@@ -1,0 +1,235 @@
+name: LemonCore
+version: "1.0.0"
+main: com.lemonpvp.lemoncore.LemonCore
+api-version: "1.21"
+description: LemonPvP Core Plugin
+authors: [LemonPvP]
+depend: []
+softdepend: [LuckPerms]
+
+permissions:
+  lemoncore.admin.rank:
+    description: Manage player ranks
+    default: op
+  lemoncore.admin.coins:
+    description: Manage player coins
+    default: op
+  lemoncore.admin.coinsall:
+    description: Give coins to all online players
+    default: op
+  lemoncore.admin.code:
+    description: Create codes
+    default: op
+  lemoncore.use.code:
+    description: Redeem codes
+    default: true
+  lemoncore.admin.ban:
+    description: Ban players
+    default: op
+  lemoncore.admin.unban:
+    description: Unban players
+    default: op
+  lemoncore.admin.mute:
+    description: Mute players
+    default: op
+  lemoncore.admin.unmute:
+    description: Unmute players
+    default: op
+  lemoncore.admin.kick:
+    description: Kick players
+    default: op
+  lemoncore.admin.history:
+    description: View player history
+    default: op
+  lemoncore.use.report:
+    description: Report players
+    default: true
+  lemoncore.admin.report:
+    description: View reports
+    default: op
+  lemoncore.use.bugreport:
+    description: Submit bug reports
+    default: true
+  lemoncore.admin.bugreport:
+    description: View bug reports
+    default: op
+  lemoncore.use.mreport:
+    description: Submit message reports
+    default: true
+  lemoncore.admin.mreport:
+    description: View message reports
+    default: op
+  lemoncore.use.stats:
+    description: View stats
+    default: true
+  lemoncore.admin.wipe:
+    description: Wipe player stats
+    default: op
+  lemoncore.admin.unwipe:
+    description: Restore wiped stats
+    default: op
+  lemoncore.use.friend:
+    description: Use friend system
+    default: true
+  lemoncore.use.recording:
+    description: Toggle recording mode
+    default: true
+  lemoncore.use.nick:
+    description: Set random nick
+    default: true
+  lemoncore.use.hide:
+    description: Set custom display name
+    default: true
+  lemoncore.use.spawn:
+    description: Teleport to lobby spawn
+    default: true
+  lemoncore.admin.spec:
+    description: Enter spectator mode
+    default: op
+  lemoncore.admin.tp:
+    description: Teleport to player
+    default: op
+  lemoncore.admin.sm:
+    description: Enter survival mode
+    default: op
+  lemoncore.admin.gspawn:
+    description: Teleport to lobby spawn
+    default: op
+  lemoncore.admin.setlobby:
+    description: Set lobby spawn
+    default: op
+  lemoncore.admin.restart:
+    description: Restart all servers
+    default: op
+  lemoncore.use.minimessage:
+    description: Use MiniMessage tags in chat
+    default: false
+  lemoncore.priority.queue:
+    description: Priority queue after restart
+    default: false
+
+commands:
+  grank:
+    description: Manage player ranks
+    permission: lemoncore.admin.rank
+    usage: /grank add|set|remove|show <player> [group]
+  rank:
+    description: Show your rank
+    permission: lemoncore.use.stats
+  coins:
+    description: Show your coins
+    permission: lemoncore.use.stats
+  gcoins:
+    description: Manage player coins
+    permission: lemoncore.admin.coins
+    usage: /gcoins add|remove|set|show <player> [amount]
+  gcoinsall:
+    description: Give coins to all online players
+    permission: lemoncore.admin.coinsall
+    usage: /gcoinsall <amount>
+  aowcode:
+    description: Create a reward code
+    permission: lemoncore.admin.code
+    usage: /aowcode <name|random26> <rank|coins|killeffect> <value> <max_uses> <duration>
+  code:
+    description: Redeem a code
+    permission: lemoncore.use.code
+    usage: /code <code>
+  gban:
+    description: Ban a player
+    permission: lemoncore.admin.ban
+    usage: /gban <player> <reason>
+  gunban:
+    description: Unban a player
+    permission: lemoncore.admin.unban
+    usage: /gunban <player>
+  gmute:
+    description: Mute a player
+    permission: lemoncore.admin.mute
+    usage: /gmute <player>
+  gunmute:
+    description: Unmute a player
+    permission: lemoncore.admin.unmute
+    usage: /gunmute <player>
+  gkick:
+    description: Kick a player
+    permission: lemoncore.admin.kick
+    usage: /gkick <player> <reason>
+  ghistory:
+    description: View player history
+    permission: lemoncore.admin.history
+    usage: /ghistory <player>
+  report:
+    description: Report a player
+    permission: lemoncore.use.report
+    usage: /report <player> <reason>
+  greport:
+    description: View reports
+    permission: lemoncore.admin.report
+  bugreport:
+    description: Submit a bug report
+    permission: lemoncore.use.bugreport
+    usage: /bugreport <description>
+  gbug:
+    description: View bug reports
+    permission: lemoncore.admin.bugreport
+  mreport:
+    description: Report a message
+    permission: lemoncore.use.mreport
+    usage: /mreport <player> <reason>
+  gmreport:
+    description: View message reports
+    permission: lemoncore.admin.mreport
+  stats:
+    description: View player stats
+    permission: lemoncore.use.stats
+    usage: /stats [player]
+  gwipe:
+    description: Wipe player stats
+    permission: lemoncore.admin.wipe
+    usage: /gwipe <player>
+  gunwipe:
+    description: Restore wiped stats
+    permission: lemoncore.admin.unwipe
+    usage: /gunwipe <player> <date>
+  settings:
+    description: Open settings GUI
+    permission: lemoncore.use.stats
+  friend:
+    description: Manage friends
+    permission: lemoncore.use.friend
+    usage: /friend add|remove <player>
+    aliases: [f]
+  recording:
+    description: Toggle recording mode
+    permission: lemoncore.use.recording
+  nick:
+    description: Set a random nick
+    permission: lemoncore.use.nick
+  hide:
+    description: Set a custom display name
+    permission: lemoncore.use.hide
+    usage: /hide <name>
+  gspec:
+    description: Enter spectator mode
+    permission: lemoncore.admin.spec
+  gtp:
+    description: Teleport to player
+    permission: lemoncore.admin.tp
+    usage: /gtp <player>
+  gsm:
+    description: Enter survival mode
+    permission: lemoncore.admin.sm
+  gspawn:
+    description: Teleport to lobby spawn (admin)
+    permission: lemoncore.admin.gspawn
+  lobby:
+    description: Teleport to lobby spawn
+    permission: lemoncore.use.spawn
+    aliases: [hub, spawn]
+  aowsetlobby:
+    description: Set lobby spawn point
+    permission: lemoncore.admin.setlobby
+  restart:
+    description: Restart all servers
+    permission: lemoncore.admin.restart

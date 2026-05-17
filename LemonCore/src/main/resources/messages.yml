@@ -1,0 +1,136 @@
+# LemonCore Messages
+prefix: "<bold><gradient:#fffb00:#00ff00>LemonPvP</gradient></bold> <dark_gray>»</dark_gray>"
+
+no-permission: "{prefix} <red>You do not have permission to use this command."
+player-not-found: "{prefix} <red>Player not found: <white>{player}"
+player-not-online: "{prefix} <red>Player <white>{player} <red>is not online."
+invalid-usage: "{prefix} <red>Usage: <white>{usage}"
+invalid-amount: "{prefix} <red>Please enter a valid number."
+
+rank:
+  show: "{prefix} <gray>Your rank: <white>{rank}"
+  set: "{prefix} <green>Set rank of <white>{player} <green>to <white>{rank}"
+  add: "{prefix} <green>Added rank <white>{rank} <green>to <white>{player}"
+  remove: "{prefix} <green>Removed rank <white>{rank} <green>from <white>{player}"
+  show-other: "{prefix} <gray>Rank of <white>{player}<gray>: <white>{rank}"
+
+coins:
+  show: "{prefix} <#fffb00>Your coins: <white>{coins}"
+  add: "{prefix} <green>Added <#fffb00>{amount} <green>coins to <white>{player}"
+  remove: "{prefix} <red>Removed <#fffb00>{amount} <red>coins from <white>{player}"
+  set: "{prefix} <green>Set coins of <white>{player} <green>to <#fffb00>{amount}"
+  show-other: "{prefix} <gray>Coins of <white>{player}<gray>: <#fffb00>{coins}"
+  coinsall: "{prefix} <green>Gave <#fffb00>{amount} <green>coins to all online players."
+  receive: "{prefix} <green>You received <#fffb00>{amount} <green>coins!"
+
+ban:
+  banned: "<red>You have been banned."
+  screen-title: "<bold><red>Banned"
+  temp: "<red>You are temporarily banned for <white>{reason}"
+  permanent: "<red>You are permanently banned."
+  ban-id: "<red>Ban ID: <white>{id}"
+  duration: "<red>Duration: <white>{duration}"
+  appeal: "<red>Maybe you can appeal on our discord: <white>{discord}"
+  success: "{prefix} <green>Banned <white>{player} <green>for <white>{reason}"
+  lemonizer: "<bold><gradient:#fffb00:#00ff00>Lemonizer</gradient></bold> <red>{player}</red> <green>has been banned for</green> <red>{reason}</red>"
+  unban-success: "{prefix} <green>Unbanned <white>{player}"
+  not-banned: "{prefix} <red>{player} is not currently banned."
+  already-banned: "{prefix} <red>{player} is already banned."
+
+mute:
+  muted: "{prefix} <red>You are muted and cannot send messages."
+  muted-duration: "{prefix} <red>You are muted for <white>{duration}"
+  success: "{prefix} <green>Muted <white>{player}"
+  unmute-success: "{prefix} <green>Unmuted <white>{player}"
+  not-muted: "{prefix} <red>{player} is not muted."
+
+kick:
+  success: "{prefix} <green>Kicked <white>{player} <green>for <white>{reason}"
+  message: "<red>You have been kicked for: <white>{reason}"
+
+code:
+  success-header: "<yellow>>>"
+  success-reward: "<yellow>Your Reward: <white>{reward}"
+  success-footer: "<yellow>>>"
+  invalid: "<red>Code Incorrect please check the Spelling"
+  create: "{prefix} <green>Code <white>{code} <green>created successfully."
+  already-redeemed: "<red>Code Incorrect please check the Spelling"
+  expired: "<red>Code Incorrect please check the Spelling"
+
+report:
+  success: "{prefix} <green>Report submitted successfully."
+  already-reported: "{prefix} <red>You have already reported this player recently."
+  self-report: "{prefix} <red>You cannot report yourself."
+  gui-title: "Reports"
+
+bug:
+  success: "{prefix} <green>Bug report submitted successfully."
+  gui-title: "Bug Reports"
+
+mreport:
+  success: "{prefix} <green>Message report submitted successfully."
+  gui-title: "Message Reports"
+
+stats:
+  gui-title: "Stats - {player}"
+  wipe-success: "{prefix} <green>Wiped stats for <white>{player}"
+  unwipe-success: "{prefix} <green>Restored stats for <white>{player} <green>from <white>{date}"
+  no-wipe: "{prefix} <red>No wipe found for that date."
+
+settings:
+  gui-title: "Settings"
+  public-chat-on: "<green>Public Chat: ON"
+  public-chat-off: "<red>Public Chat: OFF"
+  party-invites-on: "<green>Party Invites: ON"
+  party-invites-off: "<red>Party Invites: OFF"
+  messages-on: "<green>Messages: ON"
+  messages-off: "<red>Messages: OFF"
+  fast-crystals-on: "<green>Fast Crystals: ON"
+  fast-crystals-off: "<red>Fast Crystals: OFF"
+
+friend:
+  add-success: "{prefix} <green>Added <white>{player} <green>to your friends."
+  remove-success: "{prefix} <green>Removed <white>{player} <green>from your friends."
+  already-friends: "{prefix} <red>You are already friends with <white>{player}"
+  not-friends: "{prefix} <red>You are not friends with <white>{player}"
+  self: "{prefix} <red>You cannot friend yourself."
+
+recording:
+  enabled: "{prefix} <red>Recording mode enabled."
+  disabled: "{prefix} <green>Recording mode disabled."
+
+nick:
+  set: "{prefix} <green>Your nick has been set to <white>{nick}"
+  cleared: "{prefix} <green>Your nick has been cleared."
+
+hide:
+  set: "{prefix} <green>Your display name has been set to <white>{name}"
+
+history:
+  gui-title: "History - {player}"
+  no-history: "{prefix} <red>No history found for <white>{player}"
+
+teleport:
+  success: "{prefix} <green>Teleported to <white>{player}"
+  spawn: "{prefix} <green>Teleported to spawn."
+  lobby-set: "{prefix} <green>Lobby spawn set."
+
+spectator:
+  enabled: "{prefix} <green>Spectator mode enabled."
+  survival: "{prefix} <green>Survival mode enabled."
+
+chat:
+  muted-player: "{prefix} <red>Your message was blocked (muted)."
+  filtered: "{prefix} <red>Your message contained inappropriate content and was blocked."
+
+restart:
+  five-min: "<bold><gradient:#fffb00:#00ff00>»</gradient></bold> <yellow>Server Restart in 5 Minutes <<"
+  three-min: "<bold><gradient:#fffb00:#00ff00>»</gradient></bold> <yellow>Server Restart in 3 Minutes <<"
+  one-min: "<bold><gradient:#fffb00:#00ff00>»</gradient></bold> <yellow>Server Restart in 1 Minute <<"
+  thirty-sec: "<bold><gradient:#fffb00:#00ff00>»</gradient></bold> <yellow>Server Restart in 30 Seconds <<"
+  warning-15: "<bold><gradient:gold:dark_orange>Warning</gradient></bold>\n<yellow>Restart in 15 Seconds"
+  warning-10: "<bold><gradient:gold:dark_orange>Warning</gradient></bold>\n<yellow>Restart in 10 Seconds"
+  countdown: "<bold><gradient:gold:dark_orange>Warning</gradient></bold>\n<yellow>Restart in {seconds} Seconds"
+  now-chat: "<bold><red>Restart</red></bold>"
+  now-title: "<bold><red>Restart</red></bold>"
+  initiated: "{prefix} <green>Restart sequence initiated."

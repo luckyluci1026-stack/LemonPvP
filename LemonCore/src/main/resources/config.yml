@@ -1,0 +1,199 @@
+# LemonCore Configuration
+database:
+  host: localhost
+  port: 3306
+  database: lemonpvp
+  username: root
+  password: password
+  pool-size: 10
+
+discord:
+  invite: https://discord.gg/lemonpvp
+
+lobby:
+  spawn:
+    world: world
+    x: 0.5
+    y: 64.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+
+scoreboard:
+  enabled: true
+  title: "<bold><gradient:#fffb00:#00ff00>LemonPvP</gradient></bold>"
+  lines:
+    - " "
+    - "<#888888>Kills <white>{kills}"
+    - "<#888888>Killstreak <white>{killstreak}"
+    - "<#fffb00>Coins <white>{coins}"
+    - " "
+
+ban:
+  reasons:
+    hacking: 30d
+    cheating: 30d
+    cheat: 30d
+    racism: 3d
+    spam: 1d
+    advertising: 7d
+    harassment: 7d
+    exploiting: 14d
+    default: 7d
+  default-duration: "7d"
+
+mute:
+  default-duration: "1d"
+  reasons:
+    spam: 1h
+    advertising: 7d
+    harassment: 1d
+    toxicity: 3d
+    default: 1d
+
+anti-swear:
+  enabled: true
+  nword:
+    first-offense-duration: "3d"
+    second-offense-duration: "14d"
+  other-insult-duration: "1d"
+
+velocity:
+  channel: "lemonpvp:core"
+
+servers:
+  lobby: lobby
+  limbo: limbo
+  ffa: ffa
+  kitpvp: kitpvp
+
+codes:
+  random-length: 26
+
+names:
+  first-names:
+    - Alex
+    - Blake
+    - Cameron
+    - Dakota
+    - Drew
+    - Evan
+    - Finley
+    - Glen
+    - Harper
+    - Ivan
+    - Jordan
+    - Kyle
+    - Logan
+    - Mason
+    - Nathan
+    - Oliver
+    - Parker
+    - Quinn
+    - Riley
+    - Sam
+    - Taylor
+    - Tyler
+    - Victor
+    - Wesley
+    - Xander
+    - Zach
+    - Aaron
+    - Ben
+    - Chris
+    - Daniel
+    - Eric
+    - Frank
+    - George
+    - Henry
+    - Ian
+    - Jack
+    - Kevin
+    - Liam
+    - Mike
+    - Noah
+    - Owen
+    - Paul
+    - Ryan
+    - Sean
+    - Tom
+    - Uriel
+    - Will
+    - Yusuf
+    - Zoe
+    - Amy
+    - Beth
+    - Clara
+    - Diana
+    - Emma
+    - Fiona
+    - Grace
+    - Hannah
+    - Iris
+    - Julia
+    - Kate
+    - Laura
+    - Maya
+    - Nina
+    - Olivia
+    - Petra
+    - Rachel
+    - Sarah
+    - Tara
+    - Uma
+    - Vera
+    - Wendy
+    - Ximena
+    - Yara
+    - Zara
+  last-names:
+    - Smith
+    - Johnson
+    - Williams
+    - Brown
+    - Jones
+    - Garcia
+    - Miller
+    - Davis
+    - Wilson
+    - Moore
+    - Taylor
+    - Anderson
+    - Thomas
+    - Jackson
+    - White
+    - Harris
+    - Martin
+    - Thompson
+    - Young
+    - Allen
+    - King
+    - Wright
+    - Scott
+    - Torres
+    - Nguyen
+    - Hill
+    - Flores
+    - Green
+    - Adams
+    - Nelson
+    - Baker
+    - Hall
+    - Rivera
+    - Campbell
+    - Mitchell
+    - Carter
+    - Roberts
+    - Phillips
+    - Evans
+    - Turner
+    - Parker
+    - Collins
+    - Stewart
+    - Sanchez
+    - Morris
+    - Rogers
+    - Reed
+    - Cook
+    - Morgan
+    - Bell

@@ -1,0 +1,5 @@
+.gradle/
+build/
+libs/*.jar
+!libs/luckperms-api-5.4.jar
+*.class

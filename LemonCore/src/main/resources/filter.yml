@@ -1,0 +1,203 @@
+# LemonCore Word Filter
+# Words/patterns that trigger auto-mute
+# Use * as wildcard, supports leetspeak variants
+
+nword-patterns:
+  # Direct and common variants
+  - "nigger"
+  - "nigga"
+  - "nigg3r"
+  - "nigg4"
+  - "n1gger"
+  - "n1gga"
+  - "n!gger"
+  - "n!gga"
+  - "n1gg3r"
+  - "n!gg3r"
+  - "niqqa"
+  - "niqqer"
+  - "niggah"
+  - "nigguh"
+  - "niggur"
+  - "n-word"
+  - "nword"
+  - "negro"
+  - "negroid"
+  # Spaced/partial
+  - "n i g g e r"
+  - "n i g g a"
+  - "n.i.g.g.e.r"
+  - "n.i.g.g.a"
+  # Common misspellings
+  - "neger"
+  - "niga"
+  - "nigr"
+  - "nigar"
+  - "niggr"
+  - "niggaz"
+  - "nigguz"
+  - "niggaz"
+
+slurs:
+  # English
+  - "faggot"
+  - "fag"
+  - "dyke"
+  - "tranny"
+  - "retard"
+  - "retarded"
+  - "spic"
+  - "chink"
+  - "gook"
+  - "kike"
+  - "wetback"
+  - "cracker"
+  - "honky"
+  - "spook"
+  - "coon"
+  - "jigaboo"
+  - "porch monkey"
+  - "sand nigger"
+  - "towelhead"
+  - "raghead"
+  - "camel jockey"
+  - "beaner"
+  - "zipperhead"
+  - "slant"
+  - "slope"
+  - "redskin"
+  - "injun"
+  - "squaw"
+  - "whitey"
+  - "peckerwood"
+  - "hillbilly"
+  - "redneck"
+  - "white trash"
+  # Spanish/Portuguese
+  - "marica"
+  - "maricon"
+  - "puta"
+  - "puto"
+  - "culero"
+  - "pendejo"
+  - "joto"
+  - "naco"
+  - "indio"
+  - "prieto"
+  # French
+  - "pede"
+  - "tapette"
+  - "salope"
+  - "negre"
+  # German
+  - "schwuchtel"
+  - "schlampe"
+  - "hurensohn"
+  - "neger"
+  - "kanake"
+  # Italian
+  - "frocio"
+  - "finocchio"
+  - "negro"
+  - "terrone"
+  # Russian/Slavic
+  - "pidor"
+  - "pidar"
+  - "pederast"
+  - "churka"
+  - "chёrny"
+  - "hohol"
+  - "moskal"
+  # Arabic
+  - "ibn el sharmouta"
+  # Turkish
+  - "orospu cocugu"
+  - "ibne"
+  # Dutch
+  - "nikker"
+  - "neger"
+  - "homo"
+  - "flikker"
+  # Swedish/Norwegian/Danish
+  - "neger"
+  - "bög"
+  - "hora"
+  # Polish
+  - "pedal"
+  - "ciapaty"
+  - "czarnuch"
+  # Hungarian
+  - "buzsi"
+  - "cigany"
+  # Romanian
+  - "cioara"
+  - "bozgor"
+  # Greek
+  - "putana"
+  - "malaka"
+  # Hindi/Urdu
+  - "bhangi"
+  - "chamar"
+  - "haramzada"
+  - "harami"
+  - "madarchod"
+  - "bhenchod"
+  - "chutiya"
+  - "saala"
+  # Indonesian/Malay
+  - "babi"
+  - "anjing"
+  - "kontol"
+  - "memek"
+  # Japanese
+  - "baka"
+  - "kichiku"
+  # Korean
+  - "shibal"
+  - "gaeseki"
+  # Chinese
+  - "sha bi"
+  - "ta ma de"
+  # Tagalog
+  - "putangina"
+  - "gago"
+  - "bobo"
+  # Swahili
+  - "mzungu" # context-sensitive, often derogatory
+  # Vietnamese
+  - "du ma"
+  - "con cho"
+  # Thai
+  - "ควาย"
+  - "สัตว์"
+  # Persian/Farsi
+  - "kos maghz"
+  - "ahmagh"
+  # Hebrew
+  - "zona"
+  - "ben zona"
+  # Common general profanity (all languages)
+  - "fuck"
+  - "shit"
+  - "ass"
+  - "asshole"
+  - "bastard"
+  - "bitch"
+  - "cunt"
+  - "damn"
+  - "dick"
+  - "prick"
+  - "motherfucker"
+  - "whore"
+  - "slut"
+  - "cock"
+  - "pussy"
+  - "penis"
+  - "vagina"
+  - "anus"
+
+whitelist:
+  # Words that look like slurs but aren't (false positive prevention)
+  - "classic"
+  - "assassin"
+  - "assumption"
