@@ -90,7 +90,7 @@ public class SpawnBuilder extends BuildHelper {
 
         // 4 sandstone_pillar columns from y=65 to y=72 at corners (±5, ±5)
         for (int[] corner : new int[][]{{-5, -5}, {5, -5}, {-5, 5}, {5, 5}}) {
-            column(es, corner[0], corner[1], 65, 72, BlockTypes.SANDSTONE_PILLAR);
+            column(es, corner[0], corner[1], 65, 72, BlockTypes.CHISELED_SANDSTONE);
         }
 
         // Walls at x=±5 and z=±5 between pillars, y=65..70 (leave open top for light)
@@ -105,7 +105,7 @@ public class SpawnBuilder extends BuildHelper {
 
         // Central raised platform at y=65 (3×3)
         fill(es, -1, 65, -1, 1, 65, 1, BlockTypes.SANDSTONE);
-        block(es, 0, 66, 0, BlockTypes.SANDSTONE_PILLAR); // centrepiece accent
+        block(es, 0, 66, 0, BlockTypes.CHISELED_SANDSTONE); // centrepiece accent
 
         // Roof: sandstone slab layer at y=73 covering the full 12×12 (x=−6..6, z=−6..6)
         fill(es, -6, 73, -6, 6, 73, 6, BlockTypes.SANDSTONE);

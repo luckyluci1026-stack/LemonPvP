@@ -322,7 +322,7 @@ public class DuelArenaBuilder {
             {ox,      oz + 38}, {ox + 38, oz + 38}
         };
         for (int[] wc : wallCorners) {
-            column(es, wc[0], wc[1], oy + 1, oy + 4, BlockTypes.SANDSTONE_PILLAR);
+            column(es, wc[0], wc[1], oy + 1, oy + 4, BlockTypes.CHISELED_SANDSTONE);
         }
     }
 
