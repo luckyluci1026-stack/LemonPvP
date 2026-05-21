@@ -1,0 +1,66 @@
+# LemonPractice Configuration
+server-type: LOBBY  # LOBBY or DUELS
+
+database:
+  host: localhost
+  port: 3306
+  database: lemonpvp
+  username: root
+  password: password
+  pool-size: 10
+
+servers:
+  lobby: lobby
+  duels: duels
+  limbo: limbo
+
+velocity:
+  channel: "lemonpractice:main"
+
+worlds:
+  lobby: world
+  duels: world_duels
+  ffa: world_ffa
+
+ffa:
+  arenas-built: false
+
+duel-arenas:
+  built: false
+  base-x: 1100
+  base-y: 64
+  base-z: 0
+  spacing: 150
+
+ffa-arenas:
+  base-x: 0
+  base-y: 64
+  base-z: 0
+  spacing: 200
+
+elo:
+  k-factor: 32
+  default: 1000
+
+countdown:
+  seconds: 3
+  float-height: 2.0
+  fall-speed: 0.08
+
+hotbar:
+  queue-sword:
+    slot: 0
+    name: "<gradient:#fffb00:#00ff00>Queue</gradient>"
+    material: DIAMOND_SWORD
+  kit-editor:
+    slot: 4
+    name: "<aqua>Kit Editor</aqua>"
+    material: BOOK
+  cosmetics:
+    slot: 7
+    name: "<light_purple>Cosmetics</light_purple>"
+    material: DIAMOND
+  settings:
+    slot: 8
+    name: "<gray>Settings</gray>"
+    material: COMPASS

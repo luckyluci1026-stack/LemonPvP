@@ -1,0 +1,33 @@
+name: LemonPractice
+version: "1.0.0"
+main: com.lemonpvp.lemonpractice.LemonPractice
+api-version: "1.21"
+description: LemonPvP Practice Plugin
+authors: [LemonPvP]
+softdepend: [LuckPerms, FastAsyncWorldEdit]
+
+permissions:
+  lemonpractice.admin.arena:
+    description: Manage arenas
+    default: op
+  lemonpractice.admin.buildspawn:
+    description: Build lobby spawn
+    default: op
+  lemonpractice.priority.queue:
+    description: Priority queue after restart
+    default: false
+  lemonpractice.use.queue:
+    description: Join queues
+    default: true
+  lemonpractice.use.ffa:
+    description: Join FFA arenas
+    default: true
+
+commands:
+  aowarena:
+    description: Manage arenas
+    permission: lemonpractice.admin.arena
+    usage: /aowarena <create|setspawn1|setspawn2|setspawnspec|setpos1|setpos2|bind|dupe> <name> [args]
+  aowbuildspawn:
+    description: Build the tropical lobby spawn
+    permission: lemonpractice.admin.buildspawn
