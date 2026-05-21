@@ -1,0 +1,19 @@
+database:
+  host: localhost
+  port: 3306
+  database: lemonpvp
+  username: root
+  password: password
+  pool-size: 10
+
+server-type: LOBBY  # LOBBY or DUELS
+
+prices:
+  trim-pattern: 250
+  trim-material: 50
+
+velocity:
+  channel: lemoncosmetics:main
+
+discord:
+  invite: "https://discord.gg/lemonpvp"

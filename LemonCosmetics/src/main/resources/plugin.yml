@@ -1,0 +1,36 @@
+name: LemonCosmetics
+version: 1.0.0
+main: com.lemonpvp.lemoncosmetics.LemonCosmetics
+api-version: '1.21'
+softdepend: [LuckPerms, LemonCore]
+commands:
+  cosmetics:
+    description: Open cosmetics menu
+    permission: lemoncosmetics.use
+permissions:
+  lemoncosmetics.use:
+    description: Access /cosmetics command
+    default: true
+  lemoncosmetics.effect.fire_swarm:
+    description: Fire Swarm kill effect
+    default: false
+  lemoncosmetics.effect.spook_swarm:
+    description: Spook Swarm kill effect
+    default: false
+  lemoncosmetics.effect.totem_explosion:
+    description: Totem Explosion kill effect
+    default: false
+  lemoncosmetics.effect.golden_gap:
+    description: Golden Gap kill effect
+    default: false
+  lemoncosmetics.effect.*:
+    description: All kill effects
+    default: false
+    children:
+      lemoncosmetics.effect.fire_swarm: true
+      lemoncosmetics.effect.spook_swarm: true
+      lemoncosmetics.effect.totem_explosion: true
+      lemoncosmetics.effect.golden_gap: true
+  lemoncosmetics.trim.*:
+    description: All armor trims
+    default: false

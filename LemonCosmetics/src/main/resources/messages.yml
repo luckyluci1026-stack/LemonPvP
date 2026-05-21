@@ -1,0 +1,11 @@
+prefix: "<gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray> "
+no-permission: "{prefix}<red>You don't have permission."
+cosmetics:
+  open: "{prefix}<green>Opening Cosmetics..."
+  effect-equipped: "{prefix}<green>Kill effect <yellow>{effect}</yellow> equipped!"
+  effect-unequipped: "{prefix}<yellow>Kill effect unequipped."
+  trim-applied: "{prefix}<green>Trim applied to <yellow>{piece}</yellow>."
+  trim-removed: "{prefix}<yellow>Trim removed from {piece}."
+  buy-success: "{prefix}<green>Purchased <yellow>{item}</yellow> for <gold>{cost} Coins</gold>!"
+  buy-no-coins: "{prefix}<red>You need <gold>{cost} Coins</gold> but only have <gold>{balance} Coins</gold>."
+  kill-effect-unlocked: "{prefix}<green>Kill effect <yellow>{effect}</yellow> unlocked!"

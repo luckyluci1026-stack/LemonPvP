@@ -66,8 +66,10 @@ public class CodeCommand implements CommandExecutor {
                 });
             }
             case "killeffect" -> {
-                // Kill effect logic would be implemented in game-specific plugins
-                // Store the kill effect preference in player data if needed
+                org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
+                        org.bukkit.Bukkit.getPluginManager().callEvent(
+                                new com.lemonpvp.lemoncore.events.KillEffectRewardEvent(
+                                        player.getUniqueId(), data.rewardValue)));
             }
         }
     }
