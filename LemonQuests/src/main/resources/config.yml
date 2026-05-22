@@ -1,0 +1,12 @@
+database:
+  host: localhost
+  port: 3306
+  database: lemonpvp
+  username: root
+  password: password
+  pool-size: 10
+
+daily_quest_count: 3
+
+velocity:
+  channel: "lemonquests:main"

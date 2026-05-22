@@ -1,0 +1,119 @@
+rank_levels:
+  iron:      1
+  gold:      5
+  emerald:   15
+  diamond:   30
+  netherite: 50
+  pro:       75
+  master:    100
+
+difficulty_multipliers:
+  EASY:   1.0
+  MEDIUM: 1.5
+  HARD:   2.0
+  EXPERT: 3.0
+
+quests:
+  first_blood:
+    display_name: "First Blood"
+    description: "Get 1 kill in any gamemode"
+    type: KILLS
+    target: 1
+    reward_type: XP
+    reward_xp: 10
+    reward_coins: 0
+    difficulty: EASY
+    daily: true
+    date: ""
+    enabled: true
+
+  ten_kills:
+    display_name: "Kill Spree"
+    description: "Get 10 kills in a single day"
+    type: KILLS
+    target: 10
+    reward_type: BOTH
+    reward_xp: 25
+    reward_coins: 50
+    difficulty: EASY
+    daily: true
+    date: ""
+    enabled: true
+
+  fifty_kills:
+    display_name: "Bloodthirsty"
+    description: "Accumulate 50 kills"
+    type: KILLS
+    target: 50
+    reward_type: XP
+    reward_xp: 75
+    reward_coins: 0
+    difficulty: MEDIUM
+    daily: false
+    date: ""
+    enabled: true
+
+  survive_deaths:
+    display_name: "Learning Curve"
+    description: "Die 20 times — every loss teaches you something"
+    type: DEATHS
+    target: 20
+    reward_type: BOTH
+    reward_xp: 40
+    reward_coins: 100
+    difficulty: MEDIUM
+    daily: true
+    date: ""
+    enabled: true
+
+  long_session:
+    display_name: "Dedicated Player"
+    description: "Play for 60 minutes in a day"
+    type: PLAYTIME
+    target: 3600
+    reward_type: XP
+    reward_xp: 100
+    reward_coins: 0
+    difficulty: HARD
+    daily: true
+    date: ""
+    enabled: true
+
+  marathon_session:
+    display_name: "Grinder"
+    description: "Play for 3 hours in a single day"
+    type: PLAYTIME
+    target: 10800
+    reward_type: BOTH
+    reward_xp: 200
+    reward_coins: 500
+    difficulty: HARD
+    daily: true
+    date: ""
+    enabled: true
+
+  win_streak:
+    display_name: "Champion"
+    description: "Win 5 matches"
+    type: WINS
+    target: 5
+    reward_type: XP
+    reward_xp: 150
+    reward_coins: 0
+    difficulty: EXPERT
+    daily: false
+    date: ""
+    enabled: true
+
+  quest_hunter:
+    display_name: "Quest Hunter"
+    description: "Complete 10 quests total"
+    type: QUESTS_COMPLETED
+    target: 10
+    reward_type: BOTH
+    reward_xp: 300
+    reward_coins: 1000
+    difficulty: EXPERT
+    daily: false
+    date: ""
+    enabled: true
