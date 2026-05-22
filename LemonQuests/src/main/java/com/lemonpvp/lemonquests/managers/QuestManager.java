@@ -5,6 +5,7 @@ import com.lemonpvp.lemonquests.model.QuestDefinition;
 import com.lemonpvp.lemonquests.model.QuestDifficulty;
 import com.lemonpvp.lemonquests.model.QuestProgress;
 import com.lemonpvp.lemonquests.model.QuestRewardType;
+import com.lemonpvp.lemonquests.model.QuestType;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -116,13 +117,11 @@ public class QuestManager {
             try {
                 String displayName = s.getString("display_name", id);
                 String description = s.getString("description", "");
-                com.lemonpvp.lemonquests.model.QuestType type =
-                        com.lemonpvp.lemonquests.model.QuestType.valueOf(
-                                s.getString("type", "KILLS").toUpperCase());
+                QuestType type = QuestType.valueOf(
+                        s.getString("type", "KILLS").toUpperCase());
                 int target = s.getInt("target", 1);
-                com.lemonpvp.lemonquests.model.QuestRewardType rewardType =
-                        com.lemonpvp.lemonquests.model.QuestRewardType.valueOf(
-                                s.getString("reward_type", "XP").toUpperCase());
+                QuestRewardType rewardType = QuestRewardType.valueOf(
+                        s.getString("reward_type", "XP").toUpperCase());
                 int rewardXp = s.getInt("reward_xp", 0);
                 int rewardCoins = s.getInt("reward_coins", 0);
                 QuestDifficulty difficulty = QuestDifficulty.valueOf(
@@ -341,7 +340,7 @@ public class QuestManager {
         LocalDate today = LocalDate.now();
 
         for (QuestDefinition def : getTodaysQuests()) {
-            if (def.getType() != com.lemonpvp.lemonquests.model.QuestType.QUESTS_COMPLETED) continue;
+            if (def.getType() != QuestType.QUESTS_COMPLETED) continue;
             if (isCompleted(uuid, def.getId())) continue;
 
             plugin.getDatabase().incrementProgress(uuid, def.getId(), today, 1);
