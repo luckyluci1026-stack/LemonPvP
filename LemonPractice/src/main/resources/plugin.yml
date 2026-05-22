@@ -13,6 +13,9 @@ permissions:
   lemonpractice.admin.buildspawn:
     description: Build lobby spawn
     default: op
+  lemonpractice.admin.elo:
+    description: Manage player ELO
+    default: op
   lemonpractice.priority.queue:
     description: Priority queue after restart
     default: false
@@ -31,3 +34,7 @@ commands:
   aowbuildspawn:
     description: Build the tropical lobby spawn
     permission: lemonpractice.admin.buildspawn
+  gelo:
+    description: Manage player ELO
+    permission: lemonpractice.admin.elo
+    usage: /gelo <player> <add|remove|set|reset> <gamemode> [amount]

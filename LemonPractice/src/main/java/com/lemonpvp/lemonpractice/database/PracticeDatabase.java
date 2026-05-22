@@ -1,6 +1,7 @@
 package com.lemonpvp.lemonpractice.database;
 
 import com.lemonpvp.lemonpractice.LemonPractice;
+import com.lemonpvp.lemonpractice.managers.EloManager;
 import com.lemonpvp.lemonpractice.model.Arena;
 import com.lemonpvp.lemonpractice.model.FFAArena;
 import com.zaxxer.hikari.HikariConfig;
@@ -136,6 +137,15 @@ public class PracticeDatabase {
                     uuid VARCHAR(36) PRIMARY KEY,
                     gamemode VARCHAR(32) NOT NULL,
                     queue_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lemonpractice_elo (
+                    uuid VARCHAR(36) NOT NULL,
+                    gamemode VARCHAR(32) NOT NULL,
+                    elo INT DEFAULT 1000,
+                    matches_played INT DEFAULT 0,
+                    PRIMARY KEY (uuid, gamemode)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
         }
@@ -316,25 +326,31 @@ public class PracticeDatabase {
         });
     }
 
-    // ELO operations (stored in lc_elo from LemonCore schema)
-    public CompletableFuture<Integer> getElo(java.util.UUID uuid, String gamemode) {
+    // ELO operations (lemonpractice_elo — uuid, gamemode, elo, matches_played)
+    public CompletableFuture<EloManager.EloData> getEloData(java.util.UUID uuid, String gamemode) {
         return queryAsync(conn -> {
-            try (PreparedStatement ps = conn.prepareStatement("SELECT elo FROM lc_elo WHERE uuid=? AND gamemode=?")) {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT elo, matches_played FROM lemonpractice_elo WHERE uuid=? AND gamemode=?")) {
                 ps.setString(1, uuid.toString()); ps.setString(2, gamemode.toLowerCase());
                 ResultSet rs = ps.executeQuery();
-                return rs.next() ? rs.getInt("elo") : 1000;
-            } catch (SQLException e) { return 1000; }
+                if (rs.next()) return new EloManager.EloData(rs.getInt("elo"), rs.getInt("matches_played"));
+                return null;
+            } catch (SQLException e) {
+                plugin.getLogger().severe("getEloData: " + e.getMessage());
+                return null;
+            }
         });
     }
 
-    public CompletableFuture<Void> setElo(java.util.UUID uuid, String gamemode, int elo) {
+    public CompletableFuture<Void> saveEloData(java.util.UUID uuid, String gamemode, int elo, int matchesPlayed) {
         return executeAsync(conn -> {
             try (PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO lc_elo (uuid, gamemode, elo) VALUES (?,?,?) ON DUPLICATE KEY UPDATE elo=VALUES(elo)")) {
+                    "INSERT INTO lemonpractice_elo (uuid, gamemode, elo, matches_played) VALUES (?,?,?,?) " +
+                    "ON DUPLICATE KEY UPDATE elo=VALUES(elo), matches_played=VALUES(matches_played)")) {
                 ps.setString(1, uuid.toString()); ps.setString(2, gamemode.toLowerCase());
-                ps.setInt(3, elo);
+                ps.setInt(3, elo); ps.setInt(4, matchesPlayed);
                 ps.executeUpdate();
-            } catch (SQLException e) { plugin.getLogger().severe("setElo: " + e.getMessage()); }
+            } catch (SQLException e) { plugin.getLogger().severe("saveEloData: " + e.getMessage()); }
         });
     }
 

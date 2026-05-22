@@ -9,113 +9,170 @@ import java.util.concurrent.CompletableFuture;
 
 public class EloManager {
 
-    private static final int DEFAULT_ELO = 1000;
+    public static final int DEFAULT_ELO = 1000;
     private static final int K_FACTOR = 32;
 
+    public static class EloData {
+        public int elo;
+        public int matchesPlayed;
+
+        public EloData(int elo, int matchesPlayed) {
+            this.elo = elo;
+            this.matchesPlayed = matchesPlayed;
+        }
+    }
+
     private final LemonPractice plugin;
-    // player uuid -> (gamemode -> elo)
-    private final Map<UUID, Map<String, Integer>> cache = new HashMap<>();
+    // uuid -> (gamemode -> EloData)
+    private final Map<UUID, Map<String, EloData>> cache = new HashMap<>();
 
     public EloManager(LemonPractice plugin) {
         this.plugin = plugin;
     }
 
-    // -----------------------------------------------------------------------
-    // Retrieval
-    // -----------------------------------------------------------------------
-
-    public int getElo(UUID playerUuid, String gamemode) {
-        Map<String, Integer> playerElos = cache.get(playerUuid);
-        if (playerElos == null) return DEFAULT_ELO;
-        return playerElos.getOrDefault(gamemode.toLowerCase(), DEFAULT_ELO);
+    public int getPlacementCount() {
+        return plugin.getConfig().getInt("placement_count", 10);
     }
 
-    public CompletableFuture<Integer> loadElo(UUID playerUuid, String gamemode) {
-        return plugin.getDatabase().getElo(playerUuid, gamemode).thenApply(elo -> {
-            int value = elo != null ? elo : DEFAULT_ELO;
-            cache.computeIfAbsent(playerUuid, u -> new HashMap<>())
-                    .put(gamemode.toLowerCase(), value);
-            return value;
+    // -----------------------------------------------------------------------
+    // Cache access
+    // -----------------------------------------------------------------------
+
+    public int getElo(UUID uuid, String gamemode) {
+        EloData data = getCached(uuid, gamemode.toLowerCase());
+        return data != null ? data.elo : DEFAULT_ELO;
+    }
+
+    public int getMatchesPlayed(UUID uuid, String gamemode) {
+        EloData data = getCached(uuid, gamemode.toLowerCase());
+        return data != null ? data.matchesPlayed : 0;
+    }
+
+    public boolean isInPlacement(UUID uuid, String gamemode) {
+        return getMatchesPlayed(uuid, gamemode) < getPlacementCount();
+    }
+
+    /**
+     * Returns the ELO used during matchmaking.
+     * Placement players always appear as DEFAULT_ELO so they match into
+     * the normal 1000-range bracket.
+     */
+    public int getEloForMatchmaking(UUID uuid, String gamemode) {
+        if (isInPlacement(uuid, gamemode)) return DEFAULT_ELO;
+        return getElo(uuid, gamemode);
+    }
+
+    private EloData getCached(UUID uuid, String gamemode) {
+        Map<String, EloData> playerMap = cache.get(uuid);
+        if (playerMap == null) return null;
+        return playerMap.get(gamemode);
+    }
+
+    // -----------------------------------------------------------------------
+    // Load from DB
+    // -----------------------------------------------------------------------
+
+    public CompletableFuture<EloData> loadEloData(UUID uuid, String gamemode) {
+        String gm = gamemode.toLowerCase();
+        return plugin.getDatabase().getEloData(uuid, gm).thenApply(data -> {
+            if (data == null) data = new EloData(DEFAULT_ELO, 0);
+            cache.computeIfAbsent(uuid, u -> new HashMap<>()).put(gm, data);
+            return data;
         });
     }
 
     // -----------------------------------------------------------------------
-    // ELO calculation  (K=32, standard Elo formula)
+    // Apply duel result  (K=32, standard Elo)
     // -----------------------------------------------------------------------
 
     /**
-     * Calculates the ELO change for the current player.
-     *
-     * @param currentElo   the player's current ELO
-     * @param opponentElo  the opponent's current ELO
-     * @param won          true = win, false = loss, use score=0.5 externally for draw
-     * @return the delta (can be negative for a loss)
-     */
-    public int calculateNewElo(int currentElo, int opponentElo, boolean won) {
-        return calculateNewEloWithScore(currentElo, opponentElo, won ? 1.0 : 0.0);
-    }
-
-    /**
-     * Variant that accepts an explicit score (1.0 win, 0.5 draw, 0.0 loss).
-     */
-    public int calculateNewEloWithScore(int currentElo, int opponentElo, double score) {
-        double expected = 1.0 / (1.0 + Math.pow(10.0, (double) (opponentElo - currentElo) / 400.0));
-        return (int) Math.round(K_FACTOR * (score - expected));
-    }
-
-    // -----------------------------------------------------------------------
-    // Apply duel result
-    // -----------------------------------------------------------------------
-
-    /**
-     * Fetches both players' ELO, computes new values, updates cache + DB.
-     *
-     * @return CompletableFuture resolving to int[]{winnerChange, loserChange}
+     * Computes new ELO for both players, increments matches_played,
+     * updates cache and DB. Returns int[]{winnerChange, loserChange}.
      */
     public CompletableFuture<int[]> applyDuelResult(UUID winner, UUID loser, String gamemode) {
         String gm = gamemode.toLowerCase();
 
-        CompletableFuture<Integer> winnerEloFuture = hasEloInCache(winner, gm)
-                ? CompletableFuture.completedFuture(getElo(winner, gm))
-                : loadElo(winner, gm);
+        CompletableFuture<EloData> wFuture = getCached(winner, gm) != null
+                ? CompletableFuture.completedFuture(getCached(winner, gm))
+                : loadEloData(winner, gm);
 
-        CompletableFuture<Integer> loserEloFuture = hasEloInCache(loser, gm)
-                ? CompletableFuture.completedFuture(getElo(loser, gm))
-                : loadElo(loser, gm);
+        CompletableFuture<EloData> lFuture = getCached(loser, gm) != null
+                ? CompletableFuture.completedFuture(getCached(loser, gm))
+                : loadEloData(loser, gm);
 
-        return winnerEloFuture.thenCombine(loserEloFuture, (winnerElo, loserElo) -> {
-            int winnerChange = calculateNewElo(winnerElo, loserElo, true);
-            int loserChange = calculateNewElo(loserElo, winnerElo, false);
+        return wFuture.thenCombine(lFuture, (wData, lData) -> {
+            int wElo = wData.elo;
+            int lElo = lData.elo;
 
-            int newWinnerElo = Math.max(0, winnerElo + winnerChange);
-            int newLoserElo = Math.max(0, loserElo + loserChange);
+            int wChange = calculateChange(wElo, lElo, true);
+            int lChange = calculateChange(lElo, wElo, false);
 
-            // Update cache
-            cache.computeIfAbsent(winner, u -> new HashMap<>()).put(gm, newWinnerElo);
-            cache.computeIfAbsent(loser, u -> new HashMap<>()).put(gm, newLoserElo);
+            wData.elo = Math.max(0, wElo + wChange);
+            wData.matchesPlayed++;
+            lData.elo = Math.max(0, lElo + lChange);
+            lData.matchesPlayed++;
 
-            // Persist to DB (fire-and-forget)
-            plugin.getDatabase().setElo(winner, gm, newWinnerElo);
-            plugin.getDatabase().setElo(loser, gm, newLoserElo);
+            plugin.getDatabase().saveEloData(winner, gm, wData.elo, wData.matchesPlayed);
+            plugin.getDatabase().saveEloData(loser,  gm, lData.elo, lData.matchesPlayed);
 
-            plugin.getLogger().info("[EloManager] " + winner + " (" + winnerElo + " -> " + newWinnerElo
-                    + ", +" + winnerChange + ") defeated " + loser + " (" + loserElo
-                    + " -> " + newLoserElo + ", " + loserChange + ") in " + gm);
+            plugin.getLogger().info("[EloManager] " + winner + " (" + wElo + "->" + wData.elo
+                    + ") beat " + loser + " (" + lElo + "->" + lData.elo + ") [" + gm + "]");
 
-            return new int[]{winnerChange, loserChange};
+            return new int[]{wChange, lChange};
         });
     }
 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
-
-    private boolean hasEloInCache(UUID uuid, String gamemode) {
-        Map<String, Integer> playerElos = cache.get(uuid);
-        return playerElos != null && playerElos.containsKey(gamemode);
+    private int calculateChange(int current, int opponent, boolean won) {
+        double expected = 1.0 / (1.0 + Math.pow(10.0, (double)(opponent - current) / 400.0));
+        return (int) Math.round(K_FACTOR * ((won ? 1.0 : 0.0) - expected));
     }
 
-    public void evict(UUID playerUuid) {
-        cache.remove(playerUuid);
+    // -----------------------------------------------------------------------
+    // Admin manipulation
+    // -----------------------------------------------------------------------
+
+    public CompletableFuture<Integer> adminAdd(UUID uuid, String gamemode, int amount) {
+        return ensureLoaded(uuid, gamemode).thenApply(data -> {
+            data.elo = Math.max(0, data.elo + amount);
+            plugin.getDatabase().saveEloData(uuid, gamemode.toLowerCase(), data.elo, data.matchesPlayed);
+            return data.elo;
+        });
+    }
+
+    public CompletableFuture<Integer> adminRemove(UUID uuid, String gamemode, int amount) {
+        return adminAdd(uuid, gamemode, -amount);
+    }
+
+    public CompletableFuture<Integer> adminSet(UUID uuid, String gamemode, int value) {
+        return ensureLoaded(uuid, gamemode).thenApply(data -> {
+            data.elo = value;
+            plugin.getDatabase().saveEloData(uuid, gamemode.toLowerCase(), data.elo, data.matchesPlayed);
+            return data.elo;
+        });
+    }
+
+    /** Resets ELO to 1000 and clears matches_played → triggers placement matches again. */
+    public CompletableFuture<Integer> adminReset(UUID uuid, String gamemode) {
+        return ensureLoaded(uuid, gamemode).thenApply(data -> {
+            data.elo = DEFAULT_ELO;
+            data.matchesPlayed = 0;
+            plugin.getDatabase().saveEloData(uuid, gamemode.toLowerCase(), DEFAULT_ELO, 0);
+            return DEFAULT_ELO;
+        });
+    }
+
+    private CompletableFuture<EloData> ensureLoaded(UUID uuid, String gamemode) {
+        String gm = gamemode.toLowerCase();
+        EloData cached = getCached(uuid, gm);
+        if (cached != null) return CompletableFuture.completedFuture(cached);
+        return loadEloData(uuid, gm);
+    }
+
+    // -----------------------------------------------------------------------
+    // Cache eviction
+    // -----------------------------------------------------------------------
+
+    public void evict(UUID uuid) {
+        cache.remove(uuid);
     }
 }

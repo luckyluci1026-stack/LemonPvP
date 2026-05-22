@@ -144,13 +144,11 @@ public class DuelManager {
         Player winner = Bukkit.getPlayer(winnerUuid);
         Player loser = Bukkit.getPlayer(loserUuid);
 
-        // Calculate ELO
+        // Apply ELO — result is internal only, never displayed to players
         plugin.getEloManager().applyDuelResult(winnerUuid, loserUuid, game.getGamemode())
                 .thenAccept(changes -> {
-                    int winnerChange = changes[0];
-                    int loserChange = changes[1];
-                    game.setEloChangeP1(game.getPlayer1Uuid().equals(winnerUuid) ? winnerChange : loserChange);
-                    game.setEloChangeP2(game.getPlayer2Uuid().equals(loserUuid) ? loserChange : winnerChange);
+                    game.setEloChangeP1(game.getPlayer1Uuid().equals(winnerUuid) ? changes[0] : changes[1]);
+                    game.setEloChangeP2(game.getPlayer2Uuid().equals(loserUuid)  ? changes[1] : changes[0]);
 
                     // Save duel record async
                     plugin.getDatabase().saveDuelRecord(
@@ -161,17 +159,16 @@ public class DuelManager {
 
                     // Switch back to main thread for Bukkit API calls
                     Bukkit.getScheduler().runTask(plugin, () ->
-                            finishDuel(game, winner, loser, winnerChange, loserChange));
+                            finishDuel(game, winner, loser));
                 });
     }
 
-    private void finishDuel(DuelGame game, Player winner, Player loser, int winnerChange, int loserChange) {
-        // Victory title for winner
+    private void finishDuel(DuelGame game, Player winner, Player loser) {
+        // Victory title for winner — ELO is internal only, not shown
         if (winner != null && winner.isOnline()) {
-            String changeStr = winnerChange >= 0 ? ("+" + winnerChange) : String.valueOf(winnerChange);
             winner.showTitle(Title.title(
                     Component.text("Victory!", NamedTextColor.GOLD),
-                    Component.text("ELO: " + changeStr, NamedTextColor.YELLOW),
+                    Component.empty(),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2500), Duration.ofMillis(500))));
 
             // 2 seconds of Absorption (invincibility flavour)
@@ -180,10 +177,9 @@ public class DuelManager {
 
         // Defeat title for loser + make spectator immediately
         if (loser != null && loser.isOnline()) {
-            String changeStr = loserChange >= 0 ? ("+" + loserChange) : String.valueOf(loserChange);
             loser.showTitle(Title.title(
                     Component.text("Defeat!", NamedTextColor.RED),
-                    Component.text("ELO: " + changeStr, NamedTextColor.YELLOW),
+                    Component.empty(),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2500), Duration.ofMillis(500))));
 
             Arena arena = game.getArena();

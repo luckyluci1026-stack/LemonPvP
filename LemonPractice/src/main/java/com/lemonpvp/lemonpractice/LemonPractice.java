@@ -12,6 +12,7 @@ import com.lemonpvp.lemonpractice.managers.SpectatorManager;
 import com.lemonpvp.lemonpractice.velocity.VelocityMessaging;
 import com.lemonpvp.lemonpractice.commands.AowArenaCommand;
 import com.lemonpvp.lemonpractice.commands.AowBuildSpawnCommand;
+import com.lemonpvp.lemonpractice.commands.GEloCommand;
 import com.lemonpvp.lemonpractice.listeners.DuelListener;
 import com.lemonpvp.lemonpractice.listeners.FFAListener;
 import com.lemonpvp.lemonpractice.listeners.KitEditorListener;
@@ -79,6 +80,7 @@ public class LemonPractice extends JavaPlugin {
         kitManager = new KitManager(this);
         eloManager = new EloManager(this);
         queueManager = new QueueManager(this);
+        queueManager.startTasks();
         duelManager = new DuelManager(this);
         spectatorManager = new SpectatorManager(this);
         ffaManager = new FFAManager(this);
@@ -97,6 +99,7 @@ public class LemonPractice extends JavaPlugin {
         // 7. Register commands
         getCommand("aowarena").setExecutor(new AowArenaCommand(this));
         getCommand("aowbuildspawn").setExecutor(new AowBuildSpawnCommand(this));
+        getCommand("gelo").setExecutor(new GEloCommand(this));
 
         // 8. If LOBBY: set up hotbars for all currently online players (reload case)
         if (serverType.equals("LOBBY")) {
@@ -111,6 +114,10 @@ public class LemonPractice extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (queueManager != null) {
+            queueManager.stopTasks();
+            queueManager.clearQueue();
+        }
         if (duelManager != null) {
             duelManager.endAllDuels();
         }

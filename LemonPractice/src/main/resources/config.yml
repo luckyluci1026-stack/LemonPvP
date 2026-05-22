@@ -38,9 +38,14 @@ ffa-arenas:
   base-z: 0
   spacing: 200
 
-elo:
-  k-factor: 32
-  default: 1000
+placement_count: 10
+
+elo_scaling:
+  base_range: 100
+  max_range: 1500
+  scale_threshold: 20
+  wait_expansion_seconds: 30
+  wait_expansion_per_10s: 50
 
 countdown:
   seconds: 3
