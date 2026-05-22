@@ -2,6 +2,7 @@ package com.lemonpvp.lemoncore;
 
 import com.lemonpvp.lemoncore.commands.admin.*;
 import com.lemonpvp.lemoncore.commands.user.*;
+import com.lemonpvp.lemoncore.managers.PlayerTracker;
 import com.lemonpvp.lemoncore.config.ConfigManager;
 import com.lemonpvp.lemoncore.config.FilterManager;
 import com.lemonpvp.lemoncore.config.MessagesManager;
@@ -10,6 +11,7 @@ import com.lemonpvp.lemoncore.gui.SettingsGUI;
 import com.lemonpvp.lemoncore.listeners.AdvancementListener;
 import com.lemonpvp.lemoncore.listeners.ChatListener;
 import com.lemonpvp.lemoncore.listeners.PlayerJoinQuitListener;
+import com.lemonpvp.lemoncore.listeners.PlayerTrackerListener;
 import com.lemonpvp.lemoncore.managers.*;
 import com.lemonpvp.lemoncore.scoreboard.ScoreboardManager;
 import com.lemonpvp.lemoncore.util.RandomNameUtil;
@@ -40,6 +42,7 @@ public class LemonCore extends JavaPlugin {
     private ScoreboardManager scoreboardManager;
     private VelocityMessaging velocityMessaging;
     private RandomNameUtil randomNameUtil;
+    private PlayerTracker playerTracker;
     private LuckPerms luckPerms;
 
     @Override
@@ -86,6 +89,7 @@ public class LemonCore extends JavaPlugin {
         listenerManager = new ListenerManager(this);
         scoreboardManager = new ScoreboardManager(this);
         velocityMessaging = new VelocityMessaging(this);
+        playerTracker = new PlayerTracker();
 
         // Register plugin messaging
         velocityMessaging.register();
@@ -94,6 +98,7 @@ public class LemonCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerJoinQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new AdvancementListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerTrackerListener(this), this);
 
         // Register commands
         registerCommands();
@@ -143,6 +148,8 @@ public class LemonCore extends JavaPlugin {
         getCommand("gspawn").setExecutor(new GSpawnCommand(this));
         getCommand("aowsetlobby").setExecutor(new AowSetLobbyCommand(this));
         getCommand("restart").setExecutor(new RestartCommand(this));
+        getCommand("gpop").setExecutor(new GPopCommand(this));
+        getCommand("gcheck").setExecutor(new GCheckCommand(this));
 
         // User commands
         getCommand("rank").setExecutor(luckPerms != null ? new RankCommand(this, luckPerms) : (s, c, l, a) -> { s.sendMessage("LuckPerms not available."); return true; });
@@ -155,6 +162,7 @@ public class LemonCore extends JavaPlugin {
         getCommand("nick").setExecutor(new NickCommand(this));
         getCommand("hide").setExecutor(new HideCommand(this));
         getCommand("lobby").setExecutor(new LobbyCommand(this));
+        getCommand("fly").setExecutor(new FlyCommand(this));
         getCommand("report").setExecutor(new ReportCommand(this));
         getCommand("bugreport").setExecutor(new BugReportCommand(this));
         getCommand("mreport").setExecutor(new MReportCommand(this));
@@ -192,5 +200,6 @@ public class LemonCore extends JavaPlugin {
     public ScoreboardManager getScoreboardManager() { return scoreboardManager; }
     public VelocityMessaging getVelocityMessaging() { return velocityMessaging; }
     public RandomNameUtil getRandomNameUtil() { return randomNameUtil; }
+    public PlayerTracker getPlayerTracker() { return playerTracker; }
     public LuckPerms getLuckPerms() { return luckPerms; }
 }

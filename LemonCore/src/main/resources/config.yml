@@ -1,4 +1,7 @@
 # LemonCore Configuration
+
+# Set this to the Velocity server name of this backend server (e.g. lobby, ffa, kitpvp)
+server-name: lobby
 database:
   host: localhost
   port: 3306

@@ -107,6 +107,18 @@ permissions:
   lemoncore.priority.queue:
     description: Priority queue after restart
     default: false
+  lemoncore.admin.pop:
+    description: Set a player's health to 0 to test auto-totem
+    default: op
+  lemoncore.admin.check:
+    description: View live player info (ping, CPS, reach, etc.)
+    default: op
+  lemoncore.use.fly:
+    description: Toggle fly mode (lobby only)
+    default: false
+  lemoncore.admin.fly:
+    description: Toggle fly mode on any server
+    default: op
 
 commands:
   grank:
@@ -233,3 +245,14 @@ commands:
   restart:
     description: Restart all servers
     permission: lemoncore.admin.restart
+  gpop:
+    description: Set a player's health to 0 to test auto-totem
+    permission: lemoncore.admin.pop
+    usage: /gpop <player>
+  gcheck:
+    description: View live player info
+    permission: lemoncore.admin.check
+    usage: /gcheck <player>
+  fly:
+    description: Toggle fly mode
+    permission: lemoncore.use.fly
