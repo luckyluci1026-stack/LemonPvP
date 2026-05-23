@@ -1,0 +1,72 @@
+name: Build Plugins
+
+on:
+  push:
+    branches: [ "claude/lemoncore-plugin-EhiMg", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # ── 1. LemonCore (must be first — others depend on it) ──────────────────
+      - name: Build LemonCore
+        working-directory: LemonCore
+        run: gradle shadowJar --no-daemon -q
+
+      # ── 2. LemonCosmetics (depends on LemonCore jar) ─────────────────────
+      - name: Build LemonCosmetics
+        working-directory: LemonCosmetics
+        run: gradle shadowJar --no-daemon -q
+
+      # ── 3. Independent plugins (parallel via matrix would need separate jobs,
+      #        here sequential for simplicity) ────────────────────────────────
+      - name: Build LemonPractice
+        working-directory: LemonPractice
+        run: gradle shadowJar --no-daemon -q
+
+      - name: Build LemonQuests
+        working-directory: LemonQuests
+        run: gradle shadowJar --no-daemon -q
+
+      - name: Build LemonResourcePack (Velocity)
+        working-directory: LemonResourcePack
+        run: gradle jar --no-daemon -q
+
+      # ── Collect all jars ──────────────────────────────────────────────────
+      - name: Collect jars
+        run: |
+          mkdir -p artifacts
+          cp LemonCore/build/libs/LemonCore-1.0.0.jar           artifacts/
+          cp LemonCosmetics/build/libs/LemonCosmetics-1.0.0.jar artifacts/
+          cp LemonPractice/build/libs/LemonPractice-1.0.0.jar   artifacts/
+          cp LemonQuests/build/libs/LemonQuests-1.0.0.jar       artifacts/
+          cp LemonResourcePack/build/libs/LemonResourcePack-1.0.0.jar artifacts/
+          ls -lh artifacts/
+
+      - name: Upload plugin jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: LemonPvP-Plugins
+          path: artifacts/*.jar
+          retention-days: 30
