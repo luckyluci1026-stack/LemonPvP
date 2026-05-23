@@ -24,11 +24,14 @@ public class GUnmuteCommand implements CommandExecutor {
             return true;
         }
 
-        plugin.getMuteManager().unmute(args[0]).thenAccept(success -> {
-            if (success) {
-                sender.sendMessage(plugin.getMessagesManager().get("mute.unmute-success", "player", args[0]));
+        String target = args[0];
+        String adminName = sender.getName();
+        plugin.getMuteManager().unmute(target).thenAccept(record -> {
+            if (record != null) {
+                sender.sendMessage(plugin.getMessagesManager().get("mute.unmute-success", "player", record.username));
+                plugin.getDiscordWebhookManager().sendUnmute(record.username, adminName);
             } else {
-                sender.sendMessage(plugin.getMessagesManager().get("mute.not-muted", "player", args[0]));
+                sender.sendMessage(plugin.getMessagesManager().get("mute.not-muted", "player", target));
             }
         });
         return true;

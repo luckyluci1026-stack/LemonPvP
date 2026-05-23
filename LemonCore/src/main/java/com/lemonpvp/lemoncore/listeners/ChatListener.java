@@ -55,7 +55,7 @@ public class ChatListener implements Listener {
                     long muteSeconds = TextUtil.parseDuration(
                             plugin.getConfig().getString("anti-swear.other-insult-duration", "1d"));
                     plugin.getMuteManager().mutePlayer(uuid, player.getName(), "Inappropriate language",
-                            null, "System", muteSeconds);
+                            null, "Auto-Mute", muteSeconds);
                     return;
                 }
             }
@@ -91,7 +91,7 @@ public class ChatListener implements Listener {
             }
 
             plugin.getBanManager().banPlayer(uuid, player.getName(), reason,
-                    null, "System", banDuration).thenAccept(ban -> {
+                    null, "Auto-Mute", banDuration).thenAccept(ban -> {
                 if (ban != null) {
                     Bukkit.getScheduler().runTask(plugin, () ->
                             plugin.getListenerManager().performBanKick(player, ban));
@@ -99,7 +99,7 @@ public class ChatListener implements Listener {
             });
 
             // Also mute
-            plugin.getMuteManager().mutePlayer(uuid, player.getName(), reason, null, "System", banDuration);
+            plugin.getMuteManager().mutePlayer(uuid, player.getName(), reason, null, "Auto-Mute", banDuration);
         });
     }
 }

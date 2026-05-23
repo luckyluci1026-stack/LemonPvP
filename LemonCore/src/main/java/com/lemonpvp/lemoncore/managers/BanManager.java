@@ -62,6 +62,9 @@ public class BanManager {
                 plugin.getLogger().severe("Ban error: " + e.getMessage());
                 return null;
             }
+        }).thenApply(record -> {
+            if (record != null) plugin.getDiscordWebhookManager().sendBan(record);
+            return record;
         });
     }
 
@@ -104,26 +107,40 @@ public class BanManager {
         });
     }
 
-    public CompletableFuture<Boolean> unban(String nameOrId) {
+    /**
+     * Deactivates the active ban matching the given player name or ban ID.
+     * Returns the BanRecord that was lifted, or null if nothing was found.
+     */
+    public CompletableFuture<BanRecord> unban(String nameOrId) {
         return db.queryAsync(conn -> {
             try {
-                // Try by ID first
-                int updated;
+                // Try to fetch by ID first, then by username
+                BanRecord record = null;
                 try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE lc_bans SET active=FALSE WHERE id=? AND active=TRUE")) {
+                        "SELECT * FROM lc_bans WHERE id=? AND active=TRUE LIMIT 1")) {
                     ps.setString(1, nameOrId);
-                    updated = ps.executeUpdate();
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) record = mapRecord(rs);
                 }
-                if (updated > 0) return true;
-                // Try by username
+                if (record == null) {
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "SELECT * FROM lc_bans WHERE username=? AND active=TRUE ORDER BY ban_time DESC LIMIT 1")) {
+                        ps.setString(1, nameOrId);
+                        ResultSet rs = ps.executeQuery();
+                        if (rs.next()) record = mapRecord(rs);
+                    }
+                }
+                if (record == null) return null;
+
                 try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE lc_bans SET active=FALSE WHERE username=? AND active=TRUE")) {
-                    ps.setString(1, nameOrId);
-                    updated = ps.executeUpdate();
+                        "UPDATE lc_bans SET active=FALSE WHERE id=?")) {
+                    ps.setString(1, record.id);
+                    ps.executeUpdate();
                 }
-                return updated > 0;
+                return record;
             } catch (SQLException e) {
-                return false;
+                plugin.getLogger().severe("Unban error: " + e.getMessage());
+                return null;
             }
         });
     }

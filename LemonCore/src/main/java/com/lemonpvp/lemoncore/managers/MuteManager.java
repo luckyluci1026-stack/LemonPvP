@@ -59,6 +59,9 @@ public class MuteManager {
                 plugin.getLogger().severe("Mute error: " + e.getMessage());
                 return null;
             }
+        }).thenApply(record -> {
+            if (record != null) plugin.getDiscordWebhookManager().sendMute(record);
+            return record;
         });
     }
 
@@ -81,25 +84,39 @@ public class MuteManager {
         });
     }
 
-    public CompletableFuture<Boolean> unmute(String nameOrUuid) {
+    /**
+     * Deactivates the active mute for the given player name or UUID string.
+     * Returns the MuteRecord that was lifted, or null if nothing was found.
+     */
+    public CompletableFuture<MuteRecord> unmute(String nameOrUuid) {
         return db.queryAsync(conn -> {
             try {
-                int updated;
+                MuteRecord record = null;
                 try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE lc_mutes SET active=FALSE WHERE username=? AND active=TRUE")) {
+                        "SELECT * FROM lc_mutes WHERE username=? AND active=TRUE ORDER BY mute_time DESC LIMIT 1")) {
                     ps.setString(1, nameOrUuid);
-                    updated = ps.executeUpdate();
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) record = mapRecord(rs);
                 }
-                if (updated == 0) {
+                if (record == null) {
                     try (PreparedStatement ps = conn.prepareStatement(
-                            "UPDATE lc_mutes SET active=FALSE WHERE uuid=? AND active=TRUE")) {
+                            "SELECT * FROM lc_mutes WHERE uuid=? AND active=TRUE ORDER BY mute_time DESC LIMIT 1")) {
                         ps.setString(1, nameOrUuid);
-                        updated = ps.executeUpdate();
+                        ResultSet rs = ps.executeQuery();
+                        if (rs.next()) record = mapRecord(rs);
                     }
                 }
-                return updated > 0;
+                if (record == null) return null;
+
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE lc_mutes SET active=FALSE WHERE id=?")) {
+                    ps.setInt(1, record.id);
+                    ps.executeUpdate();
+                }
+                return record;
             } catch (SQLException e) {
-                return false;
+                plugin.getLogger().severe("Unmute error: " + e.getMessage());
+                return null;
             }
         });
     }

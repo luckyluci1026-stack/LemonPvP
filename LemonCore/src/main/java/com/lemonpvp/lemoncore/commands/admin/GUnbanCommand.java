@@ -25,9 +25,11 @@ public class GUnbanCommand implements CommandExecutor {
         }
 
         String target = args[0];
-        plugin.getBanManager().unban(target).thenAccept(success -> {
-            if (success) {
-                sender.sendMessage(plugin.getMessagesManager().get("ban.unban-success", "player", target));
+        String adminName = sender.getName();
+        plugin.getBanManager().unban(target).thenAccept(record -> {
+            if (record != null) {
+                sender.sendMessage(plugin.getMessagesManager().get("ban.unban-success", "player", record.username));
+                plugin.getDiscordWebhookManager().sendUnban(record.username, adminName, record.id);
             } else {
                 sender.sendMessage(plugin.getMessagesManager().get("ban.not-banned", "player", target));
             }

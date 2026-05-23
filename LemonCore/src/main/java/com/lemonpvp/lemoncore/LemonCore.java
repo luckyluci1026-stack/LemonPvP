@@ -2,6 +2,7 @@ package com.lemonpvp.lemoncore;
 
 import com.lemonpvp.lemoncore.commands.admin.*;
 import com.lemonpvp.lemoncore.commands.user.*;
+import com.lemonpvp.lemoncore.discord.DiscordWebhookManager;
 import com.lemonpvp.lemoncore.managers.PlayerTracker;
 import com.lemonpvp.lemoncore.config.ConfigManager;
 import com.lemonpvp.lemoncore.config.FilterManager;
@@ -43,6 +44,7 @@ public class LemonCore extends JavaPlugin {
     private VelocityMessaging velocityMessaging;
     private RandomNameUtil randomNameUtil;
     private PlayerTracker playerTracker;
+    private DiscordWebhookManager discordWebhookManager;
     private LuckPerms luckPerms;
 
     @Override
@@ -90,6 +92,7 @@ public class LemonCore extends JavaPlugin {
         scoreboardManager = new ScoreboardManager(this);
         velocityMessaging = new VelocityMessaging(this);
         playerTracker = new PlayerTracker();
+        discordWebhookManager = new DiscordWebhookManager(this);
 
         // Register plugin messaging
         velocityMessaging.register();
@@ -115,6 +118,9 @@ public class LemonCore extends JavaPlugin {
         for (Player p : Bukkit.getOnlinePlayers()) {
             playerDataManager.savePlayer(p.getUniqueId()).join();
         }
+
+        // Shutdown webhook scheduler
+        if (discordWebhookManager != null) discordWebhookManager.shutdown();
 
         // Disconnect database
         if (databaseManager != null) databaseManager.disconnect();
@@ -201,5 +207,6 @@ public class LemonCore extends JavaPlugin {
     public VelocityMessaging getVelocityMessaging() { return velocityMessaging; }
     public RandomNameUtil getRandomNameUtil() { return randomNameUtil; }
     public PlayerTracker getPlayerTracker() { return playerTracker; }
+    public DiscordWebhookManager getDiscordWebhookManager() { return discordWebhookManager; }
     public LuckPerms getLuckPerms() { return luckPerms; }
 }
