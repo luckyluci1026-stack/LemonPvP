@@ -259,6 +259,23 @@ public class DatabaseManager {
                     last_offense TIMESTAMP NULL
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lc_verify_codes (
+                    uuid VARCHAR(36) NOT NULL,
+                    code VARCHAR(6) NOT NULL PRIMARY KEY,
+                    player_name VARCHAR(16) NOT NULL,
+                    expires_at TIMESTAMP NOT NULL,
+                    INDEX idx_vc_uuid (uuid)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lc_discord_links (
+                    uuid VARCHAR(36) PRIMARY KEY,
+                    discord_id VARCHAR(20) NOT NULL,
+                    discord_username VARCHAR(100) NOT NULL,
+                    linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
         }
     }
 }

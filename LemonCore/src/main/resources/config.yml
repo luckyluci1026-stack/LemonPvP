@@ -18,6 +18,7 @@ discord_webhooks:
   mutes:   ""
   unbans:  ""
   unmutes: ""
+  public:  ""
 
 lobby:
   spawn:

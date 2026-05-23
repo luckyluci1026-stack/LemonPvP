@@ -119,6 +119,18 @@ permissions:
   lemoncore.admin.fly:
     description: Toggle fly mode on any server
     default: op
+  lemoncore.use.link:
+    description: Link your Discord account
+    default: true
+  lemoncore.use.unlink:
+    description: Unlink your Discord account
+    default: true
+  lemoncore.use.linked:
+    description: View your own linked Discord account
+    default: true
+  lemoncore.admin.linked:
+    description: View another player's linked Discord account
+    default: op
 
 commands:
   grank:
@@ -256,3 +268,15 @@ commands:
   fly:
     description: Toggle fly mode
     permission: lemoncore.use.fly
+  link:
+    description: Link your Discord account
+    permission: lemoncore.use.link
+    usage: /link
+  unlink:
+    description: Unlink your Discord account
+    permission: lemoncore.use.unlink
+    usage: /unlink
+  linked:
+    description: View linked Discord account
+    permission: lemoncore.use.linked
+    usage: /linked [player]

@@ -44,6 +44,7 @@ public class LemonCore extends JavaPlugin {
     private VelocityMessaging velocityMessaging;
     private RandomNameUtil randomNameUtil;
     private PlayerTracker playerTracker;
+    private DiscordLinkManager discordLinkManager;
     private DiscordWebhookManager discordWebhookManager;
     private LuckPerms luckPerms;
 
@@ -92,6 +93,8 @@ public class LemonCore extends JavaPlugin {
         scoreboardManager = new ScoreboardManager(this);
         velocityMessaging = new VelocityMessaging(this);
         playerTracker = new PlayerTracker();
+        discordLinkManager = new DiscordLinkManager(this);
+        discordLinkManager.start();
         discordWebhookManager = new DiscordWebhookManager(this);
 
         // Register plugin messaging
@@ -119,7 +122,8 @@ public class LemonCore extends JavaPlugin {
             playerDataManager.savePlayer(p.getUniqueId()).join();
         }
 
-        // Shutdown webhook scheduler
+        // Stop link polling and webhook scheduler
+        if (discordLinkManager != null) discordLinkManager.stop();
         if (discordWebhookManager != null) discordWebhookManager.shutdown();
 
         // Disconnect database
@@ -156,6 +160,7 @@ public class LemonCore extends JavaPlugin {
         getCommand("restart").setExecutor(new RestartCommand(this));
         getCommand("gpop").setExecutor(new GPopCommand(this));
         getCommand("gcheck").setExecutor(new GCheckCommand(this));
+        getCommand("linked").setExecutor(new LinkedCommand(this));
 
         // User commands
         getCommand("rank").setExecutor(luckPerms != null ? new RankCommand(this, luckPerms) : (s, c, l, a) -> { s.sendMessage("LuckPerms not available."); return true; });
@@ -169,6 +174,8 @@ public class LemonCore extends JavaPlugin {
         getCommand("hide").setExecutor(new HideCommand(this));
         getCommand("lobby").setExecutor(new LobbyCommand(this));
         getCommand("fly").setExecutor(new FlyCommand(this));
+        getCommand("link").setExecutor(new LinkCommand(this));
+        getCommand("unlink").setExecutor(new UnlinkCommand(this));
         getCommand("report").setExecutor(new ReportCommand(this));
         getCommand("bugreport").setExecutor(new BugReportCommand(this));
         getCommand("mreport").setExecutor(new MReportCommand(this));
@@ -207,6 +214,7 @@ public class LemonCore extends JavaPlugin {
     public VelocityMessaging getVelocityMessaging() { return velocityMessaging; }
     public RandomNameUtil getRandomNameUtil() { return randomNameUtil; }
     public PlayerTracker getPlayerTracker() { return playerTracker; }
+    public DiscordLinkManager getDiscordLinkManager() { return discordLinkManager; }
     public DiscordWebhookManager getDiscordWebhookManager() { return discordWebhookManager; }
     public LuckPerms getLuckPerms() { return luckPerms; }
 }
