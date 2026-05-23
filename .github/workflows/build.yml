@@ -19,39 +19,33 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          gradle-version: '8.8'
 
       # ── 1. LemonCore (must be first — others depend on it) ──────────────────
       - name: Build LemonCore
         working-directory: LemonCore
-        run: gradle shadowJar --no-daemon -q
+        run: gradle shadowJar --no-daemon
 
       # ── 2. LemonCosmetics (depends on LemonCore jar) ─────────────────────
       - name: Build LemonCosmetics
         working-directory: LemonCosmetics
-        run: gradle shadowJar --no-daemon -q
+        run: gradle shadowJar --no-daemon
 
-      # ── 3. Independent plugins (parallel via matrix would need separate jobs,
-      #        here sequential for simplicity) ────────────────────────────────
+      # ── 3. Independent plugins ────────────────────────────────────────────
       - name: Build LemonPractice
         working-directory: LemonPractice
-        run: gradle shadowJar --no-daemon -q
+        run: gradle shadowJar --no-daemon
 
       - name: Build LemonQuests
         working-directory: LemonQuests
-        run: gradle shadowJar --no-daemon -q
+        run: gradle shadowJar --no-daemon
 
       - name: Build LemonResourcePack (Velocity)
         working-directory: LemonResourcePack
-        run: gradle jar --no-daemon -q
+        run: gradle jar --no-daemon
 
       # ── Collect all jars ──────────────────────────────────────────────────
       - name: Collect jars
