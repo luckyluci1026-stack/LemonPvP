@@ -33,6 +33,7 @@ public class PlayerListener implements Listener {
         plugin.getCosmeticsManager().loadPlayer(player.getUniqueId())
                 .thenAccept(cosmetics -> Bukkit.getScheduler().runTask(plugin, () -> {
                     plugin.getArmorTrimManager().applyTrimToPlayer(player);
+                    plugin.getHatManager().restoreHat(player);
                     if (isLobby()) {
                         giveCosmeticsItem(player);
                     }
@@ -41,6 +42,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        plugin.getHatManager().removeHat(event.getPlayer());
         plugin.getCosmeticsManager().unloadPlayer(event.getPlayer().getUniqueId());
     }
 

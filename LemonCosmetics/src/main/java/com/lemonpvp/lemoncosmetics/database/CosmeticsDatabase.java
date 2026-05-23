@@ -101,6 +101,24 @@ public class CosmeticsDatabase {
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")) {
                 stmt.executeUpdate();
             }
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "CREATE TABLE IF NOT EXISTS lc_cosmetics_hats (" +
+                    "    uuid VARCHAR(36) NOT NULL," +
+                    "    hat_id VARCHAR(64) NOT NULL," +
+                    "    equipped BOOLEAN DEFAULT FALSE," +
+                    "    PRIMARY KEY (uuid, hat_id)" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")) {
+                stmt.executeUpdate();
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "CREATE TABLE IF NOT EXISTS lc_cosmetics_trails (" +
+                    "    uuid VARCHAR(36) NOT NULL," +
+                    "    trail_id VARCHAR(64) NOT NULL," +
+                    "    active BOOLEAN DEFAULT FALSE," +
+                    "    PRIMARY KEY (uuid, trail_id)" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")) {
+                stmt.executeUpdate();
+            }
         }
     }
 
@@ -196,6 +214,42 @@ public class CosmeticsDatabase {
                 }
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to load armor trims for " + uuidStr, e);
+            }
+
+            // Hats
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT hat_id, equipped FROM lc_cosmetics_hats WHERE uuid = ?")) {
+                stmt.setString(1, uuidStr);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String hatId = rs.getString("hat_id");
+                        boolean equipped = rs.getBoolean("equipped");
+                        cosmetics.getOwnedHats().add(hatId);
+                        if (equipped) {
+                            cosmetics.setEquippedHatId(hatId);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to load hats for " + uuidStr, e);
+            }
+
+            // Arrow trails
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT trail_id, active FROM lc_cosmetics_trails WHERE uuid = ?")) {
+                stmt.setString(1, uuidStr);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String trailId = rs.getString("trail_id");
+                        boolean active = rs.getBoolean("active");
+                        cosmetics.getOwnedTrails().add(trailId);
+                        if (active) {
+                            cosmetics.setActiveTrailId(trailId);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to load trails for " + uuidStr, e);
             }
 
             return cosmetics;
@@ -351,6 +405,138 @@ public class CosmeticsDatabase {
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to clear armor trim", e);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Hats
+    // -------------------------------------------------------------------------
+
+    /** Upserts a hat row. */
+    public CompletableFuture<Void> saveHat(UUID uuid, String hatId, boolean equipped) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "INSERT INTO lc_cosmetics_hats (uuid, hat_id, equipped) VALUES (?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE equipped = VALUES(equipped)")) {
+                stmt.setString(1, uuid.toString());
+                stmt.setString(2, hatId);
+                stmt.setBoolean(3, equipped);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to save hat", e);
+            }
+        });
+    }
+
+    /**
+     * Sets the given hat as equipped and marks all other hats for this player
+     * as unequipped in a single transaction.
+     */
+    public CompletableFuture<Void> setEquippedHat(UUID uuid, String hatId) {
+        return executeAsync(conn -> {
+            try {
+                conn.setAutoCommit(false);
+
+                try (PreparedStatement clear = conn.prepareStatement(
+                        "UPDATE lc_cosmetics_hats SET equipped = FALSE WHERE uuid = ?")) {
+                    clear.setString(1, uuid.toString());
+                    clear.executeUpdate();
+                }
+
+                try (PreparedStatement upsert = conn.prepareStatement(
+                        "INSERT INTO lc_cosmetics_hats (uuid, hat_id, equipped) VALUES (?, ?, TRUE) " +
+                        "ON DUPLICATE KEY UPDATE equipped = TRUE")) {
+                    upsert.setString(1, uuid.toString());
+                    upsert.setString(2, hatId);
+                    upsert.executeUpdate();
+                }
+
+                conn.commit();
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+                plugin.getLogger().log(Level.SEVERE, "Failed to set equipped hat", e);
+            } finally {
+                try { conn.setAutoCommit(true); } catch (SQLException e) { /* ignore */ }
+            }
+        });
+    }
+
+    /** Clears the equipped flag on all hats for the player. */
+    public CompletableFuture<Void> clearEquippedHat(UUID uuid) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE lc_cosmetics_hats SET equipped = FALSE WHERE uuid = ?")) {
+                stmt.setString(1, uuid.toString());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to clear equipped hat", e);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Arrow trails
+    // -------------------------------------------------------------------------
+
+    /** Upserts a trail row. */
+    public CompletableFuture<Void> saveTrail(UUID uuid, String trailId, boolean active) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "INSERT INTO lc_cosmetics_trails (uuid, trail_id, active) VALUES (?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE active = VALUES(active)")) {
+                stmt.setString(1, uuid.toString());
+                stmt.setString(2, trailId);
+                stmt.setBoolean(3, active);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to save trail", e);
+            }
+        });
+    }
+
+    /**
+     * Sets the given trail as active and marks all other trails for this player
+     * as inactive in a single transaction.
+     */
+    public CompletableFuture<Void> setActiveTrail(UUID uuid, String trailId) {
+        return executeAsync(conn -> {
+            try {
+                conn.setAutoCommit(false);
+
+                try (PreparedStatement clear = conn.prepareStatement(
+                        "UPDATE lc_cosmetics_trails SET active = FALSE WHERE uuid = ?")) {
+                    clear.setString(1, uuid.toString());
+                    clear.executeUpdate();
+                }
+
+                try (PreparedStatement upsert = conn.prepareStatement(
+                        "INSERT INTO lc_cosmetics_trails (uuid, trail_id, active) VALUES (?, ?, TRUE) " +
+                        "ON DUPLICATE KEY UPDATE active = TRUE")) {
+                    upsert.setString(1, uuid.toString());
+                    upsert.setString(2, trailId);
+                    upsert.executeUpdate();
+                }
+
+                conn.commit();
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+                plugin.getLogger().log(Level.SEVERE, "Failed to set active trail", e);
+            } finally {
+                try { conn.setAutoCommit(true); } catch (SQLException e) { /* ignore */ }
+            }
+        });
+    }
+
+    /** Clears the active flag on all trails for the player. */
+    public CompletableFuture<Void> clearActiveTrail(UUID uuid) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE lc_cosmetics_trails SET active = FALSE WHERE uuid = ?")) {
+                stmt.setString(1, uuid.toString());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to clear active trail", e);
             }
         });
     }

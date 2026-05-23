@@ -2,10 +2,13 @@ package com.lemonpvp.lemoncosmetics;
 
 import com.lemonpvp.lemoncosmetics.commands.CosmeticsCommand;
 import com.lemonpvp.lemoncosmetics.database.CosmeticsDatabase;
+import com.lemonpvp.lemoncosmetics.listeners.ArrowTrailListener;
 import com.lemonpvp.lemoncosmetics.listeners.KillListener;
 import com.lemonpvp.lemoncosmetics.listeners.PlayerListener;
 import com.lemonpvp.lemoncosmetics.managers.ArmorTrimManager;
+import com.lemonpvp.lemoncosmetics.managers.ArrowTrailManager;
 import com.lemonpvp.lemoncosmetics.managers.CosmeticsManager;
+import com.lemonpvp.lemoncosmetics.managers.HatManager;
 import com.lemonpvp.lemoncosmetics.managers.KillEffectManager;
 import com.lemonpvp.lemoncosmetics.velocity.CosmeticsMessaging;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,6 +19,8 @@ public final class LemonCosmetics extends JavaPlugin {
     private CosmeticsManager cosmeticsManager;
     private ArmorTrimManager armorTrimManager;
     private KillEffectManager killEffectManager;
+    private HatManager hatManager;
+    private ArrowTrailManager arrowTrailManager;
     private CosmeticsMessaging cosmeticsMessaging;
 
     @Override
@@ -34,12 +39,15 @@ public final class LemonCosmetics extends JavaPlugin {
         cosmeticsManager = new CosmeticsManager(this);
         armorTrimManager = new ArmorTrimManager(this);
         killEffectManager = new KillEffectManager(this);
+        hatManager = new HatManager(this);
+        arrowTrailManager = new ArrowTrailManager(this);
 
         cosmeticsMessaging = new CosmeticsMessaging(this);
         cosmeticsMessaging.register();
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         getServer().getPluginManager().registerEvents(new KillListener(this), this);
+        getServer().getPluginManager().registerEvents(new ArrowTrailListener(this), this);
 
         var cosmeticsCmd = getCommand("cosmetics");
         if (cosmeticsCmd != null) {
@@ -70,6 +78,14 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public KillEffectManager getKillEffectManager() {
         return killEffectManager;
+    }
+
+    public HatManager getHatManager() {
+        return hatManager;
+    }
+
+    public ArrowTrailManager getArrowTrailManager() {
+        return arrowTrailManager;
     }
 
     public CosmeticsMessaging getCosmeticsMessaging() {

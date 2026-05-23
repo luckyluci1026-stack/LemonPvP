@@ -18,6 +18,10 @@ public class PlayerCosmetics {
      * array where [0] = patternId and [1] = materialId.
      */
     private final Map<String, String[]> appliedTrims;
+    private String equippedHatId = null;
+    private final Set<String> ownedHats = new HashSet<>();
+    private String activeTrailId = null;
+    private final Set<String> ownedTrails = new HashSet<>();
 
     public PlayerCosmetics(UUID playerUuid) {
         this.playerUuid = playerUuid;
@@ -63,6 +67,46 @@ public class PlayerCosmetics {
     // -------------------------------------------------------------------------
     // Ownership helpers
     // -------------------------------------------------------------------------
+
+    // -------------------------------------------------------------------------
+    // Hat getters / setters
+    // -------------------------------------------------------------------------
+
+    public String getEquippedHatId() {
+        return equippedHatId;
+    }
+
+    public void setEquippedHatId(String equippedHatId) {
+        this.equippedHatId = equippedHatId;
+    }
+
+    public Set<String> getOwnedHats() {
+        return ownedHats;
+    }
+
+    public boolean ownsHat(String id) {
+        return id != null && ownedHats.contains(id);
+    }
+
+    // -------------------------------------------------------------------------
+    // Arrow trail getters / setters
+    // -------------------------------------------------------------------------
+
+    public String getActiveTrailId() {
+        return activeTrailId;
+    }
+
+    public void setActiveTrailId(String activeTrailId) {
+        this.activeTrailId = activeTrailId;
+    }
+
+    public Set<String> getOwnedTrails() {
+        return ownedTrails;
+    }
+
+    public boolean ownsTrail(String id) {
+        return id != null && ownedTrails.contains(id);
+    }
 
     public boolean ownsEffect(String id) {
         return id != null && ownedEffects.contains(id);

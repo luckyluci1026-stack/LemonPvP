@@ -1,0 +1,32 @@
+{
+  "credit": "LemonPvP",
+  "textures": {"hat": "lemonpvp:item/hat_bamboo"},
+  "elements": [
+    {
+      "from": [2, 0, 2], "to": [14, 4, 14],
+      "faces": {
+        "north": {"uv": [0, 8, 6, 10], "texture": "#hat"},
+        "south": {"uv": [0, 8, 6, 10], "texture": "#hat"},
+        "east":  {"uv": [0, 8, 6, 10], "texture": "#hat"},
+        "west":  {"uv": [0, 8, 6, 10], "texture": "#hat"},
+        "up":    {"uv": [0, 8, 6, 14], "texture": "#hat"},
+        "down":  {"uv": [0, 8, 6, 14], "texture": "#hat"}
+      }
+    },
+    {
+      "from": [-5, 0, -5], "to": [21, 2, 21],
+      "faces": {
+        "up":    {"uv": [0, 0, 16, 16], "texture": "#hat"},
+        "down":  {"uv": [0, 0, 16, 16], "texture": "#hat"},
+        "north": {"uv": [0, 0, 16,  2], "texture": "#hat"},
+        "south": {"uv": [0, 0, 16,  2], "texture": "#hat"},
+        "east":  {"uv": [0, 0, 16,  2], "texture": "#hat"},
+        "west":  {"uv": [0, 0, 16,  2], "texture": "#hat"}
+      }
+    }
+  ],
+  "display": {
+    "head": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]},
+    "gui":  {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.625, 0.625, 0.625]}
+  }
+}

@@ -34,3 +34,9 @@ permissions:
   lemoncosmetics.trim.*:
     description: All armor trims
     default: false
+  lemoncosmetics.hat.*:
+    description: All hats
+    default: false
+  lemoncosmetics.trail.*:
+    description: All arrow trails
+    default: false

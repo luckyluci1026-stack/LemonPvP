@@ -4,6 +4,7 @@ import com.lemonpvp.lemoncosmetics.LemonCosmetics;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,8 +13,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 
 import java.util.List;
 
@@ -52,13 +55,23 @@ public class CosmeticsMainGUI implements Listener {
         killEffects.setItemMeta(effectsMeta);
         inventory.setItem(13, killEffects);
 
-        // Slot 15: Coming Soon
-        ItemStack comingSoon = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-        ItemMeta comingSoonMeta = comingSoon.getItemMeta();
-        comingSoonMeta.displayName(MM.deserialize("<gray>Coming Soon"));
-        comingSoonMeta.lore(List.of(MM.deserialize("<dark_gray>(Reserved)")));
-        comingSoon.setItemMeta(comingSoonMeta);
-        inventory.setItem(15, comingSoon);
+        // Slot 12: Arrow Trails
+        ItemStack arrowTrails = new ItemStack(Material.ARROW);
+        ItemMeta trailsMeta = arrowTrails.getItemMeta();
+        trailsMeta.displayName(MM.deserialize("<white>Arrow Trails"));
+        trailsMeta.lore(List.of(MM.deserialize("<gray>Customize your arrow trails")));
+        arrowTrails.setItemMeta(trailsMeta);
+        inventory.setItem(12, arrowTrails);
+
+        // Slot 14: Hats
+        ItemStack hats = new ItemStack(Material.LEATHER_HELMET);
+        LeatherArmorMeta hatsMeta = (LeatherArmorMeta) hats.getItemMeta();
+        hatsMeta.setColor(Color.fromRGB(0, 0, 0));
+        hatsMeta.displayName(MM.deserialize("<white>Hats"));
+        hatsMeta.lore(List.of(MM.deserialize("<gray>Wear custom hats")));
+        hatsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_DYE);
+        hats.setItemMeta(hatsMeta);
+        inventory.setItem(14, hats);
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         player.openInventory(inventory);
@@ -87,9 +100,15 @@ public class CosmeticsMainGUI implements Listener {
         if (slot == 11) {
             player.closeInventory();
             new TrimPatternGUI(plugin, player).open();
+        } else if (slot == 12) {
+            player.closeInventory();
+            new ArrowTrailsGUI(plugin, player).open();
         } else if (slot == 13) {
             player.closeInventory();
             new KillEffectsGUI(plugin, player).open();
+        } else if (slot == 14) {
+            player.closeInventory();
+            new HatsGUI(plugin, player).open();
         }
     }
 

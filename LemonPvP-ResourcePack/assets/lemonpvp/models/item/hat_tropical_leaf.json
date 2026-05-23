@@ -1,0 +1,22 @@
+{
+  "credit": "LemonPvP",
+  "textures": {"hat": "lemonpvp:item/hat_tropical_leaf"},
+  "elements": [
+    {
+      "from": [-4, 2, -4], "to": [20, 4, 20],
+      "rotation": {"angle": 22.5, "axis": "z", "origin": [8, 0, 8]},
+      "faces": {
+        "north": {"uv": [0, 0, 16,  2], "texture": "#hat"},
+        "south": {"uv": [0, 0, 16,  2], "texture": "#hat"},
+        "east":  {"uv": [0, 0, 16,  2], "texture": "#hat"},
+        "west":  {"uv": [0, 0, 16,  2], "texture": "#hat"},
+        "up":    {"uv": [0, 0, 16, 16], "texture": "#hat"},
+        "down":  {"uv": [0, 0, 16, 16], "texture": "#hat"}
+      }
+    }
+  ],
+  "display": {
+    "head": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]},
+    "gui":  {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.625, 0.625, 0.625]}
+  }
+}
