@@ -45,7 +45,7 @@ jobs:
 
       - name: Build LemonResourcePack (Velocity)
         working-directory: LemonResourcePack
-        run: gradle jar --no-daemon
+        run: gradle shadowJar --no-daemon
 
       # ── Collect all jars ──────────────────────────────────────────────────
       - name: Collect jars

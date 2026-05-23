@@ -276,6 +276,19 @@ public class DatabaseManager {
                     linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lemoncore_maintenance (
+                    id INT PRIMARY KEY DEFAULT 1,
+                    maintenance_on BOOLEAN DEFAULT FALSE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lemoncore_maintenance_whitelist (
+                    uuid VARCHAR(36) PRIMARY KEY,
+                    player_name VARCHAR(16) NOT NULL,
+                    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
         }
     }
 }

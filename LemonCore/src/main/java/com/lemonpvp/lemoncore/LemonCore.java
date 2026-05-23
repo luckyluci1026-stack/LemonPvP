@@ -46,6 +46,7 @@ public class LemonCore extends JavaPlugin {
     private PlayerTracker playerTracker;
     private DiscordLinkManager discordLinkManager;
     private DiscordWebhookManager discordWebhookManager;
+    private MaintenanceManager maintenanceManager;
     private LuckPerms luckPerms;
 
     @Override
@@ -79,6 +80,10 @@ public class LemonCore extends JavaPlugin {
         } else {
             getLogger().warning("LuckPerms not found! Rank features will be limited.");
         }
+
+        // Init maintenance (before other managers so state is ready at join)
+        maintenanceManager = new MaintenanceManager(this);
+        maintenanceManager.load();
 
         // Init managers
         playerDataManager = new PlayerDataManager(this);
@@ -161,6 +166,7 @@ public class LemonCore extends JavaPlugin {
         getCommand("gpop").setExecutor(new GPopCommand(this));
         getCommand("gcheck").setExecutor(new GCheckCommand(this));
         getCommand("linked").setExecutor(new LinkedCommand(this));
+        getCommand("aowm").setExecutor(new AOWMCommand(this));
 
         // User commands
         getCommand("rank").setExecutor(luckPerms != null ? new RankCommand(this, luckPerms) : (s, c, l, a) -> { s.sendMessage("LuckPerms not available."); return true; });
@@ -216,5 +222,6 @@ public class LemonCore extends JavaPlugin {
     public PlayerTracker getPlayerTracker() { return playerTracker; }
     public DiscordLinkManager getDiscordLinkManager() { return discordLinkManager; }
     public DiscordWebhookManager getDiscordWebhookManager() { return discordWebhookManager; }
+    public MaintenanceManager getMaintenanceManager() { return maintenanceManager; }
     public LuckPerms getLuckPerms() { return luckPerms; }
 }

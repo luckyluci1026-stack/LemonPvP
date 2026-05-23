@@ -131,6 +131,9 @@ permissions:
   lemoncore.admin.linked:
     description: View another player's linked Discord account
     default: op
+  lemoncore.admin.maintenance:
+    description: Manage maintenance mode
+    default: op
 
 commands:
   grank:
@@ -280,3 +283,7 @@ commands:
     description: View linked Discord account
     permission: lemoncore.use.linked
     usage: /linked [player]
+  aowm:
+    description: Manage maintenance mode
+    permission: lemoncore.admin.maintenance
+    usage: /aowm <on|off|whitelist <player>>

@@ -11,7 +11,7 @@ database:
   pool-size: 10
 
 discord:
-  invite: https://discord.gg/lemonpvp
+  invite: https://discord.gg/eZWP9EGW7
 
 discord_webhooks:
   bans:    ""

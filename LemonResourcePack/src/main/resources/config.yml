@@ -7,3 +7,14 @@ resourcepack:
   required: true
   # Prompt shown to the player in the accept dialog (MiniMessage)
   prompt: "<gradient:#fffb00:#00ff00>LemonPvP</gradient> <white>Please accept the Resource Pack.</white>"
+
+database:
+  host: localhost
+  port: 3306
+  database: lemonpvp
+  username: root
+  password: password
+
+maintenance:
+  # Discord invite link shown in the maintenance kick message
+  discord-link: "https://discord.gg/eZWP9EGW7"

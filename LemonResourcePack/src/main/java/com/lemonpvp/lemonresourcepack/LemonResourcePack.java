@@ -1,8 +1,11 @@
 package com.lemonpvp.lemonresourcepack;
 
 import com.google.inject.Inject;
+import com.lemonpvp.lemonresourcepack.maintenance.MaintenanceDatabase;
+import com.lemonpvp.lemonresourcepack.maintenance.MaintenanceListener;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -16,6 +19,11 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Plugin(
         id = "lemonresourcepack",
@@ -33,9 +41,15 @@ public class LemonResourcePack {
     private final Path dataDirectory;
 
     private String packUrl;
-    private byte[] packHash;   // SHA-1 as byte[], empty = no hash
+    private byte[] packHash;
     private boolean required;
     private String promptRaw;
+
+    // Maintenance state
+    private MaintenanceDatabase maintenanceDb;
+    private final AtomicBoolean maintenanceEnabled = new AtomicBoolean(false);
+    private final Set<UUID> maintenanceWhitelist = new CopyOnWriteArraySet<>();
+    private String maintenanceDiscordLink = "https://discord.gg/eZWP9EGW7";
 
     @Inject
     public LemonResourcePack(ProxyServer server, Logger logger,
@@ -49,7 +63,30 @@ public class LemonResourcePack {
     public void onProxyInit(ProxyInitializeEvent event) {
         loadConfig();
         server.getEventManager().register(this, new ResourcePackListener(this, server, logger));
+        server.getEventManager().register(this,
+                new MaintenanceListener(maintenanceEnabled, maintenanceWhitelist, maintenanceDiscordLink));
+
+        // Refresh maintenance state from DB every 30 seconds
+        server.getScheduler()
+                .buildTask(this, this::refreshMaintenance)
+                .repeat(30, TimeUnit.SECONDS)
+                .schedule();
+
         logger.info("LemonResourcePack enabled. Pack: {}", packUrl);
+    }
+
+    @Subscribe
+    public void onProxyShutdown(ProxyShutdownEvent event) {
+        if (maintenanceDb != null) maintenanceDb.close();
+    }
+
+    private void refreshMaintenance() {
+        if (maintenanceDb == null) return;
+        boolean state = maintenanceDb.loadMaintenanceState();
+        maintenanceEnabled.set(state);
+        Set<UUID> fresh = maintenanceDb.loadWhitelist();
+        maintenanceWhitelist.clear();
+        maintenanceWhitelist.addAll(fresh);
     }
 
     // -------------------------------------------------------------------------
@@ -61,13 +98,34 @@ public class LemonResourcePack {
         saveDefaultConfig();
         try (InputStream in = Files.newInputStream(dataDirectory.resolve("config.yml"))) {
             Map<String, Object> root = new Yaml().load(in);
+
             Map<String, Object> rp = (Map<String, Object>) root.get("resourcepack");
-            packUrl  = getString(rp, "url", "");
-            required = getBool(rp, "required", true);
+            packUrl   = getString(rp, "url", "");
+            required  = getBool(rp, "required", true);
             promptRaw = getString(rp, "prompt",
                     "<gradient:#fffb00:#00ff00>LemonPvP</gradient> <white>Please accept the Resource Pack.</white>");
             String sha1Hex = getString(rp, "sha1", "");
             packHash = parseHex(sha1Hex);
+
+            // Database section
+            Map<String, Object> dbSection = (Map<String, Object>) root.get("database");
+            if (dbSection != null) {
+                try {
+                    maintenanceDb = new MaintenanceDatabase(dbSection, logger);
+                    maintenanceEnabled.set(maintenanceDb.loadMaintenanceState());
+                    maintenanceWhitelist.addAll(maintenanceDb.loadWhitelist());
+                    logger.info("Maintenance DB connected (maintenance={})", maintenanceEnabled.get());
+                } catch (Exception e) {
+                    logger.error("Failed to connect maintenance database: {}", e.getMessage());
+                }
+            }
+
+            // Maintenance section
+            Map<String, Object> maint = (Map<String, Object>) root.get("maintenance");
+            if (maint != null) {
+                maintenanceDiscordLink = getString(maint, "discord-link", maintenanceDiscordLink);
+            }
+
         } catch (IOException e) {
             logger.error("Failed to load config: {}", e.getMessage());
         }
@@ -116,8 +174,8 @@ public class LemonResourcePack {
     // Getters
     // -------------------------------------------------------------------------
 
-    public String getPackUrl()  { return packUrl; }
-    public byte[] getPackHash() { return packHash; }
-    public boolean isRequired() { return required; }
+    public String getPackUrl()   { return packUrl; }
+    public byte[] getPackHash()  { return packHash; }
+    public boolean isRequired()  { return required; }
     public String getPromptRaw() { return promptRaw; }
 }
