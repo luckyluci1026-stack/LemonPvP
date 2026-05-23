@@ -3,9 +3,11 @@
     {
       "type": "bitmap",
       "file": "lemonpvp:font/lemon_caps.png",
-      "ascent": 8,
-      "height": 9,
-      "chars": ["abcdefghijklmnopqrstuvwxyz     "]
+      "height": 7,
+      "ascent": 6,
+      "chars": [
+        "abcdefghijklmnopqrstuvwxyz"
+      ]
     }
   ]
 }
