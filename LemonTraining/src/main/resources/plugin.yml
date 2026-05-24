@@ -1,0 +1,17 @@
+name: LemonTraining
+version: 1.0.0
+main: com.lemonpvp.lemontraining.LemonTraining
+api-version: '1.21'
+softdepend: [LuckPerms, LemonCore, FastAsyncWorldEdit]
+commands:
+  leave:
+    description: Leave current practice session
+    permission: lemontraining.use.leave
+    usage: /leave
+permissions:
+  lemontraining.use.leave:
+    description: Leave practice session
+    default: true
+  lemontraining.admin:
+    description: Admin commands
+    default: op

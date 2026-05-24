@@ -1,0 +1,12 @@
+database:
+  host: localhost
+  port: 3306
+  database: lemonpvp
+  username: root
+  password: ""
+
+server-name: lobby
+training-server: training
+restart:
+  time: "02:30"
+  timezone: "Europe/Berlin"

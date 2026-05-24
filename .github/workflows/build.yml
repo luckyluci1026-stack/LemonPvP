@@ -51,6 +51,14 @@ jobs:
         working-directory: LemonEvents
         run: gradle shadowJar --no-daemon
 
+      - name: Build LemonLobby
+        working-directory: LemonLobby
+        run: gradle shadowJar --no-daemon
+
+      - name: Build LemonTraining
+        working-directory: LemonTraining
+        run: gradle shadowJar --no-daemon
+
       # ── Collect all jars ──────────────────────────────────────────────────
       - name: Collect jars
         run: |
@@ -61,6 +69,8 @@ jobs:
           cp LemonQuests/build/libs/LemonQuests-1.0.0.jar       artifacts/
           cp LemonResourcePack/build/libs/LemonResourcePack-1.0.0.jar artifacts/
           cp LemonEvents/build/libs/LemonEvents-1.0.0.jar       artifacts/
+          cp LemonLobby/build/libs/LemonLobby-1.0.0.jar         artifacts/
+          cp LemonTraining/build/libs/LemonTraining-1.0.0.jar   artifacts/
           ls -lh artifacts/
 
       - name: Upload plugin jars
