@@ -39,6 +39,14 @@ public class CosmeticsMainGUI implements Listener {
 
         fillInventory();
 
+        // Slot 10: Tags
+        ItemStack tags = new ItemStack(Material.NAME_TAG);
+        ItemMeta tagsMeta = tags.getItemMeta();
+        tagsMeta.displayName(MM.deserialize("<white>Tags"));
+        tagsMeta.lore(List.of(MM.deserialize("<gray>Show off your tag above your head")));
+        tags.setItemMeta(tagsMeta);
+        inventory.setItem(10, tags);
+
         // Slot 11: Armor Trims
         ItemStack armorTrims = new ItemStack(Material.IRON_CHESTPLATE);
         ItemMeta trimsMeta = armorTrims.getItemMeta();
@@ -97,7 +105,10 @@ public class CosmeticsMainGUI implements Listener {
         if (event.getClickedInventory() == null || !event.getClickedInventory().equals(inventory)) return;
 
         int slot = event.getSlot();
-        if (slot == 11) {
+        if (slot == 10) {
+            player.closeInventory();
+            new TagsGUI(plugin, player).open();
+        } else if (slot == 11) {
             player.closeInventory();
             new TrimPatternGUI(plugin, player).open();
         } else if (slot == 12) {

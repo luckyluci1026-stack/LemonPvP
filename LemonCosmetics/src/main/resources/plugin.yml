@@ -40,3 +40,59 @@ permissions:
   lemoncosmetics.trail.*:
     description: All arrow trails
     default: false
+  lemoncosmetics.tag.developing:
+    description: Developing tag (permission-only)
+    default: false
+  lemoncosmetics.tag.staff:
+    description: Staff tag (permission-only)
+    default: false
+  lemoncosmetics.tag.money:
+    description: Money tag
+    default: false
+  lemoncosmetics.tag.winner:
+    description: Winner tag
+    default: false
+  lemoncosmetics.tag.veteran:
+    description: Veteran tag
+    default: false
+  lemoncosmetics.tag.lemon:
+    description: Lemon tag
+    default: false
+  lemoncosmetics.tag.elite:
+    description: Elite tag
+    default: false
+  lemoncosmetics.tag.ghost:
+    description: Ghost tag
+    default: false
+  lemoncosmetics.tag.toxic:
+    description: Toxic tag
+    default: false
+  lemoncosmetics.tag.nova:
+    description: Nova tag
+    default: false
+  lemoncosmetics.tag.frost:
+    description: Frost tag
+    default: false
+  lemoncosmetics.tag.inferno:
+    description: Inferno tag
+    default: false
+  lemoncosmetics.tag.cosmic:
+    description: Cosmic tag
+    default: false
+  lemoncosmetics.tag.*:
+    description: All tags
+    default: false
+    children:
+      lemoncosmetics.tag.developing: true
+      lemoncosmetics.tag.staff: true
+      lemoncosmetics.tag.money: true
+      lemoncosmetics.tag.winner: true
+      lemoncosmetics.tag.veteran: true
+      lemoncosmetics.tag.lemon: true
+      lemoncosmetics.tag.elite: true
+      lemoncosmetics.tag.ghost: true
+      lemoncosmetics.tag.toxic: true
+      lemoncosmetics.tag.nova: true
+      lemoncosmetics.tag.frost: true
+      lemoncosmetics.tag.inferno: true
+      lemoncosmetics.tag.cosmic: true

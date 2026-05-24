@@ -22,6 +22,8 @@ public class PlayerCosmetics {
     private final Set<String> ownedHats = new HashSet<>();
     private String activeTrailId = null;
     private final Set<String> ownedTrails = new HashSet<>();
+    private String equippedTagId = null;
+    private final Set<String> ownedTags = new HashSet<>();
 
     public PlayerCosmetics(UUID playerUuid) {
         this.playerUuid = playerUuid;
@@ -106,6 +108,26 @@ public class PlayerCosmetics {
 
     public boolean ownsTrail(String id) {
         return id != null && ownedTrails.contains(id);
+    }
+
+    // -------------------------------------------------------------------------
+    // Tag getters / setters
+    // -------------------------------------------------------------------------
+
+    public String getEquippedTagId() {
+        return equippedTagId;
+    }
+
+    public void setEquippedTagId(String equippedTagId) {
+        this.equippedTagId = equippedTagId;
+    }
+
+    public Set<String> getOwnedTags() {
+        return ownedTags;
+    }
+
+    public boolean ownsTag(String id) {
+        return id != null && ownedTags.contains(id);
     }
 
     public boolean ownsEffect(String id) {

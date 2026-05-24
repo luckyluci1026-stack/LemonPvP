@@ -1,0 +1,33 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {
+        "when": 3005,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/trail_lemon"
+        }
+      },
+      {
+        "when": 3006,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/trail_emerald"
+        }
+      },
+      {
+        "when": 3007,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/trail_flame"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/arrow"
+    }
+  }
+}

@@ -119,6 +119,15 @@ public class CosmeticsDatabase {
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")) {
                 stmt.executeUpdate();
             }
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "CREATE TABLE IF NOT EXISTS lc_cosmetics_tags (" +
+                    "    uuid VARCHAR(36) NOT NULL," +
+                    "    tag_id VARCHAR(64) NOT NULL," +
+                    "    equipped BOOLEAN DEFAULT FALSE," +
+                    "    PRIMARY KEY (uuid, tag_id)" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")) {
+                stmt.executeUpdate();
+            }
         }
     }
 
@@ -250,6 +259,22 @@ public class CosmeticsDatabase {
                 }
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to load trails for " + uuidStr, e);
+            }
+
+            // Tags
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT tag_id, equipped FROM lc_cosmetics_tags WHERE uuid = ?")) {
+                stmt.setString(1, uuidStr);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String tagId = rs.getString("tag_id");
+                        boolean equipped = rs.getBoolean("equipped");
+                        cosmetics.getOwnedTags().add(tagId);
+                        if (equipped) cosmetics.setEquippedTagId(tagId);
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to load tags for " + uuidStr, e);
             }
 
             return cosmetics;
@@ -537,6 +562,63 @@ public class CosmeticsDatabase {
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to clear active trail", e);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Tags
+    // -------------------------------------------------------------------------
+
+    public CompletableFuture<Void> saveTag(UUID uuid, String tagId, boolean equipped) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "INSERT INTO lc_cosmetics_tags (uuid, tag_id, equipped) VALUES (?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE equipped = VALUES(equipped)")) {
+                stmt.setString(1, uuid.toString());
+                stmt.setString(2, tagId);
+                stmt.setBoolean(3, equipped);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to save tag", e);
+            }
+        });
+    }
+
+    public CompletableFuture<Void> setEquippedTag(UUID uuid, String tagId) {
+        return executeAsync(conn -> {
+            try {
+                conn.setAutoCommit(false);
+                try (PreparedStatement clear = conn.prepareStatement(
+                        "UPDATE lc_cosmetics_tags SET equipped = FALSE WHERE uuid = ?")) {
+                    clear.setString(1, uuid.toString());
+                    clear.executeUpdate();
+                }
+                try (PreparedStatement upsert = conn.prepareStatement(
+                        "INSERT INTO lc_cosmetics_tags (uuid, tag_id, equipped) VALUES (?, ?, TRUE) " +
+                        "ON DUPLICATE KEY UPDATE equipped = TRUE")) {
+                    upsert.setString(1, uuid.toString());
+                    upsert.setString(2, tagId);
+                    upsert.executeUpdate();
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+                plugin.getLogger().log(Level.SEVERE, "Failed to set equipped tag", e);
+            } finally {
+                try { conn.setAutoCommit(true); } catch (SQLException e) { /* ignore */ }
+            }
+        });
+    }
+
+    public CompletableFuture<Void> clearEquippedTag(UUID uuid) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE lc_cosmetics_tags SET equipped = FALSE WHERE uuid = ?")) {
+                stmt.setString(1, uuid.toString());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to clear equipped tag", e);
             }
         });
     }

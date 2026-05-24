@@ -1,0 +1,40 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {
+        "when": 4001,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/quest_easy"
+        }
+      },
+      {
+        "when": 4002,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/quest_medium"
+        }
+      },
+      {
+        "when": 4003,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/quest_hard"
+        }
+      },
+      {
+        "when": 4004,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/quest_expert"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/paper"
+    }
+  }
+}

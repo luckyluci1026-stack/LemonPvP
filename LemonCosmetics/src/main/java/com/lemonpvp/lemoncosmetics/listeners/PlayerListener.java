@@ -35,6 +35,7 @@ public class PlayerListener implements Listener {
                     plugin.getArmorTrimManager().applyTrimToPlayer(player);
                     plugin.getHatManager().restoreHat(player);
                     if (isLobby()) {
+                        plugin.getTagManager().restoreTag(player);
                         giveCosmeticsItem(player);
                     }
                 }));
@@ -43,6 +44,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         plugin.getHatManager().removeHat(event.getPlayer());
+        plugin.getTagManager().removeTag(event.getPlayer().getUniqueId());
         plugin.getCosmeticsManager().unloadPlayer(event.getPlayer().getUniqueId());
     }
 

@@ -1,0 +1,40 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {
+        "when": 3001,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/kill_fire_swarm"
+        }
+      },
+      {
+        "when": 3002,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/kill_spook_swarm"
+        }
+      },
+      {
+        "when": 3003,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/kill_totem_explosion"
+        }
+      },
+      {
+        "when": 3004,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/kill_golden_gap"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/blaze_powder"
+    }
+  }
+}
