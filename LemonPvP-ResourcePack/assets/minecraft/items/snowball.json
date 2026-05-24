@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {
+        "when": 7001,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/venom_bomb"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/snowball"
+    }
+  }
+}

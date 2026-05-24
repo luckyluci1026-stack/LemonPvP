@@ -30,6 +30,27 @@
           "type": "minecraft:model",
           "model": "lemonpvp:item/quest_expert"
         }
+      },
+      {
+        "when": 7003,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/grove_salve"
+        }
+      },
+      {
+        "when": 8001,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/monster_name_tag"
+        }
+      },
+      {
+        "when": 8003,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/evidence"
+        }
       }
     ],
     "fallback": {

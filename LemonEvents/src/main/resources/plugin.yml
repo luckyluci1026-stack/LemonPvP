@@ -1,0 +1,51 @@
+name: LemonEvents
+version: 1.0.0
+main: com.lemonpvp.lemonevents.LemonEvents
+api-version: '1.21'
+softdepend: [LuckPerms, LemonCore, FastAsyncWorldEdit]
+
+commands:
+  aowcreateevent:
+    description: Create a new event
+    permission: lemonevents.admin.create
+    usage: /aowcreateevent <name> <type> <prize3> <prize2> <prize1>
+  joinevent:
+    description: Join an event waiting list
+    permission: lemonevents.use.join
+    usage: /joinevent <name>
+  aowstartevent:
+    description: Start an event manually
+    permission: lemonevents.admin.start
+    usage: /aowstartevent <name>
+  aowendevent:
+    description: End an event and distribute prizes
+    permission: lemonevents.admin.end
+    usage: /aowendevent <name>
+  aowffaevent:
+    description: Backup FFA and build event map
+    permission: lemonevents.admin.ffaevent
+    usage: /aowffaevent <name>
+  aoweventffa:
+    description: Restore FFA server from backup
+    permission: lemonevents.admin.eventffa
+    usage: /aoweventffa
+
+permissions:
+  lemonevents.admin.create:
+    description: Create events
+    default: op
+  lemonevents.admin.start:
+    description: Start events
+    default: op
+  lemonevents.admin.end:
+    description: End events
+    default: op
+  lemonevents.admin.ffaevent:
+    description: Backup FFA and set up event map
+    default: op
+  lemonevents.admin.eventffa:
+    description: Restore FFA server from backup
+    default: op
+  lemonevents.use.join:
+    description: Join events
+    default: true

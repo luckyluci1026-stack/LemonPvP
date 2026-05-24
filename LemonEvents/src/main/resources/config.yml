@@ -1,0 +1,48 @@
+server-type: EVENTS
+
+database:
+  host: localhost
+  port: 3306
+  database: lemonpvp
+  username: root
+  password: password
+  pool-size: 10
+
+# Name of this server as registered in BungeeCord/Velocity
+server-name: events
+
+# Name of the FFA server
+ffa-server-name: ffa
+
+# Path to the FFA server's world folder (must be accessible from this server)
+ffa-world-path: /home/minecraft/servers/ffa/world
+
+# Directory where FFA backups are stored
+ffa-backup-dir: /home/minecraft/backups/ffa
+
+# Directory where event map schematics are stored
+schematics-dir: /home/minecraft/schematics/events
+
+# World name on the Events server where all events take place
+events-world: world
+
+# FFA world region to back up (coordinates)
+ffa-region:
+  min-x: -500
+  min-y: 0
+  min-z: -500
+  max-x: 500
+  max-y: 255
+  max-z: 500
+
+# Default event origin on the Events world
+event-origin:
+  x: 0
+  y: 64
+  z: 0
+
+# Discord link for messages
+discord-link: "https://discord.gg/eZWP9EGW7"
+
+# Announcement interval in seconds (default 180 = 3 minutes)
+announcement-interval: 180
