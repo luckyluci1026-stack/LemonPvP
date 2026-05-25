@@ -333,7 +333,7 @@ public class PlayerDataManager {
                         .exceptionally(ex -> {
                             plugin.getLogger().log(Level.SEVERE,
                                     "Error checking rank unlock for " + rank, ex);
-                            return null;
+                            return (Void) null;
                         });
                 futures.add(f);
             }
