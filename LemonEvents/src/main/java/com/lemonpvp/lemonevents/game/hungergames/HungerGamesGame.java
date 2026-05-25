@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class HungerGamesGame extends AbstractGame {
 
@@ -41,7 +42,7 @@ public class HungerGamesGame extends AbstractGame {
             if (p != null) p.setWalkSpeed(0f);
         }
 
-        scheduleTask(Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
+        scheduleTask(new BukkitRunnable() {
             int countdown = 10;
             @Override public void run() {
                 if (countdown <= 0) {
@@ -70,7 +71,7 @@ public class HungerGamesGame extends AbstractGame {
                 }
                 countdown--;
             }
-        }, 0L, 20L));
+        }.runTaskTimer(plugin, 0L, 20L));
     }
 
     private void spawnPlayers(World world) {

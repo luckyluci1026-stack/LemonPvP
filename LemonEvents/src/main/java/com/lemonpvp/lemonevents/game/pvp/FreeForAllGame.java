@@ -7,6 +7,7 @@ import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.*;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
@@ -35,7 +36,7 @@ public class FreeForAllGame extends AbstractGame {
         setupScoreboard();
 
         // Timer
-        scheduleTask(Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
+        scheduleTask(new BukkitRunnable() {
             @Override public void run() {
                 if (!running) { cancel(); return; }
                 timeLeft--;
@@ -48,7 +49,7 @@ public class FreeForAllGame extends AbstractGame {
                     broadcastParticipants(MM.deserialize("<yellow>1 minute remaining!"));
                 }
             }
-        }, 20L, 20L));
+        }.runTaskTimer(plugin, 20L, 20L));
     }
 
     private void spawnPlayers() {

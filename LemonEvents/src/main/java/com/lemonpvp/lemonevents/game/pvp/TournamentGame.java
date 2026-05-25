@@ -8,6 +8,7 @@ import org.bukkit.*;
 import org.bukkit.entity.Player;
 
 import java.util.*;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class TournamentGame extends AbstractGame {
 
@@ -82,7 +83,7 @@ public class TournamentGame extends AbstractGame {
         }
 
         // Countdown
-        scheduleTask(Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
+        scheduleTask(new BukkitRunnable() {
             int c = 5;
             @Override public void run() {
                 if (c <= 0) { if (p1 != null) p1.setWalkSpeed(0.2f); if (p2 != null) p2.setWalkSpeed(0.2f); cancel(); return; }
@@ -90,7 +91,7 @@ public class TournamentGame extends AbstractGame {
                 broadcastParticipants(MM.deserialize("<yellow>Fight starts in <gold>" + c + "</gold>..."));
                 c--;
             }
-        }, 0L, 20L));
+        }.runTaskTimer(plugin, 0L, 20L));
     }
 
     private void setupKit(Player player) {

@@ -4,6 +4,7 @@ import com.lemonpvp.lemonevents.LemonEvents;
 import com.lemonpvp.lemonevents.game.AbstractGame;
 import com.lemonpvp.lemonevents.model.GameEvent;
 import net.kyori.adventure.title.Title;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -131,7 +132,7 @@ public class MafiaGame extends AbstractGame {
             }
         }
 
-        scheduleTask(Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
+        scheduleTask(new BukkitRunnable() {
             int t = phaseTimer;
             @Override public void run() {
                 if (!running) { cancel(); return; }
@@ -139,7 +140,7 @@ public class MafiaGame extends AbstractGame {
                 if (t == 10) broadcastParticipants(MM.deserialize("<yellow>10 seconds left in this phase!"));
                 if (t <= 0) { phaseEnd(); cancel(); }
             }
-        }, 20L, 20L));
+        }.runTaskTimer(plugin, 20L, 20L));
     }
 
     private void phaseEnd() {

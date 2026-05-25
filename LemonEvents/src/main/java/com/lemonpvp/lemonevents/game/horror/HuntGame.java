@@ -11,6 +11,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class HuntGame extends AbstractGame {
 
@@ -46,7 +47,7 @@ public class HuntGame extends AbstractGame {
             "<gray>Prey: survive " + (gameDuration / 60) + " minutes OR hit the hunter 3 times to switch!"));
 
         // Timer countdown
-        scheduleTask(Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
+        scheduleTask(new BukkitRunnable() {
             @Override public void run() {
                 if (!running) { cancel(); return; }
                 timeLeft--;
@@ -65,7 +66,7 @@ public class HuntGame extends AbstractGame {
                     cancel();
                 }
             }
-        }, 20L, 20L));
+        }.runTaskTimer(plugin, 20L, 20L));
     }
 
     private void selectHunter() {

@@ -4,6 +4,7 @@ import com.lemonpvp.lemonevents.LemonEvents;
 import com.lemonpvp.lemonevents.game.AbstractGame;
 import com.lemonpvp.lemonevents.model.GameEvent;
 import com.lemonpvp.lemonevents.model.LootRarity;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -45,14 +46,14 @@ public class LemonRoyaleGame extends AbstractGame {
             "<green>starting on map <yellow>" + selectedMap + "</yellow>!</green>"));
 
         // 10-second countdown
-        scheduleTask(Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
+        scheduleTask(new BukkitRunnable() {
             int countdown = 10;
             @Override public void run() {
                 if (countdown <= 0) { spawnPlayersAndBegin(world); cancel(); return; }
                 broadcastParticipants(MM.deserialize("<yellow>Starting in <gold>" + countdown + "</gold>..."));
                 countdown--;
             }
-        }, 0L, 20L));
+        }.runTaskTimer(plugin, 0L, 20L));
     }
 
     private void spawnPlayersAndBegin(World world) {
