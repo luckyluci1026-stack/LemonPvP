@@ -23,11 +23,26 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.8'
+          cache-read-only: false
+
+      - name: Diagnostics
+        run: |
+          echo "=== Java version ==="
+          java -version
+          echo "=== Gradle version ==="
+          gradle --version
+          echo "=== Network: repo.papermc.io ==="
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+            "https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/1.21.4-R0.1-SNAPSHOT/maven-metadata.xml" \
+            || echo "curl failed"
+          echo "=== Network: maven central ==="
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+            "https://repo1.maven.org/maven2/com/zaxxer/HikariCP/5.1.0/HikariCP-5.1.0.pom"
 
       # ── 1. LemonCore (must be first — others depend on it) ──────────────────
       - name: Build LemonCore
         working-directory: LemonCore
-        run: gradle shadowJar --no-daemon
+        run: gradle shadowJar --no-daemon --info 2>&1 | tail -60
 
       # ── 2. LemonCosmetics (depends on LemonCore jar) ─────────────────────
       - name: Build LemonCosmetics
