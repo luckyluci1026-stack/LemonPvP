@@ -328,7 +328,7 @@ public class PlayerDataManager {
                                                             + rank + "</gradient> <<")));
                                 }
                             }
-                            return CompletableFuture.completedFuture(null);
+                            return CompletableFuture.<Void>completedFuture(null);
                         })
                         .exceptionally(ex -> {
                             plugin.getLogger().log(Level.SEVERE,
