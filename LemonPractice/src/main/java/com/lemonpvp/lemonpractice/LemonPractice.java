@@ -168,7 +168,7 @@ public class LemonPractice extends JavaPlugin {
     public SpectatorManager getSpectatorManager() { return spectatorManager; }
     public FFAManager getFfaManager() { return ffaManager; }
     public LobbyHotbarManager getLobbyHotbarManager() { return lobbyHotbarManager; }
-        public FileConfiguration getServersConfig() { return serversConfig; }
+    public FileConfiguration getServersConfig() { return serversConfig; }
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
         if (!f.exists()) saveResource("servers.yml", false);

@@ -95,7 +95,7 @@ public final class LemonCosmetics extends JavaPlugin {
         return arrowTrailManager;
     }
 
-        public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
+    public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
         if (!f.exists()) saveResource("servers.yml", false);

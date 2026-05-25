@@ -123,10 +123,9 @@ public class LemonQuests extends JavaPlugin {
     }
 
     // -------------------------------------------------------------------------
-    // Messages config
+    // Servers config
     // -------------------------------------------------------------------------
 
-    /** Returns the cached messages.yml configuration. */
     public FileConfiguration getServersConfig() { return serversConfig; }
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
@@ -134,7 +133,11 @@ public class LemonQuests extends JavaPlugin {
         serversConfig = YamlConfiguration.loadConfiguration(f);
     }
 
-        public FileConfiguration getMessagesConfig() {
+    // -------------------------------------------------------------------------
+    // Messages config
+    // -------------------------------------------------------------------------
+
+    public FileConfiguration getMessagesConfig() {
         return messagesConfig;
     }
 
