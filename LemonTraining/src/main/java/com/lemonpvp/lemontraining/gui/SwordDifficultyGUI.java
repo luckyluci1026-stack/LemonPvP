@@ -60,6 +60,10 @@ public class SwordDifficultyGUI implements Listener {
         player.openInventory(inv);
     }
 
+    private ItemStack makeItem(Material mat, String name) {
+        return makeItem(mat, name, null);
+    }
+
     private ItemStack makeItem(Material mat, String name, List<String> loreParts) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
