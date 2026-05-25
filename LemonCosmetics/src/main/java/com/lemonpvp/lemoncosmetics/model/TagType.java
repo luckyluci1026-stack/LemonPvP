@@ -16,7 +16,10 @@ public enum TagType {
     FROST      ("frost",     "Frost",       600, '', 0xAAEEFF, 0x003366),
     INFERNO    ("inferno",   "Inferno",     600, '', 0xFF4400, 0x660000),
     COSMIC     ("cosmic",    "Cosmic",      900, '', 0x000066, 0x6600CC),
-    STAFF      ("staff",     "Staff",        -1, '', 0xFF0000, 0x880000);
+    STAFF      ("staff",     "Staff",        -1, '', 0xFF0000, 0x880000),
+    HOLZI      ("holzi",    "Holzi",        -1, '', 0xC8A060, 0x5C3010),
+    WICHTIG    ("wichtig",  "Wichtig",      -1, '', 0x00CFFF, 0xFF00CC),
+    HUGO       ("hugo",     "Hugo",         -1, '', 0x00CCFF, 0x9900FF);
 
     public final String id;
     public final String displayName;

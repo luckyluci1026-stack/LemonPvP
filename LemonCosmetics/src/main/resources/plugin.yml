@@ -79,6 +79,15 @@ permissions:
   lemoncosmetics.tag.cosmic:
     description: Cosmic tag
     default: false
+  lemoncosmetics.tag.holzi:
+    description: Holzi tag (permission-only)
+    default: false
+  lemoncosmetics.tag.wichtig:
+    description: Wichtig tag (permission-only or /aowcode)
+    default: false
+  lemoncosmetics.tag.hugo:
+    description: Hugo tag (permission-only)
+    default: false
   lemoncosmetics.tag.*:
     description: All tags
     default: false
@@ -96,3 +105,6 @@ permissions:
       lemoncosmetics.tag.frost: true
       lemoncosmetics.tag.inferno: true
       lemoncosmetics.tag.cosmic: true
+      lemoncosmetics.tag.holzi: true
+      lemoncosmetics.tag.wichtig: true
+      lemoncosmetics.tag.hugo: true

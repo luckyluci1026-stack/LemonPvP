@@ -21,4 +21,10 @@ tags:
     price: 600
   cosmic:
     price: 900
-  # developing and staff have no price — permission only
+  # developing, staff, holzi, wichtig, hugo have no price — permission only
+  holzi:
+    permission: lemoncosmetics.tag.holzi
+  wichtig:
+    permission: lemoncosmetics.tag.wichtig
+  hugo:
+    permission: lemoncosmetics.tag.hugo

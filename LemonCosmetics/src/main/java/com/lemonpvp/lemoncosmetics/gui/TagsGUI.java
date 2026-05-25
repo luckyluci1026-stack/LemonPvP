@@ -29,7 +29,7 @@ public class TagsGUI implements Listener {
     private static final Key FONT_CAPS = Key.key("lemonpvp", "default");
 
     // 4-row chest (36 slots): tags in rows 1-2, back button row 3
-    private static final int[] TAG_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24};
+    private static final int[] TAG_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 28, 29, 30};
     private static final int BACK_SLOT = 31;
 
     private final LemonCosmetics plugin;

@@ -413,4 +413,57 @@ def mk_staff():
 tag(12, mk_staff)
 
 s(tags, f"{FT}/lemon_tags.png")
+
+# ── TAG SPRITE SHEET 2 — 48×16 (3 new emojis: Holzi, Wichtig, Hugo) ─────────
+tags2 = Image.new("RGBA", (48, 16), T)
+
+def tag2(idx, fn):
+    e = fn(); tags2.paste(e, (idx * 16, 0))
+
+# E014 Holzi: wood block with grain lines
+def mk_holzi():
+    e=em(); d=ImageDraw.Draw(e)
+    d.rectangle([1,1,14,14],fill=(160,100,50,255))
+    d.rectangle([2,2,13,13],fill=(180,120,65,255))
+    grain=(130,80,30,255)
+    for y in [4,7,10]: d.line([(2,y),(13,y)],fill=grain,width=1)
+    d.ellipse([7,6,9,8],fill=(110,65,25,255),outline=(90,50,20,255))
+    d.rectangle([1,1,14,14],outline=(80,45,15,255),width=1)
+    return e
+tag2(0, mk_holzi)
+
+# E015 Wichtig: microphone (round head + grille + stand)
+def mk_wichtig():
+    e=em(); d=ImageDraw.Draw(e)
+    body=(50,50,55,255); dark=(25,25,30,255); silver=(180,180,190,255)
+    d.ellipse([5,2,10,8],fill=body)
+    d.rectangle([5,4,10,8],fill=body)
+    for y in [3,5,7]: d.line([(6,y),(9,y)],fill=dark,width=1)
+    d.rectangle([7,8,8,12],fill=dark)
+    d.line([(5,10),(4,12),(11,12),(10,10)],fill=silver,width=1)
+    d.rectangle([3,13,12,14],fill=silver)
+    p(e,6,3,(120,120,130,200))
+    return e
+tag2(1, mk_wichtig)
+
+# E016 Hugo: friendly player head silhouette
+def mk_hugo():
+    e=em(); d=ImageDraw.Draw(e)
+    skin=(220,170,120,255); dark_skin=(180,130,80,255)
+    hair=(80,50,20,255); eye_col=(40,30,25,255)
+    d.rectangle([3,3,12,12],fill=skin)
+    d.rectangle([4,2,11,3],fill=skin)
+    d.rectangle([3,2,12,4],fill=hair)
+    d.rectangle([3,2,4,6],fill=hair)
+    d.rectangle([11,2,12,6],fill=hair)
+    p(e,5,7,eye_col);p(e,5,8,eye_col)
+    p(e,9,7,eye_col);p(e,9,8,eye_col)
+    p(e,5,10,dark_skin);p(e,9,10,dark_skin)
+    d.line([(6,11),(9,11)],fill=dark_skin,width=1)
+    p(e,4,9,(230,160,140,120));p(e,10,9,(230,160,140,120))
+    d.rectangle([6,13,9,14],fill=skin)
+    return e
+tag2(2, mk_hugo)
+
+s(tags2, f"{FT}/lemon_tags_2.png")
 print("Done! All textures generated.")
