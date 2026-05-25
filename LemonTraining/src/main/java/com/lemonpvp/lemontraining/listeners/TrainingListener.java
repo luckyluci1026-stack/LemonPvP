@@ -140,6 +140,30 @@ public class TrainingListener implements Listener {
     }
 
     @EventHandler
+    public void onRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+        if (!plugin.getPracticeManager().isInSession(uuid)) return;
+
+        AbstractPractice practice = plugin.getPracticeManager().getSession(uuid);
+        if (practice == null) return;
+
+        Location spawn = plugin.getArenaManager().getSpawnLocation(practice.getSession().getMode());
+        if (spawn != null) {
+            event.setRespawnLocation(spawn);
+        }
+        // Restore health and totems after respawn
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline()) {
+                player.setHealth(player.getMaxHealth());
+                if (practice instanceof TotemPractice tp) {
+                    tp.refillTotems();
+                }
+            }
+        }, 1L);
+    }
+
+    @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
         if (!(event.getEntity().getShooter() instanceof Player player)) return;
         if (!plugin.getPracticeManager().isInSession(player.getUniqueId())) return;

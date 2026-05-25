@@ -1,6 +1,5 @@
 package com.lemonpvp.lemontraining.managers;
 
-import com.fastasyncworldedit.core.FaweAPI;
 import com.lemonpvp.lemontraining.LemonTraining;
 import com.lemonpvp.lemontraining.model.PracticeMode;
 import com.sk89q.worldedit.EditSession;
