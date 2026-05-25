@@ -29,9 +29,10 @@ public class AowBuildSpawnCommand implements CommandExecutor {
 
         player.sendMessage("§eBuilding spawn island... this may take a few seconds.");
 
+        org.bukkit.World world = player.getWorld();
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                new SpawnBuilder(plugin).build();
+                new SpawnBuilder(plugin, world).build();
                 plugin.getServer().getScheduler().runTask(plugin, () ->
                         player.sendMessage("§aSpawn island built at 0, 64, 0."));
             } catch (Exception e) {
