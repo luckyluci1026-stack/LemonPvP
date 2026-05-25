@@ -7,10 +7,11 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.*;
+import com.sk89q.worldedit.function.block.BlockReplace;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
-import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
+import com.sk89q.worldedit.function.visitor.RegionVisitor;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.session.ClipboardHolder;
@@ -165,14 +166,14 @@ public class MapManager {
                 .world(weWorld).maxBlocks(-1).build()) {
             // Fill air layer
             BlockVector3 airMax = BlockVector3.at(max.x(), max.y(), max.z());
-            session.setBlocks(new CuboidRegion(weWorld,
-                    BlockVector3.at(min.x(), min.y() + 1, min.z()), airMax),
-                    (Pattern) BlockTypes.AIR.getDefaultState());
+            Operations.complete(new RegionVisitor(
+                    new CuboidRegion(weWorld, BlockVector3.at(min.x(), min.y() + 1, min.z()), airMax),
+                    new BlockReplace(session, BlockTypes.AIR.getDefaultState())));
             // Fill floor
-            session.setBlocks(new CuboidRegion(weWorld,
-                    BlockVector3.at(min.x(), min.y(), min.z()),
-                    BlockVector3.at(max.x(), min.y(), max.z())),
-                    (Pattern) BukkitAdapter.adapt(floor.createBlockData()));
+            Operations.complete(new RegionVisitor(
+                    new CuboidRegion(weWorld, BlockVector3.at(min.x(), min.y(), min.z()),
+                            BlockVector3.at(max.x(), min.y(), max.z())),
+                    new BlockReplace(session, BukkitAdapter.adapt(floor.createBlockData()))));
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "fillPlatform error", e);
         }
