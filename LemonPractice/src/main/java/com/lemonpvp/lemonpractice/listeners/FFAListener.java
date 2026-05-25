@@ -46,9 +46,10 @@ public class FFAListener implements Listener {
 
         // Auto-respawn after 3 seconds (60 ticks)
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            // Paper 1.21.4: Player#respawn() triggers PlayerRespawnEvent on the next tick
             if (player.isOnline() && player.isDead()) {
-                player.respawn();
+                try {
+                    player.getClass().getMethod("respawn").invoke(player);
+                } catch (Exception ignored) {}
             }
         }, 60L);
     }
