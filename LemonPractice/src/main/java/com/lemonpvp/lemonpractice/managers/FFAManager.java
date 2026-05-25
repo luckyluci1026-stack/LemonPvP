@@ -91,7 +91,7 @@ public class FFAManager {
             player.setGameMode(GameMode.ADVENTURE);
 
             // Teleport to lobby
-            String lobbyServer = plugin.getConfig().getString("servers.lobby", "lobby");
+            String lobbyServer = plugin.getServersConfig().getString("servers.lobby.name", "lobby");
             plugin.getVelocityMessaging().sendToServer(player, lobbyServer);
         }
 

@@ -107,7 +107,7 @@ public class RestartManager {
         }
 
         // Move players to limbo via plugin messaging, then restart server
-        String limbo = plugin.getConfig().getString("servers.limbo", "limbo");
+        String limbo = plugin.getServersConfig().getString("servers.limbo.name", "limbo");
         for (Player p : Bukkit.getOnlinePlayers()) {
             plugin.getVelocityMessaging().sendToServer(p, limbo);
         }

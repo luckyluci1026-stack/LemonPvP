@@ -15,10 +15,12 @@ public final class LemonLobby extends JavaPlugin {
     private LobbyMessaging lobbyMessaging;
     private TrainingGUI trainingGUI;
     private RestartManager restartManager;
+    private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        loadServersConfig();
 
         // Database setup
         database = new Database(this);
@@ -64,5 +66,12 @@ public final class LemonLobby extends JavaPlugin {
     public HotbarManager getHotbarManager() { return hotbarManager; }
     public LobbyMessaging getLobbyMessaging(){ return lobbyMessaging; }
     public TrainingGUI getTrainingGUI()     { return trainingGUI; }
+        public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
+    private void loadServersConfig() {
+        java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
+        if (!f.exists()) saveResource("servers.yml", false);
+        serversConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f);
+    }
+
     public RestartManager getRestartManager(){ return restartManager; }
 }

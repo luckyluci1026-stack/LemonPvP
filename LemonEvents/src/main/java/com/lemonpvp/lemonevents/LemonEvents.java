@@ -22,10 +22,12 @@ public final class LemonEvents extends JavaPlugin {
 
     private FileConfiguration eventsConfig;
     private FileConfiguration lootConfig;
+    private FileConfiguration serversConfig;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        loadServersConfig();
         saveResourceIfAbsent("events.yml");
         saveResourceIfAbsent("lootTables.yml");
         loadExtraConfigs();
@@ -102,6 +104,13 @@ public final class LemonEvents extends JavaPlugin {
     public LootManager getLootManager() { return lootManager; }
     public MapManager getMapManager() { return mapManager; }
     public EventMessaging getMessaging() { return messaging; }
+        public FileConfiguration getServersConfig() { return serversConfig; }
+    private void loadServersConfig() {
+        java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
+        if (!f.exists()) saveResource("servers.yml", false);
+        serversConfig = YamlConfiguration.loadConfiguration(f);
+    }
+
     public FileConfiguration getEventsConfig() { return eventsConfig; }
     public FileConfiguration getLootConfig() { return lootConfig; }
 }

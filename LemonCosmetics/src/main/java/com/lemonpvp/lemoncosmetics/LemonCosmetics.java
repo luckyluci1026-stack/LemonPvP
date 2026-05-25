@@ -24,10 +24,12 @@ public final class LemonCosmetics extends JavaPlugin {
     private ArrowTrailManager arrowTrailManager;
     private TagManager tagManager;
     private CosmeticsMessaging cosmeticsMessaging;
+    private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        loadServersConfig();
 
         database = new CosmeticsDatabase(this);
         try {
@@ -91,6 +93,13 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public ArrowTrailManager getArrowTrailManager() {
         return arrowTrailManager;
+    }
+
+        public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
+    private void loadServersConfig() {
+        java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
+        if (!f.exists()) saveResource("servers.yml", false);
+        serversConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f);
     }
 
     public TagManager getTagManager() {

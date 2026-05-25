@@ -33,7 +33,7 @@ public class LobbyMessaging {
         out.writeUTF(mode);
         player.sendPluginMessage(plugin, "lemonlobby:training", out.toByteArray());
 
-        String trainingServer = plugin.getConfig().getString("training-server", "training");
+        String trainingServer = plugin.getServersConfig().getString("servers.duels.name", "duels");
         connectToServer(player, trainingServer);
     }
 }

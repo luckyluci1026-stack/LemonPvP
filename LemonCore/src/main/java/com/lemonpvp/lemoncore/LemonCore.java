@@ -48,11 +48,13 @@ public class LemonCore extends JavaPlugin {
     private DiscordWebhookManager discordWebhookManager;
     private MaintenanceManager maintenanceManager;
     private LuckPerms luckPerms;
+    private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
     @Override
     public void onEnable() {
         // Save default configs
         saveDefaultConfig();
+        loadServersConfig();
 
         // Init config managers
         configManager = new ConfigManager(this);
@@ -203,6 +205,13 @@ public class LemonCore extends JavaPlugin {
     }
 
     // Getters
+        public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
+    private void loadServersConfig() {
+        java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
+        if (!f.exists()) saveResource("servers.yml", false);
+        serversConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f);
+    }
+
     public DatabaseManager getDatabaseManager() { return databaseManager; }
     public ConfigManager getConfigManager() { return configManager; }
     public MessagesManager getMessagesManager() { return messagesManager; }

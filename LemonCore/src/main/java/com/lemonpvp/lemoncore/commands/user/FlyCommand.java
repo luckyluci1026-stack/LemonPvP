@@ -31,7 +31,7 @@ public class FlyCommand implements CommandExecutor {
         // Admins with lemoncore.admin.fly bypass the server restriction
         if (!player.hasPermission("lemoncore.admin.fly")) {
             String thisServer  = plugin.getConfig().getString("server-name", "");
-            String lobbyServer = plugin.getConfig().getString("servers.lobby", "lobby");
+            String lobbyServer = plugin.getServersConfig().getString("servers.lobby.name", "lobby");
             if (!thisServer.equalsIgnoreCase(lobbyServer)) {
                 player.sendMessage(MM.deserialize("<red>You can only use /fly in the Lobby.</red>"));
                 return true;

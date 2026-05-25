@@ -35,6 +35,7 @@ public class LemonQuests extends JavaPlugin {
 
     // Listener instance kept so setupHotbar can be called for online players on reload
     private PlayerListener playerListener;
+    private FileConfiguration serversConfig;
 
     // -------------------------------------------------------------------------
     // Lifecycle
@@ -44,6 +45,7 @@ public class LemonQuests extends JavaPlugin {
     public void onEnable() {
         // 1. Save default resource files
         saveDefaultConfig();
+        loadServersConfig();
         saveResource("quests.yml", false);
         saveResource("messages.yml", false);
         reloadMessagesConfig();
@@ -125,7 +127,14 @@ public class LemonQuests extends JavaPlugin {
     // -------------------------------------------------------------------------
 
     /** Returns the cached messages.yml configuration. */
-    public FileConfiguration getMessagesConfig() {
+    public FileConfiguration getServersConfig() { return serversConfig; }
+    private void loadServersConfig() {
+        java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
+        if (!f.exists()) saveResource("servers.yml", false);
+        serversConfig = YamlConfiguration.loadConfiguration(f);
+    }
+
+        public FileConfiguration getMessagesConfig() {
         return messagesConfig;
     }
 

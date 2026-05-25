@@ -1,0 +1,21 @@
+servers:
+  lobby:
+    name: "lobby"
+    host: "127.0.0.1"
+    port: 20437
+  duels:
+    name: "duels"
+    host: "127.0.0.1"
+    port: 20481
+  events:
+    name: "events"
+    host: "127.0.0.1"
+    port: 20393
+  proxy:
+    host: "127.0.0.1"
+    port: 20250
+  limbo:
+    name: "limbo"
+    host: "127.0.0.1"
+    port: 0
+

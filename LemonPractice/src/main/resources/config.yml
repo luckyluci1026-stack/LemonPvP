@@ -9,10 +9,7 @@ database:
   password: password
   pool-size: 10
 
-servers:
-  lobby: lobby
-  duels: duels
-  limbo: limbo
+# Server names are configured in servers.yml
 
 velocity:
   channel: "lemonpractice:main"

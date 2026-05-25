@@ -71,11 +71,7 @@ anti-swear:
 velocity:
   channel: "lemonpvp:core"
 
-servers:
-  lobby: lobby
-  limbo: limbo
-  ffa: ffa
-  kitpvp: kitpvp
+# Server names are configured in servers.yml
 
 codes:
   random-length: 26

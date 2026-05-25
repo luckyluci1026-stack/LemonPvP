@@ -260,7 +260,7 @@ public class DuelManager {
 
     private void sendToLobby(Player player) {
         if (player == null || !player.isOnline()) return;
-        String lobbyServer = plugin.getConfig().getString("servers.lobby", "lobby");
+        String lobbyServer = plugin.getServersConfig().getString("servers.lobby.name", "lobby");
         plugin.getVelocityMessaging().sendToServer(player, lobbyServer);
     }
 

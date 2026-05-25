@@ -11,8 +11,7 @@ database:
 # Name of this server as registered in BungeeCord/Velocity
 server-name: events
 
-# Name of the FFA server
-ffa-server-name: ffa
+# FFA server name is configured in servers.yml
 
 # Path to the FFA server's world folder (must be accessible from this server)
 ffa-world-path: /home/minecraft/servers/ffa/world

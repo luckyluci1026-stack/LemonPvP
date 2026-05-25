@@ -19,10 +19,12 @@ public final class LemonTraining extends JavaPlugin {
     private PracticeManager practiceManager;
     private TrainingMessaging trainingMessaging;
     private FileConfiguration messages;
+    private FileConfiguration serversConfig;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        loadServersConfig();
         saveResource("messages.yml", false);
         messages = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "messages.yml"));
 
@@ -65,5 +67,12 @@ public final class LemonTraining extends JavaPlugin {
     public TrainingDatabase getDatabase()       { return database; }
     public ArenaManager getArenaManager()       { return arenaManager; }
     public PracticeManager getPracticeManager() { return practiceManager; }
+        public FileConfiguration getServersConfig() { return serversConfig; }
+    private void loadServersConfig() {
+        java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
+        if (!f.exists()) saveResource("servers.yml", false);
+        serversConfig = YamlConfiguration.loadConfiguration(f);
+    }
+
     public FileConfiguration getMessages()      { return messages; }
 }

@@ -6,7 +6,6 @@ database:
   password: ""
 
 server-name: lobby
-training-server: training
 restart:
   time: "02:30"
   timezone: "Europe/Berlin"

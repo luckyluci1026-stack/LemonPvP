@@ -54,7 +54,7 @@ public abstract class AbstractPractice {
     protected void sendToLobby() {
         com.google.common.io.ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("Connect");
-        out.writeUTF(plugin.getConfig().getString("lobby-server", "lobby"));
+        out.writeUTF(plugin.getServersConfig().getString("servers.lobby.name", "lobby"));
         player.sendPluginMessage(plugin, "BungeeCord", out.toByteArray());
     }
 

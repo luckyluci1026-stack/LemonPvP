@@ -160,7 +160,7 @@ public class PlayerListener implements Listener {
             }
             case 8 -> {
                 // Leave - connect to hub
-                lobbyMessaging.connectToServer(player, "hub");
+                lobbyMessaging.connectToServer(player, plugin.getServersConfig().getString("servers.lobby.name", "lobby"));
             }
             default -> {
                 // Not a handled slot
