@@ -8,6 +8,7 @@ import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.extent.clipboard.io.*;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
+import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.math.BlockVector3;
@@ -166,12 +167,12 @@ public class MapManager {
             BlockVector3 airMax = BlockVector3.at(max.x(), max.y(), max.z());
             session.setBlocks(new CuboidRegion(weWorld,
                     BlockVector3.at(min.x(), min.y() + 1, min.z()), airMax),
-                    BlockTypes.AIR.getDefaultState());
+                    (Pattern) BlockTypes.AIR.getDefaultState());
             // Fill floor
             session.setBlocks(new CuboidRegion(weWorld,
                     BlockVector3.at(min.x(), min.y(), min.z()),
                     BlockVector3.at(max.x(), min.y(), max.z())),
-                    BukkitAdapter.adapt(floor.createBlockData()));
+                    (Pattern) BukkitAdapter.adapt(floor.createBlockData()));
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "fillPlatform error", e);
         }
