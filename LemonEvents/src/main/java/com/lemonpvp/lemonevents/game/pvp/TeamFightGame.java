@@ -53,11 +53,11 @@ public class TeamFightGame extends AbstractGame {
         scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
         sbTeamA = scoreboard.registerNewTeam("team_a");
         sbTeamA.color(TEAM_A_COLOR);
-        sbTeamA.setPrefix(net.kyori.adventure.text.Component.text("[A] ", TEAM_A_COLOR));
+        sbTeamA.prefix(net.kyori.adventure.text.Component.text("[A] ", TEAM_A_COLOR));
 
         sbTeamB = scoreboard.registerNewTeam("team_b");
         sbTeamB.color(TEAM_B_COLOR);
-        sbTeamB.setPrefix(net.kyori.adventure.text.Component.text("[B] ", TEAM_B_COLOR));
+        sbTeamB.prefix(net.kyori.adventure.text.Component.text("[B] ", TEAM_B_COLOR));
 
         for (UUID uuid : teamA) {
             Player p = Bukkit.getPlayer(uuid);
