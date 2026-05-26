@@ -39,33 +39,54 @@ public class FilterManager {
         whitelist.addAll(filterConfig.getStringList("whitelist"));
 
         for (String word : filterConfig.getStringList("nword-patterns")) {
-            try {
-                nwordPatterns.add(buildPattern(word));
-            } catch (Exception ignored) {}
+            try { nwordPatterns.add(buildPattern(word)); } catch (Exception ignored) {}
         }
-
         for (String word : filterConfig.getStringList("slurs")) {
-            try {
-                slurPatterns.add(buildPattern(word));
-            } catch (Exception ignored) {}
+            try { slurPatterns.add(buildPattern(word)); } catch (Exception ignored) {}
         }
     }
 
+    /**
+     * Builds a regex Pattern that catches the given word even when:
+     * - Letters are separated by spaces, dots, underscores, dashes, asterisks, etc.
+     * - Common leetspeak substitutions are used (a→4/@, e→3, i→1/!, o→0, s→$, ...)
+     * - Characters are repeated (fuuuuck, niiiig...)
+     */
     private Pattern buildPattern(String word) {
-        // Build a flexible pattern that handles leetspeak and common substitutions
+        // Between consecutive letters we allow any number of non-alphanumeric separators
+        // (catches "f.u.c.k", "f_u_c_k", "f u c k", "f*ck", ...)
+        String sep = "[^a-zA-Z0-9]*";
+
         StringBuilder sb = new StringBuilder("(?i)");
+        boolean first = true;
+
         for (char c : word.toCharArray()) {
-            switch (Character.toLowerCase(c)) {
-                case 'a' -> sb.append("[a@4]");
-                case 'e' -> sb.append("[e3]");
-                case 'i' -> sb.append("[i1!|]");
-                case 'o' -> sb.append("[o0]");
-                case 's' -> sb.append("[s$5]");
-                case 'g' -> sb.append("[g9]");
-                case 'b' -> sb.append("[b8]");
-                case 't' -> sb.append("[t7+]");
-                case ' ' -> sb.append("[\\s._-]*");
-                default -> sb.append(Pattern.quote(String.valueOf(c)));
+            char lc = Character.toLowerCase(c);
+
+            if (lc == ' ') {
+                // Space within a multi-word phrase — require at least one separator
+                sb.append("[\\s._\\-!@#$%^&*]+");
+                first = true; // next char is "first" after the word-gap
+                continue;
+            }
+
+            if (!first) sb.append(sep);
+            first = false;
+
+            // Each character is matched as one-or-more (+) to handle repetition (fuuuck)
+            switch (lc) {
+                case 'a' -> sb.append("[a@4áä]+");
+                case 'e' -> sb.append("[e3é]+");
+                case 'i' -> sb.append("[i1!|íï]+");
+                case 'o' -> sb.append("[o0óö]+");
+                case 'u' -> sb.append("[uüú]+");
+                case 's' -> sb.append("[s$5ß]+");
+                case 'g' -> sb.append("[g9]+");
+                case 'b' -> sb.append("[b8]+");
+                case 't' -> sb.append("[t7+]+");
+                case 'c' -> sb.append("[cç]+");
+                case 'n' -> sb.append("[nñ]+");
+                default  -> sb.append(Pattern.quote(String.valueOf(lc)) + "+");
             }
         }
         return Pattern.compile(sb.toString());
@@ -98,8 +119,9 @@ public class FilterManager {
     }
 
     private String clean(String message) {
-        // Remove zero-width and special chars, normalize spaces
-        return message.replaceAll("[\\u200B-\\u200D\\uFEFF]", "")
+        // Remove zero-width, invisible, and directional Unicode characters
+        return message
+                .replaceAll("[\\u200B-\\u200D\\uFEFF\\u00AD\\u200E\\u200F\\u202A-\\u202E\\u2060-\\u2069\\u206A-\\u206F]", "")
                 .replaceAll("\\s+", " ")
                 .trim();
     }
