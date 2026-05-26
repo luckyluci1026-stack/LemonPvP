@@ -61,7 +61,44 @@ public class TrainingDatabase {
                         hits INT DEFAULT 0
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                     """);
+            stmt.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS lemontraining_pending (
+                        uuid VARCHAR(36) PRIMARY KEY,
+                        mode VARCHAR(16) NOT NULL,
+                        created_at BIGINT NOT NULL
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                    """);
         }
+    }
+
+    /**
+     * Reads the pending practice mode for the given player and deletes it atomically.
+     * Returns null if no pending mode exists. Call from an async thread.
+     */
+    public CompletableFuture<String> getPendingModeAndDelete(java.util.UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            try (Connection conn = dataSource.getConnection()) {
+                String mode = null;
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT mode FROM lemontraining_pending WHERE uuid = ?")) {
+                    ps.setString(1, uuid.toString());
+                    try (java.sql.ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) mode = rs.getString("mode");
+                    }
+                }
+                if (mode != null) {
+                    try (PreparedStatement del = conn.prepareStatement(
+                            "DELETE FROM lemontraining_pending WHERE uuid = ?")) {
+                        del.setString(1, uuid.toString());
+                        del.executeUpdate();
+                    }
+                }
+                return mode;
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to get pending training mode", e);
+                return null;
+            }
+        });
     }
 
     /**

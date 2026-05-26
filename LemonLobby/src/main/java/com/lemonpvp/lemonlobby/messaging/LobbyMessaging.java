@@ -3,6 +3,7 @@ package com.lemonpvp.lemonlobby.messaging;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.lemonpvp.lemonlobby.LemonLobby;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class LobbyMessaging {
@@ -24,16 +25,16 @@ public class LobbyMessaging {
     }
 
     /**
-     * Sends the player's UUID and chosen training mode over the "lemonlobby:training" channel,
-     * then connects the player to the training server.
+     * Saves the player's chosen training mode to the shared database so the
+     * training server can pick it up on join, then sends the player to the
+     * practice/training server.
      */
     public void sendTrainingMode(Player player, String mode) {
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF(player.getUniqueId().toString());
-        out.writeUTF(mode);
-        player.sendPluginMessage(plugin, "lemonlobby:training", out.toByteArray());
+        // Write pending mode asynchronously — will be ready before player arrives
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
+                plugin.getDatabase().savePendingTrainingMode(player.getUniqueId(), mode));
 
-        String trainingServer = plugin.getServersConfig().getString("servers.duels.name", "duels");
+        String trainingServer = plugin.getServersConfig().getString("servers.practice.name", "practice");
         connectToServer(player, trainingServer);
     }
 }

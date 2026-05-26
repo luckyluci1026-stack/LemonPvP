@@ -49,13 +49,13 @@ kick:
   message: "<red>You have been kicked for: <white>{reason}"
 
 code:
-  success-header: "<yellow>>>"
-  success-reward: "<yellow>Your Reward: <white>{reward}"
-  success-footer: "<yellow>>>"
-  invalid: "<red>Code Incorrect please check the Spelling"
+  success-header: "<bold><gradient:#fffb00:#00ff00>» Code redeemed! «</gradient></bold>"
+  success-reward: "<gray>Your Reward: <white>{reward}"
+  success-footer: ""
+  invalid: "{prefix} <red>Invalid code — please check the spelling."
   create: "{prefix} <green>Code <white>{code} <green>created successfully."
-  already-redeemed: "<red>Code Incorrect please check the Spelling"
-  expired: "<red>Code Incorrect please check the Spelling"
+  already-redeemed: "{prefix} <red>You have already redeemed this code."
+  expired: "{prefix} <red>This code has expired."
 
 report:
   success: "{prefix} <green>Report submitted successfully."

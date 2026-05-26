@@ -167,29 +167,35 @@ public class TrimMaterialGUI implements Listener {
     }
 
     private ItemStack buildMaterialItem(String matId, boolean owned) {
-        Material icon = owned
-                ? plugin.getArmorTrimManager().getTrimMaterialIcon(matId)
-                : Material.GRAY_STAINED_GLASS_PANE;
-        ItemStack item = new ItemStack(icon);
+        // Always show the actual material icon so players can see what they're buying
+        Material icon = plugin.getArmorTrimManager().getTrimMaterialIcon(matId);
+        ItemStack item = new ItemStack(icon != null ? icon : Material.STONE);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
         String name = plugin.getArmorTrimManager().getMaterialDisplayName(matId);
-        meta.displayName(owned ? MM.deserialize("<white>" + name) : MM.deserialize("<gray>" + name));
+        meta.displayName(MM.deserialize("<!italic><white>" + name + "</white></!italic>"));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
         if (owned) {
-            lore.add(MM.deserialize("<green>Owned"));
+            lore.add(MM.deserialize("<!italic><green>✔ Owned</green></!italic>"));
             if (matId.equals(selectedMaterialId)) {
-                lore.add(MM.deserialize("<yellow>Selected"));
+                lore.add(MM.deserialize("<!italic><yellow>Selected</yellow></!italic>"));
             } else {
-                lore.add(MM.deserialize("<gray>Click to apply"));
+                lore.add(MM.deserialize("<!italic><gray>Click to apply</gray></!italic>"));
             }
+            // Enchanting glint for owned items
+            meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
+            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
         } else {
-            lore.add(MM.deserialize("<gray>Price: <gold>50 Coins"));
-            lore.add(MM.deserialize("<dark_gray>Not owned"));
-            if (matId.equals(selectedMaterialId)) lore.add(MM.deserialize("<yellow>Selected — click Buy Material"));
+            int cost = plugin.getConfig().getInt("prices.trim-material", 50);
+            lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + cost + " Coins</gold></gray></!italic>"));
+            if (matId.equals(selectedMaterialId)) {
+                lore.add(MM.deserialize("<!italic><yellow>Selected — click Buy Material</yellow></!italic>"));
+            } else {
+                lore.add(MM.deserialize("<!italic><dark_gray>Not owned — click to select</dark_gray></!italic>"));
+            }
         }
         meta.lore(lore);
         meta.getPersistentDataContainer().set(materialKey, PersistentDataType.STRING, matId);
@@ -201,13 +207,14 @@ public class TrimMaterialGUI implements Listener {
         ItemStack item = new ItemStack(Material.GOLD_INGOT);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
-        meta.displayName(MM.deserialize("<gold>Buy Material"));
+        int cost = plugin.getConfig().getInt("prices.trim-material", 50);
+        meta.displayName(MM.deserialize("<!italic><gold>Buy Material</gold></!italic>"));
         List<Component> lore = new ArrayList<>();
-        lore.add(MM.deserialize("<gray>Cost: <gold>50 Coins"));
+        lore.add(MM.deserialize("<!italic><gray>Cost: <gold>" + cost + " Coins</gold></gray></!italic>"));
         if (selectedMaterialId != null)
-            lore.add(MM.deserialize("<yellow>Selected: " + plugin.getArmorTrimManager().getMaterialDisplayName(selectedMaterialId)));
+            lore.add(MM.deserialize("<!italic><yellow>Selected: " + plugin.getArmorTrimManager().getMaterialDisplayName(selectedMaterialId) + "</yellow></!italic>"));
         else
-            lore.add(MM.deserialize("<gray>Select a material first"));
+            lore.add(MM.deserialize("<!italic><gray>Select a material first</gray></!italic>"));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
@@ -216,7 +223,7 @@ public class TrimMaterialGUI implements Listener {
     private ItemStack backButton() {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.displayName(MM.deserialize("<gray>Back")); item.setItemMeta(meta); }
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>Back</gray></!italic>")); item.setItemMeta(meta); }
         return item;
     }
 

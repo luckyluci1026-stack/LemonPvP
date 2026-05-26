@@ -23,7 +23,7 @@ public class TagManager {
 
     private static final Key FONT_TAGS    = Key.key("lemonpvp", "tags");
     private static final Key FONT_CAPS    = Key.key("lemonpvp", "default");
-    private static final double TAG_HEIGHT = 0.52;
+    private static final double TAG_HEIGHT = 0.9;
 
     private final LemonCosmetics plugin;
     private final Map<UUID, TextDisplay> displays  = new ConcurrentHashMap<>();
@@ -58,7 +58,8 @@ public class TagManager {
                 phases.remove(entry.getKey());
                 continue;
             }
-            // Teleport display to stay above player's head
+            // Smooth teleport: client interpolates over 2 ticks matching the task period
+            display.setTeleportDuration(2);
             display.teleport(getTagLocation(player));
 
             // Update animated text
@@ -92,6 +93,7 @@ public class TagManager {
             d.setDefaultBackground(false);
             d.setSeeThrough(false);
             d.setViewRange(64f);
+            d.setTeleportDuration(2);
         });
         displays.put(player.getUniqueId(), display);
     }

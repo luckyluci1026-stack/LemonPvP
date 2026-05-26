@@ -3,6 +3,10 @@ servers:
     name: "lobby"
     host: "127.0.0.1"
     port: 20437
+  practice:
+    name: "practice"
+    host: "127.0.0.1"
+    port: 20481
   duels:
     name: "duels"
     host: "127.0.0.1"

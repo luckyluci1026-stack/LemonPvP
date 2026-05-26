@@ -5,7 +5,6 @@ import com.lemonpvp.lemontraining.database.TrainingDatabase;
 import com.lemonpvp.lemontraining.listeners.TrainingListener;
 import com.lemonpvp.lemontraining.managers.ArenaManager;
 import com.lemonpvp.lemontraining.managers.PracticeManager;
-import com.lemonpvp.lemontraining.messaging.TrainingMessaging;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -17,7 +16,6 @@ public final class LemonTraining extends JavaPlugin {
     private TrainingDatabase database;
     private ArenaManager arenaManager;
     private PracticeManager practiceManager;
-    private TrainingMessaging trainingMessaging;
     private FileConfiguration messages;
     private FileConfiguration serversConfig;
 
@@ -39,11 +37,9 @@ public final class LemonTraining extends JavaPlugin {
 
         arenaManager = new ArenaManager(this);
         practiceManager = new PracticeManager(this);
-        trainingMessaging = new TrainingMessaging(this);
 
-        // BungeeCord channels
+        // BungeeCord outgoing for sendToLobby in AbstractPractice
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-        getServer().getMessenger().registerIncomingPluginChannel(this, "lemonlobby:training", trainingMessaging);
 
         // Commands and listeners
         getCommand("leave").setExecutor(new LeaveCommand(this));
@@ -60,7 +56,6 @@ public final class LemonTraining extends JavaPlugin {
         if (practiceManager != null) practiceManager.endAllSessions();
         if (database != null) database.close();
         getServer().getMessenger().unregisterOutgoingPluginChannel(this);
-        getServer().getMessenger().unregisterIncomingPluginChannel(this, "lemonlobby:training");
         getLogger().info("LemonTraining disabled.");
     }
 

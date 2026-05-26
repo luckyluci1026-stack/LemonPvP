@@ -5,7 +5,10 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.UUID;
 
 public class Database {
 
@@ -39,7 +42,37 @@ public class Database {
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
 
         dataSource = new HikariDataSource(config);
+        createPendingTrainingTable();
         plugin.getLogger().info("Database connection established.");
+    }
+
+    private void createPendingTrainingTable() {
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS lemontraining_pending (" +
+                "    uuid VARCHAR(36) PRIMARY KEY," +
+                "    mode VARCHAR(16) NOT NULL," +
+                "    created_at BIGINT NOT NULL" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            );
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to create pending training table: " + e.getMessage());
+        }
+    }
+
+    /** Saves or overwrites a pending training mode for the given player. Blocking — call from async thread. */
+    public void savePendingTrainingMode(UUID uuid, String mode) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "REPLACE INTO lemontraining_pending (uuid, mode, created_at) VALUES (?, ?, ?)")) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, mode);
+            ps.setLong(3, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to save pending training mode: " + e.getMessage());
+        }
     }
 
     public Connection getConnection() throws SQLException {

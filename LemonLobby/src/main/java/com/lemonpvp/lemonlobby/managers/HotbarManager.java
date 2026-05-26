@@ -83,7 +83,7 @@ public class HotbarManager {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        Component displayName = MINI_MESSAGE.deserialize(miniMessageName);
+        Component displayName = MINI_MESSAGE.deserialize("<!italic>" + miniMessageName + "</!italic>");
         meta.displayName(displayName);
 
         if (customModelData >= 0) {

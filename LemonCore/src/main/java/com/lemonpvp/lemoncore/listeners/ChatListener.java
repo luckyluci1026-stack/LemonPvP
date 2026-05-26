@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
+import java.util.Set;
 import java.util.UUID;
 
 public class ChatListener implements Listener {
@@ -28,10 +29,31 @@ public class ChatListener implements Listener {
         UUID uuid = player.getUniqueId();
         String plain = PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
 
-        // Check mute (async-safe)
+        // --- Synchronous filter checks: cancel immediately so message never gets through ---
+        if (plugin.getConfig().getBoolean("anti-swear.enabled", true)) {
+            if (plugin.getFilterManager().containsNword(plain)) {
+                event.setCancelled(true);
+                handleNwordOffense(player, uuid);
+                return;
+            }
+            if (plugin.getFilterManager().containsSlur(plain)) {
+                event.setCancelled(true);
+                player.sendMessage(plugin.getMessagesManager().get("chat.filtered"));
+                long muteSeconds = TextUtil.parseDuration(
+                        plugin.getConfig().getString("anti-swear.other-insult-duration", "1d"));
+                plugin.getMuteManager().mutePlayer(uuid, player.getName(), "Inappropriate language",
+                        null, "Auto-Mute", muteSeconds);
+                return;
+            }
+        }
+
+        // --- Async mute check: cancel now, re-broadcast if player is not muted ---
+        event.setCancelled(true);
+        final Component originalMessage = event.message();
+        final Set<? extends net.kyori.adventure.audience.Audience> viewers = event.viewers();
+
         plugin.getMuteManager().getActiveMute(uuid).thenAccept(mute -> {
             if (mute != null) {
-                event.setCancelled(true);
                 String duration = mute.isPermanent() ? "Permanent"
                         : TextUtil.formatDuration(mute.getRemainingSeconds());
                 player.sendMessage(plugin.getMessagesManager().get("mute.muted-duration",
@@ -39,39 +61,20 @@ public class ChatListener implements Listener {
                 return;
             }
 
-            // Anti-swear checks
-            if (plugin.getConfig().getBoolean("anti-swear.enabled", true)) {
-                // N-word check
-                if (plugin.getFilterManager().containsNword(plain)) {
-                    event.setCancelled(true);
-                    handleNwordOffense(player, uuid);
-                    return;
-                }
-
-                // Other slur check
-                if (plugin.getFilterManager().containsSlur(plain)) {
-                    event.setCancelled(true);
-                    player.sendMessage(plugin.getMessagesManager().get("chat.filtered"));
-                    long muteSeconds = TextUtil.parseDuration(
-                            plugin.getConfig().getString("anti-swear.other-insult-duration", "1d"));
-                    plugin.getMuteManager().mutePlayer(uuid, player.getName(), "Inappropriate language",
-                            null, "Auto-Mute", muteSeconds);
-                    return;
-                }
-            }
-
-            // Strip MiniMessage tags for players without permission
+            // Not muted — build the formatted message and broadcast to all viewers
+            Component msg = originalMessage;
             if (!player.hasPermission("lemoncore.use.minimessage") && !player.isOp()) {
-                String escaped = TextUtil.escapeTags(plain);
-                event.message(Component.text(escaped));
+                msg = Component.text(TextUtil.escapeTags(plain));
             }
+            final Component finalMsg = msg;
 
-            // Send as SYSTEM message to prevent vanilla reporting
-            event.renderer((source, sourceDisplayName, message, viewer) -> {
-                PlayerData data = plugin.getPlayerDataManager().getCached(source.getUniqueId());
-                String displayName = data != null ? data.getDisplayName() : source.getName();
-                return Component.text("<" + displayName + "> ").append(message);
-            });
+            PlayerData data = plugin.getPlayerDataManager().getCached(uuid);
+            String displayName = data != null ? data.getDisplayName() : player.getName();
+            Component formatted = Component.text("<" + displayName + "> ").append(finalMsg);
+
+            for (net.kyori.adventure.audience.Audience viewer : viewers) {
+                viewer.sendMessage(formatted);
+            }
         });
     }
 
@@ -98,7 +101,6 @@ public class ChatListener implements Listener {
                 }
             });
 
-            // Also mute
             plugin.getMuteManager().mutePlayer(uuid, player.getName(), reason, null, "Auto-Mute", banDuration);
         });
     }

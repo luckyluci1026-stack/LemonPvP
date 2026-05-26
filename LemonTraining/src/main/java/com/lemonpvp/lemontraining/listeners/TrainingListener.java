@@ -42,15 +42,24 @@ public class TrainingListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
-        // Start pending practice mode (arrived from lobby selection)
-        if (plugin.getPracticeManager().hasPending(uuid)) {
-            PracticeMode mode = plugin.getPracticeManager().pollPending(uuid);
+
+        // Check DB for a pending practice mode set by the lobby before player transferred
+        plugin.getDatabase().getPendingModeAndDelete(uuid).thenAccept(modeName -> {
+            if (modeName == null) return;
+            PracticeMode mode;
+            try {
+                mode = PracticeMode.valueOf(modeName);
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Unknown pending practice mode from DB: " + modeName);
+                return;
+            }
+            final PracticeMode finalMode = mode;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (player.isOnline()) {
-                    plugin.getPracticeManager().startPractice(player, mode);
+                    plugin.getPracticeManager().startPractice(player, finalMode);
                 }
             }, 20L);
-        }
+        });
     }
 
     @EventHandler

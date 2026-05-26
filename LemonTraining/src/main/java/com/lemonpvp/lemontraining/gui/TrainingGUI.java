@@ -42,28 +42,28 @@ public class TrainingGUI implements Listener {
 
         // Slot 11: Iron Sword → TOTEM
         inv.setItem(11, makeItem(Material.IRON_SWORD,
-                "<yellow>Totem Practice",
-                List.of("<gray>Practice catching anvils with totems.</gray>")));
+                "<!italic><yellow>Totem Practice</yellow></!italic>",
+                List.of("<!italic><gray>Practice catching anvils with totems.</gray></!italic>")));
 
         // Slot 12: Bow → BOW
         inv.setItem(12, makeItem(Material.BOW,
-                "<aqua>Bow Practice",
-                List.of("<gray>Hit targets with bow and crossbow.</gray>")));
+                "<!italic><aqua>Bow Practice</aqua></!italic>",
+                List.of("<!italic><gray>Hit targets with bow and crossbow.</gray></!italic>")));
 
         // Slot 13: Mace → MACE
         inv.setItem(13, makeItem(Material.MACE,
-                "<light_purple>Mace Practice",
-                List.of("<gray>Practice mace dive attacks.</gray>")));
+                "<!italic><light_purple>Mace Practice</light_purple></!italic>",
+                List.of("<!italic><gray>Practice mace dive attacks.</gray></!italic>")));
 
         // Slot 14: Diamond Sword → SWORD
         inv.setItem(14, makeItem(Material.DIAMOND_SWORD,
-                "<green>Sword Practice",
-                List.of("<gray>Practice sword combat.</gray>")));
+                "<!italic><green>Sword Practice</green></!italic>",
+                List.of("<!italic><gray>Practice sword combat.</gray></!italic>")));
 
         // Slot 15: End Crystal → CRYSTAL
         inv.setItem(15, makeItem(Material.END_CRYSTAL,
-                "<red>Crystal Practice",
-                List.of("<gray>Practice crystal PvP.</gray>")));
+                "<!italic><red>Crystal Practice</red></!italic>",
+                List.of("<!italic><gray>Practice crystal PvP.</gray></!italic>")));
 
         Bukkit.getPluginManager().registerEvents(this, plugin);
         player.openInventory(inv);

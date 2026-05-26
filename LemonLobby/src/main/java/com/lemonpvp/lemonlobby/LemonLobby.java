@@ -38,9 +38,8 @@ public final class LemonLobby extends JavaPlugin {
         trainingGUI    = new TrainingGUI(this, lobbyMessaging);
         restartManager = new RestartManager(this);
 
-        // Register BungeeCord plugin messaging channels
+        // BungeeCord plugin messaging
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-        getServer().getMessenger().registerOutgoingPluginChannel(this, "lemonlobby:training");
 
         // Register listeners
         getServer().getPluginManager().registerEvents(
@@ -56,7 +55,7 @@ public final class LemonLobby extends JavaPlugin {
     public void onDisable() {
         if (restartManager != null) restartManager.stop();
         if (database != null) database.close();
-        getServer().getMessenger().unregisterOutgoingPluginChannel(this);
+        getServer().getMessenger().unregisterOutgoingPluginChannel(this, "BungeeCord");
         getLogger().info("LemonLobby disabled.");
     }
 

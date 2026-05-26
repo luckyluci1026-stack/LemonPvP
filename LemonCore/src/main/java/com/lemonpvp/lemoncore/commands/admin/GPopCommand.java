@@ -35,10 +35,11 @@ public class GPopCommand implements CommandExecutor {
             return true;
         }
 
-        target.setHealth(0.0);
+        // Use damage() instead of setHealth(0) so the totem-of-undying check fires normally
+        target.setNoDamageTicks(0);
+        target.damage(target.getHealth() + 4.0);
         sender.sendMessage(MM.deserialize(
-                "<green>Set health to 0 on " + target.getName()
-                        + " — watch for auto-totem.</green>"));
+                "<green>Popped " + target.getName() + " — totem will activate if held.</green>"));
         return true;
     }
 }

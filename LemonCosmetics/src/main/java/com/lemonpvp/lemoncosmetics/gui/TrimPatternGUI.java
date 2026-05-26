@@ -6,6 +6,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -16,7 +18,11 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
+import org.bukkit.inventory.meta.trim.TrimPattern;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +44,7 @@ public class TrimPatternGUI implements Listener {
 
     public void open() {
         inventory = Bukkit.createInventory(null, 54,
-                MM.deserialize("<gradient:#fffb00:#00ff00>Armor Trims - Pattern</gradient>"));
+                MM.deserialize("<!italic><gradient:#fffb00:#00ff00>Armor Trims - Pattern</gradient></!italic>"));
 
         renderItems();
 
@@ -63,43 +69,13 @@ public class TrimPatternGUI implements Listener {
             String patternId = patternIds.get(i);
             boolean owned = cosmetics != null && cosmetics.ownsPattern(patternId);
             boolean selected = patternId.equals(selectedPatternId);
-
-            ItemStack item;
-            if (owned) {
-                Material icon = plugin.getArmorTrimManager().getTrimPatternIcon(patternId);
-                item = new ItemStack(icon != null ? icon : Material.PAPER);
-            } else {
-                item = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-            }
-
-            ItemMeta meta = item.getItemMeta();
-            String displayName = plugin.getArmorTrimManager().getDisplayName(patternId);
-            meta.displayName(MM.deserialize("<white>" + displayName));
-
-            List<Component> lore = new ArrayList<>();
-            if (owned) {
-                lore.add(MM.deserialize("<green>Owned"));
-                lore.add(MM.deserialize("<gray>Click to select"));
-            } else {
-                int cost = plugin.getConfig().getInt("prices.trim-pattern", 250);
-                lore.add(MM.deserialize("<gray>Price: <gold>" + cost + " Coins"));
-                lore.add(MM.deserialize("<dark_gray>Not owned"));
-            }
-            meta.lore(lore);
-
-            if (selected && !owned) {
-                meta.addEnchant(Enchantment.UNBREAKING, 1, true);
-                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            }
-
-            item.setItemMeta(meta);
-            inventory.setItem(i, item);
+            inventory.setItem(i, buildPreviewItem(patternId, owned, selected));
         }
 
         // Slot 45: Back button
         ItemStack backButton = new ItemStack(Material.ARROW);
         ItemMeta backMeta = backButton.getItemMeta();
-        backMeta.displayName(MM.deserialize("<gray>Back"));
+        backMeta.displayName(MM.deserialize("<!italic><gray>Back</gray></!italic>"));
         backButton.setItemMeta(backMeta);
         inventory.setItem(45, backButton);
 
@@ -107,13 +83,55 @@ public class TrimPatternGUI implements Listener {
         int cost = plugin.getConfig().getInt("prices.trim-pattern", 250);
         ItemStack buyButton = new ItemStack(Material.GOLD_INGOT);
         ItemMeta buyMeta = buyButton.getItemMeta();
-        buyMeta.displayName(MM.deserialize("<gold>Buy Trim Pattern"));
+        buyMeta.displayName(MM.deserialize("<!italic><gold>Buy Trim Pattern</gold></!italic>"));
         buyMeta.lore(List.of(
-                MM.deserialize("<gray>Cost: <gold>" + cost + " Coins"),
-                MM.deserialize("<gray>Click a pattern to buy it")
+                MM.deserialize("<!italic><gray>Cost: <gold>" + cost + " Coins</gold></gray></!italic>"),
+                MM.deserialize("<!italic><gray>Click a pattern first, then buy</gray></!italic>")
         ));
         buyButton.setItemMeta(buyMeta);
         inventory.setItem(49, buyButton);
+    }
+
+    /** Builds a diamond chestplate preview item with the actual trim applied. */
+    private ItemStack buildPreviewItem(String patternId, boolean owned, boolean selected) {
+        ItemStack item = new ItemStack(Material.DIAMOND_CHESTPLATE);
+
+        if (item.getItemMeta() instanceof ArmorMeta meta) {
+            // Apply the trim with gold material as a visual default
+            TrimPattern pattern = Registry.TRIM_PATTERN.get(NamespacedKey.minecraft(patternId));
+            TrimMaterial material = Registry.TRIM_MATERIAL.get(NamespacedKey.minecraft("gold"));
+            if (pattern != null && material != null) {
+                meta.setTrim(new ArmorTrim(material, pattern));
+            }
+
+            String displayName = plugin.getArmorTrimManager().getDisplayName(patternId);
+            meta.displayName(MM.deserialize("<!italic><white>" + displayName + "</white></!italic>"));
+
+            List<Component> lore = new ArrayList<>();
+            lore.add(MM.deserialize("<!italic><dark_gray>Preview: Gold material</dark_gray></!italic>"));
+            lore.add(Component.empty());
+
+            if (owned) {
+                lore.add(MM.deserialize("<!italic><green>✔ Owned</green></!italic>"));
+                lore.add(MM.deserialize("<!italic><gray>Click to apply to armor</gray></!italic>"));
+                // Enchanting glint to mark owned items
+                meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            } else if (selected) {
+                int cost = plugin.getConfig().getInt("prices.trim-pattern", 250);
+                lore.add(MM.deserialize("<!italic><yellow>Selected — click Buy to confirm</yellow></!italic>"));
+                lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + cost + " Coins</gold></gray></!italic>"));
+            } else {
+                int cost = plugin.getConfig().getInt("prices.trim-pattern", 250);
+                lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + cost + " Coins</gold></gray></!italic>"));
+                lore.add(MM.deserialize("<!italic><dark_gray>Not owned — click to select</dark_gray></!italic>"));
+            }
+
+            meta.lore(lore);
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+            item.setItemMeta(meta);
+        }
+        return item;
     }
 
     @EventHandler
@@ -140,7 +158,7 @@ public class TrimPatternGUI implements Listener {
             } else {
                 selectedPatternId = patternId;
                 renderItems();
-                player.sendMessage(MM.deserialize("<yellow>Click <gold>Buy Trim Pattern</gold> to confirm your purchase."));
+                player.sendMessage(MM.deserialize("<!italic><yellow>Click <gold>Buy Trim Pattern</gold> to confirm your purchase.</yellow></!italic>"));
             }
             return;
         }
@@ -155,11 +173,11 @@ public class TrimPatternGUI implements Listener {
         // Buy button
         if (slot == 49) {
             if (selectedPatternId == null) {
-                player.sendMessage(MM.deserialize("<red>Select a pattern first!"));
+                player.sendMessage(MM.deserialize("<!italic><red>Select a pattern first!</red></!italic>"));
                 return;
             }
             if (cosmetics != null && cosmetics.ownsPattern(selectedPatternId)) {
-                player.sendMessage(MM.deserialize("<red>You already own this pattern!"));
+                player.sendMessage(MM.deserialize("<!italic><red>You already own this pattern!</red></!italic>"));
                 return;
             }
 
@@ -169,9 +187,9 @@ public class TrimPatternGUI implements Listener {
                         if (success) {
                             selectedPatternId = null;
                             renderItems();
-                            player.sendMessage(MM.deserialize("<green>Successfully purchased the trim pattern!"));
+                            player.sendMessage(MM.deserialize("<!italic><green>Successfully purchased the trim pattern!</green></!italic>"));
                         } else {
-                            player.sendMessage(MM.deserialize("<red>You don't have enough coins!"));
+                            player.sendMessage(MM.deserialize("<!italic><red>You don't have enough coins!</red></!italic>"));
                         }
                     }));
         }

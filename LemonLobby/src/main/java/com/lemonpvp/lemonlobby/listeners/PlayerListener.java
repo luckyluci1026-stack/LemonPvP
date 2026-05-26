@@ -7,8 +7,6 @@ import com.lemonpvp.lemonlobby.messaging.LobbyMessaging;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.Material;
-import org.bukkit.Plugin;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -24,7 +22,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.Plugin;
 
 public class PlayerListener implements Listener {
 
@@ -59,9 +56,8 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onDropItem(PlayerDropItemEvent event) {
-        if (hotbarManager.isHotbarItem(event.getItemDrop().getItemStack())) {
-            event.setCancelled(true);
-        }
+        // Block all item drops in the lobby
+        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -71,13 +67,10 @@ public class PlayerListener implements Listener {
         // Delegate to TrainingGUI first
         if (trainingGUI.handleClick(event)) return;
 
-        // If clicking in own player inventory, cancel if hotbar item
+        // Cancel all clicks in the player's own inventory — prevents moving any items
         if (event.getClickedInventory() != null
                 && event.getClickedInventory().equals(player.getInventory())) {
-            ItemStack clicked = event.getCurrentItem();
-            if (hotbarManager.isHotbarItem(clicked)) {
-                event.setCancelled(true);
-            }
+            event.setCancelled(true);
         }
     }
 
@@ -97,9 +90,6 @@ public class PlayerListener implements Listener {
                     return; // Our GUI — allow it
                 }
             }
-            // Also allow if the title is our training GUI title
-            // (handled generously: block any non-our-code chest)
-            // We'll close unknown chest inventories too to be safe
         }
 
         // Close crafting and player inventories
@@ -151,7 +141,7 @@ public class PlayerListener implements Listener {
             }
             case 6 -> {
                 // Cosmetics
-                Plugin cosmeticsPlugin = Bukkit.getPluginManager().getPlugin("LemonCosmetics");
+                org.bukkit.plugin.Plugin cosmeticsPlugin = Bukkit.getPluginManager().getPlugin("LemonCosmetics");
                 if (cosmeticsPlugin instanceof com.lemonpvp.lemoncosmetics.LemonCosmetics lemonCosmetics) {
                     new com.lemonpvp.lemoncosmetics.gui.CosmeticsMainGUI(lemonCosmetics, player).open();
                 } else {
