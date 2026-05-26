@@ -50,10 +50,11 @@ public class ScoreboardManager {
                     .replace("{deaths}", String.valueOf(data.getDeaths()))
                     .replace("{player}", data.getUsername());
 
-            // Use unique team entries for each line
-            String entryKey = "lc_line_" + score;
-            Team team = sb.registerNewTeam(entryKey);
+            // Use invisible color code strings as unique entries so they don't show on screen
+            String entryKey = "§" + Integer.toHexString(score) + "§r";
+            Team team = sb.registerNewTeam("lc_" + score);
             team.prefix(TextUtil.parse(formatted));
+            team.suffix(Component.empty());
             team.addEntry(entryKey);
             obj.getScore(entryKey).setScore(score);
         }

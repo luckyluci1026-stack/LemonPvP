@@ -8,6 +8,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.Plugin;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -130,33 +131,36 @@ public class PlayerListener implements Listener {
 
         switch (slot) {
             case 0 -> {
-                // Queue
-                player.sendMessage(MINI_MESSAGE.deserialize("<red>Queue is not implemented yet."));
+                // Queue → Practice server
+                lobbyMessaging.connectToServer(player,
+                        plugin.getServersConfig().getString("servers.practice.name", "practice"));
             }
             case 1 -> {
                 // Training Compass - open Training GUI
                 trainingGUI.open(player);
             }
             case 3 -> {
-                // Events
-                player.sendMessage(MINI_MESSAGE.deserialize("<red>Events is not implemented yet."));
+                // Events server
+                lobbyMessaging.connectToServer(player,
+                        plugin.getServersConfig().getString("servers.events.name", "events"));
             }
             case 4 -> {
-                // Kit Editor
-                player.sendMessage(MINI_MESSAGE.deserialize("<red>Kit Editor is not implemented yet."));
+                // Kit Editor → Practice server
+                lobbyMessaging.connectToServer(player,
+                        plugin.getServersConfig().getString("servers.practice.name", "practice"));
             }
             case 6 -> {
-                // Cosmetics - try LemonCosmetics plugin
-                Plugin cosmetics = Bukkit.getPluginManager().getPlugin("LemonCosmetics");
-                if (cosmetics != null && cosmetics.isEnabled()) {
-                    player.sendMessage(MINI_MESSAGE.deserialize("<red>Cosmetics is not implemented yet."));
+                // Cosmetics
+                Plugin cosmeticsPlugin = Bukkit.getPluginManager().getPlugin("LemonCosmetics");
+                if (cosmeticsPlugin instanceof com.lemonpvp.lemoncosmetics.LemonCosmetics lemonCosmetics) {
+                    new com.lemonpvp.lemoncosmetics.gui.CosmeticsMainGUI(lemonCosmetics, player).open();
                 } else {
                     player.sendMessage(MINI_MESSAGE.deserialize("<red>Cosmetics is not available right now."));
                 }
             }
             case 7 -> {
-                // Settings
-                player.sendMessage(MINI_MESSAGE.deserialize("<red>Settings is not implemented yet."));
+                // Settings → open settings GUI
+                player.sendMessage(MINI_MESSAGE.deserialize("<yellow>Settings coming soon!"));
             }
             case 8 -> {
                 // Leave - connect to hub
