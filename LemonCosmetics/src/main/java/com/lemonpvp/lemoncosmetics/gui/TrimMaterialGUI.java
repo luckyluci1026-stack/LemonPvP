@@ -174,27 +174,27 @@ public class TrimMaterialGUI implements Listener {
         if (meta == null) return item;
 
         String name = plugin.getArmorTrimManager().getMaterialDisplayName(matId);
-        meta.displayName(MM.deserialize("<!italic><white>" + name + "</white></!italic>"));
+        meta.displayName(MM.deserialize("<!italic><white>" + name + "</white>"));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
         if (owned) {
-            lore.add(MM.deserialize("<!italic><green>✔ Owned</green></!italic>"));
+            lore.add(MM.deserialize("<!italic><green>✔ Owned</green>"));
             if (matId.equals(selectedMaterialId)) {
-                lore.add(MM.deserialize("<!italic><yellow>Selected</yellow></!italic>"));
+                lore.add(MM.deserialize("<!italic><yellow>Selected</yellow>"));
             } else {
-                lore.add(MM.deserialize("<!italic><gray>Click to apply</gray></!italic>"));
+                lore.add(MM.deserialize("<!italic><gray>Click to apply</gray>"));
             }
             // Enchanting glint for owned items
             meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
             meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
         } else {
             int cost = plugin.getConfig().getInt("prices.trim-material", 50);
-            lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + cost + " Coins</gold></gray></!italic>"));
+            lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + cost + " Coins</gold></gray>"));
             if (matId.equals(selectedMaterialId)) {
-                lore.add(MM.deserialize("<!italic><yellow>Selected — click Buy Material</yellow></!italic>"));
+                lore.add(MM.deserialize("<!italic><yellow>Selected — click Buy Material</yellow>"));
             } else {
-                lore.add(MM.deserialize("<!italic><dark_gray>Not owned — click to select</dark_gray></!italic>"));
+                lore.add(MM.deserialize("<!italic><dark_gray>Not owned — click to select</dark_gray>"));
             }
         }
         meta.lore(lore);
@@ -208,13 +208,13 @@ public class TrimMaterialGUI implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
         int cost = plugin.getConfig().getInt("prices.trim-material", 50);
-        meta.displayName(MM.deserialize("<!italic><gold>Buy Material</gold></!italic>"));
+        meta.displayName(MM.deserialize("<!italic><gold>Buy Material</gold>"));
         List<Component> lore = new ArrayList<>();
-        lore.add(MM.deserialize("<!italic><gray>Cost: <gold>" + cost + " Coins</gold></gray></!italic>"));
+        lore.add(MM.deserialize("<!italic><gray>Cost: <gold>" + cost + " Coins</gold></gray>"));
         if (selectedMaterialId != null)
-            lore.add(MM.deserialize("<!italic><yellow>Selected: " + plugin.getArmorTrimManager().getMaterialDisplayName(selectedMaterialId) + "</yellow></!italic>"));
+            lore.add(MM.deserialize("<!italic><yellow>Selected: " + plugin.getArmorTrimManager().getMaterialDisplayName(selectedMaterialId) + "</yellow>"));
         else
-            lore.add(MM.deserialize("<!italic><gray>Select a material first</gray></!italic>"));
+            lore.add(MM.deserialize("<!italic><gray>Select a material first</gray>"));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
@@ -223,7 +223,7 @@ public class TrimMaterialGUI implements Listener {
     private ItemStack backButton() {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>Back</gray></!italic>")); item.setItemMeta(meta); }
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>Back</gray>")); item.setItemMeta(meta); }
         return item;
     }
 

@@ -28,6 +28,7 @@ public class NickCommand implements CommandExecutor {
 
         String nick = plugin.getRandomNameUtil().generateName();
         data.setNick(nick);
+        plugin.getPlayerDataManager().applyNames(player);
         player.sendMessage(plugin.getMessagesManager().get("nick.set", "nick", nick));
         plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
         return true;

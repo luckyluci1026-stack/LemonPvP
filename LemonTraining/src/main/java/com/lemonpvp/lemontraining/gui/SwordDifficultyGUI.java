@@ -43,18 +43,18 @@ public class SwordDifficultyGUI implements Listener {
 
         // Slot 11: Easy
         inv.setItem(11, makeItem(Material.LIME_DYE,
-                "<!italic><green>Easy</green></!italic>",
-                List.of("<!italic><gray>Zombie without AI</gray></!italic>")));
+                "<!italic><green>Easy</green>",
+                List.of("<!italic><gray>Zombie without AI</gray>")));
 
         // Slot 13: Medium
         inv.setItem(13, makeItem(Material.YELLOW_DYE,
-                "<!italic><yellow>Medium</yellow></!italic>",
-                List.of("<!italic><gray>Zombie with Slowness I</gray></!italic>")));
+                "<!italic><yellow>Medium</yellow>",
+                List.of("<!italic><gray>Zombie with Slowness I</gray>")));
 
         // Slot 15: Normal
         inv.setItem(15, makeItem(Material.RED_DYE,
-                "<!italic><red>Normal</red></!italic>",
-                List.of("<!italic><gray>Zombie with full AI</gray></!italic>")));
+                "<!italic><red>Normal</red>",
+                List.of("<!italic><gray>Zombie with full AI</gray>")));
 
         Bukkit.getPluginManager().registerEvents(this, plugin);
         player.openInventory(inv);

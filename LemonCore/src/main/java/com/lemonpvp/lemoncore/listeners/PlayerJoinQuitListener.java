@@ -34,9 +34,11 @@ public class PlayerJoinQuitListener implements Listener {
                                     org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
                                             plugin.getListenerManager().performBanKick(player, ban));
                                 } else {
-                                    // Update scoreboard
-                                    org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
-                                            plugin.getScoreboardManager().updateScoreboard(player, data));
+                                    // Update scoreboard and apply display name
+                                    org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                                        plugin.getScoreboardManager().updateScoreboard(player, data);
+                                        plugin.getPlayerDataManager().applyNames(player);
+                                    });
                                 }
                             });
                 });

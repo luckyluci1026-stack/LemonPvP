@@ -42,28 +42,28 @@ public class TrainingGUI implements Listener {
 
         // Slot 11: Iron Sword → TOTEM
         inv.setItem(11, makeItem(Material.IRON_SWORD,
-                "<!italic><yellow>Totem Practice</yellow></!italic>",
-                List.of("<!italic><gray>Practice catching anvils with totems.</gray></!italic>")));
+                "<!italic><yellow>Totem Practice</yellow>",
+                List.of("<!italic><gray>Practice catching anvils with totems.</gray>")));
 
         // Slot 12: Bow → BOW
         inv.setItem(12, makeItem(Material.BOW,
-                "<!italic><aqua>Bow Practice</aqua></!italic>",
-                List.of("<!italic><gray>Hit targets with bow and crossbow.</gray></!italic>")));
+                "<!italic><aqua>Bow Practice</aqua>",
+                List.of("<!italic><gray>Hit targets with bow and crossbow.</gray>")));
 
         // Slot 13: Mace → MACE
         inv.setItem(13, makeItem(Material.MACE,
-                "<!italic><light_purple>Mace Practice</light_purple></!italic>",
-                List.of("<!italic><gray>Practice mace dive attacks.</gray></!italic>")));
+                "<!italic><light_purple>Mace Practice</light_purple>",
+                List.of("<!italic><gray>Practice mace dive attacks.</gray>")));
 
         // Slot 14: Diamond Sword → SWORD
         inv.setItem(14, makeItem(Material.DIAMOND_SWORD,
-                "<!italic><green>Sword Practice</green></!italic>",
-                List.of("<!italic><gray>Practice sword combat.</gray></!italic>")));
+                "<!italic><green>Sword Practice</green>",
+                List.of("<!italic><gray>Practice sword combat.</gray>")));
 
         // Slot 15: End Crystal → CRYSTAL
         inv.setItem(15, makeItem(Material.END_CRYSTAL,
-                "<!italic><red>Crystal Practice</red></!italic>",
-                List.of("<!italic><gray>Practice crystal PvP.</gray></!italic>")));
+                "<!italic><red>Crystal Practice</red>",
+                List.of("<!italic><gray>Practice crystal PvP.</gray>")));
 
         Bukkit.getPluginManager().registerEvents(this, plugin);
         player.openInventory(inv);

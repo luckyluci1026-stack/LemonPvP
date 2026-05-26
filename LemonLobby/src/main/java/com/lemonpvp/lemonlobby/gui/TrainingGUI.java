@@ -71,7 +71,7 @@ public class TrainingGUI {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(MINI_MESSAGE.deserialize("<!italic><white>" + displayName + "</white></!italic>"));
+            meta.displayName(MINI_MESSAGE.deserialize("<!italic><white>" + displayName + "</white>"));
             // Store mode in PDC
             meta.getPersistentDataContainer().set(
                     new NamespacedKey(plugin, "training_mode"),

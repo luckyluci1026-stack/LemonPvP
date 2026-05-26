@@ -70,7 +70,8 @@ public class ChatListener implements Listener {
 
             PlayerData data = plugin.getPlayerDataManager().getCached(uuid);
             String displayName = data != null ? data.getDisplayName() : player.getName();
-            Component formatted = Component.text("<" + displayName + "> ").append(finalMsg);
+            Component nameComp = TextUtil.parse(displayName);
+            Component formatted = Component.text("<").append(nameComp).append(Component.text("> ")).append(finalMsg);
 
             for (net.kyori.adventure.audience.Audience viewer : viewers) {
                 viewer.sendMessage(formatted);

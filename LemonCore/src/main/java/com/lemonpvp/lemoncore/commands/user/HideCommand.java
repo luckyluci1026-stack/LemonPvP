@@ -29,7 +29,10 @@ public class HideCommand implements CommandExecutor {
         }
 
         PlayerData data = plugin.getPlayerDataManager().getCached(player.getUniqueId());
-        if (data == null) return true;
+        if (data == null) {
+            player.sendMessage(plugin.getMessagesManager().get("no-permission"));
+            return true;
+        }
 
         // Strip MiniMessage tags unless they have permission
         String name = player.hasPermission("lemoncore.use.minimessage")
@@ -39,6 +42,7 @@ public class HideCommand implements CommandExecutor {
         if (name.length() > 32) name = name.substring(0, 32);
 
         data.setHiddenName(name);
+        plugin.getPlayerDataManager().applyNames(player);
         player.sendMessage(plugin.getMessagesManager().get("hide.set", "name", name));
         plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
         return true;

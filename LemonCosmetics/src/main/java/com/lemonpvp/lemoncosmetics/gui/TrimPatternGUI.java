@@ -44,7 +44,7 @@ public class TrimPatternGUI implements Listener {
 
     public void open() {
         inventory = Bukkit.createInventory(null, 54,
-                MM.deserialize("<!italic><gradient:#fffb00:#00ff00>Armor Trims - Pattern</gradient></!italic>"));
+                MM.deserialize("<!italic><gradient:#fffb00:#00ff00>Armor Trims - Pattern</gradient>"));
 
         renderItems();
 
@@ -75,7 +75,7 @@ public class TrimPatternGUI implements Listener {
         // Slot 45: Back button
         ItemStack backButton = new ItemStack(Material.ARROW);
         ItemMeta backMeta = backButton.getItemMeta();
-        backMeta.displayName(MM.deserialize("<!italic><gray>Back</gray></!italic>"));
+        backMeta.displayName(MM.deserialize("<!italic><gray>Back</gray>"));
         backButton.setItemMeta(backMeta);
         inventory.setItem(45, backButton);
 
@@ -83,10 +83,10 @@ public class TrimPatternGUI implements Listener {
         int cost = plugin.getConfig().getInt("prices.trim-pattern", 250);
         ItemStack buyButton = new ItemStack(Material.GOLD_INGOT);
         ItemMeta buyMeta = buyButton.getItemMeta();
-        buyMeta.displayName(MM.deserialize("<!italic><gold>Buy Trim Pattern</gold></!italic>"));
+        buyMeta.displayName(MM.deserialize("<!italic><gold>Buy Trim Pattern</gold>"));
         buyMeta.lore(List.of(
-                MM.deserialize("<!italic><gray>Cost: <gold>" + cost + " Coins</gold></gray></!italic>"),
-                MM.deserialize("<!italic><gray>Click a pattern first, then buy</gray></!italic>")
+                MM.deserialize("<!italic><gray>Cost: <gold>" + cost + " Coins</gold></gray>"),
+                MM.deserialize("<!italic><gray>Click a pattern first, then buy</gray>")
         ));
         buyButton.setItemMeta(buyMeta);
         inventory.setItem(49, buyButton);
@@ -105,26 +105,26 @@ public class TrimPatternGUI implements Listener {
             }
 
             String displayName = plugin.getArmorTrimManager().getDisplayName(patternId);
-            meta.displayName(MM.deserialize("<!italic><white>" + displayName + "</white></!italic>"));
+            meta.displayName(MM.deserialize("<!italic><white>" + displayName + "</white>"));
 
             List<Component> lore = new ArrayList<>();
-            lore.add(MM.deserialize("<!italic><dark_gray>Preview: Gold material</dark_gray></!italic>"));
+            lore.add(MM.deserialize("<!italic><dark_gray>Preview: Gold material</dark_gray>"));
             lore.add(Component.empty());
 
             if (owned) {
-                lore.add(MM.deserialize("<!italic><green>✔ Owned</green></!italic>"));
-                lore.add(MM.deserialize("<!italic><gray>Click to apply to armor</gray></!italic>"));
+                lore.add(MM.deserialize("<!italic><green>✔ Owned</green>"));
+                lore.add(MM.deserialize("<!italic><gray>Click to apply to armor</gray>"));
                 // Enchanting glint to mark owned items
                 meta.addEnchant(Enchantment.UNBREAKING, 1, true);
                 meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             } else if (selected) {
                 int cost = plugin.getConfig().getInt("prices.trim-pattern", 250);
-                lore.add(MM.deserialize("<!italic><yellow>Selected — click Buy to confirm</yellow></!italic>"));
-                lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + cost + " Coins</gold></gray></!italic>"));
+                lore.add(MM.deserialize("<!italic><yellow>Selected — click Buy to confirm</yellow>"));
+                lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + cost + " Coins</gold></gray>"));
             } else {
                 int cost = plugin.getConfig().getInt("prices.trim-pattern", 250);
-                lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + cost + " Coins</gold></gray></!italic>"));
-                lore.add(MM.deserialize("<!italic><dark_gray>Not owned — click to select</dark_gray></!italic>"));
+                lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + cost + " Coins</gold></gray>"));
+                lore.add(MM.deserialize("<!italic><dark_gray>Not owned — click to select</dark_gray>"));
             }
 
             meta.lore(lore);
@@ -158,7 +158,7 @@ public class TrimPatternGUI implements Listener {
             } else {
                 selectedPatternId = patternId;
                 renderItems();
-                player.sendMessage(MM.deserialize("<!italic><yellow>Click <gold>Buy Trim Pattern</gold> to confirm your purchase.</yellow></!italic>"));
+                player.sendMessage(MM.deserialize("<!italic><yellow>Click <gold>Buy Trim Pattern</gold> to confirm your purchase.</yellow>"));
             }
             return;
         }
@@ -173,11 +173,11 @@ public class TrimPatternGUI implements Listener {
         // Buy button
         if (slot == 49) {
             if (selectedPatternId == null) {
-                player.sendMessage(MM.deserialize("<!italic><red>Select a pattern first!</red></!italic>"));
+                player.sendMessage(MM.deserialize("<!italic><red>Select a pattern first!</red>"));
                 return;
             }
             if (cosmetics != null && cosmetics.ownsPattern(selectedPatternId)) {
-                player.sendMessage(MM.deserialize("<!italic><red>You already own this pattern!</red></!italic>"));
+                player.sendMessage(MM.deserialize("<!italic><red>You already own this pattern!</red>"));
                 return;
             }
 
@@ -187,9 +187,9 @@ public class TrimPatternGUI implements Listener {
                         if (success) {
                             selectedPatternId = null;
                             renderItems();
-                            player.sendMessage(MM.deserialize("<!italic><green>Successfully purchased the trim pattern!</green></!italic>"));
+                            player.sendMessage(MM.deserialize("<!italic><green>Successfully purchased the trim pattern!</green>"));
                         } else {
-                            player.sendMessage(MM.deserialize("<!italic><red>You don't have enough coins!</red></!italic>"));
+                            player.sendMessage(MM.deserialize("<!italic><red>You don't have enough coins!</red>"));
                         }
                     }));
         }

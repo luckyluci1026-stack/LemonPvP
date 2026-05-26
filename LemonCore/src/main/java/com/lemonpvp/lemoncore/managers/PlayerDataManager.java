@@ -2,6 +2,8 @@ package com.lemonpvp.lemoncore.managers;
 
 import com.lemonpvp.lemoncore.LemonCore;
 import com.lemonpvp.lemoncore.database.DatabaseManager;
+import com.lemonpvp.lemoncore.util.TextUtil;
+import org.bukkit.entity.Player;
 
 import java.sql.*;
 import java.util.*;
@@ -175,6 +177,14 @@ public class PlayerDataManager {
 
     public CompletableFuture<Void> removeCoins(UUID uuid, long amount, String reason, UUID adminUuid) {
         return addCoins(uuid, -amount, reason, adminUuid);
+    }
+
+    public void applyNames(Player player) {
+        PlayerData data = cache.get(player.getUniqueId());
+        if (data == null) return;
+        var name = TextUtil.parse(data.getDisplayName());
+        player.displayName(name);
+        player.playerListName(name);
     }
 
     public CompletableFuture<Void> setCoins(UUID uuid, long amount, UUID adminUuid) {
