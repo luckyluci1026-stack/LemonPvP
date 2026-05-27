@@ -4,33 +4,49 @@ import com.lemonpvp.lemonpractice.LemonPractice;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
 
 /**
- * Builds "Citadel Aeternum" — LemonPvP's detailed floating-island practice hub.
+ * SpawnBuilder — "Citadel Aeternum"
  *
- * Layout (top-down, centred at world 0,64,0)
- * ─────────────────────────────────────────
- *   Bow Portal   (0,  64, -22)  — dark-oak / stone theme
- *   Totem Portal (16, 64, -16)  — jungle / nature theme
- *   Sword Portal (-22,64,  0)   — quartz / iron theme
- *   Crystal Portal(22, 64,  0)  — end-stone / amethyst theme
- *   Mace Portal  (0,  64,  22)  — nether-brick / fire theme
+ * <p>A grand 180×214 floating island practice hub centred at world origin (0, 64, 0).
+ * The island ellipse has half-radii RX=90 (east–west) and RZ=107 (north–south),
+ * with the surface floor at Y=64 (SY).
  *
- *   Island ellipse : rx=44, rz=38
- *   Central tower  : 13×13 base, 36 blocks tall, polished-deepslate + quartz
- *   Perimeter wall : follows ellipse at ~87% radius, stone-brick with merlons
- *   Watchtowers    : four 5×5 stone-brick turrets near island corners
- *   Forest zone    : NE quadrant — oak, dark-oak, birch, cherry trees
- *   Water gardens  : SW quadrant — two pools, stream, waterfall
- *   Underground cave: y=47-57, accessible via hidden trapdoor shaft
+ * <h2>Portal Locations</h2>
+ * <ul>
+ *   <li>Crystal  — East,       (55, 64,   0)</li>
+ *   <li>Sword    — West,      (-55, 64,   0)</li>
+ *   <li>Mace     — South,     (  0, 64,  65)</li>
+ *   <li>Bow      — North,     (  0, 64, -65)</li>
+ *   <li>Totem    — NE,        ( 38, 64, -45)</li>
+ *   <li>Axe      — NW,        (-38, 64, -45)</li>
+ *   <li>Trident  — SE,        ( 38, 64,  55)</li>
+ *   <li>Shield   — SW,        (-38, 64,  55)</li>
+ * </ul>
+ *
+ * <h2>Themed Zones</h2>
+ * <ul>
+ *   <li>Forest    — NE quadrant</li>
+ *   <li>Water     — SW quadrant</li>
+ *   <li>Arena     — NW quadrant</li>
+ *   <li>Ruins     — SE quadrant</li>
+ * </ul>
+ *
+ * <p>Build order: island terrain → central structures → portals →
+ * connectivity → zones → fortifications → lighting → details.
  */
 public class SpawnBuilder extends BuildHelper {
 
-    // ── Island geometry ─────────────────────────────────────────────────────────
-    private static final int RX = 44;   // island X half-width
-    private static final int RZ = 38;   // island Z half-depth
-    private static final int SY = 64;   // surface Y
+    // ── Island geometry constants ────────────────────────────────────────────────
+    private static final int RX = 90;   // island east-west half-radius
+    private static final int RZ = 107;  // island north-south half-radius
+    private static final int SY = 64;   // surface Y level
+
+    // ============================================================================
+    //  Constructor
+    // ============================================================================
 
     public SpawnBuilder(LemonPractice plugin, org.bukkit.World world) {
         super(plugin, world);
@@ -47,480 +63,835 @@ public class SpawnBuilder extends BuildHelper {
                 .fastMode(true)
                 .build()) {
 
-            // ① terrain (must come first — everything else overwrites it)
+            // ─── Terrain ───────────────────────────────────────────────────────
             buildIslandBase(es);
             buildIslandUnderbelly(es);
 
-            // ② hub structures
+            // ─── Central structures ────────────────────────────────────────────
             buildCentralPlaza(es);
+            buildCentralFountains(es);
             buildMainTower(es);
             buildTowerInterior(es);
+            buildSecondaryHubs(es);
 
-            // ③ practice portals
+            // ─── Portals ───────────────────────────────────────────────────────
             buildCrystalPortal(es);
             buildSwordPortal(es);
             buildMacePortal(es);
             buildBowPortal(es);
             buildTotemPortal(es);
+            buildAxePortal(es);
+            buildTridentPortal(es);
+            buildShieldPortal(es);
 
-            // ④ connectivity
+            // ─── Connectivity ──────────────────────────────────────────────────
             buildGrandStaircase(es);
+            buildRingRoad(es);
             buildPathways(es);
             buildBridges(es);
 
-            // ⑤ nature
+            // ─── Zones ─────────────────────────────────────────────────────────
             buildForestZone(es);
             buildWaterGardens(es);
+            buildArenaZone(es);
+            buildRuinsZone(es);
             buildVegetation(es);
 
-            // ⑥ fortifications
+            // ─── Fortifications ────────────────────────────────────────────────
             buildPerimeterWalls(es);
             buildWatchtowers(es);
 
-            // ⑦ lighting & polish
+            // ─── Details & lighting ────────────────────────────────────────────
             buildLampPosts(es);
-            buildUndergroundCave(es);
+            buildUndergroundCaves(es);
             buildFinalAccents(es);
 
         } catch (Exception e) {
-            plugin.getLogger().severe("[SpawnBuilder] Build error: " + e.getMessage());
+            plugin.getLogger().severe("[SpawnBuilder] Build failed: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     // ============================================================================
-    //  ①  TERRAIN
+    //  TERRAIN
     // ============================================================================
 
+    /**
+     * Lays the main island surface and layered cross-section for every column
+     * that falls within the island ellipse.  The island tapers from a thick
+     * centre (bottom at Y≈40) to thin edges (bottom at Y≈61), producing a
+     * natural floating-island silhouette.
+     */
     private void buildIslandBase(EditSession es) {
         for (int x = -RX; x <= RX; x++) {
             for (int z = -RZ; z <= RZ; z++) {
+
+                // Ellipse membership test
                 double ex = (double) x / RX;
                 double ez = (double) z / RZ;
                 double t  = ex * ex + ez * ez;
                 if (t > 1.0) continue;
 
-                // Island bottom: deepest at centre (y=42), tapers to y=61 at edge
-                int bottomY = 42 + (int) (19.0 * t);
+                // Bottom Y: centre sits deepest, edge sits shallowest
+                int bottomY = 40 + (int) (21.0 * t);
 
-                // ── Surface block ──────────────────────────────────────────────
-                if (t > 0.88) {
-                    block(es, x, SY, z, BlockTypes.COARSE_DIRT);
-                } else if (t > 0.76 && (Math.abs(x) % 5 == 0 || Math.abs(z) % 6 == 0)) {
-                    block(es, x, SY, z, BlockTypes.COARSE_DIRT);
-                } else if (t > 0.60 && (x + z) % 7 == 0) {
-                    block(es, x, SY, z, BlockTypes.DIRT);
+                // ── Surface block – varies with edge proximity and pattern ────
+                BlockType surface;
+                if (t > 0.90) {
+                    // Outermost fringe – coarse dirt cliff edge
+                    surface = BlockTypes.COARSE_DIRT;
+                } else if (t > 0.78 && (Math.abs(x) % 6 == 0 || Math.abs(z) % 7 == 0)) {
+                    // Grid stripe pattern near the rim
+                    surface = BlockTypes.COARSE_DIRT;
+                } else if (t > 0.62 && (x + z) % 8 == 0) {
+                    // Diagonal accent dots in the mid-ring
+                    surface = BlockTypes.DIRT;
                 } else {
-                    block(es, x, SY, z, BlockTypes.GRASS_BLOCK);
+                    surface = BlockTypes.GRASS_BLOCK;
                 }
+                block(es, x, SY, z, surface);
 
-                // ── Subsurface ─────────────────────────────────────────────────
+                // ── Dirt sub-surface: 2 layers below the grass ───────────────
                 fill(es, x, SY - 2, z, x, SY - 1, z, BlockTypes.DIRT);
 
+                // ── Stone layer ───────────────────────────────────────────────
                 int stoneTop    = SY - 3;
-                int stoneBottom = Math.max(bottomY + 6, SY - 11);
-                if (stoneTop >= stoneBottom)
+                int stoneBottom = Math.max(bottomY + 7, SY - 16);
+                if (stoneTop >= stoneBottom) {
                     fill(es, x, stoneBottom, z, x, stoneTop, z, BlockTypes.STONE);
+                }
 
+                // ── Deepslate layer beneath stone ─────────────────────────────
                 int deepTop    = stoneBottom - 1;
-                int deepBottom = bottomY + 3;
-                if (deepTop >= deepBottom)
+                int deepBottom = bottomY + 4;
+                if (deepTop >= deepBottom) {
                     fill(es, x, deepBottom, z, x, deepTop, z, BlockTypes.DEEPSLATE);
+                }
 
-                // ── Bottom rim ─────────────────────────────────────────────────
-                block(es, x, bottomY + 2, z, BlockTypes.COBBLED_DEEPSLATE);
+                // ── Visible bottom rim – 4-layer decorative underside ─────────
+                block(es, x, bottomY + 3, z, BlockTypes.COBBLED_DEEPSLATE);
+                block(es, x, bottomY + 2, z, BlockTypes.COBBLESTONE);
                 block(es, x, bottomY + 1, z, BlockTypes.GRAVEL);
                 block(es, x, bottomY,     z, BlockTypes.COBBLED_DEEPSLATE);
             }
         }
     }
 
+    /**
+     * Decorates the underside of the island with stalactite clusters,
+     * gravel and tuff texture patches, cobbled-deepslate perimeter overhangs,
+     * and andesite/tuff vein streaks – all visible when looking up from below.
+     */
     private void buildIslandUnderbelly(EditSession es) {
-        // Stalactite clusters hanging from the underside
-        int[][] clusters = {
-            { 0,  0,  9}, {16, 10,  7}, {-16,  8,  6}, {10,-16,  7},
-            {-10,-18,  6}, {22,  4,  5}, {-22, -4,  5}, { 6, 22,  7},
-            { -6,-22,  5}, {18,-10,  6}, {-18, 12,  5}, { 8,-28,  4},
-            {-8,  28,  4}, {28,  -4, 4}, {-28,  4,  4}
+
+        // ── Stalactite cluster positions (30 hand-placed clusters across
+        //    the full interior of the 90×107 ellipse) ──────────────────────────
+        int[][] clusterDefs = {
+            // {cx, cz, length}  — spread to cover all quadrants
+            {  0,   0, 12}, { 18,  14, 10}, {-20,  12,  9}, { 20, -18,  8},
+            {-22, -16,  9}, { 36,   8,  7}, {-38, -10,  8}, { 10,  30,  9},
+            {-12, -32,  7}, { 30, -22,  8}, {-28,  26,  7}, { 16, -44,  6},
+            {-14,  46,  6}, { 50,  -8,  5}, {-52,   6,  5}, { 42,  32,  6},
+            {-44, -28,  6}, { 28,  50,  5}, {-26, -50,  5}, { 60,  18,  4},
+            {-58, -20,  4}, { 22,  66,  4}, {-24, -68,  4}, { 70,   0,  3},
+            {-72,   0,  3}, {  0,  80,  4}, {  0, -82,  4}, { 46, -60,  4},
+            {-48,  58,  5}, { 58, -44,  4}
         };
-        for (int[] c : clusters) {
+
+        for (int[] c : clusterDefs) {
             int cx = c[0], cz = c[1], length = c[2];
-            double ex = (double) cx / RX, ez = (double) cz / RZ;
+            double ex = (double) cx / RX;
+            double ez = (double) cz / RZ;
             double t  = ex * ex + ez * ez;
-            if (t > 0.78) continue;
-            int bottomY = 42 + (int) (19.0 * t);
+            if (t > 0.80) continue;  // only place inside the 80% ellipse
+
+            int bottomY = 40 + (int) (21.0 * t);
+
+            // Taper downward: wider at the attachment point, narrow at tip
             for (int i = 0; i < length; i++) {
                 int y      = bottomY - i;
                 int spread = Math.max(0, (length - i - 1) / 2);
-                fill(es, cx - spread, y, cz - spread,
-                         cx + spread, y, cz + spread, BlockTypes.DEEPSLATE);
-            }
-        }
-
-        // Gravel/stone patches on the underside surface
-        for (int x = -22; x <= 22; x += 4) {
-            for (int z = -20; z <= 20; z += 5) {
-                double ex = (double) x / RX, ez = (double) z / RZ;
-                double t  = ex * ex + ez * ez;
-                if (t > 0.58) continue;
-                int bottomY = 42 + (int) (19.0 * t);
-                block(es, x, bottomY + 2, z, BlockTypes.GRAVEL);
-                if ((x + z) % 8 == 0)
-                    block(es, x, bottomY + 3, z, BlockTypes.TUFF);
-            }
-        }
-
-        // Cobbled_deepslate patches at edge overhang
-        for (int angle = 0; angle < 360; angle += 5) {
-            double rad = Math.toRadians(angle);
-            int wx = (int) Math.round((RX - 4) * Math.cos(rad));
-            int wz = (int) Math.round((RZ - 4) * Math.sin(rad));
-            double ex = (double) wx / RX, ez = (double) wz / RZ;
-            double t  = ex * ex + ez * ez;
-            int bottomY = 42 + (int) (19.0 * t);
-            block(es, wx, bottomY + 4, wz, BlockTypes.COBBLED_DEEPSLATE);
-            block(es, wx, bottomY + 5, wz, BlockTypes.STONE);
-        }
-    }
-
-    // ============================================================================
-    //  ②  HUB STRUCTURES
-    // ============================================================================
-
-    private void buildCentralPlaza(EditSession es) {
-        // Circular polished-deepslate plaza, radius 13
-        for (int x = -13; x <= 13; x++) {
-            for (int z = -13; z <= 13; z++) {
-                double dist = Math.sqrt(x * x + z * z);
-                if (dist > 13.0) continue;
-
-                boolean onQuartzRing = dist >= 9.5 && dist <= 10.5;
-                if (onQuartzRing) {
-                    block(es, x, SY, z, BlockTypes.QUARTZ_BRICKS);
-                } else if (Math.abs(x) <= 7 && Math.abs(z) <= 7) {
-                    // Inner area (under/around tower): smooth polished deepslate
-                    block(es, x, SY, z, BlockTypes.POLISHED_DEEPSLATE);
-                } else {
-                    // Outer ring: checkerboard pattern
-                    boolean alt = (Math.abs(x) + Math.abs(z)) % 2 == 0;
-                    block(es, x, SY, z,
-                          alt ? BlockTypes.POLISHED_DEEPSLATE : BlockTypes.DEEPSLATE_TILES);
+                fill(es,
+                     cx - spread, y, cz - spread,
+                     cx + spread, y, cz + spread,
+                     BlockTypes.DEEPSLATE);
+                // Occasional cobbled-deepslate crack on the surface of the stalactite
+                if (i == 1 && spread > 0) {
+                    block(es, cx - spread, y, cz,           BlockTypes.COBBLED_DEEPSLATE);
+                    block(es, cx + spread, y, cz,           BlockTypes.COBBLED_DEEPSLATE);
+                    block(es, cx,          y, cz - spread,  BlockTypes.COBBLED_DEEPSLATE);
+                    block(es, cx,          y, cz + spread,  BlockTypes.COBBLED_DEEPSLATE);
                 }
             }
         }
 
-        // Second quartz accent ring at radius 6
-        for (int x = -7; x <= 7; x++) {
-            for (int z = -7; z <= 7; z++) {
-                double dist = Math.sqrt(x * x + z * z);
-                if (dist >= 5.8 && dist <= 6.5)
-                    block(es, x, SY, z, BlockTypes.CHISELED_QUARTZ_BLOCK);
+        // ── Gravel and tuff texture patches across underside surface ──────────
+        for (int x = -RX + 5; x <= RX - 5; x += 5) {
+            for (int z = -RZ + 6; z <= RZ - 6; z += 6) {
+                double ex = (double) x / RX;
+                double ez = (double) z / RZ;
+                double t  = ex * ex + ez * ez;
+                if (t > 0.76) continue;
+                int bottomY = 40 + (int) (21.0 * t);
+
+                // Gravel on bottom rim surface
+                block(es, x, bottomY + 3, z, BlockTypes.GRAVEL);
+                // Tuff occasional accent
+                if ((x + z) % 11 == 0) {
+                    block(es, x, bottomY + 3, z, BlockTypes.TUFF);
+                }
+                // Andesite patches mid-underside
+                if ((x * 3 + z * 7) % 13 == 0) {
+                    block(es, x, bottomY + 5, z, BlockTypes.ANDESITE);
+                }
             }
         }
 
-        // 8 decorative pillars at radius ~11
-        for (int a = 0; a < 8; a++) {
-            double rad = Math.toRadians(a * 45.0);
-            int px = (int) Math.round(11 * Math.cos(rad));
-            int pz = (int) Math.round(11 * Math.sin(rad));
-            block(es, px, SY,     pz, BlockTypes.DEEPSLATE_BRICKS);
-            column(es, px, pz, SY + 1, SY + 4, BlockTypes.QUARTZ_PILLAR);
-            block(es, px, SY + 5, pz, BlockTypes.POLISHED_DEEPSLATE);
-            block(es, px, SY + 6, pz, BlockTypes.LANTERN);
-            // Chain draping between adjacent pillars mid-point (decorative)
-            double rad2 = Math.toRadians(a * 45.0 + 22.5);
-            int mx = (int) Math.round(10 * Math.cos(rad2));
-            int mz = (int) Math.round(10 * Math.sin(rad2));
-            block(es, mx, SY + 5, mz, BlockTypes.CHAIN);
+        // ── Cobbled-deepslate overhangs at perimeter – every 4° ───────────────
+        for (int angle = 0; angle < 360; angle += 4) {
+            double rad   = Math.toRadians(angle);
+            int    wx    = (int) Math.round((RX - 6) * Math.cos(rad));
+            int    wz    = (int) Math.round((RZ - 6) * Math.sin(rad));
+            double ex    = (double) wx / RX;
+            double ez    = (double) wz / RZ;
+            double t     = ex * ex + ez * ez;
+            int    botY  = 40 + (int) (21.0 * t);
+
+            block(es, wx,     botY + 4, wz,     BlockTypes.COBBLED_DEEPSLATE);
+            block(es, wx,     botY + 5, wz,     BlockTypes.STONE);
+            block(es, wx + 1, botY + 4, wz,     BlockTypes.COBBLED_DEEPSLATE);
+            block(es, wx - 1, botY + 4, wz,     BlockTypes.COBBLED_DEEPSLATE);
+            block(es, wx,     botY + 4, wz + 1, BlockTypes.COBBLED_DEEPSLATE);
+            block(es, wx,     botY + 4, wz - 1, BlockTypes.COBBLED_DEEPSLATE);
         }
 
-        // Step ring around plaza edge (transitions island→plaza)
-        for (int a = 0; a < 360; a += 2) {
-            double rad = Math.toRadians(a);
-            int sx = (int) Math.round(13.6 * Math.cos(rad));
-            int sz = (int) Math.round(13.6 * Math.sin(rad));
-            double ex = (double) sx / RX, ez = (double) sz / RZ;
-            if (ex * ex + ez * ez > 0.96) continue;
+        // ── Tuff + andesite veins at ~12 scattered positions ──────────────────
+        int[][] veinSeeds = {
+            { 14,  20}, {-16, -18}, { 30, -10}, {-32,  12},
+            {  6,  52}, { -8, -54}, { 48,  24}, {-46, -26},
+            { 62, -14}, {-60,  16}, { 24,  70}, {-22, -72}
+        };
+        for (int vi = 0; vi < veinSeeds.length; vi++) {
+            int vx = veinSeeds[vi][0], vz = veinSeeds[vi][1];
+            double ex = (double) vx / RX;
+            double ez = (double) vz / RZ;
+            double t  = ex * ex + ez * ez;
+            if (t > 0.82) continue;
+            int botY = 40 + (int) (21.0 * t);
+
+            BlockType veinMat = (vi % 2 == 0) ? BlockTypes.TUFF : BlockTypes.ANDESITE;
+            // Place a 3-block diagonal vein on the underside
+            for (int i = -2; i <= 2; i++) {
+                block(es, vx + i,     botY + 5, vz,     veinMat);
+                block(es, vx,         botY + 5, vz + i, veinMat);
+                block(es, vx + i,     botY + 6, vz + i, veinMat);
+            }
+            // Occasional polished-andesite geode-like accent
+            if (vi % 3 == 0) {
+                block(es, vx, botY + 7, vz, BlockTypes.POLISHED_ANDESITE);
+            }
+        }
+    }
+
+    // ============================================================================
+    //  CENTRAL STRUCTURES
+    // ============================================================================
+
+    /**
+     * Builds the central plaza: a polished-deepslate disk of radius 20 at SY,
+     * with concentric decorative rings, 12 ornamental pillars, and step rings
+     * transitioning down to island level.
+     */
+    private void buildCentralPlaza(EditSession es) {
+
+        // ── Full plaza disk fill – radius 20 ─────────────────────────────────
+        for (int x = -20; x <= 20; x++) {
+            for (int z = -20; z <= 20; z++) {
+                double dist = Math.sqrt((double)(x * x + z * z));
+                if (dist > 20.0) continue;
+
+                BlockType tile;
+                if (dist < 10.0) {
+                    // Inner solid zone
+                    tile = BlockTypes.POLISHED_DEEPSLATE;
+                } else if (dist >= 10.5 && dist <= 11.5) {
+                    // Chiseled accent ring
+                    tile = BlockTypes.CHISELED_DEEPSLATE;
+                } else if (dist >= 16.5 && dist <= 17.5) {
+                    // Quartz decorative ring
+                    tile = BlockTypes.QUARTZ_BRICKS;
+                } else {
+                    // Outer checkerboard (r=12 to r=20)
+                    boolean alt = (Math.abs(x) + Math.abs(z)) % 2 == 0;
+                    tile = alt ? BlockTypes.POLISHED_DEEPSLATE : BlockTypes.DEEPSLATE_TILES;
+                }
+                block(es, x, SY, z, tile);
+            }
+        }
+
+        // ── 12 ornamental pillars evenly spaced at r=17, every 30° ───────────
+        for (int pillarIndex = 0; pillarIndex < 12; pillarIndex++) {
+            double rad = Math.toRadians(pillarIndex * 30.0);
+            int px = (int) Math.round(17.0 * Math.cos(rad));
+            int pz = (int) Math.round(17.0 * Math.sin(rad));
+
+            // Base block
+            block(es, px, SY,     pz, BlockTypes.DEEPSLATE_BRICKS);
+            // 5-tall quartz pillar shaft
+            column(es, px, pz, SY + 1, SY + 5, BlockTypes.QUARTZ_PILLAR);
+            // Capital
+            block(es, px, SY + 6, pz, BlockTypes.POLISHED_DEEPSLATE);
+            // Lantern on top
+            block(es, px, SY + 7, pz, BlockTypes.LANTERN);
+
+            // Chains between alternate pillar midpoints
+            if (pillarIndex % 2 == 0) {
+                double radNext = Math.toRadians((pillarIndex + 1) * 30.0);
+                int mx = (int) Math.round(16.5 * Math.cos(radNext - Math.toRadians(15)));
+                int mz = (int) Math.round(16.5 * Math.sin(radNext - Math.toRadians(15)));
+                block(es, mx, SY + 4, mz, BlockTypes.CHAIN);
+                block(es, mx, SY + 5, mz, BlockTypes.CHAIN);
+            }
+        }
+
+        // ── Step ring at r=20.8 (outer transition) ────────────────────────────
+        for (int angle = 0; angle < 360; angle++) {
+            double rad = Math.toRadians(angle);
+            int sx = (int) Math.round(20.8 * Math.cos(rad));
+            int sz = (int) Math.round(20.8 * Math.sin(rad));
+            // Boundary check: must still be on island
+            double ex = (double) sx / RX;
+            double ez = (double) sz / RZ;
+            if (ex * ex + ez * ez > 0.95) continue;
             block(es, sx, SY, sz, BlockTypes.STONE_BRICKS);
         }
 
-        // Central fountain between tower south face and plaza edge
-        buildCentralFountain(es);
+        // ── Secondary step ring at r=21.8, offset -1Y ─────────────────────────
+        for (int angle = 0; angle < 360; angle++) {
+            double rad = Math.toRadians(angle);
+            int sx = (int) Math.round(21.8 * Math.cos(rad));
+            int sz = (int) Math.round(21.8 * Math.sin(rad));
+            double ex = (double) sx / RX;
+            double ez = (double) sz / RZ;
+            if (ex * ex + ez * ez > 0.95) continue;
+            block(es, sx, SY - 1, sz, BlockTypes.COBBLESTONE);
+        }
     }
 
-    private void buildCentralFountain(EditSession es) {
-        // Circular fountain basin west of tower: centre at (-10, SY, 0)
-        int fx = -10, fz = 0;
+    /**
+     * Places four themed fountains at (±16, SY, 0) and (0, SY, ±16), each with
+     * a 5×5 basin, themed rim, water interior, prismarine floor, sea-lantern,
+     * a central polished-andesite post with water on top, and mossy corner
+     * accents.  Each fountain uses a slightly different aesthetic.
+     */
+    private void buildCentralFountains(EditSession es) {
 
-        // Stone-brick rim, 5×5
-        for (int x = fx - 2; x <= fx + 2; x++) {
-            for (int z = fz - 2; z <= fz + 2; z++) {
-                boolean edge = x == fx - 2 || x == fx + 2 || z == fz - 2 || z == fz + 2;
-                if (edge) {
-                    block(es, x, SY,     z, BlockTypes.STONE_BRICKS);
-                    block(es, x, SY + 1, z, BlockTypes.STONE_BRICK_WALL);
-                } else {
-                    block(es, x, SY - 1, z, BlockTypes.WATER);
-                    block(es, x, SY - 2, z, BlockTypes.PRISMARINE);
-                    block(es, x, SY,     z, BlockTypes.AIR);
+        // ── Fountain 1: East (16, SY, 0) — Smooth-quartz / elegant theme ─────
+        {
+            int fx = 16, fz = 0;
+            for (int x = fx - 2; x <= fx + 2; x++) {
+                for (int z = fz - 2; z <= fz + 2; z++) {
+                    boolean edge = (x == fx - 2 || x == fx + 2 || z == fz - 2 || z == fz + 2);
+                    if (edge) {
+                        block(es, x, SY,     z, BlockTypes.SMOOTH_QUARTZ);
+                        block(es, x, SY + 1, z, BlockTypes.STONE_BRICK_WALL);
+                    } else {
+                        block(es, x, SY - 1, z, BlockTypes.WATER);
+                        block(es, x, SY - 2, z, BlockTypes.PRISMARINE);
+                        block(es, x, SY,     z, BlockTypes.AIR);
+                    }
                 }
             }
+            block(es, fx, SY - 2, fz, BlockTypes.SEA_LANTERN);
+            block(es, fx, SY,     fz, BlockTypes.POLISHED_ANDESITE);
+            block(es, fx, SY + 1, fz, BlockTypes.WATER);
+            // Mossy corner accents
+            block(es, fx - 2, SY + 2, fz - 2, BlockTypes.MOSSY_STONE_BRICKS);
+            block(es, fx + 2, SY + 2, fz - 2, BlockTypes.MOSSY_STONE_BRICKS);
+            block(es, fx - 2, SY + 2, fz + 2, BlockTypes.MOSSY_STONE_BRICKS);
+            block(es, fx + 2, SY + 2, fz + 2, BlockTypes.MOSSY_STONE_BRICKS);
         }
 
-        // Prismarine glow beneath water
-        block(es, fx, SY - 2, fz, BlockTypes.SEA_LANTERN);
+        // ── Fountain 2: West (-16, SY, 0) — Stone-bricks / classic theme ─────
+        {
+            int fx = -16, fz = 0;
+            for (int x = fx - 2; x <= fx + 2; x++) {
+                for (int z = fz - 2; z <= fz + 2; z++) {
+                    boolean edge = (x == fx - 2 || x == fx + 2 || z == fz - 2 || z == fz + 2);
+                    if (edge) {
+                        block(es, x, SY,     z, BlockTypes.STONE_BRICKS);
+                        block(es, x, SY + 1, z, BlockTypes.STONE_BRICK_WALL);
+                    } else {
+                        block(es, x, SY - 1, z, BlockTypes.WATER);
+                        block(es, x, SY - 2, z, BlockTypes.PRISMARINE);
+                        block(es, x, SY,     z, BlockTypes.AIR);
+                    }
+                }
+            }
+            block(es, fx, SY - 2, fz, BlockTypes.SEA_LANTERN);
+            block(es, fx, SY,     fz, BlockTypes.POLISHED_ANDESITE);
+            block(es, fx, SY + 1, fz, BlockTypes.WATER);
+            block(es, fx - 2, SY + 2, fz - 2, BlockTypes.MOSSY_STONE_BRICKS);
+            block(es, fx + 2, SY + 2, fz - 2, BlockTypes.MOSSY_STONE_BRICKS);
+            block(es, fx - 2, SY + 2, fz + 2, BlockTypes.MOSSY_STONE_BRICKS);
+            block(es, fx + 2, SY + 2, fz + 2, BlockTypes.MOSSY_STONE_BRICKS);
+        }
 
-        // Central small pillar with water-source on top
-        block(es, fx, SY,     fz, BlockTypes.POLISHED_ANDESITE);
-        block(es, fx, SY + 1, fz, BlockTypes.WATER);
+        // ── Fountain 3: North (0, SY, -16) — Mossy-stone-bricks / nature theme ─
+        {
+            int fx = 0, fz = -16;
+            for (int x = fx - 2; x <= fx + 2; x++) {
+                for (int z = fz - 2; z <= fz + 2; z++) {
+                    boolean edge = (x == fx - 2 || x == fx + 2 || z == fz - 2 || z == fz + 2);
+                    if (edge) {
+                        block(es, x, SY,     z, BlockTypes.MOSSY_STONE_BRICKS);
+                        block(es, x, SY + 1, z, BlockTypes.STONE_BRICK_WALL);
+                    } else {
+                        block(es, x, SY - 1, z, BlockTypes.WATER);
+                        block(es, x, SY - 2, z, BlockTypes.PRISMARINE);
+                        block(es, x, SY,     z, BlockTypes.AIR);
+                    }
+                }
+            }
+            block(es, fx, SY - 2, fz, BlockTypes.SEA_LANTERN);
+            block(es, fx, SY,     fz, BlockTypes.POLISHED_ANDESITE);
+            block(es, fx, SY + 1, fz, BlockTypes.WATER);
+            block(es, fx - 2, SY + 2, fz - 2, BlockTypes.MOSSY_COBBLESTONE);
+            block(es, fx + 2, SY + 2, fz - 2, BlockTypes.MOSSY_COBBLESTONE);
+            block(es, fx - 2, SY + 2, fz + 2, BlockTypes.MOSSY_COBBLESTONE);
+            block(es, fx + 2, SY + 2, fz + 2, BlockTypes.MOSSY_COBBLESTONE);
+        }
 
-        // Rim corner accents
-        for (int[] c : new int[][]{{fx-2,fz-2},{fx+2,fz-2},{fx-2,fz+2},{fx+2,fz+2}}) {
-            block(es, c[0], SY + 2, c[1], BlockTypes.CHISELED_STONE_BRICKS);
+        // ── Fountain 4: South (0, SY, 16) — Deepslate-bricks / dark theme ────
+        {
+            int fx = 0, fz = 16;
+            for (int x = fx - 2; x <= fx + 2; x++) {
+                for (int z = fz - 2; z <= fz + 2; z++) {
+                    boolean edge = (x == fx - 2 || x == fx + 2 || z == fz - 2 || z == fz + 2);
+                    if (edge) {
+                        block(es, x, SY,     z, BlockTypes.DEEPSLATE_BRICKS);
+                        block(es, x, SY + 1, z, BlockTypes.STONE_BRICK_WALL);
+                    } else {
+                        block(es, x, SY - 1, z, BlockTypes.WATER);
+                        block(es, x, SY - 2, z, BlockTypes.PRISMARINE);
+                        block(es, x, SY,     z, BlockTypes.AIR);
+                    }
+                }
+            }
+            block(es, fx, SY - 2, fz, BlockTypes.SEA_LANTERN);
+            block(es, fx, SY,     fz, BlockTypes.POLISHED_ANDESITE);
+            block(es, fx, SY + 1, fz, BlockTypes.WATER);
+            block(es, fx - 2, SY + 2, fz - 2, BlockTypes.CHISELED_DEEPSLATE);
+            block(es, fx + 2, SY + 2, fz - 2, BlockTypes.CHISELED_DEEPSLATE);
+            block(es, fx - 2, SY + 2, fz + 2, BlockTypes.CHISELED_DEEPSLATE);
+            block(es, fx + 2, SY + 2, fz + 2, BlockTypes.CHISELED_DEEPSLATE);
         }
     }
 
+    /**
+     * Builds the main central tower: 19×19 footprint (x=−9..9, z=−9..9),
+     * 55 blocks tall.  Includes a multi-layered body, arched windows,
+     * entryways, observation deck, battlements, four corner turrets,
+     * and a tapering quartz spire.
+     */
     private void buildMainTower(EditSession es) {
-        // 13×13 footprint (x=-6..6, z=-6..6), 36 blocks from SY up
-        // Material: polished deepslate main walls, quartz accents, chiseled deepslate details
 
-        // ── Foundation slab at SY ────────────────────────────────────────────
-        fill(es, -6, SY, -6, 6, SY, 6, BlockTypes.DEEPSLATE_BRICKS);
-        // Raised quartz border at SY on the foundation perimeter
-        for (int x = -6; x <= 6; x++) {
-            block(es, x, SY + 1, -6, BlockTypes.CHISELED_DEEPSLATE);
-            block(es, x, SY + 1,  6, BlockTypes.CHISELED_DEEPSLATE);
+        // ── Foundation at SY ─────────────────────────────────────────────────
+        fill(es, -9, SY, -9, 9, SY, 9, BlockTypes.DEEPSLATE_BRICKS);
+        // Chiseled border at SY+1 on perimeter
+        for (int x = -9; x <= 9; x++) {
+            block(es, x, SY + 1, -9, BlockTypes.CHISELED_DEEPSLATE);
+            block(es, x, SY + 1,  9, BlockTypes.CHISELED_DEEPSLATE);
         }
-        for (int z = -5; z <= 5; z++) {
-            block(es, -6, SY + 1, z, BlockTypes.CHISELED_DEEPSLATE);
-            block(es,  6, SY + 1, z, BlockTypes.CHISELED_DEEPSLATE);
+        for (int z = -8; z <= 8; z++) {
+            block(es, -9, SY + 1, z, BlockTypes.CHISELED_DEEPSLATE);
+            block(es,  9, SY + 1, z, BlockTypes.CHISELED_DEEPSLATE);
         }
 
-        // ── Lower body  y = SY+2 .. SY+12  (2-block thick hollow walls) ────
-        for (int y = SY + 2; y <= SY + 12; y++) {
-            for (int x = -6; x <= 6; x++) {
-                for (int z = -6; z <= 6; z++) {
-                    boolean outer = (x == -6 || x == 6 || z == -6 || z == 6);
-                    boolean inner = (x == -5 || x == 5 || z == -5 || z == 5);
-                    if (outer) {
-                        boolean quartz = (x + z + y) % 5 == 0;
-                        block(es, x, y, z, quartz ? BlockTypes.QUARTZ_BRICKS
-                                                  : BlockTypes.POLISHED_DEEPSLATE);
-                    } else if (inner) {
+        // ── Lower body: y = SY+2 to SY+18, 2-block-thick hollow walls ────────
+        for (int y = SY + 2; y <= SY + 18; y++) {
+            for (int x = -9; x <= 9; x++) {
+                for (int z = -9; z <= 9; z++) {
+                    boolean isOuter = (x == -9 || x == 9 || z == -9 || z == 9);
+                    boolean isInner = (x == -8 || x == 8 || z == -8 || z == 8);
+                    if (isOuter) {
+                        // Occasional quartz accent block on the outer wall
+                        boolean quartzAccent = ((x + z + y) % 5 == 0);
+                        block(es, x, y, z,
+                              quartzAccent ? BlockTypes.QUARTZ_BRICKS
+                                           : BlockTypes.POLISHED_DEEPSLATE);
+                    } else if (isInner) {
                         block(es, x, y, z, BlockTypes.DEEPSLATE_BRICKS);
                     }
                 }
             }
         }
 
-        // Lower-body windows: 1×2 tinted glass on each face at x/z = -3, 0, +3
+        // Lower body: 3 windows per face, 1×2 tinted-glass, at y+6..y+7
+        //   North (z=-9) and South (z=9) faces — openings at x=-3,0,+3
         for (int wx : new int[]{-3, 0, 3}) {
-            for (int wy = SY + 5; wy <= SY + 6; wy++) {
-                block(es, wx, wy, -6, BlockTypes.TINTED_GLASS);
-                block(es, wx, wy,  6, BlockTypes.TINTED_GLASS);
-                block(es, -6, wy, wx, BlockTypes.TINTED_GLASS);
-                block(es,  6, wy, wx, BlockTypes.TINTED_GLASS);
-            }
+            block(es, wx, SY + 6,  -9, BlockTypes.TINTED_GLASS);
+            block(es, wx, SY + 7,  -9, BlockTypes.TINTED_GLASS);
+            block(es, wx, SY + 6,   9, BlockTypes.TINTED_GLASS);
+            block(es, wx, SY + 7,   9, BlockTypes.TINTED_GLASS);
+        }
+        //   East (x=9) and West (x=-9) faces — openings at z=-3,0,+3
+        for (int wz : new int[]{-3, 0, 3}) {
+            block(es,  9, SY + 6, wz, BlockTypes.TINTED_GLASS);
+            block(es,  9, SY + 7, wz, BlockTypes.TINTED_GLASS);
+            block(es, -9, SY + 6, wz, BlockTypes.TINTED_GLASS);
+            block(es, -9, SY + 7, wz, BlockTypes.TINTED_GLASS);
         }
 
-        // Entryways: 3-wide × 3-tall openings on south (z=6) and north (z=-6)
-        for (int ey = SY + 2; ey <= SY + 4; ey++) {
+        // Lower body: entryways 3-wide × 4-tall on North (z=-9) and South (z=9)
+        for (int ey = SY + 2; ey <= SY + 5; ey++) {
             for (int ex = -1; ex <= 1; ex++) {
-                block(es, ex, ey,  6, BlockTypes.AIR);
-                block(es, ex, ey, -6, BlockTypes.AIR);
+                block(es, ex, ey, -9, BlockTypes.AIR);
+                block(es, ex, ey,  9, BlockTypes.AIR);
             }
         }
 
-        // ── Mid body  y = SY+13 .. SY+22  (1-block thick, quartz + deepslate) ─
-        for (int y = SY + 13; y <= SY + 22; y++) {
-            for (int x = -6; x <= 6; x++) {
-                for (int z = -6; z <= 6; z++) {
-                    if (x == -6 || x == 6 || z == -6 || z == 6) {
-                        boolean quartz = (x + z) % 4 == 0;
-                        block(es, x, y, z, quartz ? BlockTypes.CHISELED_QUARTZ_BLOCK
-                                                  : BlockTypes.POLISHED_DEEPSLATE);
+        // ── Mid body: y = SY+19 to SY+33, 1-block-thick walls ────────────────
+        for (int y = SY + 19; y <= SY + 33; y++) {
+            for (int x = -9; x <= 9; x++) {
+                for (int z = -9; z <= 9; z++) {
+                    if (x == -9 || x == 9 || z == -9 || z == 9) {
+                        boolean quartzAlt = ((x + z) % 4 == 0);
+                        block(es, x, y, z,
+                              quartzAlt ? BlockTypes.CHISELED_QUARTZ_BLOCK
+                                        : BlockTypes.POLISHED_DEEPSLATE);
                     }
                 }
             }
         }
 
-        // Large 3-wide × 5-tall arched windows on mid body
-        for (int wy = SY + 14; wy <= SY + 19; wy++) {
+        // Mid body: large 3-wide × 7-tall arched windows on each face, y+20..y+26
+        //   North and South
+        for (int wy = SY + 20; wy <= SY + 26; wy++) {
             for (int wx = -1; wx <= 1; wx++) {
-                block(es, wx, wy, -6, BlockTypes.TINTED_GLASS);
-                block(es, wx, wy,  6, BlockTypes.TINTED_GLASS);
-                block(es, -6, wy, wx, BlockTypes.TINTED_GLASS);
-                block(es,  6, wy, wx, BlockTypes.TINTED_GLASS);
+                block(es, wx, wy, -9, BlockTypes.TINTED_GLASS);
+                block(es, wx, wy,  9, BlockTypes.TINTED_GLASS);
+                block(es, -9, wy, wx, BlockTypes.TINTED_GLASS);
+                block(es,  9, wy, wx, BlockTypes.TINTED_GLASS);
             }
         }
-        // Arched glass top: centre only at highest row
-        block(es, 0, SY + 20, -6, BlockTypes.TINTED_GLASS);
-        block(es, 0, SY + 20,  6, BlockTypes.TINTED_GLASS);
-        block(es, -6, SY + 20, 0, BlockTypes.TINTED_GLASS);
-        block(es,  6, SY + 20, 0, BlockTypes.TINTED_GLASS);
+        // Arched top centre-only at SY+27 on mid body
+        block(es,  0, SY + 27, -9, BlockTypes.TINTED_GLASS);
+        block(es,  0, SY + 27,  9, BlockTypes.TINTED_GLASS);
+        block(es, -9, SY + 27,  0, BlockTypes.TINTED_GLASS);
+        block(es,  9, SY + 27,  0, BlockTypes.TINTED_GLASS);
 
-        // ── Upper tier  y = SY+23 .. SY+27 (narrows to 11×11 with quartz trim) ─
-        for (int y = SY + 23; y <= SY + 27; y++) {
-            for (int x = -5; x <= 5; x++) {
-                for (int z = -5; z <= 5; z++) {
-                    if (x == -5 || x == 5 || z == -5 || z == 5) {
+        // ── Upper tier: y = SY+34 to SY+40, narrows to 17×17 (±8) ───────────
+        for (int y = SY + 34; y <= SY + 40; y++) {
+            for (int x = -8; x <= 8; x++) {
+                for (int z = -8; z <= 8; z++) {
+                    if (x == -8 || x == 8 || z == -8 || z == 8) {
                         block(es, x, y, z, BlockTypes.DEEPSLATE_BRICKS);
                     }
                 }
             }
         }
 
-        // ── Observation floor at SY+27 ──────────────────────────────────────
-        fill(es, -4, SY + 27, -4, 4, SY + 27, 4, BlockTypes.POLISHED_DEEPSLATE);
-        // Quartz accent tiles in corners
-        for (int[] corner : new int[][]{{-3,-3},{3,-3},{-3,3},{3,3}}) {
-            block(es, corner[0], SY + 27, corner[1], BlockTypes.QUARTZ_BRICKS);
-        }
-        // Iron-bar railing
-        for (int i = -5; i <= 5; i++) {
-            block(es, i, SY + 28, -5, BlockTypes.IRON_BARS);
-            block(es, i, SY + 28,  5, BlockTypes.IRON_BARS);
-        }
-        for (int i = -4; i <= 4; i++) {
-            block(es, -5, SY + 28, i, BlockTypes.IRON_BARS);
-            block(es,  5, SY + 28, i, BlockTypes.IRON_BARS);
+        // ── Observation deck at SY+40 ─────────────────────────────────────────
+        fill(es, -7, SY + 40, -7, 7, SY + 40, 7, BlockTypes.POLISHED_DEEPSLATE);
+        // Quartz accent tiles at corners
+        block(es, -6, SY + 40, -6, BlockTypes.QUARTZ_BRICKS);
+        block(es,  6, SY + 40, -6, BlockTypes.QUARTZ_BRICKS);
+        block(es, -6, SY + 40,  6, BlockTypes.QUARTZ_BRICKS);
+        block(es,  6, SY + 40,  6, BlockTypes.QUARTZ_BRICKS);
+        // Iron-bars railing at SY+41 on perimeter (±7)
+        for (int i = -7; i <= 7; i++) {
+            block(es,  i, SY + 41, -7, BlockTypes.IRON_BARS);
+            block(es,  i, SY + 41,  7, BlockTypes.IRON_BARS);
+            block(es, -7, SY + 41,  i, BlockTypes.IRON_BARS);
+            block(es,  7, SY + 41,  i, BlockTypes.IRON_BARS);
         }
 
-        // ── Battlements (merlons + crenels) at upper tier top ───────────────
-        for (int x = -5; x <= 5; x++) {
-            for (int z = -5; z <= 5; z++) {
-                if (x == -5 || x == 5 || z == -5 || z == 5) {
-                    if ((x + z) % 2 == 0) {
-                        block(es, x, SY + 28, z, BlockTypes.DEEPSLATE_BRICKS);
-                        block(es, x, SY + 29, z, BlockTypes.DEEPSLATE_TILES);
-                    }
-                }
+        // ── Battlements at SY+41 – merlons every other block ─────────────────
+        for (int i = -8; i <= 8; i++) {
+            // North face
+            if ((i + 8) % 2 == 0) {
+                block(es,  i, SY + 41, -8, BlockTypes.DEEPSLATE_BRICKS);
+                block(es,  i, SY + 42, -8, BlockTypes.DEEPSLATE_TILES);
+            }
+            // South face
+            if ((i + 8) % 2 == 0) {
+                block(es,  i, SY + 41,  8, BlockTypes.DEEPSLATE_BRICKS);
+                block(es,  i, SY + 42,  8, BlockTypes.DEEPSLATE_TILES);
+            }
+        }
+        for (int j = -7; j <= 7; j++) {
+            // West face
+            if ((j + 7) % 2 == 0) {
+                block(es, -8, SY + 41, j, BlockTypes.DEEPSLATE_BRICKS);
+                block(es, -8, SY + 42, j, BlockTypes.DEEPSLATE_TILES);
+            }
+            // East face
+            if ((j + 7) % 2 == 0) {
+                block(es,  8, SY + 41, j, BlockTypes.DEEPSLATE_BRICKS);
+                block(es,  8, SY + 42, j, BlockTypes.DEEPSLATE_TILES);
             }
         }
 
-        // ── Four corner turrets: 3×3, rise from SY+1 to SY+33 ──────────────
-        for (int[] c : new int[][]{{-6,-6},{6,-6},{-6,6},{6,6}}) {
-            int tx = c[0], tz = c[1];
-            int ox = tx < 0 ? 2 : -2, oz = tz < 0 ? 2 : -2;  // offsets toward centre
-            for (int y = SY + 1; y <= SY + 33; y++) {
-                for (int dx = 0; dx <= 2; dx++) {
-                    for (int dz = 0; dz <= 2; dz++) {
-                        int bx = tx + dx * (tx < 0 ? 1 : -1);
-                        int bz = tz + dz * (tz < 0 ? 1 : -1);
-                        boolean outer = dx == 0 || dx == 2 || dz == 0 || dz == 2;
-                        if (outer) {
-                            block(es, bx, y, bz, y % 4 == 0
-                                    ? BlockTypes.QUARTZ_BRICKS
-                                    : BlockTypes.CHISELED_DEEPSLATE);
+        // ── 4 corner turrets: 4×4 hollow, placed at corners offset outward ────
+        //    Positions relative to tower corners at (±9, ±9)
+        int[][] turretCorners = {{-9, -9}, {9, -9}, {-9, 9}, {9, 9}};
+        int[]   turretOffsetX  = {-1,       1,       -1,      1};
+        int[]   turretOffsetZ  = {-1,      -1,        1,      1};
+
+        for (int tc = 0; tc < 4; tc++) {
+            int baseTX = turretCorners[tc][0] + turretOffsetX[tc];
+            int baseTZ = turretCorners[tc][1] + turretOffsetZ[tc];
+
+            for (int y = SY + 1; y <= SY + 50; y++) {
+                for (int dx = 0; dx <= 3; dx++) {
+                    for (int dz = 0; dz <= 3; dz++) {
+                        // Map dx/dz to absolute coordinates using offsets
+                        int bx = baseTX + dx * turretOffsetX[tc];
+                        int bz = baseTZ + dz * turretOffsetZ[tc];
+                        boolean isTurretWall = (dx == 0 || dx == 3 || dz == 0 || dz == 3);
+                        if (isTurretWall) {
+                            block(es, bx, y, bz,
+                                  y % 4 == 0 ? BlockTypes.QUARTZ_BRICKS
+                                             : BlockTypes.CHISELED_DEEPSLATE);
                         }
                     }
                 }
             }
-            // Turret cap
-            int capX = tx + (tx < 0 ? 1 : -1);
-            int capZ = tz + (tz < 0 ? 1 : -1);
-            fill(es, capX - 1, SY + 34, capZ - 1, capX + 1, SY + 34, capZ + 1,
-                    BlockTypes.DEEPSLATE_BRICKS);
-            block(es, capX, SY + 35, capZ, BlockTypes.LANTERN);
+            // Turret cap at SY+51
+            int capX = baseTX + turretOffsetX[tc];
+            int capZ = baseTZ + turretOffsetZ[tc];
+            fill(es, capX - 1, SY + 51, capZ - 1, capX + 1, SY + 51, capZ + 1,
+                 BlockTypes.POLISHED_DEEPSLATE);
+            block(es, capX, SY + 52, capZ, BlockTypes.LANTERN);
         }
 
-        // ── Spire: y = SY+29 .. SY+38 ───────────────────────────────────────
-        // Profile shrinks each 2 blocks
-        int[][] spireProfile = {{-2,-2,2,2},{-2,-2,2,2},{-1,-1,1,1},{-1,-1,1,1},{0,0,0,0},{0,0,0,0}};
-        for (int i = 0; i < spireProfile.length; i++) {
-            int y = SY + 30 + i;
-            int[] s = spireProfile[i];
-            if (s[0] == s[2]) {
-                column(es, s[0], s[1], y, y, BlockTypes.QUARTZ_PILLAR);
-            } else {
-                fill(es, s[0], y, s[1], s[2], y, s[3], BlockTypes.QUARTZ_PILLAR);
-            }
-        }
-        // Tip: sea lantern on top of quartz pillar
-        column(es, 0, 0, SY + 36, SY + 37, BlockTypes.QUARTZ_PILLAR);
-        block(es, 0, SY + 38, 0, BlockTypes.SEA_LANTERN);
-        block(es, 0, SY + 39, 0, BlockTypes.CHAIN);
-        block(es, 0, SY + 40, 0, BlockTypes.LANTERN);
+        // ── Spire: y = SY+42 to SY+55, tapering quartz profile ───────────────
+        //  SY+42..43 — 5×5 base footprint
+        fill(es, -2, SY + 42, -2,  2, SY + 43,  2, BlockTypes.QUARTZ_PILLAR);
+        //  SY+44..47 — 3×3
+        fill(es, -1, SY + 44, -1,  1, SY + 47,  1, BlockTypes.QUARTZ_PILLAR);
+        //  SY+48..54 — 1×1 shaft
+        column(es, 0, 0, SY + 48, SY + 54, BlockTypes.QUARTZ_PILLAR);
+        // Tip
+        block(es, 0, SY + 55, 0, BlockTypes.SEA_LANTERN);
+        block(es, 0, SY + 56, 0, BlockTypes.CHAIN);
+        block(es, 0, SY + 57, 0, BlockTypes.LANTERN);
     }
 
+    /**
+     * Furnishes the inside of the main tower: polished-deepslate floors,
+     * sea-lantern uplights at corners, a central QUARTZ_PILLAR load-bearing
+     * column, secondary columns, a spiral staircase, multiple landing floors,
+     * an iron-block beacon base on the observation deck, and bookshelf
+     * decorations on interior walls.
+     */
     private void buildTowerInterior(EditSession es) {
-        // ── Ground floor interior ────────────────────────────────────────────
-        fill(es, -4, SY + 1, -4, 4, SY + 1, 4, BlockTypes.POLISHED_DEEPSLATE);
 
-        // Corner sea-lanterns flush with floor
-        block(es, -3, SY + 1, -3, BlockTypes.SEA_LANTERN);
-        block(es,  3, SY + 1, -3, BlockTypes.SEA_LANTERN);
-        block(es, -3, SY + 1,  3, BlockTypes.SEA_LANTERN);
-        block(es,  3, SY + 1,  3, BlockTypes.SEA_LANTERN);
+        // ── Ground floor: polished-deepslate fill ±7 ─────────────────────────
+        fill(es, -7, SY + 1, -7, 7, SY + 1, 7, BlockTypes.POLISHED_DEEPSLATE);
 
-        // Central load-bearing pillar y+2..y+12
-        column(es, 0, 0, SY + 2, SY + 12, BlockTypes.QUARTZ_PILLAR);
-        block(es, 0, SY + 13, 0, BlockTypes.SEA_LANTERN);
+        // 4 corner sea-lanterns embedded in the floor
+        block(es, -6, SY + 1, -6, BlockTypes.SEA_LANTERN);
+        block(es,  6, SY + 1, -6, BlockTypes.SEA_LANTERN);
+        block(es, -6, SY + 1,  6, BlockTypes.SEA_LANTERN);
+        block(es,  6, SY + 1,  6, BlockTypes.SEA_LANTERN);
 
-        // 4 secondary pillars at ±3
-        for (int[] pos : new int[][]{{-3,0},{3,0},{0,-3},{0,3}}) {
-            column(es, pos[0], pos[1], SY + 2, SY + 9, BlockTypes.POLISHED_DEEPSLATE);
-            block(es, pos[0], SY + 10, pos[1], BlockTypes.GLOWSTONE);
+        // ── Central load-bearing QUARTZ_PILLAR column ─────────────────────────
+        column(es, 0, 0, SY + 2, SY + 18, BlockTypes.QUARTZ_PILLAR);
+        block(es, 0, SY + 19, 0, BlockTypes.SEA_LANTERN);
+
+        // ── 4 secondary columns at (±5, 0) and (0, ±5) ───────────────────────
+        for (int[] colPos : new int[][]{{-5, 0}, {5, 0}, {0, -5}, {0, 5}}) {
+            column(es, colPos[0], colPos[1], SY + 2, SY + 10, BlockTypes.POLISHED_DEEPSLATE);
+            block(es, colPos[0], SY + 11, colPos[1], BlockTypes.SEA_LANTERN);
         }
 
-        // Spiral staircase: one step per 4 ticks, rotates around central pillar
-        for (int step = 0; step < 24; step++) {
-            int y  = SY + 2 + step;
-            int quad = step % 4;
-            int[] sx = {-4, 4,  4, -4};
-            int[] sz = {-4,-4,  4,  4};
-            block(es, sx[quad], y, sz[quad], BlockTypes.POLISHED_DEEPSLATE);
-            // Landing slab beside the stair
-            int[] lx = {-3, 3,  3, -3};
-            int[] lz = {-4,-3,  4,  3};
-            block(es, lx[quad], y, lz[quad], BlockTypes.DEEPSLATE_TILES);
+        // ── Spiral staircase – 36 steps wrapping the interior ─────────────────
+        // Steps cycle through 4 corner positions (NW, NE, SE, SW) while
+        // incrementing y by 1 each step
+        int[] spiralX = {-6, 6,  6, -6};
+        int[] spiralZ = {-6, -6, 6,  6};
+        for (int step = 0; step < 36; step++) {
+            int quadrant = step % 4;
+            int y        = SY + 2 + step;
+            block(es, spiralX[quadrant], y, spiralZ[quadrant],
+                  BlockTypes.POLISHED_DEEPSLATE);
+            // Landing-slab approach block adjacent to the step
+            int lx = spiralX[quadrant] + (spiralX[quadrant] < 0 ? 1 : -1);
+            int lz = spiralZ[quadrant] + (spiralZ[quadrant] < 0 ? 1 : -1);
+            block(es, lx, y, lz, BlockTypes.DEEPSLATE_TILES);
         }
 
-        // ── Second floor landing at SY+13 ────────────────────────────────────
-        fill(es, -3, SY + 13, -3, 3, SY + 13, 3, BlockTypes.DEEPSLATE_BRICKS);
-        block(es, 0, SY + 14, 0, BlockTypes.SEA_LANTERN);
+        // ── Second floor landing at SY+19 ────────────────────────────────────
+        fill(es, -6, SY + 19, -6, 6, SY + 19, 6, BlockTypes.DEEPSLATE_BRICKS);
+        // Clear interior of second floor (air)
+        fill(es, -5, SY + 19, -5, 5, SY + 19, 5, BlockTypes.POLISHED_DEEPSLATE);
+        block(es, 0, SY + 20, 0, BlockTypes.SEA_LANTERN);
 
-        // ── Observation floor details (SY+27) already placed in buildMainTower ──
-        // Add central throne-like structure on obs floor
-        fill(es, -1, SY + 28, -1, 1, SY + 28, 1, BlockTypes.QUARTZ_BRICKS);
-        block(es,  0, SY + 29,  0, BlockTypes.BEACON);
-        // Beacon base: iron blocks 3×3 at SY+27
-        for (int bx = -1; bx <= 1; bx++)
-            for (int bz = -1; bz <= 1; bz++)
-                block(es, bx, SY + 27, bz, BlockTypes.IRON_BLOCK);
+        // ── Third floor landing at SY+33 ─────────────────────────────────────
+        fill(es, -6, SY + 33, -6, 6, SY + 33, 6, BlockTypes.DEEPSLATE_TILES);
+        fill(es, -5, SY + 33, -5, 5, SY + 33, 5, BlockTypes.POLISHED_DEEPSLATE);
+        block(es, 0, SY + 34, 0, BlockTypes.SEA_LANTERN);
+
+        // ── Observation deck: 3×3 iron-block beacon base at SY+40 ─────────────
+        fill(es, -1, SY + 40, -1, 1, SY + 40, 1, BlockTypes.IRON_BLOCK);
+        block(es, 0, SY + 41, 0, BlockTypes.BEACON);
+
+        // ── Bookshelf decorations on interior walls at SY+4..5 ───────────────
+        //    North inner face (z = -8)
+        for (int bx : new int[]{-4, -2, 0, 2, 4}) {
+            block(es, bx, SY + 4, -8, BlockTypes.CHISELED_STONE_BRICKS);
+            block(es, bx, SY + 5, -8, BlockTypes.CHISELED_STONE_BRICKS);
+        }
+        //    South inner face (z = +8)
+        for (int bx : new int[]{-4, -2, 0, 2, 4}) {
+            block(es, bx, SY + 4, 8, BlockTypes.CHISELED_STONE_BRICKS);
+            block(es, bx, SY + 5, 8, BlockTypes.CHISELED_STONE_BRICKS);
+        }
+        //    West inner face (x = -8)
+        for (int bz : new int[]{-4, -2, 0, 2, 4}) {
+            block(es, -8, SY + 4, bz, BlockTypes.CHISELED_STONE_BRICKS);
+            block(es, -8, SY + 5, bz, BlockTypes.CHISELED_STONE_BRICKS);
+        }
+        //    East inner face (x = +8)
+        for (int bz : new int[]{-4, -2, 0, 2, 4}) {
+            block(es, 8, SY + 4, bz, BlockTypes.CHISELED_STONE_BRICKS);
+            block(es, 8, SY + 5, bz, BlockTypes.CHISELED_STONE_BRICKS);
+        }
+
+        // Accent sea-lanterns above bookshelf rows
+        block(es,  0, SY + 6, -8, BlockTypes.SEA_LANTERN);
+        block(es,  0, SY + 6,  8, BlockTypes.SEA_LANTERN);
+        block(es, -8, SY + 6,  0, BlockTypes.SEA_LANTERN);
+        block(es,  8, SY + 6,  0, BlockTypes.SEA_LANTERN);
+    }
+
+    /**
+     * Places 4 mini-hub plazas on cardinal directions at radius ~32, each with
+     * a 7×7 polished-deepslate pad, corner columns, and a central sea-lantern.
+     * Also places 4 directional signpost obelisks at radius ~40 pointing toward
+     * the nearest portal.
+     */
+    private void buildSecondaryHubs(EditSession es) {
+
+        // ── 4 mini-hub positions ──────────────────────────────────────────────
+        int[][] hubPositions = {{32, 0}, {-32, 0}, {0, 32}, {0, -32}};
+
+        for (int[] hub : hubPositions) {
+            int hx = hub[0], hz = hub[1];
+            // Boundary check
+            double ex = (double) hx / RX;
+            double ez = (double) hz / RZ;
+            if (ex * ex + ez * ez > 0.90) continue;
+
+            // 7×7 pad
+            fill(es, hx - 3, SY, hz - 3, hx + 3, SY, hz + 3,
+                 BlockTypes.POLISHED_DEEPSLATE);
+            // Checkerboard accent tiles
+            for (int dx = -3; dx <= 3; dx++) {
+                for (int dz = -3; dz <= 3; dz++) {
+                    if ((Math.abs(dx) + Math.abs(dz)) % 2 == 0) {
+                        block(es, hx + dx, SY, hz + dz, BlockTypes.DEEPSLATE_TILES);
+                    }
+                }
+            }
+
+            // 4-tall chiseled-stone-bricks corner columns
+            for (int[] corner : new int[][]{{-3,-3},{3,-3},{-3,3},{3,3}}) {
+                column(es, hx + corner[0], hz + corner[1],
+                       SY + 1, SY + 4, BlockTypes.CHISELED_STONE_BRICKS);
+                block(es, hx + corner[0], SY + 5, hz + corner[1],
+                      BlockTypes.SEA_LANTERN);
+            }
+
+            // Central sea-lantern
+            block(es, hx, SY + 1, hz, BlockTypes.SEA_LANTERN);
+            // Quartz pillar central post
+            column(es, hx, hz, SY + 1, SY + 3, BlockTypes.QUARTZ_PILLAR);
+            block(es, hx, SY + 4, hz, BlockTypes.SEA_LANTERN);
+        }
+
+        // ── 4 directional signpost obelisks at radius ~40 ─────────────────────
+        int[][] obeliskPositions = {{40, 0}, {-40, 0}, {0, 40}, {0, -40}};
+
+        for (int[] ob : obeliskPositions) {
+            int ox = ob[0], oz = ob[1];
+            double ex = (double) ox / RX;
+            double ez = (double) oz / RZ;
+            if (ex * ex + ez * ez > 0.92) continue;
+
+            // 3-tall chiseled column obelisk
+            block(es, ox, SY,     oz, BlockTypes.DEEPSLATE_BRICKS);
+            block(es, ox, SY + 1, oz, BlockTypes.CHISELED_DEEPSLATE);
+            block(es, ox, SY + 2, oz, BlockTypes.CHISELED_DEEPSLATE);
+            block(es, ox, SY + 3, oz, BlockTypes.POLISHED_DEEPSLATE);
+            block(es, ox, SY + 4, oz, BlockTypes.LANTERN);
+            // Small 3×3 base platform
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx != 0 || dz != 0) {
+                        block(es, ox + dx, SY, oz + dz, BlockTypes.STONE_BRICKS);
+                    }
+                }
+            }
+        }
     }
 
     // ============================================================================
-    //  ③  PRACTICE PORTALS
+    //  PORTAL HELPER
     // ============================================================================
 
     /**
-     * Builds a freestanding 7-wide × 9-tall arch centred at (cx, SY, cz).
-     * axisX=true  → arch aperture spans along X (player walks north/south through it).
-     * axisX=false → arch aperture spans along Z (player walks east/west through it).
+     * Builds a 9-wide × 12-tall freestanding arch centred at (cx, SY, cz).
+     *
+     * <p>When {@code axisX} is {@code true} the arch spans along X (players
+     * walk north/south through the opening); when {@code false} it spans along Z
+     * (players walk east/west).
+     *
+     * <p>Structure per off-column (off = −4 to +4):
+     * <ul>
+     *   <li>off == ±4 → solid pillar alternating pillar/arch material every 2Y</li>
+     *   <li>y == SY   → floor block</li>
+     *   <li>y ≤ SY+6  → AIR (open walkway)</li>
+     *   <li>y &gt; SY+6 → arch profile: archRow=y−(SY+7), halfOpen=4−archRow;
+     *       if |off| &gt; halfOpen → solid, else AIR</li>
+     * </ul>
+     * Capstone + chain + lantern placed above the crown.
      */
     private void portalArch(EditSession es, int cx, int cz, boolean axisX,
-                             BlockType pillar, BlockType arch, BlockType floor) {
-        for (int off = -3; off <= 3; off++) {
+                            com.sk89q.worldedit.world.block.BlockType pillar,
+                            com.sk89q.worldedit.world.block.BlockType arch,
+                            com.sk89q.worldedit.world.block.BlockType floor) {
+
+        for (int off = -4; off <= 4; off++) {
+            // Resolve absolute coordinates for this column
             int ax = axisX ? cx + off : cx;
             int az = axisX ? cz       : cz + off;
 
-            for (int y = SY; y <= SY + 9; y++) {
-                boolean leftEdge  = off == -3;
-                boolean rightEdge = off ==  3;
+            for (int y = SY; y <= SY + 12; y++) {
+                boolean isEdgeCol = (off == -4 || off == 4);
 
-                if (leftEdge || rightEdge) {
-                    // Full-height solid pillar, alternating materials every 2
+                if (isEdgeCol) {
+                    // Full-height solid pillar, alternating material every 2 blocks
                     block(es, ax, y, az, y % 2 == 0 ? pillar : arch);
+
                 } else if (y == SY) {
+                    // Floor level
                     block(es, ax, y, az, floor);
-                } else if (y <= SY + 5) {
-                    block(es, ax, y, az, BlockTypes.AIR);  // open walkway
+
+                } else if (y <= SY + 6) {
+                    // Open walkway interior
+                    block(es, ax, y, az, BlockTypes.AIR);
+
                 } else {
-                    // Arch profile: wider openings at lower arch rows
-                    int archRow = y - (SY + 6);            // 0..3
-                    int halfOpen = 3 - archRow;            // 3,2,1,0
+                    // Arch profile: rows close inward toward the crown
+                    int archRow  = y - (SY + 7);   // 0 at first arch row, 5 at top
+                    int halfOpen = 4 - archRow;     // how many cols are open each side
+                    if (halfOpen < 0) halfOpen = 0;
+
                     if (Math.abs(off) > halfOpen) {
+                        // Solid arch material
                         block(es, ax, y, az, y % 2 == 0 ? arch : pillar);
                     } else {
                         block(es, ax, y, az, BlockTypes.AIR);
@@ -528,1051 +899,951 @@ public class SpawnBuilder extends BuildHelper {
                 }
             }
         }
-        // Capstone + hanging lantern
-        int topY = SY + 10;
-        block(es, cx, topY,     cz, arch);
-        block(es, cx, topY + 1, cz, BlockTypes.CHAIN);
-        block(es, cx, topY + 2, cz, BlockTypes.LANTERN);
+
+        // ── Capstone at SY+13, chain at SY+14, lantern at SY+15 ─────────────
+        block(es, cx, SY + 13, cz, arch);
+        block(es, cx, SY + 14, cz, BlockTypes.CHAIN);
+        block(es, cx, SY + 15, cz, BlockTypes.LANTERN);
     }
 
-    /** Crystal Practice Portal — East  (x=22, z=0).  End Stone / Amethyst theme */
+    // ============================================================================
+    //  PORTALS
+    // ============================================================================
+
+    /**
+     * Crystal Portal — East (cx=55, cz=0).
+     * End-stone / amethyst theme with a purpur arch and flanking obelisks.
+     * Approach path runs west from x=48 to the pad.
+     */
     private void buildCrystalPortal(EditSession es) {
-        int cx = 22, cz = 0;
+        int cx = 55, cz = 0;
 
-        // Platform pad 7×7
-        fill(es, cx - 3, SY, cz - 3, cx + 3, SY, cz + 3, BlockTypes.END_STONE_BRICKS);
-        // Purpur inset border
-        for (int x = cx - 3; x <= cx + 3; x++) {
-            block(es, x, SY, cz - 3, BlockTypes.PURPUR_BLOCK);
-            block(es, x, SY, cz + 3, BlockTypes.PURPUR_BLOCK);
+        // ── 9×9 pad with PURPUR_BLOCK border ──────────────────────────────────
+        fill(es, cx - 4, SY, cz - 4, cx + 4, SY, cz + 4, BlockTypes.END_STONE_BRICKS);
+        for (int x = cx - 4; x <= cx + 4; x++) {
+            block(es, x, SY, cz - 4, BlockTypes.PURPUR_BLOCK);
+            block(es, x, SY, cz + 4, BlockTypes.PURPUR_BLOCK);
         }
-        for (int z = cz - 2; z <= cz + 2; z++) {
-            block(es, cx - 3, SY, z, BlockTypes.PURPUR_BLOCK);
-            block(es, cx + 3, SY, z, BlockTypes.PURPUR_BLOCK);
+        for (int z = cz - 3; z <= cz + 3; z++) {
+            block(es, cx - 4, SY, z, BlockTypes.PURPUR_BLOCK);
+            block(es, cx + 4, SY, z, BlockTypes.PURPUR_BLOCK);
         }
 
-        // Arch (faces Z-axis — player walks east through portal on X axis)
+        // ── Arch (axisX=false → spans Z, player walks east through X) ─────────
         portalArch(es, cx, cz, false,
-                BlockTypes.PURPUR_PILLAR, BlockTypes.END_STONE_BRICKS,
-                BlockTypes.END_STONE_BRICKS);
+                   BlockTypes.PURPUR_PILLAR,
+                   BlockTypes.END_STONE_BRICKS,
+                   BlockTypes.END_STONE_BRICKS);
 
-        // Amethyst accent blocks flanking pillar bases
-        block(es, cx, SY + 1, cz - 3, BlockTypes.AMETHYST_BLOCK);
-        block(es, cx, SY + 1, cz + 3, BlockTypes.AMETHYST_BLOCK);
-        block(es, cx, SY + 2, cz - 3, BlockTypes.AMETHYST_CLUSTER);
-        block(es, cx, SY + 2, cz + 3, BlockTypes.AMETHYST_CLUSTER);
+        // ── Amethyst accents at both pillar bases ─────────────────────────────
+        for (int dz : new int[]{-4, 4}) {
+            block(es, cx, SY + 1, cz + dz, BlockTypes.AMETHYST_BLOCK);
+            block(es, cx, SY + 2, cz + dz, BlockTypes.AMETHYST_CLUSTER);
+            block(es, cx, SY + 3, cz + dz, BlockTypes.BUDDING_AMETHYST);
+        }
 
-        // Flanking obelisks
-        column(es, cx - 6, cz - 2, SY + 1, SY + 6, BlockTypes.PURPUR_BLOCK);
-        column(es, cx - 6, cz + 2, SY + 1, SY + 6, BlockTypes.PURPUR_BLOCK);
-        block(es, cx - 6, SY + 7, cz - 2, BlockTypes.SEA_LANTERN);
-        block(es, cx - 6, SY + 7, cz + 2, BlockTypes.SEA_LANTERN);
+        // ── Flanking obelisks (PURPUR_BLOCK columns, 8-tall, SEA_LANTERN caps)
+        //    placed at cx−9, cz±4
+        for (int dz : new int[]{-4, 4}) {
+            column(es, cx - 9, cz + dz, SY + 1, SY + 8, BlockTypes.PURPUR_PILLAR);
+            block(es,  cx - 9, SY + 9,  cz + dz, BlockTypes.SEA_LANTERN);
+        }
 
-        // Glowstone header strip above arch
-        fill(es, cx, SY + 11, cz - 3, cx, SY + 11, cz + 3, BlockTypes.GLOWSTONE);
-        block(es, cx, SY + 12, cz, BlockTypes.AMETHYST_BLOCK);
+        // ── Glowstone header strip above arch ─────────────────────────────────
+        for (int z = cz - 4; z <= cz + 4; z++) {
+            block(es, cx, SY + 16, z, BlockTypes.GLOWSTONE);
+        }
+        // Amethyst-block accent row above glowstone
+        for (int z = cz - 2; z <= cz + 2; z++) {
+            block(es, cx, SY + 17, z, BlockTypes.AMETHYST_BLOCK);
+        }
+        block(es, cx, SY + 18, cz, BlockTypes.AMETHYST_CLUSTER);
 
-        // Approach stepping stones toward plaza
-        for (int x = cx - 4; x >= cx - 7; x--) {
-            for (int z = cz - 1; z <= cz + 1; z++)
-                block(es, x, SY, z, BlockTypes.POLISHED_DEEPSLATE);
+        // ── Approach path 3-wide (z=−1..1), x=48..54 ─────────────────────────
+        for (int px = 48; px <= 54; px++) {
+            for (int pz = -1; pz <= 1; pz++) {
+                block(es, px, SY, pz, BlockTypes.POLISHED_DEEPSLATE);
+            }
+        }
+        // Kerb stones
+        for (int px = 48; px <= 54; px++) {
+            block(es, px, SY, -2, BlockTypes.COBBLESTONE);
+            block(es, px, SY,  2, BlockTypes.COBBLESTONE);
         }
     }
 
-    /** Sword Practice Portal — West  (x=-22, z=0).  Quartz / Iron theme */
+    /**
+     * Sword Portal — West (cx=−55, cz=0).
+     * Smooth-quartz / iron theme with QUARTZ_PILLAR arch and iron-block accents.
+     * Approach path runs east from x=−48 toward the ring road.
+     */
     private void buildSwordPortal(EditSession es) {
-        int cx = -22, cz = 0;
+        int cx = -55, cz = 0;
 
-        fill(es, cx - 3, SY, cz - 3, cx + 3, SY, cz + 3, BlockTypes.SMOOTH_QUARTZ);
-        for (int x = cx - 3; x <= cx + 3; x++) {
-            block(es, x, SY, cz - 3, BlockTypes.QUARTZ_BRICKS);
-            block(es, x, SY, cz + 3, BlockTypes.QUARTZ_BRICKS);
+        // ── 9×9 pad: SMOOTH_QUARTZ fill + QUARTZ_BRICKS border ───────────────
+        fill(es, cx - 4, SY, cz - 4, cx + 4, SY, cz + 4, BlockTypes.SMOOTH_QUARTZ);
+        for (int x = cx - 4; x <= cx + 4; x++) {
+            block(es, x, SY, cz - 4, BlockTypes.QUARTZ_BRICKS);
+            block(es, x, SY, cz + 4, BlockTypes.QUARTZ_BRICKS);
+        }
+        for (int z = cz - 3; z <= cz + 3; z++) {
+            block(es, cx - 4, SY, z, BlockTypes.QUARTZ_BRICKS);
+            block(es, cx + 4, SY, z, BlockTypes.QUARTZ_BRICKS);
         }
 
+        // ── Arch (axisX=false → spans Z) ──────────────────────────────────────
         portalArch(es, cx, cz, false,
-                BlockTypes.QUARTZ_PILLAR, BlockTypes.QUARTZ_BRICKS,
-                BlockTypes.SMOOTH_QUARTZ);
+                   BlockTypes.QUARTZ_PILLAR,
+                   BlockTypes.QUARTZ_BRICKS,
+                   BlockTypes.SMOOTH_QUARTZ);
 
-        block(es, cx, SY + 1, cz - 3, BlockTypes.IRON_BLOCK);
-        block(es, cx, SY + 1, cz + 3, BlockTypes.IRON_BLOCK);
+        // ── IRON_BLOCK accents at pillar bases ────────────────────────────────
+        for (int dz : new int[]{-4, 4}) {
+            block(es, cx, SY + 1, cz + dz, BlockTypes.IRON_BLOCK);
+            block(es, cx, SY + 2, cz + dz, BlockTypes.IRON_BARS);
+            block(es, cx, SY + 3, cz + dz, BlockTypes.IRON_BLOCK);
+        }
 
-        column(es, cx + 6, cz - 2, SY + 1, SY + 6, BlockTypes.QUARTZ_PILLAR);
-        column(es, cx + 6, cz + 2, SY + 1, SY + 6, BlockTypes.QUARTZ_PILLAR);
-        block(es, cx + 6, SY + 7, cz - 2, BlockTypes.SEA_LANTERN);
-        block(es, cx + 6, SY + 7, cz + 2, BlockTypes.SEA_LANTERN);
+        // ── Flanking QUARTZ_PILLAR obelisks at cx+9, cz±4 ────────────────────
+        for (int dz : new int[]{-4, 4}) {
+            column(es, cx + 9, cz + dz, SY + 1, SY + 8, BlockTypes.QUARTZ_PILLAR);
+            block(es,  cx + 9, SY + 9,  cz + dz, BlockTypes.SEA_LANTERN);
+        }
 
-        fill(es, cx, SY + 11, cz - 3, cx, SY + 11, cz + 3, BlockTypes.GLOWSTONE);
-        block(es, cx, SY + 12, cz, BlockTypes.IRON_BLOCK);
+        // ── Glowstone header ──────────────────────────────────────────────────
+        for (int z = cz - 4; z <= cz + 4; z++) {
+            block(es, cx, SY + 16, z, BlockTypes.GLOWSTONE);
+        }
+        block(es, cx, SY + 17, cz, BlockTypes.IRON_BLOCK);
+        block(es, cx, SY + 18, cz, BlockTypes.CHAIN);
+        block(es, cx, SY + 19, cz, BlockTypes.LANTERN);
 
-        for (int x = cx + 4; x <= cx + 7; x++) {
-            for (int z = cz - 1; z <= cz + 1; z++)
-                block(es, x, SY, z, BlockTypes.POLISHED_DEEPSLATE);
+        // ── Approach path 3-wide (z=−1..1), x=−48..−54 ───────────────────────
+        for (int px = -48; px >= -54; px--) {
+            for (int pz = -1; pz <= 1; pz++) {
+                block(es, px, SY, pz, BlockTypes.POLISHED_DEEPSLATE);
+            }
+        }
+        for (int px = -48; px >= -54; px--) {
+            block(es, px, SY, -2, BlockTypes.COBBLESTONE);
+            block(es, px, SY,  2, BlockTypes.COBBLESTONE);
         }
     }
 
-    /** Mace Practice Portal — South  (x=0, z=22).  Nether Brick / Fire theme */
+    /**
+     * Mace Portal — South (cx=0, cz=65).
+     * Nether-bricks / fire theme: RED_NETHER_BRICKS pad border, magma accents,
+     * soul-sand / soul-soil scatter, flanking obelisks, glowstone header.
+     * Approach path runs north from z=58 to the pad.
+     */
     private void buildMacePortal(EditSession es) {
-        int cx = 0, cz = 22;
+        int cx = 0, cz = 65;
 
-        fill(es, cx - 3, SY, cz - 3, cx + 3, SY, cz + 3, BlockTypes.NETHER_BRICKS);
-        for (int z = cz - 3; z <= cz + 3; z++) {
-            block(es, cx - 3, SY, z, BlockTypes.RED_NETHER_BRICKS);
-            block(es, cx + 3, SY, z, BlockTypes.RED_NETHER_BRICKS);
+        // ── 9×9 pad: NETHER_BRICKS + RED_NETHER_BRICKS border ─────────────────
+        fill(es, cx - 4, SY, cz - 4, cx + 4, SY, cz + 4, BlockTypes.NETHER_BRICKS);
+        for (int z = cz - 4; z <= cz + 4; z++) {
+            block(es, cx - 4, SY, z, BlockTypes.RED_NETHER_BRICKS);
+            block(es, cx + 4, SY, z, BlockTypes.RED_NETHER_BRICKS);
         }
-
-        portalArch(es, cx, cz, true,
-                BlockTypes.RED_NETHER_BRICKS, BlockTypes.NETHER_BRICKS,
-                BlockTypes.NETHER_BRICKS);
-
-        block(es, cx - 3, SY + 1, cz, BlockTypes.MAGMA_BLOCK);
-        block(es, cx + 3, SY + 1, cz, BlockTypes.MAGMA_BLOCK);
-
-        column(es, cx - 2, cz + 6, SY + 1, SY + 6, BlockTypes.RED_NETHER_BRICKS);
-        column(es, cx + 2, cz + 6, SY + 1, SY + 6, BlockTypes.RED_NETHER_BRICKS);
-        block(es, cx - 2, SY + 7, cz + 6, BlockTypes.GLOWSTONE);
-        block(es, cx + 2, SY + 7, cz + 6, BlockTypes.GLOWSTONE);
-
-        fill(es, cx - 3, SY + 11, cz, cx + 3, SY + 11, cz, BlockTypes.GLOWSTONE);
-        block(es, cx, SY + 12, cz, BlockTypes.MAGMA_BLOCK);
-
-        // Soul sand / soul soil accent
-        block(es, cx - 4, SY, cz + 2, BlockTypes.SOUL_SAND);
-        block(es, cx + 4, SY, cz + 2, BlockTypes.SOUL_SAND);
-        block(es, cx - 4, SY, cz - 2, BlockTypes.SOUL_SOIL);
-        block(es, cx + 4, SY, cz - 2, BlockTypes.SOUL_SOIL);
-
-        for (int z = cz - 4; z >= cz - 7; z--) {
-            for (int x = cx - 1; x <= cx + 1; x++)
-                block(es, x, SY, z, BlockTypes.POLISHED_DEEPSLATE);
-        }
-    }
-
-    /** Bow Practice Portal — North  (x=0, z=-22).  Dark Oak / Mossy Stone theme */
-    private void buildBowPortal(EditSession es) {
-        int cx = 0, cz = -22;
-
-        fill(es, cx - 3, SY, cz - 3, cx + 3, SY, cz + 3, BlockTypes.MOSSY_STONE_BRICKS);
-        for (int z = cz - 3; z <= cz + 3; z++) {
-            block(es, cx - 3, SY, z, BlockTypes.MOSSY_COBBLESTONE);
-            block(es, cx + 3, SY, z, BlockTypes.MOSSY_COBBLESTONE);
-        }
-
-        portalArch(es, cx, cz, true,
-                BlockTypes.DARK_OAK_LOG, BlockTypes.MOSSY_COBBLESTONE,
-                BlockTypes.MOSSY_STONE_BRICKS);
-
-        block(es, cx - 3, SY + 1, cz, BlockTypes.OAK_LOG);
-        block(es, cx + 3, SY + 1, cz, BlockTypes.OAK_LOG);
-
-        column(es, cx - 2, cz - 6, SY + 1, SY + 6, BlockTypes.DARK_OAK_LOG);
-        column(es, cx + 2, cz - 6, SY + 1, SY + 6, BlockTypes.DARK_OAK_LOG);
-        block(es, cx - 2, SY + 7, cz - 6, BlockTypes.LANTERN);
-        block(es, cx + 2, SY + 7, cz - 6, BlockTypes.LANTERN);
-
-        // Leaf overhang above arch
-        fill(es, cx - 2, SY + 13, cz - 2, cx + 2, SY + 13, cz + 2, BlockTypes.DARK_OAK_LEAVES);
-        fill(es, cx - 1, SY + 14, cz - 1, cx + 1, SY + 14, cz + 1, BlockTypes.DARK_OAK_LEAVES);
-
-        fill(es, cx - 3, SY + 11, cz, cx + 3, SY + 11, cz, BlockTypes.GLOWSTONE);
-        block(es, cx, SY + 12, cz, BlockTypes.DARK_OAK_LOG);
-
-        for (int z = cz + 4; z <= cz + 7; z++) {
-            for (int x = cx - 1; x <= cx + 1; x++)
-                block(es, x, SY, z, BlockTypes.POLISHED_DEEPSLATE);
-        }
-    }
-
-    /** Totem Practice Portal — NE  (x=16, z=-16).  Jungle / Nature theme */
-    private void buildTotemPortal(EditSession es) {
-        int cx = 16, cz = -16;
-
-        fill(es, cx - 3, SY, cz - 3, cx + 3, SY, cz + 3, BlockTypes.JUNGLE_PLANKS);
         for (int x = cx - 3; x <= cx + 3; x++) {
-            block(es, x, SY, cz - 3, BlockTypes.JUNGLE_LOG);
-            block(es, x, SY, cz + 3, BlockTypes.JUNGLE_LOG);
-        }
-        for (int z = cz - 2; z <= cz + 2; z++) {
-            block(es, cx - 3, SY, z, BlockTypes.JUNGLE_LOG);
-            block(es, cx + 3, SY, z, BlockTypes.JUNGLE_LOG);
+            block(es, x, SY, cz - 4, BlockTypes.RED_NETHER_BRICKS);
+            block(es, x, SY, cz + 4, BlockTypes.RED_NETHER_BRICKS);
         }
 
+        // ── Arch (axisX=true → spans X, player walks south through Z) ─────────
         portalArch(es, cx, cz, true,
-                BlockTypes.JUNGLE_LOG, BlockTypes.MOSSY_STONE_BRICKS,
-                BlockTypes.JUNGLE_PLANKS);
+                   BlockTypes.RED_NETHER_BRICKS,
+                   BlockTypes.NETHER_BRICKS,
+                   BlockTypes.NETHER_BRICKS);
 
-        block(es, cx - 3, SY + 1, cz, BlockTypes.JUNGLE_LOG);
-        block(es, cx + 3, SY + 1, cz, BlockTypes.JUNGLE_LOG);
+        // ── MAGMA_BLOCK accents at pillar bases ───────────────────────────────
+        for (int dx : new int[]{-4, 4}) {
+            block(es, cx + dx, SY + 1, cz, BlockTypes.MAGMA_BLOCK);
+            block(es, cx + dx, SY + 2, cz, BlockTypes.NETHER_BRICK_WALL);
+            block(es, cx + dx, SY + 3, cz, BlockTypes.MAGMA_BLOCK);
+        }
 
-        column(es, cx - 2, cz - 6, SY + 1, SY + 6, BlockTypes.JUNGLE_LOG);
-        column(es, cx + 2, cz - 6, SY + 1, SY + 6, BlockTypes.JUNGLE_LOG);
-        block(es, cx - 2, SY + 7, cz - 6, BlockTypes.LANTERN);
-        block(es, cx + 2, SY + 7, cz - 6, BlockTypes.LANTERN);
+        // ── Soul-sand / soul-soil scatter near base ───────────────────────────
+        block(es, cx - 6, SY, cz + 2, BlockTypes.SOUL_SAND);
+        block(es, cx + 6, SY, cz + 2, BlockTypes.SOUL_SAND);
+        block(es, cx - 5, SY, cz - 2, BlockTypes.SOUL_SOIL);
+        block(es, cx + 5, SY, cz - 2, BlockTypes.SOUL_SOIL);
+        block(es, cx - 7, SY, cz,     BlockTypes.SOUL_SAND);
+        block(es, cx + 7, SY, cz,     BlockTypes.SOUL_SOIL);
 
-        // Jungle leaf canopy over arch
-        fill(es, cx - 3, SY + 13, cz - 3, cx + 3, SY + 13, cz + 3, BlockTypes.JUNGLE_LEAVES);
-        fill(es, cx - 2, SY + 14, cz - 2, cx + 2, SY + 14, cz + 2, BlockTypes.JUNGLE_LEAVES);
-        fill(es, cx - 1, SY + 15, cz - 1, cx + 1, SY + 15, cz + 1, BlockTypes.JUNGLE_LEAVES);
+        // ── Flanking RED_NETHER_BRICKS obelisks ──────────────────────────────
+        for (int dx : new int[]{-4, 4}) {
+            column(es, cx + dx, cz + 9, SY + 1, SY + 8, BlockTypes.RED_NETHER_BRICKS);
+            block(es,  cx + dx, SY + 9, cz + 9, BlockTypes.GLOWSTONE);
+        }
 
-        fill(es, cx - 3, SY + 11, cz, cx + 3, SY + 11, cz, BlockTypes.GLOWSTONE);
+        // ── Glowstone header ──────────────────────────────────────────────────
+        for (int x = cx - 4; x <= cx + 4; x++) {
+            block(es, x, SY + 16, cz, BlockTypes.GLOWSTONE);
+        }
+        block(es, cx, SY + 17, cz, BlockTypes.MAGMA_BLOCK);
+        block(es, cx, SY + 18, cz, BlockTypes.NETHER_BRICKS);
 
-        // Diagonal approach path (NE to SW diagonal)
-        for (int i = 1; i <= 5; i++) {
-            int px = cx - i, pz = cz + i;
-            for (int d = -1; d <= 1; d++) {
-                block(es, px + d, SY, pz, BlockTypes.POLISHED_DEEPSLATE);
-                block(es, px, SY, pz + d, BlockTypes.POLISHED_DEEPSLATE);
+        // ── Approach path 3-wide (x=−1..1), z=58..64 ─────────────────────────
+        for (int pz = 58; pz <= 64; pz++) {
+            for (int px = -1; px <= 1; px++) {
+                block(es, px, SY, pz, BlockTypes.POLISHED_DEEPSLATE);
             }
+        }
+        for (int pz = 58; pz <= 64; pz++) {
+            block(es, -2, SY, pz, BlockTypes.COBBLESTONE);
+            block(es,  2, SY, pz, BlockTypes.COBBLESTONE);
         }
     }
 
-    // ============================================================================
-    //  ④  CONNECTIVITY
-    // ============================================================================
+    /**
+     * Bow Portal — North (cx=0, cz=−65).
+     * Mossy-stone / dark-oak theme: mossy pad, dark-oak log arch, leaf canopy
+     * overhead, flanking dark-oak obelisks, glowstone header.
+     * Approach path runs south from z=−58 toward the ring road.
+     */
+    private void buildBowPortal(EditSession es) {
+        int cx = 0, cz = -65;
 
-    private void buildGrandStaircase(EditSession es) {
-        // 3-wide stone staircase descending from plaza level to the surrounding island
-        // on each of the 4 cardinal approaches (before the portals)
-
-        // East staircase at x=14: descend from SY down 3 blocks to the east
-        for (int step = 0; step < 3; step++) {
-            int bx = 14 + step;
-            for (int z = -2; z <= 2; z++) {
-                block(es, bx, SY - step, z, BlockTypes.STONE_BRICKS);
-            }
+        // ── 9×9 pad: MOSSY_STONE_BRICKS + MOSSY_COBBLESTONE border ──────────
+        fill(es, cx - 4, SY, cz - 4, cx + 4, SY, cz + 4, BlockTypes.MOSSY_STONE_BRICKS);
+        for (int z = cz - 4; z <= cz + 4; z++) {
+            block(es, cx - 4, SY, z, BlockTypes.MOSSY_COBBLESTONE);
+            block(es, cx + 4, SY, z, BlockTypes.MOSSY_COBBLESTONE);
         }
-        // West staircase at x=-14
-        for (int step = 0; step < 3; step++) {
-            int bx = -14 - step;
-            for (int z = -2; z <= 2; z++) {
-                block(es, bx, SY - step, z, BlockTypes.STONE_BRICKS);
-            }
-        }
-        // South staircase at z=14
-        for (int step = 0; step < 3; step++) {
-            int bz = 14 + step;
-            for (int x = -2; x <= 2; x++) {
-                block(es, x, SY - step, bz, BlockTypes.STONE_BRICKS);
-            }
-        }
-        // North staircase at z=-14
-        for (int step = 0; step < 3; step++) {
-            int bz = -14 - step;
-            for (int x = -2; x <= 2; x++) {
-                block(es, x, SY - step, bz, BlockTypes.STONE_BRICKS);
-            }
+        for (int x = cx - 3; x <= cx + 3; x++) {
+            block(es, x, SY, cz - 4, BlockTypes.MOSSY_COBBLESTONE);
+            block(es, x, SY, cz + 4, BlockTypes.MOSSY_COBBLESTONE);
         }
 
-        // Staircase railings: oak fence posts at step edges
-        for (int step = 0; step < 3; step++) {
-            int bx = 14 + step;
-            column(es, bx, -2, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
-            column(es, bx,  2, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+        // ── Arch (axisX=true → spans X, player walks north through Z) ─────────
+        portalArch(es, cx, cz, true,
+                   BlockTypes.DARK_OAK_LOG,
+                   BlockTypes.MOSSY_COBBLESTONE,
+                   BlockTypes.MOSSY_STONE_BRICKS);
+
+        // ── OAK_LOG accents at pillar bases ───────────────────────────────────
+        for (int dx : new int[]{-4, 4}) {
+            block(es, cx + dx, SY + 1, cz, BlockTypes.OAK_LOG);
+            block(es, cx + dx, SY + 2, cz, BlockTypes.OAK_PLANKS);
+            block(es, cx + dx, SY + 3, cz, BlockTypes.OAK_LOG);
         }
-        for (int step = 0; step < 3; step++) {
-            int bx = -14 - step;
-            column(es, bx, -2, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
-            column(es, bx,  2, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+
+        // ── Flanking DARK_OAK_LOG obelisks ────────────────────────────────────
+        for (int dx : new int[]{-4, 4}) {
+            column(es, cx + dx, cz - 9, SY + 1, SY + 8, BlockTypes.DARK_OAK_LOG);
+            block(es,  cx + dx, SY + 9, cz - 9, BlockTypes.LANTERN);
+        }
+
+        // ── Dark-oak leaf canopy (5×5 at SY+16, 3×3 at SY+17) ───────────────
+        fill(es, cx - 2, SY + 16, cz - 2, cx + 2, SY + 16, cz + 2, BlockTypes.DARK_OAK_LEAVES);
+        fill(es, cx - 1, SY + 17, cz - 1, cx + 1, SY + 17, cz + 1, BlockTypes.DARK_OAK_LEAVES);
+        block(es, cx, SY + 18, cz, BlockTypes.DARK_OAK_LEAVES);
+
+        // ── Glowstone header ──────────────────────────────────────────────────
+        for (int x = cx - 4; x <= cx + 4; x++) {
+            block(es, x, SY + 16, cz, BlockTypes.GLOWSTONE);
+        }
+        block(es, cx, SY + 17, cz, BlockTypes.DARK_OAK_LOG);
+
+        // ── Approach path 3-wide (x=−1..1), z=−58..−64 ──────────────────────
+        for (int pz = -58; pz >= -64; pz--) {
+            for (int px = -1; px <= 1; px++) {
+                block(es, px, SY, pz, BlockTypes.POLISHED_DEEPSLATE);
+            }
+        }
+        for (int pz = -58; pz >= -64; pz--) {
+            block(es, -2, SY, pz, BlockTypes.COBBLESTONE);
+            block(es,  2, SY, pz, BlockTypes.COBBLESTONE);
         }
     }
 
-    private void buildPathways(EditSession es) {
-        // 3-wide stone-brick paths, plaza edge → portal pad
-        // East  (x=14..21)
-        for (int x = 14; x <= 21; x++)
-            for (int z = -1; z <= 1; z++) block(es, x, SY, z, BlockTypes.STONE_BRICKS);
+    /**
+     * Totem Portal — NE (cx=38, cz=−45).
+     * Jungle / nature theme: jungle-planks pad, jungle-log arch, moss-block
+     * key blocks, triple-layer leaf canopy, flanking jungle-log obelisks,
+     * and a 7-step diagonal approach path toward the SW.
+     */
+    private void buildTotemPortal(EditSession es) {
+        int cx = 38, cz = -45;
 
-        // West  (x=-14..-21)
-        for (int x = -14; x >= -21; x--)
-            for (int z = -1; z <= 1; z++) block(es, x, SY, z, BlockTypes.STONE_BRICKS);
+        // ── 9×9 pad: JUNGLE_PLANKS + JUNGLE_LOG border ───────────────────────
+        fill(es, cx - 4, SY, cz - 4, cx + 4, SY, cz + 4, BlockTypes.JUNGLE_PLANKS);
+        for (int x = cx - 4; x <= cx + 4; x++) {
+            block(es, x, SY, cz - 4, BlockTypes.JUNGLE_LOG);
+            block(es, x, SY, cz + 4, BlockTypes.JUNGLE_LOG);
+        }
+        for (int z = cz - 3; z <= cz + 3; z++) {
+            block(es, cx - 4, SY, z, BlockTypes.JUNGLE_LOG);
+            block(es, cx + 4, SY, z, BlockTypes.JUNGLE_LOG);
+        }
 
-        // South (z=14..21)
-        for (int z = 14; z <= 21; z++)
-            for (int x = -1; x <= 1; x++) block(es, x, SY, z, BlockTypes.STONE_BRICKS);
+        // ── Arch (axisX=true → spans X) ───────────────────────────────────────
+        portalArch(es, cx, cz, true,
+                   BlockTypes.JUNGLE_LOG,
+                   BlockTypes.MOSS_BLOCK,
+                   BlockTypes.JUNGLE_PLANKS);
 
-        // North (z=-14..-21)
-        for (int z = -14; z >= -21; z--)
-            for (int x = -1; x <= 1; x++) block(es, x, SY, z, BlockTypes.STONE_BRICKS);
+        // ── 3-layer jungle-leaves canopy over arch ────────────────────────────
+        fill(es, cx - 4, SY + 16, cz - 4, cx + 4, SY + 16, cz + 4, BlockTypes.JUNGLE_LEAVES);
+        fill(es, cx - 3, SY + 17, cz - 3, cx + 3, SY + 17, cz + 3, BlockTypes.JUNGLE_LEAVES);
+        fill(es, cx - 2, SY + 18, cz - 2, cx + 2, SY + 18, cz + 2, BlockTypes.JUNGLE_LEAVES);
 
-        // NE diagonal → Totem Portal  (staggered 3-wide)
-        for (int i = 0; i <= 6; i++) {
-            int px = 10 + i, pz = -10 - i;
+        // ── Flanking JUNGLE_LOG obelisks ──────────────────────────────────────
+        for (int dx : new int[]{-4, 4}) {
+            column(es, cx + dx, cz - 9, SY + 1, SY + 8, BlockTypes.JUNGLE_LOG);
+            block(es,  cx + dx, SY + 9, cz - 9, BlockTypes.LANTERN);
+        }
+
+        // ── Diagonal approach path NE→SW, 7 steps, 3-wide ────────────────────
+        for (int step = 1; step <= 7; step++) {
+            int px = cx - step;
+            int pz = cz + step;
+            // 3-wide perpendicular to diagonal (offset ±1 on both axes)
             for (int d = -1; d <= 1; d++) {
                 block(es, px + d, SY, pz,     BlockTypes.STONE_BRICKS);
                 block(es, px,     SY, pz + d, BlockTypes.STONE_BRICKS);
             }
-        }
-
-        // Cobblestone kerb strips along path edges  (±2 from centre)
-        for (int x = 14; x <= 21; x++) {
-            block(es, x, SY, -2, BlockTypes.COBBLESTONE);
-            block(es, x, SY,  2, BlockTypes.COBBLESTONE);
-        }
-        for (int x = -14; x >= -21; x--) {
-            block(es, x, SY, -2, BlockTypes.COBBLESTONE);
-            block(es, x, SY,  2, BlockTypes.COBBLESTONE);
-        }
-        for (int z = 14; z <= 21; z++) {
-            block(es, -2, SY, z, BlockTypes.COBBLESTONE);
-            block(es,  2, SY, z, BlockTypes.COBBLESTONE);
-        }
-        for (int z = -14; z >= -21; z--) {
-            block(es, -2, SY, z, BlockTypes.COBBLESTONE);
-            block(es,  2, SY, z, BlockTypes.COBBLESTONE);
-        }
-
-        // Mossy accent tiles every 4 blocks along paths
-        for (int x = 16; x <= 21; x += 4) {
-            block(es, x, SY, 0, BlockTypes.MOSSY_STONE_BRICKS);
-            block(es, -x, SY, 0, BlockTypes.MOSSY_STONE_BRICKS);
-        }
-        for (int z = 16; z <= 21; z += 4) {
-            block(es, 0, SY, z, BlockTypes.MOSSY_STONE_BRICKS);
-            block(es, 0, SY, -z, BlockTypes.MOSSY_STONE_BRICKS);
-        }
-    }
-
-    private void buildBridges(EditSession es) {
-        // ── Bridge 1: east path crosses small stream at x=12, z=-6..6 ──────
-        for (int z = -6; z <= 6; z++) {
-            block(es, 12, SY, z, BlockTypes.SPRUCE_PLANKS);
-        }
-        for (int z = -6; z <= 6; z++) {
-            if (Math.abs(z) > 1) {  // railing only outside main path
-                block(es, 12, SY + 1, z, BlockTypes.OAK_FENCE);
-                block(es, 12, SY + 2, z, BlockTypes.OAK_FENCE);
+            // Occasional mossy accent
+            if (step % 3 == 0) {
+                block(es, px, SY, pz, BlockTypes.MOSSY_STONE_BRICKS);
             }
         }
-        // Bridge support columns
-        block(es, 12, SY - 1, -4, BlockTypes.OAK_LOG);
-        block(es, 12, SY - 1,  0, BlockTypes.OAK_LOG);
-        block(es, 12, SY - 1,  4, BlockTypes.OAK_LOG);
-        // Bridge end lanterns
-        block(es, 12, SY + 3, -6, BlockTypes.LANTERN);
-        block(es, 12, SY + 3,  6, BlockTypes.LANTERN);
-
-        // ── Bridge 2: north path crosses stream at z=-12, x=-6..6 ──────────
-        for (int x = -6; x <= 6; x++) {
-            block(es, x, SY, -12, BlockTypes.SPRUCE_PLANKS);
-        }
-        for (int x = -6; x <= 6; x++) {
-            if (Math.abs(x) > 1) {
-                block(es, x, SY + 1, -12, BlockTypes.OAK_FENCE);
-                block(es, x, SY + 2, -12, BlockTypes.OAK_FENCE);
-            }
-        }
-        block(es, -4, SY - 1, -12, BlockTypes.OAK_LOG);
-        block(es,  0, SY - 1, -12, BlockTypes.OAK_LOG);
-        block(es,  4, SY - 1, -12, BlockTypes.OAK_LOG);
-        block(es, -6, SY + 3, -12, BlockTypes.LANTERN);
-        block(es,  6, SY + 3, -12, BlockTypes.LANTERN);
-
-        // ── Small rope-style bridge over west stream at x=-12 ───────────────
-        for (int z = -4; z <= 4; z++) {
-            block(es, -12, SY, z, BlockTypes.SPRUCE_PLANKS);
-            if (Math.abs(z) > 1) {
-                column(es, -12, z, SY + 1, SY + 2, BlockTypes.OAK_FENCE);
-            }
-        }
-        block(es, -12, SY - 1, 0, BlockTypes.OAK_LOG);
-        block(es, -12, SY + 3, -4, BlockTypes.LANTERN);
-        block(es, -12, SY + 3,  4, BlockTypes.LANTERN);
     }
 
-    // ============================================================================
-    //  ⑤  NATURE
-    // ============================================================================
+    /**
+     * Axe Portal — NW (cx=−38, cz=−45).
+     * Spruce / deepslate theme: spruce-planks pad, spruce-log arch,
+     * cobbled-deepslate accents, moss-carpet scatter, flanking spruce-log
+     * obelisks with lantern caps, 7-step diagonal approach from SE.
+     */
+    private void buildAxePortal(EditSession es) {
+        int cx = -38, cz = -45;
 
-    private void buildForestZone(EditSession es) {
-        // NE quadrant — x=18..40, z=-36..2
-        buildOakTree    (es,  24, -26, 7);
-        buildOakTree    (es,  32, -16, 6);
-        buildOakTree    (es,  38,  -6, 8);
-        buildOakTree    (es,  26,   0, 5);
-        buildDarkOakTree(es,  20, -12, 7);
-        buildDarkOakTree(es,  34, -26, 8);
-        buildBirchTree  (es,  18, -34, 9);
-        buildBirchTree  (es,  28, -20, 7);
-        buildBirchTree  (es,  36,   2, 6);
-        buildCherryTree (es,  22, -30, 6);
-        buildCherryTree (es,  30,  -8, 7);
-        buildCherryTree (es,  40, -18, 5);
-
-        // Undergrowth ferns
-        int[][] ferns = {
-            {25,-24},{31,-18},{37,-11},{23, -9},
-            {32,-28},{35, -4},{21,-16},{29, -5},
-            {39,-22},{27,-32},{24,  0},{36,-14}
-        };
-        for (int[] f : ferns) {
-            double ex = (double)f[0]/RX, ez = (double)f[1]/RZ;
-            if (ex*ex + ez*ez > 0.9) continue;
-            block(es, f[0],     SY + 1, f[1],     BlockTypes.FERN);
-            block(es, f[0] + 1, SY + 1, f[1],     BlockTypes.FERN);
-            block(es, f[0],     SY + 1, f[1] + 1, BlockTypes.SHORT_GRASS);
+        // ── 9×9 pad: SPRUCE_PLANKS + SPRUCE_LOG border ───────────────────────
+        fill(es, cx - 4, SY, cz - 4, cx + 4, SY, cz + 4, BlockTypes.SPRUCE_PLANKS);
+        for (int x = cx - 4; x <= cx + 4; x++) {
+            block(es, x, SY, cz - 4, BlockTypes.SPRUCE_LOG);
+            block(es, x, SY, cz + 4, BlockTypes.SPRUCE_LOG);
+        }
+        for (int z = cz - 3; z <= cz + 3; z++) {
+            block(es, cx - 4, SY, z, BlockTypes.SPRUCE_LOG);
+            block(es, cx + 4, SY, z, BlockTypes.SPRUCE_LOG);
         }
 
-        // Moss patches at tree bases
-        int[][] moss = {{24,-27},{33,-15},{38,-8},{27,1},{21,-11},{35,-26}};
-        for (int[] m : moss) {
-            fill(es, m[0]-1, SY, m[1]-1, m[0]+1, SY, m[1]+1, BlockTypes.MOSS_BLOCK);
-            fill(es, m[0]-1, SY+1, m[1]-1, m[0]+1, SY+1, m[1]+1, BlockTypes.MOSS_CARPET);
+        // ── Arch (axisX=true → spans X) ───────────────────────────────────────
+        portalArch(es, cx, cz, true,
+                   BlockTypes.SPRUCE_LOG,
+                   BlockTypes.COBBLED_DEEPSLATE,
+                   BlockTypes.SPRUCE_PLANKS);
+
+        // ── MOSSY_COBBLESTONE accents at both pillar bases ────────────────────
+        for (int dx : new int[]{-4, 4}) {
+            block(es, cx + dx, SY + 1, cz, BlockTypes.MOSSY_COBBLESTONE);
+            block(es, cx + dx, SY + 2, cz, BlockTypes.MOSSY_COBBLESTONE);
+            block(es, cx + dx, SY + 3, cz, BlockTypes.COBBLED_DEEPSLATE);
         }
 
-        // Mushrooms
-        block(es, 26, SY + 1, -15, BlockTypes.RED_MUSHROOM);
-        block(es, 35, SY + 1, -22, BlockTypes.BROWN_MUSHROOM);
-        block(es, 29, SY + 1,  -7, BlockTypes.RED_MUSHROOM);
-        block(es, 22, SY + 1, -28, BlockTypes.BROWN_MUSHROOM);
-
-        // Azalea bushes on forest edge
-        block(es, 18, SY + 1,  -8, BlockTypes.AZALEA);
-        block(es, 19, SY + 1,  -6, BlockTypes.FLOWERING_AZALEA);
-        block(es, 30, SY + 1,   2, BlockTypes.AZALEA);
-        block(es, 24, SY + 1, -16, BlockTypes.FLOWERING_AZALEA);
-    }
-
-    private void buildOakTree(EditSession es, int tx, int tz, int h) {
-        column(es, tx, tz, SY + 1, SY + h, BlockTypes.OAK_LOG);
-        int top = SY + h;
-        // Bottom leaf layer r=3
-        for (int x = tx-3; x <= tx+3; x++)
-            for (int z = tz-3; z <= tz+3; z++)
-                if ((x-tx)*(x-tx)+(z-tz)*(z-tz) <= 10)
-                    block(es, x, top, z, BlockTypes.OAK_LEAVES);
-        // Mid layer r=2
-        for (int x = tx-2; x <= tx+2; x++)
-            for (int z = tz-2; z <= tz+2; z++)
-                if ((x-tx)*(x-tx)+(z-tz)*(z-tz) <= 6)
-                    block(es, x, top+1, z, BlockTypes.OAK_LEAVES);
-        // Top puff
-        for (int x = tx-1; x <= tx+1; x++)
-            for (int z = tz-1; z <= tz+1; z++)
-                block(es, x, top+2, z, BlockTypes.OAK_LEAVES);
-        block(es, tx, top+3, tz, BlockTypes.OAK_LEAVES);
-        // Hanging leaf detail
-        block(es, tx-1, top-1, tz,   BlockTypes.OAK_LEAVES);
-        block(es, tx,   top-1, tz+1, BlockTypes.OAK_LEAVES);
-    }
-
-    private void buildDarkOakTree(EditSession es, int tx, int tz, int h) {
-        // 2×2 trunk
-        for (int ox = 0; ox <= 1; ox++)
-            for (int oz = 0; oz <= 1; oz++)
-                column(es, tx+ox, tz+oz, SY+1, SY+h, BlockTypes.DARK_OAK_LOG);
-        int top = SY + h;
-        // Wide flat canopy r=5, 2 layers
-        for (int x = tx-5; x <= tx+5; x++)
-            for (int z = tz-5; z <= tz+5; z++)
-                if ((x-tx-0.5)*(x-tx-0.5)+(z-tz-0.5)*(z-tz-0.5) <= 28)
-                    block(es, x, top, z, BlockTypes.DARK_OAK_LEAVES);
-        for (int x = tx-3; x <= tx+3; x++)
-            for (int z = tz-3; z <= tz+3; z++)
-                if ((x-tx-0.5)*(x-tx-0.5)+(z-tz-0.5)*(z-tz-0.5) <= 14)
-                    block(es, x, top+1, z, BlockTypes.DARK_OAK_LEAVES);
-        // Branch logs
-        block(es, tx-2, top, tz,   BlockTypes.DARK_OAK_LOG);
-        block(es, tx+3, top, tz,   BlockTypes.DARK_OAK_LOG);
-        block(es, tx,   top, tz-2, BlockTypes.DARK_OAK_LOG);
-        block(es, tx+1, top, tz+3, BlockTypes.DARK_OAK_LOG);
-    }
-
-    private void buildBirchTree(EditSession es, int tx, int tz, int h) {
-        column(es, tx, tz, SY+1, SY+h, BlockTypes.BIRCH_LOG);
-        int top = SY + h;
-        // Narrow upright canopy
-        for (int y = top-1; y <= top+2; y++) {
-            int r = (y <= top) ? 2 : 1;
-            for (int x = tx-r; x <= tx+r; x++)
-                for (int z = tz-r; z <= tz+r; z++)
-                    if (Math.abs(x-tx)+Math.abs(z-tz) <= r+1)
-                        block(es, x, y, z, BlockTypes.BIRCH_LEAVES);
-        }
-        block(es, tx, top+3, tz, BlockTypes.BIRCH_LEAVES);
-    }
-
-    private void buildCherryTree(EditSession es, int tx, int tz, int h) {
-        column(es, tx, tz, SY+1, SY+h, BlockTypes.CHERRY_LOG);
-        int top = SY + h;
-        // Fluffy round cherry canopy
-        for (int dy = -1; dy <= 2; dy++) {
-            int r = dy == -1 ? 2 : dy == 0 ? 3 : dy == 1 ? 3 : 2;
-            for (int x = tx-r; x <= tx+r; x++)
-                for (int z = tz-r; z <= tz+r; z++)
-                    if ((x-tx)*(x-tx)+(z-tz)*(z-tz) <= r*r)
-                        block(es, x, top+dy, z, BlockTypes.CHERRY_LEAVES);
-        }
-        block(es, tx, top+3, tz, BlockTypes.CHERRY_LEAVES);
-        // Diagonal branch logs
-        block(es, tx+1, top-1, tz,   BlockTypes.CHERRY_LOG);
-        block(es, tx-1, top-1, tz+1, BlockTypes.CHERRY_LOG);
-    }
-
-    private void buildWaterGardens(EditSession es) {
-        // SW quadrant — x=-16..-36, z=8..32
-
-        // ── Main garden pool: 9×7 centred at (-24, 63, 20) ──────────────────
-        int px = -24, pz = 20;
-        for (int x = px-4; x <= px+4; x++) {
-            for (int z = pz-3; z <= pz+3; z++) {
-                boolean edge = x==px-4||x==px+4||z==pz-3||z==pz+3;
-                if (edge) {
-                    block(es, x, SY,     z, BlockTypes.STONE_BRICKS);
-                    block(es, x, SY + 1, z, BlockTypes.STONE_BRICK_WALL);
-                } else {
-                    block(es, x, SY - 1, z, BlockTypes.WATER);
-                    block(es, x, SY - 2, z, BlockTypes.PRISMARINE);
-                    block(es, x, SY,     z, BlockTypes.AIR);
+        // ── MOSS_CARPET scattered around base ────────────────────────────────
+        for (int dx = -5; dx <= 5; dx++) {
+            for (int dz = -5; dz <= 5; dz++) {
+                if (Math.abs(dx) + Math.abs(dz) > 7) continue;
+                if ((dx + dz) % 3 == 0) {
+                    block(es, cx + dx, SY + 1, cz + dz, BlockTypes.MOSS_CARPET);
                 }
             }
         }
 
-        // Lily pads
-        for (int[] l : new int[][]{{px-2,pz-1},{px,pz+1},{px+2,pz},{px-1,pz+2},{px+3,pz-1}})
-            block(es, l[0], SY, l[1], BlockTypes.LILY_PAD);
+        // ── Flanking SPRUCE_LOG obelisks with LANTERN caps ───────────────────
+        for (int dx : new int[]{-4, 4}) {
+            column(es, cx + dx, cz - 9, SY + 1, SY + 8, BlockTypes.SPRUCE_LOG);
+            block(es,  cx + dx, SY + 9, cz - 9, BlockTypes.LANTERN);
+        }
 
-        // Sea lantern in pool floor
-        block(es, px,   SY-2, pz,   BlockTypes.SEA_LANTERN);
-        block(es, px-2, SY-2, pz+1, BlockTypes.PRISMARINE_BRICKS);
-        block(es, px+2, SY-2, pz-1, BlockTypes.PRISMARINE_BRICKS);
-
-        // Prism column fountain in pool centre
-        block(es, px, SY - 1, pz, BlockTypes.PRISMARINE);
-        block(es, px, SY,     pz, BlockTypes.WATER);
-
-        // Mossy stone rim corners
-        for (int[] c : new int[][]{{px-4,pz-3},{px+4,pz-3},{px-4,pz+3},{px+4,pz+3}})
-            block(es, c[0], SY+2, c[1], BlockTypes.MOSSY_STONE_BRICKS);
-
-        // ── Small secondary pool: 5×5 at (-30, 63, 28) ──────────────────────
-        int sx = -30, sz = 28;
-        for (int x = sx-2; x <= sx+2; x++) {
-            for (int z = sz-2; z <= sz+2; z++) {
-                boolean edge = x==sx-2||x==sx+2||z==sz-2||z==sz+2;
-                if (edge) {
-                    block(es, x, SY, z, BlockTypes.MOSSY_STONE_BRICKS);
-                } else {
-                    block(es, x, SY-1, z, BlockTypes.WATER);
-                    block(es, x, SY-2, z, BlockTypes.DARK_PRISMARINE);
-                    block(es, x, SY,   z, BlockTypes.AIR);
-                }
+        // ── Diagonal approach path SE→NW (from cx+8, cz+8 direction), 7 steps, 3-wide ─
+        for (int step = 1; step <= 7; step++) {
+            int px = cx + step;
+            int pz = cz + step;
+            for (int d = -1; d <= 1; d++) {
+                block(es, px + d, SY, pz,     BlockTypes.STONE_BRICKS);
+                block(es, px,     SY, pz + d, BlockTypes.STONE_BRICKS);
+            }
+            if (step % 3 == 0) {
+                block(es, px, SY, pz, BlockTypes.MOSSY_STONE_BRICKS);
             }
         }
-        block(es, sx, SY-2, sz, BlockTypes.SEA_LANTERN);
-
-        // ── Stream: main pool → secondary pool ──────────────────────────────
-        for (int x = px; x >= sx; x--) {
-            int curZ = pz + 4 + (int)(((sx - x) / (double)(sx - px)) * (sz - pz - 4));
-            block(es, x, SY-1, curZ,   BlockTypes.WATER);
-            block(es, x, SY-2, curZ,   BlockTypes.STONE_BRICKS);
-            block(es, x, SY,   curZ,   BlockTypes.AIR);
-        }
-
-        // ── Waterfall from elevated point into main pool ─────────────────────
-        for (int y = SY; y >= SY-4; y--) {
-            block(es, -36, y, 16, BlockTypes.WATER);
-            block(es, -36, y, 17, BlockTypes.WATER);
-        }
-        block(es, -36, SY+1, 16, BlockTypes.STONE_BRICKS);
-        block(es, -36, SY+1, 17, BlockTypes.STONE_BRICKS);
-
-        // ── Decorative rocks ─────────────────────────────────────────────────
-        BlockType[] rMat = {BlockTypes.MOSSY_COBBLESTONE, BlockTypes.COBBLESTONE,
-                            BlockTypes.STONE, BlockTypes.ANDESITE};
-        int[][] rocks = {{px-5,pz+1},{px-5,pz-2},{px+5,pz},{sx-3,sz+3},{sx+3,sz-3}};
-        for (int i = 0; i < rocks.length; i++) {
-            block(es, rocks[i][0],   SY+1, rocks[i][1],   rMat[i % rMat.length]);
-            block(es, rocks[i][0]+1, SY+1, rocks[i][1],   rMat[(i+1)%rMat.length]);
-            block(es, rocks[i][0],   SY+2, rocks[i][1],   rMat[(i+2)%rMat.length]);
-        }
-
-        // Trees near garden
-        buildOakTree(es, -20, 24, 5);
-        buildBirchTree(es, -32, 14, 6);
-        buildCherryTree(es, -26, 30, 5);
     }
 
-    private void buildVegetation(EditSession es) {
-        // Flower patch 1 — oxeye daisy, east corridor
-        for (int[] p : new int[][]{{15,-5},{16,-6},{17,-4},{18,-5},{16,-3},{15,-7}})
-            block(es, p[0], SY+1, p[1], BlockTypes.OXEYE_DAISY);
+    /**
+     * Trident Portal — SE (cx=38, cz=55).
+     * Prismarine theme: prismarine-bricks pad, dark-prismarine border,
+     * sea-lantern accents at pillar bases, flanking prismarine obelisks
+     * with sea-lantern caps, glowstone header, prismarine accent row.
+     * Approach path runs west from x=31 to x=37 (z=54..56).
+     */
+    private void buildTridentPortal(EditSession es) {
+        int cx = 38, cz = 55;
 
-        // Flower patch 2 — cornflower, west
-        for (int[] p : new int[][]{{-16,8},{-18,6},{-17,10},{-19,8},{-15,9}})
-            block(es, p[0], SY+1, p[1], BlockTypes.CORNFLOWER);
-
-        // Flower patch 3 — dandelion + allium, south
-        for (int[] p : new int[][]{{10,14},{12,15},{8,16},{11,17},{9,13}}) {
-            block(es, p[0],   SY+1, p[1], BlockTypes.DANDELION);
-            block(es, p[0]+1, SY+1, p[1], BlockTypes.ALLIUM);
+        // ── 9×9 pad: PRISMARINE_BRICKS + DARK_PRISMARINE border ──────────────
+        fill(es, cx - 4, SY, cz - 4, cx + 4, SY, cz + 4, BlockTypes.PRISMARINE_BRICKS);
+        for (int z = cz - 4; z <= cz + 4; z++) {
+            block(es, cx - 4, SY, z, BlockTypes.DARK_PRISMARINE);
+            block(es, cx + 4, SY, z, BlockTypes.DARK_PRISMARINE);
+        }
+        for (int x = cx - 3; x <= cx + 3; x++) {
+            block(es, x, SY, cz - 4, BlockTypes.DARK_PRISMARINE);
+            block(es, x, SY, cz + 4, BlockTypes.DARK_PRISMARINE);
         }
 
-        // Flower patch 4 — blue orchid + lily near water
-        for (int[] p : new int[][]{{-18,14},{-20,16},{-22,12},{-16,18}}) {
-            block(es, p[0],   SY+1, p[1], BlockTypes.BLUE_ORCHID);
-            block(es, p[0]-1, SY+1, p[1], BlockTypes.LILY_OF_THE_VALLEY);
+        // ── Arch (axisX=false → spans Z, player walks east) ──────────────────
+        portalArch(es, cx, cz, false,
+                   BlockTypes.PRISMARINE_BRICKS,
+                   BlockTypes.DARK_PRISMARINE,
+                   BlockTypes.PRISMARINE_BRICKS);
+
+        // ── SEA_LANTERN accents at pillar bases (instead of standard) ─────────
+        for (int dz : new int[]{-4, 4}) {
+            block(es, cx, SY + 1, cz + dz, BlockTypes.SEA_LANTERN);
+            block(es, cx, SY + 2, cz + dz, BlockTypes.PRISMARINE_BRICKS);
+            block(es, cx, SY + 3, cz + dz, BlockTypes.SEA_LANTERN);
         }
 
-        // Flower patch 5 — poppy + azure_bluet, north island
-        for (int[] p : new int[][]{{10,-28},{12,-30},{8,-26},{14,-28}}) {
-            double ex = (double)p[0]/RX, ez = (double)p[1]/RZ;
-            if (ex*ex+ez*ez > 0.9) continue;
-            block(es, p[0],   SY+1, p[1], BlockTypes.POPPY);
-            block(es, p[0]+1, SY+1, p[1], BlockTypes.AZURE_BLUET);
+        // ── Flanking PRISMARINE obelisks with SEA_LANTERN caps ───────────────
+        for (int dz : new int[]{-4, 4}) {
+            column(es, cx - 9, cz + dz, SY + 1, SY + 8, BlockTypes.PRISMARINE);
+            block(es,  cx - 9, SY + 9,  cz + dz, BlockTypes.SEA_LANTERN);
         }
 
-        // Short grass tufts scattered
-        int[][] grassPos = {
-            {20,14},{-18,-10},{-10,26},{30, 4},{-30,-6},{10,-28},
-            {38,-16},{-38, 12},{5,30},{-5,-30},{40,0},{-40,0},
-            {15, 8},{-12,-8},{22, 16},{-22,-14},{4,34},{-4,-34}
-        };
-        for (int[] g : grassPos) {
-            double ex = (double)g[0]/RX, ez = (double)g[1]/RZ;
-            if (ex*ex+ez*ez > 0.90) continue;
-            block(es, g[0],   SY+1, g[1],   BlockTypes.SHORT_GRASS);
-            block(es, g[0]+1, SY+1, g[1],   BlockTypes.SHORT_GRASS);
-            block(es, g[0],   SY+1, g[1]+1, BlockTypes.FERN);
+        // ── Glowstone header + PRISMARINE accent ──────────────────────────────
+        for (int z = cz - 4; z <= cz + 4; z++) {
+            block(es, cx, SY + 16, z, BlockTypes.GLOWSTONE);
+        }
+        for (int z = cz - 3; z <= cz + 3; z++) {
+            block(es, cx, SY + 17, z, BlockTypes.PRISMARINE);
+        }
+        block(es, cx, SY + 18, cz, BlockTypes.SEA_LANTERN);
+
+        // ── Approach path (z=54..56, x=31..37) ───────────────────────────────
+        for (int px = 31; px <= 37; px++) {
+            for (int pz = cz - 1; pz <= cz + 1; pz++) {
+                block(es, px, SY, pz, BlockTypes.PRISMARINE_BRICKS);
+            }
+        }
+        for (int px = 31; px <= 37; px++) {
+            block(es, px, SY, cz - 2, BlockTypes.DARK_PRISMARINE);
+            block(es, px, SY, cz + 2, BlockTypes.DARK_PRISMARINE);
+        }
+    }
+
+    /**
+     * Shield Portal — SW (cx=−38, cz=55).
+     * Oxidized-copper theme: CUT_COPPER pad, OXIDIZED_CUT_COPPER border,
+     * WEATHERED_CUT_COPPER accents, COPPER_BLOCK obelisks with LANTERN caps.
+     * Approach path from x=−31 to x=−37.
+     */
+    private void buildShieldPortal(EditSession es) {
+        int cx = -38, cz = 55;
+
+        // ── 9×9 pad: CUT_COPPER + OXIDIZED_CUT_COPPER border ─────────────────
+        fill(es, cx - 4, SY, cz - 4, cx + 4, SY, cz + 4, BlockTypes.CUT_COPPER);
+        for (int z = cz - 4; z <= cz + 4; z++) {
+            block(es, cx - 4, SY, z, BlockTypes.OXIDIZED_CUT_COPPER);
+            block(es, cx + 4, SY, z, BlockTypes.OXIDIZED_CUT_COPPER);
+        }
+        for (int x = cx - 3; x <= cx + 3; x++) {
+            block(es, x, SY, cz - 4, BlockTypes.OXIDIZED_CUT_COPPER);
+            block(es, x, SY, cz + 4, BlockTypes.OXIDIZED_CUT_COPPER);
         }
 
-        // Azalea line on forest/water border
-        int[][] azaleas = {{18,-8},{20,5},{-12,16},{-8,24},{30,-4},{-24,8}};
-        for (int[] a : azaleas) {
-            block(es, a[0],   SY+1, a[1],   BlockTypes.AZALEA);
-            block(es, a[0]+1, SY+1, a[1]+1, BlockTypes.FLOWERING_AZALEA);
+        // ── Arch (axisX=false → spans Z, player walks west) ──────────────────
+        portalArch(es, cx, cz, false,
+                   BlockTypes.COPPER_BLOCK,
+                   BlockTypes.OXIDIZED_COPPER,
+                   BlockTypes.CUT_COPPER);
+
+        // ── WEATHERED_CUT_COPPER accents at pillar bases ──────────────────────
+        for (int dz : new int[]{-4, 4}) {
+            block(es, cx, SY + 1, cz + dz, BlockTypes.WEATHERED_CUT_COPPER);
+            block(es, cx, SY + 2, cz + dz, BlockTypes.COPPER_BLOCK);
+            block(es, cx, SY + 3, cz + dz, BlockTypes.WEATHERED_CUT_COPPER);
         }
 
-        // Spore blossoms on underside of island overhangs (bottom face)
-        int[][] blossoms = {{26,-22},{-20,18},{20,22},{-26,-14},{8,-34},{-8,34}};
-        for (int[] b : blossoms) {
-            double ex = (double)b[0]/RX, ez = (double)b[1]/RZ;
-            if (ex*ex+ez*ez > 0.88) continue;
-            block(es, b[0], SY-1, b[1], BlockTypes.SPORE_BLOSSOM);
+        // ── Flanking COPPER_BLOCK obelisks with LANTERN caps ──────────────────
+        for (int dz : new int[]{-4, 4}) {
+            column(es, cx + 9, cz + dz, SY + 1, SY + 8, BlockTypes.COPPER_BLOCK);
+            block(es,  cx + 9, SY + 9,  cz + dz, BlockTypes.LANTERN);
         }
 
-        // Hanging roots at underside mid-section
-        int[][] hRoots = {{6,8},{-6,10},{12,4},{-10,6},{8,-6},{-12,-4},{4,16},{-4,-14}};
-        for (int[] hr : hRoots) {
-            double ex = (double)hr[0]/RX, ez = (double)hr[1]/RZ;
-            double t  = ex*ex+ez*ez;
-            if (t > 0.68) continue;
-            int botY = 42 + (int)(19.0*t);
-            block(es, hr[0], botY+4, hr[1], BlockTypes.HANGING_ROOTS);
-            block(es, hr[0], botY+5, hr[1], BlockTypes.HANGING_ROOTS);
+        // ── Accent details above arch ─────────────────────────────────────────
+        for (int z = cz - 4; z <= cz + 4; z++) {
+            block(es, cx, SY + 16, z, BlockTypes.OXIDIZED_COPPER);
         }
+        for (int z = cz - 2; z <= cz + 2; z++) {
+            block(es, cx, SY + 17, z, BlockTypes.WEATHERED_COPPER);
+        }
+        block(es, cx, SY + 18, cz, BlockTypes.COPPER_BLOCK);
+        block(es, cx, SY + 19, cz, BlockTypes.CHAIN);
+        block(es, cx, SY + 20, cz, BlockTypes.LANTERN);
 
-        // Big dripleafs near water gardens
-        block(es, -18, SY+1, 18, BlockTypes.BIG_DRIPLEAF);
-        block(es, -22, SY+1, 14, BlockTypes.BIG_DRIPLEAF);
-        block(es, -28, SY+1, 22, BlockTypes.BIG_DRIPLEAF);
+        // ── Approach path x=−31..−37, 3-wide z=cz−1..cz+1 ───────────────────
+        for (int px = -31; px >= -37; px--) {
+            for (int pz = cz - 1; pz <= cz + 1; pz++) {
+                block(es, px, SY, pz, BlockTypes.CUT_COPPER);
+            }
+        }
+        for (int px = -31; px >= -37; px--) {
+            block(es, px, SY, cz - 2, BlockTypes.OXIDIZED_CUT_COPPER);
+            block(es, px, SY, cz + 2, BlockTypes.OXIDIZED_CUT_COPPER);
+        }
     }
 
     // ============================================================================
-    //  ⑥  FORTIFICATIONS
+    //  CONNECTIVITY
     // ============================================================================
 
-    private void buildPerimeterWalls(EditSession es) {
-        // Stone-brick wall follows island ellipse at ~87% radius
-        double wRX = 38.0, wRZ = 33.0;
+    /**
+     * Places 5-wide stone-brick staircases descending 4 steps outward from the
+     * central plaza edge on each of the 4 cardinal sides.  Each staircase has
+     * oak-fence railings, 2-tall, on both sides.
+     */
+    private void buildGrandStaircase(EditSession es) {
+
+        // ── East staircase: base at x=21, descends eastward ──────────────────
+        for (int step = 0; step < 4; step++) {
+            int bx = 21 + step;
+            for (int z = -2; z <= 2; z++) {
+                block(es, bx, SY - step, z, BlockTypes.STONE_BRICKS);
+            }
+            // Oak fence railings on z=±2 edges
+            column(es, bx, -3, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+            column(es, bx,  3, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+        }
+
+        // ── West staircase: base at x=−21, descends westward ─────────────────
+        for (int step = 0; step < 4; step++) {
+            int bx = -21 - step;
+            for (int z = -2; z <= 2; z++) {
+                block(es, bx, SY - step, z, BlockTypes.STONE_BRICKS);
+            }
+            column(es, bx, -3, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+            column(es, bx,  3, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+        }
+
+        // ── South staircase: base at z=21, descends southward ────────────────
+        for (int step = 0; step < 4; step++) {
+            int bz = 21 + step;
+            for (int x = -2; x <= 2; x++) {
+                block(es, x, SY - step, bz, BlockTypes.STONE_BRICKS);
+            }
+            column(es, -3, bz, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+            column(es,  3, bz, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+        }
+
+        // ── North staircase: base at z=−21, descends northward ───────────────
+        for (int step = 0; step < 4; step++) {
+            int bz = -21 - step;
+            for (int x = -2; x <= 2; x++) {
+                block(es, x, SY - step, bz, BlockTypes.STONE_BRICKS);
+            }
+            column(es, -3, bz, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+            column(es,  3, bz, SY - step + 1, SY - step + 2, BlockTypes.OAK_FENCE);
+        }
+    }
+
+    /**
+     * Builds a 3-wide slightly elliptical stone-brick ring road at approximately
+     * radius 28 (east-west) × 34 (north-south).  Includes cobblestone kerbs on
+     * path edges and mossy accent tiles every 15°.
+     */
+    private void buildRingRoad(EditSession es) {
         for (int angle = 0; angle < 360; angle++) {
             double rad = Math.toRadians(angle);
-            int wx = (int) Math.round(wRX * Math.cos(rad));
-            int wz = (int) Math.round(wRZ * Math.sin(rad));
-            double ex = (double)wx/RX, ez = (double)wz/RZ;
-            if (ex*ex+ez*ez > 0.93) continue;
+            // Elliptical ring: rx≈28, rz≈34
+            int  ringX = (int) Math.round(28.0 * Math.cos(rad));
+            int  ringZ = (int) Math.round(34.0 * Math.sin(rad));
 
-            block(es, wx, SY,     wz, BlockTypes.STONE_BRICKS);
-            block(es, wx, SY + 1, wz, BlockTypes.STONE_BRICKS);
-            block(es, wx, SY + 2, wz, BlockTypes.STONE_BRICKS);
-            if (angle % 5 < 3) {
-                block(es, wx, SY + 3, wz, BlockTypes.STONE_BRICKS);
-                block(es, wx, SY + 4, wz, BlockTypes.STONE_BRICK_WALL);
+            // Ensure within island
+            double ex = (double) ringX / RX;
+            double ez = (double) ringZ / RZ;
+            if (ex * ex + ez * ez > 0.92) continue;
+
+            // 3-wide path segment: perpendicular offset directions
+            double perpCos = -Math.sin(rad); // perpendicular to radial
+            double perpSin =  Math.cos(rad);
+
+            for (int lane = -1; lane <= 1; lane++) {
+                int lx = ringX + (int) Math.round(lane * perpCos);
+                int lz = ringZ + (int) Math.round(lane * perpSin);
+                boolean isMossy = (angle % 15 == 0 && lane == 0);
+                block(es, lx, SY, lz,
+                      isMossy ? BlockTypes.MOSSY_STONE_BRICKS : BlockTypes.STONE_BRICKS);
             }
-            if (angle % 9 == 0)
-                block(es, wx, SY + 1, wz, BlockTypes.MOSSY_STONE_BRICKS);
-        }
 
-        // Clearings aligned with each portal direction (5-wide gaps)
-        // East portal gap (x~38, z~0)
-        for (int gz = -3; gz <= 3; gz++)
-            for (int gy = SY; gy <= SY+4; gy++)
-                for (int gx = 36; gx <= 40; gx++)
-                    block(es, gx, gy, gz, BlockTypes.AIR);
-
-        // West portal gap
-        for (int gz = -3; gz <= 3; gz++)
-            for (int gy = SY; gy <= SY+4; gy++)
-                for (int gx = -40; gx <= -36; gx++)
-                    block(es, gx, gy, gz, BlockTypes.AIR);
-
-        // South portal gap
-        for (int gx = -3; gx <= 3; gx++)
-            for (int gy = SY; gy <= SY+4; gy++)
-                for (int gz = 31; gz <= 35; gz++)
-                    block(es, gx, gy, gz, BlockTypes.AIR);
-
-        // North portal gap
-        for (int gx = -3; gx <= 3; gx++)
-            for (int gy = SY; gy <= SY+4; gy++)
-                for (int gz = -35; gz <= -31; gz++)
-                    block(es, gx, gy, gz, BlockTypes.AIR);
-
-        // NE totem gap (diagonal — approximate)
-        for (int gy = SY; gy <= SY+4; gy++) {
-            for (int d = -3; d <= 3; d++) {
-                block(es, 28+d, gy, -24, BlockTypes.AIR);
-                block(es, 28,   gy, -24+d, BlockTypes.AIR);
-            }
-        }
-    }
-
-    private void buildWatchtowers(EditSession es) {
-        buildSingleWatchtower(es,  32,  26);
-        buildSingleWatchtower(es, -32,  26);
-        buildSingleWatchtower(es,  32, -26);
-        buildSingleWatchtower(es, -32, -26);
-    }
-
-    private void buildSingleWatchtower(EditSession es, int cx, int cz) {
-        double ex = (double)cx/RX, ez = (double)cz/RZ;
-        if (ex*ex+ez*ez > 0.91) return;
-
-        // ── 5×5 hollow body, y=SY..SY+16 ─────────────────────────────────────
-        for (int y = SY; y <= SY+16; y++) {
-            for (int x = cx-2; x <= cx+2; x++) {
-                for (int z = cz-2; z <= cz+2; z++) {
-                    if (x==cx-2||x==cx+2||z==cz-2||z==cz+2) {
-                        block(es, x, y, z, y%4==0
-                                ? BlockTypes.CHISELED_STONE_BRICKS
-                                : BlockTypes.STONE_BRICKS);
-                    }
+            // Cobblestone kerb at path edges (lane ±2)
+            for (int kerb : new int[]{-2, 2}) {
+                int kx = ringX + (int) Math.round(kerb * perpCos);
+                int kz = ringZ + (int) Math.round(kerb * perpSin);
+                double kex = (double) kx / RX;
+                double kez = (double) kz / RZ;
+                if (kex * kex + kez * kez <= 0.94) {
+                    block(es, kx, SY, kz, BlockTypes.COBBLESTONE);
                 }
             }
         }
-
-        // Doorway inward (facing origin)
-        int doorX = cx + (cx < 0 ? 2 : -2);
-        block(es, doorX, SY+1, cz, BlockTypes.AIR);
-        block(es, doorX, SY+2, cz, BlockTypes.AIR);
-
-        // ── Interior floor SY+1 ───────────────────────────────────────────────
-        fill(es, cx-1, SY+1, cz-1, cx+1, SY+1, cz+1, BlockTypes.POLISHED_DEEPSLATE);
-        block(es, cx, SY+2, cz, BlockTypes.SEA_LANTERN);
-
-        // ── Arrow slits at y=SY+6..7, each face ──────────────────────────────
-        for (int wy = SY+6; wy <= SY+7; wy++) {
-            block(es, cx,     wy, cz-2, BlockTypes.AIR);
-            block(es, cx,     wy, cz+2, BlockTypes.AIR);
-            block(es, cx-2,   wy, cz,   BlockTypes.AIR);
-            block(es, cx+2,   wy, cz,   BlockTypes.AIR);
-        }
-
-        // ── Upper platform at SY+16 ───────────────────────────────────────────
-        fill(es, cx-2, SY+16, cz-2, cx+2, SY+16, cz+2, BlockTypes.POLISHED_DEEPSLATE);
-        for (int i = cx-2; i <= cx+2; i++) {
-            block(es, i, SY+17, cz-2, BlockTypes.IRON_BARS);
-            block(es, i, SY+17, cz+2, BlockTypes.IRON_BARS);
-        }
-        for (int i = cz-1; i <= cz+1; i++) {
-            block(es, cx-2, SY+17, i, BlockTypes.IRON_BARS);
-            block(es, cx+2, SY+17, i, BlockTypes.IRON_BARS);
-        }
-
-        // ── Corner crenellations + lanterns ───────────────────────────────────
-        for (int[] c : new int[][]{{cx-2,cz-2},{cx+2,cz-2},{cx-2,cz+2},{cx+2,cz+2}}) {
-            column(es, c[0], c[1], SY+17, SY+19, BlockTypes.STONE_BRICKS);
-            block(es, c[0], SY+20, c[1], BlockTypes.LANTERN);
-        }
-
-        // ── Dark-oak pyramid roof ─────────────────────────────────────────────
-        fill(es, cx-2, SY+21, cz-2, cx+2, SY+21, cz+2, BlockTypes.DARK_OAK_PLANKS);
-        fill(es, cx-1, SY+22, cz-1, cx+1, SY+22, cz+1, BlockTypes.DARK_OAK_PLANKS);
-        block(es, cx,   SY+23, cz,   BlockTypes.DARK_OAK_LOG);
-        block(es, cx,   SY+24, cz,   BlockTypes.LANTERN);
     }
 
-    // ============================================================================
-    //  ⑦  LIGHTING
-    // ============================================================================
+    /**
+     * Places 3-wide STONE_BRICKS radial paths from the ring road out to each of
+     * the 8 portal approach areas, plus 3-wide paths from the central plaza to
+     * the ring road on all 4 cardinal directions.  Cobblestone kerbs flank each
+     * path and mossy accent tiles appear every 6 blocks.
+     */
+    private void buildPathways(EditSession es) {
 
-    private void buildLampPosts(EditSession es) {
-        // Path-side lamp posts — 2 per side on each of the 4 main paths
-        int[][] lamps = {
-            // east path
-            { 15, 3},{ 15,-3},{ 20, 3},{ 20,-3},
-            // west path
-            {-15, 3},{-15,-3},{-20, 3},{-20,-3},
-            // south path
-            {  3, 15},{-3, 15},{  3, 20},{-3, 20},
-            // north path
-            {  3,-15},{-3,-15},{  3,-20},{-3,-20}
-        };
-        for (int[] lp : lamps) {
-            double ex = (double)lp[0]/RX, ez = (double)lp[1]/RZ;
-            if (ex*ex+ez*ez > 0.96) continue;
-            column(es, lp[0], lp[1], SY+1, SY+3, BlockTypes.OAK_FENCE);
-            block(es, lp[0], SY+4, lp[1], BlockTypes.LANTERN);
+        // ── Cardinal paths: plaza (r≈21) to ring road (r≈28) ─────────────────
+
+        // East path (x=21..28, z=−1..1)
+        for (int x = 22; x <= 28; x++) {
+            for (int z = -1; z <= 1; z++) {
+                block(es, x, SY, z,
+                      (x % 6 == 0 && z == 0) ? BlockTypes.MOSSY_STONE_BRICKS
+                                              : BlockTypes.STONE_BRICKS);
+            }
+            block(es, x, SY, -2, BlockTypes.COBBLESTONE);
+            block(es, x, SY,  2, BlockTypes.COBBLESTONE);
         }
 
-        // Plaza ring lamps at radius 15, every 45°
-        for (int a = 22; a < 360; a += 45) {
-            double rad = Math.toRadians(a);
-            int lx = (int) Math.round(15 * Math.cos(rad));
-            int lz = (int) Math.round(15 * Math.sin(rad));
-            double ex=(double)lx/RX, ez=(double)lz/RZ;
-            if (ex*ex+ez*ez > 0.95) continue;
-            column(es, lx, lz, SY+1, SY+4, BlockTypes.OAK_FENCE);
-            block(es, lx, SY+5, lz, BlockTypes.LANTERN);
+        // West path (x=−22..−28, z=−1..1)
+        for (int x = -22; x >= -28; x--) {
+            for (int z = -1; z <= 1; z++) {
+                block(es, x, SY, z,
+                      (Math.abs(x) % 6 == 0 && z == 0) ? BlockTypes.MOSSY_STONE_BRICKS
+                                                        : BlockTypes.STONE_BRICKS);
+            }
+            block(es, x, SY, -2, BlockTypes.COBBLESTONE);
+            block(es, x, SY,  2, BlockTypes.COBBLESTONE);
         }
 
-        // Perimeter wall torches (every ~18°)
-        for (int a = 9; a < 360; a += 18) {
-            double rad = Math.toRadians(a);
-            int wx = (int) Math.round(38.5 * Math.cos(rad));
-            int wz = (int) Math.round(33.5 * Math.sin(rad));
-            double ex=(double)wx/RX, ez=(double)wz/RZ;
-            if (ex*ex+ez*ez > 0.97) continue;
-            block(es, wx, SY+5, wz, BlockTypes.LANTERN);
+        // South path (z=22..34, x=−1..1)
+        for (int z = 22; z <= 34; z++) {
+            for (int x = -1; x <= 1; x++) {
+                block(es, x, SY, z,
+                      (z % 6 == 0 && x == 0) ? BlockTypes.MOSSY_STONE_BRICKS
+                                             : BlockTypes.STONE_BRICKS);
+            }
+            block(es, -2, SY, z, BlockTypes.COBBLESTONE);
+            block(es,  2, SY, z, BlockTypes.COBBLESTONE);
         }
 
-        // Plaza pillar chain-lanterns (already placed pillar tops at SY+6,
-        // add chain from SY+8 down to SY+6 between alternating pillars)
-        for (int a = 0; a < 8; a++) {
-            double rad = Math.toRadians(a * 45.0);
-            int px = (int) Math.round(11 * Math.cos(rad));
-            int pz = (int) Math.round(11 * Math.sin(rad));
-            block(es, px, SY+7, pz, BlockTypes.CHAIN);
-            block(es, px, SY+8, pz, BlockTypes.CHAIN);
+        // North path (z=−22..−34, x=−1..1)
+        for (int z = -22; z >= -34; z--) {
+            for (int x = -1; x <= 1; x++) {
+                block(es, x, SY, z,
+                      (Math.abs(z) % 6 == 0 && x == 0) ? BlockTypes.MOSSY_STONE_BRICKS
+                                                        : BlockTypes.STONE_BRICKS);
+            }
+            block(es, -2, SY, z, BlockTypes.COBBLESTONE);
+            block(es,  2, SY, z, BlockTypes.COBBLESTONE);
         }
 
-        // Soul lanterns near nether portal for ambience
-        block(es, -2, SY+1, 22, BlockTypes.SOUL_LANTERN);
-        block(es,  2, SY+1, 22, BlockTypes.SOUL_LANTERN);
+        // ── Radial paths from ring road to each portal approach ───────────────
 
-        // Additional lanterns near water gardens
-        column(es, -20, 20, SY+1, SY+3, BlockTypes.OAK_FENCE);
-        block(es, -20, SY+4, 20, BlockTypes.LANTERN);
-        column(es, -28, 10, SY+1, SY+3, BlockTypes.OAK_FENCE);
-        block(es, -28, SY+4, 10, BlockTypes.LANTERN);
-    }
+        // Crystal (E): x=29..47, z=−1..1
+        for (int x = 29; x <= 47; x++) {
+            for (int z = -1; z <= 1; z++) {
+                block(es, x, SY, z, (x % 6 == 0 && z == 0) ? BlockTypes.MOSSY_STONE_BRICKS
+                                                             : BlockTypes.STONE_BRICKS);
+            }
+            block(es, x, SY, -2, BlockTypes.COBBLESTONE);
+            block(es, x, SY,  2, BlockTypes.COBBLESTONE);
+        }
 
-    // ============================================================================
-    //  ⑧  UNDERGROUND CAVE
-    // ============================================================================
+        // Sword (W): x=−29..−47, z=−1..1
+        for (int x = -29; x >= -47; x--) {
+            for (int z = -1; z <= 1; z++) {
+                block(es, x, SY, z, (Math.abs(x) % 6 == 0 && z == 0)
+                                    ? BlockTypes.MOSSY_STONE_BRICKS : BlockTypes.STONE_BRICKS);
+            }
+            block(es, x, SY, -2, BlockTypes.COBBLESTONE);
+            block(es, x, SY,  2, BlockTypes.COBBLESTONE);
+        }
 
-    private void buildUndergroundCave(EditSession es) {
-        int caY = 52;    // cave centre Y
+        // Mace (S): z=35..57, x=−1..1
+        for (int z = 35; z <= 57; z++) {
+            for (int x = -1; x <= 1; x++) {
+                block(es, x, SY, z, (z % 6 == 0 && x == 0) ? BlockTypes.MOSSY_STONE_BRICKS
+                                                             : BlockTypes.STONE_BRICKS);
+            }
+            block(es, -2, SY, z, BlockTypes.COBBLESTONE);
+            block(es,  2, SY, z, BlockTypes.COBBLESTONE);
+        }
 
-        // ── Carve ellipsoidal chamber ─────────────────────────────────────────
-        for (int x = -15; x <= 15; x++) {
-            for (int y = caY-6; y <= caY+5; y++) {
-                for (int z = -15; z <= 15; z++) {
-                    double dx = (double)x/15.0, dy = (double)(y-caY)/5.5, dz = (double)z/15.0;
-                    if (dx*dx+dy*dy+dz*dz <= 1.0)
-                        block(es, x, y, z, BlockTypes.CAVE_AIR);
-                }
+        // Bow (N): z=−35..−57, x=−1..1
+        for (int z = -35; z >= -57; z--) {
+            for (int x = -1; x <= 1; x++) {
+                block(es, x, SY, z, (Math.abs(z) % 6 == 0 && x == 0)
+                                    ? BlockTypes.MOSSY_STONE_BRICKS : BlockTypes.STONE_BRICKS);
+            }
+            block(es, -2, SY, z, BlockTypes.COBBLESTONE);
+            block(es,  2, SY, z, BlockTypes.COBBLESTONE);
+        }
+
+        // Totem (NE diagonal): 7-step path from ring to portal approach
+        // Rings at ~28, portal at (38, -45); step diagonally
+        for (int step = 0; step <= 9; step++) {
+            int px = 29 + step;
+            int pz = -35 - step;
+            double ex = (double) px / RX;
+            double ez = (double) pz / RZ;
+            if (ex * ex + ez * ez > 0.96) continue;
+            for (int d = -1; d <= 1; d++) {
+                block(es, px + d, SY, pz,     BlockTypes.STONE_BRICKS);
+                block(es, px,     SY, pz + d, BlockTypes.STONE_BRICKS);
+            }
+            if (step % 6 == 0) {
+                block(es, px, SY, pz, BlockTypes.MOSSY_STONE_BRICKS);
             }
         }
 
-        // ── Cave floor: gravel + stone ────────────────────────────────────────
-        for (int x = -13; x <= 13; x++) {
-            for (int z = -13; z <= 13; z++) {
-                if ((double)x/13*(double)x/13 + (double)z/13*(double)z/13 <= 1.0) {
-                    block(es, x, caY-6, z, BlockTypes.GRAVEL);
-                    block(es, x, caY-7, z, BlockTypes.STONE);
-                    if ((x*31+z*17) % 7 == 0) block(es, x, caY-6, z, BlockTypes.COBBLESTONE);
-                }
+        // Axe (NW diagonal): ring to portal
+        for (int step = 0; step <= 9; step++) {
+            int px = -29 - step;
+            int pz = -35 - step;
+            double ex = (double) px / RX;
+            double ez = (double) pz / RZ;
+            if (ex * ex + ez * ez > 0.96) continue;
+            for (int d = -1; d <= 1; d++) {
+                block(es, px + d, SY, pz,     BlockTypes.STONE_BRICKS);
+                block(es, px,     SY, pz + d, BlockTypes.STONE_BRICKS);
+            }
+            if (step % 6 == 0) {
+                block(es, px, SY, pz, BlockTypes.MOSSY_STONE_BRICKS);
             }
         }
 
-        // ── Stalactite clusters ───────────────────────────────────────────────
-        int[][] stalactites = {
-            {4,4,4},{-4,-4,5},{6,-3,3},{-6,4,3},{0,8,5},
-            {8,0,4},{-8,-2,4},{2,-9,3},{-2,9,4},{5,7,3},
-            {-5,-7,3},{9,-7,3},{-9,7,4},{0,0,6}
-        };
-        for (int[] s : stalactites) {
-            for (int i = 0; i < s[2]; i++)
-                block(es, s[0], caY+5-i, s[1], BlockTypes.DEEPSLATE);
+        // Trident (SE diagonal): ring to portal
+        for (int step = 0; step <= 9; step++) {
+            int px = 29 + step;
+            int pz = 35 + step;
+            double ex = (double) px / RX;
+            double ez = (double) pz / RZ;
+            if (ex * ex + ez * ez > 0.96) continue;
+            for (int d = -1; d <= 1; d++) {
+                block(es, px + d, SY, pz,     BlockTypes.STONE_BRICKS);
+                block(es, px,     SY, pz + d, BlockTypes.STONE_BRICKS);
+            }
+            if (step % 6 == 0) {
+                block(es, px, SY, pz, BlockTypes.MOSSY_STONE_BRICKS);
+            }
         }
 
-        // Stalagmites from floor
-        int[][] stalagmites = {{3,6},{-5,5},{7,-3},{-7,4},{1,-8},{-1,9},{6,8},{-6,-9}};
-        for (int[] st : stalagmites) {
-            int ht = 1 + (Math.abs(st[0]+st[1]) % 3);
-            for (int i = 0; i < ht; i++)
-                block(es, st[0], caY-6+i, st[1], BlockTypes.STONE);
+        // Shield (SW diagonal): ring to portal
+        for (int step = 0; step <= 9; step++) {
+            int px = -29 - step;
+            int pz = 35 + step;
+            double ex = (double) px / RX;
+            double ez = (double) pz / RZ;
+            if (ex * ex + ez * ez > 0.96) continue;
+            for (int d = -1; d <= 1; d++) {
+                block(es, px + d, SY, pz,     BlockTypes.STONE_BRICKS);
+                block(es, px,     SY, pz + d, BlockTypes.STONE_BRICKS);
+            }
+            if (step % 6 == 0) {
+                block(es, px, SY, pz, BlockTypes.MOSSY_STONE_BRICKS);
+            }
         }
+    }
 
-        // ── Ore veins on cave walls (deterministic) ───────────────────────────
-        BlockType[] oreTypes = {
-            BlockTypes.DEEPSLATE_IRON_ORE, BlockTypes.DEEPSLATE_GOLD_ORE,
-            BlockTypes.DEEPSLATE_COAL_ORE, BlockTypes.DEEPSLATE_LAPIS_ORE,
-            BlockTypes.DEEPSLATE_DIAMOND_ORE
-        };
-        int[][] oreSeeds = {
-            {-13, caY+1,  3, 0}, {11, caY-1, -9, 1}, {-9, caY+3, 10, 2},
-            { 7,  caY+2,  13, 3},{-12, caY-2, -7, 4}, {13, caY, 5, 2},
-            {-7,  caY+4, -10, 1},{ 5,  caY-3,  9, 3}
-        };
-        for (int[] o : oreSeeds) {
+    /**
+     * Places 5 wooden bridges across gaps and water features on the island,
+     * each approximately 10–15 blocks long, 3-wide SPRUCE_PLANKS deck with
+     * 2-tall OAK_FENCE railings, OAK_LOG support columns every 4 blocks below,
+     * and LANTERN decorations at each bridge end.
+     *
+     * <ul>
+     *   <li>Bridge 1 – East approach, x=26, spanning z=−8..8</li>
+     *   <li>Bridge 2 – North approach, z=−26, spanning x=−6..6</li>
+     *   <li>Bridge 3 – West approach, x=−26, spanning z=−6..6</li>
+     *   <li>Bridge 4 – South approach, z=26, spanning x=−6..6</li>
+     *   <li>Bridge 5 – NE diagonal bridge over a small scenic gap</li>
+     * </ul>
+     */
+    private void buildBridges(EditSession es) {
+
+        // ── Bridge 1: East approach at x=26, spanning z=−8..8 (17 blocks long)
+        {
+            int bx = 26;
+            // 3-wide deck: z=−8..8, x=bx−1..bx+1
+            for (int z = -8; z <= 8; z++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    block(es, bx + dx, SY, z, BlockTypes.SPRUCE_PLANKS);
+                }
+            }
+            // OAK_FENCE railings on both long sides (x=bx−1 and x=bx+1), 2-tall
+            for (int z = -8; z <= 8; z++) {
+                block(es, bx - 1, SY + 1, z, BlockTypes.OAK_FENCE);
+                block(es, bx - 1, SY + 2, z, BlockTypes.OAK_FENCE);
+                block(es, bx + 1, SY + 1, z, BlockTypes.OAK_FENCE);
+                block(es, bx + 1, SY + 2, z, BlockTypes.OAK_FENCE);
+            }
+            // OAK_LOG support columns below deck every 4 blocks along z
+            for (int z = -8; z <= 8; z += 4) {
+                block(es, bx, SY - 1, z, BlockTypes.OAK_LOG);
+                block(es, bx, SY - 2, z, BlockTypes.OAK_LOG);
+                block(es, bx, SY - 3, z, BlockTypes.OAK_LOG);
+            }
+            // Lanterns at both ends of the bridge
+            block(es, bx - 1, SY + 3, -8, BlockTypes.LANTERN);
+            block(es, bx + 1, SY + 3, -8, BlockTypes.LANTERN);
+            block(es, bx - 1, SY + 3,  8, BlockTypes.LANTERN);
+            block(es, bx + 1, SY + 3,  8, BlockTypes.LANTERN);
+            // Extra cobblestone kerb blocks at bridge entry/exit
             for (int dx = -1; dx <= 1; dx++) {
+                block(es, bx + dx, SY,  9, BlockTypes.COBBLESTONE);
+                block(es, bx + dx, SY, -9, BlockTypes.COBBLESTONE);
+            }
+        }
+
+        // ── Bridge 2: North approach at z=−26, spanning x=−6..6 (13 blocks) ──
+        {
+            int bz = -26;
+            for (int x = -6; x <= 6; x++) {
                 for (int dz = -1; dz <= 1; dz++) {
-                    int hash = (o[0]+dx)*31+(o[1])*17+(o[2]+dz)*7;
-                    if (hash % 3 != 0) continue;
-                    block(es, o[0]+dx, o[1], o[2]+dz, oreTypes[o[3]]);
+                    block(es, x, SY, bz + dz, BlockTypes.SPRUCE_PLANKS);
                 }
             }
-        }
-
-        // ── Cave lighting ─────────────────────────────────────────────────────
-        block(es,  0, caY+4,  0, BlockTypes.GLOWSTONE);
-        block(es,  7, caY+4,  7, BlockTypes.SHROOMLIGHT);
-        block(es, -7, caY+4, -7, BlockTypes.SHROOMLIGHT);
-        block(es,  9, caY+2, -5, BlockTypes.GLOWSTONE);
-        block(es, -9, caY+2,  5, BlockTypes.GLOWSTONE);
-        block(es,  4, caY-5, -7, BlockTypes.SEA_LANTERN);
-        block(es, -4, caY-5,  8, BlockTypes.SEA_LANTERN);
-        block(es,  0, caY-5,  0, BlockTypes.GLOWSTONE);
-
-        // ── Underground pool ──────────────────────────────────────────────────
-        fill(es, -7, caY-6, -8, -4, caY-6, -5, BlockTypes.WATER);
-        fill(es, -7, caY-7, -8, -4, caY-7, -5, BlockTypes.DARK_PRISMARINE);
-        block(es, -5, caY-7, -6, BlockTypes.SEA_LANTERN);
-
-        // ── Glowing mushroom patch ─────────────────────────────────────────────
-        fill(es, 4, caY-6, 6, 8, caY-6, 10, BlockTypes.MYCELIUM);
-        for (int[] m : new int[][]{{5,7},{6,9},{8,7},{5,10}})
-            block(es, m[0], caY-5, m[1], BlockTypes.BROWN_MUSHROOM);
-
-        // ── Access shaft from surface → cave ─────────────────────────────────
-        // Hidden at (18, ?, 2) in the forest zone
-        for (int y = caY+6; y < SY; y++) {
-            block(es, 17, y, 2, BlockTypes.CAVE_AIR);
-            block(es, 18, y, 2, BlockTypes.CAVE_AIR);
-            block(es, 17, y, 3, BlockTypes.CAVE_AIR);
-            block(es, 18, y, 3, BlockTypes.CAVE_AIR);
-        }
-        // Oak fence ladder rungs every 2 blocks
-        for (int y = caY+7; y < SY-1; y += 2)
-            block(es, 17, y, 2, BlockTypes.OAK_FENCE);
-
-        // Shaft wall lining: stone bricks
-        for (int y = caY+6; y < SY; y++) {
-            block(es, 16, y, 2, BlockTypes.STONE_BRICKS);
-            block(es, 19, y, 2, BlockTypes.STONE_BRICKS);
-            block(es, 17, y, 1, BlockTypes.STONE_BRICKS);
-            block(es, 18, y, 4, BlockTypes.STONE_BRICKS);
-        }
-
-        // Iron trapdoor covering the entrance (flush with SY+1)
-        block(es, 17, SY+1, 2, BlockTypes.IRON_TRAPDOOR);
-        block(es, 18, SY+1, 2, BlockTypes.OAK_PLANKS);
-        // Mossy stone "disguise" around trapdoor
-        fill(es, 16, SY, 1, 19, SY, 4, BlockTypes.MOSS_BLOCK);
-        block(es, 17, SY, 2, BlockTypes.AIR);  // clear over shaft opening
-        block(es, 18, SY, 2, BlockTypes.AIR);
-        block(es, 17, SY, 3, BlockTypes.AIR);
-        block(es, 18, SY, 3, BlockTypes.AIR);
-    }
-
-    // ============================================================================
-    //  ⑨  FINAL ACCENTS
-    // ============================================================================
-
-    private void buildFinalAccents(EditSession es) {
-        // ── Decorative boulders ───────────────────────────────────────────────
-        BlockType[] bMat = {BlockTypes.ANDESITE, BlockTypes.MOSSY_COBBLESTONE,
-                            BlockTypes.STONE, BlockTypes.POLISHED_ANDESITE, BlockTypes.GRANITE};
-        int[][] boulders = {
-            {-18,-26},{26,18},{-30,10},{38,-20},{-16,30},
-            { 14, 28},{-34,-14},{20,-30},{40,14},{-26,-28},
-            { 10, 32},{-10,-32},{36, 16},{-36,-16},{-38,8}
-        };
-        for (int i = 0; i < boulders.length; i++) {
-            int bx = boulders[i][0], bz = boulders[i][1];
-            double ex = (double)bx/RX, ez = (double)bz/RZ;
-            if (ex*ex+ez*ez > 0.87) continue;
-            block(es, bx,   SY+1, bz,   bMat[i%bMat.length]);
-            block(es, bx+1, SY+1, bz,   bMat[(i+1)%bMat.length]);
-            block(es, bx,   SY+1, bz+1, bMat[(i+2)%bMat.length]);
-            block(es, bx,   SY+2, bz,   bMat[(i+3)%bMat.length]);
-        }
-
-        // ── Amethyst crystal cluster near Crystal Portal ──────────────────────
-        int[][] crystalPos = {{20,-5},{21,4},{24,-3},{19,5},{23,-6},{25,2}};
-        for (int[] c : crystalPos) {
-            block(es, c[0], SY+1, c[1], BlockTypes.AMETHYST_BLOCK);
-            if ((c[0]+c[1]) % 2 == 0) block(es, c[0], SY+2, c[1], BlockTypes.AMETHYST_CLUSTER);
-        }
-        // Budding amethyst buried slightly
-        block(es, 22, SY, -1, BlockTypes.BUDDING_AMETHYST);
-        block(es, 22, SY,  1, BlockTypes.BUDDING_AMETHYST);
-
-        // ── Nether wart accent near Mace Portal ───────────────────────────────
-        int[][] warts = {{4,18},{-4,18},{3,20},{-2,20},{5,22},{-5,22},{4,25},{-3,25}};
-        for (int[] w : warts) block(es, w[0], SY+1, w[1], BlockTypes.NETHER_WART_BLOCK);
-
-        // ── Copper oxidation accent near Sword Portal ─────────────────────────
-        BlockType[] copperMats = {BlockTypes.CUT_COPPER, BlockTypes.WEATHERED_CUT_COPPER,
-                                   BlockTypes.OXIDIZED_CUT_COPPER, BlockTypes.COPPER_BLOCK};
-        int[][] copper = {{-18,5},{-20,7},{-19,9},{-17,6},{-21,-4},{-18,-6},{-20,-3},{-16,-7}};
-        for (int i = 0; i < copper.length; i++)
-            block(es, copper[i][0], SY+1, copper[i][1], copperMats[i%copperMats.length]);
-
-        // ── Information / sign pillars flanking each portal entry ─────────────
-        int[][] lorePillars = {{19,0},{-19,0},{0,19},{0,-19}};
-        for (int[] lp : lorePillars) {
-            column(es, lp[0], lp[1], SY+1, SY+5, BlockTypes.CHISELED_STONE_BRICKS);
-            block(es, lp[0], SY+6, lp[1], BlockTypes.SEA_LANTERN);
-            block(es, lp[0], SY+7, lp[1], BlockTypes.CHAIN);
-            block(es, lp[0], SY+8, lp[1], BlockTypes.LANTERN);
-        }
-
-        // ── Edge flowers ──────────────────────────────────────────────────────
-        BlockType[] edgeFlowers = {
-            BlockTypes.POPPY, BlockTypes.BLUE_ORCHID, BlockTypes.LILY_OF_THE_VALLEY,
-            BlockTypes.AZURE_BLUET, BlockTypes.DANDELION, BlockTypes.CORNFLOWER,
-            BlockTypes.ALLIUM, BlockTypes.OXEYE_DAISY
-        };
-        int[][] efPos = {
-            {40,-2},{-40,2},{2,36},{-2,-36},{38,10},{-38,-10},{10,34},{-10,-34},
-            {36,18},{-36,-18},{18,34},{-18,-34},{42,0},{-42,0},{0,36},{0,-36}
-        };
-        for (int i = 0; i < efPos.length; i++) {
-            int fx = efPos[i][0], fz = efPos[i][1];
-            double ex = (double)fx/RX, ez = (double)fz/RZ;
-            if (ex*ex+ez*ez > 0.96) continue;
-            block(es, fx, SY+1, fz, edgeFlowers[i%edgeFlowers.length]);
-        }
-
-        // ── Glowstone seam in island core visible from cave ───────────────────
-        int[][] glowVeins = {{6,4},{-6,-4},{4,-6},{-4,6},{0,10},{10,0},{-10,0},{0,-10}};
-        for (int[] gv : glowVeins) {
-            for (int y = 47; y <= 56; y += 3) {
-                if ((gv[0]+gv[1]+y) % 6 == 0)
-                    block(es, gv[0], y, gv[1], BlockTypes.GLOWSTONE);
+            // Railings along north and south long sides
+            for (int x = -6; x <= 6; x++) {
+                block(es, x, SY + 1, bz - 1, BlockTypes.OAK_FENCE);
+                block(es, x, SY + 2, bz - 1, BlockTypes.OAK_FENCE);
+                block(es, x, SY + 1, bz + 1, BlockTypes.OAK_FENCE);
+                block(es, x, SY + 2, bz + 1, BlockTypes.OAK_FENCE);
+            }
+            // Support columns below every 4 blocks along x
+            for (int x = -6; x <= 6; x += 4) {
+                block(es, x, SY - 1, bz, BlockTypes.OAK_LOG);
+                block(es, x, SY - 2, bz, BlockTypes.OAK_LOG);
+                block(es, x, SY - 3, bz, BlockTypes.OAK_LOG);
+            }
+            // Lanterns at both short ends
+            block(es, -6, SY + 3, bz - 1, BlockTypes.LANTERN);
+            block(es, -6, SY + 3, bz + 1, BlockTypes.LANTERN);
+            block(es,  6, SY + 3, bz - 1, BlockTypes.LANTERN);
+            block(es,  6, SY + 3, bz + 1, BlockTypes.LANTERN);
+            // Entry kerbs
+            for (int dz = -1; dz <= 1; dz++) {
+                block(es, -7, SY, bz + dz, BlockTypes.COBBLESTONE);
+                block(es,  7, SY, bz + dz, BlockTypes.COBBLESTONE);
             }
         }
 
-        // ── Beacon base buried under tower for atmospheric beacon beam ─────────
-        fill(es, -1, SY-2, -1, 1, SY-2, 1, BlockTypes.IRON_BLOCK);
-        block(es,  0, SY-1,  0, BlockTypes.BEACON);
+        // ── Bridge 3: West approach at x=−26, spanning z=−6..6 (13 blocks) ───
+        {
+            int bx = -26;
+            for (int z = -6; z <= 6; z++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    block(es, bx + dx, SY, z, BlockTypes.SPRUCE_PLANKS);
+                }
+            }
+            // Railings on x=bx−1 and x=bx+1
+            for (int z = -6; z <= 6; z++) {
+                block(es, bx - 1, SY + 1, z, BlockTypes.OAK_FENCE);
+                block(es, bx - 1, SY + 2, z, BlockTypes.OAK_FENCE);
+                block(es, bx + 1, SY + 1, z, BlockTypes.OAK_FENCE);
+                block(es, bx + 1, SY + 2, z, BlockTypes.OAK_FENCE);
+            }
+            // Support columns every 4 along z
+            for (int z = -6; z <= 6; z += 4) {
+                block(es, bx, SY - 1, z, BlockTypes.OAK_LOG);
+                block(es, bx, SY - 2, z, BlockTypes.OAK_LOG);
+                block(es, bx, SY - 3, z, BlockTypes.OAK_LOG);
+            }
+            // Lanterns at short ends
+            block(es, bx - 1, SY + 3, -6, BlockTypes.LANTERN);
+            block(es, bx + 1, SY + 3, -6, BlockTypes.LANTERN);
+            block(es, bx - 1, SY + 3,  6, BlockTypes.LANTERN);
+            block(es, bx + 1, SY + 3,  6, BlockTypes.LANTERN);
+            // Entry kerbs
+            for (int dx = -1; dx <= 1; dx++) {
+                block(es, bx + dx, SY, -7, BlockTypes.COBBLESTONE);
+                block(es, bx + dx, SY,  7, BlockTypes.COBBLESTONE);
+            }
+        }
 
-        // ── Sea lanterns on perimeter wall top at 4 cardinal points ───────────
-        block(es,  38,  SY+5,  0, BlockTypes.SEA_LANTERN);
-        block(es, -38,  SY+5,  0, BlockTypes.SEA_LANTERN);
-        block(es,   0,  SY+5, 33, BlockTypes.SEA_LANTERN);
-        block(es,   0,  SY+5,-33, BlockTypes.SEA_LANTERN);
+        // ── Bridge 4: South approach at z=26, spanning x=−6..6 (13 blocks) ───
+        {
+            int bz = 26;
+            for (int x = -6; x <= 6; x++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    block(es, x, SY, bz + dz, BlockTypes.SPRUCE_PLANKS);
+                }
+            }
+            // Railings along both long sides
+            for (int x = -6; x <= 6; x++) {
+                block(es, x, SY + 1, bz - 1, BlockTypes.OAK_FENCE);
+                block(es, x, SY + 2, bz - 1, BlockTypes.OAK_FENCE);
+                block(es, x, SY + 1, bz + 1, BlockTypes.OAK_FENCE);
+                block(es, x, SY + 2, bz + 1, BlockTypes.OAK_FENCE);
+            }
+            // Support columns every 4 along x
+            for (int x = -6; x <= 6; x += 4) {
+                block(es, x, SY - 1, bz, BlockTypes.OAK_LOG);
+                block(es, x, SY - 2, bz, BlockTypes.OAK_LOG);
+                block(es, x, SY - 3, bz, BlockTypes.OAK_LOG);
+            }
+            // Lanterns at short ends
+            block(es, -6, SY + 3, bz - 1, BlockTypes.LANTERN);
+            block(es, -6, SY + 3, bz + 1, BlockTypes.LANTERN);
+            block(es,  6, SY + 3, bz - 1, BlockTypes.LANTERN);
+            block(es,  6, SY + 3, bz + 1, BlockTypes.LANTERN);
+            // Entry kerbs
+            for (int dz = -1; dz <= 1; dz++) {
+                block(es, -7, SY, bz + dz, BlockTypes.COBBLESTONE);
+                block(es,  7, SY, bz + dz, BlockTypes.COBBLESTONE);
+            }
+        }
 
-        // ── Tuff accent blocks randomly dotting island surface near edges ──────
-        int[][] tuffSpots = {
-            {38,-10},{-38,8},{14,-32},{-14,30},{34,20},{-34,-20},
-            {24,-34},{-24,32},{40,6},{-40,-6}
-        };
-        for (int[] t : tuffSpots) {
-            double ex=(double)t[0]/RX, ez=(double)t[1]/RZ;
-            if (ex*ex+ez*ez > 0.9) continue;
-            block(es, t[0], SY+1, t[1], BlockTypes.TUFF);
+        // ── Bridge 5: NE diagonal bridge over a small scenic gap ─────────────
+        //    Runs from approximately (26, SY, −20) to (36, SY, −30),
+        //    10 diagonal steps, 3-wide SPRUCE_PLANKS, OAK_FENCE railings,
+        //    OAK_LOG supports mid-span, LANTERN ends.
+        {
+            int startX = 26, startZ = -20;
+            int steps  = 10;
+
+            for (int step = 0; step <= steps; step++) {
+                int dx = startX + step;
+                int dz = startZ - step;
+
+                // Check within island
+                double ex = (double) dx / RX;
+                double ez = (double) dz / RZ;
+                if (ex * ex + ez * ez > 0.94) continue;
+
+                // 3-wide perpendicular to the NE diagonal (offset on the SE–NW axis)
+                // The diagonal is (1,−1), perpendicular is (1,1)/√2
+                block(es, dx,     SY, dz,     BlockTypes.SPRUCE_PLANKS);
+                block(es, dx + 1, SY, dz + 1, BlockTypes.SPRUCE_PLANKS);
+                block(es, dx - 1, SY, dz - 1, BlockTypes.SPRUCE_PLANKS);
+
+                // Railings on outer edges
+                block(es, dx + 1, SY + 1, dz + 1, BlockTypes.OAK_FENCE);
+                block(es, dx + 1, SY + 2, dz + 1, BlockTypes.OAK_FENCE);
+                block(es, dx - 1, SY + 1, dz - 1, BlockTypes.OAK_FENCE);
+                block(es, dx - 1, SY + 2, dz - 1, BlockTypes.OAK_FENCE);
+
+                // Support columns every 4 steps
+                if (step % 4 == 2) {
+                    block(es, dx, SY - 1, dz, BlockTypes.OAK_LOG);
+                    block(es, dx, SY - 2, dz, BlockTypes.OAK_LOG);
+                    block(es, dx, SY - 3, dz, BlockTypes.OAK_LOG);
+                }
+            }
+
+            // Lanterns at each end of the diagonal bridge
+            block(es, startX - 1, SY + 3, startZ - 1, BlockTypes.LANTERN);
+            block(es, startX + 1, SY + 3, startZ + 1, BlockTypes.LANTERN);
+            block(es, startX + steps - 1, SY + 3, startZ - steps - 1, BlockTypes.LANTERN);
+            block(es, startX + steps + 1, SY + 3, startZ - steps + 1, BlockTypes.LANTERN);
         }
     }
-}
