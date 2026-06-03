@@ -1,13 +1,3 @@
-resourcepack:
-  # Full HTTPS URL to the hosted resource pack ZIP
-  url: "https://example.com/LemonPvP-ResourcePack.zip"
-  # SHA-1 hash of the pack file (hex string, or empty to skip verification)
-  sha1: ""
-  # true = kick players who decline the pack
-  required: true
-  # Prompt shown to the player in the accept dialog (MiniMessage)
-  prompt: "<gradient:#fffb00:#00ff00>LemonPvP</gradient> <white>ᴘʟᴇᴀꜱᴇ ᴀᴄᴄᴇᴘᴛ ᴛᴏ ᴘʟᴀʏ.</white>"
-
 database:
   host: localhost
   port: 3306

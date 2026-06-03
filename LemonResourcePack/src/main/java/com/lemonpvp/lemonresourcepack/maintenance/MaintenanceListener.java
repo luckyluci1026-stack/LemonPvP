@@ -32,8 +32,8 @@ public class MaintenanceListener {
         if (!whitelist.contains(uuid)) {
             Component msg = MM.deserialize(
                 "<bold><gradient:#fffb00:#00ff00>LemonPvP</gradient></bold>\n" +
-                "<red>The server is currently under maintenance.</red>\n" +
-                "<gray>Follow our Discord for updates:</gray>\n" +
+                "<red>ᴛʜᴇ ꜱᴇʀᴠᴇʀ ɪꜱ ᴄᴜʀʀᴇɴᴛʟʏ ᴜɴᴅᴇʀ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ.</red>\n" +
+                "<gray>ꜰᴏʟʟᴏᴡ ᴏᴜʀ ᴅɪꜱᴄᴏʀᴅ ꜰᴏʀ ᴜᴘᴅᴀᴛᴇꜱ:</gray>\n" +
                 "<aqua>" + discordLink + "</aqua>"
             );
             event.getPlayer().disconnect(msg);
@@ -45,7 +45,7 @@ public class MaintenanceListener {
         if (!enabled.get()) return;
         Component motd = MM.deserialize(
             "<bold><gradient:#fffb00:#00ff00>LemonPvP</gradient></bold>\n" +
-            "<red>⚙ Under Maintenance</red>"
+            "<red>⚙ ᴜɴᴅᴇʀ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ</red>"
         );
         event.setPing(event.getPing().asBuilder().description(motd).build());
     }
