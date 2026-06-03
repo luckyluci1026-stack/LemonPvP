@@ -10,7 +10,6 @@ import com.lemonpvp.lemoncosmetics.managers.ArrowTrailManager;
 import com.lemonpvp.lemoncosmetics.managers.CosmeticsManager;
 import com.lemonpvp.lemoncosmetics.managers.HatManager;
 import com.lemonpvp.lemoncosmetics.managers.KillEffectManager;
-import com.lemonpvp.lemoncosmetics.managers.TagManager;
 import com.lemonpvp.lemoncosmetics.velocity.CosmeticsMessaging;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -22,7 +21,6 @@ public final class LemonCosmetics extends JavaPlugin {
     private KillEffectManager killEffectManager;
     private HatManager hatManager;
     private ArrowTrailManager arrowTrailManager;
-    private TagManager tagManager;
     private CosmeticsMessaging cosmeticsMessaging;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
@@ -45,8 +43,6 @@ public final class LemonCosmetics extends JavaPlugin {
         killEffectManager = new KillEffectManager(this);
         hatManager = new HatManager(this);
         arrowTrailManager = new ArrowTrailManager(this);
-        tagManager = new TagManager(this);
-        tagManager.start();
 
         cosmeticsMessaging = new CosmeticsMessaging(this);
         cosmeticsMessaging.register();
@@ -65,7 +61,6 @@ public final class LemonCosmetics extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (tagManager != null) tagManager.stop();
         if (cosmeticsMessaging != null) cosmeticsMessaging.unregister();
         if (database != null) database.disconnect();
         getLogger().info("LemonCosmetics disabled.");
@@ -100,10 +95,6 @@ public final class LemonCosmetics extends JavaPlugin {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
         if (!f.exists()) saveResource("servers.yml", false);
         serversConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f);
-    }
-
-    public TagManager getTagManager() {
-        return tagManager;
     }
 
     public CosmeticsMessaging getCosmeticsMessaging() {
