@@ -65,7 +65,7 @@ public class ResourcePackListener {
                 if (plugin.isRequired()) {
                     Component msg = LemonResourcePack.MM.deserialize(
                             "<bold><gradient:#fffb00:#00ff00>LemonPvP</gradient></bold>"
-                            + " <red>You must accept the Resource Pack to play.</red>");
+                            + " <red>ʏᴏᴜ ᴍᴜꜱᴛ ᴀᴄᴄᴇᴘᴛ ᴛᴏ ᴘʟᴀʏ.</red>");
                     event.getPlayer().disconnect(msg);
                 }
             }
@@ -73,7 +73,7 @@ public class ResourcePackListener {
                 if (plugin.isRequired()) {
                     Component msg = LemonResourcePack.MM.deserialize(
                             "<bold><gradient:#fffb00:#00ff00>LemonPvP</gradient></bold>"
-                            + " <red>Resource Pack download failed. Please rejoin and try again.</red>");
+                            + " <red>ᴅᴏᴡɴʟᴏᴀᴅ ꜰᴀɪʟᴇᴅ. ᴘʟᴇᴀꜱᴇ ʀᴇᴊᴏɪɴ ᴀɴᴅ ᴛʀʏ ᴀɢᴀɪɴ.</red>");
                     event.getPlayer().disconnect(msg);
                 } else {
                     logger.warn("Resource pack download failed for {}", event.getPlayer().getUsername());

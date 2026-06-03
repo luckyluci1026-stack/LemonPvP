@@ -103,7 +103,7 @@ public class LemonResourcePack {
             packUrl   = getString(rp, "url", "");
             required  = getBool(rp, "required", true);
             promptRaw = getString(rp, "prompt",
-                    "<gradient:#fffb00:#00ff00>LemonPvP</gradient> <white>Please accept the Resource Pack.</white>");
+                    "<gradient:#fffb00:#00ff00>LemonPvP</gradient> <white>ᴘʟᴇᴀꜱᴇ ᴀᴄᴄᴇᴘᴛ ᴛᴏ ᴘʟᴀʏ.</white>");
             String sha1Hex = getString(rp, "sha1", "");
             packHash = parseHex(sha1Hex);
 

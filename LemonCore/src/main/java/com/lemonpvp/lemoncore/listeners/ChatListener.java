@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,11 +33,13 @@ public class ChatListener implements Listener {
         // --- Synchronous filter checks: cancel immediately so message never gets through ---
         if (plugin.getConfig().getBoolean("anti-swear.enabled", true)) {
             if (plugin.getFilterManager().containsNword(plain)) {
+                event.viewers().clear();
                 event.setCancelled(true);
                 handleNwordOffense(player, uuid);
                 return;
             }
             if (plugin.getFilterManager().containsSlur(plain)) {
+                event.viewers().clear();
                 event.setCancelled(true);
                 player.sendMessage(plugin.getMessagesManager().get("chat.filtered"));
                 long muteSeconds = TextUtil.parseDuration(
@@ -48,9 +51,12 @@ public class ChatListener implements Listener {
         }
 
         // --- Async mute check: cancel now, re-broadcast if player is not muted ---
+        // Snapshot viewers before clearing so we can re-broadcast manually for non-muted players.
+        // Clearing the event's viewer set prevents Paper from rendering an empty prefix line.
+        final Set<net.kyori.adventure.audience.Audience> viewers = new HashSet<>(event.viewers());
+        event.viewers().clear();
         event.setCancelled(true);
         final Component originalMessage = event.message();
-        final Set<? extends net.kyori.adventure.audience.Audience> viewers = event.viewers();
 
         plugin.getMuteManager().getActiveMute(uuid).thenAccept(mute -> {
             if (mute != null) {

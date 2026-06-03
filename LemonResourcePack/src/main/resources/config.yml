@@ -6,7 +6,7 @@ resourcepack:
   # true = kick players who decline the pack
   required: true
   # Prompt shown to the player in the accept dialog (MiniMessage)
-  prompt: "<gradient:#fffb00:#00ff00>LemonPvP</gradient> <white>Please accept the Resource Pack.</white>"
+  prompt: "<gradient:#fffb00:#00ff00>LemonPvP</gradient> <white>ᴘʟᴇᴀꜱᴇ ᴀᴄᴄᴇᴘᴛ ᴛᴏ ᴘʟᴀʏ.</white>"
 
 database:
   host: localhost
