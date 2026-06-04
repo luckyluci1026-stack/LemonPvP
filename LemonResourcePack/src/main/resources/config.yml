@@ -1,5 +1,5 @@
 database:
-  host: localhost
+  host: 172.18.0.1
   port: 3306
   database: s1_LemonPvP_Network
   username: u1_zMGE6ZE7k8
