@@ -2,11 +2,11 @@
 server-type: LOBBY  # LOBBY or DUELS
 
 database:
-  host: localhost
+  host: 172.18.0.3
   port: 3306
-  database: lemonpvp
-  username: root
-  password: password
+  database: s1_LemonPvP_Network
+  username: u1_zMGE6ZE7k8
+  password: "I.W3m6k5Yb@sZxtwFbtBey9C"
   pool-size: 10
 
 # Server names are configured in servers.yml
