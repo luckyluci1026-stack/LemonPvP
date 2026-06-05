@@ -3,3 +3,4 @@ build/
 *.class
 *.jar
 bot_config.yml
+.claude/
