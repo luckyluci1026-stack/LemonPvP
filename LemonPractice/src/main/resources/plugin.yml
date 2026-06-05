@@ -30,7 +30,7 @@ commands:
   aowarena:
     description: Manage arenas
     permission: lemonpractice.admin.arena
-    usage: /aowarena <create|setspawn1|setspawn2|setspawnspec|setpos1|setpos2|bind|dupe> <name> [args]
+    usage: /aowarena <create|setspawn1|setspawn2|setspawnspec|setpos1|setpos2|bind|dupe|save|buildarenas> <name> [args]
   aowbuildspawn:
     description: Build the tropical lobby spawn
     permission: lemonpractice.admin.buildspawn

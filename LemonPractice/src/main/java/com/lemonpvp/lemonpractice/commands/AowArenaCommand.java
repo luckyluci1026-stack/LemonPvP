@@ -1,7 +1,10 @@
 package com.lemonpvp.lemonpractice.commands;
 
 import com.lemonpvp.lemonpractice.LemonPractice;
+import com.lemonpvp.lemonpractice.builder.ArenaBuilder;
 import com.lemonpvp.lemonpractice.model.Arena;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -145,6 +148,26 @@ public class AowArenaCommand implements CommandExecutor {
                     return true;
                 }
                 doDupe(player, source, count);
+            }
+
+            case "buildarenas" -> {
+                if (args.length < 2) { player.sendMessage("§cUsage: /aowarena buildarenas <world>"); return true; }
+                String worldName = args[1];
+                World world = Bukkit.getWorld(worldName);
+                if (world == null) {
+                    player.sendMessage("§cWorld §e" + worldName + " §cnot found.");
+                    return true;
+                }
+                player.sendMessage("§eBuilding all tropical arenas in §6" + worldName + "§e... this may take a while.");
+                plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                    try {
+                        new ArenaBuilder(plugin, world).build();
+                        player.sendMessage("§aAll arenas built successfully in §e" + worldName + "§a.");
+                    } catch (Exception e) {
+                        player.sendMessage("§cArena build failed: " + e.getMessage());
+                        plugin.getLogger().severe("ArenaBuilder error: " + e.getMessage());
+                    }
+                });
             }
 
             case "save" -> {
@@ -308,5 +331,6 @@ public class AowArenaCommand implements CommandExecutor {
         player.sendMessage("§6/aowarena §ebind §7<arena> <gamemode>");
         player.sendMessage("§6/aowarena §edupe §7<name> <count>");
         player.sendMessage("§6/aowarena §esave §7<name>");
+        player.sendMessage("§6/aowarena §ebuildarenas §7<world>");
     }
 }
