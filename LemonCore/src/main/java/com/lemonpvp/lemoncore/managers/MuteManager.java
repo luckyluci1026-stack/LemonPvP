@@ -126,7 +126,9 @@ public class MuteManager {
              PreparedStatement ps = conn.prepareStatement("UPDATE lc_mutes SET active=FALSE WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            plugin.getLogger().warning("[MuteManager] unmuteById failed for id=" + id + ": " + e.getMessage());
+        }
     }
 
     public CompletableFuture<List<MuteRecord>> getHistory(UUID uuid) {

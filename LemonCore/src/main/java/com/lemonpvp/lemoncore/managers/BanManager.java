@@ -150,7 +150,9 @@ public class BanManager {
              PreparedStatement ps = conn.prepareStatement("UPDATE lc_bans SET active=FALSE WHERE id=?")) {
             ps.setString(1, id);
             ps.executeUpdate();
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            plugin.getLogger().warning("[BanManager] unbanById failed for id=" + id + ": " + e.getMessage());
+        }
     }
 
     public CompletableFuture<List<BanRecord>> getHistory(UUID uuid) {

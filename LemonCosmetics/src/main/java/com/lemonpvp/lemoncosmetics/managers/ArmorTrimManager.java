@@ -146,7 +146,7 @@ public class ArmorTrimManager {
             String[] trim = cosmetics.getAppliedTrim(slot.name().toLowerCase());
             ItemStack worn = player.getInventory().getItem(slot.getEquipmentSlot());
             if (worn == null || worn.getType() == Material.AIR) continue;
-            if (trim != null) {
+            if (trim != null && trim.length >= 2) {
                 applyTrimToItem(worn, trim[0], trim[1]);
                 player.getInventory().setItem(slot.getEquipmentSlot(), worn);
             }

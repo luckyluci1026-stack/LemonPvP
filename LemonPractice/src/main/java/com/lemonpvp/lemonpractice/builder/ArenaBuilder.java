@@ -30,6 +30,12 @@ public class ArenaBuilder extends BuildHelper {
         buildPyramidFFA();
         buildMangroveBayFFA();
         buildVolcanoHighlandsFFA();
+        // Extra texture/detail passes run after all base terrain is placed
+        buildAllArenaExtraDetail();
+        buildAllFFAExtraDetail();
+        buildAllCentreFeatures();
+        buildAllBorderDecorations();
+        buildAllHeightVariation();
     }
 
     private EditSession newSession() {

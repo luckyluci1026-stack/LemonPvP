@@ -62,7 +62,9 @@ public class VelocityMessaging implements PluginMessageListener {
                 }
                 default -> {}
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            plugin.getLogger().warning("[Velocity] Failed to handle plugin message: " + e.getMessage());
+        }
     }
 
     public void sendToServer(Player via, String serverName) {

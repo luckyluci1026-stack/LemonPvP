@@ -39,10 +39,12 @@ public class FilterManager {
         whitelist.addAll(filterConfig.getStringList("whitelist"));
 
         for (String word : filterConfig.getStringList("nword-patterns")) {
-            try { nwordPatterns.add(buildPattern(word)); } catch (Exception ignored) {}
+            try { nwordPatterns.add(buildPattern(word)); }
+            catch (Exception e) { plugin.getLogger().warning("[Filter] Failed to compile nword pattern '" + word + "': " + e.getMessage()); }
         }
         for (String word : filterConfig.getStringList("slurs")) {
-            try { slurPatterns.add(buildPattern(word)); } catch (Exception ignored) {}
+            try { slurPatterns.add(buildPattern(word)); }
+            catch (Exception e) { plugin.getLogger().warning("[Filter] Failed to compile slur pattern '" + word + "': " + e.getMessage()); }
         }
     }
 
