@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EloManager {
 
@@ -24,7 +25,8 @@ public class EloManager {
 
     private final LemonPractice plugin;
     // uuid -> (gamemode -> EloData)
-    private final Map<UUID, Map<String, EloData>> cache = new HashMap<>();
+    // Accessed from both async DB callbacks and the main thread — must be concurrent.
+    private final Map<UUID, Map<String, EloData>> cache = new ConcurrentHashMap<>();
 
     public EloManager(LemonPractice plugin) {
         this.plugin = plugin;
@@ -76,7 +78,7 @@ public class EloManager {
         String gm = gamemode.toLowerCase();
         return plugin.getDatabase().getEloData(uuid, gm).thenApply(data -> {
             if (data == null) data = new EloData(DEFAULT_ELO, 0);
-            cache.computeIfAbsent(uuid, u -> new HashMap<>()).put(gm, data);
+            cache.computeIfAbsent(uuid, u -> new ConcurrentHashMap<>()).put(gm, data);
             return data;
         });
     }

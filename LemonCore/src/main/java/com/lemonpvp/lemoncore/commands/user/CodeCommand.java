@@ -74,6 +74,10 @@ public class CodeCommand implements CommandExecutor {
                 } catch (NumberFormatException ignored) {}
             }
             case "rank" -> {
+                if (lp == null) {
+                    plugin.getLogger().warning("[CodeCommand] LuckPerms not available; cannot grant rank.");
+                    break;
+                }
                 lp.getUserManager().loadUser(player.getUniqueId()).thenAccept(user -> {
                     user.data().add(InheritanceNode.builder(data.rewardValue).build());
                     lp.getUserManager().saveUser(user);

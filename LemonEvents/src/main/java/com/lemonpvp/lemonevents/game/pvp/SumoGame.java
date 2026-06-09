@@ -15,6 +15,7 @@ public class SumoGame extends AbstractGame {
     private UUID fighter1, fighter2;
     private int platformRadius;
     private int voidY;
+    private org.bukkit.scheduler.BukkitTask voidCheckTask;
 
     public SumoGame(LemonEvents plugin, GameEvent event) {
         super(plugin, event);
@@ -63,7 +64,6 @@ public class SumoGame extends AbstractGame {
             bracket.remove(winner);
             participants.remove(winner);
             finishOrder.add(0, winner);
-            Collections.reverse(finishOrder);
             endGame();
             return;
         }
@@ -83,8 +83,8 @@ public class SumoGame extends AbstractGame {
             if (p2 != null) { p2.setGameMode(GameMode.SURVIVAL); p2.getInventory().clear(); p2.teleport(new Location(world, 3.5, 61, 0.5)); p2.setHealth(20); }
         }
 
-        // Check for void falls every tick
-        scheduleTask(Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        // Check for void falls every 2 ticks; stored so onFellOff can cancel it
+        voidCheckTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (!running) return;
             for (UUID uuid : List.of(fighter1, fighter2)) {
                 Player p = Bukkit.getPlayer(uuid);
@@ -92,10 +92,17 @@ public class SumoGame extends AbstractGame {
                     onFellOff(p);
                 }
             }
-        }, 0L, 2L));
+        }, 0L, 2L);
+        scheduleTask(voidCheckTask);
     }
 
     private void onFellOff(Player loser) {
+        // Cancel the per-match void timer immediately to prevent multiple invocations
+        if (voidCheckTask != null) {
+            voidCheckTask.cancel();
+            voidCheckTask = null;
+        }
+
         UUID loserId = loser.getUniqueId();
         UUID winnerId = loserId.equals(fighter1) ? fighter2 : fighter1;
 

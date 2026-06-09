@@ -171,17 +171,21 @@ public class BowPractice extends AbstractPractice {
         }, 40L);
     }
 
-    @Override
-    public void end() {
-        // Remove all active target blocks
+    /** Cleans up target blocks and inventory without sending the player to lobby. */
+    public void cleanup() {
         for (Location loc : activeTargetLocations) {
             if (loc.getBlock().getType() == Material.TARGET) {
                 loc.getBlock().setType(Material.AIR);
             }
         }
         activeTargetLocations.clear();
-        cancelTasks();
         player.getInventory().clear();
+    }
+
+    @Override
+    public void end() {
+        cleanup();
+        cancelTasks();
         sendToLobby();
     }
 }

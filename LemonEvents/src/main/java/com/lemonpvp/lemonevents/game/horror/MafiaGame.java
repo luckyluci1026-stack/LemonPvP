@@ -208,6 +208,14 @@ public class MafiaGame extends AbstractGame {
         long villagersAlive = participants.stream().filter(u -> roles.get(u) == Role.VILLAGER).count();
         if (mafiaAlive == 0) {
             broadcastAll(MM.deserialize("<green><bold>🏘 Villagers win! The Mafia has been eliminated!</bold></green>"));
+            List<UUID> mafiaList = getRoleList(Role.MAFIA);
+            List<UUID> villagerList = getRoleList(Role.VILLAGER);
+            participants.removeAll(mafiaList);
+            participants.removeAll(villagerList);
+            // Villagers win: add mafia first (lowest placement), then villagers (top)
+            mafiaList.forEach(u -> finishOrder.add(0, u));
+            villagerList.forEach(u -> finishOrder.add(0, u));
+            Collections.reverse(finishOrder);
             endGame();
         } else if (mafiaAlive >= villagersAlive) {
             broadcastAll(MM.deserialize("<dark_red><bold>😈 Mafia wins! They have taken over the village!</bold></dark_red>"));

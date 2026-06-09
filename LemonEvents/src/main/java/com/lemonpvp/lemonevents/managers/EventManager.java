@@ -89,7 +89,7 @@ public class EventManager {
 
         return plugin.getDatabase().updateEventStatus(event.getId(), EventStatus.ACTIVE)
                 .thenApply(v -> {
-                    game.startGame();
+                    Bukkit.getScheduler().runTask(plugin, game::startGame);
                     return true;
                 });
     }

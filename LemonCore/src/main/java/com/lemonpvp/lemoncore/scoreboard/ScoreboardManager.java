@@ -20,11 +20,11 @@ public class ScoreboardManager {
     }
 
     public void startUpdating() {
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 PlayerData data = plugin.getPlayerDataManager().getCached(p.getUniqueId());
                 if (data == null) continue;
-                Bukkit.getScheduler().runTask(plugin, () -> updateScoreboard(p, data));
+                updateScoreboard(p, data);
             }
         }, 20L, 20L);
     }

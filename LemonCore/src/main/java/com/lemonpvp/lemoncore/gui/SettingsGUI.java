@@ -79,7 +79,7 @@ public class SettingsGUI implements Listener {
 
         if (data == null) return;
 
-        switch (event.getSlot()) {
+        switch (event.getRawSlot()) {
             case 10 -> {
                 data.setPublicChat(!data.isPublicChat());
                 plugin.getPlayerDataManager().savePlayer(player.getUniqueId());

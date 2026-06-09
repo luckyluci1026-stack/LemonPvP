@@ -22,7 +22,7 @@ public class AowBuildSpawnCommand implements CommandExecutor {
             return true;
         }
 
-        if (!player.hasPermission("lemonpractice.admin")) {
+        if (!player.hasPermission("lemonpractice.admin.buildspawn")) {
             player.sendMessage("§cYou do not have permission to use this command.");
             return true;
         }

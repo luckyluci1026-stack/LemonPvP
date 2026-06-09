@@ -27,7 +27,7 @@ public class PlayerData {
     private final Map<String, Integer> elo = new HashMap<>();
 
     // Friends (loaded separately)
-    private final java.util.Set<UUID> friends = new java.util.HashSet<>();
+    private final java.util.Set<UUID> friends = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public PlayerData(UUID uuid, String username) {
         this.uuid = uuid;

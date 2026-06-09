@@ -71,8 +71,7 @@ public class PracticeManager {
                     if (e != null) e.remove();
                 }
             } else if (practice instanceof BowPractice bp) {
-                bp.end();
-                return;
+                bp.cleanup();
             }
         }
     }

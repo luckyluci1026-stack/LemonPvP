@@ -68,8 +68,7 @@ public abstract class AbstractGame {
         if (participants.size() == 1) {
             UUID winner = participants.iterator().next();
             participants.remove(winner);
-            finishOrder.add(0, winner); // winner at front
-            Collections.reverse(finishOrder); // now index 0 = 1st place
+            finishOrder.add(0, winner); // winner at front = index 0 = 1st place
             endGame();
         } else if (participants.isEmpty()) {
             endGame();

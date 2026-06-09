@@ -100,6 +100,11 @@ public class DuelManager {
         final int[] countdown = {3};
 
         Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            // Abort if the duel was cancelled mid-countdown (e.g. a player disconnected).
+            if (game.getState() != DuelState.COUNTDOWN) {
+                task.cancel();
+                return;
+            }
             if (countdown[0] <= 0) {
                 task.cancel();
                 game.setState(DuelState.FIGHTING);
@@ -132,7 +137,15 @@ public class DuelManager {
 
     public void handleDeath(UUID loserUuid) {
         DuelGame game = activeDuels.get(loserUuid);
-        if (game == null || game.getState() != DuelState.FIGHTING) return;
+        if (game == null) return;
+
+        // Player left/died before the fight started (WAITING or COUNTDOWN):
+        // abort cleanly so the arena is freed and the opponent isn't left stuck.
+        if (game.getState() != DuelState.FIGHTING) {
+            if (game.getState() == DuelState.ENDING) return; // already being cleaned up
+            abortDuel(game, loserUuid);
+            return;
+        }
 
         game.setState(DuelState.ENDING);
 
@@ -161,6 +174,30 @@ public class DuelManager {
                     Bukkit.getScheduler().runTask(plugin, () ->
                             finishDuel(game, winner, loser));
                 });
+    }
+
+    /**
+     * Cancels a duel that never reached the FIGHTING state (e.g. a player
+     * disconnected during the countdown). Frees the arena and returns the
+     * remaining player to the lobby so nobody is left stranded.
+     */
+    private void abortDuel(DuelGame game, UUID quitterUuid) {
+        game.setState(DuelState.ENDING); // makes the countdown task cancel itself
+
+        activeDuels.remove(game.getPlayer1Uuid());
+        activeDuels.remove(game.getPlayer2Uuid());
+
+        UUID survivorUuid = game.getOpponent(quitterUuid);
+        if (survivorUuid != null) {
+            Player survivor = Bukkit.getPlayer(survivorUuid);
+            if (survivor != null && survivor.isOnline()) {
+                plugin.getSpectatorManager().removeSpectator(survivor);
+                sendToLobby(survivor);
+            }
+        }
+
+        plugin.getArenaManager().markInUse(game.getArena(), false);
+        plugin.getArenaManager().resetArena(game.getArena());
     }
 
     private void finishDuel(DuelGame game, Player winner, Player loser) {

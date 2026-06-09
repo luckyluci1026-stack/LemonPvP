@@ -69,6 +69,15 @@ public class FFAListener implements Listener {
         if (spawn != null) {
             event.setRespawnLocation(spawn);
         }
+
+        // Re-equip the FFA kit and restore the player one tick after respawn
+        // (inventory is cleared on death). Single respawn path for all deaths.
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline()
+                    && plugin.getFfaManager().getArena(player.getUniqueId()) != null) {
+                plugin.getFfaManager().respawnEquip(player);
+            }
+        }, 1L);
     }
 
     // -------------------------------------------------------------------------

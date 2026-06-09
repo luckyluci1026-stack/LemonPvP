@@ -51,7 +51,6 @@ public class TournamentGame extends AbstractGame {
         if (matchIndex + 1 >= bracket.size()) {
             // Only one player left = winner
             finishOrder.add(0, bracket.get(matchIndex));
-            Collections.reverse(finishOrder);
             endGame();
             return;
         }

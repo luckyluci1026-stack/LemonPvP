@@ -33,7 +33,7 @@ public class AowArenaCommand implements CommandExecutor {
             return true;
         }
 
-        if (!player.hasPermission("lemonpractice.admin")) {
+        if (!player.hasPermission("lemonpractice.admin.arena")) {
             player.sendMessage("§cYou do not have permission to use this command.");
             return true;
         }

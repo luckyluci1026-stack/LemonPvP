@@ -105,28 +105,23 @@ public class FFAManager {
     public void handleKill(Player killer, Player victim) {
         if (killer == null || victim == null) return;
 
-        // Update stats via LemonCore if available (reflective to avoid hard dependency)
+        // Update stats via LemonCore if available (reflective to avoid hard dependency).
+        // Respawning is handled by the single respawn path: FFAListener.onDeath
+        // schedules player.respawn(), and FFAListener.onRespawn re-equips via
+        // respawnEquip() — this avoids two competing respawn tasks.
         tryUpdateLemonCoreStats(killer, victim);
+    }
 
-        // Respawn victim at a random spawn after 3 seconds
-        FFAArena arena = getArena(victim.getUniqueId());
-        if (arena == null) return;
-
-        victim.setGameMode(GameMode.SPECTATOR);
-
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!victim.isOnline()) return;
-            // Check victim is still in this arena
-            if (!Objects.equals(playerArena.get(victim.getUniqueId()), arena.getId())) return;
-
-            Location respawn = arena.getRandomSpawn();
-            if (respawn == null) return;
-
-            preparePlayer(victim);
-            victim.teleport(respawn);
-            victim.setGameMode(GameMode.SURVIVAL);
-            applyFfaKit(victim);
-        }, 60L); // 3 seconds
+    /**
+     * Restores health/food and re-applies the FFA kit. Called from the respawn
+     * listener so every FFA death — whether by a killer or the environment —
+     * flows through one consistent code path (and the kit is always restored).
+     */
+    public void respawnEquip(Player player) {
+        if (player == null) return;
+        preparePlayer(player);
+        player.setGameMode(GameMode.SURVIVAL);
+        applyFfaKit(player);
     }
 
     // -----------------------------------------------------------------------

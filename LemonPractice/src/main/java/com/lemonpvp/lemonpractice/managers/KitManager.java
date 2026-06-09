@@ -13,12 +13,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class KitManager {
 
     private final LemonPractice plugin;
     // player uuid -> (gamemode -> PlayerKit)
-    private final Map<UUID, Map<String, PlayerKit>> cache = new HashMap<>();
+    // Accessed from both async DB callbacks and the main thread — must be concurrent.
+    private final Map<UUID, Map<String, PlayerKit>> cache = new ConcurrentHashMap<>();
 
     public KitManager(LemonPractice plugin) {
         this.plugin = plugin;
@@ -44,14 +46,14 @@ public class KitManager {
                 }
             }
 
-            cache.computeIfAbsent(playerUuid, u -> new HashMap<>()).put(gamemode.toLowerCase(), kit);
+            cache.computeIfAbsent(playerUuid, u -> new ConcurrentHashMap<>()).put(gamemode.toLowerCase(), kit);
             return kit;
         });
     }
 
     public CompletableFuture<Void> saveKit(UUID playerUuid, String gamemode, PlayerKit kit) {
         // Update cache first
-        cache.computeIfAbsent(playerUuid, u -> new HashMap<>()).put(gamemode.toLowerCase(), kit);
+        cache.computeIfAbsent(playerUuid, u -> new ConcurrentHashMap<>()).put(gamemode.toLowerCase(), kit);
 
         // Persist each slot asynchronously
         CompletableFuture<?>[] futures = kit.getSlots().entrySet().stream()

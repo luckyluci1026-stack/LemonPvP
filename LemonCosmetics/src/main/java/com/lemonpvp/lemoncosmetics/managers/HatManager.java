@@ -78,6 +78,7 @@ public class HatManager {
         ItemStack helmet = player.getInventory().getHelmet();
         if (helmet == null || helmet.getType() != Material.LEATHER_HELMET) return;
         if (!helmet.hasItemMeta()) return;
+        if (!helmet.getItemMeta().hasCustomModelData()) return;
         int cmd = helmet.getItemMeta().getCustomModelData();
         for (HatType hat : HatType.values()) {
             if (hat.customModelData == cmd) {
