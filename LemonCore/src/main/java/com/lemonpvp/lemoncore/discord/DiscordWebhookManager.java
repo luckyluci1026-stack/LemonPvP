@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 public class DiscordWebhookManager {
 
-    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    private static final DateTimeFormatter DATE_FMT      = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
     private static final DateTimeFormatter DATE_ONLY_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     private final LemonCore plugin;
@@ -45,63 +45,78 @@ public class DiscordWebhookManager {
     // -------------------------------------------------------------------------
 
     public void sendBan(BanRecord ban) {
-        String adminUrl = getUrl("bans");
+        String adminUrl  = getUrl("bans");
         String publicUrl = getUrl("public");
         if (adminUrl == null && publicUrl == null) return;
 
-        // Fetch Discord link async so it can be included in the admin embed
-        plugin.getDiscordLinkManager().getDiscordUsername(ban.uuid).thenAccept(discordUser -> {
-            if (adminUrl != null) {
-                String duration = ban.isPermanent()
-                        ? "Permanent"
-                        : TextUtil.formatDuration(ban.getRemainingSeconds());
-                String by = ban.bannerName != null ? ban.bannerName : "Unknown";
-                StringBuilder desc = new StringBuilder()
-                        .append(ban.username).append(" has been banned.\n")
-                        .append("• Banned by: ").append(by).append("\n")
-                        .append("• Duration: ").append(duration).append("\n")
-                        .append("• Reason: ").append(ban.reason).append("\n")
-                        .append("• Ban ID: ").append(ban.id);
-                if (discordUser != null) desc.append("\n• Discord: ").append(discordUser);
-                sendWithRetry(adminUrl, buildEmbed("🔨 Banned", desc.toString(), 0xFF0000));
-            }
-            if (publicUrl != null) {
-                String duration = ban.isPermanent() ? "Permanent" : "Temporary";
-                String desc = "**" + ban.username + "** has been banned.\n"
-                        + "• Reason: " + ban.reason + "\n"
-                        + "• Duration: " + duration;
-                sendWithRetry(publicUrl, buildPublicEmbed("🔨 Player Banned", desc, 0xFF0000));
-            }
-        });
+        // Public webhook does NOT need the Discord username — send immediately.
+        if (publicUrl != null) {
+            String duration = ban.isPermanent() ? "Permanent" : "Temporary";
+            String desc = "**" + ban.username + "** has been banned.\n"
+                    + "• Reason: " + ban.reason + "\n"
+                    + "• Duration: " + duration;
+            sendWithRetry(publicUrl, buildPublicEmbed("🔨 Player Banned", desc, 0xFF0000));
+        }
+
+        // Admin webhook optionally includes Discord username.
+        // .exceptionally(ex -> null) ensures the chain always completes even if the
+        // Discord-link lookup fails, so the webhook is never silently dropped.
+        if (adminUrl != null) {
+            final String url = adminUrl;
+            plugin.getDiscordLinkManager()
+                    .getDiscordUsername(ban.uuid)
+                    .exceptionally(ex -> null)
+                    .thenAccept(discordUser -> {
+                        String duration = ban.isPermanent()
+                                ? "Permanent"
+                                : TextUtil.formatDuration(ban.getRemainingSeconds());
+                        String by = ban.bannerName != null ? ban.bannerName : "Unknown";
+                        StringBuilder desc = new StringBuilder()
+                                .append(ban.username).append(" has been banned.\n")
+                                .append("• Banned by: ").append(by).append("\n")
+                                .append("• Duration: ").append(duration).append("\n")
+                                .append("• Reason: ").append(ban.reason).append("\n")
+                                .append("• Ban ID: ").append(ban.id);
+                        if (discordUser != null) desc.append("\n• Discord: ").append(discordUser);
+                        sendWithRetry(url, buildEmbed("🔨 Banned", desc.toString(), 0xFF0000));
+                    });
+        }
     }
 
     public void sendMute(MuteRecord mute) {
-        String adminUrl = getUrl("mutes");
+        String adminUrl  = getUrl("mutes");
         String publicUrl = getUrl("public");
         if (adminUrl == null && publicUrl == null) return;
 
-        plugin.getDiscordLinkManager().getDiscordUsername(mute.uuid).thenAccept(discordUser -> {
-            if (adminUrl != null) {
-                String duration = mute.isPermanent()
-                        ? "Permanent"
-                        : TextUtil.formatDuration(mute.getRemainingSeconds());
-                String by = mute.muterName != null ? mute.muterName : "Unknown";
-                StringBuilder desc = new StringBuilder()
-                        .append(mute.username).append(" has been muted.\n")
-                        .append("• Muted by: ").append(by).append("\n")
-                        .append("• Duration: ").append(duration).append("\n")
-                        .append("• Reason: ").append(mute.reason);
-                if (discordUser != null) desc.append("\n• Discord: ").append(discordUser);
-                sendWithRetry(adminUrl, buildEmbed("🔇 Muted", desc.toString(), 0xFFA500));
-            }
-            if (publicUrl != null) {
-                String duration = mute.isPermanent() ? "Permanent" : "Temporary";
-                String desc = "**" + mute.username + "** has been muted.\n"
-                        + "• Reason: " + mute.reason + "\n"
-                        + "• Duration: " + duration;
-                sendWithRetry(publicUrl, buildPublicEmbed("🔇 Player Muted", desc, 0xFFA500));
-            }
-        });
+        // Public webhook — send immediately, no Discord lookup needed.
+        if (publicUrl != null) {
+            String duration = mute.isPermanent() ? "Permanent" : "Temporary";
+            String desc = "**" + mute.username + "** has been muted.\n"
+                    + "• Reason: " + mute.reason + "\n"
+                    + "• Duration: " + duration;
+            sendWithRetry(publicUrl, buildPublicEmbed("🔇 Player Muted", desc, 0xFFA500));
+        }
+
+        // Admin webhook — Discord username is optional.
+        if (adminUrl != null) {
+            final String url = adminUrl;
+            plugin.getDiscordLinkManager()
+                    .getDiscordUsername(mute.uuid)
+                    .exceptionally(ex -> null)
+                    .thenAccept(discordUser -> {
+                        String duration = mute.isPermanent()
+                                ? "Permanent"
+                                : TextUtil.formatDuration(mute.getRemainingSeconds());
+                        String by = mute.muterName != null ? mute.muterName : "Unknown";
+                        StringBuilder desc = new StringBuilder()
+                                .append(mute.username).append(" has been muted.\n")
+                                .append("• Muted by: ").append(by).append("\n")
+                                .append("• Duration: ").append(duration).append("\n")
+                                .append("• Reason: ").append(mute.reason);
+                        if (discordUser != null) desc.append("\n• Discord: ").append(discordUser);
+                        sendWithRetry(url, buildEmbed("🔇 Muted", desc.toString(), 0xFFA500));
+                    });
+        }
     }
 
     public void sendUnban(String playerName, String adminName, String banId) {
@@ -112,7 +127,7 @@ public class DiscordWebhookManager {
                 + "• Unbanned by: " + adminName + "\n"
                 + "• Original Ban ID: " + banId;
 
-        sendWithRetry(url, buildEmbed("Unbanned", description, 0x00FF00));
+        sendWithRetry(url, buildEmbed("✅ Unbanned", description, 0x00FF00));
     }
 
     public void sendUnmute(String playerName, String adminName) {
@@ -122,7 +137,7 @@ public class DiscordWebhookManager {
         String description = playerName + " has been unmuted.\n"
                 + "• Unmuted by: " + adminName;
 
-        sendWithRetry(url, buildEmbed("Unmuted", description, 0x00FF00));
+        sendWithRetry(url, buildEmbed("✅ Unmuted", description, 0x00FF00));
     }
 
     // -------------------------------------------------------------------------
@@ -138,20 +153,20 @@ public class DiscordWebhookManager {
     private String buildEmbed(String title, String description, int color) {
         String footer = "LemonPvP • " + LocalDateTime.now().format(DATE_FMT);
         return "{\"embeds\":[{"
-                + "\"title\":" + esc(title) + ","
-                + "\"description\":" + esc(description) + ","
-                + "\"color\":" + color + ","
-                + "\"footer\":{\"text\":" + esc(footer) + "}"
+                + "\"title\":"       + esc(title)       + ","
+                + "\"description\":" + esc(description)  + ","
+                + "\"color\":"       + color             + ","
+                + "\"footer\":{\"text\":" + esc(footer)  + "}"
                 + "}]}";
     }
 
     private String buildPublicEmbed(String title, String description, int color) {
         String footer = "LemonPvP • " + LocalDate.now().format(DATE_ONLY_FMT);
         return "{\"embeds\":[{"
-                + "\"title\":" + esc(title) + ","
-                + "\"description\":" + esc(description) + ","
-                + "\"color\":" + color + ","
-                + "\"footer\":{\"text\":" + esc(footer) + "}"
+                + "\"title\":"       + esc(title)       + ","
+                + "\"description\":" + esc(description)  + ","
+                + "\"color\":"       + color             + ","
+                + "\"footer\":{\"text\":" + esc(footer)  + "}"
                 + "}]}";
     }
 
@@ -188,12 +203,14 @@ public class DiscordWebhookManager {
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+        // Use ofString() so Discord's error body is visible in warnings.
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(resp -> {
                     int status = resp.statusCode();
                     if (status < 200 || status >= 300) {
                         plugin.getLogger().warning(
-                                "[Discord] Webhook returned HTTP " + status);
+                                "[Discord] Webhook returned HTTP " + status
+                                + " — " + resp.body());
                         return false;
                     }
                     return true;
