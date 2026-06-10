@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: #0a0a0f;
+    color: #e2e8f0;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-dark-700 border border-dark-500 rounded-xl p-6;
+  }
+  .btn-primary {
+    @apply bg-lemon-500 hover:bg-lemon-400 text-dark-900 font-semibold px-4 py-2 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-dark-600 hover:bg-dark-500 text-gray-200 font-medium px-4 py-2 rounded-lg transition-all duration-150 border border-dark-400;
+  }
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-500 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-150;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+  .input {
+    @apply bg-dark-800 border border-dark-400 rounded-lg px-3 py-2 text-gray-200 w-full
+           placeholder:text-gray-600 focus:outline-none focus:border-lemon-500 focus:ring-1 focus:ring-lemon-500/30
+           transition-colors;
+  }
+  .label {
+    @apply text-sm font-medium text-gray-400 mb-1 block;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium;
+  }
+  .badge-green  { @apply badge bg-emerald-500/20 text-emerald-400 border border-emerald-500/30; }
+  .badge-red    { @apply badge bg-red-500/20 text-red-400 border border-red-500/30; }
+  .badge-yellow { @apply badge bg-lemon-500/20 text-lemon-400 border border-lemon-500/30; }
+  .badge-gray   { @apply badge bg-gray-500/20 text-gray-400 border border-gray-600/30; }
+  .badge-blue   { @apply badge bg-blue-500/20 text-blue-400 border border-blue-500/30; }
+  .table-wrap   { @apply overflow-x-auto rounded-xl border border-dark-500; }
+  table         { @apply w-full text-sm; }
+  thead tr      { @apply bg-dark-600; }
+  th            { @apply px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider; }
+  tbody tr      { @apply border-t border-dark-600 hover:bg-dark-600/50 transition-colors; }
+  td            { @apply px-4 py-3 text-gray-300; }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-dark-600
+           transition-all duration-150 font-medium text-sm;
+  }
+  .sidebar-link.active {
+    @apply text-lemon-400 bg-lemon-500/10 border border-lemon-500/20;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #12121a; }
+::-webkit-scrollbar-thumb { background: #3a3a5c; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #FFD700; }
+
+/* Console font */
+.font-mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
