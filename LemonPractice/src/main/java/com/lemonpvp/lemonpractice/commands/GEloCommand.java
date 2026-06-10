@@ -38,7 +38,8 @@ public class GEloCommand implements CommandExecutor, TabCompleter {
             case 2 -> ACTIONS.stream()
                     .filter(a -> a.startsWith(lower))
                     .collect(Collectors.toList());
-            case 3 -> plugin.getGamemodeManager().getAllGamemodes().keySet().stream()
+            case 3 -> plugin.getGamemodeManager().getAllGamemodes().stream()
+                    .map(gm -> gm.getId())
                     .filter(g -> g.startsWith(lower))
                     .collect(Collectors.toList());
             default -> List.of();

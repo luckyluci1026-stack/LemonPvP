@@ -34,13 +34,14 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
             return SUBCOMMANDS.stream().filter(s -> s.startsWith(lower)).collect(Collectors.toList());
         }
         if (args.length == 2 && ARENA_SUBS.contains(args[0].toLowerCase())) {
-            return plugin.getArenaManager().getAllArenas().values().stream()
+            return plugin.getArenaManager().getAllArenas().stream()
                     .map(a -> a.getName())
                     .filter(n -> n.toLowerCase().startsWith(lower))
                     .collect(Collectors.toList());
         }
         if (args.length == 3 && args[0].equalsIgnoreCase("bind")) {
-            return plugin.getGamemodeManager().getAllGamemodes().keySet().stream()
+            return plugin.getGamemodeManager().getAllGamemodes().stream()
+                    .map(gm -> gm.getId())
                     .filter(g -> g.startsWith(lower))
                     .collect(Collectors.toList());
         }
