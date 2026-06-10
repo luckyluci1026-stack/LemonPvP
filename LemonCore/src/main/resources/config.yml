@@ -68,6 +68,11 @@ anti-swear:
     second-offense-duration: "14d"
   other-insult-duration: "1d"
 
+http-api:
+  enabled: true
+  port: 8080
+  key: "change-me-in-production"
+
 velocity:
   channel: "lemonpvp:core"
 

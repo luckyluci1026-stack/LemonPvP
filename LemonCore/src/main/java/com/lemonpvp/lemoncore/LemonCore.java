@@ -1,5 +1,6 @@
 package com.lemonpvp.lemoncore;
 
+import com.lemonpvp.lemoncore.api.HttpApiManager;
 import com.lemonpvp.lemoncore.commands.admin.*;
 import com.lemonpvp.lemoncore.commands.user.*;
 import com.lemonpvp.lemoncore.discord.DiscordWebhookManager;
@@ -48,10 +49,13 @@ public class LemonCore extends JavaPlugin {
     private DiscordWebhookManager discordWebhookManager;
     private MaintenanceManager maintenanceManager;
     private LuckPerms luckPerms;
+    private HttpApiManager httpApiManager;
+    private long startTimeMs;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
     @Override
     public void onEnable() {
+        startTimeMs = System.currentTimeMillis();
         // Save default configs
         saveDefaultConfig();
         loadServersConfig();
@@ -119,6 +123,10 @@ public class LemonCore extends JavaPlugin {
         // Start scoreboard
         scoreboardManager.startUpdating();
 
+        // Start HTTP API
+        httpApiManager = new HttpApiManager(this);
+        httpApiManager.start();
+
         getLogger().info("LemonCore enabled successfully.");
     }
 
@@ -135,6 +143,9 @@ public class LemonCore extends JavaPlugin {
 
         // Disconnect database
         if (databaseManager != null) databaseManager.disconnect();
+
+        // Stop HTTP API
+        if (httpApiManager != null) httpApiManager.stop();
 
         // Unregister messaging
         if (velocityMessaging != null) velocityMessaging.unregister();
@@ -292,4 +303,6 @@ public class LemonCore extends JavaPlugin {
     public DiscordWebhookManager getDiscordWebhookManager() { return discordWebhookManager; }
     public MaintenanceManager getMaintenanceManager() { return maintenanceManager; }
     public LuckPerms getLuckPerms() { return luckPerms; }
+    public long getStartTimeMs() { return startTimeMs; }
+    public HttpApiManager getHttpApiManager() { return httpApiManager; }
 }
