@@ -25,15 +25,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class ArenaManager {
 
     private final LemonPractice plugin;
-    private final Map<Integer, Arena> arenas = new HashMap<>();
+    private final Map<Integer, Arena> arenas = new ConcurrentHashMap<>();
 
     public ArenaManager(LemonPractice plugin) {
         this.plugin = plugin;

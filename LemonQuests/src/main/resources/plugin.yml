@@ -19,6 +19,16 @@ commands:
 permissions:
   lemonquests.use:
     default: true
+  lemonquests.admin:
+    description: All LemonQuests admin commands
+    default: op
+    children:
+      lemonquests.admin.reload: true
+      lemonquests.admin.give: true
+      lemonquests.admin.complete: true
+      lemonquests.admin.info: true
+      lemonquests.admin.xp: true
+      lemonquests.admin.level: true
   lemonquests.admin.reload:
     default: op
   lemonquests.admin.give:
