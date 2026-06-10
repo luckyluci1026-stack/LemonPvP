@@ -235,8 +235,13 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
                 Arena arena = requireArena(player, args[1]);
                 if (arena == null) return true;
                 player.sendMessage("§eSaving schematic for §6" + arena.getName() + "§e...");
+                UUID uuidSave = player.getUniqueId();
+                String arenaNameSave = arena.getName();
                 plugin.getArenaManager().saveArenaSchematic(arena).thenRun(() ->
-                        player.sendMessage("§aSchematic for §e" + arena.getName() + " §asaved."));
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(uuidSave);
+                        if (p != null) p.sendMessage("§aSchematic for §e" + arenaNameSave + " §asaved.");
+                    }));
             }
 
             default -> sendUsage(player);
@@ -283,11 +288,13 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
         int y2 = Math.max(p1[1], p2[1]);
         int z2 = Math.max(p1[2], p2[2]);
 
-        plugin.getDatabase().updateArenaRegion(arena.getId(), x1, y1, z1, x2, y2, z2).thenRun(() -> {
-            arena.setRegionX1(x1); arena.setRegionY1(y1); arena.setRegionZ1(z1);
-            arena.setRegionX2(x2); arena.setRegionY2(y2); arena.setRegionZ2(z2);
-            player.sendMessage("§aRegion for arena §e" + arena.getName() + " §asaved.");
-        });
+        plugin.getDatabase().updateArenaRegion(arena.getId(), x1, y1, z1, x2, y2, z2).thenRun(() ->
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                arena.setRegionX1(x1); arena.setRegionY1(y1); arena.setRegionZ1(z1);
+                arena.setRegionX2(x2); arena.setRegionY2(y2); arena.setRegionZ2(z2);
+                Player p = Bukkit.getPlayer(uuid);
+                if (p != null) p.sendMessage("§aRegion for arena §e" + arena.getName() + " §asaved.");
+            }));
     }
 
     /**
@@ -299,6 +306,7 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
     private void doDupe(Player player, Arena source, int count) {
         String baseName = source.getName();
         int offsetX = 125;
+        UUID playerUuid = player.getUniqueId();
 
         // Run the whole operation asynchronously; DB calls are already async
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -371,7 +379,11 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
 
                     successCount++;
                 } catch (Exception e) {
-                    player.sendMessage("§cError creating dupe §e" + dupeName + "§c: " + e.getMessage());
+                    final String errMsg = e.getMessage();
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(playerUuid);
+                        if (p != null) p.sendMessage("§cError creating dupe §e" + dupeName + "§c: " + errMsg);
+                    });
                 }
             }
 
@@ -379,8 +391,11 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
             // Reload arena cache on main thread after all dupes are created
             plugin.getServer().getScheduler().runTask(plugin, () ->
                     plugin.getArenaManager().loadAll().thenRun(() ->
-                            player.sendMessage("§aDuplicated §e" + finalSuccess
-                                    + "§a arenas from §e" + baseName + "§a (dupe_group='" + baseName + "').")));
+                            Bukkit.getScheduler().runTask(plugin, () -> {
+                                Player p = Bukkit.getPlayer(playerUuid);
+                                if (p != null) p.sendMessage("§aDuplicated §e" + finalSuccess
+                                        + "§a arenas from §e" + baseName + "§a (dupe_group='" + baseName + "').");
+                            })));
         });
     }
 
