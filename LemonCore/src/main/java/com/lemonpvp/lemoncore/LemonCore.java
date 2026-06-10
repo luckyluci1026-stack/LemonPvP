@@ -132,6 +132,9 @@ public class LemonCore extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Stop HTTP API first so no request arrives after the database closes
+        if (httpApiManager != null) httpApiManager.stop();
+
         // Save all online players
         for (Player p : Bukkit.getOnlinePlayers()) {
             playerDataManager.savePlayer(p.getUniqueId()).join();
@@ -143,9 +146,6 @@ public class LemonCore extends JavaPlugin {
 
         // Disconnect database
         if (databaseManager != null) databaseManager.disconnect();
-
-        // Stop HTTP API
-        if (httpApiManager != null) httpApiManager.stop();
 
         // Unregister messaging
         if (velocityMessaging != null) velocityMessaging.unregister();

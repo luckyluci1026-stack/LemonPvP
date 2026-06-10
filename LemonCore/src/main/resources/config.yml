@@ -70,6 +70,9 @@ anti-swear:
 
 http-api:
   enabled: true
+  # Bind address: 127.0.0.1 limits access to this machine (recommended when
+  # the staff panel runs on the same host). Use 0.0.0.0 to listen on all interfaces.
+  bind: "127.0.0.1"
   port: 8080
   key: "change-me-in-production"
 

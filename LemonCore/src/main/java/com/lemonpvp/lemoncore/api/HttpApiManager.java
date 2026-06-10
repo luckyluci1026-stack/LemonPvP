@@ -31,6 +31,7 @@ public class HttpApiManager {
     private final LemonCore plugin;
     private final Logger log;
     private HttpServer server;
+    private java.util.concurrent.ExecutorService executor;
 
     public HttpApiManager(LemonCore plugin) {
         this.plugin = plugin;
@@ -46,21 +47,26 @@ public class HttpApiManager {
         }
 
         int port = plugin.getConfig().getInt("http-api.port", 8080);
+        String bindAddress = plugin.getConfig().getString("http-api.bind", "127.0.0.1");
         String apiKey = plugin.getConfig().getString("http-api.key", "");
 
         if (apiKey.isEmpty()) {
             log.warning("[HttpAPI] No API key configured! Set http-api.key in config.yml to enable the HTTP API.");
             return;
         }
+        if ("change-me-in-production".equals(apiKey)) {
+            log.warning("[HttpAPI] http-api.key is still the default value — change it before exposing the API.");
+        }
 
         try {
-            server = HttpServer.create(new InetSocketAddress(port), 0);
-            server.setExecutor(Executors.newFixedThreadPool(4));
+            server = HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
+            executor = Executors.newFixedThreadPool(4);
+            server.setExecutor(executor);
             server.createContext("/api/player/",     ex -> handlePlayerRoot(ex, apiKey));
             server.createContext("/api/server/stats", ex -> handleStats(ex, apiKey));
             server.createContext("/api/console",     ex -> handleConsole(ex, apiKey));
             server.start();
-            log.info("[HttpAPI] Started on port " + port);
+            log.info("[HttpAPI] Started on " + bindAddress + ":" + port);
         } catch (IOException e) {
             log.severe("[HttpAPI] Failed to start: " + e.getMessage());
         }
@@ -71,13 +77,20 @@ public class HttpApiManager {
             server.stop(1);
             log.info("[HttpAPI] Stopped.");
         }
+        if (executor != null) {
+            executor.shutdownNow();
+        }
     }
 
     // ─── Auth ───────────────────────────────────────────────────────────────
 
     private boolean authenticate(HttpExchange ex, String apiKey) {
         String auth = ex.getRequestHeaders().getFirst("Authorization");
-        return auth != null && auth.equals("Bearer " + apiKey);
+        if (auth == null) return false;
+        // Constant-time comparison to avoid leaking key bytes via response timing
+        return java.security.MessageDigest.isEqual(
+                auth.getBytes(StandardCharsets.UTF_8),
+                ("Bearer " + apiKey).getBytes(StandardCharsets.UTF_8));
     }
 
     // ─── Route dispatcher ────────────────────────────────────────────────────
