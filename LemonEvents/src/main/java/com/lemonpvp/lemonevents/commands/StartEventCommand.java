@@ -2,6 +2,7 @@ package com.lemonpvp.lemonevents.commands;
 
 import com.lemonpvp.lemonevents.LemonEvents;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 
 public class StartEventCommand implements CommandExecutor {
@@ -23,15 +24,16 @@ public class StartEventCommand implements CommandExecutor {
         }
 
         String name = args[0];
-        plugin.getEventManager().startEvent(name).thenAccept(success -> {
-            if (success) {
-                sender.sendMessage(MM.deserialize(
-                    "<green>Event <yellow>" + name + "</yellow> started!"));
-            } else {
-                sender.sendMessage(MM.deserialize(
-                    "<red>Could not start event '" + name + "'. It may not exist or is not in WAITING status."));
-            }
-        });
+        plugin.getEventManager().startEvent(name).thenAccept(success ->
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (success) {
+                    sender.sendMessage(MM.deserialize(
+                        "<green>Event <yellow>" + name + "</yellow> started!"));
+                } else {
+                    sender.sendMessage(MM.deserialize(
+                        "<red>Could not start event '" + name + "'. It may not exist or is not in WAITING status."));
+                }
+            }));
         return true;
     }
 }

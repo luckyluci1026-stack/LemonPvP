@@ -28,7 +28,8 @@ public class EventFFACommand implements CommandExecutor {
                 return;
             }
 
-            sender.sendMessage(MM.deserialize("<yellow>Restoring FFA from backup: " + backupPath));
+            Bukkit.getScheduler().runTask(plugin, () ->
+                sender.sendMessage(MM.deserialize("<yellow>Restoring FFA from backup: " + backupPath)));
 
             Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                 boolean success = plugin.getMapManager().restoreFfaWorld(backupPath);

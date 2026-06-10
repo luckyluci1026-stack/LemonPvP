@@ -2,6 +2,7 @@ package com.lemonpvp.lemonevents.commands;
 
 import com.lemonpvp.lemonevents.LemonEvents;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 
 public class EndEventCommand implements CommandExecutor {
@@ -23,15 +24,16 @@ public class EndEventCommand implements CommandExecutor {
         }
 
         String name = args[0];
-        plugin.getEventManager().endEvent(name).thenAccept(success -> {
-            if (success) {
-                sender.sendMessage(MM.deserialize(
-                    "<green>Event <yellow>" + name + "</yellow> ended and prizes distributed."));
-            } else {
-                sender.sendMessage(MM.deserialize(
-                    "<red>Could not end event '" + name + "'. It may not be active."));
-            }
-        });
+        plugin.getEventManager().endEvent(name).thenAccept(success ->
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (success) {
+                    sender.sendMessage(MM.deserialize(
+                        "<green>Event <yellow>" + name + "</yellow> ended and prizes distributed."));
+                } else {
+                    sender.sendMessage(MM.deserialize(
+                        "<red>Could not end event '" + name + "'. It may not be active."));
+                }
+            }));
         return true;
     }
 }

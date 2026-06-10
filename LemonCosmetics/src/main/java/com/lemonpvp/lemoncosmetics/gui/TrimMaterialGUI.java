@@ -116,16 +116,13 @@ public class TrimMaterialGUI implements Listener {
                             renderMaterials();
                             inventory.setItem(BUY_SLOT, buildBuyButton());
                         } else {
-                            plugin.getCosmeticsManager().canAfford(clicker.getUniqueId(), cost)
-                                    .thenAccept(a -> {
-                                        if (plugin.getCosmeticsManager().getLemonCore() != null) {
-                                            plugin.getCosmeticsManager().getLemonCore()
-                                                    .getPlayerDataManager().getCoins(clicker.getUniqueId())
-                                                    .thenAccept(bal -> Bukkit.getScheduler().runTask(plugin, () ->
-                                                            clicker.sendMessage(MM.deserialize("<red>You need <gold>" + cost
-                                                                    + " Coins</gold> but only have <gold>" + bal + " Coins</gold>."))));
-                                        }
-                                    });
+                            if (plugin.getCosmeticsManager().getLemonCore() != null) {
+                                plugin.getCosmeticsManager().getLemonCore()
+                                        .getPlayerDataManager().getCoins(clicker.getUniqueId())
+                                        .thenAccept(bal -> Bukkit.getScheduler().runTask(plugin, () ->
+                                                clicker.sendMessage(MM.deserialize("<red>You need <gold>" + cost
+                                                        + " Coins</gold> but only have <gold>" + bal + " Coins</gold>."))));
+                            }
                         }
                     }));
             return;

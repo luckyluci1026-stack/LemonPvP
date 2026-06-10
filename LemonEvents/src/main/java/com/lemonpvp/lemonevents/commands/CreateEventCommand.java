@@ -3,6 +3,7 @@ package com.lemonpvp.lemonevents.commands;
 import com.lemonpvp.lemonevents.LemonEvents;
 import com.lemonpvp.lemonevents.model.EventType;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 
 public class CreateEventCommand implements CommandExecutor {
@@ -50,7 +51,7 @@ public class CreateEventCommand implements CommandExecutor {
         }
 
         plugin.getEventManager().createEvent(name, type, prize3, prize2, prize1)
-                .thenAccept(event -> {
+                .thenAccept(event -> Bukkit.getScheduler().runTask(plugin, () -> {
                     if (event == null) {
                         sender.sendMessage(MM.deserialize("<red>Failed to create event. Check console."));
                     } else {
@@ -59,7 +60,7 @@ public class CreateEventCommand implements CommandExecutor {
                             "</gold>) created! Prizes: <gold>" + prize1 + "</gold> / <gold>" +
                             prize2 + "</gold> / <gold>" + prize3 + "</gold> coins."));
                     }
-                });
+                }));
         return true;
     }
 }
