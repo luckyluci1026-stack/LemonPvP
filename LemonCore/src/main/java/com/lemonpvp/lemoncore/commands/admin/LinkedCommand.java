@@ -65,7 +65,8 @@ public class LinkedCommand implements CommandExecutor {
             }
         }).thenAccept(uuid -> {
             if (uuid == null) {
-                sender.sendMessage(MM.deserialize("<red>Player not found.</red>"));
+                Bukkit.getScheduler().runTask(plugin, () ->
+                    sender.sendMessage(MM.deserialize("<red>Player not found.</red>")));
                 return;
             }
             showLink(sender, uuid, targetName);
@@ -75,14 +76,16 @@ public class LinkedCommand implements CommandExecutor {
 
     private void showLink(CommandSender sender, UUID uuid, String playerName) {
         plugin.getDiscordLinkManager().getLinkedAccount(uuid).thenAccept(link -> {
-            if (link == null) {
-                sender.sendMessage(MM.deserialize(
-                        "<gray>" + playerName + " has no Discord account linked.</gray>"));
-            } else {
-                sender.sendMessage(MM.deserialize(
-                        "<gray>Linked Discord: <white>" + link.discordUsername
-                        + "</white> (<aqua>" + link.discordId + "</aqua>)</gray>"));
-            }
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (link == null) {
+                    sender.sendMessage(MM.deserialize(
+                            "<gray>" + playerName + " has no Discord account linked.</gray>"));
+                } else {
+                    sender.sendMessage(MM.deserialize(
+                            "<gray>Linked Discord: <white>" + link.discordUsername
+                            + "</white> (<aqua>" + link.discordId + "</aqua>)</gray>"));
+                }
+            });
         });
     }
 }

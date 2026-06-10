@@ -1,6 +1,7 @@
 package com.lemonpvp.lemoncore.commands.admin;
 
 import com.lemonpvp.lemoncore.LemonCore;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -26,14 +27,15 @@ public class GUnbanCommand implements CommandExecutor {
 
         String target = args[0];
         String adminName = sender.getName();
-        plugin.getBanManager().unban(target).thenAccept(record -> {
-            if (record != null) {
-                sender.sendMessage(plugin.getMessagesManager().get("ban.unban-success", "player", record.username));
-                plugin.getDiscordWebhookManager().sendUnban(record.username, adminName, record.id);
-            } else {
-                sender.sendMessage(plugin.getMessagesManager().get("ban.not-banned", "player", target));
-            }
-        });
+        plugin.getBanManager().unban(target).thenAccept(record ->
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (record != null) {
+                    sender.sendMessage(plugin.getMessagesManager().get("ban.unban-success", "player", record.username));
+                    plugin.getDiscordWebhookManager().sendUnban(record.username, adminName, record.id);
+                } else {
+                    sender.sendMessage(plugin.getMessagesManager().get("ban.not-banned", "player", target));
+                }
+            }));
         return true;
     }
 }

@@ -32,11 +32,20 @@ public class GUnwipeCommand implements CommandExecutor {
         String date = args[1];
 
         resolveUuid(targetName, uuid -> {
-            if (uuid == null) { sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)); return; }
+            if (uuid == null) {
+                Bukkit.getScheduler().runTask(plugin, () ->
+                    sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)));
+                return;
+            }
             plugin.getStatsManager().findWipeByDate(uuid, date).thenAccept(wipe -> {
-                if (wipe == null) { sender.sendMessage(plugin.getMessagesManager().get("stats.no-wipe")); return; }
+                if (wipe == null) {
+                    Bukkit.getScheduler().runTask(plugin, () ->
+                        sender.sendMessage(plugin.getMessagesManager().get("stats.no-wipe")));
+                    return;
+                }
                 plugin.getStatsManager().restoreStats(uuid, wipe)
-                        .thenRun(() -> sender.sendMessage(plugin.getMessagesManager().get("stats.unwipe-success", "player", targetName, "date", date)));
+                        .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
+                            sender.sendMessage(plugin.getMessagesManager().get("stats.unwipe-success", "player", targetName, "date", date))));
             });
         });
         return true;

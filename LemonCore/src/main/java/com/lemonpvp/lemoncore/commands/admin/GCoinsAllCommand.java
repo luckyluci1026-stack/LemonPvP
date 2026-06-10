@@ -38,8 +38,12 @@ public class GCoinsAllCommand implements CommandExecutor {
         final long amt = amount;
 
         for (Player p : Bukkit.getOnlinePlayers()) {
-            plugin.getPlayerDataManager().addCoins(p.getUniqueId(), amt, "coinsall", adminUuid)
-                    .thenRun(() -> p.sendMessage(plugin.getMessagesManager().get("coins.receive", "amount", String.valueOf(amt))));
+            UUID pUuid = p.getUniqueId();
+            plugin.getPlayerDataManager().addCoins(pUuid, amt, "coinsall", adminUuid)
+                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player pp = Bukkit.getPlayer(pUuid);
+                        if (pp != null) pp.sendMessage(plugin.getMessagesManager().get("coins.receive", "amount", String.valueOf(amt)));
+                    }));
         }
 
         sender.sendMessage(plugin.getMessagesManager().get("coins.coinsall", "amount", String.valueOf(amt)));

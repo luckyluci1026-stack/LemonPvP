@@ -34,12 +34,18 @@ public class GWipeCommand implements CommandExecutor {
         Player online = Bukkit.getPlayer(targetName);
         if (online != null) {
             plugin.getStatsManager().wipeStats(online.getUniqueId(), online.getName(), senderUuid, sender.getName())
-                    .thenRun(() -> sender.sendMessage(plugin.getMessagesManager().get("stats.wipe-success", "player", targetName)));
+                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
+                        sender.sendMessage(plugin.getMessagesManager().get("stats.wipe-success", "player", targetName))));
         } else {
             plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid -> {
-                if (uuid == null) { sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)); return; }
+                if (uuid == null) {
+                    Bukkit.getScheduler().runTask(plugin, () ->
+                        sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)));
+                    return;
+                }
                 plugin.getStatsManager().wipeStats(uuid, targetName, senderUuid, sender.getName())
-                        .thenRun(() -> sender.sendMessage(plugin.getMessagesManager().get("stats.wipe-success", "player", targetName)));
+                        .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
+                            sender.sendMessage(plugin.getMessagesManager().get("stats.wipe-success", "player", targetName))));
             });
         }
         return true;

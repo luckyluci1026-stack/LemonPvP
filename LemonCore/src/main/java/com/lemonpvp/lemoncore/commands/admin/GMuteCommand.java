@@ -36,13 +36,19 @@ public class GMuteCommand implements CommandExecutor {
         if (online != null) {
             plugin.getMuteManager().mutePlayer(online.getUniqueId(), online.getName(), "Muted by admin",
                     senderUuid, sender.getName(), duration)
-                    .thenRun(() -> sender.sendMessage(plugin.getMessagesManager().get("mute.success", "player", targetName)));
+                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
+                        sender.sendMessage(plugin.getMessagesManager().get("mute.success", "player", targetName))));
         } else {
             plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid -> {
-                if (uuid == null) { sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)); return; }
+                if (uuid == null) {
+                    Bukkit.getScheduler().runTask(plugin, () ->
+                        sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)));
+                    return;
+                }
                 plugin.getMuteManager().mutePlayer(uuid, targetName, "Muted by admin",
                         senderUuid, sender.getName(), duration)
-                        .thenRun(() -> sender.sendMessage(plugin.getMessagesManager().get("mute.success", "player", targetName)));
+                        .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
+                            sender.sendMessage(plugin.getMessagesManager().get("mute.success", "player", targetName))));
             });
         }
         return true;

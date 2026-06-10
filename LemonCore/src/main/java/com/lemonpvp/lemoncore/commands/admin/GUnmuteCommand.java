@@ -1,6 +1,7 @@
 package com.lemonpvp.lemoncore.commands.admin;
 
 import com.lemonpvp.lemoncore.LemonCore;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -26,14 +27,15 @@ public class GUnmuteCommand implements CommandExecutor {
 
         String target = args[0];
         String adminName = sender.getName();
-        plugin.getMuteManager().unmute(target).thenAccept(record -> {
-            if (record != null) {
-                sender.sendMessage(plugin.getMessagesManager().get("mute.unmute-success", "player", record.username));
-                plugin.getDiscordWebhookManager().sendUnmute(record.username, adminName);
-            } else {
-                sender.sendMessage(plugin.getMessagesManager().get("mute.not-muted", "player", target));
-            }
-        });
+        plugin.getMuteManager().unmute(target).thenAccept(record ->
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (record != null) {
+                    sender.sendMessage(plugin.getMessagesManager().get("mute.unmute-success", "player", record.username));
+                    plugin.getDiscordWebhookManager().sendUnmute(record.username, adminName);
+                } else {
+                    sender.sendMessage(plugin.getMessagesManager().get("mute.not-muted", "player", target));
+                }
+            }));
         return true;
     }
 }
