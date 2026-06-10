@@ -3,6 +3,8 @@ package com.lemonpvp.lemonpractice.listeners;
 import com.lemonpvp.lemonpractice.LemonPractice;
 import com.lemonpvp.lemonpractice.gui.QueueGUI;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -84,10 +86,16 @@ public class LobbyListener implements Listener {
         event.quitMessage(null);
 
         Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
 
         // Remove from queue if they were queued
-        if (plugin.getQueueManager().isQueued(player.getUniqueId())) {
-            plugin.getQueueManager().removeFromQueue(player.getUniqueId());
+        if (plugin.getQueueManager().isQueued(uuid)) {
+            plugin.getQueueManager().removeFromQueue(uuid);
+        }
+
+        // Remove from FFA arena — decrements player count and frees the slot
+        if (plugin.getFfaManager().isInFfa(uuid)) {
+            plugin.getFfaManager().leaveArena(player);
         }
     }
 
