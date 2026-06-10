@@ -14,27 +14,27 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 
 public class ArenaManager {
 
     private final LemonTraining plugin;
-    private final List<BlockVector3> bowTargetPositions = new ArrayList<>();
+    // Written from the async build thread, read from event handlers on the main thread
+    private final List<BlockVector3> bowTargetPositions = new CopyOnWriteArrayList<>();
 
     public ArenaManager(LemonTraining plugin) {
         this.plugin = plugin;
     }
 
     public void buildArenas() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            for (PracticeMode mode : PracticeMode.values()) {
-                try {
-                    buildArena(mode);
-                } catch (Exception e) {
-                    plugin.getLogger().log(Level.WARNING, "Failed to build arena for " + mode, e);
-                }
+        for (PracticeMode mode : PracticeMode.values()) {
+            try {
+                buildArena(mode);
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to build arena for " + mode, e);
             }
-        });
+        }
     }
 
     private void buildArena(PracticeMode mode) {
@@ -53,8 +53,7 @@ public class ArenaManager {
         int cy = sec.getInt("center-y", 64);
         int cz = sec.getInt("center-z", 0);
 
-        // Check if floor block already exists
-        Location center = new Location(world, cx, cy, cz);
+        // Check if floor block already exists (main thread — getBlockAt may load the chunk)
         if (world.getBlockAt(cx, cy - 1, cz).getType() != org.bukkit.Material.AIR) {
             // Arena already built
             if (mode == PracticeMode.BOW) {
@@ -65,24 +64,27 @@ public class ArenaManager {
 
         com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(world);
 
-        try (EditSession editSession = WorldEdit.getInstance().newEditSessionBuilder()
-                .world(weWorld).maxBlocks(-1).build()) {
+        // FAWE edit sessions are async-safe; keep the heavy block work off the main thread
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (EditSession editSession = WorldEdit.getInstance().newEditSessionBuilder()
+                    .world(weWorld).maxBlocks(-1).build()) {
 
-            switch (mode) {
-                case TOTEM -> buildTotemArena(editSession, cx, cy, cz, sec.getInt("size", 20));
-                case BOW -> buildBowArena(editSession, cx, cy, cz, sec, worldName);
-                case MACE -> buildMaceArena(editSession, cx, cy, cz, sec.getInt("size", 20));
-                case SWORD -> buildSwordArena(editSession, cx, cy, cz, sec.getInt("size", 20));
-                case CRYSTAL -> buildCrystalArena(editSession, cx, cy, cz, sec.getInt("size", 20));
+                switch (mode) {
+                    case TOTEM -> buildTotemArena(editSession, cx, cy, cz, sec.getInt("size", 20));
+                    case BOW -> buildBowArena(editSession, cx, cy, cz, sec, worldName);
+                    case MACE -> buildMaceArena(editSession, cx, cy, cz, sec.getInt("size", 20));
+                    case SWORD -> buildSwordArena(editSession, cx, cy, cz, sec.getInt("size", 20));
+                    case CRYSTAL -> buildCrystalArena(editSession, cx, cy, cz, sec.getInt("size", 20));
+                }
+
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.SEVERE, "Error building " + mode + " arena", e);
             }
 
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Error building " + mode + " arena", e);
-        }
-
-        if (mode == PracticeMode.BOW) {
-            populateBowTargets(sec, cx, cy, cz);
-        }
+            if (mode == PracticeMode.BOW) {
+                populateBowTargets(sec, cx, cy, cz);
+            }
+        });
     }
 
     // --- Totem Arena: 20x20 floor + 3-high walls, hollow ---
