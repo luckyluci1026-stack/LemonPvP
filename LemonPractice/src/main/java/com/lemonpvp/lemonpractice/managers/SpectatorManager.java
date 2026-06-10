@@ -28,7 +28,9 @@ public class SpectatorManager {
 
         player.setGameMode(GameMode.SPECTATOR);
 
-        if (specSpawn != null) {
+        // Only teleport living players. Dead players are handled by the onRespawn
+        // listener which sets the respawn location before they come back to life.
+        if (specSpawn != null && !player.isDead()) {
             player.teleport(specSpawn);
         }
 

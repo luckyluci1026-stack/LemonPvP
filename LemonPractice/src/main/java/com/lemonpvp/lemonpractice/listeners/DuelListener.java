@@ -4,6 +4,7 @@ import com.lemonpvp.lemonpractice.LemonPractice;
 import com.lemonpvp.lemonpractice.duel.DuelGame;
 import com.lemonpvp.lemonpractice.duel.DuelState;
 import com.lemonpvp.lemonpractice.model.Arena;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -44,6 +45,14 @@ public class DuelListener implements Listener {
 
         if (plugin.getDuelManager().isInDuel(uuid)) {
             plugin.getDuelManager().handleDeath(uuid);
+
+            // Auto-respawn after 1 tick so the spectator setup in makeSpectator takes effect
+            // (setGameMode SPECTATOR on a dead player requires a respawn cycle to apply).
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline() && player.isDead()) {
+                    player.respawn();
+                }
+            }, 1L);
         }
     }
 
