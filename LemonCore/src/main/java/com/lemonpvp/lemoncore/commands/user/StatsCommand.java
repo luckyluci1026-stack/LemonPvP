@@ -9,6 +9,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.UUID;
+
 public class StatsCommand implements CommandExecutor {
 
     private final LemonCore plugin;
@@ -33,14 +35,17 @@ public class StatsCommand implements CommandExecutor {
                 if (data != null) {
                     openStatsGUI(player, data);
                 } else {
+                    UUID playerUuid = player.getUniqueId();
                     plugin.getPlayerDataManager().loadOfflinePlayer(targetName)
-                            .thenAccept(d -> {
+                            .thenAccept(d -> Bukkit.getScheduler().runTask(plugin, () -> {
+                                Player p = Bukkit.getPlayer(playerUuid);
+                                if (p == null) return;
                                 if (d == null) {
-                                    player.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName));
+                                    p.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName));
                                 } else {
-                                    Bukkit.getScheduler().runTask(plugin, () -> openStatsGUI(player, d));
+                                    openStatsGUI(p, d);
                                 }
-                            });
+                            }));
                 }
             } else {
                 plugin.getPlayerDataManager().loadOfflinePlayer(targetName)

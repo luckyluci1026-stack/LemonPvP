@@ -98,6 +98,7 @@ public class FriendCommand implements CommandExecutor {
     private void resolveUuid(String name, java.util.function.Consumer<UUID> callback) {
         Player online = Bukkit.getPlayer(name);
         if (online != null) { callback.accept(online.getUniqueId()); return; }
-        plugin.getPlayerDataManager().findUUIDByName(name).thenAccept(callback);
+        plugin.getPlayerDataManager().findUUIDByName(name).thenAccept(uuid ->
+            Bukkit.getScheduler().runTask(plugin, () -> callback.accept(uuid)));
     }
 }

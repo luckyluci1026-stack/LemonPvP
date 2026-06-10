@@ -8,6 +8,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 public class MReportCommand implements CommandExecutor {
 
@@ -37,18 +38,29 @@ public class MReportCommand implements CommandExecutor {
     }
 
     private void resolveUuid(String targetName, Player reporter, String reason) {
+        UUID reporterUuid = reporter.getUniqueId();
+        String reporterName = reporter.getName();
         Player online = Bukkit.getPlayer(targetName);
         if (online != null) {
-            plugin.getReportManager().submitMessageReport(reporter.getUniqueId(), reporter.getName(),
+            plugin.getReportManager().submitMessageReport(reporterUuid, reporterName,
                     online.getUniqueId(), online.getName(), reason)
-                    .thenRun(() -> reporter.sendMessage(plugin.getMessagesManager().get("mreport.success")));
+                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(reporterUuid);
+                        if (p != null) p.sendMessage(plugin.getMessagesManager().get("mreport.success"));
+                    }));
         } else {
-            plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid -> {
-                if (uuid == null) { reporter.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)); return; }
-                plugin.getReportManager().submitMessageReport(reporter.getUniqueId(), reporter.getName(),
-                        uuid, targetName, reason)
-                        .thenRun(() -> reporter.sendMessage(plugin.getMessagesManager().get("mreport.success")));
-            });
+            plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(reporterUuid);
+                    if (p == null) return;
+                    if (uuid == null) { p.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)); return; }
+                    plugin.getReportManager().submitMessageReport(reporterUuid, reporterName,
+                            uuid, targetName, reason)
+                            .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                                Player pp = Bukkit.getPlayer(reporterUuid);
+                                if (pp != null) pp.sendMessage(plugin.getMessagesManager().get("mreport.success"));
+                            }));
+                }));
         }
     }
 }
