@@ -72,6 +72,8 @@ public class PracticeManager {
                 }
             } else if (practice instanceof BowPractice bp) {
                 bp.cleanup();
+            } else if (practice instanceof TotemPractice tp) {
+                tp.cleanup();
             }
         }
     }

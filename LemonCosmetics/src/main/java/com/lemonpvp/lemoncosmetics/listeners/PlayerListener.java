@@ -42,8 +42,10 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        plugin.getHatManager().removeHat(event.getPlayer());
-        plugin.getCosmeticsManager().unloadPlayer(event.getPlayer().getUniqueId());
+        Player player = event.getPlayer();
+        plugin.getArrowTrailManager().stopAllTrailsForPlayer(player.getUniqueId());
+        plugin.getHatManager().removeHat(player);
+        plugin.getCosmeticsManager().unloadPlayer(player.getUniqueId());
     }
 
     @EventHandler

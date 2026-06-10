@@ -10,12 +10,15 @@ import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class TotemPractice extends AbstractPractice {
 
     private static final int TOTEM_COUNT = 36;
     private static final Random RANDOM = new Random();
+    private final List<FallingBlock> spawnedAnvils = new ArrayList<>();
 
     public TotemPractice(LemonTraining plugin, Player player, PracticeSession session) {
         super(plugin, player, session);
@@ -42,6 +45,7 @@ public class TotemPractice extends AbstractPractice {
             FallingBlock fb = player.getWorld().spawnFallingBlock(spawnLoc, Material.ANVIL.createBlockData());
             fb.setDropItem(false);
             fb.setHurtEntities(false);
+            spawnedAnvils.add(fb);
         }, 60L, 60L));
 
         // Totem check: every 20 ticks refill if 0 totems remain
@@ -77,10 +81,16 @@ public class TotemPractice extends AbstractPractice {
         player.getInventory().setItemInOffHand(new ItemStack(Material.TOTEM_OF_UNDYING, 1));
     }
 
+    public void cleanup() {
+        spawnedAnvils.forEach(fb -> { if (fb.isValid()) fb.remove(); });
+        spawnedAnvils.clear();
+        player.getInventory().clear();
+    }
+
     @Override
     public void end() {
         cancelTasks();
-        player.getInventory().clear();
+        cleanup();
         sendToLobby();
     }
 }
