@@ -32,8 +32,10 @@ export async function POST(req: NextRequest, { params }: Params) {
     switch (action) {
       case 'ban': {
         if (!hasPermission(session, 'player.ban')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-        await mc.banPlayer(name, String(body.reason ?? 'Kein Grund angegeben'), String(body.duration ?? 'permanent'))
-        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_BAN', target: name, details: String(body.reason) })
+        const reason = typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : 'Kein Grund angegeben'
+        const duration = typeof body.duration === 'string' && body.duration.trim() ? body.duration.trim() : 'permanent'
+        await mc.banPlayer(name, reason, duration)
+        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_BAN', target: name, details: reason })
         break
       }
       case 'unban': {
@@ -44,14 +46,19 @@ export async function POST(req: NextRequest, { params }: Params) {
       }
       case 'coins': {
         if (!hasPermission(session, 'player.coins')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-        await mc.setCoins(name, Number(body.amount), (body.action as 'add' | 'remove' | 'set') ?? 'add')
-        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_COINS', target: name, details: `${body.action} ${body.amount}` })
+        const amount = Number(body.amount)
+        if (!Number.isFinite(amount)) return NextResponse.json({ error: 'amount muss eine Zahl sein.' }, { status: 400 })
+        const coinAction = ['add', 'remove', 'set'].includes(String(body.action)) ? (body.action as 'add' | 'remove' | 'set') : 'add'
+        await mc.setCoins(name, amount, coinAction)
+        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_COINS', target: name, details: `${coinAction} ${amount}` })
         break
       }
       case 'rank': {
         if (!hasPermission(session, 'player.rank')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-        await mc.setRank(name, String(body.rank))
-        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_RANK', target: name, details: String(body.rank) })
+        const rank = typeof body.rank === 'string' && body.rank.trim() ? body.rank.trim() : null
+        if (!rank) return NextResponse.json({ error: 'rank darf nicht leer sein.' }, { status: 400 })
+        await mc.setRank(name, rank)
+        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_RANK', target: name, details: rank })
         break
       }
       default:

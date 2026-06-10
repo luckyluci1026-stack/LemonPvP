@@ -11,17 +11,18 @@ public class TotemExplosionEffect {
     private TotemExplosionEffect() {}
 
     public static void play(LemonCosmetics plugin, Location loc) {
-        // Play sound on main thread then particles async
-        plugin.getServer().getScheduler().runTask(plugin, () ->
-                loc.getWorld().playSound(loc, Sound.ITEM_TOTEM_USE, 1.0f, 1.0f));
+        if (loc.getWorld() == null) return;
+        loc.getWorld().playSound(loc, Sound.ITEM_TOTEM_USE, 1.0f, 1.0f);
 
         final int[] tick = {0};
         final BukkitTask[] task = new BukkitTask[1];
-        task[0] = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+        task[0] = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             if (tick[0] >= 10) {
                 task[0].cancel();
                 return;
             }
+            var world = loc.getWorld();
+            if (world == null) { task[0].cancel(); return; }
             double radius = 0.5 + tick[0] * 0.25;
             int count = 12 + tick[0] * 3;
             for (int i = 0; i < count; i++) {
@@ -29,9 +30,9 @@ public class TotemExplosionEffect {
                 double x = Math.cos(a) * radius;
                 double z = Math.sin(a) * radius;
                 double y = tick[0] * 0.1;
-                loc.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, loc.clone().add(x, y, z), 1, 0, 0, 0, 0);
-                loc.getWorld().spawnParticle(Particle.HEART, loc.clone().add(x, y + 0.2, z), 0, 0, 0.1, 0, 0);
-                loc.getWorld().spawnParticle(Particle.FLAME, loc.clone().add(x * 0.5, y, z * 0.5), 0, 0, 0.05, 0, 0);
+                world.spawnParticle(Particle.TOTEM_OF_UNDYING, loc.clone().add(x, y, z), 1, 0, 0, 0, 0);
+                world.spawnParticle(Particle.HEART, loc.clone().add(x, y + 0.2, z), 0, 0, 0.1, 0, 0);
+                world.spawnParticle(Particle.FLAME, loc.clone().add(x * 0.5, y, z * 0.5), 0, 0, 0.05, 0, 0);
             }
             tick[0]++;
         }, 0L, 1L);

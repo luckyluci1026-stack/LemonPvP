@@ -75,15 +75,17 @@ public class ArrowTrailManager {
     private void spawnParticle(Arrow arrow, ArrowTrailType trail) {
         try {
             var loc = arrow.getLocation();
+            var world = loc.getWorld();
+            if (world == null) return;
             if (trail.particle == Particle.DUST) {
                 Particle.DustOptions dust = new Particle.DustOptions(trail.dustColor, trail.dustSize);
-                loc.getWorld().spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0, dust);
+                world.spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0, dust);
             } else if (trail.particle == Particle.FLAME) {
                 // Flame + smoke alternating based on entity ID % 2
                 Particle p = (arrow.getEntityId() % 2 == 0) ? Particle.FLAME : Particle.SMOKE;
-                loc.getWorld().spawnParticle(p, loc, 1, 0, 0, 0, 0);
+                world.spawnParticle(p, loc, 1, 0, 0, 0, 0);
             } else {
-                loc.getWorld().spawnParticle(trail.particle, loc, 1, 0, 0, 0, 0);
+                world.spawnParticle(trail.particle, loc, 1, 0, 0, 0, 0);
             }
         } catch (Exception ignored) {}
     }

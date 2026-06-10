@@ -277,14 +277,19 @@ public class HttpApiManager {
             @Override public void close() {}
         };
         Bukkit.getLogger().addHandler(handler);
-
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-            future.complete(null);
-        });
-        try { future.get(5, TimeUnit.SECONDS); } catch (Exception ignored) {}
-        Bukkit.getLogger().removeHandler(handler);
+        try {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                try {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+                } finally {
+                    future.complete(null);
+                }
+            });
+            try { future.get(5, TimeUnit.SECONDS); } catch (Exception ignored) {}
+        } finally {
+            Bukkit.getLogger().removeHandler(handler);
+        }
 
         JsonObject result = new JsonObject();
         result.addProperty("output", output.toString().trim());
