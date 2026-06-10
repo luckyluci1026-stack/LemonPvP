@@ -449,7 +449,7 @@ public class QuestManager {
      * Starts the async playtime tracking task (fires every 60 seconds).
      */
     public void startPlaytimeTracking() {
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 onStatUpdate(player.getUniqueId(), "PLAYTIME", 1);
             }
