@@ -36,6 +36,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
     db.prepare('UPDATE users SET password = ?, updated_at = datetime(\'now\') WHERE id = ?').run(hash, userId)
   }
   if (body.role !== undefined) {
+    const validRoles = ['SUPER_ADMIN', 'ADMIN', 'STAFF']
+    if (!validRoles.includes(body.role)) {
+      return NextResponse.json({ error: 'Ungültige Rolle.' }, { status: 400 })
+    }
     if (body.role === 'SUPER_ADMIN' && session.role !== 'SUPER_ADMIN') {
       return NextResponse.json({ error: 'Keine Berechtigung für Super-Admin.' }, { status: 403 })
     }

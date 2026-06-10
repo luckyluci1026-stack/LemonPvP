@@ -80,13 +80,16 @@ export async function DELETE(req: NextRequest) {
   if (!hasPermission(session, 'admin.emails')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { email, aliasId } = await req.json() as { email?: string; aliasId?: number }
+  if (aliasId === undefined && !email) {
+    return NextResponse.json({ error: 'email oder aliasId erforderlich.' }, { status: 400 })
+  }
   try {
     if (aliasId !== undefined) {
       await mc.deleteAlias(aliasId)
       addAuditLog({ userId: session.id, userEmail: session.email, action: 'DELETE_ALIAS', target: String(aliasId) })
-    } else if (email) {
-      await mc.deleteMailbox(email)
-      addAuditLog({ userId: session.id, userEmail: session.email, action: 'DELETE_MAILBOX', target: email })
+    } else {
+      await mc.deleteMailbox(email!)
+      addAuditLog({ userId: session.id, userEmail: session.email, action: 'DELETE_MAILBOX', target: email! })
     }
     return NextResponse.json({ ok: true })
   } catch (e: unknown) {

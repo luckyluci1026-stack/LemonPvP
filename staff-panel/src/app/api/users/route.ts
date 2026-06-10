@@ -28,8 +28,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email, Passwort und Name erforderlich.' }, { status: 400 })
   }
 
+  const validRoles = ['SUPER_ADMIN', 'ADMIN', 'STAFF']
+  const assignedRole = role && validRoles.includes(role) ? role : 'STAFF'
   // Super admin can only be set by existing super admin
-  if (role === 'SUPER_ADMIN' && session.role !== 'SUPER_ADMIN') {
+  if (assignedRole === 'SUPER_ADMIN' && session.role !== 'SUPER_ADMIN') {
     return NextResponse.json({ error: 'Nur Super-Admins können Super-Admins erstellen.' }, { status: 403 })
   }
 
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
       email.toLowerCase().trim(),
       hash,
       name.trim(),
-      role || 'STAFF',
+      assignedRole,
       JSON.stringify(permissions || [])
     )
     addAuditLog({
