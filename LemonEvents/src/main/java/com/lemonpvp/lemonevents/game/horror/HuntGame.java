@@ -71,6 +71,10 @@ public class HuntGame extends AbstractGame {
 
     private void selectHunter() {
         List<UUID> list = new ArrayList<>(participants);
+        if (list.isEmpty()) {
+            endGame();
+            return;
+        }
         currentHunter = list.get(new Random().nextInt(list.size()));
     }
 

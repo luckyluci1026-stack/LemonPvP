@@ -8,13 +8,44 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-public class AowArenaCommand implements CommandExecutor {
+public class AowArenaCommand implements CommandExecutor, TabCompleter {
+
+    private static final List<String> SUBCOMMANDS = List.of(
+            "create", "setspawn1", "setspawn2", "setspawnspec",
+            "setpos1", "setpos2", "bind", "dupe", "save", "buildarenas");
+    private static final List<String> ARENA_SUBS = List.of(
+            "setspawn1", "setspawn2", "setspawnspec", "setpos1", "setpos2", "bind", "dupe", "save");
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("lemonpractice.admin.arena")) return List.of();
+        String lower = args[args.length - 1].toLowerCase();
+
+        if (args.length == 1) {
+            return SUBCOMMANDS.stream().filter(s -> s.startsWith(lower)).collect(Collectors.toList());
+        }
+        if (args.length == 2 && ARENA_SUBS.contains(args[0].toLowerCase())) {
+            return plugin.getArenaManager().getAllArenas().values().stream()
+                    .map(a -> a.getName())
+                    .filter(n -> n.toLowerCase().startsWith(lower))
+                    .collect(Collectors.toList());
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("bind")) {
+            return plugin.getGamemodeManager().getAllGamemodes().keySet().stream()
+                    .filter(g -> g.startsWith(lower))
+                    .collect(Collectors.toList());
+        }
+        return List.of();
+    }
 
     private final LemonPractice plugin;
 

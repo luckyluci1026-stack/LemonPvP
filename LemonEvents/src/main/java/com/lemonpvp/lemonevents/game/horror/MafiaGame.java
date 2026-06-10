@@ -204,8 +204,8 @@ public class MafiaGame extends AbstractGame {
 
     @Override
     protected void checkWinCondition() {
-        long mafiaAlive = participants.stream().filter(u -> roles.get(u) == Role.MAFIA).count();
-        long villagersAlive = participants.stream().filter(u -> roles.get(u) == Role.VILLAGER).count();
+        long mafiaAlive = participants.stream().filter(u -> roles.getOrDefault(u, Role.VILLAGER) == Role.MAFIA).count();
+        long villagersAlive = participants.stream().filter(u -> roles.getOrDefault(u, Role.VILLAGER) == Role.VILLAGER).count();
         if (mafiaAlive == 0) {
             broadcastAll(MM.deserialize("<green><bold>🏘 Villagers win! The Mafia has been eliminated!</bold></green>"));
             List<UUID> mafiaList = getRoleList(Role.MAFIA);

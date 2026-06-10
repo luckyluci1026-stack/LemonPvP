@@ -107,6 +107,7 @@ public class LootManager {
     }
 
     private LootItem weightedRandom(List<LootItem> items) {
+        if (items.isEmpty()) return null;
         int total = items.stream().mapToInt(LootItem::getWeight).sum();
         if (total == 0) return items.get(0);
         int roll = random.nextInt(total);

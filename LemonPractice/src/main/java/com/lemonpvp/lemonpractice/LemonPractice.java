@@ -99,9 +99,13 @@ public class LemonPractice extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new FFAListener(this), this);
 
         // 7. Register commands
-        getCommand("aowarena").setExecutor(new AowArenaCommand(this));
+        AowArenaCommand arenaCmd = new AowArenaCommand(this);
+        getCommand("aowarena").setExecutor(arenaCmd);
+        getCommand("aowarena").setTabCompleter(arenaCmd);
         getCommand("aowbuildspawn").setExecutor(new AowBuildSpawnCommand(this));
-        getCommand("gelo").setExecutor(new GEloCommand(this));
+        GEloCommand eloCmd = new GEloCommand(this);
+        getCommand("gelo").setExecutor(eloCmd);
+        getCommand("gelo").setTabCompleter(eloCmd);
 
         // 8. If LOBBY: set up hotbars for all currently online players (reload case)
         if (serverType.equals("LOBBY")) {

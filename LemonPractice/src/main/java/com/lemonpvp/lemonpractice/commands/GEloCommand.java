@@ -7,18 +7,42 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
-public class GEloCommand implements CommandExecutor {
+public class GEloCommand implements CommandExecutor, TabCompleter {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final List<String> ACTIONS = List.of("add", "remove", "set", "reset");
 
     private final LemonPractice plugin;
 
     public GEloCommand(LemonPractice plugin) {
         this.plugin = plugin;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("lemonpractice.admin.elo")) return List.of();
+        String lower = args[args.length - 1].toLowerCase();
+        return switch (args.length) {
+            case 1 -> Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(n -> n.toLowerCase().startsWith(lower))
+                    .collect(Collectors.toList());
+            case 2 -> ACTIONS.stream()
+                    .filter(a -> a.startsWith(lower))
+                    .collect(Collectors.toList());
+            case 3 -> plugin.getGamemodeManager().getAllGamemodes().keySet().stream()
+                    .filter(g -> g.startsWith(lower))
+                    .collect(Collectors.toList());
+            default -> List.of();
+        };
     }
 
     @Override

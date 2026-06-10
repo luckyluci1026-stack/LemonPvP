@@ -187,6 +187,65 @@ public class LemonCore extends JavaPlugin {
         getCommand("report").setExecutor(new ReportCommand(this));
         getCommand("bugreport").setExecutor(new BugReportCommand(this));
         getCommand("mreport").setExecutor(new MReportCommand(this));
+
+        // Tab completers for commands that accept an online player name as first argument
+        org.bukkit.command.TabCompleter playerTab = (s, c, l, a) ->
+                a.length == 1 ? onlinePlayers(a[0]) : java.util.List.of();
+        for (String cmd : new String[]{"gtp", "gban", "gmute", "gkick", "ghistory",
+                "gwipe", "gspec", "gpop", "gcheck", "report", "mreport", "stats"}) {
+            var pluginCmd = getCommand(cmd);
+            if (pluginCmd != null) pluginCmd.setTabCompleter(playerTab);
+        }
+
+        // /grank <add|set|remove|show> <player>
+        var grankCmd = getCommand("grank");
+        if (grankCmd != null) grankCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
+            case 1 -> filterStart(java.util.List.of("add", "set", "remove", "show"), a[0]);
+            case 2 -> onlinePlayers(a[1]);
+            default -> java.util.List.of();
+        });
+
+        // /gcoins <add|remove|set|show> <player>
+        var gcoinsCmd = getCommand("gcoins");
+        if (gcoinsCmd != null) gcoinsCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
+            case 1 -> filterStart(java.util.List.of("add", "remove", "set", "show"), a[0]);
+            case 2 -> onlinePlayers(a[1]);
+            default -> java.util.List.of();
+        });
+
+        // /friend <add|remove> <player>
+        var friendCmd = getCommand("friend");
+        if (friendCmd != null) friendCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
+            case 1 -> filterStart(java.util.List.of("add", "remove"), a[0]);
+            case 2 -> onlinePlayers(a[1]);
+            default -> java.util.List.of();
+        });
+
+        // /linked [player]
+        var linkedCmd = getCommand("linked");
+        if (linkedCmd != null) linkedCmd.setTabCompleter((s, c, l, a) ->
+                a.length == 1 ? onlinePlayers(a[0]) : java.util.List.of());
+
+        // /aowm <on|off|whitelist> [player]
+        var aowmCmd = getCommand("aowm");
+        if (aowmCmd != null) aowmCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
+            case 1 -> filterStart(java.util.List.of("on", "off", "whitelist"), a[0]);
+            case 2 -> "whitelist".equalsIgnoreCase(a[0]) ? onlinePlayers(a[1]) : java.util.List.of();
+            default -> java.util.List.of();
+        });
+    }
+
+    private java.util.List<String> onlinePlayers(String prefix) {
+        String lower = prefix.toLowerCase();
+        return Bukkit.getOnlinePlayers().stream()
+                .map(Player::getName)
+                .filter(n -> n.toLowerCase().startsWith(lower))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private java.util.List<String> filterStart(java.util.List<String> options, String prefix) {
+        String lower = prefix.toLowerCase();
+        return options.stream().filter(o -> o.startsWith(lower)).collect(java.util.stream.Collectors.toList());
     }
 
     public void teleportToLobby(Player player) {
