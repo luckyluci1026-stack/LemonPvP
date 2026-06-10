@@ -36,14 +36,17 @@ public class GHistoryCommand implements CommandExecutor {
         if (online != null) {
             new HistoryGUI(plugin, online.getUniqueId(), online.getName()).open(admin);
         } else {
-            plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid -> {
-                if (uuid == null) {
-                    admin.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName));
-                    return;
-                }
-                Bukkit.getScheduler().runTask(plugin, () ->
-                        new HistoryGUI(plugin, uuid, targetName).open(admin));
-            });
+            UUID adminUuid = admin.getUniqueId();
+            plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player a = Bukkit.getPlayer(adminUuid);
+                    if (a == null) return;
+                    if (uuid == null) {
+                        a.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName));
+                        return;
+                    }
+                    new HistoryGUI(plugin, uuid, targetName).open(a);
+                }));
         }
         return true;
     }

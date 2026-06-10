@@ -43,7 +43,8 @@ public class GBanCommand implements CommandExecutor {
         } else {
             plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid -> {
                 if (uuid == null) {
-                    sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName));
+                    Bukkit.getScheduler().runTask(plugin, () ->
+                        sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)));
                     return;
                 }
                 executeBan(sender, uuid, targetName, reason, senderUuid, senderName, duration, null);
@@ -58,11 +59,12 @@ public class GBanCommand implements CommandExecutor {
         plugin.getBanManager().banPlayer(targetUuid, targetName, reason, senderUuid, senderName, duration)
                 .thenAccept(ban -> {
                     if (ban == null) return;
-                    sender.sendMessage(plugin.getMessagesManager().get("ban.success", "player", targetName, "reason", reason));
-                    if (onlineTarget != null) {
-                        Bukkit.getScheduler().runTask(plugin, () ->
-                                plugin.getListenerManager().performBanKick(onlineTarget, ban));
-                    }
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        sender.sendMessage(plugin.getMessagesManager().get("ban.success", "player", targetName, "reason", reason));
+                        if (onlineTarget != null) {
+                            plugin.getListenerManager().performBanKick(onlineTarget, ban);
+                        }
+                    });
                 });
     }
 }

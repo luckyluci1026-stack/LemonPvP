@@ -36,10 +36,15 @@ public class GCoinsCommand implements CommandExecutor {
 
         if (action.equals("show")) {
             resolveUuid(targetName, uuid -> {
-                if (uuid == null) { sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)); return; }
+                if (uuid == null) {
+                    Bukkit.getScheduler().runTask(plugin, () ->
+                        sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)));
+                    return;
+                }
                 plugin.getPlayerDataManager().getCoins(uuid).thenAccept(coins ->
+                    Bukkit.getScheduler().runTask(plugin, () ->
                         sender.sendMessage(plugin.getMessagesManager().get("coins.show-other",
-                                "player", targetName, "coins", String.valueOf(coins))));
+                                "player", targetName, "coins", String.valueOf(coins)))));
             });
             return true;
         }
@@ -58,20 +63,27 @@ public class GCoinsCommand implements CommandExecutor {
 
         final long amt = amount;
         resolveUuid(targetName, uuid -> {
-            if (uuid == null) { sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)); return; }
+            if (uuid == null) {
+                Bukkit.getScheduler().runTask(plugin, () ->
+                    sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)));
+                return;
+            }
             final UUID finalUuid = uuid;
             switch (action) {
                 case "add" -> plugin.getPlayerDataManager().addCoins(finalUuid, amt, "admin", senderUuid)
-                        .thenRun(() -> {
+                        .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                             sender.sendMessage(plugin.getMessagesManager().get("coins.add", "player", targetName, "amount", String.valueOf(amt)));
                             Player target = Bukkit.getPlayer(finalUuid);
                             if (target != null) target.sendMessage(plugin.getMessagesManager().get("coins.receive", "amount", String.valueOf(amt)));
-                        });
+                        }));
                 case "remove" -> plugin.getPlayerDataManager().removeCoins(finalUuid, amt, "admin", senderUuid)
-                        .thenRun(() -> sender.sendMessage(plugin.getMessagesManager().get("coins.remove", "player", targetName, "amount", String.valueOf(amt))));
+                        .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
+                            sender.sendMessage(plugin.getMessagesManager().get("coins.remove", "player", targetName, "amount", String.valueOf(amt)))));
                 case "set" -> plugin.getPlayerDataManager().setCoins(finalUuid, amt, senderUuid)
-                        .thenRun(() -> sender.sendMessage(plugin.getMessagesManager().get("coins.set", "player", targetName, "amount", String.valueOf(amt))));
-                default -> sender.sendMessage(plugin.getMessagesManager().get("invalid-usage", "usage", "/gcoins add|remove|set|show <player> [amount]"));
+                        .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
+                            sender.sendMessage(plugin.getMessagesManager().get("coins.set", "player", targetName, "amount", String.valueOf(amt)))));
+                default -> Bukkit.getScheduler().runTask(plugin, () ->
+                    sender.sendMessage(plugin.getMessagesManager().get("invalid-usage", "usage", "/gcoins add|remove|set|show <player> [amount]")));
             }
         });
         return true;

@@ -2,6 +2,7 @@ package com.lemonpvp.lemoncore.commands.admin;
 
 import com.lemonpvp.lemoncore.LemonCore;
 import com.lemonpvp.lemoncore.util.TextUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -46,7 +47,8 @@ public class AowCodeCommand implements CommandExecutor {
         plugin.getCodeManager().createCode(codeName, rewardType, rewardValue, maxUses, duration, creatorUuid)
                 .thenAccept(code -> {
                     if (code != null) {
-                        sender.sendMessage(plugin.getMessagesManager().get("code.create", "code", code));
+                        Bukkit.getScheduler().runTask(plugin, () ->
+                            sender.sendMessage(plugin.getMessagesManager().get("code.create", "code", code)));
                     }
                 });
         return true;
