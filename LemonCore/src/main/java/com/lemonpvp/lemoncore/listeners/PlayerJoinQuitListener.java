@@ -36,6 +36,7 @@ public class PlayerJoinQuitListener implements Listener {
                                 } else {
                                     // Update scoreboard and apply display name
                                     org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                                        if (!player.isOnline()) return;
                                         plugin.getScoreboardManager().updateScoreboard(player, data);
                                         plugin.getPlayerDataManager().applyNames(player);
                                     });

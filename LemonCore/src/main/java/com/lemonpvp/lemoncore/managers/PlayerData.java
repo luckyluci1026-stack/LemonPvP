@@ -1,8 +1,8 @@
 package com.lemonpvp.lemoncore.managers;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerData {
 
@@ -24,7 +24,7 @@ public class PlayerData {
     private boolean fastCrystals = false;
 
     // ELO per gamemode
-    private final Map<String, Integer> elo = new HashMap<>();
+    private final Map<String, Integer> elo = new ConcurrentHashMap<>();
 
     // Friends (loaded separately)
     private final java.util.Set<UUID> friends = java.util.concurrent.ConcurrentHashMap.newKeySet();
