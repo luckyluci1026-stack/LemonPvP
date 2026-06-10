@@ -8,6 +8,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 public class ReportCommand implements CommandExecutor {
 
@@ -42,9 +43,13 @@ public class ReportCommand implements CommandExecutor {
             return true;
         }
 
-        plugin.getReportManager().submitReport(player.getUniqueId(), player.getName(),
+        UUID uuid = player.getUniqueId();
+        plugin.getReportManager().submitReport(uuid, player.getName(),
                 target.getUniqueId(), target.getName(), reason)
-                .thenRun(() -> player.sendMessage(plugin.getMessagesManager().get("report.success")));
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(uuid);
+                    if (p != null) p.sendMessage(plugin.getMessagesManager().get("report.success"));
+                }));
         return true;
     }
 }

@@ -2,10 +2,13 @@ package com.lemonpvp.lemoncore.commands.user;
 
 import com.lemonpvp.lemoncore.LemonCore;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.UUID;
 
 public class UnlinkCommand implements CommandExecutor {
 
@@ -27,12 +30,17 @@ public class UnlinkCommand implements CommandExecutor {
             return true;
         }
 
-        plugin.getDiscordLinkManager().unlinkAccount(player.getUniqueId()).thenAccept(removed -> {
-            if (removed) {
-                player.sendMessage(MM.deserialize("<green>Discord account unlinked.</green>"));
-            } else {
-                player.sendMessage(MM.deserialize("<gray>No Discord account linked.</gray>"));
-            }
+        UUID uuid = player.getUniqueId();
+        plugin.getDiscordLinkManager().unlinkAccount(uuid).thenAccept(removed -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p == null) return;
+                if (removed) {
+                    p.sendMessage(MM.deserialize("<green>Discord account unlinked.</green>"));
+                } else {
+                    p.sendMessage(MM.deserialize("<gray>No Discord account linked.</gray>"));
+                }
+            });
         });
         return true;
     }

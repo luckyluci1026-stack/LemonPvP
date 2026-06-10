@@ -4,6 +4,7 @@ import com.lemonpvp.lemonpractice.LemonPractice;
 import com.lemonpvp.lemonpractice.builder.ArenaBuilder;
 import com.lemonpvp.lemonpractice.model.Arena;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -81,49 +82,66 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
             case "create" -> {
                 if (args.length < 2) { player.sendMessage("§cUsage: /aowarena create <name>"); return true; }
                 String name = args[1];
-                plugin.getDatabase().createArena(name).thenAccept(id -> {
-                    if (id == -1) {
-                        player.sendMessage("§cFailed to create arena '" + name + "' (may already exist or DB error).");
-                        return;
-                    }
-                    Arena arena = new Arena(id, name);
-                    plugin.getArenaManager().getAllArenas(); // already loaded; add manually
-                    // Reload all arenas so the new one appears in cache
-                    plugin.getArenaManager().loadAll().thenRun(() ->
-                            player.sendMessage("§aArena §e" + name + " §acreated (id=" + id + ")."));
-                });
+                UUID senderUuid = player.getUniqueId();
+                plugin.getDatabase().createArena(name).thenAccept(id ->
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(senderUuid);
+                        if (id == -1) {
+                            if (p != null) p.sendMessage("§cFailed to create arena '" + name + "' (may already exist or DB error).");
+                            return;
+                        }
+                        plugin.getArenaManager().loadAll().thenRun(() ->
+                            Bukkit.getScheduler().runTask(plugin, () -> {
+                                Player pp = Bukkit.getPlayer(senderUuid);
+                                if (pp != null) pp.sendMessage("§aArena §e" + name + " §acreated (id=" + id + ").");
+                            }));
+                    }));
             }
 
             case "setspawn1" -> {
                 if (args.length < 2) { player.sendMessage("§cUsage: /aowarena setspawn1 <name>"); return true; }
                 Arena arena = requireArena(player, args[1]);
                 if (arena == null) return true;
-                plugin.getDatabase().updateArenaSpawn(arena.getId(), 1, player.getLocation()).thenRun(() -> {
-                    arena.setSpawn1(player.getLocation());
-                    arena.setWorldName(player.getWorld().getName());
-                    player.sendMessage("§aSpawn 1 of §e" + arena.getName() + " §aset.");
-                });
+                Location loc1 = player.getLocation();
+                String world1 = player.getWorld().getName();
+                UUID uuid1 = player.getUniqueId();
+                plugin.getDatabase().updateArenaSpawn(arena.getId(), 1, loc1).thenRun(() ->
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        arena.setSpawn1(loc1);
+                        arena.setWorldName(world1);
+                        Player p = Bukkit.getPlayer(uuid1);
+                        if (p != null) p.sendMessage("§aSpawn 1 of §e" + arena.getName() + " §aset.");
+                    }));
             }
 
             case "setspawn2" -> {
                 if (args.length < 2) { player.sendMessage("§cUsage: /aowarena setspawn2 <name>"); return true; }
                 Arena arena = requireArena(player, args[1]);
                 if (arena == null) return true;
-                plugin.getDatabase().updateArenaSpawn(arena.getId(), 2, player.getLocation()).thenRun(() -> {
-                    arena.setSpawn2(player.getLocation());
-                    arena.setWorldName(player.getWorld().getName());
-                    player.sendMessage("§aSpawn 2 of §e" + arena.getName() + " §aset.");
-                });
+                Location loc2 = player.getLocation();
+                String world2 = player.getWorld().getName();
+                UUID uuid2 = player.getUniqueId();
+                plugin.getDatabase().updateArenaSpawn(arena.getId(), 2, loc2).thenRun(() ->
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        arena.setSpawn2(loc2);
+                        arena.setWorldName(world2);
+                        Player p = Bukkit.getPlayer(uuid2);
+                        if (p != null) p.sendMessage("§aSpawn 2 of §e" + arena.getName() + " §aset.");
+                    }));
             }
 
             case "setspawnspec" -> {
                 if (args.length < 2) { player.sendMessage("§cUsage: /aowarena setspawnspec <name>"); return true; }
                 Arena arena = requireArena(player, args[1]);
                 if (arena == null) return true;
-                plugin.getDatabase().updateArenaSpawn(arena.getId(), 3, player.getLocation()).thenRun(() -> {
-                    arena.setSpawnSpec(player.getLocation());
-                    player.sendMessage("§aSpec spawn of §e" + arena.getName() + " §aset.");
-                });
+                Location locSpec = player.getLocation();
+                UUID uuidSpec = player.getUniqueId();
+                plugin.getDatabase().updateArenaSpawn(arena.getId(), 3, locSpec).thenRun(() ->
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        arena.setSpawnSpec(locSpec);
+                        Player p = Bukkit.getPlayer(uuidSpec);
+                        if (p != null) p.sendMessage("§aSpec spawn of §e" + arena.getName() + " §aset.");
+                    }));
             }
 
             case "setpos1" -> {
@@ -157,11 +175,14 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
                     player.sendMessage("§cUnknown gamemode: §e" + gamemode + "§c. Check gamemodes.yml.");
                     return true;
                 }
-                plugin.getDatabase().bindArena(arena.getId(), gamemode).thenRun(() -> {
-                    arena.addGamemodeBind(gamemode);
-                    player.sendMessage("§aArena §e" + arena.getName()
-                            + " §abound to gamemode §e" + gamemode + "§a.");
-                });
+                UUID uuidBind = player.getUniqueId();
+                plugin.getDatabase().bindArena(arena.getId(), gamemode).thenRun(() ->
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        arena.addGamemodeBind(gamemode);
+                        Player p = Bukkit.getPlayer(uuidBind);
+                        if (p != null) p.sendMessage("§aArena §e" + arena.getName()
+                                + " §abound to gamemode §e" + gamemode + "§a.");
+                    }));
             }
 
             case "dupe" -> {
@@ -191,13 +212,20 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 player.sendMessage("§eBuilding all tropical arenas in §6" + worldName + "§e... this may take a while.");
+                UUID uuidBuild = player.getUniqueId();
                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                     try {
                         new ArenaBuilder(plugin, world).build();
-                        player.sendMessage("§aAll arenas built successfully in §e" + worldName + "§a.");
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            Player p = Bukkit.getPlayer(uuidBuild);
+                            if (p != null) p.sendMessage("§aAll arenas built successfully in §e" + worldName + "§a.");
+                        });
                     } catch (Exception e) {
-                        player.sendMessage("§cArena build failed: " + e.getMessage());
                         plugin.getLogger().severe("ArenaBuilder error: " + e.getMessage());
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            Player p = Bukkit.getPlayer(uuidBuild);
+                            if (p != null) p.sendMessage("§cArena build failed: " + e.getMessage());
+                        });
                     }
                 });
             }

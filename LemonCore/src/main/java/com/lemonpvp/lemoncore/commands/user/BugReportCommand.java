@@ -1,10 +1,13 @@
 package com.lemonpvp.lemoncore.commands.user;
 
 import com.lemonpvp.lemoncore.LemonCore;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.UUID;
 
 public class BugReportCommand implements CommandExecutor {
 
@@ -27,8 +30,12 @@ public class BugReportCommand implements CommandExecutor {
         }
 
         String description = String.join(" ", args);
-        plugin.getReportManager().submitBugReport(player.getUniqueId(), player.getName(), description)
-                .thenRun(() -> player.sendMessage(plugin.getMessagesManager().get("bug.success")));
+        UUID uuid = player.getUniqueId();
+        plugin.getReportManager().submitBugReport(uuid, player.getName(), description)
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(uuid);
+                    if (p != null) p.sendMessage(plugin.getMessagesManager().get("bug.success"));
+                }));
         return true;
     }
 }

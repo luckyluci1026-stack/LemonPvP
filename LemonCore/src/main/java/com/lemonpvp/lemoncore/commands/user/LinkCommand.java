@@ -2,10 +2,13 @@ package com.lemonpvp.lemoncore.commands.user;
 
 import com.lemonpvp.lemoncore.LemonCore;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.UUID;
 
 public class LinkCommand implements CommandExecutor {
 
@@ -27,36 +30,46 @@ public class LinkCommand implements CommandExecutor {
             return true;
         }
 
-        plugin.getDiscordLinkManager().getLinkedAccount(player.getUniqueId()).thenAccept(link -> {
+        UUID uuid = player.getUniqueId();
+        String playerName = player.getName();
+        plugin.getDiscordLinkManager().getLinkedAccount(uuid).thenAccept(link -> {
             if (link != null) {
-                player.sendMessage(MM.deserialize(
-                        "<gray>Already linked to <white>" + link.discordUsername
-                        + "</white>. Use /unlink to remove.</gray>"));
+                String discordName = link.discordUsername;
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(uuid);
+                    if (p != null) p.sendMessage(MM.deserialize(
+                            "<gray>Already linked to <white>" + discordName
+                            + "</white>. Use /unlink to remove.</gray>"));
+                });
                 return;
             }
             plugin.getDiscordLinkManager()
-                    .generateCode(player.getUniqueId(), player.getName())
+                    .generateCode(uuid, playerName)
                     .thenAccept(code -> {
-                        if (code == null) {
-                            player.sendMessage(MM.deserialize(
-                                    "<red>Failed to generate code. Please try again.</red>"));
-                            return;
-                        }
                         String invite = plugin.getConfig().getString(
                                 "discord.invite", "https://discord.gg/lemonpvp");
-                        player.sendMessage(MM.deserialize(" "));
-                        player.sendMessage(MM.deserialize(
-                                "<bold><gradient:#fffb00:#00ff00>>></gradient>"
-                                + " Discord Link "
-                                + "<gradient:#fffb00:#00ff00><<</gradient></bold>"));
-                        player.sendMessage(MM.deserialize(
-                                "<white>Go to our Discord and type:</white>"));
-                        player.sendMessage(MM.deserialize(
-                                "<bold><yellow>/verify " + code + "</yellow></bold>"));
-                        player.sendMessage(MM.deserialize(
-                                "<gray>Code expires in 10 minutes.</gray>"));
-                        player.sendMessage(MM.deserialize("<aqua>" + invite + "</aqua>"));
-                        player.sendMessage(MM.deserialize(" "));
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            Player p = Bukkit.getPlayer(uuid);
+                            if (p == null) return;
+                            if (code == null) {
+                                p.sendMessage(MM.deserialize(
+                                        "<red>Failed to generate code. Please try again.</red>"));
+                                return;
+                            }
+                            p.sendMessage(MM.deserialize(" "));
+                            p.sendMessage(MM.deserialize(
+                                    "<bold><gradient:#fffb00:#00ff00>>></gradient>"
+                                    + " Discord Link "
+                                    + "<gradient:#fffb00:#00ff00><<</gradient></bold>"));
+                            p.sendMessage(MM.deserialize(
+                                    "<white>Go to our Discord and type:</white>"));
+                            p.sendMessage(MM.deserialize(
+                                    "<bold><yellow>/verify " + code + "</yellow></bold>"));
+                            p.sendMessage(MM.deserialize(
+                                    "<gray>Code expires in 10 minutes.</gray>"));
+                            p.sendMessage(MM.deserialize("<aqua>" + invite + "</aqua>"));
+                            p.sendMessage(MM.deserialize(" "));
+                        });
                     });
         });
         return true;
