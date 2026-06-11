@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 type Group = {
   id: number; name: string; description: string | null
@@ -9,11 +10,11 @@ type Group = {
 }
 
 export default function GroupsPage() {
+  const { showToast } = useToast()
   const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<'create' | 'edit' | null>(null)
   const [editGroup, setEditGroup] = useState<Group | null>(null)
-  const [error, setError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -27,15 +28,17 @@ export default function GroupsPage() {
   async function deleteGroup(g: Group) {
     if (!confirm(`Gruppe "${g.name}" löschen?`)) return
     const res = await fetch(`/api/groups/${g.id}`, { method: 'DELETE' })
-    if (!res.ok) { const d = await res.json(); setError(d.error); return }
+    if (!res.ok) { const d = await res.json(); showToast(d.error, 'error'); return }
+    showToast(`Gruppe "${g.name}" gelöscht.`)
     load()
   }
 
   async function removeMember(groupId: number, userId: number) {
-    await fetch(`/api/groups/${groupId}`, {
+    const res = await fetch(`/api/groups/${groupId}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ removeMember: userId }),
     })
+    if (!res.ok) { const d = await res.json(); showToast(d.error, 'error'); return }
     load()
   }
 
@@ -50,8 +53,6 @@ export default function GroupsPage() {
           + Gruppe erstellen
         </button>
       </div>
-
-      {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
 
       {loading ? <div className="text-gray-500 text-sm">Lade…</div> : groups.length === 0 ? (
         <div className="card text-center text-gray-600 py-12">

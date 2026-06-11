@@ -9,9 +9,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
+  const limitParam = req.nextUrl.searchParams.get('limit')
+  const limit = Math.min(Math.max(parseInt(limitParam ?? '200', 10) || 200, 1), 1000)
+
   const logs = db.prepare(
-    'SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 200'
-  ).all() as AuditLog[]
+    'SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ?'
+  ).all(limit) as AuditLog[]
 
   return NextResponse.json({ logs })
 }

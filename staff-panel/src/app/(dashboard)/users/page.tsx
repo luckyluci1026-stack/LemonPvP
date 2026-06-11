@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 type User = {
   id: number; email: string; name: string; role: string
@@ -21,11 +22,11 @@ const ALL_PERMS = [
 ]
 
 export default function UsersPage() {
+  const { showToast } = useToast()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<Modal>(null)
   const [editUser, setEditUser] = useState<User | null>(null)
-  const [error, setError] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -37,17 +38,19 @@ export default function UsersPage() {
   useEffect(() => { load() }, [load])
 
   async function toggleSuspend(u: User) {
-    await fetch(`/api/users/${u.id}`, {
+    const res = await fetch(`/api/users/${u.id}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ suspended: !u.suspended }),
     })
+    if (!res.ok) { const d = await res.json(); showToast(d.error, 'error'); return }
     load()
   }
 
   async function deleteUser(u: User) {
     if (!confirm(`${u.name} (${u.email}) wirklich löschen?`)) return
     const res = await fetch(`/api/users/${u.id}`, { method: 'DELETE' })
-    if (!res.ok) { const d = await res.json(); setError(d.error); return }
+    if (!res.ok) { const d = await res.json(); showToast(d.error, 'error'); return }
+    showToast(`${u.name} wurde gelöscht.`)
     load()
   }
 
@@ -74,8 +77,6 @@ export default function UsersPage() {
           + Account erstellen
         </button>
       </div>
-
-      {error && <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">{error}</div>}
 
       {loading ? <div className="text-gray-500 text-sm">Lade…</div> : (
         <div className="table-wrap">

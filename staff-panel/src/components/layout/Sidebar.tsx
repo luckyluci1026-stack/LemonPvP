@@ -6,17 +6,19 @@ import type { SessionUser } from '@/lib/auth'
 import { clsx } from 'clsx'
 
 const NAV = [
-  { href: '/dashboard', icon: '📊', label: 'Dashboard',     perm: null },
-  { href: '/players',   icon: '⚔️',  label: 'Spieler',       perm: 'player.view' },
-  { href: '/console',   icon: '💻',  label: 'Konsole',        perm: 'admin.console' },
-  { href: '/emails',    icon: '📧',  label: 'E-Mails',        perm: 'admin.emails' },
-  { href: '/users',     icon: '👥',  label: 'Staff Accounts', perm: 'admin.users' },
-  { href: '/groups',    icon: '🏷️',  label: 'Gruppen',        perm: 'admin.groups' },
-  { href: '/tutorial',  icon: '📖',  label: 'Tutorial',       perm: null },
-  { href: '/settings',  icon: '⚙️',  label: 'Einstellungen',  perm: null, adminOnly: true },
+  { href: '/dashboard', icon: '📊', label: 'Dashboard',      perm: null },
+  { href: '/players',   icon: '⚔️',  label: 'Spieler',        perm: 'player.view' },
+  { href: '/console',   icon: '💻',  label: 'Konsole',         perm: 'admin.console' },
+  { href: '/emails',    icon: '📧',  label: 'E-Mails',         perm: 'admin.emails' },
+  { href: '/users',     icon: '👥',  label: 'Staff Accounts',  perm: 'admin.users' },
+  { href: '/groups',    icon: '🏷️',  label: 'Gruppen',         perm: 'admin.groups' },
+  { href: '/audit',     icon: '📋',  label: 'Audit-Log',       perm: null, adminOnly: true },
+  { href: '/tutorial',  icon: '📖',  label: 'Tutorial',        perm: null },
+  { href: '/settings',  icon: '⚙️',  label: 'Einstellungen',   perm: null, superAdminOnly: true },
 ]
 
-function hasAccess(session: SessionUser, perm: string | null, adminOnly?: boolean) {
+function hasAccess(session: SessionUser, perm: string | null, adminOnly?: boolean, superAdminOnly?: boolean) {
+  if (superAdminOnly && session.role !== 'SUPER_ADMIN') return false
   if (adminOnly && session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN') return false
   if (!perm) return true
   if (session.role === 'SUPER_ADMIN') return true
@@ -41,7 +43,7 @@ export default function Sidebar({ session }: { session: SessionUser }) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {NAV.filter(n => hasAccess(session, n.perm ?? null, n.adminOnly)).map(item => (
+        {NAV.filter(n => hasAccess(session, n.perm ?? null, n.adminOnly, n.superAdminOnly)).map(item => (
           <Link
             key={item.href}
             href={item.href}

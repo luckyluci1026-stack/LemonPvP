@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 type Player = {
   uuid: string; name: string; online: boolean; coins: number
@@ -11,33 +12,31 @@ type Player = {
 type Modal = 'ban' | 'unban' | 'coins' | 'rank' | null
 
 export default function PlayersPage() {
+  const { showToast } = useToast()
   const [search, setSearch] = useState('')
   const [player, setPlayer] = useState<Player | null>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [modal, setModal] = useState<Modal>(null)
-  const [msg, setMsg] = useState('')
 
   async function fetchPlayer() {
     if (!search.trim()) return
-    setLoading(true); setError(''); setPlayer(null); setMsg('')
+    setLoading(true); setPlayer(null)
     try {
       const res = await fetch(`/api/minecraft/player/${encodeURIComponent(search.trim())}`)
       const data = await res.json()
-      if (!res.ok) { setError(data.error); return }
+      if (!res.ok) { showToast(data.error, 'error'); return }
       setPlayer(data.player)
     } finally { setLoading(false) }
   }
 
   async function doAction(action: string, body: Record<string, unknown>) {
     if (!player) return
-    setMsg('')
     const res = await fetch(`/api/minecraft/player/${encodeURIComponent(player.name)}?action=${action}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     })
     const data = await res.json()
-    if (!res.ok) { setError(data.error); return }
-    setMsg('Aktion erfolgreich ausgeführt!')
+    if (!res.ok) { showToast(data.error, 'error'); return }
+    showToast('Aktion erfolgreich ausgeführt!')
     setModal(null)
     fetchPlayer()
   }
@@ -63,8 +62,6 @@ export default function PlayersPage() {
             {loading ? '…' : '🔍 Suchen'}
           </button>
         </div>
-        {error && <div className="mt-3 text-red-400 text-sm">{error}</div>}
-        {msg && <div className="mt-3 text-emerald-400 text-sm">{msg}</div>}
       </div>
 
       {/* Player card */}
