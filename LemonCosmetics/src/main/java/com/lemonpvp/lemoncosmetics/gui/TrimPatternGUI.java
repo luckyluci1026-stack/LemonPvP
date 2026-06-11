@@ -26,6 +26,7 @@ import org.bukkit.inventory.meta.trim.TrimPattern;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class TrimPatternGUI implements Listener {
 
@@ -182,14 +183,17 @@ public class TrimPatternGUI implements Listener {
             }
 
             String patternToBuy = selectedPatternId;
-            plugin.getCosmeticsManager().buyTrimPattern(player.getUniqueId(), patternToBuy)
+            UUID buyerUuid = player.getUniqueId();
+            plugin.getCosmeticsManager().buyTrimPattern(buyerUuid, patternToBuy)
                     .thenAccept(success -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(buyerUuid);
+                        if (p == null) return;
                         if (success) {
                             selectedPatternId = null;
                             renderItems();
-                            player.sendMessage(MM.deserialize("<!italic><green>Successfully purchased the trim pattern!</green>"));
+                            p.sendMessage(MM.deserialize("<!italic><green>Successfully purchased the trim pattern!</green>"));
                         } else {
-                            player.sendMessage(MM.deserialize("<!italic><red>You don't have enough coins!</red>"));
+                            p.sendMessage(MM.deserialize("<!italic><red>You don't have enough coins!</red>"));
                         }
                     }));
         }

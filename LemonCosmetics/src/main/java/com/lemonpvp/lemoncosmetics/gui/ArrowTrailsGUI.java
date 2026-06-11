@@ -19,6 +19,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ArrowTrailsGUI implements Listener {
 
@@ -89,16 +90,18 @@ public class ArrowTrailsGUI implements Listener {
     private void handleTrailClick(Player clicker, ArrowTrailType trail) {
         PlayerCosmetics cosmetics = plugin.getCosmeticsManager().getPlayerCosmetics(clicker.getUniqueId());
         boolean owned = cosmetics != null && cosmetics.ownsTrail(trail.id);
+        UUID clickerUuid = clicker.getUniqueId();
 
         if (!owned) {
-            // Try to buy
-            plugin.getArrowTrailManager().buyTrail(clicker.getUniqueId(), trail.id)
+            plugin.getArrowTrailManager().buyTrail(clickerUuid, trail.id)
                     .thenAccept(success -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(clickerUuid);
+                        if (p == null) return;
                         if (success) {
-                            clicker.sendMessage(MM.deserialize("<green>Purchased <yellow>" + trail.displayName + "</yellow>!"));
+                            p.sendMessage(MM.deserialize("<green>Purchased <yellow>" + trail.displayName + "</yellow>!"));
                             renderTrails();
                         } else {
-                            clicker.sendMessage(MM.deserialize("<red>You cannot afford <yellow>" + trail.displayName
+                            p.sendMessage(MM.deserialize("<red>You cannot afford <yellow>" + trail.displayName
                                     + "</yellow>. It costs <gold>" + trail.price + " coins</gold>."));
                         }
                     }));
@@ -107,17 +110,19 @@ public class ArrowTrailsGUI implements Listener {
 
         String activeId = cosmetics.getActiveTrailId();
         if (trail.id.equals(activeId)) {
-            // Deactivate
-            plugin.getArrowTrailManager().setActiveTrail(clicker.getUniqueId(), null)
+            plugin.getArrowTrailManager().setActiveTrail(clickerUuid, null)
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        clicker.sendMessage(MM.deserialize("<yellow>Arrow trail deactivated."));
+                        Player p = Bukkit.getPlayer(clickerUuid);
+                        if (p == null) return;
+                        p.sendMessage(MM.deserialize("<yellow>Arrow trail deactivated."));
                         renderTrails();
                     }));
         } else {
-            // Activate
-            plugin.getArrowTrailManager().setActiveTrail(clicker.getUniqueId(), trail.id)
+            plugin.getArrowTrailManager().setActiveTrail(clickerUuid, trail.id)
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        clicker.sendMessage(MM.deserialize("<green>Activated <yellow>" + trail.displayName + "</yellow>!"));
+                        Player p = Bukkit.getPlayer(clickerUuid);
+                        if (p == null) return;
+                        p.sendMessage(MM.deserialize("<green>Activated <yellow>" + trail.displayName + "</yellow>!"));
                         renderTrails();
                     }));
         }

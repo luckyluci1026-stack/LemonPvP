@@ -19,6 +19,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class KillEffectsGUI implements Listener {
 
@@ -96,19 +97,22 @@ public class KillEffectsGUI implements Listener {
             return;
         }
 
+        UUID clickerUuid = clicker.getUniqueId();
         String activeId = cosmetics.getActiveEffectId();
         if (effect.getId().equals(activeId)) {
-            // Unequip
-            plugin.getCosmeticsManager().setActiveKillEffect(clicker.getUniqueId(), null)
+            plugin.getCosmeticsManager().setActiveKillEffect(clickerUuid, null)
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        clicker.sendMessage(MM.deserialize("<yellow>Kill effect unequipped."));
+                        Player p = Bukkit.getPlayer(clickerUuid);
+                        if (p == null) return;
+                        p.sendMessage(MM.deserialize("<yellow>Kill effect unequipped."));
                         renderEffects();
                     }));
         } else {
-            // Equip
-            plugin.getCosmeticsManager().setActiveKillEffect(clicker.getUniqueId(), effect.getId())
+            plugin.getCosmeticsManager().setActiveKillEffect(clickerUuid, effect.getId())
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        clicker.sendMessage(MM.deserialize("<green>Equipped <yellow>" + effect.getDisplayName() + "</yellow>!"));
+                        Player p = Bukkit.getPlayer(clickerUuid);
+                        if (p == null) return;
+                        p.sendMessage(MM.deserialize("<green>Equipped <yellow>" + effect.getDisplayName() + "</yellow>!"));
                         renderEffects();
                     }));
         }

@@ -106,11 +106,15 @@ public class TrimMaterialGUI implements Listener {
                 return;
             }
             int cost = plugin.getConfig().getInt("prices.trim-material", 50);
-            plugin.getCosmeticsManager().buyTrimMaterial(clicker.getUniqueId(), selectedMaterialId)
+            UUID buyerUuid = clicker.getUniqueId();
+            String buyMatId = selectedMaterialId;
+            plugin.getCosmeticsManager().buyTrimMaterial(buyerUuid, buyMatId)
                     .thenAccept(success -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(buyerUuid);
+                        if (p == null) return;
                         if (success) {
-                            clicker.sendMessage(MM.deserialize("<green>Purchased <yellow>"
-                                    + plugin.getArmorTrimManager().getMaterialDisplayName(selectedMaterialId)
+                            p.sendMessage(MM.deserialize("<green>Purchased <yellow>"
+                                    + plugin.getArmorTrimManager().getMaterialDisplayName(buyMatId)
                                     + "</yellow> for <gold>" + cost + " Coins</gold>!"));
                             selectedMaterialId = null;
                             renderMaterials();
@@ -118,10 +122,13 @@ public class TrimMaterialGUI implements Listener {
                         } else {
                             if (plugin.getCosmeticsManager().getLemonCore() != null) {
                                 plugin.getCosmeticsManager().getLemonCore()
-                                        .getPlayerDataManager().getCoins(clicker.getUniqueId())
-                                        .thenAccept(bal -> Bukkit.getScheduler().runTask(plugin, () ->
-                                                clicker.sendMessage(MM.deserialize("<red>You need <gold>" + cost
-                                                        + " Coins</gold> but only have <gold>" + bal + " Coins</gold>."))));
+                                        .getPlayerDataManager().getCoins(buyerUuid)
+                                        .thenAccept(bal -> Bukkit.getScheduler().runTask(plugin, () -> {
+                                            Player p2 = Bukkit.getPlayer(buyerUuid);
+                                            if (p2 == null) return;
+                                            p2.sendMessage(MM.deserialize("<red>You need <gold>" + cost
+                                                    + " Coins</gold> but only have <gold>" + bal + " Coins</gold>."));
+                                        }));
                             }
                         }
                     }));
@@ -135,13 +142,15 @@ public class TrimMaterialGUI implements Listener {
         boolean owned = cosmetics != null && cosmetics.ownsMaterial(matId);
 
         if (owned) {
-            // Apply trim
-            plugin.getCosmeticsManager().applyArmorTrim(clicker.getUniqueId(), armorSlot, patternId, matId)
+            UUID applyUuid = clicker.getUniqueId();
+            plugin.getCosmeticsManager().applyArmorTrim(applyUuid, armorSlot, patternId, matId)
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        clicker.sendMessage(MM.deserialize("<green>Trim applied to <yellow>"
-                                + armorSlot.getDisplayName() + "</yellow>."));
+                        Player p = Bukkit.getPlayer(applyUuid);
                         unregister();
-                        clicker.closeInventory();
+                        if (p == null) return;
+                        p.sendMessage(MM.deserialize("<green>Trim applied to <yellow>"
+                                + armorSlot.getDisplayName() + "</yellow>."));
+                        p.closeInventory();
                     }));
         } else {
             selectedMaterialId = matId;

@@ -16,6 +16,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.UUID;
+
 public class PlayerListener implements Listener {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
@@ -30,12 +32,15 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        plugin.getCosmeticsManager().loadPlayer(player.getUniqueId())
+        UUID joinedUuid = player.getUniqueId();
+        plugin.getCosmeticsManager().loadPlayer(joinedUuid)
                 .thenAccept(cosmetics -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    plugin.getArmorTrimManager().applyTrimToPlayer(player);
-                    plugin.getHatManager().restoreHat(player);
+                    Player p = Bukkit.getPlayer(joinedUuid);
+                    if (p == null) return;
+                    plugin.getArmorTrimManager().applyTrimToPlayer(p);
+                    plugin.getHatManager().restoreHat(p);
                     if (isLobby()) {
-                        giveCosmeticsItem(player);
+                        giveCosmeticsItem(p);
                     }
                 }));
     }
@@ -73,11 +78,15 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        plugin.getCosmeticsManager().unlockKillEffect(event.getPlayerUuid(), effectId)
-                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
-                        player.sendMessage(MM.deserialize("<green>Unlocked kill effect: <yellow>"
-                                + KillEffectType.fromId(effectId).map(KillEffectType::getDisplayName).orElse(effectId)
-                                + "</yellow>!"))));
+        UUID effectUuid = event.getPlayerUuid();
+        plugin.getCosmeticsManager().unlockKillEffect(effectUuid, effectId)
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(effectUuid);
+                    if (p == null) return;
+                    p.sendMessage(MM.deserialize("<green>Unlocked kill effect: <yellow>"
+                            + KillEffectType.fromId(effectId).map(KillEffectType::getDisplayName).orElse(effectId)
+                            + "</yellow>!"));
+                }));
     }
 
     private void giveCosmeticsItem(Player player) {

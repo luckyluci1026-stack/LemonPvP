@@ -48,14 +48,17 @@ public class StatsCommand implements CommandExecutor {
                             }));
                 }
             } else {
+                UUID senderUuid = player.getUniqueId();
                 plugin.getPlayerDataManager().loadOfflinePlayer(targetName)
-                        .thenAccept(d -> {
+                        .thenAccept(d -> Bukkit.getScheduler().runTask(plugin, () -> {
+                            Player p = Bukkit.getPlayer(senderUuid);
+                            if (p == null) return;
                             if (d == null) {
-                                player.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName));
+                                p.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName));
                             } else {
-                                Bukkit.getScheduler().runTask(plugin, () -> openStatsGUI(player, d));
+                                openStatsGUI(p, d);
                             }
-                        });
+                        }));
             }
         } else {
             PlayerData data = plugin.getPlayerDataManager().getCached(player.getUniqueId());

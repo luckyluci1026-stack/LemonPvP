@@ -22,6 +22,7 @@ import org.bukkit.inventory.meta.LeatherArmorMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class HatsGUI implements Listener {
 
@@ -92,16 +93,18 @@ public class HatsGUI implements Listener {
     private void handleHatClick(Player clicker, HatType hat) {
         PlayerCosmetics cosmetics = plugin.getCosmeticsManager().getPlayerCosmetics(clicker.getUniqueId());
         boolean owned = cosmetics != null && cosmetics.ownsHat(hat.id);
+        UUID clickerUuid = clicker.getUniqueId();
 
         if (!owned) {
-            // Try to buy
-            plugin.getHatManager().buyHat(clicker.getUniqueId(), hat.id)
+            plugin.getHatManager().buyHat(clickerUuid, hat.id)
                     .thenAccept(success -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(clickerUuid);
+                        if (p == null) return;
                         if (success) {
-                            clicker.sendMessage(MM.deserialize("<green>Purchased <yellow>" + hat.displayName + "</yellow>!"));
+                            p.sendMessage(MM.deserialize("<green>Purchased <yellow>" + hat.displayName + "</yellow>!"));
                             renderHats();
                         } else {
-                            clicker.sendMessage(MM.deserialize("<red>You cannot afford <yellow>" + hat.displayName
+                            p.sendMessage(MM.deserialize("<red>You cannot afford <yellow>" + hat.displayName
                                     + "</yellow>. It costs <gold>" + hat.price + " coins</gold>."));
                         }
                     }));
@@ -110,17 +113,19 @@ public class HatsGUI implements Listener {
 
         String equippedId = cosmetics.getEquippedHatId();
         if (hat.id.equals(equippedId)) {
-            // Unequip
-            plugin.getHatManager().unequipHat(clicker.getUniqueId())
+            plugin.getHatManager().unequipHat(clickerUuid)
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        clicker.sendMessage(MM.deserialize("<yellow>Hat unequipped."));
+                        Player p = Bukkit.getPlayer(clickerUuid);
+                        if (p == null) return;
+                        p.sendMessage(MM.deserialize("<yellow>Hat unequipped."));
                         renderHats();
                     }));
         } else {
-            // Equip
-            plugin.getHatManager().equipHat(clicker.getUniqueId(), hat.id)
+            plugin.getHatManager().equipHat(clickerUuid, hat.id)
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        clicker.sendMessage(MM.deserialize("<green>Equipped <yellow>" + hat.displayName + "</yellow>!"));
+                        Player p = Bukkit.getPlayer(clickerUuid);
+                        if (p == null) return;
+                        p.sendMessage(MM.deserialize("<green>Equipped <yellow>" + hat.displayName + "</yellow>!"));
                         renderHats();
                     }));
         }

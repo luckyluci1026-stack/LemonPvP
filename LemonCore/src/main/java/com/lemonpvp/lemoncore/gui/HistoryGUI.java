@@ -32,10 +32,13 @@ public class HistoryGUI {
     public void open(Player admin) {
         String title = plugin.getMessagesManager().getRaw("history.gui-title")
                 .replace("{player}", targetName);
+        UUID adminUuid = admin.getUniqueId();
 
         plugin.getBanManager().getHistory(targetUuid).thenAccept(bans -> {
             plugin.getMuteManager().getHistory(targetUuid).thenAccept(mutes -> {
                 Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player a = Bukkit.getPlayer(adminUuid);
+                    if (a == null) return;
                     int size = Math.max(9, Math.min(54, ((bans.size() + mutes.size() + 8) / 9) * 9));
                     if (size == 0) size = 9;
                     Inventory inv = Bukkit.createInventory(null, size, TextUtil.parse(title));
@@ -67,11 +70,11 @@ public class HistoryGUI {
                     }
 
                     if (slot == 0) {
-                        admin.sendMessage(plugin.getMessagesManager().get("history.no-history", "player", targetName));
+                        a.sendMessage(plugin.getMessagesManager().get("history.no-history", "player", targetName));
                         return;
                     }
 
-                    admin.openInventory(inv);
+                    a.openInventory(inv);
                 });
             });
         });
