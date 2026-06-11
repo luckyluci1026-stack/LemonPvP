@@ -47,7 +47,7 @@ public class EventManager {
                 }
             }
             plugin.getLogger().info("Loaded " + events.size() + " events.");
-        });
+        }).exceptionally(ex -> { plugin.getLogger().severe("[EventManager] loadAll failed: " + ex.getMessage()); return null; });
     }
 
     public CompletableFuture<GameEvent> createEvent(String name, EventType type,

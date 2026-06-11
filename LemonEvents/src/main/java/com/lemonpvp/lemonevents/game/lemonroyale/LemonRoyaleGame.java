@@ -118,7 +118,7 @@ public class LemonRoyaleGame extends AbstractGame {
         lootChests.put(loc, true);
 
         // Fill chest with random loot
-        org.bukkit.block.Chest chest = (org.bukkit.block.Chest) loc.getBlock().getState();
+        if (!(loc.getBlock().getState() instanceof org.bukkit.block.Chest chest)) return;
         chest.getInventory().clear();
         int itemCount = 3 + new Random().nextInt(4);
         for (int i = 0; i < itemCount; i++) {
@@ -161,10 +161,12 @@ public class LemonRoyaleGame extends AbstractGame {
         player.sendActionBar(MiniMessage.miniMessage().deserialize(
             "<gold>🍋 Lemon Drop incoming in 10 seconds!"));
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            targetLoc.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, targetLoc, 50, 1, 1, 1, 0.1);
-            targetLoc.getWorld().playSound(targetLoc, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1.0f, 0.8f);
+            World dropWorld = targetLoc.getWorld();
+            if (dropWorld == null) return;
+            dropWorld.spawnParticle(Particle.TOTEM_OF_UNDYING, targetLoc, 50, 1, 1, 1, 0.1);
+            dropWorld.playSound(targetLoc, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1.0f, 0.8f);
             targetLoc.getBlock().setType(Material.CHEST);
-            org.bukkit.block.Chest chest = (org.bukkit.block.Chest) targetLoc.getBlock().getState();
+            if (!(targetLoc.getBlock().getState() instanceof org.bukkit.block.Chest chest)) return;
             for (int i = 0; i < 5; i++) {
                 ItemStack item = plugin.getLootManager().rollLootOfRarity(LootRarity.LEGENDARY);
                 chest.getInventory().addItem(item);
