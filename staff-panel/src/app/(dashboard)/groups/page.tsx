@@ -134,16 +134,23 @@ function GroupModal({ group, onClose, onSave }: { group: Group | null; onClose: 
 
   async function addMember() {
     if (!group || !memberEmail.trim()) return
-    // look up user by email
-    const users = await fetch('/api/users').then(r => r.json())
-    const found = users.users?.find((u: { email: string; id: number }) => u.email === memberEmail.trim())
-    if (!found) { setErr('Benutzer nicht gefunden.'); return }
-    await fetch(`/api/groups/${group.id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ addMember: found.id }),
-    })
-    setMemberEmail('')
-    onSave()
+    setErr('')
+    try {
+      const usersRes = await fetch('/api/users')
+      if (!usersRes.ok) { setErr('Fehler beim Laden der Benutzer.'); return }
+      const usersData = await usersRes.json()
+      const found = usersData.users?.find((u: { email: string; id: number }) => u.email === memberEmail.trim())
+      if (!found) { setErr('Benutzer nicht gefunden.'); return }
+      const res = await fetch(`/api/groups/${group.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ addMember: found.id }),
+      })
+      if (!res.ok) { const d = await res.json(); setErr(d.error ?? 'Fehler beim Hinzufügen.'); return }
+      setMemberEmail('')
+      onSave()
+    } catch {
+      setErr('Netzwerkfehler. Bitte versuche es erneut.')
+    }
   }
 
   return (

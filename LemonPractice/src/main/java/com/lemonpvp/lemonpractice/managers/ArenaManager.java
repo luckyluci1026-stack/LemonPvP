@@ -124,8 +124,8 @@ public class ArenaManager {
                 if (!schemDir.exists()) schemDir.mkdirs();
 
                 File schemFile = new File(schemDir, arena.getName() + ".schem");
-                try (ClipboardWriter writer = BuiltInClipboardFormat.SPONGE_V3_SCHEMATIC
-                        .getWriter(new FileOutputStream(schemFile))) {
+                try (FileOutputStream fos = new FileOutputStream(schemFile);
+                     ClipboardWriter writer = BuiltInClipboardFormat.SPONGE_V3_SCHEMATIC.getWriter(fos)) {
                     writer.write(clipboard);
                 }
 

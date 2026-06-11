@@ -11,6 +11,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const { id } = await params
   const groupId = parseInt(id)
+  if (isNaN(groupId)) return NextResponse.json({ error: 'Ungültige Gruppen-ID.' }, { status: 400 })
   const body = await req.json() as {
     name?: string; description?: string; permissions?: string[]
     addMember?: number; removeMember?: number
@@ -44,7 +45,9 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (!hasPermission(session, 'admin.groups')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  db.prepare('DELETE FROM groups WHERE id = ?').run(parseInt(id))
+  const delId = parseInt(id)
+  if (isNaN(delId)) return NextResponse.json({ error: 'Ungültige Gruppen-ID.' }, { status: 400 })
+  db.prepare('DELETE FROM groups WHERE id = ?').run(delId)
   addAuditLog({ userId: session.id, userEmail: session.email, action: 'DELETE_GROUP', target: id })
   return NextResponse.json({ ok: true })
 }

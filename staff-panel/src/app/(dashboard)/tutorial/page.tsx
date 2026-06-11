@@ -26,6 +26,8 @@ export default function TutorialPage() {
         <div className="mt-3 space-y-2">
           <ActionItem icon="🔨" label="Bannen" desc="Spieler temporär oder permanent bannen. Gib immer einen Grund an!" />
           <ActionItem icon="✅" label="Entbannen" desc="Gebannte Spieler wieder freischalten." />
+          <ActionItem icon="🔇" label="Stummschalten" desc="Spieler temporär oder permanent stumm schalten. Wählbare Dauer: 1h, 6h, 1d, 3d, 7d, 30d oder permanent." />
+          <ActionItem icon="🔊" label="Entstummen" desc="Stummgeschaltete Spieler wieder zum Schreiben freischalten." />
           <ActionItem icon="💰" label="Coins" desc="Coins hinzufügen, abziehen oder auf einen Wert setzen." />
           <ActionItem icon="🏆" label="Rang" desc="Einem Spieler einen Rang zuweisen (z.B. VIP, MVP)." />
         </div>
@@ -57,6 +59,7 @@ export default function TutorialPage() {
             { perm: 'player.view', desc: 'Spieler-Info ansehen' },
             { perm: 'player.ban', desc: 'Spieler bannen' },
             { perm: 'player.unban', desc: 'Spieler entbannen' },
+            { perm: 'player.mute', desc: 'Spieler stumm schalten / entstummen' },
             { perm: 'player.coins', desc: 'Coins vergeben/entfernen' },
             { perm: 'player.rank', desc: 'Ränge setzen' },
             { perm: 'admin.emails', desc: 'E-Mails verwalten' },
