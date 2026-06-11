@@ -202,8 +202,9 @@ public class LemonCore extends JavaPlugin {
         // Tab completers for commands that accept an online player name as first argument
         org.bukkit.command.TabCompleter playerTab = (s, c, l, a) ->
                 a.length == 1 ? onlinePlayers(a[0]) : java.util.List.of();
-        for (String cmd : new String[]{"gtp", "gban", "gmute", "gkick", "ghistory",
-                "gwipe", "gspec", "gpop", "gcheck", "report", "mreport", "stats"}) {
+        for (String cmd : new String[]{"gtp", "gban", "gmute", "gunban", "gunmute", "gkick",
+                "ghistory", "gwipe", "gunwipe", "gspec", "gpop", "gcheck",
+                "report", "mreport", "gmreport", "stats"}) {
             var pluginCmd = getCommand(cmd);
             if (pluginCmd != null) pluginCmd.setTabCompleter(playerTab);
         }
