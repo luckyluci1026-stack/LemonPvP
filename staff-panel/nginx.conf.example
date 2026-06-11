@@ -1,0 +1,52 @@
+# Nginx reverse-proxy for the LemonPvP Staff Panel
+# Place this at: /etc/nginx/sites-available/panel.example.com
+# Then: ln -s /etc/nginx/sites-available/panel.example.com \
+#             /etc/nginx/sites-enabled/
+#       certbot --nginx -d panel.example.com
+#       nginx -t && systemctl reload nginx
+
+server {
+    listen 80;
+    server_name panel.example.com;   # <-- replace with your real domain
+
+    # Let's Encrypt challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    # Redirect all HTTP to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name panel.example.com;   # <-- replace with your real domain
+
+    # Certificates managed by Certbot (it edits these lines automatically)
+    ssl_certificate     /etc/letsencrypt/live/panel.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/panel.example.com/privkey.pem;
+    include             /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header X-Content-Type-Options    nosniff always;
+    add_header X-Frame-Options           SAMEORIGIN always;
+    add_header Referrer-Policy           strict-origin-when-cross-origin always;
+
+    # Forward all traffic to the Next.js process (default port 3000)
+    location / {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection 'upgrade';
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 60s;
+    }
+}

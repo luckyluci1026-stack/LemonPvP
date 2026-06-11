@@ -70,9 +70,13 @@ anti-swear:
 
 http-api:
   enabled: true
-  # Bind address: 127.0.0.1 limits access to this machine (recommended when
-  # the staff panel runs on the same host). Use 0.0.0.0 to listen on all interfaces.
-  bind: "127.0.0.1"
+  # bind: which network interface to listen on.
+  #   127.0.0.1 — only reachable from this machine (use when panel is on the same host)
+  #   0.0.0.0   — reachable on all interfaces (use when panel is on a different server)
+  # IMPORTANT: if you use 0.0.0.0, add a firewall rule on this machine that
+  # only allows the panel server's IP on this port. Example (ufw):
+  #   ufw allow from <PANEL_SERVER_IP> to any port 8080
+  bind: "0.0.0.0"
   port: 8080
   key: "change-me-in-production"
 
