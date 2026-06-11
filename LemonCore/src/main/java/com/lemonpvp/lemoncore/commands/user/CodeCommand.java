@@ -81,7 +81,7 @@ public class CodeCommand implements CommandExecutor {
                 lp.getUserManager().loadUser(player.getUniqueId()).thenAccept(user -> {
                     user.data().add(InheritanceNode.builder(data.rewardValue).build());
                     lp.getUserManager().saveUser(user);
-                });
+                }).exceptionally(ex -> { plugin.getLogger().severe("[CodeCommand] Rank grant failed: " + ex.getMessage()); return null; });
             }
             case "killeffect" -> {
                 org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->

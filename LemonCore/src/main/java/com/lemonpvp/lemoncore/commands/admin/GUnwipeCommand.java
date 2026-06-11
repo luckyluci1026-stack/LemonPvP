@@ -45,8 +45,9 @@ public class GUnwipeCommand implements CommandExecutor {
                 }
                 plugin.getStatsManager().restoreStats(uuid, wipe)
                         .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
-                            sender.sendMessage(plugin.getMessagesManager().get("stats.unwipe-success", "player", targetName, "date", date))));
-            });
+                            sender.sendMessage(plugin.getMessagesManager().get("stats.unwipe-success", "player", targetName, "date", date))))
+                        .exceptionally(ex -> { plugin.getLogger().severe("[GUnwipe] restoreStats failed: " + ex.getMessage()); return null; });
+            }).exceptionally(ex -> { plugin.getLogger().severe("[GUnwipe] findWipeByDate failed: " + ex.getMessage()); return null; });
         });
         return true;
     }

@@ -47,7 +47,8 @@ public class MReportCommand implements CommandExecutor {
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         Player p = Bukkit.getPlayer(reporterUuid);
                         if (p != null) p.sendMessage(plugin.getMessagesManager().get("mreport.success"));
-                    }));
+                    }))
+                    .exceptionally(ex -> { plugin.getLogger().severe("[MReport] Submit failed: " + ex.getMessage()); return null; });
         } else {
             plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid ->
                 Bukkit.getScheduler().runTask(plugin, () -> {
@@ -59,8 +60,10 @@ public class MReportCommand implements CommandExecutor {
                             .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                                 Player pp = Bukkit.getPlayer(reporterUuid);
                                 if (pp != null) pp.sendMessage(plugin.getMessagesManager().get("mreport.success"));
-                            }));
-                }));
+                            }))
+                            .exceptionally(ex -> { plugin.getLogger().severe("[MReport] Submit failed: " + ex.getMessage()); return null; });
+                }))
+                    .exceptionally(ex -> { plugin.getLogger().severe("[MReport] UUID lookup failed: " + ex.getMessage()); return null; });
         }
     }
 }
