@@ -70,7 +70,7 @@ export default function AuditPage() {
   const pages = Math.ceil(filtered.length / PAGE_SIZE)
   const slice = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
-  const uniqueActions = [...new Set(logs.map(l => l.action))].sort()
+  const uniqueActions = Array.from(new Set(logs.map(l => l.action))).sort()
 
   return (
     <div className="space-y-5">
