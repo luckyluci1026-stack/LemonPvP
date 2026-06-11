@@ -97,6 +97,10 @@ public class LobbyListener implements Listener {
         if (plugin.getFfaManager().isInFfa(uuid)) {
             plugin.getFfaManager().leaveArena(player);
         }
+
+        // Evict in-memory caches so data doesn't accumulate for offline players
+        plugin.getKitManager().evict(uuid);
+        plugin.getEloManager().evict(uuid);
     }
 
     // -------------------------------------------------------------------------

@@ -11,6 +11,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -83,6 +84,7 @@ public class KitEditorListener implements Listener {
 
         // Restore the lobby hotbar now that the editor is closed
         plugin.getLobbyHotbarManager().setupHotbar(player);
+        activeEditors.remove(player.getUniqueId());
     }
 
     // -------------------------------------------------------------------------
@@ -170,6 +172,17 @@ public class KitEditorListener implements Listener {
         if (playerPdc.has(editingGamemodeKey, PersistentDataType.STRING)) {
             event.setCancelled(true);
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Quit — clean up all per-player state so maps don't grow forever
+    // -------------------------------------------------------------------------
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+        activeEditors.remove(uuid);
+        deleteConfirmTime.remove(uuid);
     }
 
     // -------------------------------------------------------------------------

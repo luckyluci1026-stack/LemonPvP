@@ -280,6 +280,11 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
         int[] p2 = pos2Selections.get(uuid);
         if (p1 == null || p2 == null) return;
 
+        // Remove entries now that both positions are captured — prevents the maps
+        // from retaining entries for players who set positions and never complete a region.
+        pos1Selections.remove(uuid);
+        pos2Selections.remove(uuid);
+
         // Normalise min/max
         int x1 = Math.min(p1[0], p2[0]);
         int y1 = Math.min(p1[1], p2[1]);
