@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 type Mailbox = {
   username: string; name: string; quota: number; quota_used: number; active: number; created: string
@@ -11,16 +12,17 @@ type Tab = 'mailboxes' | 'aliases'
 type Modal = 'new-mailbox' | 'new-alias' | 'edit' | null
 
 export default function EmailsPage() {
+  const { showToast } = useToast()
   const [tab, setTab] = useState<Tab>('mailboxes')
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([])
   const [aliases, setAliases] = useState<Alias[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [configError, setConfigError] = useState('')
   const [modal, setModal] = useState<Modal>(null)
   const [editTarget, setEditTarget] = useState<Mailbox | null>(null)
 
   const load = useCallback(async () => {
-    setLoading(true); setError('')
+    setLoading(true); setConfigError('')
     try {
       const [mbRes, alRes] = await Promise.all([
         fetch('/api/emails?type=mailboxes'),
@@ -28,7 +30,7 @@ export default function EmailsPage() {
       ])
       const mbData = await mbRes.json()
       const alData = await alRes.json()
-      if (!mbRes.ok) setError(mbData.error)
+      if (!mbRes.ok) setConfigError(mbData.error)
       else { setMailboxes(mbData.mailboxes ?? []); setAliases(alData.aliases ?? []) }
     } finally { setLoading(false) }
   }, [])
@@ -38,15 +40,15 @@ export default function EmailsPage() {
   async function deleteMailbox(email: string) {
     if (!confirm(`${email} wirklich löschen?`)) return
     const res = await fetch('/api/emails', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
-    if (res.ok) load()
-    else { const d = await res.json(); setError(d.error) }
+    if (res.ok) { showToast(`${email} gelöscht.`); load() }
+    else { const d = await res.json(); showToast(d.error, 'error') }
   }
 
   async function deleteAlias(id: number, addr: string) {
     if (!confirm(`Alias ${addr} löschen?`)) return
     const res = await fetch('/api/emails', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aliasId: id }) })
-    if (res.ok) load()
-    else { const d = await res.json(); setError(d.error) }
+    if (res.ok) { showToast(`Alias ${addr} gelöscht.`); load() }
+    else { const d = await res.json(); showToast(d.error, 'error') }
   }
 
   async function toggleMailbox(mb: Mailbox) {
@@ -55,7 +57,8 @@ export default function EmailsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: mb.username, active: mb.active !== 1 }),
     })
-    if (res.ok) load()
+    if (!res.ok) { const d = await res.json(); showToast(d.error, 'error'); return }
+    load()
   }
 
   return (
@@ -71,10 +74,10 @@ export default function EmailsPage() {
         </div>
       </div>
 
-      {error && (
+      {configError && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400 text-sm">
-          ⚠️ {error}
-          {error.includes('nicht konfiguriert') && (
+          ⚠️ {configError}
+          {configError.includes('nicht konfiguriert') && (
             <span> — Gehe zu <a href="/settings" className="underline">Einstellungen</a> um Mailcow zu konfigurieren.</span>
           )}
         </div>

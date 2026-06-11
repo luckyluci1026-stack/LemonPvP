@@ -17,6 +17,7 @@ const ALL_PERMS = [
   { key: 'player.view', label: '🔍 Spieler ansehen' },
   { key: 'player.ban', label: '🔨 Spieler bannen' },
   { key: 'player.unban', label: '✅ Spieler entbannen' },
+  { key: 'player.mute', label: '🔇 Spieler stumm schalten' },
   { key: 'player.coins', label: '💰 Coins verwalten' },
   { key: 'player.rank', label: '🏆 Ränge verwalten' },
 ]

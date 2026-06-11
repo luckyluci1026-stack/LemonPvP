@@ -150,7 +150,12 @@ public class PlayerListener implements Listener {
             }
             case 7 -> {
                 // Settings → open settings GUI
-                player.sendMessage(MINI_MESSAGE.deserialize("<yellow>Settings coming soon!"));
+                org.bukkit.plugin.Plugin settingsPlugin = Bukkit.getPluginManager().getPlugin("LemonCore");
+                if (settingsPlugin instanceof com.lemonpvp.lemoncore.LemonCore lemonCore) {
+                    new com.lemonpvp.lemoncore.gui.SettingsGUI(lemonCore, player).open();
+                } else {
+                    player.sendMessage(MINI_MESSAGE.deserialize("<red>Settings nicht verfügbar."));
+                }
             }
             case 8 -> {
                 // Leave - connect to hub

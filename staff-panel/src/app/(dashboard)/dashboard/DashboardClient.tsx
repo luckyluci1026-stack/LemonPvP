@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import type { SessionUser } from '@/lib/auth'
 import type { AuditLog } from '@/lib/db'
 
@@ -26,6 +26,8 @@ const ACTION_LABELS: Record<string, string> = {
   DELETE_ALIAS: '🗑️ Alias gelöscht',
   PLAYER_BAN: '🔨 Spieler gebannt',
   PLAYER_UNBAN: '✅ Spieler entbannt',
+  PLAYER_MUTE: '🔇 Spieler stummgeschaltet',
+  PLAYER_UNMUTE: '🔊 Spieler entstummt',
   PLAYER_COINS: '💰 Coins geändert',
   PLAYER_RANK: '🏆 Rang gesetzt',
   CONSOLE_CMD: '💻 Konsolenbefehl',
@@ -46,19 +48,44 @@ export default function DashboardClient({
 }) {
   const [stats, setStats] = useState<Stats>(null)
   const [statsError, setStatsError] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  useEffect(() => {
+  const fetchStats = useCallback(() => {
     fetch('/api/minecraft/stats')
       .then(r => r.json())
-      .then(d => { if (d.stats) setStats(d.stats); else setStatsError(true) })
+      .then(d => {
+        if (d.stats) { setStats(d.stats); setStatsError(false); setLastUpdated(new Date()) }
+        else setStatsError(true)
+      })
       .catch(() => setStatsError(true))
   }, [])
 
+  useEffect(() => {
+    fetchStats()
+    const interval = setInterval(fetchStats, 30_000)
+    return () => clearInterval(interval)
+  }, [fetchStats])
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Übersicht aller wichtigen Informationen</p>
+      <div className="flex items-start justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-1">Übersicht aller wichtigen Informationen</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {lastUpdated && (
+            <span className="text-xs text-gray-600">
+              Aktualisiert {lastUpdated.toLocaleTimeString('de-DE')}
+            </span>
+          )}
+          <button
+            className="btn-secondary btn-sm text-xs"
+            onClick={fetchStats}
+          >
+            ↻ Aktualisieren
+          </button>
+        </div>
       </div>
 
       {/* Stats Grid */}

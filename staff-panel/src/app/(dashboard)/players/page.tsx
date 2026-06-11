@@ -5,11 +5,12 @@ import { useToast } from '@/components/ui/Toast'
 
 type Player = {
   uuid: string; name: string; online: boolean; coins: number
-  elo: Record<string, number>; rank: string; banned: boolean
-  ban_reason?: string; ban_expires?: string | null
+  elo: Record<string, number>; rank: string
+  banned: boolean; ban_reason?: string; ban_expires?: string | null
+  muted: boolean; mute_reason?: string; mute_expires?: string | null
 }
 
-type Modal = 'ban' | 'unban' | 'coins' | 'rank' | null
+type Modal = 'ban' | 'unban' | 'mute' | 'unmute' | 'coins' | 'rank' | null
 
 export default function PlayersPage() {
   const { showToast } = useToast()
@@ -75,12 +76,17 @@ export default function PlayersPage() {
                   {player.online ? '● Online' : '○ Offline'}
                 </span>
                 {player.banned && <span className="badge badge-red">🔨 Gebannt</span>}
+                {player.muted && <span className="badge badge-yellow">🔇 Stumm</span>}
               </div>
               <div className="text-xs text-gray-500 mt-1 font-mono">{player.uuid}</div>
             </div>
             <div className="flex gap-2 flex-wrap">
               <button className="btn-secondary btn-sm" onClick={() => setModal('coins')}>💰 Coins</button>
               <button className="btn-secondary btn-sm" onClick={() => setModal('rank')}>🏆 Rang</button>
+              {player.muted
+                ? <button className="btn-secondary btn-sm" onClick={() => setModal('unmute')}>🔊 Entstummen</button>
+                : <button className="btn-secondary btn-sm" onClick={() => setModal('mute')}>🔇 Stumm</button>
+              }
               {player.banned
                 ? <button className="btn-secondary btn-sm" onClick={() => setModal('unban')}>✅ Entbannen</button>
                 : <button className="btn-danger btn-sm" onClick={() => setModal('ban')}>🔨 Bannen</button>
@@ -88,13 +94,18 @@ export default function PlayersPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <InfoCard label="Rang" value={player.rank || '–'} icon="🏆" />
             <InfoCard label="Coins" value={player.coins.toLocaleString('de-DE')} icon="💰" />
             <InfoCard
               label="Ban Status"
               value={player.banned ? player.ban_reason || 'Gebannt' : 'Sauber'}
               icon={player.banned ? '🔨' : '✅'}
+            />
+            <InfoCard
+              label="Stumm Status"
+              value={player.muted ? player.mute_reason || 'Stumm' : 'Normal'}
+              icon={player.muted ? '🔇' : '🔊'}
             />
           </div>
 
@@ -118,6 +129,12 @@ export default function PlayersPage() {
               {player.ban_expires && <div className="text-red-400/60 text-xs mt-1">Läuft ab: {player.ban_expires}</div>}
             </div>
           )}
+          {player.muted && player.mute_reason && (
+            <div className="bg-lemon-500/10 border border-lemon-500/20 rounded-lg p-3">
+              <div className="text-lemon-400 text-sm font-medium">Stumm-Grund: {player.mute_reason}</div>
+              {player.mute_expires && <div className="text-lemon-400/60 text-xs mt-1">Läuft ab: {player.mute_expires}</div>}
+            </div>
+          )}
         </div>
       )}
 
@@ -131,6 +148,17 @@ export default function PlayersPage() {
           msg={`Möchtest du ${player?.name} wirklich entbannen?`}
           onClose={() => setModal(null)}
           onConfirm={() => doAction('unban', {})}
+        />
+      )}
+      {modal === 'mute' && (
+        <MuteModal onClose={() => setModal(null)} onConfirm={(reason, dur) => doAction('mute', { reason, duration: dur })} />
+      )}
+      {modal === 'unmute' && (
+        <ConfirmModal
+          title="Spieler entstummen"
+          msg={`Möchtest du ${player?.name} wirklich entstummen?`}
+          onClose={() => setModal(null)}
+          onConfirm={() => doAction('unmute', {})}
         />
       )}
       {modal === 'coins' && (
@@ -149,6 +177,37 @@ function InfoCard({ label, value, icon }: { label: string; value: string; icon: 
       <div className="text-xs text-gray-500 mb-1">{icon} {label}</div>
       <div className="text-white font-semibold">{value}</div>
     </div>
+  )
+}
+
+function MuteModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (r: string, d: string) => void }) {
+  const [reason, setReason] = useState('')
+  const [duration, setDuration] = useState('permanent')
+  return (
+    <ModalWrapper title="🔇 Spieler stumm schalten" onClose={onClose}>
+      <div className="space-y-4">
+        <div>
+          <label className="label">Grund</label>
+          <input className="input" value={reason} onChange={e => setReason(e.target.value)} placeholder="z.B. Spam" />
+        </div>
+        <div>
+          <label className="label">Dauer</label>
+          <select className="input" value={duration} onChange={e => setDuration(e.target.value)}>
+            <option value="permanent">Permanent</option>
+            <option value="1h">1 Stunde</option>
+            <option value="6h">6 Stunden</option>
+            <option value="1d">1 Tag</option>
+            <option value="3d">3 Tage</option>
+            <option value="7d">7 Tage</option>
+            <option value="30d">30 Tage</option>
+          </select>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button className="btn-secondary btn-sm" onClick={onClose}>Abbrechen</button>
+          <button className="btn-danger btn-sm" onClick={() => onConfirm(reason || 'Kein Grund', duration)}>Stumm schalten</button>
+        </div>
+      </div>
+    </ModalWrapper>
   )
 }
 

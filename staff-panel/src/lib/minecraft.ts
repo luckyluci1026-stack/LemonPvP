@@ -37,6 +37,9 @@ export type McPlayer = {
   banned: boolean
   ban_reason?: string
   ban_expires?: string | null
+  muted: boolean
+  mute_reason?: string
+  mute_expires?: string | null
 }
 
 export type McStats = {
@@ -77,6 +80,19 @@ export async function setRank(name: string, rank: string): Promise<void> {
   await mcFetch(`/api/player/${encodeURIComponent(name)}/rank`, {
     method: 'POST',
     body: JSON.stringify({ rank }),
+  })
+}
+
+export async function mutePlayer(name: string, reason: string, duration: string): Promise<void> {
+  await mcFetch(`/api/player/${encodeURIComponent(name)}/mute`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, duration }),
+  })
+}
+
+export async function unmutePlayer(name: string): Promise<void> {
+  await mcFetch(`/api/player/${encodeURIComponent(name)}/unmute`, {
+    method: 'POST',
   })
 }
 

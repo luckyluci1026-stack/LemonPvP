@@ -112,10 +112,12 @@ public class HttpApiManager {
         } else if ("POST".equals(method) && action != null) {
             String body = readBody(ex);
             switch (action) {
-                case "ban"   -> handleBan(ex, playerName, body);
-                case "unban" -> handleUnban(ex, playerName);
-                case "coins" -> handleCoins(ex, playerName, body);
-                case "rank"  -> handleRank(ex, playerName, body);
+                case "ban"    -> handleBan(ex, playerName, body);
+                case "unban"  -> handleUnban(ex, playerName);
+                case "mute"   -> handleMute(ex, playerName, body);
+                case "unmute" -> handleUnmute(ex, playerName);
+                case "coins"  -> handleCoins(ex, playerName, body);
+                case "rank"   -> handleRank(ex, playerName, body);
                 default -> send(ex, 400, error("Unknown action: " + action));
             }
         } else {
@@ -161,9 +163,19 @@ public class HttpApiManager {
         plugin.getBanManager().getActiveBan(uuid).thenAccept(ban -> {
             obj.addProperty("banned", ban != null);
             if (ban != null) {
-                obj.addProperty("ban_reason", ban.getReason());
-                if (ban.getExpiresAt() != null)
-                    obj.addProperty("ban_expires", ban.getExpiresAt().toString());
+                obj.addProperty("ban_reason", ban.reason);
+                if (ban.expires != null)
+                    obj.addProperty("ban_expires", ban.expires.toString());
+            }
+        }).join();
+
+        // Mute
+        plugin.getMuteManager().getActiveMute(uuid).thenAccept(mute -> {
+            obj.addProperty("muted", mute != null);
+            if (mute != null) {
+                obj.addProperty("mute_reason", mute.reason);
+                if (!mute.isPermanent() && mute.expires != null)
+                    obj.addProperty("mute_expires", mute.expires.toString());
             }
         }).join();
 
@@ -197,6 +209,36 @@ public class HttpApiManager {
         UUID uuid = getUuidByName(name);
         if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
         plugin.getBanManager().unban(name).join();
+        send(ex, 200, ok());
+    }
+
+    // ─── POST /api/player/{name}/mute ───────────────────────────────────────
+
+    private void handleMute(HttpExchange ex, String name, String body) throws IOException {
+        UUID uuid = getUuidByName(name);
+        if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
+
+        JsonObject parsed = parseJson(body);
+        String reason   = getStr(parsed, "reason", "Staff Panel");
+        String duration = getStr(parsed, "duration", "permanent");
+        long durationSecs = parseDuration(duration);
+
+        plugin.getMuteManager().mutePlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
+            .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                Player online = Bukkit.getPlayer(uuid);
+                if (online != null)
+                    online.sendMessage(net.kyori.adventure.text.Component.text("Du wurdest stummgeschaltet: " + reason));
+            })).join();
+
+        send(ex, 200, ok());
+    }
+
+    // ─── POST /api/player/{name}/unmute ─────────────────────────────────────
+
+    private void handleUnmute(HttpExchange ex, String name) throws IOException {
+        UUID uuid = getUuidByName(name);
+        if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
+        plugin.getMuteManager().unmute(name).join();
         send(ex, 200, ok());
     }
 
