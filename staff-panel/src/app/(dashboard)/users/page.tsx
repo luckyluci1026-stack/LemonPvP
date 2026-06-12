@@ -146,6 +146,7 @@ function UserModal({ user, onClose, onSave }: { user: User | null; onClose: () =
     password: '',
     role: user?.role ?? 'STAFF',
     permissions: user ? (JSON.parse(user.permissions) as string[]) : [] as string[],
+    mustChangePassword: true,
   })
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(false)
@@ -153,7 +154,13 @@ function UserModal({ user, onClose, onSave }: { user: User | null; onClose: () =
   async function submit() {
     setErr(''); setLoading(true)
     const body = editing
-      ? { name: form.name, password: form.password || undefined, role: form.role, permissions: form.permissions }
+      ? {
+          name: form.name,
+          password: form.password || undefined,
+          role: form.role,
+          permissions: form.permissions,
+          ...(form.password ? { mustChangePassword: form.mustChangePassword } : {}),
+        }
       : { ...form }
     const res = await fetch(editing ? `/api/users/${user!.id}` : '/api/users', {
       method: editing ? 'PUT' : 'POST',
@@ -211,6 +218,21 @@ function UserModal({ user, onClose, onSave }: { user: User | null; onClose: () =
             <label className="label">{editing ? 'Neues Passwort (leer = unverändert)' : 'Passwort'}</label>
             <input className="input" type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
           </div>
+
+          {(!editing || form.password) && (
+            <label className="flex items-center gap-3 p-3 rounded-lg bg-dark-600 border border-dark-500 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.mustChangePassword}
+                onChange={e => setForm(f => ({ ...f, mustChangePassword: e.target.checked }))}
+                className="accent-lemon-500"
+              />
+              <div>
+                <div className="text-sm text-gray-200 font-medium">🔐 Passwort-Änderung beim Login erzwingen</div>
+                <div className="text-xs text-gray-500 mt-0.5">Der Nutzer muss beim nächsten Login ein neues Passwort setzen</div>
+              </div>
+            </label>
+          )}
 
           <div>
             <label className="label">Berechtigungen</label>

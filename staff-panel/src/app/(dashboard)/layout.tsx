@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/auth'
+import { getSession, getUserById } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
@@ -6,6 +6,10 @@ import Header from '@/components/layout/Header'
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession()
   if (!session) redirect('/login')
+
+  // Re-check DB so suspension takes effect immediately without waiting for JWT expiry
+  const dbUser = getUserById(session.id)
+  if (!dbUser || dbUser.suspended) redirect('/api/auth/force-logout')
 
   return (
     <div className="flex h-screen overflow-hidden bg-dark-900">

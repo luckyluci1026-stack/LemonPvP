@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
 
   const hash = await bcrypt.hash(password, 12)
   const stmt = db.prepare(`
-    INSERT INTO users (email, password, name, role, permissions)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO users (email, password, name, role, permissions, must_change_password)
+    VALUES (?, ?, ?, ?, ?, 1)
   `)
 
   try {

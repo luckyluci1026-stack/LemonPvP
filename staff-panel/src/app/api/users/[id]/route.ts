@@ -26,6 +26,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     role?: string
     suspended?: boolean
     permissions?: string[]
+    mustChangePassword?: boolean
   }
 
   if (body.name !== undefined) {
@@ -34,6 +35,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (body.password !== undefined && body.password.length > 0) {
     const hash = await bcrypt.hash(body.password, 12)
     db.prepare('UPDATE users SET password = ?, updated_at = datetime(\'now\') WHERE id = ?').run(hash, userId)
+    if (body.mustChangePassword !== undefined) {
+      db.prepare('UPDATE users SET must_change_password = ?, updated_at = datetime(\'now\') WHERE id = ?').run(body.mustChangePassword ? 1 : 0, userId)
+    }
   }
   if (body.role !== undefined) {
     const validRoles = ['SUPER_ADMIN', 'ADMIN', 'STAFF']

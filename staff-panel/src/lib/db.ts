@@ -67,6 +67,10 @@ db.exec(`
   );
 `)
 
+// ─── Migrations ────────────────────────────────────────────────────────────
+
+try { db.exec('ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0') } catch { /* already exists */ }
+
 // ─── Seed admin account ────────────────────────────────────────────────────
 
 // Seed admin account idempotently
@@ -104,6 +108,7 @@ export type User = {
   name: string
   role: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF'
   suspended: number
+  must_change_password: number
   permissions: string
   created_at: string
   updated_at: string

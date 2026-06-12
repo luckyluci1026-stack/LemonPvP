@@ -63,5 +63,6 @@ export function toSessionUser(u: User): SessionUser {
     name: u.name,
     role: u.role,
     permissions: JSON.parse(u.permissions) as string[],
+    mustChangePassword: u.must_change_password === 1,
   }
 }

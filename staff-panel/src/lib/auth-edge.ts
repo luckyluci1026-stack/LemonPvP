@@ -11,6 +11,7 @@ export type SessionUser = {
   name: string
   role: string
   permissions: string[]
+  mustChangePassword?: boolean
 }
 
 export async function verifyToken(token: string): Promise<SessionUser | null> {

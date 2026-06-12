@@ -1,14 +1,17 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const isSuspended = searchParams.get('r') === 'suspended'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -32,14 +35,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark-900 px-4">
-      {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-lemon-500/5 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-lemon-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-lemon-500/10 border border-lemon-500/30 mb-4">
             <span className="text-3xl">🍋</span>
@@ -48,7 +49,12 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm mt-1">Melde dich mit deinem Staff Account an</p>
         </div>
 
-        {/* Card */}
+        {isSuspended && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-400 text-sm mb-4 text-center">
+            🚫 Dein Account wurde gesperrt. Du wurdest automatisch abgemeldet.
+          </div>
+        )}
+
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -93,5 +99,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

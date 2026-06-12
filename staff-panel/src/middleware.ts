@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth-edge'
 
-const PUBLIC_PATHS = ['/login', '/api/auth/login']
+const PUBLIC_PATHS = [
+  '/login',
+  '/api/auth/login',
+  '/change-password',
+  '/api/auth/change-password',
+  '/api/auth/force-logout',
+  '/api/public',
+]
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -17,6 +24,10 @@ export async function middleware(req: NextRequest) {
     const res = NextResponse.redirect(new URL('/login', req.url))
     res.cookies.delete('lemon_session')
     return res
+  }
+
+  if (session.mustChangePassword) {
+    return NextResponse.redirect(new URL('/change-password', req.url))
   }
 
   return NextResponse.next()
