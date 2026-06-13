@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSessionFromRequest, hasPermission } from '@/lib/auth'
 import { addAuditLog } from '@/lib/db'
+import { rateLimit } from '@/lib/rateLimit'
 import * as mc from '@/lib/minecraft'
 
 // permissions map for player actions
@@ -29,6 +30,12 @@ export async function GET(req: NextRequest, { params }: Params) {
 export async function POST(req: NextRequest, { params }: Params) {
   const session = await getSessionFromRequest(req)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Per-user safety cap: protects the MC server from a runaway or hijacked
+  // session. Generous enough not to hinder normal moderation work.
+  if (!rateLimit(`mcaction:${session.id}`, 40, 60 * 1000)) {
+    return NextResponse.json({ error: 'Zu viele Aktionen in kurzer Zeit. Bitte kurz warten.' }, { status: 429 })
+  }
 
   const { name } = await params
   const url = new URL(req.url)

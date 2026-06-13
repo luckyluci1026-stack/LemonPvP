@@ -34,7 +34,7 @@ export default function SettingsPage() {
     setForm(f => ({ ...f, [k]: e.target.value }))
 
   async function save() {
-    setSaving(true); setMsg('')
+    setSaving(true)
     // Only send non-empty key fields
     const body: Record<string, string> = {
       mailcow_url: form.mailcow_url,

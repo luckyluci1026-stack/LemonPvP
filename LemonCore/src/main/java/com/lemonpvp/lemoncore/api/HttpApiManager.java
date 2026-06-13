@@ -64,9 +64,9 @@ public class HttpApiManager {
             server = HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
             executor = Executors.newFixedThreadPool(4);
             server.setExecutor(executor);
-            server.createContext("/api/player/",     ex -> handlePlayerRoot(ex, apiKey));
-            server.createContext("/api/server/stats", ex -> handleStats(ex, apiKey));
-            server.createContext("/api/console",     ex -> handleConsole(ex, apiKey));
+            server.createContext("/api/player/",     ex -> route(ex, e -> handlePlayerRoot(e, apiKey)));
+            server.createContext("/api/server/stats", ex -> route(ex, e -> handleStats(e, apiKey)));
+            server.createContext("/api/console",     ex -> route(ex, e -> handleConsole(e, apiKey)));
             server.start();
             log.info("[HttpAPI] Started on " + bindAddress + ":" + port);
         } catch (IOException e) {
@@ -82,6 +82,39 @@ public class HttpApiManager {
         if (executor != null) {
             executor.shutdownNow();
         }
+    }
+
+    // ─── Request wrapper ──────────────────────────────────────────────────────
+
+    @FunctionalInterface
+    private interface Route { void handle(HttpExchange ex) throws IOException; }
+
+    /** Carries an HTTP status so handlers can fail cleanly instead of resetting the socket. */
+    private static class ApiException extends IOException {
+        final int status;
+        ApiException(int status, String message) { super(message); this.status = status; }
+    }
+
+    /**
+     * Wraps every handler so any thrown exception still produces a proper HTTP
+     * response and the exchange is always closed. Without this, an exception
+     * (e.g. a timeout) would leave the client with a dropped connection.
+     */
+    private void route(HttpExchange ex, Route handler) {
+        try {
+            handler.handle(ex);
+        } catch (ApiException e) {
+            trySend(ex, e.status, error(e.getMessage()));
+        } catch (Exception e) {
+            log.warning("[HttpAPI] Handler error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            trySend(ex, 500, error("Internal server error"));
+        } finally {
+            ex.close();
+        }
+    }
+
+    private void trySend(HttpExchange ex, int code, String body) {
+        try { send(ex, code, body); } catch (IOException ignored) {}
     }
 
     // ─── Auth ───────────────────────────────────────────────────────────────
@@ -369,21 +402,22 @@ public class HttpApiManager {
         try {
             return future.get(FUTURE_TIMEOUT_SECS, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            throw new IOException("Operation timed out");
+            throw new ApiException(504, "Operation timed out");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IOException("Operation interrupted");
+            throw new ApiException(503, "Operation interrupted");
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
-            if (cause instanceof RuntimeException) throw (RuntimeException) cause;
-            throw new IOException("Operation failed: " + cause.getMessage(), cause);
+            log.warning("[HttpAPI] Async operation failed: "
+                    + (cause != null ? cause.getClass().getSimpleName() + ": " + cause.getMessage() : e.getMessage()));
+            throw new ApiException(500, "Operation failed");
         }
     }
 
     private String readBody(HttpExchange ex) throws IOException {
         try (InputStream is = ex.getRequestBody()) {
             byte[] buf = is.readNBytes(MAX_BODY_BYTES + 1);
-            if (buf.length > MAX_BODY_BYTES) throw new IOException("Request body too large");
+            if (buf.length > MAX_BODY_BYTES) throw new ApiException(413, "Request body too large");
             return new String(buf, StandardCharsets.UTF_8);
         }
     }
