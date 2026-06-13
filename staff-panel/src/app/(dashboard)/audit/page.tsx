@@ -21,6 +21,8 @@ const ACTION_LABELS: Record<string, { icon: string; label: string }> = {
   DELETE_ALIAS:    { icon: '🗑️', label: 'Alias gelöscht' },
   PLAYER_BAN:      { icon: '🔨', label: 'Spieler gebannt' },
   PLAYER_UNBAN:    { icon: '✅', label: 'Spieler entbannt' },
+  PLAYER_MUTE:     { icon: '🔇', label: 'Spieler stummgeschaltet' },
+  PLAYER_UNMUTE:   { icon: '🔊', label: 'Spieler entstummt' },
   PLAYER_COINS:    { icon: '💰', label: 'Coins geändert' },
   PLAYER_RANK:     { icon: '🏆', label: 'Rang gesetzt' },
   CONSOLE_CMD:     { icon: '💻', label: 'Konsolenbefehl' },

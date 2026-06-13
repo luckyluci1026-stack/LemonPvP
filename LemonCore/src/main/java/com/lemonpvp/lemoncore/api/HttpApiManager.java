@@ -20,8 +20,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 public class HttpApiManager {
@@ -153,31 +155,31 @@ public class HttpApiManager {
         LuckPerms lp = plugin.getLuckPerms();
         if (lp != null) {
             try {
-                User user = lp.getUserManager().loadUser(uuid).join();
+                User user = joinWithTimeout(lp.getUserManager().loadUser(uuid));
                 if (user != null) rank = user.getPrimaryGroup();
             } catch (Exception ignored) {}
         }
         obj.addProperty("rank", rank);
 
         // Ban
-        plugin.getBanManager().getActiveBan(uuid).thenAccept(ban -> {
+        joinWithTimeout(plugin.getBanManager().getActiveBan(uuid).thenAccept(ban -> {
             obj.addProperty("banned", ban != null);
             if (ban != null) {
                 obj.addProperty("ban_reason", ban.reason);
                 if (ban.expires != null)
                     obj.addProperty("ban_expires", ban.expires.toString());
             }
-        }).join();
+        }));
 
         // Mute
-        plugin.getMuteManager().getActiveMute(uuid).thenAccept(mute -> {
+        joinWithTimeout(plugin.getMuteManager().getActiveMute(uuid).thenAccept(mute -> {
             obj.addProperty("muted", mute != null);
             if (mute != null) {
                 obj.addProperty("mute_reason", mute.reason);
                 if (!mute.isPermanent() && mute.expires != null)
                     obj.addProperty("mute_expires", mute.expires.toString());
             }
-        }).join();
+        }));
 
         send(ex, 200, GSON.toJson(obj));
     }
@@ -193,12 +195,12 @@ public class HttpApiManager {
         String duration = getStr(parsed, "duration", "permanent");
         long durationSecs = parseDuration(duration);
 
-        plugin.getBanManager().banPlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
+        joinWithTimeout(plugin.getBanManager().banPlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
             .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                 Player online = Bukkit.getPlayer(uuid);
                 if (online != null)
                     online.kick(net.kyori.adventure.text.Component.text("Du wurdest gebannt: " + reason));
-            })).join();
+            })));
 
         send(ex, 200, ok());
     }
@@ -208,7 +210,7 @@ public class HttpApiManager {
     private void handleUnban(HttpExchange ex, String name) throws IOException {
         UUID uuid = getUuidByName(name);
         if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
-        plugin.getBanManager().unban(name).join();
+        joinWithTimeout(plugin.getBanManager().unban(name));
         send(ex, 200, ok());
     }
 
@@ -223,12 +225,12 @@ public class HttpApiManager {
         String duration = getStr(parsed, "duration", "permanent");
         long durationSecs = parseDuration(duration);
 
-        plugin.getMuteManager().mutePlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
+        joinWithTimeout(plugin.getMuteManager().mutePlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
             .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                 Player online = Bukkit.getPlayer(uuid);
                 if (online != null)
                     online.sendMessage(net.kyori.adventure.text.Component.text("Du wurdest stummgeschaltet: " + reason));
-            })).join();
+            })));
 
         send(ex, 200, ok());
     }
@@ -238,7 +240,7 @@ public class HttpApiManager {
     private void handleUnmute(HttpExchange ex, String name) throws IOException {
         UUID uuid = getUuidByName(name);
         if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
-        plugin.getMuteManager().unmute(name).join();
+        joinWithTimeout(plugin.getMuteManager().unmute(name));
         send(ex, 200, ok());
     }
 
@@ -253,7 +255,7 @@ public class HttpApiManager {
         long amount = getLong(parsed, "amount", 0L);
         String action = getStr(parsed, "action", "add");
 
-        plugin.getPlayerDataManager().loadPlayer(uuid, name).thenAccept(data -> {
+        joinWithTimeout(plugin.getPlayerDataManager().loadPlayer(uuid, name).thenAccept(data -> {
             switch (action) {
                 case "add"    -> plugin.getPlayerDataManager().addCoins(uuid, amount, "staff-panel", null);
                 case "remove" -> plugin.getPlayerDataManager().removeCoins(uuid, amount, "staff-panel", null);
@@ -264,7 +266,7 @@ public class HttpApiManager {
                     else if (diff < 0) plugin.getPlayerDataManager().removeCoins(uuid, -diff, "staff-panel", null);
                 }
             }
-        }).join();
+        }));
 
         send(ex, 200, ok());
     }
@@ -284,11 +286,11 @@ public class HttpApiManager {
         if (rank == null) { send(ex, 400, error("rank required")); return; }
 
         try {
-            User user = lp.getUserManager().loadUser(uuid).join();
+            User user = joinWithTimeout(lp.getUserManager().loadUser(uuid));
             if (user == null) { send(ex, 404, error("LuckPerms user not found")); return; }
             user.data().clear(node -> node instanceof InheritanceNode);
             user.data().add(InheritanceNode.builder(rank).build());
-            lp.getUserManager().saveUser(user).join();
+            joinWithTimeout(lp.getUserManager().saveUser(user));
             send(ex, 200, ok());
         } catch (Exception e) {
             send(ex, 500, error("LuckPerms error: " + e.getMessage()));
@@ -360,9 +362,29 @@ public class HttpApiManager {
         return op != null ? op.getUniqueId() : null;
     }
 
+    private static final int MAX_BODY_BYTES = 8192;
+    private static final long FUTURE_TIMEOUT_SECS = 5;
+
+    private <T> T joinWithTimeout(CompletableFuture<T> future) throws IOException {
+        try {
+            return future.get(FUTURE_TIMEOUT_SECS, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            throw new IOException("Operation timed out");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Operation interrupted");
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException) throw (RuntimeException) cause;
+            throw new IOException("Operation failed: " + cause.getMessage(), cause);
+        }
+    }
+
     private String readBody(HttpExchange ex) throws IOException {
         try (InputStream is = ex.getRequestBody()) {
-            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            byte[] buf = is.readNBytes(MAX_BODY_BYTES + 1);
+            if (buf.length > MAX_BODY_BYTES) throw new IOException("Request body too large");
+            return new String(buf, StandardCharsets.UTF_8);
         }
     }
 

@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 export default function SettingsPage() {
+  const { showToast } = useToast()
   const [form, setForm] = useState({
     mailcow_url: '', mailcow_key: '', mc_api_url: '', mc_api_key: '',
     domain: '', panel_name: '',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState('')
 
   useEffect(() => {
     fetch('/api/settings')
@@ -49,8 +50,8 @@ export default function SettingsPage() {
       body: JSON.stringify(body),
     })
     setSaving(false)
-    if (res.ok) setMsg('✅ Einstellungen gespeichert!')
-    else setMsg('❌ Fehler beim Speichern.')
+    if (res.ok) showToast('Einstellungen gespeichert!')
+    else { const d = await res.json(); showToast(d.error ?? 'Fehler beim Speichern.', 'error') }
   }
 
   if (loading) return <div className="text-gray-500 text-sm">Lade…</div>
@@ -98,12 +99,6 @@ export default function SettingsPage() {
   key: YOUR_API_KEY_HERE`}</pre>
         </div>
       </Section>
-
-      {msg && (
-        <div className={`rounded-lg px-4 py-3 text-sm ${msg.startsWith('✅') ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
-          {msg}
-        </div>
-      )}
 
       <button className="btn-primary" onClick={save} disabled={saving}>
         {saving ? 'Speichert…' : '💾 Speichern'}

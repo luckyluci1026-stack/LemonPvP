@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   if (!hasPermission(session, 'admin.users')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const users = db.prepare(`
-    SELECT id, email, name, role, suspended, permissions, created_at FROM users ORDER BY created_at DESC
+    SELECT id, email, name, role, suspended, permissions, must_change_password, created_at FROM users ORDER BY created_at DESC
   `).all() as Omit<User, 'password'>[]
 
   return NextResponse.json({ users })

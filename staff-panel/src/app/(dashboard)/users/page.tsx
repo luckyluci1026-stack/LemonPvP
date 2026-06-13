@@ -5,7 +5,7 @@ import { useToast } from '@/components/ui/Toast'
 
 type User = {
   id: number; email: string; name: string; role: string
-  suspended: number; permissions: string; created_at: string
+  suspended: number; permissions: string; must_change_password: number; created_at: string
 }
 type Modal = 'create' | 'edit' | null
 
@@ -83,7 +83,7 @@ export default function UsersPage() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>Name / E-Mail</th><th>Rolle</th><th>Berechtigungen</th><th>Status</th><th>Erstellt</th><th>Aktionen</th></tr>
+              <tr><th>Name / E-Mail</th><th>Rolle</th><th>Berechtigungen</th><th>Status</th><th>PW-Änderung</th><th>Erstellt</th><th>Aktionen</th></tr>
             </thead>
             <tbody>
               {users.map(u => {
@@ -113,6 +113,13 @@ export default function UsersPage() {
                       <span className={`badge ${u.suspended ? 'badge-red' : 'badge-green'}`}>
                         {u.suspended ? '🚫 Gesperrt' : '✅ Aktiv'}
                       </span>
+                    </td>
+                    <td>
+                      {u.must_change_password ? (
+                        <span className="badge badge-yellow text-xs">🔐 Pflicht</span>
+                      ) : (
+                        <span className="text-gray-600 text-xs">–</span>
+                      )}
                     </td>
                     <td className="text-xs text-gray-500">{new Date(u.created_at).toLocaleDateString('de-DE')}</td>
                     <td>

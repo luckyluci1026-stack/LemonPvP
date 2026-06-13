@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="LemonPvP – Der beste deutschsprachige PvP-Server. Ranked Duels, FFA, Events und mehr!">
   <title>LemonPvP – Tritt dem besten PvP-Server bei!</title>
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://lemonpvp.de/">
+  <meta property="og:title" content="LemonPvP – Der schärfste PvP-Server">
+  <meta property="og:description" content="Ranked Duels mit ELO-System, FFA, Events und mehr. Tritt dem besten deutschsprachigen PvP-Server bei!">
+  <meta property="og:image" content="https://lemonpvp.de/og.png">
+  <meta property="og:locale" content="de_DE">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="LemonPvP – Der schärfste PvP-Server">
+  <meta name="twitter:description" content="Ranked Duels mit ELO-System, FFA, Events und mehr. Tritt dem besten deutschsprachigen PvP-Server bei!">
+  <meta name="twitter:image" content="https://lemonpvp.de/og.png">
+  <!-- Theme -->
+  <meta name="theme-color" content="#CDFF00">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -225,9 +239,42 @@
       50% { transform: translateY(-20px) rotate(8deg); }
     }
 
+    /* ── Hamburger ── */
+    .nav-hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      width: 36px; height: 36px; background: none; border: none; cursor: pointer; padding: 4px;
+    }
+    .nav-hamburger span {
+      display: block; height: 2px; background: var(--muted2); border-radius: 2px;
+      transition: transform .25s, opacity .25s, background .2s;
+      transform-origin: center;
+    }
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); background: #fff; }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); background: #fff; }
+
+    .mobile-menu {
+      display: none; position: fixed; top: 64px; left: 0; right: 0; z-index: 99;
+      background: rgba(8,11,15,0.97); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      flex-direction: column; padding: 1rem 2rem 1.5rem; gap: 0.25rem;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      color: var(--muted2); text-decoration: none; font-size: 1rem; font-weight: 500;
+      padding: 0.75rem 0; border-bottom: 1px solid var(--border); transition: color .2s;
+    }
+    .mobile-menu a:last-child { border-bottom: none; }
+    .mobile-menu a:hover { color: #fff; }
+    .mobile-menu .mob-btn {
+      margin-top: 0.75rem; background: var(--lemon); color: #000; font-weight: 700;
+      text-align: center; padding: 0.75rem; border-radius: 10px; border: none;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 640px) {
-      .nav-links { display: none; }
+      .nav-links, .nav-btn { display: none; }
+      .nav-hamburger { display: flex; }
       .stats-bar { gap: 1.5rem; }
     }
   </style>
@@ -251,7 +298,18 @@
     <a href="https://discord.gg/lemonpvp" target="_blank">Discord</a>
   </div>
   <a class="nav-btn" href="#join">Jetzt spielen</a>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menü öffnen" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#gamemodes" onclick="closeMenu()">⚔️ Gamemodes</a>
+  <a href="#features" onclick="closeMenu()">✨ Features</a>
+  <a href="https://discord.gg/lemonpvp" target="_blank" onclick="closeMenu()">💬 Discord</a>
+  <a class="mob-btn" href="#join" onclick="closeMenu()">🍋 Jetzt spielen</a>
+</div>
 
 <!-- Hero -->
 <section class="hero">
@@ -421,6 +479,18 @@
 </div>
 
 <script>
+  // ── Mobile Menu ──
+  function toggleMenu() {
+    const btn = document.getElementById('hamburger')
+    const menu = document.getElementById('mobileMenu')
+    btn.classList.toggle('open')
+    menu.classList.toggle('open')
+  }
+  function closeMenu() {
+    document.getElementById('hamburger').classList.remove('open')
+    document.getElementById('mobileMenu').classList.remove('open')
+  }
+
   // ── Copy IP ──
   function copyIP() {
     navigator.clipboard.writeText('play.lemonpvp.de').then(() => {

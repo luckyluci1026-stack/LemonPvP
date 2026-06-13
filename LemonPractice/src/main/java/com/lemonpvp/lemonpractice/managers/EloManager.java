@@ -109,16 +109,20 @@ public class EloManager {
             int wChange = calculateChange(wElo, lElo, true);
             int lChange = calculateChange(lElo, wElo, false);
 
-            wData.elo = Math.max(0, wElo + wChange);
-            wData.matchesPlayed++;
-            lData.elo = Math.max(0, lElo + lChange);
-            lData.matchesPlayed++;
+            int newWElo = Math.max(0, wElo + wChange);
+            int newLElo = Math.max(0, lElo + lChange);
+            int newWMatches = wData.matchesPlayed + 1;
+            int newLMatches = lData.matchesPlayed + 1;
 
-            plugin.getDatabase().saveEloData(winner, gm, wData.elo, wData.matchesPlayed);
-            plugin.getDatabase().saveEloData(loser,  gm, lData.elo, lData.matchesPlayed);
+            // Replace cached objects atomically rather than mutating the shared reference
+            cache.computeIfAbsent(winner, u -> new ConcurrentHashMap<>()).put(gm, new EloData(newWElo, newWMatches));
+            cache.computeIfAbsent(loser,  u -> new ConcurrentHashMap<>()).put(gm, new EloData(newLElo, newLMatches));
 
-            plugin.getLogger().info("[EloManager] " + winner + " (" + wElo + "->" + wData.elo
-                    + ") beat " + loser + " (" + lElo + "->" + lData.elo + ") [" + gm + "]");
+            plugin.getDatabase().saveEloData(winner, gm, newWElo, newWMatches);
+            plugin.getDatabase().saveEloData(loser,  gm, newLElo, newLMatches);
+
+            plugin.getLogger().info("[EloManager] " + winner + " (" + wElo + "->" + newWElo
+                    + ") beat " + loser + " (" + lElo + "->" + newLElo + ") [" + gm + "]");
 
             return new int[]{wChange, lChange};
         });
