@@ -232,6 +232,32 @@
     footer a:hover { color: #fff; }
     .footer-links { display: flex; gap: 1.5rem; }
 
+
+    /* ── Minecraft Icons ── */
+    .gm-icon { width:56px; height:56px; margin-bottom:1rem; display:block; image-rendering:pixelated; image-rendering:crisp-edges; }
+    .gm-card { cursor:pointer; }
+    .gm-card.active { border-color:var(--lemon) !important; transform:translateY(-3px); box-shadow:0 0 24px rgba(205,255,0,0.15); }
+    .gm-card.active::before { background:var(--lemon); }
+
+    /* ── Gamemode Detail Panel ── */
+    #gm-detail {
+      display:none; margin-top:1.5rem;
+      background:var(--card2); border:1px solid rgba(205,255,0,0.2);
+      border-radius:16px; padding:2rem; animation:slideIn .25s ease;
+    }
+    #gm-detail.visible { display:block; }
+    @keyframes slideIn { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+    .gm-detail-header { display:flex; align-items:center; gap:1.25rem; margin-bottom:1.25rem; }
+    .gm-detail-header img { width:52px; height:52px; image-rendering:pixelated; image-rendering:crisp-edges; }
+    .gm-detail-title { font-size:1.375rem; font-weight:800; color:#fff; }
+    .gm-detail-sub { font-size:0.875rem; color:var(--muted2); margin-top:0.2rem; }
+    .gm-detail-desc { font-size:0.9375rem; color:var(--muted2); line-height:1.65; margin-bottom:1.25rem; max-width:620px; }
+    .gm-detail-features { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:0.6rem; }
+    .gm-feat { display:flex; align-items:flex-start; gap:0.6rem; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:0.65rem 0.85rem; }
+    .gm-feat-icon { font-size:1.125rem; flex-shrink:0; line-height:1.4; }
+    .gm-feat-text { font-size:0.8125rem; color:var(--muted2); line-height:1.45; }
+    .gm-feat-text strong { color:var(--text); display:block; font-weight:600; margin-bottom:0.15rem; }
+
     /* ── Floating Lemon SVG (background decoration) ── */
     .float-lemon {
       position: absolute; opacity: 0.04; pointer-events: none;
@@ -298,7 +324,7 @@
   <div class="nav-links">
     <a href="#gamemodes">Gamemodes</a>
     <a href="#features">Features</a>
-    <a href="https://discord.gg/lemonpvp" target="_blank">Discord</a>
+    <a href="https://discord.gg/eZWP9EGW7" target="_blank">Discord</a>
   </div>
   <a class="nav-btn" href="#join">Jetzt spielen</a>
   <button class="nav-hamburger" id="hamburger" aria-label="Menü öffnen" onclick="toggleMenu()">
@@ -310,7 +336,7 @@
 <div class="mobile-menu" id="mobileMenu">
   <a href="#gamemodes" onclick="closeMenu()">⚔️ Gamemodes</a>
   <a href="#features" onclick="closeMenu()">✨ Features</a>
-  <a href="https://discord.gg/lemonpvp" target="_blank" onclick="closeMenu()">💬 Discord</a>
+  <a href="https://discord.gg/eZWP9EGW7" target="_blank" onclick="closeMenu()">💬 Discord</a>
   <a class="mob-btn" href="#join" onclick="closeMenu()">🍋 Jetzt spielen</a>
 </div>
 
@@ -338,7 +364,7 @@
         </span>
       </div>
 
-      <a class="btn-ghost" href="https://discord.gg/lemonpvp" target="_blank">
+      <a class="btn-ghost" href="https://discord.gg/eZWP9EGW7" target="_blank">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.101 18.08.118 18.104.135 18.116a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
         Discord beitreten
       </a>
@@ -373,33 +399,46 @@
     <h2>Für jeden das Richtige</h2>
     <p class="section-sub">Von kompetitiven Ranked Duels bis zu epischen Server-Events — bei LemonPvP ist immer was los.</p>
 
-    <div class="gamemodes-grid">
-      <div class="gm-card">
-        <span class="gm-icon">⚔️</span>
+    <div class="gamemodes-grid" id="gmGrid">
+      <div class="gm-card" onclick="selectGm('duels')">
+        <img class="gm-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABP0lEQVR4nO2ZsQnCQBhGjYgjiKWFhSMIWohgb21l4QDOEEcQxAUUZ7C2yBxOYG1ztskJkZBLXuL/ve5yBl4+vv8wJOr8OcnbJen1tB9N0+tuvTrNQwHQAjQ9WiA0o9vdpdfHV/7vzTdAAdACNBEtUBZ/5mfLVWb/Mohyn9F8AxQALUDTujOg7Mz7mG+AAqAFaBp/BoSeeR/zDVAAtABN486Aqmfex3wDFAAtQIOfAXXPvI/5BigAWoAm+HeBzSZ22fW60P3X/SGkzk/MN0AB0AI0CoAWoFEAtABN5e8Cu8U4879gPhlm9rfnB/o+Yr4BCoAWoAk+f02feR/zDVAAtABN6Xls28z7mG+AAqAFaArPZ9tn3sd8AxQALUDz87tAHJ9c3v7z68qjhE79mG+AAqAFaBQALUCjAGgBIYQg+QDHwDWKPJrS9QAAAABJRU5ErkJggg==" alt="Ranked Duels">
         <div class="gm-name">Ranked Duels</div>
-        <div class="gm-desc">Trete im 1v1 gegen andere Spieler an. Erkämpfe dir deinen ELO-Rang in verschiedenen Kits wie Nodebuff, Sumo, Bridge und mehr.</div>
+        <div class="gm-desc">Trete im 1v1 gegen andere Spieler an. Das ELO-Matchmaking findet dir den perfekten Gegner — von Iron bis Legend.</div>
         <span class="gm-badge">ELO-System</span>
       </div>
-      <div class="gm-card">
-        <span class="gm-icon">🏆</span>
+      <div class="gm-card" onclick="selectGm('royale')">
+        <img class="gm-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABO0lEQVR4nO2ZwRGCMBBFg2MB9oAXK8CLtWAZlGAZUoH04EUq0IP2YAd4hkN2MCGPmfx3c8TNmz9L4mwKl5jh2wy+74vdpUjl4pxzm5SLrREFQAvQKABagEYB0AI0W+uB6bmd+py2CPXLvgMUAC1AY74vw9P5/7sf7Box68X2yb4DFAAtQKMAaAEaBUAL0CgAWoBGAdACNOY8oO/Hn6tqKZX/mPrNJfsOUAC0AI0CoAVoFAAtQKMAaAEaBUAL0CgAWoBGAdACNOY8wMK6q1u63nQ+8biOf388++8Ks+8ABUAL0ATvAa5txlO5+uKdGp7at7fcvd5HXc8i+w5QALQATfAe8Om60TtY1qEV066XfQcoAFqAJngPKG+vWc+b53zk9Syy7wAFQAvQzN4DQu/j10b2HaAAaAEhhCD5AdQeN0ccvu5KAAAAAElFTkSuQmCC" alt="LemonRoyale">
         <div class="gm-name">LemonRoyale</div>
-        <div class="gm-desc">Unser eigenes Battle-Royale-Event! Sammle Beute aus Kisten, bekämpfe andere Spieler und sei der Letzte, der steht.</div>
+        <div class="gm-desc">Unser eigenes Battle-Royale! Sammle Beute, bekämpfe Gegner in der schrumpfenden Zone und sei der letzte Überlebende.</div>
         <span class="gm-badge">Saisonale Events</span>
       </div>
-      <div class="gm-card">
-        <span class="gm-icon">🔥</span>
+      <div class="gm-card" onclick="selectGm('ffa')">
+        <img class="gm-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABJUlEQVR4nO2bsQ3CMBBFL4gRMgIFG7ALc1BTUDMHu7ABBSNkh9CnsGX5fI/o/mst2U9fd1ZiJ5MF8z3Pa2n89FmmKBczs0PkYv+IAqAFaIb32/q0Ys/XmG5jHdNXgAKgBWjc+6u352t47wnpK0AB0AI03f3U3PPXuTz+Wpqm690T0leAAqAFaJr7x73nawzeE9JXgAKgBWiO4SvOj3dxfLlfgkzMTBWgABQALUCjAGgBmvQBND8HbJ+1R58B1tB5QCcKgBagGX8v4HweoHsBZxQALUCjAGgBGgVAC9B0nwlGvwts19O7QCcKgBagGX8vsL3bc/4+oJf0FaAAaAGa+LvB4B6vkb4CFAAtQKNvhT0n2yMKgBag0T9DIyffAwqAFhBCCJIfunQwn2D5M8UAAAAASUVORK5CYII=" alt="Free For All">
         <div class="gm-name">Free For All</div>
-        <div class="gm-desc">Spring direkt ins Geschehen. FFA-Arenen für alle Skill-Level — von Anfänger bis Profi. Warm up, verbessere deine Skills.</div>
+        <div class="gm-desc">Kein Matchmaking, keine Wartezeit — spring sofort in die Arena und verdiene Coins für jeden Kill.</div>
         <span class="gm-badge">Immer verfügbar</span>
       </div>
-      <div class="gm-card">
-        <span class="gm-icon">🎯</span>
+      <div class="gm-card" onclick="selectGm('practice')">
+        <img class="gm-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABQklEQVR4nO2bMRKCUAxE1bHyEL+ipvA41h7LwsoDUVlY/ZrGE2hNnCGz/ugOZF8LE5adbPwfcLMRQmRm21pgKOUVIeRb+lqb7mEXJWSpyAC2ADZwftDMl2FALzGh9j10PjoT0neADGALYOPmxct8a8Zb8WaENxPSd4AMYAtg85GP6Mzfug6UNOX0eEDno+uG9B0gA9gC2OyjC7Zm3quHzgSLXRek7wAZwBbAxl0HeL/7aOYvpcweP9cK1fNmgl0XaAYYZABbAJufzwAv89dxnK9/PMwebyV9B8gAtgA24XuBaO71+dP66TtABrAFsNFeALraCpEBbAFswt8LRD8TtKCZt2gGGGQAWwCb8L2Azei/3w162BmXvgNkAFsAG30jFKpmgcgAtgA2+lYYqr5CZABbABv9ZyhKyFKRAWwBQgjB5A2PA2kTSEC0JwAAAABJRU5ErkJggg==" alt="Practice">
         <div class="gm-name">Practice</div>
-        <div class="gm-desc">Trainiere deine Klick-Rate, Combos und Bewegungen ohne Konsequenzen. Perfekt zum Aufwärmen oder Verbessern.</div>
+        <div class="gm-desc">Trainiere Combos, CPS und Strafing ohne ELO-Druck. Bot-Training, Kit-Editor und Live-Stats inklusive.</div>
         <span class="gm-badge">Kein ELO-Verlust</span>
       </div>
     </div>
-  </div>
+
+    <!-- Gamemode detail panel -->
+    <div id="gm-detail">
+      <div class="gm-detail-header">
+        <img id="gmd-icon" src="" alt="">
+        <div>
+          <div class="gm-detail-title" id="gmd-title"></div>
+          <div class="gm-detail-sub" id="gmd-sub"></div>
+        </div>
+      </div>
+      <div class="gm-detail-desc" id="gmd-desc"></div>
+      <div class="gm-detail-features" id="gmd-feats"></div>
+    </div>
+  
 </section>
 
 <!-- Features -->
@@ -459,7 +498,7 @@
           <span class="ip-address">play.lemonpvp.de</span>
           <span class="ip-copy">📋 Kopieren</span>
         </div>
-        <a class="btn-primary-lg" href="https://discord.gg/lemonpvp" target="_blank">
+        <a class="btn-primary-lg" href="https://discord.gg/eZWP9EGW7" target="_blank">
           Discord beitreten →
         </a>
       </div>
@@ -474,7 +513,7 @@
       🍋 <span>LemonPvP</span>
     </div>
     <div class="footer-links">
-      <a href="https://discord.gg/lemonpvp" target="_blank">Discord</a>
+      <a href="https://discord.gg/eZWP9EGW7" target="_blank">Discord</a>
       <a href="https://staff.lemonpvp.de" target="_blank">Staff Panel</a>
     </div>
     <div style="color:var(--muted)">© 2026 LemonPvP. Alle Rechte vorbehalten.</div>
@@ -494,6 +533,106 @@
     document.getElementById('mobileMenu').classList.remove('open')
   }
 
+
+  // ── Gamemode icons (base64 embedded) ──
+  const GM_ICONS = {
+    sword: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABP0lEQVR4nO2ZsQnCQBhGjYgjiKWFhSMIWohgb21l4QDOEEcQxAUUZ7C2yBxOYG1ztskJkZBLXuL/ve5yBl4+vv8wJOr8OcnbJen1tB9N0+tuvTrNQwHQAjQ9WiA0o9vdpdfHV/7vzTdAAdACNBEtUBZ/5mfLVWb/Mohyn9F8AxQALUDTujOg7Mz7mG+AAqAFaBp/BoSeeR/zDVAAtABN486Aqmfex3wDFAAtQIOfAXXPvI/5BigAWoAm+HeBzSZ22fW60P3X/SGkzk/MN0AB0AI0CoAWoFEAtABN5e8Cu8U4879gPhlm9rfnB/o+Yr4BCoAWoAk+f02feR/zDVAAtABN6Xls28z7mG+AAqAFaArPZ9tn3sd8AxQALUDz87tAHJ9c3v7z68qjhE79mG+AAqAFaBQALUCjAGgBIYQg+QDHwDWKPJrS9QAAAABJRU5ErkJggg==",
+    crown: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABO0lEQVR4nO2ZwRGCMBBFg2MB9oAXK8CLtWAZlGAZUoH04EUq0IP2YAd4hkN2MCGPmfx3c8TNmz9L4mwKl5jh2wy+74vdpUjl4pxzm5SLrREFQAvQKABagEYB0AI0W+uB6bmd+py2CPXLvgMUAC1AY74vw9P5/7sf7Box68X2yb4DFAAtQKMAaAEaBUAL0CgAWoBGAdACNOY8oO/Hn6tqKZX/mPrNJfsOUAC0AI0CoAVoFAAtQKMAaAEaBUAL0CgAWoBGAdACNOY8wMK6q1u63nQ+8biOf388++8Ks+8ABUAL0ATvAa5txlO5+uKdGp7at7fcvd5HXc8i+w5QALQATfAe8Om60TtY1qEV066XfQcoAFqAJngPKG+vWc+b53zk9Syy7wAFQAvQzN4DQu/j10b2HaAAaAEhhCD5AdQeN0ccvu5KAAAAAElFTkSuQmCC",
+    fire: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABJUlEQVR4nO2bsQ3CMBBFL4gRMgIFG7ALc1BTUDMHu7ABBSNkh9CnsGX5fI/o/mst2U9fd1ZiJ5MF8z3Pa2n89FmmKBczs0PkYv+IAqAFaIb32/q0Ys/XmG5jHdNXgAKgBWjc+6u352t47wnpK0AB0AI03f3U3PPXuTz+Wpqm690T0leAAqAFaJr7x73nawzeE9JXgAKgBWiO4SvOj3dxfLlfgkzMTBWgABQALUCjAGgBmvQBND8HbJ+1R58B1tB5QCcKgBagGX8v4HweoHsBZxQALUCjAGgBGgVAC9B0nwlGvwts19O7QCcKgBagGX8vsL3bc/4+oJf0FaAAaAGa+LvB4B6vkb4CFAAtQKNvhT0n2yMKgBag0T9DIyffAwqAFhBCCJIfunQwn2D5M8UAAAAASUVORK5CYII=",
+    target: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABQklEQVR4nO2bMRKCUAxE1bHyEL+ipvA41h7LwsoDUVlY/ZrGE2hNnCGz/ugOZF8LE5adbPwfcLMRQmRm21pgKOUVIeRb+lqb7mEXJWSpyAC2ADZwftDMl2FALzGh9j10PjoT0neADGALYOPmxct8a8Zb8WaENxPSd4AMYAtg85GP6Mzfug6UNOX0eEDno+uG9B0gA9gC2OyjC7Zm3quHzgSLXRek7wAZwBbAxl0HeL/7aOYvpcweP9cK1fNmgl0XaAYYZABbAJufzwAv89dxnK9/PMwebyV9B8gAtgA24XuBaO71+dP66TtABrAFsNFeALraCpEBbAFswt8LRD8TtKCZt2gGGGQAWwCb8L2Azei/3w162BmXvgNkAFsAG30jFKpmgcgAtgA2+lYYqr5CZABbABv9ZyhKyFKRAWwBQgjB5A2PA2kTSEC0JwAAAABJRU5ErkJggg==",
+  };
+
+  const GM_DATA = {
+    duels: {
+      icon: GM_ICONS.sword,
+      title: 'Ranked Duels',
+      sub: '1v1 · ELO-Matchmaking · Saisonale Ränge',
+      desc: 'Im kompetitiven 1v1-Format trittst du gegen Spieler deines Levels an. Das ELO-System sorgt dafür, dass du immer faire Kämpfe bekommst — egal ob du gerade anfängst oder schon seit Jahren spielst.',
+      feats: [
+        { icon:'🧪', title:'Placement Matches', text:'10 Kämpfe um deinen Startrang zu bestimmen' },
+        { icon:'📈', title:'ELO-System', text:'Gewinne oder verliere Punkte basierend auf Gegner-Stärke' },
+        { icon:'⚔️', title:'Kits', text:'Nodebuff, Sumo, Bridge, Soup, Combo, Axe, UHC & mehr' },
+        { icon:'🏆', title:'Saisonale Ränge', text:'Iron → Gold → Diamond → Emerald → Legend' },
+        { icon:'🎁', title:'Belohnungen', text:'Exklusive Saisonale Cosmetics für Top-Platzierungen' },
+        { icon:'🔄', title:'Fairplay', text:'Anti-Cheat und Staff-Moderation für saubere Duelle' },
+      ]
+    },
+    royale: {
+      icon: GM_ICONS.crown,
+      title: 'LemonRoyale',
+      sub: 'Battle-Royale · Saisonale Events · Exklusive Preise',
+      desc: 'Unser exklusives Battle-Royale-Format! Lande auf der Map, sammle Beute aus Kisten, rüste dich auf und eliminiere alle anderen Spieler. Die schrumpfende Zone treibt alle zusammen — nur einer überlebt.',
+      feats: [
+        { icon:'🗺️', title:'Große Map', text:'Weitläufige Arena mit verschiedenen Beute-Zonen' },
+        { icon:'🔴', title:'Schrumpfende Zone', text:'Der Kreis wird kleiner — bleib drin oder nimm Schaden' },
+        { icon:'📦', title:'Loot-System', text:'Kisten mit Ausrüstung verteilt über die gesamte Map' },
+        { icon:'🌟', title:'Event-Items', text:'Seltene Drops mit besonderen Effekten' },
+        { icon:'🏆', title:'Sieger-Belohnung', text:'Exklusive Cosmetics und Coin-Preise für den Letzten' },
+        { icon:'📅', title:'Saisonal', text:'Regelmäßige Events mit wechselnden Maps und Mods' },
+      ]
+    },
+    ffa: {
+      icon: GM_ICONS.fire,
+      title: 'Free For All',
+      sub: 'Jeder gegen Jeden · Sofort spielen · Coins verdienen',
+      desc: 'Kein Matchmaking, keine Wartezeit — spring sofort in die Arena und kämpfe gegen alle gleichzeitig. FFA ist der perfekte Modus zum Aufwärmen, Trainieren oder einfach zum Austoben ohne Konsequenzen fürs ELO.',
+      feats: [
+        { icon:'⚡', title:'Sofort spielen', text:'Keine Wartezeit, direkt rein und loskämpfen' },
+        { icon:'🗺️', title:'Mehrere Arenen', text:'Verschiedene Maps und Kits zur Auswahl' },
+        { icon:'💰', title:'Coins verdienen', text:'Für jeden Kill gibt es Coins für den Shop' },
+        { icon:'🔥', title:'Kein ELO-Druck', text:'Verliere niemals Ranking-Punkte im FFA-Modus' },
+        { icon:'📊', title:'Kill-Streak Bonus', text:'Mehr Kills hintereinander = mehr Coin-Multiplikator' },
+        { icon:'🎮', title:'Kit-Auswahl', text:'Wähle deinen Lieblings-Kit und los geht's' },
+      ]
+    },
+    practice: {
+      icon: GM_ICONS.target,
+      title: 'Practice',
+      sub: 'Training · Bot-Kämpfe · Kit-Editor · Keine Konsequenzen',
+      desc: 'Werde systematisch besser. Practice gibt dir alle Werkzeuge an die Hand um deine Klickrate, Combos, Strafing und Timings zu verbessern — ganz ohne Risiko fürs Ranking.',
+      feats: [
+        { icon:'🎯', title:'Bot-Training', text:'Übe gegen KI-Gegner mit einstellbarer Schwierigkeit' },
+        { icon:'⌨️', title:'CPS-Verbesserung', text:'Trainiere Klickrate und Combo-Timing gezielt' },
+        { icon:'🔧', title:'Kit-Editor', text:'Erstelle und speichere eigene Ausrüstungs-Setups' },
+        { icon:'📊', title:'Live-Stats', text:'Verfolge deinen Fortschritt mit echtzeitstatistiken' },
+        { icon:'🤝', title:'Unranked Duels', text:'Fordere Freunde heraus ohne ELO-Auswirkung' },
+        { icon:'🏋️', title:'Warm-Up', text:'Perfekt vor Ranked-Games zum Einspielen' },
+      ]
+    },
+  };
+
+  let activeGm = null;
+
+  function selectGm(id) {
+    if (activeGm === id) {
+      // toggle off
+      activeGm = null;
+      document.getElementById('gm-detail').classList.remove('visible');
+      document.querySelectorAll('.gm-card').forEach(c => c.classList.remove('active'));
+      return;
+    }
+    activeGm = id;
+    const data = GM_DATA[id];
+    document.querySelectorAll('.gm-card').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    document.getElementById('gmd-icon').src = data.icon;
+    document.getElementById('gmd-title').textContent = data.title;
+    document.getElementById('gmd-sub').textContent = data.sub;
+    document.getElementById('gmd-desc').textContent = data.desc;
+
+    const feats = document.getElementById('gmd-feats');
+    feats.innerHTML = data.feats.map(f =>
+      `<div class="gm-feat"><span class="gm-feat-icon">${f.icon}</span><div class="gm-feat-text"><strong>${f.title}</strong>${f.text}</div></div>`
+    ).join('');
+
+    const detail = document.getElementById('gm-detail');
+    detail.classList.remove('visible');
+    void detail.offsetWidth; // force reflow for animation
+    detail.classList.add('visible');
+    setTimeout(() => detail.scrollIntoView({behavior:'smooth', block:'nearest'}), 50);
+  }
+
   // ── Copy IP ──
   function copyIP() {
     navigator.clipboard.writeText('play.lemonpvp.de').then(() => {
@@ -501,7 +640,7 @@
         const orig = el.textContent
         el.textContent = '✓ Kopiert!'
         el.classList.add('ip-copied')
-        setTimeout(() => { el.textContent = orig.includes('Kopiert') ? '📋 Kopieren' : '📋 Kopieren'; el.classList.remove('ip-copied') }, 2000)
+        setTimeout(() => { el.textContent = orig.includes('Kopiert') ? '📋 Kopieren' : (el.id === 'ipCopyText' ? '📋 Kopieren' : '📋 Kopieren'); el.classList.remove('ip-copied') }, 2000)
       })
     })
   }
