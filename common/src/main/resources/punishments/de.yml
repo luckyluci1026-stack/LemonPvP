@@ -1,0 +1,171 @@
+# ======================================================================
+#  FLFAC - Strafen
+# ======================================================================
+# Platzhalter:
+#   %check_name%  - Name der Prüfung
+#   %description% - Beschreibung der Prüfung
+#   %vl%          - Verstöße
+#   %verbose%     - zusätzliche Informationen
+#   %player%      - Spielername
+#
+# Spezielle Befehle:
+#   [alert]   - benachrichtigt das Team im Spiel
+#   [log]     - schreibt in die FLFAC-Verstoßhistorie
+#   [webhook] - sendet an deinen Discord-Webhook
+#   [proxy]   - sendet an andere Server über deinen Proxy (Bungee/Velocity)
+#
+# Befehlsformat:  "Schwelle:Intervall Befehl"
+#   N = benötigte Verstöße, damit der Befehl ausgeführt wird.
+#   M > 0 -> läuft bei N, dann N+M, N+2M, ...
+#   M = 0 -> läuft einmalig bei N.
+#
+# ----------------------------------------------------------------------
+#  >>> BAN / KICK / FREEZE - so wählst du die Strafe <<<
+# ----------------------------------------------------------------------
+# Jede Gruppe hat einen "FLFAC Strafen-Leiter"-Abschnitt. Zum AKTIVIEREN
+# einer Strafe die Zeile entkommentieren (das "#" entfernen), zum
+# DEAKTIVIEREN ein "#" davor setzen. Beliebig pro Gruppe kombinierbar.
+#
+#   FREEZE (Vanilla, ohne Zusatz-Plugin):
+#     "40:0 effect give %player% minecraft:slowness 9999 250 true"
+#     "40:0 effect give %player% minecraft:blindness 9999 1 true"
+#   FREEZE (mit Freeze-Plugin, z. B. Befehl /freeze):
+#     "40:0 freeze %player%"
+#   KICK:
+#     "60:0 kick %player% &cFLFAC &8» &fUnfairer Vorteil erkannt (%check_name%)"
+#   BAN (Vanilla):
+#     "100:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"
+#   BAN (mit LiteBans/AdvancedBan usw.):
+#     "100:0 tempban %player% 30d FLFAC > Cheating (%check_name%)"
+# ======================================================================
+
+Punishments:
+  Simulation:
+    remove-violations-after: 300
+    checks:
+      - "Simulation"
+      - "GroundSpoof"
+      - "Timer"
+      - "TimerLimit"
+      - "NoFall"
+    commands:
+      - "100:40 [alert]"
+      - "1:1 [log]"
+      - "100:100 [webhook]"
+      - "100:100 [proxy]"
+      # --- FLFAC Strafen-Leiter ---
+      # - "150:0 effect give %player% minecraft:slowness 9999 250 true"     # FREEZE
+      # - "200:0 kick %player% &cFLFAC &8» &fUngültige Bewegung (%check_name%)" # KICK
+      # - "400:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"       # BAN
+
+  Knockback:
+    remove-violations-after: 300
+    checks:
+      - "Knockback"
+      - "Explosion"
+    commands:
+      - "5:5 [alert]"
+      - "1:1 [log]"
+      - "20:20 [webhook]"
+      - "20:20 [proxy]"
+      # --- FLFAC Strafen-Leiter ---
+      # - "40:0 kick %player% &cFLFAC &8» &fAnti-Knockback (%check_name%)"   # KICK
+      # - "80:0 ban %player% FLFAC > Anti-Knockback (%check_name%)"          # BAN
+
+  Post:
+    remove-violations-after: 300
+    checks:
+      - "Post"
+    commands:
+      - "20:20 [alert]"
+      - "1:1 [log]"
+      - "40:40 [webhook]"
+      - "40:40 [proxy]"
+
+  BadPackets:
+    remove-violations-after: 300
+    checks:
+      - "BadPackets"
+      - "PacketOrder"
+      - "Crash"
+    commands:
+      - "20:20 [alert]"
+      - "1:1 [log]"
+      - "40:40 [webhook]"
+      - "40:40 [proxy]"
+      # --- FLFAC Strafen-Leiter (BadPackets ist sehr zuverlässig) ---
+      # - "40:0 kick %player% &cFLFAC &8» &fIllegale Pakete (%check_name%)"  # KICK
+      # - "80:0 ban %player% FLFAC > Illegale Pakete (%check_name%)"         # BAN
+
+  Reach:
+    remove-violations-after: 300
+    checks:
+      - "Reach"
+    commands:
+      - "5:3 [alert]"
+      - "1:1 [log]"
+      - "5:3 [webhook]"
+      - "5:3 [proxy]"
+      # --- FLFAC Strafen-Leiter (Reach ist sehr zuverlässig) ---
+      # - "15:0 effect give %player% minecraft:slowness 9999 250 true"      # FREEZE
+      # - "25:0 kick %player% &cFLFAC &8» &fReach erkannt (%check_name%)"    # KICK
+      # - "50:0 ban %player% FLFAC > Reach erkannt (%check_name%)"           # BAN
+
+  Hitboxes:
+    remove-violations-after: 300
+    checks:
+      - "Hitboxes"
+    commands:
+      - "5:3 [alert]"
+      - "1:1 [log]"
+      - "5:3 [webhook]"
+      - "5:3 [proxy]"
+      # --- FLFAC Strafen-Leiter ---
+      # - "25:0 kick %player% &cFLFAC &8» &fHitbox erkannt (%check_name%)"   # KICK
+      # - "50:0 ban %player% FLFAC > Hitbox erkannt (%check_name%)"          # BAN
+
+  Misc:
+    remove-violations-after: 300
+    checks:
+      - "Vehicle"
+      - "NoSlow"
+      - "Sprint"
+      - "MultiActions"
+      - "Place"
+      - "Baritone"
+      - "Break"
+      - "TransactionOrder"
+      - "Elytra"
+      - "Chat"
+      - "Exploit"
+    commands:
+      - "10:5 [alert]"
+      - "1:1 [log]"
+      - "20:10 [webhook]"
+      - "20:10 [proxy]"
+      # --- FLFAC Strafen-Leiter ---
+      # - "60:0 kick %player% &cFLFAC &8» &fUnfairer Vorteil (%check_name%)" # KICK
+      # - "120:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"       # BAN
+
+  Combat:
+    remove-violations-after: 300
+    checks:
+      - "Interact"
+      - "Aim"
+    commands:
+      - "20:40 [alert]"
+      - "1:1 [log]"
+      # --- FLFAC Strafen-Leiter ---
+      # - "60:0 kick %player% &cFLFAC &8» &fKampf-Anomalie (%check_name%)"   # KICK
+      # - "120:0 ban %player% FLFAC > Kampf-Anomalie (%check_name%)"         # BAN
+
+  Autoclicker:
+    remove-violations-after: 300
+    checks:
+      - "Autoclicker"
+    commands:
+      - "20:40 [alert]"
+      - "1:1 [log]"
+      # --- FLFAC Strafen-Leiter ---
+      # - "60:0 kick %player% &cFLFAC &8» &fAutoClicker (%check_name%)"      # KICK
+      # - "120:0 ban %player% FLFAC > AutoClicker (%check_name%)"            # BAN

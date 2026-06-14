@@ -1,109 +1,67 @@
-# FLFAC — Fast Lag Free Anti Cheat
-
-> A GrimAC-inspired, event-driven anticheat for **Paper** with a custom check
-> suite and signature **gradient styling** (Farbverläufe). Built for LemonPvP.
-
-FLFAC takes the spirit of GrimAC — a serious, server-side anticheat — and ships
-it as a lightweight, self-contained Paper plugin with extra quality-of-life
-features and a unique look. No ProtocolLib, no external dependencies: it hooks
-straight into Bukkit/Paper events so it stays **fast and lag free**.
+<div align="center">
+ <h1>⚡ FLFAC — Fast Lag Free Anti Cheat</h1>
+ <p><i>A prediction-based anticheat for Paper, with custom features and gradient styling — built for LemonPvP.</i></p>
+</div>
 
 ---
 
-## ✨ Features
+FLFAC is a high-accuracy, fully server-side anticheat. It keeps a complete
+movement-prediction engine (the same approach the best anticheats use to
+simulate the player's physics every tick) and layers LemonPvP's own branding,
+gradient interface and a detailed, ready-to-use punishment system on top.
 
-### Custom features on top of "just another AC"
-- **Gradient everything (Farbverläufe).** Prefix, player names, check names and
-  accents are all rendered with configurable MiniMessage gradients. Default is
-  the LemonPvP yellow→green brand (`#fffb00 → #00ff00`).
-- **Lag-free guard.** Heavy checks are automatically skipped while the server
-  TPS is below a configurable threshold, so the AC never makes lag worse.
-- **Lag compensation.** Ping is factored into combat checks (reach) to crush
-  false positives for high-ping players.
-- **Animated gradient console banner** on startup.
-- **Live alert & verbose system** with hover details and click-to-inspect.
-- **Per-check punishment ladders** (global or per-check) run from console.
-- **Violation decay** so legit players are never punished for old noise.
-- **Rich `/flfac` command** with tab completion and a player violation profile.
+## ✨ What's inside
 
-### Checks
-| Category | Checks |
-|----------|--------|
-| Combat   | Reach, Hitbox, KillAura, AutoClicker, Velocity (anti-knockback) |
-| Movement | Speed, Fly, NoFall, Jesus (water-walk), Timer |
-| World    | Scaffold, Nuker, FastBreak |
-| Player   | BadPackets |
-
-Every check is individually toggleable and tunable in `config.yml`
-(thresholds, alert level, max violation level, punishment ladder).
-
----
-
-## 🚀 Commands & Permissions
-
-```
-/flfac                  → help
-/flfac alerts           → toggle cheat alerts        (flfac.alerts)
-/flfac verbose          → toggle verbose output      (flfac.verbose)
-/flfac info <player>    → show a player's violations (flfac.command)
-/flfac checks           → list all checks + state     (flfac.command)
-/flfac reset <player>   → reset violations            (flfac.admin)
-/flfac reload           → reload config               (flfac.admin)
-```
-Aliases: `/fac`, `/ac`, `/anticheat`.
-
-| Permission       | Purpose                              | Default |
-|------------------|--------------------------------------|---------|
-| `flfac.command`  | Use `/flfac`                         | op      |
-| `flfac.alerts`   | Receive cheat alerts                 | op      |
-| `flfac.verbose`  | Receive verbose debug output         | op      |
-| `flfac.admin`    | Reload / reset                       | op      |
-| `flfac.bypass`   | Bypass **all** checks                | false   |
-| `flfac.*`        | Everything                           | op      |
-
----
+- 🧠 **Real prediction engine** — movement is simulated and compared against
+  what the client claims, instead of relying on guessy thresholds.
+- 🌈 **Gradient styling (Farbverläufe)** — the prefix, alerts and check names use
+  configurable MiniMessage gradients. Default is the LemonPvP `#fffb00 → #00ff00`
+  look, set in `common/src/main/resources/messages/`.
+- 🔨 **Detailed Ban / Kick / Freeze config** — every check group has a documented
+  punishment ladder in `common/src/main/resources/punishments/`. Turn a
+  punishment on/off by (un)commenting a single line. Includes vanilla freeze
+  (slowness/blindness), freeze-plugin and ban-plugin examples.
+- 🪶 **Lag friendly** — async, packet-driven design.
+- 🌍 **Localized** — English and German messages/punishments rebranded to FLFAC.
+- 🧩 **Folia + multi-version support** inherited from the upstream engine.
 
 ## 🛠️ Building
 
-Requires **JDK 21** and Maven. FLFAC builds against the Paper API, so your build
-machine needs access to `https://repo.papermc.io`.
+This is a Gradle project.
 
 ```bash
-mvn clean package
+./gradlew :bukkit:build
 ```
 
-The compiled plugin lands in `target/FLFAC-1.0.0.jar`. Drop it into your
-server's `plugins/` folder (Paper **1.20.x – 1.21.x**, Java 21) and restart.
+The plugin jar is produced under `bukkit/build/libs/`. Building requires a JDK
+that satisfies the toolchain in `bukkit/build.gradle.kts` and network access to
+the PacketEvents / Paper / Grim Maven repositories declared in the build files.
 
----
+> ℹ️ Note: this repository contains the full engine source. Internal package
+> names (`ac.grim.grimac.*`), permissions (`grim.*`) and the in-game command
+> (`/grim`) are intentionally left as-is so the engine keeps working; the
+> user-facing identity (plugin name **FLFAC**, prefix, alerts, punishments) is
+> what has been rebranded.
 
 ## ⚙️ Configuration
 
-All colors accept hex values and are combined into MiniMessage gradients.
-The most important knobs:
+After the first start, files appear in `plugins/FLFAC/`:
 
-```yaml
-branding:
-  prefix-gradient: ["#fffb00", "#aaff00", "#00ff00"]  # FLFAC brand
-performance:
-  min-tps: 16.0          # skip heavy checks below this TPS
-  lag-compensation: true # add ping into reach etc.
-checks:
-  reach:
-    enabled: true
-    max-reach: 3.05
-    alert-vl: 4
-```
+- `messages/<lang>.yml` — branding, gradients, alert format
+- `punishments/<lang>.yml` — the Ban / Kick / Freeze ladder
+- `config/<lang>.yml` — engine settings & check toggles
 
-See `src/main/resources/config.yml` for the fully documented defaults.
+Run `/grim reload` after editing.
 
 ---
 
-## ⚠️ Notes & honest scope
+## 📜 License & Credits
 
-FLFAC is **inspired by** GrimAC but is an independent implementation. It does
-**not** replicate GrimAC's full client-prediction engine; instead it uses
-robust, well-tuned heuristics driven by Bukkit/Paper events. Thresholds default
-to conservative values to keep false positives low — tune them for your server.
+FLFAC is a fork of **GrimAC** and is therefore licensed under the
+**GNU General Public License v3 (GPLv3)** — see [`LICENSE`](LICENSE). The full
+corresponding source is included in this repository, as the license requires.
 
-Made with ⚡ by **LemonPvP**.
+**Original project / prediction engine:** GrimAC by the GrimAnticheat team —
+<https://github.com/GrimAnticheat/Grim>. All credit for the underlying engine
+goes to them. FLFAC only adds branding, gradient styling and configuration on
+top.
