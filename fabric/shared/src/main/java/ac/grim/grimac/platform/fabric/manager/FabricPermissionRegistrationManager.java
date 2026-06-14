@@ -31,16 +31,16 @@ public class FabricPermissionRegistrationManager implements PermissionRegistrati
                                                Consumer<String> onRegister) {
         this.fabricSenderFactory = fabricSenderFactory;
         this.onRegister = onRegister;
-        registerPermission("grim.exempt", PermissionDefaultValue.FALSE);
-        registerPermission("grim.nosetback", PermissionDefaultValue.FALSE);
-        registerPermission("grim.nomodifypacket", PermissionDefaultValue.FALSE);
-        registerPermission("grim.disabled", PermissionDefaultValue.FALSE);
-        registerPermission("grim.alerts.enable-on-join", PermissionDefaultValue.FALSE);
-        registerPermission("grim.verbose.enable-on-join", PermissionDefaultValue.FALSE);
-        registerPermission("grim.brand.enable-on-join", PermissionDefaultValue.FALSE);
-        registerPermission("grim.alerts.enable-on-join.silent", PermissionDefaultValue.FALSE);
-        registerPermission("grim.verbose.enable-on-join.silent", PermissionDefaultValue.FALSE);
-        registerPermission("grim.brand.enable-on-join.silent", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.exempt", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.nosetback", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.nomodifypacket", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.disabled", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.alerts.enable-on-join", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.verbose.enable-on-join", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.brand.enable-on-join", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.alerts.enable-on-join.silent", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.verbose.enable-on-join.silent", PermissionDefaultValue.FALSE);
+        registerPermission("flfac.brand.enable-on-join.silent", PermissionDefaultValue.FALSE);
     }
 
     @Override

@@ -617,10 +617,10 @@ public class GrimPlayer implements GrimUser {
     public void updatePermissions() {
         runSafely(() -> {
             try {
-                boolean noModifyPacketPermission = hasPermission("grim.nomodifypacket");
-                boolean noSetbackPermission = hasPermission("grim.nosetback");
-                boolean disabledPermission = hasPermission("grim.disabled");
-                boolean exemptPermission = hasPermission("grim.exempt");
+                boolean noModifyPacketPermission = hasPermission("flfac.nomodifypacket");
+                boolean noSetbackPermission = hasPermission("flfac.nosetback");
+                boolean disabledPermission = hasPermission("flfac.disabled");
+                boolean exemptPermission = hasPermission("flfac.exempt");
                 for (AbstractCheck check : checkManager.allChecks.values()) {
                     if (check instanceof Check c) {
                         c.updatePermissions();
