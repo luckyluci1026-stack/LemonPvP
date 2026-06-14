@@ -1,0 +1,39 @@
+name: FLFAC
+version: ${project.version}
+main: de.lemonpvp.flfac.FLFAC
+api-version: '1.20'
+author: LemonPvP
+description: Fast Lag Free Anti Cheat - GrimAC-style anticheat with custom features and gradients.
+website: https://lemonpvp.eu
+folia-supported: false
+
+commands:
+  flfac:
+    description: FLFAC main command
+    usage: /flfac help
+    aliases: [fac, ac, anticheat]
+
+permissions:
+  flfac.*:
+    description: Grants all FLFAC permissions
+    default: op
+    children:
+      flfac.command: true
+      flfac.alerts: true
+      flfac.verbose: true
+      flfac.admin: true
+  flfac.command:
+    description: Allows use of /flfac
+    default: op
+  flfac.alerts:
+    description: Receive FLFAC cheat alerts
+    default: op
+  flfac.verbose:
+    description: Receive FLFAC verbose debug output
+    default: op
+  flfac.admin:
+    description: Allows reload and management of FLFAC
+    default: op
+  flfac.bypass:
+    description: Bypass all FLFAC checks
+    default: false

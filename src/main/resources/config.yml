@@ -1,0 +1,189 @@
+# ███████╗██╗      ███████╗ █████╗  ██████╗
+# ██╔════╝██║      ██╔════╝██╔══██╗██╔════╝
+# █████╗  ██║      █████╗  ███████║██║
+# ██╔══╝  ██║      ██╔══╝  ██╔══██║██║
+# ██║     ███████╗ ██║     ██║  ██║╚██████╗
+# ╚═╝     ╚══════╝ ╚═╝     ╚═╝  ╚═╝ ╚═════╝
+#  Fast Lag Free Anti Cheat  -  by LemonPvP
+#
+# Colors support MiniMessage gradients (Farbverläufe), e.g.:
+#   "#fffb00:#00ff00"  ->  yellow to green gradient (FLFAC brand)
+
+# ----------------------------------------------------------------------
+#  Branding & Colors
+# ----------------------------------------------------------------------
+branding:
+  # The plugin tag shown in front of every message.
+  prefix-text: "FLFAC"
+  # Gradient colors used for the prefix (top to bottom of the list = left to right).
+  prefix-gradient:
+    - "#fffb00"
+    - "#aaff00"
+    - "#00ff00"
+  # Gradient used for player names in alerts.
+  player-gradient:
+    - "#ffffff"
+    - "#bdbdbd"
+  # Gradient used for the check name in alerts.
+  check-gradient:
+    - "#ff5e00"
+    - "#ffd000"
+  # Gradient used for the violation counter / accents.
+  accent-gradient:
+    - "#00ff95"
+    - "#00d4ff"
+  # Show the animated gradient startup banner in the console.
+  startup-banner: true
+
+# ----------------------------------------------------------------------
+#  Performance ("Lag Free")
+# ----------------------------------------------------------------------
+performance:
+  # When the server TPS drops below this value, heavy checks are skipped
+  # for that tick to keep the server lag-free. Set to 0 to never skip.
+  min-tps: 16.0
+  # Add the player's ping (in ms) into lag-compensated checks (reach etc.)
+  # to dramatically reduce false positives for high-ping players.
+  lag-compensation: true
+  # Players whose ping is above this are treated more leniently (ms).
+  high-ping-threshold: 150
+
+# ----------------------------------------------------------------------
+#  Alerts
+# ----------------------------------------------------------------------
+alerts:
+  # Default state of /flfac alerts for staff who just joined.
+  enabled-by-default: true
+  # Play a sound to staff when an alert fires.
+  sound:
+    enabled: true
+    name: "minecraft:block.note_block.pling"
+    volume: 0.6
+    pitch: 1.4
+  # Cooldown between two alerts of the same check for the same player (ms).
+  cooldown-ms: 800
+  # Format placeholders: %player%, %check%, %type%, %vl%, %ping%, %tps%, %details%
+  format: "%player% <gray>failed</gray> %check% <dark_gray>[</dark_gray>%type%<dark_gray>]</dark_gray> <gray>x</gray>%vl%"
+
+# ----------------------------------------------------------------------
+#  Violations & Decay
+# ----------------------------------------------------------------------
+violations:
+  # Violation level removed from every player every second (decay).
+  decay-per-second: 0.25
+  # Reset a player's violations completely when they log out.
+  reset-on-quit: true
+
+# ----------------------------------------------------------------------
+#  Punishments
+# ----------------------------------------------------------------------
+# Commands run from console when a player's violation level for a check
+# reaches the given threshold. Placeholders: %player%, %check%, %vl%
+punishments:
+  enabled: true
+  # Global ladder applied to every check (per-check overrides below win).
+  ladder:
+    20: "kick %player% &cFLFAC &7> &fUnfair advantage detected (%check%)"
+    40: "ban %player% &cFLFAC &7> &fCheating detected (%check%)"
+
+# ----------------------------------------------------------------------
+#  Checks
+# ----------------------------------------------------------------------
+# Every check has:
+#   enabled    -> turn the check on/off
+#   alert-vl   -> minimum violation level before staff get alerted
+#   max-vl     -> violation level is capped here
+# Plus check specific options.
+checks:
+  # --- Combat ---
+  reach:
+    enabled: true
+    alert-vl: 4
+    max-vl: 60
+    max-reach: 3.05          # survival default is 3.0; small buffer
+    vl-add: 1.0
+  hitbox:
+    enabled: true
+    alert-vl: 5
+    max-vl: 60
+    max-angle: 75.0          # max angle (deg) between look vector and target
+    vl-add: 1.0
+  killaura:
+    enabled: true
+    alert-vl: 6
+    max-vl: 80
+    max-rotation-delta: 50.0 # max plausible yaw change per tick while attacking
+    min-aim-consistency: 0.0
+    vl-add: 1.0
+  autoclicker:
+    enabled: true
+    alert-vl: 5
+    max-vl: 60
+    max-cps: 20              # clicks per second considered impossible
+    constant-cps-deviation: 1.2 # low deviation = robot-like clicking
+    vl-add: 1.0
+  velocity:
+    enabled: true
+    alert-vl: 6
+    max-vl: 60
+    min-horizontal: 0.20     # required fraction of expected knockback
+    min-vertical: 0.10
+    vl-add: 1.0
+
+  # --- Movement ---
+  speed:
+    enabled: true
+    alert-vl: 6
+    max-vl: 80
+    max-horizontal: 0.62     # base allowed blocks/tick on ground (sprint+jump)
+    vl-add: 1.0
+  fly:
+    enabled: true
+    alert-vl: 6
+    max-vl: 80
+    max-air-hover-ticks: 12  # ticks allowed hovering with ~0 vertical movement
+    vl-add: 1.0
+  nofall:
+    enabled: true
+    alert-vl: 4
+    max-vl: 40
+    min-fall-distance: 3.0
+    vl-add: 1.0
+  jesus:
+    enabled: true
+    alert-vl: 6
+    max-vl: 40
+    vl-add: 1.0
+  timer:
+    enabled: true
+    alert-vl: 8
+    max-vl: 60
+    max-balance: 120.0       # accumulated time-ahead (ms) before flag
+    vl-add: 1.0
+
+  # --- World ---
+  scaffold:
+    enabled: true
+    alert-vl: 6
+    max-vl: 60
+    max-place-angle: 80.0    # placing blocks while barely looking at them
+    vl-add: 1.0
+  nuker:
+    enabled: true
+    alert-vl: 4
+    max-vl: 60
+    max-blocks-per-tick: 2
+    vl-add: 1.0
+  fastbreak:
+    enabled: true
+    alert-vl: 5
+    max-vl: 60
+    min-break-ratio: 0.6     # broke block in <60% of the expected time
+    vl-add: 1.0
+
+  # --- Player / Packets ---
+  badpackets:
+    enabled: true
+    alert-vl: 3
+    max-vl: 40
+    vl-add: 1.0
