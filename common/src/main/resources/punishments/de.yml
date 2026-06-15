@@ -54,9 +54,9 @@ Punishments:
       - "100:100 [webhook]"
       - "100:100 [proxy]"
       # --- FLFAC Strafen-Leiter ---
-      # - "150:0 effect give %player% minecraft:slowness 9999 250 true"     # FREEZE
-      # - "200:0 kick %player% &cFLFAC &8» &fUngültige Bewegung (%check_name%)" # KICK
-      # - "400:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"       # BAN
+      - "150:0 effect give %player% minecraft:slowness 9999 250 true"     # FREEZE
+      - "200:0 kick %player% &cFLFAC &8» &fUngültige Bewegung (%check_name%)" # KICK
+      - "400:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"       # BAN
 
   Knockback:
     remove-violations-after: 300
@@ -69,8 +69,8 @@ Punishments:
       - "20:20 [webhook]"
       - "20:20 [proxy]"
       # --- FLFAC Strafen-Leiter ---
-      # - "40:0 kick %player% &cFLFAC &8» &fAnti-Knockback (%check_name%)"   # KICK
-      # - "80:0 ban %player% FLFAC > Anti-Knockback (%check_name%)"          # BAN
+      - "40:0 kick %player% &cFLFAC &8» &fAnti-Knockback (%check_name%)"   # KICK
+      - "80:0 ban %player% FLFAC > Anti-Knockback (%check_name%)"          # BAN
 
   Post:
     remove-violations-after: 300
@@ -94,8 +94,8 @@ Punishments:
       - "40:40 [webhook]"
       - "40:40 [proxy]"
       # --- FLFAC Strafen-Leiter (BadPackets ist sehr zuverlässig) ---
-      # - "40:0 kick %player% &cFLFAC &8» &fIllegale Pakete (%check_name%)"  # KICK
-      # - "80:0 ban %player% FLFAC > Illegale Pakete (%check_name%)"         # BAN
+      - "40:0 kick %player% &cFLFAC &8» &fIllegale Pakete (%check_name%)"  # KICK
+      - "80:0 ban %player% FLFAC > Illegale Pakete (%check_name%)"         # BAN
 
   Reach:
     remove-violations-after: 300
@@ -107,9 +107,9 @@ Punishments:
       - "5:3 [webhook]"
       - "5:3 [proxy]"
       # --- FLFAC Strafen-Leiter (Reach ist sehr zuverlässig) ---
-      # - "15:0 effect give %player% minecraft:slowness 9999 250 true"      # FREEZE
-      # - "25:0 kick %player% &cFLFAC &8» &fReach erkannt (%check_name%)"    # KICK
-      # - "50:0 ban %player% FLFAC > Reach erkannt (%check_name%)"           # BAN
+      - "15:0 effect give %player% minecraft:slowness 9999 250 true"      # FREEZE
+      - "25:0 kick %player% &cFLFAC &8» &fReach erkannt (%check_name%)"    # KICK
+      - "50:0 ban %player% FLFAC > Reach erkannt (%check_name%)"           # BAN
 
   Hitboxes:
     remove-violations-after: 300
@@ -121,8 +121,8 @@ Punishments:
       - "5:3 [webhook]"
       - "5:3 [proxy]"
       # --- FLFAC Strafen-Leiter ---
-      # - "25:0 kick %player% &cFLFAC &8» &fHitbox erkannt (%check_name%)"   # KICK
-      # - "50:0 ban %player% FLFAC > Hitbox erkannt (%check_name%)"          # BAN
+      - "25:0 kick %player% &cFLFAC &8» &fHitbox erkannt (%check_name%)"   # KICK
+      - "50:0 ban %player% FLFAC > Hitbox erkannt (%check_name%)"          # BAN
 
   Misc:
     remove-violations-after: 300
@@ -144,8 +144,8 @@ Punishments:
       - "20:10 [webhook]"
       - "20:10 [proxy]"
       # --- FLFAC Strafen-Leiter ---
-      # - "60:0 kick %player% &cFLFAC &8» &fUnfairer Vorteil (%check_name%)" # KICK
-      # - "120:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"       # BAN
+      - "60:0 kick %player% &cFLFAC &8» &fUnfairer Vorteil (%check_name%)" # KICK
+      - "120:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"       # BAN
 
   Combat:
     remove-violations-after: 300
@@ -156,8 +156,8 @@ Punishments:
       - "20:40 [alert]"
       - "1:1 [log]"
       # --- FLFAC Strafen-Leiter ---
-      # - "60:0 kick %player% &cFLFAC &8» &fKampf-Anomalie (%check_name%)"   # KICK
-      # - "120:0 ban %player% FLFAC > Kampf-Anomalie (%check_name%)"         # BAN
+      - "60:0 kick %player% &cFLFAC &8» &fKampf-Anomalie (%check_name%)"   # KICK
+      - "120:0 ban %player% FLFAC > Kampf-Anomalie (%check_name%)"         # BAN
 
   Autoclicker:
     remove-violations-after: 300
@@ -167,5 +167,5 @@ Punishments:
       - "20:40 [alert]"
       - "1:1 [log]"
       # --- FLFAC Strafen-Leiter ---
-      # - "60:0 kick %player% &cFLFAC &8» &fAutoClicker (%check_name%)"      # KICK
-      # - "120:0 ban %player% FLFAC > AutoClicker (%check_name%)"            # BAN
+      - "60:0 kick %player% &cFLFAC &8» &fAutoClicker (%check_name%)"      # KICK
+      - "120:0 ban %player% FLFAC > AutoClicker (%check_name%)"            # BAN

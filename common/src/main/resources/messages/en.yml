@@ -7,7 +7,7 @@ verbose-enabled: "%prefix% &fVerbose enabled"
 verbose-disabled: "%prefix% &fVerbose disabled"
 brands-enabled: "%prefix% &fBrands enabled"
 brands-disabled: "%prefix% &fBrands disabled"
-client-brand-format: "%prefix% &f%player% joined using %brand%"
+client-brand-format: "%prefix% &f%player% &7joined using <gradient:#00ff95:#00d4ff>%brand%</gradient>"
 console-specify-target: "%prefix% &cYou must specify a target as the console!"
 reloading: "%prefix% &7Reloading config..."
 reloaded: "%prefix% &fConfig has been reloaded."
@@ -47,17 +47,17 @@ alerts-format-proxy: "%prefix% &f[&cproxy&f] &f%player% &bfailed &f%check_name%%
 experimental-symbol: "*"
 
 profile:
-    - "&7======================"
-    - "%prefix% &bProfile for &f%player%"
+    - "<gradient:#fffb00:#00ff00>========================</gradient>"
+    - "%prefix% <gradient:#fffb00:#00ff00>Profile for</gradient> &f%player%"
     - "&bPing: &f%ping%"
     - "&bVersion: &f%version%"
     - "&bClient Brand: &f%brand%"
     - "&bHorizontal Sensitivity: &f%h_sensitivity%%"
     - "&bVertical Sensitivity: &f%v_sensitivity%%"
     - "&bFastMath Enabled: &f%fast_math%"
-    - "&7======================"
+    - "<gradient:#fffb00:#00ff00>========================</gradient>"
 help:
-    - "&7======================"
+    - "<gradient:#fffb00:#00ff00>========================</gradient>"
     - "/grim alerts &f- &7Toggle alerts"
     - "/grim brands &f- &7Toggle brands"
     - "/grim profile <player> &f- &7View player info"
@@ -72,7 +72,7 @@ help:
     - "/grim history <player> page <N> &f- &7Jump to page N of the session list"
     - "/grim history <player> session <N|latest> [-d] [-v] &f- &7Session detail (most recent violations first)"
     - "/grim history <player> session <N|latest> page <N> [-d] [-v] &f- &7Session detail, violation page N"
-    - "&7======================"
+    - "<gradient:#fffb00:#00ff00>========================</gradient>"
 
 # === /grim history ===
 # Session-based history UI. All lines below are fully configurable; placeholders
