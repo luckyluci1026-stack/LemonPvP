@@ -138,6 +138,18 @@ Explosion:
     threshold: 0.001
     setbackvl: 3
 
+# FLFAC-Eigencheck. Erkennt AutoClicker über Klicks pro Sekunde und
+# Klick-Konsistenz (Armschwünge beim Blockabbau werden ignoriert).
+# Experimenteller Check - mit 'experimental-checks: true' aktivieren.
+Autoclicker:
+    # Klicks pro Sekunde über diesem Wert gelten als unmöglich.
+    max-cps: 16
+    # Minimale Standardabweichung (ms) zwischen Klicks. Darunter = roboterhaft.
+    constant-deviation-ms: 1.2
+    # Klicks im 1s-Fenster, bevor der Konsistenz-Test greift.
+    min-samples: 8
+    decay: 0.05
+
 TimerA:
     setbackvl: 10
     # Millisekunden, die der Spieler akkumulieren kann, um sie später zu nutzen, wenn er zurückfällt.

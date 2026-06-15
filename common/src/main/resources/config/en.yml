@@ -138,6 +138,18 @@ Explosion:
     threshold: 0.001
     setbackvl: 3
 
+# FLFAC custom check. Detects auto clickers via clicks-per-second and click
+# consistency (arm swings while breaking blocks are ignored).
+# This is an experimental check - set 'experimental-checks: true' to enable it.
+Autoclicker:
+    # Clicks per second above this are considered impossible.
+    max-cps: 16
+    # Minimum standard deviation (ms) between clicks. Below this is robotic.
+    constant-deviation-ms: 1.2
+    # Clicks needed in the 1s window before the consistency test runs.
+    min-samples: 8
+    decay: 0.05
+
 TimerA:
     setbackvl: 10
     # Milliseconds that the player can accumulate for later use when they fall behind
