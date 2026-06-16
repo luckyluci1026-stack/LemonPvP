@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (user.suspended) {
+    addAuditLog({ userId: user.id, userEmail: user.email, action: 'LOGIN_SUSPENDED', ip })
     return NextResponse.json({ error: 'Dein Account wurde gesperrt. Kontaktiere einen Admin.' }, { status: 403 })
   }
 

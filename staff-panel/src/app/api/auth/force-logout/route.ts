@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { clearSessionCookie } from '@/lib/auth'
 
-export async function GET(req: NextRequest) {
-  const res = NextResponse.redirect(new URL('/login?r=suspended', req.url))
-  res.cookies.delete('lemon_session')
-  return res
+// POST-only to prevent CSRF logout via <img src="..."> from cross-origin pages.
+export async function POST() {
+  await clearSessionCookie()
+  return NextResponse.json({ ok: true })
 }

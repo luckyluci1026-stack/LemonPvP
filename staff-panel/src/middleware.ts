@@ -6,7 +6,6 @@ const PUBLIC_PATHS = [
   '/api/auth/login',
   '/change-password',
   '/api/auth/change-password',
-  '/api/auth/logout',
   '/api/auth/force-logout',
   '/api/public',
 ]
@@ -16,6 +15,21 @@ export async function middleware(req: NextRequest) {
 
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) return NextResponse.next()
   if (pathname.startsWith('/_next') || pathname.startsWith('/favicon')) return NextResponse.next()
+
+  // CSRF: reject cross-origin non-GET API requests (defense-in-depth on top of sameSite:strict)
+  if (req.method !== 'GET' && pathname.startsWith('/api/')) {
+    const origin = req.headers.get('origin')
+    const host   = req.headers.get('host')
+    if (origin && host) {
+      try {
+        if (new URL(origin).host !== host) {
+          return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } })
+        }
+      } catch {
+        return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } })
+      }
+    }
+  }
 
   const token = req.cookies.get('lemon_session')?.value
   if (!token) {

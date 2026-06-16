@@ -6,6 +6,7 @@ import type { AuditLog } from '@/lib/db'
 const ACTION_LABELS: Record<string, { icon: string; label: string }> = {
   LOGIN:           { icon: '🔐', label: 'Login' },
   LOGIN_FAIL:      { icon: '❌', label: 'Login fehlgeschlagen' },
+  LOGIN_SUSPENDED: { icon: '🚫', label: 'Login: Account gesperrt' },
   CHANGE_PASSWORD: { icon: '🔑', label: 'Passwort geändert' },
   CREATE_USER:     { icon: '👤', label: 'Account erstellt' },
   UPDATE_USER:     { icon: '✏️', label: 'Account bearbeitet' },
