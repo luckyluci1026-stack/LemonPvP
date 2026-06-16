@@ -65,6 +65,10 @@ db.exec(`
     ip         TEXT,
     created_at TEXT    NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_gm_group ON group_members(group_id);
+  CREATE INDEX IF NOT EXISTS idx_gm_user  ON group_members(user_id);
 `)
 
 // ─── Migrations ────────────────────────────────────────────────────────────
@@ -78,8 +82,8 @@ const existingAdmin = db.prepare('SELECT id FROM users WHERE email = ?').get('le
 if (!existingAdmin) {
   const hash = bcrypt.hashSync('LemonLemon', 12)
   db.prepare(`
-    INSERT OR IGNORE INTO users (email, password, name, role, permissions)
-    VALUES (?, ?, ?, 'SUPER_ADMIN', '["*"]')
+    INSERT OR IGNORE INTO users (email, password, name, role, permissions, must_change_password)
+    VALUES (?, ?, ?, 'SUPER_ADMIN', '["*"]', 1)
   `).run('lemonightt@lemonpvp.de', hash, 'LemonPvP Admin')
 }
 

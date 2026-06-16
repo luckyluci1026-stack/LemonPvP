@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSessionFromRequest, hasPermission } from '@/lib/auth'
 import { addAuditLog } from '@/lib/db'
 import * as mc from '@/lib/mailcow'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function GET(req: NextRequest) {
   const session = await getSessionFromRequest(req)
@@ -27,6 +28,10 @@ export async function POST(req: NextRequest) {
   const session = await getSessionFromRequest(req)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!hasPermission(session, 'admin.emails')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  if (!rateLimit(`email:${session.id}`, 10, 60 * 1000)) {
+    return NextResponse.json({ error: 'Zu viele Aktionen in kurzer Zeit. Bitte kurz warten.' }, { status: 429 })
+  }
 
   const body = await req.json() as {
     type: 'mailbox' | 'alias'

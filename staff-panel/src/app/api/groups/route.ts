@@ -5,6 +5,7 @@ import { getSessionFromRequest, hasPermission } from '@/lib/auth'
 export async function GET(req: NextRequest) {
   const session = await getSessionFromRequest(req)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!hasPermission(session, 'admin.groups')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const groups = db.prepare('SELECT * FROM groups ORDER BY name').all() as Group[]
   const membersRaw = db.prepare(`

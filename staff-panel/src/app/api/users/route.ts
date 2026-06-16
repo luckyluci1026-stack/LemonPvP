@@ -27,12 +27,28 @@ export async function POST(req: NextRequest) {
   if (!email || !password || !name) {
     return NextResponse.json({ error: 'Email, Passwort und Name erforderlich.' }, { status: 400 })
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: 'Ungültige Email-Adresse.' }, { status: 400 })
+  }
+  if (password.length < 8) {
+    return NextResponse.json({ error: 'Passwort muss mindestens 8 Zeichen haben.' }, { status: 400 })
+  }
+  if (password.length > 200) {
+    return NextResponse.json({ error: 'Passwort ist zu lang.' }, { status: 400 })
+  }
 
   const validRoles = ['SUPER_ADMIN', 'ADMIN', 'STAFF']
   const assignedRole = role && validRoles.includes(role) ? role : 'STAFF'
-  // Super admin can only be set by existing super admin
   if (assignedRole === 'SUPER_ADMIN' && session.role !== 'SUPER_ADMIN') {
     return NextResponse.json({ error: 'Nur Super-Admins können Super-Admins erstellen.' }, { status: 403 })
+  }
+
+  // Non-super-admins cannot grant permissions they don't hold
+  if (permissions?.length && session.role !== 'SUPER_ADMIN') {
+    const actorPerms = new Set(session.permissions)
+    if (permissions.includes('*') || permissions.some((p: string) => !actorPerms.has(p))) {
+      return NextResponse.json({ error: 'Du kannst keine Rechte vergeben, die du selbst nicht besitzt.' }, { status: 403 })
+    }
   }
 
   const hash = await bcrypt.hash(password, 12)

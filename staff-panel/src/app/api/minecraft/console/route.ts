@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSessionFromRequest, hasPermission } from '@/lib/auth'
 import { addAuditLog } from '@/lib/db'
 import { executeCommand } from '@/lib/minecraft'
+import { rateLimit } from '@/lib/rateLimit'
 
 // Commands that could crash or destabilize the server — blocked for all staff.
 // SUPER_ADMIN can still run them by SSHing to the server directly.
@@ -11,6 +12,10 @@ export async function POST(req: NextRequest) {
   const session = await getSessionFromRequest(req)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!hasPermission(session, 'admin.console')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  if (!rateLimit(`console:${session.id}`, 20, 60 * 1000)) {
+    return NextResponse.json({ error: 'Zu viele Befehle in kurzer Zeit. Bitte kurz warten.' }, { status: 429 })
+  }
 
   const { command } = await req.json() as { command: string }
   const cmd = command?.trim()

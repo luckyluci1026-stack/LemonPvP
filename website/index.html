@@ -400,25 +400,25 @@
     <p class="section-sub">Von kompetitiven Ranked Duels bis zu epischen Server-Events — bei LemonPvP ist immer was los.</p>
 
     <div class="gamemodes-grid" id="gmGrid">
-      <div class="gm-card" onclick="selectGm('duels')">
+      <div class="gm-card" data-gm="duels" role="button" tabindex="0" aria-expanded="false" onclick="selectGm('duels')">
         <img class="gm-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABP0lEQVR4nO2ZsQnCQBhGjYgjiKWFhSMIWohgb21l4QDOEEcQxAUUZ7C2yBxOYG1ztskJkZBLXuL/ve5yBl4+vv8wJOr8OcnbJen1tB9N0+tuvTrNQwHQAjQ9WiA0o9vdpdfHV/7vzTdAAdACNBEtUBZ/5mfLVWb/Mohyn9F8AxQALUDTujOg7Mz7mG+AAqAFaBp/BoSeeR/zDVAAtABN486Aqmfex3wDFAAtQIOfAXXPvI/5BigAWoAm+HeBzSZ22fW60P3X/SGkzk/MN0AB0AI0CoAWoFEAtABN5e8Cu8U4879gPhlm9rfnB/o+Yr4BCoAWoAk+f02feR/zDVAAtABN6Xls28z7mG+AAqAFaArPZ9tn3sd8AxQALUDz87tAHJ9c3v7z68qjhE79mG+AAqAFaBQALUCjAGgBIYQg+QDHwDWKPJrS9QAAAABJRU5ErkJggg==" alt="Ranked Duels">
         <div class="gm-name">Ranked Duels</div>
         <div class="gm-desc">Trete im 1v1 gegen andere Spieler an. Das ELO-Matchmaking findet dir den perfekten Gegner — von Iron bis Legend.</div>
         <span class="gm-badge">ELO-System</span>
       </div>
-      <div class="gm-card" onclick="selectGm('royale')">
+      <div class="gm-card" data-gm="royale" role="button" tabindex="0" aria-expanded="false" onclick="selectGm('royale')">
         <img class="gm-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABO0lEQVR4nO2ZwRGCMBBFg2MB9oAXK8CLtWAZlGAZUoH04EUq0IP2YAd4hkN2MCGPmfx3c8TNmz9L4mwKl5jh2wy+74vdpUjl4pxzm5SLrREFQAvQKABagEYB0AI0W+uB6bmd+py2CPXLvgMUAC1AY74vw9P5/7sf7Box68X2yb4DFAAtQKMAaAEaBUAL0CgAWoBGAdACNOY8oO/Hn6tqKZX/mPrNJfsOUAC0AI0CoAVoFAAtQKMAaAEaBUAL0CgAWoBGAdACNOY8wMK6q1u63nQ+8biOf388++8Ks+8ABUAL0ATvAa5txlO5+uKdGp7at7fcvd5HXc8i+w5QALQATfAe8Om60TtY1qEV066XfQcoAFqAJngPKG+vWc+b53zk9Syy7wAFQAvQzN4DQu/j10b2HaAAaAEhhCD5AdQeN0ccvu5KAAAAAElFTkSuQmCC" alt="LemonRoyale">
         <div class="gm-name">LemonRoyale</div>
         <div class="gm-desc">Unser eigenes Battle-Royale! Sammle Beute, bekämpfe Gegner in der schrumpfenden Zone und sei der letzte Überlebende.</div>
         <span class="gm-badge">Saisonale Events</span>
       </div>
-      <div class="gm-card" onclick="selectGm('ffa')">
+      <div class="gm-card" data-gm="ffa" role="button" tabindex="0" aria-expanded="false" onclick="selectGm('ffa')">
         <img class="gm-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABJUlEQVR4nO2bsQ3CMBBFL4gRMgIFG7ALc1BTUDMHu7ABBSNkh9CnsGX5fI/o/mst2U9fd1ZiJ5MF8z3Pa2n89FmmKBczs0PkYv+IAqAFaIb32/q0Ys/XmG5jHdNXgAKgBWjc+6u352t47wnpK0AB0AI03f3U3PPXuTz+Wpqm690T0leAAqAFaJr7x73nawzeE9JXgAKgBWiO4SvOj3dxfLlfgkzMTBWgABQALUCjAGgBmvQBND8HbJ+1R58B1tB5QCcKgBagGX8v4HweoHsBZxQALUCjAGgBGgVAC9B0nwlGvwts19O7QCcKgBagGX8vsL3bc/4+oJf0FaAAaAGa+LvB4B6vkb4CFAAtQKNvhT0n2yMKgBag0T9DIyffAwqAFhBCCJIfunQwn2D5M8UAAAAASUVORK5CYII=" alt="Free For All">
         <div class="gm-name">Free For All</div>
         <div class="gm-desc">Kein Matchmaking, keine Wartezeit — spring sofort in die Arena und verdiene Coins für jeden Kill.</div>
         <span class="gm-badge">Immer verfügbar</span>
       </div>
-      <div class="gm-card" onclick="selectGm('practice')">
+      <div class="gm-card" data-gm="practice" role="button" tabindex="0" aria-expanded="false" onclick="selectGm('practice')">
         <img class="gm-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABQklEQVR4nO2bMRKCUAxE1bHyEL+ipvA41h7LwsoDUVlY/ZrGE2hNnCGz/ugOZF8LE5adbPwfcLMRQmRm21pgKOUVIeRb+lqb7mEXJWSpyAC2ADZwftDMl2FALzGh9j10PjoT0neADGALYOPmxct8a8Zb8WaENxPSd4AMYAtg85GP6Mzfug6UNOX0eEDno+uG9B0gA9gC2OyjC7Zm3quHzgSLXRek7wAZwBbAxl0HeL/7aOYvpcweP9cK1fNmgl0XaAYYZABbAJufzwAv89dxnK9/PMwebyV9B8gAtgA24XuBaO71+dP66TtABrAFsNFeALraCpEBbAFswt8LRD8TtKCZt2gGGGQAWwCb8L2Azei/3w162BmXvgNkAFsAG30jFKpmgcgAtgA2+lYYqr5CZABbABv9ZyhKyFKRAWwBQgjB5A2PA2kTSEC0JwAAAABJRU5ErkJggg==" alt="Practice">
         <div class="gm-name">Practice</div>
         <div class="gm-desc">Trainiere Combos, CPS und Strafing ohne ELO-Druck. Bot-Training, Kit-Editor und Live-Stats inklusive.</div>
@@ -438,7 +438,7 @@
       <div class="gm-detail-desc" id="gmd-desc"></div>
       <div class="gm-detail-features" id="gmd-feats"></div>
     </div>
-  
+  </div>
 </section>
 
 <!-- Features -->
@@ -582,7 +582,7 @@
         { icon:'💰', title:'Coins verdienen', text:'Für jeden Kill gibt es Coins für den Shop' },
         { icon:'🔥', title:'Kein ELO-Druck', text:'Verliere niemals Ranking-Punkte im FFA-Modus' },
         { icon:'📊', title:'Kill-Streak Bonus', text:'Mehr Kills hintereinander = mehr Coin-Multiplikator' },
-        { icon:'🎮', title:'Kit-Auswahl', text:'Wähle deinen Lieblings-Kit und los geht's' },
+        { icon:'🎮', title:'Kit-Auswahl', text:'Wähle deinen Lieblings-Kit und los geht\'s' },
       ]
     },
     practice: {

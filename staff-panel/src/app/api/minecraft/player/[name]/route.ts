@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         const reason = typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : 'Kein Grund angegeben'
         const duration = typeof body.duration === 'string' && body.duration.trim() ? body.duration.trim() : 'permanent'
         await mc.banPlayer(name, reason, duration)
-        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_BAN', target: name, details: reason })
+        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_BAN', target: name, details: `${duration} – ${reason}` })
         break
       }
       case 'unban': {
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         const reason = typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : 'Kein Grund angegeben'
         const duration = typeof body.duration === 'string' && body.duration.trim() ? body.duration.trim() : 'permanent'
         await mc.mutePlayer(name, reason, duration)
-        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_MUTE', target: name, details: reason })
+        addAuditLog({ userId: session.id, userEmail: session.email, action: 'PLAYER_MUTE', target: name, details: `${duration} – ${reason}` })
         break
       }
       case 'unmute': {

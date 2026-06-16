@@ -11,7 +11,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (!hasPermission(session, 'admin.users')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  const userId = parseInt(id)
+  const userId = parseInt(id, 10)
+  if (Number.isNaN(userId)) return NextResponse.json({ error: 'Ungültige ID.' }, { status: 400 })
+
   const target = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as User | undefined
   if (!target) return NextResponse.json({ error: 'Benutzer nicht gefunden.' }, { status: 404 })
 
@@ -29,10 +31,17 @@ export async function PUT(req: NextRequest, { params }: Params) {
     mustChangePassword?: boolean
   }
 
+  // Prevent self-escalation: users cannot change their own role/permissions/suspension
+  if (userId === session.id && (body.role !== undefined || body.permissions !== undefined || body.suspended !== undefined)) {
+    return NextResponse.json({ error: 'Du kannst deine eigene Rolle, Rechte oder Sperre nicht ändern.' }, { status: 403 })
+  }
+
   if (body.name !== undefined) {
     db.prepare('UPDATE users SET name = ?, updated_at = datetime(\'now\') WHERE id = ?').run(body.name, userId)
   }
   if (body.password !== undefined && body.password.length > 0) {
+    if (body.password.length < 8) return NextResponse.json({ error: 'Passwort muss mindestens 8 Zeichen haben.' }, { status: 400 })
+    if (body.password.length > 200) return NextResponse.json({ error: 'Passwort ist zu lang.' }, { status: 400 })
     const hash = await bcrypt.hash(body.password, 12)
     db.prepare('UPDATE users SET password = ?, updated_at = datetime(\'now\') WHERE id = ?').run(hash, userId)
     if (body.mustChangePassword !== undefined) {
@@ -59,6 +68,13 @@ export async function PUT(req: NextRequest, { params }: Params) {
     })
   }
   if (body.permissions !== undefined) {
+    // Only SUPER_ADMIN can grant wildcard; others cannot grant permissions they don't hold
+    if (session.role !== 'SUPER_ADMIN') {
+      const actorPerms = new Set(session.permissions)
+      if (body.permissions.includes('*') || body.permissions.some(p => !actorPerms.has(p))) {
+        return NextResponse.json({ error: 'Du kannst keine Rechte vergeben, die du selbst nicht besitzt.' }, { status: 403 })
+      }
+    }
     db.prepare('UPDATE users SET permissions = ?, updated_at = datetime(\'now\') WHERE id = ?').run(JSON.stringify(body.permissions), userId)
   }
 
@@ -72,7 +88,8 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (!hasPermission(session, 'admin.users')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id } = await params
-  const userId = parseInt(id)
+  const userId = parseInt(id, 10)
+  if (Number.isNaN(userId)) return NextResponse.json({ error: 'Ungültige ID.' }, { status: 400 })
   if (userId === session.id) return NextResponse.json({ error: 'Du kannst deinen eigenen Account nicht löschen.' }, { status: 400 })
 
   const target = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as User | undefined

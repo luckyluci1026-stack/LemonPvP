@@ -1,8 +1,22 @@
-// Simple in-memory rate limiter. Resets on server restart, which is fine
-// for a staff panel (low user count, short-lived server processes).
+// Simple in-memory rate limiter. Guarded on globalThis so a single instance
+// is shared across Next.js hot-reloads and module re-evaluations.
 
 type Entry = { count: number; resetAt: number }
-const store = new Map<string, Entry>()
+
+const g = globalThis as typeof globalThis & { __rlStore?: Map<string, Entry>; __rlTimer?: ReturnType<typeof setInterval> }
+const store: Map<string, Entry> = g.__rlStore ??= new Map()
+
+if (!g.__rlTimer) {
+  const t = setInterval(() => {
+    const now = Date.now()
+    for (const [k, v] of store) {
+      if (now > v.resetAt) store.delete(k)
+    }
+  }, 5 * 60 * 1000)
+  // Don't hold the event loop open for cleanup alone
+  if (typeof t === 'object' && 'unref' in t) (t as NodeJS.Timeout).unref()
+  g.__rlTimer = t
+}
 
 export function rateLimit(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now()
@@ -15,11 +29,3 @@ export function rateLimit(key: string, limit: number, windowMs: number): boolean
   entry.count++
   return true
 }
-
-// Clean up expired entries every 5 minutes so the map doesn't grow forever.
-setInterval(() => {
-  const now = Date.now()
-  for (const [k, v] of store) {
-    if (now > v.resetAt) store.delete(k)
-  }
-}, 5 * 60 * 1000)

@@ -17,7 +17,7 @@ export async function setSessionCookie(user: SessionUser): Promise<void> {
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     maxAge: 60 * 60 * 12,
     path: '/',
   })
@@ -32,15 +32,25 @@ export async function getSession(): Promise<SessionUser | null> {
   const store = await cookies()
   const token = store.get(COOKIE_NAME)?.value
   if (!token) return null
-  return verifyToken(token)
+  const claim = await verifyToken(token)
+  if (!claim) return null
+  const dbUser = getUserById(claim.id)
+  if (!dbUser || dbUser.suspended) return null
+  return toSessionUser(dbUser)
 }
 
 // ─── Request-level auth (for API routes) ──────────────────────────────────
+// Re-reads role, permissions and suspended from the DB on every call so that
+// revoked/changed permissions take effect immediately without waiting for JWT expiry.
 
 export async function getSessionFromRequest(req: NextRequest): Promise<SessionUser | null> {
   const token = req.cookies.get(COOKIE_NAME)?.value
   if (!token) return null
-  return verifyToken(token)
+  const claim = await verifyToken(token)
+  if (!claim) return null
+  const dbUser = getUserById(claim.id)
+  if (!dbUser || dbUser.suspended) return null
+  return toSessionUser(dbUser)
 }
 
 // ─── Permission check ──────────────────────────────────────────────────────

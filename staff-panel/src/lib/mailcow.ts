@@ -75,11 +75,13 @@ export async function updateMailbox(email: string, params: {
   active?: boolean
   quotaMb?: number
 }): Promise<void> {
-  const body: Record<string, unknown> = { items: [email] }
-  if (params.name)     body.name = params.name
-  if (params.quotaMb)  body.quota = params.quotaMb
-  if (params.active !== undefined) body.active = params.active ? '1' : '0'
-  await mcFetch('/edit/mailbox', { method: 'POST', body: JSON.stringify(body) })
+  const attr: Record<string, unknown> = {}
+  if (params.name)                    attr.name  = params.name
+  if (params.quotaMb)                 attr.quota = params.quotaMb
+  if (params.active !== undefined)    attr.active = params.active ? '1' : '0'
+  if (Object.keys(attr).length) {
+    await mcFetch('/edit/mailbox', { method: 'POST', body: JSON.stringify({ items: [email], attr }) })
+  }
 
   if (params.password) {
     await mcFetch('/edit/mailbox', {
