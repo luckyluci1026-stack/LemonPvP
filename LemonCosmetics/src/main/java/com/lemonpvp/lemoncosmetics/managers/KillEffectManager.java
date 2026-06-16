@@ -31,7 +31,7 @@ public class KillEffectManager {
                 .getActiveKillEffect(killer.getUniqueId());
         if (effectType == null) return;
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        Bukkit.getScheduler().runTask(plugin, () -> {
             switch (effectType) {
                 case FIRE_SWARM      -> FireSwarmEffect.play(plugin, killLocation);
                 case SPOOK_SWARM     -> SpookSwarmEffect.play(plugin, killLocation);

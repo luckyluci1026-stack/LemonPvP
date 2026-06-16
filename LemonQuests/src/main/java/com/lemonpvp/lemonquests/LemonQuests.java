@@ -18,6 +18,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class LemonQuests extends JavaPlugin {
 
@@ -106,14 +109,22 @@ public class LemonQuests extends JavaPlugin {
             messaging.unregister();
         }
 
-        // Save all online players' data before shutdown
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            // saveAndUnload is async; we just fire-and-forget here since
-            // the server is shutting down and the pool will drain before closing
-            playerDataManager.saveAndUnload(player.getUniqueId());
+        // Save all online players' data and wait for completion before closing the pool
+        if (playerDataManager != null) {
+            List<CompletableFuture<Void>> saves = new ArrayList<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                saves.add(playerDataManager.saveAndUnload(player.getUniqueId()));
+            }
+            if (!saves.isEmpty()) {
+                try {
+                    CompletableFuture.allOf(saves.toArray(new CompletableFuture[0])).join();
+                } catch (Exception e) {
+                    getLogger().warning("Error waiting for player data saves: " + e.getMessage());
+                }
+            }
         }
 
-        // Close the connection pool
+        // Close the connection pool only after all saves complete
         if (database != null) {
             database.disconnect();
             getLogger().info("Database disconnected.");

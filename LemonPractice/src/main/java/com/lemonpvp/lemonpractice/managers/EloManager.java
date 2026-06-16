@@ -138,10 +138,12 @@ public class EloManager {
     // -----------------------------------------------------------------------
 
     public CompletableFuture<Integer> adminAdd(UUID uuid, String gamemode, int amount) {
-        return ensureLoaded(uuid, gamemode).thenApply(data -> {
-            data.elo = Math.max(0, data.elo + amount);
-            plugin.getDatabase().saveEloData(uuid, gamemode.toLowerCase(), data.elo, data.matchesPlayed);
-            return data.elo;
+        String gm = gamemode.toLowerCase();
+        return ensureLoaded(uuid, gm).thenApply(data -> {
+            int newElo = Math.max(0, data.elo + amount);
+            cache.computeIfAbsent(uuid, u -> new ConcurrentHashMap<>()).put(gm, new EloData(newElo, data.matchesPlayed));
+            plugin.getDatabase().saveEloData(uuid, gm, newElo, data.matchesPlayed);
+            return newElo;
         });
     }
 
@@ -150,19 +152,20 @@ public class EloManager {
     }
 
     public CompletableFuture<Integer> adminSet(UUID uuid, String gamemode, int value) {
-        return ensureLoaded(uuid, gamemode).thenApply(data -> {
-            data.elo = value;
-            plugin.getDatabase().saveEloData(uuid, gamemode.toLowerCase(), data.elo, data.matchesPlayed);
-            return data.elo;
+        String gm = gamemode.toLowerCase();
+        return ensureLoaded(uuid, gm).thenApply(data -> {
+            cache.computeIfAbsent(uuid, u -> new ConcurrentHashMap<>()).put(gm, new EloData(value, data.matchesPlayed));
+            plugin.getDatabase().saveEloData(uuid, gm, value, data.matchesPlayed);
+            return value;
         });
     }
 
     /** Resets ELO to 1000 and clears matches_played → triggers placement matches again. */
     public CompletableFuture<Integer> adminReset(UUID uuid, String gamemode) {
-        return ensureLoaded(uuid, gamemode).thenApply(data -> {
-            data.elo = DEFAULT_ELO;
-            data.matchesPlayed = 0;
-            plugin.getDatabase().saveEloData(uuid, gamemode.toLowerCase(), DEFAULT_ELO, 0);
+        String gm = gamemode.toLowerCase();
+        return ensureLoaded(uuid, gm).thenApply(data -> {
+            cache.computeIfAbsent(uuid, u -> new ConcurrentHashMap<>()).put(gm, new EloData(DEFAULT_ELO, 0));
+            plugin.getDatabase().saveEloData(uuid, gm, DEFAULT_ELO, 0);
             return DEFAULT_ELO;
         });
     }

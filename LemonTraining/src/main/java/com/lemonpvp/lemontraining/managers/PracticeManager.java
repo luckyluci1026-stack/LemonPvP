@@ -107,7 +107,7 @@ public class PracticeManager {
     }
 
     public void endAllSessions() {
-        for (UUID uuid : activeSessions.keySet()) {
+        for (UUID uuid : new java.util.ArrayList<>(activeSessions.keySet())) {
             endPractice(uuid, false);
         }
     }

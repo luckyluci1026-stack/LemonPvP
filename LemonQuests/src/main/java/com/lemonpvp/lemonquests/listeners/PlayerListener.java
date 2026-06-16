@@ -52,9 +52,7 @@ public class PlayerListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         plugin.getPlayerDataManager().saveAndUnload(player.getUniqueId());
-        // Quest progress is not unloaded here because DB writes are async and
-        // the cache is cleaned by the daily reset task. For memory safety on a
-        // long-running server we can still remove it.
+        plugin.getQuestManager().unloadPlayer(player.getUniqueId());
     }
 
     // -------------------------------------------------------------------------

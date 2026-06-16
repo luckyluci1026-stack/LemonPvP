@@ -438,6 +438,12 @@ public class QuestManager {
         }, ticksToMidnight);
     }
 
+    /** Removes per-player cache entries when the player disconnects. */
+    public void unloadPlayer(UUID uuid) {
+        progressCache.remove(uuid);
+        completedCache.remove(uuid);
+    }
+
     private void performDailyReset() {
         plugin.getLogger().info("Performing daily quest reset...");
         progressCache.clear();

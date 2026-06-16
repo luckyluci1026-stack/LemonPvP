@@ -16,6 +16,7 @@ public class SumoGame extends AbstractGame {
     private int platformRadius;
     private int voidY;
     private org.bukkit.scheduler.BukkitTask voidCheckTask;
+    private boolean matchResolved = false;
 
     public SumoGame(LemonEvents plugin, GameEvent event) {
         super(plugin, event);
@@ -97,6 +98,8 @@ public class SumoGame extends AbstractGame {
     }
 
     private void onFellOff(Player loser) {
+        if (matchResolved) return;
+        matchResolved = true;
         // Cancel the per-match void timer immediately to prevent multiple invocations
         if (voidCheckTask != null) {
             voidCheckTask.cancel();
@@ -119,6 +122,7 @@ public class SumoGame extends AbstractGame {
         if (winner != null && world != null) winner.teleport(new Location(world, 0.5, 61, 0.5));
 
         matchIndex = 0;
+        matchResolved = false;
         scheduleTask(Bukkit.getScheduler().runTaskLater(plugin, () -> startNextMatch(), 80L));
     }
 

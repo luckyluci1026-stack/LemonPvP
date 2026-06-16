@@ -288,18 +288,12 @@ public class HttpApiManager {
         long amount = getLong(parsed, "amount", 0L);
         String action = getStr(parsed, "action", "add");
 
-        joinWithTimeout(plugin.getPlayerDataManager().loadPlayer(uuid, name).thenAccept(data -> {
-            switch (action) {
-                case "add"    -> plugin.getPlayerDataManager().addCoins(uuid, amount, "staff-panel", null);
-                case "remove" -> plugin.getPlayerDataManager().removeCoins(uuid, amount, "staff-panel", null);
-                case "set"    -> {
-                    long current = data.getCoins();
-                    long diff = amount - current;
-                    if (diff > 0) plugin.getPlayerDataManager().addCoins(uuid, diff, "staff-panel", null);
-                    else if (diff < 0) plugin.getPlayerDataManager().removeCoins(uuid, -diff, "staff-panel", null);
-                }
-            }
-        }));
+        switch (action) {
+            case "add"    -> joinWithTimeout(plugin.getPlayerDataManager().addCoins(uuid, amount, "staff-panel", null));
+            case "remove" -> joinWithTimeout(plugin.getPlayerDataManager().removeCoins(uuid, amount, "staff-panel", null));
+            case "set"    -> joinWithTimeout(plugin.getPlayerDataManager().setCoins(uuid, amount, null));
+            default       -> { send(ex, 400, error("Unknown action: " + action)); return; }
+        }
 
         send(ex, 200, ok());
     }
@@ -336,17 +330,27 @@ public class HttpApiManager {
         if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
         if (!"GET".equals(ex.getRequestMethod())) { send(ex, 405, error("Method not allowed")); return; }
 
-        double[] tps = Bukkit.getTPS();
         long uptime = (System.currentTimeMillis() - plugin.getStartTimeMs()) / 1000L;
+        String version = Bukkit.getVersion();
 
-        JsonObject obj = new JsonObject();
-        obj.addProperty("online",         Bukkit.getOnlinePlayers().size());
-        obj.addProperty("max",            Bukkit.getMaxPlayers());
-        obj.addProperty("tps",            Math.round(tps[0] * 10.0) / 10.0);
-        obj.addProperty("uptime_seconds", uptime);
-        obj.addProperty("version",        Bukkit.getVersion());
+        // Bukkit.getTPS() / getOnlinePlayers() / getMaxPlayers() are main-thread-only
+        CompletableFuture<JsonObject> mainFuture = new CompletableFuture<>();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            try {
+                double[] tps = Bukkit.getTPS();
+                JsonObject obj = new JsonObject();
+                obj.addProperty("online",         Bukkit.getOnlinePlayers().size());
+                obj.addProperty("max",            Bukkit.getMaxPlayers());
+                obj.addProperty("tps",            Math.round(tps[0] * 10.0) / 10.0);
+                obj.addProperty("uptime_seconds", uptime);
+                obj.addProperty("version",        version);
+                mainFuture.complete(obj);
+            } catch (Exception e) {
+                mainFuture.completeExceptionally(e);
+            }
+        });
 
-        send(ex, 200, GSON.toJson(obj));
+        send(ex, 200, GSON.toJson(joinWithTimeout(mainFuture)));
     }
 
     // ─── POST /api/console ───────────────────────────────────────────────────

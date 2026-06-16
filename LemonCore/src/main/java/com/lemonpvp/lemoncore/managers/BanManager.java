@@ -78,7 +78,7 @@ public class BanManager {
                 BanRecord r = mapRecord(rs);
                 // Auto-expire check
                 if (r.isExpired()) {
-                    unbanById(r.id);
+                    unbanById(conn, r.id);
                     return null;
                 }
                 return r;
@@ -97,7 +97,7 @@ public class BanManager {
                 if (!rs.next()) return null;
                 BanRecord r = mapRecord(rs);
                 if (r.isExpired()) {
-                    unbanById(r.id);
+                    unbanById(conn, r.id);
                     return null;
                 }
                 return r;
@@ -145,9 +145,8 @@ public class BanManager {
         });
     }
 
-    private void unbanById(String id) {
-        try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement("UPDATE lc_bans SET active=FALSE WHERE id=?")) {
+    private void unbanById(Connection conn, String id) {
+        try (PreparedStatement ps = conn.prepareStatement("UPDATE lc_bans SET active=FALSE WHERE id=?")) {
             ps.setString(1, id);
             ps.executeUpdate();
         } catch (SQLException e) {

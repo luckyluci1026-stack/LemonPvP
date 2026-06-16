@@ -44,7 +44,7 @@ public class ArrowTrailManager {
         }
 
         BukkitTask task = Bukkit.getScheduler()
-                .runTaskTimerAsynchronously(plugin, () -> {
+                .runTaskTimer(plugin, () -> {
                     if (!arrow.isValid() || arrow.isOnGround()) {
                         stopTrail(entityId);
                         if (shooterUuid != null) {
@@ -61,6 +61,13 @@ public class ArrowTrailManager {
     private void stopTrail(int entityId) {
         BukkitTask task = arrowTasks.remove(entityId);
         if (task != null) task.cancel();
+    }
+
+    /** Cancel all active arrow trail tasks (called on plugin disable). */
+    public void cancelAll() {
+        arrowTasks.values().forEach(BukkitTask::cancel);
+        arrowTasks.clear();
+        playerArrows.clear();
     }
 
     /** Cancel all active arrow trail tasks for a player (called on disconnect). */

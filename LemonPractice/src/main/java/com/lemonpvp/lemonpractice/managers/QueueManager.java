@@ -52,6 +52,7 @@ public class QueueManager {
 
     public void addToQueue(UUID uuid, String gamemode) {
         if (queue.containsKey(uuid)) return;
+        if (plugin.getDuelManager().isInDuel(uuid)) return;
 
         // Pre-load ELO data into cache so matchmaking can read it synchronously
         plugin.getEloManager().loadEloData(uuid, gamemode);

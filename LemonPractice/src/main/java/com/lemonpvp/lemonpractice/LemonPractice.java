@@ -86,6 +86,7 @@ public class LemonPractice extends JavaPlugin {
         duelManager = new DuelManager(this);
         spectatorManager = new SpectatorManager(this);
         ffaManager = new FFAManager(this);
+        ffaManager.loadAll();
         lobbyHotbarManager = new LobbyHotbarManager(this);
 
         // 5. Register VelocityMessaging

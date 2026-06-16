@@ -154,7 +154,7 @@ public class PlayerDataManager {
         return db.executeAsync(conn -> {
             try {
                 try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE lc_players SET coins = coins + ? WHERE uuid=?")) {
+                        "UPDATE lc_players SET coins = GREATEST(0, coins + ?) WHERE uuid=?")) {
                     ps.setLong(1, amount);
                     ps.setString(2, uuid.toString());
                     ps.executeUpdate();

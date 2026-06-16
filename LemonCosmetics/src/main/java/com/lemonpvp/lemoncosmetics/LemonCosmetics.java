@@ -61,6 +61,7 @@ public final class LemonCosmetics extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (arrowTrailManager != null) arrowTrailManager.cancelAll();
         if (cosmeticsMessaging != null) cosmeticsMessaging.unregister();
         if (database != null) database.disconnect();
         getLogger().info("LemonCosmetics disabled.");

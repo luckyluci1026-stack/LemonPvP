@@ -30,11 +30,11 @@ public class LobbyMessaging {
      * practice/training server.
      */
     public void sendTrainingMode(Player player, String mode) {
-        // Write pending mode asynchronously — will be ready before player arrives
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
-                plugin.getDatabase().savePendingTrainingMode(player.getUniqueId(), mode));
-
         String trainingServer = plugin.getServersConfig().getString("servers.practice.name", "practice");
-        connectToServer(player, trainingServer);
+        // Save pending mode before transferring so the training server can read it on join
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            plugin.getDatabase().savePendingTrainingMode(player.getUniqueId(), mode);
+            Bukkit.getScheduler().runTask(plugin, () -> connectToServer(player, trainingServer));
+        });
     }
 }

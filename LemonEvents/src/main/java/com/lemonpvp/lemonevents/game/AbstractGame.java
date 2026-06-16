@@ -125,11 +125,11 @@ public abstract class AbstractGame {
     }
 
     protected void broadcastParticipants(Component message) {
-        for (UUID uuid : participants) {
+        for (UUID uuid : new ArrayList<>(participants)) {
             Player p = Bukkit.getPlayer(uuid);
             if (p != null) p.sendMessage(message);
         }
-        for (UUID uuid : finishOrder) {
+        for (UUID uuid : new ArrayList<>(finishOrder)) {
             Player p = Bukkit.getPlayer(uuid);
             if (p != null) p.sendMessage(message);
         }

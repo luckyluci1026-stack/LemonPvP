@@ -92,9 +92,9 @@ public class PlayerListener implements Listener {
             }
         }
 
-        // Close crafting and player inventories
+        // Close crafting and player inventories — cancel immediately to avoid flicker
         if (type == InventoryType.CRAFTING || type == InventoryType.PLAYER) {
-            Bukkit.getScheduler().runTask(plugin, () -> player.closeInventory());
+            event.setCancelled(true);
         }
     }
 

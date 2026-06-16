@@ -154,9 +154,6 @@ public class DuelManager {
 
         game.setWinnerUuid(winnerUuid);
 
-        Player winner = Bukkit.getPlayer(winnerUuid);
-        Player loser = Bukkit.getPlayer(loserUuid);
-
         // Apply ELO — result is internal only, never displayed to players
         plugin.getEloManager().applyDuelResult(winnerUuid, loserUuid, game.getGamemode())
                 .thenAccept(changes -> {
@@ -170,9 +167,26 @@ public class DuelManager {
                             game.getEloChangeP1(), game.getEloChangeP2(),
                             game.getDurationSeconds());
 
-                    // Switch back to main thread for Bukkit API calls
-                    Bukkit.getScheduler().runTask(plugin, () ->
-                            finishDuel(game, winner, loser));
+                    // Re-fetch Player refs on main thread to avoid stale references
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player winner = Bukkit.getPlayer(winnerUuid);
+                        Player loser  = Bukkit.getPlayer(loserUuid);
+                        finishDuel(game, winner, loser);
+                    });
+                })
+                .exceptionally(ex -> {
+                    plugin.getLogger().severe("[DuelManager] ELO update failed for "
+                            + winnerUuid + " vs " + loserUuid + ": " + ex.getMessage());
+                    // Free arena so it doesn't get permanently locked
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        activeDuels.remove(game.getPlayer1Uuid());
+                        activeDuels.remove(game.getPlayer2Uuid());
+                        plugin.getArenaManager().markInUse(game.getArena(), false);
+                        plugin.getArenaManager().resetArena(game.getArena());
+                        sendToLobby(Bukkit.getPlayer(winnerUuid));
+                        sendToLobby(Bukkit.getPlayer(loserUuid));
+                    });
+                    return null;
                 });
     }
 
