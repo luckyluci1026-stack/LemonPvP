@@ -9,6 +9,7 @@ on:
     branches:
       - flfac-checks
       - flfac-rename
+      - flfac-all
   workflow_dispatch:
 
 jobs:
@@ -38,18 +39,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: flfac-bukkit-${{ github.ref_name }}
-          path: |
-            bukkit/build/libs/*.jar
-            !bukkit/build/libs/*-sources.jar
-            !bukkit/build/libs/*-javadoc.jar
+          # Only the shaded plugin jar (with dependencies), not the thin jar.
+          path: bukkit/build/libs/flfac-bukkit-*.jar
           if-no-files-found: error
 
       - name: Upload mod jar (Fabric)
         uses: actions/upload-artifact@v4
         with:
           name: flfac-fabric-${{ github.ref_name }}
-          path: |
-            fabric/build/libs/*.jar
-            !fabric/build/libs/*-sources.jar
-            !fabric/build/libs/*-dev.jar
+          path: fabric/build/libs/flfac-fabric-*.jar
           if-no-files-found: warn

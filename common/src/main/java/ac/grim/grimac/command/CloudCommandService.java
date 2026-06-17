@@ -92,7 +92,7 @@ public class CloudCommandService implements CommandService {
         if (input.startsWith("/")) input = input.substring(1).strip();
         String[] tokens = input.toLowerCase(Locale.ROOT).split("\\s+");
         return tokens.length >= 2
-                && (tokens[0].equals("grim") || tokens[0].equals("grimac"))
+                && (tokens[0].equals("flfac") || tokens[0].equals("grim") || tokens[0].equals("grimac"))
                 && (tokens[1].equals("history") || tokens[1].equals("hist"));
     }
 

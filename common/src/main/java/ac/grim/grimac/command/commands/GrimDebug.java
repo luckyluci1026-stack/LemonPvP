@@ -21,19 +21,19 @@ import org.jetbrains.annotations.Nullable;
 public class GrimDebug implements BuildableCommand {
 
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
-        Command.Builder<Sender> grimCommand = commandManager.commandBuilder("grim", "grimac");
+        Command.Builder<Sender> grimCommand = commandManager.commandBuilder("flfac", "grim", "grimac");
 
         // Register "debug" subcommand
         Command.Builder<Sender> debugCommand = grimCommand
                 .literal("debug", Description.of("Toggle debug output for a player"))
-                .permission("grim.debug")
+                .permission("flfac.debug")
                 .optional("target", arguments.singlePlayerSelectorParser())
                 .handler(this::handleDebug);
 
         // Register "consoledebug" subcommand
         Command.Builder<Sender> consoleDebugCommand = grimCommand
                 .literal("consoledebug", Description.of("Toggle console debug output for a player"))
-                .permission("grim.consoledebug")
+                .permission("flfac.consoledebug")
                 .required("target", arguments.singlePlayerSelectorParser())
                 .handler(this::handleConsoleDebug);
 

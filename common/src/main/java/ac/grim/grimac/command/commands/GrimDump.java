@@ -32,9 +32,9 @@ public class GrimDump implements BuildableCommand {
     @Override
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
         commandManager.command(
-                commandManager.commandBuilder("grim", "grimac")
+                commandManager.commandBuilder("flfac", "grim", "grimac")
                         .literal("dump", Description.of("Generate a debug dump"))
-                        .permission("grim.dump")
+                        .permission("flfac.dump")
                         .handler(this::handleDump)
         );
     }
