@@ -29,3 +29,27 @@ jobs:
 
       - name: Build (compile + tests + jars)
         run: ./gradlew build --stacktrace --no-daemon
+
+      - name: List built jars
+        if: always()
+        run: ls -laR bukkit/build/libs fabric/build/libs 2>/dev/null || true
+
+      - name: Upload plugin jar (Bukkit/Paper/Spigot)
+        uses: actions/upload-artifact@v4
+        with:
+          name: flfac-bukkit-${{ github.ref_name }}
+          path: |
+            bukkit/build/libs/*.jar
+            !bukkit/build/libs/*-sources.jar
+            !bukkit/build/libs/*-javadoc.jar
+          if-no-files-found: error
+
+      - name: Upload mod jar (Fabric)
+        uses: actions/upload-artifact@v4
+        with:
+          name: flfac-fabric-${{ github.ref_name }}
+          path: |
+            fabric/build/libs/*.jar
+            !fabric/build/libs/*-sources.jar
+            !fabric/build/libs/*-dev.jar
+          if-no-files-found: warn
