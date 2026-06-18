@@ -9,7 +9,7 @@
   <!-- Tailwind (CDN, JIT mit Arbitrary Values) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- React + lucide-react über Import Map -->
+  <!-- React + lucide-react + Monaco (VS-Code-Editor) über Import Map -->
   <script type="importmap">
   {
     "imports": {
@@ -17,9 +17,22 @@
       "react/": "https://esm.sh/react@18.3.1/",
       "react-dom": "https://esm.sh/react-dom@18.3.1",
       "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-      "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react"
+      "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
+      "@monaco-editor/react": "https://esm.sh/@monaco-editor/react@4.6.0?external=react,react-dom"
     }
   }
+  </script>
+
+  <!-- Monaco Web-Worker (VS-Code-Editor), an Version 0.52.2 gepinnt -->
+  <script>
+    window.MonacoEnvironment = {
+      getWorkerUrl: function () {
+        return URL.createObjectURL(new Blob([
+          "self.MonacoEnvironment = { baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/' };",
+          "importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/base/worker/workerMain.js');"
+        ], { type: 'text/javascript' }));
+      }
+    };
   </script>
 
   <!-- Babel Standalone zum Transpilieren von App.jsx im Browser -->

@@ -2867,6 +2867,88 @@ function CodeEditor({ value, onChange, disabled, lang }) {
   );
 }
 
+/* VS-Code-Editor (Monaco) für Code-Aufgaben — mit Fallback auf CodeEditor */
+const MONACO_LANG = { javascript: "javascript", html: "html", css: "css", java: "java", python: "python", sql: "sql", cpp: "cpp" };
+const MONACO_VS = "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs";
+let monacoConfigured = false;
+
+// Plain-Function-Wrapper (KEINE verschachtelte Komponente -> Monaco bleibt erhalten)
+function editorChrome(courseId, label, right, children) {
+  const ext = { javascript: "js", python: "py", java: "java", html: "html", css: "css", sql: "sql", cpp: "cpp" }[courseId] || "txt";
+  return (
+    <div className="rounded-lg overflow-hidden border border-[#1E2D4A] bg-[#0A0E1A]" style={{ borderLeft: "3px solid #4F8EF7" }}>
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#0F1629] border-b border-[#1E2D4A]">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]/60" /><span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]/60" /><span className="w-2.5 h-2.5 rounded-full bg-[#10B981]/60" />
+          <span className="ml-2 font-code text-[11px] text-[#4A5A7A]">solution.{ext}</span>
+        </div>
+        <span className="font-code text-[10px] text-[#4A5A7A] flex items-center gap-1">{right}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function MonacoCodeEditor({ value, onChange, disabled, courseId, label }) {
+  const [mod, setMod] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    import("@monaco-editor/react")
+      .then((m) => {
+        try { if (!monacoConfigured && m.loader) { m.loader.config({ paths: { vs: MONACO_VS } }); monacoConfigured = true; } } catch (e) {}
+        if (alive) setMod(() => m);
+      })
+      .catch(() => { if (alive) setFailed(true); });
+    return () => { alive = false; };
+  }, []);
+
+  // CDN nicht erreichbar → klassischer Editor mit Zeilennummern
+  if (failed) return <CodeEditor value={value} onChange={onChange} disabled={disabled} lang={label} />;
+
+  if (!mod) return editorChrome(courseId, label, <><Loader2 size={11} className="ld-spin" />Editor lädt …</>,
+    <div className="p-3 space-y-2">
+      <div className="ld-skeleton h-3 w-2/3" /><div className="ld-skeleton h-3 w-1/2" /><div className="ld-skeleton h-3 w-3/4" /><div className="ld-skeleton h-3 w-1/3" />
+    </div>
+  );
+
+  const Editor = mod.default;
+  const beforeMount = (monaco) => {
+    monaco.editor.defineTheme("ld-dark", {
+      base: "vs-dark", inherit: true, rules: [],
+      colors: {
+        "editor.background": "#0A0E1A",
+        "editorGutter.background": "#0A0E1A",
+        "editorLineNumber.foreground": "#4A5A7A",
+        "editorLineNumber.activeForeground": "#8A9BC0",
+        "editor.lineHighlightBackground": "#141D35",
+        "editor.selectionBackground": "#2A3F6F",
+        "editorCursor.foreground": "#4F8EF7",
+        "editorIndentGuide.background1": "#1E2D4A",
+      },
+    });
+  };
+  return editorChrome(courseId, label, <>VS&nbsp;Code · Monaco</>,
+    <Editor
+      height="280px"
+      language={MONACO_LANG[courseId] || "plaintext"}
+      theme="ld-dark"
+      value={value}
+      beforeMount={beforeMount}
+      onChange={(v) => onChange(v == null ? "" : v)}
+      loading={<div className="p-4 text-sm text-[#8A9BC0] flex items-center gap-2"><Loader2 size={14} className="ld-spin" />Editor wird vorbereitet …</div>}
+      options={{
+        readOnly: disabled, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontLigatures: true,
+        minimap: { enabled: false }, scrollBeyondLastLine: false, automaticLayout: true,
+        padding: { top: 10, bottom: 10 }, tabSize: 2, lineNumbersMinChars: 3, renderLineHighlight: "line",
+        smoothScrolling: true, cursorBlinking: "smooth", roundedSelection: true, scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+      }}
+    />
+  );
+}
+
+
 /* Konfetti-Feier bei abgeschlossener Lektion */
 function Confetti() {
   const colors = ["#4F8EF7", "#7C3AED", "#F7C948", "#10B981", "#EF4444", "#F59E0B"];
@@ -4098,9 +4180,9 @@ function LessonView({ ctx }) {
                 </div>
               )}
 
-              {/* Code schreiben */}
+              {/* Code schreiben — VS-Code-Editor (Monaco) */}
               {task.type === "code_write" && (
-                <CodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={!!result} lang={lesson._course.name} />
+                <MonacoCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={!!result} courseId={lesson._course.id} label={lesson._course.name} />
               )}
 
               {/* Lückentext */}
