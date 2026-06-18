@@ -36,9 +36,16 @@ function GlobalStyles() {
       @keyframes ld-pulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
       @keyframes ld-spin { to { transform: rotate(360deg); } }
       @keyframes ld-grow { from { width: 0; } }
-      .ld-skeleton { background: linear-gradient(90deg,#141D35 25%,#1A2540 50%,#141D35 75%); background-size: 200% 100%; animation: ld-pulse 1.5s ease-in-out infinite; }
+      @keyframes ld-pop { 0% { transform: scale(.8); opacity: 0; } 60% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+      @keyframes ld-confetti { 0% { transform: translateY(0) rotateZ(0deg); opacity: 1; } 100% { transform: translateY(105vh) rotateZ(720deg); opacity: 0; } }
+      @keyframes ld-shimmer { to { background-position: -200% 0; } }
+      .ld-skeleton { background: linear-gradient(90deg,#141D35 25%,#1A2540 50%,#141D35 75%); background-size: 200% 100%; animation: ld-pulse 1.5s ease-in-out infinite; border-radius: 8px; }
       .ld-spin { animation: ld-spin 1s linear infinite; }
+      .ld-pop { animation: ld-pop .3s ease-out; }
       textarea, input { outline: none; }
+      :focus-visible { outline: 2px solid #4F8EF7; outline-offset: 2px; border-radius: 6px; }
+      button { -webkit-tap-highlight-color: transparent; }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
     `}} />
   );
 }
@@ -230,7 +237,7 @@ console.log(typeof 42);       // "number"
 console.log(typeof true);     // "boolean"
 \`\`\``;
 
-const LESSON_CONTENT = {
+const BASE_LESSONS = {
   javascript_1_1: {
     estimatedMinutes: 15,
     theory: JS_LESSON_1_THEORY,
@@ -334,6 +341,2107 @@ const LESSON_CONTENT = {
   },
 };
 
+// Von Fachautoren erstellte Lektionsinhalte (Modul 1 aller Sprachen + JS-Vertiefung)
+const EXTRA_LESSONS = {
+  "cpp_1_1": {
+    "estimatedMinutes": 15,
+    "theory": "# C++ Grundstruktur & Kompilierung\n\nC++ ist eine **kompilierte** Sprache: Du schreibst Quellcode, ein Compiler übersetzt ihn in Maschinencode, und erst danach läuft das Programm. Das unterscheidet C++ von Sprachen wie Python, die direkt interpretiert werden.\n\n## Das kleinste lauffähige Programm\n\nJedes C++-Programm braucht eine Funktion namens `main`. Sie ist der **Einstiegspunkt** – hier startet die Ausführung.\n\n```cpp\n#include <iostream>\n\nint main() {\n    std::cout << \"Hallo Welt!\" << std::endl;\n    return 0;\n}\n```\n\n## Die Bestandteile\n\n| Zeile | Bedeutung |\n|-------|-----------|\n| `#include <iostream>` | bindet die Bibliothek für Ein-/Ausgabe ein |\n| `int main()` | die Hauptfunktion, gibt einen `int` zurück |\n| `std::cout` | gibt Text auf der Konsole aus |\n| `return 0;` | meldet dem Betriebssystem: alles ok |\n\nDie Zeile `#include` ist eine **Präprozessor-Direktive**. Sie wird vor dem eigentlichen Kompilieren verarbeitet und macht Funktionen wie `std::cout` verfügbar.\n\n## Kompilieren mit g++\n\nAuf der Kommandozeile übersetzt du den Code so:\n\n```cpp\n// im Terminal:\n// g++ hallo.cpp -o hallo\n// ./hallo\n```\n\nMit `-o hallo` legst du den Namen der ausführbaren Datei fest. Ohne `-o` heißt sie standardmäßig `a.out`.\n\n> 💡 Ein `return 0;` am Ende von `main` signalisiert Erfolg. Ein Wert ungleich 0 bedeutet üblicherweise, dass ein Fehler aufgetreten ist.",
+    "tasks": [
+      {
+        "id": "c11_1",
+        "type": "multiple_choice",
+        "question": "Wie heißt die Funktion, in der jedes C++-Programm startet?",
+        "options": [
+          "start()",
+          "main()",
+          "begin()",
+          "run()"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Die Funktion main() ist der festgelegte Einstiegspunkt jedes C++-Programms.",
+        "aiCheck": false
+      },
+      {
+        "id": "c11_2",
+        "type": "multiple_choice",
+        "question": "Was bewirkt die Zeile #include <iostream>?",
+        "options": [
+          "Sie startet das Programm sofort.",
+          "Sie bindet die Bibliothek für Ein- und Ausgabe ein.",
+          "Sie kompiliert den Code automatisch.",
+          "Sie definiert die Funktion main()."
+        ],
+        "correctAnswer": 1,
+        "explanation": "iostream stellt unter anderem std::cout und std::cin bereit.",
+        "aiCheck": false
+      },
+      {
+        "id": "c11_3",
+        "type": "multiple_choice",
+        "question": "Welcher g++-Befehl erzeugt eine ausführbare Datei mit dem Namen 'app'?",
+        "options": [
+          "g++ app.cpp",
+          "g++ -run app.cpp",
+          "g++ app.cpp -o app",
+          "g++ app -o app.cpp"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Mit -o app legst du den Namen der Ausgabedatei fest. Ohne -o entsteht a.out.",
+        "aiCheck": false
+      },
+      {
+        "id": "c11_4",
+        "type": "code_write",
+        "question": "Schreibe ein vollständiges C++-Programm, das den Text 'Mein erstes Programm' auf der Konsole ausgibt. Vergiss den include, die main-Funktion und return 0 nicht.",
+        "starterCode": "#include <iostream>\n\nint main() {\n    // dein Code hier\n    return 0;\n}\n",
+        "expectedConcepts": [
+          "#include <iostream>",
+          "int main()",
+          "std::cout",
+          "return 0"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "c11_5",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Die Direktive ___ bindet eine Bibliothek ein, und am Ende von main steht ___ um Erfolg zu melden.",
+        "blanks": [
+          "#include",
+          "return 0;"
+        ],
+        "aiCheck": false
+      }
+    ]
+  },
+  "cpp_1_2": {
+    "estimatedMinutes": 15,
+    "theory": "# Variablen, Typen, Ein- und Ausgabe\n\nEine **Variable** ist ein benannter Speicherplatz für einen Wert. In C++ musst du beim Anlegen immer den **Datentyp** angeben – die Sprache ist *statisch typisiert*.\n\n## Grundlegende Datentypen\n\n| Typ | Beispiel | Beschreibung |\n|-----|----------|--------------|\n| `int` | `int alter = 25;` | Ganzzahlen |\n| `double` | `double preis = 3.99;` | Kommazahlen |\n| `char` | `char buchstabe = 'A';` | einzelnes Zeichen |\n| `bool` | `bool aktiv = true;` | Wahrheitswert |\n| `std::string` | `std::string name = \"Lea\";` | Zeichenkette |\n\nFür `std::string` brauchst du zusätzlich `#include <string>`.\n\n## Ausgabe mit std::cout\n\nMit dem Operator `<<` schiebst du Werte in den Ausgabestrom:\n\n```cpp\n#include <iostream>\n#include <string>\n\nint main() {\n    std::string name = \"Lea\";\n    int alter = 25;\n    std::cout << \"Name: \" << name << \", Alter: \" << alter << std::endl;\n    return 0;\n}\n```\n\n## Eingabe mit std::cin\n\nMit `std::cin` und dem Operator `>>` liest du eine Eingabe vom Benutzer in eine Variable:\n\n```cpp\nint zahl;\nstd::cout << \"Gib eine Zahl ein: \";\nstd::cin >> zahl;\n```\n\nBeachte die **Richtung der Pfeile**: Bei der Ausgabe zeigen sie zu `cout` hin (`<<`), bei der Eingabe von `cin` weg in die Variable (`>>`).\n\n> 💡 `std::endl` fügt einen Zeilenumbruch ein und leert zusätzlich den Ausgabepuffer. Für reinen Umbruch ist auch `\"\\n\"` möglich und oft schneller.",
+    "tasks": [
+      {
+        "id": "c12_1",
+        "type": "multiple_choice",
+        "question": "Welcher Datentyp eignet sich am besten für den Wert 3.99?",
+        "options": [
+          "int",
+          "char",
+          "double",
+          "bool"
+        ],
+        "correctAnswer": 2,
+        "explanation": "double speichert Kommazahlen. int könnte nur 3 speichern, der Nachkommateil ginge verloren.",
+        "aiCheck": false
+      },
+      {
+        "id": "c12_2",
+        "type": "multiple_choice",
+        "question": "Mit welchem Operator liest std::cin eine Eingabe in eine Variable?",
+        "options": [
+          "<<",
+          ">>",
+          "==",
+          "->"
+        ],
+        "correctAnswer": 1,
+        "explanation": "std::cin verwendet >> (Extraktion). std::cout verwendet << (Insertion).",
+        "aiCheck": false
+      },
+      {
+        "id": "c12_3",
+        "type": "multiple_choice",
+        "question": "Welche Anweisung deklariert korrekt eine Zeichenkette?",
+        "options": [
+          "string name = Lea;",
+          "std::string name = \"Lea\";",
+          "int name = \"Lea\";",
+          "char name = \"Lea\";"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Ein std::string-Literal steht in doppelten Anführungszeichen. Einzelne Zeichen mit char nutzen einfache Anführungszeichen.",
+        "aiCheck": false
+      },
+      {
+        "id": "c12_4",
+        "type": "code_write",
+        "question": "Deklariere eine int-Variable 'alter' mit dem Wert 30 und eine std::string-Variable 'name' mit dem Wert 'Tom'. Gib danach beide mit std::cout in einer Zeile aus.",
+        "starterCode": "#include <iostream>\n#include <string>\n\nint main() {\n    // dein Code hier\n    return 0;\n}\n",
+        "expectedConcepts": [
+          "int alter",
+          "std::string",
+          "std::cout",
+          "<<"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "c12_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Unterschied zwischen std::cout und std::cin und welche Pfeil-Operatoren jeweils dazugehören.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "cpp_1_3": {
+    "estimatedMinutes": 15,
+    "theory": "# Operatoren & Ausdrücke\n\nEin **Ausdruck** kombiniert Werte und Variablen mit **Operatoren** zu einem neuen Wert. C++ kennt viele Kategorien von Operatoren.\n\n## Arithmetische Operatoren\n\n| Operator | Bedeutung | Beispiel | Ergebnis |\n|----------|-----------|----------|----------|\n| `+` | Addition | `3 + 4` | `7` |\n| `-` | Subtraktion | `5 - 2` | `3` |\n| `*` | Multiplikation | `6 * 2` | `12` |\n| `/` | Division | `7 / 2` | `3` |\n| `%` | Rest (Modulo) | `7 % 2` | `1` |\n\nAchtung: Bei zwei `int`-Operanden ist `/` eine **Ganzzahldivision** – `7 / 2` ergibt `3`, nicht `3.5`. Erst wenn ein `double` beteiligt ist (z. B. `7.0 / 2`), erhältst du `3.5`.\n\n## Vergleichs- und logische Operatoren\n\n```cpp\nbool a = (5 > 3);      // true\nbool b = (4 == 4);     // true, == prüft Gleichheit\nbool c = (a && b);     // true, logisches UND\nbool d = (a || false); // true, logisches ODER\nbool e = !a;           // false, Negation\n```\n\nVerwechsle `=` (Zuweisung) nicht mit `==` (Vergleich)!\n\n## Kurzschreibweisen\n\n```cpp\nint x = 10;\nx += 5;   // x = x + 5  -> 15\nx++;      // x = x + 1  -> 16\nx *= 2;   // x = x * 2  -> 32\n```\n\n> 💡 Der Modulo-Operator `%` ist sehr nützlich, um zu prüfen, ob eine Zahl gerade ist: `zahl % 2 == 0` ist genau dann `true`, wenn `zahl` gerade ist.",
+    "tasks": [
+      {
+        "id": "c13_1",
+        "type": "multiple_choice",
+        "question": "Was ergibt der Ausdruck 7 / 2, wenn beide Werte vom Typ int sind?",
+        "options": [
+          "3.5",
+          "3",
+          "4",
+          "1"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Die Division zweier int-Werte ist eine Ganzzahldivision: der Nachkommateil wird abgeschnitten, das Ergebnis ist 3.",
+        "aiCheck": false
+      },
+      {
+        "id": "c13_2",
+        "type": "multiple_choice",
+        "question": "Was ergibt 7 % 2?",
+        "options": [
+          "0",
+          "1",
+          "3",
+          "3.5"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Der Modulo-Operator liefert den Rest der Division. 7 geteilt durch 2 ist 3 Rest 1.",
+        "aiCheck": false
+      },
+      {
+        "id": "c13_3",
+        "type": "multiple_choice",
+        "question": "Welcher Operator prüft, ob zwei Werte gleich sind?",
+        "options": [
+          "=",
+          "==",
+          "!=",
+          "=>"
+        ],
+        "correctAnswer": 1,
+        "explanation": "== ist der Vergleichsoperator. Ein einzelnes = ist die Zuweisung und ein häufiger Anfängerfehler.",
+        "aiCheck": false
+      },
+      {
+        "id": "c13_4",
+        "type": "code_write",
+        "question": "Lies zwei int-Zahlen mit std::cin ein und gib ihre Summe sowie ihren Rest bei Division (Modulo) mit std::cout aus.",
+        "starterCode": "#include <iostream>\n\nint main() {\n    int a, b;\n    // einlesen und ausgeben\n    return 0;\n}\n",
+        "expectedConcepts": [
+          "std::cin",
+          "+",
+          "%",
+          "std::cout"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "c13_5",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Der Operator ___ liefert den Rest einer Division, und ___ ist die Kurzschreibweise für x = x + 1.",
+        "blanks": [
+          "%",
+          "x++"
+        ],
+        "aiCheck": false
+      }
+    ]
+  },
+  "cpp_1_4": {
+    "estimatedMinutes": 15,
+    "theory": "# Kontrollstrukturen\n\nMit **Kontrollstrukturen** steuerst du, *welcher* Code ausgeführt wird und *wie oft*. Ohne sie liefe ein Programm einfach von oben nach unten durch.\n\n## Verzweigung mit if / else\n\n```cpp\nint alter = 17;\nif (alter >= 18) {\n    std::cout << \"volljaehrig\";\n} else {\n    std::cout << \"minderjaehrig\";\n}\n```\n\nDie **Bedingung** in den runden Klammern muss einen Wahrheitswert ergeben. Ist sie `true`, läuft der `if`-Block, sonst der `else`-Block. Für mehrere Fälle hängst du `else if` an.\n\n## Die while-Schleife\n\nEine `while`-Schleife wiederholt ihren Block, **solange** die Bedingung `true` ist:\n\n```cpp\nint i = 0;\nwhile (i < 3) {\n    std::cout << i << \" \";\n    i++;            // ohne diese Zeile: Endlosschleife!\n}\n// Ausgabe: 0 1 2\n```\n\n## Die for-Schleife\n\nDie `for`-Schleife bündelt Start, Bedingung und Schritt in einer Zeile:\n\n```cpp\nfor (int i = 0; i < 3; i++) {\n    std::cout << i << \" \";\n}\n// Ausgabe: 0 1 2\n```\n\n| Teil | Beispiel | Wann läuft er? |\n|------|----------|----------------|\n| Initialisierung | `int i = 0` | einmal am Anfang |\n| Bedingung | `i < 3` | vor jedem Durchlauf |\n| Schritt | `i++` | nach jedem Durchlauf |\n\n> 💡 Nutze `for`, wenn die Anzahl der Wiederholungen bekannt ist, und `while`, wenn sie von einer Bedingung abhängt, deren Ende du noch nicht kennst.",
+    "tasks": [
+      {
+        "id": "c14_1",
+        "type": "multiple_choice",
+        "question": "Wie oft wird der Block dieser Schleife ausgeführt: for (int i = 0; i < 3; i++)?",
+        "options": [
+          "2 mal",
+          "3 mal",
+          "4 mal",
+          "unendlich oft"
+        ],
+        "correctAnswer": 1,
+        "explanation": "i nimmt die Werte 0, 1 und 2 an. Bei i == 3 ist die Bedingung false, daher 3 Durchläufe.",
+        "aiCheck": false
+      },
+      {
+        "id": "c14_2",
+        "type": "multiple_choice",
+        "question": "Was passiert, wenn man in einer while-Schleife die Zählvariable nie verändert?",
+        "options": [
+          "Die Schleife läuft genau einmal.",
+          "Der Compiler meldet einen Fehler.",
+          "Es entsteht eine Endlosschleife.",
+          "Die Schleife wird übersprungen."
+        ],
+        "correctAnswer": 2,
+        "explanation": "Bleibt die Bedingung dauerhaft true, wird der Block endlos wiederholt - eine Endlosschleife.",
+        "aiCheck": false
+      },
+      {
+        "id": "c14_3",
+        "type": "multiple_choice",
+        "question": "Welcher Block läuft, wenn die if-Bedingung false ergibt?",
+        "options": [
+          "der if-Block",
+          "der else-Block",
+          "beide Blöcke",
+          "kein Block je wieder"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Ist die Bedingung false, wird der else-Block ausgefuehrt (sofern vorhanden).",
+        "aiCheck": false
+      },
+      {
+        "id": "c14_4",
+        "type": "code_write",
+        "question": "Schreibe eine for-Schleife, die die Zahlen von 1 bis 5 (einschließlich) mit std::cout ausgibt.",
+        "starterCode": "#include <iostream>\n\nint main() {\n    // for-Schleife hier\n    return 0;\n}\n",
+        "expectedConcepts": [
+          "for",
+          "std::cout",
+          "i <= 5",
+          "i++"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "c14_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, wann du eine for-Schleife und wann du eine while-Schleife verwenden würdest.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "css_1_1": {
+    "estimatedMinutes": 10,
+    "theory": "# CSS einbinden, Selektoren & Eigenschaften\n\n**CSS** (Cascading Style Sheets) bestimmt, wie HTML-Elemente aussehen. Es gibt drei Wege, CSS einzubinden:\n\n## Die drei Einbindungsarten\n\n| Methode | Wo? | Beispiel |\n| --- | --- | --- |\n| **inline** | direkt am Element | `<p style=\"color: red;\">` |\n| **internal** | im `<style>`-Tag im `<head>` | `<style> p { color: red; } </style>` |\n| **external** | eigene `.css`-Datei | `<link rel=\"stylesheet\" href=\"style.css\">` |\n\nDie **externe** Variante ist meist die beste Wahl: Sie trennt Inhalt (HTML) von Gestaltung (CSS) und lässt sich auf mehreren Seiten wiederverwenden.\n\n## Selektoren & Eigenschaften\n\nEine CSS-Regel besteht aus einem **Selektor** und einem **Deklarationsblock** mit `Eigenschaft: Wert;`-Paaren.\n\n```css\n/* Element-Selektor: alle <p> */\np {\n  color: navy;\n  font-size: 16px;\n}\n\n/* Klassen-Selektor: alle Elemente mit class=\"hinweis\" */\n.hinweis {\n  background-color: yellow;\n}\n\n/* ID-Selektor: das Element mit id=\"header\" */\n#header {\n  text-align: center;\n}\n```\n\n- **Element-Selektor**: `p`, `h1`, `div` – wählt nach Tag-Name.\n- **Klassen-Selektor**: beginnt mit `.` – wiederverwendbar, mehrfach pro Seite.\n- **ID-Selektor**: beginnt mit `#` – sollte **nur einmal** pro Seite vorkommen.\n\n> 💡 Eine `class` darfst du beliebig oft verwenden, eine `id` muss eindeutig sein. Klassen sind im Alltag deutlich häufiger.",
+    "tasks": [
+      {
+        "id": "c11_1",
+        "type": "multiple_choice",
+        "question": "Mit welchem Zeichen beginnt ein Klassen-Selektor in CSS?",
+        "options": [
+          "#",
+          ".",
+          "@",
+          "*"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Klassen-Selektoren beginnen mit einem Punkt (.), ID-Selektoren mit einer Raute (#).",
+        "aiCheck": false
+      },
+      {
+        "id": "c11_2",
+        "type": "multiple_choice",
+        "question": "Welche Einbindungsart trennt Inhalt und Gestaltung am besten und ist wiederverwendbar?",
+        "options": [
+          "inline über das style-Attribut",
+          "internal im style-Tag",
+          "external über eine .css-Datei",
+          "Es gibt keinen Unterschied"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Externe CSS-Dateien werden per <link> eingebunden, trennen HTML von CSS und lassen sich auf vielen Seiten nutzen.",
+        "aiCheck": false
+      },
+      {
+        "id": "c11_3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Ein ID-Selektor beginnt mit ___ und darf pro Seite nur ___ vorkommen.",
+        "blanks": [
+          "#",
+          "einmal"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "c11_4",
+        "type": "code_write",
+        "question": "Schreibe eine CSS-Regel, die allen <p>-Elementen die Schriftfarbe blau (color) gibt.",
+        "starterCode": "/* Element-Selektor fuer p */\n",
+        "expectedConcepts": [
+          "p",
+          "color",
+          "blue",
+          "{"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "c11_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Unterschied zwischen einem Klassen-Selektor und einem ID-Selektor.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "css_1_2": {
+    "estimatedMinutes": 11,
+    "theory": "# Farben, Hintergründe & Schriften\n\nCSS bietet viele Möglichkeiten, Farben und Schriften festzulegen. Das macht eine Seite lesbar und ansprechend.\n\n## Farben angeben\n\nFarben lassen sich auf mehrere Arten definieren:\n\n| Format | Beispiel | Bedeutung |\n| --- | --- | --- |\n| **Name** | `red` | benannte Farbe |\n| **Hex** | `#ff0000` | Rot-Grün-Blau als Hexadezimal |\n| **RGB** | `rgb(255, 0, 0)` | Rot-Grün-Blau 0–255 |\n| **RGBA** | `rgba(255, 0, 0, 0.5)` | RGB + Transparenz (Alpha) |\n\nBei Hex-Werten stehen je zwei Zeichen für Rot, Grün und Blau: `#ff0000` ist reines Rot.\n\n## Hintergründe & Schriften\n\n```css\nbody {\n  background-color: #f0f0f0;\n  color: #333333;\n  font-family: Arial, sans-serif;\n  font-size: 16px;\n}\n\nh1 {\n  color: rgb(0, 102, 204);\n  font-size: 2rem;\n}\n```\n\n- `color` setzt die **Textfarbe**.\n- `background-color` setzt die **Hintergrundfarbe**.\n- `font-family` legt die **Schriftart** fest; mit Kommas gibst du Alternativen an (Fallback).\n- `font-size` bestimmt die **Schriftgröße**, z. B. in `px` oder `rem`.\n\n> 💡 Gib bei `font-family` immer eine allgemeine Familie wie `sans-serif` als letzte Option an. Falls keine der vorderen Schriften verfügbar ist, nutzt der Browser eine passende Standardschrift.",
+    "tasks": [
+      {
+        "id": "c12_1",
+        "type": "multiple_choice",
+        "question": "Welcher Hex-Wert steht für reines Rot?",
+        "options": [
+          "#00ff00",
+          "#0000ff",
+          "#ff0000",
+          "#ffffff"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Bei Hex stehen die ersten beiden Stellen für Rot. #ff0000 bedeutet maximaler Rotanteil, kein Grün, kein Blau.",
+        "aiCheck": false
+      },
+      {
+        "id": "c12_2",
+        "type": "multiple_choice",
+        "question": "Wofür ist die vierte Zahl bei rgba(255, 0, 0, 0.5) zuständig?",
+        "options": [
+          "für die Helligkeit",
+          "für die Transparenz (Alpha)",
+          "für den Grauwert",
+          "für die Schriftgröße"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Der vierte Wert (Alpha) steuert die Deckkraft: 0 ist komplett durchsichtig, 1 ist komplett deckend.",
+        "aiCheck": false
+      },
+      {
+        "id": "c12_3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Die Eigenschaft ___ setzt die Textfarbe, ___ setzt die Hintergrundfarbe.",
+        "blanks": [
+          "color",
+          "background-color"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "c12_4",
+        "type": "code_write",
+        "question": "Schreibe eine CSS-Regel für body mit hellgrauem Hintergrund (#f0f0f0) und der Schriftart Arial mit sans-serif als Fallback.",
+        "starterCode": "body {\n  /* dein Code */\n}\n",
+        "expectedConcepts": [
+          "background-color",
+          "#f0f0f0",
+          "font-family",
+          "sans-serif"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "c12_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, warum man bei font-family mehrere Schriften durch Kommas getrennt angibt.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "css_1_3": {
+    "estimatedMinutes": 12,
+    "theory": "# Das Box-Model\n\nJedes HTML-Element ist im Layout eine rechteckige **Box**. Das **Box-Model** beschreibt, aus welchen Schichten diese Box besteht – von innen nach außen.\n\n## Die vier Schichten\n\n| Schicht | Eigenschaft | Bedeutung |\n| --- | --- | --- |\n| **Content** | `width`, `height` | der eigentliche Inhalt |\n| **Padding** | `padding` | Innenabstand zum Rand |\n| **Border** | `border` | der Rahmen |\n| **Margin** | `margin` | Außenabstand zu anderen Elementen |\n\n```css\n.box {\n  width: 200px;\n  padding: 20px;\n  border: 2px solid black;\n  margin: 10px;\n}\n```\n\n## box-sizing\n\nStandardmäßig (`box-sizing: content-box`) addiert der Browser Padding und Border **zur** `width` dazu. Die Box oben ist also tatsächlich 200 + 2·20 + 2·2 = **244px** breit.\n\nMit `box-sizing: border-box` zählen Padding und Border **in** die angegebene Breite hinein – die Box bleibt 200px breit:\n\n```css\n* {\n  box-sizing: border-box;\n}\n```\n\n> 💡 Viele Entwickler setzen `box-sizing: border-box` global auf alle Elementen (`*`). Das macht Größen viel leichter berechenbar, weil `width` dann die komplette sichtbare Breite ist.\n\nDu kannst Abstände auch einzeln angeben, z. B. `margin-top`, `padding-left`. Bei `margin: 10px 20px;` gilt der erste Wert für oben/unten, der zweite für links/rechts.",
+    "tasks": [
+      {
+        "id": "c13_1",
+        "type": "multiple_choice",
+        "question": "Welche Eigenschaft erzeugt den Innenabstand zwischen Inhalt und Rahmen?",
+        "options": [
+          "margin",
+          "padding",
+          "border",
+          "spacing"
+        ],
+        "correctAnswer": 1,
+        "explanation": "padding ist der Innenabstand. margin ist der Außenabstand zu anderen Elementen.",
+        "aiCheck": false
+      },
+      {
+        "id": "c13_2",
+        "type": "multiple_choice",
+        "question": "Eine Box hat width: 200px, padding: 20px und border: 2px solid black bei box-sizing: content-box. Wie breit ist sie sichtbar?",
+        "options": [
+          "200px",
+          "222px",
+          "244px",
+          "240px"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Bei content-box gilt: 200 + 2*20 (padding) + 2*2 (border) = 244px.",
+        "aiCheck": false
+      },
+      {
+        "id": "c13_3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Der Außenabstand heißt ___, der Rahmen heißt ___.",
+        "blanks": [
+          "margin",
+          "border"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "c13_4",
+        "type": "code_write",
+        "question": "Schreibe eine Regel für die Klasse .karte mit 16px Innenabstand (padding) und einem 1px breiten, durchgezogenen, grauen Rahmen (border).",
+        "starterCode": ".karte {\n  /* dein Code */\n}\n",
+        "expectedConcepts": [
+          "padding",
+          "16px",
+          "border",
+          "solid"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "c13_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, was box-sizing: border-box bewirkt und warum es praktisch ist.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "css_1_4": {
+    "estimatedMinutes": 10,
+    "theory": "# Display & Visibility\n\nDie Eigenschaft `display` bestimmt, **wie** ein Element im Layout fließt. Sie ist eine der wichtigsten Eigenschaften in CSS.\n\n## Die wichtigsten display-Werte\n\n| Wert | Verhalten |\n| --- | --- |\n| `block` | nimmt die volle Breite ein, beginnt in neuer Zeile (z. B. `<div>`, `<p>`) |\n| `inline` | fließt im Text, `width`/`height` wirken **nicht** (z. B. `<span>`, `<a>`) |\n| `inline-block` | fließt wie inline, akzeptiert aber `width`/`height` |\n| `none` | Element wird **komplett entfernt**, nimmt keinen Platz ein |\n\n```css\n.menue-eintrag {\n  display: inline-block;\n  width: 120px;\n  padding: 8px;\n}\n\n.versteckt {\n  display: none;\n}\n```\n\n## display: none vs. visibility: hidden\n\nBeide verstecken ein Element, aber unterschiedlich:\n\n```css\n.weg   { display: none; }       /* Platz verschwindet komplett */\n.unsichtbar { visibility: hidden; } /* Platz bleibt leer reserviert */\n```\n\n- `display: none` entfernt das Element aus dem Layout – es hinterlässt **keine Lücke**.\n- `visibility: hidden` macht das Element unsichtbar, der **Platz bleibt** aber erhalten.\n\n> 💡 Merke: `display: none` ist wie \"gibt es nicht\", `visibility: hidden` ist wie \"ist da, aber durchsichtig\". Für ein- und ausklappbare Menüs nutzt man meist `display: none`.",
+    "tasks": [
+      {
+        "id": "c14_1",
+        "type": "multiple_choice",
+        "question": "Welcher display-Wert lässt ein Element im Text fließen UND akzeptiert width/height?",
+        "options": [
+          "block",
+          "inline",
+          "inline-block",
+          "none"
+        ],
+        "correctAnswer": 2,
+        "explanation": "inline-block kombiniert beides: Es fließt wie inline, respektiert aber width und height.",
+        "aiCheck": false
+      },
+      {
+        "id": "c14_2",
+        "type": "multiple_choice",
+        "question": "Was ist der Unterschied zwischen display: none und visibility: hidden?",
+        "options": [
+          "Es gibt keinen Unterschied",
+          "display: none entfernt den Platz, visibility: hidden behält ihn",
+          "visibility: hidden entfernt den Platz, display: none behält ihn",
+          "Beide löschen das Element aus dem HTML"
+        ],
+        "correctAnswer": 1,
+        "explanation": "display: none nimmt keinen Platz mehr ein, während visibility: hidden den reservierten Platz als leere Lücke behält.",
+        "aiCheck": false
+      },
+      {
+        "id": "c14_3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Ein ___-Element nimmt die volle Breite ein, ein ___-Element fließt im Text.",
+        "blanks": [
+          "block",
+          "inline"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "c14_4",
+        "type": "code_write",
+        "question": "Schreibe eine Regel für die Klasse .versteckt, die das Element komplett aus dem Layout entfernt (kein Platz reserviert).",
+        "starterCode": ".versteckt {\n  /* dein Code */\n}\n",
+        "expectedConcepts": [
+          "display",
+          "none"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "c14_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Unterschied zwischen einem block- und einem inline-Element.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "html_1_2": {
+    "estimatedMinutes": 12,
+    "theory": "# Überschriften, Absätze & Text-Formatierung\n\nIn dieser Lektion lernst du, wie du Text in HTML strukturierst. Das sind die wichtigsten Bausteine fast jeder Webseite.\n\n## Überschriften (h1 bis h6)\n\nHTML kennt **sechs Überschriftenebenen**: von `<h1>` (die wichtigste) bis `<h6>` (die unwichtigste). Pro Seite solltest du nur **eine** `<h1>` verwenden, denn sie beschreibt das Hauptthema.\n\n| Tag    | Bedeutung            | Größe (Standard) |\n|--------|----------------------|------------------|\n| `h1`   | Hauptüberschrift     | sehr groß        |\n| `h2`   | Unterüberschrift     | groß             |\n| `h3`   | Abschnitts­titel      | mittel           |\n| `h6`   | kleinste Überschrift | klein            |\n\n## Absätze und Zeilenumbrüche\n\nFür Fließtext nutzt du den Absatz `<p>`. Ein Browser fügt vor und nach einem Absatz automatisch etwas Abstand ein. Brauchst du nur einen Zeilenumbruch ohne Abstand, verwendest du `<br>` – ein leeres Element ohne schließenden Tag.\n\n## Text hervorheben\n\n- `<strong>` macht Text **wichtig** (meist fett dargestellt).\n- `<em>` betont Text *(meist kursiv dargestellt)*.\n\n```html\n<h1>Mein Blog</h1>\n<h2>Erster Beitrag</h2>\n<p>Das ist <strong>sehr wichtig</strong>.<br>\nUnd das ist <em>betont</em>.</p>\n```\n\n> 💡 Tipp: Wähle Überschriften nach ihrer **Bedeutung**, nicht nach der Größe! Für reine Optik benutzt du später CSS.",
+    "tasks": [
+      {
+        "id": "h12_1",
+        "type": "multiple_choice",
+        "question": "Welches Tag steht für die wichtigste Überschrift einer Seite?",
+        "options": [
+          "<h6>",
+          "<head>",
+          "<h1>",
+          "<p>"
+        ],
+        "correctAnswer": 2,
+        "explanation": "<h1> ist die ranghöchste Überschrift und sollte pro Seite nur einmal vorkommen.",
+        "aiCheck": false
+      },
+      {
+        "id": "h12_2",
+        "type": "multiple_choice",
+        "question": "Womit erzeugst du einen einfachen Zeilenumbruch ohne zusätzlichen Abstand?",
+        "options": [
+          "<p>",
+          "<br>",
+          "<em>",
+          "<h2>"
+        ],
+        "correctAnswer": 1,
+        "explanation": "<br> ist ein leeres Element und erzeugt nur einen Zeilenumbruch, während <p> einen ganzen Absatz mit Abstand bildet.",
+        "aiCheck": false
+      },
+      {
+        "id": "h12_3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Mit ___ markierst du wichtigen Text und mit ___ betonst du Text.",
+        "blanks": [
+          "strong",
+          "em"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "h12_4",
+        "type": "code_write",
+        "question": "Schreibe eine Hauptüberschrift mit dem Text \"Willkommen\" und darunter einen Absatz, in dem das Wort \"toll\" mit strong hervorgehoben ist.",
+        "starterCode": "<!-- Deine Überschrift und dein Absatz hier -->\n",
+        "expectedConcepts": [
+          "<h1>",
+          "</h1>",
+          "<p>",
+          "</p>",
+          "<strong>",
+          "</strong>"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "h12_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Unterschied zwischen <strong> und <em>.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "html_1_3": {
+    "estimatedMinutes": 12,
+    "theory": "# Links & Bilder\n\nDas Web lebt von Verlinkungen und Bildern. In dieser Lektion lernst du, wie du beides in HTML einbindest.\n\n## Links mit dem a-Element\n\nEin Link (Hyperlink) wird mit dem `<a>`-Tag erstellt. Das wichtigste Attribut ist `href` (steht für *hypertext reference*) – es gibt das Ziel des Links an.\n\n```html\n<a href=\"https://example.com\">Zu example.com</a>\n```\n\nMit dem Attribut `target=\"_blank\"` öffnet sich der Link in einem **neuen Tab**:\n\n```html\n<a href=\"https://example.com\" target=\"_blank\">In neuem Tab öffnen</a>\n```\n\n## Bilder mit dem img-Element\n\nBilder bindest du mit `<img>` ein. Es ist ein leeres Element (kein schließender Tag) und hat zwei wichtige Attribute:\n\n| Attribut | Bedeutung                                            |\n|----------|------------------------------------------------------|\n| `src`    | Quelle (Pfad oder URL) des Bildes                    |\n| `alt`    | Alternativtext, falls das Bild nicht lädt            |\n\n```html\n<img src=\"katze.jpg\" alt=\"Eine schlafende Katze\">\n```\n\nDer `alt`-Text ist sehr wichtig: Screenreader lesen ihn vor, und er erscheint, wenn das Bild nicht geladen werden kann.\n\n> 💡 Tipp: Vergiss niemals das `alt`-Attribut! Es macht deine Seite **barrierefrei** und hilft auch Suchmaschinen, das Bild zu verstehen.",
+    "tasks": [
+      {
+        "id": "h13_1",
+        "type": "multiple_choice",
+        "question": "Welches Attribut gibt das Ziel eines Links an?",
+        "options": [
+          "src",
+          "alt",
+          "href",
+          "target"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Das href-Attribut des <a>-Tags enthält die Adresse, zu der der Link führt.",
+        "aiCheck": false
+      },
+      {
+        "id": "h13_2",
+        "type": "multiple_choice",
+        "question": "Wofür ist das alt-Attribut bei <img> da?",
+        "options": [
+          "Es gibt die Bildbreite an.",
+          "Es liefert einen Alternativtext, wenn das Bild nicht lädt.",
+          "Es verlinkt das Bild.",
+          "Es bestimmt die Bildfarbe."
+        ],
+        "correctAnswer": 1,
+        "explanation": "alt beschreibt das Bild als Text – wichtig für Barrierefreiheit und falls das Bild nicht geladen werden kann.",
+        "aiCheck": false
+      },
+      {
+        "id": "h13_3",
+        "type": "multiple_choice",
+        "question": "Wie öffnest du einen Link in einem neuen Tab?",
+        "options": [
+          "Mit href=\"_blank\"",
+          "Mit target=\"_blank\"",
+          "Mit new=\"tab\"",
+          "Mit open=\"new\""
+        ],
+        "correctAnswer": 1,
+        "explanation": "Das Attribut target=\"_blank\" sorgt dafür, dass der Link in einem neuen Tab geöffnet wird.",
+        "aiCheck": false
+      },
+      {
+        "id": "h13_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Das <img>-Tag braucht ___ für die Bildquelle und ___ für den Alternativtext.",
+        "blanks": [
+          "src",
+          "alt"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "h13_5",
+        "type": "code_write",
+        "question": "Erstelle einen Link zu \"https://wikipedia.org\" mit dem Text \"Wikipedia\" und binde darunter ein Bild \"logo.png\" mit dem Alternativtext \"Logo\" ein.",
+        "starterCode": "<!-- Dein Link und dein Bild hier -->\n",
+        "expectedConcepts": [
+          "<a href=",
+          "</a>",
+          "<img",
+          "src=",
+          "alt="
+        ],
+        "aiCheck": true
+      }
+    ]
+  },
+  "html_1_4": {
+    "estimatedMinutes": 12,
+    "theory": "# Listen (ul, ol, li)\n\nListen helfen dir, Inhalte übersichtlich aufzuzählen. HTML kennt zwei Haupttypen von Listen.\n\n## Ungeordnete Listen\n\nEine **ungeordnete** Liste (`<ul>` für *unordered list*) zeigt Punkte ohne feste Reihenfolge – meist mit Aufzählungszeichen (Bullets). Jeder Eintrag steht in einem `<li>` (*list item*).\n\n```html\n<ul>\n  <li>Äpfel</li>\n  <li>Bananen</li>\n  <li>Kirschen</li>\n</ul>\n```\n\n## Geordnete Listen\n\nEine **geordnete** Liste (`<ol>` für *ordered list*) nummeriert die Einträge automatisch. Auch hier nutzt du `<li>` für jeden Punkt.\n\n```html\n<ol>\n  <li>Wasser kochen</li>\n  <li>Teebeutel einlegen</li>\n  <li>Genießen</li>\n</ol>\n```\n\n| Tag   | Bedeutung           | Darstellung      |\n|-------|---------------------|------------------|\n| `ul`  | ungeordnete Liste   | Punkte (•)       |\n| `ol`  | geordnete Liste     | Zahlen (1, 2, 3) |\n| `li`  | Listeneintrag       | ein Punkt        |\n\n## Verschachtelte Listen\n\nDu kannst eine Liste **in** einem `<li>` einer anderen Liste platzieren:\n\n```html\n<ul>\n  <li>Obst\n    <ul>\n      <li>Apfel</li>\n    </ul>\n  </li>\n</ul>\n```\n\n> 💡 Tipp: Nimm `<ol>`, wenn die **Reihenfolge zählt** (z. B. ein Rezept), und `<ul>`, wenn sie egal ist.",
+    "tasks": [
+      {
+        "id": "h14_1",
+        "type": "multiple_choice",
+        "question": "Welches Tag erzeugt eine nummerierte (geordnete) Liste?",
+        "options": [
+          "<ul>",
+          "<ol>",
+          "<li>",
+          "<list>"
+        ],
+        "correctAnswer": 1,
+        "explanation": "<ol> steht für 'ordered list' und nummeriert die Einträge automatisch.",
+        "aiCheck": false
+      },
+      {
+        "id": "h14_2",
+        "type": "multiple_choice",
+        "question": "In welches Tag schreibst du einen einzelnen Listeneintrag?",
+        "options": [
+          "<li>",
+          "<item>",
+          "<ul>",
+          "<p>"
+        ],
+        "correctAnswer": 0,
+        "explanation": "Jeder Eintrag einer Liste steht in einem <li>-Element (list item).",
+        "aiCheck": false
+      },
+      {
+        "id": "h14_3",
+        "type": "multiple_choice",
+        "question": "Wann ist eine <ol> sinnvoller als eine <ul>?",
+        "options": [
+          "Wenn die Reihenfolge der Einträge wichtig ist.",
+          "Wenn die Liste kurz ist.",
+          "Wenn man Bilder einfügen will.",
+          "Niemals, beide sind identisch."
+        ],
+        "correctAnswer": 0,
+        "explanation": "Eine geordnete Liste (<ol>) zeigt eine klare Reihenfolge, etwa bei einer Schritt-für-Schritt-Anleitung.",
+        "aiCheck": false
+      },
+      {
+        "id": "h14_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Eine ungeordnete Liste beginnt mit ___ und jeder Punkt steht in einem ___.",
+        "blanks": [
+          "ul",
+          "li"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "h14_5",
+        "type": "code_write",
+        "question": "Erstelle eine ungeordnete Liste mit den drei Einträgen \"Rot\", \"Grün\" und \"Blau\".",
+        "starterCode": "<!-- Deine Liste hier -->\n",
+        "expectedConcepts": [
+          "<ul>",
+          "</ul>",
+          "<li>",
+          "</li>"
+        ],
+        "aiCheck": true
+      }
+    ]
+  },
+  "java_1_1": {
+    "estimatedMinutes": 15,
+    "theory": "# Java Setup & Hello World\n\nWillkommen bei **Java**! Java ist eine objektorientierte Programmiersprache, die plattformunabhängig läuft. Dein Code wird vom **Compiler** (`javac`) in *Bytecode* übersetzt, den die **JVM** (Java Virtual Machine) auf jedem Betriebssystem ausführen kann.\n\n## Dein erstes Programm\n\nIn Java lebt jeder Code innerhalb einer **Klasse**. Der Dateiname muss exakt dem Klassennamen entsprechen, also `HelloWorld.java`.\n\n```java\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hallo Welt!\");\n    }\n}\n```\n\nDie Methode `main` ist der **Einstiegspunkt**: Hier startet die Ausführung. Mit `System.out.println(...)` gibst du Text auf der Konsole aus und springst danach in eine neue Zeile. Jede Anweisung endet mit einem **Semikolon** `;`.\n\n## Die Bestandteile von main\n\n| Teil | Bedeutung |\n|------|-----------|\n| `public` | Von überall sichtbar |\n| `static` | Ohne Objekt aufrufbar |\n| `void` | Kein Rückgabewert |\n| `String[] args` | Kommandozeilen-Argumente |\n\n> 💡 Merksatz: `public static void main(String[] args)` ist die exakte Signatur, die die JVM sucht. Schon ein Tippfehler verhindert den Start.\n\n## Kompilieren & Ausführen\n\nDu übersetzt mit `javac HelloWorld.java` und startest mit `java HelloWorld` (ohne `.class`-Endung). Der Unterschied zu `println` ist `print`: Letzteres gibt **ohne** Zeilenumbruch aus.",
+    "tasks": [
+      {
+        "id": "j11_1",
+        "type": "multiple_choice",
+        "question": "Welche Methode ist der Einstiegspunkt eines Java-Programms?",
+        "options": [
+          "start()",
+          "public static void main(String[] args)",
+          "void run()",
+          "begin()"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Die JVM sucht exakt nach der Signatur public static void main(String[] args).",
+        "aiCheck": false
+      },
+      {
+        "id": "j11_2",
+        "type": "multiple_choice",
+        "question": "Womit muss jede Anweisung in Java enden?",
+        "options": [
+          "Mit einem Punkt .",
+          "Mit einem Doppelpunkt :",
+          "Mit einem Semikolon ;",
+          "Mit einem Komma ,"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Jede Anweisung wird in Java mit einem Semikolon abgeschlossen.",
+        "aiCheck": false
+      },
+      {
+        "id": "j11_3",
+        "type": "code_write",
+        "question": "Schreibe eine Klasse Greeting mit einer main-Methode, die 'Willkommen!' auf der Konsole ausgibt.",
+        "starterCode": "public class Greeting {\n    // Schreibe hier die main-Methode\n}\n",
+        "expectedConcepts": [
+          "public static void main",
+          "System.out.println",
+          "Willkommen!"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "j11_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Mit ___ wird Text MIT Zeilenumbruch ausgegeben, mit ___ OHNE Zeilenumbruch.",
+        "blanks": [
+          "System.out.println",
+          "System.out.print"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "j11_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, was die Schlüsselwörter static und void in der main-Methode bedeuten.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "java_1_2": {
+    "estimatedMinutes": 15,
+    "theory": "# Variablen & primitive Datentypen\n\nEine **Variable** ist ein benannter Speicherplatz für einen Wert. Java ist **statisch typisiert**: Du musst beim Anlegen den **Datentyp** angeben. Das Format lautet `Typ name = wert;`.\n\n## Die wichtigsten Typen\n\n```java\nint alter = 30;\ndouble preis = 9.99;\nboolean istAktiv = true;\nchar buchstabe = 'A';\nString name = \"Lemon\";\n```\n\nBeachte: `char` nutzt **einfache** Anführungszeichen (`'A'`), `String` dagegen **doppelte** (`\"Lemon\"`).\n\n## Übersicht\n\n| Typ | Beispiel | Beschreibung |\n|------|----------|--------------|\n| `int` | `42` | Ganzzahl |\n| `double` | `3.14` | Kommazahl |\n| `boolean` | `true` / `false` | Wahrheitswert |\n| `char` | `'X'` | Einzelnes Zeichen |\n| `String` | `\"Text\"` | Zeichenkette |\n\n`String` ist streng genommen **kein** primitiver Typ, sondern eine Klasse, wird aber wie ein Grundtyp benutzt.\n\n> 💡 Tipp: Wähle `int` für ganze Zahlen und `double` für alles mit Nachkommastellen. Eine ganze Zahl wie `5` als Kommazahl schreibst du `5.0`.\n\n## Variablen verwenden\n\n```java\nint x = 10;\nx = x + 5;\nSystem.out.println(x); // gibt 15 aus\n```\n\nMit `final` machst du eine Variable zu einer **Konstanten**, die sich nicht mehr ändern lässt: `final int MAX = 100;`.",
+    "tasks": [
+      {
+        "id": "j12_1",
+        "type": "multiple_choice",
+        "question": "Welcher Datentyp eignet sich am besten für die Zahl 3.14?",
+        "options": [
+          "int",
+          "double",
+          "boolean",
+          "char"
+        ],
+        "correctAnswer": 1,
+        "explanation": "double speichert Kommazahlen; int kann nur ganze Zahlen speichern.",
+        "aiCheck": false
+      },
+      {
+        "id": "j12_2",
+        "type": "multiple_choice",
+        "question": "Welche Deklaration eines char ist KORREKT?",
+        "options": [
+          "char c = \"A\";",
+          "char c = 'A';",
+          "char c = A;",
+          "char c = (A);"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Ein char wird mit einfachen Anführungszeichen geschrieben: 'A'. Doppelte gehören zu String.",
+        "aiCheck": false
+      },
+      {
+        "id": "j12_3",
+        "type": "code_write",
+        "question": "Deklariere eine int-Variable 'alter' mit Wert 25 und eine String-Variable 'name' mit deinem Namen. Gib beide mit System.out.println aus.",
+        "starterCode": "public class Vars {\n    public static void main(String[] args) {\n        // Deine Variablen hier\n    }\n}\n",
+        "expectedConcepts": [
+          "int alter",
+          "String name",
+          "=",
+          "System.out.println"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "j12_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Der Typ ___ speichert true oder false, und der Typ ___ speichert ganze Zahlen.",
+        "blanks": [
+          "boolean",
+          "int"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "j12_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Unterschied zwischen char und String.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "java_1_3": {
+    "estimatedMinutes": 15,
+    "theory": "# Operatoren & Ausdrücke\n\nMit **Operatoren** verknüpfst du Werte zu **Ausdrücken**, die ein Ergebnis liefern. Java kennt arithmetische, Vergleichs- und logische Operatoren.\n\n## Arithmetik\n\n```java\nint a = 10, b = 3;\nSystem.out.println(a + b); // 13\nSystem.out.println(a - b); // 7\nSystem.out.println(a * b); // 30\nSystem.out.println(a / b); // 3  (Ganzzahldivision!)\nSystem.out.println(a % b); // 1  (Rest / Modulo)\n```\n\nAchtung: `10 / 3` ergibt `3`, weil beide Operanden `int` sind. Für `3.33...` brauchst du `double`: `10.0 / 3`.\n\n## Vergleich & Logik\n\n| Operator | Bedeutung |\n|----------|-----------|\n| `==` | gleich |\n| `!=` | ungleich |\n| `>` `<` | größer / kleiner |\n| `&&` | logisches UND |\n| `\\|\\|` | logisches ODER |\n| `!` | Negation |\n\n```java\nboolean ergebnis = (5 > 3) && (2 < 1); // false\n```\n\nVergleichsoperatoren liefern immer einen `boolean`.\n\n> 💡 Verwechsle nicht `=` (Zuweisung) mit `==` (Vergleich). `x = 5` setzt den Wert, `x == 5` prüft auf Gleichheit.\n\n## Kurzformen\n\nStatt `x = x + 1` schreibst du `x += 1` oder kurz `x++`. Diese **Inkrement**- und **Dekrement**-Operatoren (`++`, `--`) sind besonders in Schleifen praktisch.",
+    "tasks": [
+      {
+        "id": "j13_1",
+        "type": "multiple_choice",
+        "question": "Was ergibt der Ausdruck 10 % 3 in Java?",
+        "options": [
+          "3",
+          "1",
+          "0",
+          "3.33"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Der Modulo-Operator % liefert den Rest der Division: 10 / 3 = 3 Rest 1.",
+        "aiCheck": false
+      },
+      {
+        "id": "j13_2",
+        "type": "multiple_choice",
+        "question": "Was ergibt (5 > 3) && (2 > 4)?",
+        "options": [
+          "true",
+          "false",
+          "5",
+          "ein Fehler"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Das logische UND ist nur true, wenn beide Seiten true sind. 2 > 4 ist false, also false.",
+        "aiCheck": false
+      },
+      {
+        "id": "j13_3",
+        "type": "code_write",
+        "question": "Berechne die Summe und das Produkt von 7 und 4 in zwei Variablen und gib beide Ergebnisse aus.",
+        "starterCode": "public class Mathe {\n    public static void main(String[] args) {\n        int a = 7;\n        int b = 4;\n        // Summe und Produkt berechnen und ausgeben\n    }\n}\n",
+        "expectedConcepts": [
+          "+",
+          "*",
+          "System.out.println"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "j13_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Der Operator ___ vergleicht auf Gleichheit, während ___ einen Wert zuweist.",
+        "blanks": [
+          "==",
+          "="
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "j13_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, warum 10 / 3 in Java das Ergebnis 3 liefert und nicht 3.33.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "java_1_4": {
+    "estimatedMinutes": 15,
+    "theory": "# Bedingungen & Schleifen\n\nProgramme treffen **Entscheidungen** und wiederholen Aufgaben. Dafür gibt es Bedingungen (`if`/`else`) und Schleifen (`for`, `while`).\n\n## Bedingungen\n\n```java\nint note = 2;\nif (note == 1) {\n    System.out.println(\"Sehr gut!\");\n} else if (note <= 3) {\n    System.out.println(\"Gut bestanden.\");\n} else {\n    System.out.println(\"Geht noch besser.\");\n}\n```\n\nDie Bedingung in den Klammern muss einen `boolean` ergeben. Nur der **erste** zutreffende Block wird ausgeführt.\n\n## Die for-Schleife\n\n```java\nfor (int i = 0; i < 5; i++) {\n    System.out.println(\"Durchlauf \" + i);\n}\n```\n\nSie besteht aus drei Teilen: **Initialisierung**, **Bedingung** und **Schrittweite**.\n\n## Die while-Schleife\n\n```java\nint zahl = 3;\nwhile (zahl > 0) {\n    System.out.println(zahl);\n    zahl--;\n}\n```\n\n| Schleife | Wann nutzen? |\n|----------|--------------|\n| `for` | Anzahl der Durchläufe bekannt |\n| `while` | Wiederholung bis Bedingung false |\n\n> 💡 Vorsicht vor **Endlosschleifen**: Vergisst du, die Bedingung irgendwann auf `false` zu setzen, läuft die Schleife ewig. Sorge dafür, dass sich der Zustand ändert (z.B. `zahl--`).\n\nMit `break` brichst du eine Schleife sofort ab, mit `continue` springst du zum nächsten Durchlauf.",
+    "tasks": [
+      {
+        "id": "j14_1",
+        "type": "multiple_choice",
+        "question": "Wie oft wird der Rumpf von 'for (int i = 0; i < 5; i++)' ausgeführt?",
+        "options": [
+          "4 mal",
+          "5 mal",
+          "6 mal",
+          "Unendlich oft"
+        ],
+        "correctAnswer": 1,
+        "explanation": "i läuft von 0 bis 4, das sind 5 Durchläufe (0,1,2,3,4).",
+        "aiCheck": false
+      },
+      {
+        "id": "j14_2",
+        "type": "multiple_choice",
+        "question": "Welche Schleife eignet sich, wenn die Anzahl der Durchläufe schon vorher feststeht?",
+        "options": [
+          "while",
+          "for",
+          "do-while",
+          "if"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Die for-Schleife eignet sich, wenn die Anzahl der Wiederholungen bekannt ist.",
+        "aiCheck": false
+      },
+      {
+        "id": "j14_3",
+        "type": "code_write",
+        "question": "Schreibe eine for-Schleife, die die Zahlen von 1 bis 5 jeweils in einer eigenen Zeile ausgibt.",
+        "starterCode": "public class Zaehlen {\n    public static void main(String[] args) {\n        // for-Schleife von 1 bis 5\n    }\n}\n",
+        "expectedConcepts": [
+          "for",
+          "i <= 5",
+          "System.out.println"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "j14_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Mit ___ bricht man eine Schleife komplett ab, mit ___ springt man zum nächsten Durchlauf.",
+        "blanks": [
+          "break",
+          "continue"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "j14_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, wie eine Endlosschleife entsteht und wie man sie vermeidet.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "java_1_5": {
+    "estimatedMinutes": 15,
+    "theory": "# Arrays\n\nEin **Array** speichert mehrere Werte **desselben Typs** unter einem Namen. Die Größe ist nach dem Anlegen **fest**.\n\n## Array anlegen\n\n```java\nint[] zahlen = {10, 20, 30};\nString[] namen = new String[3];\nnamen[0] = \"Lemon\";\n```\n\nDu kannst ein Array direkt mit Werten füllen oder mit `new Typ[länge]` eine leere Hülle erzeugen. Die Elemente erreichst du über einen **Index**, der bei **0** beginnt.\n\n## Zugriff & Länge\n\n```java\nint[] werte = {5, 8, 13};\nSystem.out.println(werte[0]);     // 5\nSystem.out.println(werte.length); // 3\n```\n\n| Ausdruck | Bedeutung |\n|----------|-----------|\n| `arr[0]` | erstes Element |\n| `arr[arr.length - 1]` | letztes Element |\n| `arr.length` | Anzahl Elemente |\n\n> 💡 Ein Zugriff außerhalb der Grenzen, z.B. `werte[3]` bei nur 3 Elementen, löst eine `ArrayIndexOutOfBoundsException` aus. Gültige Indizes gehen von `0` bis `length - 1`.\n\n## Durchlaufen\n\n```java\nint[] werte = {5, 8, 13};\nfor (int i = 0; i < werte.length; i++) {\n    System.out.println(werte[i]);\n}\n// Alternative: for-each\nfor (int w : werte) {\n    System.out.println(w);\n}\n```\n\nDie **for-each**-Schleife ist kompakter, wenn du nur die Werte (und nicht den Index) brauchst.",
+    "tasks": [
+      {
+        "id": "j15_1",
+        "type": "multiple_choice",
+        "question": "Mit welchem Index spricht man das ERSTE Element eines Arrays an?",
+        "options": [
+          "1",
+          "0",
+          "-1",
+          "arr.first"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Array-Indizes beginnen in Java bei 0. Das erste Element ist arr[0].",
+        "aiCheck": false
+      },
+      {
+        "id": "j15_2",
+        "type": "multiple_choice",
+        "question": "Was passiert bei int[] a = {1,2,3}; und dem Zugriff a[3]?",
+        "options": [
+          "Gibt 3 zurück",
+          "Gibt 0 zurück",
+          "ArrayIndexOutOfBoundsException",
+          "Gibt null zurück"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Gültige Indizes sind 0 bis length-1, also 0..2. a[3] wirft eine ArrayIndexOutOfBoundsException.",
+        "aiCheck": false
+      },
+      {
+        "id": "j15_3",
+        "type": "code_write",
+        "question": "Lege ein int-Array mit den Werten 4, 8, 15 an und gib alle Elemente mit einer Schleife aus.",
+        "starterCode": "public class Arrays {\n    public static void main(String[] args) {\n        int[] zahlen = {4, 8, 15};\n        // Schleife über das Array\n    }\n}\n",
+        "expectedConcepts": [
+          "for",
+          "length",
+          "zahlen[",
+          "System.out.println"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "j15_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Die Anzahl der Elemente liest man mit ___ aus, und der gültige Index reicht von 0 bis ___.",
+        "blanks": [
+          "arr.length",
+          "length - 1"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "j15_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Vorteil einer for-each-Schleife gegenüber einer klassischen for-Schleife beim Durchlaufen eines Arrays.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "javascript_1_2": {
+    "estimatedMinutes": 16,
+    "theory": "# Datentypen & Operatoren\n\nIn JavaScript verarbeitest du ständig Werte: Zahlen, Texte und Wahrheitswerte. Mit **Operatoren** verknüpfst, vergleichst und kombinierst du diese Werte.\n\n## Arithmetische Operatoren\n\nSie rechnen mit Zahlen vom Typ `number`:\n\n```javascript\nconsole.log(10 + 3);   // 13\nconsole.log(10 - 3);   // 7\nconsole.log(10 * 3);   // 30\nconsole.log(10 / 3);   // 3.3333333333333335\nconsole.log(10 % 3);   // 1  (Rest der Division, \"Modulo\")\nconsole.log(2 ** 3);   // 8  (Potenz)\n```\n\n## Vergleichsoperatoren\n\nSie liefern immer einen `boolean` (`true` oder `false`).\n\n| Operator | Bedeutung            | Beispiel        | Ergebnis |\n|----------|----------------------|-----------------|----------|\n| `===`    | strikt gleich        | `3 === \"3\"`     | `false`  |\n| `==`     | locker gleich        | `3 == \"3\"`      | `true`   |\n| `!==`    | strikt ungleich      | `5 !== 5`       | `false`  |\n| `>` `<`  | größer / kleiner     | `5 > 2`         | `true`   |\n\nDer Unterschied zwischen `==` und `===` ist wichtig: `==` wandelt Typen vorher um (**Type Coercion**), `===` vergleicht Wert **und** Typ.\n\n> 💡 **Faustregel:** Nutze fast immer `===` und `!==`. So vermeidest du überraschende Fehler durch automatische Typumwandlung.\n\n## Logische Operatoren\n\nSie verknüpfen Wahrheitswerte:\n\n```javascript\nconsole.log(true && false); // false  (UND: beide müssen true sein)\nconsole.log(true || false); // true   (ODER: einer reicht)\nconsole.log(!true);         // false  (NICHT: kehrt um)\n```\n\nSo baust du komplexe Bedingungen, etwa \"Alter über 18 **und** Ticket vorhanden\".",
+    "tasks": [
+      {
+        "id": "dt1",
+        "type": "multiple_choice",
+        "question": "Was gibt `console.log(17 % 5)` aus?",
+        "options": [
+          "3",
+          "2",
+          "3.4",
+          "12"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Der Modulo-Operator % liefert den Rest der Division: 17 geteilt durch 5 ist 3 Rest 2. Also ist das Ergebnis 2.",
+        "aiCheck": false
+      },
+      {
+        "id": "dt2",
+        "type": "multiple_choice",
+        "question": "Was gibt `console.log(3 === \"3\")` aus?",
+        "options": [
+          "true",
+          "false",
+          "3",
+          "Ein Fehler"
+        ],
+        "correctAnswer": 1,
+        "explanation": "=== vergleicht Wert UND Typ. Die Zahl 3 und der String \"3\" haben unterschiedliche Typen, daher ist das Ergebnis false.",
+        "aiCheck": false
+      },
+      {
+        "id": "dt3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Der ___-Operator (&&) ist nur true, wenn beide Seiten true sind. Der ___-Operator (||) ist true, sobald eine Seite true ist.",
+        "blanks": [
+          "UND",
+          "ODER"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "dt4",
+        "type": "code_write",
+        "question": "Erstelle zwei Konstanten `a` (Wert 8) und `b` (Wert 3). Gib mit `console.log` aus, ob `a` strikt größer als `b` ist.",
+        "starterCode": "// Schreib deinen Code hier:\n\n",
+        "expectedConcepts": [
+          "const",
+          ">",
+          "console.log"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "dt5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Unterschied zwischen `==` und `===`. Warum solltest du meist `===` verwenden?",
+        "aiCheck": true
+      }
+    ]
+  },
+  "javascript_1_3": {
+    "estimatedMinutes": 15,
+    "theory": "# Bedingungen: if/else und switch\n\nProgramme müssen Entscheidungen treffen. Mit **Bedingungen** führst du Code nur dann aus, wenn ein Ausdruck `true` ist.\n\n## Die if/else-Anweisung\n\n```javascript\nconst alter = 17;\n\nif (alter >= 18) {\n  console.log(\"Du bist volljährig.\");\n} else if (alter >= 16) {\n  console.log(\"Fast volljährig.\");\n} else {\n  console.log(\"Noch minderjährig.\");\n}\n// Ausgabe: \"Fast volljährig.\"\n```\n\nGeprüft wird von oben nach unten. Der **erste** Block, dessen Bedingung `true` ist, läuft – der Rest wird übersprungen.\n\n## Truthy und Falsy\n\nBedingungen müssen kein echtes `boolean` sein. JavaScript wertet Werte als **truthy** oder **falsy** aus.\n\n| Falsy-Werte        | Truthy (Beispiele) |\n|--------------------|--------------------|\n| `false`, `0`       | `\"text\"`           |\n| `\"\"` (leerer String) | `42`             |\n| `null`, `undefined` | `[]`, `{}`        |\n| `NaN`              | `-1`               |\n\n## Die switch-Anweisung\n\nPraktisch, wenn du **eine** Variable gegen viele feste Werte prüfst:\n\n```javascript\nconst tag = \"Mo\";\n\nswitch (tag) {\n  case \"Sa\":\n  case \"So\":\n    console.log(\"Wochenende!\");\n    break;\n  default:\n    console.log(\"Arbeitstag.\");\n}\n// Ausgabe: \"Arbeitstag.\"\n```\n\n> 💡 **Wichtig:** Vergiss das `break` nicht! Ohne `break` läuft die Ausführung in den nächsten `case` hinein (\"Fall-through\"). Das ist eine häufige Fehlerquelle.\n\n`switch` vergleicht übrigens mit `===`, also strikt nach Wert und Typ.",
+    "tasks": [
+      {
+        "id": "bd1",
+        "type": "multiple_choice",
+        "question": "Was wird ausgegeben? `const x = 0; if (x) { console.log(\"A\"); } else { console.log(\"B\"); }`",
+        "options": [
+          "A",
+          "B",
+          "0",
+          "Nichts"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Die Zahl 0 ist ein falsy-Wert. Die if-Bedingung ist also nicht erfüllt, daher läuft der else-Block und gibt \"B\" aus.",
+        "aiCheck": false
+      },
+      {
+        "id": "bd2",
+        "type": "multiple_choice",
+        "question": "Was passiert in einem `switch`, wenn das `break` in einem `case` fehlt?",
+        "options": [
+          "Ein Syntaxfehler",
+          "Der Code im nächsten case wird auch ausgeführt",
+          "Der default-Block wird übersprungen",
+          "Die Schleife startet neu"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Ohne break gibt es einen Fall-through: Die Ausführung läuft in die folgenden case-Blöcke weiter, bis ein break oder das Ende erreicht wird.",
+        "aiCheck": false
+      },
+      {
+        "id": "bd3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Eine ___-Anweisung führt Code aus, wenn eine Bedingung true ist. Der ___-Block läuft, wenn keine vorherige Bedingung zutrifft.",
+        "blanks": [
+          "if",
+          "else"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "bd4",
+        "type": "code_write",
+        "question": "Schreibe eine `if/else`-Bedingung, die eine Variable `note` (Zahl) prüft: Ist sie kleiner oder gleich 4, gib \"bestanden\" aus, sonst \"durchgefallen\".",
+        "starterCode": "const note = 3;\n// Schreib deine Bedingung hier:\n\n",
+        "expectedConcepts": [
+          "if",
+          "else",
+          "<=",
+          "console.log"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "bd5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, wann du eher eine `switch`-Anweisung statt vieler `else if` verwenden würdest.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "javascript_1_4": {
+    "estimatedMinutes": 16,
+    "theory": "# Schleifen: for, while und forEach\n\nMit **Schleifen** wiederholst du Code, ohne ihn mehrfach zu schreiben. Das ist eines der mächtigsten Werkzeuge der Programmierung.\n\n## Die for-Schleife\n\nIdeal, wenn du die Anzahl der Durchläufe kennst:\n\n```javascript\nfor (let i = 0; i < 3; i++) {\n  console.log(\"Durchlauf \" + i);\n}\n// Durchlauf 0\n// Durchlauf 1\n// Durchlauf 2\n```\n\nSie besteht aus drei Teilen: **Startwert** (`let i = 0`), **Bedingung** (`i < 3`) und **Schritt** (`i++`).\n\n## Die while-Schleife\n\nLäuft, solange eine Bedingung `true` ist – die Anzahl ist vorher oft unbekannt:\n\n```javascript\nlet zahl = 1;\nwhile (zahl <= 3) {\n  console.log(zahl);\n  zahl++;\n}\n// 1, 2, 3\n```\n\n> 💡 **Vorsicht vor Endlosschleifen!** Wenn die Bedingung nie `false` wird (z. B. weil du `zahl++` vergisst), läuft das Programm ewig und friert ein.\n\n## forEach für Arrays\n\nUm über jedes Element eines Arrays zu gehen, ist `forEach` am elegantesten:\n\n```javascript\nconst farben = [\"rot\", \"grün\", \"blau\"];\nfarben.forEach((farbe, index) => {\n  console.log(index + \": \" + farbe);\n});\n// 0: rot, 1: grün, 2: blau\n```\n\n## Vergleich\n\n| Schleife   | Wann verwenden?                          |\n|------------|------------------------------------------|\n| `for`      | feste Anzahl an Durchläufen              |\n| `while`    | unbekannte Anzahl, bedingt abhängig      |\n| `forEach`  | jedes Element eines Arrays durchgehen    |\n\nMit `break` brichst du eine Schleife vorzeitig ab, mit `continue` überspringst du den aktuellen Durchlauf.",
+    "tasks": [
+      {
+        "id": "sl1",
+        "type": "multiple_choice",
+        "question": "Wie oft läuft der Schleifenkörper? `for (let i = 0; i < 5; i++) { ... }`",
+        "options": [
+          "4 Mal",
+          "5 Mal",
+          "6 Mal",
+          "Unendlich oft"
+        ],
+        "correctAnswer": 1,
+        "explanation": "i startet bei 0 und läuft solange i < 5, also für die Werte 0, 1, 2, 3, 4. Das sind genau 5 Durchläufe.",
+        "aiCheck": false
+      },
+      {
+        "id": "sl2",
+        "type": "multiple_choice",
+        "question": "Welche Gefahr besteht bei einer `while`-Schleife besonders?",
+        "options": [
+          "Sie ist immer langsamer als for",
+          "Eine Endlosschleife, wenn die Bedingung nie false wird",
+          "Sie kann keine Zahlen verarbeiten",
+          "Sie funktioniert nur mit Arrays"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Wenn die Abbruchbedingung nie false wird (z. B. weil der Zähler nicht erhöht wird), läuft die while-Schleife endlos weiter.",
+        "aiCheck": false
+      },
+      {
+        "id": "sl3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Die ___-Schleife eignet sich für eine feste Anzahl an Durchläufen, die ___-Schleife läuft, solange eine Bedingung wahr ist, und ___ geht über jedes Element eines Arrays.",
+        "blanks": [
+          "for",
+          "while",
+          "forEach"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "sl4",
+        "type": "code_write",
+        "question": "Schreibe eine `for`-Schleife, die die Zahlen von 1 bis 10 (einschließlich) mit `console.log` ausgibt.",
+        "starterCode": "// Schreib deine Schleife hier:\n\n",
+        "expectedConcepts": [
+          "for",
+          "let",
+          "i++",
+          "console.log"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "sl5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Unterschied zwischen einer `for`-Schleife und einer `while`-Schleife.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "javascript_1_5": {
+    "estimatedMinutes": 17,
+    "theory": "# Funktionen\n\nEine **Funktion** ist ein wiederverwendbarer Codeblock mit einem Namen. Du definierst Logik einmal und rufst sie beliebig oft auf – das hält Code übersichtlich und vermeidet Wiederholung.\n\n## Deklaration und Aufruf\n\n```javascript\nfunction begruessen(name) {\n  return \"Hallo, \" + name + \"!\";\n}\n\nconst nachricht = begruessen(\"Lena\");\nconsole.log(nachricht); // \"Hallo, Lena!\"\n```\n\n- `name` ist ein **Parameter** (Platzhalter).\n- `\"Lena\"` ist das **Argument** (der echte Wert beim Aufruf).\n- `return` gibt einen Wert zurück. Ohne `return` liefert die Funktion `undefined`.\n\n## Mehrere Parameter\n\n```javascript\nfunction addiere(a, b) {\n  return a + b;\n}\nconsole.log(addiere(4, 7)); // 11\n```\n\n## Arrow-Funktionen\n\nEine kürzere Schreibweise, besonders beliebt für kleine Funktionen:\n\n```javascript\nconst quadrat = (x) => {\n  return x * x;\n};\n\n// Noch kürzer: bei einem einzigen Ausdruck darf return entfallen\nconst verdoppeln = (x) => x * 2;\n\nconsole.log(quadrat(5));    // 25\nconsole.log(verdoppeln(5)); // 10\n```\n\n> 💡 Bei einer Arrow-Funktion mit nur einer Zeile kannst du die geschweiften Klammern **und** das `return` weglassen – der Ausdruck wird automatisch zurückgegeben.\n\n## Überblick\n\n| Begriff      | Bedeutung                                  |\n|--------------|--------------------------------------------|\n| Parameter    | Platzhalter in der Definition              |\n| Argument     | tatsächlicher Wert beim Aufruf             |\n| `return`     | gibt ein Ergebnis zurück                   |\n| Arrow `=>`   | kompakte Funktionssyntax                   |\n\nFunktionen sind die Bausteine, mit denen du größere Programme strukturierst.",
+    "tasks": [
+      {
+        "id": "fn1",
+        "type": "multiple_choice",
+        "question": "Was gibt eine Funktion zurück, wenn sie kein `return` enthält?",
+        "options": [
+          "null",
+          "0",
+          "undefined",
+          "Einen Fehler"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Ohne explizites return liefert eine Funktion automatisch undefined zurück.",
+        "aiCheck": false
+      },
+      {
+        "id": "fn2",
+        "type": "multiple_choice",
+        "question": "Welche Schreibweise ist eine korrekte Arrow-Funktion, die x verdoppelt?",
+        "options": [
+          "const f = x => x * 2;",
+          "function => (x) { x * 2 }",
+          "const f = (x) -> x * 2;",
+          "arrow f(x) { return x*2 }"
+        ],
+        "correctAnswer": 0,
+        "explanation": "const f = x => x * 2; ist gültig: Bei einem einzigen Parameter und einem einzigen Ausdruck darf der Ausdruck ohne Klammern und ohne return stehen.",
+        "aiCheck": false
+      },
+      {
+        "id": "fn3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Ein ___ ist ein Platzhalter in der Funktionsdefinition, während das ___ der echte Wert beim Aufruf ist. Mit ___ gibt eine Funktion einen Wert zurück.",
+        "blanks": [
+          "Parameter",
+          "Argument",
+          "return"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "fn4",
+        "type": "code_write",
+        "question": "Schreibe eine Funktion `multipliziere`, die zwei Zahlen als Parameter nimmt und ihr Produkt mit `return` zurückgibt.",
+        "starterCode": "// Schreib deine Funktion hier:\n\n",
+        "expectedConcepts": [
+          "function",
+          "return",
+          "*"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "fn5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, warum Funktionen nützlich sind und was der Unterschied zwischen einem Parameter und einem Argument ist.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "javascript_2_1": {
+    "estimatedMinutes": 17,
+    "theory": "# Arrays & Array-Methoden\n\nEin **Array** ist eine geordnete Liste von Werten. Du speicherst damit mehrere Daten unter einem Namen – jedes Element hat einen **Index**, der bei `0` beginnt.\n\n```javascript\nconst fruechte = [\"Apfel\", \"Banane\", \"Kirsche\"];\nconsole.log(fruechte[0]);     // \"Apfel\"\nconsole.log(fruechte.length); // 3\n```\n\n## Elemente hinzufügen: push\n\n`push` hängt ein Element ans Ende an und verändert das Array direkt:\n\n```javascript\nconst zahlen = [1, 2];\nzahlen.push(3);\nconsole.log(zahlen); // [1, 2, 3]\n```\n\n## map: jedes Element umwandeln\n\n`map` erzeugt ein **neues** Array, indem es eine Funktion auf jedes Element anwendet:\n\n```javascript\nconst zahlen = [1, 2, 3];\nconst verdoppelt = zahlen.map((n) => n * 2);\nconsole.log(verdoppelt); // [2, 4, 6]\nconsole.log(zahlen);     // [1, 2, 3] bleibt unverändert\n```\n\n## filter: Elemente auswählen\n\n`filter` behält nur die Elemente, für die die Funktion `true` zurückgibt:\n\n```javascript\nconst zahlen = [1, 2, 3, 4, 5];\nconst gerade = zahlen.filter((n) => n % 2 === 0);\nconsole.log(gerade); // [2, 4]\n```\n\n> 💡 `map` und `filter` verändern das Original **nicht** – sie geben ein neues Array zurück. `push` dagegen verändert das bestehende Array.\n\n## Übersicht\n\n| Methode    | Zweck                          | Verändert Original? |\n|------------|--------------------------------|---------------------|\n| `push`     | Element ans Ende anhängen       | Ja                  |\n| `map`      | jedes Element umwandeln         | Nein                |\n| `filter`   | Elemente nach Bedingung wählen  | Nein                |\n| `length`   | Anzahl der Elemente (Property)  | –                   |",
+    "tasks": [
+      {
+        "id": "ar1",
+        "type": "multiple_choice",
+        "question": "Was gibt `[\"a\", \"b\", \"c\"][1]` zurück?",
+        "options": [
+          "\"a\"",
+          "\"b\"",
+          "\"c\"",
+          "1"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Arrays sind 0-basiert: Index 0 ist \"a\", Index 1 ist \"b\". Daher liefert [1] den Wert \"b\".",
+        "aiCheck": false
+      },
+      {
+        "id": "ar2",
+        "type": "multiple_choice",
+        "question": "Was ist das Ergebnis von `[1, 2, 3].map((n) => n + 1)`?",
+        "options": [
+          "[1, 2, 3]",
+          "[2, 3, 4]",
+          "6",
+          "[1, 2, 3, 1]"
+        ],
+        "correctAnswer": 1,
+        "explanation": "map wendet die Funktion auf jedes Element an und gibt ein neues Array zurück: 1+1, 2+1, 3+1 ergibt [2, 3, 4].",
+        "aiCheck": false
+      },
+      {
+        "id": "ar3",
+        "type": "multiple_choice",
+        "question": "Welche Methode verändert das ursprüngliche Array?",
+        "options": [
+          "map",
+          "filter",
+          "push",
+          "Keine davon"
+        ],
+        "correctAnswer": 2,
+        "explanation": "push hängt ein Element ans bestehende Array an und verändert es dadurch. map und filter geben dagegen ein neues Array zurück.",
+        "aiCheck": false
+      },
+      {
+        "id": "ar4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Mit ___ hängst du ein Element ans Ende eines Arrays. Mit der Property ___ erfährst du die Anzahl der Elemente.",
+        "blanks": [
+          "push",
+          "length"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "ar5",
+        "type": "code_write",
+        "question": "Gegeben ist `const preise = [10, 25, 5, 40]`. Erzeuge mit `filter` ein neues Array `teuer`, das nur Preise über 20 enthält, und gib es aus.",
+        "starterCode": "const preise = [10, 25, 5, 40];\n// Schreib deinen Code hier:\n\n",
+        "expectedConcepts": [
+          "filter",
+          "=>",
+          ">",
+          "console.log"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "ar6",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Unterschied zwischen `map` und `filter`.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "javascript_2_2": {
+    "estimatedMinutes": 17,
+    "theory": "# Objekte & JSON\n\nEin **Objekt** speichert Daten als **Schlüssel-Wert-Paare** (Properties). Während ein Array eine Liste ist, beschreibt ein Objekt eine \"Sache\" mit benannten Eigenschaften.\n\n```javascript\nconst person = {\n  name: \"Mia\",\n  alter: 28,\n  istAdmin: false,\n};\n```\n\n## Zugriff auf Properties\n\nEs gibt zwei Wege:\n\n```javascript\nconsole.log(person.name);      // \"Mia\"  (Punkt-Notation)\nconsole.log(person[\"alter\"]);  // 28     (Klammer-Notation)\n\nperson.alter = 29;             // Wert ändern\nperson.stadt = \"Berlin\";       // neue Property hinzufügen\n```\n\n> 💡 Die Punkt-Notation ist kürzer und üblicher. Die Klammer-Notation brauchst du, wenn der Schlüssel in einer Variablen steckt oder Sonderzeichen enthält.\n\n## JSON\n\n**JSON** (JavaScript Object Notation) ist ein Textformat zum Austausch von Daten, z. B. mit einem Server. Es sieht aus wie ein JS-Objekt, ist aber ein **String**.\n\n```javascript\nconst obj = { name: \"Mia\", alter: 28 };\n\n// Objekt -> JSON-String\nconst text = JSON.stringify(obj);\nconsole.log(text); // '{\"name\":\"Mia\",\"alter\":28}'\n\n// JSON-String -> Objekt\nconst zurueck = JSON.parse(text);\nconsole.log(zurueck.name); // \"Mia\"\n```\n\n## Übersicht\n\n| Funktion           | Eingabe        | Ausgabe        |\n|--------------------|----------------|----------------|\n| `JSON.stringify`   | Objekt         | JSON-String    |\n| `JSON.parse`       | JSON-String    | Objekt         |\n\nMerke: In JSON müssen alle Schlüssel in **doppelten** Anführungszeichen stehen, und es sind keine Funktionen erlaubt – nur Daten.",
+    "tasks": [
+      {
+        "id": "ob1",
+        "type": "multiple_choice",
+        "question": "Wie greifst du auf die Property `name` des Objekts `user` zu?",
+        "options": [
+          "user->name",
+          "user.name",
+          "user[name]",
+          "name(user)"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Mit der Punkt-Notation user.name greifst du auf die Property zu. user[name] wäre nur korrekt, wenn name eine Variable mit dem Schlüsselnamen wäre.",
+        "aiCheck": false
+      },
+      {
+        "id": "ob2",
+        "type": "multiple_choice",
+        "question": "Was macht `JSON.parse('{\"x\":5}')`?",
+        "options": [
+          "Gibt den String unverändert zurück",
+          "Wandelt den JSON-String in ein Objekt um",
+          "Wandelt ein Objekt in einen String um",
+          "Erzeugt einen Fehler"
+        ],
+        "correctAnswer": 1,
+        "explanation": "JSON.parse wandelt einen JSON-String in ein JavaScript-Objekt um. Hier entsteht das Objekt { x: 5 }.",
+        "aiCheck": false
+      },
+      {
+        "id": "ob3",
+        "type": "multiple_choice",
+        "question": "Was liefert `JSON.stringify({ a: 1 })`?",
+        "options": [
+          "{ a: 1 }",
+          "'{\"a\":1}'",
+          "[a, 1]",
+          "1"
+        ],
+        "correctAnswer": 1,
+        "explanation": "JSON.stringify wandelt das Objekt in einen JSON-String um. Schlüssel werden dabei in doppelte Anführungszeichen gesetzt: '{\"a\":1}'.",
+        "aiCheck": false
+      },
+      {
+        "id": "ob4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Mit ___ wandelst du ein Objekt in einen JSON-String um. Mit ___ machst du aus einem JSON-String wieder ein Objekt.",
+        "blanks": [
+          "JSON.stringify",
+          "JSON.parse"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "ob5",
+        "type": "code_write",
+        "question": "Erstelle ein Objekt `buch` mit den Properties `titel` (String) und `seiten` (Zahl). Gib danach den Titel mit `console.log` aus.",
+        "starterCode": "// Schreib deinen Code hier:\n\n",
+        "expectedConcepts": [
+          "const",
+          "{",
+          "titel",
+          "console.log"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "ob6",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, was JSON ist und wozu man `JSON.stringify` und `JSON.parse` braucht.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "python_1_1": {
+    "estimatedMinutes": 14,
+    "theory": "# Python installieren & Hello World\n\nWillkommen zu deinem ersten Schritt mit **Python**! Python ist eine der beliebtesten Programmiersprachen, weil sie gut lesbar und einfach zu lernen ist.\n\n## Python installieren\n\nLade Python von [python.org](https://www.python.org) herunter. Prüfe danach im Terminal, ob alles funktioniert:\n\n```bash\npython --version\n```\n\nDu solltest etwas wie `Python 3.12.0` sehen.\n\n## Dein erstes Programm\n\nMit der Funktion `print()` gibst du Text auf dem Bildschirm aus:\n\n```python\nprint(\"Hello, World!\")\n# Diese Zeile ist ein Kommentar und wird ignoriert\nprint(\"Ich lerne Python\")\n```\n\nDie Ausgabe lautet:\n\n```\nHello, World!\nIch lerne Python\n```\n\n## Kommentare\n\nKommentare beginnen mit `#` und werden von Python **nicht** ausgeführt. Sie dienen als Notizen für Menschen.\n\n| Schreibweise | Bedeutung |\n| --- | --- |\n| `# Text` | Einzeiliger Kommentar |\n| `print(\"Hi\")` | Gibt `Hi` aus |\n| `print()` | Gibt eine Leerzeile aus |\n\n> 💡 **Tipp:** Der Text in `print()` muss in Anführungszeichen stehen (`\"...\"` oder `'...'`). Vergisst du sie, behandelt Python den Text als Variablennamen und es kommt zu einem Fehler.\n\nMehrere Werte kannst du durch Kommas getrennt ausgeben. Python fügt automatisch ein Leerzeichen ein:\n\n```python\nprint(\"Alter:\", 25)\n# Ausgabe: Alter: 25\n```",
+    "tasks": [
+      {
+        "id": "p11_1",
+        "type": "multiple_choice",
+        "question": "Was gibt `print(\"Hallo\")` aus?",
+        "options": [
+          "\"Hallo\"",
+          "Hallo",
+          "print(Hallo)",
+          "Ein Fehler"
+        ],
+        "correctAnswer": 1,
+        "explanation": "print() gibt den Text ohne die Anführungszeichen aus, also genau: Hallo",
+        "aiCheck": false
+      },
+      {
+        "id": "p11_2",
+        "type": "multiple_choice",
+        "question": "Womit beginnt ein einzeiliger Kommentar in Python?",
+        "options": [
+          "//",
+          "<!--",
+          "#",
+          "/*"
+        ],
+        "correctAnswer": 2,
+        "explanation": "In Python leitet das Zeichen # einen Kommentar ein, der bis zum Zeilenende reicht.",
+        "aiCheck": false
+      },
+      {
+        "id": "p11_3",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Die Funktion ___ gibt Text aus, und ein Kommentar beginnt mit dem Zeichen ___.",
+        "blanks": [
+          "print",
+          "#"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "p11_4",
+        "type": "code_write",
+        "question": "Schreibe ein Programm, das mit print() den Text 'Hallo Welt' ausgibt und darüber einen Kommentar enthält, der das Programm beschreibt.",
+        "starterCode": "# Schreibe deinen Code hier\n",
+        "expectedConcepts": [
+          "print",
+          "Kommentar",
+          "String"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "p11_5",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, warum man Kommentare in seinem Code verwendet, obwohl Python sie ignoriert.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "python_1_2": {
+    "estimatedMinutes": 14,
+    "theory": "# Variablen & Datentypen\n\nEine **Variable** ist ein Name, unter dem du einen Wert speicherst. In Python erstellst du sie mit dem Zuweisungsoperator `=`.\n\n```python\nname = \"Anna\"\nalter = 25\ngroesse = 1.72\nist_student = True\n```\n\n## Die wichtigsten Datentypen\n\nPython erkennt den Datentyp automatisch anhand des Werts. Mit `type()` kannst du ihn überprüfen:\n\n```python\nprint(type(alter))   # <class 'int'>\nprint(type(groesse)) # <class 'float'>\nprint(type(name))    # <class 'str'>\nprint(type(ist_student)) # <class 'bool'>\n```\n\n| Typ | Beschreibung | Beispiel |\n| --- | --- | --- |\n| `int` | Ganze Zahl | `42` |\n| `float` | Kommazahl | `3.14` |\n| `str` | Zeichenkette (Text) | `\"Hallo\"` |\n| `bool` | Wahrheitswert | `True` / `False` |\n\n## Typen umwandeln\n\nDu kannst Werte zwischen Typen konvertieren:\n\n```python\nzahl = int(\"10\")     # str -> int, ergibt 10\ntext = str(99)       # int -> str, ergibt \"99\"\nkomma = float(3)     # int -> float, ergibt 3.0\n```\n\n> 💡 **Achtung:** Variablennamen sind in Python **case-sensitive**. `Alter` und `alter` sind zwei verschiedene Variablen!\n\nEin häufiger Fehler ist das Verwechseln von `int` und `str`. `5 + 3` ergibt `8`, aber `\"5\" + \"3\"` ergibt `\"53\"`, weil Strings aneinandergehängt werden.",
+    "tasks": [
+      {
+        "id": "p12_1",
+        "type": "multiple_choice",
+        "question": "Welchen Datentyp hat der Wert `3.14` in Python?",
+        "options": [
+          "int",
+          "float",
+          "str",
+          "bool"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Zahlen mit Nachkommastellen sind vom Typ float (Fließkommazahl).",
+        "aiCheck": false
+      },
+      {
+        "id": "p12_2",
+        "type": "multiple_choice",
+        "question": "Was gibt `print(\"5\" + \"3\")` aus?",
+        "options": [
+          "8",
+          "53",
+          "\"53\"",
+          "Ein Fehler"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Beide Werte sind Strings, daher werden sie aneinandergehängt (Konkatenation): 53",
+        "aiCheck": false
+      },
+      {
+        "id": "p12_3",
+        "type": "multiple_choice",
+        "question": "Was gibt `type(True)` zurück?",
+        "options": [
+          "<class 'int'>",
+          "<class 'bool'>",
+          "<class 'str'>",
+          "<class 'true'>"
+        ],
+        "correctAnswer": 1,
+        "explanation": "True und False sind Wahrheitswerte vom Typ bool.",
+        "aiCheck": false
+      },
+      {
+        "id": "p12_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Mit der Funktion ___ prüft man den Datentyp, und ganze Zahlen haben den Typ ___.",
+        "blanks": [
+          "type",
+          "int"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "p12_5",
+        "type": "code_write",
+        "question": "Erstelle drei Variablen: einen Namen (str), ein Alter (int) und eine Groesse (float). Gib anschliessend den Datentyp jeder Variable mit type() aus.",
+        "starterCode": "# Erstelle deine Variablen hier\n",
+        "expectedConcepts": [
+          "Variable",
+          "type",
+          "int",
+          "float",
+          "str"
+        ],
+        "aiCheck": true
+      }
+    ]
+  },
+  "python_1_3": {
+    "estimatedMinutes": 14,
+    "theory": "# Strings & String-Methoden\n\nEin **String** (`str`) ist eine Zeichenkette. Jedes Zeichen hat eine Position, einen sogenannten **Index**, beginnend bei `0`.\n\n```python\nwort = \"Python\"\nprint(wort[0])   # P\nprint(wort[-1])  # n (letztes Zeichen)\n```\n\n## Slicing\n\nMit `[start:ende]` schneidest du Teile heraus. Der Endindex ist **nicht** enthalten:\n\n```python\nwort = \"Python\"\nprint(wort[0:3])  # Pyt\nprint(wort[2:])   # thon\nprint(wort[:2])   # Py\n```\n\n## Nützliche String-Methoden\n\n| Methode | Beschreibung | Beispiel |\n| --- | --- | --- |\n| `.upper()` | Grossbuchstaben | `\"hi\".upper()` → `\"HI\"` |\n| `.lower()` | Kleinbuchstaben | `\"HI\".lower()` → `\"hi\"` |\n| `.strip()` | Leerzeichen entfernen | `\" hi \".strip()` → `\"hi\"` |\n| `.replace(a, b)` | Ersetzen | `\"ab\".replace(\"a\",\"x\")` → `\"xb\"` |\n| `len(s)` | Länge | `len(\"hi\")` → `2` |\n\n## f-Strings\n\nMit einem **f-String** fügst du Variablen direkt in Text ein. Stelle dem String einfach ein `f` voran und schreibe die Variable in geschweifte Klammern:\n\n```python\nname = \"Anna\"\nalter = 25\nprint(f\"{name} ist {alter} Jahre alt.\")\n# Anna ist 25 Jahre alt.\n```\n\n> 💡 **Tipp:** Strings sind in Python **unveränderlich** (immutable). Methoden wie `.upper()` ändern den Original-String nicht, sondern geben einen **neuen** String zurück.",
+    "tasks": [
+      {
+        "id": "p13_1",
+        "type": "multiple_choice",
+        "question": "Was gibt `\"Python\"[1:4]` zurück?",
+        "options": [
+          "Pyt",
+          "yth",
+          "ytho",
+          "Pyth"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Slicing startet bei Index 1 (y) und endet vor Index 4. Also y, t, h = 'yth'.",
+        "aiCheck": false
+      },
+      {
+        "id": "p13_2",
+        "type": "multiple_choice",
+        "question": "Was gibt `\"hallo\".upper()` zurück?",
+        "options": [
+          "hallo",
+          "Hallo",
+          "HALLO",
+          "hALLO"
+        ],
+        "correctAnswer": 2,
+        "explanation": ".upper() wandelt alle Zeichen in Grossbuchstaben um: HALLO",
+        "aiCheck": false
+      },
+      {
+        "id": "p13_3",
+        "type": "multiple_choice",
+        "question": "Welche Ausgabe erzeugt `name = \"Tim\"; print(f\"Hi {name}\")`?",
+        "options": [
+          "Hi {name}",
+          "Hi Tim",
+          "f Hi Tim",
+          "Hi name"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Ein f-String ersetzt {name} durch den Wert der Variable, also Tim.",
+        "aiCheck": false
+      },
+      {
+        "id": "p13_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Der erste Index eines Strings ist ___, und ein f-String beginnt mit dem Buchstaben ___.",
+        "blanks": [
+          "0",
+          "f"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "p13_5",
+        "type": "code_write",
+        "question": "Speichere deinen Vornamen in einer Variable. Gib ihn in Grossbuchstaben aus und erstelle dann mit einem f-String den Satz '<Name> hat X Buchstaben', wobei X die Laenge des Namens ist.",
+        "starterCode": "name = \"DeinName\"\n",
+        "expectedConcepts": [
+          "upper",
+          "f-string",
+          "len"
+        ],
+        "aiCheck": true
+      }
+    ]
+  },
+  "python_1_4": {
+    "estimatedMinutes": 14,
+    "theory": "# Listen, Tupel, Sets\n\nPython bietet mehrere Möglichkeiten, mehrere Werte in einer Variable zu speichern. Die drei wichtigsten sind **Liste**, **Tupel** und **Set**.\n\n## Listen\n\nEine **Liste** ist geordnet und **veränderbar**. Du erstellst sie mit eckigen Klammern `[]`:\n\n```python\nfarben = [\"rot\", \"grün\", \"blau\"]\nfarben.append(\"gelb\")   # hinzufügen\nprint(farben[0])        # rot\nfarben[1] = \"schwarz\"   # ändern\n```\n\n## Tupel\n\nEin **Tupel** ist geordnet, aber **unveränderbar** (immutable). Du erstellst es mit runden Klammern `()`:\n\n```python\npunkt = (10, 20)\nprint(punkt[0])  # 10\n# punkt[0] = 5  -> Fehler! Tupel sind unveränderbar\n```\n\n## Sets\n\nEin **Set** ist eine ungeordnete Sammlung **ohne Duplikate**. Du erstellst es mit geschweiften Klammern `{}`:\n\n```python\nzahlen = {1, 2, 2, 3}\nprint(zahlen)  # {1, 2, 3} – Duplikat entfernt\n```\n\n## Vergleich\n\n| Typ | Klammern | Geordnet | Veränderbar | Duplikate |\n| --- | --- | --- | --- | --- |\n| Liste | `[]` | Ja | Ja | Ja |\n| Tupel | `()` | Ja | Nein | Ja |\n| Set | `{}` | Nein | Ja | Nein |\n\n> 💡 **Merke:** Nutze eine **Liste**, wenn sich die Daten ändern können, ein **Tupel** für feste Werte (z. B. Koordinaten) und ein **Set**, wenn du eindeutige Werte brauchst.\n\nMit `len()` ermittelst du bei allen dreien die Anzahl der Elemente.",
+    "tasks": [
+      {
+        "id": "p14_1",
+        "type": "multiple_choice",
+        "question": "Welcher Datentyp ist geordnet UND veränderbar?",
+        "options": [
+          "Tupel",
+          "Set",
+          "Liste",
+          "String"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Eine Liste ist geordnet (Indexzugriff möglich) und veränderbar (Elemente hinzufügen/ändern).",
+        "aiCheck": false
+      },
+      {
+        "id": "p14_2",
+        "type": "multiple_choice",
+        "question": "Was gibt `print({1, 2, 2, 3})` aus?",
+        "options": [
+          "{1, 2, 2, 3}",
+          "{1, 2, 3}",
+          "[1, 2, 3]",
+          "Ein Fehler"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Ein Set entfernt Duplikate, daher bleibt {1, 2, 3} übrig.",
+        "aiCheck": false
+      },
+      {
+        "id": "p14_3",
+        "type": "multiple_choice",
+        "question": "Welche Klammern verwendet man, um ein Tupel zu erstellen?",
+        "options": [
+          "Eckige Klammern []",
+          "Runde Klammern ()",
+          "Geschweifte Klammern {}",
+          "Spitze Klammern <>"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Tupel werden mit runden Klammern () erstellt, z. B. (10, 20).",
+        "aiCheck": false
+      },
+      {
+        "id": "p14_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Eine Liste ist ___ (kann geändert werden), während ein Tupel ___ ist.",
+        "blanks": [
+          "veränderbar",
+          "unveränderbar"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "p14_5",
+        "type": "code_write",
+        "question": "Erstelle eine Liste mit drei Tiernamen, füge mit append() ein viertes Tier hinzu und gib anschliessend mit len() die Anzahl der Tiere aus.",
+        "starterCode": "# Erstelle deine Liste hier\n",
+        "expectedConcepts": [
+          "Liste",
+          "append",
+          "len"
+        ],
+        "aiCheck": true
+      }
+    ]
+  },
+  "python_1_5": {
+    "estimatedMinutes": 14,
+    "theory": "# Dictionaries\n\nEin **Dictionary** (`dict`) speichert Daten als **Schlüssel-Wert-Paare** (key-value). Statt über einen Index greifst du über den Schlüssel auf den Wert zu.\n\n```python\nperson = {\n    \"name\": \"Anna\",\n    \"alter\": 25,\n    \"stadt\": \"Berlin\"\n}\nprint(person[\"name\"])  # Anna\n```\n\n## Werte hinzufügen und ändern\n\n```python\nperson[\"beruf\"] = \"Lehrerin\"  # neues Paar hinzufügen\nperson[\"alter\"] = 26          # Wert ändern\n```\n\n## Sicherer Zugriff mit get()\n\nGreifst du auf einen nicht vorhandenen Schlüssel mit `[]` zu, entsteht ein `KeyError`. Die Methode `.get()` gibt stattdessen `None` (oder einen Standardwert) zurück:\n\n```python\nprint(person.get(\"email\"))            # None\nprint(person.get(\"email\", \"fehlt\"))   # fehlt\n```\n\n## Wichtige Methoden\n\n| Methode | Beschreibung |\n| --- | --- |\n| `.keys()` | Alle Schlüssel |\n| `.values()` | Alle Werte |\n| `.items()` | Alle Paare als Tupel |\n| `.get(k)` | Wert sicher abrufen |\n\nDu kannst über ein Dictionary auch iterieren:\n\n```python\nfor schluessel, wert in person.items():\n    print(schluessel, \"->\", wert)\n```\n\n> 💡 **Merke:** Schlüssel müssen **eindeutig** und unveränderbar sein (z. B. Strings oder Zahlen). Wird ein Schlüssel doppelt vergeben, überschreibt der letzte Wert den vorherigen.",
+    "tasks": [
+      {
+        "id": "p15_1",
+        "type": "multiple_choice",
+        "question": "Wie greift man auf den Wert des Schlüssels `\"name\"` in einem Dictionary `d` zu?",
+        "options": [
+          "d.name",
+          "d[\"name\"]",
+          "d(0)",
+          "d->name"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Auf Werte greift man über den Schlüssel in eckigen Klammern zu: d[\"name\"].",
+        "aiCheck": false
+      },
+      {
+        "id": "p15_2",
+        "type": "multiple_choice",
+        "question": "Was passiert bei `d[\"x\"]`, wenn der Schlüssel \"x\" nicht existiert?",
+        "options": [
+          "Gibt None zurück",
+          "Gibt 0 zurück",
+          "Es entsteht ein KeyError",
+          "Erstellt den Schlüssel"
+        ],
+        "correctAnswer": 2,
+        "explanation": "Der Zugriff mit [] auf einen nicht vorhandenen Schlüssel löst einen KeyError aus. .get() wäre sicherer.",
+        "aiCheck": false
+      },
+      {
+        "id": "p15_3",
+        "type": "multiple_choice",
+        "question": "Welche Methode gibt alle Schlüssel-Wert-Paare zurück?",
+        "options": [
+          ".keys()",
+          ".values()",
+          ".items()",
+          ".pairs()"
+        ],
+        "correctAnswer": 2,
+        "explanation": ".items() liefert alle Paare als (Schlüssel, Wert)-Tupel.",
+        "aiCheck": false
+      },
+      {
+        "id": "p15_4",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus:",
+        "template": "Ein Dictionary speichert Daten als ___-Wert-Paare und wird mit ___ Klammern erstellt.",
+        "blanks": [
+          "Schlüssel",
+          "geschweiften"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "p15_5",
+        "type": "code_write",
+        "question": "Erstelle ein Dictionary für ein Auto mit den Schlüsseln 'marke', 'modell' und 'baujahr'. Füge danach den Schlüssel 'farbe' hinzu und gib die Marke des Autos aus.",
+        "starterCode": "# Erstelle dein Dictionary hier\n",
+        "expectedConcepts": [
+          "dict",
+          "Schlüssel",
+          "Zugriff",
+          "hinzufügen"
+        ],
+        "aiCheck": true
+      }
+    ]
+  },
+  "sql_1_1": {
+    "estimatedMinutes": 12,
+    "theory": "# Was sind Datenbanken?\n\nEine **Datenbank** ist ein organisierter Speicher für Daten. In einer **relationalen Datenbank** werden Daten in **Tabellen** abgelegt – ganz ähnlich wie in einer Tabellenkalkulation.\n\n## Tabellen, Zeilen und Spalten\n\nEine **Tabelle** besteht aus **Spalten** (engl. *columns*) und **Zeilen** (engl. *rows*).\n\n- Jede **Spalte** beschreibt ein Merkmal, z. B. `name` oder `email`.\n- Jede **Zeile** ist ein einzelner Datensatz, z. B. ein konkreter Kunde.\n\nHier ein Beispiel für eine Tabelle `kunden`:\n\n| id | name      | stadt     |\n|----|-----------|-----------|\n| 1  | Anna      | Berlin    |\n| 2  | Ben       | Hamburg   |\n| 3  | Clara     | München   |\n\n## Der Primärschlüssel\n\nJede Tabelle sollte einen **Primärschlüssel** (engl. *primary key*) besitzen. Das ist eine Spalte, deren Wert jede Zeile **eindeutig** identifiziert. Oben ist das die Spalte `id`.\n\n```sql\nCREATE TABLE kunden (\n  id INTEGER PRIMARY KEY,\n  name TEXT,\n  stadt TEXT\n);\n```\n\nEin Primärschlüssel darf **nicht doppelt** vorkommen und **nicht leer** (NULL) sein.\n\n> 💡 Merke: Der Primärschlüssel ist wie eine Ausweisnummer – kein zweiter Datensatz darf denselben Wert haben.\n\nSo weißt du immer genau, welche Zeile gemeint ist, selbst wenn zwei Kunden denselben Namen tragen.",
+    "tasks": [
+      {
+        "id": "s11_q1",
+        "type": "multiple_choice",
+        "question": "Was beschreibt eine Spalte in einer Tabelle?",
+        "options": [
+          "Einen einzelnen Datensatz",
+          "Ein Merkmal/Attribut der Daten, z. B. name",
+          "Die gesamte Datenbank",
+          "Eine Verbindung zwischen zwei Tabellen"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Eine Spalte steht für ein Merkmal wie name oder stadt. Ein einzelner Datensatz ist dagegen eine Zeile.",
+        "aiCheck": false
+      },
+      {
+        "id": "s11_q2",
+        "type": "multiple_choice",
+        "question": "Welche Eigenschaft hat ein Primärschlüssel?",
+        "options": [
+          "Er darf sich beliebig oft wiederholen",
+          "Er identifiziert jede Zeile eindeutig",
+          "Er muss immer eine Textspalte sein",
+          "Er darf NULL sein"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Ein Primärschlüssel identifiziert jede Zeile eindeutig und darf weder doppelt noch NULL sein.",
+        "aiCheck": false
+      },
+      {
+        "id": "s11_fb1",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus: Eine ___ besteht aus Spalten und ___.",
+        "template": "Eine ___ besteht aus Spalten und ___.",
+        "blanks": [
+          "Tabelle",
+          "Zeilen"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "s11_ex1",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten, warum ein Primärschlüssel wichtig ist, wenn zwei Kunden denselben Namen haben.",
+        "aiCheck": true
+      },
+      {
+        "id": "s11_cw1",
+        "type": "code_write",
+        "question": "Schreibe eine CREATE TABLE Anweisung für eine Tabelle produkte mit den Spalten id (Primärschlüssel), name und preis.",
+        "starterCode": "-- Lege die Tabelle produkte an\n",
+        "expectedConcepts": [
+          "create table",
+          "primary key",
+          "produkte"
+        ],
+        "aiCheck": true
+      }
+    ]
+  },
+  "sql_1_2": {
+    "estimatedMinutes": 12,
+    "theory": "# SELECT & FROM\n\nMit **SELECT** liest du Daten aus einer Datenbank. Es ist der wichtigste Befehl in SQL und der erste, den du wirklich brauchst.\n\n## Der Aufbau\n\nEine einfache Abfrage besteht aus zwei Teilen:\n\n- **SELECT** gibt an, **welche Spalten** du sehen willst.\n- **FROM** gibt an, **aus welcher Tabelle** die Daten kommen.\n\n```sql\nSELECT name, stadt\nFROM kunden;\n```\n\nDiese Abfrage liefert nur die Spalten `name` und `stadt` aus der Tabelle `kunden`.\n\n## Alle Spalten mit *\n\nMöchtest du **alle Spalten** sehen, benutze den Stern `*`:\n\n```sql\nSELECT * FROM kunden;\n```\n\nBeispiel-Datensätze der Tabelle `kunden`:\n\n| id | name  | stadt    |\n|----|-------|----------|\n| 1  | Anna  | Berlin   |\n| 2  | Ben   | Hamburg  |\n\n## Wichtige Details\n\n- Jede Anweisung endet mit einem **Semikolon** `;`.\n- SQL-Schlüsselwörter werden oft **GROSS** geschrieben, das ist aber nur Stil – `select` funktioniert auch.\n- Die Reihenfolge der Spalten nach `SELECT` bestimmt die Reihenfolge in der Ausgabe.\n\n> 💡 Tipp: Benutze `*` zum schnellen Stöbern, aber wähle in echten Programmen lieber gezielt die Spalten aus, die du wirklich brauchst – das ist schneller und klarer.",
+    "tasks": [
+      {
+        "id": "s12_q1",
+        "type": "multiple_choice",
+        "question": "Welcher Teil der Abfrage gibt an, aus welcher Tabelle die Daten kommen?",
+        "options": [
+          "SELECT",
+          "WHERE",
+          "FROM",
+          "ORDER BY"
+        ],
+        "correctAnswer": 2,
+        "explanation": "FROM bestimmt die Quelltabelle. SELECT bestimmt die Spalten.",
+        "aiCheck": false
+      },
+      {
+        "id": "s12_q2",
+        "type": "multiple_choice",
+        "question": "Was bewirkt SELECT * FROM kunden;?",
+        "options": [
+          "Es löscht alle Kunden",
+          "Es gibt alle Spalten aller Zeilen der Tabelle kunden zurück",
+          "Es gibt nur die Spalte name zurück",
+          "Es erstellt die Tabelle kunden"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Der Stern * wählt alle Spalten, und ohne WHERE werden alle Zeilen zurückgegeben.",
+        "aiCheck": false
+      },
+      {
+        "id": "s12_fb1",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus, um alle Spalten aus kunden zu wählen:",
+        "template": "___ * ___ kunden;",
+        "blanks": [
+          "SELECT",
+          "FROM"
+        ],
+        "aiCheck": false
+      },
+      {
+        "id": "s12_cw1",
+        "type": "code_write",
+        "question": "Schreibe eine Abfrage, die nur die Spalten name und stadt aus der Tabelle kunden zurückgibt.",
+        "starterCode": "-- Wähle name und stadt aus kunden\n",
+        "expectedConcepts": [
+          "select",
+          "from",
+          "kunden",
+          "name",
+          "stadt"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "s12_ex1",
+        "type": "explain",
+        "question": "Erkläre in eigenen Worten den Unterschied zwischen SELECT * und der gezielten Auswahl einzelner Spalten.",
+        "aiCheck": true
+      }
+    ]
+  },
+  "sql_1_3": {
+    "estimatedMinutes": 12,
+    "theory": "# WHERE & Bedingungen\n\nMit **WHERE** filterst du Zeilen. Nur Zeilen, für die die Bedingung **wahr** ist, kommen in das Ergebnis.\n\n## Vergleichsoperatoren\n\n```sql\nSELECT name, alter\nFROM kunden\nWHERE alter > 18;\n```\n\nDie wichtigsten Operatoren:\n\n| Operator | Bedeutung           | Beispiel           |\n|----------|---------------------|--------------------|\n| `=`      | gleich              | `stadt = 'Berlin'` |\n| `>`      | größer als          | `alter > 18`       |\n| `<`      | kleiner als         | `preis < 100`      |\n| `<>`     | ungleich            | `stadt <> 'Bonn'`  |\n\n> 💡 Achtung: In SQL bedeutet ein einzelnes `=` \"ist gleich\" (kein `==` wie in vielen Programmiersprachen). Texte stehen in **einfachen Anführungszeichen**: `'Berlin'`.\n\n## AND und OR\n\nMehrere Bedingungen verknüpfst du mit **AND** (beide müssen wahr sein) oder **OR** (mindestens eine muss wahr sein):\n\n```sql\nSELECT name FROM kunden\nWHERE stadt = 'Berlin' AND alter > 30;\n\nSELECT name FROM kunden\nWHERE stadt = 'Berlin' OR stadt = 'Hamburg';\n```\n\n## Mustersuche mit LIKE\n\n`LIKE` sucht nach **Textmustern**. Das Prozentzeichen `%` steht für beliebig viele Zeichen:\n\n```sql\nSELECT name FROM kunden\nWHERE name LIKE 'A%';\n```\n\nDas findet alle Namen, die mit **A** beginnen, z. B. *Anna* oder *Anton*. `'%a'` findet Namen, die auf *a* enden, und `'%nn%'` findet *nn* an beliebiger Stelle.",
+    "tasks": [
+      {
+        "id": "s13_q1",
+        "type": "multiple_choice",
+        "question": "Welche Bedingung findet alle Kunden aus Berlin?",
+        "options": [
+          "WHERE stadt == Berlin",
+          "WHERE stadt = 'Berlin'",
+          "WHERE stadt LIKE Berlin",
+          "WHERE stadt > 'Berlin'"
+        ],
+        "correctAnswer": 1,
+        "explanation": "In SQL prüft man Gleichheit mit einem einzelnen = und Texte stehen in einfachen Anführungszeichen.",
+        "aiCheck": false
+      },
+      {
+        "id": "s13_q2",
+        "type": "multiple_choice",
+        "question": "Was bewirkt WHERE name LIKE 'A%'?",
+        "options": [
+          "Findet Namen, die genau 'A%' lauten",
+          "Findet Namen, die mit A beginnen",
+          "Findet Namen, die mit A enden",
+          "Findet Namen, die ein A in der Mitte haben"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Das % nach dem A steht für beliebig viele Zeichen danach, also alle Namen, die mit A beginnen.",
+        "aiCheck": false
+      },
+      {
+        "id": "s13_q3",
+        "type": "multiple_choice",
+        "question": "Wann liefert eine mit AND verknüpfte Bedingung eine Zeile zurück?",
+        "options": [
+          "Wenn mindestens eine Teilbedingung wahr ist",
+          "Wenn beide Teilbedingungen wahr sind",
+          "Immer, AND wird ignoriert",
+          "Nur wenn beide Teilbedingungen falsch sind"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Bei AND müssen alle verknüpften Bedingungen wahr sein. Bei OR genügt eine.",
+        "aiCheck": false
+      },
+      {
+        "id": "s13_cw1",
+        "type": "code_write",
+        "question": "Schreibe eine Abfrage, die name und stadt aller Kunden zurückgibt, die in Berlin wohnen UND älter als 30 sind (Spalte alter).",
+        "starterCode": "-- Filtere kunden nach stadt und alter\n",
+        "expectedConcepts": [
+          "select",
+          "from",
+          "where",
+          "and"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "s13_fb1",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus, um Kunden aus Berlin ODER Hamburg zu finden:",
+        "template": "SELECT name FROM kunden WHERE stadt = 'Berlin' ___ stadt ___ 'Hamburg';",
+        "blanks": [
+          "OR",
+          "="
+        ],
+        "aiCheck": false
+      }
+    ]
+  },
+  "sql_1_4": {
+    "estimatedMinutes": 12,
+    "theory": "# ORDER BY & LIMIT\n\nStandardmäßig kommen die Zeilen einer Abfrage in **keiner garantierten Reihenfolge** zurück. Mit **ORDER BY** sortierst du das Ergebnis.\n\n## Sortieren mit ORDER BY\n\n```sql\nSELECT name, preis\nFROM produkte\nORDER BY preis;\n```\n\n- **ASC** (*ascending*) = aufsteigend (klein nach groß). Das ist der **Standard**.\n- **DESC** (*descending*) = absteigend (groß nach klein).\n\n```sql\nSELECT name, preis\nFROM produkte\nORDER BY preis DESC;\n```\n\nBeispieldaten der Tabelle `produkte`:\n\n| id | name    | preis |\n|----|---------|-------|\n| 1  | Apfel   | 2     |\n| 2  | Birne   | 3     |\n| 3  | Kirsche | 5     |\n\nSortiert nach `preis DESC` käme zuerst *Kirsche*, dann *Birne*, dann *Apfel*.\n\n## Begrenzen mit LIMIT\n\n**LIMIT** begrenzt die Anzahl der zurückgegebenen Zeilen:\n\n```sql\nSELECT name, preis\nFROM produkte\nORDER BY preis DESC\nLIMIT 1;\n```\n\nDiese Abfrage liefert das **teuerste Produkt** – sortieren absteigend nach Preis und nur die erste Zeile nehmen.\n\n> 💡 Reihenfolge merken: `SELECT` → `FROM` → `WHERE` → `ORDER BY` → `LIMIT`. Diese Reihenfolge ist fest vorgeschrieben.\n\nSo kombinierst du Sortierung und Begrenzung, um z. B. die \"Top 3\" oder den günstigsten Eintrag zu finden.",
+    "tasks": [
+      {
+        "id": "s14_q1",
+        "type": "multiple_choice",
+        "question": "Was ist die Standard-Sortierrichtung von ORDER BY?",
+        "options": [
+          "DESC (absteigend)",
+          "ASC (aufsteigend)",
+          "Zufällig",
+          "Es gibt keine Standardrichtung"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Ohne Angabe sortiert ORDER BY aufsteigend (ASC), also von klein nach groß.",
+        "aiCheck": false
+      },
+      {
+        "id": "s14_q2",
+        "type": "multiple_choice",
+        "question": "Welche Abfrage liefert das teuerste Produkt?",
+        "options": [
+          "SELECT name FROM produkte ORDER BY preis ASC LIMIT 1;",
+          "SELECT name FROM produkte ORDER BY preis DESC LIMIT 1;",
+          "SELECT name FROM produkte LIMIT 1;",
+          "SELECT name FROM produkte WHERE preis = teuer;"
+        ],
+        "correctAnswer": 1,
+        "explanation": "Absteigend nach preis sortieren (DESC) und mit LIMIT 1 nur die erste, also teuerste Zeile nehmen.",
+        "aiCheck": false
+      },
+      {
+        "id": "s14_q3",
+        "type": "multiple_choice",
+        "question": "Welche Reihenfolge der Klauseln ist korrekt?",
+        "options": [
+          "SELECT ... ORDER BY ... FROM ... LIMIT ...",
+          "SELECT ... FROM ... ORDER BY ... LIMIT ...",
+          "FROM ... SELECT ... LIMIT ... ORDER BY ...",
+          "SELECT ... LIMIT ... FROM ... ORDER BY ..."
+        ],
+        "correctAnswer": 1,
+        "explanation": "Die feste Reihenfolge ist SELECT, FROM, (WHERE), ORDER BY, LIMIT.",
+        "aiCheck": false
+      },
+      {
+        "id": "s14_cw1",
+        "type": "code_write",
+        "question": "Schreibe eine Abfrage, die die 3 günstigsten Produkte (name, preis) aus der Tabelle produkte zurückgibt.",
+        "starterCode": "-- Günstigste 3 Produkte\n",
+        "expectedConcepts": [
+          "select",
+          "from",
+          "order by",
+          "limit"
+        ],
+        "aiCheck": true
+      },
+      {
+        "id": "s14_fb1",
+        "type": "fill_blank",
+        "question": "Fülle die Lücken aus, um Produkte nach Preis absteigend zu sortieren und nur 5 zu zeigen:",
+        "template": "SELECT name FROM produkte ORDER BY preis ___ ___ 5;",
+        "blanks": [
+          "DESC",
+          "LIMIT"
+        ],
+        "aiCheck": false
+      }
+    ]
+  }
+};
+
+// Alle handgemachten Inhalte zusammenführen
+const LESSON_CONTENT = { ...EXTRA_LESSONS, ...BASE_LESSONS };
+
 // Fallback-Lektion, falls keine handgemachten Inhalte vorliegen
 function buildFallbackLesson(course, meta) {
   const title = meta.lesson.title;
@@ -416,7 +2524,7 @@ Bitte bewerte diese Antwort.`;
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 1000,
@@ -485,13 +2593,14 @@ function heuristicCheck(task, userAnswer) {
 
 function renderInline(text, kp) {
   const parts = [];
-  const regex = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*]+\*)/g;
+  const regex = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*]+\*)|(\[[^\]]+\]\([^)]+\))/g;
   let last = 0, m, i = 0;
   while ((m = regex.exec(text))) {
     if (m.index > last) parts.push(text.slice(last, m.index));
     if (m[1]) parts.push(<code key={kp + "c" + i} className="font-code text-[13px] px-1.5 py-0.5 rounded bg-[#0A0E1A] border border-[#1E2D4A] text-[#4F8EF7]">{m[1].slice(1, -1)}</code>);
     else if (m[2]) parts.push(<strong key={kp + "b" + i} className="font-semibold text-[#E8EDF5]">{m[2].slice(2, -2)}</strong>);
     else if (m[3]) parts.push(<em key={kp + "i" + i} className="italic text-[#8A9BC0]">{m[3].slice(1, -1)}</em>);
+    else if (m[4]) { const lm = m[4].match(/\[([^\]]+)\]\(([^)]+)\)/); parts.push(<a key={kp + "a" + i} href={lm[2]} target="_blank" rel="noopener noreferrer" className="text-[#4F8EF7] underline decoration-[#4F8EF7]/40 hover:decoration-[#4F8EF7]">{lm[1]}</a>); }
     last = regex.lastIndex; i++;
   }
   if (last < text.length) parts.push(text.slice(last));
@@ -722,6 +2831,85 @@ function XPPopup({ amount }) {
   );
 }
 
+/* Code-Editor mit Zeilennummern + Tab-Support */
+function CodeEditor({ value, onChange, disabled, lang }) {
+  const ref = useRef(null);
+  const gutterRef = useRef(null);
+  const lines = (value || "").split("\n");
+  const onKeyDown = (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const el = e.target;
+      const s = el.selectionStart, end = el.selectionEnd;
+      const next = value.slice(0, s) + "  " + value.slice(end);
+      onChange(next);
+      requestAnimationFrame(() => { el.selectionStart = el.selectionEnd = s + 2; });
+    }
+  };
+  const syncScroll = (e) => { if (gutterRef.current) gutterRef.current.scrollTop = e.target.scrollTop; };
+  return (
+    <div className="rounded-lg overflow-hidden border border-[#1E2D4A] bg-[#0A0E1A]" style={{ borderLeft: "3px solid #4F8EF7" }}>
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#0F1629] border-b border-[#1E2D4A]">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]/60" /><span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]/60" /><span className="w-2.5 h-2.5 rounded-full bg-[#10B981]/60" />
+        </div>
+        <span className="font-code text-[11px] text-[#4A5A7A] uppercase">{lang}</span>
+      </div>
+      <div className="flex max-h-72 overflow-hidden">
+        <div ref={gutterRef} className="select-none overflow-hidden py-3 pl-3 pr-2 text-right font-code text-[13px] leading-relaxed text-[#4A5A7A] bg-[#0A0E1A] border-r border-[#1E2D4A]/60" aria-hidden>
+          {lines.map((_, i) => <div key={i}>{i + 1}</div>)}
+        </div>
+        <textarea ref={ref} value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown} onScroll={syncScroll}
+          disabled={disabled} spellCheck={false} rows={Math.max(7, lines.length)} aria-label="Code-Editor"
+          className="flex-1 bg-transparent p-3 font-code text-[13px] text-[#C9D6F0] resize-none leading-relaxed overflow-auto" placeholder="// Dein Code …" />
+      </div>
+    </div>
+  );
+}
+
+/* Konfetti-Feier bei abgeschlossener Lektion */
+function Confetti() {
+  const colors = ["#4F8EF7", "#7C3AED", "#F7C948", "#10B981", "#EF4444", "#F59E0B"];
+  const pieces = Array.from({ length: 80 });
+  return (
+    <div className="fixed inset-0 z-[95] pointer-events-none overflow-hidden" aria-hidden>
+      {pieces.map((_, i) => {
+        const left = Math.random() * 100;
+        const delay = Math.random() * 0.4;
+        const dur = 1.6 + Math.random() * 1.4;
+        const size = 6 + Math.random() * 8;
+        const c = colors[i % colors.length];
+        return (
+          <span key={i} style={{
+            position: "absolute", top: "-20px", left: left + "%", width: size, height: size * 0.5,
+            background: c, borderRadius: 2, opacity: 0,
+            animation: `ld-confetti ${dur}s ${delay}s ease-in forwards`,
+          }} />
+        );
+      })}
+    </div>
+  );
+}
+
+/* Skeleton-Loader für KI-Bewertung */
+function SkeletonFeedback() {
+  return (
+    <Card className="p-5 mt-5">
+      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
+        <Bot size={18} className="text-[#7C3AED]" />
+        <span className="font-display font-bold">KI-Bewertung</span>
+        <span className="ml-auto flex items-center gap-1.5 text-xs text-[#8A9BC0]"><Loader2 size={13} className="ld-spin" />analysiert deinen Code …</span>
+      </div>
+      <div className="space-y-2.5">
+        <div className="ld-skeleton h-4 w-1/3" />
+        <div className="ld-skeleton h-3 w-full" />
+        <div className="ld-skeleton h-3 w-11/12" />
+        <div className="ld-skeleton h-3 w-2/3" />
+      </div>
+    </Card>
+  );
+}
+
 /* ============================ Main App ============================= */
 function genSchoolCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -740,9 +2928,12 @@ export default function App() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [xpPopup, setXpPopup] = useState(null);
+  const [confetti, setConfetti] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const me = currentUser ? users.find((u) => u.id === currentUser) : null;
+
+  const celebrate = useCallback(() => { setConfetti(true); setTimeout(() => setConfetti(false), 3200); }, []);
 
   const pushToast = useCallback((type, msg) => {
     const id = Math.random().toString(36).slice(2);
@@ -833,7 +3024,7 @@ export default function App() {
     view, navigate, users, me, setUsers, currentUser,
     selectedCourse, openCourse, selectedLesson, openLesson,
     selectedStudent, setSelectedStudent, login, register, logout,
-    pushToast, showXP, addXP, completeLesson, sidebarOpen, setSidebarOpen,
+    pushToast, showXP, addXP, completeLesson, celebrate, sidebarOpen, setSidebarOpen,
   };
 
   let screen = null;
@@ -855,6 +3046,7 @@ export default function App() {
       {screen}
       <Toasts toasts={toasts} />
       {xpPopup != null && <XPPopup amount={xpPopup} />}
+      {confetti && <Confetti />}
     </div>
   );
 }
@@ -1145,7 +3337,7 @@ function AppShell({ ctx, children }) {
         {/* Top bar */}
         <header className="sticky top-0 z-40 backdrop-blur-md bg-[#0A0E1A]/85 border-b border-[#1E2D4A]">
           <div className="px-4 lg:px-8 h-16 flex items-center justify-between">
-            <button className="lg:hidden text-[#8A9BC0]" onClick={() => setSidebarOpen(true)}><Menu size={22} /></button>
+            <button className="lg:hidden text-[#8A9BC0]" onClick={() => setSidebarOpen(true)} aria-label="Menü öffnen"><Menu size={22} /></button>
             <div className="hidden lg:block text-sm text-[#8A9BC0] capitalize">{view === "course" ? "Kurs" : view === "teacher" ? "Lehrer-Bereich" : view}</div>
             <div className="flex items-center gap-3">
               {me.role === "student" && (
@@ -1154,7 +3346,7 @@ function AppShell({ ctx, children }) {
                   <span className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-[#141D35] border border-[#1E2D4A]"><Flame size={14} className="text-[#F59E0B]" /><span className="font-semibold">{me.streak}</span></span>
                 </>
               )}
-              <button onClick={() => navigate("profile")} className="text-2xl w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors">{me.avatar}</button>
+              <button onClick={() => navigate("profile")} aria-label="Profil" className="text-2xl w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors">{me.avatar}</button>
             </div>
           </div>
         </header>
@@ -1246,6 +3438,30 @@ function StudentDashboard({ ctx }) {
         <StatCard icon={CheckCircle2} label="Lektionen" value={me.completedLessons.length} color="#10B981" />
       </div>
 
+      {/* Streak-Woche + Level-Fortschritt */}
+      <Card className="p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+          <div className="flex-1">
+            <p className="text-sm font-medium mb-3 flex items-center gap-1.5"><Flame size={15} className="text-[#F59E0B]" />Deine Lern-Woche</p>
+            <div className="flex gap-2">
+              {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d, i) => {
+                const lit = i >= 7 - Math.min(me.streak, 7);
+                return (
+                  <div key={d} className="flex flex-col items-center gap-1.5">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${lit ? "" : "bg-[#1A2540] text-[#4A5A7A]"}`} style={lit ? { background: GRADIENT } : undefined}>{lit ? "🔥" : ""}</div>
+                    <span className="text-[10px] text-[#8A9BC0]">{d}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="sm:w-72">
+            <div className="flex justify-between text-xs mb-1.5"><span className="text-[#8A9BC0]">Bis Level {lvl.next ? lvl.next.level : lvl.level}</span><span className="text-[#F7C948]">{lvl.next ? `noch ${lvl.toNext.toLocaleString("de-DE")} XP` : "Max-Level!"}</span></div>
+            <ProgressBar value={lvl.pct} max={100} height="h-3" />
+          </div>
+        </div>
+      </Card>
+
       {/* Aktueller Kurs */}
       {cur && (
         <Card className="p-6 relative overflow-hidden">
@@ -1312,15 +3528,44 @@ function StudentDashboard({ ctx }) {
 
 function CoursesOverview({ ctx }) {
   const { me, openCourse } = ctx;
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const q = query.trim().toLowerCase();
+  const filtered = COURSES.filter((c) => {
+    const matchesQuery = !q || c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q);
+    const matchesFilter = filter === "all" || c.modules.some((m) => m.level === filter);
+    return matchesQuery && matchesFilter;
+  });
+  const filters = [["all", "Alle"], ["beginner", "Anfänger"], ["intermediate", "Mittel"], ["advanced", "Fortgeschritten"], ["expert", "Experte"]];
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold">Meine Kurse</h1>
         <p className="text-[#8A9BC0] mt-1">Wähle eine Sprache und leg los.</p>
       </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {COURSES.map((c) => <CourseCard key={c.id} course={c} user={me} onOpen={openCourse} />)}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Eye size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A5A7A]" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Kurs suchen …" aria-label="Kurs suchen"
+            className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 pl-9 text-sm text-[#E8EDF5] placeholder:text-[#4A5A7A] transition-colors" />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {filters.map(([v, label]) => (
+            <button key={v} onClick={() => setFilter(v)}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${filter === v ? "border-[#4F8EF7] bg-[#4F8EF7]/10 text-[#4F8EF7]" : "border-[#1E2D4A] text-[#8A9BC0] hover:border-[#2A3F6F]"}`}>{label}</button>
+          ))}
+        </div>
       </div>
+      {filtered.length === 0 ? (
+        <Card className="p-10 text-center">
+          <Eye size={36} className="mx-auto text-[#4A5A7A] mb-3" />
+          <p className="text-[#8A9BC0]">Kein Kurs gefunden. Versuch einen anderen Suchbegriff.</p>
+        </Card>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((c) => <CourseCard key={c.id} course={c} user={me} onOpen={openCourse} />)}
+        </div>
+      )}
     </div>
   );
 }
@@ -1461,16 +3706,23 @@ function Leaderboard({ ctx }) {
 }
 
 /* =========================== Profile ============================== */
+const AVATARS = ["🧑‍💻", "👩‍💻", "👨‍🎓", "👩‍🎓", "🦸", "🦹", "🧙", "🥷", "🤖", "👾", "🐱", "🦊", "🐼", "🦁", "🚀", "⚡"];
 function Profile({ ctx }) {
-  const { me, pushToast } = ctx;
+  const { me, pushToast, setUsers } = ctx;
   const isStudent = me.role === "student";
   const lvl = isStudent ? getLevelInfo(me.xp) : null;
+  const [picker, setPicker] = useState(false);
   const copy = (txt) => { try { navigator.clipboard.writeText(txt); } catch (e) {} pushToast("success", "In Zwischenablage kopiert!"); };
+  const setAvatar = (a) => { setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatar: a } : u)); setPicker(false); pushToast("success", "Avatar aktualisiert!"); };
   return (
     <div className="space-y-6 max-w-3xl">
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row items-center gap-5">
-          <div className="text-6xl w-24 h-24 rounded-2xl bg-[#0A0E1A] border border-[#1E2D4A] flex items-center justify-center">{me.avatar}</div>
+          <button onClick={() => setPicker((p) => !p)} aria-label="Avatar ändern"
+            className="relative text-6xl w-24 h-24 rounded-2xl bg-[#0A0E1A] border border-[#1E2D4A] hover:border-[#4F8EF7] flex items-center justify-center transition-colors group">
+            {me.avatar}
+            <span className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-[#141D35] border border-[#1E2D4A] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><PenLine size={12} className="text-[#4F8EF7]" /></span>
+          </button>
           <div className="flex-1 text-center sm:text-left">
             <h1 className="font-display text-2xl font-bold">{me.name}</h1>
             <p className="text-[#8A9BC0]">{me.email}</p>
@@ -1485,6 +3737,17 @@ function Profile({ ctx }) {
             </div>
           )}
         </div>
+        {picker && (
+          <div className="mt-5 pt-5 border-t border-[#1E2D4A]">
+            <p className="text-sm text-[#8A9BC0] mb-3">Wähle deinen Avatar:</p>
+            <div className="flex flex-wrap gap-2">
+              {AVATARS.map((a) => (
+                <button key={a} onClick={() => setAvatar(a)} aria-label={`Avatar ${a}`}
+                  className={`text-2xl w-12 h-12 rounded-xl flex items-center justify-center transition-all ${me.avatar === a ? "bg-[#4F8EF7]/15 border border-[#4F8EF7]" : "bg-[#0A0E1A] border border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>{a}</button>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
 
       {isStudent ? (
@@ -1691,7 +3954,7 @@ function AIFeedback({ result }) {
 }
 
 function LessonView({ ctx }) {
-  const { selectedLesson, navigate, openCourse, me, addXP, showXP, completeLesson, pushToast } = ctx;
+  const { selectedLesson, navigate, openCourse, me, addXP, showXP, completeLesson, celebrate, pushToast } = ctx;
   const lesson = getFullLesson(selectedLesson);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -1755,13 +4018,33 @@ function LessonView({ ctx }) {
   const finish = () => {
     if (!alreadyDone) {
       completeLesson(lesson.id, lesson.xpReward);
+      celebrate();
       setTimeout(() => { showXP(lesson.xpReward); }, 200);
       pushToast("success", `Lektion abgeschlossen! +${lesson.xpReward} XP 🎉`);
+      setTimeout(() => openCourse(lesson._course.id), 1400);
     } else {
       pushToast("info", "Lektion bereits abgeschlossen.");
+      openCourse(lesson._course.id);
     }
-    openCourse(lesson._course.id);
   };
+
+  // Tastatur-Shortcuts: 1–4 wählt Multiple-Choice-Option, Enter prüft/weiter
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target.tagName || "").toLowerCase();
+      if (tag === "textarea" || tag === "input") return;
+      if (task.type === "multiple_choice" && !result && /^[1-9]$/.test(e.key)) {
+        const n = parseInt(e.key, 10) - 1;
+        if (n < task.options.length) { e.preventDefault(); setAns(n); }
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (!result && !aiLoading) submit();
+        else if (result) { isLast ? finish() : setIdx((i) => i + 1); }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   return (
     <div className="min-h-screen bg-[#0A0E1A]">
@@ -1817,11 +4100,7 @@ function LessonView({ ctx }) {
 
               {/* Code schreiben */}
               {task.type === "code_write" && (
-                <div className="rounded-lg overflow-hidden border border-[#1E2D4A] bg-[#0A0E1A]" style={{ borderLeft: "3px solid #4F8EF7" }}>
-                  <div className="flex items-center justify-between px-3 py-1.5 bg-[#0F1629] border-b border-[#1E2D4A]"><span className="font-code text-[11px] text-[#4A5A7A] uppercase">{lesson._course.id}</span><Code2 size={13} className="text-[#4A5A7A]" /></div>
-                  <textarea value={answers[task.id] || ""} onChange={(e) => setAns(e.target.value)} spellCheck={false} rows={7}
-                    className="w-full bg-transparent p-3 font-code text-[13px] text-[#C9D6F0] resize-y leading-relaxed" placeholder="// Dein Code …" />
-                </div>
+                <CodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={!!result} lang={lesson._course.name} />
               )}
 
               {/* Lückentext */}
@@ -1869,7 +4148,13 @@ function LessonView({ ctx }) {
             </Card>
 
             {/* KI-Feedback */}
+            {aiLoading && task.aiCheck && <SkeletonFeedback />}
             {result && task.aiCheck && <AIFeedback result={result} />}
+
+            {/* Tastatur-Hinweis */}
+            <p className="text-center text-[11px] text-[#4A5A7A] mt-3">
+              {task.type === "multiple_choice" ? "Tipp: Tasten 1–4 zum Wählen · " : ""}<kbd className="font-code px-1 py-0.5 rounded bg-[#141D35] border border-[#1E2D4A]">Enter</kbd> zum {result ? "Weiter" : "Prüfen"}
+            </p>
 
             {/* Task-Navigation Punkte */}
             <div className="flex items-center justify-center gap-1.5 mt-5">
