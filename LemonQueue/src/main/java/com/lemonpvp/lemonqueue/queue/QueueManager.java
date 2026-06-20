@@ -40,8 +40,7 @@ public class QueueManager {
     private final LemonQueue plugin;
     private final ProxyServer proxy;
     private final Logger logger;
-    private final QueueConfig config;
-    private final Messages msg;
+    private QueueConfig config;
 
     /** Sliding window of release timestamps (ms) used to estimate wait time. */
     private static final long ETA_WINDOW_MS = 60_000L;
@@ -49,6 +48,9 @@ public class QueueManager {
     private final Map<String, ServerQueue> queues = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastPosition = new ConcurrentHashMap<>();
     private final Deque<Long> recentReleases = new ArrayDeque<>();
+
+    // volatile so that reloadConfig() is immediately visible to the scheduler threads.
+    private volatile Messages msg;
 
     private ScheduledTask processTask;
     private ScheduledTask displayTask;
@@ -59,6 +61,12 @@ public class QueueManager {
         this.logger = logger;
         this.config = config;
         this.msg = config.getMessages();
+    }
+
+    /** Hot-reloads config + messages without interrupting active queues. */
+    public void reloadConfig(QueueConfig newConfig) {
+        this.config = newConfig;
+        this.msg = newConfig.getMessages();
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────

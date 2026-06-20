@@ -5,6 +5,14 @@
 
 # Name des Limbo-Servers, wie er in velocity.toml unter [servers] registriert ist.
 # Spieler werden hierhin geparkt, während sie in der Warteschlange stehen.
+# MOTD, die im Minecraft-Server-Browser angezeigt wird (MiniMessage).
+# Überschreibt den Wert aus velocity.toml. Leer lassen ("") = velocity.toml wird verwendet.
+# Wird mit /lq reload sofort aktualisiert — kein Proxy-Neustart nötig!
+motd: ""
+# Beispiel / Example:
+# motd: "                  <#808080>ᴘʟᴀʏ.<bold><gradient:#fffb00:#109010>ʟᴇᴍᴏɴᴘᴠᴘ<reset><#808080>.ᴅᴇ\n<bold><gradient:#fffb00:#109010>    ᴏᴘᴇɴ ᴀʟᴘʜᴀ <gradient:#109010:#fffb00>ʀᴇʟᴇᴀꜱᴇ ᴄᴏᴍɪɴɢ ꜱᴏᴏɴ"
+
+# Name des Limbo-Servers, wie er in velocity.toml unter [servers] registriert ist.
 limbo-server: "limbo"
 
 # Standard-Zielserver für neu verbundene Spieler (z. B. die Lobby).
@@ -92,5 +100,6 @@ messages:
   admin-none: ""
   admin-line: ""
   admin-total: ""
+  cmd-reloaded: ""
   # Beispiel / Example (eigenes MiniMessage über der Hotbar):
   # actionbar-waiting: "<gradient:#fff700:#00ff7f><bold>Queue</bold></gradient> <gray>{pos}/{total} • {eta}</gray>"

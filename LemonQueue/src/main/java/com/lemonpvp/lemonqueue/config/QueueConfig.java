@@ -20,6 +20,7 @@ public class QueueConfig {
     private String limboServer = "limbo";
     private String defaultTarget = "lobby";
     private String bypassPermission = "lemonqueue.bypass";
+    private String motd = "";
 
     private long processInterval = 1000L;
     private long updateInterval = 250L;
@@ -62,6 +63,7 @@ public class QueueConfig {
         limboServer      = str(map, "limbo-server", limboServer);
         defaultTarget    = str(map, "default-target", defaultTarget);
         bypassPermission = str(map, "bypass-permission", bypassPermission);
+        motd             = str(map, "motd", motd);
         processInterval  = lng(map, "process-interval", processInterval);
         updateInterval   = lng(map, "update-interval", updateInterval);
         sendBatch        = (int) lng(map, "send-batch", sendBatch);
@@ -86,6 +88,7 @@ public class QueueConfig {
     public String getLimboServer()      { return limboServer; }
     public String getDefaultTarget()    { return defaultTarget; }
     public String getBypassPermission() { return bypassPermission; }
+    public String getMotd()             { return motd; }
     public long getProcessInterval()    { return processInterval; }
     public long getUpdateInterval()     { return updateInterval; }
     public int getSendBatch()           { return Math.max(1, sendBatch); }

@@ -188,12 +188,18 @@ public final class Messages {
         return Gradients.lemon(en() ? "Cleared the queue for '" + server + "'." : "Warteschlange für '" + server + "' geleert.");
     }
 
+    public Component cmdReloaded() {
+        String o = override("cmd-reloaded");
+        if (o != null) return Gradients.template(o, ph());
+        return Gradients.lemon(en() ? "✔ Config reloaded." : "✔ Config neu geladen.");
+    }
+
     public Component cmdUnknown() {
         String o = override("cmd-unknown");
         if (o != null) return Gradients.template(o, ph());
         return Component.text(en()
-                ? "Unknown. Usage: /lq [leave|admin|clear <server>]"
-                : "Unbekannt. Nutzung: /lq [leave|admin|clear <server>]", NamedTextColor.RED);
+                ? "Unknown. Usage: /lq [leave|admin|reload|clear <server>]"
+                : "Unbekannt. Nutzung: /lq [leave|admin|reload|clear <server>]", NamedTextColor.RED);
     }
 
     public Component adminHeader() {

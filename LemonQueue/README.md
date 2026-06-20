@@ -102,6 +102,7 @@ Durchlaufrate der Warteschlange (gleitendes 60-Sekunden-Fenster).
 | `/lq leave` | alle | Warteschlange verlassen (bleibt im Limbo) |
 | `/lq admin` | `lemonqueue.admin` | Alle Warteschlangen + Größen |
 | `/lq clear <server>` | `lemonqueue.admin` | Warteschlange leeren |
+| `/lq reload` | `lemonqueue.admin` | config.yml neu laden (Texte, MOTD, Limits) |
 
 ## Permissions
 

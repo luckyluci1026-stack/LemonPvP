@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.lemonpvp.lemonqueue.command.QueueCommand;
 import com.lemonpvp.lemonqueue.config.QueueConfig;
 import com.lemonpvp.lemonqueue.listener.ConnectionListener;
+import com.lemonpvp.lemonqueue.listener.PingListener;
 import com.lemonpvp.lemonqueue.queue.QueueManager;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
@@ -53,6 +54,7 @@ public class LemonQueue {
         this.queueManager = new QueueManager(this, proxy, logger, config);
 
         proxy.getEventManager().register(this, new ConnectionListener(proxy, config, queueManager));
+        proxy.getEventManager().register(this, new PingListener(this));
 
         CommandManager cm = proxy.getCommandManager();
         CommandMeta meta = cm.metaBuilder("lemonqueue").aliases("lq", "queue").plugin(this).build();
@@ -76,4 +78,13 @@ public class LemonQueue {
 
     public ProxyServer getProxy() { return proxy; }
     public Logger getLogger()     { return logger; }
+    public QueueConfig getConfig() { return config; }
+
+    /** Reloads config.yml from disk without stopping or re-queueing any players. */
+    public void reload() {
+        this.config = QueueConfig.load(dataDir, logger);
+        queueManager.reloadConfig(config);
+        logger.info("[LemonQueue] Config reloaded. language='{}', limbo='{}', target='{}'.",
+                config.getLanguage(), config.getLimboServer(), config.getDefaultTarget());
+    }
 }

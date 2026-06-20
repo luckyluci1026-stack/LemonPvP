@@ -20,7 +20,8 @@ import com.velocitypowered.api.proxy.Player;
  */
 public class QueueCommand implements SimpleCommand {
 
-    private static final String ADMIN_PERM = "lemonqueue.admin";
+    private static final String ADMIN_PERM   = "lemonqueue.admin";
+    private static final String RELOAD_PERM  = "lemonqueue.admin";
 
     private final LemonQueue plugin;
     private final QueueManager queues;
@@ -79,6 +80,11 @@ public class QueueCommand implements SimpleCommand {
                 }
                 queues.clearQueue(args[1]);
                 source.sendMessage(msg.cmdCleared(args[1]));
+            }
+            case "reload" -> {
+                if (!source.hasPermission(RELOAD_PERM)) { noPerm(source); return; }
+                plugin.reload();
+                source.sendMessage(msg.cmdReloaded());
             }
             default -> source.sendMessage(msg.cmdUnknown());
         }
