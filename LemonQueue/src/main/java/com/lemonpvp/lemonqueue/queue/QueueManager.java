@@ -11,10 +11,14 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
 import org.slf4j.Logger;
 
 import java.time.Duration;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,8 +46,12 @@ public class QueueManager {
     private final Logger logger;
     private final QueueConfig config;
 
+    /** Sliding window of release timestamps (ms) used to estimate wait time. */
+    private static final long ETA_WINDOW_MS = 60_000L;
+
     private final Map<String, ServerQueue> queues = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastPosition = new ConcurrentHashMap<>();
+    private final Deque<Long> recentReleases = new ArrayDeque<>();
 
     private ScheduledTask processTask;
     private ScheduledTask displayTask;
@@ -93,8 +101,8 @@ public class QueueManager {
         int total = queue.size();
         int pos = queue.position(player.getUniqueId());
         player.showTitle(Title.title(
-                Gradients.lemon("In der Warteschlange"),
-                Gradients.fire("Platz " + pos + " von " + total),
+                Gradients.lemon("In der Warteschlange").decorate(TextDecoration.BOLD),
+                Gradients.fire("Platz " + pos + " von " + total).decorate(TextDecoration.BOLD),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofMillis(600))));
         player.sendMessage(Gradients.lemonAnimated(
                 "» Der Server ist voll – du wurdest in die Warteschlange aufgenommen (Platz "
@@ -173,6 +181,7 @@ public class QueueManager {
                     if (err == null && result != null && result.isSuccessful()) {
                         queue.remove(qp.getUuid());
                         lastPosition.remove(qp.getUuid());
+                        recordRelease();
                         player.clearTitle();
                         player.sendActionBar(Gradients.rainbowAnimated("✔ Verbunden mit " + queue.getTargetServer() + "!"));
                         player.playSound(CONNECT);
@@ -186,6 +195,13 @@ public class QueueManager {
     }
 
     private void updateDisplays() {
+        // Title is re-sent every tick; stay must exceed the update interval so the
+        // text never fades between refreshes (fade-in 0 keeps the animation smooth).
+        Title.Times times = Title.Times.times(
+                Duration.ZERO,
+                Duration.ofMillis(config.getUpdateInterval() + 1000L),
+                Duration.ZERO);
+
         for (ServerQueue queue : queues.values()) {
             var snapshot = queue.snapshot();
             int total = snapshot.size();
@@ -195,17 +211,97 @@ public class QueueManager {
                 if (player == null || !player.isActive()) continue;
 
                 int pos = i + 1;
+                String eta = formatEta(pos);
+
                 Component bar = Component.text()
                         .append(Gradients.fireAnimated("⏳ Warteschlange "))
                         .append(Component.text("» ", NamedTextColor.DARK_GRAY))
                         .append(Gradients.lemonAnimated("Platz " + pos + " / " + total))
-                        .build();
+                        .append(Component.text("  •  ", NamedTextColor.DARK_GRAY))
+                        .append(Gradients.coolAnimated("ca. " + eta))
+                        .build()
+                        .decorate(TextDecoration.BOLD);
                 player.sendActionBar(bar);
+
+                if (config.isTitleEnabled()) {
+                    player.showTitle(Title.title(
+                            buildTitle(queue.getTargetServer(), pos, total, eta),
+                            buildSubtitle(queue.getTargetServer(), pos, total, eta),
+                            times));
+                }
 
                 // Soft chime when the player advances.
                 Integer prev = lastPosition.put(qp.getUuid(), pos);
                 if (prev != null && pos < prev) player.playSound(MOVE_UP);
             }
         }
+    }
+
+    // ── Title / Subtitle / ETA helpers ────────────────────────────────────
+
+    private Component buildTitle(String target, int pos, int total, String eta) {
+        String tpl = config.getTitleTemplate();
+        if (tpl == null || tpl.isBlank()) {
+            return Gradients.lemonAnimated("In der Warteschlange").decorate(TextDecoration.BOLD);
+        }
+        return Gradients.template(tpl, placeholders(target, pos, total, eta));
+    }
+
+    private Component buildSubtitle(String target, int pos, int total, String eta) {
+        String tpl = config.getSubtitleTemplate();
+        if (tpl == null || tpl.isBlank()) {
+            return Component.text()
+                    .append(Gradients.fireAnimated("Platz " + pos + " / " + total))
+                    .append(Component.text("  •  ", NamedTextColor.DARK_GRAY))
+                    .append(Gradients.coolAnimated("ca. " + eta))
+                    .build()
+                    .decorate(TextDecoration.BOLD);
+        }
+        return Gradients.template(tpl, placeholders(target, pos, total, eta));
+    }
+
+    private Map<String, String> placeholders(String target, int pos, int total, String eta) {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("pos", String.valueOf(pos));
+        m.put("total", String.valueOf(total));
+        m.put("eta", eta);
+        m.put("target", target);
+        return m;
+    }
+
+    /** Records that a player was just released to a backend (for ETA rate). */
+    private void recordRelease() {
+        synchronized (recentReleases) {
+            recentReleases.addLast(System.currentTimeMillis());
+        }
+    }
+
+    /**
+     * Estimates the wait for a player at {@code pos} from the recent release
+     * rate, formatted as {@code "Mm Ss"} / {@code "Ss"}. Falls back to a friendly
+     * placeholder until enough samples exist.
+     */
+    private String formatEta(int pos) {
+        long now = System.currentTimeMillis();
+        int count;
+        long oldest;
+        synchronized (recentReleases) {
+            while (!recentReleases.isEmpty() && now - recentReleases.peekFirst() > ETA_WINDOW_MS) {
+                recentReleases.pollFirst();
+            }
+            count = recentReleases.size();
+            oldest = recentReleases.isEmpty() ? now : recentReleases.peekFirst();
+        }
+        if (count == 0) return "…";
+
+        double windowSec = Math.max(1.0, (now - oldest) / 1000.0);
+        double ratePerSec = count / windowSec;            // releases per second
+        if (ratePerSec <= 0.0) return "…";
+
+        long seconds = (long) Math.ceil(pos / ratePerSec);
+        if (seconds < 60) return seconds + "s";
+        long minutes = seconds / 60;
+        long rem = seconds % 60;
+        return rem == 0 ? minutes + "m" : minutes + "m " + rem + "s";
     }
 }

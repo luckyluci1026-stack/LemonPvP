@@ -25,6 +25,11 @@ public class QueueConfig {
     private long updateInterval = 250L;
     private int sendBatch = 5;
 
+    // Animated title/subtitle shown while waiting in the limbo.
+    private boolean titleEnabled = true;
+    private String titleTemplate = "";
+    private String subtitleTemplate = "";
+
     private final Map<String, Integer> maxPlayers = new LinkedHashMap<>();
     private final Map<String, Integer> priorities = new LinkedHashMap<>();
 
@@ -59,6 +64,14 @@ public class QueueConfig {
         updateInterval   = lng(map, "update-interval", updateInterval);
         sendBatch        = (int) lng(map, "send-batch", sendBatch);
 
+        if (map.get("title") instanceof Map<?, ?> tt) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> title = (Map<String, Object>) tt;
+            titleEnabled     = bool(title, "enable", titleEnabled);
+            titleTemplate    = str(title, "title", titleTemplate);
+            subtitleTemplate = str(title, "subtitle", subtitleTemplate);
+        }
+
         if (map.get("max-players") instanceof Map<?, ?> mp) {
             for (Map.Entry<?, ?> e : mp.entrySet()) {
                 maxPlayers.put(String.valueOf(e.getKey()), toInt(e.getValue(), 100));
@@ -79,6 +92,9 @@ public class QueueConfig {
     public long getProcessInterval()    { return processInterval; }
     public long getUpdateInterval()     { return updateInterval; }
     public int getSendBatch()           { return Math.max(1, sendBatch); }
+    public boolean isTitleEnabled()     { return titleEnabled; }
+    public String getTitleTemplate()    { return titleTemplate; }
+    public String getSubtitleTemplate() { return subtitleTemplate; }
     public Map<String, Integer> getPriorities() { return priorities; }
 
     /** Max players for a target server; {@link Integer#MAX_VALUE} if uncapped. */
@@ -95,6 +111,13 @@ public class QueueConfig {
 
     private static long lng(Map<String, Object> m, String k, long def) {
         return toLong(m.get(k), def);
+    }
+
+    private static boolean bool(Map<String, Object> m, String k, boolean def) {
+        Object v = m.get(k);
+        if (v instanceof Boolean b) return b;
+        if (v != null) return Boolean.parseBoolean(v.toString().trim());
+        return def;
     }
 
     private static int toInt(Object o, int def) {

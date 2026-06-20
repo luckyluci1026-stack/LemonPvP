@@ -3,6 +3,8 @@ package com.lemonpvp.lemonqueue.util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
+import java.util.Map;
+
 /**
  * Gradient helpers built on MiniMessage (bundled with Velocity).
  *
@@ -49,6 +51,24 @@ public final class Gradients {
     public static Component rainbowAnimated(String text) {
         return parse("<gradient:#ff0040:#ff8a00:#fff700:#00ff7f:#00e5ff:#7c4dff:" + fmt(phase(4000)) + ">"
                 + text + "</gradient>");
+    }
+
+    /** Flowing cool gradient (≈3 s loop): aqua → blue → violet. */
+    public static Component coolAnimated(String text) {
+        return parse("<gradient:#00e5ff:#2979ff:#7c4dff:" + fmt(phase(3000)) + ">" + text + "</gradient>");
+    }
+
+    /**
+     * Parses an arbitrary MiniMessage template after substituting the supplied
+     * {@code {key}} placeholders. Used for user-configurable title/subtitle
+     * lines so server owners can supply their own gradients and tags.
+     */
+    public static Component template(String template, Map<String, String> placeholders) {
+        String out = template;
+        for (Map.Entry<String, String> e : placeholders.entrySet()) {
+            out = out.replace("{" + e.getKey() + "}", e.getValue());
+        }
+        return parse(out);
     }
 
     // ── Internals ────────────────────────────────────────────────────────

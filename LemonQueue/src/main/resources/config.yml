@@ -38,3 +38,24 @@ update-interval: 250
 # Maximale Anzahl Spieler, die pro Durchlauf und Server weitergeleitet werden
 # (verhindert Lastspitzen beim Backend bei großem Andrang).
 send-batch: 5
+
+# ── Title / Subtitle in der Warteschlange ────────────────────
+# Laufend aktualisierter, animierter Title/Subtitle, während man im Limbo wartet.
+# Wird im selben Takt wie die ActionBar (update-interval) neu gesendet, damit
+# die Gradients flüssig fließen und die Live-Position/ETA aktuell bleiben.
+#
+# Platzhalter (in title/subtitle verwendbar):
+#   {pos}    – aktueller Platz in der Warteschlange
+#   {total}  – Gesamtzahl wartender Spieler
+#   {eta}    – geschätzte Wartezeit (z. B. "1m 20s"), basierend auf der Durchlaufrate
+#   {target} – Zielserver (z. B. "lobby")
+#
+# title / subtitle akzeptieren volles MiniMessage (eigene <gradient>, <bold>, usw.).
+# Leer lassen ("") für die eingebauten animierten Lemon-/Fire-/Cool-Gradients.
+title:
+  enable: true
+  title: ""
+  subtitle: ""
+  # Beispiel mit eigenem MiniMessage statt der eingebauten Animation:
+  # title: "<gradient:#fff700:#00ff7f><bold>In der Warteschlange</bold></gradient>"
+  # subtitle: "<gradient:#ffd000:#ff0040>Platz {pos}/{total}</gradient> <dark_gray>•</dark_gray> <gray>ca. {eta}</gray>"
