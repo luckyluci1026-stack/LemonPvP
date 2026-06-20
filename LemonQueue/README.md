@@ -66,6 +66,34 @@ limbo   = "127.0.0.1:25599"
 3. `config.yml` anpassen (Limits, Prioritäten) und `/lq reload` … bzw. Proxy
    neu starten.
 
+## Sprache & Texte anpassen
+
+In der `config.yml`:
+
+```yaml
+language: "de"      # "de" (Deutsch) oder "en" (English)
+show-title: true    # animierten Title/Subtitle anzeigen (ActionBar ist immer an)
+```
+
+`language` schaltet **alle** eingebauten Texte um (ActionBar über der Hotbar,
+Title/Subtitle, Warteschlangen-Meldungen, `/lq`-Befehle).
+
+Jede einzelne Zeile lässt sich zusätzlich im `messages:`-Block per **MiniMessage**
+überschreiben (eigene `<gradient>`, `<bold>`, `<color>` …). Leer (`""`) = der
+eingebaute, animierte, fette Standard. Platzhalter: `{pos}`, `{total}`, `{eta}`,
+`{target}`, `{server}` (sowie `{size}`/`{max}`/`{count}` in Admin-Zeilen).
+
+```yaml
+messages:
+  # Text über der Hotbar (ActionBar) frei gestalten:
+  actionbar-waiting: "<gradient:#fff700:#00ff7f><bold>Queue</bold></gradient> <gray>{pos}/{total} • {eta}</gray>"
+  title: "<gradient:#fff700:#00ff7f><bold>In queue</bold></gradient>"
+  subtitle: "<gray>{pos}/{total} • {eta}</gray>"
+```
+
+`{eta}` ist eine geschätzte Wartezeit, berechnet aus der tatsächlichen
+Durchlaufrate der Warteschlange (gleitendes 60-Sekunden-Fenster).
+
 ## Commands
 
 | Command | Rechte | Funktion |

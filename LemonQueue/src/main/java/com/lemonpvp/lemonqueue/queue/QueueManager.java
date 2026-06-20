@@ -1,24 +1,20 @@
 package com.lemonpvp.lemonqueue.queue;
 
 import com.lemonpvp.lemonqueue.LemonQueue;
+import com.lemonpvp.lemonqueue.config.Messages;
 import com.lemonpvp.lemonqueue.config.QueueConfig;
-import com.lemonpvp.lemonqueue.util.Gradients;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
 import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +41,7 @@ public class QueueManager {
     private final ProxyServer proxy;
     private final Logger logger;
     private final QueueConfig config;
+    private final Messages msg;
 
     /** Sliding window of release timestamps (ms) used to estimate wait time. */
     private static final long ETA_WINDOW_MS = 60_000L;
@@ -61,6 +58,7 @@ public class QueueManager {
         this.proxy = proxy;
         this.logger = logger;
         this.config = config;
+        this.msg = config.getMessages();
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
@@ -101,12 +99,10 @@ public class QueueManager {
         int total = queue.size();
         int pos = queue.position(player.getUniqueId());
         player.showTitle(Title.title(
-                Gradients.lemon("In der Warteschlange").decorate(TextDecoration.BOLD),
-                Gradients.fire("Platz " + pos + " von " + total).decorate(TextDecoration.BOLD),
+                msg.joinTitle(),
+                msg.joinSubtitle(pos, total),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofMillis(600))));
-        player.sendMessage(Gradients.lemonAnimated(
-                "» Der Server ist voll – du wurdest in die Warteschlange aufgenommen (Platz "
-                        + pos + "/" + total + ")."));
+        player.sendMessage(msg.joinMessage(pos, total));
     }
 
     /** Removes a player from every queue (call on disconnect / leave). */
@@ -183,7 +179,7 @@ public class QueueManager {
                         lastPosition.remove(qp.getUuid());
                         recordRelease();
                         player.clearTitle();
-                        player.sendActionBar(Gradients.rainbowAnimated("✔ Verbunden mit " + queue.getTargetServer() + "!"));
+                        player.sendActionBar(msg.actionbarConnected(queue.getTargetServer()));
                         player.playSound(CONNECT);
                     } else {
                         // Target rejected (full again / down): keep the player queued.
@@ -213,20 +209,12 @@ public class QueueManager {
                 int pos = i + 1;
                 String eta = formatEta(pos);
 
-                Component bar = Component.text()
-                        .append(Gradients.fireAnimated("⏳ Warteschlange "))
-                        .append(Component.text("» ", NamedTextColor.DARK_GRAY))
-                        .append(Gradients.lemonAnimated("Platz " + pos + " / " + total))
-                        .append(Component.text("  •  ", NamedTextColor.DARK_GRAY))
-                        .append(Gradients.coolAnimated("ca. " + eta))
-                        .build()
-                        .decorate(TextDecoration.BOLD);
-                player.sendActionBar(bar);
+                player.sendActionBar(msg.actionbarWaiting(pos, total, eta));
 
                 if (config.isTitleEnabled()) {
                     player.showTitle(Title.title(
-                            buildTitle(queue.getTargetServer(), pos, total, eta),
-                            buildSubtitle(queue.getTargetServer(), pos, total, eta),
+                            msg.title(pos, total, eta),
+                            msg.subtitle(pos, total, eta),
                             times));
                 }
 
@@ -237,37 +225,7 @@ public class QueueManager {
         }
     }
 
-    // ── Title / Subtitle / ETA helpers ────────────────────────────────────
-
-    private Component buildTitle(String target, int pos, int total, String eta) {
-        String tpl = config.getTitleTemplate();
-        if (tpl == null || tpl.isBlank()) {
-            return Gradients.lemonAnimated("In der Warteschlange").decorate(TextDecoration.BOLD);
-        }
-        return Gradients.template(tpl, placeholders(target, pos, total, eta));
-    }
-
-    private Component buildSubtitle(String target, int pos, int total, String eta) {
-        String tpl = config.getSubtitleTemplate();
-        if (tpl == null || tpl.isBlank()) {
-            return Component.text()
-                    .append(Gradients.fireAnimated("Platz " + pos + " / " + total))
-                    .append(Component.text("  •  ", NamedTextColor.DARK_GRAY))
-                    .append(Gradients.coolAnimated("ca. " + eta))
-                    .build()
-                    .decorate(TextDecoration.BOLD);
-        }
-        return Gradients.template(tpl, placeholders(target, pos, total, eta));
-    }
-
-    private Map<String, String> placeholders(String target, int pos, int total, String eta) {
-        Map<String, String> m = new LinkedHashMap<>();
-        m.put("pos", String.valueOf(pos));
-        m.put("total", String.valueOf(total));
-        m.put("eta", eta);
-        m.put("target", target);
-        return m;
-    }
+    // ── ETA helper ────────────────────────────────────────────────────────
 
     /** Records that a player was just released to a backend (for ETA rate). */
     private void recordRelease() {

@@ -2,7 +2,6 @@ package com.lemonpvp.lemonqueue.listener;
 
 import com.lemonpvp.lemonqueue.config.QueueConfig;
 import com.lemonpvp.lemonqueue.queue.QueueManager;
-import com.lemonpvp.lemonqueue.util.Gradients;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
@@ -73,7 +72,7 @@ public class ConnectionListener {
         // Redirect to limbo + queue instead of dropping the player.
         event.setResult(KickedFromServerEvent.RedirectPlayer.create(
                 limbo.get(),
-                Gradients.fire("Der Server " + kicked + " ist voll – du wartest jetzt in der Warteschlange.")));
+                config.getMessages().kickFull(kicked)));
         queues.enqueue(player, kicked);
     }
 

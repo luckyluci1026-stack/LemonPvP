@@ -1,14 +1,12 @@
 package com.lemonpvp.lemonqueue.command;
 
 import com.lemonpvp.lemonqueue.LemonQueue;
+import com.lemonpvp.lemonqueue.config.Messages;
 import com.lemonpvp.lemonqueue.config.QueueConfig;
 import com.lemonpvp.lemonqueue.queue.QueueManager;
 import com.lemonpvp.lemonqueue.queue.ServerQueue;
-import com.lemonpvp.lemonqueue.util.Gradients;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
  * {@code /lemonqueue} (aliases {@code /lq}, {@code /queue}).
@@ -27,11 +25,13 @@ public class QueueCommand implements SimpleCommand {
     private final LemonQueue plugin;
     private final QueueManager queues;
     private final QueueConfig config;
+    private final Messages msg;
 
     public QueueCommand(LemonQueue plugin, QueueManager queues, QueueConfig config) {
         this.plugin = plugin;
         this.queues = queues;
         this.config = config;
+        this.msg = config.getMessages();
     }
 
     @Override
@@ -43,9 +43,9 @@ public class QueueCommand implements SimpleCommand {
             if (source instanceof Player player) {
                 int pos = queues.positionOf(player.getUniqueId());
                 if (pos > 0) {
-                    player.sendMessage(Gradients.lemonAnimated("Du stehst in der Warteschlange – Platz " + pos + "."));
+                    player.sendMessage(msg.cmdPosition(pos));
                 } else {
-                    player.sendMessage(Gradients.lemon("Du stehst aktuell in keiner Warteschlange."));
+                    player.sendMessage(msg.cmdNotQueued());
                 }
             } else {
                 showAdminStats(source);
@@ -59,12 +59,12 @@ public class QueueCommand implements SimpleCommand {
                     if (queues.positionOf(player.getUniqueId()) > 0) {
                         queues.dequeue(player.getUniqueId());
                         player.clearTitle();
-                        player.sendMessage(Gradients.fire("Du hast die Warteschlange verlassen."));
+                        player.sendMessage(msg.cmdLeft());
                     } else {
-                        player.sendMessage(Component.text("Du stehst in keiner Warteschlange.", NamedTextColor.GRAY));
+                        player.sendMessage(msg.cmdNotInQueue());
                     }
                 } else {
-                    source.sendMessage(Component.text("Nur Spieler können die Warteschlange verlassen.", NamedTextColor.RED));
+                    source.sendMessage(msg.cmdPlayersOnly());
                 }
             }
             case "admin" -> {
@@ -74,36 +74,32 @@ public class QueueCommand implements SimpleCommand {
             case "clear" -> {
                 if (!source.hasPermission(ADMIN_PERM)) { noPerm(source); return; }
                 if (args.length < 2) {
-                    source.sendMessage(Component.text("Nutzung: /lq clear <server>", NamedTextColor.RED));
+                    source.sendMessage(msg.cmdClearUsage());
                     return;
                 }
                 queues.clearQueue(args[1]);
-                source.sendMessage(Gradients.lemon("Warteschlange für '" + args[1] + "' geleert."));
+                source.sendMessage(msg.cmdCleared(args[1]));
             }
-            default -> source.sendMessage(Component.text(
-                    "Unbekannt. Nutzung: /lq [leave|admin|clear <server>]", NamedTextColor.RED));
+            default -> source.sendMessage(msg.cmdUnknown());
         }
     }
 
     private void showAdminStats(com.velocitypowered.api.command.CommandSource source) {
-        source.sendMessage(Gradients.rainbowAnimated("══════ LemonQueue ══════"));
+        source.sendMessage(msg.adminHeader());
         if (queues.getQueues().isEmpty()) {
-            source.sendMessage(Component.text("Keine aktiven Warteschlangen.", NamedTextColor.GRAY));
+            source.sendMessage(msg.adminNone());
             return;
         }
         for (ServerQueue q : queues.getQueues().values()) {
             int max = config.getMaxPlayers(q.getTargetServer());
             String cap = max == Integer.MAX_VALUE ? "∞" : String.valueOf(max);
-            source.sendMessage(Component.text()
-                    .append(Gradients.lemon(q.getTargetServer()))
-                    .append(Component.text(" – " + q.size() + " wartend (max " + cap + ")", NamedTextColor.GRAY))
-                    .build());
+            source.sendMessage(msg.adminLine(q.getTargetServer(), q.size(), cap));
         }
-        source.sendMessage(Component.text("Gesamt: " + queues.totalQueued() + " Spieler", NamedTextColor.DARK_GRAY));
+        source.sendMessage(msg.adminTotal(queues.totalQueued()));
     }
 
     private void noPerm(com.velocitypowered.api.command.CommandSource source) {
-        source.sendMessage(Component.text("Dazu fehlt dir die Berechtigung.", NamedTextColor.RED));
+        source.sendMessage(msg.cmdNoPerm());
     }
 
     @Override

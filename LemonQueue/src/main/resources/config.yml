@@ -39,23 +39,58 @@ update-interval: 250
 # (verhindert Lastspitzen beim Backend bei großem Andrang).
 send-batch: 5
 
-# ── Title / Subtitle in der Warteschlange ────────────────────
-# Laufend aktualisierter, animierter Title/Subtitle, während man im Limbo wartet.
-# Wird im selben Takt wie die ActionBar (update-interval) neu gesendet, damit
-# die Gradients flüssig fließen und die Live-Position/ETA aktuell bleiben.
+# ── Sprache / Language ───────────────────────────────────────
+# Sprache der eingebauten Texte: "de" (Deutsch) oder "en" (English).
+# Affects all built-in messages (action bar, title, queue messages, commands).
+language: "de"
+
+# Animierten Title/Subtitle in der Warteschlange anzeigen (ActionBar bleibt immer aktiv).
+# Show the animated title/subtitle while waiting (the action bar is always shown).
+show-title: true
+
+# ── Texte / Messages (optional überschreiben) ────────────────
+# Jeder Eintrag ist OPTIONAL. Leer lassen ("") = eingebauter (animierter,
+# sprachabhängiger, fetter) Standard. Wird ein Wert gesetzt, gilt er als volles
+# MiniMessage-Template (eigene <gradient>, <bold>, <color> usw.) und überschreibt
+# Sprache + Animation für diese eine Zeile.
 #
-# Platzhalter (in title/subtitle verwendbar):
-#   {pos}    – aktueller Platz in der Warteschlange
-#   {total}  – Gesamtzahl wartender Spieler
-#   {eta}    – geschätzte Wartezeit (z. B. "1m 20s"), basierend auf der Durchlaufrate
-#   {target} – Zielserver (z. B. "lobby")
+# Every entry is OPTIONAL. Leave empty ("") for the built-in animated, bold,
+# language-dependent default. Any value you set is used as a full MiniMessage
+# template and overrides language + animation for that single line.
 #
-# title / subtitle akzeptieren volles MiniMessage (eigene <gradient>, <bold>, usw.).
-# Leer lassen ("") für die eingebauten animierten Lemon-/Fire-/Cool-Gradients.
-title:
-  enable: true
+# Platzhalter / Placeholders:
+#   {pos}    – Platz in der Warteschlange / queue position
+#   {total}  – Anzahl wartender Spieler / players waiting
+#   {eta}    – geschätzte Wartezeit / estimated wait (z. B. "1m 20s")
+#   {target} – Zielserver / target server
+#   {server} – betroffener Server / affected server
+#   {size} {max} {count} – nur in Admin-Zeilen / admin lines only
+messages:
+  # Über der Hotbar (ActionBar) – läuft animiert, daher am besten leer lassen
+  # oder ein eigenes MiniMessage mit {pos}/{total}/{eta} angeben.
+  actionbar-waiting: ""
+  actionbar-connected: ""
+  # Title / Subtitle in der Warteschlange
   title: ""
   subtitle: ""
-  # Beispiel mit eigenem MiniMessage statt der eingebauten Animation:
-  # title: "<gradient:#fff700:#00ff7f><bold>In der Warteschlange</bold></gradient>"
-  # subtitle: "<gradient:#ffd000:#ff0040>Platz {pos}/{total}</gradient> <dark_gray>•</dark_gray> <gray>ca. {eta}</gray>"
+  # Einmalige Meldungen beim Einreihen
+  join-title: ""
+  join-subtitle: ""
+  join-message: ""
+  kick-full: ""
+  # /lq Befehl
+  cmd-position: ""
+  cmd-not-queued: ""
+  cmd-left: ""
+  cmd-not-in-queue: ""
+  cmd-players-only: ""
+  cmd-no-perm: ""
+  cmd-clear-usage: ""
+  cmd-cleared: ""
+  cmd-unknown: ""
+  admin-header: ""
+  admin-none: ""
+  admin-line: ""
+  admin-total: ""
+  # Beispiel / Example (eigenes MiniMessage über der Hotbar):
+  # actionbar-waiting: "<gradient:#fff700:#00ff7f><bold>Queue</bold></gradient> <gray>{pos}/{total} • {eta}</gray>"
