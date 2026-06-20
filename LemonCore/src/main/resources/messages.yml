@@ -133,3 +133,7 @@ restart:
   now-chat: "<bold><red>Restart</red></bold>"
   now-title: "<bold><red>Restart</red></bold>"
   initiated: "{prefix} <green>Restart sequence initiated."
+  already-running: "{prefix} <red>A restart is already in progress. Use <white>/restart cancel <red>to abort it."
+  not-running: "{prefix} <red>There is no restart in progress."
+  cancelled: "{prefix} <green>Restart sequence cancelled."
+  cancelled-broadcast: "<bold><gradient:#fffb00:#00ff00>»</gradient></bold> <green>The server restart has been cancelled."

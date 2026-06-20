@@ -119,8 +119,13 @@ public class RestartManager {
     }
 
     public void cancel() {
+        if (!restarting) return;
         for (BukkitTask t : tasks) t.cancel();
         tasks.clear();
         restarting = false;
+
+        // Tell everyone the restart was aborted (chat + clear any lingering title).
+        Bukkit.broadcast(plugin.getMessagesManager().get("restart.cancelled-broadcast"));
+        for (Player p : Bukkit.getOnlinePlayers()) p.clearTitle();
     }
 }

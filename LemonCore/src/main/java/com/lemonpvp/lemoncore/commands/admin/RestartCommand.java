@@ -19,8 +19,19 @@ public class RestartCommand implements CommandExecutor {
             sender.sendMessage(plugin.getMessagesManager().get("no-permission"));
             return true;
         }
+
+        if (args.length > 0 && args[0].equalsIgnoreCase("cancel")) {
+            if (!plugin.getRestartManager().isRestarting()) {
+                sender.sendMessage(plugin.getMessagesManager().get("restart.not-running"));
+                return true;
+            }
+            plugin.getRestartManager().cancel();
+            sender.sendMessage(plugin.getMessagesManager().get("restart.cancelled"));
+            return true;
+        }
+
         if (plugin.getRestartManager().isRestarting()) {
-            sender.sendMessage(plugin.getMessagesManager().get("restart.initiated"));
+            sender.sendMessage(plugin.getMessagesManager().get("restart.already-running"));
             return true;
         }
         plugin.getRestartManager().beginRestart();

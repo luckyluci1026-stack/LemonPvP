@@ -246,6 +246,11 @@ public class LemonCore extends JavaPlugin {
             case 2 -> "whitelist".equalsIgnoreCase(a[0]) ? onlinePlayers(a[1]) : java.util.List.of();
             default -> java.util.List.of();
         });
+
+        // /restart [cancel]
+        var restartCmd = getCommand("restart");
+        if (restartCmd != null) restartCmd.setTabCompleter((s, c, l, a) ->
+                a.length == 1 ? filterStart(java.util.List.of("cancel"), a[0]) : java.util.List.of());
     }
 
     private java.util.List<String> onlinePlayers(String prefix) {
