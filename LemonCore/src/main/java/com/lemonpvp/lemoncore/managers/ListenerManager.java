@@ -15,25 +15,32 @@ public class ListenerManager {
 
     public void performBanKick(Player player, BanRecord ban) {
         String discord = plugin.getConfigManager().getDiscord();
-        String duration = ban.isPermanent() ? "Permanent"
+        String duration = ban.isPermanent()
+                ? plugin.getMessagesManager().getRaw("ban.permanent-label")
                 : TextUtil.formatDuration(ban.getRemainingSeconds());
 
-        // Play wither sound
-        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.0f);
+        // Tell the Velocity proxy NOT to intercept this kick and re-route to limbo.
+        plugin.getVelocityMessaging().sendLemonMessage(player, "PlayerBanning",
+                player.getUniqueId().toString());
 
-        // Build full kick screen — shown by Velocity as the disconnect screen
-        String kickMsg = "<bold><red>You have been banned!</bold>\n\n"
-                + "<gray>Reason: <white>" + ban.reason + "\n"
-                + "<gray>Duration: <white>" + duration + "\n"
-                + "<gray>Ban ID: <white>" + ban.id + "\n\n"
-                + "<gray>Appeal at: <aqua>" + discord;
+        // Build kick screen from messages.yml — no "Banned" header.
+        String reasonLine = ban.isPermanent()
+                ? plugin.getMessagesManager().getRaw("ban.permanent")
+                : plugin.getMessagesManager().getRaw("ban.temp")
+                        .replace("{reason}", ban.reason);
+        String kickMsg = reasonLine + "\n"
+                + plugin.getMessagesManager().getRaw("ban.duration")
+                        .replace("{duration}", duration) + "\n"
+                + plugin.getMessagesManager().getRaw("ban.ban-id")
+                        .replace("{id}", ban.id) + "\n\n"
+                + plugin.getMessagesManager().getRaw("ban.appeal")
+                        .replace("{discord}", discord);
         Component kickScreen = TextUtil.parse(kickMsg);
 
-        // Kick after 1 second so sound can play
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.0f);
         org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () ->
                 player.kick(kickScreen), 20L);
 
-        // Lemonizer broadcast
         String lmsg = plugin.getMessagesManager().getRaw("ban.lemonizer")
                 .replace("{player}", player.getName())
                 .replace("{reason}", ban.reason);

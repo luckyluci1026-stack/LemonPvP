@@ -44,10 +44,14 @@ public class QueueManager {
 
     /** Sliding window of release timestamps (ms) used to estimate wait time. */
     private static final long ETA_WINDOW_MS = 60_000L;
+    /** How long a "banning" mark is kept before it expires (safety net). */
+    private static final long BANNING_TTL_MS = 10_000L;
 
     private final Map<String, ServerQueue> queues = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastPosition = new ConcurrentHashMap<>();
     private final Deque<Long> recentReleases = new ArrayDeque<>();
+    /** UUIDs of players whose next kick must NOT be re-routed to limbo (ban kicks). */
+    private final Map<UUID, Long> banningMarks = new ConcurrentHashMap<>();
 
     // volatile so that reloadConfig() is immediately visible to the scheduler threads.
     private volatile Messages msg;
@@ -111,6 +115,26 @@ public class QueueManager {
                 msg.joinSubtitle(pos, total),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(4), Duration.ofMillis(600))));
         player.sendMessage(msg.joinMessage(pos, total));
+    }
+
+    /**
+     * Marks a player as "about to be ban-kicked". The next
+     * {@code KickedFromServerEvent} for this UUID will not be intercepted.
+     * The mark expires after {@value #BANNING_TTL_MS} ms automatically.
+     */
+    public void markBanning(UUID uuid) {
+        banningMarks.put(uuid, System.currentTimeMillis() + BANNING_TTL_MS);
+    }
+
+    /** Returns true if this player's kick should bypass the limbo redirect. */
+    public boolean isBanning(UUID uuid) {
+        Long expiry = banningMarks.get(uuid);
+        if (expiry == null) return false;
+        if (System.currentTimeMillis() > expiry) {
+            banningMarks.remove(uuid);
+            return false;
+        }
+        return true;
     }
 
     /** Removes a player from every queue (call on disconnect / leave). */

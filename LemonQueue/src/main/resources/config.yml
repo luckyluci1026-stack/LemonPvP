@@ -101,5 +101,6 @@ messages:
   admin-line: ""
   admin-total: ""
   cmd-reloaded: ""
+  leave-proxy: ""
   # Beispiel / Example (eigenes MiniMessage über der Hotbar):
   # actionbar-waiting: "<gradient:#fff700:#00ff7f><bold>Queue</bold></gradient> <gray>{pos}/{total} • {eta}</gray>"

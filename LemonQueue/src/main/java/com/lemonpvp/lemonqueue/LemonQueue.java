@@ -5,6 +5,7 @@ import com.lemonpvp.lemonqueue.command.QueueCommand;
 import com.lemonpvp.lemonqueue.config.QueueConfig;
 import com.lemonpvp.lemonqueue.listener.ConnectionListener;
 import com.lemonpvp.lemonqueue.listener.PingListener;
+import com.lemonpvp.lemonqueue.listener.PluginMessageListener;
 import com.lemonpvp.lemonqueue.queue.QueueManager;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
@@ -14,6 +15,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -53,8 +55,14 @@ public class LemonQueue {
         this.config = QueueConfig.load(dataDir, logger);
         this.queueManager = new QueueManager(this, proxy, logger, config);
 
+        // Register the lemonpvp:core channel so Velocity forwards plugin messages from backends.
+        MinecraftChannelIdentifier lemonChannel =
+                MinecraftChannelIdentifier.from("lemonpvp:core");
+        proxy.getChannelRegistrar().register(lemonChannel);
+
         proxy.getEventManager().register(this, new ConnectionListener(proxy, config, queueManager));
         proxy.getEventManager().register(this, new PingListener(this));
+        proxy.getEventManager().register(this, new PluginMessageListener(queueManager));
 
         CommandManager cm = proxy.getCommandManager();
         CommandMeta meta = cm.metaBuilder("lemonqueue").aliases("lq", "queue").plugin(this).build();

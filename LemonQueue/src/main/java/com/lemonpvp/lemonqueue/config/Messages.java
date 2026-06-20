@@ -156,6 +156,15 @@ public final class Messages {
         return Gradients.fire(en() ? "You left the queue." : "Du hast die Warteschlange verlassen.");
     }
 
+    /** Disconnect screen shown when a player leaves the queue (kicked from proxy). */
+    public Component leaveProxy() {
+        String o = override("leave-proxy");
+        if (o != null) return Gradients.template(o, ph());
+        return Gradients.lemon(en()
+                ? "You left the queue. Reconnect to rejoin."
+                : "Du hast die Warteschlange verlassen. Verbinde dich erneut.");
+    }
+
     public Component cmdNotInQueue() {
         String o = override("cmd-not-in-queue");
         if (o != null) return Gradients.template(o, ph());

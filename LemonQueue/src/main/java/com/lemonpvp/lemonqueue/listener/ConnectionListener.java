@@ -65,6 +65,11 @@ public class ConnectionListener {
         // Never re-queue someone leaving the limbo itself.
         if (kicked.equalsIgnoreCase(config.getLimboServer())) return;
         if (player.hasPermission(config.getBypassPermission())) return;
+        // Ban-kick: LemonCore signalled us not to intercept this kick.
+        if (queues.isBanning(player.getUniqueId())) {
+            queues.dequeue(player.getUniqueId());
+            return;
+        }
 
         Optional<RegisteredServer> limbo = proxy.getServer(config.getLimboServer());
         if (limbo.isEmpty()) return;

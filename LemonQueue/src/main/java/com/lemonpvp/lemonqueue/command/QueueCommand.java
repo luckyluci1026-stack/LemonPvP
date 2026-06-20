@@ -59,8 +59,7 @@ public class QueueCommand implements SimpleCommand {
                 if (source instanceof Player player) {
                     if (queues.positionOf(player.getUniqueId()) > 0) {
                         queues.dequeue(player.getUniqueId());
-                        player.clearTitle();
-                        player.sendMessage(msg.cmdLeft());
+                        player.disconnect(msg.leaveProxy());
                     } else {
                         player.sendMessage(msg.cmdNotInQueue());
                     }
