@@ -66,6 +66,21 @@ public class ConfigManager {
         return TextUtil.parseDuration(def != null ? def.toString() : get("mute.default-duration", "1d"));
     }
 
+    /** Duration (seconds) for the /offend quick-ban, from config "offend.duration". */
+    public long getOffendDuration() {
+        return TextUtil.parseDuration(get("offend.duration", "7d"));
+    }
+
+    /** Fixed reason for the /offend quick-ban. */
+    public String getOffendReason() {
+        return get("offend.reason", "Regelverstoß");
+    }
+
+    /** Fixed reason for the /punish permanent ban. */
+    public String getPunishReason() {
+        return get("punish.reason", "Schwerwiegender Regelverstoß");
+    }
+
     public String getDiscord() {
         return get("discord.invite", "https://discord.gg/lemonpvp");
     }

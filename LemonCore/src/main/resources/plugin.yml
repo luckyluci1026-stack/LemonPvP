@@ -23,8 +23,11 @@ permissions:
   lemoncore.use.code:
     description: Redeem codes
     default: true
-  lemoncore.admin.ban:
-    description: Ban players
+  lemoncore.admin.offend:
+    description: Temporarily ban a player (duration + reason from config)
+    default: op
+  lemoncore.admin.punish:
+    description: Permanently ban a player (reason from config)
     default: op
   lemoncore.admin.unban:
     description: Unban players
@@ -162,10 +165,14 @@ commands:
     description: Redeem a code
     permission: lemoncore.use.code
     usage: /code <code>
-  gban:
-    description: Ban a player
-    permission: lemoncore.admin.ban
-    usage: /gban <player> <reason>
+  offend:
+    description: Temporarily ban a player (duration + reason from config)
+    permission: lemoncore.admin.offend
+    usage: /offend <player>
+  punish:
+    description: Permanently ban a player (reason from config)
+    permission: lemoncore.admin.punish
+    usage: /punish <player>
   gunban:
     description: Unban a player
     permission: lemoncore.admin.unban

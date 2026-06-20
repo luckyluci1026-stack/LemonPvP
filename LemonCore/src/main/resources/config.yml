@@ -52,6 +52,15 @@ ban:
     default: 7d
   default-duration: "7d"
 
+# Schnell-Strafen mit festem Grund + fester Dauer aus dieser Config.
+#   /offend <player>  → temporärer Bann (duration + reason unten)
+#   /punish <player>  → permanenter Bann (reason unten)
+offend:
+  duration: "7d"
+  reason: "Regelverstoß"
+punish:
+  reason: "Schwerwiegender Regelverstoß"
+
 mute:
   default-duration: "1d"
   reasons:

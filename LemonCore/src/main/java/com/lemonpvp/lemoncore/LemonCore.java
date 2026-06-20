@@ -159,7 +159,8 @@ public class LemonCore extends JavaPlugin {
         getCommand("gcoins").setExecutor(new GCoinsCommand(this));
         getCommand("gcoinsall").setExecutor(new GCoinsAllCommand(this));
         getCommand("aowcode").setExecutor(new AowCodeCommand(this));
-        getCommand("gban").setExecutor(new GBanCommand(this));
+        getCommand("offend").setExecutor(new OffendCommand(this));
+        getCommand("punish").setExecutor(new PunishCommand(this));
         getCommand("gunban").setExecutor(new GUnbanCommand(this));
         getCommand("gmute").setExecutor(new GMuteCommand(this));
         getCommand("gunmute").setExecutor(new GUnmuteCommand(this));
@@ -202,7 +203,7 @@ public class LemonCore extends JavaPlugin {
         // Tab completers for commands that accept an online player name as first argument
         org.bukkit.command.TabCompleter playerTab = (s, c, l, a) ->
                 a.length == 1 ? onlinePlayers(a[0]) : java.util.List.of();
-        for (String cmd : new String[]{"gtp", "gban", "gmute", "gunban", "gunmute", "gkick",
+        for (String cmd : new String[]{"gtp", "offend", "punish", "gmute", "gunban", "gunmute", "gkick",
                 "ghistory", "gwipe", "gunwipe", "gspec", "gpop", "gcheck",
                 "report", "mreport", "gmreport", "stats"}) {
             var pluginCmd = getCommand(cmd);

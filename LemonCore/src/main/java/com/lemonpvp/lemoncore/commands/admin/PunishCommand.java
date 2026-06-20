@@ -1,45 +1,49 @@
 package com.lemonpvp.lemoncore.commands.admin;
 
 import com.lemonpvp.lemoncore.LemonCore;
-import net.luckperms.api.LuckPerms;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
 import java.util.UUID;
 
-public class GBanCommand implements CommandExecutor {
+/**
+ * {@code /punish <player>} — permanent ban whose reason is fixed in config.yml
+ * under the {@code punish} section. The staff member only supplies the player
+ * name; the ban never expires.
+ */
+public class PunishCommand implements CommandExecutor {
+
+    /** Negative duration → permanent (see BanManager: durationSeconds &gt; 0 check). */
+    private static final long PERMANENT = -1L;
 
     private final LemonCore plugin;
 
-    public GBanCommand(LemonCore plugin) {
+    public PunishCommand(LemonCore plugin) {
         this.plugin = plugin;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("lemoncore.admin.ban")) {
+        if (!sender.hasPermission("lemoncore.admin.punish")) {
             sender.sendMessage(plugin.getMessagesManager().get("no-permission"));
             return true;
         }
-        if (args.length < 2) {
-            sender.sendMessage(plugin.getMessagesManager().get("invalid-usage", "usage", "/gban <player> <reason>"));
+        if (args.length < 1) {
+            sender.sendMessage(plugin.getMessagesManager().get("invalid-usage", "usage", "/punish <player>"));
             return true;
         }
 
         String targetName = args[0];
-        String reason = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        String reason = plugin.getConfigManager().getPunishReason();
         UUID senderUuid = sender instanceof Player p ? p.getUniqueId() : null;
         String senderName = sender.getName();
-        long duration = plugin.getConfigManager().getBanDuration(reason);
 
-        // Resolve target
         Player online = Bukkit.getPlayer(targetName);
         if (online != null) {
-            executeBan(sender, online.getUniqueId(), online.getName(), reason, senderUuid, senderName, duration, online);
+            executeBan(sender, online.getUniqueId(), online.getName(), reason, senderUuid, senderName, online);
         } else {
             plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid -> {
                 if (uuid == null) {
@@ -47,16 +51,15 @@ public class GBanCommand implements CommandExecutor {
                         sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)));
                     return;
                 }
-                executeBan(sender, uuid, targetName, reason, senderUuid, senderName, duration, null);
+                executeBan(sender, uuid, targetName, reason, senderUuid, senderName, null);
             });
         }
         return true;
     }
 
     private void executeBan(CommandSender sender, UUID targetUuid, String targetName,
-                             String reason, UUID senderUuid, String senderName,
-                             long duration, Player onlineTarget) {
-        plugin.getBanManager().banPlayer(targetUuid, targetName, reason, senderUuid, senderName, duration)
+                             String reason, UUID senderUuid, String senderName, Player onlineTarget) {
+        plugin.getBanManager().banPlayer(targetUuid, targetName, reason, senderUuid, senderName, PERMANENT)
                 .thenAccept(ban -> {
                     if (ban == null) return;
                     Bukkit.getScheduler().runTask(plugin, () -> {
