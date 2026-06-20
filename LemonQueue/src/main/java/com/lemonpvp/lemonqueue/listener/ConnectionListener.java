@@ -1,0 +1,84 @@
+package com.lemonpvp.lemonqueue.listener;
+
+import com.lemonpvp.lemonqueue.config.QueueConfig;
+import com.lemonpvp.lemonqueue.queue.QueueManager;
+import com.lemonpvp.lemonqueue.util.Gradients;
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.player.KickedFromServerEvent;
+import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+
+import java.util.Optional;
+
+/**
+ * Routes players based on capacity:
+ * <ul>
+ *   <li>On join, sends them straight to the target if a slot is free,
+ *       otherwise parks them in the limbo and enqueues them.</li>
+ *   <li>If a backend kicks them because it is full, redirects to the limbo
+ *       and enqueues instead of disconnecting them.</li>
+ *   <li>Cleans up queue state on disconnect.</li>
+ * </ul>
+ * Players with the bypass permission always skip the queue.
+ */
+public class ConnectionListener {
+
+    private final ProxyServer proxy;
+    private final QueueConfig config;
+    private final QueueManager queues;
+
+    public ConnectionListener(ProxyServer proxy, QueueConfig config, QueueManager queues) {
+        this.proxy = proxy;
+        this.config = config;
+        this.queues = queues;
+    }
+
+    @Subscribe
+    public void onChooseInitialServer(PlayerChooseInitialServerEvent event) {
+        Player player = event.getPlayer();
+        String target = config.getDefaultTarget();
+
+        // Staff/owner bypass: go straight to the target, even if "full".
+        if (player.hasPermission(config.getBypassPermission()) || queues.hasFreeSlot(target)) {
+            proxy.getServer(target).ifPresent(event::setInitialServer);
+            return;
+        }
+
+        // Full → park in limbo, then enqueue for the real target.
+        Optional<RegisteredServer> limbo = proxy.getServer(config.getLimboServer());
+        if (limbo.isPresent()) {
+            event.setInitialServer(limbo.get());
+            queues.enqueue(player, target);
+        } else {
+            // No limbo configured: fall back to sending them to the target anyway.
+            proxy.getServer(target).ifPresent(event::setInitialServer);
+        }
+    }
+
+    @Subscribe
+    public void onKickedFromServer(KickedFromServerEvent event) {
+        Player player = event.getPlayer();
+        String kicked = event.getServer().getServerInfo().getName();
+
+        // Never re-queue someone leaving the limbo itself.
+        if (kicked.equalsIgnoreCase(config.getLimboServer())) return;
+        if (player.hasPermission(config.getBypassPermission())) return;
+
+        Optional<RegisteredServer> limbo = proxy.getServer(config.getLimboServer());
+        if (limbo.isEmpty()) return;
+
+        // Redirect to limbo + queue instead of dropping the player.
+        event.setResult(KickedFromServerEvent.RedirectPlayer.create(
+                limbo.get(),
+                Gradients.fire("Der Server " + kicked + " ist voll – du wartest jetzt in der Warteschlange.")));
+        queues.enqueue(player, kicked);
+    }
+
+    @Subscribe
+    public void onDisconnect(DisconnectEvent event) {
+        queues.dequeue(event.getPlayer().getUniqueId());
+    }
+}

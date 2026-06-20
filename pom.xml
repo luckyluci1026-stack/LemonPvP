@@ -18,6 +18,7 @@
         <module>LemonEvents</module>
         <module>LemonLobby</module>
         <module>LemonTraining</module>
+        <module>LemonQueue</module>
     </modules>
 
     <properties>

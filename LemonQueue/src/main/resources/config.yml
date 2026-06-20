@@ -1,0 +1,40 @@
+# ╔════════════════════════════════════════════════════════════╗
+# ║                  LemonQueue – Konfiguration                  ║
+# ║   Warteschlange + Limbo-Routing für das LemonPvP-Netzwerk    ║
+# ╚════════════════════════════════════════════════════════════╝
+
+# Name des Limbo-Servers, wie er in velocity.toml unter [servers] registriert ist.
+# Spieler werden hierhin geparkt, während sie in der Warteschlange stehen.
+limbo-server: "limbo"
+
+# Standard-Zielserver für neu verbundene Spieler (z. B. die Lobby).
+default-target: "lobby"
+
+# Maximale Spielerzahl pro Zielserver.
+# Velocity kennt das interne Limit der Backend-Server nicht – daher hier definieren.
+# Sobald ein Server diese Zahl erreicht, landen weitere Spieler in der Warteschlange.
+max-players:
+  lobby: 100
+  practice: 200
+  events: 150
+
+# Rang-Prioritäten für die Warteschlange (höher = weiter vorne).
+# Ein Spieler erhält die höchste Priorität, für die er die Permission besitzt.
+# Bei gleicher Priorität gilt FIFO (wer zuerst kam, kommt zuerst dran).
+priorities:
+  "lemonqueue.priority.owner": 100
+  "lemonqueue.priority.admin": 80
+  "lemonqueue.priority.premium": 50
+  "lemonqueue.priority.vip": 20
+
+# Wer diese Permission hat, überspringt die Warteschlange komplett (Staff/Owner).
+bypass-permission: "lemonqueue.bypass"
+
+# ── Timing (in Millisekunden) ────────────────────────────────
+# Wie oft geprüft wird, ob Spieler aus der Queue weitergeleitet werden können.
+process-interval: 1000
+# Wie oft die animierte ActionBar / Position aktualisiert wird (kleiner = flüssiger).
+update-interval: 250
+# Maximale Anzahl Spieler, die pro Durchlauf und Server weitergeleitet werden
+# (verhindert Lastspitzen beim Backend bei großem Andrang).
+send-batch: 5
