@@ -1,5 +1,6 @@
 package com.lemonpvp.lemonqueue.listener;
 
+import com.lemonpvp.lemonqueue.LemonQueue;
 import com.lemonpvp.lemonqueue.config.QueueConfig;
 import com.lemonpvp.lemonqueue.queue.QueueManager;
 import com.velocitypowered.api.event.Subscribe;
@@ -22,21 +23,29 @@ import java.util.Optional;
  *   <li>Cleans up queue state on disconnect.</li>
  * </ul>
  * Players with the bypass permission always skip the queue.
+ *
+ * <p>Config is read live from {@link LemonQueue#getConfig()} on every event so
+ * that {@code /lq reload} takes effect immediately for routing decisions.</p>
  */
 public class ConnectionListener {
 
+    private final LemonQueue plugin;
     private final ProxyServer proxy;
-    private final QueueConfig config;
     private final QueueManager queues;
 
-    public ConnectionListener(ProxyServer proxy, QueueConfig config, QueueManager queues) {
-        this.proxy = proxy;
-        this.config = config;
+    public ConnectionListener(LemonQueue plugin, QueueManager queues) {
+        this.plugin = plugin;
+        this.proxy = plugin.getProxy();
         this.queues = queues;
+    }
+
+    private QueueConfig config() {
+        return plugin.getConfig();
     }
 
     @Subscribe
     public void onChooseInitialServer(PlayerChooseInitialServerEvent event) {
+        QueueConfig config = config();
         Player player = event.getPlayer();
         String target = config.getDefaultTarget();
 
@@ -59,14 +68,15 @@ public class ConnectionListener {
 
     @Subscribe
     public void onKickedFromServer(KickedFromServerEvent event) {
+        QueueConfig config = config();
         Player player = event.getPlayer();
         String kicked = event.getServer().getServerInfo().getName();
 
         // Never re-queue someone leaving the limbo itself.
         if (kicked.equalsIgnoreCase(config.getLimboServer())) return;
         if (player.hasPermission(config.getBypassPermission())) return;
-        // Ban-kick: LemonCore signalled us not to intercept this kick.
-        if (queues.isBanning(player.getUniqueId())) {
+        // Ban-kick: LemonCore signalled us not to intercept this kick (consume-once).
+        if (queues.consumeBanning(player.getUniqueId())) {
             queues.dequeue(player.getUniqueId());
             return;
         }

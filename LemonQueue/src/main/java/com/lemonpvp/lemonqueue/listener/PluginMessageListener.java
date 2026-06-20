@@ -31,6 +31,10 @@ public class PluginMessageListener {
         if (!event.getIdentifier().getId().equals(CHANNEL)) return;
         if (!(event.getSource() instanceof ServerConnection)) return;
 
+        // Internal backend→proxy control message: consume it so it is not
+        // forwarded onward to the client.
+        event.setResult(PluginMessageEvent.ForwardResult.handled());
+
         try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(event.getData()))) {
             String action = in.readUTF();
             if ("PlayerBanning".equals(action)) {

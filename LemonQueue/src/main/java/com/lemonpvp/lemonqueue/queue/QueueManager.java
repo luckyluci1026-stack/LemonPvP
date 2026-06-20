@@ -40,12 +40,15 @@ public class QueueManager {
     private final LemonQueue plugin;
     private final ProxyServer proxy;
     private final Logger logger;
-    private QueueConfig config;
+    // volatile so reloadConfig() (command thread) is visible to scheduler threads.
+    private volatile QueueConfig config;
 
     /** Sliding window of release timestamps (ms) used to estimate wait time. */
     private static final long ETA_WINDOW_MS = 60_000L;
     /** How long a "banning" mark is kept before it expires (safety net). */
     private static final long BANNING_TTL_MS = 10_000L;
+    /** Max time a connect request may be in flight before we retry the player. */
+    private static final long SEND_TIMEOUT_MS = 10_000L;
 
     private final Map<String, ServerQueue> queues = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastPosition = new ConcurrentHashMap<>();
@@ -126,15 +129,15 @@ public class QueueManager {
         banningMarks.put(uuid, System.currentTimeMillis() + BANNING_TTL_MS);
     }
 
-    /** Returns true if this player's kick should bypass the limbo redirect. */
-    public boolean isBanning(UUID uuid) {
-        Long expiry = banningMarks.get(uuid);
+    /**
+     * Returns true if this player's kick should bypass the limbo redirect, and
+     * consumes the mark so it only suppresses a single (the ban) kick — a later
+     * unrelated kick within the TTL is handled normally.
+     */
+    public boolean consumeBanning(UUID uuid) {
+        Long expiry = banningMarks.remove(uuid);
         if (expiry == null) return false;
-        if (System.currentTimeMillis() > expiry) {
-            banningMarks.remove(uuid);
-            return false;
-        }
-        return true;
+        return System.currentTimeMillis() <= expiry;
     }
 
     /** Removes a player from every queue (call on disconnect / leave). */
@@ -194,7 +197,9 @@ public class QueueManager {
 
             for (QueuedPlayer qp : queue.snapshot()) {
                 if (sent >= batch) break;
-                if (qp.isSending()) continue;
+                // Skip players with an in-flight request, unless it has hung past the
+                // timeout — then allow a retry so they don't block the whole queue.
+                if (qp.isSending() && !qp.isSendingStale(SEND_TIMEOUT_MS)) continue;
 
                 Player player = qp.getPlayer();
                 if (player == null || !player.isActive()) {
@@ -210,9 +215,12 @@ public class QueueManager {
                         queue.remove(qp.getUuid());
                         lastPosition.remove(qp.getUuid());
                         recordRelease();
-                        player.clearTitle();
-                        player.sendActionBar(msg.actionbarConnected(queue.getTargetServer()));
-                        player.playSound(CONNECT);
+                        // Player may have disconnected during the async connect.
+                        if (player.isActive()) {
+                            player.clearTitle();
+                            player.sendActionBar(msg.actionbarConnected(queue.getTargetServer()));
+                            player.playSound(CONNECT);
+                        }
                     } else {
                         // Target rejected (full again / down): keep the player queued.
                         qp.setSending(false);
@@ -232,13 +240,19 @@ public class QueueManager {
 
         for (ServerQueue queue : queues.values()) {
             var snapshot = queue.snapshot();
-            int total = snapshot.size();
+            // Count only players still online so positions/totals match reality.
+            int total = 0;
+            for (QueuedPlayer qp : snapshot) {
+                Player p = qp.getPlayer();
+                if (p != null && p.isActive()) total++;
+            }
+            int pos = 0;
             for (int i = 0; i < snapshot.size(); i++) {
                 QueuedPlayer qp = snapshot.get(i);
                 Player player = qp.getPlayer();
                 if (player == null || !player.isActive()) continue;
 
-                int pos = i + 1;
+                pos++;
                 String eta = formatEta(pos);
 
                 player.sendActionBar(msg.actionbarWaiting(pos, total, eta));

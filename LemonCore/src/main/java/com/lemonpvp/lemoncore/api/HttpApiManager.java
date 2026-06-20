@@ -229,11 +229,15 @@ public class HttpApiManager {
         long durationSecs = parseDuration(duration);
 
         joinWithTimeout(plugin.getBanManager().banPlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
-            .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                Player online = Bukkit.getPlayer(uuid);
-                if (online != null)
-                    online.kick(net.kyori.adventure.text.Component.text("Du wurdest gebannt: " + reason));
-            })));
+            .thenAccept(ban -> {
+                if (ban == null) return;
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player online = Bukkit.getPlayer(uuid);
+                    // Route through performBanKick so the proxy gets the PlayerBanning
+                    // signal (no limbo evasion) and the kick screen matches messages.yml.
+                    if (online != null) plugin.getListenerManager().performBanKick(online, ban);
+                });
+            }));
 
         send(ex, 200, ok());
     }

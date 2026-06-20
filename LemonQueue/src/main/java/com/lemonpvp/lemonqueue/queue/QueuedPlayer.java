@@ -19,6 +19,7 @@ public class QueuedPlayer {
     private final long joinTime;
 
     private volatile boolean sending = false;
+    private volatile long sendingSince = 0L;
 
     public QueuedPlayer(Player player, String target, int priority, long joinTime) {
         this.player = player;
@@ -34,5 +35,18 @@ public class QueuedPlayer {
     public long getJoinTime()   { return joinTime; }
 
     public boolean isSending()          { return sending; }
-    public void setSending(boolean s)   { this.sending = s; }
+
+    public void setSending(boolean s) {
+        this.sending = s;
+        this.sendingSince = s ? System.currentTimeMillis() : 0L;
+    }
+
+    /**
+     * True if a connection request has been in flight longer than {@code maxMs}.
+     * Guards against head-of-line blocking when a backend connect future hangs
+     * and the {@code sending} flag would otherwise never reset.
+     */
+    public boolean isSendingStale(long maxMs) {
+        return sending && (System.currentTimeMillis() - sendingSince) > maxMs;
+    }
 }

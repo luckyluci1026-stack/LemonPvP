@@ -60,13 +60,13 @@ public class LemonQueue {
                 MinecraftChannelIdentifier.from("lemonpvp:core");
         proxy.getChannelRegistrar().register(lemonChannel);
 
-        proxy.getEventManager().register(this, new ConnectionListener(proxy, config, queueManager));
+        proxy.getEventManager().register(this, new ConnectionListener(this, queueManager));
         proxy.getEventManager().register(this, new PingListener(this));
         proxy.getEventManager().register(this, new PluginMessageListener(queueManager));
 
         CommandManager cm = proxy.getCommandManager();
         CommandMeta meta = cm.metaBuilder("lemonqueue").aliases("lq", "queue").plugin(this).build();
-        cm.register(meta, new QueueCommand(this, queueManager, config));
+        cm.register(meta, new QueueCommand(this, queueManager));
 
         queueManager.start();
 

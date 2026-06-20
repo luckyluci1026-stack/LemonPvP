@@ -85,6 +85,9 @@ messages:
   join-title: ""
   join-subtitle: ""
   join-message: ""
+  # Nachricht, wenn ein voller Server dich in die Warteschlange schickt.
+  # {server} = betroffener Server. Frei editierbar, sofort per /lq reload aktiv.
+  # Beispiel: kick-full: "<red>Deine Lobby ist voll – du wartest jetzt in der Warteschlange."
   kick-full: ""
   # /lq Befehl
   cmd-position: ""

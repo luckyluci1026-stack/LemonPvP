@@ -25,20 +25,21 @@ public class QueueCommand implements SimpleCommand {
 
     private final LemonQueue plugin;
     private final QueueManager queues;
-    private final QueueConfig config;
-    private final Messages msg;
 
-    public QueueCommand(LemonQueue plugin, QueueManager queues, QueueConfig config) {
+    public QueueCommand(LemonQueue plugin, QueueManager queues) {
         this.plugin = plugin;
         this.queues = queues;
-        this.config = config;
-        this.msg = config.getMessages();
     }
+
+    // Read live so /lq reload (which swaps the config + Messages bundle) applies.
+    private QueueConfig config() { return plugin.getConfig(); }
+    private Messages msg()       { return plugin.getConfig().getMessages(); }
 
     @Override
     public void execute(Invocation invocation) {
         var source = invocation.source();
         String[] args = invocation.arguments();
+        Messages msg = msg();
 
         if (args.length == 0) {
             if (source instanceof Player player) {
@@ -90,6 +91,8 @@ public class QueueCommand implements SimpleCommand {
     }
 
     private void showAdminStats(com.velocitypowered.api.command.CommandSource source) {
+        Messages msg = msg();
+        QueueConfig config = config();
         source.sendMessage(msg.adminHeader());
         if (queues.getQueues().isEmpty()) {
             source.sendMessage(msg.adminNone());
@@ -104,7 +107,7 @@ public class QueueCommand implements SimpleCommand {
     }
 
     private void noPerm(com.velocitypowered.api.command.CommandSource source) {
-        source.sendMessage(msg.cmdNoPerm());
+        source.sendMessage(msg().cmdNoPerm());
     }
 
     @Override
