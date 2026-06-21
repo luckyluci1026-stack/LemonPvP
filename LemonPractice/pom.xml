@@ -42,6 +42,18 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>com.lemonpvp</groupId>
+            <artifactId>LemonCore</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.lemonpvp</groupId>
+            <artifactId>LemonCosmetics</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
         </dependency>

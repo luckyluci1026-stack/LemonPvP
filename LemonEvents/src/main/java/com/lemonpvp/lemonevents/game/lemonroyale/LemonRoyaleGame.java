@@ -67,10 +67,15 @@ public class LemonRoyaleGame extends AbstractGame {
             Player p = Bukkit.getPlayer(playerList.get(i));
             if (p == null) continue;
             Map<?, ?> sp = spawnList.get(i % spawnList.size());
-            int x = ((Number) sp.get("x")).intValue();
-            int y = ((Number) sp.get("y")).intValue();
-            int z = ((Number) sp.get("z")).intValue();
-            p.teleport(new Location(world, x + 0.5, y, z + 0.5));
+            try {
+                int x = ((Number) sp.get("x")).intValue();
+                int y = ((Number) sp.get("y")).intValue();
+                int z = ((Number) sp.get("z")).intValue();
+                p.teleport(new Location(world, x + 0.5, y, z + 0.5));
+            } catch (ClassCastException | NullPointerException e) {
+                plugin.getLogger().warning("[LemonRoyale] Skipping malformed spawnpoint in events.yml: " + sp);
+                p.teleport(new Location(world, 0.5, 65, 0.5));
+            }
             p.setGameMode(GameMode.SURVIVAL);
             p.getInventory().clear();
         }

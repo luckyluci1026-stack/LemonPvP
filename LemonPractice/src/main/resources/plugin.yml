@@ -4,7 +4,7 @@ main: com.lemonpvp.lemonpractice.LemonPractice
 api-version: "1.21"
 description: LemonPvP Practice Plugin
 authors: [LemonPvP]
-softdepend: [LuckPerms, FastAsyncWorldEdit]
+softdepend: [LuckPerms, FastAsyncWorldEdit, LemonCore, LemonCosmetics]
 
 permissions:
   lemonpractice.admin.arena:

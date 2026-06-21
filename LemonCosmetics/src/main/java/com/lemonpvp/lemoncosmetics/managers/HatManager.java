@@ -61,7 +61,7 @@ public class HatManager {
         if (hat == null) return;
 
         ItemStack helmet = new ItemStack(Material.LEATHER_HELMET);
-        LeatherArmorMeta meta = (LeatherArmorMeta) helmet.getItemMeta();
+        if (!(helmet.getItemMeta() instanceof LeatherArmorMeta meta)) return;
         meta.setColor(Color.fromRGB(0, 0, 0));
         meta.setCustomModelData(hat.customModelData);
         meta.setUnbreakable(true);

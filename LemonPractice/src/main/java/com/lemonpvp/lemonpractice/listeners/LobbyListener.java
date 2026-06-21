@@ -142,13 +142,29 @@ public class LobbyListener implements Listener {
         switch (hotbarAction) {
             case "queue" -> new QueueGUI(plugin, player).open();
             case "kit_editor" -> new QueueGUI(plugin, player).openKitEditor();
-            case "cosmetics" -> player.sendMessage(
-                    MiniMessage.miniMessage().deserialize("<yellow>Coming soon!"));
-            case "settings" -> player.sendMessage(
-                    MiniMessage.miniMessage().deserialize("<yellow>See <white>/settings</white> command."));
-            default -> {
-                // Unknown action — ignore
-            }
+            case "cosmetics" -> openCosmetics(player);
+            case "settings" -> openSettings(player);
+            default -> plugin.getLogger().warning("Unknown hotbar action: " + hotbarAction);
+        }
+    }
+
+    /** Opens the LemonCosmetics menu if that plugin is present, else informs the player. */
+    private void openCosmetics(Player player) {
+        org.bukkit.plugin.Plugin cosmeticsPlugin = Bukkit.getPluginManager().getPlugin("LemonCosmetics");
+        if (cosmeticsPlugin instanceof com.lemonpvp.lemoncosmetics.LemonCosmetics lemonCosmetics) {
+            new com.lemonpvp.lemoncosmetics.gui.CosmeticsMainGUI(lemonCosmetics, player).open();
+        } else {
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Cosmetics are not available right now."));
+        }
+    }
+
+    /** Opens the LemonCore settings menu if that plugin is present, else informs the player. */
+    private void openSettings(Player player) {
+        org.bukkit.plugin.Plugin corePlugin = Bukkit.getPluginManager().getPlugin("LemonCore");
+        if (corePlugin instanceof com.lemonpvp.lemoncore.LemonCore lemonCore) {
+            new com.lemonpvp.lemoncore.gui.SettingsGUI(lemonCore, player).open();
+        } else {
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Settings are not available right now."));
         }
     }
 
