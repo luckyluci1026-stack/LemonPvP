@@ -94,10 +94,6 @@ public class LemonRoyaleGame extends AbstractGame {
     }
 
     private void spawnLootChests(World world) {
-        ConfigurationSection chestSection = plugin.getLootConfig()
-                .getConfigurationSection("lr-chest-positions." + selectedMap);
-        if (chestSection == null) return;
-
         List<?> positions = plugin.getLootConfig().getList("lr-chest-positions." + selectedMap);
         if (positions == null) return;
 
