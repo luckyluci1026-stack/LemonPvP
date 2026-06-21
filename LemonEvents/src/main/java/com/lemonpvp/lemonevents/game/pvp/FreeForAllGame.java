@@ -117,7 +117,7 @@ public class FreeForAllGame extends AbstractGame {
             if (!running || !participants.contains(victimUuid)) return;
             Player p = Bukkit.getPlayer(victimUuid);
             if (p == null) return;
-            if (p.isDead()) p.respawn();
+            if (p.isDead()) p.spigot().respawn();
             // Apply kit and teleport on the next tick after the respawn cycle completes
             Bukkit.getScheduler().runTask(plugin, () -> {
                 Player fresh = Bukkit.getPlayer(victimUuid);

@@ -45,9 +45,11 @@ public class FFAListener implements Listener {
         }
 
         // Auto-respawn after 3 seconds (60 ticks)
+        UUID deathUuid = player.getUniqueId();
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (player.isOnline() && player.isDead()) {
-                player.respawn();
+            Player p = Bukkit.getPlayer(deathUuid);
+            if (p != null && p.isDead()) {
+                p.spigot().respawn();
             }
         }, 60L);
     }
