@@ -14,6 +14,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MReportGUI {
 
@@ -25,8 +26,11 @@ public class MReportGUI {
 
     public void open(Player admin) {
         String title = plugin.getMessagesManager().getRaw("mreport.gui-title");
+        UUID adminUuid = admin.getUniqueId();
         plugin.getReportManager().getMessageReports().thenAccept(reports -> {
             Bukkit.getScheduler().runTask(plugin, () -> {
+                Player a = Bukkit.getPlayer(adminUuid);
+                if (a == null) return;
                 int size = Math.max(9, Math.min(54, ((reports.size() + 8) / 9) * 9));
                 if (size == 0) size = 9;
                 Inventory inv = Bukkit.createInventory(null, size, TextUtil.parse(title));
@@ -41,7 +45,7 @@ public class MReportGUI {
                     lore.add("<gray>Date: <white>" + sdf.format(r.reportTime));
                     inv.setItem(slot++, makeItem(Material.PAPER, "<yellow>MReport #" + r.id, lore));
                 }
-                admin.openInventory(inv);
+                a.openInventory(inv);
             });
         });
     }
