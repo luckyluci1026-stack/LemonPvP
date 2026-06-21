@@ -44,14 +44,15 @@ public class VelocityMessaging implements PluginMessageListener {
                 case "BanPlayer" -> {
                     String uuidStr = in.readUTF();
                     String reason = in.readUTF();
-                    // Handle ban notification from proxy
-                    Player target = Bukkit.getPlayer(UUID.fromString(uuidStr));
-                    if (target != null) {
-                        plugin.getBanManager().getActiveBan(UUID.fromString(uuidStr))
+                    UUID banUuid = UUID.fromString(uuidStr);
+                    if (Bukkit.getPlayer(banUuid) != null) {
+                        plugin.getBanManager().getActiveBan(banUuid)
                                 .thenAccept(ban -> {
                                     if (ban != null) {
-                                        Bukkit.getScheduler().runTask(plugin, () ->
-                                                plugin.getListenerManager().performBanKick(target, ban));
+                                        Bukkit.getScheduler().runTask(plugin, () -> {
+                                            Player t = Bukkit.getPlayer(banUuid);
+                                            if (t != null) plugin.getListenerManager().performBanKick(t, ban);
+                                        });
                                     }
                                 });
                     }

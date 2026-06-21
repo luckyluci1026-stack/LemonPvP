@@ -37,8 +37,8 @@ public class QueuedPlayer {
     public boolean isSending()          { return sending; }
 
     public void setSending(boolean s) {
-        this.sending = s;
         this.sendingSince = s ? System.currentTimeMillis() : 0L;
+        this.sending = s; // written last so isSendingStale() never sees sending=true with sendingSince=0
     }
 
     /**

@@ -103,8 +103,10 @@ public class ChatListener implements Listener {
             plugin.getBanManager().banPlayer(uuid, player.getName(), reason,
                     null, "Auto-Mute", banDuration).thenAccept(ban -> {
                 if (ban != null) {
-                    Bukkit.getScheduler().runTask(plugin, () ->
-                            plugin.getListenerManager().performBanKick(player, ban));
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(uuid);
+                        if (p != null) plugin.getListenerManager().performBanKick(p, ban);
+                    });
                 }
             });
 
