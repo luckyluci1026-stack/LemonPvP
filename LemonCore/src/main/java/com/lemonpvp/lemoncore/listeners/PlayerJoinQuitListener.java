@@ -23,22 +23,26 @@ public class PlayerJoinQuitListener implements Listener {
         event.joinMessage(null);
 
         var player = event.getPlayer();
+        java.util.UUID uuid = player.getUniqueId();
 
         // Load player data async, then check ban
-        plugin.getPlayerDataManager().loadPlayer(player.getUniqueId(), player.getName())
+        plugin.getPlayerDataManager().loadPlayer(uuid, player.getName())
                 .thenAccept(data -> {
                     // Check for active ban
-                    plugin.getBanManager().getActiveBan(player.getUniqueId())
+                    plugin.getBanManager().getActiveBan(uuid)
                             .thenAccept(ban -> {
                                 if (ban != null) {
-                                    org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
-                                            plugin.getListenerManager().performBanKick(player, ban));
+                                    org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                                        org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayer(uuid);
+                                        if (p != null) plugin.getListenerManager().performBanKick(p, ban);
+                                    });
                                 } else {
                                     // Update scoreboard and apply display name
                                     org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
-                                        if (!player.isOnline()) return;
-                                        plugin.getScoreboardManager().updateScoreboard(player, data);
-                                        plugin.getPlayerDataManager().applyNames(player);
+                                        org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayer(uuid);
+                                        if (p == null) return;
+                                        plugin.getScoreboardManager().updateScoreboard(p, data);
+                                        plugin.getPlayerDataManager().applyNames(p);
                                     });
                                 }
                             });

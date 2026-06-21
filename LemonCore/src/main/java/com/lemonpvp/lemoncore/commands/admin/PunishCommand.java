@@ -43,7 +43,7 @@ public class PunishCommand implements CommandExecutor {
 
         Player online = Bukkit.getPlayer(targetName);
         if (online != null) {
-            executeBan(sender, online.getUniqueId(), online.getName(), reason, senderUuid, senderName, online);
+            executeBan(sender, online.getUniqueId(), online.getName(), reason, senderUuid, senderName);
         } else {
             plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid -> {
                 if (uuid == null) {
@@ -51,22 +51,21 @@ public class PunishCommand implements CommandExecutor {
                         sender.sendMessage(plugin.getMessagesManager().get("player-not-found", "player", targetName)));
                     return;
                 }
-                executeBan(sender, uuid, targetName, reason, senderUuid, senderName, null);
+                executeBan(sender, uuid, targetName, reason, senderUuid, senderName);
             });
         }
         return true;
     }
 
     private void executeBan(CommandSender sender, UUID targetUuid, String targetName,
-                             String reason, UUID senderUuid, String senderName, Player onlineTarget) {
+                             String reason, UUID senderUuid, String senderName) {
         plugin.getBanManager().banPlayer(targetUuid, targetName, reason, senderUuid, senderName, PERMANENT)
                 .thenAccept(ban -> {
                     if (ban == null) return;
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         sender.sendMessage(plugin.getMessagesManager().get("ban.success", "player", targetName, "reason", reason));
-                        if (onlineTarget != null) {
-                            plugin.getListenerManager().performBanKick(onlineTarget, ban);
-                        }
+                        Player t = Bukkit.getPlayer(targetUuid);
+                        if (t != null) plugin.getListenerManager().performBanKick(t, ban);
                     });
                 });
     }
