@@ -198,8 +198,7 @@ public class PlayerDataManager {
             CompletableFuture<Void> saveFuture = persistPlayerData(uuid, pd);
 
             if (newLevel > oldLevel) {
-                return saveFuture.thenCompose(v ->
-                        checkRankUnlocks(uuid, Bukkit.getPlayer(uuid)));
+                return saveFuture.thenCompose(v -> checkRankUnlocks(uuid));
             }
             return saveFuture;
         });
@@ -224,7 +223,7 @@ public class PlayerDataManager {
             pd.subtractXp(pd.getTotalXp()); // zero out
             pd.addXp(Math.max(0, amount));
             return persistPlayerData(uuid, pd)
-                    .thenCompose(v -> checkRankUnlocks(uuid, Bukkit.getPlayer(uuid)));
+                    .thenCompose(v -> checkRankUnlocks(uuid));
         });
     }
 
@@ -242,7 +241,7 @@ public class PlayerDataManager {
             pd.subtractXp(pd.getTotalXp());
             pd.addXp(targetXp);
             return persistPlayerData(uuid, pd)
-                    .thenCompose(v -> checkRankUnlocks(uuid, Bukkit.getPlayer(uuid)));
+                    .thenCompose(v -> checkRankUnlocks(uuid));
         });
     }
 
@@ -267,7 +266,7 @@ public class PlayerDataManager {
             }
 
             return persistPlayerData(uuid, pd)
-                    .thenCompose(v -> checkRankUnlocks(uuid, Bukkit.getPlayer(uuid)));
+                    .thenCompose(v -> checkRankUnlocks(uuid));
         });
     }
 
@@ -302,7 +301,7 @@ public class PlayerDataManager {
      * Checks each rank threshold. For any rank the player qualifies for that
      * hasn't been unlocked yet, grants it via LuckPerms and records it in the DB.
      */
-    public CompletableFuture<Void> checkRankUnlocks(UUID uuid, Player player) {
+    public CompletableFuture<Void> checkRankUnlocks(UUID uuid) {
         PlayerData pd = cache.get(uuid);
         if (pd == null) return CompletableFuture.completedFuture(null);
 
@@ -321,12 +320,12 @@ public class PlayerDataManager {
                                 grantRank(uuid, rank);
                                 plugin.getDatabase().recordRankUnlock(uuid, rank);
 
-                                if (player != null && player.isOnline()) {
-                                    Bukkit.getScheduler().runTask(plugin, () ->
-                                            player.sendMessage(MM.deserialize(
-                                                    ">> <gradient:#fffb00:#00ff00>Rank Unlocked: "
-                                                            + rank + "</gradient> <<")));
-                                }
+                                Bukkit.getScheduler().runTask(plugin, () -> {
+                                    Player p = Bukkit.getPlayer(uuid);
+                                    if (p != null) p.sendMessage(MM.deserialize(
+                                            ">> <gradient:#fffb00:#00ff00>Rank Unlocked: "
+                                                    + rank + "</gradient> <<"));
+                                });
                             }
                             return CompletableFuture.<Void>completedFuture(null);
                         })

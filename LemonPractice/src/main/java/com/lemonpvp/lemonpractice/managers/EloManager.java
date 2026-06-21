@@ -94,12 +94,14 @@ public class EloManager {
     public CompletableFuture<int[]> applyDuelResult(UUID winner, UUID loser, String gamemode) {
         String gm = gamemode.toLowerCase();
 
-        CompletableFuture<EloData> wFuture = getCached(winner, gm) != null
-                ? CompletableFuture.completedFuture(getCached(winner, gm))
+        EloData wCached = getCached(winner, gm);
+        CompletableFuture<EloData> wFuture = wCached != null
+                ? CompletableFuture.completedFuture(wCached)
                 : loadEloData(winner, gm);
 
-        CompletableFuture<EloData> lFuture = getCached(loser, gm) != null
-                ? CompletableFuture.completedFuture(getCached(loser, gm))
+        EloData lCached = getCached(loser, gm);
+        CompletableFuture<EloData> lFuture = lCached != null
+                ? CompletableFuture.completedFuture(lCached)
                 : loadEloData(loser, gm);
 
         return wFuture.thenCombine(lFuture, (wData, lData) -> {
