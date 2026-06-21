@@ -49,8 +49,9 @@ public class DuelListener implements Listener {
             // Auto-respawn after 1 tick so the spectator setup in makeSpectator takes effect
             // (setGameMode SPECTATOR on a dead player requires a respawn cycle to apply).
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (player.isOnline() && player.isDead()) {
-                    player.respawn();
+                Player p = Bukkit.getPlayer(uuid);
+                if (p != null && p.isDead()) {
+                    p.spigot().respawn();
                 }
             }, 1L);
         }
