@@ -103,15 +103,3 @@ kits:
       chest: {material: DIAMOND_CHESTPLATE, enchantments: {PROTECTION: 4}}
       legs: {material: DIAMOND_LEGGINGS, enchantments: {PROTECTION: 4}}
       feet: {material: DIAMOND_BOOTS, enchantments: {PROTECTION: 4}}
-
-  iron:
-    hotbar:
-      0: {material: IRON_SWORD, amount: 1, enchantments: {SHARPNESS: 2, UNBREAKING: 3}}
-      1: {material: GOLDEN_APPLE, amount: 8}
-      2: {material: COOKED_BEEF, amount: 64}
-      3: {material: ENDER_PEARL, amount: 16}
-    armor:
-      head: {material: IRON_HELMET, enchantments: {PROTECTION: 2, UNBREAKING: 3}}
-      chest: {material: IRON_CHESTPLATE, enchantments: {PROTECTION: 2, UNBREAKING: 3}}
-      legs: {material: IRON_LEGGINGS, enchantments: {PROTECTION: 2, UNBREAKING: 3}}
-      feet: {material: IRON_BOOTS, enchantments: {PROTECTION: 2, UNBREAKING: 3}}
