@@ -7,116 +7,90 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 public class LobbyHotbarManager {
 
+    private static final MiniMessage MM = MiniMessage.miniMessage();
+
     private final LemonPractice plugin;
-    private final MiniMessage miniMessage = MiniMessage.miniMessage();
-
-    /** PersistentData key used to identify hotbar actions */
     private final NamespacedKey actionKey;
-
-    // Hotbar slot constants
-    private static final int SLOT_QUEUE        = 0;
-    private static final int SLOT_KIT_EDITOR   = 4;
-    private static final int SLOT_COSMETICS    = 7;
-    private static final int SLOT_SETTINGS     = 8;
 
     public LobbyHotbarManager(LemonPractice plugin) {
         this.plugin = plugin;
         this.actionKey = new NamespacedKey(plugin, "hotbar_action");
     }
 
-    // -----------------------------------------------------------------------
-    // Setup
-    // -----------------------------------------------------------------------
-
     public void setupHotbar(Player player) {
         player.getInventory().clear();
-
-        player.getInventory().setItem(SLOT_QUEUE,
-                buildItem(
-                        Material.IRON_SWORD,
-                        plugin.getConfig().getString("hotbar.queue.name", "<green>Queue"),
-                        plugin.getConfig().getInt("hotbar.queue.model-data", 0),
-                        "queue"));
-
-        player.getInventory().setItem(SLOT_KIT_EDITOR,
-                buildItem(
-                        Material.BOOK,
-                        plugin.getConfig().getString("hotbar.kit-editor.name", "<green>Kit Editor"),
-                        plugin.getConfig().getInt("hotbar.kit-editor.model-data", 0),
-                        "kit_editor"));
-
-        player.getInventory().setItem(SLOT_COSMETICS,
-                buildItem(
-                        Material.DIAMOND,
-                        plugin.getConfig().getString("hotbar.cosmetics.name", "<green>Cosmetics"),
-                        plugin.getConfig().getInt("hotbar.cosmetics.model-data", 0),
-                        "cosmetics"));
-
-        player.getInventory().setItem(SLOT_SETTINGS,
-                buildItem(
-                        Material.COMPASS,
-                        plugin.getConfig().getString("hotbar.settings.name", "<green>Settings"),
-                        plugin.getConfig().getInt("hotbar.settings.model-data", 0),
-                        "settings"));
+        placeItem(player, "queue",      "queue",      Material.IRON_SWORD);
+        placeItem(player, "kit-editor", "kit_editor", Material.BOOK);
+        placeItem(player, "cosmetics",  "cosmetics",  Material.DIAMOND);
+        placeItem(player, "settings",   "settings",   Material.COMPASS);
     }
-
-    // -----------------------------------------------------------------------
-    // Clear
-    // -----------------------------------------------------------------------
 
     public void clearHotbar(Player player) {
         player.getInventory().clear();
     }
 
-    // -----------------------------------------------------------------------
-    // Read action from an ItemStack
-    // -----------------------------------------------------------------------
-
-    /**
-     * Returns the hotbar action string stored in the item's PersistentDataContainer,
-     * or {@code null} if this is not a hotbar item.
-     */
     public String getAction(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return null;
-        ItemMeta meta = item.getItemMeta();
-        return meta.getPersistentDataContainer().get(actionKey, PersistentDataType.STRING);
+        return item.getItemMeta().getPersistentDataContainer().get(actionKey, PersistentDataType.STRING);
     }
 
-    // -----------------------------------------------------------------------
-    // Item builder
-    // -----------------------------------------------------------------------
+    // -------------------------------------------------------------------------
+
+    private void placeItem(Player player, String configKey, String action, Material fallbackMaterial) {
+        String path = "hotbar." + configKey;
+
+        int slot = plugin.getConfig().getInt(path + ".slot", defaultSlot(configKey));
+
+        String rawName = plugin.getConfig().getString(path + ".name", "<!italic><white>" + configKey);
+        // Ensure name is never italic — prepend if not already present
+        if (!rawName.contains("<!italic>") && !rawName.contains("<italic:false>")) {
+            rawName = "<!italic>" + rawName;
+        }
+
+        String matName = plugin.getConfig().getString(path + ".material", fallbackMaterial.name());
+        Material material;
+        try {
+            material = Material.valueOf(matName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            material = fallbackMaterial;
+        }
+
+        int modelData = plugin.getConfig().getInt(path + ".model-data", 0);
+
+        player.getInventory().setItem(slot, buildItem(material, rawName, modelData, action));
+    }
+
+    private int defaultSlot(String key) {
+        return switch (key) {
+            case "queue"      -> 0;
+            case "kit-editor" -> 4;
+            case "cosmetics"  -> 7;
+            case "settings"   -> 8;
+            default           -> 0;
+        };
+    }
 
     private ItemStack buildItem(Material material, String miniMessageName, int modelData, String action) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
 
-        if (meta != null) {
-            // Parse MiniMessage component for the display name
-            Component displayName = miniMessage.deserialize(miniMessageName);
-            meta.displayName(displayName);
+        Component displayName = MM.deserialize(miniMessageName);
+        meta.displayName(displayName);
 
-            // Custom model data (0 = disabled / use default)
-            if (modelData > 0) {
-                meta.setCustomModelData(modelData);
-            }
+        if (modelData > 0) meta.setCustomModelData(modelData);
 
-            // Mark the item as unbreakable without showing the flag
-            meta.setUnbreakable(true);
-            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);
-            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
-            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+        meta.setUnbreakable(true);
+        meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
+        meta.getPersistentDataContainer().set(actionKey, PersistentDataType.STRING, action);
 
-            // Store the action identifier
-            meta.getPersistentDataContainer().set(actionKey, PersistentDataType.STRING, action);
-
-            item.setItemMeta(meta);
-        }
-
+        item.setItemMeta(meta);
         return item;
     }
 }

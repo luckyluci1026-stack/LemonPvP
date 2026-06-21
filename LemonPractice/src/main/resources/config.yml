@@ -50,19 +50,23 @@ countdown:
   fall-speed: 0.08
 
 hotbar:
-  queue-sword:
+  queue:
     slot: 0
-    name: "<gradient:#fffb00:#00ff00>Queue</gradient>"
+    name: "<!italic><gradient:#fffb00:#00ff00>Queue</gradient>"
     material: DIAMOND_SWORD
+    model-data: 0
   kit-editor:
     slot: 4
-    name: "<aqua>Kit Editor</aqua>"
+    name: "<!italic><aqua>Kit Editor</aqua>"
     material: BOOK
+    model-data: 0
   cosmetics:
     slot: 7
-    name: "<light_purple>Cosmetics</light_purple>"
+    name: "<!italic><light_purple>Cosmetics</light_purple>"
     material: DIAMOND
+    model-data: 0
   settings:
     slot: 8
-    name: "<gray>Settings</gray>"
+    name: "<!italic><gray>Settings</gray>"
     material: COMPASS
+    model-data: 0
