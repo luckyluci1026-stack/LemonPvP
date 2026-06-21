@@ -7,6 +7,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.UUID;
+
 public class AowBuildSpawnCommand implements CommandExecutor {
 
     private final LemonPractice plugin;
@@ -29,17 +31,23 @@ public class AowBuildSpawnCommand implements CommandExecutor {
 
         player.sendMessage("§eBuilding spawn island... this may take a few seconds.");
 
+        UUID uuid = player.getUniqueId();
         org.bukkit.World world = player.getWorld();
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 new SpawnBuilder(plugin, world).build();
-                plugin.getServer().getScheduler().runTask(plugin, () ->
-                        player.sendMessage("§aSpawn island built at 0, 64, 0."));
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    Player p = org.bukkit.Bukkit.getPlayer(uuid);
+                    if (p != null) p.sendMessage("§aSpawn island built at 0, 64, 0.");
+                });
             } catch (Exception e) {
                 plugin.getLogger().severe("[AowBuildSpawnCommand] SpawnBuilder failed: " + e.getMessage());
                 e.printStackTrace();
-                plugin.getServer().getScheduler().runTask(plugin, () ->
-                        player.sendMessage("§cSpawn build failed: " + e.getMessage()));
+                final String errMsg = e.getMessage();
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    Player p = org.bukkit.Bukkit.getPlayer(uuid);
+                    if (p != null) p.sendMessage("§cSpawn build failed: " + errMsg);
+                });
             }
         });
 

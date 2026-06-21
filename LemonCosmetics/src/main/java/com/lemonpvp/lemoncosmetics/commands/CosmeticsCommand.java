@@ -10,6 +10,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.UUID;
+
 public class CosmeticsCommand implements CommandExecutor {
 
     private final LemonCosmetics plugin;
@@ -34,9 +36,12 @@ public class CosmeticsCommand implements CommandExecutor {
 
         if (cosmetics == null) {
             // Not yet cached — load from DB, then open once loaded
-            plugin.getCosmeticsManager().loadPlayer(player.getUniqueId())
-                    .thenAccept(c -> Bukkit.getScheduler().runTask(plugin,
-                            () -> new CosmeticsMainGUI(plugin, player).open()));
+            UUID uuid = player.getUniqueId();
+            plugin.getCosmeticsManager().loadPlayer(uuid)
+                    .thenAccept(c -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player p = Bukkit.getPlayer(uuid);
+                        if (p != null) new CosmeticsMainGUI(plugin, p).open();
+                    }));
             return true;
         }
 

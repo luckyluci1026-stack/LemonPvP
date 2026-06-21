@@ -120,6 +120,20 @@ public class EventManager {
         }
     }
 
+    /** Force-ends all active games and marks them ENDED in the DB. Called on plugin shutdown. */
+    public void endAllActiveGames() {
+        new ArrayList<>(activeGames.entrySet()).forEach(entry -> {
+            AbstractGame game = entry.getValue();
+            game.forceEnd();
+            GameEvent ev = events.get(entry.getKey());
+            if (ev != null) {
+                ev.setStatus(EventStatus.ENDED);
+                plugin.getDatabase().updateEventStatus(ev.getId(), EventStatus.ENDED);
+            }
+        });
+        activeGames.clear();
+    }
+
     public GameEvent getEvent(String name) {
         return events.get(name);
     }

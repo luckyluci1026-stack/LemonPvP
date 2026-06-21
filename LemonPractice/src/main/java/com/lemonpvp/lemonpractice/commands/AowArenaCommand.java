@@ -326,7 +326,11 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
                 try {
                     Integer id = plugin.getDatabase().createArena(dupeName).get();
                     if (id == null || id == -1) {
-                        player.sendMessage("§cFailed to create dupe arena §e" + dupeName + "§c (may already exist).");
+                        final String failedName = dupeName;
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            Player p = Bukkit.getPlayer(playerUuid);
+                            if (p != null) p.sendMessage("§cFailed to create dupe arena §e" + failedName + "§c (may already exist).");
+                        });
                         continue;
                     }
 

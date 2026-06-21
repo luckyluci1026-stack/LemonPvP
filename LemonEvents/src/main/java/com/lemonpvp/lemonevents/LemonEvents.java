@@ -61,6 +61,7 @@ public final class LemonEvents extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (eventManager != null) eventManager.endAllActiveGames();
         if (announcementManager != null) announcementManager.stop();
         if (messaging != null) messaging.unregister();
         if (database != null) database.disconnect();
