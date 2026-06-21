@@ -5,8 +5,13 @@ import com.lemonpvp.lemontraining.database.TrainingDatabase;
 import com.lemonpvp.lemontraining.listeners.TrainingListener;
 import com.lemonpvp.lemontraining.managers.ArenaManager;
 import com.lemonpvp.lemontraining.managers.PracticeManager;
+import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Zombie;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -45,6 +50,9 @@ public final class LemonTraining extends JavaPlugin {
         getCommand("leave").setExecutor(new LeaveCommand(this));
         getServer().getPluginManager().registerEvents(new TrainingListener(this), this);
 
+        // Remove any training zombies left over from a previous crash
+        cleanupOrphanZombies();
+
         // Build arenas async (non-blocking startup)
         getServer().getScheduler().runTask(this, arenaManager::buildArenas);
 
@@ -70,4 +78,18 @@ public final class LemonTraining extends JavaPlugin {
     }
 
     public FileConfiguration getMessages()      { return messages; }
+
+    private void cleanupOrphanZombies() {
+        NamespacedKey key = new NamespacedKey(this, "training_zombie");
+        int removed = 0;
+        for (World world : Bukkit.getWorlds()) {
+            for (Zombie z : world.getEntitiesByClass(Zombie.class)) {
+                if (z.getPersistentDataContainer().has(key, PersistentDataType.BYTE)) {
+                    z.remove();
+                    removed++;
+                }
+            }
+        }
+        if (removed > 0) getLogger().info("Removed " + removed + " orphaned training zombie(s) from previous session.");
+    }
 }
