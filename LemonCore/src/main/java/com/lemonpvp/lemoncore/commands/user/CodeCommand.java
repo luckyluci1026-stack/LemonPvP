@@ -32,32 +32,35 @@ public class CodeCommand implements CommandExecutor {
         }
 
         String code = args[0];
-        plugin.getCodeManager().redeemCode(code, player.getUniqueId()).thenAccept(result -> {
+        java.util.UUID uuid = player.getUniqueId();
+        plugin.getCodeManager().redeemCode(code, uuid).thenAccept(result -> {
             org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                Player p = org.bukkit.Bukkit.getPlayer(uuid);
+                if (p == null) return;
                 switch (result.result) {
                     case SUCCESS -> {
-                        applyReward(player, result);
-                        player.sendMessage(plugin.getMessagesManager().get("code.success-header"));
-                        player.sendMessage(plugin.getMessagesManager().get("code.success-reward",
+                        applyReward(p, result);
+                        p.sendMessage(plugin.getMessagesManager().get("code.success-header"));
+                        p.sendMessage(plugin.getMessagesManager().get("code.success-reward",
                                 "reward", formatReward(result)));
-                        player.sendMessage(plugin.getMessagesManager().get("code.success-footer"));
-                        player.playSound(player.getLocation(),
+                        p.sendMessage(plugin.getMessagesManager().get("code.success-footer"));
+                        p.playSound(p.getLocation(),
                                 org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
                     }
                     case ALREADY_USED -> {
-                        player.playSound(player.getLocation(),
+                        p.playSound(p.getLocation(),
                                 org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-                        player.sendMessage(plugin.getMessagesManager().get("code.already-redeemed"));
+                        p.sendMessage(plugin.getMessagesManager().get("code.already-redeemed"));
                     }
                     case EXPIRED -> {
-                        player.playSound(player.getLocation(),
+                        p.playSound(p.getLocation(),
                                 org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-                        player.sendMessage(plugin.getMessagesManager().get("code.expired"));
+                        p.sendMessage(plugin.getMessagesManager().get("code.expired"));
                     }
                     default -> {
-                        player.playSound(player.getLocation(),
+                        p.playSound(p.getLocation(),
                                 org.bukkit.Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-                        player.sendMessage(plugin.getMessagesManager().get("code.invalid"));
+                        p.sendMessage(plugin.getMessagesManager().get("code.invalid"));
                     }
                 }
             });
