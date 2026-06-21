@@ -137,6 +137,9 @@ permissions:
   lemoncore.admin.maintenance:
     description: Manage maintenance mode
     default: op
+  lemoncore.use.rtp:
+    description: Use random teleport
+    default: true
 
 commands:
   grank:
@@ -295,3 +298,7 @@ commands:
     description: Manage maintenance mode
     permission: lemoncore.admin.maintenance
     usage: /aowm <on|off|whitelist <player>>
+  rtp:
+    description: Random Teleport (coming soon)
+    permission: lemoncore.use.rtp
+    usage: /rtp

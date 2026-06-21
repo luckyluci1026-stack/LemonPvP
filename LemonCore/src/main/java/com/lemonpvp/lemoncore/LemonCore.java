@@ -199,6 +199,7 @@ public class LemonCore extends JavaPlugin {
         getCommand("report").setExecutor(new ReportCommand(this));
         getCommand("bugreport").setExecutor(new BugReportCommand(this));
         getCommand("mreport").setExecutor(new MReportCommand(this));
+        getCommand("rtp").setExecutor(new RtpCommand(this));
 
         // Tab completers for commands that accept an online player name as first argument
         org.bukkit.command.TabCompleter playerTab = (s, c, l, a) ->

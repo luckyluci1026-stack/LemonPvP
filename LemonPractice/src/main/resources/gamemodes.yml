@@ -54,3 +54,10 @@ gamemodes:
     material: MINECART
     enabled: true
     slot: 7
+
+  iron:
+    name: "Iron"
+    display-name: "<gray>Iron"
+    material: IRON_SWORD
+    enabled: true
+    slot: 8

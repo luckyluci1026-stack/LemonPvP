@@ -107,6 +107,9 @@ public class LemonPractice extends JavaPlugin {
         GEloCommand eloCmd = new GEloCommand(this);
         getCommand("gelo").setExecutor(eloCmd);
         getCommand("gelo").setTabCompleter(eloCmd);
+        LPracticeCommand lpCmd = new LPracticeCommand(this);
+        getCommand("lpractice").setExecutor(lpCmd);
+        getCommand("lpractice").setTabCompleter(lpCmd);
 
         // 8. If LOBBY: set up hotbars for all currently online players (reload case)
         if (serverType.equals("LOBBY")) {

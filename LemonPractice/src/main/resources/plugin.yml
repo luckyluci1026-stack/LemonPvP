@@ -7,6 +7,9 @@ authors: [LemonPvP]
 softdepend: [LuckPerms, FastAsyncWorldEdit, LemonCore, LemonCosmetics]
 
 permissions:
+  lemonpractice.admin.reload:
+    description: Reload LemonPractice configs without restarting
+    default: op
   lemonpractice.admin.arena:
     description: Manage arenas
     default: op
@@ -27,6 +30,10 @@ permissions:
     default: true
 
 commands:
+  lpractice:
+    description: LemonPractice admin commands
+    permission: lemonpractice.admin.reload
+    usage: /lpractice reload
   aowarena:
     description: Manage arenas
     permission: lemonpractice.admin.arena
