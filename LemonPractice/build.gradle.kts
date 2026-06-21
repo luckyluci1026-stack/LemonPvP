@@ -24,6 +24,8 @@ dependencies {
     compileOnly("net.luckperms:api:5.4")
     compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core:2.11.1")
     compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:2.11.1") { isTransitive = false }
+    compileOnly(files("../LemonCore/build/libs/LemonCore-1.0.0.jar"))
+    compileOnly(files("../LemonCosmetics/build/libs/LemonCosmetics-1.0.0.jar"))
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("com.mysql:mysql-connector-j:8.3.0")
 }
