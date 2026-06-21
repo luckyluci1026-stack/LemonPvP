@@ -152,6 +152,28 @@ public class HuntGame extends AbstractGame {
     }
 
     @Override
+    public void handleQuit(UUID uuid) {
+        if (!participants.remove(uuid)) return;
+        finishOrder.add(0, uuid);
+
+        if (participants.isEmpty()) {
+            endGame();
+            return;
+        }
+
+        // If the hunter quits, pick a random prey as the new hunter
+        if (uuid.equals(currentHunter)) {
+            selectHunter();
+            Player newHunter = Bukkit.getPlayer(currentHunter);
+            if (newHunter != null) {
+                applyNewHunter(newHunter);
+                broadcastParticipants(MM.deserialize(
+                    "<red>🔄 <yellow>" + newHunter.getName() + "</yellow> is now the Hunter! (previous hunter left)"));
+            }
+        }
+    }
+
+    @Override
     protected void doCleanup() {
         for (UUID uuid : participants) {
             Player p = Bukkit.getPlayer(uuid);

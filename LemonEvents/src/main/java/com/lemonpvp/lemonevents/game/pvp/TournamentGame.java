@@ -132,6 +132,28 @@ public class TournamentGame extends AbstractGame {
     }
 
     @Override
+    public void handleQuit(UUID uuid) {
+        if (!participants.remove(uuid)) return;
+        finishOrder.add(0, uuid);
+        bracket.remove(uuid);
+
+        // If this was a current fighter, award the match to their opponent.
+        if (uuid.equals(currentFighter1) || uuid.equals(currentFighter2)) {
+            UUID winnerId = uuid.equals(currentFighter1) ? currentFighter2 : currentFighter1;
+            broadcastParticipants(MM.deserialize(
+                "<yellow>" + getPlayerName(uuid) + " disconnected — <green>" + getPlayerName(winnerId) + " advances!"));
+            // Rebuild bracket: winner stays, quitter's slot already removed above
+            bracket.remove(winnerId);
+            bracket.add(0, winnerId);
+            matchIndex = 0;
+            scheduleTask(Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                displayBracket();
+                startNextMatch();
+            }, 100L));
+        }
+    }
+
+    @Override
     protected void checkWinCondition() {
         // Tournament handles win condition internally via onFighterDeath
     }

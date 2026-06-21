@@ -127,6 +127,32 @@ public class SumoGame extends AbstractGame {
     }
 
     @Override
+    public void handleQuit(UUID uuid) {
+        if (!participants.remove(uuid)) return;
+        finishOrder.add(0, uuid);
+        bracket.remove(uuid);
+
+        // If the quitter was one of the current fighters, resolve the match in the other's favor.
+        if (uuid.equals(fighter1) || uuid.equals(fighter2)) {
+            if (voidCheckTask != null) { voidCheckTask.cancel(); voidCheckTask = null; }
+            if (!matchResolved) {
+                matchResolved = true;
+                UUID winnerId = uuid.equals(fighter1) ? fighter2 : fighter1;
+                broadcastParticipants(MM.deserialize(
+                    "<yellow>" + getPlayerName(uuid) + " disconnected — <green>" + getPlayerName(winnerId) + " wins the match!"));
+                // Move winner to the single remaining bracket slot
+                bracket.remove(winnerId);
+                bracket.add(0, winnerId);
+                matchIndex = 0;
+                matchResolved = false;
+                scheduleTask(Bukkit.getScheduler().runTaskLater(plugin, this::startNextMatch, 80L));
+            }
+        } else if (participants.size() <= 1) {
+            endGame();
+        }
+    }
+
+    @Override
     protected void checkWinCondition() {} // handled by onFellOff
 
     private String getPlayerName(UUID uuid) {

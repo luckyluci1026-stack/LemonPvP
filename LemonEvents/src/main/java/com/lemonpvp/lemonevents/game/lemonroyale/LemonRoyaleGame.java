@@ -99,12 +99,16 @@ public class LemonRoyaleGame extends AbstractGame {
 
         for (Object raw : positions) {
             if (!(raw instanceof Map<?, ?> pos)) continue;
-            int x = ((Number) pos.get("x")).intValue();
-            int y = ((Number) pos.get("y")).intValue();
-            int z = ((Number) pos.get("z")).intValue();
-            Location loc = new Location(world, x, y, z);
-            world.getBlockAt(loc).setType(Material.CHEST);
-            lootChests.put(loc, false);
+            try {
+                int x = ((Number) pos.get("x")).intValue();
+                int y = ((Number) pos.get("y")).intValue();
+                int z = ((Number) pos.get("z")).intValue();
+                Location loc = new Location(world, x, y, z);
+                world.getBlockAt(loc).setType(Material.CHEST);
+                lootChests.put(loc, false);
+            } catch (ClassCastException | NullPointerException e) {
+                plugin.getLogger().warning("[LemonRoyale] Skipping malformed chest position in lootTables.yml: " + pos);
+            }
         }
     }
 
