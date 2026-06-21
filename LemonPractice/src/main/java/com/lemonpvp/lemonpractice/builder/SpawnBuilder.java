@@ -4451,7 +4451,7 @@ public class SpawnBuilder extends BuildHelper {
         }
 
         // ── Flower beds around secondary hub plazas ────────────────────────────
-        org.bukkit.block.BlockType[] flowerRing = {
+        BlockType[] flowerRing = {
             BlockTypes.OXEYE_DAISY, BlockTypes.CORNFLOWER, BlockTypes.POPPY,
             BlockTypes.DANDELION, BlockTypes.BLUE_ORCHID, BlockTypes.ALLIUM
         };
