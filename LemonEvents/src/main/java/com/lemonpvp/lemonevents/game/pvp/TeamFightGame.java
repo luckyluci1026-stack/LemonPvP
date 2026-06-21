@@ -131,6 +131,30 @@ public class TeamFightGame extends AbstractGame {
     }
 
     @Override
+    public void handleQuit(UUID uuid) {
+        if (!participants.remove(uuid)) return;
+        finishOrder.add(0, uuid);
+        // Treat disconnect as elimination so team win-condition is re-evaluated
+        teamA.remove(uuid);
+        teamB.remove(uuid);
+        // Reuse onPlayerDeath win-check path (player ref can be null — only team emptiness matters)
+        Player ghost = Bukkit.getPlayer(uuid);
+        if (ghost != null) ghost.setGameMode(GameMode.SPECTATOR);
+        broadcastParticipants(MM.deserialize("<gray>" + Bukkit.getOfflinePlayer(uuid).getName() + " disconnected!"));
+        if (teamA.isEmpty()) {
+            broadcastAll(MM.deserialize("<blue><bold>Team B wins!</bold></blue>"));
+            new ArrayList<>(teamB).forEach(w -> { participants.remove(w); finishOrder.add(0, w); });
+            Collections.reverse(finishOrder);
+            endGame();
+        } else if (teamB.isEmpty()) {
+            broadcastAll(MM.deserialize("<red><bold>Team A wins!</bold></red>"));
+            new ArrayList<>(teamA).forEach(w -> { participants.remove(w); finishOrder.add(0, w); });
+            Collections.reverse(finishOrder);
+            endGame();
+        }
+    }
+
+    @Override
     protected void checkWinCondition() {} // handled by onPlayerDeath
 
     private String teamNames(Set<UUID> team) {
