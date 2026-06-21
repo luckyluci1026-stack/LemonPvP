@@ -71,6 +71,7 @@ public class QueueGUI implements Listener {
             registered = true;
         }
 
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
         player.openInventory(inventory);
     }
 
@@ -104,9 +105,11 @@ public class QueueGUI implements Listener {
 
         if (plugin.getQueueManager().isQueued(clicker.getUniqueId())) {
             plugin.getQueueManager().removeFromQueue(clicker.getUniqueId());
+            clicker.playSound(clicker.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 0.8f);
             clicker.sendMessage(MM.deserialize("<red>Left queue."));
         } else {
             plugin.getQueueManager().addToQueue(clicker.getUniqueId(), gamemodeId);
+            clicker.playSound(clicker.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.2f);
             clicker.sendMessage(MM.deserialize("<green>Joined queue for <yellow>" + gm.getName() + "<green>."));
             clicker.closeInventory();
         }

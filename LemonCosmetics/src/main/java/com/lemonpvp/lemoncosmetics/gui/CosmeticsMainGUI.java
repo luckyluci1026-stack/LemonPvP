@@ -95,6 +95,7 @@ public class CosmeticsMainGUI implements Listener {
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
             registered = true;
         }
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
         player.openInventory(inventory);
     }
 

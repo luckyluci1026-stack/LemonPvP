@@ -36,7 +36,7 @@ public class TrainingGUI {
     }
 
     public void open(Player player) {
-        Component title = MINI_MESSAGE.deserialize("<font:lemonpvp:default>ᴛʀᴀɪɴɪɴɢ</font>");
+        Component title = MINI_MESSAGE.deserialize("<gradient:#fffb00:#00ff00><bold>Training</bold></gradient>");
         Inventory inv = Bukkit.createInventory(null, 27, title);
 
         // Fill all slots with gray glass pane filler
@@ -52,6 +52,7 @@ public class TrainingGUI {
         inv.setItem(SLOT_SWORD, buildModeItem(Material.DIAMOND_SWORD, "Sword Practice", "SWORD"));
         inv.setItem(SLOT_CRYSTAL, buildModeItem(Material.END_CRYSTAL, "Crystal Practice", "CRYSTAL"));
 
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.3f);
         player.openInventory(inv);
     }
 
@@ -92,8 +93,7 @@ public class TrainingGUI {
     public boolean handleClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return false;
 
-        Component guiTitle = MINI_MESSAGE.deserialize("<font:lemonpvp:default>ᴛʀᴀɪɴɪɴɢ</font>");
-        // Check if the clicked inventory's title matches our GUI
+        Component guiTitle = MINI_MESSAGE.deserialize("<gradient:#fffb00:#00ff00><bold>Training</bold></gradient>");
         if (event.getView().title().equals(guiTitle)) {
             event.setCancelled(true);
 
@@ -109,6 +109,7 @@ public class TrainingGUI {
             String mode = meta.getPersistentDataContainer().get(modeKey, PersistentDataType.STRING);
             if (mode == null) return true;
 
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
             player.closeInventory();
             lobbyMessaging.sendTrainingMode(player, mode);
             return true;

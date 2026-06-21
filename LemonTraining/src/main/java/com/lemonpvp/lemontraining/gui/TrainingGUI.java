@@ -24,6 +24,7 @@ public class TrainingGUI implements Listener {
     private final LemonTraining plugin;
     private final Player player;
     private Inventory inv;
+    private boolean registered = false;
 
     public TrainingGUI(LemonTraining plugin, Player player) {
         this.plugin = plugin;
@@ -32,40 +33,38 @@ public class TrainingGUI implements Listener {
 
     public void open() {
         inv = Bukkit.createInventory(null, 27,
-                MM.deserialize("<font:lemonpvp:default>ᴛʀᴀɪɴɪɴɢ</font>"));
+                MM.deserialize("<gradient:#fffb00:#00ff00><bold>Training</bold></gradient>"));
 
-        // Fill with gray glass panes
         ItemStack filler = makeItem(Material.GRAY_STAINED_GLASS_PANE, " ");
         for (int i = 0; i < 27; i++) {
             inv.setItem(i, filler);
         }
 
-        // Slot 11: Iron Sword → TOTEM
         inv.setItem(11, makeItem(Material.IRON_SWORD,
                 "<!italic><yellow>Totem Practice</yellow>",
-                List.of("<!italic><gray>Practice catching anvils with totems.</gray>")));
+                List.of("<!italic><gray>Practice catching anvils with totems.")));
 
-        // Slot 12: Bow → BOW
         inv.setItem(12, makeItem(Material.BOW,
                 "<!italic><aqua>Bow Practice</aqua>",
-                List.of("<!italic><gray>Hit targets with bow and crossbow.</gray>")));
+                List.of("<!italic><gray>Hit targets with bow and crossbow.")));
 
-        // Slot 13: Mace → MACE
         inv.setItem(13, makeItem(Material.MACE,
                 "<!italic><light_purple>Mace Practice</light_purple>",
-                List.of("<!italic><gray>Practice mace dive attacks.</gray>")));
+                List.of("<!italic><gray>Practice mace dive attacks.")));
 
-        // Slot 14: Diamond Sword → SWORD
         inv.setItem(14, makeItem(Material.DIAMOND_SWORD,
                 "<!italic><green>Sword Practice</green>",
-                List.of("<!italic><gray>Practice sword combat.</gray>")));
+                List.of("<!italic><gray>Practice sword combat.")));
 
-        // Slot 15: End Crystal → CRYSTAL
         inv.setItem(15, makeItem(Material.END_CRYSTAL,
                 "<!italic><red>Crystal Practice</red>",
-                List.of("<!italic><gray>Practice crystal PvP.</gray>")));
+                List.of("<!italic><gray>Practice crystal PvP.")));
 
-        Bukkit.getPluginManager().registerEvents(this, plugin);
+        if (!registered) {
+            Bukkit.getPluginManager().registerEvents(this, plugin);
+            registered = true;
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.3f);
         player.openInventory(inv);
     }
 
@@ -104,6 +103,7 @@ public class TrainingGUI implements Listener {
         };
 
         if (mode != null) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
             player.closeInventory();
             plugin.getPracticeManager().startPractice(player, mode);
         }
@@ -112,6 +112,10 @@ public class TrainingGUI implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!event.getPlayer().getUniqueId().equals(player.getUniqueId())) return;
-        HandlerList.unregisterAll(this);
+        if (!event.getInventory().equals(inv)) return;
+        if (registered) {
+            HandlerList.unregisterAll(this);
+            registered = false;
+        }
     }
 }

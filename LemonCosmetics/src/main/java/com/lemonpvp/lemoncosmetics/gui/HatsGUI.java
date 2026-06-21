@@ -55,6 +55,7 @@ public class HatsGUI implements Listener {
             Bukkit.getPluginManager().registerEvents(this, plugin);
             registered = true;
         }
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
         player.openInventory(inventory);
     }
 
@@ -101,9 +102,11 @@ public class HatsGUI implements Listener {
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
                         if (success) {
+                            p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
                             p.sendMessage(MM.deserialize("<green>Purchased <yellow>" + hat.displayName + "</yellow>!"));
                             renderHats();
                         } else {
+                            p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
                             p.sendMessage(MM.deserialize("<red>You cannot afford <yellow>" + hat.displayName
                                     + "</yellow>. It costs <gold>" + hat.price + " coins</gold>."));
                         }
@@ -117,6 +120,7 @@ public class HatsGUI implements Listener {
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
+                        p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.4f, 0.9f);
                         p.sendMessage(MM.deserialize("<yellow>Hat unequipped."));
                         renderHats();
                     }));
@@ -125,6 +129,7 @@ public class HatsGUI implements Listener {
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
+                        p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.2f);
                         p.sendMessage(MM.deserialize("<green>Equipped <yellow>" + hat.displayName + "</yellow>!"));
                         renderHats();
                     }));

@@ -37,6 +37,7 @@ public class TrimPatternGUI implements Listener {
     private Inventory inventory;
 
     private String selectedPatternId = null;
+    private boolean registered = false;
 
     public TrimPatternGUI(LemonCosmetics plugin, Player player) {
         this.plugin = plugin;
@@ -49,15 +50,21 @@ public class TrimPatternGUI implements Listener {
 
         renderItems();
 
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        if (!registered) {
+            plugin.getServer().getPluginManager().registerEvents(this, plugin);
+            registered = true;
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
         player.openInventory(inventory);
     }
 
     private void renderItems() {
         ItemStack filler = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta fillerMeta = filler.getItemMeta();
-        fillerMeta.displayName(Component.empty());
-        filler.setItemMeta(fillerMeta);
+        if (fillerMeta != null) {
+            fillerMeta.displayName(Component.empty());
+            filler.setItemMeta(fillerMeta);
+        }
         for (int i = 0; i < inventory.getSize(); i++) {
             inventory.setItem(i, filler);
         }
@@ -76,20 +83,24 @@ public class TrimPatternGUI implements Listener {
         // Slot 45: Back button
         ItemStack backButton = new ItemStack(Material.ARROW);
         ItemMeta backMeta = backButton.getItemMeta();
-        backMeta.displayName(MM.deserialize("<!italic><gray>Back</gray>"));
-        backButton.setItemMeta(backMeta);
+        if (backMeta != null) {
+            backMeta.displayName(MM.deserialize("<!italic><gray>Back</gray>"));
+            backButton.setItemMeta(backMeta);
+        }
         inventory.setItem(45, backButton);
 
         // Slot 49: Buy button
         int cost = plugin.getConfig().getInt("prices.trim-pattern", 250);
         ItemStack buyButton = new ItemStack(Material.GOLD_INGOT);
         ItemMeta buyMeta = buyButton.getItemMeta();
-        buyMeta.displayName(MM.deserialize("<!italic><gold>Buy Trim Pattern</gold>"));
-        buyMeta.lore(List.of(
-                MM.deserialize("<!italic><gray>Cost: <gold>" + cost + " Coins</gold></gray>"),
-                MM.deserialize("<!italic><gray>Click a pattern first, then buy</gray>")
-        ));
-        buyButton.setItemMeta(buyMeta);
+        if (buyMeta != null) {
+            buyMeta.displayName(MM.deserialize("<!italic><gold>Buy Trim Pattern</gold>"));
+            buyMeta.lore(List.of(
+                    MM.deserialize("<!italic><gray>Cost: <gold>" + cost + " Coins</gold></gray>"),
+                    MM.deserialize("<!italic><gray>Click a pattern first, then buy</gray>")
+            ));
+            buyButton.setItemMeta(buyMeta);
+        }
         inventory.setItem(49, buyButton);
     }
 
@@ -154,10 +165,12 @@ public class TrimPatternGUI implements Listener {
             boolean owned = cosmetics != null && cosmetics.ownsPattern(patternId);
 
             if (owned) {
+                player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
                 player.closeInventory();
                 new TrimArmorPieceGUI(plugin, player, patternId).open();
             } else {
                 selectedPatternId = patternId;
+                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.4f, 1.1f);
                 renderItems();
                 player.sendMessage(MM.deserialize("<!italic><yellow>Click <gold>Buy Trim Pattern</gold> to confirm your purchase.</yellow>"));
             }
@@ -166,6 +179,7 @@ public class TrimPatternGUI implements Listener {
 
         // Back button
         if (slot == 45) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 0.9f);
             player.closeInventory();
             new CosmeticsMainGUI(plugin, player).open();
             return;
@@ -174,10 +188,12 @@ public class TrimPatternGUI implements Listener {
         // Buy button
         if (slot == 49) {
             if (selectedPatternId == null) {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
                 player.sendMessage(MM.deserialize("<!italic><red>Select a pattern first!</red>"));
                 return;
             }
             if (cosmetics != null && cosmetics.ownsPattern(selectedPatternId)) {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
                 player.sendMessage(MM.deserialize("<!italic><red>You already own this pattern!</red>"));
                 return;
             }
@@ -189,10 +205,12 @@ public class TrimPatternGUI implements Listener {
                         Player p = Bukkit.getPlayer(buyerUuid);
                         if (p == null) return;
                         if (success) {
+                            p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
                             selectedPatternId = null;
                             renderItems();
                             p.sendMessage(MM.deserialize("<!italic><green>Successfully purchased the trim pattern!</green>"));
                         } else {
+                            p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
                             p.sendMessage(MM.deserialize("<!italic><red>You don't have enough coins!</red>"));
                         }
                     }));
@@ -203,6 +221,9 @@ public class TrimPatternGUI implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!event.getInventory().equals(inventory)) return;
         if (!event.getPlayer().getUniqueId().equals(player.getUniqueId())) return;
-        HandlerList.unregisterAll(this);
+        if (registered) {
+            HandlerList.unregisterAll(this);
+            registered = false;
+        }
     }
 }

@@ -88,6 +88,7 @@ public class PlayerListener implements Listener {
     public void setupHotbar(Player player) {
         ItemStack questItem = new ItemStack(Material.NETHER_STAR);
         ItemMeta meta = questItem.getItemMeta();
+        if (meta == null) return;
 
         meta.displayName(MM.deserialize("<gradient:#fffb00:#00ff00>Quests</gradient>"));
 

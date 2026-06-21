@@ -24,6 +24,7 @@ public class SettingsGUI implements Listener {
     private final Player player;
     private final PlayerData data;
     private Inventory inv;
+    private boolean registered = false;
 
     public SettingsGUI(LemonCore plugin, Player player) {
         this.plugin = plugin;
@@ -34,11 +35,16 @@ public class SettingsGUI implements Listener {
     public void open() {
         if (data == null) return;
 
-        String title = plugin.getMessagesManager().getRaw("settings.gui-title");
-        inv = Bukkit.createInventory(null, 27, TextUtil.parse(title));
+        inv = Bukkit.createInventory(null, 27,
+                net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
+                        .deserialize("<gradient:#fffb00:#00ff00><bold>Settings</bold></gradient>"));
         refresh();
 
-        Bukkit.getPluginManager().registerEvents(this, plugin);
+        if (!registered) {
+            Bukkit.getPluginManager().registerEvents(this, plugin);
+            registered = true;
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.3f);
         player.openInventory(inv);
     }
 
@@ -83,21 +89,25 @@ public class SettingsGUI implements Listener {
             case 10 -> {
                 data.setPublicChat(!data.isPublicChat());
                 plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+                playToggleSound(clicker, data.isPublicChat());
                 refresh();
             }
             case 12 -> {
                 data.setPartyInvites(!data.isPartyInvites());
                 plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+                playToggleSound(clicker, data.isPartyInvites());
                 refresh();
             }
             case 14 -> {
                 data.setMessagesEnabled(!data.isMessagesEnabled());
                 plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+                playToggleSound(clicker, data.isMessagesEnabled());
                 refresh();
             }
             case 16 -> {
                 data.setFastCrystals(!data.isFastCrystals());
                 plugin.getPlayerDataManager().savePlayer(player.getUniqueId());
+                playToggleSound(clicker, data.isFastCrystals());
                 refresh();
             }
         }
@@ -106,7 +116,18 @@ public class SettingsGUI implements Listener {
     @EventHandler
     public void onClose(InventoryCloseEvent event) {
         if (event.getInventory() != inv) return;
-        HandlerList.unregisterAll(this);
+        if (registered) {
+            HandlerList.unregisterAll(this);
+            registered = false;
+        }
+    }
+
+    private void playToggleSound(Player p, boolean on) {
+        if (on) {
+            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.2f);
+        } else {
+            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 0.8f);
+        }
     }
 
     private ItemStack makeItem(Material mat, String name) {

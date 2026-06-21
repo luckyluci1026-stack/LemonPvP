@@ -15,6 +15,11 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scoreboard.Criteria;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 
 import java.time.Duration;
 import java.util.*;
@@ -100,7 +105,6 @@ public class DuelManager {
         final int[] countdown = {3};
 
         Bukkit.getScheduler().runTaskTimer(plugin, task -> {
-            // Abort if the duel was cancelled mid-countdown (e.g. a player disconnected).
             if (game.getState() != DuelState.COUNTDOWN) {
                 task.cancel();
                 return;
@@ -115,8 +119,17 @@ public class DuelManager {
                         Component.empty(),
                         Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(800), Duration.ofMillis(200)));
 
-                if (p1.isOnline()) p1.showTitle(fightTitle);
-                if (p2.isOnline()) p2.showTitle(fightTitle);
+                if (p1.isOnline()) {
+                    p1.showTitle(fightTitle);
+                    p1.playSound(p1.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f);
+                }
+                if (p2.isOnline()) {
+                    p2.showTitle(fightTitle);
+                    p2.playSound(p2.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f);
+                }
+
+                setupDuelScoreboard(game, p1, p2);
+                startScoreboardUpdater(game);
                 return;
             }
 
@@ -125,10 +138,135 @@ public class DuelManager {
                     Component.empty(),
                     Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(800), Duration.ofMillis(100)));
 
-            if (p1.isOnline()) p1.showTitle(countTitle);
-            if (p2.isOnline()) p2.showTitle(countTitle);
+            if (p1.isOnline()) {
+                p1.showTitle(countTitle);
+                p1.playSound(p1.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.0f);
+            }
+            if (p2.isOnline()) {
+                p2.showTitle(countTitle);
+                p2.playSound(p2.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 1.0f);
+            }
             countdown[0]--;
         }, 0L, 20L);
+    }
+
+    // -----------------------------------------------------------------------
+    // Duel Scoreboard
+    // -----------------------------------------------------------------------
+
+    private static final String[] SB_ENTRIES = {
+        "§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8"
+    };
+
+    private void setupDuelScoreboard(DuelGame game, Player p1, Player p2) {
+        if (!p1.isOnline() || !p2.isOnline()) return;
+
+        Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective obj = board.registerNewObjective("duel", Criteria.DUMMY,
+                net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
+                        .deserialize("<gradient:#fffb00:#00ff00><bold>Practice</bold></gradient>"));
+        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        for (int i = 0; i < SB_ENTRIES.length; i++) {
+            Team t = board.registerNewTeam("line" + i);
+            t.addEntry(SB_ENTRIES[i]);
+            obj.getScore(SB_ENTRIES[i]).setScore(SB_ENTRIES.length - 1 - i);
+        }
+
+        setLine(board, 0, "§8§m──────────────");
+        setLine(board, 1, "§fvs §e" + (p1.getUniqueId().equals(game.getPlayer1Uuid()) ? game.getPlayer2Name() : game.getPlayer1Name()));
+        setLine(board, 2, " ");
+        setLine(board, 3, "§7Gegner HP: §c" + formatHp(getOpponent(game, p1)));
+        setLine(board, 4, " ");
+        setLine(board, 5, "§7Zeit: §f" + formatTime(0));
+        setLine(board, 6, " ");
+        setLine(board, 7, "§7Modus: §f" + capitalize(game.getGamemode()));
+        setLine(board, 8, "§8§m──────────────");
+
+        game.setScoreboard(board);
+        p1.setScoreboard(board);
+
+        // p2 gets a mirrored scoreboard showing p1 as opponent
+        Scoreboard board2 = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective obj2 = board2.registerNewObjective("duel", Criteria.DUMMY,
+                net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
+                        .deserialize("<gradient:#fffb00:#00ff00><bold>Practice</bold></gradient>"));
+        obj2.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        for (int i = 0; i < SB_ENTRIES.length; i++) {
+            Team t = board2.registerNewTeam("line" + i);
+            t.addEntry(SB_ENTRIES[i]);
+            obj2.getScore(SB_ENTRIES[i]).setScore(SB_ENTRIES.length - 1 - i);
+        }
+
+        setLine(board2, 0, "§8§m──────────────");
+        setLine(board2, 1, "§fvs §e" + (p2.getUniqueId().equals(game.getPlayer1Uuid()) ? game.getPlayer2Name() : game.getPlayer1Name()));
+        setLine(board2, 2, " ");
+        setLine(board2, 3, "§7Gegner HP: §c" + formatHp(getOpponent(game, p2)));
+        setLine(board2, 4, " ");
+        setLine(board2, 5, "§7Zeit: §f" + formatTime(0));
+        setLine(board2, 6, " ");
+        setLine(board2, 7, "§7Modus: §f" + capitalize(game.getGamemode()));
+        setLine(board2, 8, "§8§m──────────────");
+
+        game.setScoreboard2(board2);
+        p2.setScoreboard(board2);
+    }
+
+    private void startScoreboardUpdater(DuelGame game) {
+        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            if (game.getState() != DuelState.FIGHTING) {
+                task.cancel();
+                return;
+            }
+            int elapsed = game.getDurationSeconds();
+            Player p1 = Bukkit.getPlayer(game.getPlayer1Uuid());
+            Player p2 = Bukkit.getPlayer(game.getPlayer2Uuid());
+
+            if (game.getScoreboard() != null && p1 != null) {
+                setLine(game.getScoreboard(), 3, "§7Gegner HP: §c" + formatHp(p2));
+                setLine(game.getScoreboard(), 5, "§7Zeit: §f" + formatTime(elapsed));
+            }
+            if (game.getScoreboard2() != null && p2 != null) {
+                setLine(game.getScoreboard2(), 3, "§7Gegner HP: §c" + formatHp(p1));
+                setLine(game.getScoreboard2(), 5, "§7Zeit: §f" + formatTime(elapsed));
+            }
+        }, 20L, 20L);
+    }
+
+    private void clearDuelScoreboard(Player player) {
+        if (player != null && player.isOnline()) {
+            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+        }
+    }
+
+    private void setLine(Scoreboard board, int lineIndex, String text) {
+        Team team = board.getTeam("line" + lineIndex);
+        if (team != null) team.setPrefix(text);
+    }
+
+    private String formatHp(Player p) {
+        if (p == null || !p.isOnline()) return "§8-";
+        double hp = p.getHealth();
+        // Build a simple heart bar: up to 10 hearts
+        int hearts = (int) Math.ceil(hp / 2.0);
+        return "§c" + ("♥".repeat(Math.max(0, hearts))) + " §7(" + String.format("%.1f", hp) + ")";
+    }
+
+    private String formatTime(int seconds) {
+        int m = seconds / 60;
+        int s = seconds % 60;
+        return String.format("%d:%02d", m, s);
+    }
+
+    private Player getOpponent(DuelGame game, Player player) {
+        UUID opponentUuid = game.getOpponent(player.getUniqueId());
+        return opponentUuid != null ? Bukkit.getPlayer(opponentUuid) : null;
+    }
+
+    private String capitalize(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1).toLowerCase();
     }
 
     // -----------------------------------------------------------------------
@@ -205,6 +343,7 @@ public class DuelManager {
         if (survivorUuid != null) {
             Player survivor = Bukkit.getPlayer(survivorUuid);
             if (survivor != null && survivor.isOnline()) {
+                clearDuelScoreboard(survivor);
                 plugin.getSpectatorManager().removeSpectator(survivor);
                 sendToLobby(survivor);
             }
@@ -215,30 +354,29 @@ public class DuelManager {
     }
 
     private void finishDuel(DuelGame game, Player winner, Player loser) {
-        // Victory title for winner — ELO is internal only, not shown
         if (winner != null && winner.isOnline()) {
+            clearDuelScoreboard(winner);
             winner.showTitle(Title.title(
                     Component.text("Victory!", NamedTextColor.GOLD),
                     Component.empty(),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2500), Duration.ofMillis(500))));
-
-            // 2 seconds of Absorption (invincibility flavour)
+            winner.playSound(winner.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.0f);
             winner.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 40, 4, false, false));
         }
 
-        // Defeat title for loser + make spectator immediately
         if (loser != null && loser.isOnline()) {
+            clearDuelScoreboard(loser);
             loser.showTitle(Title.title(
                     Component.text("Defeat!", NamedTextColor.RED),
                     Component.empty(),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2500), Duration.ofMillis(500))));
+            loser.playSound(loser.getLocation(), org.bukkit.Sound.ENTITY_WITHER_AMBIENT, 0.4f, 1.5f);
 
             Arena arena = game.getArena();
             Location specSpawn = arena.getSpawnSpec() != null ? arena.getSpawnSpec() : arena.getSpawn1();
             plugin.getSpectatorManager().makeSpectator(loser, specSpawn);
         }
 
-        // After 3 seconds: send both to lobby, free arena, reset
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (winner != null && winner.isOnline()) {
                 plugin.getSpectatorManager().removeSpectator(winner);
@@ -249,12 +387,11 @@ public class DuelManager {
                 sendToLobby(loser);
             }
 
-            // Clean up
             activeDuels.remove(game.getPlayer1Uuid());
             activeDuels.remove(game.getPlayer2Uuid());
             plugin.getArenaManager().markInUse(game.getArena(), false);
             plugin.getArenaManager().resetArena(game.getArena());
-        }, 60L); // 3 seconds = 60 ticks
+        }, 60L);
     }
 
     // -----------------------------------------------------------------------

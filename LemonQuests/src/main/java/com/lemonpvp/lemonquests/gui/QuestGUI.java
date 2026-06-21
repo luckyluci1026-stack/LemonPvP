@@ -43,8 +43,10 @@ public class QuestGUI implements Listener {
     static {
         FILLER = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta meta = FILLER.getItemMeta();
-        meta.displayName(Component.empty());
-        FILLER.setItemMeta(meta);
+        if (meta != null) {
+            meta.displayName(Component.empty());
+            FILLER.setItemMeta(meta);
+        }
     }
 
     private final LemonQuests plugin;
@@ -72,12 +74,10 @@ public class QuestGUI implements Listener {
 
         render();
 
-        // Register this instance as a Bukkit listener
         Bukkit.getPluginManager().registerEvents(this, plugin);
-
-        // Refresh every second (20 ticks)
         refreshTask = Bukkit.getScheduler().runTaskTimer(plugin, this::render, 20L, 20L);
 
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
         player.openInventory(inventory);
     }
 
