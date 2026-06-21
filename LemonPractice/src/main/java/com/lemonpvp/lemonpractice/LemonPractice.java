@@ -13,6 +13,7 @@ import com.lemonpvp.lemonpractice.velocity.VelocityMessaging;
 import com.lemonpvp.lemonpractice.commands.AowArenaCommand;
 import com.lemonpvp.lemonpractice.commands.AowBuildSpawnCommand;
 import com.lemonpvp.lemonpractice.commands.GEloCommand;
+import com.lemonpvp.lemonpractice.commands.LPracticeCommand;
 import com.lemonpvp.lemonpractice.listeners.DuelListener;
 import com.lemonpvp.lemonpractice.listeners.FFAListener;
 import com.lemonpvp.lemonpractice.listeners.KitEditorListener;
