@@ -1,18 +1,16 @@
 package com.lemonpvp.lemoncore.commands.admin;
 
 import com.lemonpvp.lemoncore.LemonCore;
+import net.kyori.adventure.text.Component;
 import net.luckperms.api.LuckPerms;
-import net.luckperms.api.model.user.User;
-import net.luckperms.api.node.Node;
+import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.InheritanceNode;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public class GRankCommand implements CommandExecutor {
 
@@ -42,7 +40,6 @@ public class GRankCommand implements CommandExecutor {
 
         plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid -> {
             if (uuid == null) {
-                // Try online player
                 var onlineTarget = Bukkit.getPlayer(targetName);
                 if (onlineTarget != null) {
                     handleAction(sender, onlineTarget.getUniqueId(), targetName, action, group);
@@ -56,35 +53,45 @@ public class GRankCommand implements CommandExecutor {
         return true;
     }
 
-    private void reply(CommandSender sender, String msg) {
+    private void reply(CommandSender sender, Component msg) {
         Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(msg));
     }
 
     private void handleAction(CommandSender sender, UUID uuid, String name, String action, String group) {
         lp.getUserManager().loadUser(uuid).thenAccept(user -> {
-            // LuckPerms user mutations happen on the LP thread; only sendMessage needs main thread
             switch (action) {
                 case "add" -> {
-                    if (group == null) { reply(sender, plugin.getMessagesManager().get("invalid-usage", "usage", "/grank add <player> <group>")); return; }
+                    if (group == null) {
+                        reply(sender, plugin.getMessagesManager().get("invalid-usage", "usage", "/grank add <player> <group>"));
+                        return;
+                    }
                     user.data().add(InheritanceNode.builder(group).build());
                     lp.getUserManager().saveUser(user);
                     reply(sender, plugin.getMessagesManager().get("rank.add", "player", name, "rank", group));
                 }
                 case "set" -> {
-                    if (group == null) { reply(sender, plugin.getMessagesManager().get("invalid-usage", "usage", "/grank set <player> <group>")); return; }
-                    user.data().clear(n -> n.getType() == net.luckperms.api.node.NodeType.INHERITANCE);
+                    if (group == null) {
+                        reply(sender, plugin.getMessagesManager().get("invalid-usage", "usage", "/grank set <player> <group>"));
+                        return;
+                    }
+                    user.data().clear(n -> n.getType() == NodeType.INHERITANCE);
                     user.data().add(InheritanceNode.builder(group).build());
                     lp.getUserManager().saveUser(user);
                     reply(sender, plugin.getMessagesManager().get("rank.set", "player", name, "rank", group));
                 }
                 case "remove" -> {
-                    if (group == null) { reply(sender, plugin.getMessagesManager().get("invalid-usage", "usage", "/grank remove <player> <group>")); return; }
+                    if (group == null) {
+                        reply(sender, plugin.getMessagesManager().get("invalid-usage", "usage", "/grank remove <player> <group>"));
+                        return;
+                    }
                     user.data().remove(InheritanceNode.builder(group).build());
                     lp.getUserManager().saveUser(user);
                     reply(sender, plugin.getMessagesManager().get("rank.remove", "player", name, "rank", group));
                 }
-                case "show" -> reply(sender, plugin.getMessagesManager().get("rank.show-other", "player", name, "rank", user.getPrimaryGroup()));
-                default -> reply(sender, plugin.getMessagesManager().get("invalid-usage", "usage", "/grank add|set|remove|show <player> [group]"));
+                case "show" -> reply(sender, plugin.getMessagesManager().get(
+                        "rank.show-other", "player", name, "rank", user.getPrimaryGroup()));
+                default -> reply(sender, plugin.getMessagesManager().get(
+                        "invalid-usage", "usage", "/grank add|set|remove|show <player> [group]"));
             }
         });
     }
