@@ -184,6 +184,10 @@ public class QueueManager {
     // ── Tasks ─────────────────────────────────────────────────────────────
 
     private void process() {
+        // Evict expired banning marks so the map doesn't grow unboundedly
+        long now = System.currentTimeMillis();
+        banningMarks.values().removeIf(expiry -> now > expiry);
+
         for (ServerQueue queue : queues.values()) {
             Optional<RegisteredServer> opt = proxy.getServer(queue.getTargetServer());
             if (opt.isEmpty()) continue;

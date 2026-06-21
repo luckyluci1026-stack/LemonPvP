@@ -112,10 +112,8 @@ public class RestartManager {
             plugin.getVelocityMessaging().sendToServer(p, limbo);
         }
 
-        // Restart server after 3 seconds
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Bukkit.spigot().restart();
-        }, 60L);
+        // Restart server after 3 seconds; track this task so cancel() can still abort it.
+        schedule(60L, Bukkit.spigot()::restart);
     }
 
     public void cancel() {
