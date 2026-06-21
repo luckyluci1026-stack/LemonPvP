@@ -10,6 +10,7 @@ import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import net.kyori.adventure.text.Component;
 
 import java.util.Optional;
 
@@ -76,8 +77,12 @@ public class ConnectionListener {
         if (kicked.equalsIgnoreCase(config.getLimboServer())) return;
         if (player.hasPermission(config.getBypassPermission())) return;
         // Ban-kick: LemonCore signalled us not to intercept this kick (consume-once).
+        // We must explicitly set DisconnectPlayer — returning without a result lets
+        // Velocity apply its own fallback routing which would send the player to limbo.
         if (queues.consumeBanning(player.getUniqueId())) {
             queues.dequeue(player.getUniqueId());
+            Component reason = event.getServerKickReason().orElse(Component.empty());
+            event.setResult(KickedFromServerEvent.DisconnectPlayer.create(reason));
             return;
         }
 
