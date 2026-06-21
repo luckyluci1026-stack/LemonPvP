@@ -159,13 +159,10 @@ public class CosmeticsManager {
         }
 
         return plugin.getDatabase().saveArmorTrim(uuid, slot.name().toLowerCase(), patternId, materialId)
-                .thenRun(() -> {
-                    Player player = Bukkit.getPlayer(uuid);
-                    if (player != null) {
-                        Bukkit.getScheduler().runTask(plugin, () ->
-                                plugin.getArmorTrimManager().applyTrimToPlayer(player));
-                    }
-                });
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(uuid);
+                    if (p != null) plugin.getArmorTrimManager().applyTrimToPlayer(p);
+                }));
     }
 
     // -------------------------------------------------------------------------

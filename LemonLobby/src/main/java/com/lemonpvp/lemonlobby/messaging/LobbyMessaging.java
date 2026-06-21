@@ -5,6 +5,7 @@ import com.google.common.io.ByteStreams;
 import com.lemonpvp.lemonlobby.LemonLobby;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import java.util.UUID;
 
 public class LobbyMessaging {
 
@@ -31,10 +32,14 @@ public class LobbyMessaging {
      */
     public void sendTrainingMode(Player player, String mode) {
         String trainingServer = plugin.getServersConfig().getString("servers.practice.name", "practice");
+        UUID uuid = player.getUniqueId();
         // Save pending mode before transferring so the training server can read it on join
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            plugin.getDatabase().savePendingTrainingMode(player.getUniqueId(), mode);
-            Bukkit.getScheduler().runTask(plugin, () -> connectToServer(player, trainingServer));
+            plugin.getDatabase().savePendingTrainingMode(uuid, mode);
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p != null) connectToServer(p, trainingServer);
+            });
         });
     }
 }

@@ -53,21 +53,23 @@ public class FreeForAllGame extends AbstractGame {
     }
 
     private void spawnPlayers() {
+        new ArrayList<>(participants).forEach(uuid -> {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null) spawnPlayer(p);
+        });
+    }
+
+    private void spawnPlayer(Player p) {
         World world = Bukkit.getWorld(plugin.getConfig().getString("events-world", "world"));
         if (world == null) return;
-        List<UUID> players = new ArrayList<>(participants);
         Random rng = new Random();
-        for (UUID uuid : players) {
-            Player p = Bukkit.getPlayer(uuid);
-            if (p == null) continue;
-            double angle = rng.nextDouble() * 2 * Math.PI;
-            double radius = 15 + rng.nextInt(10);
-            double x = Math.cos(angle) * radius;
-            double z = Math.sin(angle) * radius;
-            p.teleport(new Location(world, x, 65, z));
-            p.setGameMode(GameMode.SURVIVAL);
-            setupKit(p);
-        }
+        double angle = rng.nextDouble() * 2 * Math.PI;
+        double radius = 15 + rng.nextInt(10);
+        double x = Math.cos(angle) * radius;
+        double z = Math.sin(angle) * radius;
+        p.teleport(new Location(world, x, 65, z));
+        p.setGameMode(GameMode.SURVIVAL);
+        setupKit(p);
     }
 
     private void setupKit(Player player) {
@@ -109,30 +111,46 @@ public class FreeForAllGame extends AbstractGame {
         broadcastParticipants(MM.deserialize(
             "<gray>" + victim.getName() + " was killed by <yellow>" + killer.getName() +
             "</yellow> <gold>(" + kills.getOrDefault(killer.getUniqueId(), 0) + " kills)</gold>"));
-        // Respawn victim
+        UUID victimUuid = victim.getUniqueId();
+        // Force-respawn after 3 seconds (60 ticks) and teleport to a random spawn
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (running && participants.contains(victim.getUniqueId())) {
-                victim.setHealth(20);
-                victim.setFoodLevel(20);
-                victim.setGameMode(GameMode.SURVIVAL);
-            }
+            if (!running || !participants.contains(victimUuid)) return;
+            Player p = Bukkit.getPlayer(victimUuid);
+            if (p == null) return;
+            if (p.isDead()) p.respawn();
+            // Apply kit and teleport on the next tick after the respawn cycle completes
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                Player fresh = Bukkit.getPlayer(victimUuid);
+                if (fresh != null && running && participants.contains(victimUuid)) {
+                    spawnPlayer(fresh);
+                }
+            });
         }, 60L);
     }
 
     private void declareWinner() {
-        UUID winner = kills.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey).orElse(null);
+        // Determine winner only from still-active participants
+        UUID winner = participants.stream()
+                .max(Comparator.comparingInt(u -> kills.getOrDefault(u, 0)))
+                .orElse(null);
+
+        // Players who disconnected mid-game are already in finishOrder (via handleQuit).
+        // Save them and rebuild the list so reverse() doesn't corrupt their positions.
+        List<UUID> disconnected = new ArrayList<>(finishOrder);
+        finishOrder.clear();
+
         if (winner != null) {
             participants.remove(winner);
-            finishOrder.add(0, winner);
-            // Sort remaining by kill count desc
-            kills.entrySet().stream()
-                    .filter(e -> !e.getKey().equals(winner))
-                    .sorted(Map.Entry.<UUID, Integer>comparingByValue().reversed())
-                    .forEach(e -> finishOrder.add(0, e.getKey()));
-            Collections.reverse(finishOrder);
+            finishOrder.add(0, winner); // winner at front
+            participants.stream()
+                    .sorted(Comparator.comparingInt((UUID u) -> kills.getOrDefault(u, 0)).reversed())
+                    .forEach(u -> finishOrder.add(0, u));
+            Collections.reverse(finishOrder); // [winner, 2nd, 3rd, ...]
         }
+        participants.clear();
+
+        // Disconnected players rank below active participants; earlier-quit = further back
+        finishOrder.addAll(disconnected);
         endGame();
     }
 
