@@ -77,6 +77,7 @@ public class HatsGUI implements Listener {
         int slot = event.getSlot();
 
         if (slot == BACK_SLOT) {
+            clicker.playSound(clicker.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 0.9f);
             unregister();
             new CosmeticsMainGUI(plugin, player).open();
             return;

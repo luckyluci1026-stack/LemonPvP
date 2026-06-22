@@ -40,7 +40,7 @@ public class KillEffectsGUI implements Listener {
 
     public void open() {
         inventory = Bukkit.createInventory(null, 27,
-                MM.deserialize("<gradient:#fffb00:#00ff00>Kill Effects</gradient>"));
+                MM.deserialize("<!italic><gradient:#ff7043:#bf360c>Kill-Effekte</gradient>"));
 
         ItemStack filler = filler();
         for (int i = 0; i < 27; i++) inventory.setItem(i, filler);
@@ -52,6 +52,7 @@ public class KillEffectsGUI implements Listener {
             Bukkit.getPluginManager().registerEvents(this, plugin);
             registered = true;
         }
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
         player.openInventory(inventory);
     }
 
@@ -73,6 +74,7 @@ public class KillEffectsGUI implements Listener {
         int slot = event.getSlot();
 
         if (slot == BACK_SLOT) {
+            clicker.playSound(clicker.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 0.9f);
             unregister();
             new CosmeticsMainGUI(plugin, player).open();
             return;
@@ -92,8 +94,9 @@ public class KillEffectsGUI implements Listener {
         boolean owned = cosmetics != null && cosmetics.ownsEffect(effect.getId());
 
         if (!owned) {
-            clicker.sendMessage(MM.deserialize("<red>You don't own <yellow>" + effect.getDisplayName()
-                    + "</yellow>. Earn it by redeeming a code!"));
+            clicker.playSound(clicker.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
+            clicker.sendMessage(MM.deserialize("<red>Du besitzt <yellow>" + effect.getDisplayName()
+                    + "</yellow> nicht. Schalte es mit einem Code frei!"));
             return;
         }
 
@@ -104,7 +107,8 @@ public class KillEffectsGUI implements Listener {
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
-                        p.sendMessage(MM.deserialize("<yellow>Kill effect unequipped."));
+                        p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.4f, 0.9f);
+                        p.sendMessage(MM.deserialize("<yellow>Kill-Effekt deaktiviert."));
                         renderEffects();
                     }));
         } else {
@@ -112,7 +116,8 @@ public class KillEffectsGUI implements Listener {
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
-                        p.sendMessage(MM.deserialize("<green>Equipped <yellow>" + effect.getDisplayName() + "</yellow>!"));
+                        p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.2f);
+                        p.sendMessage(MM.deserialize("<green>Ausgerüstet: <yellow>" + effect.getDisplayName() + "</yellow>!"));
                         renderEffects();
                     }));
         }
@@ -140,21 +145,24 @@ public class KillEffectsGUI implements Listener {
         if (meta == null) return item;
 
         meta.displayName(owned
-                ? MM.deserialize("<white>" + effect.getDisplayName())
-                : MM.deserialize("<gray>" + effect.getDisplayName()));
+                ? MM.deserialize("<!italic><gold>" + effect.getDisplayName())
+                : MM.deserialize("<!italic><gray>" + effect.getDisplayName()));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
         if (owned) {
-            lore.add(MM.deserialize("<green>Owned"));
             if (active) {
-                lore.add(MM.deserialize("<aqua>Active — click to unequip"));
+                lore.add(MM.deserialize("<!italic><aqua>✔ Aktiv"));
+                lore.add(MM.deserialize("<!italic><gray>Klicken zum Deaktivieren"));
+                meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
+                meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
             } else {
-                lore.add(MM.deserialize("<gray>Click to equip"));
+                lore.add(MM.deserialize("<!italic><green>✔ Besessen"));
+                lore.add(MM.deserialize("<!italic><gray>Klicken zum Ausrüsten"));
             }
         } else {
-            lore.add(MM.deserialize("<dark_gray>Not owned"));
-            lore.add(MM.deserialize("<gray>Redeem a code to unlock"));
+            lore.add(MM.deserialize("<!italic><dark_gray>Nicht besessen"));
+            lore.add(MM.deserialize("<!italic><gray>Mit einem Code freischalten"));
         }
         meta.lore(lore);
         item.setItemMeta(meta);
@@ -164,7 +172,7 @@ public class KillEffectsGUI implements Listener {
     private ItemStack backButton() {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.displayName(MM.deserialize("<gray>Back")); item.setItemMeta(meta); }
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>← Zurück")); item.setItemMeta(meta); }
         return item;
     }
 

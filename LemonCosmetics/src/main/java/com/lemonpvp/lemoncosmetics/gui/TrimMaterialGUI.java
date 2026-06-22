@@ -64,6 +64,7 @@ public class TrimMaterialGUI implements Listener {
             Bukkit.getPluginManager().registerEvents(this, plugin);
             registered = true;
         }
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
         player.openInventory(inventory);
     }
 
@@ -91,6 +92,7 @@ public class TrimMaterialGUI implements Listener {
         if (meta == null) return;
 
         if (slot == BACK_SLOT) {
+            clicker.playSound(clicker.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 0.9f);
             unregister();
             new TrimArmorPieceGUI(plugin, player, patternId).open();
             return;
@@ -98,12 +100,14 @@ public class TrimMaterialGUI implements Listener {
 
         if (slot == BUY_SLOT) {
             if (selectedMaterialId == null) {
-                clicker.sendMessage(MM.deserialize("<red>Select a material first."));
+                clicker.playSound(clicker.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
+                clicker.sendMessage(MM.deserialize("<red>Wähle zuerst ein Material aus."));
                 return;
             }
             PlayerCosmetics cosmetics = plugin.getCosmeticsManager().getPlayerCosmetics(clicker.getUniqueId());
             if (cosmetics != null && cosmetics.ownsMaterial(selectedMaterialId)) {
-                clicker.sendMessage(MM.deserialize("<red>You already own this material."));
+                clicker.playSound(clicker.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
+                clicker.sendMessage(MM.deserialize("<red>Du besitzt dieses Material bereits."));
                 return;
             }
             int cost = plugin.getConfig().getInt("prices.trim-material", 50);
@@ -114,21 +118,23 @@ public class TrimMaterialGUI implements Listener {
                         Player p = Bukkit.getPlayer(buyerUuid);
                         if (p == null) return;
                         if (success) {
-                            p.sendMessage(MM.deserialize("<green>Purchased <yellow>"
+                            p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
+                            p.sendMessage(MM.deserialize("<green>Gekauft: <yellow>"
                                     + plugin.getArmorTrimManager().getMaterialDisplayName(buyMatId)
-                                    + "</yellow> for <gold>" + cost + " Coins</gold>!"));
+                                    + "</yellow> für <gold>" + cost + " Münzen</gold>!"));
                             selectedMaterialId = null;
                             renderMaterials();
                             inventory.setItem(BUY_SLOT, buildBuyButton());
                         } else {
+                            p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
                             if (plugin.getCosmeticsManager().getLemonCore() != null) {
                                 plugin.getCosmeticsManager().getLemonCore()
                                         .getPlayerDataManager().getCoins(buyerUuid)
                                         .thenAccept(bal -> Bukkit.getScheduler().runTask(plugin, () -> {
                                             Player p2 = Bukkit.getPlayer(buyerUuid);
                                             if (p2 == null) return;
-                                            p2.sendMessage(MM.deserialize("<red>You need <gold>" + cost
-                                                    + " Coins</gold> but only have <gold>" + bal + " Coins</gold>."));
+                                            p2.sendMessage(MM.deserialize("<red>Du brauchst <gold>" + cost
+                                                    + " Münzen</gold>, hast aber nur <gold>" + bal + " Münzen</gold>."));
                                         }));
                             }
                         }
@@ -149,14 +155,16 @@ public class TrimMaterialGUI implements Listener {
                         Player p = Bukkit.getPlayer(applyUuid);
                         unregister();
                         if (p == null) return;
-                        p.sendMessage(MM.deserialize("<green>Trim applied to <yellow>"
-                                + armorSlot.getDisplayName() + "</yellow>."));
+                        p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.3f);
+                        p.sendMessage(MM.deserialize("<green>Trim auf <yellow>"
+                                + armorSlot.getDisplayName() + "</yellow> angewendet."));
                         p.closeInventory();
                     }));
         } else {
             selectedMaterialId = matId;
-            clicker.sendMessage(MM.deserialize("<yellow>Click <gold>Buy Material</gold> to purchase "
-                    + plugin.getArmorTrimManager().getMaterialDisplayName(matId) + "."));
+            clicker.playSound(clicker.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.4f, 1.1f);
+            clicker.sendMessage(MM.deserialize("<yellow>Klicke <gold>Material kaufen</gold>, um "
+                    + plugin.getArmorTrimManager().getMaterialDisplayName(matId) + " zu kaufen."));
             renderMaterials();
             inventory.setItem(BUY_SLOT, buildBuyButton());
         }
