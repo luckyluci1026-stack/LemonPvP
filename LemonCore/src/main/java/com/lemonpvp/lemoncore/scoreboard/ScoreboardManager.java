@@ -32,6 +32,14 @@ public class ScoreboardManager {
     public void updateScoreboard(Player player, PlayerData data) {
         if (!plugin.getConfig().getBoolean("scoreboard.enabled", true)) return;
 
+        // Yield to match scoreboards (LemonPractice duel/FFA) so we don't flicker
+        // over them every tick. Those objectives are named "duel" / "ffa".
+        Objective current = player.getScoreboard().getObjective(DisplaySlot.SIDEBAR);
+        if (current != null) {
+            String name = current.getName();
+            if (name.equals("duel") || name.equals("ffa")) return;
+        }
+
         org.bukkit.scoreboard.ScoreboardManager sbm = Bukkit.getScoreboardManager();
         Scoreboard sb = sbm.getNewScoreboard();
 
@@ -55,8 +63,11 @@ public class ScoreboardManager {
             line = line
                     .replace("{kills}", String.valueOf(data.getKills()))
                     .replace("{killstreak}", String.valueOf(data.getKillstreak()))
+                    .replace("{best_killstreak}", String.valueOf(data.getBestKillstreak()))
                     .replace("{coins}", String.valueOf(data.getCoins()))
                     .replace("{deaths}", String.valueOf(data.getDeaths()))
+                    .replace("{kdr}", String.format("%.2f", data.getKDRatio()))
+                    .replace("{online}", String.valueOf(Bukkit.getOnlinePlayers().size()))
                     .replace("{player}", data.getUsername());
 
             // Use increasing-spaces as unique but invisible entry names.

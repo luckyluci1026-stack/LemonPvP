@@ -31,13 +31,21 @@ lobby:
 
 scoreboard:
   enabled: true
-  title: "<bold><gradient:#fffb00:#00ff00>LemonPvP</gradient></bold>"
+  title: "<bold><gradient:#fffb00:#00ff00>LᴇᴍᴏɴPᴠP</gradient></bold>"
   lines:
+    - "<dark_gray><st>                </st>"
+    - "<white>Willkommen,"
+    - "<gradient:#fffb00:#00ff00>{player}</gradient>"
     - " "
-    - "<#888888>Kills <white>{kills}"
-    - "<#888888>Killstreak <white>{killstreak}"
-    - "<#fffb00>Coins <white>{coins}"
+    - "<gray>Kills: <green>{kills}"
+    - "<gray>Deaths: <red>{deaths}"
+    - "<gray>K/D: <white>{kdr}"
+    - "<gray>Killstreak: <gold>{killstreak}"
     - " "
+    - "<gray>Münzen: <gold>{coins} ⭐"
+    - "<gray>Online: <green>{online}"
+    - "<dark_gray><st>                </st>"
+    - "<yellow>play.lemonpvp.de"
 
 ban:
   reasons:
