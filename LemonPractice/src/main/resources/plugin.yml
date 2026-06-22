@@ -28,6 +28,9 @@ permissions:
   lemonpractice.use.ffa:
     description: Join FFA arenas
     default: true
+  lemonpractice.use.duel:
+    description: Challenge players to direct duels
+    default: true
 
 commands:
   lpractice:
@@ -45,3 +48,7 @@ commands:
     description: Manage player ELO
     permission: lemonpractice.admin.elo
     usage: /gelo <player> <add|remove|set|reset> <gamemode> [amount]
+  duel:
+    description: Challenge a player to a direct duel
+    permission: lemonpractice.use.duel
+    usage: /duel <player> [gamemode] | /duel accept|deny <player>

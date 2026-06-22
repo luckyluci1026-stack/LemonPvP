@@ -3,6 +3,7 @@ package com.lemonpvp.lemonpractice;
 import com.lemonpvp.lemonpractice.database.PracticeDatabase;
 import com.lemonpvp.lemonpractice.managers.ArenaManager;
 import com.lemonpvp.lemonpractice.managers.DuelManager;
+import com.lemonpvp.lemonpractice.managers.DuelInviteManager;
 import com.lemonpvp.lemonpractice.managers.EloManager;
 import com.lemonpvp.lemonpractice.managers.FFAManager;
 import com.lemonpvp.lemonpractice.managers.KitManager;
@@ -14,7 +15,9 @@ import com.lemonpvp.lemonpractice.commands.AowArenaCommand;
 import com.lemonpvp.lemonpractice.commands.AowBuildSpawnCommand;
 import com.lemonpvp.lemonpractice.commands.GEloCommand;
 import com.lemonpvp.lemonpractice.commands.LPracticeCommand;
+import com.lemonpvp.lemonpractice.commands.DuelCommand;
 import com.lemonpvp.lemonpractice.listeners.DuelListener;
+import com.lemonpvp.lemonpractice.listeners.DuelInviteListener;
 import com.lemonpvp.lemonpractice.listeners.FFAListener;
 import com.lemonpvp.lemonpractice.listeners.KitEditorListener;
 import com.lemonpvp.lemonpractice.listeners.LobbyListener;
@@ -35,6 +38,7 @@ public class LemonPractice extends JavaPlugin {
     private EloManager eloManager;
     private QueueManager queueManager;
     private DuelManager duelManager;
+    private DuelInviteManager duelInviteManager;
     private SpectatorManager spectatorManager;
     private FFAManager ffaManager;
     private LobbyHotbarManager lobbyHotbarManager;
@@ -85,6 +89,7 @@ public class LemonPractice extends JavaPlugin {
         queueManager = new QueueManager(this);
         queueManager.startTasks();
         duelManager = new DuelManager(this);
+        duelInviteManager = new DuelInviteManager(this);
         spectatorManager = new SpectatorManager(this);
         ffaManager = new FFAManager(this);
         ffaManager.loadAll();
@@ -100,6 +105,7 @@ public class LemonPractice extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new KitEditorListener(this), this);
         getServer().getPluginManager().registerEvents(new DuelListener(this), this);
         getServer().getPluginManager().registerEvents(new FFAListener(this), this);
+        getServer().getPluginManager().registerEvents(new DuelInviteListener(this), this);
 
         // 7. Register commands
         AowArenaCommand arenaCmd = new AowArenaCommand(this);
@@ -112,6 +118,9 @@ public class LemonPractice extends JavaPlugin {
         LPracticeCommand lpCmd = new LPracticeCommand(this);
         getCommand("lpractice").setExecutor(lpCmd);
         getCommand("lpractice").setTabCompleter(lpCmd);
+        DuelCommand duelCmd = new DuelCommand(this);
+        getCommand("duel").setExecutor(duelCmd);
+        getCommand("duel").setTabCompleter(duelCmd);
 
         // 8. If LOBBY: set up hotbars for all currently online players (reload case)
         if (serverType.equals("LOBBY")) {
@@ -175,6 +184,7 @@ public class LemonPractice extends JavaPlugin {
     public EloManager getEloManager() { return eloManager; }
     public QueueManager getQueueManager() { return queueManager; }
     public DuelManager getDuelManager() { return duelManager; }
+    public DuelInviteManager getDuelInviteManager() { return duelInviteManager; }
     public SpectatorManager getSpectatorManager() { return spectatorManager; }
     public FFAManager getFfaManager() { return ffaManager; }
     public LobbyHotbarManager getLobbyHotbarManager() { return lobbyHotbarManager; }

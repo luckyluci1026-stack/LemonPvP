@@ -148,7 +148,94 @@ public class PracticeDatabase {
                     PRIMARY KEY (uuid, gamemode)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            // Cross-server direct-duel handoff: the lobby writes a row here when a
+            // /duel invite is accepted, then both players are sent to the duels
+            // server, which picks the row up on join and starts the match.
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lp_pending_duels (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    player1 VARCHAR(36) NOT NULL,
+                    player2 VARCHAR(36) NOT NULL,
+                    gamemode VARCHAR(32) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // Pending cross-server duels (direct /duel challenges)
+    // -----------------------------------------------------------------------
+
+    /** A queued direct duel waiting for both players to reach the duels server. */
+    public record PendingDuel(long id, UUID player1, UUID player2, String gamemode) {}
+
+    /**
+     * Records a pending direct duel and prunes any stale rows (older than 2 min).
+     */
+    public CompletableFuture<Void> insertPendingDuel(UUID p1, UUID p2, String gamemode) {
+        return executeAsync(conn -> {
+            try (PreparedStatement prune = conn.prepareStatement(
+                    "DELETE FROM lp_pending_duels WHERE created_at < NOW() - INTERVAL 2 MINUTE")) {
+                prune.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Pending-duel prune failed: " + e.getMessage());
+            }
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO lp_pending_duels (player1, player2, gamemode) VALUES (?, ?, ?)")) {
+                ps.setString(1, p1.toString());
+                ps.setString(2, p2.toString());
+                ps.setString(3, gamemode);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().severe("insertPendingDuel error: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Finds the most recent (≤60s old) pending duel involving {@code uuid}, or
+     * {@code null} if none. Does not delete it — call {@link #deletePendingDuel(long)}
+     * once both players are confirmed present to claim it race-safely.
+     */
+    public CompletableFuture<PendingDuel> findPendingDuel(UUID uuid) {
+        return queryAsync(conn -> {
+            String sql = "SELECT id, player1, player2, gamemode FROM lp_pending_duels "
+                    + "WHERE (player1 = ? OR player2 = ?) AND created_at > NOW() - INTERVAL 60 SECOND "
+                    + "ORDER BY created_at DESC LIMIT 1";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, uuid.toString());
+                ps.setString(2, uuid.toString());
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    return new PendingDuel(
+                            rs.getLong("id"),
+                            UUID.fromString(rs.getString("player1")),
+                            UUID.fromString(rs.getString("player2")),
+                            rs.getString("gamemode"));
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe("findPendingDuel error: " + e.getMessage());
+            }
+            return null;
+        });
+    }
+
+    /**
+     * Atomically claims a pending duel by id. Returns {@code true} only for the
+     * caller that actually deleted the row, so exactly one server starts the duel.
+     */
+    public CompletableFuture<Boolean> deletePendingDuel(long id) {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "DELETE FROM lp_pending_duels WHERE id = ?")) {
+                ps.setLong(1, id);
+                return ps.executeUpdate() == 1;
+            } catch (SQLException e) {
+                plugin.getLogger().severe("deletePendingDuel error: " + e.getMessage());
+                return false;
+            }
+        });
     }
 
     // Arena CRUD
