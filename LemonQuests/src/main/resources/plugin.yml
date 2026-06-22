@@ -2,7 +2,7 @@ name: LemonQuests
 version: "1.0.0"
 main: com.lemonpvp.lemonquests.LemonQuests
 api-version: "1.21"
-softdepend: [LuckPerms]
+softdepend: [LuckPerms, LemonCore]
 commands:
   quests:
     description: Open quests menu

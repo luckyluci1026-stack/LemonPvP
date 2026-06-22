@@ -25,6 +25,7 @@ public class SwordDifficultyGUI implements Listener {
     private final LemonTraining plugin;
     private final SwordPractice swordPractice;
     private Inventory inv;
+    private boolean registered = false;
 
     public SwordDifficultyGUI(LemonTraining plugin, SwordPractice swordPractice) {
         this.plugin = plugin;
@@ -33,30 +34,30 @@ public class SwordDifficultyGUI implements Listener {
 
     public void open(Player player) {
         inv = Bukkit.createInventory(null, 27,
-                MM.deserialize("<font:lemonpvp:default>sᴡᴏʀᴅ ᴘʀᴀᴄᴛɪᴄᴇ</font>"));
+                MM.deserialize("<gradient:#fffb00:#00ff00><bold>sᴡᴏʀᴅ ᴘʀᴀᴄᴛɪᴄᴇ</bold></gradient>"));
 
-        // Fill with gray glass panes
         ItemStack filler = makeItem(Material.GRAY_STAINED_GLASS_PANE, " ");
         for (int i = 0; i < 27; i++) {
             inv.setItem(i, filler);
         }
 
-        // Slot 11: Easy
         inv.setItem(11, makeItem(Material.LIME_DYE,
                 "<!italic><green>Easy</green>",
-                List.of("<!italic><gray>Zombie without AI</gray>")));
+                List.of("<!italic><gray>Zombie without AI")));
 
-        // Slot 13: Medium
         inv.setItem(13, makeItem(Material.YELLOW_DYE,
                 "<!italic><yellow>Medium</yellow>",
-                List.of("<!italic><gray>Zombie with Slowness I</gray>")));
+                List.of("<!italic><gray>Zombie with Slowness I")));
 
-        // Slot 15: Normal
         inv.setItem(15, makeItem(Material.RED_DYE,
                 "<!italic><red>Normal</red>",
-                List.of("<!italic><gray>Zombie with full AI</gray>")));
+                List.of("<!italic><gray>Zombie with full AI")));
 
-        Bukkit.getPluginManager().registerEvents(this, plugin);
+        if (!registered) {
+            Bukkit.getPluginManager().registerEvents(this, plugin);
+            registered = true;
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.3f);
         player.openInventory(inv);
     }
 
@@ -93,6 +94,7 @@ public class SwordDifficultyGUI implements Listener {
         };
 
         if (difficulty != null) {
+            clicker.playSound(clicker.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
             clicker.closeInventory();
             swordPractice.startWithDifficulty(difficulty);
         }
@@ -101,6 +103,10 @@ public class SwordDifficultyGUI implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!event.getPlayer().getUniqueId().equals(swordPractice.getSession().getUuid())) return;
-        HandlerList.unregisterAll(this);
+        if (!event.getInventory().equals(inv)) return;
+        if (registered) {
+            HandlerList.unregisterAll(this);
+            registered = false;
+        }
     }
 }

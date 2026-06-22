@@ -2,7 +2,6 @@ package com.lemonpvp.lemonpractice.duel;
 
 import com.lemonpvp.lemonpractice.model.Arena;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Scoreboard;
 
 import java.util.UUID;
 
@@ -19,8 +18,6 @@ public class DuelGame {
     private long startTime;
     private int eloChangeP1;
     private int eloChangeP2;
-    private Scoreboard scoreboard;
-    private Scoreboard scoreboard2;
 
     public DuelGame(UUID p1, String p1Name, UUID p2, String p2Name, String gamemode, Arena arena) {
         this.player1Uuid = p1;
@@ -59,10 +56,6 @@ public class DuelGame {
     }
 
     public boolean isDraw() { return winnerUuid == null; }
-    public Scoreboard getScoreboard() { return scoreboard; }
-    public void setScoreboard(Scoreboard scoreboard) { this.scoreboard = scoreboard; }
-    public Scoreboard getScoreboard2() { return scoreboard2; }
-    public void setScoreboard2(Scoreboard scoreboard2) { this.scoreboard2 = scoreboard2; }
 
     public int getDurationSeconds() {
         if (startTime == 0) return 0;

@@ -25,55 +25,47 @@ public class HotbarManager {
     }
 
     public void giveHotbar(Player player) {
-        // Clear existing hotbar items first
         removeHotbar(player);
 
-        // Slot 0: Diamond Sword - Queue
         player.getInventory().setItem(0, buildItem(
                 Material.DIAMOND_SWORD,
-                "<font:lemonpvp:default>Qᴜᴇᴜᴇ</font>",
-                0
+                "<gradient:#fffb00:#00ff00>Qᴜᴇᴜᴇ</gradient>",
+                -1
         ));
 
-        // Slot 1: Compass - Training
         player.getInventory().setItem(1, buildItem(
                 Material.COMPASS,
-                "<font:lemonpvp:default>ᴛʀᴀɪɴɪɴɢ</font>",
+                "<aqua>ᴛʀᴀɪɴɪɴɢ</aqua>",
                 -1
         ));
 
-        // Slot 3: Nether Star - Events
         player.getInventory().setItem(3, buildItem(
                 Material.NETHER_STAR,
-                "<font:lemonpvp:default>ᴇᴠᴇɴᴛs</font>",
+                "<gold>ᴇᴠᴇɴᴛs</gold>",
                 -1
         ));
 
-        // Slot 4: Written Book - Kit Editor
         player.getInventory().setItem(4, buildItem(
                 Material.WRITTEN_BOOK,
-                "<font:lemonpvp:default>Kɪᴛ ᴇᴅɪᴛᴏʀ</font>",
+                "<yellow>Kɪᴛ ᴇᴅɪᴛᴏʀ</yellow>",
                 -1
         ));
 
-        // Slot 6: Diamond - Cosmetics
         player.getInventory().setItem(6, buildItem(
                 Material.DIAMOND,
-                "<font:lemonpvp:default>ᴄᴏsᴍᴇᴛɪᴄs</font>",
+                "<light_purple>ᴄᴏsᴍᴇᴛɪᴄs</light_purple>",
                 -1
         ));
 
-        // Slot 7: Compass - Settings
         player.getInventory().setItem(7, buildItem(
-                Material.COMPASS,
-                "<font:lemonpvp:default>sᴇᴛᴛɪɴɢs</font>",
+                Material.REPEATER,
+                "<gray>sᴇᴛᴛɪɴɢs</gray>",
                 -1
         ));
 
-        // Slot 8: Red Bed - Leave
         player.getInventory().setItem(8, buildItem(
                 Material.RED_BED,
-                "<font:lemonpvp:default>ʟᴇᴀᴠᴇ</font>",
+                "<red>ʟᴇᴀᴠᴇ</red>",
                 -1
         ));
     }

@@ -44,6 +44,9 @@ public class FFAListener implements Listener {
             plugin.getFfaManager().handleKill(killer, player);
         }
 
+        // The victim's killstreak ends on death
+        plugin.getFfaManager().resetKillstreak(player.getUniqueId());
+
         // Auto-respawn after 3 seconds (60 ticks)
         UUID deathUuid = player.getUniqueId();
         Bukkit.getScheduler().runTaskLater(plugin, () -> {

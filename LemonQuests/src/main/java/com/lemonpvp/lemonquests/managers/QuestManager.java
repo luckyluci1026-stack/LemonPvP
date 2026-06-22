@@ -316,14 +316,29 @@ public class QuestManager {
             xpFuture = plugin.getPlayerDataManager().addXp(uuid, xp);
         }
 
+        // Actually award coins via LemonCore (previously the message was shown
+        // but no coins were granted — half-implemented reward).
+        boolean grantCoins = (rewardType == QuestRewardType.COINS || rewardType == QuestRewardType.BOTH) && coins > 0;
+        if (grantCoins) {
+            awardCoins(uuid, coins, "quest:" + questId);
+        }
+
         xpFuture.thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
+                player.showTitle(net.kyori.adventure.title.Title.title(
+                        MM.deserialize("<gradient:#fffb00:#00ff00><bold>Quest abgeschlossen!</bold></gradient>"),
+                        MM.deserialize("<yellow>" + def.getDisplayName()),
+                        net.kyori.adventure.title.Title.Times.times(
+                                java.time.Duration.ofMillis(300),
+                                java.time.Duration.ofMillis(2000),
+                                java.time.Duration.ofMillis(600))));
+                player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.0f);
                 player.sendMessage(MM.deserialize(
-                        "<green>Quest <yellow>" + def.getDisplayName() + "</yellow> completed! "
+                        "<green>Quest <yellow>" + def.getDisplayName() + "</yellow> abgeschlossen! "
                                 + "<yellow>+" + xp + " XP</yellow></green>"));
-                if ((rewardType == QuestRewardType.COINS || rewardType == QuestRewardType.BOTH) && coins > 0) {
-                    player.sendMessage(MM.deserialize("<gold>+" + coins + " Coins</gold>"));
+                if (grantCoins) {
+                    player.sendMessage(MM.deserialize("<gold>+" + coins + " Münzen ⭐</gold>"));
                 }
             }
         }));
@@ -360,18 +375,49 @@ public class QuestManager {
                     if (rt == QuestRewardType.XP || rt == QuestRewardType.BOTH) {
                         plugin.getPlayerDataManager().addXp(uuid, xp);
                     }
+                    final int fcoins = def.getRewardCoins();
+                    final boolean fgrantCoins = (rt == QuestRewardType.COINS || rt == QuestRewardType.BOTH) && fcoins > 0;
+                    if (fgrantCoins) {
+                        awardCoins(uuid, fcoins, "quest:" + def.getId());
+                    }
                     final QuestDefinition fd = def;
                     final int fx = xp;
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         Player player = Bukkit.getPlayer(uuid);
                         if (player != null) {
+                            player.showTitle(net.kyori.adventure.title.Title.title(
+                                    MM.deserialize("<gradient:#fffb00:#00ff00><bold>Quest abgeschlossen!</bold></gradient>"),
+                                    MM.deserialize("<yellow>" + fd.getDisplayName()),
+                                    net.kyori.adventure.title.Title.Times.times(
+                                            java.time.Duration.ofMillis(300),
+                                            java.time.Duration.ofMillis(2000),
+                                            java.time.Duration.ofMillis(600))));
+                            player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.0f);
                             player.sendMessage(MM.deserialize(
-                                    "<green>Quest <yellow>" + fd.getDisplayName() + "</yellow> completed! "
+                                    "<green>Quest <yellow>" + fd.getDisplayName() + "</yellow> abgeschlossen! "
                                             + "<yellow>+" + fx + " XP</yellow></green>"));
+                            if (fgrantCoins) {
+                                player.sendMessage(MM.deserialize("<gold>+" + fcoins + " Münzen ⭐</gold>"));
+                            }
                         }
                     });
                 }
             }
+        }
+    }
+
+    /**
+     * Awards coins to the player via LemonCore's economy. LemonCore is accessed
+     * through the Bukkit plugin manager so LemonQuests only soft-depends on it;
+     * if LemonCore is missing, the coin reward is silently skipped (XP still works).
+     */
+    private void awardCoins(UUID uuid, int coins, String reason) {
+        org.bukkit.plugin.Plugin lcPlugin = Bukkit.getPluginManager().getPlugin("LemonCore");
+        if (lcPlugin instanceof com.lemonpvp.lemoncore.LemonCore core) {
+            core.getPlayerDataManager().addCoins(uuid, coins, reason, null);
+        } else {
+            plugin.getLogger().warning("Cannot award " + coins
+                    + " quest coins to " + uuid + " — LemonCore not available.");
         }
     }
 

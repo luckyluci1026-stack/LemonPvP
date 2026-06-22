@@ -7,6 +7,7 @@ import com.lemonpvp.lemonpractice.model.Arena;
 import com.lemonpvp.lemonpractice.model.PlayerKit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -18,8 +19,8 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.Criteria;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
 
 import java.time.Duration;
 import java.util.*;
@@ -154,63 +155,48 @@ public class DuelManager {
     // Duel Scoreboard
     // -----------------------------------------------------------------------
 
-    private static final String[] SB_ENTRIES = {
-        "§0", "§1", "§2", "§3", "§4", "§5", "§6", "§7", "§8"
-    };
+    private static final MiniMessage SB_MM = MiniMessage.miniMessage();
 
     private void setupDuelScoreboard(DuelGame game, Player p1, Player p2) {
-        if (!p1.isOnline() || !p2.isOnline()) return;
+        renderScoreboard(game, p1, p2, 0);
+        renderScoreboard(game, p2, p1, 0);
+    }
+
+    /**
+     * Builds a fresh sidebar scoreboard for {@code viewer} showing {@code opponent}'s
+     * state and applies it. Recreated each tick (proven pattern, mirrors LemonCore).
+     */
+    private void renderScoreboard(DuelGame game, Player viewer, Player opponent, int elapsed) {
+        if (viewer == null || !viewer.isOnline()) return;
 
         Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
         Objective obj = board.registerNewObjective("duel", Criteria.DUMMY,
-                net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
-                        .deserialize("<gradient:#fffb00:#00ff00><bold>Practice</bold></gradient>"));
+                SB_MM.deserialize("<gradient:#fffb00:#00ff00><bold>Pʀᴀᴄᴛɪᴄᴇ</bold></gradient>"));
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        for (int i = 0; i < SB_ENTRIES.length; i++) {
-            Team t = board.registerNewTeam("line" + i);
-            t.addEntry(SB_ENTRIES[i]);
-            obj.getScore(SB_ENTRIES[i]).setScore(SB_ENTRIES.length - 1 - i);
+        String opponentName = (opponent != null) ? opponent.getName() : "???";
+
+        List<Component> lines = new ArrayList<>();
+        lines.add(SB_MM.deserialize("<dark_gray><st>                </st>"));
+        lines.add(SB_MM.deserialize("<gray>Gegner: <white>" + opponentName));
+        lines.add(SB_MM.deserialize("<gray>HP: " + formatHp(opponent)));
+        lines.add(Component.empty());
+        lines.add(SB_MM.deserialize("<gray>Deine HP: " + formatHp(viewer)));
+        lines.add(Component.empty());
+        lines.add(SB_MM.deserialize("<gray>Modus: <white>" + capitalize(game.getGamemode())));
+        lines.add(SB_MM.deserialize("<gray>Zeit: <white>" + formatTime(elapsed)));
+        lines.add(SB_MM.deserialize("<dark_gray><st>                </st>"));
+
+        for (int i = 0; i < lines.size(); i++) {
+            int scoreValue = lines.size() - i;
+            // Unique invisible entry key; customName controls the rendered text (Paper 1.20.4+)
+            String entryKey = " ".repeat(i + 1);
+            Score score = obj.getScore(entryKey);
+            score.setScore(scoreValue);
+            score.customName(lines.get(i));
         }
 
-        setLine(board, 0, "§8§m──────────────");
-        setLine(board, 1, "§fvs §e" + (p1.getUniqueId().equals(game.getPlayer1Uuid()) ? game.getPlayer2Name() : game.getPlayer1Name()));
-        setLine(board, 2, " ");
-        setLine(board, 3, "§7Gegner HP: §c" + formatHp(getOpponent(game, p1)));
-        setLine(board, 4, " ");
-        setLine(board, 5, "§7Zeit: §f" + formatTime(0));
-        setLine(board, 6, " ");
-        setLine(board, 7, "§7Modus: §f" + capitalize(game.getGamemode()));
-        setLine(board, 8, "§8§m──────────────");
-
-        game.setScoreboard(board);
-        p1.setScoreboard(board);
-
-        // p2 gets a mirrored scoreboard showing p1 as opponent
-        Scoreboard board2 = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective obj2 = board2.registerNewObjective("duel", Criteria.DUMMY,
-                net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
-                        .deserialize("<gradient:#fffb00:#00ff00><bold>Practice</bold></gradient>"));
-        obj2.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-        for (int i = 0; i < SB_ENTRIES.length; i++) {
-            Team t = board2.registerNewTeam("line" + i);
-            t.addEntry(SB_ENTRIES[i]);
-            obj2.getScore(SB_ENTRIES[i]).setScore(SB_ENTRIES.length - 1 - i);
-        }
-
-        setLine(board2, 0, "§8§m──────────────");
-        setLine(board2, 1, "§fvs §e" + (p2.getUniqueId().equals(game.getPlayer1Uuid()) ? game.getPlayer2Name() : game.getPlayer1Name()));
-        setLine(board2, 2, " ");
-        setLine(board2, 3, "§7Gegner HP: §c" + formatHp(getOpponent(game, p2)));
-        setLine(board2, 4, " ");
-        setLine(board2, 5, "§7Zeit: §f" + formatTime(0));
-        setLine(board2, 6, " ");
-        setLine(board2, 7, "§7Modus: §f" + capitalize(game.getGamemode()));
-        setLine(board2, 8, "§8§m──────────────");
-
-        game.setScoreboard2(board2);
-        p2.setScoreboard(board2);
+        viewer.setScoreboard(board);
     }
 
     private void startScoreboardUpdater(DuelGame game) {
@@ -223,14 +209,8 @@ public class DuelManager {
             Player p1 = Bukkit.getPlayer(game.getPlayer1Uuid());
             Player p2 = Bukkit.getPlayer(game.getPlayer2Uuid());
 
-            if (game.getScoreboard() != null && p1 != null) {
-                setLine(game.getScoreboard(), 3, "§7Gegner HP: §c" + formatHp(p2));
-                setLine(game.getScoreboard(), 5, "§7Zeit: §f" + formatTime(elapsed));
-            }
-            if (game.getScoreboard2() != null && p2 != null) {
-                setLine(game.getScoreboard2(), 3, "§7Gegner HP: §c" + formatHp(p1));
-                setLine(game.getScoreboard2(), 5, "§7Zeit: §f" + formatTime(elapsed));
-            }
+            if (p1 != null && p1.isOnline()) renderScoreboard(game, p1, p2, elapsed);
+            if (p2 != null && p2.isOnline()) renderScoreboard(game, p2, p1, elapsed);
         }, 20L, 20L);
     }
 
@@ -240,28 +220,18 @@ public class DuelManager {
         }
     }
 
-    private void setLine(Scoreboard board, int lineIndex, String text) {
-        Team team = board.getTeam("line" + lineIndex);
-        if (team != null) team.setPrefix(text);
-    }
-
     private String formatHp(Player p) {
-        if (p == null || !p.isOnline()) return "§8-";
+        if (p == null || !p.isOnline()) return "<dark_gray>-";
         double hp = p.getHealth();
-        // Build a simple heart bar: up to 10 hearts
         int hearts = (int) Math.ceil(hp / 2.0);
-        return "§c" + ("♥".repeat(Math.max(0, hearts))) + " §7(" + String.format("%.1f", hp) + ")";
+        return "<red>" + ("❤".repeat(Math.max(0, Math.min(10, hearts))))
+                + " <gray>(" + String.format("%.1f", hp) + ")";
     }
 
     private String formatTime(int seconds) {
         int m = seconds / 60;
         int s = seconds % 60;
         return String.format("%d:%02d", m, s);
-    }
-
-    private Player getOpponent(DuelGame game, Player player) {
-        UUID opponentUuid = game.getOpponent(player.getUniqueId());
-        return opponentUuid != null ? Bukkit.getPlayer(opponentUuid) : null;
     }
 
     private String capitalize(String s) {

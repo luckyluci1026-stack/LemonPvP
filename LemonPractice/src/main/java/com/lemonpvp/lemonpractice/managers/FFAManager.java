@@ -3,11 +3,18 @@ package com.lemonpvp.lemonpractice.managers;
 import com.lemonpvp.lemonpractice.LemonPractice;
 import com.lemonpvp.lemonpractice.model.FFAArena;
 import com.lemonpvp.lemonpractice.model.PlayerKit;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Criteria;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Score;
+import org.bukkit.scoreboard.Scoreboard;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FFAManager {
 
     private static final String FFA_GAMEMODE = "sword";
+    private static final MiniMessage MM = MiniMessage.miniMessage();
 
     private final LemonPractice plugin;
 
@@ -24,8 +32,64 @@ public class FFAManager {
     /** player uuid -> arena id */
     private final Map<UUID, Integer> playerArena = new ConcurrentHashMap<>();
 
+    /** Session FFA stats (reset when the player leaves the arena). */
+    private final Map<UUID, Integer> sessionKills = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> sessionKillstreak = new ConcurrentHashMap<>();
+
     public FFAManager(LemonPractice plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * Starts the repeating FFA scoreboard + action bar updater. Call once on enable.
+     */
+    public void startTasks() {
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            for (UUID uuid : playerArena.keySet()) {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p == null || !p.isOnline()) continue;
+                renderScoreboard(p);
+                p.sendActionBar(MM.deserialize(
+                        "<gray>❤ <red>" + String.format("%.1f", p.getHealth())
+                        + " <dark_gray>| <gray>Killstreak <gold>"
+                        + sessionKillstreak.getOrDefault(uuid, 0)));
+            }
+        }, 20L, 20L);
+    }
+
+    private void renderScoreboard(Player player) {
+        UUID uuid = player.getUniqueId();
+        FFAArena arena = getArena(uuid);
+        if (arena == null) return;
+
+        Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
+        Objective obj = board.registerNewObjective("ffa", Criteria.DUMMY,
+                MM.deserialize("<gradient:#fffb00:#00ff00><bold>Fꜰᴀ</bold></gradient>"));
+        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        List<Component> lines = new ArrayList<>();
+        lines.add(MM.deserialize("<dark_gray><st>                </st>"));
+        lines.add(MM.deserialize("<gray>Kills: <green>" + sessionKills.getOrDefault(uuid, 0)));
+        lines.add(MM.deserialize("<gray>Killstreak: <gold>" + sessionKillstreak.getOrDefault(uuid, 0)));
+        lines.add(Component.empty());
+        lines.add(MM.deserialize("<gray>Spieler: <white>" + arena.getPlayerCount()));
+        lines.add(MM.deserialize("<gray>Arena: <white>" + arena.getName()));
+        lines.add(MM.deserialize("<dark_gray><st>                </st>"));
+
+        for (int i = 0; i < lines.size(); i++) {
+            int scoreValue = lines.size() - i;
+            String entryKey = " ".repeat(i + 1);
+            Score score = obj.getScore(entryKey);
+            score.setScore(scoreValue);
+            score.customName(lines.get(i));
+        }
+
+        player.setScoreboard(board);
+    }
+
+    /** Resets the FFA killstreak for a player (called on their death). */
+    public void resetKillstreak(UUID uuid) {
+        sessionKillstreak.put(uuid, 0);
     }
 
     // -----------------------------------------------------------------------
@@ -74,6 +138,14 @@ public class FFAManager {
         playerArena.put(player.getUniqueId(), arena.getId());
         arena.incrementPlayers();
 
+        // Initialise session stats
+        sessionKills.put(player.getUniqueId(), 0);
+        sessionKillstreak.put(player.getUniqueId(), 0);
+
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.3f);
+        player.sendMessage(MM.deserialize("<gradient:#fffb00:#00ff00><bold>FFA</bold></gradient> "
+                + "<green>Du bist der Arena <yellow>" + arena.getName() + "</yellow> beigetreten!"));
+
         plugin.getLogger().info("[FFAManager] " + player.getName() + " joined FFA arena " + arena.getName());
     }
 
@@ -86,9 +158,14 @@ public class FFAManager {
             if (arena != null) arena.decrementPlayers();
         }
 
+        // Clear session stats and reset the scoreboard
+        sessionKills.remove(player.getUniqueId());
+        sessionKillstreak.remove(player.getUniqueId());
+
         if (player.isOnline()) {
             player.getInventory().clear();
             player.setGameMode(GameMode.ADVENTURE);
+            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 
             // Teleport to lobby
             String lobbyServer = plugin.getServersConfig().getString("servers.lobby.name", "lobby");
@@ -105,11 +182,38 @@ public class FFAManager {
     public void handleKill(Player killer, Player victim) {
         if (killer == null || victim == null) return;
 
+        // Increment session stats for the killer
+        UUID killerUuid = killer.getUniqueId();
+        int kills = sessionKills.merge(killerUuid, 1, Integer::sum);
+        int streak = sessionKillstreak.merge(killerUuid, 1, Integer::sum);
+
+        // Heal + feedback for the killer
+        killer.setHealth(Objects.requireNonNull(
+                killer.getAttribute(Attribute.MAX_HEALTH)).getBaseValue());
+        killer.setFoodLevel(20);
+        killer.playSound(killer.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.4f);
+        killer.sendMessage(MM.deserialize("<gray>Du hast <red>" + victim.getName()
+                + "</red> getötet! <dark_gray>(<green>" + kills + " Kills</green>)"));
+
+        // Killstreak milestone announcement to the whole arena
+        if (streak % 5 == 0) {
+            broadcastArena(getArena(killerUuid), MM.deserialize(
+                    "<gold>" + killer.getName() + "</gold> <yellow>ist auf einem <gold>"
+                    + streak + "</gold> Killstreak!"));
+        }
+
         // Update stats via LemonCore if available (reflective to avoid hard dependency).
-        // Respawning is handled by the single respawn path: FFAListener.onDeath
-        // schedules player.respawn(), and FFAListener.onRespawn re-equips via
-        // respawnEquip() — this avoids two competing respawn tasks.
         tryUpdateLemonCoreStats(killer, victim);
+    }
+
+    /** Broadcasts a message to every player in the given arena. */
+    private void broadcastArena(FFAArena arena, Component message) {
+        if (arena == null) return;
+        for (Map.Entry<UUID, Integer> entry : playerArena.entrySet()) {
+            if (entry.getValue() != arena.getId()) continue;
+            Player p = Bukkit.getPlayer(entry.getKey());
+            if (p != null && p.isOnline()) p.sendMessage(message);
+        }
     }
 
     /**
