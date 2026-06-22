@@ -8,6 +8,7 @@ import com.lemonpvp.lemonpractice.managers.EloManager;
 import com.lemonpvp.lemonpractice.managers.FFAManager;
 import com.lemonpvp.lemonpractice.managers.KitManager;
 import com.lemonpvp.lemonpractice.managers.LobbyHotbarManager;
+import com.lemonpvp.lemonpractice.managers.PartyManager;
 import com.lemonpvp.lemonpractice.managers.QueueManager;
 import com.lemonpvp.lemonpractice.managers.SpectatorManager;
 import com.lemonpvp.lemonpractice.velocity.VelocityMessaging;
@@ -16,11 +17,14 @@ import com.lemonpvp.lemonpractice.commands.AowBuildSpawnCommand;
 import com.lemonpvp.lemonpractice.commands.GEloCommand;
 import com.lemonpvp.lemonpractice.commands.LPracticeCommand;
 import com.lemonpvp.lemonpractice.commands.DuelCommand;
+import com.lemonpvp.lemonpractice.commands.PartyCommand;
+import com.lemonpvp.lemonpractice.commands.StatsCommand;
 import com.lemonpvp.lemonpractice.listeners.DuelListener;
 import com.lemonpvp.lemonpractice.listeners.DuelInviteListener;
 import com.lemonpvp.lemonpractice.listeners.FFAListener;
 import com.lemonpvp.lemonpractice.listeners.KitEditorListener;
 import com.lemonpvp.lemonpractice.listeners.LobbyListener;
+import com.lemonpvp.lemonpractice.listeners.PartyListener;
 import com.lemonpvp.lemonpractice.config.GamemodeManager;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -42,6 +46,7 @@ public class LemonPractice extends JavaPlugin {
     private SpectatorManager spectatorManager;
     private FFAManager ffaManager;
     private LobbyHotbarManager lobbyHotbarManager;
+    private PartyManager partyManager;
     private VelocityMessaging velocityMessaging;
     private String serverType;
 
@@ -95,6 +100,7 @@ public class LemonPractice extends JavaPlugin {
         ffaManager.loadAll();
         ffaManager.startTasks();
         lobbyHotbarManager = new LobbyHotbarManager(this);
+        partyManager = new PartyManager(this);
 
         // 5. Register VelocityMessaging
         velocityMessaging = new VelocityMessaging(this);
@@ -106,6 +112,7 @@ public class LemonPractice extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new DuelListener(this), this);
         getServer().getPluginManager().registerEvents(new FFAListener(this), this);
         getServer().getPluginManager().registerEvents(new DuelInviteListener(this), this);
+        getServer().getPluginManager().registerEvents(new PartyListener(this), this);
 
         // 7. Register commands
         AowArenaCommand arenaCmd = new AowArenaCommand(this);
@@ -121,6 +128,16 @@ public class LemonPractice extends JavaPlugin {
         DuelCommand duelCmd = new DuelCommand(this);
         getCommand("duel").setExecutor(duelCmd);
         getCommand("duel").setTabCompleter(duelCmd);
+        StatsCommand statsCmd = new StatsCommand(this);
+        getCommand("stats").setExecutor(statsCmd);
+        getCommand("stats").setTabCompleter(statsCmd);
+        PartyCommand partyCmd = new PartyCommand(this);
+        getCommand("party").setExecutor(partyCmd);
+        getCommand("party").setTabCompleter(partyCmd);
+        getCommand("p").setExecutor(partyCmd);
+        getCommand("p").setTabCompleter(partyCmd);
+        getCommand("partychat").setExecutor(partyCmd);
+        getCommand("partychat").setTabCompleter(partyCmd);
 
         // 8. If LOBBY: set up hotbars for all currently online players (reload case)
         if (serverType.equals("LOBBY")) {
@@ -188,6 +205,7 @@ public class LemonPractice extends JavaPlugin {
     public SpectatorManager getSpectatorManager() { return spectatorManager; }
     public FFAManager getFfaManager() { return ffaManager; }
     public LobbyHotbarManager getLobbyHotbarManager() { return lobbyHotbarManager; }
+    public PartyManager getPartyManager() { return partyManager; }
     public FileConfiguration getServersConfig() { return serversConfig; }
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");

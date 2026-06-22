@@ -31,6 +31,12 @@ permissions:
   lemonpractice.use.duel:
     description: Challenge players to direct duels
     default: true
+  lemonpractice.use.party:
+    description: Use the party system
+    default: true
+  lemonpractice.use.stats:
+    description: View player statistics
+    default: true
 
 commands:
   lpractice:
@@ -52,3 +58,19 @@ commands:
     description: Challenge a player to a direct duel
     permission: lemonpractice.use.duel
     usage: /duel <player> [gamemode] | /duel accept|deny <player>
+  stats:
+    description: View your or another player's statistics
+    permission: lemonpractice.use.stats
+    usage: /stats [player]
+  party:
+    description: Manage your party
+    permission: lemonpractice.use.party
+    usage: /party <invite|accept|deny|leave|kick|disband|list|promote|queue|chat> [args]
+  p:
+    description: Party chat shortcut
+    permission: lemonpractice.use.party
+    usage: /p <message>
+  partychat:
+    description: Party chat
+    permission: lemonpractice.use.party
+    usage: /partychat <message>
