@@ -16,6 +16,7 @@ import com.lemonpvp.lemoncore.listeners.PlayerJoinQuitListener;
 import com.lemonpvp.lemoncore.listeners.PlayerTrackerListener;
 import com.lemonpvp.lemoncore.managers.*;
 import com.lemonpvp.lemoncore.scoreboard.ScoreboardManager;
+import com.lemonpvp.lemoncore.scoreboard.TablistManager;
 import com.lemonpvp.lemoncore.util.RandomNameUtil;
 import com.lemonpvp.lemoncore.velocity.VelocityMessaging;
 import net.luckperms.api.LuckPerms;
@@ -42,6 +43,7 @@ public class LemonCore extends JavaPlugin {
     private RestartManager restartManager;
     private ListenerManager listenerManager;
     private ScoreboardManager scoreboardManager;
+    private TablistManager tablistManager;
     private VelocityMessaging velocityMessaging;
     private RandomNameUtil randomNameUtil;
     private PlayerTracker playerTracker;
@@ -102,6 +104,7 @@ public class LemonCore extends JavaPlugin {
         restartManager = new RestartManager(this);
         listenerManager = new ListenerManager(this);
         scoreboardManager = new ScoreboardManager(this);
+        tablistManager = new TablistManager(this);
         velocityMessaging = new VelocityMessaging(this);
         playerTracker = new PlayerTracker();
         discordLinkManager = new DiscordLinkManager(this);
@@ -120,8 +123,9 @@ public class LemonCore extends JavaPlugin {
         // Register commands
         registerCommands();
 
-        // Start scoreboard
+        // Start scoreboard + tablist
         scoreboardManager.startUpdating();
+        tablistManager.startUpdating();
 
         // Start HTTP API
         httpApiManager = new HttpApiManager(this);
@@ -304,6 +308,7 @@ public class LemonCore extends JavaPlugin {
     public RestartManager getRestartManager() { return restartManager; }
     public ListenerManager getListenerManager() { return listenerManager; }
     public ScoreboardManager getScoreboardManager() { return scoreboardManager; }
+    public TablistManager getTablistManager() { return tablistManager; }
     public VelocityMessaging getVelocityMessaging() { return velocityMessaging; }
     public RandomNameUtil getRandomNameUtil() { return randomNameUtil; }
     public PlayerTracker getPlayerTracker() { return playerTracker; }

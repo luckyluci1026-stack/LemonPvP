@@ -47,6 +47,19 @@ scoreboard:
     - "<dark_gray><st>                </st>"
     - "<yellow>play.lemonpvp.de"
 
+tablist:
+  enabled: true
+  header:
+    - ""
+    - "<bold><gradient:#fffb00:#00ff00>LᴇᴍᴏɴPᴠP</gradient></bold>"
+    - "<gray>Das deutsche PvP-Practice Netzwerk"
+    - ""
+  footer:
+    - ""
+    - "<gray>Online: <green>{online}<gray>/<white>{max}"
+    - "<yellow>play.lemonpvp.de <dark_gray>| <aqua>discord.gg/lemonpvp"
+    - ""
+
 ban:
   reasons:
     hacking: 30d
