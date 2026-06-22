@@ -19,6 +19,7 @@ import com.lemonpvp.lemonpractice.commands.LPracticeCommand;
 import com.lemonpvp.lemonpractice.commands.DuelCommand;
 import com.lemonpvp.lemonpractice.commands.PartyCommand;
 import com.lemonpvp.lemonpractice.commands.StatsCommand;
+import com.lemonpvp.lemonpractice.commands.TopCommand;
 import com.lemonpvp.lemonpractice.listeners.DuelListener;
 import com.lemonpvp.lemonpractice.listeners.DuelInviteListener;
 import com.lemonpvp.lemonpractice.listeners.FFAListener;
@@ -131,6 +132,8 @@ public class LemonPractice extends JavaPlugin {
         StatsCommand statsCmd = new StatsCommand(this);
         getCommand("stats").setExecutor(statsCmd);
         getCommand("stats").setTabCompleter(statsCmd);
+        TopCommand topCmd = new TopCommand(this);
+        getCommand("top").setExecutor(topCmd);
         PartyCommand partyCmd = new PartyCommand(this);
         getCommand("party").setExecutor(partyCmd);
         getCommand("party").setTabCompleter(partyCmd);

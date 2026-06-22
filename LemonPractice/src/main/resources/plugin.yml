@@ -37,6 +37,9 @@ permissions:
   lemonpractice.use.stats:
     description: View player statistics
     default: true
+  lemonpractice.use.top:
+    description: View the network leaderboard
+    default: true
 
 commands:
   lpractice:
@@ -62,6 +65,11 @@ commands:
     description: View your or another player's statistics
     permission: lemonpractice.use.stats
     usage: /stats [player]
+  top:
+    description: Open the network leaderboard
+    permission: lemonpractice.use.top
+    aliases: [leaderboard, lb, leaderboards]
+    usage: /top
   party:
     description: Manage your party
     permission: lemonpractice.use.party

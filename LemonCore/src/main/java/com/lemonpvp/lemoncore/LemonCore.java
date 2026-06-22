@@ -234,7 +234,7 @@ public class LemonCore extends JavaPlugin {
         // /friend <add|remove> <player>
         var friendCmd = getCommand("friend");
         if (friendCmd != null) friendCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
-            case 1 -> filterStart(java.util.List.of("add", "remove"), a[0]);
+            case 1 -> filterStart(java.util.List.of("add", "remove", "list"), a[0]);
             case 2 -> onlinePlayers(a[1]);
             default -> java.util.List.of();
         });

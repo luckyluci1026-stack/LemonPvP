@@ -441,6 +441,78 @@ public class PracticeDatabase {
         });
     }
 
+    // -----------------------------------------------------------------------
+    // Leaderboards
+    // -----------------------------------------------------------------------
+
+    /** A single leaderboard row: the player's name plus their score value. */
+    public record LeaderEntry(java.util.UUID uuid, String name, int value) {}
+
+    /**
+     * Top players by ELO for a gamemode. Only counts players past placement
+     * ({@code matches_played >= minMatches}). Joins {@code lc_players} (same
+     * database) for the username; falls back to the UUID prefix if missing.
+     */
+    public CompletableFuture<java.util.List<LeaderEntry>> getTopElo(String gamemode, int minMatches, int limit) {
+        return queryAsync(conn -> {
+            java.util.List<LeaderEntry> out = new java.util.ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT e.uuid AS uuid, e.elo AS val, p.username AS name " +
+                    "FROM lemonpractice_elo e LEFT JOIN lc_players p ON e.uuid = p.uuid " +
+                    "WHERE e.gamemode = ? AND e.matches_played >= ? " +
+                    "ORDER BY e.elo DESC LIMIT ?")) {
+                ps.setString(1, gamemode.toLowerCase());
+                ps.setInt(2, minMatches);
+                ps.setInt(3, limit);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    java.util.UUID uuid;
+                    try { uuid = java.util.UUID.fromString(rs.getString("uuid")); }
+                    catch (Exception ex) { continue; }
+                    String name = rs.getString("name");
+                    if (name == null) name = rs.getString("uuid").substring(0, 8);
+                    out.add(new LeaderEntry(uuid, name, rs.getInt("val")));
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe("getTopElo: " + e.getMessage());
+            }
+            return out;
+        });
+    }
+
+    /**
+     * Top players by a global {@code lc_players} stat column (kills, deaths,
+     * killstreak, best_killstreak, coins). The column name is validated against
+     * an allow-list before use to keep this injection-safe.
+     */
+    public CompletableFuture<java.util.List<LeaderEntry>> getTopStat(String column, int limit) {
+        java.util.Set<String> allowed = java.util.Set.of(
+                "kills", "deaths", "killstreak", "best_killstreak", "coins");
+        if (!allowed.contains(column)) {
+            return CompletableFuture.completedFuture(java.util.List.of());
+        }
+        return queryAsync(conn -> {
+            java.util.List<LeaderEntry> out = new java.util.ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT uuid, username, " + column + " AS val FROM lc_players " +
+                    "WHERE " + column + " > 0 ORDER BY " + column + " DESC LIMIT ?")) {
+                ps.setInt(1, limit);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    java.util.UUID uuid;
+                    try { uuid = java.util.UUID.fromString(rs.getString("uuid")); }
+                    catch (Exception ex) { continue; }
+                    String name = rs.getString("username");
+                    if (name == null) name = rs.getString("uuid").substring(0, 8);
+                    out.add(new LeaderEntry(uuid, name, rs.getInt("val")));
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe("getTopStat: " + e.getMessage());
+            }
+            return out;
+        });
+    }
+
     // FFA Arena
     public CompletableFuture<Void> saveFfaArena(FFAArena arena) {
         return executeAsync(conn -> {

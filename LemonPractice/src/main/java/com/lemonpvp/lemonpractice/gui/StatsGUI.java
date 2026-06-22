@@ -198,8 +198,18 @@ public class StatsGUI implements Listener {
             if (inPlacement) {
                 lore.add(MM.deserialize("<!italic><gray>ELO: <yellow>Platzierung "
                         + "<dark_gray>(" + matches + "/" + placement + ")"));
+                lore.add(MM.deserialize("<!italic><gray>Division: <!italic>"
+                        + com.lemonpvp.lemonpractice.model.RankTier.UNRANKED.getDisplay()));
             } else {
+                com.lemonpvp.lemonpractice.model.RankTier tier =
+                        com.lemonpvp.lemonpractice.model.RankTier.fromElo(elo);
                 lore.add(MM.deserialize("<!italic><gray>ELO: <" + eloColor + "><bold>" + elo));
+                lore.add(MM.deserialize("<!italic><gray>Division: <!italic>" + tier.getDisplay()));
+                int nextElo = tier.nextTierElo();
+                if (nextElo > 0 && tier.next() != null) {
+                    lore.add(MM.deserialize("<!italic><dark_gray>Nächste: <!italic>"
+                            + tier.next().getDisplay() + " <dark_gray>(" + (nextElo - elo) + " ELO)"));
+                }
             }
             lore.add(MM.deserialize("<!italic><gray>Spiele: <white>" + matches));
             lore.add(Component.empty());

@@ -235,8 +235,8 @@ commands:
   friend:
     description: Manage friends
     permission: lemoncore.use.friend
-    usage: /friend add|remove <player>
-    aliases: [f]
+    usage: /friend add|remove <player> | /friend list
+    aliases: [f, friends]
   recording:
     description: Toggle recording mode
     permission: lemoncore.use.recording

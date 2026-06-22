@@ -25,8 +25,15 @@ public class FriendCommand implements CommandExecutor {
             player.sendMessage(plugin.getMessagesManager().get("no-permission"));
             return true;
         }
+        // No args, or list/gui → open the friends overview GUI.
+        if (args.length == 0
+                || args[0].equalsIgnoreCase("list")
+                || args[0].equalsIgnoreCase("gui")) {
+            new com.lemonpvp.lemoncore.gui.FriendsGUI(plugin, player).open();
+            return true;
+        }
         if (args.length < 2) {
-            player.sendMessage(plugin.getMessagesManager().get("invalid-usage", "usage", "/friend add|remove <player>"));
+            player.sendMessage(plugin.getMessagesManager().get("invalid-usage", "usage", "/friend add|remove <player> | /friend list"));
             return true;
         }
 
