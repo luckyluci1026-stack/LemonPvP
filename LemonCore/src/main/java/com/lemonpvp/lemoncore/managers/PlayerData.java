@@ -17,6 +17,13 @@ public class PlayerData {
     private String hiddenName;
     private boolean recordingMode;
 
+    /**
+     * Rendered MiniMessage string for the player's equipped cosmetic tag,
+     * pushed here by LemonCosmetics so chat/tablist can render it as a suffix.
+     * Transient — not persisted by LemonCore (cosmetics owns the source data).
+     */
+    private String tagDisplay;
+
     // Settings
     private boolean publicChat = true;
     private boolean partyInvites = true;
@@ -53,6 +60,8 @@ public class PlayerData {
     public void setHiddenName(String hiddenName) { this.hiddenName = hiddenName; }
     public boolean isRecordingMode() { return recordingMode; }
     public void setRecordingMode(boolean recordingMode) { this.recordingMode = recordingMode; }
+    public String getTagDisplay() { return tagDisplay; }
+    public void setTagDisplay(String tagDisplay) { this.tagDisplay = tagDisplay; }
     public boolean isPublicChat() { return publicChat; }
     public void setPublicChat(boolean publicChat) { this.publicChat = publicChat; }
     public boolean isPartyInvites() { return partyInvites; }

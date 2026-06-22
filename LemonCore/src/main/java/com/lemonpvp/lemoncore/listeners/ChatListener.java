@@ -77,7 +77,14 @@ public class ChatListener implements Listener {
             PlayerData data = plugin.getPlayerDataManager().getCached(uuid);
             String displayName = data != null ? data.getDisplayName() : player.getName();
             Component nameComp = TextUtil.parse(displayName);
-            Component formatted = Component.text("<").append(nameComp).append(Component.text("> ")).append(finalMsg);
+
+            // Append the player's equipped cosmetic tag (if any) as a suffix.
+            String tag = data != null ? data.getTagDisplay() : null;
+            Component nameWithTag = (tag != null && !tag.isEmpty())
+                    ? nameComp.append(Component.space()).append(TextUtil.parse(tag))
+                    : nameComp;
+
+            Component formatted = Component.text("<").append(nameWithTag).append(Component.text("> ")).append(finalMsg);
 
             for (net.kyori.adventure.audience.Audience viewer : viewers) {
                 viewer.sendMessage(formatted);

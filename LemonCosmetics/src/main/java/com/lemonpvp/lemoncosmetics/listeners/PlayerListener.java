@@ -39,6 +39,7 @@ public class PlayerListener implements Listener {
                     if (p == null) return;
                     plugin.getArmorTrimManager().applyTrimToPlayer(p);
                     plugin.getHatManager().restoreHat(p);
+                    plugin.getTagManager().restoreTag(p);
                     if (isLobby()) {
                         giveCosmeticsItem(p);
                     }

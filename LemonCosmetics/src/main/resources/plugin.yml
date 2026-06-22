@@ -7,9 +7,13 @@ commands:
   cosmetics:
     description: Open cosmetics menu
     permission: lemoncosmetics.use
+  tags:
+    description: Open the tags menu
+    permission: lemoncosmetics.use
+    aliases: [tag]
 permissions:
   lemoncosmetics.use:
-    description: Access /cosmetics command
+    description: Access /cosmetics and /tags commands
     default: true
   lemoncosmetics.effect.fire_swarm:
     description: Fire Swarm kill effect

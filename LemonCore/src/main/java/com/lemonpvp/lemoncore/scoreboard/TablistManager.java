@@ -106,7 +106,14 @@ public class TablistManager {
         Component nameComp = LEGACY.deserialize(name.replace('§', '&'));
         Component suffixComp = LEGACY.deserialize(suffix.replace('§', '&'));
 
-        return prefixComp.append(nameComp).append(suffixComp)
-                .decoration(TextDecoration.ITALIC, false);
+        Component result = prefixComp.append(nameComp).append(suffixComp);
+
+        // Append the player's equipped cosmetic tag (MiniMessage) as a suffix.
+        String tag = data != null ? data.getTagDisplay() : null;
+        if (tag != null && !tag.isEmpty()) {
+            result = result.append(Component.space()).append(MM.deserialize(tag));
+        }
+
+        return result.decoration(TextDecoration.ITALIC, false);
     }
 }

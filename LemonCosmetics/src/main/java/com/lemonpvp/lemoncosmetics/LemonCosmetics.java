@@ -10,6 +10,8 @@ import com.lemonpvp.lemoncosmetics.managers.ArrowTrailManager;
 import com.lemonpvp.lemoncosmetics.managers.CosmeticsManager;
 import com.lemonpvp.lemoncosmetics.managers.HatManager;
 import com.lemonpvp.lemoncosmetics.managers.KillEffectManager;
+import com.lemonpvp.lemoncosmetics.managers.TagManager;
+import com.lemonpvp.lemoncosmetics.commands.TagsCommand;
 import com.lemonpvp.lemoncosmetics.velocity.CosmeticsMessaging;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -21,6 +23,7 @@ public final class LemonCosmetics extends JavaPlugin {
     private KillEffectManager killEffectManager;
     private HatManager hatManager;
     private ArrowTrailManager arrowTrailManager;
+    private TagManager tagManager;
     private CosmeticsMessaging cosmeticsMessaging;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
@@ -43,6 +46,7 @@ public final class LemonCosmetics extends JavaPlugin {
         killEffectManager = new KillEffectManager(this);
         hatManager = new HatManager(this);
         arrowTrailManager = new ArrowTrailManager(this);
+        tagManager = new TagManager(this);
 
         cosmeticsMessaging = new CosmeticsMessaging(this);
         cosmeticsMessaging.register();
@@ -54,6 +58,10 @@ public final class LemonCosmetics extends JavaPlugin {
         var cosmeticsCmd = getCommand("cosmetics");
         if (cosmeticsCmd != null) {
             cosmeticsCmd.setExecutor(new CosmeticsCommand(this));
+        }
+        var tagsCmd = getCommand("tags");
+        if (tagsCmd != null) {
+            tagsCmd.setExecutor(new TagsCommand(this));
         }
 
         getLogger().info("LemonCosmetics enabled.");
@@ -89,6 +97,10 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public ArrowTrailManager getArrowTrailManager() {
         return arrowTrailManager;
+    }
+
+    public TagManager getTagManager() {
+        return tagManager;
     }
 
     public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }

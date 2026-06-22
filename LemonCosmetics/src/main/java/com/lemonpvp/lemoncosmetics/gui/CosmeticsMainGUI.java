@@ -30,11 +30,12 @@ public class CosmeticsMainGUI implements Listener {
 
     static final MiniMessage MM = MiniMessage.miniMessage();
 
-    // Category slots
-    private static final int TRIMS_SLOT   = 10;
+    // Category slots — five categories centred in row 1 (slots 11–15)
+    private static final int TRIMS_SLOT   = 11;
     private static final int TRAILS_SLOT  = 12;
-    private static final int EFFECTS_SLOT = 14;
-    private static final int HATS_SLOT    = 16;
+    private static final int EFFECTS_SLOT = 13;
+    private static final int HATS_SLOT    = 14;
+    private static final int TAGS_SLOT    = 15;
     private static final int PROFILE_SLOT = 4;
 
     private final LemonCosmetics plugin;
@@ -64,6 +65,7 @@ public class CosmeticsMainGUI implements Listener {
         inventory.setItem(TRAILS_SLOT,   buildTrailsItem(cosmetics));
         inventory.setItem(EFFECTS_SLOT,  buildEffectsItem(cosmetics));
         inventory.setItem(HATS_SLOT,     buildHatsItem(cosmetics));
+        inventory.setItem(TAGS_SLOT,     buildTagsItem(cosmetics));
 
         if (!registered) {
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -81,11 +83,10 @@ public class CosmeticsMainGUI implements Listener {
         // Row 0 and Row 2: full black border
         for (int i = 0; i < 9; i++) inventory.setItem(i, BLACK_FILLER);
         for (int i = 18; i < 27; i++) inventory.setItem(i, BLACK_FILLER);
-        // Row 1: black edges, gray spacers between categories
+        // Row 1: black edges around the five centred categories (slots 11–15)
         inventory.setItem(9,  BLACK_FILLER);
-        inventory.setItem(11, GRAY_FILLER);
-        inventory.setItem(13, GRAY_FILLER);
-        inventory.setItem(15, GRAY_FILLER);
+        inventory.setItem(10, BLACK_FILLER);
+        inventory.setItem(16, BLACK_FILLER);
         inventory.setItem(17, BLACK_FILLER);
     }
 
@@ -258,6 +259,43 @@ public class CosmeticsMainGUI implements Listener {
         return item;
     }
 
+    private ItemStack buildTagsItem(PlayerCosmetics cosmetics) {
+        ItemStack item = new ItemStack(Material.NAME_TAG);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+
+        meta.displayName(MM.deserialize("<!italic><gradient:#69f0ae:#00bfa5>Tags</gradient>"));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><gray>Zeige einen Tag als Suffix"));
+        lore.add(MM.deserialize("<!italic><gray>hinter deinem Namen."));
+        lore.add(Component.empty());
+
+        if (cosmetics != null) {
+            int owned = cosmetics.getOwnedTags().size();
+            int total = com.lemonpvp.lemoncosmetics.model.TagType.values().length;
+            lore.add(MM.deserialize("<!italic><dark_gray>Besessen: <white>" + owned + "<dark_gray>/<white>" + total));
+            String equippedTag = cosmetics.getEquippedTagId();
+            if (equippedTag != null) {
+                com.lemonpvp.lemoncosmetics.model.TagType t =
+                        com.lemonpvp.lemoncosmetics.model.TagType.fromId(equippedTag).orElse(null);
+                lore.add(MM.deserialize("<!italic><dark_gray>Ausgerüstet: <reset>"
+                        + (t != null ? t.render : equippedTag)));
+            } else {
+                lore.add(MM.deserialize("<!italic><dark_gray>Ausgerüstet: <gray>Keiner"));
+            }
+        }
+
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><aqua>➜ Klicken zum Öffnen"));
+
+        meta.lore(lore);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        item.setItemMeta(meta);
+        return item;
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
@@ -320,6 +358,11 @@ public class CosmeticsMainGUI implements Listener {
                 player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
                 unregister();
                 new HatsGUI(plugin, player).open();
+            }
+            case TAGS_SLOT -> {
+                player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
+                unregister();
+                new TagsGUI(plugin, player).open();
             }
         }
     }
