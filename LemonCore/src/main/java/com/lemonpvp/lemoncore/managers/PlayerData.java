@@ -24,6 +24,14 @@ public class PlayerData {
      */
     private String tagDisplay;
 
+    /**
+     * Compact MiniMessage badge for the player's best ELO division across all
+     * gamemodes (e.g. {@code "<gradient:#40c4ff:#2962ff>❺"}), pushed here by
+     * LemonPractice's EloManager after each load or duel result.
+     * Transient — not persisted by LemonCore.
+     */
+    private String rankDisplay;
+
     // Settings
     private boolean publicChat = true;
     private boolean partyInvites = true;
@@ -62,6 +70,8 @@ public class PlayerData {
     public void setRecordingMode(boolean recordingMode) { this.recordingMode = recordingMode; }
     public String getTagDisplay() { return tagDisplay; }
     public void setTagDisplay(String tagDisplay) { this.tagDisplay = tagDisplay; }
+    public String getRankDisplay() { return rankDisplay; }
+    public void setRankDisplay(String rankDisplay) { this.rankDisplay = rankDisplay; }
     public boolean isPublicChat() { return publicChat; }
     public void setPublicChat(boolean publicChat) { this.publicChat = publicChat; }
     public boolean isPartyInvites() { return partyInvites; }

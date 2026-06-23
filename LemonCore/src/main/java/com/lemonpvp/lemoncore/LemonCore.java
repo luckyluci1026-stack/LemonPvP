@@ -52,6 +52,7 @@ public class LemonCore extends JavaPlugin {
     private MaintenanceManager maintenanceManager;
     private LuckPerms luckPerms;
     private HttpApiManager httpApiManager;
+    private FriendRequestManager friendRequestManager;
     private long startTimeMs;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
@@ -92,6 +93,8 @@ public class LemonCore extends JavaPlugin {
         // Init maintenance (before other managers so state is ready at join)
         maintenanceManager = new MaintenanceManager(this);
         maintenanceManager.load();
+
+        friendRequestManager = new FriendRequestManager();
 
         // Init managers
         playerDataManager = new PlayerDataManager(this);
@@ -234,7 +237,7 @@ public class LemonCore extends JavaPlugin {
         // /friend <add|remove> <player>
         var friendCmd = getCommand("friend");
         if (friendCmd != null) friendCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
-            case 1 -> filterStart(java.util.List.of("add", "remove", "list"), a[0]);
+            case 1 -> filterStart(java.util.List.of("add", "accept", "deny", "remove", "list"), a[0]);
             case 2 -> onlinePlayers(a[1]);
             default -> java.util.List.of();
         });
@@ -318,4 +321,5 @@ public class LemonCore extends JavaPlugin {
     public LuckPerms getLuckPerms() { return luckPerms; }
     public long getStartTimeMs() { return startTimeMs; }
     public HttpApiManager getHttpApiManager() { return httpApiManager; }
+    public FriendRequestManager getFriendRequestManager() { return friendRequestManager; }
 }

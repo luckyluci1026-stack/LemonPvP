@@ -55,6 +55,8 @@ public class PlayerJoinQuitListener implements Listener {
         event.quitMessage(null);
 
         var player = event.getPlayer();
+        // Clean up any pending friend requests for the leaving player.
+        plugin.getFriendRequestManager().clear(player.getUniqueId());
         // Save and remove from cache
         plugin.getPlayerDataManager().savePlayer(player.getUniqueId())
                 .thenRun(() -> plugin.getPlayerDataManager().removeCached(player.getUniqueId()));

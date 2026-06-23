@@ -49,8 +49,13 @@ public enum RankTier {
     public String getSymbol() { return symbol; }
     public Material getIcon() { return icon; }
 
-    /**
-     * Resolves the highest tier whose {@link #minElo} the rating reaches.
+    /** Compact colored badge for scoreboard/tablist: gradient tag + symbol glyph. */
+    public String badge() {
+        // display starts with the MiniMessage color/gradient tag; extract it.
+        int end = display.indexOf('>');
+        String colorPrefix = end >= 0 ? display.substring(0, end + 1) : "<gray>";
+        return colorPrefix + symbol;
+    }
      * {@link #UNRANKED} is never returned here (its bound is MIN_VALUE only as a
      * sentinel) — callers should special-case placement players themselves.
      */

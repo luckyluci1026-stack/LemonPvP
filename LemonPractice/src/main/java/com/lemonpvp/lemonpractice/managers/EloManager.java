@@ -79,6 +79,7 @@ public class EloManager {
         return plugin.getDatabase().getEloData(uuid, gm).thenApply(data -> {
             if (data == null) data = new EloData(DEFAULT_ELO, 0);
             cache.computeIfAbsent(uuid, u -> new ConcurrentHashMap<>()).put(gm, data);
+            pushRankToLemonCore(uuid);
             return data;
         });
     }
@@ -125,6 +126,9 @@ public class EloManager {
 
             plugin.getLogger().info("[EloManager] " + winner + " (" + wElo + "->" + newWElo
                     + ") beat " + loser + " (" + lElo + "->" + newLElo + ") [" + gm + "]");
+
+            pushRankToLemonCore(winner);
+            pushRankToLemonCore(loser);
 
             return new int[]{wChange, lChange};
         });
@@ -177,6 +181,46 @@ public class EloManager {
         EloData cached = getCached(uuid, gm);
         if (cached != null) return CompletableFuture.completedFuture(cached);
         return loadEloData(uuid, gm);
+    }
+
+    // -----------------------------------------------------------------------
+    // Rank push to LemonCore (tablist integration)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Resolves the best {@link com.lemonpvp.lemonpractice.model.RankTier} across
+     * all gamemodes currently cached for the player and pushes a compact
+     * MiniMessage badge string to {@code LemonCore}'s {@code PlayerData} so the
+     * tablist can render it without a circular dependency.
+     *
+     * <p>Called from both {@link #loadEloData} and {@link #applyDuelResult}, so
+     * the tablist badge stays in sync as new gamemodes are loaded or after a duel.
+     * The actual Bukkit API call is dispatched onto the main thread.
+     */
+    private void pushRankToLemonCore(UUID uuid) {
+        Map<String, EloData> allData = cache.get(uuid);
+        if (allData == null || allData.isEmpty()) return;
+
+        int placementCount = getPlacementCount();
+        com.lemonpvp.lemonpractice.model.RankTier best =
+                com.lemonpvp.lemonpractice.model.RankTier.UNRANKED;
+        for (EloData data : allData.values()) {
+            boolean inPlacement = data.matchesPlayed < placementCount;
+            com.lemonpvp.lemonpractice.model.RankTier tier =
+                    inPlacement ? com.lemonpvp.lemonpractice.model.RankTier.UNRANKED
+                                : com.lemonpvp.lemonpractice.model.RankTier.fromElo(data.elo);
+            if (tier.ordinal() > best.ordinal()) best = tier;
+        }
+
+        final com.lemonpvp.lemonpractice.model.RankTier finalTier = best;
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            org.bukkit.plugin.Plugin lc =
+                    plugin.getServer().getPluginManager().getPlugin("LemonCore");
+            if (!(lc instanceof com.lemonpvp.lemoncore.LemonCore lemonCore)) return;
+            com.lemonpvp.lemoncore.managers.PlayerData pd =
+                    lemonCore.getPlayerDataManager().getCached(uuid);
+            if (pd != null) pd.setRankDisplay(finalTier.badge());
+        });
     }
 
     // -----------------------------------------------------------------------

@@ -103,12 +103,18 @@ public class TablistManager {
         // LuckPerms prefixes/suffixes are legacy colour-coded; normalise § to &
         // so the legacy serializer renders them correctly, then concatenate.
         Component prefixComp = LEGACY.deserialize(prefix.replace('§', '&'));
-        Component nameComp = LEGACY.deserialize(name.replace('§', '&'));
+        Component nameComp   = LEGACY.deserialize(name.replace('§', '&'));
         Component suffixComp = LEGACY.deserialize(suffix.replace('§', '&'));
 
-        Component result = prefixComp.append(nameComp).append(suffixComp);
+        // ELO division badge (e.g. "❺" in Diamond gradient) pushed by LemonPractice.
+        String rank = data != null ? data.getRankDisplay() : null;
+        Component rankComp = (rank != null && !rank.isEmpty())
+                ? MM.deserialize(rank).append(Component.space())
+                : Component.empty();
 
-        // Append the player's equipped cosmetic tag (MiniMessage) as a suffix.
+        Component result = prefixComp.append(rankComp).append(nameComp).append(suffixComp);
+
+        // Cosmetic tag suffix (pushed by LemonCosmetics).
         String tag = data != null ? data.getTagDisplay() : null;
         if (tag != null && !tag.isEmpty()) {
             result = result.append(Component.space()).append(MM.deserialize(tag));
