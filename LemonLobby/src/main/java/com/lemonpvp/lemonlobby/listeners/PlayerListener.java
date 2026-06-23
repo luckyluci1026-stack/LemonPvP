@@ -118,6 +118,13 @@ public class PlayerListener implements Listener {
         // Only handle right-click actions
         if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) return;
 
+        // Defer to the apple tree: right-clicking a tree block should harvest it,
+        // not fire the held hotbar item's action (e.g. the Practice queue compass).
+        if (action == Action.RIGHT_CLICK_BLOCK
+                && plugin.getAppleTreeListener().isTreeBlock(event.getClickedBlock())) {
+            return;
+        }
+
         ItemStack item = event.getItem();
         if (item == null || !hotbarManager.isHotbarItem(item)) return;
 

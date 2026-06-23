@@ -58,7 +58,7 @@ public class ShopGUI implements Listener {
 
     public void open() {
         inv = Bukkit.createInventory(null, 54,
-                MM.deserialize("<!italic><gradient:#fffb00:#00ff00><bold>🛒 Sʜᴏᴘ</bold></gradient>"));
+                MM.deserialize("<!italic><gradient:#fffb00:#00ff00><bold>Aᴘꜰᴇʟ-Sʜᴏᴘ</bold></gradient>"));
 
         ItemStack black = pane(Material.BLACK_STAINED_GLASS_PANE);
         ItemStack gray  = pane(Material.GRAY_STAINED_GLASS_PANE);
@@ -265,8 +265,8 @@ public class ShopGUI implements Listener {
                     planks = pd.getPlanks();
                 }
             }
-            lore.add(MM.deserialize("<!italic><gray>🍎 Äpfel: <green>" + FormatUtil.formatAmount(apples)));
-            lore.add(MM.deserialize("<!italic><gray>🪵 Planks: <#D2691E>" + FormatUtil.formatAmount(planks)));
+            lore.add(MM.deserialize("<!italic><gray>✿ Äpfel: <green>" + FormatUtil.formatAmount(apples)));
+            lore.add(MM.deserialize("<!italic><gray>▬ Planks: <#D2691E>" + FormatUtil.formatAmount(planks)));
             lore.add(Component.empty());
             meta.lore(lore);
             skull.setItemMeta(meta);
@@ -319,7 +319,7 @@ public class ShopGUI implements Listener {
         long apples = getApples();
         if (apples < tier.appleCost) {
             player.sendActionBar(MM.deserialize("<!italic><red>Nicht genug Äpfel! Du brauchst "
-                    + FormatUtil.formatAmount(tier.appleCost) + " 🍎"));
+                    + FormatUtil.formatAmount(tier.appleCost) + " ✿"));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
             return;
         }
@@ -347,7 +347,7 @@ public class ShopGUI implements Listener {
         long apples = getApples();
         if (apples < tier.appleCost) {
             player.sendActionBar(MM.deserialize("<!italic><red>Nicht genug Äpfel! Du brauchst "
-                    + FormatUtil.formatAmount(tier.appleCost) + " 🍎"));
+                    + FormatUtil.formatAmount(tier.appleCost) + " ✿"));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
             return;
         }

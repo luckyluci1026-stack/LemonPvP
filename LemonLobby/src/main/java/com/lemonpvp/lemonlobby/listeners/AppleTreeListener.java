@@ -2,7 +2,6 @@ package com.lemonpvp.lemonlobby.listeners;
 
 import com.lemonpvp.lemonlobby.LemonLobby;
 import com.lemonpvp.lemonlobby.model.PlankTier;
-import com.lemonpvp.lemonlobby.util.FormatUtil;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -10,10 +9,10 @@ import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.*;
 
@@ -51,6 +50,9 @@ public class AppleTreeListener implements Listener {
     @EventHandler
     public void onInteract(PlayerInteractEvent e) {
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        // PlayerInteractEvent fires once per hand — only react to the main hand
+        // so a single right-click does not award the reward twice.
+        if (e.getHand() != EquipmentSlot.HAND) return;
         Block block = e.getClickedBlock();
         if (block == null) return;
 
@@ -89,12 +91,12 @@ public class AppleTreeListener implements Listener {
 
         // Feedback
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 1.4f);
-        block.getLocation().add(0.5, 0.5, 0.5).getWorld().spawnParticle(
-                Particle.HAPPY_VILLAGER, block.getLocation().add(0.5, 0.5, 0.5), 5, 0.3, 0.3, 0.3, 0);
+        org.bukkit.Location center = block.getLocation().add(0.5, 0.5, 0.5);
+        block.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, center, 5, 0.3, 0.3, 0.3, 0);
 
         String msg = bonus > 0
-                ? "<!italic><gradient:#fffb00:#00ff00>+<white>" + total + " <green>🍎 <gray>(<yellow>+" + bonus + " Boost<gray>)"
-                : "<!italic><gradient:#fffb00:#00ff00>+<white>" + total + " <green>🍎";
+                ? "<!italic><gradient:#fffb00:#00ff00>+<white>" + total + " <green>✿ <gray>(<yellow>+" + bonus + " Boost<gray>)"
+                : "<!italic><gradient:#fffb00:#00ff00>+<white>" + total + " <green>✿";
         player.sendActionBar(MM.deserialize(msg));
     }
 
@@ -116,12 +118,17 @@ public class AppleTreeListener implements Listener {
 
         // Feedback
         player.playSound(player.getLocation(), Sound.BLOCK_WOOD_HIT, 0.8f, 1.0f);
-        block.getLocation().add(0.5, 0.5, 0.5).getWorld().spawnParticle(
-                Particle.BLOCK, block.getLocation().add(0.5, 0.5, 0.5), 8,
-                0.3, 0.3, 0.3, block.getBlockData());
+        org.bukkit.Location center = block.getLocation().add(0.5, 0.5, 0.5);
+        block.getWorld().spawnParticle(Particle.BLOCK, center, 8, 0.3, 0.3, 0.3, block.getBlockData());
 
         player.sendActionBar(MM.deserialize(
-                "<!italic><gradient:#8B4513:#D2691E>+<white>" + planks + " <#D2691E>🪵 <gray>(" + tier.displayName + ")"));
+                "<!italic><gradient:#8B4513:#D2691E>+<white>" + planks + " <#D2691E>▬ <gray>(" + tier.displayName + ")"));
+    }
+
+    /** Whether the given block is part of the apple tree (leaf or log). */
+    public boolean isTreeBlock(Block block) {
+        if (block == null) return false;
+        return leafMaterials.contains(block.getType()) || logMaterials.contains(block.getType());
     }
 
     public void cleanupPlayer(UUID uuid) {
