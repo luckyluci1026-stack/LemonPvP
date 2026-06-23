@@ -1,5 +1,6 @@
 package com.lemonpvp.lemonlobby;
 
+import com.lemonpvp.lemonlobby.commands.LobbyAdminCommand;
 import com.lemonpvp.lemonlobby.commands.ShopCommand;
 import com.lemonpvp.lemonlobby.database.Database;
 import com.lemonpvp.lemonlobby.gui.TrainingGUI;
@@ -59,6 +60,12 @@ public final class LemonLobby extends JavaPlugin {
         // Register commands
         var shopCmd = getCommand("shop");
         if (shopCmd != null) shopCmd.setExecutor(new ShopCommand(this));
+        var llobbyCmd = getCommand("llobby");
+        if (llobbyCmd != null) {
+            var llobbyAdmin = new LobbyAdminCommand(this);
+            llobbyCmd.setExecutor(llobbyAdmin);
+            llobbyCmd.setTabCompleter(llobbyAdmin);
+        }
 
         // Start daily restart scheduler
         restartManager.start();

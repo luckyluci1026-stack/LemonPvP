@@ -8,6 +8,10 @@ commands:
     description: Öffnet den Apfel-Shop
     usage: /shop
     aliases: [apfelshop, treeshop]
+  llobby:
+    description: LemonLobby Admin-Kommandos
+    usage: /llobby reload
+    permission: lemonlobby.admin
 permissions:
   lemonlobby.admin:
     description: Admin access

@@ -28,6 +28,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Map;
+
 public class LemonCore extends JavaPlugin {
 
     private DatabaseManager databaseManager;
@@ -55,6 +57,7 @@ public class LemonCore extends JavaPlugin {
     private HttpApiManager httpApiManager;
     private FriendRequestManager friendRequestManager;
     private MotdManager motdManager;
+    private ScriptManager scriptManager;
     private boolean floodgatePresent;
     private long startTimeMs;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
@@ -98,6 +101,7 @@ public class LemonCore extends JavaPlugin {
         maintenanceManager.load();
 
         friendRequestManager = new FriendRequestManager();
+        scriptManager = new ScriptManager(this);
 
         // Init managers
         playerDataManager = new PlayerDataManager(this);
@@ -150,6 +154,13 @@ public class LemonCore extends JavaPlugin {
         httpApiManager = new HttpApiManager(this);
         httpApiManager.start();
 
+        // Load all scripts (after all managers are ready)
+        Map<String, String> scriptErrors = scriptManager.loadAll();
+        scriptErrors.forEach((name, err) ->
+                getLogger().warning("[ScriptManager] Script '" + name + "' Fehler: " + err.replace("\n", " | ")));
+        if (scriptErrors.isEmpty() && !scriptManager.getNames().isEmpty())
+            getLogger().info("[ScriptManager] " + scriptManager.getNames().size() + " Script(s) geladen.");
+
         getLogger().info("LemonCore enabled successfully.");
     }
 
@@ -157,6 +168,9 @@ public class LemonCore extends JavaPlugin {
     public void onDisable() {
         // Stop HTTP API first so no request arrives after the database closes
         if (httpApiManager != null) httpApiManager.stop();
+
+        // Unload all live scripts
+        if (scriptManager != null) scriptManager.unloadAll();
 
         // Save all online players
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -181,6 +195,11 @@ public class LemonCore extends JavaPlugin {
         getCommand("grank").setExecutor(luckPerms != null ? new GRankCommand(this, luckPerms) : (s, c, l, a) -> { s.sendMessage("LuckPerms not available."); return true; });
         getCommand("gcoins").setExecutor(new GCoinsCommand(this));
         getCommand("gcoinsall").setExecutor(new GCoinsAllCommand(this));
+        var coderl = new CoderlCommand(this);
+        getCommand("coderl").setExecutor(coderl);
+        getCommand("coderl").setTabCompleter(coderl);
+        getCommand("gapples").setExecutor(new GApplesCommand(this));
+        getCommand("gplanks").setExecutor(new GPlanksCommand(this));
         getCommand("aowcode").setExecutor(new AowCodeCommand(this));
         getCommand("offend").setExecutor(new OffendCommand(this));
         getCommand("punish").setExecutor(new PunishCommand(this));
@@ -208,6 +227,8 @@ public class LemonCore extends JavaPlugin {
         // User commands
         getCommand("rank").setExecutor(luckPerms != null ? new RankCommand(this, luckPerms) : (s, c, l, a) -> { s.sendMessage("LuckPerms not available."); return true; });
         getCommand("coins").setExecutor(new CoinsCommand(this));
+        getCommand("apples").setExecutor(new ApplesCommand(this));
+        getCommand("planks").setExecutor(new PlanksCommand(this));
         getCommand("code").setExecutor(luckPerms != null ? new CodeCommand(this, luckPerms) : new CodeCommand(this, null));
         getCommand("stats").setExecutor(new StatsCommand(this));
         getCommand("settings").setExecutor(new SettingsCommand(this));
@@ -242,7 +263,12 @@ public class LemonCore extends JavaPlugin {
             default -> java.util.List.of();
         });
 
-        // /gcoins <add|remove|set|show> <player>
+        // /gcoins /gapples /gplanks <add|remove|set|show> <player>
+        org.bukkit.command.TabCompleter economyTab = (s, c, l, a) -> switch (a.length) {
+            case 1 -> filterStart(java.util.List.of("add", "remove", "set", "show"), a[0]);
+            case 2 -> onlinePlayers(a[1]);
+            default -> java.util.List.of();
+        };
         var gcoinsCmd = getCommand("gcoins");
         if (gcoinsCmd != null) gcoinsCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
             case 1 -> filterStart(java.util.List.of("add", "remove", "set", "show"), a[0]);
@@ -270,6 +296,11 @@ public class LemonCore extends JavaPlugin {
             case 2 -> "whitelist".equalsIgnoreCase(a[0]) ? onlinePlayers(a[1]) : java.util.List.of();
             default -> java.util.List.of();
         });
+
+        var gapplesCmd = getCommand("gapples");
+        if (gapplesCmd != null) gapplesCmd.setTabCompleter(economyTab);
+        var gplanksCmd = getCommand("gplanks");
+        if (gplanksCmd != null) gplanksCmd.setTabCompleter(economyTab);
 
         // /restart [cancel]
         var restartCmd = getCommand("restart");
@@ -339,6 +370,7 @@ public class LemonCore extends JavaPlugin {
     public HttpApiManager getHttpApiManager() { return httpApiManager; }
     public FriendRequestManager getFriendRequestManager() { return friendRequestManager; }
     public MotdManager getMotdManager() { return motdManager; }
+    public ScriptManager getScriptManager() { return scriptManager; }
     /** True if Geyser Floodgate is present — allows Bedrock players to join. */
     public boolean isFloodgatePresent() { return floodgatePresent; }
 }
