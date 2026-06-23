@@ -289,6 +289,13 @@ public class DatabaseManager {
                     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lc_economy (
+                    uuid VARCHAR(36) PRIMARY KEY,
+                    apples BIGINT DEFAULT 0,
+                    planks BIGINT DEFAULT 0
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
         }
     }
 }

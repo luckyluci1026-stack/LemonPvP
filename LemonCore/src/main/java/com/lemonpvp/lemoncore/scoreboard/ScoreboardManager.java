@@ -73,7 +73,11 @@ public class ScoreboardManager {
                     .replace("{kdr}", String.format("%.2f", data.getKDRatio()))
                     .replace("{online}", String.valueOf(Bukkit.getOnlinePlayers().size()))
                     .replace("{player}", data.getUsername())
-                    .replace("{rank}", rank);
+                    .replace("{rank}", rank)
+                    .replace("{apples}", String.valueOf(data.getApples()))
+                    .replace("{apples_short}", com.lemonpvp.lemoncore.util.TextUtil.formatCoins(data.getApples()))
+                    .replace("{planks}", String.valueOf(data.getPlanks()))
+                    .replace("{planks_short}", com.lemonpvp.lemoncore.util.TextUtil.formatCoins(data.getPlanks()));
 
             // Use increasing-spaces as unique but invisible entry names.
             // Score.customName() (Paper 1.20.4+) controls what is actually rendered.

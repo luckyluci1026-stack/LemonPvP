@@ -47,11 +47,17 @@ public class PlayerListener implements Listener {
         player.setFoodLevel(20);
         player.setSaturation(20.0f);
         hotbarManager.giveHotbar(player);
+        plugin.getTreeUpgradeManager().load(player.getUniqueId());
+        plugin.getBoosterManager().load(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onQuit(PlayerQuitEvent event) {
-        hotbarManager.removeHotbar(event.getPlayer());
+        Player player = event.getPlayer();
+        hotbarManager.removeHotbar(player);
+        plugin.getTreeUpgradeManager().unload(player.getUniqueId());
+        plugin.getBoosterManager().unload(player.getUniqueId());
+        plugin.getAppleTreeListener().cleanupPlayer(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.NORMAL)

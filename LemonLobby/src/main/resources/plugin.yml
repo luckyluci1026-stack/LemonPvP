@@ -2,8 +2,12 @@ name: LemonLobby
 version: 1.0.0
 main: com.lemonpvp.lemonlobby.LemonLobby
 api-version: '1.21'
-softdepend: [LuckPerms, LemonCore]
+softdepend: [LuckPerms, LemonCore, LemonCosmetics]
 commands:
+  shop:
+    description: Öffnet den Apfel-Shop
+    usage: /shop
+    aliases: [apfelshop, treeshop]
 permissions:
   lemonlobby.admin:
     description: Admin access

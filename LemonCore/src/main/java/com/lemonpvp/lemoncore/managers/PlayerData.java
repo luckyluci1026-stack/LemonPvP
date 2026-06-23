@@ -32,6 +32,10 @@ public class PlayerData {
      */
     private String rankDisplay;
 
+    // Apple Economy (persisted in lc_economy)
+    private long apples;
+    private long planks;
+
     // Settings
     private boolean publicChat = true;
     private boolean partyInvites = true;
@@ -83,6 +87,11 @@ public class PlayerData {
     public Map<String, Integer> getElo() { return elo; }
     public int getEloFor(String gamemode) { return elo.getOrDefault(gamemode, 1000); }
     public void setEloFor(String gamemode, int value) { elo.put(gamemode, value); }
+    public long getApples() { return apples; }
+    public void setApples(long apples) { this.apples = Math.max(0, apples); }
+    public long getPlanks() { return planks; }
+    public void setPlanks(long planks) { this.planks = Math.max(0, planks); }
+
     public java.util.Set<UUID> getFriends() { return friends; }
     public boolean isFriend(UUID uuid) { return friends.contains(uuid); }
     public void addFriend(UUID uuid) { friends.add(uuid); }

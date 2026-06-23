@@ -9,3 +9,31 @@ server-name: lobby
 restart:
   time: "02:30"
   timezone: "Europe/Berlin"
+
+apple-tree:
+  # World name where the apple tree is located
+  world: world
+  # Leaf materials that reward apples on right-click
+  leaf-materials:
+    - OAK_LEAVES
+    - BIRCH_LEAVES
+    - SPRUCE_LEAVES
+    - ACACIA_LEAVES
+    - DARK_OAK_LEAVES
+    - JUNGLE_LEAVES
+    - AZALEA_LEAVES
+    - FLOWERING_AZALEA_LEAVES
+  # Log materials that reward planks on right-click
+  log-materials:
+    - OAK_LOG
+    - BIRCH_LOG
+    - SPRUCE_LOG
+    - ACACIA_LOG
+    - DARK_OAK_LOG
+    - JUNGLE_LOG
+  # Cooldown between leaf clicks per player (in ticks, 20 = 1s)
+  apple-cooldown-ticks: 20
+  # Cooldown between log clicks per player (in ticks, 100 = 5s)
+  plank-cooldown-ticks: 100
+  # Base apples awarded per leaf click (before boosters)
+  base-apples: 1

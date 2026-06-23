@@ -43,6 +43,8 @@ scoreboard:
     - "<gray>Killstreak: <gold>{killstreak}"
     - " "
     - "<gray>Münzen: <yellow>✦ <gold>{coins_short}"
+    - "<gray>Äpfel: <green>🍎 <white>{apples_short}"
+    - "<gray>Planks: <#8B4513>🪵 <white>{planks_short}"
     - "<gray>Online: <green>{online}"
     - "<dark_gray><st>                </st>"
     - "<yellow>play.lemonpvp.de"

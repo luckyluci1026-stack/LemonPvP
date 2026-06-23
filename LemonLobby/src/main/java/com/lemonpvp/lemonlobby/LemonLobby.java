@@ -1,10 +1,14 @@
 package com.lemonpvp.lemonlobby;
 
+import com.lemonpvp.lemonlobby.commands.ShopCommand;
 import com.lemonpvp.lemonlobby.database.Database;
 import com.lemonpvp.lemonlobby.gui.TrainingGUI;
+import com.lemonpvp.lemonlobby.listeners.AppleTreeListener;
 import com.lemonpvp.lemonlobby.listeners.PlayerListener;
+import com.lemonpvp.lemonlobby.managers.BoosterManager;
 import com.lemonpvp.lemonlobby.managers.HotbarManager;
 import com.lemonpvp.lemonlobby.managers.RestartManager;
+import com.lemonpvp.lemonlobby.managers.TreeUpgradeManager;
 import com.lemonpvp.lemonlobby.messaging.LobbyMessaging;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -15,6 +19,9 @@ public final class LemonLobby extends JavaPlugin {
     private LobbyMessaging lobbyMessaging;
     private TrainingGUI trainingGUI;
     private RestartManager restartManager;
+    private BoosterManager boosterManager;
+    private TreeUpgradeManager treeUpgradeManager;
+    private AppleTreeListener appleTreeListener;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
     @Override
@@ -33,10 +40,13 @@ public final class LemonLobby extends JavaPlugin {
         }
 
         // Managers and messaging
-        hotbarManager  = new HotbarManager(this);
-        lobbyMessaging = new LobbyMessaging(this);
-        trainingGUI    = new TrainingGUI(this, lobbyMessaging);
-        restartManager = new RestartManager(this);
+        hotbarManager      = new HotbarManager(this);
+        lobbyMessaging     = new LobbyMessaging(this);
+        trainingGUI        = new TrainingGUI(this, lobbyMessaging);
+        restartManager     = new RestartManager(this);
+        boosterManager     = new BoosterManager(this);
+        treeUpgradeManager = new TreeUpgradeManager(this);
+        appleTreeListener  = new AppleTreeListener(this);
 
         // BungeeCord plugin messaging
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
@@ -44,6 +54,11 @@ public final class LemonLobby extends JavaPlugin {
         // Register listeners
         getServer().getPluginManager().registerEvents(
                 new PlayerListener(this, hotbarManager, lobbyMessaging, trainingGUI), this);
+        getServer().getPluginManager().registerEvents(appleTreeListener, this);
+
+        // Register commands
+        var shopCmd = getCommand("shop");
+        if (shopCmd != null) shopCmd.setExecutor(new ShopCommand(this));
 
         // Start daily restart scheduler
         restartManager.start();
@@ -61,16 +76,19 @@ public final class LemonLobby extends JavaPlugin {
 
     // ── Getters ───────────────────────────────────────────────────────────────
 
-    public Database getDatabase()           { return database; }
-    public HotbarManager getHotbarManager() { return hotbarManager; }
-    public LobbyMessaging getLobbyMessaging(){ return lobbyMessaging; }
-    public TrainingGUI getTrainingGUI()     { return trainingGUI; }
+    public Database getDatabase()                     { return database; }
+    public HotbarManager getHotbarManager()           { return hotbarManager; }
+    public LobbyMessaging getLobbyMessaging()         { return lobbyMessaging; }
+    public TrainingGUI getTrainingGUI()               { return trainingGUI; }
+    public BoosterManager getBoosterManager()         { return boosterManager; }
+    public TreeUpgradeManager getTreeUpgradeManager() { return treeUpgradeManager; }
+    public AppleTreeListener getAppleTreeListener()   { return appleTreeListener; }
     public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
+    public RestartManager getRestartManager()         { return restartManager; }
+
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
         if (!f.exists()) saveResource("servers.yml", false);
         serversConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f);
     }
-
-    public RestartManager getRestartManager(){ return restartManager; }
 }

@@ -104,6 +104,22 @@ public class PlayerDataManager {
                     }
                 }
 
+                // Load apple economy
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT IGNORE INTO lc_economy (uuid) VALUES (?)")) {
+                    ps.setString(1, uuid.toString());
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT apples, planks FROM lc_economy WHERE uuid=?")) {
+                    ps.setString(1, uuid.toString());
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        data.setApples(rs.getLong("apples"));
+                        data.setPlanks(rs.getLong("planks"));
+                    }
+                }
+
                 cache.put(uuid, data);
                 return data;
             } catch (SQLException e) {
@@ -144,10 +160,64 @@ public class PlayerDataManager {
                     ps.setBoolean(5, data.isFastCrystals());
                     ps.executeUpdate();
                 }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO lc_economy (uuid, apples, planks) VALUES (?,?,?) " +
+                        "ON DUPLICATE KEY UPDATE apples=VALUES(apples), planks=VALUES(planks)")) {
+                    ps.setString(1, uuid.toString());
+                    ps.setLong(2, data.getApples());
+                    ps.setLong(3, data.getPlanks());
+                    ps.executeUpdate();
+                }
             } catch (SQLException e) {
                 plugin.getLogger().severe("Failed to save player " + uuid + ": " + e.getMessage());
             }
         });
+    }
+
+    public CompletableFuture<Void> addApples(UUID uuid, long amount) {
+        return db.executeAsync(conn -> {
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO lc_economy (uuid, apples) VALUES (?,?) " +
+                        "ON DUPLICATE KEY UPDATE apples=GREATEST(0, apples + ?)")) {
+                    ps.setString(1, uuid.toString());
+                    ps.setLong(2, Math.max(0, amount));
+                    ps.setLong(3, amount);
+                    ps.executeUpdate();
+                }
+                PlayerData cached = cache.get(uuid);
+                if (cached != null) cached.setApples(cached.getApples() + amount);
+            } catch (SQLException e) {
+                plugin.getLogger().severe("addApples error: " + e.getMessage());
+            }
+        });
+    }
+
+    public CompletableFuture<Void> removeApples(UUID uuid, long amount) {
+        return addApples(uuid, -amount);
+    }
+
+    public CompletableFuture<Void> addPlanks(UUID uuid, long amount) {
+        return db.executeAsync(conn -> {
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO lc_economy (uuid, planks) VALUES (?,?) " +
+                        "ON DUPLICATE KEY UPDATE planks=GREATEST(0, planks + ?)")) {
+                    ps.setString(1, uuid.toString());
+                    ps.setLong(2, Math.max(0, amount));
+                    ps.setLong(3, amount);
+                    ps.executeUpdate();
+                }
+                PlayerData cached = cache.get(uuid);
+                if (cached != null) cached.setPlanks(cached.getPlanks() + amount);
+            } catch (SQLException e) {
+                plugin.getLogger().severe("addPlanks error: " + e.getMessage());
+            }
+        });
+    }
+
+    public CompletableFuture<Void> removePlanks(UUID uuid, long amount) {
+        return addPlanks(uuid, -amount);
     }
 
     public CompletableFuture<Void> addCoins(UUID uuid, long amount, String reason, UUID adminUuid) {
