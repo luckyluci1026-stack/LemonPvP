@@ -126,9 +126,10 @@ public class StatsGUI implements Listener {
                 List.of("<gray>Beste Killstreak: <white>" + fBestKs)));
 
         // Coins
+        String coinsShort = com.lemonpvp.lemoncore.util.TextUtil.formatCoins(fCoins);
         inv.setItem(STAT_SLOTS[4], statItem(Material.GOLD_NUGGET,
                 "<gradient:#fffb00:#ff9800><!italic>Mᴏɴᴇᴛᴇɴ",
-                List.of("<gray>Kontostand: <yellow>" + fCoins)));
+                List.of("<gray>Kontostand: <yellow>✦ <gold>" + coinsShort)));
 
         inv.setItem(STAT_SLOTS[5], pane(Material.GRAY_STAINED_GLASS_PANE));
         inv.setItem(STAT_SLOTS[6], pane(Material.GRAY_STAINED_GLASS_PANE));

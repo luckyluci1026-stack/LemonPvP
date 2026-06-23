@@ -5,6 +5,7 @@ import com.lemonpvp.lemoncore.commands.admin.*;
 import com.lemonpvp.lemoncore.commands.user.*;
 import com.lemonpvp.lemoncore.discord.DiscordWebhookManager;
 import com.lemonpvp.lemoncore.managers.PlayerTracker;
+import com.lemonpvp.lemoncore.listeners.NoChatReportsListener;
 import com.lemonpvp.lemoncore.config.ConfigManager;
 import com.lemonpvp.lemoncore.config.FilterManager;
 import com.lemonpvp.lemoncore.config.MessagesManager;
@@ -53,6 +54,8 @@ public class LemonCore extends JavaPlugin {
     private LuckPerms luckPerms;
     private HttpApiManager httpApiManager;
     private FriendRequestManager friendRequestManager;
+    private MotdManager motdManager;
+    private boolean floodgatePresent;
     private long startTimeMs;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
@@ -116,6 +119,19 @@ public class LemonCore extends JavaPlugin {
 
         // Register plugin messaging
         velocityMessaging.register();
+
+        // Floodgate (Geyser Bedrock support) — optional soft-depend
+        floodgatePresent = getServer().getPluginManager().getPlugin("floodgate") != null
+                || getServer().getPluginManager().getPlugin("Floodgate") != null;
+        if (floodgatePresent) getLogger().info("Floodgate detected — Bedrock players supported.");
+
+        // MOTD + no-chat-reports
+        motdManager = new MotdManager(this);
+        getServer().getPluginManager().registerEvents(motdManager, this);
+        if (getConfig().getBoolean("no-chat-reports", true)) {
+            getServer().getPluginManager().registerEvents(new NoChatReportsListener(this), this);
+            getLogger().info("No-Chat-Reports mode enabled.");
+        }
 
         // Register listeners
         getServer().getPluginManager().registerEvents(new PlayerJoinQuitListener(this), this);
@@ -322,4 +338,7 @@ public class LemonCore extends JavaPlugin {
     public long getStartTimeMs() { return startTimeMs; }
     public HttpApiManager getHttpApiManager() { return httpApiManager; }
     public FriendRequestManager getFriendRequestManager() { return friendRequestManager; }
+    public MotdManager getMotdManager() { return motdManager; }
+    /** True if Geyser Floodgate is present — allows Bedrock players to join. */
+    public boolean isFloodgatePresent() { return floodgatePresent; }
 }

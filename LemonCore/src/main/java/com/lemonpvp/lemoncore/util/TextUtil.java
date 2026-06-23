@@ -87,6 +87,33 @@ public class TextUtil {
         return sb.toString();
     }
 
+    /**
+     * Formats a coin amount into a compact human-readable string.
+     * 1 500 → 1.5k | 1 000 000 → 1M | 1 000 000 000 → 1B |
+     * 1 000 000 000 000 → 1T | ≥ 1 quadrillion → 999T+
+     */
+    public static String formatCoins(long amount) {
+        if (amount < 0) return "-" + formatCoins(-amount);
+        if (amount >= 1_000_000_000_000_000L) return "999T+";
+
+        long[] thresholds = {
+            1_000_000_000_000L,   // T
+            1_000_000_000L,       // B
+            1_000_000L,           // M
+            1_000L                // k
+        };
+        String[] suffixes = {"T", "B", "M", "k"};
+
+        for (int i = 0; i < thresholds.length; i++) {
+            if (amount >= thresholds[i]) {
+                long whole = amount / thresholds[i];
+                long dec   = (amount % thresholds[i]) / (thresholds[i] / 10);
+                return dec > 0 ? whole + "." + dec + suffixes[i] : whole + suffixes[i];
+            }
+        }
+        return String.valueOf(amount);
+    }
+
     public static String generateAlphanumeric(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sb = new StringBuilder();

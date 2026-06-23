@@ -23,13 +23,13 @@ public class CoinsCommand implements CommandExecutor {
         if (!(sender instanceof Player player)) return true;
         PlayerData data = plugin.getPlayerDataManager().getCached(player.getUniqueId());
         if (data != null) {
-            player.sendMessage(plugin.getMessagesManager().get("coins.show", "coins", String.valueOf(data.getCoins())));
+            player.sendMessage(plugin.getMessagesManager().get("coins.show", "coins", com.lemonpvp.lemoncore.util.TextUtil.formatCoins(data.getCoins())));
         } else {
             UUID uuid = player.getUniqueId();
             plugin.getPlayerDataManager().getCoins(uuid).thenAccept(coins ->
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         Player p = Bukkit.getPlayer(uuid);
-                        if (p != null) p.sendMessage(plugin.getMessagesManager().get("coins.show", "coins", String.valueOf(coins)));
+                        if (p != null) p.sendMessage(plugin.getMessagesManager().get("coins.show", "coins", com.lemonpvp.lemoncore.util.TextUtil.formatCoins(coins)));
                     }));
         }
         return true;

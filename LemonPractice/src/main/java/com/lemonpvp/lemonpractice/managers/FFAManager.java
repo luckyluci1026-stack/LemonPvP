@@ -5,9 +5,13 @@ import com.lemonpvp.lemonpractice.model.FFAArena;
 import com.lemonpvp.lemonpractice.model.PlayerKit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Criteria;
@@ -15,6 +19,8 @@ import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
+
+import java.time.Duration;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -87,6 +93,47 @@ public class FFAManager {
         player.setScoreboard(board);
     }
 
+    /**
+     * FlowPvP-style FFA entrance: gradient title, swoosh sound sequence,
+     * and a ring of yellow/green Redstone particles at spawn.
+     */
+    private void showFfaEntrance(Player player, FFAArena arena) {
+        // Title — big gradient main, subtitle with arena name
+        Title title = Title.title(
+                MM.deserialize("<gradient:#fffb00:#00ff00><bold>Fꜰᴀ</bold></gradient>"),
+                MM.deserialize("<gray>Arena: <white>" + arena.getName()
+                        + "  <dark_gray>|  <gray>Spieler: <green>" + arena.getPlayerCount()),
+                Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1500), Duration.ofMillis(500))
+        );
+        player.showTitle(title);
+
+        // Sound sequence: whoosh → ding
+        player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.7f, 1.4f);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline())
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.8f, 1.6f);
+        }, 6L);
+
+        // Particle ring at spawn position — yellow + green dust
+        Location loc = player.getLocation();
+        int count = 24;
+        for (int i = 0; i < count; i++) {
+            double angle = 2 * Math.PI * i / count;
+            double x = loc.getX() + 1.2 * Math.cos(angle);
+            double z = loc.getZ() + 1.2 * Math.sin(angle);
+            Location pLoc = new Location(loc.getWorld(), x, loc.getY() + 0.1, z);
+            loc.getWorld().spawnParticle(Particle.DUST,
+                    pLoc, 2, 0, 0, 0, 0,
+                    new Particle.DustOptions(i % 2 == 0 ? Color.YELLOW : Color.LIME, 1.2f));
+        }
+
+        // Chat message
+        player.sendMessage(MM.deserialize(
+                "<gradient:#fffb00:#00ff00><bold>FFA</bold></gradient> "
+                + "<green>Du bist <white>" + arena.getName() + " <green>beigetreten!  "
+                + "<dark_gray>(<gray>" + arena.getPlayerCount() + " Spieler<dark_gray>)"));
+    }
+
     /** Resets the FFA killstreak for a player (called on their death). */
     public void resetKillstreak(UUID uuid) {
         sessionKillstreak.put(uuid, 0);
@@ -142,9 +189,7 @@ public class FFAManager {
         sessionKills.put(player.getUniqueId(), 0);
         sessionKillstreak.put(player.getUniqueId(), 0);
 
-        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.3f);
-        player.sendMessage(MM.deserialize("<gradient:#fffb00:#00ff00><bold>FFA</bold></gradient> "
-                + "<green>Du bist der Arena <yellow>" + arena.getName() + "</yellow> beigetreten!"));
+        showFfaEntrance(player, arena);
 
         plugin.getLogger().info("[FFAManager] " + player.getName() + " joined FFA arena " + arena.getName());
     }

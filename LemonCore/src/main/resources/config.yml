@@ -34,15 +34,15 @@ scoreboard:
   title: "<bold><gradient:#fffb00:#00ff00>LᴇᴍᴏɴPᴠP</gradient></bold>"
   lines:
     - "<dark_gray><st>                </st>"
-    - "<white>Willkommen,"
-    - "<gradient:#fffb00:#00ff00>{player}</gradient>"
+    - "<gray>Spieler: <gradient:#fffb00:#00ff00>{player}"
+    - "<gray>Rang: {rank}"
     - " "
     - "<gray>Kills: <green>{kills}"
-    - "<gray>Deaths: <red>{deaths}"
+    - "<gray>Tode: <red>{deaths}"
     - "<gray>K/D: <white>{kdr}"
     - "<gray>Killstreak: <gold>{killstreak}"
     - " "
-    - "<gray>Münzen: <gold>{coins} ⭐"
+    - "<gray>Münzen: <yellow>✦ <gold>{coins_short}"
     - "<gray>Online: <green>{online}"
     - "<dark_gray><st>                </st>"
     - "<yellow>play.lemonpvp.de"
@@ -59,6 +59,15 @@ tablist:
     - "<gray>Online: <green>{online}<gray>/<white>{max}"
     - "<yellow>play.lemonpvp.de <dark_gray>| <aqua>discord.gg/lemonpvp"
     - ""
+
+no-chat-reports: true
+
+motd:
+  enabled: true
+  line1: "<gradient:#fffb00:#00ff00><bold>⚔ LᴇᴍᴏɴPᴠP ⚔</bold></gradient>"
+  line2: "<gray>♦ Practice Network  <yellow>✦  <white>play.lemonpvp.de"
+  # Displayed max players = current online + offset (0 = use server default)
+  max-players-offset: 0
 
 ban:
   reasons:

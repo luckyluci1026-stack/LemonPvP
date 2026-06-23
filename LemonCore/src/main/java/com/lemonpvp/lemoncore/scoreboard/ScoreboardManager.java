@@ -60,15 +60,20 @@ public class ScoreboardManager {
             }
 
             // Manual internal replacements
+            String rank = data.getRankDisplay();
+            if (rank == null || rank.isBlank()) rank = "<gray>✫";
+
             line = line
                     .replace("{kills}", String.valueOf(data.getKills()))
                     .replace("{killstreak}", String.valueOf(data.getKillstreak()))
                     .replace("{best_killstreak}", String.valueOf(data.getBestKillstreak()))
                     .replace("{coins}", String.valueOf(data.getCoins()))
+                    .replace("{coins_short}", com.lemonpvp.lemoncore.util.TextUtil.formatCoins(data.getCoins()))
                     .replace("{deaths}", String.valueOf(data.getDeaths()))
                     .replace("{kdr}", String.format("%.2f", data.getKDRatio()))
                     .replace("{online}", String.valueOf(Bukkit.getOnlinePlayers().size()))
-                    .replace("{player}", data.getUsername());
+                    .replace("{player}", data.getUsername())
+                    .replace("{rank}", rank);
 
             // Use increasing-spaces as unique but invisible entry names.
             // Score.customName() (Paper 1.20.4+) controls what is actually rendered.
