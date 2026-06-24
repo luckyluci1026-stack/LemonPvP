@@ -140,12 +140,6 @@ permissions:
   lemoncore.use.rtp:
     description: Use random teleport
     default: true
-  lemoncore.admin.apples:
-    description: Manage player apples
-    default: op
-  lemoncore.admin.planks:
-    description: Manage player planks
-    default: op
   lemoncore.admin.coderl:
     description: Hot-reload Java scripts at runtime
     default: op
@@ -311,21 +305,6 @@ commands:
     description: Random Teleport (coming soon)
     permission: lemoncore.use.rtp
     usage: /rtp
-  apples:
-    description: Zeigt deine Äpfel an
-    permission: lemoncore.use.stats
-    aliases: [äpfel]
-  planks:
-    description: Zeigt deine Planks an
-    permission: lemoncore.use.stats
-  gapples:
-    description: Verwaltet Spieler-Äpfel
-    permission: lemoncore.admin.apples
-    usage: /gapples add|remove|set|show <spieler> [menge]
-  gplanks:
-    description: Verwaltet Spieler-Planks
-    permission: lemoncore.admin.planks
-    usage: /gplanks add|remove|set|show <spieler> [menge]
   coderl:
     description: Java-Scripts hot-reload
     permission: lemoncore.admin.coderl

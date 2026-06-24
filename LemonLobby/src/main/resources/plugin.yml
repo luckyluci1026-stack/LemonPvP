@@ -8,6 +8,21 @@ commands:
     description: Öffnet den Apfel-Shop
     usage: /shop
     aliases: [apfelshop, treeshop]
+  apples:
+    description: Zeigt deine Äpfel an
+    usage: /apples
+    aliases: [äpfel]
+  planks:
+    description: Zeigt deine Planks an
+    usage: /planks
+  gapples:
+    description: Verwaltet Spieler-Äpfel
+    usage: /gapples add|remove|set|show <spieler> [menge]
+    permission: lemonlobby.admin.apples
+  gplanks:
+    description: Verwaltet Spieler-Planks
+    usage: /gplanks add|remove|set|show <spieler> [menge]
+    permission: lemonlobby.admin.planks
   llobby:
     description: LemonLobby Admin-Kommandos
     usage: /llobby reload
@@ -15,4 +30,10 @@ commands:
 permissions:
   lemonlobby.admin:
     description: Admin access
+    default: op
+  lemonlobby.admin.apples:
+    description: Manage player apples
+    default: op
+  lemonlobby.admin.planks:
+    description: Manage player planks
     default: op

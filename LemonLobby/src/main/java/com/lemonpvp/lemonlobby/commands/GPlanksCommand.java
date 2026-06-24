@@ -1,30 +1,38 @@
-package com.lemonpvp.lemoncore.commands.admin;
+package com.lemonpvp.lemonlobby.commands;
 
 import com.lemonpvp.lemoncore.LemonCore;
-import com.lemonpvp.lemoncore.util.TextUtil;
+import com.lemonpvp.lemonlobby.LemonLobby;
+import com.lemonpvp.lemonlobby.util.FormatUtil;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class GPlanksCommand implements CommandExecutor {
+public class GPlanksCommand implements CommandExecutor, TabCompleter {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private final LemonCore plugin;
+    private final LemonLobby plugin;
 
-    public GPlanksCommand(LemonCore plugin) {
+    public GPlanksCommand(LemonLobby plugin) {
         this.plugin = plugin;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("lemoncore.admin.planks")) {
-            sender.sendMessage(plugin.getMessagesManager().get("no-permission"));
+        if (!sender.hasPermission("lemonlobby.admin.planks")) {
+            sender.sendMessage(MM.deserialize("<!italic><red>Keine Berechtigung."));
+            return true;
+        }
+        LemonCore lc = getLemonCore();
+        if (lc == null) {
+            sender.sendMessage(MM.deserialize("<!italic><red>Economy-System nicht verfügbar."));
             return true;
         }
         if (args.length < 2) {
@@ -36,15 +44,15 @@ public class GPlanksCommand implements CommandExecutor {
         String targetName = args[1];
 
         if (action.equals("show")) {
-            resolveUuid(targetName, uuid -> {
+            resolveUuid(lc, targetName, uuid -> {
                 if (uuid == null) {
                     run(() -> sender.sendMessage(MM.deserialize("<!italic><red>Spieler <white>" + targetName + " <red>nicht gefunden.")));
                     return;
                 }
-                var cached = plugin.getPlayerDataManager().getCached(uuid);
+                var cached = lc.getPlayerDataManager().getCached(uuid);
                 long planks = cached != null ? cached.getPlanks() : -1;
                 run(() -> sender.sendMessage(MM.deserialize("<!italic><gray>Planks von <white>" + targetName
-                        + "<gray>: <#D2691E>▬ <white>" + (planks >= 0 ? TextUtil.formatCoins(planks) : "nicht geladen"))));
+                        + "<gray>: <#D2691E>▬ <white>" + (planks >= 0 ? FormatUtil.formatAmount(planks) : "nicht geladen"))));
             });
             return true;
         }
@@ -60,30 +68,30 @@ public class GPlanksCommand implements CommandExecutor {
         }
         final long amt = amount;
 
-        resolveUuid(targetName, uuid -> {
+        resolveUuid(lc, targetName, uuid -> {
             if (uuid == null) {
                 run(() -> sender.sendMessage(MM.deserialize("<!italic><red>Spieler <white>" + targetName + " <red>nicht gefunden.")));
                 return;
             }
             switch (action) {
-                case "add" -> plugin.getPlayerDataManager().addPlanks(uuid, amt)
+                case "add" -> lc.getPlayerDataManager().addPlanks(uuid, amt)
                         .thenRun(() -> run(() -> {
                             sender.sendMessage(MM.deserialize("<!italic><green>+<white>" + amt + " <#D2691E>▬ <green>Planks zu <white>" + targetName + " <green>hinzugefügt."));
                             Player t = Bukkit.getPlayer(uuid);
                             if (t != null) t.sendMessage(MM.deserialize(
                                     "<!italic><gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray>"
-                                    + " <green>Du hast <white>" + TextUtil.formatCoins(amt) + " <#D2691E>▬ <green>Planks erhalten!"));
+                                    + " <green>Du hast <white>" + FormatUtil.formatAmount(amt) + " <#D2691E>▬ <green>Planks erhalten!"));
                         }));
-                case "remove" -> plugin.getPlayerDataManager().removePlanks(uuid, amt)
+                case "remove" -> lc.getPlayerDataManager().removePlanks(uuid, amt)
                         .thenRun(() -> run(() ->
-                            sender.sendMessage(MM.deserialize("<!italic><red>-<white>" + amt + " <red>▬ Planks von <white>" + targetName + " <red>abgezogen."))));
+                            sender.sendMessage(MM.deserialize("<!italic><red>-<white>" + amt + " <#D2691E>▬ Planks von <white>" + targetName + " <red>abgezogen."))));
                 case "set" -> {
-                    var cached = plugin.getPlayerDataManager().getCached(uuid);
+                    var cached = lc.getPlayerDataManager().getCached(uuid);
                     long current = cached != null ? cached.getPlanks() : 0;
                     long diff = amt - current;
-                    plugin.getPlayerDataManager().addPlanks(uuid, diff)
+                    lc.getPlayerDataManager().addPlanks(uuid, diff)
                             .thenRun(() -> run(() ->
-                                sender.sendMessage(MM.deserialize("<!italic><green>Planks von <white>" + targetName + " <green>auf <white>" + TextUtil.formatCoins(amt) + " <green>gesetzt."))));
+                                sender.sendMessage(MM.deserialize("<!italic><green>Planks von <white>" + targetName + " <green>auf <white>" + FormatUtil.formatAmount(amt) + " <green>gesetzt."))));
                 }
                 default -> run(() -> sender.sendMessage(MM.deserialize("<!italic><red>Unbekannte Aktion. Nutze add|remove|set|show")));
             }
@@ -91,13 +99,32 @@ public class GPlanksCommand implements CommandExecutor {
         return true;
     }
 
-    private void resolveUuid(String name, Consumer<UUID> callback) {
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!sender.hasPermission("lemonlobby.admin.planks")) return List.of();
+        return switch (args.length) {
+            case 1 -> List.of("add", "remove", "set", "show").stream()
+                    .filter(s -> s.startsWith(args[0].toLowerCase())).toList();
+            case 2 -> Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(n -> n.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .toList();
+            default -> List.of();
+        };
+    }
+
+    private void resolveUuid(LemonCore lc, String name, Consumer<UUID> callback) {
         Player online = Bukkit.getPlayer(name);
         if (online != null) { callback.accept(online.getUniqueId()); return; }
-        plugin.getPlayerDataManager().findUUIDByName(name).thenAccept(callback);
+        lc.getPlayerDataManager().findUUIDByName(name).thenAccept(callback);
     }
 
     private void run(Runnable r) {
         Bukkit.getScheduler().runTask(plugin, r);
+    }
+
+    private LemonCore getLemonCore() {
+        var p = Bukkit.getPluginManager().getPlugin("LemonCore");
+        return p instanceof LemonCore lc ? lc : null;
     }
 }

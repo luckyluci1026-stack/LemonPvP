@@ -1,6 +1,10 @@
 package com.lemonpvp.lemonlobby;
 
+import com.lemonpvp.lemonlobby.commands.ApplesCommand;
+import com.lemonpvp.lemonlobby.commands.GApplesCommand;
+import com.lemonpvp.lemonlobby.commands.GPlanksCommand;
 import com.lemonpvp.lemonlobby.commands.LobbyAdminCommand;
+import com.lemonpvp.lemonlobby.commands.PlanksCommand;
 import com.lemonpvp.lemonlobby.commands.ShopCommand;
 import com.lemonpvp.lemonlobby.database.Database;
 import com.lemonpvp.lemonlobby.gui.TrainingGUI;
@@ -60,6 +64,16 @@ public final class LemonLobby extends JavaPlugin {
         // Register commands
         var shopCmd = getCommand("shop");
         if (shopCmd != null) shopCmd.setExecutor(new ShopCommand(this));
+        var applesCmd = getCommand("apples");
+        if (applesCmd != null) applesCmd.setExecutor(new ApplesCommand(this));
+        var planksCmd = getCommand("planks");
+        if (planksCmd != null) planksCmd.setExecutor(new PlanksCommand(this));
+        var gapplesCmd = new GApplesCommand(this);
+        var gapplesBukkitCmd = getCommand("gapples");
+        if (gapplesBukkitCmd != null) { gapplesBukkitCmd.setExecutor(gapplesCmd); gapplesBukkitCmd.setTabCompleter(gapplesCmd); }
+        var gplanksCmd = new GPlanksCommand(this);
+        var gplanksBukkitCmd = getCommand("gplanks");
+        if (gplanksBukkitCmd != null) { gplanksBukkitCmd.setExecutor(gplanksCmd); gplanksBukkitCmd.setTabCompleter(gplanksCmd); }
         var llobbyCmd = getCommand("llobby");
         if (llobbyCmd != null) {
             var llobbyAdmin = new LobbyAdminCommand(this);

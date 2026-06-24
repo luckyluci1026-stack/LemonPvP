@@ -198,8 +198,6 @@ public class LemonCore extends JavaPlugin {
         var coderl = new CoderlCommand(this);
         getCommand("coderl").setExecutor(coderl);
         getCommand("coderl").setTabCompleter(coderl);
-        getCommand("gapples").setExecutor(new GApplesCommand(this));
-        getCommand("gplanks").setExecutor(new GPlanksCommand(this));
         getCommand("aowcode").setExecutor(new AowCodeCommand(this));
         getCommand("offend").setExecutor(new OffendCommand(this));
         getCommand("punish").setExecutor(new PunishCommand(this));
@@ -227,8 +225,6 @@ public class LemonCore extends JavaPlugin {
         // User commands
         getCommand("rank").setExecutor(luckPerms != null ? new RankCommand(this, luckPerms) : (s, c, l, a) -> { s.sendMessage("LuckPerms not available."); return true; });
         getCommand("coins").setExecutor(new CoinsCommand(this));
-        getCommand("apples").setExecutor(new ApplesCommand(this));
-        getCommand("planks").setExecutor(new PlanksCommand(this));
         getCommand("code").setExecutor(luckPerms != null ? new CodeCommand(this, luckPerms) : new CodeCommand(this, null));
         getCommand("stats").setExecutor(new StatsCommand(this));
         getCommand("settings").setExecutor(new SettingsCommand(this));
@@ -263,12 +259,6 @@ public class LemonCore extends JavaPlugin {
             default -> java.util.List.of();
         });
 
-        // /gcoins /gapples /gplanks <add|remove|set|show> <player>
-        org.bukkit.command.TabCompleter economyTab = (s, c, l, a) -> switch (a.length) {
-            case 1 -> filterStart(java.util.List.of("add", "remove", "set", "show"), a[0]);
-            case 2 -> onlinePlayers(a[1]);
-            default -> java.util.List.of();
-        };
         var gcoinsCmd = getCommand("gcoins");
         if (gcoinsCmd != null) gcoinsCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
             case 1 -> filterStart(java.util.List.of("add", "remove", "set", "show"), a[0]);
@@ -296,11 +286,6 @@ public class LemonCore extends JavaPlugin {
             case 2 -> "whitelist".equalsIgnoreCase(a[0]) ? onlinePlayers(a[1]) : java.util.List.of();
             default -> java.util.List.of();
         });
-
-        var gapplesCmd = getCommand("gapples");
-        if (gapplesCmd != null) gapplesCmd.setTabCompleter(economyTab);
-        var gplanksCmd = getCommand("gplanks");
-        if (gplanksCmd != null) gplanksCmd.setTabCompleter(economyTab);
 
         // /restart [cancel]
         var restartCmd = getCommand("restart");
