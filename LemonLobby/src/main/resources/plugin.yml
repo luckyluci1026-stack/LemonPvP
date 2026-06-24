@@ -25,7 +25,7 @@ commands:
     permission: lemonlobby.admin.planks
   llobby:
     description: LemonLobby Admin-Kommandos
-    usage: /llobby reload
+    usage: /llobby reload|upgrade|booster
     permission: lemonlobby.admin
 permissions:
   lemonlobby.admin:

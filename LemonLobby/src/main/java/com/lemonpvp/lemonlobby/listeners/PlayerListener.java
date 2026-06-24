@@ -48,7 +48,9 @@ public class PlayerListener implements Listener {
         player.setSaturation(20.0f);
         hotbarManager.giveHotbar(player);
         plugin.getTreeUpgradeManager().load(player.getUniqueId());
-        plugin.getBoosterManager().load(player.getUniqueId());
+        plugin.getBoosterManager().load(player.getUniqueId())
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin,
+                        () -> plugin.getBoosterManager().showBoosterBar(player)));
     }
 
     @EventHandler(priority = EventPriority.NORMAL)

@@ -81,6 +81,10 @@ public final class LemonLobby extends JavaPlugin {
             llobbyCmd.setTabCompleter(llobbyAdmin);
         }
 
+        // Booster bossbar tick (every second)
+        getServer().getScheduler().runTaskTimer(this,
+                () -> boosterManager.tickBossBars(), 20L, 20L);
+
         // Start daily restart scheduler
         restartManager.start();
 
@@ -107,7 +111,7 @@ public final class LemonLobby extends JavaPlugin {
     public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
     public RestartManager getRestartManager()         { return restartManager; }
 
-    private void loadServersConfig() {
+    public void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
         if (!f.exists()) saveResource("servers.yml", false);
         serversConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(f);

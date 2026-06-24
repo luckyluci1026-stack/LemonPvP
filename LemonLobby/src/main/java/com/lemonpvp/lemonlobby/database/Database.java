@@ -85,10 +85,11 @@ public class Database {
              PreparedStatement ps = conn.prepareStatement(
                      "SELECT tier, expires_at FROM ll_plank_upgrades WHERE uuid=?")) {
             ps.setString(1, uuid.toString());
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                PlankTier tier = PlankTier.fromName(rs.getString("tier"));
-                return new PlankEntry(tier, rs.getLong("expires_at"));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    PlankTier tier = PlankTier.fromName(rs.getString("tier"));
+                    return new PlankEntry(tier, rs.getLong("expires_at"));
+                }
             }
             return null;
         } catch (SQLException e) {
@@ -120,11 +121,12 @@ public class Database {
              PreparedStatement ps = conn.prepareStatement(
                      "SELECT tier, remaining_uses, expires_at FROM ll_boosters WHERE uuid=?")) {
             ps.setString(1, uuid.toString());
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                BoosterTier tier = BoosterTier.fromLevel(rs.getInt("tier"));
-                if (tier == null) return null;
-                return new BoosterEntry(tier, rs.getInt("remaining_uses"), rs.getLong("expires_at"));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BoosterTier tier = BoosterTier.fromLevel(rs.getInt("tier"));
+                    if (tier == null) return null;
+                    return new BoosterEntry(tier, rs.getInt("remaining_uses"), rs.getLong("expires_at"));
+                }
             }
             return null;
         } catch (SQLException e) {
