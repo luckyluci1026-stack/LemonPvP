@@ -1,10 +1,11 @@
 package com.lemonpvp.lemonlobby.listeners;
 
-import com.lemonpvp.lemoncore.LemonCore;
 import com.lemonpvp.lemonlobby.LemonLobby;
 import com.lemonpvp.lemonlobby.model.PlankTier;
+import com.lemonpvp.lemonlobby.util.EconomyBridge;
+import com.lemonpvp.lemonlobby.util.HologramUtil;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -16,13 +17,17 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
+import java.time.Duration;
 import java.util.*;
 
 public class AppleTreeListener implements Listener {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final long COMBO_WINDOW_MS = 2_000;
-    private static final int  MAX_COMBO = 5;
+
+    private static final long   COMBO_WINDOW_MS  = 2_000;
+    private static final int    MAX_COMBO        = 5;
+    private static final double JACKPOT_CHANCE   = 0.03;  // 3 % per leaf-click
+    private static final int    JACKPOT_BONUS    = 25;
 
     private final LemonLobby plugin;
     private final Map<UUID, Long>    appleCooldowns = new HashMap<>();
@@ -33,11 +38,10 @@ public class AppleTreeListener implements Listener {
     // Cached from config on reload()
     private Set<Material> leafMaterials;
     private Set<Material> logMaterials;
-    private long appleCooldownMs;
-    private long plankCooldownMs;
+    private long   appleCooldownMs;
+    private long   plankCooldownMs;
     private String worldName;
-    private int baseApples;
-    private LemonCore lcCache;
+    private int    baseApples;
 
     public AppleTreeListener(LemonLobby plugin) {
         this.plugin = plugin;
@@ -55,10 +59,8 @@ public class AppleTreeListener implements Listener {
         }
         appleCooldownMs = plugin.getConfig().getLong("apple-tree.apple-cooldown-ticks", 20) * 50L;
         plankCooldownMs = plugin.getConfig().getLong("apple-tree.plank-cooldown-ticks", 100) * 50L;
-        worldName   = plugin.getConfig().getString("apple-tree.world", "world");
-        baseApples  = plugin.getConfig().getInt("apple-tree.base-apples", 1);
-        var p = Bukkit.getPluginManager().getPlugin("LemonCore");
-        lcCache = p instanceof LemonCore lc ? lc : null;
+        worldName  = plugin.getConfig().getString("apple-tree.world", "world");
+        baseApples = plugin.getConfig().getInt("apple-tree.base-apples", 1);
     }
 
     @EventHandler
@@ -69,8 +71,8 @@ public class AppleTreeListener implements Listener {
         if (block == null) return;
         if (!e.getPlayer().getWorld().getName().equals(worldName)) return;
 
-        Material type = block.getType();
-        Player player = e.getPlayer();
+        Material type  = block.getType();
+        Player   player = e.getPlayer();
 
         if (leafMaterials.contains(type)) {
             handleLeafClick(player, block);
@@ -78,6 +80,8 @@ public class AppleTreeListener implements Listener {
             handleLogClick(player, block);
         }
     }
+
+    // ── Leaf → Apples ─────────────────────────────────────────────────────────
 
     private void handleLeafClick(Player player, Block block) {
         UUID uuid = player.getUniqueId();
@@ -94,38 +98,72 @@ public class AppleTreeListener implements Listener {
 
         int combo  = advanceCombo(uuid, now);
         int bonus  = plugin.getBoosterManager().getBonus(uuid);
-        // Multiplier scales linearly: 1.0x at combo 1 → 2.0x at combo MAX_COMBO
-        double mult  = 1.0 + (double)(combo - 1) / MAX_COMBO;
-        int total    = (int) Math.round((baseApples + bonus) * mult);
+        double mult = 1.0 + (double)(combo - 1) / MAX_COMBO;
+        boolean jackpot = Math.random() < JACKPOT_CHANCE;
+        int total = (int) Math.round((baseApples + bonus) * mult) + (jackpot ? JACKPOT_BONUS : 0);
 
-        if (lcCache != null) lcCache.getPlayerDataManager().addApples(uuid, total);
+        EconomyBridge.addApples(uuid, total);
         if (bonus > 0) plugin.getBoosterManager().consumeUse(uuid);
 
-        // Sound: pitch rises with combo
-        float pitch = Math.min(2.0f, 1.0f + (combo - 1) * 0.15f);
-        player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.7f, pitch);
-
-        // Max-combo burst
-        if (combo == MAX_COMBO) {
-            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.6f);
-        }
-
-        // Particles
         org.bukkit.Location center = block.getLocation().add(0.5, 0.5, 0.5);
-        int pCount = 4 + combo * 2;
-        if (bonus > 0) {
-            block.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, center, pCount, 0.3, 0.3, 0.3, 0.05);
-        } else {
-            block.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, center, pCount, 0.3, 0.3, 0.3, 0);
-        }
 
-        // Action-bar message
-        String comboTag = combo > 1 ? " <gold>×" + combo : "";
-        String boostTag = bonus > 0 ? " <gray>(<yellow>Boost +<white>" + bonus + "<gray>)" : "";
-        String gradient = combo >= MAX_COMBO ? "<gradient:#fffb00:#ff6600>" : "<green>";
-        player.sendActionBar(MM.deserialize(
-                "<!italic>" + gradient + "+<white>" + total + " <green>✿" + comboTag + boostTag));
+        if (jackpot) {
+            handleJackpot(player, block, center, total);
+        } else {
+            // Sound: pitch rises with combo
+            float pitch = Math.min(2.0f, 1.0f + (combo - 1) * 0.15f);
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.7f, pitch);
+            if (combo == MAX_COMBO) {
+                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.6f);
+            }
+
+            // Particles
+            int pCount = 4 + combo * 2;
+            block.getWorld().spawnParticle(
+                    bonus > 0 ? Particle.TOTEM_OF_UNDYING : Particle.HAPPY_VILLAGER,
+                    center, pCount, 0.3, 0.3, 0.3, bonus > 0 ? 0.05 : 0);
+
+            // Action-bar
+            String comboTag  = combo > 1 ? " <gold>×" + combo : "";
+            String boostTag  = bonus > 0 ? " <gray>(<yellow>+<white>" + bonus + "<gray>)" : "";
+            String gradient  = combo >= MAX_COMBO ? "<gradient:#fffb00:#ff6600>" : "<green>";
+            player.sendActionBar(MM.deserialize(
+                    "<!italic>" + gradient + "+<white>" + total + " <green>✿" + comboTag + boostTag));
+
+            // Floating hologram
+            HologramUtil.spawnRising(plugin, center.clone().add(0, 1, 0),
+                    MM.deserialize("<!italic><bold><green>+" + total + " ✿"
+                            + (combo > 1 ? " <gold>×" + combo : "")));
+        }
     }
+
+    private void handleJackpot(Player player, Block block, org.bukkit.Location center, int total) {
+        // Firework-ring particles
+        for (int i = 0; i < 16; i++) {
+            double angle = (2 * Math.PI / 16) * i;
+            double dx = Math.cos(angle) * 0.8;
+            double dz = Math.sin(angle) * 0.8;
+            block.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
+                    center.clone().add(dx, 0.5, dz), 4, 0, 0.4, 0, 0.08);
+        }
+        block.getWorld().spawnParticle(Particle.FIREWORK, center, 20, 0.4, 0.4, 0.4, 0.1);
+
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.8f);
+        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.5f);
+
+        player.showTitle(Title.title(
+                MM.deserialize("<!italic><bold><gradient:#fffb00:#ff6600>★ JACKPOT! ★"),
+                MM.deserialize("<!italic><white>+" + total + " <green>✿ Bonus!"),
+                Title.Times.times(
+                        Duration.ofMillis(150),
+                        Duration.ofMillis(1500),
+                        Duration.ofMillis(400))));
+
+        HologramUtil.spawnRising(plugin, center.clone().add(0, 1, 0),
+                MM.deserialize("<!italic><bold><gradient:#fffb00:#ff6600>★ +" + total + " ✿ ★"));
+    }
+
+    // ── Log → Planks ──────────────────────────────────────────────────────────
 
     private void handleLogClick(Player player, Block block) {
         UUID uuid = player.getUniqueId();
@@ -140,10 +178,10 @@ public class AppleTreeListener implements Listener {
         }
         plankCooldowns.put(uuid, now);
 
-        PlankTier tier   = plugin.getTreeUpgradeManager().getCurrentTier(uuid);
+        PlankTier tier  = plugin.getTreeUpgradeManager().getCurrentTier(uuid);
         int planks       = tier.planksPerClick;
 
-        if (lcCache != null) lcCache.getPlayerDataManager().addPlanks(uuid, planks);
+        EconomyBridge.addPlanks(uuid, planks);
 
         player.playSound(player.getLocation(), Sound.BLOCK_WOOD_HIT, 0.8f, 1.0f);
         org.bukkit.Location center = block.getLocation().add(0.5, 0.5, 0.5);
@@ -151,7 +189,12 @@ public class AppleTreeListener implements Listener {
 
         player.sendActionBar(MM.deserialize(
                 "<!italic><#D2691E>+<white>" + planks + " <#D2691E>▬ <gray>(" + tier.displayName + ")"));
+
+        HologramUtil.spawnRising(plugin, center.clone().add(0, 1, 0),
+                MM.deserialize("<!italic><bold><#D2691E>+" + planks + " ▬"));
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private int advanceCombo(UUID uuid, long now) {
         Long lastTime = lastClickTime.get(uuid);

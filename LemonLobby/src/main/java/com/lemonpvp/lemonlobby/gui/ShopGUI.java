@@ -1,11 +1,11 @@
 package com.lemonpvp.lemonlobby.gui;
 
-import com.lemonpvp.lemoncore.LemonCore;
 import com.lemonpvp.lemoncore.managers.PlayerData;
 import com.lemonpvp.lemonlobby.LemonLobby;
 import com.lemonpvp.lemonlobby.database.Database;
 import com.lemonpvp.lemonlobby.model.BoosterTier;
 import com.lemonpvp.lemonlobby.model.PlankTier;
+import com.lemonpvp.lemonlobby.util.EconomyBridge;
 import com.lemonpvp.lemonlobby.util.FormatUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -281,13 +281,9 @@ public class ShopGUI implements Listener {
             meta.displayName(MM.deserialize("<!italic><bold><gradient:#fffb00:#00ff00>" + player.getName()));
             List<Component> lore = new ArrayList<>();
             lore.add(Component.empty());
-
-            long apples = 0, planks = 0;
-            LemonCore lc = getLemonCore();
-            if (lc != null) {
-                PlayerData pd = lc.getPlayerDataManager().getCached(player.getUniqueId());
-                if (pd != null) { apples = pd.getApples(); planks = pd.getPlanks(); }
-            }
+            PlayerData pd = EconomyBridge.cached(player.getUniqueId());
+            long apples = pd != null ? pd.getApples() : 0;
+            long planks = pd != null ? pd.getPlanks() : 0;
             lore.add(MM.deserialize("<!italic><gray>✿ Äpfel: <green>" + FormatUtil.formatAmount(apples)));
             lore.add(MM.deserialize("<!italic><gray>▬ Planks: <#D2691E>" + FormatUtil.formatAmount(planks)));
             lore.add(Component.empty());
@@ -337,10 +333,7 @@ public class ShopGUI implements Listener {
         }
 
         purchasing = true;
-        LemonCore lc = getLemonCore();
-        if (lc == null) { purchasing = false; return; }
-
-        lc.getPlayerDataManager().removeApples(player.getUniqueId(), tier.appleCost)
+        EconomyBridge.removeApples(player.getUniqueId(), tier.appleCost)
                 .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                     plugin.getTreeUpgradeManager().upgrade(player.getUniqueId(), tier);
                     player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.3f);
@@ -365,10 +358,7 @@ public class ShopGUI implements Listener {
         }
 
         purchasing = true;
-        LemonCore lc = getLemonCore();
-        if (lc == null) { purchasing = false; return; }
-
-        lc.getPlayerDataManager().removeApples(player.getUniqueId(), tier.appleCost)
+        EconomyBridge.removeApples(player.getUniqueId(), tier.appleCost)
                 .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                     plugin.getBoosterManager().activate(player.getUniqueId(), tier);
                     player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.8f, 1.0f);
@@ -399,15 +389,7 @@ public class ShopGUI implements Listener {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private long getApples() {
-        LemonCore lc = getLemonCore();
-        if (lc == null) return 0;
-        PlayerData pd = lc.getPlayerDataManager().getCached(player.getUniqueId());
-        return pd != null ? pd.getApples() : 0;
-    }
-
-    private LemonCore getLemonCore() {
-        var p = Bukkit.getPluginManager().getPlugin("LemonCore");
-        return p instanceof LemonCore lc ? lc : null;
+        return EconomyBridge.apples(player.getUniqueId());
     }
 
     private String progressBar(long current, long max, int bars) {
