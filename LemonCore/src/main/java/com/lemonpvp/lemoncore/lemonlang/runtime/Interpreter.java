@@ -72,6 +72,24 @@ public final class Interpreter {
                     execAll(r.body(), childCtx);
                 }
             }
+
+            case ThreadStmt t -> {
+                org.bukkit.plugin.Plugin plugin = ctx.manager().getPlugin();
+                if (t.mode().equals("async")) {
+                    org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                        try { execAll(t.body(), ctx); } catch (StopExecution ignored) {}
+                    });
+                } else {
+                    // main thread — if already on main, run inline; otherwise schedule
+                    if (org.bukkit.Bukkit.isPrimaryThread()) {
+                        execAll(t.body(), ctx);
+                    } else {
+                        org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                            try { execAll(t.body(), ctx); } catch (StopExecution ignored) {}
+                        });
+                    }
+                }
+            }
         }
     }
 

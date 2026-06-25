@@ -6,7 +6,6 @@ import com.lemonpvp.lemoncore.lemonlang.token.ArgScanner;
 import com.lemonpvp.lemoncore.lemonlang.token.Line;
 
 import java.util.*;
-import java.util.Set;
 
 /**
  * Parses a flat list of {@link Line} objects into a {@link Program}.
@@ -56,7 +55,6 @@ public final class Parser {
         if (words.isEmpty()) { pos++; return null; }
 
         String kw = words.get(0).toLowerCase();
-        int lineNum = line.number();
         switch (kw) {
             case "set":    return parseSet(line);
             case "define": return parseDefine(line);

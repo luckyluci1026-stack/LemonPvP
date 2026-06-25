@@ -50,6 +50,11 @@ public class DatabaseManager {
         return dataSource.getConnection();
     }
 
+    /** Returns the underlying HikariDataSource for external use (e.g., LemonLangDB). */
+    public HikariDataSource getDataSource() {
+        return dataSource;
+    }
+
     public CompletableFuture<Void> executeAsync(Consumer<Connection> action) {
         return CompletableFuture.runAsync(() -> {
             try (Connection conn = getConnection()) {

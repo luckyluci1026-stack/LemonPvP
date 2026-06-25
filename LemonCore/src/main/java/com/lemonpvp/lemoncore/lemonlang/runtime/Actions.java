@@ -425,6 +425,78 @@ public final class Actions {
                 throw new StopExecution();
             }
 
+            // ---- db (write/read/delete) -----------------------------------------
+            case "db": {
+                // Format: db write [sync] TABLE KEY FIELD VALUE
+                //         db read  [sync] TABLE KEY FIELD -> VARIABLE
+                //         db delete [sync] TABLE KEY FIELD
+                if (args.isEmpty()) {
+                    LOG.warning("[LemonLang] db: Kein Unterbefehl angegeben. Erlaubt: write, read, delete");
+                    break;
+                }
+                LemonCore lc = (LemonCore) ctx.manager().getPlugin();
+                String sub = args.get(0).toLowerCase();
+                boolean sync = args.size() > 1 && args.get(1).equalsIgnoreCase("sync");
+                int offset = sync ? 2 : 1;
+                // Need at least: sub [sync] TABLE KEY FIELD  → offset + 3 total args
+                if (args.size() < offset + 3) {
+                    LOG.warning("[LemonLang] db " + sub + ": Zu wenige Argumente. "
+                            + "Format: db " + sub + " [sync] TABLE KEY FIELD [VALUE]");
+                    break;
+                }
+                // TABLE arg is present but semantically unused (table is always lemonlang_data);
+                // we keep it in the syntax for forward-compatibility and user clarity.
+                String key   = ctx.resolveString(args.get(offset + 1));  // KEY (resolved)
+                String field = args.get(offset + 2);                     // FIELD
+
+                switch (sub) {
+                    case "write" -> {
+                        if (args.size() < offset + 4) {
+                            LOG.warning("[LemonLang] db write: Fehlender Wert. "
+                                    + "Format: db write [sync] TABLE KEY FIELD VALUE");
+                            break;
+                        }
+                        String value = ctx.resolveString(
+                                String.join(" ", args.subList(offset + 3, args.size())));
+                        if (sync) {
+                            LemonLangDB.writeSync(lc, key, field, value);
+                        } else {
+                            LemonLangDB.writeAsync(lc, key, field, value);
+                        }
+                    }
+                    case "read" -> {
+                        // Format: db read [sync] TABLE KEY FIELD -> VARIABLE
+                        int arrowIdx = args.indexOf("->");
+                        if (arrowIdx < 0 || arrowIdx >= args.size() - 1) {
+                            LOG.warning("[LemonLang] db read: Fehlendes '->' oder Variablenname. "
+                                    + "Format: db read [sync] TABLE KEY FIELD -> VARIABLE");
+                            break;
+                        }
+                        String varName = args.get(arrowIdx + 1);
+                        if (sync) {
+                            String val = LemonLangDB.readSync(lc, key, field).orElse("");
+                            ctx.env().setVar(varName, val);
+                        } else {
+                            LemonLangDB.readAsync(lc, key, field).thenAccept(optVal -> {
+                                String val = optVal.orElse("");
+                                org.bukkit.Bukkit.getScheduler().runTask(ctx.manager().getPlugin(), () ->
+                                        ctx.env().setVar(varName, val));
+                            });
+                        }
+                    }
+                    case "delete" -> {
+                        if (sync) {
+                            LemonLangDB.deleteSync(lc, key, field);
+                        } else {
+                            LemonLangDB.deleteAsync(lc, key, field);
+                        }
+                    }
+                    default -> LOG.warning("[LemonLang] db: Unbekannter Unterbefehl '" + sub
+                            + "'. Erlaubt: write, read, delete");
+                }
+                break;
+            }
+
             default: {
                 LOG.warning("[LemonLang] Unbekanntes Verb '" + verb + "' in Skript '" + scriptFile + "'.");
             }

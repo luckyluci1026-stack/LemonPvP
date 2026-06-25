@@ -4,7 +4,9 @@ import com.lemonpvp.lemoncore.LemonCore;
 import com.lemonpvp.lemoncore.lemonlang.ast.*;
 import com.lemonpvp.lemoncore.lemonlang.parser.Parser;
 import com.lemonpvp.lemoncore.lemonlang.runtime.*;
+import com.lemonpvp.lemoncore.lemonlang.runtime.LemonLangDB;
 import com.lemonpvp.lemoncore.lemonlang.token.LineReader;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
 import java.io.*;
@@ -43,6 +45,9 @@ public final class LemonLangManager {
     /** script name → LemonLangScript metadata */
     private final Map<String, LemonLangScript> scripts = new ConcurrentHashMap<>();
 
+    /** File-system watcher for auto-reloading changed .lemon files. */
+    private ScriptWatcher scriptWatcher;
+
     public LemonLangManager(LemonCore plugin) {
         this.plugin = plugin;
     }
@@ -55,6 +60,9 @@ public final class LemonLangManager {
         File lemonDir = new File(plugin.getDataFolder(), "lemonlang");
         lemonDir.mkdirs();
 
+        // Ensure the DB table exists before any script might use 'db' actions
+        LemonLangDB.ensureTable(plugin);
+
         // Copy embedded example/doc resources from jar (only if not already present)
         extractResourceDir("lemonlang/docs", lemonDir);
         extractResourceDir("lemonlang/examples", lemonDir);
@@ -63,17 +71,22 @@ public final class LemonLangManager {
         File[] lemonFiles = lemonDir.listFiles((dir, name) -> name.endsWith(".lemon"));
         if (lemonFiles == null || lemonFiles.length == 0) {
             LOG.info("[LemonLang] Keine .lemon Dateien in " + lemonDir.getPath() + " gefunden.");
-            return;
-        }
-
-        for (File file : lemonFiles) {
-            loadScript(file);
+        } else {
+            for (File file : lemonFiles) {
+                loadScript(file);
+            }
         }
 
         LOG.info("[LemonLang] " + programs.size() + " Skript(e) geladen, " +
                 itemRegistry.size() + " Item(s), " +
                 guiRegistry.size() + " GUI(s), " +
                 schedulerManager.size() + " Timer.");
+
+        // Start the file watcher for auto-reload (only if not already running)
+        if (scriptWatcher == null) {
+            scriptWatcher = new ScriptWatcher(lemonDir.toPath(), this, plugin);
+            scriptWatcher.start();
+        }
     }
 
     /** Reload all scripts: cancel tasks, unregister commands, clear registries, reload. */
@@ -103,6 +116,11 @@ public final class LemonLangManager {
 
     /** Stop all tasks and unregister all dynamic commands. */
     public void shutdown() {
+        // Stop the file watcher first
+        if (scriptWatcher != null) {
+            scriptWatcher.stop();
+            scriptWatcher = null;
+        }
         schedulerManager.cancelAll();
         for (DynamicCommand cmd : dynamicCommands) {
             cmd.unregister(plugin);
@@ -181,6 +199,33 @@ public final class LemonLangManager {
         programs.put(name, program);
         script.setProgram(program);
 
+        // Validate system and import declarations before registering
+        String scriptName = name;
+        for (Node node : program.nodes()) {
+            if (node instanceof SystemDecl sys) {
+                String detected = detectServerType();
+                if (!detected.equals(sys.type())) {
+                    LOG.warning("[LemonLang] Skript '" + scriptName + "' deklariert 'system " + sys.type()
+                        + "', aber Server ist '" + detected + "'. Skript wird nicht geladen.");
+                    programs.remove(name);
+                    return;
+                }
+            }
+            if (node instanceof ImportDecl imp) {
+                String pluginId = canonicalPluginName(imp.pluginName());
+                if (pluginId != null && Bukkit.getPluginManager().getPlugin(pluginId) == null) {
+                    LemonLangError err = new LemonLangError(scriptName, imp.line(),
+                        "Plugin '" + imp.pluginName() + "' ist nicht geladen.",
+                        "Installiere " + imp.pluginName() + " oder entferne die import-Zeile.");
+                    lastErrors.put(scriptName, err);
+                    LOG.warning("[LemonLang] Skript '" + scriptName + "' benoetigt Plugin '"
+                        + imp.pluginName() + "' (nicht gefunden). Skript wird nicht geladen.");
+                    programs.remove(name);
+                    return;
+                }
+            }
+        }
+
         // Register everything from the program
         int itemCount = 0, cmdCount = 0, guiCount = 0, triggerCount = 0;
         Interpreter interp = new Interpreter(name + ".lemon");
@@ -217,6 +262,33 @@ public final class LemonLangManager {
         script.markLoaded();
         LOG.info("[LemonLang] '" + name + ".lemon' geladen: " + triggerCount + " Trigger, " +
                 itemCount + " Items, " + cmdCount + " Commands, " + guiCount + " GUIs.");
+    }
+
+    // ---- Server type detection ------------------------------------------------
+
+    private String detectServerType() {
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+            return "folia";
+        } catch (ClassNotFoundException ignored) {}
+        try {
+            Class.forName("io.papermc.paper.PaperConfig");
+            return "paper";
+        } catch (ClassNotFoundException ignored) {}
+        return "paper"; // default
+    }
+
+    private String canonicalPluginName(String importName) {
+        return switch (importName.toLowerCase()) {
+            case "luckperms" -> "LuckPerms";
+            case "lpc" -> "LuckPerms";
+            case "placeholderapi" -> "PlaceholderAPI";
+            case "vault" -> "Vault";
+            case "advancedenchantments" -> "AdvancedEnchantments";
+            case "itemsadder" -> "ItemsAdder";
+            case "paper" -> null; // always available, skip check
+            default -> importName; // try exact name
+        };
     }
 
     // ---- Resource extraction ---------------------------------------------------
