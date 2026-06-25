@@ -112,7 +112,7 @@ history:
 teleport:
   success: "{prefix} <green>Teleported to <white>{player}"
   spawn: "{prefix} <green>Teleported to spawn."
-  lobby-set: "{prefix} <green>Lobby spawn set."
+  lobby-set: "{prefix} <green>Spawn gesetzt."
 
 spectator:
   enabled: "{prefix} <green>Spectator mode enabled."

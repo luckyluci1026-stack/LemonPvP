@@ -273,6 +273,7 @@ commands:
   aowsetlobby:
     description: Set lobby spawn point
     permission: lemoncore.admin.setlobby
+    aliases: [setspawn, setlobby]
   restart:
     description: Restart all servers (5-minute countdown)
     permission: lemoncore.admin.restart
