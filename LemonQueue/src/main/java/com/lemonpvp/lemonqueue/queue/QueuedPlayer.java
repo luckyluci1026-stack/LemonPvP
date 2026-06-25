@@ -20,6 +20,8 @@ public class QueuedPlayer {
 
     private volatile boolean sending = false;
     private volatile long sendingSince = 0L;
+    /** Epoch-ms until which this player must not be retried after a failed connect. */
+    private volatile long retryAfter = 0L;
 
     public QueuedPlayer(Player player, String target, int priority, long joinTime) {
         this.player = player;
@@ -48,5 +50,15 @@ public class QueuedPlayer {
      */
     public boolean isSendingStale(long maxMs) {
         return sending && (System.currentTimeMillis() - sendingSince) > maxMs;
+    }
+
+    /** True while a retry-cooldown from a previous failed connect is still active. */
+    public boolean isOnRetryBackoff() {
+        return System.currentTimeMillis() < retryAfter;
+    }
+
+    /** Prevents this player from being retried for {@code cooldownMs} milliseconds. */
+    public void setRetryBackoff(long cooldownMs) {
+        this.retryAfter = System.currentTimeMillis() + cooldownMs;
     }
 }

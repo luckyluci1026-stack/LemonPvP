@@ -49,6 +49,8 @@ public class QueueManager {
     private static final long BANNING_TTL_MS = 10_000L;
     /** Max time a connect request may be in flight before we retry the player. */
     private static final long SEND_TIMEOUT_MS = 10_000L;
+    /** Cooldown after a failed connect before the same player is retried. */
+    private static final long RETRY_COOLDOWN_MS = 5_000L;
 
     private final Map<String, ServerQueue> queues = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastPosition = new ConcurrentHashMap<>();
@@ -220,6 +222,8 @@ public class QueueManager {
                 if (sent >= batch) break;
                 // Skip players with an in-flight request unless it has hung.
                 if (qp.isSending() && !qp.isSendingStale(SEND_TIMEOUT_MS)) continue;
+                // Skip players still in their post-failure cooldown window.
+                if (qp.isOnRetryBackoff()) continue;
 
                 Player player = qp.getPlayer();
                 if (player == null || !player.isActive()) {
@@ -242,8 +246,9 @@ public class QueueManager {
                         }
                     } else {
                         // Target rejected (full again / went down): keep player queued.
-                        // Do NOT log here — health cache will log the offline event once.
+                        // Apply a cooldown so we don't hammer the server on every tick.
                         qp.setSending(false);
+                        qp.setRetryBackoff(RETRY_COOLDOWN_MS);
                     }
                 });
             }
