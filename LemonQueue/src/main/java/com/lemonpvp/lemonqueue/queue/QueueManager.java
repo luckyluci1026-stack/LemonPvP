@@ -61,6 +61,7 @@ public class QueueManager {
 
     private ScheduledTask processTask;
     private ScheduledTask displayTask;
+    private ServerHealthCache healthCache;
 
     public QueueManager(LemonQueue plugin, ProxyServer proxy, Logger logger, QueueConfig config) {
         this.plugin = plugin;
@@ -79,6 +80,11 @@ public class QueueManager {
     // ── Lifecycle ─────────────────────────────────────────────────────────
 
     public void start() {
+        // Health monitor: watches limbo + default target, logs once on state change.
+        healthCache = new ServerHealthCache(proxy, logger,
+                config.getLimboServer(), config.getDefaultTarget());
+        healthCache.start(plugin);
+
         processTask = proxy.getScheduler().buildTask(plugin, this::process)
                 .repeat(config.getProcessInterval(), TimeUnit.MILLISECONDS)
                 .schedule();
@@ -88,10 +94,16 @@ public class QueueManager {
     }
 
     public void stop() {
+        if (healthCache != null) { healthCache.stop(); healthCache = null; }
         if (processTask != null) processTask.cancel();
         if (displayTask != null) displayTask.cancel();
         queues.clear();
         lastPosition.clear();
+    }
+
+    /** Returns true if the limbo server is currently reachable. */
+    public boolean isLimboOnline() {
+        return healthCache == null || healthCache.isOnline(config.getLimboServer());
     }
 
     // ── Public API ────────────────────────────────────────────────────────
@@ -184,16 +196,21 @@ public class QueueManager {
     // ── Tasks ─────────────────────────────────────────────────────────────
 
     private void process() {
-        // Evict expired banning marks so the map doesn't grow unboundedly
+        // Evict expired banning marks so the map doesn't grow unboundedly.
         long now = System.currentTimeMillis();
         banningMarks.values().removeIf(expiry -> now > expiry);
 
         for (ServerQueue queue : queues.values()) {
-            Optional<RegisteredServer> opt = proxy.getServer(queue.getTargetServer());
+            // Skip silently when the target is known offline — ServerHealthCache
+            // already logged the state change once; no further spam needed.
+            String targetName = queue.getTargetServer();
+            if (healthCache != null && !healthCache.isOnline(targetName)) continue;
+
+            Optional<RegisteredServer> opt = proxy.getServer(targetName);
             if (opt.isEmpty()) continue;
             RegisteredServer target = opt.get();
 
-            int free = config.getMaxPlayers(queue.getTargetServer()) - target.getPlayersConnected().size();
+            int free = config.getMaxPlayers(targetName) - target.getPlayersConnected().size();
             if (free <= 0) continue;
 
             int batch = Math.min(free, config.getSendBatch());
@@ -201,8 +218,7 @@ public class QueueManager {
 
             for (QueuedPlayer qp : queue.snapshot()) {
                 if (sent >= batch) break;
-                // Skip players with an in-flight request, unless it has hung past the
-                // timeout — then allow a retry so they don't block the whole queue.
+                // Skip players with an in-flight request unless it has hung.
                 if (qp.isSending() && !qp.isSendingStale(SEND_TIMEOUT_MS)) continue;
 
                 Player player = qp.getPlayer();
@@ -219,14 +235,14 @@ public class QueueManager {
                         queue.remove(qp.getUuid());
                         lastPosition.remove(qp.getUuid());
                         recordRelease();
-                        // Player may have disconnected during the async connect.
                         if (player.isActive()) {
                             player.clearTitle();
-                            player.sendActionBar(msg.actionbarConnected(queue.getTargetServer()));
+                            player.sendActionBar(msg.actionbarConnected(targetName));
                             player.playSound(CONNECT);
                         }
                     } else {
-                        // Target rejected (full again / down): keep the player queued.
+                        // Target rejected (full again / went down): keep player queued.
+                        // Do NOT log here — health cache will log the offline event once.
                         qp.setSending(false);
                     }
                 });

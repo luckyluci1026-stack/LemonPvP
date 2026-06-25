@@ -57,12 +57,14 @@ public class ConnectionListener {
         }
 
         // Full → park in limbo, then enqueue for the real target.
+        // Only use limbo if it is registered AND currently reachable (no log spam).
         Optional<RegisteredServer> limbo = proxy.getServer(config.getLimboServer());
-        if (limbo.isPresent()) {
+        if (limbo.isPresent() && queues.isLimboOnline()) {
             event.setInitialServer(limbo.get());
             queues.enqueue(player, target);
         } else {
-            // No limbo configured: fall back to sending them to the target anyway.
+            // Limbo offline or unconfigured → send directly to target.
+            // If target is also full the player will just see the normal full-server screen.
             proxy.getServer(target).ifPresent(event::setInitialServer);
         }
     }
@@ -77,8 +79,6 @@ public class ConnectionListener {
         if (kicked.equalsIgnoreCase(config.getLimboServer())) return;
         if (player.hasPermission(config.getBypassPermission())) return;
         // Ban-kick: LemonCore signalled us not to intercept this kick (consume-once).
-        // We must explicitly set DisconnectPlayer — returning without a result lets
-        // Velocity apply its own fallback routing which would send the player to limbo.
         if (queues.consumeBanning(player.getUniqueId())) {
             queues.dequeue(player.getUniqueId());
             Component reason = event.getServerKickReason().orElse(Component.empty());
@@ -86,8 +86,9 @@ public class ConnectionListener {
             return;
         }
 
+        // Only redirect to limbo when it is actually reachable.
         Optional<RegisteredServer> limbo = proxy.getServer(config.getLimboServer());
-        if (limbo.isEmpty()) return;
+        if (limbo.isEmpty() || !queues.isLimboOnline()) return;
 
         // Redirect to limbo + queue instead of dropping the player.
         event.setResult(KickedFromServerEvent.RedirectPlayer.create(
