@@ -9,9 +9,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
 import net.luckperms.api.LuckPerms;
-import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
@@ -19,6 +19,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.Registry;
 
 import java.time.Duration;
 import java.util.List;
@@ -270,11 +271,11 @@ public final class Actions {
                 if (player == null) return;
                 if (args.size() < 3) throw error(scriptFile, 0, "effect braucht 3 Argumente.",
                         "Syntax: effect EFFECT_NAME DAUER_SEKUNDEN AMPLIFIER");
-                String effectName = args.get(0).toUpperCase();
-                PotionEffectType type = PotionEffectType.getByName(effectName);
+                String effectName = args.get(0).toLowerCase();
+                PotionEffectType type = Registry.EFFECT.get(NamespacedKey.minecraft(effectName));
                 if (type == null) {
                     throw error(scriptFile, 0, "Unbekannter Effekt: '" + effectName + "'.",
-                            "Bitte einen gueltigen PotionEffect-Namen verwenden.");
+                            "Bitte einen gueltigen PotionEffect-Namen verwenden (z.B. speed, regeneration, strength).");
                 }
                 int durationSecs = 30;
                 int amplifier = 0;
@@ -309,11 +310,13 @@ public final class Actions {
             // ---- heal -----------------------------------------------------------
             case "heal": {
                 if (player == null) return;
-                double health = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
+                var maxHealthAttr = player.getAttribute(Attribute.MAX_HEALTH);
+                double maxHealth = maxHealthAttr != null ? maxHealthAttr.getValue() : 20.0;
+                double health = maxHealth;
                 if (!args.isEmpty()) {
                     try { health = Double.parseDouble(args.get(0)); } catch (NumberFormatException ignored) {}
                 }
-                player.setHealth(Math.min(health, player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue()));
+                player.setHealth(Math.min(health, maxHealth));
                 break;
             }
 
@@ -393,8 +396,7 @@ public final class Actions {
                 String guiName = args.get(0);
                 LemonLangManager mgr = ctx.manager();
                 if (mgr != null && player != null) {
-                    LemonCore core = (LemonCore) mgr.getPlugin();
-                    mgr.getGuiRegistry().open(guiName, player, core);
+                        mgr.getGuiRegistry().open(guiName, player, mgr.getPlugin());
                 }
                 break;
             }
