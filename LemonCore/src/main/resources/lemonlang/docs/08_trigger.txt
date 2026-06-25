@@ -1,0 +1,106 @@
+================================================================
+  08 — TRIGGER (WANN PASSIERT WAS?)
+================================================================
+
+Ein Trigger sagt: "WENN dieses Ereignis passiert, DANN tue
+das." Du beginnst mit "on" und dem Namen des Ereignisses,
+danach eingerueckt die Aktionen.
+
+  on join
+    message <green>Willkommen!
+
+
+----------------------------------------------------------------
+  ALLE TRIGGER IM UEBERBLICK
+----------------------------------------------------------------
+
+  on join         -> Spieler betritt den Server
+  on quit         -> Spieler verlaesst den Server
+  on death        -> Spieler stirbt
+  on respawn      -> Spieler taucht wieder auf
+  on chat         -> Spieler schreibt in den Chat
+  on move         -> Spieler bewegt sich (von Block zu Block)
+  on interact     -> Spieler interagiert (Klick auf Block/Luft)
+  on hit          -> Spieler schlaegt einen anderen Spieler
+  on kill         -> Spieler toetet einen anderen Spieler
+  on blockbreak   -> Spieler baut einen Block ab
+  on blockplace   -> Spieler setzt einen Block
+  on rightclick   -> Rechtsklick (vor allem fuer eigene Items)
+  on leftclick    -> Linksklick
+
+
+----------------------------------------------------------------
+  EVENTDATEN (PLATZHALTER FUER EREIGNISSE)
+----------------------------------------------------------------
+
+Manche Ereignisse liefern zusaetzliche Infos:
+
+  {attacker}  -> der Angreifer (bei on hit / on kill)
+  {victim}    -> das Opfer     (bei on hit / on kill / death)
+  {message}   -> die Chatnachricht (bei on chat)
+
+Beispiele:
+
+  on hit
+    actionbar {attacker} hat {victim} getroffen!
+
+  on kill
+    give coins 50
+    message <green>Du hast {victim} besiegt! +50 Muenzen
+
+  on chat
+    if has perm lemon.vip
+      broadcast <gold>[VIP] {player}: {message}
+
+
+----------------------------------------------------------------
+  on move MIT KOORDINATEN
+----------------------------------------------------------------
+
+"on move" laeuft, wenn sich der Spieler bewegt. Damit kannst du
+zum Beispiel besondere Orte erkennen (siehe Kapitel 09 zu
+"at" und "near"):
+
+  on move
+    if at -125 674 89
+      sound ENTITY_VILLAGER_AMBIENT
+    else if near 0 64 0 5
+      actionbar <yellow>Nahe Spawn
+
+
+----------------------------------------------------------------
+  EREIGNISSE ABBRECHEN MIT cancel
+----------------------------------------------------------------
+
+Bei manchen Ereignissen kannst du verhindern, dass sie
+passieren — mit dem Verb "cancel":
+
+  on blockbreak
+    if not has perm lemon.bauen
+      cancel
+      actionbar <red>Du darfst hier nicht abbauen!
+
+
+----------------------------------------------------------------
+  TIMER: every <zeit>
+----------------------------------------------------------------
+
+Mit "every" laeuft ein Block IMMER WIEDER nach einer bestimmten
+Zeit — fuer alle Spieler, die online sind:
+
+  every 30s
+    if chance 50
+      actionbar <aqua>Gluecksmoment!
+
+Zeitformate:
+  5s = 5 Sekunden
+  10m = 10 Minuten
+  2h = 2 Stunden
+  1d = 1 Tag
+
+Beispiel — Tipp alle 5 Minuten:
+
+  every 5m
+    actionbar <gray>Tipp: Tippe /shop fuer den Apfel-Shop!
+
+Weiter mit 09_bedingungen.txt!

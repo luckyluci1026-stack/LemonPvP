@@ -1,0 +1,164 @@
+================================================================
+  11 — REFERENZ / SPICKZETTEL
+================================================================
+
+Alles Wichtige auf einen Blick. Zum schnellen Nachschlagen.
+
+
+----------------------------------------------------------------
+  GRUNDREGELN
+----------------------------------------------------------------
+
+  - Einrueckung = 2 Leerzeichen pro Ebene. KEINE Tabs!
+  - # am Zeilenanfang = Kommentar.
+  - Leere Zeilen werden ignoriert.
+  - Keine Klammern, Punkte oder Anfuehrungszeichen.
+  - Verb zuerst, dann Angaben mit Leerzeichen getrennt.
+  - Text-Verben nehmen den GANZEN Rest der Zeile als Text.
+
+
+----------------------------------------------------------------
+  TEXT-VERBEN (Rest der Zeile = Text)
+----------------------------------------------------------------
+
+  VERB        BEDEUTUNG
+  ---------   ------------------------------------------------
+  message     Nachricht an den Spieler
+  actionbar   Text ueber der Hotbar
+  title       Grosser Titel (Haupt | Unter | Dauer)
+  subtitle    Untertitel
+  broadcast   Nachricht an ALLE
+  kick        Spieler kicken (Text = Grund)
+
+
+----------------------------------------------------------------
+  STRUKTUR-VERBEN (Woerter als Angaben)
+----------------------------------------------------------------
+
+  VERB                        BEISPIEL
+  -------------------------   --------------------------------
+  give apples|planks|coins N  give apples 10
+  give item NAME [to {arg1}]  give item KIRSCHE to {arg1}
+  take apples|planks|coins N  take coins 50
+  take item MATERIAL [N]      take item APPLE 3
+  sound NAME [vol] [pitch]    sound ENTITY_PLAYER_LEVELUP 1 1
+  particle NAME [anzahl]      particle HEART 8
+  firework                    firework
+  effect TYP DAUER [staerke]  effect SPEED 10s 2
+  teleport WELT X Y Z         teleport world 0 64 0
+  heal                        heal
+  feed                        feed
+  perm add|remove NODE        perm add lemon.vip
+  run MACRONAME               run belohnung
+  console BEFEHL              console say Hallo
+  command BEFEHL              command spawn
+  gui NAME                    gui SHOP
+  cooldown ZEIT               cooldown 5s
+  wait ZEIT                   wait 3s
+  stop                        stop
+  cancel                      cancel
+
+
+----------------------------------------------------------------
+  BEDINGUNGEN
+----------------------------------------------------------------
+
+  Vergleich:   GROESSE OPERATOR WERT
+               apples >= 100
+
+  Operatoren:  ==  !=  >=  <=  >  <
+
+  Groessen:    apples planks coins health food
+               world x y z gamemode name online
+               (auch {arg1} usw.)
+
+  Tests:
+    at X Y Z              -> genaue Position
+    near X Y Z RADIUS     -> in der Naehe
+    chance PROZENT        -> Zufall
+    has perm NODE         -> Berechtigung
+    has item MATERIAL     -> Item im Inventar
+
+  Verknuepfen:  and   oder   not
+                if A and B
+                if A or B
+                if not A
+
+
+----------------------------------------------------------------
+  STRUKTUREN (KOEPFE)
+----------------------------------------------------------------
+
+  set NAME = WERT          Variable anlegen, nutzen mit {NAME}
+  define NAME              Macro (Baustein) anlegen
+  run NAME                 Macro ausfuehren
+  if / else if / else      Bedingung
+  repeat N                 N-mal wiederholen ({loop})
+  on EVENT                 Trigger
+  every ZEIT               Timer fuer alle Spieler
+  item NAME                Item definieren
+  command NAME             Command definieren
+  gui NAME                 GUI definieren
+  slot N                   Feld in einem GUI
+
+
+----------------------------------------------------------------
+  TRIGGER (on ...)
+----------------------------------------------------------------
+
+  join quit death respawn chat move interact
+  hit kill blockbreak blockplace rightclick leftclick
+
+  In Items/Commands/GUIs zusaetzlich:
+  on rightclick   (Item)
+  on run          (Command, ohne Argument)
+  on run target   (Command, mit {arg1})
+  on click        (GUI-Slot)
+
+
+----------------------------------------------------------------
+  PLATZHALTER {...}
+----------------------------------------------------------------
+
+  {player}    Spielername
+  {apples}    Aepfel
+  {planks}    Bretter
+  {coins}     Muenzen
+  {health}    Leben
+  {food}      Hunger
+  {world}     Weltname
+  {x} {y} {z} Koordinaten
+  {online}    Spieler online
+  {loop}      Schleifenzaehler (in repeat)
+  {attacker}  Angreifer (hit/kill)
+  {victim}    Opfer (hit/kill/death)
+  {message}   Chatnachricht (chat)
+  {arg1}...   Command-Argumente
+  {NAME}      eigene Variable
+
+
+----------------------------------------------------------------
+  ZEITFORMAT
+----------------------------------------------------------------
+
+  5s   = 5 Sekunden
+  10m  = 10 Minuten
+  2h   = 2 Stunden
+  1d   = 1 Tag
+
+  Verwendet bei: cooldown, wait, effect, every
+
+
+----------------------------------------------------------------
+  MINIMESSAGE FARBEN (Auswahl)
+----------------------------------------------------------------
+
+  <red> <green> <blue> <yellow> <gold> <aqua>
+  <gray> <white> <black> <light_purple> <dark_red>
+
+  <#ff8800>                 eigene Hex-Farbe
+  <bold> <italic> <underlined>
+  <gradient:#fffb00:#00ff00>...   Farbverlauf
+  <rainbow>...                    Regenbogen
+
+Ende der Referenz. Viel Spass mit LemonLang! 🍋

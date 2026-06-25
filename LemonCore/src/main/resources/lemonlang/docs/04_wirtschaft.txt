@@ -1,0 +1,99 @@
+================================================================
+  04 — WIRTSCHAFT (AEPFEL, BRETTER, MUENZEN)
+================================================================
+
+LemonPvP hat drei Waehrungen, mit denen du arbeiten kannst:
+
+  apples  -> Aepfel
+  planks  -> Bretter
+  coins   -> Muenzen
+
+
+----------------------------------------------------------------
+  GEBEN MIT give
+----------------------------------------------------------------
+
+So gibst du einem Spieler Waehrung:
+
+  give apples 10     -> 10 Aepfel dazu
+  give planks 5      -> 5 Bretter dazu
+  give coins 50      -> 50 Muenzen dazu
+
+Beispiel:
+
+  on kill
+    give coins 50
+    message <green>Du hast {victim} besiegt! +50 Muenzen
+
+
+----------------------------------------------------------------
+  NEHMEN MIT take
+----------------------------------------------------------------
+
+So ziehst du einem Spieler Waehrung ab:
+
+  take apples 100
+  take coins 25
+
+Beispiel:
+
+  take apples 100
+  message <green>100 Aepfel abgezogen.
+
+
+----------------------------------------------------------------
+  BEDINGUNGEN: HAT DER SPIELER GENUG?
+----------------------------------------------------------------
+
+Bevor du etwas abziehst, solltest du pruefen, ob der Spieler
+genug hat. Das machst du mit "if" und einem Vergleich:
+
+  if apples >= 100
+    take apples 100
+    message <green>Gekauft!
+  else
+    actionbar <red>Zu wenig Aepfel!
+
+Vergleichs-Operatoren:
+
+  >=   groesser oder gleich
+  <=   kleiner oder gleich
+  >    groesser
+  <    kleiner
+  ==   gleich
+  !=   ungleich
+
+Du kannst die Waehrungen direkt vergleichen:
+
+  if coins >= 500
+  if planks < 10
+  if apples == 0
+
+
+----------------------------------------------------------------
+  MEHRERE BEDINGUNGEN MIT und / oder
+----------------------------------------------------------------
+
+  if apples >= 1000 and has perm lemon.vip
+    broadcast <gold>{player} ist reich!
+
+  if coins >= 100 or has perm lemon.gratis
+    message <green>Du darfst kaufen!
+
+
+----------------------------------------------------------------
+  KOMPLETTES BEISPIEL: KLEINER SHOP
+----------------------------------------------------------------
+
+  define kaufe_brett
+    if apples >= 20
+      take apples 20
+      give planks 1
+      message <green>1 Brett gekauft fuer 20 Aepfel!
+    else
+      actionbar <red>Du brauchst 20 Aepfel!
+
+  on join
+    message <gray>Tipp: Du hast {apples} Aepfel und {coins} Muenzen.
+
+Weiter mit 05_items.txt!

@@ -1,0 +1,93 @@
+================================================================
+  06 — EIGENE COMMANDS (BEFEHLE)
+================================================================
+
+Du kannst eigene Befehle wie /kirsche bauen, mit Berechtigung
+und Beschreibung.
+
+
+----------------------------------------------------------------
+  EINEN COMMAND ANLEGEN
+----------------------------------------------------------------
+
+Beginne mit "command" und dem Namen (OHNE Schraegstrich).
+Darunter eingerueckt die Eigenschaften und Aktionen:
+
+  command kirsche
+    permission lemon.kirsche
+    description Gibt dir eine Kirsche
+    on run
+      give item KIRSCHE
+      message <green>Hier ist deine Kirsche!
+
+Im Spiel rufst du das dann mit /kirsche auf.
+
+
+----------------------------------------------------------------
+  DIE EIGENSCHAFTEN
+----------------------------------------------------------------
+
+  permission lemon.kirsche
+    Welche Berechtigung der Spieler braucht. Fehlt sie ihm,
+    darf er den Befehl nicht nutzen. (Optional weglassbar.)
+
+  description Gibt dir eine Kirsche
+    Eine kurze Beschreibung des Befehls. (Optional.)
+
+
+----------------------------------------------------------------
+  on run — OHNE ARGUMENT
+----------------------------------------------------------------
+
+"on run" laeuft, wenn der Spieler den Befehl OHNE zusaetzliche
+Angabe eingibt:
+
+  on run
+    give item KIRSCHE
+    message <green>Hier ist deine Kirsche!
+
+  -> /kirsche
+
+
+----------------------------------------------------------------
+  on run target — MIT EINEM ARGUMENT
+----------------------------------------------------------------
+
+"on run target" laeuft, wenn der Spieler EIN zusaetzliches Wort
+angibt. Dieses Wort steht dann in {arg1}:
+
+  on run target
+    give item KIRSCHE to {arg1}
+    message <green>Kirsche an {arg1} gegeben!
+
+  -> /kirsche Steve
+
+Du kannst beide Varianten im selben Command haben. LemonLang
+waehlt automatisch die passende, je nachdem ob der Spieler ein
+Wort angegeben hat oder nicht.
+
+
+----------------------------------------------------------------
+  WEITERE ARGUMENTE
+----------------------------------------------------------------
+
+Gibt der Spieler mehrere Woerter an, findest du sie in:
+
+  {arg1} {arg2} {arg3} ...
+
+
+----------------------------------------------------------------
+  KOMPLETTES BEISPIEL
+----------------------------------------------------------------
+
+  command kirsche
+    permission lemon.kirsche
+    description Gibt dir oder anderen eine Kirsche
+    on run
+      give item KIRSCHE
+      message <green>Hier ist deine Kirsche!
+    on run target
+      give item KIRSCHE to {arg1}
+      message <green>Kirsche an {arg1} gegeben!
+
+Weiter mit 07_guis.txt!

@@ -1,0 +1,27 @@
+# ============================================================
+#  BEISPIEL: Kirsche
+#  Ein eigenes Item + Command, das es ausgibt.
+# ============================================================
+
+item KIRSCHE
+  material CHERRY_LEAVES
+  name <red>Kirsche
+  glow true
+  lore <gray>Lecker!
+  lore <gray>Rechtsklick = +3 Aepfel
+  cooldown 5s
+  on rightclick
+    give apples 3
+    particle HAPPY_VILLAGER 5
+    sound ENTITY_ITEM_PICKUP
+    actionbar <green>+3 Aepfel!
+
+command kirsche
+  permission lemon.kirsche
+  description Gibt dir oder anderen eine Kirsche
+  on run
+    give item KIRSCHE
+    message <green>Hier ist deine Kirsche!
+  on run target
+    give item KIRSCHE to {arg1}
+    message <green>Kirsche an {arg1} gegeben!

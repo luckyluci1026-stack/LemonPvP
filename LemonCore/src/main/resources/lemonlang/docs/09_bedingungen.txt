@@ -1,0 +1,144 @@
+================================================================
+  09 — BEDINGUNGEN (WENN / DANN) UND SCHLEIFEN
+================================================================
+
+Mit Bedingungen entscheidest du, ob etwas passiert oder nicht.
+
+
+----------------------------------------------------------------
+  if / else if / else
+----------------------------------------------------------------
+
+  if BEDINGUNG
+    ... wenn wahr ...
+  else if ANDERE BEDINGUNG
+    ... sonst, wenn die wahr ist ...
+  else
+    ... in allen anderen Faellen ...
+
+Beispiel:
+
+  on chat
+    if apples >= 1000
+      broadcast <gold>{player} ist reich!
+    else if apples >= 100
+      message <green>Du hast schon einiges gespart!
+    else
+      message <gray>Sammle mehr Aepfel!
+
+Du kannst "else if" beliebig oft hintereinander benutzen.
+"else" ist optional.
+
+
+----------------------------------------------------------------
+  VERGLEICHE (OPERATOREN)
+----------------------------------------------------------------
+
+Vergleiche eine Groesse mit einem Wert:
+
+  ==  gleich
+  !=  ungleich
+  >=  groesser oder gleich
+  <=  kleiner oder gleich
+  >   groesser
+  <   kleiner
+
+Was du vergleichen kannst (links vom Operator):
+
+  apples planks coins   -> Waehrungen
+  health food           -> Leben / Hunger
+  x y z                 -> Koordinaten
+  world                 -> Weltname
+  gamemode              -> Spielmodus
+  name                  -> Spielername
+  online                -> Anzahl online
+
+Auch Platzhalter wie {arg1} sind erlaubt.
+
+Beispiele:
+
+  if health <= 5
+  if world == spawn
+  if name == Steve
+  if online >= 10
+
+
+----------------------------------------------------------------
+  SPEZIELLE TESTS
+----------------------------------------------------------------
+
+Diese pruefen besondere Dinge:
+
+  at X Y Z
+    Steht der Spieler genau auf diesen Koordinaten?
+      if at -125 674 89
+
+  near X Y Z RADIUS
+    Ist der Spieler nah dran (innerhalb RADIUS Bloecke)?
+      if near 0 64 0 5
+
+  chance PROZENT
+    Zufall: zu PROZENT Prozent wahr.
+      if chance 50
+
+  has perm NODE
+    Hat der Spieler diese Berechtigung?
+      if has perm lemon.vip
+
+  has item MATERIAL
+    Hat der Spieler dieses Item im Inventar?
+      if has item DIAMOND
+
+
+----------------------------------------------------------------
+  und / oder / not (VERKNUEPFEN)
+----------------------------------------------------------------
+
+Du kannst Bedingungen kombinieren:
+
+  und  -> beide muessen wahr sein
+  oder -> mindestens eine muss wahr sein
+  not  -> kehrt eine Bedingung um (Verneinung)
+
+Beispiele:
+
+  if apples >= 1000 and has perm lemon.vip
+    broadcast <gold>{player} ist ein reicher VIP!
+
+  if has perm lemon.vip or has perm lemon.mvp
+    message <green>Willkommen, Premium-Spieler!
+
+  if not has perm lemon.bauen
+    cancel
+    actionbar <red>Kein Baurecht!
+
+
+----------------------------------------------------------------
+  SCHLEIFEN MIT repeat
+----------------------------------------------------------------
+
+"repeat N" wiederholt einen Block N-mal. Die aktuelle
+Wiederholungsnummer steht in {loop}:
+
+  on death
+    repeat 3
+      sound ENTITY_VILLAGER_NO
+
+  repeat 5
+    message <gray>Durchgang {loop}
+
+
+----------------------------------------------------------------
+  KOMPLETTES BEISPIEL
+----------------------------------------------------------------
+
+  on move
+    if at -125 674 89
+      sound ENTITY_VILLAGER_AMBIENT
+      actionbar <gold>Geheimer Ort gefunden!
+    else if near 0 64 0 5
+      actionbar <yellow>Du bist nahe Spawn
+    else if health <= 5 and not has perm lemon.unsterblich
+      actionbar <red>Vorsicht, wenig Leben!
+
+Weiter mit 10_effekte.txt!

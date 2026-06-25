@@ -1,0 +1,185 @@
+================================================================
+  10 — EFFEKTE UND AKTIONEN
+================================================================
+
+Hier sind alle weiteren Aktionen, mit denen du dein Spiel
+lebendig machst.
+
+
+----------------------------------------------------------------
+  sound — SOUND ABSPIELEN
+----------------------------------------------------------------
+
+  sound NAME
+  sound NAME LAUTSTAERKE TONHOEHE
+
+  sound ENTITY_PLAYER_LEVELUP
+  sound ENTITY_VILLAGER_NO 1 1.5
+
+Nutze die Minecraft-Soundnamen in GROSSBUCHSTABEN.
+
+
+----------------------------------------------------------------
+  particle — PARTIKEL ZEIGEN
+----------------------------------------------------------------
+
+  particle NAME
+  particle NAME ANZAHL
+
+  particle HAPPY_VILLAGER 5
+  particle HEART 8
+
+
+----------------------------------------------------------------
+  firework — FEUERWERK
+----------------------------------------------------------------
+
+  firework
+
+Zuendet ein Feuerwerk an der Position des Spielers.
+
+
+----------------------------------------------------------------
+  effect — STATUSEFFEKT (TRANK-EFFEKT)
+----------------------------------------------------------------
+
+  effect TYP DAUER
+  effect TYP DAUER STAERKE
+
+  effect SPEED 10s
+  effect REGENERATION 5s 2
+
+  TYP    = z.B. SPEED, JUMP, REGENERATION, STRENGTH
+  DAUER  = z.B. 10s, 1m
+  STAERKE = Stufe (optional, z.B. 2)
+
+
+----------------------------------------------------------------
+  teleport — TELEPORTIEREN
+----------------------------------------------------------------
+
+  teleport WELT X Y Z
+
+  teleport world 0 64 0
+  teleport spawn 100 70 -50
+
+
+----------------------------------------------------------------
+  heal / feed — HEILEN / SAETTIGEN
+----------------------------------------------------------------
+
+  heal    -> volles Leben
+  feed    -> voller Hunger
+
+
+----------------------------------------------------------------
+  perm — BERECHTIGUNG GEBEN/NEHMEN
+----------------------------------------------------------------
+
+  perm add NODE
+  perm remove NODE
+
+  perm add lemon.vip
+  perm remove lemon.vip
+
+
+----------------------------------------------------------------
+  console — KONSOLENBEFEHL AUSFUEHREN
+----------------------------------------------------------------
+
+Fuehrt einen Befehl als Server-Konsole aus (mit allen Rechten):
+
+  console gamemode creative {player}
+  console say Hallo an alle!
+
+
+----------------------------------------------------------------
+  command — BEFEHL ALS SPIELER AUSFUEHREN
+----------------------------------------------------------------
+
+Fuehrt einen Befehl so aus, als haette der Spieler ihn getippt:
+
+  command spawn
+  command home
+
+
+----------------------------------------------------------------
+  gui — MENUE OEFFNEN
+----------------------------------------------------------------
+
+  gui SHOP
+
+Oeffnet das GUI mit diesem Namen (siehe Kapitel 07).
+
+
+----------------------------------------------------------------
+  cooldown — WARTEZEIT
+----------------------------------------------------------------
+
+Setzt eine Wartezeit. Klickt/loest der Spieler zu frueh erneut
+aus, sieht er "Noch Xs" und der Rest wird abgebrochen.
+
+  cooldown 5s
+  cooldown 1h
+
+(Bei Items kannst du cooldown auch direkt als Eigenschaft
+setzen, siehe Kapitel 05.)
+
+
+----------------------------------------------------------------
+  wait — PAUSE EINLEGEN
+----------------------------------------------------------------
+
+Wartet eine bestimmte Zeit und fuehrt DANN die restlichen
+Zeilen aus:
+
+  on join
+    message <green>Willkommen!
+    wait 3s
+    title <gold>Viel Spass!
+
+Alles NACH "wait" passiert erst nach der Wartezeit.
+
+
+----------------------------------------------------------------
+  stop — HIER ANHALTEN
+----------------------------------------------------------------
+
+Beendet den aktuellen Block sofort. Nuetzlich, um frueh
+auszusteigen:
+
+  on rightclick
+    if not has perm lemon.benutzen
+      actionbar <red>Keine Berechtigung!
+      stop
+    give apples 3
+
+
+----------------------------------------------------------------
+  cancel — EREIGNIS VERHINDERN
+----------------------------------------------------------------
+
+Verhindert das aktuelle Ereignis (z.B. Blockabbau), wenn es
+abbrechbar ist:
+
+  on blockplace
+    if not has perm lemon.bauen
+      cancel
+      actionbar <red>Bauen verboten!
+
+
+----------------------------------------------------------------
+  KOMPLETTES BEISPIEL
+----------------------------------------------------------------
+
+  define vip_boost
+    effect SPEED 30s 2
+    particle HAPPY_VILLAGER 10
+    sound ENTITY_PLAYER_LEVELUP
+    actionbar <gold>VIP-Boost aktiviert!
+
+  on join
+    if has perm lemon.vip
+      run vip_boost
+
+Weiter mit 11_referenz.txt!

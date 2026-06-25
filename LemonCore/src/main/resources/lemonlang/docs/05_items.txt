@@ -1,0 +1,103 @@
+================================================================
+  05 — EIGENE ITEMS BAUEN
+================================================================
+
+Du kannst eigene Items mit Namen, Beschreibung, Leuchten und
+sogar einer Aktion bei Rechtsklick erstellen.
+
+
+----------------------------------------------------------------
+  EIN ITEM ANLEGEN
+----------------------------------------------------------------
+
+Beginne mit "item" und einem Namen (Grossbuchstaben sind
+ueblich). Darunter kommen eingerueckt die Eigenschaften:
+
+  item KIRSCHE
+    material CHERRY_LEAVES
+    name <red>Kirsche
+    glow true
+    lore <gray>Lecker!
+    lore <gray>Rechtsklick = +3 Aepfel
+    cooldown 5s
+    on rightclick
+      give apples 3
+      particle HAPPY_VILLAGER 5
+      sound ENTITY_ITEM_PICKUP
+
+
+----------------------------------------------------------------
+  DIE EIGENSCHAFTEN
+----------------------------------------------------------------
+
+  material NAME
+    Welcher Block/Gegenstand. Nutze die Minecraft-Namen in
+    GROSSBUCHSTABEN, z.B. APPLE, CHERRY_LEAVES, DIAMOND_SWORD.
+
+  name <farbe>Text
+    Der angezeigte Name des Items (mit MiniMessage-Farben).
+
+  glow true
+    Lasse das Item leuchten (wie verzaubert). glow false = nicht.
+
+  lore <farbe>Text
+    Eine Zeile Beschreibung. Du kannst MEHRERE lore-Zeilen
+    untereinander schreiben — jede wird eine eigene Zeile:
+
+      lore <gray>Zeile 1
+      lore <gray>Zeile 2
+      lore <yellow>Zeile 3
+
+  cooldown 5s
+    Wartezeit zwischen zwei Benutzungen. Formate: 5s, 10m, 2h,
+    1d. Versucht der Spieler frueher zu klicken, sieht er
+    "Noch Xs" und es passiert nichts.
+
+
+----------------------------------------------------------------
+  AKTION BEI RECHTSKLICK: on rightclick
+----------------------------------------------------------------
+
+Mit "on rightclick" sagst du, was passieren soll, wenn der
+Spieler das Item in der Hand hat und rechtsklickt:
+
+  on rightclick
+    give apples 3
+    sound ENTITY_ITEM_PICKUP
+
+Du kannst hier alle normalen Aktionen und auch Bedingungen
+benutzen.
+
+
+----------------------------------------------------------------
+  ITEM AUSGEBEN
+----------------------------------------------------------------
+
+Ein selbst gebautes Item gibst du mit "give item NAME":
+
+  give item KIRSCHE
+
+Oder an einen bestimmten Spieler (z.B. in einem Command):
+
+  give item KIRSCHE to {arg1}
+
+Mehr dazu im naechsten Kapitel (Commands).
+
+
+----------------------------------------------------------------
+  KOMPLETTES BEISPIEL
+----------------------------------------------------------------
+
+  item HEILTRANK
+    material POTION
+    name <light_purple>Heiltrank
+    glow true
+    lore <gray>Rechtsklick zum Heilen
+    cooldown 30s
+    on rightclick
+      heal
+      particle HEART 8
+      sound ENTITY_PLAYER_LEVELUP
+      actionbar <green>Geheilt!
+
+Weiter mit 06_commands.txt!

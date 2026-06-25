@@ -2,6 +2,9 @@ package com.lemonpvp.lemoncore;
 
 import com.lemonpvp.lemoncore.api.HttpApiManager;
 import com.lemonpvp.lemoncore.commands.admin.*;
+import com.lemonpvp.lemoncore.lemonlang.LemonLangManager;
+import com.lemonpvp.lemoncore.lemonlang.LemonLangEventListener;
+import com.lemonpvp.lemoncore.lemonlang.command.LemonLangCommand;
 import com.lemonpvp.lemoncore.commands.user.*;
 import com.lemonpvp.lemoncore.discord.DiscordWebhookManager;
 import com.lemonpvp.lemoncore.managers.PlayerTracker;
@@ -58,6 +61,7 @@ public class LemonCore extends JavaPlugin {
     private FriendRequestManager friendRequestManager;
     private MotdManager motdManager;
     private ScriptManager scriptManager;
+    private LemonLangManager lemonLangManager;
     private boolean floodgatePresent;
     private long startTimeMs;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
@@ -154,6 +158,11 @@ public class LemonCore extends JavaPlugin {
         httpApiManager = new HttpApiManager(this);
         httpApiManager.start();
 
+        // Init LemonLang (after all other managers are ready)
+        lemonLangManager = new LemonLangManager(this);
+        lemonLangManager.loadAll();
+        getServer().getPluginManager().registerEvents(new LemonLangEventListener(this), this);
+
         // Load all scripts (after all managers are ready)
         Map<String, String> scriptErrors = scriptManager.loadAll();
         scriptErrors.forEach((name, err) ->
@@ -168,6 +177,9 @@ public class LemonCore extends JavaPlugin {
     public void onDisable() {
         // Stop HTTP API first so no request arrives after the database closes
         if (httpApiManager != null) httpApiManager.stop();
+
+        // Shutdown LemonLang
+        if (lemonLangManager != null) lemonLangManager.shutdown();
 
         // Unload all live scripts
         if (scriptManager != null) scriptManager.unloadAll();
@@ -198,6 +210,9 @@ public class LemonCore extends JavaPlugin {
         var coderl = new CoderlCommand(this);
         getCommand("coderl").setExecutor(coderl);
         getCommand("coderl").setTabCompleter(coderl);
+        var lemonLangCmd = new LemonLangCommand(this);
+        var llCmd = getCommand("lemonlang");
+        if (llCmd != null) { llCmd.setExecutor(lemonLangCmd); llCmd.setTabCompleter(lemonLangCmd); }
         getCommand("aowcode").setExecutor(new AowCodeCommand(this));
         getCommand("offend").setExecutor(new OffendCommand(this));
         getCommand("punish").setExecutor(new PunishCommand(this));
@@ -356,6 +371,7 @@ public class LemonCore extends JavaPlugin {
     public FriendRequestManager getFriendRequestManager() { return friendRequestManager; }
     public MotdManager getMotdManager() { return motdManager; }
     public ScriptManager getScriptManager() { return scriptManager; }
+    public LemonLangManager getLemonLangManager() { return lemonLangManager; }
     /** True if Geyser Floodgate is present — allows Bedrock players to join. */
     public boolean isFloodgatePresent() { return floodgatePresent; }
 }

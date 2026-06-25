@@ -143,6 +143,9 @@ permissions:
   lemoncore.admin.coderl:
     description: Hot-reload Java scripts at runtime
     default: op
+  lemoncore.admin.lemonlang:
+    description: LemonLang verwalten
+    default: op
 
 commands:
   grank:
@@ -309,3 +312,8 @@ commands:
     description: Java-Scripts hot-reload
     permission: lemoncore.admin.coderl
     usage: /coderl list|load|unload|reload [name]
+  lemonlang:
+    description: LemonLang Skript-Verwaltung
+    aliases: [ll, lang]
+    permission: lemoncore.admin.lemonlang
+    usage: /lemonlang list|reload [name]|error <name>|info

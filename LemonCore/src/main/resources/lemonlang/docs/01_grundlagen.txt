@@ -1,0 +1,105 @@
+================================================================
+  01 — GRUNDLAGEN
+================================================================
+
+In diesem Kapitel lernst du, wie ein Script aufgebaut ist und
+schreibst dein allererstes eigenes Script.
+
+
+----------------------------------------------------------------
+  ZEILEN
+----------------------------------------------------------------
+
+Ein Script besteht aus Zeilen. Jede Zeile ist eine Anweisung
+("tue das"). Eine Anweisung beginnt mit einem WORT (dem Verb)
+und danach kommen die Angaben dazu, getrennt durch Leerzeichen.
+
+  message <green>Hallo Welt!
+  give apples 10
+  sound ENTITY_PLAYER_LEVELUP
+
+Das erste Wort sagt WAS getan wird (message, give, sound).
+Der Rest sind die Details.
+
+
+----------------------------------------------------------------
+  KOMMENTARE MIT #
+----------------------------------------------------------------
+
+Eine Zeile, die mit # beginnt, ist ein Kommentar. Sie wird vom
+Server ignoriert. Kommentare sind Notizen fuer DICH.
+
+  # Das hier ist nur eine Notiz
+  # Begruessung fuer neue Spieler:
+  on join
+    message <green>Willkommen!
+
+Auch leere Zeilen werden ignoriert. Nutze sie, um dein Script
+uebersichtlich zu halten.
+
+
+----------------------------------------------------------------
+  EINRUECKUNG (DAS WICHTIGSTE!)
+----------------------------------------------------------------
+
+LemonLang hat KEINE Klammern. Stattdessen zeigt die Einrueckung,
+welche Zeilen zusammengehoeren.
+
+  -> Eine Ebene tiefer = 2 Leerzeichen mehr.
+
+  on join                 <- Kopfzeile (Ebene 0)
+    message Hallo!        <- gehoert dazu (Ebene 1, 2 Leerzeichen)
+    give apples 5         <- gehoert auch dazu (Ebene 1)
+
+Du kannst auch tiefer schachteln:
+
+  on join
+    if has perm lemon.vip       <- Ebene 1
+      message <gold>VIP!        <- Ebene 2 (4 Leerzeichen)
+    message Schoen, dass du da bist!   <- wieder Ebene 1
+
+WICHTIG:
+  - Immer Vielfache von 2 Leerzeichen.
+  - NIEMALS Tabs (sonst Fehler "Bitte Leerzeichen statt Tabs").
+
+
+----------------------------------------------------------------
+  DEIN ERSTES SCRIPT
+----------------------------------------------------------------
+
+1. Lege eine Datei an:
+   plugins/LemonCore/lemonlang/mein_erstes.lemon
+
+2. Schreibe hinein:
+
+   # Mein erstes LemonLang Script
+   on join
+     message <gradient:#fffb00:#00ff00>Willkommen {player}!
+     sound ENTITY_PLAYER_LEVELUP
+
+3. Speichern.
+
+4. Im Spiel oder in der Konsole:
+   /lemonlang reload
+
+5. Verlasse den Server und joine neu — du wirst begruesst und
+   hoerst einen Sound!
+
+Was passiert hier?
+  - "on join" = wenn ein Spieler den Server betritt.
+  - "message ..." = schicke ihm diese Nachricht (mit Farben!).
+  - "{player}" = wird durch den Namen des Spielers ersetzt.
+  - "sound ..." = spiele einen Sound ab.
+
+
+----------------------------------------------------------------
+  HAEUFIGE STOLPERFALLEN
+----------------------------------------------------------------
+
+  - Tab statt Leerzeichen benutzt -> Fehler. Nimm 2 Leerzeichen.
+  - 3 Leerzeichen statt 2 -> Einrueckung muss ein Vielfaches
+    von 2 sein.
+  - Tippfehler im Verb (z.B. "mesage") -> LemonLang sagt dir,
+    was du wahrscheinlich meintest.
+
+Weiter geht's mit 02_variablen_macros.txt!

@@ -1,0 +1,18 @@
+# ============================================================
+#  BEISPIEL: Taegliche Belohnung
+#  Beim Join gibt es einmal pro 24 Stunden eine Belohnung.
+#  Der cooldown sorgt dafuer, dass es nur einmal am Tag geht.
+# ============================================================
+
+define tagesbelohnung
+  give coins 100
+  give apples 10
+  sound ENTITY_PLAYER_LEVELUP
+  title <gold>Tagesbelohnung! | <gray>+100 Muenzen & +10 Aepfel | 4s
+  particle HAPPY_VILLAGER 15
+
+on join
+  message <gradient:#fffb00:#00ff00>Willkommen zurueck, {player}!
+  cooldown 24h
+  run tagesbelohnung
+  broadcast <gold>{player} <green>hat die Tagesbelohnung abgeholt!

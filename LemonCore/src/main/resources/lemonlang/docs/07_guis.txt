@@ -1,0 +1,143 @@
+================================================================
+  07 — GUIS (MENUES UND SHOPS)
+================================================================
+
+Ein GUI ist ein Menue, das sich als Truhen-Fenster oeffnet. Du
+legst einzelne Felder (Slots) mit Items hinein, und beim
+Anklicken passiert etwas — perfekt fuer Shops!
+
+
+----------------------------------------------------------------
+  EIN GUI ANLEGEN
+----------------------------------------------------------------
+
+Beginne mit "gui" und einem Namen, danach eingerueckt:
+
+  gui SHOP
+    title <gold>Apfel-Shop
+    rows 3
+    slot 13
+      material APPLE
+      name <green>Kirsche kaufen
+      lore <gray>Kosten: <green>100 Aepfel
+      on click
+        if apples >= 100
+          take apples 100
+          give item KIRSCHE
+          message <green>Gekauft!
+        else
+          actionbar <red>Zu wenig Aepfel!
+
+
+----------------------------------------------------------------
+  DIE EIGENSCHAFTEN
+----------------------------------------------------------------
+
+  title <gold>Apfel-Shop
+    Die Ueberschrift des Menues.
+
+  rows 3
+    Anzahl der Zeilen (1 bis 6). Jede Zeile hat 9 Slots.
+      1 Zeile  =  9 Slots
+      3 Zeilen = 27 Slots
+      6 Zeilen = 54 Slots
+
+
+----------------------------------------------------------------
+  EINEN SLOT FUELLEN
+----------------------------------------------------------------
+
+Mit "slot N" waehlst du ein Feld (gezaehlt ab 0). Darunter wie
+bei einem Item: material, name, lore und "on click":
+
+  slot 11
+    material DIAMOND
+    name <aqua>Diamant kaufen
+    lore <gray>Kosten: <yellow>500 Muenzen
+    on click
+      if coins >= 500
+        take coins 500
+        give item DIAMANT
+        message <green>Gekauft!
+      else
+        actionbar <red>Zu wenig Muenzen!
+
+
+----------------------------------------------------------------
+  SLOT-NUMMERN (54-SLOT DIAGRAMM)
+----------------------------------------------------------------
+
+Die Slots sind von links nach rechts, oben nach unten
+durchnummeriert — beginnend bei 0. Hier alle 6 Zeilen:
+
+   Zeile 1:  +----+----+----+----+----+----+----+----+----+
+             |  0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |
+   Zeile 2:  +----+----+----+----+----+----+----+----+----+
+             |  9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 |
+   Zeile 3:  +----+----+----+----+----+----+----+----+----+
+             | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 |
+   Zeile 4:  +----+----+----+----+----+----+----+----+----+
+             | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 |
+   Zeile 5:  +----+----+----+----+----+----+----+----+----+
+             | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 | 44 |
+   Zeile 6:  +----+----+----+----+----+----+----+----+----+
+             | 45 | 46 | 47 | 48 | 49 | 50 | 51 | 52 | 53 |
+             +----+----+----+----+----+----+----+----+----+
+
+Tipp: Die Mitte einer 3-Zeilen-GUI ist Slot 13.
+Leere Slots werden automatisch mit schwarzen Glasscheiben
+gefuellt.
+
+
+----------------------------------------------------------------
+  GUI OEFFNEN
+----------------------------------------------------------------
+
+Oeffne ein GUI mit dem Verb "gui" und dem Namen:
+
+  gui SHOP
+
+Zum Beispiel in einem Command:
+
+  command shop
+    description Oeffnet den Shop
+    on run
+      gui SHOP
+
+Oder bei Rechtsklick auf ein Item.
+
+
+----------------------------------------------------------------
+  KOMPLETTES BEISPIEL
+----------------------------------------------------------------
+
+  gui SHOP
+    title <gold>Apfel-Shop
+    rows 3
+    slot 11
+      material APPLE
+      name <green>Kirsche kaufen
+      lore <gray>Kosten: <green>100 Aepfel
+      on click
+        if apples >= 100
+          take apples 100
+          give item KIRSCHE
+          message <green>Gekauft!
+        else
+          actionbar <red>Zu wenig Aepfel!
+    slot 15
+      material DIAMOND
+      name <aqua>Diamant kaufen
+      lore <gray>Kosten: <yellow>500 Muenzen
+      on click
+        if coins >= 500
+          take coins 500
+          message <green>Diamant gekauft!
+        else
+          actionbar <red>Zu wenig Muenzen!
+
+  command shop
+    on run
+      gui SHOP
+
+Weiter mit 08_trigger.txt!
