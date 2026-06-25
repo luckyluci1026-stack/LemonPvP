@@ -162,7 +162,7 @@ public class BoosterManager {
                 buildBarTitle(entry.tier(), entry.remainingUses(), remaining),
                 progress,
                 BossBar.Color.YELLOW,
-                BossBar.Overlay.SOLID);
+                BossBar.Overlay.PROGRESS);
     }
 
     private Component buildBarTitle(BoosterTier tier, int uses, long remainingMs) {
