@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
@@ -65,19 +66,44 @@ public class AppleTreeListener implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent e) {
-        if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (e.getHand() != EquipmentSlot.HAND) return;
         Block block = e.getClickedBlock();
         if (block == null) return;
         if (!e.getPlayer().getWorld().getName().equals(worldName)) return;
 
-        Material type  = block.getType();
-        Player   player = e.getPlayer();
+        Material type = block.getType();
+        boolean treeBlock = leafMaterials.contains(type) || logMaterials.contains(type);
+        if (!treeBlock) return;
 
+        // Äpfel/Planks gibt es NUR per Interact (Rechtsklick). Schlagen
+        // (Linksklick/Hit) auf einen Baum-Block darf niemals ernten oder den
+        // Block beschädigen — daher hier hart abbrechen.
+        if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
+            e.setCancelled(true);
+            return;
+        }
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+
+        Player player = e.getPlayer();
         if (leafMaterials.contains(type)) {
             handleLeafClick(player, block);
         } else if (logMaterials.contains(type)) {
             handleLogClick(player, block);
+        }
+    }
+
+    /**
+     * Verhindert das Abbauen von Baum-Blöcken (Blätter/Stämme) komplett.
+     * Damit kann man durch <em>Schlagen</em> weder den Baum zerstören noch die
+     * Vanilla-Apfel-Drops von Eichenlaub abgreifen — Ernte läuft ausschließlich
+     * über Rechtsklick (Interact).
+     */
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent e) {
+        if (!e.getPlayer().getWorld().getName().equals(worldName)) return;
+        Material type = e.getBlock().getType();
+        if (leafMaterials.contains(type) || logMaterials.contains(type)) {
+            e.setCancelled(true);
         }
     }
 
