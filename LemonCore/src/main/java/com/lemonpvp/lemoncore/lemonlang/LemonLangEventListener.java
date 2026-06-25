@@ -1,11 +1,11 @@
 package com.lemonpvp.lemoncore.lemonlang;
 
 import com.lemonpvp.lemoncore.LemonCore;
-import com.lemonpvp.lemoncore.lemonlang.ast.SlotDef;
-import com.lemonpvp.lemoncore.lemonlang.ast.TriggerDef;
+import com.lemonpvp.lemoncore.lemonlang.ast.*;
 import com.lemonpvp.lemoncore.lemonlang.runtime.*;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -122,9 +122,77 @@ public final class LemonLangEventListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent e) {
-        if (e.getPlayer() != null) {
-            fireOnMain("interact", e.getPlayer(), null);
+        Player player = e.getPlayer();
+        if (player == null) return;
+
+        // General interact trigger
+        fireOnMain("interact", player, null);
+
+        // Item-specific rightclick/leftclick triggers
+        LemonLangManager mgr = manager();
+        if (mgr == null) return;
+
+        ItemStack handItem = player.getInventory().getItemInMainHand();
+        if (handItem.getType().isAir()) return;
+
+        String lemonItemName = mgr.getItemRegistry().getLemonName(handItem, plugin);
+        if (lemonItemName == null) return;
+
+        // Determine which action (rightclick or leftclick)
+        String triggerEvent = null;
+        org.bukkit.event.block.Action action = e.getAction();
+        if (action == org.bukkit.event.block.Action.RIGHT_CLICK_AIR ||
+            action == org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+            triggerEvent = "rightclick";
+        } else if (action == org.bukkit.event.block.Action.LEFT_CLICK_AIR ||
+                   action == org.bukkit.event.block.Action.LEFT_CLICK_BLOCK) {
+            triggerEvent = "leftclick";
         }
+
+        if (triggerEvent == null) return;
+
+        // Find triggers for this specific item
+        for (Node node : collectNodes(mgr)) {
+            if (!(node instanceof ItemDef item)) continue;
+            if (!item.name().equals(lemonItemName)) continue;
+
+            // Check cooldown
+            String cooldownKey = "item_" + lemonItemName;
+            if (mgr.getCooldownRegistry().isOnCooldown(player.getUniqueId(), cooldownKey)) continue;
+
+            // Apply item cooldown if set
+            String cooldownStr = item.props().get("cooldown");
+            if (cooldownStr != null && !cooldownStr.isBlank()) {
+                try {
+                    long ms = com.lemonpvp.lemoncore.lemonlang.token.ArgScanner.parseDuration(cooldownStr.trim(), item.name(), 0);
+                    mgr.getCooldownRegistry().setCooldown(player.getUniqueId(), cooldownKey, ms);
+                } catch (Exception ignored) {}
+            }
+
+            String finalTriggerEvent = triggerEvent;
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                for (TriggerDef trigger : item.triggers()) {
+                    if (!finalTriggerEvent.equalsIgnoreCase(trigger.event())) continue;
+                    Environment childEnv = mgr.getEnvironment().child();
+                    ScriptContext ctx = new ScriptContext(player, item.name(), childEnv, mgr);
+                    Interpreter interp = new Interpreter(item.name());
+                    try {
+                        interp.run(trigger.body(), ctx);
+                    } catch (Exception ex) {
+                        java.util.logging.Logger.getLogger("LemonLang").warning(
+                                "[LemonLang] Fehler in Item-Trigger '" + item.name() + "': " + ex.getMessage());
+                    }
+                }
+            });
+        }
+    }
+
+    private java.util.Collection<Node> collectNodes(LemonLangManager mgr) {
+        java.util.List<Node> all = new java.util.ArrayList<>();
+        for (Program p : mgr.getPrograms().values()) {
+            all.addAll(p.nodes());
+        }
+        return all;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

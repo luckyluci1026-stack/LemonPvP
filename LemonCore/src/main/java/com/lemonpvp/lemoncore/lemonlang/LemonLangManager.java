@@ -124,8 +124,9 @@ public final class LemonLangManager {
     public Optional<LemonLangError> getLastError(String name) { return Optional.ofNullable(lastErrors.get(name)); }
 
     /**
-     * Returns all TriggerDef nodes across all loaded programs matching the given event name.
-     * Used by the event listener.
+     * Returns all top-level TriggerDef nodes across all loaded programs matching the given event name.
+     * Item-specific triggers (rightclick, leftclick on items) are NOT included here —
+     * they are handled separately by the event listener.
      */
     public List<TriggerDef> getTriggers(String event) {
         List<TriggerDef> result = new ArrayList<>();
@@ -133,12 +134,6 @@ public final class LemonLangManager {
             for (Node node : program.nodes()) {
                 if (node instanceof TriggerDef t && event.equalsIgnoreCase(t.event())) {
                     result.add(t);
-                }
-                // Also collect triggers from items (rightclick, leftclick) and commands
-                if (node instanceof ItemDef item) {
-                    for (TriggerDef t : item.triggers()) {
-                        if (event.equalsIgnoreCase(t.event())) result.add(t);
-                    }
                 }
             }
         }
