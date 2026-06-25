@@ -5,5 +5,5 @@ package com.lemonpvp.lemoncore.lemonlang.ast;
  * statement kinds.
  */
 public sealed interface Stmt extends Node
-        permits ActionStmt, IfStmt, SetStmt, DefineStmt, RepeatStmt {
+        permits ActionStmt, IfStmt, SetStmt, DefineStmt, RepeatStmt, ThreadStmt {
 }

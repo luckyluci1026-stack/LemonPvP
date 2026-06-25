@@ -6,6 +6,7 @@ import com.lemonpvp.lemoncore.lemonlang.token.ArgScanner;
 import com.lemonpvp.lemoncore.lemonlang.token.Line;
 
 import java.util.*;
+import java.util.Set;
 
 /**
  * Parses a flat list of {@link Line} objects into a {@link Program}.
@@ -55,6 +56,7 @@ public final class Parser {
         if (words.isEmpty()) { pos++; return null; }
 
         String kw = words.get(0).toLowerCase();
+        int lineNum = line.number();
         switch (kw) {
             case "set":    return parseSet(line);
             case "define": return parseDefine(line);
@@ -63,10 +65,13 @@ public final class Parser {
             case "item":   return parseItem(line);
             case "command":return parseCommand(line);
             case "gui":    return parseGui(line);
+            case "system": { pos++; return parseSystem(line); }
+            case "import": { pos++; return parseImport(line); }
+            case "sync":   { pos++; return parseSync(line); }
             default:
                 throw new LemonLangError(scriptFile, line.number(),
                         "Unbekanntes Schluessewort auf der obersten Ebene: '" + kw + "'.",
-                        "Erlaubt: set, define, on, every, item, command, gui");
+                        "Erlaubt: set, define, on, every, item, command, gui, system, import, sync");
         }
     }
 
@@ -366,6 +371,8 @@ public final class Parser {
                 List<Stmt> body = parseBody(line.indent());
                 return new DefineStmt(name, body, line.number());
             }
+            case "thread":
+                return parseThread(line, parentIndent);
             default: {
                 // Action statement
                 pos++;
@@ -383,6 +390,48 @@ public final class Parser {
                 }
             }
         }
+    }
+
+    // ---- system / import / sync / thread -------------------------------------
+
+    private Node parseSystem(Line line) {
+        List<String> words = ArgScanner.words(line.content());
+        if (words.size() < 2) throw new LemonLangError(scriptFile, line.number(),
+            "Verwendung: system paper|velocity|folia", "Beispiel: system paper");
+        String type = words.get(1).toLowerCase();
+        if (!Set.of("paper", "velocity", "folia").contains(type))
+            throw new LemonLangError(scriptFile, line.number(),
+                "Unbekannter System-Typ: '" + type + "'", "Erlaubt: paper, velocity, folia");
+        return new SystemDecl(type, line.number());
+    }
+
+    private Node parseImport(Line line) {
+        List<String> words = ArgScanner.words(line.content());
+        if (words.size() < 2) throw new LemonLangError(scriptFile, line.number(),
+            "Verwendung: import <plugin-name>", "Beispiel: import luckperms");
+        return new ImportDecl(words.get(1).toLowerCase(), line.number());
+    }
+
+    private Node parseSync(Line line) {
+        List<String> words = ArgScanner.words(line.content());
+        if (words.size() < 2) throw new LemonLangError(scriptFile, line.number(),
+            "Verwendung: sync on|off|to [server1 ...]", "Beispiel: sync on");
+        String mode = words.get(1).toLowerCase();
+        List<String> targets = words.size() > 2 ? words.subList(2, words.size()) : List.of();
+        return new SyncDecl(mode, targets, line.number());
+    }
+
+    private Stmt parseThread(Line line, int baseIndent) {
+        pos++;
+        List<String> words = ArgScanner.words(line.content());
+        if (words.size() < 2) throw new LemonLangError(scriptFile, line.number(),
+            "Verwendung: thread main|async", "Beispiel: thread main");
+        String mode = words.get(1).toLowerCase();
+        if (!mode.equals("main") && !mode.equals("async"))
+            throw new LemonLangError(scriptFile, line.number(),
+                "Unbekannter Thread-Modus: '" + mode + "'", "Erlaubt: main, async");
+        List<Stmt> body = parseBody(line.indent());
+        return new ThreadStmt(mode, body, line.number());
     }
 
     // ---- if / else -----------------------------------------------------------
