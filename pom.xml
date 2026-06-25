@@ -19,6 +19,7 @@
         <module>LemonLobby</module>
         <module>LemonTraining</module>
         <module>LemonQueue</module>
+        <module>LemonBuild</module>
     </modules>
 
     <properties>
