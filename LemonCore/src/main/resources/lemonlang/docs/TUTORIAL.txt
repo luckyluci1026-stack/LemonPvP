@@ -1,0 +1,920 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         LEMONLANG v3 — KOMPLETTES TUTORIAL                  ║
+║              Deine eigene Programmiersprache für Minecraft-Server            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+LemonLang ist so einfach wie Python, aber direkt in Minecraft eingebaut.
+Du brauchst kein Java. Du brauchst keine IDE. Nur eine .lemon Datei.
+
+Speicherort deiner Skripte:  plugins/LemonCore/lemonlang/
+Dateiendung:                 .lemon
+Sprache steuern:             /lemonlang reload
+Fehler anzeigen:             /lemonlang error meinskript
+Alle Skripte:                /lemonlang list
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 1 — WIE FUNKTIONIERT LEMONLANG?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Keine Klammern. Keine Semikolons. Keine Anführungszeichen.
+Einrückung (2 Leerzeichen) zeigt an, was wozu gehört — genau wie Python.
+
+RICHTIG:                          FALSCH (vergiss das):
+  on join                           on join {
+    message Hallo!                    message("Hallo!")
+    sound ENTITY_CAT_PURR             sound(ENTITY_CAT_PURR);
+                                    }
+
+Kommentare beginnen mit #:
+  # Das ist ein Kommentar — wird ignoriert
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 2 — SYSTEM-DEKLARATION UND IMPORTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ganz oben in der Datei kannst du sagen, auf welchem Server-Typ du arbeitest
+und welche Plugins du nutzen möchtest:
+
+  system paper          # Paper-Server (Standard, kannst du weglassen)
+  system folia          # Folia (regionaler Thread-Support)
+  system velocity       # Velocity Proxy
+
+  import paper          # Paper-API (Events, ItemStack, Inventories, etc.)
+  import luckperms      # LuckPerms — Permissions setzen/lesen
+  import lpc            # LuckPermsContext (Prefix/Suffix, Gruppen)
+  import placeholderapi # PlaceholderAPI — {papi:player_name} usw.
+  import vault          # Vault Economy (falls vorhanden)
+  import advancedenchantments  # AdvancedEnchantments
+  import itemsadder     # ItemsAdder
+
+Ohne Import funktioniert das jeweilige Plugin nicht.
+Mit Import prüft LemonLang beim Laden, ob das Plugin da ist.
+Fehlt es, siehst du eine Fehlermeldung statt stiller Fehler.
+
+Beispiel-Dateikopf:
+
+  # willkommen.lemon
+  system paper
+  import luckperms
+  import placeholderapi
+
+  on join
+    message <green>Willkommen, {player}!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 3 — VARIABLEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Variablen speichern Text oder Zahlen. Du nutzt sie mit {name}.
+
+  set prefix = <gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient>
+  set trennzeichen = <dark_gray>»</dark_gray>
+  set willkommen = {prefix} {trennzeichen} <green>Willkommen, {player}!
+
+  on join
+    message {willkommen}
+
+Variablen innerhalb von Events (dynamisch):
+  on join
+    set begruessung = Hallo {player}, du bist der {online}. Spieler!
+    message {begruessung}
+
+Variablen können auch Zahlen sein:
+  set bonus = 50
+  set max_kills = 100
+
+Eingebaute Platzhalter (immer verfügbar):
+  {player}         — Name des Spielers
+  {player_apples}  — Äpfel des Spielers
+  {player_planks}  — Planks des Spielers
+  {player_coins}   — Coins des Spielers
+  {player_health}  — Leben (0.0 - 20.0)
+  {player_world}   — Weltname
+  {online}         — Anzahl Online-Spieler
+  {arg1} {arg2}    — Befehlsargumente
+  {attacker}       — Angreifer bei hit/kill
+  {victim}         — Opfer bei hit/kill
+  {message}        — Chat-Nachricht bei chat-Event
+  {loop}           — Aktuelle Schleifenindex (0-basiert)
+
+Mit PlaceholderAPI (import placeholderapi):
+  {papi:player_name}
+  {papi:vault_eco_balance}
+  {papi:luckperms_prefix}
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 4 — MAKROS (define)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Makros sind wiederverwendbare Blöcke. Statt Code zu kopieren, definierst du
+ihn einmal und rufst ihn überall auf:
+
+  define belohne_spieler
+    give apples 10
+    sound ENTITY_PLAYER_LEVELUP
+    title <gold><bold>Belohnung! | <gray>+10 Äpfel | 2s
+    actionbar <green>+10 ✿ Äpfel erhalten!
+
+  on join
+    run belohne_spieler
+
+  on kill
+    run belohne_spieler
+
+  every 1h
+    broadcast <gold>Alle Spieler werden belohnt!
+    # (broadcast-only — run macht es nur für den Trigger-Spieler)
+
+Makros können auch Variablen nutzen:
+  define vip_join
+    message {prefix} <gold>VIP {player} ist beigetreten!
+    sound BLOCK_BEACON_ACTIVATE
+    firework GOLD
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 5 — TRIGGER (Events)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Trigger reagieren auf Server-Events:
+
+JOIN & QUIT:
+  on join
+    message <green>Willkommen!
+
+  on quit
+    broadcast <gray>{player} hat den Server verlassen.
+
+TOD & RESPAWN:
+  on death
+    sound ENTITY_WITHER_SPAWN
+    title <red>Du bist gestorben! | <gray>Respawne... | 3s
+
+  on respawn
+    heal
+    feed
+    message <green>Du bist respawnt!
+
+CHAT:
+  on chat
+    # {message} ist die Chat-Nachricht
+    if chance 5
+      broadcast <rainbow>{player}: {message}
+    console lp user {player} meta addprefix 100 <red>[Chatbomb]
+
+BEWEGUNG:
+  on move
+    # Feuert wenn der Spieler den Block wechselt (nicht bei jeder Pixel-Bewegung!)
+    if at -125 674 89
+      sound ENTITY_VILLAGER_AMBIENT
+      actionbar <yellow>Du stehst am magischen Punkt!
+
+INTERAKTION:
+  on interact
+    message Du hast etwas geklickt!
+
+  on rightclick
+    # Wenn der Spieler Rechtsklick macht (auch für Custom Items)
+    message Rechtsklick!
+
+  on leftclick
+    message Linksklick!
+
+KAMPF:
+  on hit
+    # {attacker} = Angreifer, {victim} = Opfer
+    actionbar <red>{attacker} hat {victim} getroffen!
+
+  on kill
+    # {attacker} = Killer, {victim} = Opfer
+    give apples 5
+    title <gold>Kill! | <white>+5 ✿ Äpfel | 2s
+    sound ENTITY_PLAYER_LEVELUP
+
+BLÖCKE:
+  on blockbreak
+    if chance 10
+      give apples 1
+      actionbar <green>Bonus! +1 Apfel
+
+  on blockplace
+    message Block gesetzt!
+
+TIMER:
+  every 30s
+    broadcast <aqua>Der Server läuft seit einiger Zeit!
+
+  every 5m
+    # Alle 5 Minuten für alle Spieler
+    broadcast <gold>Denk daran, den Server zu voten!
+
+  every 1h
+    broadcast <red>Server-Restart in Kürze!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 6 — BEDINGUNGEN (if / else)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EINFACHES IF:
+  on join
+    if has perm lemon.vip
+      message <gold>Willkommen zurück, VIP!
+    else
+      message <white>Willkommen!
+
+VERGLEICHE:
+  on hit
+    if apples >= 1000
+      message <gold>Du bist reich!
+    if health <= 4
+      actionbar <red>⚠ Niedriges Leben! ⚠
+    if name == Steve
+      message Hallo Steve!
+
+Verfügbare Variablen für Vergleiche:
+  apples       — Äpfel-Anzahl
+  planks       — Planks-Anzahl
+  coins        — Coins-Anzahl
+  health       — Leben (0-20)
+  food         — Hunger (0-20)
+  world        — Weltname (z.B. world, world_nether)
+  x y z        — Position
+  gamemode     — creative, survival, adventure, spectator
+  name         — Spielername
+  online       — Anzahl Online-Spieler
+
+Operatoren:  == != >= <= > <
+
+KOORDINATEN-CHECKS:
+  on move
+    if at -125 674 89
+      # Exakt an dieser Position
+      sound ENTITY_VILLAGER_AMBIENT
+
+    if near 0 64 0 50
+      # Innerhalb von 50 Blöcken um 0,64,0
+      actionbar <yellow>Du bist in der Mitte!
+
+ZUFALLS-CHECKS:
+  on blockbreak
+    if chance 10
+      # 10% Wahrscheinlichkeit
+      give apples 1
+
+PERMISSION-CHECKS:
+  on join
+    if has perm lemon.vip
+      run vip_join
+    if has perm lemon.admin
+      message <red>Du bist Admin!
+
+ITEM-CHECKS:
+  on rightclick
+    if has item DIAMOND_SWORD
+      message Du hast ein Diamantschwert!
+
+LOGISCHE VERKNÜPFUNGEN:
+  on hit
+    if apples >= 100 and health > 10
+      give apples 5
+      message <green>Combo-Bonus!
+
+    if health <= 2 or food == 0
+      actionbar <red>GEFAHR!
+
+    if not has perm lemon.vip
+      message <gray>Hol dir VIP für mehr Features!
+
+VERSCHACHTELT (mehrere Ebenen):
+  on kill
+    if has perm lemon.vip
+      if chance 25
+        give apples 50
+        title <gold>JACKPOT! | <white>+50 ✿ Äpfel | 3s
+      else
+        give apples 10
+    else
+      give apples 5
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 7 — AKTIONEN (was der Server tun soll)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NACHRICHTEN:
+  message <green>Hallo {player}!          # Nur an diesen Spieler
+  actionbar <red>⚠ Achtung!              # Aktionsleiste
+  title <gold>Titel | <gray>Untertitel | 3s  # Titel (| trennt Teile)
+  subtitle <gray>Nur Untertitel          # Nur Untertitel
+  broadcast <aqua>Server-Nachricht!      # An alle
+
+SOUND:
+  sound ENTITY_PLAYER_LEVELUP
+  sound BLOCK_BEACON_ACTIVATE
+  sound ENTITY_CAT_PURR
+  sound UI_TOAST_CHALLENGE_COMPLETE
+  (Alle Minecraft Sound-Namen: https://minecraft.wiki/w/Sounds.json)
+
+WIRTSCHAFT:
+  give apples 10        # +10 Äpfel
+  give planks 50        # +50 Planks
+  give coins 100        # +100 Coins
+  take apples 5         # -5 Äpfel (kein Minus-Guthaben)
+  take planks 20        # -20 Planks
+
+LEBEN & HUNGER:
+  heal                  # Volles Leben
+  heal 10               # 10 Leben setzen
+  feed                  # Voller Hunger
+  feed 15               # 15 Hunger setzen
+
+TELEPORT:
+  teleport 0 64 0       # In aktueller Welt
+  teleport 0 64 0 world # In Welt "world"
+
+EFFEKTE:
+  effect SPEED 30 1     # Speed II für 30 Sekunden
+  effect REGENERATION 10 0   # Regeneration I für 10s
+  effect STRENGTH 60 2  # Strength III für 60s
+
+PARTIKEL & FEUERWERK:
+  particle FLAME        # Flammen-Partikel am Spieler
+  particle HEART        # Herz-Partikel
+  firework RED          # Rotes Feuerwerk
+  firework RAINBOW      # Regenbogen-Feuerwerk
+
+PERMISSIONS (LuckPerms):
+  perm add lemon.vip             # Permission hinzufügen
+  perm remove lemon.vip          # Permission entfernen
+  # (Benötigt: import luckperms)
+
+KICK:
+  kick <red>Du wurdest gekickt!  # Spieler kicken
+
+CONSOLEN-BEFEHLE:
+  console lp user {player} parent add vip    # Als Konsole ausführen
+  console give {player} diamond 1            # Diamant geben
+
+SPIELER-BEFEHLE:
+  command /spawn       # Spieler führt diesen Befehl aus
+
+GUI ÖFFNEN:
+  gui SHOP             # Registriertes GUI öffnen
+
+COOLDOWN SETZEN:
+  cooldown kirsche 5s  # 5 Sekunden Cooldown für "kirsche"
+
+WIEDERHOLEN:
+  repeat 3
+    give apples 5
+    sound ENTITY_PLAYER_LEVELUP
+  # Gibt 3x 5 Äpfel (= 15 insgesamt), {loop} = 0, 1, 2
+
+SKRIPT STOPPEN:
+  stop                 # Skript hier abbrechen
+  cancel               # Event abbrechen (z.B. Chat-Nachricht unterdrücken)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 8 — CUSTOM ITEMS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  item KIRSCHE
+    material CHERRY_LEAVES
+    name <red><bold>Kirsche
+    lore <gray>Klicke für Äpfel
+    lore <dark_gray>Cooldown: 5 Sekunden
+    cooldown 5s
+    on rightclick
+      give apples 3
+      sound ENTITY_PLAYER_LEVELUP
+      particle HEART
+      actionbar <red>+3 ✿ Äpfel erhalten!
+
+  item GOLDENER_APFEL
+    material GOLDEN_APPLE
+    name <gold>Magischer Apfel
+    lore <yellow>Heilt vollständig
+    lore <gray>Cooldown: 30 Sekunden
+    cooldown 30s
+    on rightclick
+      heal
+      feed
+      effect REGENERATION 10 1
+      sound ENTITY_PLAYER_LEVELUP
+      title <gold>Geheilt! | <white>Volles Leben & Hunger | 2s
+
+  item SPAWN_EI
+    material SPAWN_EGG
+    name <green>Spawn-Ei
+    lore <gray>Teleportiert dich zum Spawn
+    on rightclick
+      teleport 0 64 0 world
+      sound ENTITY_ENDERMAN_TELEPORT
+      message <green>Zum Spawn teleportiert!
+
+Items geben (in Commands oder Triggers):
+  give item KIRSCHE        # Dem Spieler das Item geben
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 9 — CUSTOM COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  command kirsche
+    description Gibt dir eine Kirsche
+    permission lemon.kirsche
+    on run
+      give item KIRSCHE
+      message <green>Du hast eine Kirsche erhalten!
+
+  command belohnung
+    description Tägliche Belohnung
+    permission lemon.user
+    on run
+      if has perm lemon.vip
+        give apples 100
+        title <gold>VIP Belohnung! | <white>+100 ✿ Äpfel | 3s
+      else
+        give apples 25
+        title <green>Belohnung! | <white>+25 ✿ Äpfel | 3s
+
+Mit Argumenten ({arg1}, {arg2}, ...):
+  command sende
+    description Schickt jemandem eine Nachricht
+    permission lemon.sende
+    on run
+      # /sende Spielername Nachricht
+      message <gray>Du hast an {arg1} geschrieben: {arg2}
+      console msg {arg1} <gray>Von {player}: {arg2}
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 10 — GUIS (Inventar-Menüs)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  gui SHOP
+    title <gold>⭐ Apfel-Shop ⭐
+    rows 3
+    slot 13
+      material APPLE
+      name <green>Kirsche kaufen
+      lore <gray>Preis: 100 ✿ Äpfel
+      lore <dark_gray>Klicke zum Kaufen
+      on click
+        if apples >= 100
+          take apples 100
+          give item KIRSCHE
+          sound ENTITY_PLAYER_LEVELUP
+          message <green>Kirsche gekauft!
+        else
+          sound ENTITY_VILLAGER_NO
+          message <red>Nicht genug Äpfel! (100 benötigt)
+
+  gui STATS
+    title <blue>Deine Statistiken
+    rows 1
+    slot 4
+      material PLAYER_HEAD
+      name <white>{player}
+      lore <gray>Äpfel: <green>{player_apples}
+      lore <gray>Planks: <#D2691E>{player_planks}
+      lore <gray>Leben: <red>{player_health}
+
+GUI öffnen (in Command oder Trigger):
+  gui SHOP
+  gui STATS
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 11 — DATENBANK (DB)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Du kannst eigene Daten in die Datenbank speichern und laden.
+Standardmäßig ist alles ASYNC (läuft im Hintergrund).
+
+SCHREIBEN (async — Standard):
+  db write lemon_data {player} kills 5
+  # Tabelle: lemon_data, Schlüssel: {player}, Feld: kills, Wert: 5
+
+SCHREIBEN (sync — blockiert den Main-Thread, nur wenn nötig!):
+  db write sync lemon_data {player} vip_rank gold
+
+LESEN (async — Ergebnis in Variable):
+  db read lemon_data {player} kills -> player_kills
+  message <gray>Deine Kills: <white>{player_kills}
+
+LESEN (sync):
+  db read sync lemon_data {player} vip_rank -> rank
+  if rank == gold
+    give apples 100
+
+LÖSCHEN:
+  db delete lemon_data {player} kills
+
+Vollständiges Beispiel — Kill-Counter:
+  on kill
+    db read lemon_data {player} kills -> kills
+    set neue_kills = {kills} + 1
+    db write lemon_data {player} kills {neue_kills}
+    actionbar <red>Kills: {neue_kills}
+    if neue_kills >= 100
+      perm add lemon.killmaster
+      title <red>KILLMASTER! | <gray>100 Kills erreicht! | 5s
+      broadcast <red>{player} hat 100 Kills erreicht!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 12 — THREAD-KONTROLLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Manche Aktionen müssen im Main-Thread laufen (GUI, Teleport, Items geben).
+Andere können im Hintergrund laufen (DB, HTTP-Requests).
+
+  thread main
+    # Alles hier läuft im Main-Thread (Bukkit/Paper)
+    teleport 0 64 0
+    give item KIRSCHE
+    gui SHOP
+
+  thread async
+    # Alles hier läuft im Hintergrund (nicht Main-Thread)
+    db write lemon_data {player} last_login {player}
+    db read lemon_data {player} kills -> kills
+
+WICHTIG:
+- GUI, Teleport, ItemStack, Partikel → immer main
+- DB, externe API → besser async
+- Standard ohne "thread": main (sicher)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 13 — SERVER-SYNC (API-KEY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LemonLang kann Skripte automatisch zwischen Servern synchronisieren.
+Alle 30 Sekunden werden Änderungen an andere Server übertragen.
+
+KONFIGURATION (plugins/LemonCore/config.yml):
+  lemonlang:
+    sync:
+      enabled: true
+      api_key: "mein-geheimer-api-key"
+      password: "mein-passwort"
+      interval: 30s
+      servers:
+        - name: lobby2
+          host: 192.168.1.2
+          port: 25565
+        - name: minigames
+          host: 192.168.1.3
+          port: 25566
+
+WIE ES FUNKTIONIERT:
+- Server A ändert ein Skript → wird alle 30s an Server B + C geschickt
+- Server B/C empfangen das Skript → laden es neu (wie /lemonlang reload)
+- Das Skript läuft dann auf ALLEN konfigurierten Servern identisch
+- Der API-Key verhindert, dass fremde Server Skripte einschleusen
+
+IN DER LEMON-DATEI — sync steuern:
+  # Dieses Skript wird NICHT synchronisiert (nur lokal):
+  sync off
+
+  # Dieses Skript wird synchronisiert (Standard wenn sync enabled):
+  sync on
+
+  # Nur auf bestimmte Server senden:
+  sync to lobby2 minigames
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 14 — MINIMESSAGE STYLING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LemonLang nutzt MiniMessage für alle Texte (Paper-Standard).
+
+FARBEN:
+  <red>          <green>        <blue>         <yellow>
+  <gold>         <aqua>         <gray>         <dark_gray>
+  <dark_red>     <dark_green>   <dark_blue>    <white>
+  <black>        <light_purple> <dark_purple>  <dark_aqua>
+
+HEX-FARBEN:
+  <#FF0000>      # Rot
+  <#FFD700>      # Gold
+  <#D2691E>      # Planks-Braun
+  <#00FF00>      # Grün
+
+FORMATE:
+  <bold>         <italic>       <underlined>   <strikethrough>
+  <!italic>      # Kursiv DEAKTIVIEREN (wichtig bei Vanilla-Items!)
+
+GRADIENT:
+  <gradient:#fffb00:#00ff00>LemonPvP</gradient>
+  <gradient:#ff0000:#0000ff>Regenbogen</gradient>
+
+RAINBOW:
+  <rainbow>Bunt!</rainbow>
+
+HOVER + CLICK:
+  <hover:show_text:'<red>Info'>Hovere hier!</hover>
+  <click:run_command:'/spawn'>Klick mich!</click>
+  <click:suggest_command:'/msg {player} '>Antworten</click>
+  <click:open_url:'https://lemonpvp.de'>Website</click>
+
+NEWLINE:
+  message <gray>Zeile 1<newline><green>Zeile 2
+
+LemonPvP Standard-Prefix (nutze ihn überall):
+  set prefix = <gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray>
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 15 — VOLLSTÄNDIGE BEISPIELE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+━━ BEISPIEL 1: Einfaches Willkommen-Skript ━━
+
+  # willkommen.lemon
+  system paper
+
+  set prefix = <gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray>
+
+  on join
+    message {prefix} <green>Willkommen, <white>{player}<green>!
+    message {prefix} <gray>Spieler online: <white>{online}
+    sound ENTITY_PLAYER_LEVELUP
+    actionbar <yellow>Viel Spaß auf LemonPvP!
+
+  on quit
+    broadcast <gray>{player} hat den Server verlassen.
+
+
+━━ BEISPIEL 2: Kill-Reward-System ━━
+
+  # kills.lemon
+  system paper
+  import luckperms
+
+  define kill_sound
+    sound ENTITY_PLAYER_LEVELUP
+    sound ENTITY_FIREWORK_ROCKET_BLAST
+
+  on kill
+    run kill_sound
+    give apples 5
+    give planks 2
+    actionbar <red>+5 ✿ Äpfel, +2 ▬ Planks für den Kill!
+
+    if chance 5
+      # 5% Jackpot-Chance
+      give apples 50
+      firework RAINBOW
+      title <gold><bold>JACKPOT! | <yellow>+50 ✿ Bonus! | 3s
+      broadcast <gold>{player} <yellow>hat einen Kill-Jackpot gewonnen!
+
+    if has perm lemon.vip
+      give apples 3
+      # VIP bekommt Bonus
+
+
+━━ BEISPIEL 3: Koordinaten-Interaktion ━━
+
+  # zonen.lemon
+  system paper
+
+  on move
+    if at 0 64 0
+      sound ENTITY_VILLAGER_AMBIENT
+      actionbar <yellow>★ Du bist am Spawn! ★
+
+    if near 100 64 100 25
+      actionbar <red>⚔ PvP-Zone! Sei vorsichtig!
+
+    if at -125 674 89
+      message <green>Du hast den geheimen Punkt gefunden!
+      give apples 10
+      sound UI_TOAST_CHALLENGE_COMPLETE
+
+
+━━ BEISPIEL 4: Tägliche Belohnung mit DB ━━
+
+  # daily.lemon
+  system paper
+
+  command daily
+    description Tägliche Belohnung
+    permission lemon.user
+    on run
+      thread async
+        db read lemon_data {player} daily_time -> last_daily
+      # Prüfung und Belohnung im Main-Thread
+      thread main
+        if has perm lemon.vip
+          give apples 200
+          give planks 100
+          title <gold>VIP Daily! | <white>+200 ✿ +100 ▬ | 3s
+        else
+          give apples 50
+          give planks 25
+          title <green>Daily! | <white>+50 ✿ +25 ▬ | 3s
+        thread async
+          db write lemon_data {player} daily_time {player}
+
+
+━━ BEISPIEL 5: Custom Item mit Cooldown ━━
+
+  # items.lemon
+  system paper
+
+  item HEILAPFEL
+    material GOLDEN_APPLE
+    name <gold><bold>Heilapfel
+    lore <yellow>Heilt dich vollständig
+    lore <gray>Cooldown: 60 Sekunden
+    cooldown 60s
+    on rightclick
+      heal
+      feed
+      effect REGENERATION 5 1
+      effect ABSORPTION 10 1
+      particle HEART
+      sound ENTITY_PLAYER_LEVELUP
+      title <gold>Geheilt! | <green>Volles Leben & Hunger | 2s
+
+  command heilapfel
+    description Gibt dir einen Heilapfel
+    permission lemon.heilapfel
+    on run
+      give item HEILAPFEL
+      message <green>Heilapfel erhalten!
+
+
+━━ BEISPIEL 6: Shop-GUI ━━
+
+  # shop.lemon
+  system paper
+
+  command shop
+    description Öffnet den Shop
+    permission lemon.user
+    on run
+      gui SHOP
+
+  gui SHOP
+    title <gold>⭐ LemonPvP Shop ⭐
+    rows 3
+    slot 11
+      material APPLE
+      name <green>Kirsche
+      lore <gray>Kosten: <green>100 ✿ Äpfel
+      on click
+        if apples >= 100
+          take apples 100
+          give item KIRSCHE
+          sound ENTITY_PLAYER_LEVELUP
+          message <green>Kirsche gekauft!
+        else
+          sound ENTITY_VILLAGER_NO
+          message <red>Zu wenig Äpfel!
+    slot 13
+      material OAK_PLANKS
+      name <#D2691E>Planks x10
+      lore <gray>Kosten: <green>500 ✿ Äpfel
+      on click
+        if apples >= 500
+          take apples 500
+          give planks 10
+          sound BLOCK_WOOD_PLACE
+          message <green>10 Planks erhalten!
+        else
+          sound ENTITY_VILLAGER_NO
+          message <red>Zu wenig Äpfel!
+    slot 15
+      material DIAMOND
+      name <aqua>Diamant
+      lore <gray>Kosten: <#D2691E>1000 ▬ Planks
+      on click
+        if planks >= 1000
+          take planks 1000
+          console give {player} diamond 1
+          sound BLOCK_AMETHYST_BLOCK_CHIME
+          message <aqua>Diamant erhalten!
+        else
+          sound ENTITY_VILLAGER_NO
+          message <red>Zu wenig Planks!
+
+
+━━ BEISPIEL 7: PvP-Arena mit Zonen ━━
+
+  # pvp_arena.lemon
+  system paper
+
+  set arena_center_x = 500
+  set arena_center_z = 500
+
+  on join
+    if near 500 64 500 100
+      message <red>⚔ Du bist in der PvP-Arena! Vorsicht!
+      effect STRENGTH 3600 0
+
+  on hit
+    actionbar <red>{attacker} ⚔ {victim}
+
+  on kill
+    give apples 10
+    firework RED
+    title <red>Kill! | <gold>+10 ✿ Äpfel | 2s
+    broadcast <red>⚔ <gold>{player} <red>hat <gold>{victim} <red>eliminiert!
+
+  on death
+    if near 500 64 500 100
+      # In der Arena gestorben
+      title <red>Eliminiert! | <gray>Respawne in der Lobby | 3s
+      sound ENTITY_WITHER_SPAWN
+
+  on respawn
+    if near 500 64 500 100
+      teleport 0 64 0 world
+      message <green>Du wurdest zur Lobby teleportiert.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 16 — FEHLERBEHEBUNG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEFEHLE:
+  /lemonlang list              — Alle geladenen Skripte anzeigen
+  /lemonlang reload            — Alle Skripte neu laden
+  /lemonlang reload meinskript — Nur ein Skript neu laden
+  /lemonlang error meinskript  — Letzten Fehler anzeigen
+  /lemonlang info              — Items, Commands, GUIs zählen
+
+HÄUFIGE FEHLER:
+
+  [LemonLang] Fehler in willkommen.lemon:5 - Unbekannter Trigger 'jion'
+  → Tipp: Trigger heißt 'join', nicht 'jion'. Tippfehler!
+
+  [LemonLang] Fehler in shop.lemon:12 - Tabulator in der Einrückung
+  → Tipp: Leerzeichen statt Tab! 2 Leerzeichen pro Ebene.
+
+  [LemonLang] Fehler in kills.lemon:8 - Import 'luckperms' nicht verfügbar
+  → Tipp: LuckPerms ist nicht installiert oder nicht aktiv.
+
+  [LemonLang] Fehler in items.lemon:3 - Unbekanntes Material 'KIRSCHE'
+  → Tipp: Materialien sind Englisch. Kirsche = CHERRY_LEAVES
+
+EINRÜCKUNG:
+  ✓ RICHTIG (2 Leerzeichen):
+    on join
+      message Hallo!
+
+  ✗ FALSCH (4 Leerzeichen):
+    on join
+        message Hallo!
+
+  ✗ FALSCH (Tab):
+    on join
+    [TAB]message Hallo!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KAPITEL 17 — SCHNELLREFERENZ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TRIGGER:           join quit death respawn chat move interact hit kill
+                   blockbreak blockplace rightclick leftclick run click
+
+AKTIONEN:          message actionbar title subtitle broadcast kick
+                   give take sound particle firework effect
+                   teleport heal feed perm run console command gui
+                   cooldown wait stop cancel repeat
+                   db write  db read  db delete
+                   thread main  thread async
+
+BEDINGUNGEN:       if  else  else if
+                   at x y z
+                   near x y z radius
+                   chance N
+                   has perm permission.node
+                   has item MATERIAL
+                   var op value  (apples >= 100, health <= 4, name == Steve)
+                   and  or  not
+
+VARIABLEN:         set name = wert
+                   {player} {player_apples} {player_planks} {player_coins}
+                   {player_health} {player_world} {online}
+                   {attacker} {victim} {message} {loop}
+                   {arg1} {arg2} ...
+
+DEFINITIONEN:      define  item  command  gui  every  system  import
+                   sync on  sync off  sync to server1 server2
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Viel Spaß beim Coden mit LemonLang!
+Bei Fragen: /lemonlang error <skriptname>  oder schau in die anderen Docs.
