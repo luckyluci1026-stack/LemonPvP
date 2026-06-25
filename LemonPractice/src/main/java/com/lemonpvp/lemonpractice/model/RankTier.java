@@ -56,6 +56,9 @@ public enum RankTier {
         String colorPrefix = end >= 0 ? display.substring(0, end + 1) : "<gray>";
         return colorPrefix + symbol;
     }
+
+    /**
+     * Resolves the highest tier whose {@code minElo} does not exceed {@code elo}.
      * {@link #UNRANKED} is never returned here (its bound is MIN_VALUE only as a
      * sentinel) — callers should special-case placement players themselves.
      */
