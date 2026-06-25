@@ -7,7 +7,6 @@ import com.lemonpvp.lemoncore.lemonlang.runtime.*;
 import com.lemonpvp.lemoncore.lemonlang.runtime.LemonLangDB;
 import com.lemonpvp.lemoncore.lemonlang.token.LineReader;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -132,7 +131,7 @@ public final class LemonLangManager {
 
     // ---- Getters ---------------------------------------------------------------
 
-    public Plugin getPlugin() { return plugin; }
+    public LemonCore getPlugin() { return plugin; }
     public Environment getEnvironment() { return globalEnv; }
     public CooldownRegistry getCooldownRegistry() { return cooldownRegistry; }
     public ItemRegistry getItemRegistry() { return itemRegistry; }

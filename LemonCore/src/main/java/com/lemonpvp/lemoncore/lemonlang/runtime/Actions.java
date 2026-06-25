@@ -334,7 +334,7 @@ public final class Actions {
                         "Syntax: perm add lemon.vip  oder  perm remove lemon.vip");
                 String action = args.get(0).toLowerCase();
                 String permNode = args.get(1);
-                LemonCore core = (LemonCore) ctx.manager().getPlugin();
+                LemonCore core = ctx.manager().getPlugin();
                 LuckPerms lp = core != null ? core.getLuckPerms() : null;
                 if (lp == null) {
                     LOG.warning("[LemonLang] LuckPerms nicht verfuegbar fuer perm-Aktion.");
@@ -434,7 +434,7 @@ public final class Actions {
                     LOG.warning("[LemonLang] db: Kein Unterbefehl angegeben. Erlaubt: write, read, delete");
                     break;
                 }
-                LemonCore lc = (LemonCore) ctx.manager().getPlugin();
+                LemonCore lc = ctx.manager().getPlugin();
                 String sub = args.get(0).toLowerCase();
                 boolean sync = args.size() > 1 && args.get(1).equalsIgnoreCase("sync");
                 int offset = sync ? 2 : 1;
@@ -523,7 +523,7 @@ public final class Actions {
     }
 
     private static PlayerDataManager economy(ScriptContext ctx) {
-        LemonCore core = (LemonCore) ctx.manager().getPlugin();
+        LemonCore core = ctx.manager().getPlugin();
         return core.getPlayerDataManager();
     }
 }

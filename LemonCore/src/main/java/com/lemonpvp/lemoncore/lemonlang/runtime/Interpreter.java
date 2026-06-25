@@ -249,7 +249,7 @@ public final class Interpreter {
 
     private PlayerData getPlayerData(Player player, ScriptContext ctx) {
         if (ctx.manager() == null) return null;
-        LemonCore core = (LemonCore) ctx.manager().getPlugin();
+        LemonCore core = ctx.manager().getPlugin();
         if (core == null) return null;
         return core.getPlayerDataManager().getCached(player.getUniqueId());
     }

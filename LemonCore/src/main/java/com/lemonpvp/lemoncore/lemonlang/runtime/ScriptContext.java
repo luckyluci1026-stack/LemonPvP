@@ -164,7 +164,7 @@ public class ScriptContext {
             return "0";
         }
         UUID uuid = player.getUniqueId();
-        LemonCore core = manager != null ? manager.getPlugin() : null;
+        LemonCore core = manager != null && manager.getPlugin() instanceof LemonCore lc ? lc : null;
         if (core == null) {
             return "0";
         }
