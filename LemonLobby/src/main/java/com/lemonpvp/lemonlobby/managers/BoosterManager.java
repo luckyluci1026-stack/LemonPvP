@@ -58,14 +58,15 @@ public class BoosterManager {
     public void tickBossBars() {
         for (var it = bossBars.entrySet().iterator(); it.hasNext();) {
             var entry = it.next();
-            UUID uuid  = entry.getKey();
-            BossBar bar = entry.getValue();
+            UUID   uuid = entry.getKey();
+            BossBar bar  = entry.getValue();
 
             Player p = Bukkit.getPlayer(uuid);
             if (p == null) { it.remove(); continue; }
 
             Database.BoosterEntry cached = cache.get(uuid);
             if (cached == null || !isActive(cached)) {
+                cache.remove(uuid);
                 p.hideBossBar(bar);
                 it.remove();
                 p.sendMessage(MM.deserialize(
@@ -75,9 +76,9 @@ public class BoosterManager {
             }
 
             long remaining = cached.expiresAt() - System.currentTimeMillis();
-            float progress = Math.max(0f, Math.min(1f,
-                    (float) cached.remainingUses() / cached.tier().maxUses));
-            bar.name(buildBarTitle(cached.tier(), cached.remainingUses(), remaining));
+            long total     = (long) cached.tier().durationSeconds * 1_000;
+            float progress = Math.max(0f, Math.min(1f, (float) remaining / total));
+            bar.name(buildBarTitle(cached.tier(), remaining));
             bar.progress(progress);
         }
     }
@@ -100,10 +101,10 @@ public class BoosterManager {
 
     public void activate(UUID uuid, BoosterTier tier) {
         long expiresAt = System.currentTimeMillis() + (long) tier.durationSeconds * 1_000;
-        Database.BoosterEntry entry = new Database.BoosterEntry(tier, tier.maxUses, expiresAt);
+        Database.BoosterEntry entry = new Database.BoosterEntry(tier, expiresAt);
         cache.put(uuid, entry);
         Bukkit.getScheduler().runTaskAsynchronously(plugin,
-                () -> plugin.getDatabase().saveBoosterEntry(uuid, tier, tier.maxUses, expiresAt));
+                () -> plugin.getDatabase().saveBoosterEntry(uuid, tier, expiresAt));
 
         // Bossbar (activate is always called from main thread)
         BossBar bar = buildBar(entry);
@@ -115,60 +116,26 @@ public class BoosterManager {
         }
     }
 
-    /** Decrements one use. Returns false when the booster is now exhausted. */
-    public boolean consumeUse(UUID uuid) {
-        Database.BoosterEntry entry = cache.get(uuid);
-        if (entry == null || !isActive(entry)) { cache.remove(uuid); hideBar(uuid); return false; }
-
-        int remaining = entry.remainingUses() - 1;
-        if (remaining <= 0) {
-            cache.remove(uuid);
-            hideBar(uuid);
-            Bukkit.getScheduler().runTaskAsynchronously(plugin,
-                    () -> plugin.getDatabase().deleteBoosterEntry(uuid));
-            Player p = Bukkit.getPlayer(uuid);
-            if (p != null) p.sendMessage(MM.deserialize(
-                    "<!italic><gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient>"
-                    + " <dark_gray>»</dark_gray> <red>Verstärker aufgebraucht!"));
-            return false;
-        }
-
-        Database.BoosterEntry updated = new Database.BoosterEntry(entry.tier(), remaining, entry.expiresAt());
-        cache.put(uuid, updated);
-        Bukkit.getScheduler().runTaskAsynchronously(plugin,
-                () -> plugin.getDatabase().saveBoosterEntry(uuid, entry.tier(), remaining, entry.expiresAt()));
-        return true;
-    }
-
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private boolean isActive(Database.BoosterEntry entry) {
-        return System.currentTimeMillis() < entry.expiresAt() && entry.remainingUses() > 0;
-    }
-
-    private void hideBar(UUID uuid) {
-        BossBar bar = bossBars.remove(uuid);
-        if (bar != null) {
-            Player p = Bukkit.getPlayer(uuid);
-            if (p != null) p.hideBossBar(bar);
-        }
+        return System.currentTimeMillis() < entry.expiresAt();
     }
 
     private BossBar buildBar(Database.BoosterEntry entry) {
         long remaining = entry.expiresAt() - System.currentTimeMillis();
-        float progress = Math.max(0f, Math.min(1f,
-                (float) entry.remainingUses() / entry.tier().maxUses));
+        long total     = (long) entry.tier().durationSeconds * 1_000;
+        float progress = Math.max(0f, Math.min(1f, (float) remaining / total));
         return BossBar.bossBar(
-                buildBarTitle(entry.tier(), entry.remainingUses(), remaining),
+                buildBarTitle(entry.tier(), remaining),
                 progress,
                 BossBar.Color.YELLOW,
                 BossBar.Overlay.PROGRESS);
     }
 
-    private Component buildBarTitle(BoosterTier tier, int uses, long remainingMs) {
-        String time = formatDuration(remainingMs);
+    private Component buildBarTitle(BoosterTier tier, long remainingMs) {
         return MM.deserialize("<!italic><gold>⚡ Verstärker " + tier.displayName
-                + " <yellow>▸ <white>" + uses + " Nutzungen <yellow>▸ <white>" + time);
+                + " <yellow>▸ <white>" + formatDuration(remainingMs) + " verbleibend");
     }
 
     private String formatDuration(long millis) {

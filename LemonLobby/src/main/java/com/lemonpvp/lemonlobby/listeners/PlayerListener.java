@@ -21,7 +21,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 
 public class PlayerListener implements Listener {
 
@@ -84,23 +83,14 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onInventoryOpen(InventoryOpenEvent event) {
-        if (!(event.getPlayer() instanceof Player player)) return;
+        if (!(event.getPlayer() instanceof Player)) return;
 
         InventoryType type = event.getInventory().getType();
 
-        // Allow chest inventories opened by our GUI code (they have a gui PDC key on items)
-        if (type == InventoryType.CHEST) {
-            // Check if the top inventory has our GUI marker item
-            ItemStack firstItem = event.getInventory().getItem(0);
-            if (firstItem != null && firstItem.hasItemMeta()) {
-                if (firstItem.getItemMeta().getPersistentDataContainer()
-                        .has(trainingGUI.getGuiKey(), PersistentDataType.BYTE)) {
-                    return; // Our GUI — allow it
-                }
-            }
-        }
+        // Allow all custom chest-based GUIs (shop, cosmetics, training, etc.)
+        if (type == InventoryType.CHEST) return;
 
-        // Close crafting and player inventories — cancel immediately to avoid flicker
+        // Block player inventory and crafting to prevent item manipulation
         if (type == InventoryType.CRAFTING || type == InventoryType.PLAYER) {
             event.setCancelled(true);
         }

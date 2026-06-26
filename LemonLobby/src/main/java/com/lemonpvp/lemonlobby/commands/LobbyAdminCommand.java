@@ -45,6 +45,7 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
 
     private void handleReload(CommandSender sender) {
         plugin.reloadConfig();
+        plugin.getBoosterConfig().reload();
         plugin.getAppleTreeListener().reload();
         plugin.loadServersConfig();
         sender.sendMessage(MM.deserialize(PREFIX + "<green>Konfiguration neu geladen."));
@@ -83,7 +84,7 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
         int level;
         try { level = Integer.parseInt(args[2]); }
         catch (NumberFormatException e) { sender.sendMessage(MM.deserialize("<!italic><red>Ungültige Stufe (1-5).")); return; }
-        BoosterTier tier = BoosterTier.fromLevel(level);
+        BoosterTier tier = plugin.getBoosterConfig().fromLevel(level);
         if (tier == null) { sender.sendMessage(MM.deserialize("<!italic><red>Ungültige Stufe (1-5).")); return; }
         plugin.getBoosterManager().activate(target.getUniqueId(), tier);
         sender.sendMessage(MM.deserialize(PREFIX + "<green>Verstärker " + tier.displayName

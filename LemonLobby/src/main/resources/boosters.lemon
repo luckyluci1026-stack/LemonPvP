@@ -1,0 +1,42 @@
+# ============================================================
+#  Booster-Stufen Konfiguration — LemonLobby
+#
+#  Alle Werte koennen hier angepasst werden.
+#  Aenderungen werden nach /llobby reload aktiv.
+#
+#  Felder pro Stufe:
+#    name    - Anzeigename im Shop & Bossbar
+#    preis   - Kosten in Aepfeln (Unterstrich als Tausendertrenner erlaubt)
+#    bonus   - Bonus-Aepfel pro Baum-Klick
+#    dauer   - Dauer in Sekunden
+# ============================================================
+
+booster L1
+  name    "Stufe I"
+  preis   2_000
+  bonus   3
+  dauer   180
+
+booster L2
+  name    "Stufe II"
+  preis   8_000
+  bonus   10
+  dauer   300
+
+booster L3
+  name    "Stufe III"
+  preis   15_000
+  bonus   20
+  dauer   450
+
+booster L4
+  name    "Stufe IV"
+  preis   25_000
+  bonus   35
+  dauer   600
+
+booster L5
+  name    "Stufe V"
+  preis   50_000
+  bonus   50
+  dauer   900

@@ -129,7 +129,6 @@ public class AppleTreeListener implements Listener {
         int total = (int) Math.round((baseApples + bonus) * mult) + (jackpot ? JACKPOT_BONUS : 0);
 
         EconomyBridge.addApples(uuid, total);
-        if (bonus > 0) plugin.getBoosterManager().consumeUse(uuid);
 
         org.bukkit.Location center = block.getLocation().add(0.5, 0.5, 0.5);
 

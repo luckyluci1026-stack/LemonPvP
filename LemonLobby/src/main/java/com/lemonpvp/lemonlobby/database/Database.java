@@ -67,10 +67,13 @@ public class Database {
                 "CREATE TABLE IF NOT EXISTS ll_boosters (" +
                 "    uuid VARCHAR(36) PRIMARY KEY," +
                 "    tier INT NOT NULL," +
-                "    remaining_uses INT NOT NULL," +
                 "    expires_at BIGINT NOT NULL" +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             );
+            // Migration: drop remaining_uses if it still exists from an older schema
+            try {
+                stmt.executeUpdate("ALTER TABLE ll_boosters DROP COLUMN IF EXISTS remaining_uses");
+            } catch (Exception ignored) {}
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to create tables: " + e.getMessage());
         }
@@ -114,18 +117,18 @@ public class Database {
 
     // ── Booster ───────────────────────────────────────────────────────────────
 
-    public record BoosterEntry(BoosterTier tier, int remainingUses, long expiresAt) {}
+    public record BoosterEntry(BoosterTier tier, long expiresAt) {}
 
     public BoosterEntry loadBoosterEntry(UUID uuid) {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "SELECT tier, remaining_uses, expires_at FROM ll_boosters WHERE uuid=?")) {
+                     "SELECT tier, expires_at FROM ll_boosters WHERE uuid=?")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    BoosterTier tier = BoosterTier.fromLevel(rs.getInt("tier"));
+                    BoosterTier tier = plugin.getBoosterConfig().fromLevel(rs.getInt("tier"));
                     if (tier == null) return null;
-                    return new BoosterEntry(tier, rs.getInt("remaining_uses"), rs.getLong("expires_at"));
+                    return new BoosterEntry(tier, rs.getLong("expires_at"));
                 }
             }
             return null;
@@ -135,15 +138,14 @@ public class Database {
         }
     }
 
-    public void saveBoosterEntry(UUID uuid, BoosterTier tier, int remainingUses, long expiresAt) {
+    public void saveBoosterEntry(UUID uuid, BoosterTier tier, long expiresAt) {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "INSERT INTO ll_boosters (uuid, tier, remaining_uses, expires_at) VALUES (?,?,?,?) " +
-                     "ON DUPLICATE KEY UPDATE tier=VALUES(tier), remaining_uses=VALUES(remaining_uses), expires_at=VALUES(expires_at)")) {
+                     "INSERT INTO ll_boosters (uuid, tier, expires_at) VALUES (?,?,?) " +
+                     "ON DUPLICATE KEY UPDATE tier=VALUES(tier), expires_at=VALUES(expires_at)")) {
             ps.setString(1, uuid.toString());
             ps.setInt(2, tier.level);
-            ps.setInt(3, remainingUses);
-            ps.setLong(4, expiresAt);
+            ps.setLong(3, expiresAt);
             ps.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().warning("saveBoosterEntry error: " + e.getMessage());

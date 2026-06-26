@@ -5,6 +5,8 @@ import com.lemonpvp.lemonlobby.LemonLobby;
 import com.lemonpvp.lemonlobby.database.Database;
 import com.lemonpvp.lemonlobby.model.BoosterTier;
 import com.lemonpvp.lemonlobby.model.PlankTier;
+
+import java.util.List;
 import com.lemonpvp.lemonlobby.util.EconomyBridge;
 import com.lemonpvp.lemonlobby.util.FormatUtil;
 import net.kyori.adventure.text.Component;
@@ -178,12 +180,12 @@ public class ShopGUI implements Listener {
     // ── Boosters ─────────────────────────────────────────────────────────────
 
     private void fillBoosters() {
-        BoosterTier[]        tiers  = BoosterTier.values();
+        List<BoosterTier>    tiers  = plugin.getBoosterConfig().getTiers();
         Database.BoosterEntry active = plugin.getBoosterManager().getActive(player.getUniqueId());
         long playerApples            = getApples();
 
-        for (int i = 0; i < BOOSTER_SLOTS.length && i < tiers.length; i++) {
-            inv.setItem(BOOSTER_SLOTS[i], buildBoosterItem(tiers[i], active, playerApples));
+        for (int i = 0; i < BOOSTER_SLOTS.length && i < tiers.size(); i++) {
+            inv.setItem(BOOSTER_SLOTS[i], buildBoosterItem(tiers.get(i), active, playerApples));
         }
     }
 
@@ -209,15 +211,13 @@ public class ShopGUI implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
         lore.add(MM.deserialize("<!italic><gray>Bonus Äpfel: <white>+" + tier.bonusApples + " / Klick"));
-        lore.add(MM.deserialize("<!italic><gray>Max. Nutzungen: <white>" + tier.maxUses));
         lore.add(MM.deserialize("<!italic><gray>Dauer: <white>" + tier.durationDisplay()));
         lore.add(Component.empty());
 
         if (isActive) {
             lore.add(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>✔ Aktiv"));
-            lore.add(MM.deserialize("<!italic><gray>Verbleibend: <white>" + active.remainingUses() + " Nutzungen"));
             long rem = active.expiresAt() - System.currentTimeMillis();
-            lore.add(MM.deserialize("<!italic><gray>Zeit: <white>" + formatDuration(rem)));
+            lore.add(MM.deserialize("<!italic><gray>Verbleibend: <white>" + formatDuration(rem)));
         } else {
             // Progress bar
             String bar = progressBar(playerApples, tier.appleCost, PROGRESS_BARS);
@@ -260,9 +260,8 @@ public class ShopGUI implements Listener {
         if (active != null) {
             lore.add(MM.deserialize("<!italic><gray>Typ: <white>" + active.tier().displayName));
             lore.add(MM.deserialize("<!italic><gray>Bonus: <white>+" + active.tier().bonusApples + " Äpfel / Klick"));
-            lore.add(MM.deserialize("<!italic><gray>Nutzungen: <white>" + active.remainingUses()));
             long rem = active.expiresAt() - System.currentTimeMillis();
-            lore.add(MM.deserialize("<!italic><gray>Zeit: <white>" + formatDuration(rem)));
+            lore.add(MM.deserialize("<!italic><gray>Verbleibend: <white>" + formatDuration(rem)));
         } else {
             lore.add(MM.deserialize("<!italic><dark_gray>Kein aktiver Verstärker."));
         }
@@ -311,9 +310,9 @@ public class ShopGUI implements Listener {
             if (slot == PLANK_SLOTS[i]) { handlePlankPurchase(planks[i]); return; }
         }
 
-        BoosterTier[] boosters = BoosterTier.values();
-        for (int i = 0; i < BOOSTER_SLOTS.length && i < boosters.length; i++) {
-            if (slot == BOOSTER_SLOTS[i]) { handleBoosterPurchase(boosters[i]); return; }
+        List<BoosterTier> boosters = plugin.getBoosterConfig().getTiers();
+        for (int i = 0; i < BOOSTER_SLOTS.length && i < boosters.size(); i++) {
+            if (slot == BOOSTER_SLOTS[i]) { handleBoosterPurchase(boosters.get(i)); return; }
         }
     }
 

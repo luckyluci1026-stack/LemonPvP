@@ -6,6 +6,7 @@ import com.lemonpvp.lemonlobby.commands.GPlanksCommand;
 import com.lemonpvp.lemonlobby.commands.LobbyAdminCommand;
 import com.lemonpvp.lemonlobby.commands.PlanksCommand;
 import com.lemonpvp.lemonlobby.commands.ShopCommand;
+import com.lemonpvp.lemonlobby.config.BoosterConfig;
 import com.lemonpvp.lemonlobby.database.Database;
 import com.lemonpvp.lemonlobby.gui.TrainingGUI;
 import com.lemonpvp.lemonlobby.listeners.AppleTreeListener;
@@ -20,6 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class LemonLobby extends JavaPlugin {
 
     private Database database;
+    private BoosterConfig boosterConfig;
     private HotbarManager hotbarManager;
     private LobbyMessaging lobbyMessaging;
     private TrainingGUI trainingGUI;
@@ -33,6 +35,10 @@ public final class LemonLobby extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         loadServersConfig();
+
+        // Booster config (must be before Database so DB can resolve tier levels)
+        boosterConfig = new BoosterConfig(this);
+        boosterConfig.reload();
 
         // Database setup
         database = new Database(this);
@@ -102,6 +108,7 @@ public final class LemonLobby extends JavaPlugin {
     // ── Getters ───────────────────────────────────────────────────────────────
 
     public Database getDatabase()                     { return database; }
+    public BoosterConfig getBoosterConfig()           { return boosterConfig; }
     public HotbarManager getHotbarManager()           { return hotbarManager; }
     public LobbyMessaging getLobbyMessaging()         { return lobbyMessaging; }
     public TrainingGUI getTrainingGUI()               { return trainingGUI; }
