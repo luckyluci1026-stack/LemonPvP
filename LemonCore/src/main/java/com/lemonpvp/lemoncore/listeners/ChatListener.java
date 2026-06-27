@@ -13,12 +13,18 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatListener implements Listener {
 
+    private static final String COOLDOWN_BYPASS = "lemoncore.chatcooldown.bypass";
+
     private final LemonCore plugin;
+    private final Map<UUID, Long> lastChat = new ConcurrentHashMap<>();
 
     public ChatListener(LemonCore plugin) {
         this.plugin = plugin;
@@ -29,6 +35,23 @@ public class ChatListener implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         String plain = PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
+
+        // --- Chat cooldown (default 2.5s) — bypass with lemoncore.chatcooldown.bypass ---
+        long cooldownMs = plugin.getConfig().getLong("chat.cooldown-ms", 2500);
+        if (cooldownMs > 0 && !player.hasPermission(COOLDOWN_BYPASS)) {
+            long now = System.currentTimeMillis();
+            Long last = lastChat.get(uuid);
+            if (last != null && now - last < cooldownMs) {
+                double remaining = (cooldownMs - (now - last)) / 1000.0;
+                event.viewers().clear();
+                event.setCancelled(true);
+                player.sendMessage(TextUtil.parse("<red>Bitte warte noch <yellow>"
+                        + String.format(Locale.US, "%.1f", remaining)
+                        + "s</yellow> bevor du wieder schreibst."));
+                return;
+            }
+            lastChat.put(uuid, now);
+        }
 
         // --- Synchronous filter checks: cancel immediately so message never gets through ---
         if (plugin.getConfig().getBoolean("anti-swear.enabled", true)) {

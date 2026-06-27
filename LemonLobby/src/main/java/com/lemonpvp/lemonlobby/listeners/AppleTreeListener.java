@@ -135,12 +135,7 @@ public class AppleTreeListener implements Listener {
         if (jackpot) {
             handleJackpot(player, block, center, total);
         } else {
-            // Sound: pitch rises with combo
-            float pitch = Math.min(2.0f, 1.0f + (combo - 1) * 0.15f);
-            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.7f, pitch);
-            if (combo == MAX_COMBO) {
-                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.6f);
-            }
+            // Sound beim Ernten entfernt (nur noch Partikel/Hologramm).
 
             // Particles
             int pCount = 4 + combo * 2;
@@ -208,7 +203,7 @@ public class AppleTreeListener implements Listener {
 
         EconomyBridge.addPlanks(uuid, planks);
 
-        player.playSound(player.getLocation(), Sound.BLOCK_WOOD_HIT, 0.8f, 1.0f);
+        // Sound beim Ernten entfernt (nur noch Partikel/Hologramm).
         org.bukkit.Location center = block.getLocation().add(0.5, 0.5, 0.5);
         block.getWorld().spawnParticle(Particle.BLOCK, center, 12, 0.3, 0.3, 0.3, block.getBlockData());
 
