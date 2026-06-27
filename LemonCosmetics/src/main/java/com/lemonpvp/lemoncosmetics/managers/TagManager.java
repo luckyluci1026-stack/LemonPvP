@@ -5,6 +5,7 @@ import com.lemonpvp.lemoncosmetics.model.PlayerCosmetics;
 import com.lemonpvp.lemoncosmetics.model.TagType;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -120,23 +121,28 @@ public class TagManager {
     }
 
     /**
-     * Restores the equipped tag on join. Because LemonCore's PlayerData may load
-     * slightly after cosmetics, this retries a few times until it is cached.
+     * Restores the equipped tag on join. LemonCore's {@code PlayerData} and the
+     * player's LuckPerms permissions can both finish loading slightly <em>after</em>
+     * cosmetics does — especially right after a relog — so a single apply often
+     * ran too early and the tag silently never showed (forcing the player to
+     * re-pick it). Instead we re-apply once per second for the first ~12 seconds:
+     * as soon as PlayerData (and permissions) are ready the tag sticks, and the
+     * repeated apply also survives any early overwrite of the runtime display.
      */
     public void restoreTag(Player player) {
-        scheduleApply(player.getUniqueId(), 0);
-    }
-
-    private void scheduleApply(UUID uuid, int attempt) {
-        Player player = Bukkit.getPlayer(uuid);
-        if (player == null || !player.isOnline()) return;
-
-        var lc = plugin.getCosmeticsManager().getLemonCore();
-        if (lc != null && lc.getPlayerDataManager().getCached(uuid) != null) {
-            applyTagDisplay(player);
-            return;
-        }
-        if (attempt >= 10) return; // give up after ~5s
-        Bukkit.getScheduler().runTaskLater(plugin, () -> scheduleApply(uuid, attempt + 1), 10L);
+        final UUID uuid = player.getUniqueId();
+        new BukkitRunnable() {
+            int ticks = 0;
+            @Override
+            public void run() {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p == null || !p.isOnline()) { cancel(); return; }
+                var lc = plugin.getCosmeticsManager().getLemonCore();
+                if (lc != null && lc.getPlayerDataManager().getCached(uuid) != null) {
+                    applyTagDisplay(p);
+                }
+                if (++ticks >= 12) cancel();
+            }
+        }.runTaskTimer(plugin, 0L, 20L);
     }
 }
