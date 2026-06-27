@@ -23,9 +23,9 @@
     </modules>
 
     <properties>
-        <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>25</java.version>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -57,7 +57,11 @@
             <dependency>
                 <groupId>io.papermc.paper</groupId>
                 <artifactId>paper-api</artifactId>
-                <version>1.21.4-R0.1-SNAPSHOT</version>
+                <!-- Minecraft 26.x uses the new year-based versioning; the old
+                     1.x-R0.1-SNAPSHOT scheme is gone as of 26.1. This Maven range
+                     resolves the latest 26.2.* build. Pin a specific build if you
+                     prefer reproducibility, e.g. 26.2.build.NN-stable. -->
+                <version>[26.2.build,26.3)</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>

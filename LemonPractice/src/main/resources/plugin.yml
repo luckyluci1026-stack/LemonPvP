@@ -1,7 +1,7 @@
 name: LemonPractice
 version: "1.0.0"
 main: com.lemonpvp.lemonpractice.LemonPractice
-api-version: "1.21"
+api-version: "26.2"
 description: LemonPvP Practice Plugin
 authors: [LemonPvP]
 softdepend: [LuckPerms, FastAsyncWorldEdit, LemonCore, LemonCosmetics]
