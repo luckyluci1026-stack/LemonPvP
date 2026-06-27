@@ -11,7 +11,6 @@ import com.lemonpvp.lemoncosmetics.managers.CosmeticsManager;
 import com.lemonpvp.lemoncosmetics.managers.HatManager;
 import com.lemonpvp.lemoncosmetics.managers.KillEffectManager;
 import com.lemonpvp.lemoncosmetics.managers.TagManager;
-import com.lemonpvp.lemoncosmetics.commands.TagsCommand;
 import com.lemonpvp.lemoncosmetics.velocity.CosmeticsMessaging;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -59,10 +58,7 @@ public final class LemonCosmetics extends JavaPlugin {
         if (cosmeticsCmd != null) {
             cosmeticsCmd.setExecutor(new CosmeticsCommand(this));
         }
-        var tagsCmd = getCommand("tags");
-        if (tagsCmd != null) {
-            tagsCmd.setExecutor(new TagsCommand(this));
-        }
+        // Tags are no longer player-facing — /tags command removed.
 
         getLogger().info("LemonCosmetics enabled.");
     }
