@@ -38,7 +38,7 @@ public class PlayerListener implements Listener {
                     Player p = Bukkit.getPlayer(joinedUuid);
                     if (p == null) return;
                     plugin.getArmorTrimManager().applyTrimToPlayer(p);
-                    plugin.getHatManager().restoreHat(p);
+                    // Hats removed — no longer restored on join.
                     plugin.getTagManager().restoreTag(p);
                     if (isLobby()) {
                         giveCosmeticsItem(p);

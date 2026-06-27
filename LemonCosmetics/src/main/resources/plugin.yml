@@ -7,6 +7,10 @@ commands:
   cosmetics:
     description: Open cosmetics menu
     permission: lemoncosmetics.use
+  tags:
+    description: Open the tags menu
+    permission: lemoncosmetics.use
+    aliases: [tag]
 permissions:
   lemoncosmetics.use:
     description: Access /cosmetics and /tags commands

@@ -2,13 +2,12 @@ package com.lemonpvp.lemoncosmetics.gui;
 
 import com.lemonpvp.lemoncosmetics.LemonCosmetics;
 import com.lemonpvp.lemoncosmetics.model.ArrowTrailType;
-import com.lemonpvp.lemoncosmetics.model.HatType;
 import com.lemonpvp.lemoncosmetics.model.KillEffectType;
 import com.lemonpvp.lemoncosmetics.model.PlayerCosmetics;
+import com.lemonpvp.lemoncosmetics.model.TagType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,7 +19,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
@@ -34,7 +32,7 @@ public class CosmeticsMainGUI implements Listener {
     private static final int TRIMS_SLOT   = 11;
     private static final int TRAILS_SLOT  = 12;
     private static final int EFFECTS_SLOT = 13;
-    private static final int HATS_SLOT    = 14;
+    private static final int TAGS_SLOT    = 14;
     private static final int PROFILE_SLOT = 4;
 
     private final LemonCosmetics plugin;
@@ -63,7 +61,7 @@ public class CosmeticsMainGUI implements Listener {
         inventory.setItem(TRIMS_SLOT,    buildTrimsItem(cosmetics));
         inventory.setItem(TRAILS_SLOT,   buildTrailsItem(cosmetics));
         inventory.setItem(EFFECTS_SLOT,  buildEffectsItem(cosmetics));
-        inventory.setItem(HATS_SLOT,     buildHatsItem(cosmetics));
+        inventory.setItem(TAGS_SLOT,     buildTagsItem(cosmetics));
 
         if (!registered) {
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -111,8 +109,8 @@ public class CosmeticsMainGUI implements Listener {
         lore.add(Component.empty());
 
         if (cosmetics != null) {
-            lore.add(MM.deserialize("<!italic><gray>Hüte: <white>" + cosmetics.getOwnedHats().size()
-                    + "<gray>/<white>" + HatType.values().length));
+            lore.add(MM.deserialize("<!italic><gray>Tags: <white>" + cosmetics.getOwnedTags().size()
+                    + "<gray>/<white>" + TagType.values().length));
             lore.add(MM.deserialize("<!italic><gray>Trails: <white>" + cosmetics.getOwnedTrails().size()
                     + "<gray>/<white>" + ArrowTrailType.values().length));
             lore.add(MM.deserialize("<!italic><gray>Effekte: <white>" + cosmetics.getOwnedEffects().size()
@@ -224,37 +222,39 @@ public class CosmeticsMainGUI implements Listener {
         return item;
     }
 
-    private ItemStack buildHatsItem(PlayerCosmetics cosmetics) {
-        ItemStack item = new ItemStack(Material.LEATHER_HELMET);
-        if (item.getItemMeta() instanceof LeatherArmorMeta hatsMeta) {
-            hatsMeta.setColor(Color.fromRGB(255, 251, 0));
-            hatsMeta.displayName(MM.deserialize("<!italic><gradient:#fffb00:#ff9800>Hüte</gradient>"));
+    private ItemStack buildTagsItem(PlayerCosmetics cosmetics) {
+        ItemStack item = new ItemStack(Material.NAME_TAG);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
 
-            List<Component> lore = new ArrayList<>();
-            lore.add(Component.empty());
-            lore.add(MM.deserialize("<!italic><gray>Trage einen stylischen Hut"));
-            lore.add(MM.deserialize("<!italic><gray>auf deinem Kopf."));
-            lore.add(Component.empty());
+        meta.displayName(MM.deserialize("<!italic><gradient:#69f0ae:#00bfa5>Tags</gradient>"));
 
-            if (cosmetics != null) {
-                int owned = cosmetics.getOwnedHats().size();
-                int total = HatType.values().length;
-                lore.add(MM.deserialize("<!italic><dark_gray>Besessen: <white>" + owned + "<dark_gray>/<white>" + total));
-                String equippedHat = cosmetics.getEquippedHatId();
-                if (equippedHat != null) {
-                    lore.add(MM.deserialize("<!italic><dark_gray>Ausgerüstet: <yellow>" + equippedHat));
-                } else {
-                    lore.add(MM.deserialize("<!italic><dark_gray>Ausgerüstet: <gray>Keiner"));
-                }
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><gray>Zeige einen Tag als Suffix"));
+        lore.add(MM.deserialize("<!italic><gray>hinter deinem Namen."));
+        lore.add(Component.empty());
+
+        if (cosmetics != null) {
+            int owned = cosmetics.getOwnedTags().size();
+            int total = TagType.values().length;
+            lore.add(MM.deserialize("<!italic><dark_gray>Besessen: <white>" + owned + "<dark_gray>/<white>" + total));
+            String equippedTag = cosmetics.getEquippedTagId();
+            if (equippedTag != null) {
+                TagType t = TagType.fromId(equippedTag).orElse(null);
+                lore.add(MM.deserialize("<!italic><dark_gray>Ausgerüstet: <reset>"
+                        + (t != null ? t.render : equippedTag)));
+            } else {
+                lore.add(MM.deserialize("<!italic><dark_gray>Ausgerüstet: <gray>Keiner"));
             }
-
-            lore.add(Component.empty());
-            lore.add(MM.deserialize("<!italic><aqua>➜ Klicken zum Öffnen"));
-
-            hatsMeta.lore(lore);
-            hatsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_DYE);
-            item.setItemMeta(hatsMeta);
         }
+
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><aqua>➜ Klicken zum Öffnen"));
+
+        meta.lore(lore);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        item.setItemMeta(meta);
         return item;
     }
 
@@ -316,10 +316,10 @@ public class CosmeticsMainGUI implements Listener {
                 unregister();
                 new KillEffectsGUI(plugin, player).open();
             }
-            case HATS_SLOT -> {
+            case TAGS_SLOT -> {
                 player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
                 unregister();
-                new HatsGUI(plugin, player).open();
+                new TagsGUI(plugin, player).open();
             }
         }
     }
