@@ -266,7 +266,7 @@ public class HttpApiManager {
             .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                 Player online = Bukkit.getPlayer(uuid);
                 if (online != null)
-                    online.sendMessage(net.kyori.adventure.text.Component.text("Du wurdest stummgeschaltet: " + reason));
+                    online.sendMessage(net.kyori.adventure.text.Component.text("You have been muted: " + reason));
             })));
 
         send(ex, 200, ok());
