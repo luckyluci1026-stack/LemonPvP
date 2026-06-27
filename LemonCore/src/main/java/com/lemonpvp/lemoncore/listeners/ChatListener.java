@@ -45,9 +45,9 @@ public class ChatListener implements Listener {
                 double remaining = (cooldownMs - (now - last)) / 1000.0;
                 event.viewers().clear();
                 event.setCancelled(true);
-                player.sendMessage(TextUtil.parse("<red>Bitte warte noch <yellow>"
+                player.sendMessage(TextUtil.parse("<red>Please wait <yellow>"
                         + String.format(Locale.US, "%.1f", remaining)
-                        + "s</yellow> bevor du wieder schreibst."));
+                        + "s</yellow> before chatting again."));
                 return;
             }
             lastChat.put(uuid, now);

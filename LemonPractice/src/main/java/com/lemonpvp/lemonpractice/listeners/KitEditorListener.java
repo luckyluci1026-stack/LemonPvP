@@ -10,14 +10,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
@@ -104,13 +102,6 @@ public class KitEditorListener implements Listener {
 
         String gamemode = playerPdc.get(editingGamemodeKey, PersistentDataType.STRING);
 
-        // Prevent moving items outside the editor window
-        int topSize = event.getView().getTopInventory().getSize();
-        if (event.getRawSlot() >= topSize && event.getRawSlot() != event.getSlot()) {
-            // Click is in the player's own inventory below the editor — allow free drag
-            // but cancel DROP-key actions that would pull items out
-        }
-
         // Prevent keyboard-drop (Q) from inside the editor
         switch (event.getAction()) {
             case DROP_ONE_SLOT, DROP_ALL_SLOT, DROP_ONE_CURSOR, DROP_ALL_CURSOR -> {
@@ -152,12 +143,15 @@ public class KitEditorListener implements Listener {
             playerPdc.remove(editingGamemodeKey);
             player.closeInventory();
             plugin.getLobbyHotbarManager().setupHotbar(player);
-            player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Kit deleted!"));
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ITEM_BREAK, 0.7f, 0.8f);
+            player.sendMessage(MiniMessage.miniMessage().deserialize(
+                    "<!italic><red>Your <yellow>" + gamemode + " <red>kit was deleted!"));
         } else {
             // First click — start the confirmation window
             deleteConfirmTime.put(uuid, now);
+            player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.8f);
             player.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<red>Click <bold>DELETE</bold> again within 3 seconds to confirm deletion."));
+                    "<!italic><red>Click <bold>Delete Kit</bold> again within <bold>3 seconds</bold> to confirm."));
         }
     }
 
@@ -183,25 +177,5 @@ public class KitEditorListener implements Listener {
         UUID uuid = event.getPlayer().getUniqueId();
         activeEditors.remove(uuid);
         deleteConfirmTime.remove(uuid);
-    }
-
-    // -------------------------------------------------------------------------
-    // Move — clean up stale confirm entries
-    // -------------------------------------------------------------------------
-
-    @EventHandler
-    public void onMove(PlayerMoveEvent event) {
-        if (deleteConfirmTime.isEmpty()) {
-            return;
-        }
-
-        long now = System.currentTimeMillis();
-        Iterator<Map.Entry<UUID, Long>> it = deleteConfirmTime.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<UUID, Long> entry = it.next();
-            if ((now - entry.getValue()) > CONFIRM_WINDOW_MS) {
-                it.remove();
-            }
-        }
     }
 }

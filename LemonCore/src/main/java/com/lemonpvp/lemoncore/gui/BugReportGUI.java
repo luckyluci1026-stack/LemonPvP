@@ -106,14 +106,14 @@ public class BugReportGUI implements Listener {
 
         if (bugs.isEmpty()) {
             inv.setItem(22, makeItem(Material.LIME_DYE,
-                    "<green>Keine offenen Bug-Reports", List.of("<gray>Alles erledigt! ✔")));
+                    "<green>No open bug reports", List.of("<gray>All clear! ✔")));
         }
 
         if (page > 0) inv.setItem(PREV_SLOT, makeItem(Material.ARROW,
-                "<yellow>← Seite " + page, List.of("<gray>Klicke für vorherige Seite")));
-        inv.setItem(CLOSE_SLOT, makeItem(Material.BARRIER, "<red>Schließen", List.of()));
+                "<yellow>← Page " + page, List.of("<gray>Click for the previous page")));
+        inv.setItem(CLOSE_SLOT, makeItem(Material.BARRIER, "<red>Close", List.of()));
         if (page < maxPage()) inv.setItem(NEXT_SLOT, makeItem(Material.ARROW,
-                "<yellow>Seite " + (page + 2) + " →", List.of("<gray>Klicke für nächste Seite")));
+                "<yellow>Page " + (page + 2) + " →", List.of("<gray>Click for the next page")));
 
         if (!registered) {
             Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -124,24 +124,24 @@ public class BugReportGUI implements Listener {
 
     private ItemStack infoItem() {
         List<String> lore = new ArrayList<>();
-        lore.add("<gray>Offene Bugs: <white>" + bugs.size());
-        lore.add("<gray>Seite: <white>" + (page + 1) + "<gray>/<white>" + (maxPage() + 1));
+        lore.add("<gray>Open bugs: <white>" + bugs.size());
+        lore.add("<gray>Page: <white>" + (page + 1) + "<gray>/<white>" + (maxPage() + 1));
         lore.add("");
-        lore.add("<yellow>Linksklick <gray>→ Vollständig im Chat anzeigen");
-        lore.add("<yellow>Rechtsklick <gray>→ Als erledigt markieren");
-        return makeItem(Material.BOOK, "<gradient:#ffb300:#e65100><bold>Bug-Übersicht", lore);
+        lore.add("<yellow>Left-click <gray>→ Show full report in chat");
+        lore.add("<yellow>Right-click <gray>→ Mark as resolved");
+        return makeItem(Material.BOOK, "<gradient:#ffb300:#e65100><bold>Bug Overview", lore);
     }
 
     private ItemStack bugItem(ReportManager.BugReport r) {
         List<String> lore = new ArrayList<>();
-        lore.add("<gray>Von: <white>" + r.reporterName);
-        lore.add("<gray>Wann: <white>" + relativeTime(r.reportTime.getTime()));
+        lore.add("<gray>By: <white>" + r.reporterName);
+        lore.add("<gray>When: <white>" + relativeTime(r.reportTime.getTime()));
         lore.add("");
-        lore.add("<gray>Beschreibung:");
+        lore.add("<gray>Description:");
         for (String wrapped : wrap(r.description, 38)) lore.add("<white>" + wrapped);
         lore.add("");
-        lore.add("<yellow>▸ Linksklick: <gray>komplett im Chat");
-        lore.add("<yellow>▸ Rechtsklick: <gray>erledigt");
+        lore.add("<yellow>▸ Left-click: <gray>full text in chat");
+        lore.add("<yellow>▸ Right-click: <gray>resolve");
         return makeItem(Material.WRITABLE_BOOK, "<red><bold>Bug #" + r.id, lore);
     }
 
@@ -164,12 +164,12 @@ public class BugReportGUI implements Listener {
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         Player a = admin();
                         if (a == null) return;
-                        a.sendMessage(TextUtil.parse("<green>Bug <white>#" + r.id + " <green>als erledigt markiert."));
+                        a.sendMessage(TextUtil.parse("<green>Bug <white>#" + r.id + " <green>marked as resolved."));
                         a.playSound(a.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.4f);
                         load();
                     }));
         } else if (e.getClick() == ClickType.LEFT) {
-            p.sendMessage(TextUtil.parse("<gold><bold>Bug #" + r.id + " <reset><gray>von <white>" + r.reporterName + ":"));
+            p.sendMessage(TextUtil.parse("<gold><bold>Bug #" + r.id + " <reset><gray>by <white>" + r.reporterName + ":"));
             p.sendMessage(TextUtil.parse("<white>" + r.description));
         }
     }
@@ -202,7 +202,7 @@ public class BugReportGUI implements Listener {
             line.append(word);
         }
         if (line.length() > 0) out.add(line.toString());
-        if (out.size() > 8) { // cap lore lines
+        if (out.size() > 8) {
             List<String> capped = new ArrayList<>(out.subList(0, 8));
             capped.add("…");
             return capped;
@@ -213,12 +213,12 @@ public class BugReportGUI implements Listener {
     private static String relativeTime(long epochMillis) {
         long diff = Math.max(0, System.currentTimeMillis() - epochMillis);
         long sec = diff / 1000;
-        if (sec < 60) return "gerade eben";
+        if (sec < 60) return "just now";
         long min = sec / 60;
-        if (min < 60) return "vor " + min + " Min";
+        if (min < 60) return min + "m ago";
         long hrs = min / 60;
-        if (hrs < 24) return "vor " + hrs + "h";
-        return "vor " + (hrs / 24) + "d";
+        if (hrs < 24) return hrs + "h ago";
+        return (hrs / 24) + "d ago";
     }
 
     private ItemStack pane(Material mat) {

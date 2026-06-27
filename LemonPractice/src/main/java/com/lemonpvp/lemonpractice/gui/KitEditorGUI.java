@@ -2,9 +2,11 @@ package com.lemonpvp.lemonpractice.gui;
 
 import com.lemonpvp.lemonpractice.LemonPractice;
 import com.lemonpvp.lemonpractice.model.PlayerKit;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -31,6 +33,7 @@ public class KitEditorGUI {
     private static final int DELETE_SLOT = 8;
 
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
+    private static final MiniMessage MM = MiniMessage.miniMessage();
 
     private final LemonPractice plugin;
     private final NamespacedKey kitActionKey;
@@ -82,8 +85,9 @@ public class KitEditorGUI {
                 editingGamemodeKey, PersistentDataType.STRING, gamemode.toLowerCase());
 
         // 5. Inform player
-        player.sendMessage("§aEditing kit for §e" + gamemode
-                + "§a. Close inventory to save, or click §cDelete Kit §ato reset.");
+        player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.6f, 1.2f);
+        player.sendMessage(MM.deserialize("<!italic><green>Editing your <yellow>" + gamemode
+                + "<green> kit. <gray>Close the inventory to <white>save<gray>, or click <red>Delete Kit <gray>to reset."));
     }
 
     // -------------------------------------------------------------------------
@@ -117,7 +121,8 @@ public class KitEditorGUI {
         // Remove editing state from PDC
         player.getPersistentDataContainer().remove(editingGamemodeKey);
 
-        player.sendMessage("§aKit for §e" + gamemode + " §asaved.");
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
+        player.sendMessage(MM.deserialize("<!italic><green>Your <yellow>" + gamemode + " <green>kit was saved."));
     }
 
     // -------------------------------------------------------------------------
@@ -131,7 +136,7 @@ public class KitEditorGUI {
         ItemStack item = new ItemStack(Material.BARRIER);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(LEGACY.deserialize("§cDelete Kit"));
+            meta.displayName(LEGACY.deserialize("§c§lDelete Kit"));
             meta.getPersistentDataContainer().set(kitActionKey, PersistentDataType.STRING, PDC_KIT_ACTION_DELETE);
             item.setItemMeta(meta);
         }

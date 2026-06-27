@@ -110,14 +110,14 @@ public class ReportGUI implements Listener {
 
         if (reports.isEmpty()) {
             inv.setItem(22, makeItem(Material.LIME_DYE,
-                    "<green>Keine offenen Reports", List.of("<gray>Alles erledigt! ✔")));
+                    "<green>No open reports", List.of("<gray>All clear! ✔")));
         }
 
         if (page > 0) inv.setItem(PREV_SLOT, makeItem(Material.ARROW,
-                "<yellow>← Seite " + page, List.of("<gray>Klicke für vorherige Seite")));
-        inv.setItem(CLOSE_SLOT, makeItem(Material.BARRIER, "<red>Schließen", List.of()));
+                "<yellow>← Page " + page, List.of("<gray>Click for the previous page")));
+        inv.setItem(CLOSE_SLOT, makeItem(Material.BARRIER, "<red>Close", List.of()));
         if (page < maxPage()) inv.setItem(NEXT_SLOT, makeItem(Material.ARROW,
-                "<yellow>Seite " + (page + 2) + " →", List.of("<gray>Klicke für nächste Seite")));
+                "<yellow>Page " + (page + 2) + " →", List.of("<gray>Click for the next page")));
 
         if (!registered) {
             Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -128,12 +128,12 @@ public class ReportGUI implements Listener {
 
     private ItemStack infoItem() {
         List<String> lore = new ArrayList<>();
-        lore.add("<gray>Offene Reports: <white>" + reports.size());
-        lore.add("<gray>Seite: <white>" + (page + 1) + "<gray>/<white>" + (maxPage() + 1));
+        lore.add("<gray>Open reports: <white>" + reports.size());
+        lore.add("<gray>Page: <white>" + (page + 1) + "<gray>/<white>" + (maxPage() + 1));
         lore.add("");
-        lore.add("<yellow>Linksklick <gray>→ Zum Spieler teleportieren");
-        lore.add("<yellow>Rechtsklick <gray>→ Als erledigt markieren");
-        return makeItem(Material.BOOK, "<gradient:#ff5252:#b71c1c><bold>Report-Übersicht", lore);
+        lore.add("<yellow>Left-click <gray>→ Teleport to player");
+        lore.add("<yellow>Right-click <gray>→ Mark as resolved");
+        return makeItem(Material.BOOK, "<gradient:#ff5252:#b71c1c><bold>Report Overview", lore);
     }
 
     private ItemStack reportItem(ReportManager.Report r) {
@@ -146,16 +146,16 @@ public class ReportGUI implements Listener {
             skull.displayName(TextUtil.parse("<reset><red><bold>Report #" + r.id
                     + " <reset>" + (online ? "<green>●" : "<dark_gray>●")));
             List<Component> lore = new ArrayList<>();
-            lore.add(TextUtil.parse("<reset><gray>Gemeldet: <white>" + r.reportedName
+            lore.add(TextUtil.parse("<reset><gray>Reported: <white>" + r.reportedName
                     + (online ? " <green>(online)" : " <dark_gray>(offline)")));
-            lore.add(TextUtil.parse("<reset><gray>Von: <white>" + r.reporterName));
-            lore.add(TextUtil.parse("<reset><gray>Grund: <yellow>" + r.reason));
-            lore.add(TextUtil.parse("<reset><gray>Wann: <white>" + relativeTime(r.reportTime.getTime())));
+            lore.add(TextUtil.parse("<reset><gray>By: <white>" + r.reporterName));
+            lore.add(TextUtil.parse("<reset><gray>Reason: <yellow>" + r.reason));
+            lore.add(TextUtil.parse("<reset><gray>When: <white>" + relativeTime(r.reportTime.getTime())));
             lore.add(Component.empty());
             lore.add(TextUtil.parse(online
-                    ? "<reset><yellow>▸ Linksklick: <gray>teleportieren"
-                    : "<reset><dark_gray>▸ Spieler offline"));
-            lore.add(TextUtil.parse("<reset><yellow>▸ Rechtsklick: <gray>erledigt"));
+                    ? "<reset><yellow>▸ Left-click: <gray>teleport"
+                    : "<reset><dark_gray>▸ Player offline"));
+            lore.add(TextUtil.parse("<reset><yellow>▸ Right-click: <gray>resolve"));
             skull.lore(lore);
             item.setItemMeta(skull);
         }
@@ -181,7 +181,7 @@ public class ReportGUI implements Listener {
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         Player a = admin();
                         if (a == null) return;
-                        a.sendMessage(TextUtil.parse("<green>Report <white>#" + r.id + " <green>als erledigt markiert."));
+                        a.sendMessage(TextUtil.parse("<green>Report <white>#" + r.id + " <green>marked as resolved."));
                         a.playSound(a.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.4f);
                         load();
                     }));
@@ -190,9 +190,9 @@ public class ReportGUI implements Listener {
             if (target != null) {
                 p.closeInventory();
                 p.teleport(target.getLocation());
-                p.sendMessage(TextUtil.parse("<green>Teleportiert zu <white>" + target.getName()));
+                p.sendMessage(TextUtil.parse("<green>Teleported to <white>" + target.getName()));
             } else {
-                p.sendMessage(TextUtil.parse("<red>" + r.reportedName + " ist nicht online."));
+                p.sendMessage(TextUtil.parse("<red>" + r.reportedName + " is not online."));
             }
         }
     }
@@ -216,12 +216,12 @@ public class ReportGUI implements Listener {
     private static String relativeTime(long epochMillis) {
         long diff = Math.max(0, System.currentTimeMillis() - epochMillis);
         long sec = diff / 1000;
-        if (sec < 60) return "gerade eben";
+        if (sec < 60) return "just now";
         long min = sec / 60;
-        if (min < 60) return "vor " + min + " Min";
+        if (min < 60) return min + "m ago";
         long hrs = min / 60;
-        if (hrs < 24) return "vor " + hrs + "h";
-        return "vor " + (hrs / 24) + "d";
+        if (hrs < 24) return hrs + "h ago";
+        return (hrs / 24) + "d ago";
     }
 
     private ItemStack pane(Material mat) {
