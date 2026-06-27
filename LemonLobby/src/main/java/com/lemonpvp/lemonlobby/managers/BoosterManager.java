@@ -76,7 +76,7 @@ public class BoosterManager {
             }
 
             long remaining = cached.expiresAt() - System.currentTimeMillis();
-            long total     = (long) cached.tier().durationSeconds * 1_000;
+            long total     = Math.max(1L, (long) cached.tier().durationSeconds * 1_000);
             float progress = Math.max(0f, Math.min(1f, (float) remaining / total));
             bar.name(buildBarTitle(cached.tier(), remaining));
             bar.progress(progress);
@@ -124,7 +124,7 @@ public class BoosterManager {
 
     private BossBar buildBar(Database.BoosterEntry entry) {
         long remaining = entry.expiresAt() - System.currentTimeMillis();
-        long total     = (long) entry.tier().durationSeconds * 1_000;
+        long total     = Math.max(1L, (long) entry.tier().durationSeconds * 1_000);
         float progress = Math.max(0f, Math.min(1f, (float) remaining / total));
         return BossBar.bossBar(
                 buildBarTitle(entry.tier(), remaining),

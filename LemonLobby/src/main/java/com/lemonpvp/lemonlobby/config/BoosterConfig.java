@@ -13,14 +13,16 @@ import java.util.*;
 public class BoosterConfig {
 
     private final Plugin plugin;
-    private final List<BoosterTier> tiers = new ArrayList<>();
+    // Swapped atomically in reload() so concurrent readers (async player load)
+    // never see a half-mutated list.
+    private volatile List<BoosterTier> tiers = List.of();
 
     public BoosterConfig(Plugin plugin) {
         this.plugin = plugin;
     }
 
     public void reload() {
-        tiers.clear();
+        List<BoosterTier> parsed = new ArrayList<>();
 
         File file = new File(plugin.getDataFolder(), "boosters.lemon");
         if (!file.exists()) {
@@ -41,9 +43,9 @@ public class BoosterConfig {
 
                 if (line.startsWith("booster ")) {
                     if (currentId != null) {
-                        int level = tiers.size() + 1;
-                        tiers.add(new BoosterTier(currentId, level, currentName,
-                                currentPrice, currentBonus, currentDuration));
+                        int level = parsed.size() + 1;
+                        parsed.add(new BoosterTier(currentId, level, currentName,
+                                currentPrice, currentBonus, Math.max(1, currentDuration)));
                     }
                     currentId       = line.substring(8).trim();
                     currentName     = currentId;
@@ -66,19 +68,20 @@ public class BoosterConfig {
 
             // flush last block
             if (currentId != null) {
-                int level = tiers.size() + 1;
-                tiers.add(new BoosterTier(currentId, level, currentName,
-                        currentPrice, currentBonus, currentDuration));
+                int level = parsed.size() + 1;
+                parsed.add(new BoosterTier(currentId, level, currentName,
+                        currentPrice, currentBonus, Math.max(1, currentDuration)));
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to load boosters.lemon: " + e.getMessage());
         }
 
+        this.tiers = List.copyOf(parsed);
         plugin.getLogger().info("Loaded " + tiers.size() + " booster tiers from boosters.lemon.");
     }
 
     public List<BoosterTier> getTiers() {
-        return Collections.unmodifiableList(tiers);
+        return tiers;
     }
 
     /** Returns the tier with the given level (1-based), or null. */
