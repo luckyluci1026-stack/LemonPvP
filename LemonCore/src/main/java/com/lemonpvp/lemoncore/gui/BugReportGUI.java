@@ -7,57 +7,237 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-public class BugReportGUI {
+/**
+ * Interactive, paginated bug-report management GUI.
+ *
+ * <p>Each bug shows its reporter and the full description (word-wrapped into
+ * lore). Left-click prints the full report to chat, right-click marks it
+ * resolved. Navigation and an info header surround a 28-slot content area.</p>
+ */
+public class BugReportGUI implements Listener {
+
+    private static final int SIZE = 54;
+    private static final int[] CONTENT = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+    };
+    private static final int INFO_SLOT = 4;
+    private static final int PREV_SLOT = 48;
+    private static final int CLOSE_SLOT = 49;
+    private static final int NEXT_SLOT = 50;
 
     private final LemonCore plugin;
+    private final UUID adminUuid;
+
+    private Inventory inv;
+    private boolean registered;
+    private int page;
+    private List<ReportManager.BugReport> bugs = new ArrayList<>();
+    private final Map<Integer, ReportManager.BugReport> slotMap = new HashMap<>();
 
     public BugReportGUI(LemonCore plugin) {
         this.plugin = plugin;
+        this.adminUuid = null;
+    }
+
+    private BugReportGUI(LemonCore plugin, UUID adminUuid) {
+        this.plugin = plugin;
+        this.adminUuid = adminUuid;
     }
 
     public void open(Player admin) {
+        new BugReportGUI(plugin, admin.getUniqueId()).load();
+    }
+
+    private void load() {
+        plugin.getReportManager().getBugReports().thenAccept(list ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    this.bugs = list != null ? list : new ArrayList<>();
+                    Player a = admin();
+                    if (a == null) return;
+                    if (page > maxPage()) page = maxPage();
+                    render(a);
+                }));
+    }
+
+    private void render(Player a) {
         String title = plugin.getMessagesManager().getRaw("bug.gui-title");
-        UUID adminUuid = admin.getUniqueId();
-        plugin.getReportManager().getBugReports().thenAccept(reports -> {
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                Player a = Bukkit.getPlayer(adminUuid);
-                if (a == null) return;
-                int size = Math.max(9, Math.min(54, ((reports.size() + 8) / 9) * 9));
-                if (size == 0) size = 9;
-                Inventory inv = Bukkit.createInventory(null, size, TextUtil.parse(title));
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-                int slot = 0;
-                for (ReportManager.BugReport r : reports) {
-                    if (slot >= size) break;
-                    List<String> lore = new ArrayList<>();
-                    lore.add("<gray>Reporter: <white>" + r.reporterName);
-                    String desc = r.description.length() > 40 ? r.description.substring(0, 40) + "..." : r.description;
-                    lore.add("<gray>Bug: <white>" + desc);
-                    lore.add("<gray>Date: <white>" + sdf.format(r.reportTime));
-                    inv.setItem(slot++, makeItem(Material.WRITABLE_BOOK, "<red>Bug #" + r.id, lore));
-                }
-                a.openInventory(inv);
-            });
-        });
+        if (title == null || title.isEmpty()) title = "<gold>Bug Reports";
+        if (inv == null || inv.getSize() != SIZE) {
+            inv = Bukkit.createInventory(null, SIZE,
+                    TextUtil.parse(title + " <dark_gray>(" + bugs.size() + ")"));
+        }
+        inv.clear();
+        slotMap.clear();
+
+        ItemStack border = pane(Material.GRAY_STAINED_GLASS_PANE);
+        for (int i = 0; i < SIZE; i++) {
+            if (i < 9 || i >= 45 || i % 9 == 0 || i % 9 == 8) inv.setItem(i, border);
+        }
+
+        inv.setItem(INFO_SLOT, infoItem());
+
+        int start = page * CONTENT.length;
+        for (int i = 0; i < CONTENT.length; i++) {
+            int idx = start + i;
+            if (idx >= bugs.size()) break;
+            ReportManager.BugReport r = bugs.get(idx);
+            inv.setItem(CONTENT[i], bugItem(r));
+            slotMap.put(CONTENT[i], r);
+        }
+
+        if (bugs.isEmpty()) {
+            inv.setItem(22, makeItem(Material.LIME_DYE,
+                    "<green>Keine offenen Bug-Reports", List.of("<gray>Alles erledigt! ✔")));
+        }
+
+        if (page > 0) inv.setItem(PREV_SLOT, makeItem(Material.ARROW,
+                "<yellow>← Seite " + page, List.of("<gray>Klicke für vorherige Seite")));
+        inv.setItem(CLOSE_SLOT, makeItem(Material.BARRIER, "<red>Schließen", List.of()));
+        if (page < maxPage()) inv.setItem(NEXT_SLOT, makeItem(Material.ARROW,
+                "<yellow>Seite " + (page + 2) + " →", List.of("<gray>Klicke für nächste Seite")));
+
+        if (!registered) {
+            Bukkit.getPluginManager().registerEvents(this, plugin);
+            registered = true;
+        }
+        a.openInventory(inv);
+    }
+
+    private ItemStack infoItem() {
+        List<String> lore = new ArrayList<>();
+        lore.add("<gray>Offene Bugs: <white>" + bugs.size());
+        lore.add("<gray>Seite: <white>" + (page + 1) + "<gray>/<white>" + (maxPage() + 1));
+        lore.add("");
+        lore.add("<yellow>Linksklick <gray>→ Vollständig im Chat anzeigen");
+        lore.add("<yellow>Rechtsklick <gray>→ Als erledigt markieren");
+        return makeItem(Material.BOOK, "<gradient:#ffb300:#e65100><bold>Bug-Übersicht", lore);
+    }
+
+    private ItemStack bugItem(ReportManager.BugReport r) {
+        List<String> lore = new ArrayList<>();
+        lore.add("<gray>Von: <white>" + r.reporterName);
+        lore.add("<gray>Wann: <white>" + relativeTime(r.reportTime.getTime()));
+        lore.add("");
+        lore.add("<gray>Beschreibung:");
+        for (String wrapped : wrap(r.description, 38)) lore.add("<white>" + wrapped);
+        lore.add("");
+        lore.add("<yellow>▸ Linksklick: <gray>komplett im Chat");
+        lore.add("<yellow>▸ Rechtsklick: <gray>erledigt");
+        return makeItem(Material.WRITABLE_BOOK, "<red><bold>Bug #" + r.id, lore);
+    }
+
+    @EventHandler
+    public void onClick(InventoryClickEvent e) {
+        if (inv == null || !e.getInventory().equals(inv)) return;
+        if (!(e.getWhoClicked() instanceof Player p) || !p.getUniqueId().equals(adminUuid)) return;
+        e.setCancelled(true);
+
+        int slot = e.getRawSlot();
+        if (slot == CLOSE_SLOT) { p.closeInventory(); return; }
+        if (slot == PREV_SLOT && page > 0) { page--; render(p); return; }
+        if (slot == NEXT_SLOT && page < maxPage()) { page++; render(p); return; }
+
+        ReportManager.BugReport r = slotMap.get(slot);
+        if (r == null) return;
+
+        if (e.getClick() == ClickType.RIGHT) {
+            plugin.getReportManager().resolveBugReport(r.id).thenRun(() ->
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        Player a = admin();
+                        if (a == null) return;
+                        a.sendMessage(TextUtil.parse("<green>Bug <white>#" + r.id + " <green>als erledigt markiert."));
+                        a.playSound(a.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.4f);
+                        load();
+                    }));
+        } else if (e.getClick() == ClickType.LEFT) {
+            p.sendMessage(TextUtil.parse("<gold><bold>Bug #" + r.id + " <reset><gray>von <white>" + r.reporterName + ":"));
+            p.sendMessage(TextUtil.parse("<white>" + r.description));
+        }
+    }
+
+    @EventHandler
+    public void onClose(InventoryCloseEvent e) {
+        if (inv == null || !e.getInventory().equals(inv)) return;
+        if (!e.getPlayer().getUniqueId().equals(adminUuid)) return;
+        if (registered) { HandlerList.unregisterAll(this); registered = false; }
+    }
+
+    // -- helpers --
+
+    private Player admin() { return adminUuid == null ? null : Bukkit.getPlayer(adminUuid); }
+
+    private int maxPage() {
+        if (bugs.isEmpty()) return 0;
+        return (bugs.size() - 1) / CONTENT.length;
+    }
+
+    private static List<String> wrap(String text, int width) {
+        List<String> out = new ArrayList<>();
+        if (text == null || text.isEmpty()) { out.add("-"); return out; }
+        StringBuilder line = new StringBuilder();
+        for (String word : text.split("\\s+")) {
+            if (line.length() + word.length() + 1 > width) {
+                if (line.length() > 0) { out.add(line.toString()); line.setLength(0); }
+            }
+            if (line.length() > 0) line.append(' ');
+            line.append(word);
+        }
+        if (line.length() > 0) out.add(line.toString());
+        if (out.size() > 8) { // cap lore lines
+            List<String> capped = new ArrayList<>(out.subList(0, 8));
+            capped.add("…");
+            return capped;
+        }
+        return out;
+    }
+
+    private static String relativeTime(long epochMillis) {
+        long diff = Math.max(0, System.currentTimeMillis() - epochMillis);
+        long sec = diff / 1000;
+        if (sec < 60) return "gerade eben";
+        long min = sec / 60;
+        if (min < 60) return "vor " + min + " Min";
+        long hrs = min / 60;
+        if (hrs < 24) return "vor " + hrs + "h";
+        return "vor " + (hrs / 24) + "d";
+    }
+
+    private ItemStack pane(Material mat) {
+        ItemStack item = new ItemStack(mat);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) { meta.displayName(Component.empty()); item.setItemMeta(meta); }
+        return item;
     }
 
     private ItemStack makeItem(Material mat, String name, List<String> lore) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(TextUtil.parse("<reset>" + name));
-        List<Component> loreComp = new ArrayList<>();
-        for (String l : lore) loreComp.add(TextUtil.parse("<reset>" + l));
-        meta.lore(loreComp);
-        item.setItemMeta(meta);
+        if (meta != null) {
+            meta.displayName(TextUtil.parse("<reset>" + name));
+            List<Component> loreComp = new ArrayList<>();
+            for (String l : lore) loreComp.add(TextUtil.parse("<reset>" + l));
+            meta.lore(loreComp);
+            item.setItemMeta(meta);
+        }
         return item;
     }
 }

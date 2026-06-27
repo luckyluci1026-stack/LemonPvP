@@ -118,6 +118,36 @@ public class ReportManager {
         });
     }
 
+    public CompletableFuture<Void> resolveReport(int id) {
+        return db.executeAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE lc_reports SET resolved=TRUE WHERE id=?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            } catch (SQLException e) { plugin.getLogger().severe("ResolveReport error: " + e.getMessage()); }
+        });
+    }
+
+    public CompletableFuture<Void> resolveBugReport(int id) {
+        return db.executeAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE lc_bug_reports SET resolved=TRUE WHERE id=?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            } catch (SQLException e) { plugin.getLogger().severe("ResolveBugReport error: " + e.getMessage()); }
+        });
+    }
+
+    public CompletableFuture<Void> resolveMessageReport(int id) {
+        return db.executeAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE lc_message_reports SET resolved=TRUE WHERE id=?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            } catch (SQLException e) { plugin.getLogger().severe("ResolveMReport error: " + e.getMessage()); }
+        });
+    }
+
     public CompletableFuture<List<Report>> getMessageReports() {
         return db.queryAsync(conn -> {
             List<Report> list = new ArrayList<>();
