@@ -70,10 +70,19 @@ public class Database {
                 "    expires_at BIGINT NOT NULL" +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             );
-            // Migration: drop remaining_uses if it still exists from an older schema
-            try {
-                stmt.executeUpdate("ALTER TABLE ll_boosters DROP COLUMN IF EXISTS remaining_uses");
-            } catch (Exception ignored) {}
+            // Migration: drop the legacy remaining_uses column if an older schema
+            // still has it. Done via metadata so it works on both MySQL (no
+            // DROP COLUMN IF EXISTS) and MariaDB. Leaving a NOT NULL column with
+            // no default would otherwise break every new booster INSERT.
+            try (ResultSet rs = conn.getMetaData()
+                    .getColumns(conn.getCatalog(), null, "ll_boosters", "remaining_uses")) {
+                if (rs.next()) {
+                    stmt.executeUpdate("ALTER TABLE ll_boosters DROP COLUMN remaining_uses");
+                    plugin.getLogger().info("Migrated ll_boosters: dropped legacy remaining_uses column.");
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("Could not drop legacy remaining_uses column: " + e.getMessage());
+            }
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to create tables: " + e.getMessage());
         }
