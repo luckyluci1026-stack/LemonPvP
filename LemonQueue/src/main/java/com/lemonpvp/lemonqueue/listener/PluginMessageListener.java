@@ -40,6 +40,9 @@ public class PluginMessageListener {
             if ("PlayerBanning".equals(action)) {
                 String uuidStr = in.readUTF();
                 queueManager.markBanning(UUID.fromString(uuidStr));
+            } else if ("PlayerKicking".equals(action)) {
+                String uuidStr = in.readUTF();
+                queueManager.markKicking(UUID.fromString(uuidStr));
             }
         } catch (IOException | IllegalArgumentException ignored) {}
     }

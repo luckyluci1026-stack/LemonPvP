@@ -9,8 +9,36 @@ public class ListenerManager {
 
     private final LemonCore plugin;
 
+    /** UUIDs whose imminent kick we triggered ourselves — the PlayerKickEvent
+     *  interceptor (KickListener) must let these through unchanged instead of
+     *  re-processing them. Consume-once. */
+    private final java.util.Set<java.util.UUID> passthroughKicks =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     public ListenerManager(LemonCore plugin) {
         this.plugin = plugin;
+    }
+
+    /** True (and clears the mark) if this kick was issued by us and should pass through. */
+    public boolean consumePassthrough(java.util.UUID uuid) {
+        return passthroughKicks.remove(uuid);
+    }
+
+    /**
+     * Kicks a player so the proxy fully DISCONNECTS them (shows the kick screen)
+     * instead of re-routing them to the limbo. Signals LemonQueue via the
+     * "PlayerKicking" message first, then kicks after a tiny delay so the message
+     * flushes ahead of the disconnect (same TCP connection keeps the order).
+     * Used for /kick, /gkick and maintenance kicks.
+     */
+    public void performKickDisconnect(Player player, Component kickScreen) {
+        if (player == null) return;
+        plugin.getVelocityMessaging().sendLemonMessage(player, "PlayerKicking",
+                player.getUniqueId().toString());
+        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            passthroughKicks.add(player.getUniqueId());
+            player.kick(kickScreen);
+        }, 2L);
     }
 
     public void performBanKick(Player player, BanRecord ban) {
@@ -42,8 +70,10 @@ public class ListenerManager {
         // 2-tick delay only guarantees the "PlayerBanning" plugin message above is
         // flushed to the proxy first (same TCP connection, so ordering holds), which
         // is what tells LemonQueue to show this kick instead of rerouting to limbo.
-        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () ->
-                player.kick(kickScreen), 2L);
+        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            passthroughKicks.add(player.getUniqueId());
+            player.kick(kickScreen);
+        }, 2L);
 
         String lmsg = plugin.getMessagesManager().getRaw("ban.lemonizer")
                 .replace("{player}", player.getName())

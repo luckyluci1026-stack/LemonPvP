@@ -57,6 +57,8 @@ public class QueueManager {
     private final Deque<Long> recentReleases = new ArrayDeque<>();
     /** UUIDs of players whose next kick must NOT be re-routed to limbo (ban kicks). */
     private final Map<UUID, Long> banningMarks = new ConcurrentHashMap<>();
+    /** UUIDs whose next kick must fully disconnect instead of re-routing to limbo (admin/maintenance kicks). */
+    private final Map<UUID, Long> kickingMarks = new ConcurrentHashMap<>();
 
     // volatile so that reloadConfig() is immediately visible to the scheduler threads.
     private volatile Messages msg;
@@ -154,6 +156,22 @@ public class QueueManager {
         return System.currentTimeMillis() <= expiry;
     }
 
+    /**
+     * Marks a player so their next backend kick fully disconnects them from the
+     * proxy (showing the kick screen) instead of being re-routed to the limbo.
+     * Used for admin kicks (/kick, /gkick, Essentials, …) and maintenance kicks.
+     */
+    public void markKicking(UUID uuid) {
+        kickingMarks.put(uuid, System.currentTimeMillis() + BANNING_TTL_MS);
+    }
+
+    /** Consume-once counterpart to {@link #markKicking(UUID)}. */
+    public boolean consumeKicking(UUID uuid) {
+        Long expiry = kickingMarks.remove(uuid);
+        if (expiry == null) return false;
+        return System.currentTimeMillis() <= expiry;
+    }
+
     /** Removes a player from every queue (call on disconnect / leave). */
     public void dequeue(UUID uuid) {
         for (ServerQueue q : queues.values()) q.remove(uuid);
@@ -198,9 +216,10 @@ public class QueueManager {
     // ── Tasks ─────────────────────────────────────────────────────────────
 
     private void process() {
-        // Evict expired banning marks so the map doesn't grow unboundedly.
+        // Evict expired banning/kicking marks so the maps don't grow unboundedly.
         long now = System.currentTimeMillis();
         banningMarks.values().removeIf(expiry -> now > expiry);
+        kickingMarks.values().removeIf(expiry -> now > expiry);
 
         for (ServerQueue queue : queues.values()) {
             // Skip silently when the target is known offline — ServerHealthCache

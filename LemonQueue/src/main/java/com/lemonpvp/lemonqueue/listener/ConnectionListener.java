@@ -78,8 +78,10 @@ public class ConnectionListener {
         // Never re-queue someone leaving the limbo itself.
         if (kicked.equalsIgnoreCase(config.getLimboServer())) return;
         if (player.hasPermission(config.getBypassPermission())) return;
-        // Ban-kick: LemonCore signalled us not to intercept this kick (consume-once).
-        if (queues.consumeBanning(player.getUniqueId())) {
+        // Ban-kick or admin/maintenance kick: LemonCore signalled us to fully
+        // disconnect the player (show the kick screen) instead of re-routing to
+        // limbo. Consume-once so a later unrelated kick is handled normally.
+        if (queues.consumeBanning(player.getUniqueId()) || queues.consumeKicking(player.getUniqueId())) {
             queues.dequeue(player.getUniqueId());
             Component reason = event.getServerKickReason().orElse(Component.empty());
             event.setResult(KickedFromServerEvent.DisconnectPlayer.create(reason));

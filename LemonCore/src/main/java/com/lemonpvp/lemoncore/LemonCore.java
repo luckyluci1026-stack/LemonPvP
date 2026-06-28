@@ -144,6 +144,7 @@ public class LemonCore extends JavaPlugin {
         // Register listeners
         getServer().getPluginManager().registerEvents(new PlayerJoinQuitListener(this), this);
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
+        getServer().getPluginManager().registerEvents(new com.lemonpvp.lemoncore.listeners.KickListener(this), this);
         getServer().getPluginManager().registerEvents(new AdvancementListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerTrackerListener(this), this);
 
