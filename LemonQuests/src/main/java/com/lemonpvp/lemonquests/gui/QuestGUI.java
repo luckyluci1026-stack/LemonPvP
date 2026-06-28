@@ -143,7 +143,7 @@ public class QuestGUI implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
         lore.add(MM.deserialize("<!italic><gray>Level: <white>" + level));
-        lore.add(MM.deserialize("<!italic><gray>Münzen: <gold>" + formatNumber(getCachedCoins()) + " ⭐"));
+        lore.add(MM.deserialize("<!italic><gray>Coins: <gold>" + formatNumber(getCachedCoins()) + " ⭐"));
         lore.add(Component.empty());
 
         String xpBar = buildBar(currentXp, 100, 20, "#00ff00", "#444444");
@@ -152,13 +152,13 @@ public class QuestGUI implements Listener {
         lore.add(Component.empty());
 
         if (nextRank != null) {
-            lore.add(MM.deserialize("<!italic><gray>Nächster Rang: <yellow>" + nextRank));
-            lore.add(MM.deserialize("<!italic><gray>bei Level <white>" + nextRankLevel));
+            lore.add(MM.deserialize("<!italic><gray>Next Rank: <yellow>" + nextRank));
+            lore.add(MM.deserialize("<!italic><gray>at Level <white>" + nextRankLevel));
         } else {
-            lore.add(MM.deserialize("<!italic><gold>Höchster Rang erreicht!"));
+            lore.add(MM.deserialize("<!italic><gold>Highest rank reached!"));
         }
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Heute abgeschlossen: <green>" + doneToday
+        lore.add(MM.deserialize("<!italic><gray>Completed today: <green>" + doneToday
                 + "<gray>/<white>" + todays.size()));
 
         meta.lore(lore);
@@ -194,25 +194,25 @@ public class QuestGUI implements Listener {
         String progressBar = buildBar(clamped, target, 20,
                 completed ? "#00ff00" : "#fffb00", "#444444");
         lore.add(MM.deserialize("<!italic>" + progressBar));
-        lore.add(MM.deserialize("<!italic><gray>Fortschritt: <white>" + clamped + "<gray>/<white>" + target
+        lore.add(MM.deserialize("<!italic><gray>Progress: <white>" + clamped + "<gray>/<white>" + target
                 + " <dark_gray>(" + percent(clamped, target) + "%)"));
         lore.add(Component.empty());
 
-        lore.add(MM.deserialize("<!italic><gray>Belohnungen:"));
+        lore.add(MM.deserialize("<!italic><gray>Rewards:"));
         if (rewardType == QuestRewardType.XP || rewardType == QuestRewardType.BOTH) {
             lore.add(MM.deserialize("<!italic>  <yellow>+ " + finalXp + " XP"));
         }
         if ((rewardType == QuestRewardType.COINS || rewardType == QuestRewardType.BOTH) && coins > 0) {
-            lore.add(MM.deserialize("<!italic>  <gold>+ " + coins + " Münzen ⭐"));
+            lore.add(MM.deserialize("<!italic>  <gold>+ " + coins + " Coins ⭐"));
         }
         lore.add(Component.empty());
 
         if (completed) {
-            lore.add(MM.deserialize("<!italic><green><bold>✔ ABGESCHLOSSEN</bold>"));
+            lore.add(MM.deserialize("<!italic><green><bold>✔ COMPLETED</bold>"));
             meta.addEnchant(Enchantment.UNBREAKING, 1, true);
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         } else {
-            lore.add(MM.deserialize("<!italic><yellow>➜ In Bearbeitung..."));
+            lore.add(MM.deserialize("<!italic><yellow>➜ In progress..."));
         }
 
         meta.lore(lore);
@@ -226,15 +226,15 @@ public class QuestGUI implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.displayName(MM.deserialize("<!italic><gradient:#4fc3f7:#0288d1>Täglicher Reset</gradient>"));
+        meta.displayName(MM.deserialize("<!italic><gradient:#4fc3f7:#0288d1>Daily Reset</gradient>"));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Neue Quests in:"));
+        lore.add(MM.deserialize("<!italic><gray>New quests in:"));
         lore.add(MM.deserialize("<!italic><white>" + formatTimeUntilMidnight()));
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><dark_gray>Quests werden um Mitternacht"));
-        lore.add(MM.deserialize("<!italic><dark_gray>zurückgesetzt."));
+        lore.add(MM.deserialize("<!italic><dark_gray>Quests reset at"));
+        lore.add(MM.deserialize("<!italic><dark_gray>midnight."));
         meta.lore(lore);
 
         item.setItemMeta(meta);
