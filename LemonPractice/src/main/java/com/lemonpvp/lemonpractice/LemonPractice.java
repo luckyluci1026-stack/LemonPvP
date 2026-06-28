@@ -11,6 +11,7 @@ import com.lemonpvp.lemonpractice.managers.LobbyHotbarManager;
 import com.lemonpvp.lemonpractice.managers.PartyManager;
 import com.lemonpvp.lemonpractice.managers.QueueManager;
 import com.lemonpvp.lemonpractice.managers.SpectatorManager;
+import com.lemonpvp.lemonpractice.game.zone.ZonePracticeManager;
 import com.lemonpvp.lemonpractice.velocity.VelocityMessaging;
 import com.lemonpvp.lemonpractice.commands.AowArenaCommand;
 import com.lemonpvp.lemonpractice.commands.AowBuildSpawnCommand;
@@ -19,6 +20,7 @@ import com.lemonpvp.lemonpractice.commands.LPracticeCommand;
 import com.lemonpvp.lemonpractice.commands.DuelCommand;
 import com.lemonpvp.lemonpractice.commands.PartyCommand;
 import com.lemonpvp.lemonpractice.commands.StatsCommand;
+import com.lemonpvp.lemonpractice.commands.ZoneCommand;
 import com.lemonpvp.lemonpractice.commands.TopCommand;
 import com.lemonpvp.lemonpractice.listeners.DuelListener;
 import com.lemonpvp.lemonpractice.listeners.DuelInviteListener;
@@ -26,6 +28,7 @@ import com.lemonpvp.lemonpractice.listeners.FFAListener;
 import com.lemonpvp.lemonpractice.listeners.KitEditorListener;
 import com.lemonpvp.lemonpractice.listeners.LobbyListener;
 import com.lemonpvp.lemonpractice.listeners.PartyListener;
+import com.lemonpvp.lemonpractice.listeners.ZoneListener;
 import com.lemonpvp.lemonpractice.config.GamemodeManager;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -48,6 +51,7 @@ public class LemonPractice extends JavaPlugin {
     private FFAManager ffaManager;
     private LobbyHotbarManager lobbyHotbarManager;
     private PartyManager partyManager;
+    private ZonePracticeManager zonePracticeManager;
     private VelocityMessaging velocityMessaging;
     private String serverType;
 
@@ -102,6 +106,7 @@ public class LemonPractice extends JavaPlugin {
         ffaManager.startTasks();
         lobbyHotbarManager = new LobbyHotbarManager(this);
         partyManager = new PartyManager(this);
+        zonePracticeManager = new ZonePracticeManager(this);
 
         // 5. Register VelocityMessaging
         velocityMessaging = new VelocityMessaging(this);
@@ -114,6 +119,7 @@ public class LemonPractice extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new FFAListener(this), this);
         getServer().getPluginManager().registerEvents(new DuelInviteListener(this), this);
         getServer().getPluginManager().registerEvents(new PartyListener(this), this);
+        getServer().getPluginManager().registerEvents(new ZoneListener(this), this);
 
         // 7. Register commands
         AowArenaCommand arenaCmd = new AowArenaCommand(this);
@@ -141,6 +147,9 @@ public class LemonPractice extends JavaPlugin {
         getCommand("p").setTabCompleter(partyCmd);
         getCommand("partychat").setExecutor(partyCmd);
         getCommand("partychat").setTabCompleter(partyCmd);
+        ZoneCommand zoneCmd = new ZoneCommand(this);
+        getCommand("zone").setExecutor(zoneCmd);
+        getCommand("zone").setTabCompleter(zoneCmd);
 
         // 8. If LOBBY: set up hotbars for all currently online players (reload case)
         if (serverType.equals("LOBBY")) {
@@ -161,6 +170,9 @@ public class LemonPractice extends JavaPlugin {
         }
         if (duelManager != null) {
             duelManager.endAllDuels();
+        }
+        if (zonePracticeManager != null) {
+            zonePracticeManager.shutdown();
         }
         if (db != null) {
             db.disconnect();
@@ -209,6 +221,7 @@ public class LemonPractice extends JavaPlugin {
     public FFAManager getFfaManager() { return ffaManager; }
     public LobbyHotbarManager getLobbyHotbarManager() { return lobbyHotbarManager; }
     public PartyManager getPartyManager() { return partyManager; }
+    public ZonePracticeManager getZonePracticeManager() { return zonePracticeManager; }
     public FileConfiguration getServersConfig() { return serversConfig; }
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");

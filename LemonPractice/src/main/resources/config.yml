@@ -22,6 +22,18 @@ worlds:
 ffa:
   arenas-built: false
 
+# Zone Practice — battle-royale style practice in real, random vanilla terrain
+# with a shrinking damage zone (DrDonut style).
+zone:
+  world: world            # vanilla world the rounds run in
+  initial-radius: 200     # starting zone radius (blocks); border diameter is 2x this
+  min-radius: 10          # smallest the zone shrinks to
+  shrink-seconds: 180     # time (s) for the zone to shrink from initial to min
+  damage-per-second: 2.0  # damage applied each second to players outside the zone (2 = 1 heart)
+  kit-gamemode: sword     # kit/gamemode id applied to participants (see gamemodes.yml)
+  min-players: 1          # players required before the shrink/damage starts
+  border-warning: 10      # world-border warning distance (blocks) shown to players
+
 duel-arenas:
   built: false
   base-x: 1100

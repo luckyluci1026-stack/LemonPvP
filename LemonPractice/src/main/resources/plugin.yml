@@ -40,6 +40,9 @@ permissions:
   lemonpractice.use.top:
     description: View the network leaderboard
     default: true
+  lemonpractice.zone:
+    description: Join Zone Practice rounds
+    default: true
 
 commands:
   lpractice:
@@ -82,3 +85,7 @@ commands:
     description: Party chat
     permission: lemonpractice.use.party
     usage: /partychat <message>
+  zone:
+    description: Join or leave a Zone Practice round (shrinking-zone battle royale practice)
+    permission: lemonpractice.zone
+    usage: /zone <join|leave>
