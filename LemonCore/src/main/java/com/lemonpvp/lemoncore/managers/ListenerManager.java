@@ -37,9 +37,13 @@ public class ListenerManager {
                         .replace("{discord}", discord);
         Component kickScreen = TextUtil.parse(kickMsg);
 
-        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.0f);
+        // Kick almost immediately so a banned player who joins doesn't stand in the
+        // world for a "cooldown" — they should just see the ban screen. The tiny
+        // 2-tick delay only guarantees the "PlayerBanning" plugin message above is
+        // flushed to the proxy first (same TCP connection, so ordering holds), which
+        // is what tells LemonQueue to show this kick instead of rerouting to limbo.
         org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () ->
-                player.kick(kickScreen), 20L);
+                player.kick(kickScreen), 2L);
 
         String lmsg = plugin.getMessagesManager().getRaw("ban.lemonizer")
                 .replace("{player}", player.getName())
