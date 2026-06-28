@@ -101,13 +101,13 @@ public class TrimMaterialGUI implements Listener {
         if (slot == BUY_SLOT) {
             if (selectedMaterialId == null) {
                 clicker.playSound(clicker.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
-                clicker.sendMessage(MM.deserialize("<red>Wähle zuerst ein Material aus."));
+                clicker.sendMessage(MM.deserialize("<red>Select a material first."));
                 return;
             }
             PlayerCosmetics cosmetics = plugin.getCosmeticsManager().getPlayerCosmetics(clicker.getUniqueId());
             if (cosmetics != null && cosmetics.ownsMaterial(selectedMaterialId)) {
                 clicker.playSound(clicker.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
-                clicker.sendMessage(MM.deserialize("<red>Du besitzt dieses Material bereits."));
+                clicker.sendMessage(MM.deserialize("<red>You already own this material."));
                 return;
             }
             int cost = plugin.getConfig().getInt("prices.trim-material", 50);
@@ -119,9 +119,9 @@ public class TrimMaterialGUI implements Listener {
                         if (p == null) return;
                         if (success) {
                             p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
-                            p.sendMessage(MM.deserialize("<green>Gekauft: <yellow>"
+                            p.sendMessage(MM.deserialize("<green>Purchased: <yellow>"
                                     + plugin.getArmorTrimManager().getMaterialDisplayName(buyMatId)
-                                    + "</yellow> für <gold>" + cost + " Münzen</gold>!"));
+                                    + "</yellow> for <gold>" + cost + " Coins</gold>!"));
                             selectedMaterialId = null;
                             renderMaterials();
                             inventory.setItem(BUY_SLOT, buildBuyButton());
@@ -133,8 +133,8 @@ public class TrimMaterialGUI implements Listener {
                                         .thenAccept(bal -> Bukkit.getScheduler().runTask(plugin, () -> {
                                             Player p2 = Bukkit.getPlayer(buyerUuid);
                                             if (p2 == null) return;
-                                            p2.sendMessage(MM.deserialize("<red>Du brauchst <gold>" + cost
-                                                    + " Münzen</gold>, hast aber nur <gold>" + bal + " Münzen</gold>."));
+                                            p2.sendMessage(MM.deserialize("<red>You need <gold>" + cost
+                                                    + " Coins</gold>, but only have <gold>" + bal + " Coins</gold>."));
                                         }));
                             }
                         }
@@ -156,15 +156,15 @@ public class TrimMaterialGUI implements Listener {
                         unregister();
                         if (p == null) return;
                         p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.3f);
-                        p.sendMessage(MM.deserialize("<green>Trim auf <yellow>"
-                                + armorSlot.getDisplayName() + "</yellow> angewendet."));
+                        p.sendMessage(MM.deserialize("<green>Trim applied to <yellow>"
+                                + armorSlot.getDisplayName() + "</yellow>."));
                         p.closeInventory();
                     }));
         } else {
             selectedMaterialId = matId;
             clicker.playSound(clicker.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.4f, 1.1f);
-            clicker.sendMessage(MM.deserialize("<yellow>Klicke <gold>Material kaufen</gold>, um "
-                    + plugin.getArmorTrimManager().getMaterialDisplayName(matId) + " zu kaufen."));
+            clicker.sendMessage(MM.deserialize("<yellow>Click <gold>Buy Material</gold> to buy "
+                    + plugin.getArmorTrimManager().getMaterialDisplayName(matId) + "."));
             renderMaterials();
             inventory.setItem(BUY_SLOT, buildBuyButton());
         }

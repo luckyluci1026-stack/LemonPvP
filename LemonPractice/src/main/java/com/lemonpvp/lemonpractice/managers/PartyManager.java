@@ -41,18 +41,18 @@ public class PartyManager {
 
     public void invite(Player sender, Player target) {
         if (target.getUniqueId().equals(sender.getUniqueId())) {
-            sender.sendMessage(MM.deserialize("<red>Du kannst dich nicht selbst einladen."));
+            sender.sendMessage(MM.deserialize("<red>You can't invite yourself."));
             return;
         }
 
         Party senderParty = parties.get(sender.getUniqueId());
         if (senderParty != null && !senderParty.isLeader(sender.getUniqueId())) {
-            sender.sendMessage(MM.deserialize("<red>Nur der Party-Leader kann Spieler einladen."));
+            sender.sendMessage(MM.deserialize("<red>Only the party leader can invite players."));
             return;
         }
         if (parties.containsKey(target.getUniqueId())) {
             sender.sendMessage(MM.deserialize("<red><yellow>" + target.getName()
-                    + "</yellow> ist bereits in einer Party."));
+                    + "</yellow> is already in a party."));
             return;
         }
 
@@ -63,7 +63,7 @@ public class PartyManager {
                     lc.getPlayerDataManager().getCached(target.getUniqueId());
             if (pd != null && !pd.isPartyInvites()) {
                 sender.sendMessage(MM.deserialize("<red><yellow>" + target.getName()
-                        + "</yellow> akzeptiert keine Party-Einladungen."));
+                        + "</yellow> isn't accepting party invites."));
                 return;
             }
         }
@@ -72,22 +72,22 @@ public class PartyManager {
                 .put(sender.getUniqueId(), System.currentTimeMillis() + INVITE_TIMEOUT_MS);
 
         sender.sendMessage(MM.deserialize(PREFIX + "<yellow>" + target.getName()
-                + "</yellow> <gray>wurde eingeladen."));
+                + "</yellow> <gray>has been invited."));
         sender.playSound(sender.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
 
-        Component accept = MM.deserialize("<green><bold>[Annehmen]</bold></green>")
+        Component accept = MM.deserialize("<green><bold>[Accept]</bold></green>")
                 .clickEvent(ClickEvent.runCommand("/party accept " + sender.getName()))
-                .hoverEvent(HoverEvent.showText(MM.deserialize("<green>Klicke, um anzunehmen")));
-        Component deny = MM.deserialize("<red><bold>[Ablehnen]</bold></red>")
+                .hoverEvent(HoverEvent.showText(MM.deserialize("<green>Click to accept")));
+        Component deny = MM.deserialize("<red><bold>[Decline]</bold></red>")
                 .clickEvent(ClickEvent.runCommand("/party deny " + sender.getName()))
-                .hoverEvent(HoverEvent.showText(MM.deserialize("<red>Klicke, um abzulehnen")));
+                .hoverEvent(HoverEvent.showText(MM.deserialize("<red>Click to decline")));
 
         target.sendMessage(MM.deserialize("<dark_gray><st>                                </st>"));
-        target.sendMessage(MM.deserialize(PREFIX + "<gradient:#fffb00:#00ff00>Einladung</gradient>"));
+        target.sendMessage(MM.deserialize(PREFIX + "<gradient:#fffb00:#00ff00>Invitation</gradient>"));
         target.sendMessage(MM.deserialize("<yellow>" + sender.getName()
-                + "</yellow> <gray>hat dich in seine Party eingeladen."));
+                + "</yellow> <gray>has invited you to their party."));
         target.sendMessage(Component.text("  ").append(accept).append(Component.text("   ")).append(deny));
-        target.sendMessage(MM.deserialize("<dark_gray>Läuft in 60 Sekunden ab."));
+        target.sendMessage(MM.deserialize("<dark_gray>Expires in 60 seconds."));
         target.sendMessage(MM.deserialize("<dark_gray><st>                                </st>"));
         target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.3f);
     }
@@ -100,14 +100,14 @@ public class PartyManager {
         Player sender = Bukkit.getPlayerExact(senderName);
         if (sender == null || !sender.isOnline()) {
             target.sendMessage(MM.deserialize("<red><yellow>" + senderName
-                    + "</yellow> ist nicht mehr online."));
+                    + "</yellow> is no longer online."));
             return;
         }
 
         Map<UUID, Long> forTarget = invites.get(target.getUniqueId());
         Long expiry = forTarget != null ? forTarget.get(sender.getUniqueId()) : null;
         if (expiry == null || System.currentTimeMillis() > expiry) {
-            target.sendMessage(MM.deserialize("<red>Keine offene Einladung von <yellow>"
+            target.sendMessage(MM.deserialize("<red>No pending invite from <yellow>"
                     + senderName + "</yellow>."));
             if (forTarget != null) forTarget.remove(sender.getUniqueId());
             return;
@@ -115,7 +115,7 @@ public class PartyManager {
         forTarget.remove(sender.getUniqueId());
 
         if (parties.containsKey(target.getUniqueId())) {
-            target.sendMessage(MM.deserialize("<red>Du bist bereits in einer Party."));
+            target.sendMessage(MM.deserialize("<red>You're already in a party."));
             return;
         }
 
@@ -125,7 +125,7 @@ public class PartyManager {
         parties.put(target.getUniqueId(), party);
 
         broadcast(party, PREFIX + "<yellow>" + target.getName()
-                + "</yellow> <gray>ist der Party beigetreten.");
+                + "</yellow> <gray>has joined the party.");
         for (UUID m : party.getMembers()) {
             Player p = Bukkit.getPlayer(m);
             if (p != null) p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.4f);
@@ -144,16 +144,16 @@ public class PartyManager {
                 : findByName(forTarget != null ? forTarget.keySet() : null, senderName);
 
         if (forTarget == null || senderUuid == null || forTarget.remove(senderUuid) == null) {
-            target.sendMessage(MM.deserialize("<red>Keine offene Einladung von <yellow>"
+            target.sendMessage(MM.deserialize("<red>No pending invite from <yellow>"
                     + senderName + "</yellow>."));
             return;
         }
 
         target.sendMessage(MM.deserialize(
-                "<gray>Du hast die Einladung von <yellow>" + senderName + "</yellow> abgelehnt."));
+                "<gray>You declined the invite from <yellow>" + senderName + "</yellow>."));
         if (sender != null && sender.isOnline()) {
             sender.sendMessage(MM.deserialize(PREFIX + "<yellow>" + target.getName()
-                    + "</yellow> <gray>hat die Einladung abgelehnt."));
+                    + "</yellow> <gray>declined the invite."));
         }
     }
 
@@ -164,12 +164,12 @@ public class PartyManager {
     public void leave(Player player) {
         Party party = parties.get(player.getUniqueId());
         if (party == null) {
-            player.sendMessage(MM.deserialize("<red>Du bist in keiner Party."));
+            player.sendMessage(MM.deserialize("<red>You're not in a party."));
             return;
         }
 
         removePlayerFromParty(player.getUniqueId(), party, true);
-        player.sendMessage(MM.deserialize("<gray>Du hast die Party verlassen."));
+        player.sendMessage(MM.deserialize("<gray>You left the party."));
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 0.8f);
     }
 
@@ -180,23 +180,23 @@ public class PartyManager {
     public void kick(Player leader, String targetName) {
         Party party = parties.get(leader.getUniqueId());
         if (party == null) {
-            leader.sendMessage(MM.deserialize("<red>Du bist in keiner Party."));
+            leader.sendMessage(MM.deserialize("<red>You're not in a party."));
             return;
         }
         if (!party.isLeader(leader.getUniqueId())) {
-            leader.sendMessage(MM.deserialize("<red>Nur der Leader kann Spieler kicken."));
+            leader.sendMessage(MM.deserialize("<red>Only the leader can kick players."));
             return;
         }
 
         UUID targetUuid = findByName(party.getMembers(), targetName);
         if (targetUuid == null || !party.isMember(targetUuid)) {
             leader.sendMessage(MM.deserialize("<red><yellow>" + targetName
-                    + "</yellow> ist nicht in deiner Party."));
+                    + "</yellow> isn't in your party."));
             return;
         }
         if (party.isLeader(targetUuid)) {
             leader.sendMessage(MM.deserialize(
-                    "<red>Du kannst dich nicht selbst kicken. Nutze /party disband."));
+                    "<red>You can't kick yourself. Use /party disband."));
             return;
         }
 
@@ -205,10 +205,10 @@ public class PartyManager {
 
         Player target = Bukkit.getPlayer(targetUuid);
         if (target != null) {
-            target.sendMessage(MM.deserialize("<red>Du wurdest aus der Party gekickt."));
+            target.sendMessage(MM.deserialize("<red>You were kicked from the party."));
             target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 0.8f);
         }
-        broadcast(party, PREFIX + "<yellow>" + targetName + "</yellow> <gray>wurde gekickt.");
+        broadcast(party, PREFIX + "<yellow>" + targetName + "</yellow> <gray>was kicked.");
     }
 
     // -----------------------------------------------------------------------
@@ -218,16 +218,16 @@ public class PartyManager {
     public void disband(Player leader) {
         Party party = parties.get(leader.getUniqueId());
         if (party == null) {
-            leader.sendMessage(MM.deserialize("<red>Du bist in keiner Party."));
+            leader.sendMessage(MM.deserialize("<red>You're not in a party."));
             return;
         }
         if (!party.isLeader(leader.getUniqueId())) {
             leader.sendMessage(MM.deserialize(
-                    "<red>Nur der Leader kann die Party auflösen."));
+                    "<red>Only the leader can disband the party."));
             return;
         }
 
-        Component msg = MM.deserialize("<red>Die Party wurde aufgelöst.");
+        Component msg = MM.deserialize("<red>The party has been disbanded.");
         for (UUID m : new ArrayList<>(party.getMembers())) {
             parties.remove(m);
             Player p = Bukkit.getPlayer(m);
@@ -245,18 +245,18 @@ public class PartyManager {
     public void promote(Player leader, String targetName) {
         Party party = parties.get(leader.getUniqueId());
         if (party == null) {
-            leader.sendMessage(MM.deserialize("<red>Du bist in keiner Party."));
+            leader.sendMessage(MM.deserialize("<red>You're not in a party."));
             return;
         }
         if (!party.isLeader(leader.getUniqueId())) {
-            leader.sendMessage(MM.deserialize("<red>Nur der Leader kann einen neuen Leader ernennen."));
+            leader.sendMessage(MM.deserialize("<red>Only the leader can appoint a new leader."));
             return;
         }
 
         UUID targetUuid = findByName(party.getMembers(), targetName);
         if (targetUuid == null || targetUuid.equals(leader.getUniqueId())) {
             leader.sendMessage(MM.deserialize("<red><yellow>" + targetName
-                    + "</yellow> ist nicht in deiner Party."));
+                    + "</yellow> isn't in your party."));
             return;
         }
 
@@ -264,7 +264,7 @@ public class PartyManager {
         Player target = Bukkit.getPlayer(targetUuid);
         String tName = target != null ? target.getName() : targetName;
         broadcast(party, PREFIX + "<yellow>" + tName
-                + "</yellow> <gray>ist jetzt der Party-Leader.");
+                + "</yellow> <gray>is now the party leader.");
         for (UUID m : party.getMembers()) {
             Player p = Bukkit.getPlayer(m);
             if (p != null) p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.2f);
@@ -278,7 +278,7 @@ public class PartyManager {
     public void chat(Player player, String message) {
         Party party = parties.get(player.getUniqueId());
         if (party == null) {
-            player.sendMessage(MM.deserialize("<red>Du bist in keiner Party."));
+            player.sendMessage(MM.deserialize("<red>You're not in a party."));
             return;
         }
         broadcast(party, "<gradient:#fffb00:#00ff00><bold>Pᴀʀᴛʏ</bold></gradient> <dark_gray>» "
@@ -292,15 +292,15 @@ public class PartyManager {
     public void list(Player player) {
         Party party = parties.get(player.getUniqueId());
         if (party == null) {
-            player.sendMessage(MM.deserialize("<red>Du bist in keiner Party."));
+            player.sendMessage(MM.deserialize("<red>You're not in a party."));
             return;
         }
 
         player.sendMessage(MM.deserialize(
                 "<dark_gray><st>                                        </st>"));
         player.sendMessage(MM.deserialize(
-                PREFIX + "<gradient:#fffb00:#00ff00><bold>Deine Party</bold></gradient>"
-                        + " <dark_gray>(" + party.size() + " Spieler)"));
+                PREFIX + "<gradient:#fffb00:#00ff00><bold>Your Party</bold></gradient>"
+                        + " <dark_gray>(" + party.size() + " players)"));
         player.sendMessage(Component.empty());
         for (UUID member : party.getMembers()) {
             Player p = Bukkit.getPlayer(member);
@@ -325,7 +325,7 @@ public class PartyManager {
         }
         if (!party.isLeader(leader.getUniqueId())) {
             leader.sendMessage(MM.deserialize(
-                    "<red>Nur der Party-Leader kann die Party in die Queue einreihen."));
+                    "<red>Only the party leader can queue the party."));
             return;
         }
 
@@ -338,12 +338,12 @@ public class PartyManager {
             Player p = Bukkit.getPlayer(member);
             if (p != null && !p.getUniqueId().equals(leader.getUniqueId())) {
                 p.sendMessage(MM.deserialize(PREFIX
-                        + "<gray>Du wurdest für <gold>" + gamemode
-                        + "</gold> in die Queue eingereiht."));
+                        + "<gray>You were queued for <gold>" + gamemode
+                        + "</gold>."));
             }
         }
         broadcast(party, PREFIX + "<gray>" + queued
-                + " Mitglieder wurden für <gold>" + gamemode + "</gold> gequeued.");
+                + " members were queued for <gold>" + gamemode + "</gold>.");
     }
 
     // -----------------------------------------------------------------------
@@ -410,14 +410,14 @@ public class PartyManager {
             String newName = newLP != null ? newLP.getName() : newLeader.toString();
             if (announce) {
                 broadcast(party, PREFIX + "<yellow>" + resolveNameOrUuid(uuid)
-                        + "</yellow> <gray>hat die Party verlassen. Neuer Leader: <yellow>" + newName + "</yellow>.");
+                        + "</yellow> <gray>left the party. New leader: <yellow>" + newName + "</yellow>.");
             } else {
                 broadcast(party, PREFIX + "<yellow>" + resolveNameOrUuid(uuid)
-                        + "</yellow> <gray>hat die Party verlassen. Neuer Leader: <yellow>" + newName + "</yellow>.");
+                        + "</yellow> <gray>left the party. New leader: <yellow>" + newName + "</yellow>.");
             }
         } else if (announce) {
             broadcast(party, PREFIX + "<yellow>" + resolveNameOrUuid(uuid)
-                    + "</yellow> <gray>hat die Party verlassen.");
+                    + "</yellow> <gray>left the party.");
         }
     }
 

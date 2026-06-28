@@ -54,8 +54,8 @@ public class ScriptManager {
      */
     public String load(String name) {
         File src = new File(scriptsDir, name + ".java");
-        if (!src.exists()) return "Datei nicht gefunden: scripts/" + name + ".java";
-        if (loaded.containsKey(name)) return "Script bereits geladen. Nutze /coderl reload " + name;
+        if (!src.exists()) return "File not found: scripts/" + name + ".java";
+        if (loaded.containsKey(name)) return "Script already loaded. Use /coderl reload " + name;
 
         String compileErr = compile(src, name);
         if (compileErr != null) return compileErr;
@@ -93,7 +93,7 @@ public class ScriptManager {
     private String compile(File src, String name) {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         if (compiler == null)
-            return "Kein Java-Compiler verfügbar — starte den Server mit einem JDK (nicht nur JRE).";
+            return "No Java compiler available — start the server with a JDK (not just a JRE).";
 
         File outDir = new File(classesDir, name);
         outDir.mkdirs();
@@ -108,14 +108,14 @@ public class ScriptManager {
                 StringBuilder sb = new StringBuilder();
                 for (Diagnostic<? extends JavaFileObject> d : diag.getDiagnostics()) {
                     if (d.getKind() == Diagnostic.Kind.ERROR)
-                        sb.append("Zeile ").append(d.getLineNumber()).append(": ").append(d.getMessage(null)).append("\n");
+                        sb.append("Line ").append(d.getLineNumber()).append(": ").append(d.getMessage(null)).append("\n");
                 }
                 return sb.toString().trim();
             }
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            return "Kompilierungsfehler: " + e.getMessage();
+            return "Compilation error: " + e.getMessage();
         }
         return null;
     }
@@ -129,7 +129,7 @@ public class ScriptManager {
             Object obj = cls.getDeclaredConstructor().newInstance();
             if (!(obj instanceof LemonScript script)) {
                 loader.close();
-                return "Klasse " + name + " implementiert nicht LemonScript.";
+                return "Class " + name + " does not implement LemonScript.";
             }
             if (script instanceof Listener l)
                 plugin.getServer().getPluginManager().registerEvents(l, plugin);
@@ -137,7 +137,7 @@ public class ScriptManager {
             loaded.put(name, new LoadedScript(script, loader));
             return null;
         } catch (Exception e) {
-            return "Ladefehler: " + e.getMessage();
+            return "Load error: " + e.getMessage();
         }
     }
 

@@ -78,7 +78,7 @@ public class FFAManager {
         lines.add(MM.deserialize("<gray>Kills: <green>" + sessionKills.getOrDefault(uuid, 0)));
         lines.add(MM.deserialize("<gray>Killstreak: <gold>" + sessionKillstreak.getOrDefault(uuid, 0)));
         lines.add(Component.empty());
-        lines.add(MM.deserialize("<gray>Spieler: <white>" + arena.getPlayerCount()));
+        lines.add(MM.deserialize("<gray>Players: <white>" + arena.getPlayerCount()));
         lines.add(MM.deserialize("<gray>Arena: <white>" + arena.getName()));
         lines.add(MM.deserialize("<dark_gray><st>                </st>"));
 
@@ -102,7 +102,7 @@ public class FFAManager {
         Title title = Title.title(
                 MM.deserialize("<gradient:#fffb00:#00ff00><bold>Fꜰᴀ</bold></gradient>"),
                 MM.deserialize("<gray>Arena: <white>" + arena.getName()
-                        + "  <dark_gray>|  <gray>Spieler: <green>" + arena.getPlayerCount()),
+                        + "  <dark_gray>|  <gray>Players: <green>" + arena.getPlayerCount()),
                 Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1500), Duration.ofMillis(500))
         );
         player.showTitle(title);
@@ -130,8 +130,8 @@ public class FFAManager {
         // Chat message
         player.sendMessage(MM.deserialize(
                 "<gradient:#fffb00:#00ff00><bold>FFA</bold></gradient> "
-                + "<green>Du bist <white>" + arena.getName() + " <green>beigetreten!  "
-                + "<dark_gray>(<gray>" + arena.getPlayerCount() + " Spieler<dark_gray>)"));
+                + "<green>You joined <white>" + arena.getName() + "<green>!  "
+                + "<dark_gray>(<gray>" + arena.getPlayerCount() + " players<dark_gray>)"));
     }
 
     /** Resets the FFA killstreak for a player (called on their death). */
@@ -237,14 +237,14 @@ public class FFAManager {
                 killer.getAttribute(Attribute.MAX_HEALTH)).getBaseValue());
         killer.setFoodLevel(20);
         killer.playSound(killer.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.4f);
-        killer.sendMessage(MM.deserialize("<gray>Du hast <red>" + victim.getName()
-                + "</red> getötet! <dark_gray>(<green>" + kills + " Kills</green>)"));
+        killer.sendMessage(MM.deserialize("<gray>You killed <red>" + victim.getName()
+                + "</red>! <dark_gray>(<green>" + kills + " kills</green>)"));
 
         // Killstreak milestone announcement to the whole arena
         if (streak % 5 == 0) {
             broadcastArena(getArena(killerUuid), MM.deserialize(
-                    "<gold>" + killer.getName() + "</gold> <yellow>ist auf einem <gold>"
-                    + streak + "</gold> Killstreak!"));
+                    "<gold>" + killer.getName() + "</gold> <yellow>is on a <gold>"
+                    + streak + "</gold> killstreak!"));
         }
 
         // Update stats via LemonCore if available (reflective to avoid hard dependency).

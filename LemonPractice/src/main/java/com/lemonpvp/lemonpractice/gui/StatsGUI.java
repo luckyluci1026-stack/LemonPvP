@@ -54,7 +54,7 @@ public class StatsGUI implements Listener {
 
     public void open() {
         inv = Bukkit.createInventory(null, 45,
-                MM.deserialize("<!italic><gradient:#fffb00:#00ff00><bold>Sᴛᴀᴛɪsᴛɪᴋᴇɴ</bold></gradient>"
+                MM.deserialize("<!italic><gradient:#fffb00:#00ff00><bold>Sᴛᴀᴛɪsᴛɪᴄs</bold></gradient>"
                         + " <dark_gray>» <white>" + targetName));
 
         ItemStack black = pane(Material.BLACK_STAINED_GLASS_PANE);
@@ -107,29 +107,29 @@ public class StatsGUI implements Listener {
         // Kills
         inv.setItem(STAT_SLOTS[0], statItem(Material.DIAMOND_SWORD,
                 "<gradient:#fffb00:#00ff00><!italic>Kɪʟʟs",
-                List.of("<gray>Gesamt: <white>" + fKills)));
+                List.of("<gray>Total: <white>" + fKills)));
 
         // Deaths
         inv.setItem(STAT_SLOTS[1], statItem(Material.BONE,
-                "<gradient:#ff6b6b:#cc0000><!italic>Tᴏᴅᴇ",
-                List.of("<gray>Gesamt: <white>" + fDeaths)));
+                "<gradient:#ff6b6b:#cc0000><!italic>Dᴇᴀᴛʜs",
+                List.of("<gray>Total: <white>" + fDeaths)));
 
         // K/D ratio
         String kdrHex = fKdr >= 2.0 ? "#00e676" : fKdr >= 1.0 ? "#fffb00" : "#ff5252";
         inv.setItem(STAT_SLOTS[2], statItem(Material.GOLDEN_SWORD,
                 "<" + kdrHex + "><!italic>K/D-Rᴀᴛɪᴏ",
-                List.of("<gray>Verhältnis: <" + kdrHex + ">" + String.format("%.2f", fKdr))));
+                List.of("<gray>Ratio: <" + kdrHex + ">" + String.format("%.2f", fKdr))));
 
         // Best killstreak
         inv.setItem(STAT_SLOTS[3], statItem(Material.BLAZE_POWDER,
-                "<gradient:#ff9800:#ff5722><!italic>Bᴇsᴛᴇ Sᴇʀɪᴇ",
-                List.of("<gray>Beste Killstreak: <white>" + fBestKs)));
+                "<gradient:#ff9800:#ff5722><!italic>Bᴇsᴛ Sᴛʀᴇᴀᴋ",
+                List.of("<gray>Best Killstreak: <white>" + fBestKs)));
 
         // Coins
         String coinsShort = com.lemonpvp.lemoncore.util.TextUtil.formatCoins(fCoins);
         inv.setItem(STAT_SLOTS[4], statItem(Material.GOLD_NUGGET,
-                "<gradient:#fffb00:#ff9800><!italic>Mᴏɴᴇᴛᴇɴ",
-                List.of("<gray>Kontostand: <yellow>✦ <gold>" + coinsShort)));
+                "<gradient:#fffb00:#ff9800><!italic>Cᴏɪɴs",
+                List.of("<gray>Balance: <yellow>✦ <gold>" + coinsShort)));
 
         inv.setItem(STAT_SLOTS[5], pane(Material.GRAY_STAINED_GLASS_PANE));
         inv.setItem(STAT_SLOTS[6], pane(Material.GRAY_STAINED_GLASS_PANE));
@@ -157,7 +157,7 @@ public class StatsGUI implements Listener {
             meta.displayName(MM.deserialize(
                     "<!italic><gradient:#fffb00:#00ff00><bold>" + targetName));
             meta.lore(List.of(
-                    MM.deserialize("<!italic><dark_gray>Statistiken von <gray>" + targetName)));
+                    MM.deserialize("<!italic><dark_gray>Statistics of <gray>" + targetName)));
             skull.setItemMeta(meta);
         }
         return skull;
@@ -197,7 +197,7 @@ public class StatsGUI implements Listener {
             List<Component> lore = new ArrayList<>();
             lore.add(Component.empty());
             if (inPlacement) {
-                lore.add(MM.deserialize("<!italic><gray>ELO: <yellow>Platzierung "
+                lore.add(MM.deserialize("<!italic><gray>ELO: <yellow>Placement "
                         + "<dark_gray>(" + matches + "/" + placement + ")"));
                 lore.add(MM.deserialize("<!italic><gray>Division: <!italic>"
                         + com.lemonpvp.lemonpractice.model.RankTier.UNRANKED.getDisplay()));
@@ -208,11 +208,11 @@ public class StatsGUI implements Listener {
                 lore.add(MM.deserialize("<!italic><gray>Division: <!italic>" + tier.getDisplay()));
                 int nextElo = tier.nextTierElo();
                 if (nextElo > 0 && tier.next() != null) {
-                    lore.add(MM.deserialize("<!italic><dark_gray>Nächste: <!italic>"
+                    lore.add(MM.deserialize("<!italic><dark_gray>Next: <!italic>"
                             + tier.next().getDisplay() + " <dark_gray>(" + (nextElo - elo) + " ELO)"));
                 }
             }
-            lore.add(MM.deserialize("<!italic><gray>Spiele: <white>" + matches));
+            lore.add(MM.deserialize("<!italic><gray>Matches: <white>" + matches));
             lore.add(Component.empty());
             meta.lore(lore);
             item.setItemMeta(meta);

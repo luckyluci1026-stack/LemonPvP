@@ -40,7 +40,7 @@ public class ArrowTrailsGUI implements Listener {
 
     public void open() {
         inventory = Bukkit.createInventory(null, 27,
-                MM.deserialize("<!italic><gradient:#ab47bc:#7b1fa2>Pfeil-Trails</gradient>"));
+                MM.deserialize("<!italic><gradient:#ab47bc:#7b1fa2>Arrow Trails</gradient>"));
 
         ItemStack filler = filler();
         for (int i = 0; i < 27; i++) inventory.setItem(i, filler);
@@ -101,12 +101,12 @@ public class ArrowTrailsGUI implements Listener {
                         if (p == null) return;
                         if (success) {
                             p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
-                            p.sendMessage(MM.deserialize("<green>Gekauft: <yellow>" + trail.displayName + "</yellow>!"));
+                            p.sendMessage(MM.deserialize("<green>Purchased: <yellow>" + trail.displayName + "</yellow>!"));
                             renderTrails();
                         } else {
                             p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
-                            p.sendMessage(MM.deserialize("<red>Du kannst dir <yellow>" + trail.displayName
-                                    + "</yellow> nicht leisten. Kostet <gold>" + trail.price + " Münzen</gold>."));
+                            p.sendMessage(MM.deserialize("<red>You can't afford <yellow>" + trail.displayName
+                                    + "</yellow>. Costs <gold>" + trail.price + " coins</gold>."));
                         }
                     }));
             return;
@@ -119,7 +119,7 @@ public class ArrowTrailsGUI implements Listener {
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
                         p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.4f, 0.9f);
-                        p.sendMessage(MM.deserialize("<yellow>Pfeil-Trail deaktiviert."));
+                        p.sendMessage(MM.deserialize("<yellow>Arrow trail deactivated."));
                         renderTrails();
                     }));
         } else {
@@ -128,7 +128,7 @@ public class ArrowTrailsGUI implements Listener {
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
                         p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.2f);
-                        p.sendMessage(MM.deserialize("<green>Aktiviert: <yellow>" + trail.displayName + "</yellow>!"));
+                        p.sendMessage(MM.deserialize("<green>Activated: <yellow>" + trail.displayName + "</yellow>!"));
                         renderTrails();
                     }));
         }
@@ -162,17 +162,17 @@ public class ArrowTrailsGUI implements Listener {
         lore.add(Component.empty());
         if (owned) {
             if (active) {
-                lore.add(MM.deserialize("<!italic><aqua>✔ Aktiv"));
-                lore.add(MM.deserialize("<!italic><gray>Klicken zum Deaktivieren"));
+                lore.add(MM.deserialize("<!italic><aqua>✔ Active"));
+                lore.add(MM.deserialize("<!italic><gray>Click to deactivate"));
                 meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
                 meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
             } else {
-                lore.add(MM.deserialize("<!italic><green>✔ Besessen"));
-                lore.add(MM.deserialize("<!italic><gray>Klicken zum Aktivieren"));
+                lore.add(MM.deserialize("<!italic><green>✔ Owned"));
+                lore.add(MM.deserialize("<!italic><gray>Click to activate"));
             }
         } else {
-            lore.add(MM.deserialize("<!italic><gold>Preis: <yellow>" + trail.price + " Münzen ⭐"));
-            lore.add(MM.deserialize("<!italic><gray>Klicken zum Kaufen"));
+            lore.add(MM.deserialize("<!italic><gold>Price: <yellow>" + trail.price + " coins ⭐"));
+            lore.add(MM.deserialize("<!italic><gray>Click to buy"));
         }
         meta.lore(lore);
         item.setItemMeta(meta);
@@ -190,7 +190,7 @@ public class ArrowTrailsGUI implements Listener {
     private ItemStack backButton() {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>← Zurück")); item.setItemMeta(meta); }
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>← Back")); item.setItemMeta(meta); }
         return item;
     }
 

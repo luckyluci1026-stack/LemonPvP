@@ -33,14 +33,14 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Nur Spieler können diesen Befehl nutzen.");
+            sender.sendMessage("Only players can use this command.");
             return true;
         }
 
         // /p <message> shortcut for party chat
         if (label.equalsIgnoreCase("p") || label.equalsIgnoreCase("partychat")) {
             if (args.length == 0) {
-                player.sendMessage(MM.deserialize("<red>Verwendung: /p <Nachricht>"));
+                player.sendMessage(MM.deserialize("<red>Usage: /p <message>"));
                 return true;
             }
             plugin.getPartyManager().chat(player, String.join(" ", args));
@@ -56,26 +56,26 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
         switch (sub) {
             case "invite" -> {
                 if (args.length < 2) {
-                    player.sendMessage(MM.deserialize("<red>Verwendung: <yellow>/party invite <Spieler>"));
+                    player.sendMessage(MM.deserialize("<red>Usage: <yellow>/party invite <player>"));
                     return true;
                 }
                 Player target = Bukkit.getPlayerExact(args[1]);
                 if (target == null) {
-                    player.sendMessage(MM.deserialize("<red>Spieler <yellow>" + args[1] + "</yellow> ist nicht online."));
+                    player.sendMessage(MM.deserialize("<red>Player <yellow>" + args[1] + "</yellow> is not online."));
                     return true;
                 }
                 plugin.getPartyManager().invite(player, target);
             }
             case "accept" -> {
                 if (args.length < 2) {
-                    player.sendMessage(MM.deserialize("<red>Verwendung: <yellow>/party accept <Spieler>"));
+                    player.sendMessage(MM.deserialize("<red>Usage: <yellow>/party accept <player>"));
                     return true;
                 }
                 plugin.getPartyManager().accept(player, args[1]);
             }
             case "deny", "decline" -> {
                 if (args.length < 2) {
-                    player.sendMessage(MM.deserialize("<red>Verwendung: <yellow>/party deny <Spieler>"));
+                    player.sendMessage(MM.deserialize("<red>Usage: <yellow>/party deny <player>"));
                     return true;
                 }
                 plugin.getPartyManager().deny(player, args[1]);
@@ -83,7 +83,7 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
             case "leave" -> plugin.getPartyManager().leave(player);
             case "kick" -> {
                 if (args.length < 2) {
-                    player.sendMessage(MM.deserialize("<red>Verwendung: <yellow>/party kick <Spieler>"));
+                    player.sendMessage(MM.deserialize("<red>Usage: <yellow>/party kick <player>"));
                     return true;
                 }
                 plugin.getPartyManager().kick(player, args[1]);
@@ -92,26 +92,26 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
             case "list", "info" -> plugin.getPartyManager().list(player);
             case "promote" -> {
                 if (args.length < 2) {
-                    player.sendMessage(MM.deserialize("<red>Verwendung: <yellow>/party promote <Spieler>"));
+                    player.sendMessage(MM.deserialize("<red>Usage: <yellow>/party promote <player>"));
                     return true;
                 }
                 plugin.getPartyManager().promote(player, args[1]);
             }
             case "queue" -> {
                 if (args.length < 2) {
-                    player.sendMessage(MM.deserialize("<red>Verwendung: <yellow>/party queue <Modus>"));
+                    player.sendMessage(MM.deserialize("<red>Usage: <yellow>/party queue <mode>"));
                     return true;
                 }
                 String gm = args[1].toLowerCase();
                 if (plugin.getGamemodeManager().getGamemode(gm) == null) {
-                    player.sendMessage(MM.deserialize("<red>Unbekannter Modus: <yellow>" + gm));
+                    player.sendMessage(MM.deserialize("<red>Unknown mode: <yellow>" + gm));
                     return true;
                 }
                 plugin.getPartyManager().queueParty(player, gm);
             }
             case "chat", "c" -> {
                 if (args.length < 2) {
-                    player.sendMessage(MM.deserialize("<red>Verwendung: <yellow>/party chat <Nachricht>"));
+                    player.sendMessage(MM.deserialize("<red>Usage: <yellow>/party chat <message>"));
                     return true;
                 }
                 plugin.getPartyManager().chat(player,
@@ -124,18 +124,18 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
 
     private void sendUsage(Player player) {
         player.sendMessage(MM.deserialize("<dark_gray><st>                                        </st>"));
-        player.sendMessage(MM.deserialize("<gradient:#fffb00:#00ff00><bold>Party-Befehle</bold></gradient>"));
+        player.sendMessage(MM.deserialize("<gradient:#fffb00:#00ff00><bold>Party Commands</bold></gradient>"));
         player.sendMessage(Component.empty());
-        player.sendMessage(MM.deserialize("<yellow>/party invite <Spieler> <gray>— Einladen"));
-        player.sendMessage(MM.deserialize("<yellow>/party accept <Spieler> <gray>— Einladung annehmen"));
-        player.sendMessage(MM.deserialize("<yellow>/party deny <Spieler>   <gray>— Einladung ablehnen"));
-        player.sendMessage(MM.deserialize("<yellow>/party leave             <gray>— Party verlassen"));
-        player.sendMessage(MM.deserialize("<yellow>/party kick <Spieler>   <gray>— Spieler kicken"));
-        player.sendMessage(MM.deserialize("<yellow>/party disband          <gray>— Party auflösen"));
-        player.sendMessage(MM.deserialize("<yellow>/party promote <Spieler><gray>— Leader übertragen"));
-        player.sendMessage(MM.deserialize("<yellow>/party list             <gray>— Mitglieder anzeigen"));
-        player.sendMessage(MM.deserialize("<yellow>/party queue <Modus>   <gray>— Alle queuen"));
-        player.sendMessage(MM.deserialize("<yellow>/p <Nachricht>          <gray>— Party-Chat"));
+        player.sendMessage(MM.deserialize("<yellow>/party invite <player> <gray>— Invite"));
+        player.sendMessage(MM.deserialize("<yellow>/party accept <player> <gray>— Accept invite"));
+        player.sendMessage(MM.deserialize("<yellow>/party deny <player>   <gray>— Decline invite"));
+        player.sendMessage(MM.deserialize("<yellow>/party leave             <gray>— Leave party"));
+        player.sendMessage(MM.deserialize("<yellow>/party kick <player>   <gray>— Kick player"));
+        player.sendMessage(MM.deserialize("<yellow>/party disband          <gray>— Disband party"));
+        player.sendMessage(MM.deserialize("<yellow>/party promote <player><gray>— Transfer leader"));
+        player.sendMessage(MM.deserialize("<yellow>/party list             <gray>— Show members"));
+        player.sendMessage(MM.deserialize("<yellow>/party queue <mode>   <gray>— Queue everyone"));
+        player.sendMessage(MM.deserialize("<yellow>/p <message>          <gray>— Party chat"));
         player.sendMessage(MM.deserialize("<dark_gray><st>                                        </st>"));
     }
 

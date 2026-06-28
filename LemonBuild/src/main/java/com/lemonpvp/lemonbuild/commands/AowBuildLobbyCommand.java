@@ -21,30 +21,30 @@ public class AowBuildLobbyCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("§cNur Spieler können diesen Befehl nutzen.");
+            sender.sendMessage("§cOnly players can use this command.");
             return true;
         }
 
         if (!player.hasPermission("lemonbuild.admin")) {
-            player.sendMessage("§cKeine Berechtigung: lemonbuild.admin");
+            player.sendMessage("§cNo permission: lemonbuild.admin");
             return true;
         }
 
         // Safety confirm step: /aowbuildlobby confirm
         if (args.length == 0 || !args[0].equalsIgnoreCase("confirm")) {
-            player.sendMessage("§e⚠ Dies überschreibt Blöcke an Weltmitte (0,64,0) — Radius 32!");
-            player.sendMessage("§eBestätige mit: §f/aowbuildlobby confirm");
+            player.sendMessage("§e⚠ This will overwrite blocks at the world center (0,64,0) — radius 32!");
+            player.sendMessage("§eConfirm with: §f/aowbuildlobby confirm");
             return true;
         }
 
         // Check WorldEdit / FAWE available
         if (Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit") == null
                 && Bukkit.getPluginManager().getPlugin("WorldEdit") == null) {
-            player.sendMessage("§cFastAsyncWorldEdit (oder WorldEdit) ist nicht installiert!");
+            player.sendMessage("§cFastAsyncWorldEdit (or WorldEdit) is not installed!");
             return true;
         }
 
-        player.sendMessage("§eBaue Lobby-Spawn-Insel bei 0, 64, 0 — bitte warten...");
+        player.sendMessage("§eBuilding lobby spawn island at 0, 64, 0 — please wait...");
         plugin.getLogger().info("[LemonBuild] " + player.getName()
                 + " startet Lobby-Build in Welt: " + player.getWorld().getName());
 
@@ -57,7 +57,7 @@ public class AowBuildLobbyCommand implements CommandExecutor {
                 plugin.getLogger().info("[LemonBuild] Lobby-Build erfolgreich abgeschlossen.");
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     Player p = Bukkit.getPlayer(uuid);
-                    if (p != null) p.sendMessage("§aLobby-Spawn-Insel wurde erfolgreich gebaut!");
+                    if (p != null) p.sendMessage("§aLobby spawn island was built successfully!");
                 });
             } catch (Exception e) {
                 plugin.getLogger().severe("[LemonBuild] Build fehlgeschlagen: " + e);
@@ -65,8 +65,8 @@ public class AowBuildLobbyCommand implements CommandExecutor {
                 String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     Player p = Bukkit.getPlayer(uuid);
-                    if (p != null) p.sendMessage("§cBuild fehlgeschlagen: §e" + msg
-                            + "\n§cDetails im Server-Log.");
+                    if (p != null) p.sendMessage("§cBuild failed: §e" + msg
+                            + "\n§cDetails in the server log.");
                 });
             }
         });

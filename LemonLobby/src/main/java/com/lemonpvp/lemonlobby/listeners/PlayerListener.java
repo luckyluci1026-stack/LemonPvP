@@ -159,7 +159,7 @@ public class PlayerListener implements Listener {
                 if (settingsPlugin instanceof com.lemonpvp.lemoncore.LemonCore lemonCore) {
                     new com.lemonpvp.lemoncore.gui.SettingsGUI(lemonCore, player).open();
                 } else {
-                    player.sendMessage(MINI_MESSAGE.deserialize("<red>Settings nicht verfügbar."));
+                    player.sendMessage(MINI_MESSAGE.deserialize("<red>Settings are not available right now."));
                 }
             }
             case 8 -> {

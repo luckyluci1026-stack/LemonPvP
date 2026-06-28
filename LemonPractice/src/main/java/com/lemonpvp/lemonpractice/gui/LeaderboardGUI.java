@@ -99,11 +99,11 @@ public class LeaderboardGUI implements Listener {
         // Loading placeholders
         for (int s : RESULT_SLOTS) {
             inv.setItem(s, simpleItem(Material.LIGHT_GRAY_STAINED_GLASS_PANE,
-                    "<!italic><gray>Lädt…", List.of()));
+                    "<!italic><gray>Loading…", List.of()));
         }
 
         inv.setItem(CLOSE_SLOT, simpleItem(Material.BARRIER,
-                "<!italic><red><bold>Sᴄʜʟɪᴇssᴇɴ", List.of("<!italic><gray>Menü schließen")));
+                "<!italic><red><bold>Cʟᴏsᴇ", List.of("<!italic><gray>Close menu")));
 
         viewer.openInventory(inv);
         viewer.playSound(viewer.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.6f, 1.4f);
@@ -133,7 +133,7 @@ public class LeaderboardGUI implements Listener {
                 } else {
                     inv.setItem(RESULT_SLOTS[i], simpleItem(Material.GRAY_STAINED_GLASS_PANE,
                             "<!italic><dark_gray>#" + (i + 1) + " <gray>—",
-                            List.of("<!italic><dark_gray>Noch kein Eintrag")));
+                            List.of("<!italic><dark_gray>No entry yet")));
                 }
             }
         }));
@@ -147,14 +147,14 @@ public class LeaderboardGUI implements Listener {
                     + smallCaps(cat.label())));
             List<Component> lore = new ArrayList<>();
             lore.add(Component.empty());
-            lore.add(MM.deserialize("<!italic><gray>" + (cat.isElo() ? "ELO-Rangliste" : "Globale Rangliste")));
+            lore.add(MM.deserialize("<!italic><gray>" + (cat.isElo() ? "ELO Ranking" : "Global Ranking")));
             lore.add(Component.empty());
             if (active) {
-                lore.add(MM.deserialize("<!italic><green>▶ Ausgewählt"));
+                lore.add(MM.deserialize("<!italic><green>▶ Selected"));
                 meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
                 meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
             } else {
-                lore.add(MM.deserialize("<!italic><yellow>▶ Klicken zum Anzeigen"));
+                lore.add(MM.deserialize("<!italic><yellow>▶ Click to view"));
             }
             meta.lore(lore);
             item.setItemMeta(meta);
@@ -185,7 +185,7 @@ public class LeaderboardGUI implements Listener {
             } else {
                 String label = switch (cat.statColumn()) {
                     case "kills" -> "Kills";
-                    case "best_killstreak" -> "Beste Killstreak";
+                    case "best_killstreak" -> "Best Killstreak";
                     case "coins" -> "Coins";
                     default -> cat.label();
                 };

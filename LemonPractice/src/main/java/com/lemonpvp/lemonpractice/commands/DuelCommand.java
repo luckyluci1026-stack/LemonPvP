@@ -30,7 +30,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Nur Spieler können diesen Befehl nutzen.");
+            sender.sendMessage("Only players can use this command.");
             return true;
         }
 
@@ -43,7 +43,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
 
         if (first.equals("accept")) {
             if (args.length < 2) {
-                player.sendMessage(MM.deserialize("<red>Verwendung: <yellow>/duel accept <Spieler>"));
+                player.sendMessage(MM.deserialize("<red>Usage: <yellow>/duel accept <player>"));
                 return true;
             }
             plugin.getDuelInviteManager().acceptInvite(player, args[1]);
@@ -52,7 +52,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
 
         if (first.equals("deny") || first.equals("decline")) {
             if (args.length < 2) {
-                player.sendMessage(MM.deserialize("<red>Verwendung: <yellow>/duel deny <Spieler>"));
+                player.sendMessage(MM.deserialize("<red>Usage: <yellow>/duel deny <player>"));
                 return true;
             }
             plugin.getDuelInviteManager().denyInvite(player, args[1]);
@@ -62,7 +62,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
         // /duel <player> [gamemode]
         Player target = Bukkit.getPlayerExact(args[0]);
         if (target == null) {
-            player.sendMessage(MM.deserialize("<red>Spieler <yellow>" + args[0] + "</yellow> ist nicht online."));
+            player.sendMessage(MM.deserialize("<red>Player <yellow>" + args[0] + "</yellow> is not online."));
             return true;
         }
 
@@ -70,7 +70,7 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
                 ? args[1].toLowerCase()
                 : defaultGamemode();
         if (gamemode == null) {
-            player.sendMessage(MM.deserialize("<red>Es sind keine Duell-Modi konfiguriert."));
+            player.sendMessage(MM.deserialize("<red>No duel modes are configured."));
             return true;
         }
 
@@ -80,10 +80,10 @@ public class DuelCommand implements CommandExecutor, TabCompleter {
 
     private void sendUsage(Player player) {
         player.sendMessage(MM.deserialize("<dark_gray><st>                        </st>"));
-        player.sendMessage(MM.deserialize("<gradient:#fffb00:#00ff00><bold>Duell-Befehle</bold></gradient>"));
-        player.sendMessage(MM.deserialize("<yellow>/duel <Spieler> [Modus] <gray>— Herausfordern"));
-        player.sendMessage(MM.deserialize("<yellow>/duel accept <Spieler> <gray>— Annehmen"));
-        player.sendMessage(MM.deserialize("<yellow>/duel deny <Spieler> <gray>— Ablehnen"));
+        player.sendMessage(MM.deserialize("<gradient:#fffb00:#00ff00><bold>Duel Commands</bold></gradient>"));
+        player.sendMessage(MM.deserialize("<yellow>/duel <player> [mode] <gray>— Challenge"));
+        player.sendMessage(MM.deserialize("<yellow>/duel accept <player> <gray>— Accept"));
+        player.sendMessage(MM.deserialize("<yellow>/duel deny <player> <gray>— Decline"));
         player.sendMessage(MM.deserialize("<dark_gray><st>                        </st>"));
     }
 

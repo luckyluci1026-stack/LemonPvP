@@ -104,7 +104,7 @@ public class CosmeticsMainGUI implements Listener {
 
         // Coins — read from LemonCore cache (synchronous)
         long coins = getCachedCoins();
-        lore.add(MM.deserialize("<!italic><gray>Münzen: <gold>" + formatNumber(coins) + " ⭐"));
+        lore.add(MM.deserialize("<!italic><gray>Coins: <gold>" + formatNumber(coins) + " ⭐"));
 
         lore.add(Component.empty());
 
@@ -113,13 +113,13 @@ public class CosmeticsMainGUI implements Listener {
                     + "<gray>/<white>" + TagType.values().length));
             lore.add(MM.deserialize("<!italic><gray>Trails: <white>" + cosmetics.getOwnedTrails().size()
                     + "<gray>/<white>" + ArrowTrailType.values().length));
-            lore.add(MM.deserialize("<!italic><gray>Effekte: <white>" + cosmetics.getOwnedEffects().size()
+            lore.add(MM.deserialize("<!italic><gray>Effects: <white>" + cosmetics.getOwnedEffects().size()
                     + "<gray>/<white>" + KillEffectType.values().length));
             int totalPatterns = plugin.getArmorTrimManager().getAllPatternIds().size();
             lore.add(MM.deserialize("<!italic><gray>Trims: <white>" + cosmetics.getOwnedPatterns().size()
                     + "<gray>/<white>" + totalPatterns));
         } else {
-            lore.add(MM.deserialize("<!italic><gray>Lade Daten..."));
+            lore.add(MM.deserialize("<!italic><gray>Loading data..."));
         }
 
         skull.lore(lore);
@@ -132,23 +132,23 @@ public class CosmeticsMainGUI implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.displayName(MM.deserialize("<!italic><gradient:#4fc3f7:#0288d1>Rüstungs-Trims</gradient>"));
+        meta.displayName(MM.deserialize("<!italic><gradient:#4fc3f7:#0288d1>Armor Trims</gradient>"));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Passe deine Rüstung mit"));
-        lore.add(MM.deserialize("<!italic><gray>einzigartigen Trims an."));
+        lore.add(MM.deserialize("<!italic><gray>Customize your armor with"));
+        lore.add(MM.deserialize("<!italic><gray>unique trims."));
         lore.add(Component.empty());
 
         if (cosmetics != null) {
             int totalPatterns = plugin.getArmorTrimManager().getAllPatternIds().size();
-            lore.add(MM.deserialize("<!italic><dark_gray>Muster: <white>" + cosmetics.getOwnedPatterns().size()
+            lore.add(MM.deserialize("<!italic><dark_gray>Patterns: <white>" + cosmetics.getOwnedPatterns().size()
                     + "<dark_gray>/<white>" + totalPatterns));
-            lore.add(MM.deserialize("<!italic><dark_gray>Materialien: <white>" + cosmetics.getOwnedMaterials().size()));
+            lore.add(MM.deserialize("<!italic><dark_gray>Materials: <white>" + cosmetics.getOwnedMaterials().size()));
         }
 
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><aqua>➜ Klicken zum Öffnen"));
+        lore.add(MM.deserialize("<!italic><aqua>➜ Click to open"));
 
         meta.lore(lore);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
@@ -161,28 +161,28 @@ public class CosmeticsMainGUI implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.displayName(MM.deserialize("<!italic><gradient:#ab47bc:#7b1fa2>Pfeil-Trails</gradient>"));
+        meta.displayName(MM.deserialize("<!italic><gradient:#ab47bc:#7b1fa2>Arrow Trails</gradient>"));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Hinterlasse einen farbigen Effekt"));
-        lore.add(MM.deserialize("<!italic><gray>bei deinen Pfeilen."));
+        lore.add(MM.deserialize("<!italic><gray>Leave a colorful effect"));
+        lore.add(MM.deserialize("<!italic><gray>behind your arrows."));
         lore.add(Component.empty());
 
         if (cosmetics != null) {
             int owned = cosmetics.getOwnedTrails().size();
             int total = ArrowTrailType.values().length;
-            lore.add(MM.deserialize("<!italic><dark_gray>Besessen: <white>" + owned + "<dark_gray>/<white>" + total));
+            lore.add(MM.deserialize("<!italic><dark_gray>Owned: <white>" + owned + "<dark_gray>/<white>" + total));
             String activeTrail = cosmetics.getActiveTrailId();
             if (activeTrail != null) {
-                lore.add(MM.deserialize("<!italic><dark_gray>Aktiv: <light_purple>" + activeTrail));
+                lore.add(MM.deserialize("<!italic><dark_gray>Active: <light_purple>" + activeTrail));
             } else {
-                lore.add(MM.deserialize("<!italic><dark_gray>Aktiv: <gray>Keiner"));
+                lore.add(MM.deserialize("<!italic><dark_gray>Active: <gray>None"));
             }
         }
 
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><aqua>➜ Klicken zum Öffnen"));
+        lore.add(MM.deserialize("<!italic><aqua>➜ Click to open"));
 
         meta.lore(lore);
         item.setItemMeta(meta);
@@ -194,28 +194,28 @@ public class CosmeticsMainGUI implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.displayName(MM.deserialize("<!italic><gradient:#ff7043:#bf360c>Kill-Effekte</gradient>"));
+        meta.displayName(MM.deserialize("<!italic><gradient:#ff7043:#bf360c>Kill Effects</gradient>"));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Löse einen Effekt aus, wenn"));
-        lore.add(MM.deserialize("<!italic><gray>du einen Spieler eliminierst."));
+        lore.add(MM.deserialize("<!italic><gray>Trigger an effect when"));
+        lore.add(MM.deserialize("<!italic><gray>you eliminate a player."));
         lore.add(Component.empty());
 
         if (cosmetics != null) {
             int owned = cosmetics.getOwnedEffects().size();
             int total = KillEffectType.values().length;
-            lore.add(MM.deserialize("<!italic><dark_gray>Besessen: <white>" + owned + "<dark_gray>/<white>" + total));
+            lore.add(MM.deserialize("<!italic><dark_gray>Owned: <white>" + owned + "<dark_gray>/<white>" + total));
             String activeEffect = cosmetics.getActiveEffectId();
             if (activeEffect != null) {
-                lore.add(MM.deserialize("<!italic><dark_gray>Aktiv: <red>" + activeEffect));
+                lore.add(MM.deserialize("<!italic><dark_gray>Active: <red>" + activeEffect));
             } else {
-                lore.add(MM.deserialize("<!italic><dark_gray>Aktiv: <gray>Keiner"));
+                lore.add(MM.deserialize("<!italic><dark_gray>Active: <gray>None"));
             }
         }
 
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><aqua>➜ Klicken zum Öffnen"));
+        lore.add(MM.deserialize("<!italic><aqua>➜ Click to open"));
 
         meta.lore(lore);
         item.setItemMeta(meta);
@@ -231,26 +231,26 @@ public class CosmeticsMainGUI implements Listener {
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Zeige einen Tag als Suffix"));
-        lore.add(MM.deserialize("<!italic><gray>hinter deinem Namen."));
+        lore.add(MM.deserialize("<!italic><gray>Display a tag as a suffix"));
+        lore.add(MM.deserialize("<!italic><gray>behind your name."));
         lore.add(Component.empty());
 
         if (cosmetics != null) {
             int owned = cosmetics.getOwnedTags().size();
             int total = TagType.values().length;
-            lore.add(MM.deserialize("<!italic><dark_gray>Besessen: <white>" + owned + "<dark_gray>/<white>" + total));
+            lore.add(MM.deserialize("<!italic><dark_gray>Owned: <white>" + owned + "<dark_gray>/<white>" + total));
             String equippedTag = cosmetics.getEquippedTagId();
             if (equippedTag != null) {
                 TagType t = TagType.fromId(equippedTag).orElse(null);
-                lore.add(MM.deserialize("<!italic><dark_gray>Ausgerüstet: <reset>"
+                lore.add(MM.deserialize("<!italic><dark_gray>Equipped: <reset>"
                         + (t != null ? t.render : equippedTag)));
             } else {
-                lore.add(MM.deserialize("<!italic><dark_gray>Ausgerüstet: <gray>Keiner"));
+                lore.add(MM.deserialize("<!italic><dark_gray>Equipped: <gray>None"));
             }
         }
 
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><aqua>➜ Klicken zum Öffnen"));
+        lore.add(MM.deserialize("<!italic><aqua>➜ Click to open"));
 
         meta.lore(lore);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);

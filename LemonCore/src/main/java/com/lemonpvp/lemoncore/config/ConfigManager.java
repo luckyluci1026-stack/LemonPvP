@@ -73,12 +73,12 @@ public class ConfigManager {
 
     /** Fixed reason for the /offend quick-ban. */
     public String getOffendReason() {
-        return get("offend.reason", "Regelverstoß");
+        return get("offend.reason", "Rule violation");
     }
 
     /** Fixed reason for the /punish permanent ban. */
     public String getPunishReason() {
-        return get("punish.reason", "Schwerwiegender Regelverstoß");
+        return get("punish.reason", "Severe rule violation");
     }
 
     public String getDiscord() {

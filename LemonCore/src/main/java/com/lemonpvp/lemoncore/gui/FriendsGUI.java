@@ -64,8 +64,8 @@ public class FriendsGUI implements Listener {
         if (page < 0) page = 0;
 
         inv = Bukkit.createInventory(null, 54,
-                MM.deserialize("<!italic><gradient:#69f0ae:#00b0ff><bold>ꜰʀᴇᴜɴᴅᴇ</bold></gradient>"
-                        + " <dark_gray>» <white>Seite " + (page + 1) + "/" + (maxPage + 1)));
+                MM.deserialize("<!italic><gradient:#69f0ae:#00b0ff><bold>ꜰʀɪᴇɴᴅs</bold></gradient>"
+                        + " <dark_gray>» <white>Page " + (page + 1) + "/" + (maxPage + 1)));
 
         ItemStack black = pane(Material.BLACK_STAINED_GLASS_PANE);
         for (int s = 0; s < 9; s++) inv.setItem(s, black);
@@ -94,14 +94,14 @@ public class FriendsGUI implements Listener {
 
         if (page > 0) {
             inv.setItem(PREV_SLOT, simpleItem(Material.ARROW,
-                    "<!italic><yellow>◀ Vorherige Seite", List.of()));
+                    "<!italic><yellow>◀ Previous Page", List.of()));
         }
         if (page < maxPage) {
             inv.setItem(NEXT_SLOT, simpleItem(Material.ARROW,
-                    "<!italic><yellow>Nächste Seite ▶", List.of()));
+                    "<!italic><yellow>Next Page ▶", List.of()));
         }
         inv.setItem(CLOSE_SLOT, simpleItem(Material.BARRIER,
-                "<!italic><red><bold>Sᴄʜʟɪᴇssᴇɴ", List.of("<!italic><gray>Menü schließen")));
+                "<!italic><red><bold>Cʟᴏsᴇ", List.of("<!italic><gray>Close menu")));
 
         viewer.openInventory(inv);
         viewer.playSound(viewer.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.5f, 1.3f);
@@ -130,10 +130,10 @@ public class FriendsGUI implements Listener {
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         if (item.getItemMeta() instanceof SkullMeta meta) {
             meta.setOwningPlayer(viewer);
-            meta.displayName(MM.deserialize("<!italic><gradient:#69f0ae:#00b0ff><bold>Dᴇɪɴᴇ Fʀᴇᴜɴᴅᴇ"));
+            meta.displayName(MM.deserialize("<!italic><gradient:#69f0ae:#00b0ff><bold>Yᴏᴜʀ Fʀɪᴇɴᴅs"));
             meta.lore(List.of(
                     Component.empty(),
-                    MM.deserialize("<!italic><gray>Gesamt: <white>" + total),
+                    MM.deserialize("<!italic><gray>Total: <white>" + total),
                     MM.deserialize("<!italic><gray>Online: <green>" + online),
                     Component.empty(),
                     MM.deserialize("<!italic><dark_gray>/friend add <name>")));

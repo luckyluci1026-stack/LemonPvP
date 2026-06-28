@@ -92,7 +92,7 @@ public class TagsGUI implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.displayName(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>Vorschau</gradient>"));
+        meta.displayName(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>Preview</gradient>"));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
@@ -103,10 +103,10 @@ public class TagsGUI implements Listener {
                     + " <reset>" + equipped.render));
         } else {
             lore.add(MM.deserialize("<!italic><gray>" + player.getName()
-                    + " <dark_gray>(kein Tag)"));
+                    + " <dark_gray>(no tag)"));
         }
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><dark_gray>So sieht dein Name im Chat aus."));
+        lore.add(MM.deserialize("<!italic><dark_gray>This is how your name looks in chat."));
         meta.lore(lore);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         item.setItemMeta(meta);
@@ -125,20 +125,20 @@ public class TagsGUI implements Listener {
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Vorschau: <reset>" + tag.render));
+        lore.add(MM.deserialize("<!italic><gray>Preview: <reset>" + tag.render));
         lore.add(Component.empty());
 
         if (equipped) {
-            lore.add(MM.deserialize("<!italic><aqua>✔ Ausgerüstet"));
-            lore.add(MM.deserialize("<!italic><gray>Klicke zum Entfernen"));
+            lore.add(MM.deserialize("<!italic><aqua>✔ Equipped"));
+            lore.add(MM.deserialize("<!italic><gray>Click to remove"));
         } else if (hasAccess) {
-            lore.add(MM.deserialize("<!italic><green>✔ Freigeschaltet"));
-            lore.add(MM.deserialize("<!italic><gray>Klicke zum Ausrüsten"));
+            lore.add(MM.deserialize("<!italic><green>✔ Unlocked"));
+            lore.add(MM.deserialize("<!italic><gray>Click to equip"));
         } else if (tag.isBuyable()) {
-            lore.add(MM.deserialize("<!italic><gold>Preis: <yellow>" + tag.price + " ⭐"));
-            lore.add(MM.deserialize("<!italic><gray>Klicke zum Kaufen"));
+            lore.add(MM.deserialize("<!italic><gold>Price: <yellow>" + tag.price + " ⭐"));
+            lore.add(MM.deserialize("<!italic><gray>Click to buy"));
         } else {
-            lore.add(MM.deserialize("<!italic><red>🔒 Nur mit Berechtigung"));
+            lore.add(MM.deserialize("<!italic><red>🔒 Permission only"));
             lore.add(MM.deserialize("<!italic><dark_gray>" + tag.permission()));
         }
 
@@ -154,12 +154,12 @@ public class TagsGUI implements Listener {
         ItemStack item = new ItemStack(hasTag ? Material.BARRIER : Material.STRUCTURE_VOID);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(MM.deserialize("<!italic><red>Tag entfernen"));
+            meta.displayName(MM.deserialize("<!italic><red>Remove tag"));
             List<Component> lore = new ArrayList<>();
             lore.add(Component.empty());
             lore.add(MM.deserialize(hasTag
-                    ? "<!italic><gray>Klicke, um deinen Tag zu entfernen."
-                    : "<!italic><dark_gray>Du hast keinen Tag ausgerüstet."));
+                    ? "<!italic><gray>Click to remove your tag."
+                    : "<!italic><dark_gray>You don't have a tag equipped."));
             meta.lore(lore);
             item.setItemMeta(meta);
         }
@@ -170,7 +170,7 @@ public class TagsGUI implements Listener {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(MM.deserialize("<!italic><gray>← Zurück"));
+            meta.displayName(MM.deserialize("<!italic><gray>← Back"));
             item.setItemMeta(meta);
         }
         return item;
@@ -233,7 +233,7 @@ public class TagsGUI implements Listener {
                     Player p = Bukkit.getPlayer(uuid);
                     if (p == null) return;
                     p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.4f, 0.9f);
-                    p.sendMessage(MM.deserialize("<yellow>Dein Tag wurde entfernt."));
+                    p.sendMessage(MM.deserialize("<yellow>Your tag has been removed."));
                     render();
                 }));
     }
@@ -247,7 +247,7 @@ public class TagsGUI implements Listener {
         if (!hasAccess) {
             if (!tag.isBuyable()) {
                 clicker.playSound(clicker.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
-                clicker.sendMessage(MM.deserialize("<red>Dieser Tag ist nur mit Berechtigung erhältlich."));
+                clicker.sendMessage(MM.deserialize("<red>This tag is only available with permission."));
                 return;
             }
             plugin.getTagManager().buyTag(uuid, tag.id)
@@ -256,13 +256,13 @@ public class TagsGUI implements Listener {
                         if (p == null) return;
                         if (success) {
                             p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
-                            p.sendMessage(MM.deserialize("<green>Tag gekauft: <reset>" + tag.render
-                                    + " <green>für <gold>" + tag.price + " ⭐<green>!"));
+                            p.sendMessage(MM.deserialize("<green>Tag purchased: <reset>" + tag.render
+                                    + " <green>for <gold>" + tag.price + " ⭐<green>!"));
                             render();
                         } else {
                             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
-                            p.sendMessage(MM.deserialize("<red>Du kannst dir diesen Tag nicht leisten. "
-                                    + "<gray>Preis: <gold>" + tag.price + " ⭐"));
+                            p.sendMessage(MM.deserialize("<red>You can't afford this tag. "
+                                    + "<gray>Price: <gold>" + tag.price + " ⭐"));
                         }
                     }));
             return;
@@ -276,7 +276,7 @@ public class TagsGUI implements Listener {
                         Player p = Bukkit.getPlayer(uuid);
                         if (p == null) return;
                         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.4f, 0.9f);
-                        p.sendMessage(MM.deserialize("<yellow>Dein Tag wurde entfernt."));
+                        p.sendMessage(MM.deserialize("<yellow>Your tag has been removed."));
                         render();
                     }));
         } else {
@@ -285,7 +285,7 @@ public class TagsGUI implements Listener {
                         Player p = Bukkit.getPlayer(uuid);
                         if (p == null) return;
                         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.2f);
-                        p.sendMessage(MM.deserialize("<green>Tag ausgerüstet: <reset>" + tag.render));
+                        p.sendMessage(MM.deserialize("<green>Tag equipped: <reset>" + tag.render));
                         render();
                     }));
         }

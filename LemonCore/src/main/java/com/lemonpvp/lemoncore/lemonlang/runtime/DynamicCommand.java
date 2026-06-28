@@ -48,7 +48,7 @@ public final class DynamicCommand extends Command {
     @Override
     public boolean execute(CommandSender sender, String commandLabel, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Dieser Befehl kann nur von Spielern ausgefuehrt werden.");
+            sender.sendMessage("This command can only be executed by players.");
             return true;
         }
 
@@ -56,7 +56,7 @@ public final class DynamicCommand extends Command {
         String perm = getPermission();
         if (perm != null && !perm.isBlank() && !player.hasPermission(perm)) {
             net.kyori.adventure.text.Component denied = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
-                    .deserialize("<red><!italic>Du hast keine Berechtigung fuer diesen Befehl.");
+                    .deserialize("<red><!italic>You do not have permission to use this command.");
             player.sendMessage(denied);
             return true;
         }

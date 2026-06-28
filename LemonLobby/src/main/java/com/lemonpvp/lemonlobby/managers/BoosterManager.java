@@ -71,7 +71,7 @@ public class BoosterManager {
                 it.remove();
                 p.sendMessage(MM.deserialize(
                         "<!italic><gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient>"
-                        + " <dark_gray>»</dark_gray> <red>Dein Verstärker ist abgelaufen!"));
+                        + " <dark_gray>»</dark_gray> <red>Your booster has expired!"));
                 continue;
             }
 
@@ -134,8 +134,8 @@ public class BoosterManager {
     }
 
     private Component buildBarTitle(BoosterTier tier, long remainingMs) {
-        return MM.deserialize("<!italic><gold>⚡ Verstärker " + tier.displayName
-                + " <yellow>▸ <white>" + formatDuration(remainingMs) + " verbleibend");
+        return MM.deserialize("<!italic><gold>⚡ Booster " + tier.displayName
+                + " <yellow>▸ <white>" + formatDuration(remainingMs) + " remaining");
     }
 
     private String formatDuration(long millis) {

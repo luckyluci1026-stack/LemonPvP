@@ -59,7 +59,7 @@ public class ShopGUI implements Listener {
 
     public void open() {
         inv = Bukkit.createInventory(null, 54,
-                MM.deserialize("<!italic><gradient:#fffb00:#00ff00><bold>Aᴘꜰᴇʟ-Sʜᴏᴘ</bold></gradient>"));
+                MM.deserialize("<!italic><gradient:#fffb00:#00ff00><bold>Aᴘᴘʟᴇ-Sʜᴏᴘ</bold></gradient>"));
 
         ItemStack black = pane(Material.BLACK_STAINED_GLASS_PANE);
         ItemStack gray  = pane(Material.GRAY_STAINED_GLASS_PANE);
@@ -69,8 +69,8 @@ public class ShopGUI implements Listener {
         for (int s : BOOSTER_SLOTS) inv.setItem(s, gray);
 
         // Section labels
-        inv.setItem(9,  sectionLabel("<#D2691E><bold>Baum-Upgrades"));
-        inv.setItem(27, sectionLabel("<gold><bold>Verstärker"));
+        inv.setItem(9,  sectionLabel("<#D2691E><bold>Tree Upgrades"));
+        inv.setItem(27, sectionLabel("<gold><bold>Boosters"));
 
         inv.setItem(BALANCE_SLOT, buildBalanceItem());
         fillPlankTiers();
@@ -113,18 +113,18 @@ public class ShopGUI implements Listener {
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Planks / Klick: <white>" + tier.planksPerClick));
-        lore.add(MM.deserialize("<!italic><gray>Dauer: " + tier.durationDisplay()));
+        lore.add(MM.deserialize("<!italic><gray>Planks / Click: <white>" + tier.planksPerClick));
+        lore.add(MM.deserialize("<!italic><gray>Duration: " + tier.durationDisplay()));
         lore.add(Component.empty());
 
         if (isActive) {
-            lore.add(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>✔ Aktiv"));
+            lore.add(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>✔ Active"));
             long expiresAt = plugin.getTreeUpgradeManager().getExpiresAt(player.getUniqueId());
             if (expiresAt > 0 && expiresAt != Long.MAX_VALUE) {
-                lore.add(MM.deserialize("<!italic><gray>Läuft ab: <white>" + formatExpiry(expiresAt)));
+                lore.add(MM.deserialize("<!italic><gray>Expires: <white>" + formatExpiry(expiresAt)));
             }
         } else if (tier.isFree()) {
-            lore.add(MM.deserialize("<!italic><green>✔ Standard"));
+            lore.add(MM.deserialize("<!italic><green>✔ Default"));
         } else {
             // Progress bar toward this tier
             String bar = progressBar(playerApples, tier.appleCost, PROGRESS_BARS);
@@ -134,11 +134,11 @@ public class ShopGUI implements Listener {
                     + " <dark_gray>/ <white>" + FormatUtil.formatAmount(tier.appleCost) + " <green>✿"));
             lore.add(Component.empty());
             if (playerApples >= tier.appleCost) {
-                lore.add(MM.deserialize("<!italic><yellow>► Klicken zum Kaufen"));
+                lore.add(MM.deserialize("<!italic><yellow>► Click to buy"));
             } else {
                 long needed = tier.appleCost - playerApples;
-                lore.add(MM.deserialize("<!italic><dark_gray>Noch <white>"
-                        + FormatUtil.formatAmount(needed) + " <green>✿ <dark_gray>benötigt"));
+                lore.add(MM.deserialize("<!italic><dark_gray>Still need <white>"
+                        + FormatUtil.formatAmount(needed) + " <green>✿ <dark_gray>more"));
             }
         }
         lore.add(Component.empty());
@@ -158,16 +158,16 @@ public class ShopGUI implements Listener {
         ItemMeta  meta    = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.displayName(MM.deserialize("<!italic><bold><gradient:#fffb00:#00ff00>Dein Baum-Upgrade"));
+        meta.displayName(MM.deserialize("<!italic><bold><gradient:#fffb00:#00ff00>Your Tree Upgrade"));
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Aktiv: <white>" + tier.displayName));
-        lore.add(MM.deserialize("<!italic><gray>Planks / Klick: <white>" + tier.planksPerClick));
+        lore.add(MM.deserialize("<!italic><gray>Active: <white>" + tier.displayName));
+        lore.add(MM.deserialize("<!italic><gray>Planks / Click: <white>" + tier.planksPerClick));
         long expiresAt = plugin.getTreeUpgradeManager().getExpiresAt(player.getUniqueId());
         if (expiresAt > 0 && expiresAt != Long.MAX_VALUE) {
-            lore.add(MM.deserialize("<!italic><gray>Läuft ab: <white>" + formatExpiry(expiresAt)));
+            lore.add(MM.deserialize("<!italic><gray>Expires: <white>" + formatExpiry(expiresAt)));
         } else {
-            lore.add(MM.deserialize("<!italic><green>Dauerhaft"));
+            lore.add(MM.deserialize("<!italic><green>Permanent"));
         }
         lore.add(Component.empty());
         meta.lore(lore);
@@ -206,18 +206,18 @@ public class ShopGUI implements Listener {
         if (meta == null) return item;
 
         String nameColor = isActive ? "<gradient:#fffb00:#ff9800>" : "<gold>";
-        meta.displayName(MM.deserialize("<!italic><bold>" + nameColor + "Verstärker " + tier.displayName));
+        meta.displayName(MM.deserialize("<!italic><bold>" + nameColor + "Booster " + tier.displayName));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><gray>Bonus Äpfel: <white>+" + tier.bonusApples + " / Klick"));
-        lore.add(MM.deserialize("<!italic><gray>Dauer: <white>" + tier.durationDisplay()));
+        lore.add(MM.deserialize("<!italic><gray>Bonus Apples: <white>+" + tier.bonusApples + " / Click"));
+        lore.add(MM.deserialize("<!italic><gray>Duration: <white>" + tier.durationDisplay()));
         lore.add(Component.empty());
 
         if (isActive) {
-            lore.add(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>✔ Aktiv"));
+            lore.add(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>✔ Active"));
             long rem = active.expiresAt() - System.currentTimeMillis();
-            lore.add(MM.deserialize("<!italic><gray>Verbleibend: <white>" + formatDuration(rem)));
+            lore.add(MM.deserialize("<!italic><gray>Remaining: <white>" + formatDuration(rem)));
         } else {
             // Progress bar
             String bar = progressBar(playerApples, tier.appleCost, PROGRESS_BARS);
@@ -227,13 +227,13 @@ public class ShopGUI implements Listener {
                     + " <dark_gray>/ <white>" + FormatUtil.formatAmount(tier.appleCost) + " <green>✿"));
             lore.add(Component.empty());
             if (active != null) {
-                lore.add(MM.deserialize("<!italic><red>Erst aktiven Verstärker aufbrauchen!"));
+                lore.add(MM.deserialize("<!italic><red>Use up your active booster first!"));
             } else if (playerApples >= tier.appleCost) {
-                lore.add(MM.deserialize("<!italic><yellow>► Klicken zum Kaufen"));
+                lore.add(MM.deserialize("<!italic><yellow>► Click to buy"));
             } else {
                 long needed = tier.appleCost - playerApples;
-                lore.add(MM.deserialize("<!italic><dark_gray>Noch <white>"
-                        + FormatUtil.formatAmount(needed) + " <green>✿ <dark_gray>benötigt"));
+                lore.add(MM.deserialize("<!italic><dark_gray>Still need <white>"
+                        + FormatUtil.formatAmount(needed) + " <green>✿ <dark_gray>more"));
             }
         }
         lore.add(Component.empty());
@@ -253,17 +253,17 @@ public class ShopGUI implements Listener {
         ItemMeta  meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.displayName(MM.deserialize("<!italic><bold><gold>Aktiver Verstärker"));
+        meta.displayName(MM.deserialize("<!italic><bold><gold>Active Booster"));
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
 
         if (active != null) {
-            lore.add(MM.deserialize("<!italic><gray>Typ: <white>" + active.tier().displayName));
-            lore.add(MM.deserialize("<!italic><gray>Bonus: <white>+" + active.tier().bonusApples + " Äpfel / Klick"));
+            lore.add(MM.deserialize("<!italic><gray>Type: <white>" + active.tier().displayName));
+            lore.add(MM.deserialize("<!italic><gray>Bonus: <white>+" + active.tier().bonusApples + " Apples / Click"));
             long rem = active.expiresAt() - System.currentTimeMillis();
-            lore.add(MM.deserialize("<!italic><gray>Verbleibend: <white>" + formatDuration(rem)));
+            lore.add(MM.deserialize("<!italic><gray>Remaining: <white>" + formatDuration(rem)));
         } else {
-            lore.add(MM.deserialize("<!italic><dark_gray>Kein aktiver Verstärker."));
+            lore.add(MM.deserialize("<!italic><dark_gray>No active booster."));
         }
         lore.add(Component.empty());
         meta.lore(lore);
@@ -283,7 +283,7 @@ public class ShopGUI implements Listener {
             PlayerData pd = EconomyBridge.cached(player.getUniqueId());
             long apples = pd != null ? pd.getApples() : 0;
             long planks = pd != null ? pd.getPlanks() : 0;
-            lore.add(MM.deserialize("<!italic><gray>✿ Äpfel: <green>" + FormatUtil.formatAmount(apples)));
+            lore.add(MM.deserialize("<!italic><gray>✿ Apples: <green>" + FormatUtil.formatAmount(apples)));
             lore.add(MM.deserialize("<!italic><gray>▬ Planks: <#D2691E>" + FormatUtil.formatAmount(planks)));
             lore.add(Component.empty());
             meta.lore(lore);
@@ -320,13 +320,13 @@ public class ShopGUI implements Listener {
         if (tier.isFree()) return;
         PlankTier current = plugin.getTreeUpgradeManager().getCurrentTier(player.getUniqueId());
         if (current == tier) {
-            player.sendActionBar(MM.deserialize("<!italic><red>Du hast dieses Upgrade bereits!"));
+            player.sendActionBar(MM.deserialize("<!italic><red>You already have this upgrade!"));
             return;
         }
         long apples = getApples();
         if (apples < tier.appleCost) {
-            player.sendActionBar(MM.deserialize("<!italic><red>Nicht genug ✿! Du brauchst noch "
-                    + FormatUtil.formatAmount(tier.appleCost - apples) + " Äpfel."));
+            player.sendActionBar(MM.deserialize("<!italic><red>Not enough ✿! You still need "
+                    + FormatUtil.formatAmount(tier.appleCost - apples) + " apples."));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
             return;
         }
@@ -336,8 +336,8 @@ public class ShopGUI implements Listener {
                 .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                     plugin.getTreeUpgradeManager().upgrade(player.getUniqueId(), tier);
                     player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.3f);
-                    player.sendActionBar(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>Baum-Upgrade auf <white>"
-                            + tier.displayName + " <gradient:#fffb00:#00ff00>aktiviert!"));
+                    player.sendActionBar(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>Tree upgrade to <white>"
+                            + tier.displayName + " <gradient:#fffb00:#00ff00>activated!"));
                     purchasing = false;
                     refresh();
                 }));
@@ -345,13 +345,13 @@ public class ShopGUI implements Listener {
 
     private void handleBoosterPurchase(BoosterTier tier) {
         if (plugin.getBoosterManager().getActive(player.getUniqueId()) != null) {
-            player.sendActionBar(MM.deserialize("<!italic><red>Du hast bereits einen aktiven Verstärker!"));
+            player.sendActionBar(MM.deserialize("<!italic><red>You already have an active booster!"));
             return;
         }
         long apples = getApples();
         if (apples < tier.appleCost) {
-            player.sendActionBar(MM.deserialize("<!italic><red>Nicht genug ✿! Du brauchst noch "
-                    + FormatUtil.formatAmount(tier.appleCost - apples) + " Äpfel."));
+            player.sendActionBar(MM.deserialize("<!italic><red>Not enough ✿! You still need "
+                    + FormatUtil.formatAmount(tier.appleCost - apples) + " apples."));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
             return;
         }
@@ -361,8 +361,8 @@ public class ShopGUI implements Listener {
                 .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                     plugin.getBoosterManager().activate(player.getUniqueId(), tier);
                     player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.8f, 1.0f);
-                    player.sendActionBar(MM.deserialize("<!italic><gradient:#fffb00:#ff9800>Verstärker "
-                            + tier.displayName + " <gradient:#fffb00:#ff9800>aktiviert!"));
+                    player.sendActionBar(MM.deserialize("<!italic><gradient:#fffb00:#ff9800>Booster "
+                            + tier.displayName + " <gradient:#fffb00:#ff9800>activated!"));
                     purchasing = false;
                     refresh();
                 }));
@@ -416,7 +416,7 @@ public class ShopGUI implements Listener {
     private ItemStack buildCloseItem() {
         ItemStack item = new ItemStack(Material.BARRIER);
         ItemMeta  meta = item.getItemMeta();
-        if (meta != null) { meta.displayName(MM.deserialize("<!italic><red>Schließen")); item.setItemMeta(meta); }
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic><red>Close")); item.setItemMeta(meta); }
         return item;
     }
 

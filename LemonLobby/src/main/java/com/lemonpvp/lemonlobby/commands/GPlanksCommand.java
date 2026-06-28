@@ -28,15 +28,15 @@ public class GPlanksCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("lemonlobby.admin.planks")) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Keine Berechtigung."));
+            sender.sendMessage(MM.deserialize("<!italic><red>No permission."));
             return true;
         }
         if (EconomyBridge.core() == null) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Economy-System nicht verfügbar."));
+            sender.sendMessage(MM.deserialize("<!italic><red>Economy system not available."));
             return true;
         }
         if (args.length < 2) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Verwendung: /gplanks add|remove|set|show <spieler> [menge]"));
+            sender.sendMessage(MM.deserialize("<!italic><red>Usage: /gplanks add|remove|set|show <player> [amount]"));
             return true;
         }
 
@@ -48,20 +48,20 @@ public class GPlanksCommand implements CommandExecutor, TabCompleter {
                 if (uuid == null) { run(() -> notFound(sender, targetName)); return; }
                 PlayerData pd = EconomyBridge.cached(uuid);
                 long planks = pd != null ? pd.getPlanks() : -1;
-                run(() -> sender.sendMessage(MM.deserialize("<!italic><gray>Planks von <white>" + targetName
+                run(() -> sender.sendMessage(MM.deserialize("<!italic><gray>Planks of <white>" + targetName
                         + "<gray>: <#D2691E>▬ <white>"
-                        + (planks >= 0 ? FormatUtil.formatAmount(planks) : "nicht geladen"))));
+                        + (planks >= 0 ? FormatUtil.formatAmount(planks) : "not loaded"))));
             });
             return true;
         }
 
         if (args.length < 3) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Verwendung: /gplanks " + action + " <spieler> <menge>"));
+            sender.sendMessage(MM.deserialize("<!italic><red>Usage: /gplanks " + action + " <player> <amount>"));
             return true;
         }
         long amount;
         try { amount = Long.parseLong(args[2]); }
-        catch (NumberFormatException e) { sender.sendMessage(MM.deserialize("<!italic><red>Ungültige Zahl.")); return true; }
+        catch (NumberFormatException e) { sender.sendMessage(MM.deserialize("<!italic><red>Invalid number.")); return true; }
         final long amt = amount;
 
         resolveUuid(targetName, uuid -> {
@@ -70,26 +70,26 @@ public class GPlanksCommand implements CommandExecutor, TabCompleter {
                 case "add" -> EconomyBridge.addPlanks(uuid, amt)
                         .thenRun(() -> run(() -> {
                             sender.sendMessage(MM.deserialize("<!italic><green>+<white>" + amt
-                                    + " <#D2691E>▬ <green>Planks zu <white>" + targetName + " <green>hinzugefügt."));
+                                    + " <#D2691E>▬ <green>Planks added to <white>" + targetName + "<green>."));
                             Player t = Bukkit.getPlayer(uuid);
                             if (t != null) t.sendMessage(MM.deserialize(
                                     "<!italic><gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray>"
-                                    + " <green>Du hast <white>" + FormatUtil.formatAmount(amt) + " <#D2691E>▬ <green>Planks erhalten!"));
+                                    + " <green>You received <white>" + FormatUtil.formatAmount(amt) + " <#D2691E>▬ <green>Planks!"));
                         }));
                 case "remove" -> EconomyBridge.removePlanks(uuid, amt)
                         .thenRun(() -> run(() ->
                             sender.sendMessage(MM.deserialize("<!italic><red>-<white>" + amt
-                                    + " <#D2691E>▬ Planks von <white>" + targetName + " <red>abgezogen."))));
+                                    + " <#D2691E>▬ Planks removed from <white>" + targetName + "<red>."))));
                 case "set" -> {
                     PlayerData pd = EconomyBridge.cached(uuid);
                     long current  = pd != null ? pd.getPlanks() : 0;
                     EconomyBridge.addPlanks(uuid, amt - current)
                             .thenRun(() -> run(() ->
-                                sender.sendMessage(MM.deserialize("<!italic><green>Planks von <white>"
-                                        + targetName + " <green>auf <white>"
-                                        + FormatUtil.formatAmount(amt) + " <green>gesetzt."))));
+                                sender.sendMessage(MM.deserialize("<!italic><green>Planks of <white>"
+                                        + targetName + " <green>set to <white>"
+                                        + FormatUtil.formatAmount(amt) + "<green>."))));
                 }
-                default -> run(() -> sender.sendMessage(MM.deserialize("<!italic><red>Unbekannte Aktion: add|remove|set|show")));
+                default -> run(() -> sender.sendMessage(MM.deserialize("<!italic><red>Unknown action: add|remove|set|show")));
             }
         });
         return true;
@@ -118,6 +118,6 @@ public class GPlanksCommand implements CommandExecutor, TabCompleter {
     private void run(Runnable r) { Bukkit.getScheduler().runTask(plugin, r); }
 
     private void notFound(CommandSender s, String name) {
-        s.sendMessage(MM.deserialize("<!italic><red>Spieler <white>" + name + " <red>nicht gefunden."));
+        s.sendMessage(MM.deserialize("<!italic><red>Player <white>" + name + " <red>not found."));
     }
 }

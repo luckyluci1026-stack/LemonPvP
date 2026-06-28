@@ -24,7 +24,7 @@ public final class BoosterTier {
     }
 
     public String priceDisplay() {
-        return "<yellow>" + com.lemonpvp.lemonlobby.util.FormatUtil.formatAmount(appleCost) + " <white>Äpfel";
+        return "<yellow>" + com.lemonpvp.lemonlobby.util.FormatUtil.formatAmount(appleCost) + " <white>Apples";
     }
 
     public String durationDisplay() {

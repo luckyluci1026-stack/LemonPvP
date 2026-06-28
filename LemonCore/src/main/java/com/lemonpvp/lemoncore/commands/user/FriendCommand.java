@@ -63,7 +63,7 @@ public class FriendCommand implements CommandExecutor {
 
         String targetName = args[1];
         if (targetName.equalsIgnoreCase(player.getName())) {
-            player.sendMessage(MM.deserialize("<red>Du kannst dir selbst keine Freundschaftsanfrage senden."));
+            player.sendMessage(MM.deserialize("<red>You can't send yourself a friend request."));
             return true;
         }
 
@@ -81,13 +81,13 @@ public class FriendCommand implements CommandExecutor {
                 case "add" -> {
                     if (data != null && data.isFriend(targetUuid)) {
                         player.sendMessage(MM.deserialize(
-                                "<red>Du bist bereits mit <white>" + targetName + "<red> befreundet."));
+                                "<red>You are already friends with <white>" + targetName + "<red>."));
                         return;
                     }
                     if (req.hasPending(player.getUniqueId(), targetUuid)) {
                         player.sendMessage(MM.deserialize(
-                                "<yellow>Du hast <white>" + targetName
-                                + "<yellow> bereits eine Anfrage gesendet. Warte auf die Antwort."));
+                                "<yellow>You have already sent <white>" + targetName
+                                + "<yellow> a request. Wait for their reply."));
                         return;
                     }
                     // Check if target already sent us a request → auto-accept
@@ -97,7 +97,7 @@ public class FriendCommand implements CommandExecutor {
                     }
                     req.send(player.getUniqueId(), targetUuid);
                     player.sendMessage(MM.deserialize(
-                            "<gray>Freundschaftsanfrage an <white>" + targetName + "<gray> gesendet."));
+                            "<gray>Friend request sent to <white>" + targetName + "<gray>."));
                     notifyTarget(targetUuid, player.getName());
                 }
 
@@ -105,18 +105,18 @@ public class FriendCommand implements CommandExecutor {
                     // "targetName" is the sender whose request we accept
                     if (!req.consume(targetUuid, player.getUniqueId())) {
                         player.sendMessage(MM.deserialize(
-                                "<red>Keine ausstehende Freundschaftsanfrage von <white>" + targetName + "<red>."));
+                                "<red>No pending friend request from <white>" + targetName + "<red>."));
                         return;
                     }
                     PlayerData targetData = plugin.getPlayerDataManager().getCached(targetUuid);
                     addFriendship(player.getUniqueId(), targetUuid, player.getName(), targetName, data);
                     player.sendMessage(MM.deserialize(
-                            "<green>Du bist jetzt mit <white>" + targetName + "<green> befreundet! 🎉"));
+                            "<green>You are now friends with <white>" + targetName + "<green>! 🎉"));
                     Player targetPlayer = Bukkit.getPlayer(targetUuid);
                     if (targetPlayer != null) {
                         targetPlayer.sendMessage(MM.deserialize(
                                 "<green><white>" + player.getName()
-                                + "<green> hat deine Freundschaftsanfrage angenommen! 🎉"));
+                                + "<green> accepted your friend request! 🎉"));
                         targetPlayer.playSound(targetPlayer.getLocation(),
                                 Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.5f);
                     }
@@ -126,33 +126,33 @@ public class FriendCommand implements CommandExecutor {
                 case "deny" -> {
                     if (!req.consume(targetUuid, player.getUniqueId())) {
                         player.sendMessage(MM.deserialize(
-                                "<red>Keine ausstehende Freundschaftsanfrage von <white>" + targetName + "<red>."));
+                                "<red>No pending friend request from <white>" + targetName + "<red>."));
                         return;
                     }
                     player.sendMessage(MM.deserialize(
-                            "<gray>Freundschaftsanfrage von <white>" + targetName + "<gray> abgelehnt."));
+                            "<gray>Friend request from <white>" + targetName + "<gray> denied."));
                     Player targetPlayer = Bukkit.getPlayer(targetUuid);
                     if (targetPlayer != null) {
                         targetPlayer.sendMessage(MM.deserialize(
                                 "<red><white>" + player.getName()
-                                + "<red> hat deine Freundschaftsanfrage abgelehnt."));
+                                + "<red> denied your friend request."));
                     }
                 }
 
                 case "remove" -> {
                     if (data != null && !data.isFriend(targetUuid)) {
                         player.sendMessage(MM.deserialize(
-                                "<red><white>" + targetName + "<red> ist nicht in deiner Freundesliste."));
+                                "<red><white>" + targetName + "<red> is not in your friends list."));
                         return;
                     }
                     removeFriendship(player.getUniqueId(), targetUuid, data, targetName);
                     player.sendMessage(MM.deserialize(
-                            "<gray><white>" + targetName + "<gray> aus der Freundesliste entfernt."));
+                            "<gray><white>" + targetName + "<gray> removed from your friends list."));
                     Player targetPlayer = Bukkit.getPlayer(targetUuid);
                     if (targetPlayer != null) {
                         targetPlayer.sendMessage(MM.deserialize(
                                 "<gray><white>" + player.getName()
-                                + "<gray> hat dich aus seiner Freundesliste entfernt."));
+                                + "<gray> removed you from their friends list."));
                     }
                 }
 
@@ -211,30 +211,30 @@ public class FriendCommand implements CommandExecutor {
         Player target = Bukkit.getPlayer(targetUuid);
         if (target == null) return;
 
-        Component accept = MM.deserialize("<green><bold>[✔ Akzeptieren]</bold></green>")
+        Component accept = MM.deserialize("<green><bold>[✔ Accept]</bold></green>")
                 .clickEvent(ClickEvent.runCommand("/friend accept " + senderName))
                 .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(
-                        MM.deserialize("<green>Freundschaftsanfrage annehmen")));
-        Component deny = MM.deserialize("<red><bold>[✘ Ablehnen]</bold></red>")
+                        MM.deserialize("<green>Accept friend request")));
+        Component deny = MM.deserialize("<red><bold>[✘ Deny]</bold></red>")
                 .clickEvent(ClickEvent.runCommand("/friend deny " + senderName))
                 .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(
-                        MM.deserialize("<red>Freundschaftsanfrage ablehnen")));
+                        MM.deserialize("<red>Deny friend request")));
 
         target.sendMessage(Component.empty());
         target.sendMessage(MM.deserialize(
-                "<gradient:#69f0ae:#00b0ff><bold>Freundschaftsanfrage</bold></gradient>"));
+                "<gradient:#69f0ae:#00b0ff><bold>Friend Request</bold></gradient>"));
         target.sendMessage(MM.deserialize(
-                "<gray><white>" + senderName + "<gray> möchte dich als Freund hinzufügen."));
+                "<gray><white>" + senderName + "<gray> wants to add you as a friend."));
         target.sendMessage(accept.append(Component.text(" ")).append(deny));
         target.sendMessage(MM.deserialize(
-                "<dark_gray><i>Verfällt in 2 Minuten.</i>"));
+                "<dark_gray><i>Expires in 2 minutes.</i>"));
         target.sendMessage(Component.empty());
         target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.6f);
     }
 
     private void sendUsage(Player player) {
         player.sendMessage(MM.deserialize(
-                "<gray>Verwendung: <white>/friend add|accept|deny|remove <Spieler>"
+                "<gray>Usage: <white>/friend add|accept|deny|remove <player>"
                 + " <dark_gray>| <white>/friend list"));
     }
 

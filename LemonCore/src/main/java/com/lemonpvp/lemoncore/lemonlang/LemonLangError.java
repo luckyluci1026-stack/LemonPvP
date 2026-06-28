@@ -61,14 +61,14 @@ public class LemonLangError extends RuntimeException {
      */
     public Component formatForChat() {
         StringBuilder raw = new StringBuilder();
-        raw.append("<red>[LemonLang] Fehler in <yellow>")
+        raw.append("<red>[LemonLang] Error in <yellow>")
            .append(escape(scriptFile == null ? "?" : scriptFile))
            .append("<red>:<yellow>")
            .append(line)
            .append("<red> - ")
            .append(escape(getMessage() == null ? "" : getMessage()));
         if (hint != null && !hint.isEmpty()) {
-            raw.append("<newline><gray>Tipp: ").append(escape(hint));
+            raw.append("<newline><gray>Tip: ").append(escape(hint));
         }
         return MiniMessage.miniMessage().deserialize(raw.toString());
     }

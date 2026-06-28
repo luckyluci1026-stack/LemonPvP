@@ -29,7 +29,7 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("lemonlobby.admin")) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Keine Berechtigung."));
+            sender.sendMessage(MM.deserialize("<!italic><red>No permission."));
             return true;
         }
         if (args.length == 0) { sendUsage(sender); return true; }
@@ -48,54 +48,54 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
         plugin.getBoosterConfig().reload();
         plugin.getAppleTreeListener().reload();
         plugin.loadServersConfig();
-        sender.sendMessage(MM.deserialize(PREFIX + "<green>Konfiguration neu geladen."));
+        sender.sendMessage(MM.deserialize(PREFIX + "<green>Configuration reloaded."));
     }
 
     private void handleUpgrade(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(MM.deserialize("<!italic><gray>Verwendung: <white>/llobby upgrade <spieler> <tier>"));
+            sender.sendMessage(MM.deserialize("<!italic><gray>Usage: <white>/llobby upgrade <player> <tier>"));
             sender.sendMessage(MM.deserialize("<!italic><dark_gray>Tiers: "
                     + String.join(", ", Arrays.stream(PlankTier.values()).map(Enum::name).toList())));
             return;
         }
         Player target = Bukkit.getPlayer(args[1]);
         if (target == null) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Spieler <white>" + args[1] + " <red>nicht online."));
+            sender.sendMessage(MM.deserialize("<!italic><red>Player <white>" + args[1] + " <red>is not online."));
             return;
         }
         PlankTier tier = PlankTier.fromName(args[2]);
         plugin.getTreeUpgradeManager().upgrade(target.getUniqueId(), tier);
-        sender.sendMessage(MM.deserialize(PREFIX + "<green>Baum-Upgrade von <white>"
-                + target.getName() + " <green>auf <white>" + tier.displayName + " <green>gesetzt."));
-        target.sendMessage(MM.deserialize(PREFIX + "<green>Dein Baum-Upgrade wurde auf <white>"
-                + tier.displayName + " <green>gesetzt!"));
+        sender.sendMessage(MM.deserialize(PREFIX + "<green>Tree upgrade for <white>"
+                + target.getName() + " <green>set to <white>" + tier.displayName + "<green>."));
+        target.sendMessage(MM.deserialize(PREFIX + "<green>Your tree upgrade has been set to <white>"
+                + tier.displayName + "<green>!"));
     }
 
     private void handleBooster(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(MM.deserialize("<!italic><gray>Verwendung: <white>/llobby booster <spieler> <1-5>"));
+            sender.sendMessage(MM.deserialize("<!italic><gray>Usage: <white>/llobby booster <player> <1-5>"));
             return;
         }
         Player target = Bukkit.getPlayer(args[1]);
         if (target == null) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Spieler <white>" + args[1] + " <red>nicht online."));
+            sender.sendMessage(MM.deserialize("<!italic><red>Player <white>" + args[1] + " <red>is not online."));
             return;
         }
         int level;
         try { level = Integer.parseInt(args[2]); }
-        catch (NumberFormatException e) { sender.sendMessage(MM.deserialize("<!italic><red>Ungültige Stufe (1-5).")); return; }
+        catch (NumberFormatException e) { sender.sendMessage(MM.deserialize("<!italic><red>Invalid level (1-5).")); return; }
         BoosterTier tier = plugin.getBoosterConfig().fromLevel(level);
-        if (tier == null) { sender.sendMessage(MM.deserialize("<!italic><red>Ungültige Stufe (1-5).")); return; }
+        if (tier == null) { sender.sendMessage(MM.deserialize("<!italic><red>Invalid level (1-5).")); return; }
         plugin.getBoosterManager().activate(target.getUniqueId(), tier);
-        sender.sendMessage(MM.deserialize(PREFIX + "<green>Verstärker " + tier.displayName
-                + " <green>für <white>" + target.getName() + " <green>aktiviert."));
-        target.sendMessage(MM.deserialize(PREFIX + "<gold>Verstärker <white>" + tier.displayName
-                + " <gold>wurde für dich aktiviert!"));
+        sender.sendMessage(MM.deserialize(PREFIX + "<green>Booster " + tier.displayName
+                + " <green>activated for <white>" + target.getName() + "<green>."));
+        target.sendMessage(MM.deserialize(PREFIX + "<gold>Booster <white>" + tier.displayName
+                + " <gold>has been activated for you!"));
     }
 
     private void sendUsage(CommandSender sender) {
         sender.sendMessage(MM.deserialize(
-                "<!italic><gray>/llobby <white>reload <gray>| <white>upgrade <spieler> <tier> <gray>| <white>booster <spieler> <1-5>"));
+                "<!italic><gray>/llobby <white>reload <gray>| <white>upgrade <player> <tier> <gray>| <white>booster <player> <1-5>"));
     }
 
     @Override

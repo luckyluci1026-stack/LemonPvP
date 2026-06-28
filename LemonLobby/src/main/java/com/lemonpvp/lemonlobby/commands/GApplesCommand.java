@@ -28,15 +28,15 @@ public class GApplesCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("lemonlobby.admin.apples")) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Keine Berechtigung."));
+            sender.sendMessage(MM.deserialize("<!italic><red>No permission."));
             return true;
         }
         if (EconomyBridge.core() == null) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Economy-System nicht verfügbar."));
+            sender.sendMessage(MM.deserialize("<!italic><red>Economy system not available."));
             return true;
         }
         if (args.length < 2) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Verwendung: /gapples add|remove|set|show <spieler> [menge]"));
+            sender.sendMessage(MM.deserialize("<!italic><red>Usage: /gapples add|remove|set|show <player> [amount]"));
             return true;
         }
 
@@ -48,20 +48,20 @@ public class GApplesCommand implements CommandExecutor, TabCompleter {
                 if (uuid == null) { run(() -> notFound(sender, targetName)); return; }
                 PlayerData pd = EconomyBridge.cached(uuid);
                 long apples = pd != null ? pd.getApples() : -1;
-                run(() -> sender.sendMessage(MM.deserialize("<!italic><gray>Äpfel von <white>" + targetName
+                run(() -> sender.sendMessage(MM.deserialize("<!italic><gray>Apples of <white>" + targetName
                         + "<gray>: <green>✿ <white>"
-                        + (apples >= 0 ? FormatUtil.formatAmount(apples) : "nicht geladen"))));
+                        + (apples >= 0 ? FormatUtil.formatAmount(apples) : "not loaded"))));
             });
             return true;
         }
 
         if (args.length < 3) {
-            sender.sendMessage(MM.deserialize("<!italic><red>Verwendung: /gapples " + action + " <spieler> <menge>"));
+            sender.sendMessage(MM.deserialize("<!italic><red>Usage: /gapples " + action + " <player> <amount>"));
             return true;
         }
         long amount;
         try { amount = Long.parseLong(args[2]); }
-        catch (NumberFormatException e) { sender.sendMessage(MM.deserialize("<!italic><red>Ungültige Zahl.")); return true; }
+        catch (NumberFormatException e) { sender.sendMessage(MM.deserialize("<!italic><red>Invalid number.")); return true; }
         final long amt = amount;
 
         resolveUuid(targetName, uuid -> {
@@ -70,26 +70,26 @@ public class GApplesCommand implements CommandExecutor, TabCompleter {
                 case "add" -> EconomyBridge.addApples(uuid, amt)
                         .thenRun(() -> run(() -> {
                             sender.sendMessage(MM.deserialize("<!italic><green>+<white>" + amt
-                                    + " <green>✿ Äpfel zu <white>" + targetName + " <green>hinzugefügt."));
+                                    + " <green>✿ apples added to <white>" + targetName + "<green>."));
                             Player t = Bukkit.getPlayer(uuid);
                             if (t != null) t.sendMessage(MM.deserialize(
                                     "<!italic><gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray>"
-                                    + " <green>Du hast <white>" + FormatUtil.formatAmount(amt) + " <green>✿ Äpfel erhalten!"));
+                                    + " <green>You received <white>" + FormatUtil.formatAmount(amt) + " <green>✿ apples!"));
                         }));
                 case "remove" -> EconomyBridge.removeApples(uuid, amt)
                         .thenRun(() -> run(() ->
                             sender.sendMessage(MM.deserialize("<!italic><red>-<white>" + amt
-                                    + " <red>✿ Äpfel von <white>" + targetName + " <red>abgezogen."))));
+                                    + " <red>✿ apples removed from <white>" + targetName + "<red>."))));
                 case "set" -> {
                     PlayerData pd = EconomyBridge.cached(uuid);
                     long current  = pd != null ? pd.getApples() : 0;
                     EconomyBridge.addApples(uuid, amt - current)
                             .thenRun(() -> run(() ->
-                                sender.sendMessage(MM.deserialize("<!italic><green>Äpfel von <white>"
-                                        + targetName + " <green>auf <white>"
-                                        + FormatUtil.formatAmount(amt) + " <green>gesetzt."))));
+                                sender.sendMessage(MM.deserialize("<!italic><green>Apples of <white>"
+                                        + targetName + " <green>set to <white>"
+                                        + FormatUtil.formatAmount(amt) + "<green>."))));
                 }
-                default -> run(() -> sender.sendMessage(MM.deserialize("<!italic><red>Unbekannte Aktion: add|remove|set|show")));
+                default -> run(() -> sender.sendMessage(MM.deserialize("<!italic><red>Unknown action: add|remove|set|show")));
             }
         });
         return true;
@@ -118,6 +118,6 @@ public class GApplesCommand implements CommandExecutor, TabCompleter {
     private void run(Runnable r) { Bukkit.getScheduler().runTask(plugin, r); }
 
     private void notFound(CommandSender s, String name) {
-        s.sendMessage(MM.deserialize("<!italic><red>Spieler <white>" + name + " <red>nicht gefunden."));
+        s.sendMessage(MM.deserialize("<!italic><red>Player <white>" + name + " <red>not found."));
     }
 }

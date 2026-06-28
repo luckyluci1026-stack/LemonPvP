@@ -21,7 +21,7 @@ public class RtpCommand implements CommandExecutor {
         }
         player.sendMessage(MM.deserialize(
             "<yellow><bold>⚠ Under Development</bold></yellow>\n" +
-            "<gray>Random Teleport (<white>/rtp</white>) wird aktuell entwickelt und ist bald verfügbar!</gray>"));
+            "<gray>Random Teleport (<white>/rtp</white>) is currently under development and will be available soon!</gray>"));
         return true;
     }
 }

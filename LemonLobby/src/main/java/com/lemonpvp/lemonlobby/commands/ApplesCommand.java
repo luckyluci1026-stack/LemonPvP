@@ -26,7 +26,7 @@ public class ApplesCommand implements CommandExecutor {
         String     formatted = data != null ? FormatUtil.formatAmount(data.getApples()) : "…";
         player.sendMessage(MM.deserialize(
                 "<!italic><gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray>"
-                + " <gray>Deine Äpfel: <green>✿ <white>" + formatted));
+                + " <gray>Your apples: <green>✿ <white>" + formatted));
         return true;
     }
 }

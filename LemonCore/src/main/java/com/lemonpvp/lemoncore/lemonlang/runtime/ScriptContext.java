@@ -112,7 +112,7 @@ public class ScriptContext {
         switch (key) {
             case "player":
             case "name":
-                return player != null ? player.getName() : "Spieler";
+                return player != null ? player.getName() : "Player";
             case "world":
                 return (player != null && player.getWorld() != null)
                     ? player.getWorld().getName() : "world";

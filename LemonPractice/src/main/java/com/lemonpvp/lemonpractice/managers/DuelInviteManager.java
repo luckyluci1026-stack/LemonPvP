@@ -43,27 +43,27 @@ public class DuelInviteManager {
 
     public void sendInvite(Player sender, Player target, String gamemodeId) {
         if (sender.getUniqueId().equals(target.getUniqueId())) {
-            sender.sendMessage(MM.deserialize("<red>Du kannst dich nicht selbst herausfordern."));
+            sender.sendMessage(MM.deserialize("<red>You can't challenge yourself."));
             return;
         }
 
         Gamemode gm = plugin.getGamemodeManager().getGamemode(gamemodeId);
         if (gm == null) {
-            sender.sendMessage(MM.deserialize("<red>Unbekannter Modus: <yellow>" + gamemodeId));
+            sender.sendMessage(MM.deserialize("<red>Unknown mode: <yellow>" + gamemodeId));
             return;
         }
         if (!gm.isEnabled()) {
-            sender.sendMessage(MM.deserialize("<red>Dieser Modus ist derzeit deaktiviert."));
+            sender.sendMessage(MM.deserialize("<red>This mode is currently disabled."));
             return;
         }
 
         if (plugin.getDuelManager().isInDuel(sender.getUniqueId())) {
-            sender.sendMessage(MM.deserialize("<red>Du bist bereits in einem Duell."));
+            sender.sendMessage(MM.deserialize("<red>You are already in a duel."));
             return;
         }
         if (plugin.getDuelManager().isInDuel(target.getUniqueId())) {
             sender.sendMessage(MM.deserialize("<red><yellow>" + target.getName()
-                    + "</yellow> ist gerade in einem Duell."));
+                    + "</yellow> is currently in a duel."));
             return;
         }
 
@@ -72,24 +72,24 @@ public class DuelInviteManager {
                         System.currentTimeMillis() + INVITE_TIMEOUT_MS));
 
         // Confirmation to the sender
-        sender.sendMessage(MM.deserialize("<green>Du hast <yellow>" + target.getName()
-                + "</yellow> zu einem <gold>" + gm.getName() + "</gold>-Duell herausgefordert."));
+        sender.sendMessage(MM.deserialize("<green>You challenged <yellow>" + target.getName()
+                + "</yellow> to a <gold>" + gm.getName() + "</gold> duel."));
         sender.playSound(sender.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
 
         // Clickable invite to the target
-        Component accept = MM.deserialize("<green><bold>[Annehmen]</bold></green>")
+        Component accept = MM.deserialize("<green><bold>[Accept]</bold></green>")
                 .clickEvent(ClickEvent.runCommand("/duel accept " + sender.getName()))
-                .hoverEvent(HoverEvent.showText(MM.deserialize("<green>Klicke, um anzunehmen")));
-        Component deny = MM.deserialize("<red><bold>[Ablehnen]</bold></red>")
+                .hoverEvent(HoverEvent.showText(MM.deserialize("<green>Click to accept")));
+        Component deny = MM.deserialize("<red><bold>[Decline]</bold></red>")
                 .clickEvent(ClickEvent.runCommand("/duel deny " + sender.getName()))
-                .hoverEvent(HoverEvent.showText(MM.deserialize("<red>Klicke, um abzulehnen")));
+                .hoverEvent(HoverEvent.showText(MM.deserialize("<red>Click to decline")));
 
         target.sendMessage(MM.deserialize("<dark_gray><st>                                </st>"));
-        target.sendMessage(MM.deserialize("<gradient:#fffb00:#00ff00><bold>Duell-Herausforderung</bold></gradient>"));
-        target.sendMessage(MM.deserialize("<yellow>" + sender.getName() + "</yellow> <gray>fordert dich heraus: <gold>"
+        target.sendMessage(MM.deserialize("<gradient:#fffb00:#00ff00><bold>Duel Challenge</bold></gradient>"));
+        target.sendMessage(MM.deserialize("<yellow>" + sender.getName() + "</yellow> <gray>challenges you: <gold>"
                 + gm.getName()));
         target.sendMessage(Component.text("  ").append(accept).append(Component.text("   ")).append(deny));
-        target.sendMessage(MM.deserialize("<dark_gray>Läuft in 60 Sekunden ab."));
+        target.sendMessage(MM.deserialize("<dark_gray>Expires in 60 seconds."));
         target.sendMessage(MM.deserialize("<dark_gray><st>                                </st>"));
         target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.3f);
     }
@@ -101,14 +101,14 @@ public class DuelInviteManager {
     public void acceptInvite(Player target, String senderName) {
         Player sender = Bukkit.getPlayerExact(senderName);
         if (sender == null) {
-            target.sendMessage(MM.deserialize("<red><yellow>" + senderName + "</yellow> ist nicht mehr online."));
+            target.sendMessage(MM.deserialize("<red><yellow>" + senderName + "</yellow> is no longer online."));
             return;
         }
 
         Map<UUID, Invite> forTarget = invites.get(target.getUniqueId());
         Invite invite = (forTarget != null) ? forTarget.get(sender.getUniqueId()) : null;
         if (invite == null || invite.isExpired()) {
-            target.sendMessage(MM.deserialize("<red>Du hast keine offene Herausforderung von <yellow>"
+            target.sendMessage(MM.deserialize("<red>You have no pending challenge from <yellow>"
                     + sender.getName() + "</yellow>."));
             if (forTarget != null) forTarget.remove(sender.getUniqueId());
             return;
@@ -117,14 +117,14 @@ public class DuelInviteManager {
         // Re-validate both players are free
         if (plugin.getDuelManager().isInDuel(target.getUniqueId())
                 || plugin.getDuelManager().isInDuel(sender.getUniqueId())) {
-            target.sendMessage(MM.deserialize("<red>Einer von euch ist bereits in einem Duell."));
+            target.sendMessage(MM.deserialize("<red>One of you is already in a duel."));
             forTarget.remove(sender.getUniqueId());
             return;
         }
 
         Gamemode gm = plugin.getGamemodeManager().getGamemode(invite.gamemode);
         if (gm == null || !gm.isEnabled()) {
-            target.sendMessage(MM.deserialize("<red>Dieser Modus ist nicht mehr verfügbar."));
+            target.sendMessage(MM.deserialize("<red>This mode is no longer available."));
             forTarget.remove(sender.getUniqueId());
             return;
         }
@@ -135,7 +135,7 @@ public class DuelInviteManager {
         UUID targetUuid = target.getUniqueId();
         String duelsServer = plugin.getServersConfig().getString("servers.duels.name", "duels");
 
-        Component starting = MM.deserialize("<green>Duell wird gestartet... <gray>Du wirst zum Duell-Server geschickt.");
+        Component starting = MM.deserialize("<green>Starting duel... <gray>You are being sent to the duel server.");
         sender.sendMessage(starting);
         target.sendMessage(starting);
         sender.playSound(sender.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.2f);
@@ -163,16 +163,16 @@ public class DuelInviteManager {
         UUID senderUuid = (sender != null) ? sender.getUniqueId() : findSenderByName(forTarget, senderName);
 
         if (forTarget == null || senderUuid == null || forTarget.remove(senderUuid) == null) {
-            target.sendMessage(MM.deserialize("<red>Du hast keine offene Herausforderung von <yellow>"
+            target.sendMessage(MM.deserialize("<red>You have no pending challenge from <yellow>"
                     + senderName + "</yellow>."));
             return;
         }
 
-        target.sendMessage(MM.deserialize("<gray>Du hast die Herausforderung von <yellow>"
-                + senderName + "</yellow> abgelehnt."));
+        target.sendMessage(MM.deserialize("<gray>You declined the challenge from <yellow>"
+                + senderName + "</yellow>."));
         if (sender != null) {
             sender.sendMessage(MM.deserialize("<red><yellow>" + target.getName()
-                    + "</yellow> hat deine Duell-Herausforderung abgelehnt."));
+                    + "</yellow> declined your duel challenge."));
         }
     }
 

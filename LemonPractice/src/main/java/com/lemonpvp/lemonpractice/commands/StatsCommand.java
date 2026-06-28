@@ -25,7 +25,7 @@ public class StatsCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player viewer)) {
-            sender.sendMessage("Nur Spieler können diesen Befehl nutzen.");
+            sender.sendMessage("Only players can use this command.");
             return true;
         }
 
@@ -36,8 +36,8 @@ public class StatsCommand implements CommandExecutor, TabCompleter {
 
         Player target = Bukkit.getPlayerExact(args[0]);
         if (target == null) {
-            viewer.sendMessage(MM.deserialize("<red>Spieler <yellow>" + args[0]
-                    + "</yellow> ist nicht online."));
+            viewer.sendMessage(MM.deserialize("<red>Player <yellow>" + args[0]
+                    + "</yellow> is not online."));
             return true;
         }
 

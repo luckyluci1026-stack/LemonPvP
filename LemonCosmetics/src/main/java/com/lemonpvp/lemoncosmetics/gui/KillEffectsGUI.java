@@ -40,7 +40,7 @@ public class KillEffectsGUI implements Listener {
 
     public void open() {
         inventory = Bukkit.createInventory(null, 27,
-                MM.deserialize("<!italic><gradient:#ff7043:#bf360c>Kill-Effekte</gradient>"));
+                MM.deserialize("<!italic><gradient:#ff7043:#bf360c>Kill Effects</gradient>"));
 
         ItemStack filler = filler();
         for (int i = 0; i < 27; i++) inventory.setItem(i, filler);
@@ -95,8 +95,8 @@ public class KillEffectsGUI implements Listener {
 
         if (!owned) {
             clicker.playSound(clicker.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
-            clicker.sendMessage(MM.deserialize("<red>Du besitzt <yellow>" + effect.getDisplayName()
-                    + "</yellow> nicht. Schalte es mit einem Code frei!"));
+            clicker.sendMessage(MM.deserialize("<red>You don't own <yellow>" + effect.getDisplayName()
+                    + "</yellow>. Unlock it with a code!"));
             return;
         }
 
@@ -108,7 +108,7 @@ public class KillEffectsGUI implements Listener {
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
                         p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.4f, 0.9f);
-                        p.sendMessage(MM.deserialize("<yellow>Kill-Effekt deaktiviert."));
+                        p.sendMessage(MM.deserialize("<yellow>Kill effect deactivated."));
                         renderEffects();
                     }));
         } else {
@@ -117,7 +117,7 @@ public class KillEffectsGUI implements Listener {
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
                         p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.2f);
-                        p.sendMessage(MM.deserialize("<green>Ausgerüstet: <yellow>" + effect.getDisplayName() + "</yellow>!"));
+                        p.sendMessage(MM.deserialize("<green>Equipped: <yellow>" + effect.getDisplayName() + "</yellow>!"));
                         renderEffects();
                     }));
         }
@@ -152,17 +152,17 @@ public class KillEffectsGUI implements Listener {
         lore.add(Component.empty());
         if (owned) {
             if (active) {
-                lore.add(MM.deserialize("<!italic><aqua>✔ Aktiv"));
-                lore.add(MM.deserialize("<!italic><gray>Klicken zum Deaktivieren"));
+                lore.add(MM.deserialize("<!italic><aqua>✔ Active"));
+                lore.add(MM.deserialize("<!italic><gray>Click to deactivate"));
                 meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
                 meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
             } else {
-                lore.add(MM.deserialize("<!italic><green>✔ Besessen"));
-                lore.add(MM.deserialize("<!italic><gray>Klicken zum Ausrüsten"));
+                lore.add(MM.deserialize("<!italic><green>✔ Owned"));
+                lore.add(MM.deserialize("<!italic><gray>Click to equip"));
             }
         } else {
-            lore.add(MM.deserialize("<!italic><dark_gray>Nicht besessen"));
-            lore.add(MM.deserialize("<!italic><gray>Mit einem Code freischalten"));
+            lore.add(MM.deserialize("<!italic><dark_gray>Not owned"));
+            lore.add(MM.deserialize("<!italic><gray>Unlock with a code"));
         }
         meta.lore(lore);
         item.setItemMeta(meta);
@@ -172,7 +172,7 @@ public class KillEffectsGUI implements Listener {
     private ItemStack backButton() {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>← Zurück")); item.setItemMeta(meta); }
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>← Back")); item.setItemMeta(meta); }
         return item;
     }
 

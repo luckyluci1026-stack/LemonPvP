@@ -38,7 +38,7 @@ public final class LemonLangCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission(PERM)) {
-            sender.sendMessage(parse(PREFIX + "<red>Keine Berechtigung."));
+            sender.sendMessage(parse(PREFIX + "<red>No permission."));
             return true;
         }
 
@@ -62,20 +62,20 @@ public final class LemonLangCommand implements CommandExecutor, TabCompleter {
 
     private boolean cmdList(CommandSender sender) {
         LemonLangManager mgr = plugin.getLemonLangManager();
-        if (mgr == null) { sender.sendMessage(parse(PREFIX + "<red>LemonLang nicht initialisiert.")); return true; }
+        if (mgr == null) { sender.sendMessage(parse(PREFIX + "<red>LemonLang not initialized.")); return true; }
 
         Map<String, LemonLangScript> scripts = mgr.getScripts();
         if (scripts.isEmpty()) {
-            sender.sendMessage(parse(PREFIX + "Keine Skripte geladen."));
+            sender.sendMessage(parse(PREFIX + "No scripts loaded."));
             return true;
         }
 
-        sender.sendMessage(parse(PREFIX + "<yellow>Geladene Skripte <dark_gray>(" + scripts.size() + "):"));
+        sender.sendMessage(parse(PREFIX + "<yellow>Loaded scripts <dark_gray>(" + scripts.size() + "):"));
         for (LemonLangScript script : scripts.values()) {
             long sizeKb = script.file().length() / 1024;
             String status = script.hasErrors()
-                    ? "<red>[Fehler]"
-                    : (script.loaded() ? "<green>[OK]" : "<yellow>[ausstehend]");
+                    ? "<red>[Error]"
+                    : (script.loaded() ? "<green>[OK]" : "<yellow>[pending]");
             sender.sendMessage(parse("  <white>" + script.name() + ".lemon"
                     + " <dark_gray>(" + sizeKb + " KB) "
                     + status
@@ -89,39 +89,39 @@ public final class LemonLangCommand implements CommandExecutor, TabCompleter {
 
     private boolean cmdReload(CommandSender sender, String[] args) {
         LemonLangManager mgr = plugin.getLemonLangManager();
-        if (mgr == null) { sender.sendMessage(parse(PREFIX + "<red>LemonLang nicht initialisiert.")); return true; }
+        if (mgr == null) { sender.sendMessage(parse(PREFIX + "<red>LemonLang not initialized.")); return true; }
 
         if (args.length >= 2) {
             String scriptName = args[1];
-            sender.sendMessage(parse(PREFIX + "Lade Skript <yellow>" + scriptName + "</yellow> neu..."));
+            sender.sendMessage(parse(PREFIX + "Reloading script <yellow>" + scriptName + "</yellow>..."));
             mgr.reloadScript(scriptName);
             boolean hasErr = mgr.getLastError(scriptName).isPresent();
             if (hasErr) {
-                sender.sendMessage(parse(PREFIX + "<red>Fehler beim Laden. Nutze <yellow>/lemonlang error " + scriptName + "</yellow> fuer Details."));
+                sender.sendMessage(parse(PREFIX + "<red>Error while loading. Use <yellow>/lemonlang error " + scriptName + "</yellow> for details."));
             } else {
-                sender.sendMessage(parse(PREFIX + "<green>Skript <yellow>" + scriptName + "</yellow> erfolgreich neu geladen."));
+                sender.sendMessage(parse(PREFIX + "<green>Script <yellow>" + scriptName + "</yellow> reloaded successfully."));
             }
         } else {
-            sender.sendMessage(parse(PREFIX + "Alle Skripte werden neu geladen..."));
+            sender.sendMessage(parse(PREFIX + "Reloading all scripts..."));
             mgr.reload();
-            sender.sendMessage(parse(PREFIX + "<green>Alle Skripte neu geladen. "
-                    + mgr.getPrograms().size() + " Skript(e) aktiv."));
+            sender.sendMessage(parse(PREFIX + "<green>All scripts reloaded. "
+                    + mgr.getPrograms().size() + " script(s) active."));
         }
         return true;
     }
 
     private boolean cmdError(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(parse(PREFIX + "<red>Verwendung: /lemonlang error <name>"));
+            sender.sendMessage(parse(PREFIX + "<red>Usage: /lemonlang error <name>"));
             return true;
         }
         LemonLangManager mgr = plugin.getLemonLangManager();
-        if (mgr == null) { sender.sendMessage(parse(PREFIX + "<red>LemonLang nicht initialisiert.")); return true; }
+        if (mgr == null) { sender.sendMessage(parse(PREFIX + "<red>LemonLang not initialized.")); return true; }
 
         String name = args[1];
         Optional<LemonLangError> errOpt = mgr.getLastError(name);
         if (errOpt.isEmpty()) {
-            sender.sendMessage(parse(PREFIX + "<green>Kein Fehler fuer Skript <yellow>" + name + "</yellow>."));
+            sender.sendMessage(parse(PREFIX + "<green>No error for script <yellow>" + name + "</yellow>."));
         } else {
             LemonLangError err = errOpt.get();
             sender.sendMessage(err.formatForChat());
@@ -131,22 +131,22 @@ public final class LemonLangCommand implements CommandExecutor, TabCompleter {
 
     private boolean cmdInfo(CommandSender sender) {
         LemonLangManager mgr = plugin.getLemonLangManager();
-        if (mgr == null) { sender.sendMessage(parse(PREFIX + "<red>LemonLang nicht initialisiert.")); return true; }
+        if (mgr == null) { sender.sendMessage(parse(PREFIX + "<red>LemonLang not initialized.")); return true; }
 
         sender.sendMessage(parse(PREFIX + "<yellow>LemonLang v3 Info:"));
-        sender.sendMessage(parse("  <white>Skripte: <aqua>" + mgr.getScripts().size()));
+        sender.sendMessage(parse("  <white>Scripts: <aqua>" + mgr.getScripts().size()));
         sender.sendMessage(parse("  <white>Items: <aqua>" + mgr.getItemRegistry().size()));
         sender.sendMessage(parse("  <white>GUIs: <aqua>" + mgr.getGuiRegistry().size()));
 
         long totalErrors = mgr.getScripts().values().stream()
                 .filter(LemonLangScript::hasErrors).count();
-        sender.sendMessage(parse("  <white>Skripte mit Fehlern: <" +
+        sender.sendMessage(parse("  <white>Scripts with errors: <" +
                 (totalErrors > 0 ? "red" : "green") + ">" + totalErrors));
         return true;
     }
 
     private void sendHelp(CommandSender sender, String label) {
-        sender.sendMessage(parse(PREFIX + "<yellow>LemonLang Befehle:"));
+        sender.sendMessage(parse(PREFIX + "<yellow>LemonLang Commands:"));
         sender.sendMessage(parse("  <white>/" + label + " list"));
         sender.sendMessage(parse("  <white>/" + label + " reload [name]"));
         sender.sendMessage(parse("  <white>/" + label + " error <name>"));
