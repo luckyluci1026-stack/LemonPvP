@@ -25,7 +25,11 @@ public class LobbyHotbarManager {
 
     public void setupHotbar(Player player) {
         player.getInventory().clear();
-        placeItem(player, "queue",      "queue",      Material.IRON_SWORD);
+        // Queue sword removed from this (duel/practice) server — queueing is done
+        // from the main lobby. Re-enable by setting hotbar.queue.enabled: true.
+        if (plugin.getConfig().getBoolean("hotbar.queue.enabled", false)) {
+            placeItem(player, "queue", "queue", Material.IRON_SWORD);
+        }
         placeItem(player, "kit-editor", "kit_editor", Material.BOOK);
         placeItem(player, "cosmetics",  "cosmetics",  Material.DIAMOND);
         placeItem(player, "settings",   "settings",   Material.COMPASS);
