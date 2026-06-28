@@ -48,7 +48,8 @@ public final class Messages {
         return new Messages(Lang.from(language), ov);
     }
 
-    private boolean en() { return lang == Lang.EN; }
+    // English-only: the network displays English regardless of the configured language.
+    private boolean en() { return true; }
 
     /** Returns a non-blank override template for {@code key}, or {@code null}. */
     private String override(String key) {

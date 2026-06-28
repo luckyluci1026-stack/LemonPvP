@@ -31,7 +31,7 @@ import java.nio.file.Path;
         id = "lemonqueue",
         name = "LemonQueue",
         version = "1.0.0",
-        description = "Warteschlange + Limbo-Routing mit Farbverläufen für LemonPvP",
+        description = "Queue + Limbo routing with gradients for LemonPvP",
         authors = {"LemonPvP"}
 )
 public class LemonQueue {
