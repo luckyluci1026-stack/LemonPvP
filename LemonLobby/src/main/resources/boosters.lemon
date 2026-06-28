@@ -12,31 +12,31 @@
 # ============================================================
 
 booster L1
-  name    "Stufe I"
+  name    "Tier I"
   preis   2_000
   bonus   3
   dauer   180
 
 booster L2
-  name    "Stufe II"
+  name    "Tier II"
   preis   8_000
   bonus   10
   dauer   300
 
 booster L3
-  name    "Stufe III"
+  name    "Tier III"
   preis   15_000
   bonus   20
   dauer   450
 
 booster L4
-  name    "Stufe IV"
+  name    "Tier IV"
   preis   25_000
   bonus   35
   dauer   600
 
 booster L5
-  name    "Stufe V"
+  name    "Tier V"
   preis   50_000
   bonus   50
   dauer   900
