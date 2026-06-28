@@ -25,6 +25,17 @@ public class PlayerJoinQuitListener implements Listener {
         var player = event.getPlayer();
         java.util.UUID uuid = player.getUniqueId();
 
+        // Maintenance: block non-whitelisted, non-admin players. Kicking routes
+        // through KickListener so the proxy fully disconnects them (with the
+        // configured offline reason) instead of parking them in limbo.
+        if (plugin.getMaintenanceManager().isEnabled()
+                && !plugin.getMaintenanceManager().isWhitelisted(uuid)
+                && !player.hasPermission("lemoncore.admin.maintenance")) {
+            player.kick(com.lemonpvp.lemoncore.util.TextUtil.parse(
+                    plugin.getMaintenanceManager().resolveReasonMessage()));
+            return;
+        }
+
         // Load player data async, then check ban
         plugin.getPlayerDataManager().loadPlayer(uuid, player.getName())
                 .thenAccept(data -> {

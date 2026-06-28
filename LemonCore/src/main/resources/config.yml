@@ -13,6 +13,22 @@ database:
 discord:
   invite: https://discord.gg/eZWP9EGW7
 
+# Shown by /store
+store:
+  url: https://store.lemonpvp.de
+
+# Maintenance / "server offline" (/goffline <reason>)
+maintenance:
+  # Reason key used when /goffline is run without one.
+  default-reason: general
+  # Selectable reasons: /goffline <key>. {discord} is replaced with discord.invite.
+  # \n = new line. MiniMessage formatting is supported.
+  reasons:
+    general: "<red>The server is currently under maintenance.</red>\n<gray>Follow our Discord for updates:</gray>\n<aqua>{discord}</aqua>"
+    update: "<red>The server is updating to a new version.</red>\n<gray>We'll be back shortly - check Discord:</gray>\n<aqua>{discord}</aqua>"
+    bugfix: "<red>The server is down for urgent bug fixes.</red>\n<gray>Thanks for your patience! Discord:</gray>\n<aqua>{discord}</aqua>"
+    event: "<gold>We're preparing a special event!</gold>\n<gray>Join our Discord to be notified:</gray>\n<aqua>{discord}</aqua>"
+
 discord_webhooks:
   bans:    ""
   mutes:   ""

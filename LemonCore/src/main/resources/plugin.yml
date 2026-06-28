@@ -318,3 +318,14 @@ commands:
     aliases: [ll, lang]
     permission: lemoncore.admin.lemonlang
     usage: /lemonlang list|reload [name]|error <name>|info
+  discord:
+    description: Show the Discord invite link
+    usage: /discord
+  store:
+    description: Show the server store link
+    usage: /store
+  goffline:
+    description: Take the server offline (maintenance) with a configurable reason
+    permission: lemoncore.admin.maintenance
+    usage: /goffline <reason|off|add <player>|remove <player>|list>
+    aliases: [maintenance]

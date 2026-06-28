@@ -15,10 +15,48 @@ public class MaintenanceManager {
 
     private final LemonCore plugin;
     private volatile boolean maintenanceEnabled;
+    /** Currently selected reason key; null → the configured default-reason. */
+    private volatile String reasonKey;
     private final Set<UUID> whitelist = ConcurrentHashMap.newKeySet();
 
     public MaintenanceManager(LemonCore plugin) {
         this.plugin = plugin;
+    }
+
+    // ── Reasons (config-driven) ────────────────────────────────────────────────
+
+    public void setReasonKey(String key) { this.reasonKey = key; }
+
+    public String getReasonKey() {
+        return reasonKey != null ? reasonKey
+                : plugin.getConfig().getString("maintenance.default-reason", "general");
+    }
+
+    /** Available reason keys defined in config under maintenance.reasons. */
+    public java.util.List<String> reasonKeys() {
+        var sec = plugin.getConfig().getConfigurationSection("maintenance.reasons");
+        return sec == null ? java.util.List.of() : new java.util.ArrayList<>(sec.getKeys(false));
+    }
+
+    /** True if the given key exists in config. */
+    public boolean hasReason(String key) {
+        return plugin.getConfig().getString("maintenance.reasons." + key) != null;
+    }
+
+    /**
+     * Resolves the current reason to a raw MiniMessage string with {discord}
+     * substituted. Callers parse it (e.g. TextUtil.parse) into the kick screen.
+     */
+    public String resolveReasonMessage() {
+        String key = getReasonKey();
+        String msg = plugin.getConfig().getString("maintenance.reasons." + key);
+        if (msg == null) {
+            String def = plugin.getConfig().getString("maintenance.default-reason", "general");
+            msg = plugin.getConfig().getString("maintenance.reasons." + def);
+        }
+        if (msg == null) msg = "<red>The server is currently under maintenance.</red>";
+        String discord = plugin.getConfig().getString("discord.invite", "https://discord.gg/lemonpvp");
+        return msg.replace("{discord}", discord).replace("\\n", "\n");
     }
 
     public void load() {

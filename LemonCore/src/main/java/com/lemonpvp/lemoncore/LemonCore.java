@@ -237,6 +237,9 @@ public class LemonCore extends JavaPlugin {
         getCommand("gcheck").setExecutor(new GCheckCommand(this));
         getCommand("linked").setExecutor(new LinkedCommand(this));
         getCommand("aowm").setExecutor(new AOWMCommand(this));
+        var gofflineCmd = new com.lemonpvp.lemoncore.commands.admin.GOfflineCommand(this);
+        getCommand("goffline").setExecutor(gofflineCmd);
+        getCommand("goffline").setTabCompleter(gofflineCmd);
 
         // User commands
         getCommand("rank").setExecutor(luckPerms != null ? new RankCommand(this, luckPerms) : (s, c, l, a) -> { s.sendMessage("LuckPerms not available."); return true; });
@@ -252,6 +255,10 @@ public class LemonCore extends JavaPlugin {
         getCommand("fly").setExecutor(new FlyCommand(this));
         getCommand("link").setExecutor(new LinkCommand(this));
         getCommand("unlink").setExecutor(new UnlinkCommand(this));
+        getCommand("discord").setExecutor(new com.lemonpvp.lemoncore.commands.user.InfoLinkCommand(
+                this, "discord.invite", "https://discord.gg/lemonpvp", "Discord", "#5865F2"));
+        getCommand("store").setExecutor(new com.lemonpvp.lemoncore.commands.user.InfoLinkCommand(
+                this, "store.url", "https://store.lemonpvp.de", "Store", "#00d26a"));
         getCommand("report").setExecutor(new ReportCommand(this));
         getCommand("bugreport").setExecutor(new BugReportCommand(this));
         getCommand("mreport").setExecutor(new MReportCommand(this));
