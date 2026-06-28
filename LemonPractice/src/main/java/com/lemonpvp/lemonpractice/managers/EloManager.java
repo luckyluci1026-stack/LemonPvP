@@ -92,7 +92,16 @@ public class EloManager {
      * Computes new ELO for both players, increments matches_played,
      * updates cache and DB. Returns int[]{winnerChange, loserChange}.
      */
+    /** Whether ranked/ELO is active. When false the server is fully casual. */
+    public boolean rankedEnabled() {
+        return plugin.getConfig().getBoolean("ranked.enabled", false);
+    }
+
     public CompletableFuture<int[]> applyDuelResult(UUID winner, UUID loser, String gamemode) {
+        // Ranked disabled → casual duel: no ELO change, no DB write, no rank badge.
+        if (!rankedEnabled()) {
+            return CompletableFuture.completedFuture(new int[]{0, 0});
+        }
         String gm = gamemode.toLowerCase();
 
         EloData wCached = getCached(winner, gm);
@@ -198,6 +207,18 @@ public class EloManager {
      * The actual Bukkit API call is dispatched onto the main thread.
      */
     private void pushRankToLemonCore(UUID uuid) {
+        // Ranked disabled → never show a rank badge in the tablist.
+        if (!rankedEnabled()) {
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                org.bukkit.plugin.Plugin lc =
+                        plugin.getServer().getPluginManager().getPlugin("LemonCore");
+                if (!(lc instanceof com.lemonpvp.lemoncore.LemonCore lemonCore)) return;
+                com.lemonpvp.lemoncore.managers.PlayerData pd =
+                        lemonCore.getPlayerDataManager().getCached(uuid);
+                if (pd != null) pd.setRankDisplay(null);
+            });
+            return;
+        }
         Map<String, EloData> allData = cache.get(uuid);
         if (allData == null || allData.isEmpty()) return;
 

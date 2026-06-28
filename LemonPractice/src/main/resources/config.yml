@@ -22,6 +22,11 @@ worlds:
 ffa:
   arenas-built: false
 
+# Ranked / ELO. Disabled = fully casual: duels never change ELO, no rank tiers
+# or rank badges are shown. Set to true to enable competitive ranked play.
+ranked:
+  enabled: false
+
 # Zone Practice — battle-royale style practice in real, random vanilla terrain
 # with a shrinking damage zone (DrDonut style).
 zone:
