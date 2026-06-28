@@ -327,7 +327,7 @@ public class QuestManager {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
                 player.showTitle(net.kyori.adventure.title.Title.title(
-                        MM.deserialize("<gradient:#fffb00:#00ff00><bold>Quest abgeschlossen!</bold></gradient>"),
+                        MM.deserialize("<gradient:#fffb00:#00ff00><bold>Quest complete!</bold></gradient>"),
                         MM.deserialize("<yellow>" + def.getDisplayName()),
                         net.kyori.adventure.title.Title.Times.times(
                                 java.time.Duration.ofMillis(300),
@@ -335,10 +335,10 @@ public class QuestManager {
                                 java.time.Duration.ofMillis(600))));
                 player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.0f);
                 player.sendMessage(MM.deserialize(
-                        "<green>Quest <yellow>" + def.getDisplayName() + "</yellow> abgeschlossen! "
+                        "<green>Quest <yellow>" + def.getDisplayName() + "</yellow> complete! "
                                 + "<yellow>+" + xp + " XP</yellow></green>"));
                 if (grantCoins) {
-                    player.sendMessage(MM.deserialize("<gold>+" + coins + " Münzen ⭐</gold>"));
+                    player.sendMessage(MM.deserialize("<gold>+" + coins + " Coins ⭐</gold>"));
                 }
             }
         }));
@@ -386,7 +386,7 @@ public class QuestManager {
                         Player player = Bukkit.getPlayer(uuid);
                         if (player != null) {
                             player.showTitle(net.kyori.adventure.title.Title.title(
-                                    MM.deserialize("<gradient:#fffb00:#00ff00><bold>Quest abgeschlossen!</bold></gradient>"),
+                                    MM.deserialize("<gradient:#fffb00:#00ff00><bold>Quest complete!</bold></gradient>"),
                                     MM.deserialize("<yellow>" + fd.getDisplayName()),
                                     net.kyori.adventure.title.Title.Times.times(
                                             java.time.Duration.ofMillis(300),
@@ -394,10 +394,10 @@ public class QuestManager {
                                             java.time.Duration.ofMillis(600))));
                             player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.0f);
                             player.sendMessage(MM.deserialize(
-                                    "<green>Quest <yellow>" + fd.getDisplayName() + "</yellow> abgeschlossen! "
+                                    "<green>Quest <yellow>" + fd.getDisplayName() + "</yellow> complete! "
                                             + "<yellow>+" + fx + " XP</yellow></green>"));
                             if (fgrantCoins) {
-                                player.sendMessage(MM.deserialize("<gold>+" + fcoins + " Münzen ⭐</gold>"));
+                                player.sendMessage(MM.deserialize("<gold>+" + fcoins + " Coins ⭐</gold>"));
                             }
                         }
                     });

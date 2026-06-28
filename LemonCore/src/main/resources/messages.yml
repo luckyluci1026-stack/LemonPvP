@@ -24,12 +24,12 @@ coins:
   receive: "{prefix} <green>You received <#fffb00>{amount} <green>coins!"
 
 ban:
-  temp: "<red>Dein Account wurde für <white>{reason} <red>gesperrt."
-  permanent: "<red>Dein Account wurde dauerhaft gesperrt."
-  permanent-label: "Dauerhaft"
-  ban-id: "<gray>Bann-ID: <white>{id}"
-  duration: "<gray>Dauer: <white>{duration}"
-  appeal: "<gray>Einspruch auf unserem Discord: <aqua>{discord}"
+  temp: "<red>Your account has been banned for <white>{reason}<red>."
+  permanent: "<red>Your account has been permanently banned."
+  permanent-label: "Permanent"
+  ban-id: "<gray>Ban ID: <white>{id}"
+  duration: "<gray>Duration: <white>{duration}"
+  appeal: "<gray>Appeal on our Discord: <aqua>{discord}"
   success: "{prefix} <green>Banned <white>{player} <green>for <white>{reason}"
   lemonizer: "<bold><gradient:#fffb00:#00ff00>Lemonizer</gradient></bold> <red>{player}</red> <green>has been banned for</green> <red>{reason}</red>"
   unban-success: "{prefix} <green>Unbanned <white>{player}"
@@ -112,7 +112,7 @@ history:
 teleport:
   success: "{prefix} <green>Teleported to <white>{player}"
   spawn: "{prefix} <green>Teleported to spawn."
-  lobby-set: "{prefix} <green>Spawn gesetzt."
+  lobby-set: "{prefix} <green>Spawn set."
 
 spectator:
   enabled: "{prefix} <green>Spectator mode enabled."
