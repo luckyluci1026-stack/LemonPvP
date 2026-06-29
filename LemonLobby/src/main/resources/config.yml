@@ -17,6 +17,15 @@ double-jump:
   forward-power: 1.0
   up-power: 0.9
 
+# Golden Hour: a server-wide event that multiplies apple-tree rewards for a
+# while, with a title + bossbar countdown. Fires automatically on the interval,
+# or manually via /llobby goldenhour [minutes] [multiplier].
+golden-hour:
+  enabled: true
+  interval-minutes: 60     # how often it auto-starts
+  duration-seconds: 300    # how long each Golden Hour lasts
+  multiplier: 2.0          # apple multiplier during the event
+
 apple-tree:
   # World name where the apple tree is located
   world: world

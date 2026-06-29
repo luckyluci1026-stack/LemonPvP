@@ -27,6 +27,7 @@ public final class LemonLobby extends JavaPlugin {
     private TrainingGUI trainingGUI;
     private RestartManager restartManager;
     private BoosterManager boosterManager;
+    private com.lemonpvp.lemonlobby.managers.GoldenHourManager goldenHourManager;
     private TreeUpgradeManager treeUpgradeManager;
     private AppleTreeListener appleTreeListener;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
@@ -56,6 +57,7 @@ public final class LemonLobby extends JavaPlugin {
         trainingGUI        = new TrainingGUI(this, lobbyMessaging);
         restartManager     = new RestartManager(this);
         boosterManager     = new BoosterManager(this);
+        goldenHourManager  = new com.lemonpvp.lemonlobby.managers.GoldenHourManager(this);
         treeUpgradeManager = new TreeUpgradeManager(this);
         appleTreeListener  = new AppleTreeListener(this);
 
@@ -89,9 +91,21 @@ public final class LemonLobby extends JavaPlugin {
             llobbyCmd.setTabCompleter(llobbyAdmin);
         }
 
-        // Booster bossbar tick (every second)
-        getServer().getScheduler().runTaskTimer(this,
-                () -> boosterManager.tickBossBars(), 20L, 20L);
+        // Booster + Golden Hour bossbar tick (every second)
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            boosterManager.tickBossBars();
+            goldenHourManager.tick();
+        }, 20L, 20L);
+
+        // Auto Golden Hour scheduler
+        if (getConfig().getBoolean("golden-hour.enabled", true)) {
+            long intervalTicks = Math.max(1, getConfig().getLong("golden-hour.interval-minutes", 60)) * 60L * 20L;
+            getServer().getScheduler().runTaskTimer(this, () -> {
+                int duration = getConfig().getInt("golden-hour.duration-seconds", 300);
+                double mult = getConfig().getDouble("golden-hour.multiplier", 2.0);
+                goldenHourManager.start(mult, duration);
+            }, intervalTicks, intervalTicks);
+        }
 
         // Start daily restart scheduler
         restartManager.start();
@@ -102,6 +116,7 @@ public final class LemonLobby extends JavaPlugin {
     @Override
     public void onDisable() {
         if (restartManager != null) restartManager.stop();
+        if (goldenHourManager != null) goldenHourManager.stopAndCleanup();
         if (database != null) database.close();
         getServer().getMessenger().unregisterOutgoingPluginChannel(this, "BungeeCord");
         getLogger().info("LemonLobby disabled.");
@@ -115,6 +130,7 @@ public final class LemonLobby extends JavaPlugin {
     public LobbyMessaging getLobbyMessaging()         { return lobbyMessaging; }
     public TrainingGUI getTrainingGUI()               { return trainingGUI; }
     public BoosterManager getBoosterManager()         { return boosterManager; }
+    public com.lemonpvp.lemonlobby.managers.GoldenHourManager getGoldenHourManager() { return goldenHourManager; }
     public TreeUpgradeManager getTreeUpgradeManager() { return treeUpgradeManager; }
     public AppleTreeListener getAppleTreeListener()   { return appleTreeListener; }
     public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }

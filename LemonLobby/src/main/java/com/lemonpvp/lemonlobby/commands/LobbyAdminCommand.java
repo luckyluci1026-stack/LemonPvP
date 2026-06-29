@@ -35,10 +35,11 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0) { sendUsage(sender); return true; }
 
         switch (args[0].toLowerCase()) {
-            case "reload"  -> handleReload(sender);
-            case "upgrade" -> handleUpgrade(sender, args);
-            case "booster" -> handleBooster(sender, args);
-            default        -> sendUsage(sender);
+            case "reload"     -> handleReload(sender);
+            case "upgrade"    -> handleUpgrade(sender, args);
+            case "booster"    -> handleBooster(sender, args);
+            case "goldenhour" -> handleGoldenHour(sender, args);
+            default           -> sendUsage(sender);
         }
         return true;
     }
@@ -93,16 +94,29 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
                 + " <gold>has been activated for you!"));
     }
 
+    private void handleGoldenHour(CommandSender sender, String[] args) {
+        int minutes = 5;
+        double mult = 2.0;
+        if (args.length >= 2) { try { minutes = Integer.parseInt(args[1]); } catch (NumberFormatException ignored) {} }
+        if (args.length >= 3) { try { mult = Double.parseDouble(args[2]); } catch (NumberFormatException ignored) {} }
+        minutes = Math.max(1, minutes);
+        if (mult <= 1.0) mult = 2.0;
+        plugin.getGoldenHourManager().start(mult, minutes * 60);
+        sender.sendMessage(MM.deserialize(PREFIX + "<gold>Golden Hour started: <yellow>" + mult
+                + "x <gold>for <white>" + minutes + " min<gold>."));
+    }
+
     private void sendUsage(CommandSender sender) {
         sender.sendMessage(MM.deserialize(
-                "<!italic><gray>/llobby <white>reload <gray>| <white>upgrade <player> <tier> <gray>| <white>booster <player> <1-5>"));
+                "<!italic><gray>/llobby <white>reload <gray>| <white>upgrade <player> <tier> <gray>| "
+                        + "<white>booster <player> <1-5> <gray>| <white>goldenhour [min] [mult]"));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.hasPermission("lemonlobby.admin")) return List.of();
         return switch (args.length) {
-            case 1 -> filter(List.of("reload", "upgrade", "booster"), args[0]);
+            case 1 -> filter(List.of("reload", "upgrade", "booster", "goldenhour"), args[0]);
             case 2 -> switch (args[0].toLowerCase()) {
                 case "upgrade", "booster" -> Bukkit.getOnlinePlayers().stream()
                         .map(Player::getName).filter(n -> n.toLowerCase().startsWith(args[1].toLowerCase())).toList();

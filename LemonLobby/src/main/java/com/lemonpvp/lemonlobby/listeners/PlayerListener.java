@@ -46,6 +46,7 @@ public class PlayerListener implements Listener {
         player.setFoodLevel(20);
         player.setSaturation(20.0f);
         hotbarManager.giveHotbar(player);
+        plugin.getGoldenHourManager().show(player);
         plugin.getTreeUpgradeManager().load(player.getUniqueId());
         plugin.getBoosterManager().load(player.getUniqueId())
                 .thenRun(() -> Bukkit.getScheduler().runTask(plugin,

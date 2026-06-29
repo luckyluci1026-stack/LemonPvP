@@ -128,6 +128,10 @@ public class AppleTreeListener implements Listener {
         boolean jackpot = Math.random() < JACKPOT_CHANCE;
         int total = (int) Math.round((baseApples + bonus) * mult) + (jackpot ? JACKPOT_BONUS : 0);
 
+        // Golden Hour: server-wide apple multiplier.
+        double goldenHour = plugin.getGoldenHourManager().getMultiplier();
+        if (goldenHour > 1.0) total = (int) Math.round(total * goldenHour);
+
         EconomyBridge.addApples(uuid, total);
 
         org.bukkit.Location center = block.getLocation().add(0.5, 0.5, 0.5);
