@@ -43,6 +43,9 @@ permissions:
   lemonpractice.zone:
     description: Join Zone Practice rounds
     default: true
+  lemonpractice.replay:
+    description: Watch and manage duel replays
+    default: true
 
 commands:
   lpractice:
@@ -89,3 +92,7 @@ commands:
     description: Join or leave a Zone Practice round (shrinking-zone battle royale practice)
     permission: lemonpractice.zone
     usage: /zone <join|leave>
+  replay:
+    description: Watch and manage duel replays
+    permission: lemonpractice.replay
+    usage: /replay <name> [add <days>] | list | info <name> | stop

@@ -22,6 +22,13 @@ worlds:
 ffa:
   arenas-built: false
 
+# Duel replays: compact recordings of duels, each capped at 50 KB and kept for
+# 100 days (extend with /replay <name> add <days>). Lower sample-interval-ticks
+# = smoother but larger; the 50 KB cap auto-reduces the rate if needed.
+replays:
+  enabled: true
+  sample-interval-ticks: 2
+
 # Ranked / ELO. Disabled = fully casual: duels never change ELO, no rank tiers
 # or rank badges are shown. Set to true to enable competitive ranked play.
 ranked:

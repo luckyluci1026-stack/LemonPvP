@@ -114,6 +114,7 @@ public class DuelManager {
                 task.cancel();
                 game.setState(DuelState.FIGHTING);
                 game.setStartTime(System.currentTimeMillis());
+                plugin.getReplayManager().start(game);
 
                 Title fightTitle = Title.title(
                         Component.text("Fight!", NamedTextColor.GREEN),
@@ -305,6 +306,7 @@ public class DuelManager {
      */
     private void abortDuel(DuelGame game, UUID quitterUuid) {
         game.setState(DuelState.ENDING); // makes the countdown task cancel itself
+        plugin.getReplayManager().stop(game);
 
         activeDuels.remove(game.getPlayer1Uuid());
         activeDuels.remove(game.getPlayer2Uuid());
@@ -324,6 +326,7 @@ public class DuelManager {
     }
 
     private void finishDuel(DuelGame game, Player winner, Player loser) {
+        plugin.getReplayManager().stop(game);
         if (winner != null && winner.isOnline()) {
             clearDuelScoreboard(winner);
             winner.showTitle(Title.title(

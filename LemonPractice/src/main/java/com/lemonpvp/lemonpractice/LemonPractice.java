@@ -52,6 +52,7 @@ public class LemonPractice extends JavaPlugin {
     private LobbyHotbarManager lobbyHotbarManager;
     private PartyManager partyManager;
     private ZonePracticeManager zonePracticeManager;
+    private com.lemonpvp.lemonpractice.managers.ReplayManager replayManager;
     private VelocityMessaging velocityMessaging;
     private String serverType;
 
@@ -107,6 +108,7 @@ public class LemonPractice extends JavaPlugin {
         lobbyHotbarManager = new LobbyHotbarManager(this);
         partyManager = new PartyManager(this);
         zonePracticeManager = new ZonePracticeManager(this);
+        replayManager = new com.lemonpvp.lemonpractice.managers.ReplayManager(this);
 
         // 5. Register VelocityMessaging
         velocityMessaging = new VelocityMessaging(this);
@@ -150,6 +152,12 @@ public class LemonPractice extends JavaPlugin {
         ZoneCommand zoneCmd = new ZoneCommand(this);
         getCommand("zone").setExecutor(zoneCmd);
         getCommand("zone").setTabCompleter(zoneCmd);
+        var replayCmd = getCommand("replay");
+        if (replayCmd != null) replayCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.ReplayCommand(this));
+
+        // Replay retention cleanup (every 6 hours; first run after 1 min)
+        getServer().getScheduler().runTaskTimerAsynchronously(this,
+                () -> replayManager.purgeExpired(), 1200L, 6L * 60L * 60L * 20L);
 
         // 8. If LOBBY: set up hotbars for all currently online players (reload case)
         if (serverType.equals("LOBBY")) {
@@ -173,6 +181,9 @@ public class LemonPractice extends JavaPlugin {
         }
         if (zonePracticeManager != null) {
             zonePracticeManager.shutdown();
+        }
+        if (replayManager != null) {
+            replayManager.shutdown();
         }
         if (db != null) {
             db.disconnect();
@@ -222,6 +233,7 @@ public class LemonPractice extends JavaPlugin {
     public LobbyHotbarManager getLobbyHotbarManager() { return lobbyHotbarManager; }
     public PartyManager getPartyManager() { return partyManager; }
     public ZonePracticeManager getZonePracticeManager() { return zonePracticeManager; }
+    public com.lemonpvp.lemonpractice.managers.ReplayManager getReplayManager() { return replayManager; }
     public FileConfiguration getServersConfig() { return serversConfig; }
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");

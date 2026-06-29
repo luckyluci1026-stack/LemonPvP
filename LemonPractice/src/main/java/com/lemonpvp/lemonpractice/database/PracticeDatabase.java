@@ -71,6 +71,96 @@ public class PracticeDatabase {
         });
     }
 
+    // ── Replays ─────────────────────────────────────────────────────────────────
+
+    public record ReplayMeta(String name, String player1, String player2,
+                             String gamemode, long createdAt, long expiresAt) {}
+
+    public CompletableFuture<Void> saveReplay(String name, String p1, String p2, String gamemode,
+                                              long createdAt, long expiresAt, byte[] data) {
+        return executeAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO lp_replays (name,player1,player2,gamemode,created_at,expires_at,data) " +
+                    "VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE expires_at=VALUES(expires_at), data=VALUES(data)")) {
+                ps.setString(1, name); ps.setString(2, p1); ps.setString(3, p2); ps.setString(4, gamemode);
+                ps.setLong(5, createdAt); ps.setLong(6, expiresAt); ps.setBytes(7, data);
+                ps.executeUpdate();
+            } catch (SQLException e) { plugin.getLogger().severe("saveReplay error: " + e.getMessage()); }
+        });
+    }
+
+    public CompletableFuture<byte[]> loadReplayData(String name) {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT data FROM lp_replays WHERE name=? AND expires_at>?")) {
+                ps.setString(1, name); ps.setLong(2, System.currentTimeMillis());
+                try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getBytes("data"); }
+            } catch (SQLException e) { plugin.getLogger().severe("loadReplay error: " + e.getMessage()); }
+            return null;
+        });
+    }
+
+    public CompletableFuture<ReplayMeta> getReplayMeta(String name) {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT name,player1,player2,gamemode,created_at,expires_at FROM lp_replays WHERE name=?")) {
+                ps.setString(1, name);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return new ReplayMeta(rs.getString("name"), rs.getString("player1"),
+                            rs.getString("player2"), rs.getString("gamemode"),
+                            rs.getLong("created_at"), rs.getLong("expires_at"));
+                }
+            } catch (SQLException e) { plugin.getLogger().severe("getReplayMeta error: " + e.getMessage()); }
+            return null;
+        });
+    }
+
+    /** Adds days to a replay's expiry. Returns the new expiry, or -1 if not found. */
+    public CompletableFuture<Long> extendReplay(String name, int days) {
+        return queryAsync(conn -> {
+            try {
+                long add = (long) days * 86_400_000L;
+                try (PreparedStatement up = conn.prepareStatement(
+                        "UPDATE lp_replays SET expires_at=expires_at+? WHERE name=?")) {
+                    up.setLong(1, add); up.setString(2, name);
+                    if (up.executeUpdate() == 0) return -1L;
+                }
+                try (PreparedStatement q = conn.prepareStatement(
+                        "SELECT expires_at FROM lp_replays WHERE name=?")) {
+                    q.setString(1, name);
+                    try (ResultSet rs = q.executeQuery()) { if (rs.next()) return rs.getLong("expires_at"); }
+                }
+            } catch (SQLException e) { plugin.getLogger().severe("extendReplay error: " + e.getMessage()); }
+            return -1L;
+        });
+    }
+
+    public CompletableFuture<Integer> deleteExpiredReplays() {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM lp_replays WHERE expires_at < ?")) {
+                ps.setLong(1, System.currentTimeMillis());
+                return ps.executeUpdate();
+            } catch (SQLException e) { plugin.getLogger().severe("deleteExpiredReplays error: " + e.getMessage()); return 0; }
+        });
+    }
+
+    public CompletableFuture<List<ReplayMeta>> listReplays(int limit) {
+        return queryAsync(conn -> {
+            List<ReplayMeta> list = new ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT name,player1,player2,gamemode,created_at,expires_at FROM lp_replays " +
+                    "WHERE expires_at>? ORDER BY created_at DESC LIMIT ?")) {
+                ps.setLong(1, System.currentTimeMillis()); ps.setInt(2, limit);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) list.add(new ReplayMeta(rs.getString("name"), rs.getString("player1"),
+                            rs.getString("player2"), rs.getString("gamemode"),
+                            rs.getLong("created_at"), rs.getLong("expires_at")));
+                }
+            } catch (SQLException e) { plugin.getLogger().severe("listReplays error: " + e.getMessage()); }
+            return list;
+        });
+    }
+
     private void createTables() throws SQLException {
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("""
@@ -119,6 +209,17 @@ public class PracticeDatabase {
                     elo_change_p2 INT DEFAULT 0,
                     duration_seconds INT DEFAULT 0,
                     played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lp_replays (
+                    name VARCHAR(96) PRIMARY KEY,
+                    player1 VARCHAR(16),
+                    player2 VARCHAR(16),
+                    gamemode VARCHAR(32),
+                    created_at BIGINT NOT NULL,
+                    expires_at BIGINT NOT NULL,
+                    data MEDIUMBLOB NOT NULL
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
             stmt.executeUpdate("""
