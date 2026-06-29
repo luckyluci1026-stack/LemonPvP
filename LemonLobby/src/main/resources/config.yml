@@ -26,6 +26,13 @@ golden-hour:
   duration-seconds: 300    # how long each Golden Hour lasts
   multiplier: 2.0          # apple multiplier during the event
 
+# Daily reward: a 7-day streak. Each day grants apples; day 7 also grants a
+# booster (tier id from boosters.lemon). Missing a day resets the streak.
+daily:
+  timezone: "Europe/Berlin"
+  day7-booster: L1
+  apples: [100, 150, 200, 300, 400, 500, 1000]
+
 apple-tree:
   # World name where the apple tree is located
   world: world

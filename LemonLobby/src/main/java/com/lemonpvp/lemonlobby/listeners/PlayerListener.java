@@ -48,6 +48,22 @@ public class PlayerListener implements Listener {
         hotbarManager.giveHotbar(player);
         plugin.getGoldenHourManager().show(player);
         plugin.getTreeUpgradeManager().load(player.getUniqueId());
+
+        // Daily reward: load state, then notify if claimable.
+        java.util.UUID dailyUuid = player.getUniqueId();
+        plugin.getDailyRewardManager().load(dailyUuid);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Player p = Bukkit.getPlayer(dailyUuid);
+            if (p == null || !p.isOnline()) return;
+            if (plugin.getDailyRewardManager().canClaim(dailyUuid)) {
+                p.sendMessage(MINI_MESSAGE.deserialize(
+                        "<gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray> "
+                        + "<gold>Your daily reward is ready! "
+                        + "<click:run_command:'/daily'><hover:show_text:'<green>Click to open'>"
+                        + "<yellow><underlined>/daily</underlined></hover></click>"));
+                p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.5f);
+            }
+        }, 60L);
         plugin.getBoosterManager().load(player.getUniqueId())
                 .thenRun(() -> Bukkit.getScheduler().runTask(plugin,
                         () -> plugin.getBoosterManager().showBoosterBar(player)));
@@ -59,6 +75,7 @@ public class PlayerListener implements Listener {
         hotbarManager.removeHotbar(player);
         plugin.getTreeUpgradeManager().unload(player.getUniqueId());
         plugin.getBoosterManager().unload(player.getUniqueId());
+        plugin.getDailyRewardManager().unload(player.getUniqueId());
         plugin.getAppleTreeListener().cleanupPlayer(player.getUniqueId());
     }
 

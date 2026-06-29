@@ -15,6 +15,10 @@ commands:
   planks:
     description: Zeigt deine Planks an
     usage: /planks
+  daily:
+    description: Claim your daily reward
+    usage: /daily
+    aliases: [dailyreward, rewards]
   gapples:
     description: Verwaltet Spieler-Äpfel
     usage: /gapples add|remove|set|show <spieler> [menge]

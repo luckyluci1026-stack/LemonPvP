@@ -70,6 +70,13 @@ public class Database {
                 "    expires_at BIGINT NOT NULL" +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             );
+            stmt.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS ll_daily (" +
+                "    uuid VARCHAR(36) PRIMARY KEY," +
+                "    last_claim BIGINT NOT NULL," +
+                "    streak INT NOT NULL" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            );
             // Migration: drop the legacy remaining_uses column if an older schema
             // still has it. Done via metadata so it works on both MySQL (no
             // DROP COLUMN IF EXISTS) and MariaDB. Leaving a NOT NULL column with
@@ -168,6 +175,39 @@ public class Database {
             ps.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().warning("deleteBoosterEntry error: " + e.getMessage());
+        }
+    }
+
+    // ── Daily Rewards ───────────────────────────────────────────────────────────
+
+    public record DailyEntry(long lastClaim, int streak) {}
+
+    public DailyEntry loadDaily(UUID uuid) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT last_claim, streak FROM ll_daily WHERE uuid=?")) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return new DailyEntry(rs.getLong("last_claim"), rs.getInt("streak"));
+            }
+            return null;
+        } catch (SQLException e) {
+            plugin.getLogger().warning("loadDaily error: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public void saveDaily(UUID uuid, long lastClaim, int streak) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT INTO ll_daily (uuid, last_claim, streak) VALUES (?,?,?) " +
+                     "ON DUPLICATE KEY UPDATE last_claim=VALUES(last_claim), streak=VALUES(streak)")) {
+            ps.setString(1, uuid.toString());
+            ps.setLong(2, lastClaim);
+            ps.setInt(3, streak);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().warning("saveDaily error: " + e.getMessage());
         }
     }
 

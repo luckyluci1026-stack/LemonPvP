@@ -28,6 +28,7 @@ public final class LemonLobby extends JavaPlugin {
     private RestartManager restartManager;
     private BoosterManager boosterManager;
     private com.lemonpvp.lemonlobby.managers.GoldenHourManager goldenHourManager;
+    private com.lemonpvp.lemonlobby.managers.DailyRewardManager dailyRewardManager;
     private TreeUpgradeManager treeUpgradeManager;
     private AppleTreeListener appleTreeListener;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
@@ -58,6 +59,7 @@ public final class LemonLobby extends JavaPlugin {
         restartManager     = new RestartManager(this);
         boosterManager     = new BoosterManager(this);
         goldenHourManager  = new com.lemonpvp.lemonlobby.managers.GoldenHourManager(this);
+        dailyRewardManager = new com.lemonpvp.lemonlobby.managers.DailyRewardManager(this);
         treeUpgradeManager = new TreeUpgradeManager(this);
         appleTreeListener  = new AppleTreeListener(this);
 
@@ -78,6 +80,8 @@ public final class LemonLobby extends JavaPlugin {
         if (applesCmd != null) applesCmd.setExecutor(new ApplesCommand(this));
         var planksCmd = getCommand("planks");
         if (planksCmd != null) planksCmd.setExecutor(new PlanksCommand(this));
+        var dailyCmd = getCommand("daily");
+        if (dailyCmd != null) dailyCmd.setExecutor(new com.lemonpvp.lemonlobby.commands.DailyCommand(this));
         var gapplesCmd = new GApplesCommand(this);
         var gapplesBukkitCmd = getCommand("gapples");
         if (gapplesBukkitCmd != null) { gapplesBukkitCmd.setExecutor(gapplesCmd); gapplesBukkitCmd.setTabCompleter(gapplesCmd); }
@@ -131,6 +135,7 @@ public final class LemonLobby extends JavaPlugin {
     public TrainingGUI getTrainingGUI()               { return trainingGUI; }
     public BoosterManager getBoosterManager()         { return boosterManager; }
     public com.lemonpvp.lemonlobby.managers.GoldenHourManager getGoldenHourManager() { return goldenHourManager; }
+    public com.lemonpvp.lemonlobby.managers.DailyRewardManager getDailyRewardManager() { return dailyRewardManager; }
     public TreeUpgradeManager getTreeUpgradeManager() { return treeUpgradeManager; }
     public AppleTreeListener getAppleTreeListener()   { return appleTreeListener; }
     public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
