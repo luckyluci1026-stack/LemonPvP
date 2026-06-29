@@ -3,13 +3,13 @@ package com.lemonpvp.lemonpractice.managers;
 import com.lemonpvp.lemonpractice.LemonPractice;
 import com.lemonpvp.lemonpractice.duel.DuelGame;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import com.lemonpvp.lemonpractice.replay.ArmorStandReplayActor;
+import com.lemonpvp.lemonpractice.replay.NpcReplayActor;
+import com.lemonpvp.lemonpractice.replay.ReplayActor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.ByteArrayInputStream;
@@ -176,12 +176,13 @@ public class ReplayManager {
 
     private static final class Playback {
         final UUID viewer;
-        final ArmorStand s1, s2;
+        final World world;
+        final ReplayActor a1, a2;
         final Decoded d;
         int index;
         BukkitTask task;
-        Playback(UUID viewer, ArmorStand s1, ArmorStand s2, Decoded d) {
-            this.viewer = viewer; this.s1 = s1; this.s2 = s2; this.d = d;
+        Playback(UUID viewer, World world, ReplayActor a1, ReplayActor a2, Decoded d) {
+            this.viewer = viewer; this.world = world; this.a1 = a1; this.a2 = a2; this.d = d;
         }
     }
 
@@ -205,9 +206,9 @@ public class ReplayManager {
                 v.sendMessage(MM.deserialize("<red>Replay world '<yellow>" + d.world + "<red>' is not loaded."));
                 return;
             }
-            ArmorStand s1 = spawnActor(world, d.frames[0], 0, d.p1);
-            ArmorStand s2 = spawnActor(world, d.frames[0], 15, d.p2);
-            Playback pb = new Playback(vu, s1, s2, d);
+            ReplayActor a1 = createActor(v, world, d.frames[0], 0, d.p1);
+            ReplayActor a2 = createActor(v, world, d.frames[0], 15, d.p2);
+            Playback pb = new Playback(vu, world, a1, a2, d);
             v.sendMessage(MM.deserialize("<green>Playing replay <yellow>" + name
                     + " <gray>(" + d.frames.length + " frames). <gray>Use <white>/replay stop<gray>."));
             pb.task = Bukkit.getScheduler().runTaskTimer(plugin, () -> stepPlayback(pb), 0L, d.interval);
@@ -218,34 +219,27 @@ public class ReplayManager {
     private void stepPlayback(Playback pb) {
         if (pb.index >= pb.d.frames.length) { finishPlayback(pb, true); return; }
         byte[] frame = pb.d.frames[pb.index++];
-        moveActor(pb.s1, frame, 0);
-        moveActor(pb.s2, frame, 15);
+        if ((frame[14] & 0x02) == 0) pb.a1.teleport(readLoc(pb.world, frame, 0));   // skip GONE frames
+        if ((frame[15 + 14] & 0x02) == 0) pb.a2.teleport(readLoc(pb.world, frame, 15));
     }
 
-    private ArmorStand spawnActor(World world, byte[] frame, int off, String name) {
+    /**
+     * Builds an actor for the viewer: a real player-model NPC via PacketEvents
+     * when it is installed, otherwise the armor-stand fallback. Any failure
+     * loading/using PacketEvents falls back gracefully.
+     */
+    private ReplayActor createActor(Player viewer, World world, byte[] frame, int off, String name) {
         Location loc = readLoc(world, frame, off);
-        ArmorStand as = world.spawn(loc, ArmorStand.class, a -> {
-            a.setGravity(false);
-            a.setInvulnerable(true);
-            a.setBasePlate(false);
-            a.setArms(true);
-            a.setCustomNameVisible(true);
-            a.customName(MM.deserialize("<yellow>" + name));
-            a.setPersistent(false);
-            ItemStack head = new ItemStack(org.bukkit.Material.PLAYER_HEAD);
-            if (head.getItemMeta() instanceof SkullMeta sm) {
-                try { sm.setOwningPlayer(Bukkit.getOfflinePlayer(name)); } catch (Exception ignored) {}
-                head.setItemMeta(sm);
+        if (Bukkit.getPluginManager().isPluginEnabled("packetevents")) {
+            try {
+                NpcReplayActor npc = new NpcReplayActor(plugin, viewer, name);
+                npc.spawn(loc);
+                return npc;
+            } catch (Throwable t) {
+                plugin.getLogger().warning("[Replay] PacketEvents NPC failed, using armor stand: " + t);
             }
-            if (a.getEquipment() != null) a.getEquipment().setHelmet(head);
-        });
-        return as;
-    }
-
-    private void moveActor(ArmorStand as, byte[] frame, int off) {
-        if (as == null || !as.isValid()) return;
-        if ((frame[off + 14] & 0x02) != 0) return; // GONE → leave in place
-        as.teleport(readLoc(as.getWorld(), frame, off));
+        }
+        return new ArmorStandReplayActor(world, loc, name);
     }
 
     private Location readLoc(World world, byte[] frame, int off) {
@@ -262,8 +256,8 @@ public class ReplayManager {
 
     private void finishPlayback(Playback pb, boolean announce) {
         if (pb.task != null) pb.task.cancel();
-        if (pb.s1 != null && pb.s1.isValid()) pb.s1.remove();
-        if (pb.s2 != null && pb.s2.isValid()) pb.s2.remove();
+        if (pb.a1 != null) pb.a1.remove();
+        if (pb.a2 != null) pb.a2.remove();
         playbacks.remove(pb.viewer);
         if (announce) {
             Player v = Bukkit.getPlayer(pb.viewer);
