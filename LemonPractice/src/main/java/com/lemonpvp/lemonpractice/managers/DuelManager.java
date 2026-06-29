@@ -326,7 +326,7 @@ public class DuelManager {
     }
 
     private void finishDuel(DuelGame game, Player winner, Player loser) {
-        plugin.getReplayManager().stop(game);
+        plugin.getReplayManager().stopWithKillCam(game, loser != null ? loser.getUniqueId() : null);
         if (winner != null && winner.isOnline()) {
             clearDuelScoreboard(winner);
             winner.showTitle(Title.title(

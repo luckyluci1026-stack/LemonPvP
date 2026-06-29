@@ -114,9 +114,45 @@ public class ReplayManager {
         if (r == null) return;
         if (r.task != null) r.task.cancel();
         if (r.frames.size() < 5) return; // too short to be worth keeping
+        persist(r, new ArrayList<>(r.frames));
+    }
 
-        final String name = buildName(r.p1Name, r.p2Name);
+    /**
+     * Stop + persist like {@link #stop}, and additionally show the loser an
+     * automatic kill-cam of the last few seconds (in-memory, no DB round-trip).
+     */
+    public void stopWithKillCam(DuelGame game, UUID loserUuid) {
+        Recording r = active.remove(game.getPlayer1Uuid());
+        if (r == null) return;
+        if (r.task != null) r.task.cancel();
+        if (r.frames.size() < 5) return;
+
         final List<byte[]> frames = new ArrayList<>(r.frames);
+        persist(r, frames);
+
+        if (!plugin.getConfig().getBoolean("replays.killcam.enabled", true)) return;
+        if (loserUuid == null || frames.size() < 10) return;
+
+        int secs = Math.max(1, plugin.getConfig().getInt("replays.killcam.seconds", 4));
+        double sp = plugin.getConfig().getDouble("replays.killcam.speed", 0.6);
+        int tail = Math.min(frames.size(), secs * 20 / Math.max(1, interval));
+        Decoded d = new Decoded();
+        d.p1 = r.p1Name; d.p2 = r.p2Name; d.world = r.world; d.interval = interval;
+        d.frames = frames.subList(frames.size() - tail, frames.size()).toArray(new byte[0][]);
+        int followIdx = loserUuid.equals(r.p2) ? 2 : 1; // follow the loser
+
+        // Let the duel's own cleanup (lobby teleport) finish first, then roll the clip.
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Player loser = Bukkit.getPlayer(loserUuid);
+            if (loser == null || !loser.isOnline()) return;
+            loser.sendMessage(MM.deserialize("<gradient:#ff5252:#b71c1c><bold>Kill-Cam</bold></gradient> "
+                    + "<gray>Replaying the final moments… <white>/replay stop <gray>to skip."));
+            playDecoded(loser, d, "killcam", followIdx, sp);
+        }, 30L);
+    }
+
+    private void persist(Recording r, List<byte[]> frames) {
+        final String name = buildName(r.p1Name, r.p2Name);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             byte[] data = encodeWithinCap(frames, r);
             if (data == null) {
@@ -186,6 +222,8 @@ public class ReplayManager {
         boolean paused = false;
         int follow = 0;        // 0 = free cam, 1 = actor1, 2 = actor2
         BukkitTask task;
+        org.bukkit.Location originLoc;     // where the viewer was before watching
+        org.bukkit.GameMode originMode;
         Playback(UUID viewer, World world, ReplayActor a1, ReplayActor a2, Decoded d, String name) {
             this.viewer = viewer; this.world = world; this.a1 = a1; this.a2 = a2; this.d = d; this.name = name;
         }
@@ -211,16 +249,57 @@ public class ReplayManager {
                 v.sendMessage(MM.deserialize("<red>Replay world '<yellow>" + d.world + "<red>' is not loaded."));
                 return;
             }
-            ReplayActor a1 = createActor(v, world, d.frames[0], 0, d.p1);
-            ReplayActor a2 = createActor(v, world, d.frames[0], 15, d.p2);
-            Playback pb = new Playback(vu, world, a1, a2, d, name);
+            startPlayback(v, world, d, name, 0, 1.0, true);
+        }));
+    }
+
+    /** Plays an already-decoded clip (used by the kill-cam, which has no DB row). */
+    private void playDecoded(Player viewer, Decoded d, String name, int follow, double speed) {
+        if (d == null || d.frames.length == 0) return;
+        World world = Bukkit.getWorld(d.world);
+        if (world == null) return;
+        startPlayback(viewer, world, d, name, follow, speed, false);
+    }
+
+    /** Shared playback setup: teleport the viewer in (spectator), spawn actors, start ticking. */
+    private void startPlayback(Player v, World world, Decoded d, String name,
+                               int follow, double speed, boolean announce) {
+        UUID vu = v.getUniqueId();
+        stopPlayback(vu); // one at a time
+
+        ReplayActor a1 = createActor(v, world, d.frames[0], 0, d.p1);
+        ReplayActor a2 = createActor(v, world, d.frames[0], 15, d.p2);
+        Playback pb = new Playback(vu, world, a1, a2, d, name);
+        pb.follow = follow;
+        pb.speed = speed;
+
+        // Remember where the viewer was, then move them into the replay as a spectator.
+        pb.originLoc = v.getLocation().clone();
+        pb.originMode = v.getGameMode();
+        try { v.setGameMode(org.bukkit.GameMode.SPECTATOR); } catch (Throwable ignored) {}
+        v.teleport(vantage(world, d.frames[0]));
+
+        if (announce) {
             v.sendMessage(MM.deserialize("<green>Playing replay <yellow>" + name
                     + " <gray>(" + d.frames.length + " frames). "
                     + "<gray>Controls: <white>/replay pause<gray>, <white>speed <x><gray>, "
                     + "<white>follow <1|2|off><gray>, <white>restart<gray>, <white>stop"));
-            pb.task = Bukkit.getScheduler().runTaskTimer(plugin, () -> tick(pb), 0L, 1L);
-            playbacks.put(vu, pb);
-        }));
+        }
+        pb.task = Bukkit.getScheduler().runTaskTimer(plugin, () -> tick(pb), 0L, 1L);
+        playbacks.put(vu, pb);
+    }
+
+    /** A vantage point overlooking the two actors at the given frame. */
+    private Location vantage(World world, byte[] frame) {
+        Location p1 = readLoc(world, frame, 0);
+        Location p2 = readLoc(world, frame, 15);
+        double mx = (p1.getX() + p2.getX()) / 2.0;
+        double my = Math.max(p1.getY(), p2.getY());
+        double mz = (p1.getZ() + p2.getZ()) / 2.0;
+        Location cam = new Location(world, mx + 4, my + 4, mz + 4);
+        org.bukkit.util.Vector look = new org.bukkit.util.Vector(mx, my + 1, mz).subtract(cam.toVector());
+        cam.setDirection(look);
+        return cam;
     }
 
     /** Runs every tick; advances the (fractional) frame position by speed/interval. */
@@ -337,9 +416,13 @@ public class ReplayManager {
         if (pb.a1 != null) pb.a1.remove();
         if (pb.a2 != null) pb.a2.remove();
         playbacks.remove(pb.viewer);
-        if (announce) {
-            Player v = Bukkit.getPlayer(pb.viewer);
-            if (v != null) v.sendMessage(MM.deserialize("<gray>Replay finished."));
+
+        // Restore the viewer to where they were watching from.
+        Player v = Bukkit.getPlayer(pb.viewer);
+        if (v != null) {
+            try { if (pb.originMode != null) v.setGameMode(pb.originMode); } catch (Throwable ignored) {}
+            if (pb.originLoc != null) v.teleport(pb.originLoc);
+            if (announce) v.sendMessage(MM.deserialize("<gray>Replay finished."));
         }
     }
 

@@ -28,6 +28,11 @@ ffa:
 replays:
   enabled: true
   sample-interval-ticks: 2
+  # Kill-cam: after a duel, auto-show the loser a slow-mo of the last few seconds.
+  killcam:
+    enabled: true
+    seconds: 4
+    speed: 0.6
 
 # Ranked / ELO. Disabled = fully casual: duels never change ELO, no rank tiers
 # or rank badges are shown. Set to true to enable competitive ranked play.

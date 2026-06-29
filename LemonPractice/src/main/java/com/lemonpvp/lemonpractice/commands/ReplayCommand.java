@@ -82,6 +82,10 @@ public class ReplayCommand implements CommandExecutor {
                 if (args.length < 2) { usage(player); return true; }
                 handleInfo(player, args[1]);
             }
+            case "share" -> {
+                if (args.length < 2) { msg(player, "<gray>Usage: /replay share <name> [player]"); return true; }
+                handleShare(player, args[1], args.length >= 3 ? args[2] : null);
+            }
             default -> {
                 // /replay <name> [add <days>]
                 String name = args[0];
@@ -112,6 +116,31 @@ public class ReplayCommand implements CommandExecutor {
                         long daysLeft = Math.max(0, (newExpiry - System.currentTimeMillis()) / 86_400_000L);
                         msg(p, PREFIX + "<green>Added <yellow>" + days + " days <green>to <white>" + name
                                 + "<green>. <gray>(" + daysLeft + " days left)");
+                    }
+                }));
+    }
+
+    private void handleShare(Player player, String name, String targetName) {
+        plugin.getDatabase().getReplayMeta(name).thenAccept(meta ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(player.getUniqueId());
+                    if (p == null) return;
+                    if (meta == null) { msg(p, "<red>Replay <yellow>" + name + " <red>not found."); return; }
+                    var card = MM.deserialize("<gradient:#fffb00:#00ff00><bold>Replay</bold></gradient> "
+                            + "<dark_gray>»</dark_gray> <white>" + p.getName() + " <gray>shared "
+                            + "<yellow>" + meta.player1() + " <gray>vs <yellow>" + meta.player2() + " "
+                            + "<click:run_command:'/replay " + meta.name() + "'>"
+                            + "<hover:show_text:'<green>Click to watch <gray>(" + meta.name() + ")'>"
+                            + "<aqua>[▶ Watch]</aqua></hover></click>");
+                    if (targetName != null) {
+                        Player target = Bukkit.getPlayerExact(targetName);
+                        if (target == null) { msg(p, "<red>Player <yellow>" + targetName + " <red>is not online."); return; }
+                        target.sendMessage(card);
+                        msg(p, "<green>Shared the replay with <yellow>" + target.getName() + "<green>.");
+                    } else {
+                        // No target: hand the clickable card to the sharer to click or pass on.
+                        p.sendMessage(card);
+                        msg(p, "<gray>Tip: <white>/replay share " + meta.name() + " <player> <gray>to send it to someone.");
                     }
                 }));
     }
