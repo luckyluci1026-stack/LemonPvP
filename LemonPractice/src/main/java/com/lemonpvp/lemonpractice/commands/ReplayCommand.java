@@ -37,10 +37,13 @@ public class ReplayCommand implements CommandExecutor {
             msg(player, "<red>You don't have permission.");
             return true;
         }
-        if (args.length == 0) { usage(player); return true; }
+        if (args.length == 0) {
+            new com.lemonpvp.lemonpractice.gui.ReplayBrowserGUI(plugin, player).open();
+            return true;
+        }
 
         switch (args[0].toLowerCase()) {
-            case "list" -> handleList(player);
+            case "list", "browse", "gui" -> new com.lemonpvp.lemonpractice.gui.ReplayBrowserGUI(plugin, player).open();
             case "stop" -> {
                 plugin.getReplayManager().stopPlayback(player.getUniqueId());
                 msg(player, "<gray>Stopped any active replay.");
@@ -48,6 +51,32 @@ public class ReplayCommand implements CommandExecutor {
             case "play" -> {
                 if (args.length < 2) { usage(player); return true; }
                 plugin.getReplayManager().play(player, args[1]);
+            }
+            case "pause" -> {
+                if (plugin.getReplayManager().togglePause(player.getUniqueId()))
+                    msg(player, "<yellow>Toggled pause.");
+                else msg(player, "<red>You're not watching a replay.");
+            }
+            case "restart" -> {
+                if (plugin.getReplayManager().restart(player.getUniqueId()))
+                    msg(player, "<green>Replay restarted.");
+                else msg(player, "<red>You're not watching a replay.");
+            }
+            case "speed" -> {
+                if (args.length < 2) { msg(player, "<gray>Usage: /replay speed <0.25-8>"); return true; }
+                double sp;
+                try { sp = Double.parseDouble(args[1]); }
+                catch (NumberFormatException e) { msg(player, "<red>Speed must be a number."); return true; }
+                if (plugin.getReplayManager().setSpeed(player.getUniqueId(), sp))
+                    msg(player, "<green>Speed set to <yellow>" + sp + "x<green>.");
+                else msg(player, "<red>You're not watching a replay.");
+            }
+            case "follow" -> {
+                if (args.length < 2) { msg(player, "<gray>Usage: /replay follow <1|2|off>"); return true; }
+                int f = switch (args[1].toLowerCase()) { case "1" -> 1; case "2" -> 2; default -> 0; };
+                if (plugin.getReplayManager().setFollow(player.getUniqueId(), f))
+                    msg(player, f == 0 ? "<gray>Free camera." : "<green>Following player " + f + ".");
+                else msg(player, "<red>You're not watching a replay.");
             }
             case "info" -> {
                 if (args.length < 2) { usage(player); return true; }
@@ -117,9 +146,10 @@ public class ReplayCommand implements CommandExecutor {
     }
 
     private void usage(Player p) {
-        msg(p, "<gray>/replay <name> <dark_gray>— watch");
-        msg(p, "<gray>/replay <name> add <days> <dark_gray>— extend retention");
-        msg(p, "<gray>/replay list <dark_gray>| <gray>info <name> <dark_gray>| <gray>stop");
+        msg(p, "<gray>/replay <dark_gray>— open the replay browser");
+        msg(p, "<gray>/replay <name> <dark_gray>— watch  <dark_gray>| <gray>add <days> <dark_gray>— extend");
+        msg(p, "<gray>Controls: <white>pause<gray>, <white>speed <x><gray>, <white>follow <1|2|off><gray>, <white>restart<gray>, <white>stop");
+        msg(p, "<gray>/replay info <name> <dark_gray>| <gray>list");
     }
 
     private void msg(Player p, String mini) {

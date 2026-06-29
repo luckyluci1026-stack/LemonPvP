@@ -179,10 +179,15 @@ public class ReplayManager {
         final World world;
         final ReplayActor a1, a2;
         final Decoded d;
-        int index;
+        final String name;
+        double index;          // fractional frame position
+        int lastRendered = -1; // last frame index actually drawn
+        double speed = 1.0;
+        boolean paused = false;
+        int follow = 0;        // 0 = free cam, 1 = actor1, 2 = actor2
         BukkitTask task;
-        Playback(UUID viewer, World world, ReplayActor a1, ReplayActor a2, Decoded d) {
-            this.viewer = viewer; this.world = world; this.a1 = a1; this.a2 = a2; this.d = d;
+        Playback(UUID viewer, World world, ReplayActor a1, ReplayActor a2, Decoded d, String name) {
+            this.viewer = viewer; this.world = world; this.a1 = a1; this.a2 = a2; this.d = d; this.name = name;
         }
     }
 
@@ -208,19 +213,92 @@ public class ReplayManager {
             }
             ReplayActor a1 = createActor(v, world, d.frames[0], 0, d.p1);
             ReplayActor a2 = createActor(v, world, d.frames[0], 15, d.p2);
-            Playback pb = new Playback(vu, world, a1, a2, d);
+            Playback pb = new Playback(vu, world, a1, a2, d, name);
             v.sendMessage(MM.deserialize("<green>Playing replay <yellow>" + name
-                    + " <gray>(" + d.frames.length + " frames). <gray>Use <white>/replay stop<gray>."));
-            pb.task = Bukkit.getScheduler().runTaskTimer(plugin, () -> stepPlayback(pb), 0L, d.interval);
+                    + " <gray>(" + d.frames.length + " frames). "
+                    + "<gray>Controls: <white>/replay pause<gray>, <white>speed <x><gray>, "
+                    + "<white>follow <1|2|off><gray>, <white>restart<gray>, <white>stop"));
+            pb.task = Bukkit.getScheduler().runTaskTimer(plugin, () -> tick(pb), 0L, 1L);
             playbacks.put(vu, pb);
         }));
     }
 
-    private void stepPlayback(Playback pb) {
-        if (pb.index >= pb.d.frames.length) { finishPlayback(pb, true); return; }
-        byte[] frame = pb.d.frames[pb.index++];
-        if ((frame[14] & 0x02) == 0) pb.a1.teleport(readLoc(pb.world, frame, 0));   // skip GONE frames
-        if ((frame[15 + 14] & 0x02) == 0) pb.a2.teleport(readLoc(pb.world, frame, 15));
+    /** Runs every tick; advances the (fractional) frame position by speed/interval. */
+    private void tick(Playback pb) {
+        Player v = Bukkit.getPlayer(pb.viewer);
+        if (v == null || !v.isOnline()) { finishPlayback(pb, false); return; }
+
+        if (!pb.paused) pb.index += pb.speed / Math.max(1, pb.d.interval);
+        int i = (int) Math.floor(pb.index);
+        if (i >= pb.d.frames.length) { finishPlayback(pb, true); return; }
+
+        if (i != pb.lastRendered) {
+            pb.lastRendered = i;
+            byte[] frame = pb.d.frames[i];
+            if ((frame[14] & 0x02) == 0) pb.a1.teleport(readLoc(pb.world, frame, 0));        // skip GONE
+            if ((frame[15 + 14] & 0x02) == 0) pb.a2.teleport(readLoc(pb.world, frame, 15));
+            if (pb.follow != 0) applyFollow(v, pb, frame);
+        }
+        sendHud(v, pb, i);
+    }
+
+    /** Over-the-shoulder camera that follows one actor. */
+    private void applyFollow(Player v, Playback pb, byte[] frame) {
+        int off = (pb.follow == 2) ? 15 : 0;
+        if ((frame[off + 14] & 0x02) != 0) return; // followed actor is gone this frame
+        Location target = readLoc(pb.world, frame, off);
+        org.bukkit.util.Vector dir = target.getDirection().setY(0).normalize();
+        if (Double.isNaN(dir.getX())) dir = new org.bukkit.util.Vector(0, 0, 1);
+        Location cam = target.clone().subtract(dir.multiply(3.2)).add(0, 1.8, 0);
+        cam.setYaw(target.getYaw());
+        cam.setPitch(12f);
+        v.teleport(cam);
+    }
+
+    private void sendHud(Player v, Playback pb, int i) {
+        String state = pb.paused ? "<red>⏸ Paused" : "<green>▶ " + trimSpeed(pb.speed) + "x";
+        String foll = pb.follow == 0 ? "" : " <dark_gray>| <aqua>following " + (pb.follow == 1 ? pb.d.p1 : pb.d.p2);
+        v.sendActionBar(MM.deserialize("<!italic>" + state + " <dark_gray>| <gray>" + i + "<dark_gray>/<gray>"
+                + pb.d.frames.length + foll));
+    }
+
+    private String trimSpeed(double d) {
+        return d == Math.floor(d) ? String.valueOf((int) d) : String.valueOf(d);
+    }
+
+    // ── Playback controls ────────────────────────────────────────────────────────
+
+    public boolean togglePause(UUID viewer) {
+        Playback pb = playbacks.get(viewer);
+        if (pb == null) return false;
+        pb.paused = !pb.paused;
+        return true;
+    }
+
+    public boolean setSpeed(UUID viewer, double speed) {
+        Playback pb = playbacks.get(viewer);
+        if (pb == null) return false;
+        pb.speed = Math.max(0.1, Math.min(8.0, speed));
+        return true;
+    }
+
+    public boolean restart(UUID viewer) {
+        Playback pb = playbacks.get(viewer);
+        if (pb == null) return false;
+        pb.index = 0; pb.lastRendered = -1; pb.paused = false;
+        return true;
+    }
+
+    /** follow: 0 free, 1 actor1, 2 actor2. */
+    public boolean setFollow(UUID viewer, int follow) {
+        Playback pb = playbacks.get(viewer);
+        if (pb == null) return false;
+        pb.follow = follow;
+        return true;
+    }
+
+    public boolean isWatching(UUID viewer) {
+        return playbacks.containsKey(viewer);
     }
 
     /**
