@@ -66,6 +66,8 @@ public final class LemonLobby extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new PlayerListener(this, hotbarManager, lobbyMessaging, trainingGUI), this);
         getServer().getPluginManager().registerEvents(appleTreeListener, this);
+        getServer().getPluginManager().registerEvents(
+                new com.lemonpvp.lemonlobby.listeners.DoubleJumpListener(this), this);
 
         // Register commands
         var shopCmd = getCommand("shop");

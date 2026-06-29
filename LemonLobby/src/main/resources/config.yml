@@ -10,6 +10,13 @@ restart:
   time: "02:30"
   timezone: "Europe/Berlin"
 
+# Hub double-jump: press the jump key twice to launch. Fall damage is disabled.
+# Players with lemoncore.use.fly keep normal /fly instead.
+double-jump:
+  enabled: true
+  forward-power: 1.0
+  up-power: 0.9
+
 apple-tree:
   # World name where the apple tree is located
   world: world
