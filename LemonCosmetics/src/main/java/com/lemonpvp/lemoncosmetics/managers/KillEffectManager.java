@@ -8,7 +8,9 @@ import com.lemonpvp.lemoncosmetics.effects.TotemExplosionEffect;
 import com.lemonpvp.lemoncosmetics.model.KillEffectType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 public class KillEffectManager {
 
@@ -37,7 +39,35 @@ public class KillEffectManager {
                 case SPOOK_SWARM     -> SpookSwarmEffect.play(plugin, killLocation);
                 case TOTEM_EXPLOSION -> TotemExplosionEffect.play(plugin, killLocation);
                 case GOLDEN_GAP      -> GoldenGapEffect.play(plugin, killLocation);
+                default              -> playGeneric(effectType, killLocation);
             }
         });
+    }
+
+    /**
+     * Generic, data-driven kill burst: an expanding particle ring plus a rising
+     * column over ~12 ticks, with the effect's sound up front. Used by every
+     * effect that doesn't have a bespoke animation class.
+     */
+    private void playGeneric(KillEffectType type, Location loc) {
+        final World world = loc.getWorld();
+        if (world == null || type.particle == null) return;
+        if (type.sound != null) world.playSound(loc, type.sound, 1.0f, 1.0f);
+
+        final Location base = loc.clone().add(0, 0.3, 0);
+        final int[] t = {0};
+        final BukkitTask[] task = new BukkitTask[1];
+        task[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (loc.getWorld() == null || t[0] >= 12) { task[0].cancel(); return; }
+            int tick = t[0];
+            double r = 0.4 + tick * 0.28;
+            int pts = 10 + tick;
+            for (int i = 0; i < pts; i++) {
+                double a = i * (Math.PI * 2 / pts);
+                world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r), 1, 0, 0, 0, 0);
+            }
+            world.spawnParticle(type.particle, base.clone().add(0, tick * 0.12, 0), 3, 0.12, 0.12, 0.12, 0);
+            t[0]++;
+        }, 0L, 1L);
     }
 }

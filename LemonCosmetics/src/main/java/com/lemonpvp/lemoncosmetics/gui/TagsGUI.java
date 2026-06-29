@@ -38,11 +38,14 @@ public class TagsGUI implements Listener {
     private static final int UNEQUIP_SLOT = 48;
     private static final int BACK_SLOT    = 49;
     private static final int PREVIEW_SLOT = 4;
+    private static final int PREV_SLOT    = 45;
+    private static final int NEXT_SLOT    = 53;
 
     private final LemonCosmetics plugin;
     private final Player player;
     private Inventory inventory;
     private boolean registered = false;
+    private int page = 0;
 
     /** Maps inventory slot -> tag shown there, for click handling. */
     private final Map<Integer, TagType> slotToTag = new HashMap<>();
@@ -71,20 +74,42 @@ public class TagsGUI implements Listener {
     // Rendering
     // -----------------------------------------------------------------------
 
+    private int maxPage() {
+        return (TagType.values().length - 1) / TAG_SLOTS.length;
+    }
+
     private void render() {
         slotToTag.clear();
         PlayerCosmetics cosmetics = plugin.getCosmeticsManager().getPlayerCosmetics(player.getUniqueId());
 
         TagType[] tags = TagType.values();
-        for (int i = 0; i < tags.length && i < TAG_SLOTS.length; i++) {
+        int start = page * TAG_SLOTS.length;
+        for (int i = 0; i < TAG_SLOTS.length; i++) {
             int slot = TAG_SLOTS[i];
-            slotToTag.put(slot, tags[i]);
-            inventory.setItem(slot, buildTagItem(tags[i], cosmetics));
+            int idx = start + i;
+            if (idx < tags.length) {
+                slotToTag.put(slot, tags[idx]);
+                inventory.setItem(slot, buildTagItem(tags[idx], cosmetics));
+            } else {
+                inventory.setItem(slot, filler(Material.GRAY_STAINED_GLASS_PANE)); // clear leftover
+            }
         }
+
+        inventory.setItem(PREV_SLOT, page > 0
+                ? navItem("<yellow>← Page " + page) : filler(Material.BLACK_STAINED_GLASS_PANE));
+        inventory.setItem(NEXT_SLOT, page < maxPage()
+                ? navItem("<yellow>Page " + (page + 2) + " →") : filler(Material.BLACK_STAINED_GLASS_PANE));
 
         inventory.setItem(PREVIEW_SLOT, buildPreviewItem(cosmetics));
         inventory.setItem(UNEQUIP_SLOT, buildUnequipItem(cosmetics));
         inventory.setItem(BACK_SLOT, buildBackButton());
+    }
+
+    private ItemStack navItem(String mini) {
+        ItemStack item = new ItemStack(Material.SPECTRAL_ARROW);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic>" + mini)); item.setItemMeta(meta); }
+        return item;
     }
 
     private ItemStack buildPreviewItem(PlayerCosmetics cosmetics) {
@@ -214,6 +239,19 @@ public class TagsGUI implements Listener {
 
         if (slot == UNEQUIP_SLOT) {
             handleUnequip(clicker);
+            return;
+        }
+
+        if (slot == PREV_SLOT && page > 0) {
+            page--;
+            clicker.playSound(clicker.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
+            render();
+            return;
+        }
+        if (slot == NEXT_SLOT && page < maxPage()) {
+            page++;
+            clicker.playSound(clicker.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
+            render();
             return;
         }
 

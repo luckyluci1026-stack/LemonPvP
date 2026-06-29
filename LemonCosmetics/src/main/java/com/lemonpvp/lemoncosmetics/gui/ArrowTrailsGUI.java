@@ -18,20 +18,32 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+/** Paginated arrow-trail shop. */
 public class ArrowTrailsGUI implements Listener {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
-
-    private static final int[] TRAIL_SLOTS = {11, 13, 15};
-    private static final int BACK_SLOT = 22;
+    private static final int SIZE = 54;
+    private static final int[] CONTENT = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+    };
+    private static final int PREV_SLOT = 48;
+    private static final int BACK_SLOT = 49;
+    private static final int NEXT_SLOT = 50;
 
     private final LemonCosmetics plugin;
     private final Player player;
     private Inventory inventory;
     private boolean registered = false;
+    private int page = 0;
+    private final Map<Integer, ArrowTrailType> slotMap = new HashMap<>();
 
     public ArrowTrailsGUI(LemonCosmetics plugin, Player player) {
         this.plugin = plugin;
@@ -39,15 +51,9 @@ public class ArrowTrailsGUI implements Listener {
     }
 
     public void open() {
-        inventory = Bukkit.createInventory(null, 27,
+        inventory = Bukkit.createInventory(null, SIZE,
                 MM.deserialize("<!italic><gradient:#ab47bc:#7b1fa2>Arrow Trails</gradient>"));
-
-        ItemStack filler = filler();
-        for (int i = 0; i < 27; i++) inventory.setItem(i, filler);
-
-        renderTrails();
-        inventory.setItem(BACK_SLOT, backButton());
-
+        render();
         if (!registered) {
             Bukkit.getPluginManager().registerEvents(this, plugin);
             registered = true;
@@ -56,12 +62,32 @@ public class ArrowTrailsGUI implements Listener {
         player.openInventory(inventory);
     }
 
-    private void renderTrails() {
+    private int maxPage() {
+        int total = ArrowTrailType.values().length;
+        return (total - 1) / CONTENT.length;
+    }
+
+    private void render() {
+        inventory.clear();
+        slotMap.clear();
+        ItemStack filler = filler();
+        for (int i = 0; i < SIZE; i++) {
+            if (i < 9 || i >= 45 || i % 9 == 0 || i % 9 == 8) inventory.setItem(i, filler);
+        }
+
         PlayerCosmetics cosmetics = plugin.getCosmeticsManager().getPlayerCosmetics(player.getUniqueId());
         ArrowTrailType[] trails = ArrowTrailType.values();
-        for (int i = 0; i < trails.length && i < TRAIL_SLOTS.length; i++) {
-            inventory.setItem(TRAIL_SLOTS[i], buildTrailItem(trails[i], cosmetics));
+        int start = page * CONTENT.length;
+        for (int i = 0; i < CONTENT.length; i++) {
+            int idx = start + i;
+            if (idx >= trails.length) break;
+            inventory.setItem(CONTENT[i], buildTrailItem(trails[idx], cosmetics));
+            slotMap.put(CONTENT[i], trails[idx]);
         }
+
+        if (page > 0) inventory.setItem(PREV_SLOT, nav("<yellow>← Page " + page));
+        inventory.setItem(BACK_SLOT, named(Material.ARROW, "<gray>← Back to Cosmetics"));
+        if (page < maxPage()) inventory.setItem(NEXT_SLOT, nav("<yellow>Page " + (page + 2) + " →"));
     }
 
     @EventHandler
@@ -71,22 +97,18 @@ public class ArrowTrailsGUI implements Listener {
         if (event.getClickedInventory() == null || !event.getClickedInventory().equals(inventory)) return;
         event.setCancelled(true);
 
-        int slot = event.getSlot();
-
+        int slot = event.getRawSlot();
         if (slot == BACK_SLOT) {
             clicker.playSound(clicker.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 0.9f);
             unregister();
             new CosmeticsMainGUI(plugin, player).open();
             return;
         }
+        if (slot == PREV_SLOT && page > 0) { page--; render(); return; }
+        if (slot == NEXT_SLOT && page < maxPage()) { page++; render(); return; }
 
-        for (int i = 0; i < TRAIL_SLOTS.length; i++) {
-            if (slot == TRAIL_SLOTS[i]) {
-                ArrowTrailType trail = ArrowTrailType.values()[i];
-                handleTrailClick(clicker, trail);
-                return;
-            }
-        }
+        ArrowTrailType trail = slotMap.get(slot);
+        if (trail != null) handleTrailClick(clicker, trail);
     }
 
     private void handleTrailClick(Player clicker, ArrowTrailType trail) {
@@ -102,7 +124,7 @@ public class ArrowTrailsGUI implements Listener {
                         if (success) {
                             p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
                             p.sendMessage(MM.deserialize("<green>Purchased: <yellow>" + trail.displayName + "</yellow>!"));
-                            renderTrails();
+                            render();
                         } else {
                             p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
                             p.sendMessage(MM.deserialize("<red>You can't afford <yellow>" + trail.displayName
@@ -113,31 +135,26 @@ public class ArrowTrailsGUI implements Listener {
         }
 
         String activeId = cosmetics.getActiveTrailId();
-        if (trail.id.equals(activeId)) {
-            plugin.getArrowTrailManager().setActiveTrail(clickerUuid, null)
-                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        Player p = Bukkit.getPlayer(clickerUuid);
-                        if (p == null) return;
+        boolean deactivate = trail.id.equals(activeId);
+        plugin.getArrowTrailManager().setActiveTrail(clickerUuid, deactivate ? null : trail.id)
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(clickerUuid);
+                    if (p == null) return;
+                    if (deactivate) {
                         p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.4f, 0.9f);
                         p.sendMessage(MM.deserialize("<yellow>Arrow trail deactivated."));
-                        renderTrails();
-                    }));
-        } else {
-            plugin.getArrowTrailManager().setActiveTrail(clickerUuid, trail.id)
-                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        Player p = Bukkit.getPlayer(clickerUuid);
-                        if (p == null) return;
+                    } else {
                         p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.2f);
                         p.sendMessage(MM.deserialize("<green>Activated: <yellow>" + trail.displayName + "</yellow>!"));
-                        renderTrails();
-                    }));
-        }
+                    }
+                    render();
+                }));
     }
 
     @EventHandler
     public void onClose(InventoryCloseEvent event) {
         if (!event.getPlayer().getUniqueId().equals(player.getUniqueId())) return;
-        if (!event.getInventory().equals(inventory)) return;
+        if (inventory == null || !event.getInventory().equals(inventory)) return;
         unregister();
     }
 
@@ -149,8 +166,7 @@ public class ArrowTrailsGUI implements Listener {
         boolean owned = cosmetics != null && cosmetics.ownsTrail(trail.id);
         boolean active = owned && trail.id.equals(cosmetics.getActiveTrailId());
 
-        Material icon = trailIcon(trail);
-        ItemStack item = new ItemStack(icon);
+        ItemStack item = new ItemStack(trail.icon == null ? Material.ARROW : trail.icon);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
@@ -179,18 +195,14 @@ public class ArrowTrailsGUI implements Listener {
         return item;
     }
 
-    private Material trailIcon(ArrowTrailType trail) {
-        return switch (trail) {
-            case LEMON_TRAIL -> Material.ARROW;
-            case EMERALD_TRAIL -> Material.ARROW;
-            case FLAME_TRAIL -> Material.BLAZE_ROD;
-        };
+    private ItemStack nav(String mini) {
+        return named(Material.SPECTRAL_ARROW, mini);
     }
 
-    private ItemStack backButton() {
-        ItemStack item = new ItemStack(Material.ARROW);
+    private ItemStack named(Material mat, String mini) {
+        ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>← Back")); item.setItemMeta(meta); }
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic>" + mini)); item.setItemMeta(meta); }
         return item;
     }
 
