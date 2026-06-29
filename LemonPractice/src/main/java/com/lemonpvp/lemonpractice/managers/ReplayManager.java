@@ -45,7 +45,7 @@ public class ReplayManager {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final int MAGIC = 0x4C525031;          // "LRP1"
-    private static final byte VERSION = 1;
+    private static final byte VERSION = 2;   // v2 adds a bookmarks section
     private static final int MAX_BYTES = 50 * 1024;       // hard 50 KB cap
     public static final long RETENTION_DAYS = 100L;
     private static final long RETENTION_MS = RETENTION_DAYS * 86_400_000L;
@@ -72,6 +72,7 @@ public class ReplayManager {
         final UUID p1, p2;
         final String p1Name, p2Name, world, gamemode;
         final List<byte[]> frames = new ArrayList<>();
+        final List<Integer> bookmarks = new ArrayList<>(); // frame indices of highlight moments
         BukkitTask task;
         Recording(DuelGame g, String world) {
             this.p1 = g.getPlayer1Uuid(); this.p2 = g.getPlayer2Uuid();
@@ -168,10 +169,13 @@ public class ReplayManager {
 
     /** Encodes frames, halving the frame rate until the GZIP payload fits in 50 KB. */
     private byte[] encodeWithinCap(List<byte[]> frames, Recording r) {
+        // Bookmarks are stored as fractions of the (original) duration, so they
+        // stay correct regardless of how much the frame rate is downsampled.
+        float[] bookmarks = bookmarkFractions(r.bookmarks, frames.size());
         int effInterval = interval;
         List<byte[]> f = frames;
         for (int attempt = 0; attempt < 8; attempt++) {
-            byte[] data = buildPayload(f, r, effInterval);
+            byte[] data = buildPayload(f, r, effInterval, bookmarks);
             if (data != null && data.length <= MAX_BYTES) return data;
             if (f.size() <= 10) return null;
             f = downsample(f);
@@ -180,7 +184,14 @@ public class ReplayManager {
         return null;
     }
 
-    private byte[] buildPayload(List<byte[]> frames, Recording r, int effInterval) {
+    private float[] bookmarkFractions(List<Integer> marks, int total) {
+        if (marks == null || marks.isEmpty() || total <= 0) return new float[0];
+        float[] out = new float[marks.size()];
+        for (int i = 0; i < marks.size(); i++) out[i] = Math.min(1f, marks.get(i) / (float) total);
+        return out;
+    }
+
+    private byte[] buildPayload(List<byte[]> frames, Recording r, int effInterval, float[] bookmarks) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try (DataOutputStream out = new DataOutputStream(new GZIPOutputStream(bos))) {
             out.writeInt(MAGIC);
@@ -191,6 +202,8 @@ public class ReplayManager {
             out.writeInt(effInterval);
             out.writeInt(frames.size());
             for (byte[] frame : frames) out.write(frame);
+            out.writeInt(bookmarks.length);
+            for (float bm : bookmarks) out.writeFloat(bm);
         } catch (Exception e) {
             plugin.getLogger().warning("[Replay] encode error: " + e.getMessage());
             return null;
@@ -207,7 +220,7 @@ public class ReplayManager {
     // ── Playback ─────────────────────────────────────────────────────────────────
 
     private static final class Decoded {
-        String p1, p2, world; int interval; byte[][] frames;
+        String p1, p2, world; int interval; byte[][] frames; float[] bookmarks = new float[0];
     }
 
     private static final class Playback {
@@ -337,8 +350,10 @@ public class ReplayManager {
     private void sendHud(Player v, Playback pb, int i) {
         String state = pb.paused ? "<red>⏸ Paused" : "<green>▶ " + trimSpeed(pb.speed) + "x";
         String foll = pb.follow == 0 ? "" : " <dark_gray>| <aqua>following " + (pb.follow == 1 ? pb.d.p1 : pb.d.p2);
+        String marks = (pb.d.bookmarks != null && pb.d.bookmarks.length > 0)
+                ? " <dark_gray>| <gold>★" + pb.d.bookmarks.length : "";
         v.sendActionBar(MM.deserialize("<!italic>" + state + " <dark_gray>| <gray>" + i + "<dark_gray>/<gray>"
-                + pb.d.frames.length + foll));
+                + pb.d.frames.length + marks + foll));
     }
 
     private String trimSpeed(double d) {
@@ -378,6 +393,43 @@ public class ReplayManager {
 
     public boolean isWatching(UUID viewer) {
         return playbacks.containsKey(viewer);
+    }
+
+    /** Jump the viewer's playback to the next/previous highlight bookmark. */
+    public boolean jumpBookmark(UUID viewer, boolean forward) {
+        Playback pb = playbacks.get(viewer);
+        if (pb == null || pb.d.bookmarks == null || pb.d.bookmarks.length == 0) return false;
+        double cur = pb.index / Math.max(1, pb.d.frames.length);
+        Float best = null;
+        for (float f : pb.d.bookmarks) {
+            if (forward && f > cur + 0.005 && (best == null || f < best)) best = f;
+            if (!forward && f < cur - 0.005 && (best == null || f > best)) best = f;
+        }
+        if (best == null) return false;
+        pb.index = best * pb.d.frames.length;
+        pb.lastRendered = -1;
+        pb.paused = false;
+        return true;
+    }
+
+    // ── Bookmarks (recording side) ───────────────────────────────────────────────
+
+    /** Marks the current frame of the victim's recording as a highlight (called on PvP hits). */
+    public void markHit(UUID victim) {
+        Recording r = recordingOf(victim);
+        if (r == null) return;
+        int now = r.frames.size();
+        if (now <= 0) return;
+        int minGap = Math.max(5, 20 / Math.max(1, interval)); // ~1s between bookmarks
+        if (!r.bookmarks.isEmpty() && now - r.bookmarks.get(r.bookmarks.size() - 1) < minGap) return;
+        r.bookmarks.add(now - 1);
+    }
+
+    private Recording recordingOf(UUID uuid) {
+        for (Recording r : active.values()) {
+            if (uuid.equals(r.p1) || uuid.equals(r.p2)) return r;
+        }
+        return null;
     }
 
     /**
@@ -429,7 +481,7 @@ public class ReplayManager {
     private Decoded decode(byte[] bytes) {
         try (DataInputStream in = new DataInputStream(new GZIPInputStream(new ByteArrayInputStream(bytes)))) {
             if (in.readInt() != MAGIC) return null;
-            in.readByte(); // version
+            int version = in.readByte();
             Decoded d = new Decoded();
             d.p1 = in.readUTF(); d.p2 = in.readUTF(); d.world = in.readUTF();
             d.interval = Math.max(1, in.readInt());
@@ -437,6 +489,13 @@ public class ReplayManager {
             if (count < 0 || count > MAX_FRAMES * 4) return null;
             d.frames = new byte[count][FRAME_BYTES];
             for (int i = 0; i < count; i++) in.readFully(d.frames[i]);
+            if (version >= 2) {
+                int bm = in.readInt();
+                if (bm >= 0 && bm <= 4096) {
+                    d.bookmarks = new float[bm];
+                    for (int i = 0; i < bm; i++) d.bookmarks[i] = in.readFloat();
+                }
+            }
             return d;
         } catch (Exception e) {
             return null;

@@ -62,6 +62,12 @@ public class ReplayCommand implements CommandExecutor {
                     msg(player, "<green>Replay restarted.");
                 else msg(player, "<red>You're not watching a replay.");
             }
+            case "next", "prev" -> {
+                boolean fwd = args[0].equalsIgnoreCase("next");
+                if (plugin.getReplayManager().jumpBookmark(player.getUniqueId(), fwd))
+                    msg(player, "<gold>★ <green>Jumped to " + (fwd ? "next" : "previous") + " highlight.");
+                else msg(player, "<gray>No " + (fwd ? "more" : "earlier") + " highlights.");
+            }
             case "speed" -> {
                 if (args.length < 2) { msg(player, "<gray>Usage: /replay speed <0.25-8>"); return true; }
                 double sp;

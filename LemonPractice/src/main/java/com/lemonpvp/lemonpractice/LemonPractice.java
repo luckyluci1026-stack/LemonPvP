@@ -122,6 +122,8 @@ public class LemonPractice extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new DuelInviteListener(this), this);
         getServer().getPluginManager().registerEvents(new PartyListener(this), this);
         getServer().getPluginManager().registerEvents(new ZoneListener(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.lemonpvp.lemonpractice.listeners.ReplayHitListener(this), this);
 
         // 7. Register commands
         AowArenaCommand arenaCmd = new AowArenaCommand(this);
