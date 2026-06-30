@@ -57,22 +57,27 @@ public class KitManager {
         // Update cache first
         cache.computeIfAbsent(playerUuid, u -> new ConcurrentHashMap<>()).put(gamemode.toLowerCase(), kit);
 
-        // Persist each slot asynchronously
-        CompletableFuture<?>[] futures = kit.getSlots().entrySet().stream()
-                .map(entry -> {
-                    try {
-                        byte[] bytes = entry.getValue().serializeAsBytes();
-                        String base64 = Base64.getEncoder().encodeToString(bytes);
-                        return plugin.getDatabase().saveKitSlot(playerUuid, gamemode, entry.getKey(), base64);
-                    } catch (Exception e) {
-                        plugin.getLogger().warning("[KitManager] Failed to serialize item for slot "
-                                + entry.getKey() + " of " + playerUuid + ": " + e.getMessage());
-                        return CompletableFuture.completedFuture(null);
-                    }
-                })
-                .toArray(CompletableFuture[]::new);
+        // Snapshot + serialize the current slots up front so the async write is stable.
+        Map<Integer, String> serialized = new HashMap<>();
+        for (Map.Entry<Integer, ItemStack> entry : kit.getSlots().entrySet()) {
+            try {
+                byte[] bytes = entry.getValue().serializeAsBytes();
+                serialized.put(entry.getKey(), Base64.getEncoder().encodeToString(bytes));
+            } catch (Exception e) {
+                plugin.getLogger().warning("[KitManager] Failed to serialize item for slot "
+                        + entry.getKey() + " of " + playerUuid + ": " + e.getMessage());
+            }
+        }
 
-        return CompletableFuture.allOf(futures);
+        // Delete the existing rows FIRST, then insert the current arrangement. This
+        // prevents slots that became empty (e.g. an item moved elsewhere) from
+        // leaving a stale DB row that would reload as a duplicate item later.
+        return plugin.getDatabase().deleteKit(playerUuid, gamemode).thenCompose(v -> {
+            CompletableFuture<?>[] futures = serialized.entrySet().stream()
+                    .map(e -> plugin.getDatabase().saveKitSlot(playerUuid, gamemode, e.getKey(), e.getValue()))
+                    .toArray(CompletableFuture[]::new);
+            return CompletableFuture.allOf(futures);
+        });
     }
 
     // -----------------------------------------------------------------------
