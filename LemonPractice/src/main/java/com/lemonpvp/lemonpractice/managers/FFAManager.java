@@ -17,7 +17,9 @@ import org.bukkit.WorldBorder;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
 import org.bukkit.scoreboard.Criteria;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -63,6 +65,9 @@ public class FFAManager {
     private final Map<UUID, Integer> sessionKills = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> sessionKillstreak = new ConcurrentHashMap<>();
 
+    /** Players currently in the death-cam → respawn flow (lethal hit intercepted). */
+    private final Set<UUID> dying = ConcurrentHashMap.newKeySet();
+
     /** The world the zone lives in (resolved lazily; Multiverse may load it late). */
     private World world;
     /** Current zone center; null until the first player joins. */
@@ -87,6 +92,8 @@ public class FFAManager {
     private String kitGamemode()    { return plugin.getConfig().getString("ffa.kit-gamemode", "sword"); }
     private int respawnDelayTicks() { return Math.max(1, plugin.getConfig().getInt("ffa.respawn-delay-ticks", 60)); }
     private int borderWarning()     { return Math.max(0, plugin.getConfig().getInt("ffa.border-warning", 6)); }
+    private boolean deathCam()      { return plugin.getConfig().getBoolean("ffa.death-cam", true); }
+    private int deathCamTicks()     { return Math.max(10, plugin.getConfig().getInt("ffa.death-cam-ticks", 50)); }
 
     // -----------------------------------------------------------------------
     // Lifecycle
@@ -118,6 +125,7 @@ public class FFAManager {
             if (p != null && p.isOnline()) p.setWorldBorder(null);
         }
         participants.clear();
+        dying.clear();
     }
 
     /** Lazily resolves and returns the FFA world, or {@code null} if not loaded. */
@@ -155,6 +163,7 @@ public class FFAManager {
         for (UUID uuid : snapshot()) {
             Player p = Bukkit.getPlayer(uuid);
             if (p == null || !p.isOnline()) continue;
+            if (dying.contains(uuid)) continue; // death-cam owns the screen
             renderScoreboard(p);
             p.sendActionBar(MM.deserialize(
                     "<gray>❤ <red>" + String.format("%.1f", p.getHealth())
@@ -183,6 +192,7 @@ public class FFAManager {
         for (UUID uuid : snapshot()) {
             Player p = Bukkit.getPlayer(uuid);
             if (p == null || !p.isOnline()) continue;
+            if (dying.contains(uuid)) continue; // mid death-cam — it will respawn them itself
             Location spawn = scatterLocation();
             if (spawn != null) p.teleport(spawn);
             preparePlayer(p);
@@ -235,6 +245,7 @@ public class FFAManager {
         boolean removed = participants.remove(player.getUniqueId());
         sessionKills.remove(player.getUniqueId());
         sessionKillstreak.remove(player.getUniqueId());
+        dying.remove(player.getUniqueId());
 
         if (player.isOnline()) {
             player.setWorldBorder(null);
@@ -284,6 +295,104 @@ public class FFAManager {
     /** Resets the FFA killstreak for a player (called on their death). */
     public void resetKillstreak(UUID uuid) {
         sessionKillstreak.put(uuid, 0);
+    }
+
+    /** True while a player is in the intercepted death-cam → respawn flow. */
+    public boolean isDying(UUID uuid) {
+        return dying.contains(uuid);
+    }
+
+    /**
+     * Handles an intercepted lethal hit: there is no vanilla death screen.
+     * The victim is credited as a kill to {@code killer}, dropped into spectator
+     * for a short death-cam orbiting the killer, then respawned inside the zone.
+     *
+     * @param victim the player who would have died (already confirmed in the FFA)
+     * @param killer the responsible player, or {@code null} for environment deaths
+     */
+    public void handleLethal(Player victim, Player killer) {
+        if (victim == null) return;
+        UUID vu = victim.getUniqueId();
+        if (!participants.contains(vu)) return;
+        if (!dying.add(vu)) return; // already dying
+
+        boolean credited = killer != null && killer.isOnline()
+                && !killer.getUniqueId().equals(vu) && participants.contains(killer.getUniqueId());
+        if (credited) {
+            handleKill(killer, victim);
+            broadcast(MM.deserialize("<red>" + victim.getName() + "</red> <gray>was slain by <yellow>"
+                    + killer.getName() + "</yellow>."));
+        } else {
+            broadcast(MM.deserialize("<red>" + victim.getName() + "</red> <gray>died."));
+        }
+        resetKillstreak(vu);
+
+        // Enter the death state: stop fire/damage, clear items, go spectator.
+        victim.setFireTicks(0);
+        victim.getInventory().clear();
+        try { victim.setGameMode(GameMode.SPECTATOR); } catch (Throwable ignored) {}
+        victim.showTitle(Title.title(
+                MM.deserialize("<red><bold>YOU DIED</bold></red>"),
+                MM.deserialize(credited ? "<gray>Slain by <yellow>" + killer.getName() : "<gray>Respawning…"),
+                Title.Times.times(Duration.ofMillis(150), Duration.ofMillis(1200), Duration.ofMillis(400))));
+        victim.playSound(victim.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 0.8f);
+
+        int camTicks = deathCam() ? deathCamTicks() : 10;
+        UUID killerUuid = credited ? killer.getUniqueId() : null;
+        runDeathCam(vu, killerUuid, camTicks);
+    }
+
+    private void runDeathCam(UUID victimUuid, UUID killerUuid, int camTicks) {
+        new BukkitRunnable() {
+            int t = 0;
+            @Override public void run() {
+                Player v = Bukkit.getPlayer(victimUuid);
+                if (v == null || !v.isOnline() || !participants.contains(victimUuid)) {
+                    dying.remove(victimUuid);
+                    cancel();
+                    return;
+                }
+                Player k = killerUuid != null ? Bukkit.getPlayer(killerUuid) : null;
+                boolean canOrbit = k != null && k.isOnline() && participants.contains(killerUuid);
+
+                if (t >= camTicks || !canOrbit) {
+                    cancel();
+                    respawnFromDeath(v);
+                    dying.remove(victimUuid);
+                    return;
+                }
+
+                // Orbit the killer.
+                Location kl = k.getLocation();
+                Location focus = kl.clone().add(0, 1.2, 0);
+                double angle = t * 0.12;
+                double r = 3.4;
+                Location cam = new Location(kl.getWorld(),
+                        kl.getX() + Math.cos(angle) * r, kl.getY() + 2.3, kl.getZ() + Math.sin(angle) * r);
+                Vector dir = focus.toVector().subtract(cam.toVector());
+                if (dir.lengthSquared() > 1.0e-6) cam.setDirection(dir);
+                v.teleport(cam);
+
+                int secsLeft = Math.max(0, (camTicks - t) / 20);
+                v.sendActionBar(MM.deserialize("<gray>Killed by <yellow>" + k.getName()
+                        + " <dark_gray>| <gray>Respawning in <white>" + (secsLeft + 1) + "s"));
+                t++;
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
+    }
+
+    /** Returns a finished death-cam viewer to the zone, fully re-equipped. */
+    private void respawnFromDeath(Player v) {
+        if (v == null || !v.isOnline()) return;
+        if (!participants.contains(v.getUniqueId())) {
+            try { v.setGameMode(GameMode.ADVENTURE); } catch (Throwable ignored) {}
+            return;
+        }
+        Location loc = getRespawnLocation();
+        try { v.setGameMode(GameMode.SURVIVAL); } catch (Throwable ignored) {}
+        if (loc != null) v.teleport(loc);
+        respawnEquip(v);
+        v.playSound(v.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.6f);
     }
 
     /**

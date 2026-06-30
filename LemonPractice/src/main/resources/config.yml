@@ -31,8 +31,13 @@ ffa:
   relocate-minutes: 20    # how often the zone jumps to a new location
   center-range: 2000      # max distance from world spawn for a new random center
   kit-gamemode: sword     # kit/gamemode id applied to FFA players (see gamemodes.yml)
-  respawn-delay-ticks: 60 # delay before auto-respawn after death (20 = 1s)
+  respawn-delay-ticks: 60 # delay before auto-respawn after death (fallback path only)
   border-warning: 6       # world-border warning distance (blocks)
+  # Death-cam: lethal hits are intercepted (no vanilla death screen) — the victim
+  # is dropped into spectator and orbits their killer for death-cam-ticks before
+  # respawning inside the zone. Players holding a Totem of Undying are exempt.
+  death-cam: true
+  death-cam-ticks: 50     # death-cam length in ticks before respawn (20 = 1s)
 
 # Duel replays: compact recordings of duels, each capped at 50 KB and kept for
 # 100 days (extend with /replay <name> add <days>). Lower sample-interval-ticks

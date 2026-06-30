@@ -3,14 +3,19 @@ package com.lemonpvp.lemonpractice.listeners;
 import com.lemonpvp.lemonpractice.LemonPractice;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.projectiles.ProjectileSource;
 
 import java.util.UUID;
 
@@ -23,7 +28,51 @@ public class FFAListener implements Listener {
     }
 
     // -------------------------------------------------------------------------
-    // Death
+    // Lethal hit interception — no death screen; run a death-cam then respawn
+    // -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onLethalDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player victim)) return;
+        if (!plugin.getFfaManager().isInFfa(victim.getUniqueId())) return;
+
+        // Already in the death-cam flow (spectator): swallow any stray damage.
+        if (plugin.getFfaManager().isDying(victim.getUniqueId())) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Would this hit be lethal? Account for absorption hearts.
+        double remaining = victim.getHealth() + victim.getAbsorptionAmount() - event.getFinalDamage();
+        if (remaining > 0.0) return; // survivable — let it through
+
+        // Respect totems: let vanilla pop the totem instead of intercepting.
+        if (hasTotem(victim)) return;
+
+        event.setCancelled(true);
+        plugin.getFfaManager().handleLethal(victim, resolveKiller(event));
+    }
+
+    private boolean hasTotem(Player player) {
+        ItemStack main = player.getInventory().getItemInMainHand();
+        ItemStack off = player.getInventory().getItemInOffHand();
+        return (main != null && main.getType() == Material.TOTEM_OF_UNDYING)
+                || (off != null && off.getType() == Material.TOTEM_OF_UNDYING);
+    }
+
+    private Player resolveKiller(EntityDamageEvent event) {
+        if (event instanceof EntityDamageByEntityEvent ed) {
+            if (ed.getDamager() instanceof Player p) return p;
+            if (ed.getDamager() instanceof Projectile proj) {
+                ProjectileSource src = proj.getShooter();
+                if (src instanceof Player sp) return sp;
+            }
+        }
+        return null;
+    }
+
+    // -------------------------------------------------------------------------
+    // Death (fallback only — combat deaths are intercepted above)
     // -------------------------------------------------------------------------
 
     @EventHandler
@@ -31,6 +80,14 @@ public class FFAListener implements Listener {
         Player player = event.getPlayer();
 
         if (!plugin.getFfaManager().isInFfa(player.getUniqueId())) {
+            return;
+        }
+
+        // The intercepted death-cam path already handled this player.
+        if (plugin.getFfaManager().isDying(player.getUniqueId())) {
+            event.deathMessage(null);
+            event.getDrops().clear();
+            event.setDroppedExp(0);
             return;
         }
 
