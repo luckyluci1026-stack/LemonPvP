@@ -1,8 +1,10 @@
 package com.lemonpvp.lemonpractice.managers;
 
 import com.lemonpvp.lemonpractice.LemonPractice;
+import com.lemonpvp.lemonpractice.model.Gamemode;
 import com.lemonpvp.lemonpractice.model.PlayerKit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -87,18 +89,26 @@ public class KitManager {
     // Default kit from kits.yml
     // -----------------------------------------------------------------------
 
+    /** Bukkit PlayerInventory armor slot indices (so {@code setItem} equips them). */
+    public static final int ARMOR_FEET = 36, ARMOR_LEGS = 37, ARMOR_CHEST = 38, ARMOR_HEAD = 39;
+
     /**
-     * Reads a default kit from the "kits" section of kits.yml.
-     * Expected structure per gamemode:
+     * Reads the preset (default) kit from the "kits" section of kits.yml.
+     *
+     * <p>Preferred structured layout per gamemode:
      * <pre>
      * kits:
      *   sword:
-     *     0:
-     *       material: DIAMOND_SWORD
-     *       enchantments:
-     *         SHARPNESS: 5
-     *     ...
+     *     hotbar:
+     *       0: {material: DIAMOND_SWORD, enchantments: {SHARPNESS: 5}}
+     *     armor:
+     *       head: {material: DIAMOND_HELMET}
+     *       chest/legs/feet: ...
      * </pre>
+     * Hotbar entries map to inventory slots 0–8; armor maps to the player
+     * inventory's armor slots ({@link #ARMOR_HEAD} etc.) so applying the kit with
+     * {@code setItem} equips it. A legacy flat {@code <slot>: {...}} layout is
+     * still accepted for backward compatibility.
      */
     public PlayerKit getDefaultKit(String gamemode) {
         ConfigurationSection kitsSection = plugin.getKitsConfig().getConfigurationSection("kits");
@@ -107,66 +117,107 @@ public class KitManager {
             return null;
         }
 
-        ConfigurationSection gamemodeSection = kitsSection.getConfigurationSection(gamemode.toLowerCase());
-        if (gamemodeSection == null) return null;
+        ConfigurationSection gm = kitsSection.getConfigurationSection(gamemode.toLowerCase());
+        if (gm == null) return null;
 
-        // UUID.fromString("00000000-0000-0000-0000-000000000000") as a sentinel for default kits
+        // sentinel UUID 0 marks a default/preset kit
         PlayerKit kit = new PlayerKit(new UUID(0, 0), gamemode);
 
-        for (String slotKey : gamemodeSection.getKeys(false)) {
-            int slot;
-            try {
-                slot = Integer.parseInt(slotKey);
-            } catch (NumberFormatException e) {
-                continue;
+        ConfigurationSection hotbar = gm.getConfigurationSection("hotbar");
+        ConfigurationSection armor = gm.getConfigurationSection("armor");
+        boolean structured = hotbar != null || armor != null;
+
+        if (hotbar != null) {
+            for (String slotKey : hotbar.getKeys(false)) {
+                int slot;
+                try { slot = Integer.parseInt(slotKey); } catch (NumberFormatException e) { continue; }
+                if (slot < 0 || slot > 8) continue;
+                ItemStack item = buildItem(hotbar.getConfigurationSection(slotKey), gamemode);
+                if (item != null) kit.setSlot(slot, item);
             }
+        }
+        if (armor != null) {
+            putArmor(kit, armor.getConfigurationSection("head"), ARMOR_HEAD, gamemode);
+            putArmor(kit, armor.getConfigurationSection("chest"), ARMOR_CHEST, gamemode);
+            putArmor(kit, armor.getConfigurationSection("legs"), ARMOR_LEGS, gamemode);
+            putArmor(kit, armor.getConfigurationSection("feet"), ARMOR_FEET, gamemode);
+        }
 
-            ConfigurationSection itemSection = gamemodeSection.getConfigurationSection(slotKey);
-            if (itemSection == null) continue;
-
-            String materialName = itemSection.getString("material");
-            if (materialName == null) continue;
-
-            Material material = Material.matchMaterial(materialName);
-            if (material == null) {
-                plugin.getLogger().warning("[KitManager] Unknown material '" + materialName
-                        + "' in default kit for " + gamemode + " slot " + slot);
-                continue;
+        // Legacy flat layout: numeric slot keys directly under the gamemode.
+        if (!structured) {
+            for (String slotKey : gm.getKeys(false)) {
+                int slot;
+                try { slot = Integer.parseInt(slotKey); } catch (NumberFormatException e) { continue; }
+                ItemStack item = buildItem(gm.getConfigurationSection(slotKey), gamemode);
+                if (item != null) kit.setSlot(slot, item);
             }
-
-            ItemStack item = new ItemStack(material, itemSection.getInt("amount", 1));
-            ItemMeta meta = item.getItemMeta();
-
-            if (meta != null) {
-                if (itemSection.contains("name")) {
-                    meta.setDisplayName(itemSection.getString("name"));
-                }
-                if (itemSection.contains("custom-model-data")) {
-                    meta.setCustomModelData(itemSection.getInt("custom-model-data"));
-                }
-                if (itemSection.contains("unbreakable")) {
-                    meta.setUnbreakable(itemSection.getBoolean("unbreakable", false));
-                }
-                item.setItemMeta(meta);
-            }
-
-            ConfigurationSection enchSection = itemSection.getConfigurationSection("enchantments");
-            if (enchSection != null) {
-                for (String enchKey : enchSection.getKeys(false)) {
-                    Enchantment enchantment = Enchantment.getByName(enchKey.toUpperCase());
-                    if (enchantment != null) {
-                        item.addUnsafeEnchantment(enchantment, enchSection.getInt(enchKey));
-                    } else {
-                        plugin.getLogger().warning("[KitManager] Unknown enchantment '" + enchKey
-                                + "' in default kit for " + gamemode);
-                    }
-                }
-            }
-
-            kit.setSlot(slot, item);
         }
 
         return kit;
+    }
+
+    /** The server-defined preset kit for a gamemode (an alias of the default kit). */
+    public PlayerKit getPresetKit(String gamemode) {
+        return getDefaultKit(gamemode);
+    }
+
+    /** True for the player-inventory armor slot indices (36–39). */
+    public static boolean isArmorSlot(int slot) {
+        return slot >= ARMOR_FEET && slot <= ARMOR_HEAD;
+    }
+
+    private void putArmor(PlayerKit kit, ConfigurationSection sec, int slot, String gamemode) {
+        ItemStack item = buildItem(sec, gamemode);
+        if (item != null) kit.setSlot(slot, item);
+    }
+
+    private ItemStack buildItem(ConfigurationSection sec, String gamemode) {
+        if (sec == null) return null;
+        String materialName = sec.getString("material");
+        if (materialName == null) return null;
+
+        Material material = Material.matchMaterial(materialName);
+        if (material == null) {
+            plugin.getLogger().warning("[KitManager] Unknown material '" + materialName
+                    + "' in kit for " + gamemode);
+            return null;
+        }
+
+        ItemStack item = new ItemStack(material, sec.getInt("amount", 1));
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            if (sec.contains("name")) meta.setDisplayName(sec.getString("name"));
+            if (sec.contains("custom-model-data")) meta.setCustomModelData(sec.getInt("custom-model-data"));
+            if (sec.contains("unbreakable")) meta.setUnbreakable(sec.getBoolean("unbreakable", false));
+            item.setItemMeta(meta);
+        }
+
+        ConfigurationSection enchSection = sec.getConfigurationSection("enchantments");
+        if (enchSection != null) {
+            for (String enchKey : enchSection.getKeys(false)) {
+                Enchantment enchantment = resolveEnchantment(enchKey);
+                if (enchantment != null) {
+                    item.addUnsafeEnchantment(enchantment, enchSection.getInt(enchKey));
+                } else {
+                    plugin.getLogger().warning("[KitManager] Unknown enchantment '" + enchKey
+                            + "' in kit for " + gamemode);
+                }
+            }
+        }
+
+        return item;
+    }
+
+    /**
+     * Resolves an enchantment from kits.yml. Names use the modern namespaced keys
+     * (e.g. {@code SHARPNESS}, {@code PROTECTION}), so we try the minecraft key
+     * first and only then fall back to the legacy by-name lookup.
+     */
+    @SuppressWarnings("deprecation")
+    private Enchantment resolveEnchantment(String key) {
+        Enchantment byKey = Enchantment.getByKey(NamespacedKey.minecraft(key.toLowerCase()));
+        if (byKey != null) return byKey;
+        return Enchantment.getByName(key.toUpperCase());
     }
 
     // -----------------------------------------------------------------------
@@ -185,5 +236,16 @@ public class KitManager {
 
     public void evict(UUID playerUuid) {
         cache.remove(playerUuid);
+    }
+
+    /**
+     * Warms the cache by loading the player's saved kit for every gamemode from
+     * the database (async). Call on join so a player's saved arrangement is
+     * applied in duels/FFA — the cache is per-JVM, so each server must load it.
+     */
+    public void preload(UUID playerUuid) {
+        for (Gamemode gm : plugin.getGamemodeManager().getAllGamemodes()) {
+            loadKit(playerUuid, gm.getId());
+        }
     }
 }

@@ -99,7 +99,7 @@ public class QueueGUI implements Listener {
 
         if (kitEditorMode) {
             clicker.closeInventory();
-            new KitEditorGUI(plugin).openEditor(clicker, gamemodeId);
+            new KitTypeGUI(plugin, clicker, gamemodeId).open();
             return;
         }
 

@@ -119,6 +119,8 @@ public class LemonPractice extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new KitEditorListener(this), this);
         getServer().getPluginManager().registerEvents(new DuelListener(this), this);
         getServer().getPluginManager().registerEvents(new FFAListener(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.lemonpvp.lemonpractice.listeners.KitPreloadListener(this), this);
         getServer().getPluginManager().registerEvents(new DuelInviteListener(this), this);
         getServer().getPluginManager().registerEvents(new PartyListener(this), this);
         getServer().getPluginManager().registerEvents(new ZoneListener(this), this);
