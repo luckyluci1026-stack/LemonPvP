@@ -1,7 +1,6 @@
 package com.lemonpvp.lemonpractice.listeners;
 
 import com.lemonpvp.lemonpractice.LemonPractice;
-import com.lemonpvp.lemonpractice.model.FFAArena;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -29,17 +28,17 @@ public class FFAListener implements Listener {
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
+        Player player = event.getPlayer();
+
+        if (!plugin.getFfaManager().isInFfa(player.getUniqueId())) {
+            return;
+        }
+
         event.deathMessage(null);
         event.getDrops().clear();
         event.setDroppedExp(0);
 
-        Player player = event.getPlayer();
-
-        if (plugin.getFfaManager().getArena(player.getUniqueId()) == null) {
-            return;
-        }
-
-        Player killer = event.getPlayer().getKiller();
+        Player killer = player.getKiller();
         if (killer != null) {
             plugin.getFfaManager().handleKill(killer, player);
         }
@@ -47,51 +46,47 @@ public class FFAListener implements Listener {
         // The victim's killstreak ends on death
         plugin.getFfaManager().resetKillstreak(player.getUniqueId());
 
-        // Auto-respawn after 3 seconds (60 ticks)
+        // Auto-respawn after the configured delay
         UUID deathUuid = player.getUniqueId();
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             Player p = Bukkit.getPlayer(deathUuid);
             if (p != null && p.isDead()) {
                 p.spigot().respawn();
             }
-        }, 60L);
+        }, plugin.getConfig().getInt("ffa.respawn-delay-ticks", 60));
     }
 
     // -------------------------------------------------------------------------
-    // Respawn — send the player back to a random arena spawn
+    // Respawn — drop the player back inside the current roaming zone
     // -------------------------------------------------------------------------
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
-        FFAArena arena = plugin.getFfaManager().getArena(player.getUniqueId());
-
-        if (arena == null) {
+        if (!plugin.getFfaManager().isInFfa(player.getUniqueId())) {
             return;
         }
 
-        Location spawn = arena.getRandomSpawn();
+        Location spawn = plugin.getFfaManager().getRespawnLocation();
         if (spawn != null) {
             event.setRespawnLocation(spawn);
         }
 
-        // Re-equip the FFA kit and restore the player one tick after respawn
-        // (inventory is cleared on death). Single respawn path for all deaths.
+        // Re-equip the FFA kit, restore health and re-apply the border one tick
+        // after respawn (inventory is cleared on death). Single respawn path.
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (player.isOnline()
-                    && plugin.getFfaManager().getArena(player.getUniqueId()) != null) {
+            if (player.isOnline() && plugin.getFfaManager().isInFfa(player.getUniqueId())) {
                 plugin.getFfaManager().respawnEquip(player);
             }
         }, 1L);
     }
 
     // -------------------------------------------------------------------------
-    // Damage — FFA players may only damage each other; non-arena players are safe
+    // Damage — FFA players may only damage each other; non-FFA players are safe
     // -------------------------------------------------------------------------
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
-        // Only care about Player vs Player
         if (!(event.getDamager() instanceof Player damager)) {
             return;
         }
@@ -109,23 +104,18 @@ public class FFAListener implements Listener {
             return;
         }
 
-        FFAArena damagerArena = plugin.getFfaManager().getArena(damagerUuid);
-        FFAArena victimArena = plugin.getFfaManager().getArena(victimUuid);
+        boolean damagerInFfa = plugin.getFfaManager().isInFfa(damagerUuid);
+        boolean victimInFfa = plugin.getFfaManager().isInFfa(victimUuid);
 
-        // If one is in FFA and the other is not — cancel to prevent griefing
-        if ((damagerArena != null) != (victimArena != null)) {
-            event.setCancelled(true);
-            return;
-        }
-
-        // Both are in FFA — they must be in the SAME arena
-        if (damagerArena != null && damagerArena.getId() != victimArena.getId()) {
+        // If exactly one is in the FFA — cancel to prevent griefing.
+        if (damagerInFfa != victimInFfa) {
             event.setCancelled(true);
         }
+        // Both in FFA (or neither) — allow normal handling.
     }
 
     // -------------------------------------------------------------------------
-    // Hunger — no hunger outside of FFA arenas (lobby, spectating, etc.)
+    // Hunger — no hunger outside of an active FFA / duel
     // -------------------------------------------------------------------------
 
     @EventHandler
@@ -135,11 +125,9 @@ public class FFAListener implements Listener {
         }
 
         UUID uuid = player.getUniqueId();
-
-        boolean inFfa = plugin.getFfaManager().getArena(uuid) != null;
+        boolean inFfa = plugin.getFfaManager().isInFfa(uuid);
         boolean inDuel = plugin.getDuelManager().isInDuel(uuid);
 
-        // Only drain hunger during an active duel or FFA fight
         if (!inFfa && !inDuel) {
             event.setCancelled(true);
         }

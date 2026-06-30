@@ -154,6 +154,12 @@ public class LemonPractice extends JavaPlugin {
         ZoneCommand zoneCmd = new ZoneCommand(this);
         getCommand("zone").setExecutor(zoneCmd);
         getCommand("zone").setTabCompleter(zoneCmd);
+        var ffaCmd = new com.lemonpvp.lemonpractice.commands.FfaCommand(this);
+        var ffaCommand = getCommand("ffa");
+        if (ffaCommand != null) {
+            ffaCommand.setExecutor(ffaCmd);
+            ffaCommand.setTabCompleter(ffaCmd);
+        }
         var replayCmd = getCommand("replay");
         if (replayCmd != null) replayCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.ReplayCommand(this));
 
@@ -183,6 +189,9 @@ public class LemonPractice extends JavaPlugin {
         }
         if (zonePracticeManager != null) {
             zonePracticeManager.shutdown();
+        }
+        if (ffaManager != null) {
+            ffaManager.shutdown();
         }
         if (replayManager != null) {
             replayManager.shutdown();

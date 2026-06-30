@@ -19,8 +19,20 @@ worlds:
   duels: world_duels
   ffa: world_ffa
 
+# Roaming-zone FFA: a single fixed-size square play area (a per-player
+# WorldBorder, "size" blocks across) that does NOT shrink. Every
+# relocate-minutes the whole zone jumps to a new random location and everyone is
+# scattered into it with the border re-centered. Players respawn inside the zone.
+# The world should be provided by Multiverse-Core. Join with /ffa.
 ffa:
   arenas-built: false
+  world: world_ffa        # world the FFA runs in (loaded by Multiverse-Core)
+  size: 150               # border size in blocks (play area is size x size)
+  relocate-minutes: 20    # how often the zone jumps to a new location
+  center-range: 2000      # max distance from world spawn for a new random center
+  kit-gamemode: sword     # kit/gamemode id applied to FFA players (see gamemodes.yml)
+  respawn-delay-ticks: 60 # delay before auto-respawn after death (20 = 1s)
+  border-warning: 6       # world-border warning distance (blocks)
 
 # Duel replays: compact recordings of duels, each capped at 50 KB and kept for
 # 100 days (extend with /replay <name> add <days>). Lower sample-interval-ticks

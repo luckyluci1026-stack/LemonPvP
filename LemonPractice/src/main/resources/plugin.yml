@@ -92,6 +92,10 @@ commands:
     description: Join or leave a Zone Practice round (shrinking-zone battle royale practice)
     permission: lemonpractice.zone
     usage: /zone <join|leave>
+  ffa:
+    description: Join or leave the roaming-zone FFA
+    permission: lemonpractice.use.ffa
+    usage: /ffa <join|leave>
   replay:
     description: Watch and manage duel replays
     permission: lemonpractice.replay

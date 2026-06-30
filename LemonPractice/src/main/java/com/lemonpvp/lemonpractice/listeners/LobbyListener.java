@@ -93,9 +93,9 @@ public class LobbyListener implements Listener {
             plugin.getQueueManager().removeFromQueue(uuid);
         }
 
-        // Remove from FFA arena — decrements player count and frees the slot
+        // Remove from the FFA — clears their border and frees the slot
         if (plugin.getFfaManager().isInFfa(uuid)) {
-            plugin.getFfaManager().leaveArena(player);
+            plugin.getFfaManager().leaveFfa(player);
         }
 
         // Evict in-memory caches so data doesn't accumulate for offline players
