@@ -20,6 +20,7 @@
         <module>LemonTraining</module>
         <module>LemonQueue</module>
         <module>LemonBuild</module>
+        <module>LemonNameTags</module>
     </modules>
 
     <properties>

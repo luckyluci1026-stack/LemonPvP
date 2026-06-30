@@ -1,0 +1,19 @@
+name: LemonNameTags
+version: "1.0.0"
+main: com.lemonpvp.lemonnametags.LemonNameTags
+api-version: "26.2"
+description: Custom over-head nametags via Text Display entities with per-rank MiniMessage gradients.
+authors: [LemonPvP]
+depend: [LuckPerms]
+
+commands:
+  lemonnametags:
+    description: Reload LemonNameTags or refresh nametags
+    permission: lemonnametags.admin
+    aliases: [lnt]
+    usage: /lnt <reload|refresh>
+
+permissions:
+  lemonnametags.admin:
+    description: Manage LemonNameTags
+    default: op
