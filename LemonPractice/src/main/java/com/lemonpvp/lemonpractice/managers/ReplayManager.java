@@ -234,6 +234,7 @@ public class ReplayManager {
         double speed = 1.0;
         boolean paused = false;
         int follow = 0;        // 0 = free cam, 1 = actor1, 2 = actor2
+        java.util.Set<Integer> hitFrames = java.util.Collections.emptySet(); // frames to play a hit fx on
         BukkitTask task;
         org.bukkit.Location originLoc;     // where the viewer was before watching
         org.bukkit.GameMode originMode;
@@ -286,6 +287,7 @@ public class ReplayManager {
         Playback pb = new Playback(vu, world, a1, a2, d, name);
         pb.follow = follow;
         pb.speed = speed;
+        pb.hitFrames = hitFramesOf(d);
 
         // Remember where the viewer was, then move them into the replay as a spectator.
         pb.originLoc = v.getLocation().clone();
@@ -328,11 +330,52 @@ public class ReplayManager {
         if (i != pb.lastRendered) {
             pb.lastRendered = i;
             byte[] frame = pb.d.frames[i];
-            if ((frame[14] & 0x02) == 0) pb.a1.teleport(readLoc(pb.world, frame, 0));        // skip GONE
-            if ((frame[15 + 14] & 0x02) == 0) pb.a2.teleport(readLoc(pb.world, frame, 15));
+            if ((frame[14] & 0x02) == 0) {                                                    // skip GONE
+                pb.a1.teleport(readLoc(pb.world, frame, 0));
+                pb.a1.setSneaking((frame[14] & 0x01) != 0);
+            }
+            if ((frame[15 + 14] & 0x02) == 0) {
+                pb.a2.teleport(readLoc(pb.world, frame, 15));
+                pb.a2.setSneaking((frame[15 + 14] & 0x01) != 0);
+            }
             if (pb.follow != 0) applyFollow(v, pb, frame);
+            if (pb.hitFrames.contains(i)) playHitEffect(v, pb, frame);
         }
         sendHud(v, pb, i);
+    }
+
+    /** Maps the replay's bookmark fractions to absolute frame indices. */
+    private java.util.Set<Integer> hitFramesOf(Decoded d) {
+        if (d.bookmarks == null || d.bookmarks.length == 0 || d.frames.length == 0) {
+            return java.util.Collections.emptySet();
+        }
+        java.util.Set<Integer> out = new java.util.HashSet<>();
+        for (float f : d.bookmarks) {
+            int idx = Math.round(f * (d.frames.length - 1));
+            out.add(Math.max(0, Math.min(d.frames.length - 1, idx)));
+        }
+        return out;
+    }
+
+    /** Per-viewer crit burst + sound at a recorded hit moment (purely visual). */
+    private void playHitEffect(Player v, Playback pb, byte[] frame) {
+        Location at;
+        boolean p1Here = (frame[14] & 0x02) == 0;
+        boolean p2Here = (frame[15 + 14] & 0x02) == 0;
+        if (p1Here && p2Here) {
+            Location a = readLoc(pb.world, frame, 0), b = readLoc(pb.world, frame, 15);
+            at = new Location(pb.world, (a.getX() + b.getX()) / 2, (a.getY() + b.getY()) / 2 + 1, (a.getZ() + b.getZ()) / 2);
+        } else if (p1Here) {
+            at = readLoc(pb.world, frame, 0).add(0, 1, 0);
+        } else if (p2Here) {
+            at = readLoc(pb.world, frame, 15).add(0, 1, 0);
+        } else {
+            return;
+        }
+        // Particles/sound are sent only to the viewer (this is a per-viewer NPC replay).
+        v.spawnParticle(org.bukkit.Particle.CRIT, at, 12, 0.3, 0.3, 0.3, 0.05);
+        v.spawnParticle(org.bukkit.Particle.DAMAGE_INDICATOR, at, 4, 0.2, 0.2, 0.2, 0.0);
+        v.playSound(at, org.bukkit.Sound.ENTITY_PLAYER_ATTACK_CRIT, 0.7f, 1.1f);
     }
 
     /** Over-the-shoulder camera that follows one actor. */

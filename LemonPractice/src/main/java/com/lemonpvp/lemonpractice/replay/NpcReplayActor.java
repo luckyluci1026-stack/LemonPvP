@@ -41,6 +41,7 @@ public class NpcReplayActor implements ReplayActor {
     private final String name;
     private final UUID uuid;
     private final int entityId;
+    private boolean sneaking = false;
 
     public NpcReplayActor(Plugin plugin, Player viewer, String name) {
         this.plugin = plugin;
@@ -78,6 +79,16 @@ public class NpcReplayActor implements ReplayActor {
         Location pe = new Location(loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch());
         send(new WrapperPlayServerEntityTeleport(entityId, pe, true));
         send(new WrapperPlayServerEntityHeadLook(entityId, loc.getYaw()));
+    }
+
+    @Override
+    public void setSneaking(boolean s) {
+        if (s == sneaking) return;
+        sneaking = s;
+        // Base entity-flags metadata (index 0): bit 0x02 = crouching. Mirrors the
+        // index-17 skin-layers metadata used in spawn().
+        send(new WrapperPlayServerEntityMetadata(entityId, List.of(
+                new EntityData<>(0, EntityDataTypes.BYTE, (byte) (s ? 0x02 : 0x00)))));
     }
 
     @Override
