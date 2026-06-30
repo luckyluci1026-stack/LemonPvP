@@ -263,6 +263,7 @@ public class ReplayManager {
                 return;
             }
             startPlayback(v, world, d, name, 0, 1.0, true);
+            plugin.getDatabase().incrementReplayViews(name);
         }));
     }
 

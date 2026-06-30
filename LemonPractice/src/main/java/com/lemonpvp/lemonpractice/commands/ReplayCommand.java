@@ -44,6 +44,7 @@ public class ReplayCommand implements CommandExecutor {
 
         switch (args[0].toLowerCase()) {
             case "list", "browse", "gui" -> new com.lemonpvp.lemonpractice.gui.ReplayBrowserGUI(plugin, player).open();
+            case "top" -> handleTop(player);
             case "stop" -> {
                 plugin.getReplayManager().stopPlayback(player.getUniqueId());
                 msg(player, "<gray>Stopped any active replay.");
@@ -162,6 +163,23 @@ public class ReplayCommand implements CommandExecutor {
                     msg(p, "<gray>Players: <white>" + meta.player1() + " <gray>vs <white>" + meta.player2());
                     msg(p, "<gray>Mode: <white>" + meta.gamemode() + " <dark_gray>| <gray>Expires in <white>" + daysLeft + " days");
                     msg(p, "<yellow>/replay " + meta.name() + " <gray>to watch.");
+                }));
+    }
+
+    private void handleTop(Player player) {
+        plugin.getDatabase().topReplays(10).thenAccept(list ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(player.getUniqueId());
+                    if (p == null) return;
+                    if (list == null || list.isEmpty()) { msg(p, "<gray>No replays available."); return; }
+                    msg(p, PREFIX + "<gold>Top replays (most watched):");
+                    int rank = 1;
+                    for (var meta : list) {
+                        msg(p, "<gray>" + (rank++) + ". <click:run_command:'/replay " + meta.name() + "'>"
+                                + "<hover:show_text:'<green>Click to watch'><yellow>" + meta.player1()
+                                + " <gray>vs <yellow>" + meta.player2()
+                                + " <dark_gray>(<gold>" + meta.views() + " views<dark_gray>)</hover></click>");
+                    }
                 }));
     }
 

@@ -74,7 +74,7 @@ public class PracticeDatabase {
     // ── Replays ─────────────────────────────────────────────────────────────────
 
     public record ReplayMeta(String name, String player1, String player2,
-                             String gamemode, long createdAt, long expiresAt) {}
+                             String gamemode, long createdAt, long expiresAt, int views) {}
 
     public CompletableFuture<Void> saveReplay(String name, String p1, String p2, String gamemode,
                                               long createdAt, long expiresAt, byte[] data) {
@@ -103,12 +103,12 @@ public class PracticeDatabase {
     public CompletableFuture<ReplayMeta> getReplayMeta(String name) {
         return queryAsync(conn -> {
             try (PreparedStatement ps = conn.prepareStatement(
-                    "SELECT name,player1,player2,gamemode,created_at,expires_at FROM lp_replays WHERE name=?")) {
+                    "SELECT name,player1,player2,gamemode,created_at,expires_at,views FROM lp_replays WHERE name=?")) {
                 ps.setString(1, name);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) return new ReplayMeta(rs.getString("name"), rs.getString("player1"),
                             rs.getString("player2"), rs.getString("gamemode"),
-                            rs.getLong("created_at"), rs.getLong("expires_at"));
+                            rs.getLong("created_at"), rs.getLong("expires_at"), rs.getInt("views"));
                 }
             } catch (SQLException e) { plugin.getLogger().severe("getReplayMeta error: " + e.getMessage()); }
             return null;
@@ -145,19 +145,39 @@ public class PracticeDatabase {
     }
 
     public CompletableFuture<List<ReplayMeta>> listReplays(int limit) {
+        return listReplays(limit, "created_at");
+    }
+
+    /** Top replays by view count. */
+    public CompletableFuture<List<ReplayMeta>> topReplays(int limit) {
+        return listReplays(limit, "views");
+    }
+
+    private CompletableFuture<List<ReplayMeta>> listReplays(int limit, String orderColumn) {
+        String order = "views".equals(orderColumn) ? "views" : "created_at";
         return queryAsync(conn -> {
             List<ReplayMeta> list = new ArrayList<>();
             try (PreparedStatement ps = conn.prepareStatement(
-                    "SELECT name,player1,player2,gamemode,created_at,expires_at FROM lp_replays " +
-                    "WHERE expires_at>? ORDER BY created_at DESC LIMIT ?")) {
+                    "SELECT name,player1,player2,gamemode,created_at,expires_at,views FROM lp_replays " +
+                    "WHERE expires_at>? ORDER BY " + order + " DESC LIMIT ?")) {
                 ps.setLong(1, System.currentTimeMillis()); ps.setInt(2, limit);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) list.add(new ReplayMeta(rs.getString("name"), rs.getString("player1"),
                             rs.getString("player2"), rs.getString("gamemode"),
-                            rs.getLong("created_at"), rs.getLong("expires_at")));
+                            rs.getLong("created_at"), rs.getLong("expires_at"), rs.getInt("views")));
                 }
             } catch (SQLException e) { plugin.getLogger().severe("listReplays error: " + e.getMessage()); }
             return list;
+        });
+    }
+
+    public CompletableFuture<Void> incrementReplayViews(String name) {
+        return executeAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE lp_replays SET views=views+1 WHERE name=?")) {
+                ps.setString(1, name);
+                ps.executeUpdate();
+            } catch (SQLException e) { plugin.getLogger().severe("incrementReplayViews error: " + e.getMessage()); }
         });
     }
 
@@ -219,9 +239,14 @@ public class PracticeDatabase {
                     gamemode VARCHAR(32),
                     created_at BIGINT NOT NULL,
                     expires_at BIGINT NOT NULL,
+                    views INT NOT NULL DEFAULT 0,
                     data MEDIUMBLOB NOT NULL
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            // Migration: add views to an older lp_replays (MySQL has no ADD COLUMN IF NOT EXISTS).
+            try (ResultSet rs = conn.getMetaData().getColumns(conn.getCatalog(), null, "lp_replays", "views")) {
+                if (!rs.next()) stmt.executeUpdate("ALTER TABLE lp_replays ADD COLUMN views INT NOT NULL DEFAULT 0");
+            } catch (Exception ignored) {}
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS lp_ffa_arenas (
                     id INT AUTO_INCREMENT PRIMARY KEY,
