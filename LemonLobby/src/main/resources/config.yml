@@ -10,6 +10,14 @@ restart:
   time: "02:30"
   timezone: "Europe/Berlin"
 
+# "Recent Plays" hologram (native TextDisplay) listing the latest duel replays.
+# Place it in-game with /llobby hologram (sets the location below).
+replay-hologram:
+  enabled: true
+  count: 5
+  refresh-seconds: 30
+  # world/x/y/z are filled in by /llobby hologram
+
 # Hub double-jump: press the jump key twice to launch. Fall damage is disabled.
 # Players with lemoncore.use.fly keep normal /fly instead.
 double-jump:

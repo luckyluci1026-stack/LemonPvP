@@ -211,6 +211,31 @@ public class Database {
         }
     }
 
+    // ── Recent replays (read the shared lp_replays table written by LemonPractice) ─
+
+    public record ReplayLite(String player1, String player2, long createdAt) {}
+
+    /** Most recent non-expired replays. Returns empty if the table is absent. Blocking — call async. */
+    public java.util.List<ReplayLite> recentReplays(int limit) {
+        java.util.List<ReplayLite> out = new java.util.ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT player1, player2, created_at FROM lp_replays " +
+                     "WHERE expires_at > ? ORDER BY created_at DESC LIMIT ?")) {
+            ps.setLong(1, System.currentTimeMillis());
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(new ReplayLite(rs.getString("player1"), rs.getString("player2"),
+                            rs.getLong("created_at")));
+                }
+            }
+        } catch (SQLException e) {
+            // table may not exist on this server yet — silent, returns empty
+        }
+        return out;
+    }
+
     /** Saves or overwrites a pending training mode for the given player. Blocking — call async. */
     public void savePendingTrainingMode(UUID uuid, String mode) {
         try (Connection conn = getConnection();

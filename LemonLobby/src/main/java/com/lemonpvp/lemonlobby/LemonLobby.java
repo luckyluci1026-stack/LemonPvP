@@ -29,6 +29,7 @@ public final class LemonLobby extends JavaPlugin {
     private BoosterManager boosterManager;
     private com.lemonpvp.lemonlobby.managers.GoldenHourManager goldenHourManager;
     private com.lemonpvp.lemonlobby.managers.DailyRewardManager dailyRewardManager;
+    private com.lemonpvp.lemonlobby.managers.ReplayHologramManager replayHologramManager;
     private TreeUpgradeManager treeUpgradeManager;
     private AppleTreeListener appleTreeListener;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
@@ -60,6 +61,7 @@ public final class LemonLobby extends JavaPlugin {
         boosterManager     = new BoosterManager(this);
         goldenHourManager  = new com.lemonpvp.lemonlobby.managers.GoldenHourManager(this);
         dailyRewardManager = new com.lemonpvp.lemonlobby.managers.DailyRewardManager(this);
+        replayHologramManager = new com.lemonpvp.lemonlobby.managers.ReplayHologramManager(this);
         treeUpgradeManager = new TreeUpgradeManager(this);
         appleTreeListener  = new AppleTreeListener(this);
 
@@ -114,6 +116,9 @@ public final class LemonLobby extends JavaPlugin {
         // Start daily restart scheduler
         restartManager.start();
 
+        // Recent-plays hologram (slight delay so worlds are fully loaded)
+        getServer().getScheduler().runTaskLater(this, () -> replayHologramManager.start(), 40L);
+
         getLogger().info("LemonLobby enabled.");
     }
 
@@ -121,6 +126,7 @@ public final class LemonLobby extends JavaPlugin {
     public void onDisable() {
         if (restartManager != null) restartManager.stop();
         if (goldenHourManager != null) goldenHourManager.stopAndCleanup();
+        if (replayHologramManager != null) replayHologramManager.shutdown();
         if (database != null) database.close();
         getServer().getMessenger().unregisterOutgoingPluginChannel(this, "BungeeCord");
         getLogger().info("LemonLobby disabled.");
@@ -136,6 +142,7 @@ public final class LemonLobby extends JavaPlugin {
     public BoosterManager getBoosterManager()         { return boosterManager; }
     public com.lemonpvp.lemonlobby.managers.GoldenHourManager getGoldenHourManager() { return goldenHourManager; }
     public com.lemonpvp.lemonlobby.managers.DailyRewardManager getDailyRewardManager() { return dailyRewardManager; }
+    public com.lemonpvp.lemonlobby.managers.ReplayHologramManager getReplayHologramManager() { return replayHologramManager; }
     public TreeUpgradeManager getTreeUpgradeManager() { return treeUpgradeManager; }
     public AppleTreeListener getAppleTreeListener()   { return appleTreeListener; }
     public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }

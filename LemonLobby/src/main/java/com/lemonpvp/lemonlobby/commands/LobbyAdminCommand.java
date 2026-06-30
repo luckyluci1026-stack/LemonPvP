@@ -39,6 +39,7 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
             case "upgrade"    -> handleUpgrade(sender, args);
             case "booster"    -> handleBooster(sender, args);
             case "goldenhour" -> handleGoldenHour(sender, args);
+            case "hologram"   -> handleHologram(sender);
             default           -> sendUsage(sender);
         }
         return true;
@@ -106,17 +107,26 @@ public class LobbyAdminCommand implements CommandExecutor, TabCompleter {
                 + "x <gold>for <white>" + minutes + " min<gold>."));
     }
 
+    private void handleHologram(CommandSender sender) {
+        if (!(sender instanceof Player p)) {
+            sender.sendMessage(MM.deserialize("<!italic><red>Players only."));
+            return;
+        }
+        plugin.getReplayHologramManager().setLocation(p);
+        sender.sendMessage(MM.deserialize(PREFIX + "<green>Recent-Plays hologram placed at your location."));
+    }
+
     private void sendUsage(CommandSender sender) {
         sender.sendMessage(MM.deserialize(
                 "<!italic><gray>/llobby <white>reload <gray>| <white>upgrade <player> <tier> <gray>| "
-                        + "<white>booster <player> <1-5> <gray>| <white>goldenhour [min] [mult]"));
+                        + "<white>booster <player> <1-5> <gray>| <white>goldenhour [min] [mult] <gray>| <white>hologram"));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.hasPermission("lemonlobby.admin")) return List.of();
         return switch (args.length) {
-            case 1 -> filter(List.of("reload", "upgrade", "booster", "goldenhour"), args[0]);
+            case 1 -> filter(List.of("reload", "upgrade", "booster", "goldenhour", "hologram"), args[0]);
             case 2 -> switch (args[0].toLowerCase()) {
                 case "upgrade", "booster" -> Bukkit.getOnlinePlayers().stream()
                         .map(Player::getName).filter(n -> n.toLowerCase().startsWith(args[1].toLowerCase())).toList();
