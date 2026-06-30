@@ -25,12 +25,15 @@ public class KitEditorGUI {
     /** PDC key written to the player entity: records which gamemode is being edited. */
     public static final String PDC_EDITING_GAMEMODE_KEY = "editing_gamemode";
 
-    /** PDC key written to the DELETE barrier item to identify its action. */
+    /** PDC key written to control items (DELETE / item-selector) to identify their action. */
     public static final String PDC_KIT_ACTION_KEY = "kit_action";
     public static final String PDC_KIT_ACTION_DELETE = "delete";
+    public static final String PDC_KIT_ACTION_ITEMS = "items";
 
     /** Inventory slot used for the DELETE barrier item (slot 8 = last hotbar slot). */
     private static final int DELETE_SLOT = 8;
+    /** Inventory slot used for the item-selector control (slot 7). */
+    private static final int ITEMS_SLOT = 7;
 
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
     private static final MiniMessage MM = MiniMessage.miniMessage();
@@ -69,15 +72,16 @@ public class KitEditorGUI {
         if (kit != null) {
             for (java.util.Map.Entry<Integer, ItemStack> entry : kit.getSlots().entrySet()) {
                 int slot = entry.getKey();
-                // Don't overwrite the DELETE slot with kit contents
-                if (slot == DELETE_SLOT) continue;
+                // Don't overwrite the reserved control slots with kit contents
+                if (slot == DELETE_SLOT || slot == ITEMS_SLOT) continue;
                 if (slot >= 0 && slot < 36) {
                     player.getInventory().setItem(slot, entry.getValue().clone());
                 }
             }
         }
 
-        // 3. Place DELETE barrier item in slot 8
+        // 3. Place control items: item-selector (slot 7) + DELETE barrier (slot 8)
+        player.getInventory().setItem(ITEMS_SLOT, buildItemSelectorItem());
         player.getInventory().setItem(DELETE_SLOT, buildDeleteItem());
 
         // 4. Store gamemode in player's PDC
@@ -87,7 +91,8 @@ public class KitEditorGUI {
         // 5. Inform player
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.6f, 1.2f);
         player.sendMessage(MM.deserialize("<!italic><green>Editing your <yellow>" + gamemode
-                + "<green> kit. <gray>Close the inventory to <white>save<gray>, or click <red>Delete Kit <gray>to reset."));
+                + "<green> kit. <gray>Right-click the <aqua>Item Selector<gray> to add items, "
+                + "close to <white>save<gray>, or click <red>Delete Kit <gray>to reset."));
     }
 
     // -------------------------------------------------------------------------
@@ -110,8 +115,8 @@ public class KitEditorGUI {
             ItemStack item = player.getInventory().getItem(slot);
             if (item == null || item.getType() == Material.AIR) continue;
 
-            // Skip the DELETE barrier item
-            if (isDeleteItem(item)) continue;
+            // Skip control items (DELETE barrier, item-selector)
+            if (isControlItem(item)) continue;
 
             kit.setSlot(slot, item.clone());
         }
@@ -144,6 +149,24 @@ public class KitEditorGUI {
     }
 
     /**
+     * Builds the item-selector control item (nether star) used to open the
+     * {@link com.lemonpvp.lemonpractice.gui.KitItemPaletteGUI} from the editor.
+     */
+    public ItemStack buildItemSelectorItem() {
+        ItemStack item = new ItemStack(Material.NETHER_STAR);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(MM.deserialize("<!italic><aqua><bold>Item Selector</bold>"));
+            meta.lore(java.util.List.of(
+                    MM.deserialize("<!italic><gray>Right-click to open the item palette"),
+                    MM.deserialize("<!italic><gray>and build your kit without creative.")));
+            meta.getPersistentDataContainer().set(kitActionKey, PersistentDataType.STRING, PDC_KIT_ACTION_ITEMS);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    /**
      * Returns {@code true} if {@code item} is the DELETE barrier sentinel.
      */
     public boolean isDeleteItem(ItemStack item) {
@@ -152,6 +175,17 @@ public class KitEditorGUI {
         if (meta == null) return false;
         String action = meta.getPersistentDataContainer().get(kitActionKey, PersistentDataType.STRING);
         return PDC_KIT_ACTION_DELETE.equals(action);
+    }
+
+    /**
+     * Returns {@code true} if {@code item} is any kit-editor control item (it
+     * carries the {@link #PDC_KIT_ACTION_KEY} PDC tag).
+     */
+    public boolean isControlItem(ItemStack item) {
+        if (item == null) return false;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return false;
+        return meta.getPersistentDataContainer().has(kitActionKey, PersistentDataType.STRING);
     }
 
     /**

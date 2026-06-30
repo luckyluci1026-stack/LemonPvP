@@ -2,21 +2,30 @@ package com.lemonpvp.lemonpractice.listeners;
 
 import com.lemonpvp.lemonpractice.LemonPractice;
 import com.lemonpvp.lemonpractice.gui.KitEditorGUI;
+import com.lemonpvp.lemonpractice.gui.KitItemPaletteGUI;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class KitEditorListener implements Listener {
@@ -25,6 +34,12 @@ public class KitEditorListener implements Listener {
 
     /** Tracks when a player clicked the DELETE button (ms timestamp). */
     private final Map<UUID, Long> deleteConfirmTime = new HashMap<>();
+
+    /**
+     * Players whose next editor-inventory close should NOT trigger a save — set
+     * just before we open the item palette (which closes the editor canvas).
+     */
+    private final Set<UUID> suppressNextSave = new HashSet<>();
 
     /**
      * Active KitEditorGUI instances keyed by player UUID.
@@ -72,6 +87,19 @@ public class KitEditorListener implements Listener {
             return;
         }
 
+        // A side GUI (the item palette) closed — never save on that; just clear
+        // any pending suppression and keep the editing session alive.
+        InventoryType type = event.getInventory().getType();
+        if (type != InventoryType.CRAFTING && type != InventoryType.PLAYER) {
+            suppressNextSave.remove(player.getUniqueId());
+            return;
+        }
+
+        // The editor canvas closing because we opened the palette — skip the save.
+        if (suppressNextSave.remove(player.getUniqueId())) {
+            return;
+        }
+
         String gamemode = playerPdc.get(editingGamemodeKey, PersistentDataType.STRING);
         if (gamemode == null) {
             return;
@@ -83,6 +111,42 @@ public class KitEditorListener implements Listener {
         // Restore the lobby hotbar now that the editor is closed
         plugin.getLobbyHotbarManager().setupHotbar(player);
         activeEditors.remove(player.getUniqueId());
+    }
+
+    // -------------------------------------------------------------------------
+    // Hotbar right-click — open the item palette from the editor
+    // -------------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        Action action = event.getAction();
+        if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) return;
+
+        Player player = event.getPlayer();
+        if (!player.getPersistentDataContainer().has(editingGamemodeKey, PersistentDataType.STRING)) return;
+
+        ItemStack item = event.getItem();
+        if (item == null || !item.hasItemMeta()) return;
+        String action2 = item.getItemMeta().getPersistentDataContainer()
+                .get(kitActionKey, PersistentDataType.STRING);
+        if (!"items".equals(action2)) return;
+
+        event.setCancelled(true);
+        openPalette(player);
+    }
+
+    /** Opens the item palette next tick, suppressing the editor's close-save. */
+    private void openPalette(Player player) {
+        suppressNextSave.add(player.getUniqueId());
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (player.isOnline()
+                    && player.getPersistentDataContainer().has(editingGamemodeKey, PersistentDataType.STRING)) {
+                new KitItemPaletteGUI(plugin, player).open();
+            } else {
+                suppressNextSave.remove(player.getUniqueId());
+            }
+        });
     }
 
     // -------------------------------------------------------------------------
@@ -123,6 +187,14 @@ public class KitEditorListener implements Listener {
         }
 
         String kitAction = itemPdc.get(kitActionKey, PersistentDataType.STRING);
+
+        // Item-selector clicked — open the palette.
+        if ("items".equals(kitAction)) {
+            event.setCancelled(true);
+            openPalette(player);
+            return;
+        }
+
         if (!"delete".equals(kitAction)) {
             return;
         }
@@ -177,5 +249,6 @@ public class KitEditorListener implements Listener {
         UUID uuid = event.getPlayer().getUniqueId();
         activeEditors.remove(uuid);
         deleteConfirmTime.remove(uuid);
+        suppressNextSave.remove(uuid);
     }
 }
