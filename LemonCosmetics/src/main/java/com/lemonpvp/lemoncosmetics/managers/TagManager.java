@@ -115,8 +115,10 @@ public class TagManager {
 
         if (tag != null && canUse(player, tag)) {
             pd.setTagDisplay(tag.render);
+            lc.setCosmeticSuffix(player.getUniqueId(), tag.render);
         } else {
             pd.setTagDisplay(null);
+            lc.setCosmeticSuffix(player.getUniqueId(), null);
         }
     }
 

@@ -374,6 +374,27 @@ public class LemonCore extends JavaPlugin {
     public DiscordWebhookManager getDiscordWebhookManager() { return discordWebhookManager; }
     public MaintenanceManager getMaintenanceManager() { return maintenanceManager; }
     public LuckPerms getLuckPerms() { return luckPerms; }
+
+    /** Priority of the cosmetic-tag suffix node so we can find/replace only ours. */
+    private static final int COSMETIC_SUFFIX_PRIORITY = 50;
+
+    /**
+     * Sets (or clears, when {@code miniMessage} is null/blank) the player's
+     * cosmetic suffix in LuckPerms so the chat plugin (LPC) renders it after the
+     * name. Only the dedicated cosmetic-priority suffix node is touched — rank
+     * suffixes are left intact. No-op if LuckPerms is unavailable.
+     */
+    public void setCosmeticSuffix(java.util.UUID uuid, String miniMessage) {
+        if (luckPerms == null) return;
+        luckPerms.getUserManager().modifyUser(uuid, user -> {
+            user.data().clear(net.luckperms.api.node.NodeType.SUFFIX.predicate(
+                    s -> s.getPriority() == COSMETIC_SUFFIX_PRIORITY));
+            if (miniMessage != null && !miniMessage.isBlank()) {
+                user.data().add(net.luckperms.api.node.types.SuffixNode.builder(
+                        " " + miniMessage, COSMETIC_SUFFIX_PRIORITY).build());
+            }
+        });
+    }
     public long getStartTimeMs() { return startTimeMs; }
     public HttpApiManager getHttpApiManager() { return httpApiManager; }
     public FriendRequestManager getFriendRequestManager() { return friendRequestManager; }
