@@ -232,9 +232,9 @@ public class BugReportGUI implements Listener {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(TextUtil.parse("<reset>" + name));
+            meta.displayName(TextUtil.parse("<!italic><reset>" + name));
             List<Component> loreComp = new ArrayList<>();
-            for (String l : lore) loreComp.add(TextUtil.parse("<reset>" + l));
+            for (String l : lore) loreComp.add(TextUtil.parse("<!italic><reset>" + l));
             meta.lore(loreComp);
             item.setItemMeta(meta);
         }

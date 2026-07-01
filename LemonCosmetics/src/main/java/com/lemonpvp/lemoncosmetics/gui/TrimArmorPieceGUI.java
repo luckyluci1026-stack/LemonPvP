@@ -15,6 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -108,7 +109,7 @@ public class TrimArmorPieceGUI implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.displayName(MM.deserialize("<white>" + slot.getDisplayName()));
+        meta.displayName(MM.deserialize("<!italic><white>" + slot.getDisplayName()));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
@@ -116,13 +117,14 @@ public class TrimArmorPieceGUI implements Listener {
         if (trim != null) {
             String patDisp = plugin.getArmorTrimManager().getDisplayName(trim[0]);
             String matDisp = plugin.getArmorTrimManager().getMaterialDisplayName(trim[1]);
-            lore.add(MM.deserialize("<gray>Current trim: <yellow>" + patDisp + " / " + matDisp));
+            lore.add(MM.deserialize("<!italic><gray>Current trim: <yellow>" + patDisp + " / " + matDisp));
         } else {
-            lore.add(MM.deserialize("<gray>Current trim: <gray>None"));
+            lore.add(MM.deserialize("<!italic><gray>Current trim: <gray>None"));
         }
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<green>Click to change material"));
+        lore.add(MM.deserialize("<!italic><green>Click to change material"));
         meta.lore(lore);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
         meta.getPersistentDataContainer().set(slotKey, PersistentDataType.STRING, slot.name().toLowerCase());
         item.setItemMeta(meta);
@@ -132,7 +134,7 @@ public class TrimArmorPieceGUI implements Listener {
     private ItemStack backButton() {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        if (meta != null) { meta.displayName(MM.deserialize("<gray>Back")); item.setItemMeta(meta); }
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic><gray>← Back")); item.setItemMeta(meta); }
         return item;
     }
 

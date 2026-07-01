@@ -144,22 +144,26 @@ public class QueueGUI implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.displayName(MM.deserialize(gamemode.getDisplayName()));
+        meta.displayName(MM.deserialize("<!italic>" + gamemode.getDisplayName()));
 
         int playing = plugin.getQueueManager().getPlayingCount(gamemode.getId());
         int queuing = plugin.getQueueManager().getQueueCount(gamemode.getId());
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<gray>Playing: <green>" + playing));
-        lore.add(MM.deserialize("<gray>Queuing: <green>" + queuing));
+        lore.add(MM.deserialize("<!italic><gray>Playing: <green>" + playing));
+        lore.add(MM.deserialize("<!italic><gray>Queuing: <green>" + queuing));
         lore.add(Component.empty());
         if (gamemode.isEnabled()) {
-            lore.add(kitEditorMode ? MM.deserialize("<green>Click to edit kit!") : MM.deserialize("<green>Click to queue!"));
+            lore.add(kitEditorMode ? MM.deserialize("<!italic><green>Click to edit kit!") : MM.deserialize("<!italic><green>Click to queue!"));
         } else {
-            lore.add(MM.deserialize("<red>Disabled"));
+            lore.add(MM.deserialize("<!italic><red>Disabled"));
         }
         meta.lore(lore);
+        // Gamemode icons are weapons (swords/trident/mace/bow) — hide attack
+        // damage and extra item data so the tooltip stays clean.
+        meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES,
+                org.bukkit.inventory.ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
         meta.getPersistentDataContainer().set(gamemodeKey, PersistentDataType.STRING, gamemode.getId());
         item.setItemMeta(meta);

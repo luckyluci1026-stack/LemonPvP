@@ -143,19 +143,19 @@ public class ReportGUI implements Listener {
                 skull.setOwningPlayer(Bukkit.getOfflinePlayer(r.reportedUuid));
             } catch (Exception ignored) { }
             boolean online = Bukkit.getPlayer(r.reportedUuid) != null;
-            skull.displayName(TextUtil.parse("<reset><red><bold>Report #" + r.id
+            skull.displayName(TextUtil.parse("<!italic><reset><red><bold>Report #" + r.id
                     + " <reset>" + (online ? "<green>●" : "<dark_gray>●")));
             List<Component> lore = new ArrayList<>();
-            lore.add(TextUtil.parse("<reset><gray>Reported: <white>" + r.reportedName
+            lore.add(TextUtil.parse("<!italic><reset><gray>Reported: <white>" + r.reportedName
                     + (online ? " <green>(online)" : " <dark_gray>(offline)")));
-            lore.add(TextUtil.parse("<reset><gray>By: <white>" + r.reporterName));
-            lore.add(TextUtil.parse("<reset><gray>Reason: <yellow>" + r.reason));
-            lore.add(TextUtil.parse("<reset><gray>When: <white>" + relativeTime(r.reportTime.getTime())));
+            lore.add(TextUtil.parse("<!italic><reset><gray>By: <white>" + r.reporterName));
+            lore.add(TextUtil.parse("<!italic><reset><gray>Reason: <yellow>" + r.reason));
+            lore.add(TextUtil.parse("<!italic><reset><gray>When: <white>" + relativeTime(r.reportTime.getTime())));
             lore.add(Component.empty());
             lore.add(TextUtil.parse(online
                     ? "<reset><yellow>▸ Left-click: <gray>teleport"
                     : "<reset><dark_gray>▸ Player offline"));
-            lore.add(TextUtil.parse("<reset><yellow>▸ Right-click: <gray>resolve"));
+            lore.add(TextUtil.parse("<!italic><reset><yellow>▸ Right-click: <gray>resolve"));
             skull.lore(lore);
             item.setItemMeta(skull);
         }
@@ -235,9 +235,9 @@ public class ReportGUI implements Listener {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(TextUtil.parse("<reset>" + name));
+            meta.displayName(TextUtil.parse("<!italic><reset>" + name));
             List<Component> loreComp = new ArrayList<>();
-            for (String l : lore) loreComp.add(TextUtil.parse("<reset>" + l));
+            for (String l : lore) loreComp.add(TextUtil.parse("<!italic><reset>" + l));
             meta.lore(loreComp);
             item.setItemMeta(meta);
         }

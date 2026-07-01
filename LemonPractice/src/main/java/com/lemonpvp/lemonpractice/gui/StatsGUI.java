@@ -167,12 +167,14 @@ public class StatsGUI implements Listener {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(MM.deserialize(name));
+            meta.displayName(MM.deserialize("<!italic>" + name));
             List<Component> lore = new ArrayList<>();
             lore.add(Component.empty());
             for (String line : loreLines) lore.add(MM.deserialize("<!italic>" + line));
             lore.add(Component.empty());
             meta.lore(lore);
+            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES,
+                    org.bukkit.inventory.ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
             item.setItemMeta(meta);
         }
         return item;

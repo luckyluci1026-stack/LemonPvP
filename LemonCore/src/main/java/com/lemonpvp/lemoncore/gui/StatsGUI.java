@@ -73,11 +73,12 @@ public class StatsGUI {
     private ItemStack buildItem(Material mat, String name, List<String> lore) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(TextUtil.parse("<reset>" + name));
+        meta.displayName(TextUtil.parse("<!italic><reset>" + name));
         List<Component> loreComponents = new ArrayList<>();
-        for (String l : lore) loreComponents.add(TextUtil.parse("<reset>" + l));
+        for (String l : lore) loreComponents.add(TextUtil.parse("<!italic><reset>" + l));
         meta.lore(loreComponents);
-        meta.setHideTooltip(false);
+        meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES,
+                org.bukkit.inventory.ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
         item.setItemMeta(meta);
         return item;
     }

@@ -133,7 +133,7 @@ public class SettingsGUI implements Listener {
     private ItemStack makeItem(Material mat, String name) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(TextUtil.parse("<reset>" + name));
+        meta.displayName(TextUtil.parse("<!italic><reset>" + name));
         item.setItemMeta(meta);
         return item;
     }
@@ -142,8 +142,8 @@ public class SettingsGUI implements Listener {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         String raw = plugin.getMessagesManager().getRaw(msgKey);
-        meta.displayName(TextUtil.parse("<reset>" + raw));
-        meta.lore(List.of(TextUtil.parse("<reset><gray>Click to toggle")));
+        meta.displayName(TextUtil.parse("<!italic><reset>" + raw));
+        meta.lore(List.of(TextUtil.parse("<!italic><reset><gray>Click to toggle")));
         item.setItemMeta(meta);
         return item;
     }

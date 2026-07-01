@@ -152,11 +152,13 @@ public class LeaderboardGUI implements Listener {
             if (active) {
                 lore.add(MM.deserialize("<!italic><green>▶ Selected"));
                 meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
-                meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
             } else {
                 lore.add(MM.deserialize("<!italic><yellow>▶ Click to view"));
             }
             meta.lore(lore);
+            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS,
+                    org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES,
+                    org.bukkit.inventory.ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
             item.setItemMeta(meta);
         }
         return item;
