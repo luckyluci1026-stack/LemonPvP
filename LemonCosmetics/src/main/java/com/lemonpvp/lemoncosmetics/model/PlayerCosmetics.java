@@ -18,8 +18,6 @@ public class PlayerCosmetics {
      * array where [0] = patternId and [1] = materialId.
      */
     private final Map<String, String[]> appliedTrims;
-    private String equippedHatId = null;
-    private final Set<String> ownedHats = new HashSet<>();
     private String activeTrailId = null;
     private final Set<String> ownedTrails = new HashSet<>();
     private String equippedTagId = null;
@@ -64,30 +62,6 @@ public class PlayerCosmetics {
 
     public Map<String, String[]> getAppliedTrims() {
         return appliedTrims;
-    }
-
-    // -------------------------------------------------------------------------
-    // Ownership helpers
-    // -------------------------------------------------------------------------
-
-    // -------------------------------------------------------------------------
-    // Hat getters / setters
-    // -------------------------------------------------------------------------
-
-    public String getEquippedHatId() {
-        return equippedHatId;
-    }
-
-    public void setEquippedHatId(String equippedHatId) {
-        this.equippedHatId = equippedHatId;
-    }
-
-    public Set<String> getOwnedHats() {
-        return ownedHats;
-    }
-
-    public boolean ownsHat(String id) {
-        return id != null && ownedHats.contains(id);
     }
 
     // -------------------------------------------------------------------------
