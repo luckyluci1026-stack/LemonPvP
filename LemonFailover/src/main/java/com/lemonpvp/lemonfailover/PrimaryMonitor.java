@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Monitors the primary proxy via periodic TCP connect checks and drives the
@@ -24,9 +25,12 @@ import java.util.concurrent.TimeUnit;
  * {@code /failover auto} hands control back to the monitor.</p>
  *
  * <p>Threading: the check runs on Velocity's async scheduler (a blocking socket
- * connect there is fine). {@code state} and {@code manualOverride} are volatile
- * so event handlers read them consistently; the counters are only touched on the
- * scheduler thread.</p>
+ * connect there is fine). Velocity repeats tasks at a fixed rate regardless of
+ * whether the previous run finished, so {@code tick()} holds an in-flight guard
+ * — a probe that outlives the interval simply causes the next round to be
+ * skipped instead of overlapping. All state mutation (counters + transitions)
+ * is {@code synchronized}; {@code state}/{@code manualOverride}/counters are
+ * volatile so event handlers and the status command read them consistently.</p>
  */
 public final class PrimaryMonitor {
 
@@ -40,8 +44,11 @@ public final class PrimaryMonitor {
     private volatile boolean manualOverride = false;
     private volatile boolean lastReachable = false;
 
-    private int consecutiveFailures = 0;
-    private int consecutiveSuccesses = 0;
+    private volatile int consecutiveFailures = 0;
+    private volatile int consecutiveSuccesses = 0;
+
+    /** Prevents overlapping probes when a slow connect outlives the interval. */
+    private final AtomicBoolean probing = new AtomicBoolean(false);
 
     private ScheduledTask task;
 
@@ -55,13 +62,20 @@ public final class PrimaryMonitor {
 
     public void start() {
         switch (plugin.getConfig().getStartMode()) {
-            case "active" -> state = FailoverState.ACTIVE;
+            case "active" -> {
+                // Explicitly requested ACTIVE: pin it so a healthy primary does
+                // not instantly demote us with a false "primary restored" alert.
+                // Release with /failover auto.
+                state = FailoverState.ACTIVE;
+                manualOverride = true;
+            }
             case "auto"   -> { /* stay STANDBY; the monitor converges quickly */ }
             default        -> state = FailoverState.STANDBY;
         }
         schedule();
-        logger.info("[LemonFailover] Monitoring primary {}:{} — start state {}.",
-                plugin.getConfig().getPrimaryHost(), plugin.getConfig().getPrimaryPort(), state);
+        logger.info("[LemonFailover] Monitoring primary {}:{} — start state {}{}.",
+                plugin.getConfig().getPrimaryHost(), plugin.getConfig().getPrimaryPort(),
+                state, manualOverride ? " (pinned — /failover auto to release)" : "");
     }
 
     public void stop() {
@@ -84,10 +98,23 @@ public final class PrimaryMonitor {
     // ── Check loop ───────────────────────────────────────────────────────────
 
     private void tick() {
-        FailoverConfig cfg = plugin.getConfig();
-        boolean reachable = probe(cfg);
-        lastReachable = reachable;
+        // Velocity repeats at a fixed rate even if the previous run is still
+        // going (e.g. connect-timeout > interval, or a reload's immediate first
+        // tick) — skip this round instead of overlapping the blocking probe.
+        if (!probing.compareAndSet(false, true)) return;
+        try {
+            FailoverConfig cfg = plugin.getConfig();
+            boolean reachable = probe(cfg);
+            lastReachable = reachable;
+            onProbeResult(cfg, reachable);
+        } finally {
+            probing.set(false);
+        }
+    }
 
+    /** Applies one probe result to the counters/state. Synchronized with the
+     *  manual force/resume methods so transitions can never double-fire. */
+    private synchronized void onProbeResult(FailoverConfig cfg, boolean reachable) {
         if (reachable) {
             consecutiveSuccesses++;
             consecutiveFailures = 0;
@@ -117,28 +144,32 @@ public final class PrimaryMonitor {
 
     // ── Transitions ──────────────────────────────────────────────────────────
 
-    private void promoteToActive(boolean manual) {
+    private synchronized void promoteToActive(boolean manual) {
         if (state == FailoverState.ACTIVE) return;
         state = FailoverState.ACTIVE;
         consecutiveFailures = 0;
         consecutiveSuccesses = 0;
         FailoverConfig cfg = plugin.getConfig();
-        logger.warn("[LemonFailover] Primary {}:{} unreachable — switching to ACTIVE (failover){}.",
-                cfg.getPrimaryHost(), cfg.getPrimaryPort(), manual ? " [manual]" : "");
+        if (manual) {
+            logger.warn("[LemonFailover] Switching to ACTIVE (failover) [manual].");
+        } else {
+            logger.warn("[LemonFailover] Primary {}:{} unreachable — switching to ACTIVE (failover).",
+                    cfg.getPrimaryHost(), cfg.getPrimaryPort());
+        }
         broadcast(cfg.getFailoverActivated());
         plugin.getWebhook().send(cfg.getDiscordWebhook(),
                 ":rotating_light: **Failover activated** — the primary proxy is unreachable. "
                         + "The backup proxy is now serving players.");
     }
 
-    private void demoteToStandby(boolean manual) {
+    private synchronized void demoteToStandby(boolean manual) {
         if (state == FailoverState.STANDBY) return;
         state = FailoverState.STANDBY;
         consecutiveFailures = 0;
         consecutiveSuccesses = 0;
         FailoverConfig cfg = plugin.getConfig();
-        logger.info("[LemonFailover] Primary reachable again — returning to STANDBY{}.",
-                manual ? " [manual]" : "");
+        logger.info("[LemonFailover] {}Returning to STANDBY{}.",
+                manual ? "" : "Primary reachable again — ", manual ? " [manual]" : "");
         broadcast(cfg.getPrimaryRestored());
         plugin.getWebhook().send(cfg.getDiscordWebhook(),
                 ":white_check_mark: **Primary restored** — the backup proxy returned to standby.");
@@ -161,20 +192,22 @@ public final class PrimaryMonitor {
     // ── Admin control ────────────────────────────────────────────────────────
 
     /** Pins ACTIVE until {@link #resumeAuto()}. */
-    public void forceActive() {
+    public synchronized void forceActive() {
         manualOverride = true;
         promoteToActive(true);
     }
 
     /** Pins STANDBY until {@link #resumeAuto()}. */
-    public void forceStandby() {
+    public synchronized void forceStandby() {
         manualOverride = true;
         demoteToStandby(true);
     }
 
     /** Returns control to the automatic monitor. */
-    public void resumeAuto() {
+    public synchronized void resumeAuto() {
         manualOverride = false;
+        consecutiveFailures = 0;
+        consecutiveSuccesses = 0;
     }
 
     // ── Queries ──────────────────────────────────────────────────────────────

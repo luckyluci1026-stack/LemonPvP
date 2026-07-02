@@ -3,7 +3,6 @@ package com.lemonpvp.lemonqueue.config;
 import org.slf4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,7 +48,9 @@ public class QueueConfig {
             try (InputStream in = Files.newInputStream(file)) {
                 cfg.apply(new Yaml().load(in));
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
+            // Catches IO problems AND SnakeYAML's runtime YAMLException — a config
+            // typo must not crash routing back to hardcoded behaviour mid-boot.
             logger.warn("[LemonQueue] Could not load config.yml, using defaults: {}", e.getMessage());
         }
         return cfg;

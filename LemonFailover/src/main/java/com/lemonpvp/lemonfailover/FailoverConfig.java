@@ -3,7 +3,6 @@ package com.lemonpvp.lemonfailover;
 import org.slf4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,7 +52,9 @@ public final class FailoverConfig {
             try (InputStream in = Files.newInputStream(file)) {
                 cfg.apply(new Yaml().load(in));
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
+            // Catches IO problems AND SnakeYAML's runtime YAMLException — a config
+            // typo must never leave the failover plugin silently disabled.
             logger.warn("[LemonFailover] Could not load config.yml, using defaults: {}", e.getMessage());
         }
         return cfg;

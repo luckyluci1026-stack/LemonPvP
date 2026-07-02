@@ -5,6 +5,7 @@ import com.velocitypowered.api.command.SimpleCommand;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -40,7 +41,7 @@ public final class FailoverCommand implements SimpleCommand {
         }
 
         String[] args = invocation.arguments();
-        String sub = args.length == 0 ? "status" : args[0].toLowerCase();
+        String sub = args.length == 0 ? "status" : args[0].toLowerCase(Locale.ROOT);
         PrimaryMonitor monitor = plugin.getMonitor();
 
         switch (sub) {
@@ -89,7 +90,7 @@ public final class FailoverCommand implements SimpleCommand {
         List<String> subs = List.of("status", "active", "standby", "auto", "reload");
         if (args.length == 0) return subs;
         if (args.length == 1) {
-            String p = args[0].toLowerCase();
+            String p = args[0].toLowerCase(Locale.ROOT);
             return subs.stream().filter(s -> s.startsWith(p)).collect(Collectors.toList());
         }
         return List.of();

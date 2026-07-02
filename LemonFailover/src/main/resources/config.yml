@@ -41,6 +41,8 @@ bypass-permission: "lemonfailover.bypass"
 # Start state on boot: "standby", "active", or "auto" (decide from the first
 # checks). "standby" is safe: the monitor promotes to ACTIVE within
 # failure-threshold checks if the primary is already down.
+# NOTE: "active" starts PINNED (manual override) so a healthy primary can't
+# instantly demote it again — release with /failover auto.
 start-mode: "standby"
 
 # MOTDs shown in the server list, per state (MiniMessage). Blank = keep
