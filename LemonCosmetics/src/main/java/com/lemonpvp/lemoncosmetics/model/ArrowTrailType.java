@@ -40,7 +40,16 @@ public enum ArrowTrailType {
     DRAGON_TRAIL  ("dragon_trail",  "Dragon Trail",  1000,Particle.DRAGON_BREATH, null, 0f, Material.DRAGON_BREATH),
     CHERRY_TRAIL  ("cherry_trail",  "Cherry Trail",  600, Particle.CHERRY_LEAVES, null, 0f, Material.CHERRY_SAPLING),
     LAVA_TRAIL    ("lava_trail",    "Lava Trail",    600, Particle.LAVA, null, 0f, Material.MAGMA_CREAM),
-    COPPER_TRAIL  ("copper_trail",  "Copper Trail",  450, Particle.WAX_OFF, null, 0f, Material.COPPER_BLOCK);
+    COPPER_TRAIL  ("copper_trail",  "Copper Trail",  450, Particle.WAX_OFF, null, 0f, Material.COPPER_BLOCK),
+
+    // ── Second wave ─────────────────────────────────────────────────────────────
+    WITCH_TRAIL   ("witch_trail",   "Witch Trail",   550, Particle.WITCH, null, 0f, Material.BREWING_STAND),
+    LLAMA_TRAIL   ("llama_trail",   "Llama Trail",   350, Particle.SPIT, null, 0f, Material.LEAD),
+    ASH_TRAIL     ("ash_trail",     "Ash Trail",     350, Particle.ASH, null, 0f, Material.TUFF),
+    GLOW_INK_TRAIL("glow_ink_trail","Glow Ink Trail",500, Particle.GLOW_SQUID_INK, null, 0f, Material.GLOW_INK_SAC),
+    FIREWORK_TRAIL("firework_trail","Firework Trail",650, Particle.FIREWORK, null, 0f, Material.FIREWORK_ROCKET),
+    TOTEM_TRAIL   ("totem_trail",   "Totem Trail",   800, Particle.TOTEM_OF_UNDYING, null, 0f, Material.TOTEM_OF_UNDYING),
+    SCULK_TRAIL   ("sculk_trail",   "Sculk Trail",   750, Particle.SCULK_SOUL, null, 0f, Material.SCULK);
 
     public final String id;
     public final String displayName;

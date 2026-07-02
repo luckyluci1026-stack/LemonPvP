@@ -8,6 +8,7 @@ import com.lemonpvp.lemoncosmetics.listeners.PlayerListener;
 import com.lemonpvp.lemoncosmetics.managers.ArmorTrimManager;
 import com.lemonpvp.lemoncosmetics.managers.ArrowTrailManager;
 import com.lemonpvp.lemoncosmetics.managers.CosmeticsManager;
+import com.lemonpvp.lemoncosmetics.managers.DeathEffectManager;
 import com.lemonpvp.lemoncosmetics.managers.KillEffectManager;
 import com.lemonpvp.lemoncosmetics.managers.TagManager;
 import com.lemonpvp.lemoncosmetics.commands.TagsCommand;
@@ -20,6 +21,7 @@ public final class LemonCosmetics extends JavaPlugin {
     private CosmeticsManager cosmeticsManager;
     private ArmorTrimManager armorTrimManager;
     private KillEffectManager killEffectManager;
+    private DeathEffectManager deathEffectManager;
     private ArrowTrailManager arrowTrailManager;
     private TagManager tagManager;
     private CosmeticsMessaging cosmeticsMessaging;
@@ -42,6 +44,7 @@ public final class LemonCosmetics extends JavaPlugin {
         cosmeticsManager = new CosmeticsManager(this);
         armorTrimManager = new ArmorTrimManager(this);
         killEffectManager = new KillEffectManager(this);
+        deathEffectManager = new DeathEffectManager(this);
         arrowTrailManager = new ArrowTrailManager(this);
         tagManager = new TagManager(this);
 
@@ -86,6 +89,10 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public KillEffectManager getKillEffectManager() {
         return killEffectManager;
+    }
+
+    public DeathEffectManager getDeathEffectManager() {
+        return deathEffectManager;
     }
 
     public ArrowTrailManager getArrowTrailManager() {

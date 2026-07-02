@@ -18,6 +18,8 @@ public class PlayerCosmetics {
      * array where [0] = patternId and [1] = materialId.
      */
     private final Map<String, String[]> appliedTrims;
+    private String activeDeathEffectId = null;
+    private final Set<String> ownedDeathEffects = new HashSet<>();
     private String activeTrailId = null;
     private final Set<String> ownedTrails = new HashSet<>();
     private String equippedTagId = null;
@@ -62,6 +64,26 @@ public class PlayerCosmetics {
 
     public Map<String, String[]> getAppliedTrims() {
         return appliedTrims;
+    }
+
+    // -------------------------------------------------------------------------
+    // Death effect getters / setters
+    // -------------------------------------------------------------------------
+
+    public String getActiveDeathEffectId() {
+        return activeDeathEffectId;
+    }
+
+    public void setActiveDeathEffectId(String activeDeathEffectId) {
+        this.activeDeathEffectId = activeDeathEffectId;
+    }
+
+    public Set<String> getOwnedDeathEffects() {
+        return ownedDeathEffects;
+    }
+
+    public boolean ownsDeathEffect(String id) {
+        return id != null && ownedDeathEffects.contains(id);
     }
 
     // -------------------------------------------------------------------------

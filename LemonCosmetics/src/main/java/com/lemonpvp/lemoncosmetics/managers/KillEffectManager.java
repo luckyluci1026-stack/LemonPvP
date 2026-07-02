@@ -54,6 +54,12 @@ public class KillEffectManager {
         if (world == null || type.particle == null) return;
         if (type.sound != null) world.playSound(loc, type.sound, 1.0f, 1.0f);
 
+        // SONIC_BOOM is a huge one-shot particle — a ring of them would be absurd.
+        if (type.particle == org.bukkit.Particle.SONIC_BOOM) {
+            world.spawnParticle(type.particle, loc.clone().add(0, 1, 0), 1, 0, 0, 0, 0);
+            return;
+        }
+
         final Location base = loc.clone().add(0, 0.3, 0);
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];

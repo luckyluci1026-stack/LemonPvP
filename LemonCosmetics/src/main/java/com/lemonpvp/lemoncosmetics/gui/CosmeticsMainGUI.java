@@ -28,10 +28,11 @@ public class CosmeticsMainGUI implements Listener {
 
     static final MiniMessage MM = MiniMessage.miniMessage();
 
-    // Category slots — four categories centred in row 1 (slots 11–14)
-    private static final int TRIMS_SLOT   = 11;
-    private static final int TRAILS_SLOT  = 12;
-    private static final int EFFECTS_SLOT = 13;
+    // Category slots — five categories centred in row 1 (slots 10–14)
+    private static final int TRIMS_SLOT   = 10;
+    private static final int TRAILS_SLOT  = 11;
+    private static final int EFFECTS_SLOT = 12;
+    private static final int DEATH_SLOT   = 13;
     private static final int TAGS_SLOT    = 14;
     private static final int PROFILE_SLOT = 4;
 
@@ -61,6 +62,7 @@ public class CosmeticsMainGUI implements Listener {
         inventory.setItem(TRIMS_SLOT,    buildTrimsItem(cosmetics));
         inventory.setItem(TRAILS_SLOT,   buildTrailsItem(cosmetics));
         inventory.setItem(EFFECTS_SLOT,  buildEffectsItem(cosmetics));
+        inventory.setItem(DEATH_SLOT,    buildDeathEffectsItem(cosmetics));
         inventory.setItem(TAGS_SLOT,     buildTagsItem(cosmetics));
 
         if (!registered) {
@@ -79,9 +81,8 @@ public class CosmeticsMainGUI implements Listener {
         // Row 0 and Row 2: full black border
         for (int i = 0; i < 9; i++) inventory.setItem(i, BLACK_FILLER);
         for (int i = 18; i < 27; i++) inventory.setItem(i, BLACK_FILLER);
-        // Row 1: black edges around the four centred categories (slots 11–14), slot 15 also black
+        // Row 1: black edges around the five centred categories (slots 10–14)
         inventory.setItem(9,  BLACK_FILLER);
-        inventory.setItem(10, BLACK_FILLER);
         inventory.setItem(15, BLACK_FILLER);
         inventory.setItem(16, BLACK_FILLER);
         inventory.setItem(17, BLACK_FILLER);
@@ -115,6 +116,8 @@ public class CosmeticsMainGUI implements Listener {
                     + "<gray>/<white>" + ArrowTrailType.values().length));
             lore.add(MM.deserialize("<!italic><gray>Effects: <white>" + cosmetics.getOwnedEffects().size()
                     + "<gray>/<white>" + KillEffectType.values().length));
+            lore.add(MM.deserialize("<!italic><gray>Death FX: <white>" + cosmetics.getOwnedDeathEffects().size()
+                    + "<gray>/<white>" + com.lemonpvp.lemoncosmetics.model.DeathEffectType.values().length));
             int totalPatterns = plugin.getArmorTrimManager().getAllPatternIds().size();
             lore.add(MM.deserialize("<!italic><gray>Trims: <white>" + cosmetics.getOwnedPatterns().size()
                     + "<gray>/<white>" + totalPatterns));
@@ -222,6 +225,39 @@ public class CosmeticsMainGUI implements Listener {
         return item;
     }
 
+    private ItemStack buildDeathEffectsItem(PlayerCosmetics cosmetics) {
+        ItemStack item = new ItemStack(Material.SKELETON_SKULL);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+
+        meta.displayName(MM.deserialize("<!italic><gradient:#b0bec5:#37474f>Death Effects</gradient>"));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><gray>Go out in style — an effect"));
+        lore.add(MM.deserialize("<!italic><gray>plays where you fall."));
+        lore.add(Component.empty());
+
+        if (cosmetics != null) {
+            int owned = cosmetics.getOwnedDeathEffects().size();
+            int total = com.lemonpvp.lemoncosmetics.model.DeathEffectType.values().length;
+            lore.add(MM.deserialize("<!italic><dark_gray>Owned: <white>" + owned + "<dark_gray>/<white>" + total));
+            String active = cosmetics.getActiveDeathEffectId();
+            if (active != null) {
+                lore.add(MM.deserialize("<!italic><dark_gray>Active: <red>" + active));
+            } else {
+                lore.add(MM.deserialize("<!italic><dark_gray>Active: <gray>None"));
+            }
+        }
+
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><aqua>➜ Click to open"));
+
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
     private ItemStack buildTagsItem(PlayerCosmetics cosmetics) {
         ItemStack item = new ItemStack(Material.NAME_TAG);
         ItemMeta meta = item.getItemMeta();
@@ -315,6 +351,11 @@ public class CosmeticsMainGUI implements Listener {
                 player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
                 unregister();
                 new KillEffectsGUI(plugin, player).open();
+            }
+            case DEATH_SLOT -> {
+                player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
+                unregister();
+                new DeathEffectsGUI(plugin, player).open();
             }
             case TAGS_SLOT -> {
                 player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);

@@ -111,6 +111,15 @@ public class CosmeticsDatabase {
                 stmt.executeUpdate();
             }
             try (PreparedStatement stmt = conn.prepareStatement(
+                    "CREATE TABLE IF NOT EXISTS lc_cosmetics_death_effects (" +
+                    "    uuid VARCHAR(36) NOT NULL," +
+                    "    effect_id VARCHAR(64) NOT NULL," +
+                    "    active BOOLEAN DEFAULT FALSE," +
+                    "    PRIMARY KEY (uuid, effect_id)" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")) {
+                stmt.executeUpdate();
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(
                     "CREATE TABLE IF NOT EXISTS lc_cosmetics_tags (" +
                     "    uuid VARCHAR(36) NOT NULL," +
                     "    tag_id VARCHAR(64) NOT NULL," +
@@ -172,6 +181,24 @@ public class CosmeticsDatabase {
                 }
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to load kill effects for " + uuidStr, e);
+            }
+
+            // Death effects
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT effect_id, active FROM lc_cosmetics_death_effects WHERE uuid = ?")) {
+                stmt.setString(1, uuidStr);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String effectId = rs.getString("effect_id");
+                        boolean active = rs.getBoolean("active");
+                        cosmetics.getOwnedDeathEffects().add(effectId);
+                        if (active) {
+                            cosmetics.setActiveDeathEffectId(effectId);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to load death effects for " + uuidStr, e);
             }
 
             // Owned trim patterns
@@ -335,6 +362,72 @@ public class CosmeticsDatabase {
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to clear active effect", e);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Death effects
+    // -------------------------------------------------------------------------
+
+    /** Upserts a death-effect row. */
+    public CompletableFuture<Void> saveDeathEffect(UUID uuid, String effectId, boolean active) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "INSERT INTO lc_cosmetics_death_effects (uuid, effect_id, active) VALUES (?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE active = VALUES(active)")) {
+                stmt.setString(1, uuid.toString());
+                stmt.setString(2, effectId);
+                stmt.setBoolean(3, active);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to save death effect", e);
+            }
+        });
+    }
+
+    /**
+     * Sets the given death effect as active and marks all other death effects
+     * for this player as inactive in a single transaction.
+     */
+    public CompletableFuture<Void> setActiveDeathEffect(UUID uuid, String effectId) {
+        return executeAsync(conn -> {
+            try {
+                conn.setAutoCommit(false);
+
+                try (PreparedStatement clear = conn.prepareStatement(
+                        "UPDATE lc_cosmetics_death_effects SET active = FALSE WHERE uuid = ?")) {
+                    clear.setString(1, uuid.toString());
+                    clear.executeUpdate();
+                }
+
+                try (PreparedStatement upsert = conn.prepareStatement(
+                        "INSERT INTO lc_cosmetics_death_effects (uuid, effect_id, active) VALUES (?, ?, TRUE) " +
+                        "ON DUPLICATE KEY UPDATE active = TRUE")) {
+                    upsert.setString(1, uuid.toString());
+                    upsert.setString(2, effectId);
+                    upsert.executeUpdate();
+                }
+
+                conn.commit();
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+                plugin.getLogger().log(Level.SEVERE, "Failed to set active death effect", e);
+            } finally {
+                try { conn.setAutoCommit(true); } catch (SQLException e) { /* ignore */ }
+            }
+        });
+    }
+
+    /** Sets all death effects for the player to inactive. */
+    public CompletableFuture<Void> clearActiveDeathEffect(UUID uuid) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE lc_cosmetics_death_effects SET active = FALSE WHERE uuid = ?")) {
+                stmt.setString(1, uuid.toString());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to clear active death effect", e);
             }
         });
     }

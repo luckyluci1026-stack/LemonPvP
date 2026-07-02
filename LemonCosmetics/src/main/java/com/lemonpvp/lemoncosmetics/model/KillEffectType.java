@@ -38,7 +38,12 @@ public enum KillEffectType {
     DRAGON_SOUL    ("dragon_soul",    "Dragon Soul",     "lemoncosmetics.effect.dragon_soul",    Material.DRAGON_HEAD,          Particle.DRAGON_BREATH,   Sound.ENTITY_ENDER_DRAGON_GROWL),
     CHERRY_BLOSSOM ("cherry_blossom", "Cherry Blossom",  "lemoncosmetics.effect.cherry_blossom", Material.CHERRY_SAPLING,       Particle.CHERRY_LEAVES,   Sound.BLOCK_AMETHYST_BLOCK_CHIME),
     CLOUD_BURST    ("cloud_burst",    "Cloud Burst",     "lemoncosmetics.effect.cloud_burst",    Material.WHITE_WOOL,           Particle.CLOUD,           Sound.ENTITY_BREEZE_SHOOT),
-    WITHERED       ("withered",       "Withered",        "lemoncosmetics.effect.withered",       Material.WITHER_SKELETON_SKULL,Particle.SMOKE,           Sound.ENTITY_WITHER_SHOOT);
+    WITHERED       ("withered",       "Withered",        "lemoncosmetics.effect.withered",       Material.WITHER_SKELETON_SKULL,Particle.SMOKE,           Sound.ENTITY_WITHER_SHOOT),
+    SONIC_BOOM     ("sonic_boom",     "Sonic Boom",      "lemoncosmetics.effect.sonic_boom",     Material.SCULK_SHRIEKER,       Particle.SONIC_BOOM,      Sound.ENTITY_WARDEN_SONIC_BOOM),
+    WITCH_BREW     ("witch_brew",     "Witch Brew",      "lemoncosmetics.effect.witch_brew",     Material.BREWING_STAND,        Particle.WITCH,           Sound.ENTITY_WITCH_CELEBRATE),
+    INK_SPLASH     ("ink_splash",     "Ink Splash",      "lemoncosmetics.effect.ink_splash",     Material.INK_SAC,              Particle.SQUID_INK,       Sound.ENTITY_SQUID_SQUIRT),
+    GLOW_BURST     ("glow_burst",     "Glow Burst",      "lemoncosmetics.effect.glow_burst",     Material.GLOW_INK_SAC,         Particle.GLOW_SQUID_INK,  Sound.ENTITY_GLOW_SQUID_AMBIENT),
+    STARFALL       ("starfall",       "Starfall",        "lemoncosmetics.effect.starfall",       Material.FIREWORK_STAR,        Particle.FIREWORK,        Sound.ENTITY_FIREWORK_ROCKET_TWINKLE);
 
     private final String id;
     private final String displayName;

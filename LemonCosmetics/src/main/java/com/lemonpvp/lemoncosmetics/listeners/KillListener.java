@@ -16,6 +16,11 @@ public class KillListener implements Listener {
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
+        // Victim's own death effect (players only), regardless of the cause.
+        if (event.getEntity() instanceof Player victim) {
+            plugin.getDeathEffectManager().playEffect(victim, victim.getLocation());
+        }
+        // Killer's kill effect.
         if (!(event.getEntity().getKiller() instanceof Player killer)) return;
         plugin.getKillEffectManager().playEffect(killer, event.getEntity().getLocation());
     }
