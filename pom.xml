@@ -21,6 +21,7 @@
         <module>LemonQueue</module>
         <module>LemonBuild</module>
         <module>LemonNameTags</module>
+        <module>LemonFailover</module>
     </modules>
 
     <properties>

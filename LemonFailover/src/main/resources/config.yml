@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  LemonFailover
+#  Runs on the FALLBACK Velocity proxy. It continuously monitors the PRIMARY
+#  proxy. While the primary is reachable this proxy stays in STANDBY (and, by
+#  default, refuses logins so all players stay on the primary). If the primary
+#  becomes unreachable, this proxy switches to ACTIVE (failover) and accepts
+#  players normally — routing them to the backend servers from velocity.toml.
+#
+#  Typical setup: both proxies share the same forwarding secret and point at the
+#  same backend servers; a DNS/TCP load balancer sends players to whichever proxy
+#  is up. This plugin makes the standby proxy behave correctly on both sides of a
+#  crash and alerts you when failover happens.
+# ─────────────────────────────────────────────────────────────────────────────
+
+primary:
+  # Address + port of the PRIMARY proxy to monitor. Use its DIRECT address
+  # (bypassing any load balancer) so this check reflects the primary itself.
+  host: "127.0.0.1"
+  port: 25565
+  # How often to check the primary (milliseconds).
+  check-interval-ms: 3000
+  # TCP connect timeout for each check (milliseconds).
+  connect-timeout-ms: 2000
+  # Consecutive FAILED checks before switching to ACTIVE (failover).
+  failure-threshold: 3
+  # Consecutive SUCCESSFUL checks before switching back to STANDBY.
+  recovery-threshold: 3
+
+# STANDBY behaviour (while the primary is healthy).
+standby:
+  # Refuse logins while the primary is up, so players never split across proxies.
+  # Turn off if your load balancer already keeps this proxy out of rotation.
+  deny-logins: true
+  # When the primary recovers, disconnect players currently on this proxy so they
+  # reconnect to the primary. Off by default to avoid surprise disconnects.
+  kick-on-recovery: false
+
+# Players with this permission may always join, even in STANDBY (e.g. to test).
+bypass-permission: "lemonfailover.bypass"
+
+# Start state on boot: "standby", "active", or "auto" (decide from the first
+# checks). "standby" is safe: the monitor promotes to ACTIVE within
+# failure-threshold checks if the primary is already down.
+start-mode: "standby"
+
+# MOTDs shown in the server list, per state (MiniMessage). Blank = keep
+# velocity.toml's MOTD.
+motd:
+  standby: "<gray>LemonPvP <dark_gray>» <yellow>Standby proxy <gray>(primary online)"
+  active:  "<gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>» <red>Failover active"
+
+# Player-facing messages (MiniMessage; \n makes a new line on the kick screen).
+messages:
+  deny-standby: "<red>The network is running on the main proxy.\n<gray>Please reconnect in a moment."
+  kicked-on-recovery: "<yellow>The main proxy is back online.\n<gray>Please reconnect."
+  failover-activated: "<red><bold>⚠ Failover</bold> <dark_gray>» <gray>the main proxy is unreachable — this backup proxy is now active."
+  primary-restored: "<green><bold>✔</bold> <dark_gray>» <gray>The main proxy is back online."
+
+# Optional Discord webhook for failover alerts (leave blank to disable).
+discord-webhook: ""
