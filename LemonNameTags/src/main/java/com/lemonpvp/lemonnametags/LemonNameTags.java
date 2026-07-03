@@ -52,6 +52,11 @@ public final class LemonNameTags extends JavaPlugin {
         int swept = manager.cleanupOrphans();
         if (swept > 0) getLogger().info("Removed " + swept + " orphaned nametag display(s).");
 
+        // Crash cleanup: the hidden-name team persists in scoreboard.dat, so a
+        // crashed session would leave stale NEVER-visibility entries behind.
+        // Drop it entirely; current players are re-added below / on join.
+        manager.removeHiddenTeam();
+
         getServer().getPluginManager().registerEvents(new NameTagListener(this, manager), this);
 
         // Live updates on rank/permission changes (fired async by LuckPerms).
@@ -76,7 +81,12 @@ public final class LemonNameTags extends JavaPlugin {
     public void onDisable() {
         if (lpSubscription != null) lpSubscription.close();
         if (validateTask != null) validateTask.cancel();
-        if (manager != null) manager.removeAll();
+        if (manager != null) {
+            manager.removeAll();
+            // Unregister the hidden-name team so nothing persists in
+            // scoreboard.dat after the plugin is gone.
+            manager.removeHiddenTeam();
+        }
     }
 
     private void onUserDataRecalculate(UserDataRecalculateEvent event) {
@@ -99,7 +109,12 @@ public final class LemonNameTags extends JavaPlugin {
             case "reload" -> {
                 reloadConfig();
                 gradients.load(getConfig(), getConfig().getBoolean("display.bold-ranked-names", true));
-                for (Player p : getServer().getOnlinePlayers()) manager.create(p);
+                boolean hide = getConfig().getBoolean("hide-vanilla-nametags", true);
+                if (!hide) manager.removeHiddenTeam(); // toggle off applies immediately
+                for (Player p : getServer().getOnlinePlayers()) {
+                    if (hide) manager.hideVanillaName(p); // toggle on applies immediately
+                    manager.create(p);
+                }
                 sender.sendMessage(MiniMessage.miniMessage().deserialize(
                         "<green>LemonNameTags reloaded (" + gradients.size() + " gradients)."));
             }

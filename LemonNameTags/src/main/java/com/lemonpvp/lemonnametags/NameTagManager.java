@@ -73,8 +73,9 @@ public final class NameTagManager {
 
     /** (Re)creates the player's nametag display and mounts it. */
     public void create(Player player) {
+        if (player == null) return;
         remove(player.getUniqueId()); // never leave a duplicate behind
-        if (player == null || !player.isOnline()) return;
+        if (!player.isOnline()) return;
 
         final Component text = buildText(player);
         final double yOffset = plugin.getConfig().getDouble("display.y-offset", 0.4);
@@ -168,6 +169,14 @@ public final class NameTagManager {
     public void hideVanillaName(Player player) {
         if (!plugin.getConfig().getBoolean("hide-vanilla-nametags", true)) return;
         Scoreboard sb = Bukkit.getScoreboardManager().getMainScoreboard();
+
+        // An entry can belong to only ONE team per scoreboard — never steal it
+        // from another plugin's/datapack's team.
+        Team existing = sb.getEntryTeam(player.getName());
+        if (existing != null && !HIDDEN_TEAM.equals(existing.getName())) {
+            return;
+        }
+
         Team team = sb.getTeam(HIDDEN_TEAM);
         if (team == null) {
             team = sb.registerNewTeam(HIDDEN_TEAM);
@@ -181,5 +190,17 @@ public final class NameTagManager {
         Scoreboard sb = Bukkit.getScoreboardManager().getMainScoreboard();
         Team team = sb.getTeam(HIDDEN_TEAM);
         if (team != null && team.hasEntry(player.getName())) team.removeEntry(player.getName());
+    }
+
+    /**
+     * Unregisters the hidden-name team entirely (all entries included). Called
+     * on enable (crash cleanup — main-scoreboard teams persist in
+     * scoreboard.dat, so entries from a crashed session would otherwise hide
+     * vanilla names forever) and on disable, so no state outlives the plugin.
+     */
+    public void removeHiddenTeam() {
+        Scoreboard sb = Bukkit.getScoreboardManager().getMainScoreboard();
+        Team team = sb.getTeam(HIDDEN_TEAM);
+        if (team != null) team.unregister();
     }
 }
