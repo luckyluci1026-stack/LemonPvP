@@ -94,9 +94,19 @@ public class DeathEffectManager {
         if (world == null || type.particle == null) return;
         if (type.sound != null) world.playSound(loc, type.sound, 1.0f, 0.9f);
 
-        // SONIC_BOOM is a huge one-shot particle — a ring of them would be absurd.
+        // Heavy one-shot particles get a compact treatment instead of the full ring.
         if (type.particle == org.bukkit.Particle.SONIC_BOOM) {
             world.spawnParticle(type.particle, loc.clone().add(0, 1, 0), 1, 0, 0, 0, 0);
+            return;
+        }
+        if (type.particle == org.bukkit.Particle.EXPLOSION) {
+            Location c = loc.clone().add(0, 0.5, 0);
+            world.spawnParticle(type.particle, c, 1, 0, 0, 0, 0);
+            for (int i = 0; i < 5; i++) {
+                double a = i * (Math.PI * 2 / 5);
+                world.spawnParticle(type.particle, c.clone().add(Math.cos(a) * 1.6, 0.2, Math.sin(a) * 1.6),
+                        1, 0, 0, 0, 0);
+            }
             return;
         }
 

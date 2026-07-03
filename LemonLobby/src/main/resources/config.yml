@@ -25,6 +25,15 @@ double-jump:
   forward-power: 1.0
   up-power: 0.9
 
+# Hub elytra boost: lobby players wear locked "Lobby Wings". Double-jump up,
+# open the elytra mid-air, then right-click while gliding for an explosive
+# boost (explosion particles + bang). Crash damage is disabled.
+elytra-boost:
+  enabled: true
+  give-elytra: true   # auto-equip the locked elytra on join
+  power: 1.6          # boost strength in the look direction
+  cooldown-ms: 1500   # delay between boosts
+
 # Golden Hour: a server-wide event that multiplies apple-tree rewards for a
 # while, with a title + bossbar countdown. Fires automatically on the interval,
 # or manually via /llobby goldenhour [minutes] [multiplier].

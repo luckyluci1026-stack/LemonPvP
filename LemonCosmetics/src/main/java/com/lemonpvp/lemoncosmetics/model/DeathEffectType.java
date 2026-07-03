@@ -30,7 +30,11 @@ public enum DeathEffectType {
     CHERRY_FAREWELL("cherry_farewell","Cherry Farewell", 600, Material.CHERRY_LEAVES,    Particle.CHERRY_LEAVES,   Sound.BLOCK_AMETHYST_BLOCK_CHIME),
     ENDER_ESCAPE   ("ender_escape",   "Ender Escape",    700, Material.ENDER_EYE,        Particle.PORTAL,          Sound.ENTITY_ENDERMAN_TELEPORT),
     WITCHS_CURSE   ("witchs_curse",   "Witch's Curse",   700, Material.BREWING_STAND,    Particle.WITCH,           Sound.ENTITY_WITCH_CELEBRATE),
-    STARFALL       ("starfall",       "Starfall",        800, Material.FIREWORK_STAR,    Particle.FIREWORK,        Sound.ENTITY_FIREWORK_ROCKET_TWINKLE);
+    STARFALL       ("starfall",       "Starfall",        800, Material.FIREWORK_STAR,    Particle.FIREWORK,        Sound.ENTITY_FIREWORK_ROCKET_TWINKLE),
+    LAST_BLAST     ("last_blast",     "Last Blast",      800, Material.TNT,              Particle.EXPLOSION,       Sound.ENTITY_GENERIC_EXPLODE),
+    SMOKE_SCREEN   ("smoke_screen",   "Smoke Screen",    500, Material.CAMPFIRE,         Particle.CAMPFIRE_COSY_SMOKE, Sound.BLOCK_FIRE_EXTINGUISH),
+    ASCENSION      ("ascension",      "Ascension",       900, Material.END_ROD,          Particle.END_ROD,         Sound.BLOCK_BEACON_ACTIVATE),
+    DRAGONS_END    ("dragons_end",    "Dragon's End",   1000, Material.DRAGON_EGG,       Particle.DRAGON_BREATH,   Sound.ENTITY_ENDER_DRAGON_HURT);
 
     public final String id;
     public final String displayName;
