@@ -335,6 +335,7 @@ public class DuelManager {
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2500), Duration.ofMillis(500))));
             winner.playSound(winner.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.0f);
             winner.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 40, 4, false, false));
+            tryPlayWinEffect(winner);
         }
 
         if (loser != null && loser.isOnline()) {
@@ -423,6 +424,19 @@ public class DuelManager {
         if (player == null || !player.isOnline()) return;
         String lobbyServer = plugin.getServersConfig().getString("servers.lobby.name", "lobby");
         plugin.getVelocityMessaging().sendToServer(player, lobbyServer);
+    }
+
+    /** Plays the winner's LemonCosmetics win effect, if that plugin is present. */
+    private void tryPlayWinEffect(Player winner) {
+        try {
+            org.bukkit.plugin.Plugin lc = Bukkit.getPluginManager().getPlugin("LemonCosmetics");
+            if (lc != null && lc.isEnabled()
+                    && lc instanceof com.lemonpvp.lemoncosmetics.LemonCosmetics cosmetics) {
+                cosmetics.getWinEffectManager().play(winner);
+            }
+        } catch (Throwable ignored) {
+            // LemonCosmetics absent or incompatible — celebrations are optional.
+        }
     }
 
     private Location raiseY(Location loc, double amount) {

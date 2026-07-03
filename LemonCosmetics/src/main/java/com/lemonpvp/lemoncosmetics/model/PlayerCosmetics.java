@@ -20,6 +20,8 @@ public class PlayerCosmetics {
     private final Map<String, String[]> appliedTrims;
     private String activeDeathEffectId = null;
     private final Set<String> ownedDeathEffects = new HashSet<>();
+    private String activeWinEffectId = null;
+    private final Set<String> ownedWinEffects = new HashSet<>();
     private String activeTrailId = null;
     private final Set<String> ownedTrails = new HashSet<>();
     private String equippedTagId = null;
@@ -84,6 +86,26 @@ public class PlayerCosmetics {
 
     public boolean ownsDeathEffect(String id) {
         return id != null && ownedDeathEffects.contains(id);
+    }
+
+    // -------------------------------------------------------------------------
+    // Win effect getters / setters
+    // -------------------------------------------------------------------------
+
+    public String getActiveWinEffectId() {
+        return activeWinEffectId;
+    }
+
+    public void setActiveWinEffectId(String activeWinEffectId) {
+        this.activeWinEffectId = activeWinEffectId;
+    }
+
+    public Set<String> getOwnedWinEffects() {
+        return ownedWinEffects;
+    }
+
+    public boolean ownsWinEffect(String id) {
+        return id != null && ownedWinEffects.contains(id);
     }
 
     // -------------------------------------------------------------------------

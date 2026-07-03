@@ -5,7 +5,7 @@ import com.lemonpvp.lemoncosmetics.model.ArrowTrailType;
 import com.lemonpvp.lemoncosmetics.model.PlayerCosmetics;
 import org.bukkit.Bukkit;
 import org.bukkit.Particle;
-import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Projectile;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Map;
@@ -35,9 +35,9 @@ public class ArrowTrailManager {
     }
 
     /** Called from ProjectileLaunchEvent when a player with an active trail shoots. */
-    public void startTrail(Arrow arrow, ArrowTrailType trail) {
-        int entityId = arrow.getEntityId();
-        UUID shooterUuid = arrow.getShooter() instanceof org.bukkit.entity.Player p ? p.getUniqueId() : null;
+    public void startTrail(Projectile projectile, ArrowTrailType trail) {
+        int entityId = projectile.getEntityId();
+        UUID shooterUuid = projectile.getShooter() instanceof org.bukkit.entity.Player p ? p.getUniqueId() : null;
 
         if (shooterUuid != null) {
             playerArrows.computeIfAbsent(shooterUuid, k -> ConcurrentHashMap.newKeySet()).add(entityId);
@@ -45,7 +45,7 @@ public class ArrowTrailManager {
 
         BukkitTask task = Bukkit.getScheduler()
                 .runTaskTimer(plugin, () -> {
-                    if (!arrow.isValid() || arrow.isOnGround()) {
+                    if (!projectile.isValid() || projectile.isOnGround()) {
                         stopTrail(entityId);
                         if (shooterUuid != null) {
                             Set<Integer> s = playerArrows.get(shooterUuid);
@@ -53,7 +53,7 @@ public class ArrowTrailManager {
                         }
                         return;
                     }
-                    spawnParticle(arrow, trail);
+                    spawnParticle(projectile, trail);
                 }, 0L, 2L);
         arrowTasks.put(entityId, task);
     }
@@ -79,9 +79,9 @@ public class ArrowTrailManager {
         }
     }
 
-    private void spawnParticle(Arrow arrow, ArrowTrailType trail) {
+    private void spawnParticle(Projectile projectile, ArrowTrailType trail) {
         try {
-            var loc = arrow.getLocation();
+            var loc = projectile.getLocation();
             var world = loc.getWorld();
             if (world == null) return;
             if (trail.particle == Particle.DUST) {
@@ -89,7 +89,7 @@ public class ArrowTrailManager {
                 world.spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0, dust);
             } else if (trail.particle == Particle.FLAME) {
                 // Flame + smoke alternating based on entity ID % 2
-                Particle p = (arrow.getEntityId() % 2 == 0) ? Particle.FLAME : Particle.SMOKE;
+                Particle p = (projectile.getEntityId() % 2 == 0) ? Particle.FLAME : Particle.SMOKE;
                 world.spawnParticle(p, loc, 1, 0, 0, 0, 0);
             } else {
                 world.spawnParticle(trail.particle, loc, 1, 0, 0, 0, 0);

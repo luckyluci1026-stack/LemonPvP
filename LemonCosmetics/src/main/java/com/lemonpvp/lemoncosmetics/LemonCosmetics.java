@@ -11,6 +11,7 @@ import com.lemonpvp.lemoncosmetics.managers.CosmeticsManager;
 import com.lemonpvp.lemoncosmetics.managers.DeathEffectManager;
 import com.lemonpvp.lemoncosmetics.managers.KillEffectManager;
 import com.lemonpvp.lemoncosmetics.managers.TagManager;
+import com.lemonpvp.lemoncosmetics.managers.WinEffectManager;
 import com.lemonpvp.lemoncosmetics.commands.TagsCommand;
 import com.lemonpvp.lemoncosmetics.velocity.CosmeticsMessaging;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,6 +23,7 @@ public final class LemonCosmetics extends JavaPlugin {
     private ArmorTrimManager armorTrimManager;
     private KillEffectManager killEffectManager;
     private DeathEffectManager deathEffectManager;
+    private WinEffectManager winEffectManager;
     private ArrowTrailManager arrowTrailManager;
     private TagManager tagManager;
     private CosmeticsMessaging cosmeticsMessaging;
@@ -45,6 +47,7 @@ public final class LemonCosmetics extends JavaPlugin {
         armorTrimManager = new ArmorTrimManager(this);
         killEffectManager = new KillEffectManager(this);
         deathEffectManager = new DeathEffectManager(this);
+        winEffectManager = new WinEffectManager(this);
         arrowTrailManager = new ArrowTrailManager(this);
         tagManager = new TagManager(this);
 
@@ -93,6 +96,10 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public DeathEffectManager getDeathEffectManager() {
         return deathEffectManager;
+    }
+
+    public WinEffectManager getWinEffectManager() {
+        return winEffectManager;
     }
 
     public ArrowTrailManager getArrowTrailManager() {
