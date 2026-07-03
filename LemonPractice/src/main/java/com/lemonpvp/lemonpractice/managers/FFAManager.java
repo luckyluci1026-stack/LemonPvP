@@ -327,6 +327,10 @@ public class FFAManager {
         }
         resetKillstreak(vu);
 
+        // The lethal hit was CANCELLED, so no EntityDeathEvent fires — play the
+        // cosmetic kill/death effects here or they'd never trigger in the FFA.
+        tryPlayCosmeticEffects(victim, credited ? killer : null);
+
         // Enter the death state: stop fire/damage, clear items, go spectator.
         victim.setFireTicks(0);
         victim.getInventory().clear();
@@ -594,6 +598,26 @@ public class FFAManager {
             return;
         }
         kit.getSlots().forEach((slot, item) -> player.getInventory().setItem(slot, item));
+    }
+
+    /**
+     * Plays the LemonCosmetics death effect (victim) and kill effect (killer)
+     * at the death location. Needed because the FFA intercepts lethal hits —
+     * no EntityDeathEvent ever fires, so LemonCosmetics' own KillListener
+     * never sees FFA kills. Guarded soft-dependency call.
+     */
+    private void tryPlayCosmeticEffects(Player victim, Player killer) {
+        try {
+            org.bukkit.plugin.Plugin lc = Bukkit.getPluginManager().getPlugin("LemonCosmetics");
+            if (lc != null && lc.isEnabled()
+                    && lc instanceof com.lemonpvp.lemoncosmetics.LemonCosmetics cosmetics) {
+                Location at = victim.getLocation();
+                cosmetics.getDeathEffectManager().playEffect(victim, at);
+                if (killer != null) cosmetics.getKillEffectManager().playEffect(killer, at);
+            }
+        } catch (Throwable ignored) {
+            // LemonCosmetics absent or incompatible — effects are optional.
+        }
     }
 
     private void tryUpdateLemonCoreStats(Player killer, Player victim) {
