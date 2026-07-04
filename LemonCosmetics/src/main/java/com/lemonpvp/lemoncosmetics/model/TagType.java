@@ -126,7 +126,7 @@ public enum TagType {
     RAGE      ("rage",      "Rage",      "<gradient:#ff1744:#ff6d00>ʀᴀɢᴇ",    Material.FIRE_CORAL,        700),
     RAPID     ("rapid",     "Rapid",     "<gradient:#00e5ff:#ffffff>ʀᴀᴘɪᴅ",   Material.SUGAR,             600),
     RAVEN     ("raven",     "Raven",     "<gradient:#455a64:#000000>ʀᴀᴠᴇɴ",   Material.BLACK_DYE,         700),
-    REBEL     ("rebel",     "Rebel",     "<gradient:#ff5252:#ffab00>ʀᴇʙᴇʟ",   Material.CHAIN,             700),
+    REBEL     ("rebel",     "Rebel",     "<gradient:#ff5252:#ffab00>ʀᴇʙᴇʟ",   Material.TRIPWIRE_HOOK,     700),
     ROGUE     ("rogue",     "Rogue",     "<gradient:#78909c:#212121>ʀᴏɢᴜᴇ",   Material.LEATHER_HELMET,    700),
     RUTHLESS  ("ruthless",  "Ruthless",  "<gradient:#b71c1c:#000000>ʀᴜᴛʜʟᴇss",Material.NETHERITE_SWORD,  1200),
     SCAR      ("scar",      "Scar",      "<gradient:#ef9a9a:#7f0000>sᴄᴀʀ",    Material.PINK_TULIP,        600),
