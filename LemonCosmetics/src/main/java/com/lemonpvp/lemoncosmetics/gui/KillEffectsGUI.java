@@ -43,6 +43,7 @@ public class KillEffectsGUI implements Listener {
     private Inventory inventory;
     private boolean registered = false;
     private int page = 0;
+    private boolean busy = false; // debounce purchases
     private final Map<Integer, KillEffectType> slotMap = new HashMap<>();
 
     public KillEffectsGUI(LemonCosmetics plugin, Player player) {
@@ -112,12 +113,30 @@ public class KillEffectsGUI implements Listener {
 
     private void handleEffectClick(Player clicker, KillEffectType effect) {
         PlayerCosmetics cosmetics = plugin.getCosmeticsManager().getPlayerCosmetics(clicker.getUniqueId());
-        boolean owned = cosmetics != null && cosmetics.ownsEffect(effect.getId());
+        if (cosmetics == null) return;
+        boolean owned = cosmetics.ownsEffect(effect.getId())
+                || clicker.hasPermission(effect.getPermission());
 
+        // Not owned — buy it with coins (codes/quests still unlock for free).
         if (!owned) {
-            clicker.playSound(clicker.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
-            clicker.sendMessage(MM.deserialize("<red>You don't own <yellow>" + effect.getDisplayName()
-                    + "</yellow>. Unlock it with a code!"));
+            if (busy) return;
+            busy = true;
+            UUID buyerUuid = clicker.getUniqueId();
+            plugin.getCosmeticsManager().buyKillEffect(buyerUuid, effect)
+                    .thenAccept(bought -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        busy = false;
+                        Player p = Bukkit.getPlayer(buyerUuid);
+                        if (p == null) return;
+                        if (bought) {
+                            p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.3f);
+                            p.sendMessage(MM.deserialize("<green>Purchased: <yellow>" + effect.getDisplayName() + "</yellow>!"));
+                        } else {
+                            p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
+                            p.sendMessage(MM.deserialize("<red>You can't afford <yellow>" + effect.getDisplayName()
+                                    + "</yellow> <gray>(" + effect.getPrice() + " coins)</gray>."));
+                        }
+                        render();
+                    }));
             return;
         }
 
@@ -151,8 +170,9 @@ public class KillEffectsGUI implements Listener {
     }
 
     private ItemStack buildEffectItem(KillEffectType effect, PlayerCosmetics cosmetics) {
-        boolean owned = cosmetics != null && cosmetics.ownsEffect(effect.getId());
-        boolean active = owned && cosmetics.getActiveEffectId() != null
+        boolean owned = (cosmetics != null && cosmetics.ownsEffect(effect.getId()))
+                || player.hasPermission(effect.getPermission());
+        boolean active = owned && cosmetics != null && cosmetics.getActiveEffectId() != null
                 && cosmetics.getActiveEffectId().equals(effect.getId());
 
         Material icon = owned ? effect.getIcon() : Material.GRAY_STAINED_GLASS_PANE;
@@ -177,8 +197,9 @@ public class KillEffectsGUI implements Listener {
                 lore.add(MM.deserialize("<!italic><gray>Click to equip"));
             }
         } else {
-            lore.add(MM.deserialize("<!italic><dark_gray>Not owned"));
-            lore.add(MM.deserialize("<!italic><gray>Unlock with a code"));
+            lore.add(MM.deserialize("<!italic><gray>Price: <gold>" + effect.getPrice() + " Coins"));
+            lore.add(MM.deserialize("<!italic><yellow>► Click to buy"));
+            lore.add(MM.deserialize("<!italic><dark_gray>Also unlockable via codes & quests"));
         }
         meta.lore(lore);
         item.setItemMeta(meta);

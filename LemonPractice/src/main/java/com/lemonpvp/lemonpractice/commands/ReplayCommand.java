@@ -183,21 +183,6 @@ public class ReplayCommand implements CommandExecutor {
                 }));
     }
 
-    private void handleList(Player player) {
-        plugin.getDatabase().listReplays(15).thenAccept(list ->
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    Player p = Bukkit.getPlayer(player.getUniqueId());
-                    if (p == null) return;
-                    if (list == null || list.isEmpty()) { msg(p, "<gray>No replays available."); return; }
-                    msg(p, PREFIX + "<white>Recent replays:");
-                    for (var meta : list) {
-                        msg(p, "<gray>• <click:run_command:'/replay " + meta.name() + "'>"
-                                + "<hover:show_text:'<green>Click to watch'><yellow>" + meta.name()
-                                + "</hover></click>");
-                    }
-                }));
-    }
-
     private void usage(Player p) {
         msg(p, "<gray>/replay <dark_gray>— open the replay browser");
         msg(p, "<gray>/replay <name> <dark_gray>— watch  <dark_gray>| <gray>add <days> <dark_gray>— extend");

@@ -103,6 +103,19 @@ public enum KillEffectType {
     public String getPermission() { return permission; }
     public Material getIcon() { return icon; }
 
+    /**
+     * Coin price for buying this effect directly in the GUI. Effects remain
+     * unlockable via codes/quests and the permission node as before — buying
+     * is an additional path. The four bespoke originals are premium-priced.
+     */
+    public int getPrice() {
+        return switch (this) {
+            case FIRE_SWARM, SPOOK_SWARM, TOTEM_EXPLOSION, GOLDEN_GAP -> 1500;
+            case LIGHTNING, DRAGON_SOUL, SONIC_BOOM, TOTEM_FLASH -> 1000;
+            default -> 700;
+        };
+    }
+
     /** True when this effect is rendered by the generic particle burst. */
     public boolean isGeneric() { return particle != null; }
 

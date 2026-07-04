@@ -2,43 +2,6 @@
 # Arena positions are managed in MySQL; this file stores metadata
 arenas: {}
 
-ffa-arenas:
-  arena1:
-    name: "Jungle Ruins"
-    gamemode: "sword"
-    built: false
-    center-x: 0
-    center-y: 64
-    center-z: 0
-  arena2:
-    name: "Mangrove Swamp Bay"
-    gamemode: "shield"
-    built: false
-    center-x: 200
-    center-y: 64
-    center-z: 0
-  arena3:
-    name: "Bamboo Fortress"
-    gamemode: "crystal"
-    built: false
-    center-x: 400
-    center-y: 64
-    center-z: 0
-  arena4:
-    name: "Tropical Beach Cove"
-    gamemode: "mace"
-    built: false
-    center-x: 600
-    center-y: 64
-    center-z: 0
-  arena5:
-    name: "Ancient Overgrown Pyramid"
-    gamemode: "uhc"
-    built: false
-    center-x: 800
-    center-y: 64
-    center-z: 0
-
 duel-arenas:
   arena1:
     name: "Jungle Temple Duel"

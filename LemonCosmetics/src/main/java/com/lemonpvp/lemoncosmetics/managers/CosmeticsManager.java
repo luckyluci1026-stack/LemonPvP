@@ -67,6 +67,24 @@ public class CosmeticsManager {
     }
 
     /**
+     * Buys a kill effect with coins (code/quest/permission unlocks continue to
+     * work as before — this is an additional path). Returns {@code false} if
+     * the player cannot afford it or LemonCore is unavailable.
+     */
+    public CompletableFuture<Boolean> buyKillEffect(UUID uuid, KillEffectType effect) {
+        if (effect == null) return CompletableFuture.completedFuture(false);
+        return canAfford(uuid, effect.getPrice()).thenCompose(affordable -> {
+            if (!affordable) return CompletableFuture.completedFuture(false);
+            com.lemonpvp.lemoncore.LemonCore lc = getLemonCore();
+            if (lc == null) return CompletableFuture.completedFuture(false);
+            return lc.getPlayerDataManager()
+                    .removeCoins(uuid, effect.getPrice(), "cosmetics:killeffect:" + effect.getId(), null)
+                    .thenCompose(v -> unlockKillEffect(uuid, effect.getId()))
+                    .thenApply(v -> true);
+        });
+    }
+
+    /**
      * Sets the player's active kill effect to {@code effectId} (or unequips it
      * when {@code effectId} is {@code null}).
      */

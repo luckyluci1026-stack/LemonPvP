@@ -25,7 +25,6 @@ worlds:
 # scattered into it with the border re-centered. Players respawn inside the zone.
 # The world should be provided by Multiverse-Core. Join with /ffa.
 ffa:
-  arenas-built: false
   world: world_ffa        # world the FFA runs in (loaded by Multiverse-Core)
   size: 150               # border size in blocks (play area is size x size)
   relocate-minutes: 20    # how often the zone jumps to a new location
@@ -74,12 +73,6 @@ duel-arenas:
   base-y: 64
   base-z: 0
   spacing: 150
-
-ffa-arenas:
-  base-x: 0
-  base-y: 64
-  base-z: 0
-  spacing: 200
 
 placement_count: 10
 

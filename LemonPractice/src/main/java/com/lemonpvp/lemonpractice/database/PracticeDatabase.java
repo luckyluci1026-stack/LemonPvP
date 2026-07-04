@@ -3,7 +3,6 @@ package com.lemonpvp.lemonpractice.database;
 import com.lemonpvp.lemonpractice.LemonPractice;
 import com.lemonpvp.lemonpractice.managers.EloManager;
 import com.lemonpvp.lemonpractice.model.Arena;
-import com.lemonpvp.lemonpractice.model.FFAArena;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.Bukkit;
@@ -639,64 +638,4 @@ public class PracticeDatabase {
         });
     }
 
-    // FFA Arena
-    public CompletableFuture<Void> saveFfaArena(FFAArena arena) {
-        return executeAsync(conn -> {
-            try {
-                StringBuilder spawnData = new StringBuilder();
-                for (int i = 0; i < arena.getSpawnPoints().size(); i++) {
-                    Location loc = arena.getSpawnPoints().get(i);
-                    if (i > 0) spawnData.append(";");
-                    spawnData.append(loc.getX()).append(",").append(loc.getY()).append(",").append(loc.getZ())
-                            .append(",").append(loc.getYaw()).append(",").append(loc.getPitch());
-                }
-                try (PreparedStatement ps = conn.prepareStatement(
-                        "INSERT INTO lp_ffa_arenas (name, gamemode, world_name, spawn_points, region_x1, region_y1, region_z1, region_x2, region_y2, region_z2) " +
-                        "VALUES (?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE gamemode=VALUES(gamemode), world_name=VALUES(world_name), " +
-                        "spawn_points=VALUES(spawn_points), region_x1=VALUES(region_x1), region_y1=VALUES(region_y1), region_z1=VALUES(region_z1), " +
-                        "region_x2=VALUES(region_x2), region_y2=VALUES(region_y2), region_z2=VALUES(region_z2)")) {
-                    ps.setString(1, arena.getName()); ps.setString(2, arena.getGamemode());
-                    ps.setString(3, arena.getWorldName()); ps.setString(4, spawnData.toString());
-                    ps.setInt(5, arena.getRegionX1()); ps.setInt(6, arena.getRegionY1()); ps.setInt(7, arena.getRegionZ1());
-                    ps.setInt(8, arena.getRegionX2()); ps.setInt(9, arena.getRegionY2()); ps.setInt(10, arena.getRegionZ2());
-                    ps.executeUpdate();
-                }
-            } catch (SQLException e) { plugin.getLogger().severe("saveFfaArena: " + e.getMessage()); }
-        });
-    }
-
-    public CompletableFuture<List<FFAArena>> loadFfaArenas() {
-        return queryAsync(conn -> {
-            List<FFAArena> arenas = new ArrayList<>();
-            try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM lp_ffa_arenas")) {
-                ResultSet rs = ps.executeQuery();
-                int idx = 1;
-                while (rs.next()) {
-                    FFAArena a = new FFAArena(idx++, rs.getString("name"), rs.getString("gamemode"));
-                    a.setWorldName(rs.getString("world_name"));
-                    a.setRegionX1(rs.getInt("region_x1")); a.setRegionY1(rs.getInt("region_y1")); a.setRegionZ1(rs.getInt("region_z1"));
-                    a.setRegionX2(rs.getInt("region_x2")); a.setRegionY2(rs.getInt("region_y2")); a.setRegionZ2(rs.getInt("region_z2"));
-                    String spawnData = rs.getString("spawn_points");
-                    if (spawnData != null && !spawnData.isEmpty()) {
-                        World world = Bukkit.getWorld(a.getWorldName());
-                        if (world != null) {
-                            for (String sp : spawnData.split(";")) {
-                                String[] parts = sp.split(",");
-                                if (parts.length >= 3) {
-                                    try {
-                                        a.addSpawnPoint(new Location(world,
-                                            Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2]),
-                                            parts.length > 3 ? Float.parseFloat(parts[3]) : 0,
-                                            parts.length > 4 ? Float.parseFloat(parts[4]) : 0));
-                                    } catch (Exception ignored) {}
-                                }
-                            }
-                        }
-                    }
-                    arenas.add(a);
-                }
-            } catch (SQLException e) { plugin.getLogger().severe("loadFfaArenas: " + e.getMessage()); }
-            return arenas;
-        });
-    }
 }
