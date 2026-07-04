@@ -1,7 +1,7 @@
 name: LemonCosmetics
 version: 1.0.0
 main: com.lemonpvp.lemoncosmetics.LemonCosmetics
-api-version: '26.2'
+api-version: '1.21'
 softdepend: [LuckPerms, LemonCore]
 commands:
   cosmetics:

@@ -1,7 +1,7 @@
 name: LemonBuild
 version: "1.0.0"
 main: com.lemonpvp.lemonbuild.LemonBuild
-api-version: "26.2"
+api-version: "1.21"
 description: LemonPvP World-Builder (Spawn-Generator)
 authors: [LemonPvP]
 softdepend: [FastAsyncWorldEdit, WorldEdit]
