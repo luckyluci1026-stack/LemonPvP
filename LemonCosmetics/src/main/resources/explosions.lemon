@@ -1,0 +1,23 @@
+# ============================================================
+#  Explosion-Particle Presets — LemonCosmetics
+#
+#  25 built-in presets ship with the plugin. Define EXTRA presets
+#  here — no recompiling needed. Reloaded on plugin restart.
+#
+#  Fields per preset:
+#    name      - display name shown in the GUI
+#    price     - cost in coins (underscores allowed: 1_000)
+#    particle  - a Bukkit Particle enum name (e.g. FLAME, END_ROD)
+#    sound     - a Bukkit Sound enum name (optional)
+#    icon      - a Material enum name for the GUI icon (optional)
+#
+#  Ids must be unique and must not clash with built-in ids.
+# ============================================================
+
+# Example (remove the leading # of every line to activate):
+#explosion honey_burst
+#  name      "Honey Burst"
+#  price     650
+#  particle  FALLING_HONEY
+#  sound     BLOCK_HONEY_BLOCK_SLIDE
+#  icon      HONEY_BOTTLE

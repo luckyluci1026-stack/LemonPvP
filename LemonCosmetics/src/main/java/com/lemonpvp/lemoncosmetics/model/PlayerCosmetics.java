@@ -22,6 +22,8 @@ public class PlayerCosmetics {
     private final Set<String> ownedDeathEffects = new HashSet<>();
     private String activeWinEffectId = null;
     private final Set<String> ownedWinEffects = new HashSet<>();
+    private String activeExplosionId = null;
+    private final Set<String> ownedExplosions = new HashSet<>();
     private String activeTrailId = null;
     private final Set<String> ownedTrails = new HashSet<>();
     private String equippedTagId = null;
@@ -86,6 +88,26 @@ public class PlayerCosmetics {
 
     public boolean ownsDeathEffect(String id) {
         return id != null && ownedDeathEffects.contains(id);
+    }
+
+    // -------------------------------------------------------------------------
+    // Explosion preset getters / setters
+    // -------------------------------------------------------------------------
+
+    public String getActiveExplosionId() {
+        return activeExplosionId;
+    }
+
+    public void setActiveExplosionId(String activeExplosionId) {
+        this.activeExplosionId = activeExplosionId;
+    }
+
+    public Set<String> getOwnedExplosions() {
+        return ownedExplosions;
+    }
+
+    public boolean ownsExplosion(String id) {
+        return id != null && ownedExplosions.contains(id);
     }
 
     // -------------------------------------------------------------------------

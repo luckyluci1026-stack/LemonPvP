@@ -9,6 +9,7 @@ import com.lemonpvp.lemoncosmetics.managers.ArmorTrimManager;
 import com.lemonpvp.lemoncosmetics.managers.ArrowTrailManager;
 import com.lemonpvp.lemoncosmetics.managers.CosmeticsManager;
 import com.lemonpvp.lemoncosmetics.managers.DeathEffectManager;
+import com.lemonpvp.lemoncosmetics.managers.ExplosionParticleManager;
 import com.lemonpvp.lemoncosmetics.managers.KillEffectManager;
 import com.lemonpvp.lemoncosmetics.managers.TagManager;
 import com.lemonpvp.lemoncosmetics.managers.WinEffectManager;
@@ -24,6 +25,7 @@ public final class LemonCosmetics extends JavaPlugin {
     private KillEffectManager killEffectManager;
     private DeathEffectManager deathEffectManager;
     private WinEffectManager winEffectManager;
+    private ExplosionParticleManager explosionParticleManager;
     private ArrowTrailManager arrowTrailManager;
     private TagManager tagManager;
     private CosmeticsMessaging cosmeticsMessaging;
@@ -48,6 +50,7 @@ public final class LemonCosmetics extends JavaPlugin {
         killEffectManager = new KillEffectManager(this);
         deathEffectManager = new DeathEffectManager(this);
         winEffectManager = new WinEffectManager(this);
+        explosionParticleManager = new ExplosionParticleManager(this);
         arrowTrailManager = new ArrowTrailManager(this);
         tagManager = new TagManager(this);
 
@@ -57,6 +60,8 @@ public final class LemonCosmetics extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         getServer().getPluginManager().registerEvents(new KillListener(this), this);
         getServer().getPluginManager().registerEvents(new ArrowTrailListener(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.lemonpvp.lemoncosmetics.listeners.ExplosionListener(this), this);
 
         var cosmeticsCmd = getCommand("cosmetics");
         if (cosmeticsCmd != null) {
@@ -100,6 +105,10 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public WinEffectManager getWinEffectManager() {
         return winEffectManager;
+    }
+
+    public ExplosionParticleManager getExplosionParticleManager() {
+        return explosionParticleManager;
     }
 
     public ArrowTrailManager getArrowTrailManager() {

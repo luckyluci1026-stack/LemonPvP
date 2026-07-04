@@ -28,14 +28,15 @@ public class CosmeticsMainGUI implements Listener {
 
     static final MiniMessage MM = MiniMessage.miniMessage();
 
-    // Category slots — six categories in row 1 (slots 10–15)
-    private static final int TRIMS_SLOT   = 10;
-    private static final int TRAILS_SLOT  = 11;
-    private static final int EFFECTS_SLOT = 12;
-    private static final int DEATH_SLOT   = 13;
-    private static final int WINS_SLOT    = 14;
-    private static final int TAGS_SLOT    = 15;
-    private static final int PROFILE_SLOT = 4;
+    // Category slots — seven categories in row 1 (slots 10–16)
+    private static final int TRIMS_SLOT      = 10;
+    private static final int TRAILS_SLOT     = 11;
+    private static final int EFFECTS_SLOT    = 12;
+    private static final int DEATH_SLOT      = 13;
+    private static final int WINS_SLOT       = 14;
+    private static final int EXPLOSIONS_SLOT = 15;
+    private static final int TAGS_SLOT       = 16;
+    private static final int PROFILE_SLOT    = 4;
 
     private final LemonCosmetics plugin;
     private final Player player;
@@ -65,6 +66,7 @@ public class CosmeticsMainGUI implements Listener {
         inventory.setItem(EFFECTS_SLOT,  buildEffectsItem(cosmetics));
         inventory.setItem(DEATH_SLOT,    buildDeathEffectsItem(cosmetics));
         inventory.setItem(WINS_SLOT,     buildWinEffectsItem(cosmetics));
+        inventory.setItem(EXPLOSIONS_SLOT, buildExplosionsItem(cosmetics));
         inventory.setItem(TAGS_SLOT,     buildTagsItem(cosmetics));
 
         if (!registered) {
@@ -83,9 +85,8 @@ public class CosmeticsMainGUI implements Listener {
         // Row 0 and Row 2: full black border
         for (int i = 0; i < 9; i++) inventory.setItem(i, BLACK_FILLER);
         for (int i = 18; i < 27; i++) inventory.setItem(i, BLACK_FILLER);
-        // Row 1: black edges around the six categories (slots 10–15)
+        // Row 1: black edges around the seven categories (slots 10–16)
         inventory.setItem(9,  BLACK_FILLER);
-        inventory.setItem(16, BLACK_FILLER);
         inventory.setItem(17, BLACK_FILLER);
     }
 
@@ -121,6 +122,8 @@ public class CosmeticsMainGUI implements Listener {
                     + "<gray>/<white>" + com.lemonpvp.lemoncosmetics.model.DeathEffectType.values().length));
             lore.add(MM.deserialize("<!italic><gray>Win FX: <white>" + cosmetics.getOwnedWinEffects().size()
                     + "<gray>/<white>" + com.lemonpvp.lemoncosmetics.model.WinEffectType.values().length));
+            lore.add(MM.deserialize("<!italic><gray>Blasts: <white>" + cosmetics.getOwnedExplosions().size()
+                    + "<gray>/<white>" + plugin.getExplosionParticleManager().getAll().size()));
             int totalPatterns = plugin.getArmorTrimManager().getAllPatternIds().size();
             lore.add(MM.deserialize("<!italic><gray>Trims: <white>" + cosmetics.getOwnedPatterns().size()
                     + "<gray>/<white>" + totalPatterns));
@@ -248,6 +251,39 @@ public class CosmeticsMainGUI implements Listener {
             String active = cosmetics.getActiveDeathEffectId();
             if (active != null) {
                 lore.add(MM.deserialize("<!italic><dark_gray>Active: <red>" + active));
+            } else {
+                lore.add(MM.deserialize("<!italic><dark_gray>Active: <gray>None"));
+            }
+        }
+
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><aqua>➜ Click to open"));
+
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack buildExplosionsItem(PlayerCosmetics cosmetics) {
+        ItemStack item = new ItemStack(Material.TNT);
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+
+        meta.displayName(MM.deserialize("<!italic><gradient:#ff9100:#dd2c00>Explosion Particles</gradient>"));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><gray>Style the blast of your"));
+        lore.add(MM.deserialize("<!italic><gray>crystals and TNT."));
+        lore.add(Component.empty());
+
+        if (cosmetics != null) {
+            int owned = cosmetics.getOwnedExplosions().size();
+            int total = plugin.getExplosionParticleManager().getAll().size();
+            lore.add(MM.deserialize("<!italic><dark_gray>Owned: <white>" + owned + "<dark_gray>/<white>" + total));
+            String active = cosmetics.getActiveExplosionId();
+            if (active != null) {
+                lore.add(MM.deserialize("<!italic><dark_gray>Active: <gold>" + active));
             } else {
                 lore.add(MM.deserialize("<!italic><dark_gray>Active: <gray>None"));
             }
@@ -397,6 +433,11 @@ public class CosmeticsMainGUI implements Listener {
                 player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
                 unregister();
                 new WinEffectsGUI(plugin, player).open();
+            }
+            case EXPLOSIONS_SLOT -> {
+                player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
+                unregister();
+                new ExplosionParticlesGUI(plugin, player).open();
             }
             case TAGS_SLOT -> {
                 player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);

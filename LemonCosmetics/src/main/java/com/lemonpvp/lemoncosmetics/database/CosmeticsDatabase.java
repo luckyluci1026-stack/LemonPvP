@@ -111,6 +111,15 @@ public class CosmeticsDatabase {
                 stmt.executeUpdate();
             }
             try (PreparedStatement stmt = conn.prepareStatement(
+                    "CREATE TABLE IF NOT EXISTS lc_cosmetics_explosions (" +
+                    "    uuid VARCHAR(36) NOT NULL," +
+                    "    preset_id VARCHAR(64) NOT NULL," +
+                    "    active BOOLEAN DEFAULT FALSE," +
+                    "    PRIMARY KEY (uuid, preset_id)" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")) {
+                stmt.executeUpdate();
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(
                     "CREATE TABLE IF NOT EXISTS lc_cosmetics_win_effects (" +
                     "    uuid VARCHAR(36) NOT NULL," +
                     "    effect_id VARCHAR(64) NOT NULL," +
@@ -208,6 +217,24 @@ public class CosmeticsDatabase {
                 }
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to load death effects for " + uuidStr, e);
+            }
+
+            // Explosion presets
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT preset_id, active FROM lc_cosmetics_explosions WHERE uuid = ?")) {
+                stmt.setString(1, uuidStr);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String presetId = rs.getString("preset_id");
+                        boolean active = rs.getBoolean("active");
+                        cosmetics.getOwnedExplosions().add(presetId);
+                        if (active) {
+                            cosmetics.setActiveExplosionId(presetId);
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to load explosion presets for " + uuidStr, e);
             }
 
             // Win effects
@@ -389,6 +416,72 @@ public class CosmeticsDatabase {
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to clear active effect", e);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Explosion presets
+    // -------------------------------------------------------------------------
+
+    /** Upserts an explosion-preset row. */
+    public CompletableFuture<Void> saveExplosion(UUID uuid, String presetId, boolean active) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "INSERT INTO lc_cosmetics_explosions (uuid, preset_id, active) VALUES (?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE active = VALUES(active)")) {
+                stmt.setString(1, uuid.toString());
+                stmt.setString(2, presetId);
+                stmt.setBoolean(3, active);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to save explosion preset", e);
+            }
+        });
+    }
+
+    /**
+     * Sets the given explosion preset as active and marks all others for this
+     * player as inactive in a single transaction.
+     */
+    public CompletableFuture<Void> setActiveExplosion(UUID uuid, String presetId) {
+        return executeAsync(conn -> {
+            try {
+                conn.setAutoCommit(false);
+
+                try (PreparedStatement clear = conn.prepareStatement(
+                        "UPDATE lc_cosmetics_explosions SET active = FALSE WHERE uuid = ?")) {
+                    clear.setString(1, uuid.toString());
+                    clear.executeUpdate();
+                }
+
+                try (PreparedStatement upsert = conn.prepareStatement(
+                        "INSERT INTO lc_cosmetics_explosions (uuid, preset_id, active) VALUES (?, ?, TRUE) " +
+                        "ON DUPLICATE KEY UPDATE active = TRUE")) {
+                    upsert.setString(1, uuid.toString());
+                    upsert.setString(2, presetId);
+                    upsert.executeUpdate();
+                }
+
+                conn.commit();
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+                plugin.getLogger().log(Level.SEVERE, "Failed to set active explosion preset", e);
+            } finally {
+                try { conn.setAutoCommit(true); } catch (SQLException e) { /* ignore */ }
+            }
+        });
+    }
+
+    /** Sets all explosion presets for the player to inactive. */
+    public CompletableFuture<Void> clearActiveExplosion(UUID uuid) {
+        return executeAsync(conn -> {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE lc_cosmetics_explosions SET active = FALSE WHERE uuid = ?")) {
+                stmt.setString(1, uuid.toString());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to clear active explosion preset", e);
             }
         });
     }
