@@ -31,7 +31,22 @@ public enum WinEffectType {
     TOTEM_TRIUMPH ("totem_triumph", "Totem Triumph",  1100, Material.TOTEM_OF_UNDYING, Particle.TOTEM_OF_UNDYING, Sound.ITEM_TOTEM_USE),
     EMERALD_RAIN  ("emerald_rain",  "Emerald Rain",    800, Material.EMERALD,          Particle.COMPOSTER,        Sound.ENTITY_EXPERIENCE_ORB_PICKUP),
     HEART_SHOW    ("heart_show",    "Heart Show",      700, Material.PINK_TULIP,       Particle.HEART,            Sound.ENTITY_PLAYER_LEVELUP),
-    GLOW_UP       ("glow_up",       "Glow Up",         900, Material.GLOWSTONE,        Particle.GLOW,             Sound.BLOCK_BEACON_ACTIVATE);
+    GLOW_UP       ("glow_up",       "Glow Up",         900, Material.GLOWSTONE,        Particle.GLOW,             Sound.BLOCK_BEACON_ACTIVATE),
+    SCULK_VICTORY ("sculk_victory", "Sculk Victory",   900, Material.SCULK,            Particle.SCULK_SOUL,       Sound.BLOCK_SCULK_CATALYST_BLOOM),
+    FROST_CROWN   ("frost_crown",   "Frost Crown",     800, Material.BLUE_ICE,         Particle.SNOWFLAKE,        Sound.ENTITY_PLAYER_LEVELUP),
+    INK_FOUNTAIN  ("ink_fountain",  "Ink Fountain",    700, Material.INK_SAC,          Particle.SQUID_INK,        Sound.ENTITY_SQUID_SQUIRT),
+    GLOW_FOUNTAIN ("glow_fountain", "Glow Fountain",   800, Material.GLOW_INK_SAC,     Particle.GLOW_SQUID_INK,   Sound.ENTITY_GLOW_SQUID_AMBIENT),
+    CLOUD_NINE    ("cloud_nine",    "Cloud Nine",      700, Material.WHITE_WOOL,       Particle.CLOUD,            Sound.ENTITY_BREEZE_SHOOT),
+    CRIT_PARADE   ("crit_parade",   "Crit Parade",     700, Material.IRON_SWORD,       Particle.CRIT,             Sound.ENTITY_PLAYER_ATTACK_CRIT),
+    VICTORY_TUNE  ("victory_tune",  "Victory Tune",    700, Material.JUKEBOX,          Particle.NOTE,             Sound.BLOCK_NOTE_BLOCK_PLING),
+    EMBER_DANCE   ("ember_dance",   "Ember Dance",     800, Material.CAMPFIRE,         Particle.SMALL_FLAME,      Sound.BLOCK_CAMPFIRE_CRACKLE),
+    SPORE_SHOWER  ("spore_shower",  "Spore Shower",    700, Material.SPORE_BLOSSOM,    Particle.SPORE_BLOSSOM_AIR, Sound.BLOCK_AMETHYST_BLOCK_CHIME),
+    WAX_SHINE     ("wax_shine",     "Wax Shine",       700, Material.HONEYCOMB,        Particle.WAX_ON,           Sound.ENTITY_EXPERIENCE_ORB_PICKUP),
+    OCEAN_WAVE    ("ocean_wave",    "Ocean Wave",      800, Material.HEART_OF_THE_SEA, Particle.DOLPHIN,          Sound.ENTITY_DOLPHIN_PLAY),
+    NAUTILUS_CROWN("nautilus_crown","Nautilus Crown",  900, Material.NAUTILUS_SHELL,   Particle.NAUTILUS,         Sound.BLOCK_BEACON_ACTIVATE),
+    VOID_WALKER   ("void_walker",   "Void Walker",     900, Material.CRYING_OBSIDIAN,  Particle.REVERSE_PORTAL,   Sound.ENTITY_ENDERMAN_TELEPORT),
+    WHITE_ROYALE  ("white_royale",  "White Royale",    800, Material.QUARTZ,           Particle.WHITE_ASH,        Sound.BLOCK_BELL_USE),
+    PETAL_WALTZ   ("petal_waltz",   "Petal Waltz",     800, Material.PINK_PETALS,      Particle.CHERRY_LEAVES,    Sound.BLOCK_NOTE_BLOCK_CHIME);
 
     public final String id;
     public final String displayName;

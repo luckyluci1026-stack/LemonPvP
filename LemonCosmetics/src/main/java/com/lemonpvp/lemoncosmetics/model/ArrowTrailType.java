@@ -49,7 +49,46 @@ public enum ArrowTrailType {
     GLOW_INK_TRAIL("glow_ink_trail","Glow Ink Trail",500, Particle.GLOW_SQUID_INK, null, 0f, Material.GLOW_INK_SAC),
     FIREWORK_TRAIL("firework_trail","Firework Trail",650, Particle.FIREWORK, null, 0f, Material.FIREWORK_ROCKET),
     TOTEM_TRAIL   ("totem_trail",   "Totem Trail",   800, Particle.TOTEM_OF_UNDYING, null, 0f, Material.TOTEM_OF_UNDYING),
-    SCULK_TRAIL   ("sculk_trail",   "Sculk Trail",   750, Particle.SCULK_SOUL, null, 0f, Material.SCULK);
+    SCULK_TRAIL   ("sculk_trail",   "Sculk Trail",   750, Particle.SCULK_SOUL, null, 0f, Material.SCULK),
+
+    // ── Third wave: dust colours ────────────────────────────────────────────────
+    MINT_TRAIL    ("mint_trail",    "Mint Trail",    400, Particle.DUST, Color.fromRGB(152, 255, 190), 1.0f, Material.LIME_DYE),
+    CORAL_TRAIL   ("coral_trail",   "Coral Trail",   400, Particle.DUST, Color.fromRGB(255, 127, 80),  1.0f, Material.FIRE_CORAL),
+    LAVENDER_TRAIL("lavender_trail","Lavender Trail",400, Particle.DUST, Color.fromRGB(200, 162, 255), 1.0f, Material.PURPLE_DYE),
+    TEAL_TRAIL    ("teal_trail",    "Teal Trail",    400, Particle.DUST, Color.fromRGB(0, 150, 152),   1.0f, Material.CYAN_DYE),
+    MAGENTA_TRAIL ("magenta_trail", "Magenta Trail", 400, Particle.DUST, Color.fromRGB(255, 0, 200),   1.0f, Material.MAGENTA_DYE),
+    SILVER_TRAIL  ("silver_trail",  "Silver Trail",  450, Particle.DUST, Color.fromRGB(200, 205, 210), 1.0f, Material.IRON_INGOT),
+    BRONZE_TRAIL  ("bronze_trail",  "Bronze Trail",  450, Particle.DUST, Color.fromRGB(176, 110, 50),  1.0f, Material.COPPER_INGOT),
+    RUBY_TRAIL    ("ruby_trail",    "Ruby Trail",    500, Particle.DUST, Color.fromRGB(200, 20, 60),   1.0f, Material.RED_DYE),
+    SAPPHIRE_TRAIL("sapphire_trail","Sapphire Trail",500, Particle.DUST, Color.fromRGB(20, 60, 220),   1.0f, Material.LAPIS_BLOCK),
+    JADE_TRAIL    ("jade_trail",    "Jade Trail",    500, Particle.DUST, Color.fromRGB(0, 168, 107),   1.0f, Material.EMERALD),
+    SUNSET_TRAIL  ("sunset_trail",  "Sunset Trail",  500, Particle.DUST, Color.fromRGB(255, 94, 19),   1.1f, Material.ORANGE_DYE),
+    BUBBLEGUM_TRAIL("bubblegum_trail","Bubblegum Trail",450,Particle.DUST,Color.fromRGB(255, 105, 200),1.1f, Material.PINK_DYE),
+    LIME_TRAIL    ("lime_trail",    "Lime Trail",    400, Particle.DUST, Color.fromRGB(170, 255, 0),   1.0f, Material.LIME_CONCRETE),
+    INDIGO_TRAIL  ("indigo_trail",  "Indigo Trail",  450, Particle.DUST, Color.fromRGB(75, 0, 130),    1.0f, Material.PURPLE_CONCRETE),
+    PEARL_TRAIL   ("pearl_trail",   "Pearl Trail",   500, Particle.DUST, Color.fromRGB(245, 245, 235), 1.1f, Material.QUARTZ),
+
+    // ── Third wave: special particles ───────────────────────────────────────────
+    WHITE_ASH_TRAIL("white_ash_trail","White Ash Trail",450, Particle.WHITE_ASH, null, 0f, Material.BONE_MEAL),
+    COMPOST_TRAIL ("compost_trail", "Compost Trail", 400, Particle.COMPOSTER, null, 0f, Material.COMPOSTER),
+    GLOW_TRAIL    ("glow_trail",    "Glow Trail",    600, Particle.GLOW, null, 0f, Material.GLOWSTONE_DUST),
+    SMOKE_TRAIL   ("smoke_trail",   "Smoke Trail",   400, Particle.SMOKE, null, 0f, Material.GUNPOWDER),
+    WAX_TRAIL     ("wax_trail",     "Wax Trail",     450, Particle.WAX_ON, null, 0f, Material.HONEYCOMB),
+    DOLPHIN_TRAIL ("dolphin_trail", "Dolphin Trail", 550, Particle.DOLPHIN, null, 0f, Material.HEART_OF_THE_SEA),
+    NAUTILUS_TRAIL("nautilus_trail","Nautilus Trail",650, Particle.NAUTILUS, null, 0f, Material.NAUTILUS_SHELL),
+    VOID_TRAIL    ("void_trail",    "Void Trail",    750, Particle.REVERSE_PORTAL, null, 0f, Material.CRYING_OBSIDIAN),
+    INK_TRAIL     ("ink_trail",     "Ink Trail",     450, Particle.SQUID_INK, null, 0f, Material.INK_SAC),
+    COZY_TRAIL    ("cozy_trail",    "Cozy Trail",    450, Particle.CAMPFIRE_COSY_SMOKE, null, 0f, Material.CAMPFIRE),
+    MYCELIUM_TRAIL("mycelium_trail","Mycelium Trail",400, Particle.MYCELIUM, null, 0f, Material.MYCELIUM),
+    CRIMSON_SPORE_TRAIL("crimson_spore_trail","Crimson Spore Trail",500, Particle.CRIMSON_SPORE, null, 0f, Material.CRIMSON_FUNGUS),
+    WARPED_SPORE_TRAIL ("warped_spore_trail", "Warped Spore Trail", 500, Particle.WARPED_SPORE, null, 0f, Material.WARPED_FUNGUS),
+    SPIRIT_TRAIL  ("spirit_trail",  "Spirit Trail",  700, Particle.SOUL, null, 0f, Material.SOUL_SAND),
+    SCRAPE_TRAIL  ("scrape_trail",  "Scrape Trail",  450, Particle.SCRAPE, null, 0f, Material.COPPER_BLOCK),
+    CANDLE_TRAIL  ("candle_trail",  "Candle Trail",  500, Particle.SMALL_FLAME, null, 0f, Material.CANDLE),
+    POOF_TRAIL    ("poof_trail",    "Poof Trail",    400, Particle.POOF, null, 0f, Material.WHITE_DYE),
+    ANGRY_TRAIL   ("angry_trail",   "Angry Trail",   500, Particle.ANGRY_VILLAGER, null, 0f, Material.CARVED_PUMPKIN),
+    DAMAGE_TRAIL  ("damage_trail",  "Damage Trail",  550, Particle.DAMAGE_INDICATOR, null, 0f, Material.RED_DYE),
+    SPORE_TRAIL   ("spore_trail",   "Spore Trail",   550, Particle.SPORE_BLOSSOM_AIR, null, 0f, Material.SPORE_BLOSSOM);
 
     public final String id;
     public final String displayName;
