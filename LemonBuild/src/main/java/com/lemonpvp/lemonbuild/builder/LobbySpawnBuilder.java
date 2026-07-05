@@ -102,6 +102,15 @@ public class LobbySpawnBuilder extends BuildHelper {
             lightFalls(es);
             floatingIslets(es);
             parkourRing(es);
+
+            // Grand-finale set pieces
+            swordGate(es);
+            daisFountains(es);
+            walkwayInlays(es);
+            banners(es);
+            championPedestal(es);
+            hotAirBalloon(es);
+            voidBeacon(es);
         }
     }
 
@@ -578,6 +587,119 @@ public class LobbySpawnBuilder extends BuildHelper {
         sphere(es, ix, iy + 4, iz, 2.2, LEAVES);
         set(es, ix + 1, iy + 4, iz, LIGHT_Y);
         set(es, ix, iy - 3, iz, H_LANTERN);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Grand-finale set pieces
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Two giant crossed swords forming a gate over the north walkway — THE
+     * PvP-identity landmark. Quartz blades with glowing edges, gold guards,
+     * blackstone grips, crossing high above head height.
+     */
+    private void swordGate(EditSession es) {
+        int z = CZ - 40;
+        giantSword(es, -1, z);
+        giantSword(es, 1, z);
+        // Glowing clash point where the blades cross.
+        sphere(es, CX, Y + 16, z, 1.6, GLASS_Y);
+        set(es, CX, Y + 16, z, LIGHT_Y);
+    }
+
+    /** One tilted giant sword in the XY-plane at depth z; dir = -1 (from west) or +1. */
+    private void giantSword(EditSession es, int dir, int z) {
+        int baseX = CX - dir * 13;
+        // Grip (below deck edge up to the guard) + pommel.
+        thickLine(es, baseX - dir * 3, Y - 2, z, baseX - dir, Y + 1, z, 1.0, DARK);
+        sphere(es, baseX - dir * 4, Y - 3, z, 1.2, GOLD);
+        // Cross-guard.
+        fill(es, baseX - 2, Y + 2, z - 1, baseX + 2, Y + 3, z + 1, GOLD);
+        set(es, baseX, Y + 2, z, GILDED);
+        // Blade rising diagonally to just past the crossing point.
+        thickLine(es, baseX, Y + 3, z, CX + dir * 4, Y + 20, z, 1.3, DECK_ALT);
+        // Glowing edge highlight offset one block outward.
+        line(es, baseX + dir, Y + 3, z, CX + dir * 5, Y + 20, z, GLASS_Y);
+        // Tip.
+        sphere(es, CX + dir * 5, Y + 21, z, 1.0, DECK_ALT);
+        set(es, CX + dir * 5, Y + 22, z, "end_rod[facing=up]");
+    }
+
+    /** Four small fountains around the spawn dais (bowl + jet + glow). */
+    private void daisFountains(EditSession es) {
+        int[][] p = {{12, 12}, {-12, 12}, {12, -12}, {-12, -12}};
+        for (int[] q : p) {
+            int fx = CX + q[0], fz = CZ + q[1];
+            ring(es, fx, Y + 1, fz, 1.2, 2.2, DECK_RIM);
+            set(es, fx, Y, fz, SEA_LANTERN);
+            set(es, fx, Y + 1, fz, "water");
+            column(es, fx, fz, Y + 2, Y + 3, GLASS_L);
+            set(es, fx, Y + 4, fz, "water");
+        }
+    }
+
+    /** Copper-grate inlays flanking the glowing walkway centre lines. */
+    private void walkwayInlays(EditSession es) {
+        String grate = "waxed_copper_grate";
+        for (int i = 31; i <= 57; i += 2) {
+            set(es, CX - 2, Y, CZ - i, grate); set(es, CX + 2, Y, CZ - i, grate); // N
+            set(es, CX + i, Y, CZ - 2, grate); set(es, CX + i, Y, CZ + 2, grate); // E
+            set(es, CX - 2, Y, CZ + i, grate); set(es, CX + 2, Y, CZ + i, grate); // S
+            set(es, CX - i, Y, CZ - 2, grate); set(es, CX - i, Y, CZ + 2, grate); // W
+        }
+    }
+
+    /** Alternating yellow/lime standing banners on the promenade rail posts. */
+    private void banners(EditSession es) {
+        int i = 0;
+        for (int deg = 10; deg < 360; deg += 20) {
+            double rad = Math.toRadians(deg);
+            int x = CX + (int) Math.round(Math.cos(rad) * 46);
+            int z = CZ + (int) Math.round(Math.sin(rad) * 46);
+            if (Math.abs(x - CX) <= 7 || Math.abs(z - CZ) <= 7) continue; // walkways
+            String id = (i++ % 2 == 0) ? "yellow_banner[rotation=0]" : "lime_banner[rotation=0]";
+            set(es, x, Y + 1, z, id);
+        }
+    }
+
+    /** Champion pedestal in front of the leaderboard wall (for the #1 NPC). */
+    private void championPedestal(EditSession es) {
+        int px = CX - 62;
+        disk(es, px, Y + 1, CZ, 2.5, CHISEL);
+        ring(es, px, Y + 1, CZ, 1.8, 2.5, GOLD);
+        set(es, px, Y + 2, CZ, GILDED);
+        set(es, px, Y + 3, CZ, GOLD);
+        // Halo light above where the champion statue/NPC stands.
+        set(es, px, Y + 8, CZ, "end_rod[facing=down]");
+    }
+
+    /** A lemon hot-air balloon drifting beside the island. */
+    private void hotAirBalloon(EditSession es) {
+        int bx = CX - 22, by = Y + 30, bz = CZ + 34;
+        // Envelope: yellow sphere with lime vertical stripes.
+        sphere(es, bx, by, bz, 5.0, "yellow_wool");
+        for (int dz = -5; dz <= 5; dz++) {
+            column(es, bx, bz + dz, by - (int) Math.sqrt(Math.max(0, 25 - dz * dz)),
+                    by + (int) Math.sqrt(Math.max(0, 25 - dz * dz)), "lime_wool");
+        }
+        sphere(es, bx, by, bz, 3.0, "air");           // hollow it
+        set(es, bx, by - 4, bz, LIGHT_Y);             // burner glow
+        // Basket + ropes.
+        fill(es, bx - 1, by - 9, bz - 1, bx + 1, by - 8, bz + 1, "stripped_oak_wood[axis=y]");
+        fill(es, bx - 1, by - 8, bz - 1, bx + 1, by - 8, bz + 1, "air");
+        set(es, bx, by - 9, bz, "barrel[facing=up]");
+        column(es, bx - 1, bz - 1, by - 7, by - 5, CHAIN);
+        column(es, bx + 1, bz + 1, by - 7, by - 5, CHAIN);
+        column(es, bx - 1, bz + 1, by - 7, by - 5, CHAIN);
+        column(es, bx + 1, bz - 1, by - 7, by - 5, CHAIN);
+    }
+
+    /** Light beam dropping from the island's bottom tip into the void. */
+    private void voidBeacon(EditSession es) {
+        for (int y = Y - 24; y <= Y - 10; y += 2) {
+            set(es, CX, y, CZ, "end_rod[facing=up]");
+        }
+        set(es, CX, Y - 26, CZ, LIGHT_Y);
     }
 
     // ────────────────────────────────────────────────────────────────────────
