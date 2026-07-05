@@ -111,6 +111,14 @@ public class LobbySpawnBuilder extends BuildHelper {
             championPedestal(es);
             hotAirBalloon(es);
             voidBeacon(es);
+
+            // Detail pass
+            deckTexture(es);
+            daisStairs(es);
+            fountainBenches(es);
+            underGlow(es);
+            parkourTrophy(es);
+            lemonMascot(es);
         }
     }
 
@@ -700,6 +708,137 @@ public class LobbySpawnBuilder extends BuildHelper {
             set(es, CX, y, CZ, "end_rod[facing=up]");
         }
         set(es, CX, Y - 26, CZ, LIGHT_Y);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Detail pass
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Subtle deterministic texture blend on the big walking surfaces so the
+     * large calcite fields don't read as flat: ~7% polished diorite +
+     * ~4% white concrete speckle (never on rims, inlays or glow lines —
+     * scatter only replaces blocks it lands on, and we re-run the accent
+     * pattern afterwards to keep lines crisp).
+     */
+    private void deckTexture(EditSession es) {
+        scatter(es, CX, Y, CZ, 32.0, 0.07, 777L, "polished_diorite");
+        scatter(es, CX, Y, CZ, 32.0, 0.04, 778L, "white_concrete");
+        for (int deg = 0; deg < 360; deg += 3) {
+            double rad = Math.toRadians(deg);
+            int x = CX + (int) Math.round(Math.cos(rad) * 43);
+            int z = CZ + (int) Math.round(Math.sin(rad) * 43);
+            if (noise(x, z, 779L) < 0.10) set(es, x, Y, z, "polished_diorite");
+        }
+        // Re-crisp everything the speckle may have touched: accent rings,
+        // compass star and the in-disk ends of the glowing walkway lines.
+        ring(es, CX, Y, CZ, 26.5, 27.5, ACCENT);
+        ring(es, CX, Y, CZ, 17.5, 18.5, ACCENT_SOFT);
+        ring(es, CX, Y, CZ, 42.6, 43.4, ACCENT);
+        for (int i = 12; i <= 26; i++) {
+            set(es, CX + i, Y, CZ + i, ACCENT_SOFT);
+            set(es, CX - i, Y, CZ + i, ACCENT_SOFT);
+            set(es, CX + i, Y, CZ - i, ACCENT_SOFT);
+            set(es, CX - i, Y, CZ - i, ACCENT_SOFT);
+        }
+        for (int i = 30; i <= 33; i++) {
+            set(es, CX, Y, CZ - i, LIGHT_Y);
+            set(es, CX + i, Y, CZ, LIGHT_Y);
+            set(es, CX, Y, CZ + i, LIGHT_Y);
+            set(es, CX - i, Y, CZ, LIGHT_Y);
+        }
+    }
+
+    /** Proper stair runs up the spawn dais on all four axes. */
+    private void daisStairs(EditSession es) {
+        // North side (walking south toward centre → stairs face south).
+        set(es, CX, Y + 1, CZ - 10, "quartz_stairs[facing=south]");
+        set(es, CX, Y + 2, CZ - 7,  "quartz_stairs[facing=south]");
+        set(es, CX, Y + 3, CZ - 4,  "quartz_stairs[facing=south]");
+        // South side.
+        set(es, CX, Y + 1, CZ + 10, "quartz_stairs[facing=north]");
+        set(es, CX, Y + 2, CZ + 7,  "quartz_stairs[facing=north]");
+        set(es, CX, Y + 3, CZ + 4,  "quartz_stairs[facing=north]");
+        // West side.
+        set(es, CX - 10, Y + 1, CZ, "quartz_stairs[facing=east]");
+        set(es, CX - 7,  Y + 2, CZ, "quartz_stairs[facing=east]");
+        set(es, CX - 4,  Y + 3, CZ, "quartz_stairs[facing=east]");
+        // East side.
+        set(es, CX + 10, Y + 1, CZ, "quartz_stairs[facing=west]");
+        set(es, CX + 7,  Y + 2, CZ, "quartz_stairs[facing=west]");
+        set(es, CX + 4,  Y + 3, CZ, "quartz_stairs[facing=west]");
+    }
+
+    /** Curved stair benches facing each dais fountain. */
+    private void fountainBenches(EditSession es) {
+        int[][] p = {{12, 12}, {-12, 12}, {12, -12}, {-12, -12}};
+        for (int[] q : p) {
+            int fx = CX + q[0], fz = CZ + q[1];
+            // Bench on the side away from the dais, facing the fountain.
+            int ox = Integer.signum(q[0]) * 3, oz = Integer.signum(q[1]) * 3;
+            String faceX = q[0] > 0 ? "west" : "east";
+            String faceZ = q[1] > 0 ? "north" : "south";
+            set(es, fx + ox, Y + 1, fz,      "quartz_stairs[facing=" + faceX + "]");
+            set(es, fx + ox, Y + 1, fz + (oz > 0 ? 1 : -1), "quartz_stairs[facing=" + faceX + "]");
+            set(es, fx, Y + 1, fz + oz,      "quartz_stairs[facing=" + faceZ + "]");
+            set(es, fx + (ox > 0 ? 1 : -1), Y + 1, fz + oz, "quartz_stairs[facing=" + faceZ + "]");
+        }
+    }
+
+    /** Glow lichen + petals: soft light under the island, petals in gardens. */
+    private void underGlow(EditSession es) {
+        int[][] spots = {{18, 4}, {-16, 8}, {4, -19}, {-8, -15}, {14, -12}, {-12, 16}, {22, 12}, {-20, -6}};
+        for (int[] s : spots) {
+            set(es, CX + s[0], Y - 3, CZ + s[1], "glow_lichen[down=true]");
+        }
+        // Petal accents on the moss garden beds.
+        int[][] beds = {{8, -36}, {-8, -36}, {36, 8}, {36, -8}, {8, 36}, {-8, 36}, {-36, 8}, {-36, -8}};
+        int n = 0;
+        for (int[] b : beds) {
+            set(es, CX + b[0] + (n % 2), Y + 1, CZ + b[1] + (n % 3 - 1),
+                    "pink_petals[flower_amount=" + (1 + n % 4) + "]");
+            n++;
+        }
+    }
+
+    /** Trophy platform at the parkour finish (last pad ends near the start). */
+    private void parkourTrophy(EditSession es) {
+        int tx = CX + 44, tz = CZ - 32;
+        fill(es, tx - 2, Y + 5, tz - 2, tx + 2, Y + 5, tz + 2, GOLD);
+        ring(es, tx, Y + 5, tz, 1.8, 2.8, GILDED);
+        // Trophy: pillar + cup.
+        column(es, tx, tz, Y + 6, Y + 7, CHISEL);
+        set(es, tx, Y + 8, tz, GOLD);
+        set(es, tx + 1, Y + 8, tz, "gold_block");
+        set(es, tx - 1, Y + 8, tz, "gold_block");
+        set(es, tx, Y + 9, tz, LIGHT_Y);
+        set(es, tx, Y + 10, tz, "end_rod[facing=up]");
+    }
+
+    /** The LemonPvP mascot: a chunky lemon buddy waving at the shop corner. */
+    private void lemonMascot(EditSession es) {
+        int mx = CX + 8, mz = CZ + 66;
+        // Feet.
+        set(es, mx - 1, Y + 1, mz, "smooth_quartz_slab[type=bottom]");
+        set(es, mx + 1, Y + 1, mz, "smooth_quartz_slab[type=bottom]");
+        // Body: squat yellow sphere.
+        ellipsoid(es, mx, Y + 4, mz, 2.6, 3.0, 2.6, "yellow_wool");
+        // Face (looking north toward the plaza): eyes + smile.
+        set(es, mx - 1, Y + 5, mz - 3, "black_concrete");
+        set(es, mx + 1, Y + 5, mz - 3, "black_concrete");
+        set(es, mx - 1, Y + 3, mz - 3, "black_concrete");
+        set(es, mx,     Y + 3, mz - 3, "black_concrete");
+        set(es, mx + 1, Y + 3, mz - 3, "black_concrete");
+        // Leaf hat + stem.
+        set(es, mx, Y + 8, mz, WOOD);
+        set(es, mx, Y + 9, mz, LEAVES_FLOW);
+        set(es, mx + 1, Y + 8, mz, LEAVES);
+        // Waving arm.
+        set(es, mx + 3, Y + 5, mz, "yellow_wool");
+        set(es, mx + 4, Y + 6, mz, "yellow_wool");
+        set(es, mx - 3, Y + 4, mz, "yellow_wool");
+        // Spotlight.
+        set(es, mx, Y + 12, mz, "end_rod[facing=down]");
     }
 
     // ────────────────────────────────────────────────────────────────────────
