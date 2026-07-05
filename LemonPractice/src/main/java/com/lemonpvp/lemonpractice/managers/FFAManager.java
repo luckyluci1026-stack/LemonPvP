@@ -289,6 +289,7 @@ public class FFAManager {
                     + streak + "</gold> killstreak!"));
         }
 
+        tryRewardCoins(killer, streak);
         tryUpdateLemonCoreStats(killer, victim);
     }
 
@@ -318,10 +319,15 @@ public class FFAManager {
 
         boolean credited = killer != null && killer.isOnline()
                 && !killer.getUniqueId().equals(vu) && participants.contains(killer.getUniqueId());
+        // Capture BEFORE handleKill heals the killer back to full.
+        double killerHearts = credited ? killer.getHealth() / 2.0 : 0;
         if (credited) {
             handleKill(killer, victim);
             broadcast(MM.deserialize("<red>" + victim.getName() + "</red> <gray>was slain by <yellow>"
                     + killer.getName() + "</yellow>."));
+            // The classic practice-server detail: how close was it?
+            victim.sendMessage(MM.deserialize(String.format(java.util.Locale.US,
+                    "<gray>Your killer had <red>%.1f ❤ <gray>left.", killerHearts)));
         } else {
             broadcast(MM.deserialize("<red>" + victim.getName() + "</red> <gray>died."));
         }
@@ -598,6 +604,29 @@ public class FFAManager {
             return;
         }
         kit.getSlots().forEach((slot, item) -> player.getInventory().setItem(slot, item));
+    }
+
+    /**
+     * Coin reward per FFA kill (config {@code ffa.kill-coins}, default 10),
+     * plus a bonus on every 5-killstreak ({@code ffa.killstreak-bonus-coins},
+     * default 50). Guarded soft-dependency call into LemonCore's economy.
+     */
+    private void tryRewardCoins(Player killer, int streak) {
+        try {
+            org.bukkit.plugin.Plugin lc = Bukkit.getPluginManager().getPlugin("LemonCore");
+            if (lc == null || !lc.isEnabled()
+                    || !(lc instanceof com.lemonpvp.lemoncore.LemonCore core)) return;
+            long coins = plugin.getConfig().getLong("ffa.kill-coins", 10);
+            long bonus = (streak > 0 && streak % 5 == 0)
+                    ? plugin.getConfig().getLong("ffa.killstreak-bonus-coins", 50) : 0;
+            long total = coins + bonus;
+            if (total <= 0) return;
+            core.getPlayerDataManager().addCoins(killer.getUniqueId(), total, "ffa:kill", null);
+            killer.sendMessage(MM.deserialize("<gold>+" + total + " coins"
+                    + (bonus > 0 ? " <yellow>(streak bonus!)" : "")));
+        } catch (Throwable ignored) {
+            // LemonCore absent or incompatible — rewards are optional.
+        }
     }
 
     /**

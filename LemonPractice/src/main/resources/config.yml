@@ -37,6 +37,9 @@ ffa:
   # respawning inside the zone. Players holding a Totem of Undying are exempt.
   death-cam: true
   death-cam-ticks: 50     # death-cam length in ticks before respawn (20 = 1s)
+  # Coin rewards per FFA kill (paid via LemonCore; 0 disables).
+  kill-coins: 10
+  killstreak-bonus-coins: 50   # extra on every 5-killstreak milestone
 
 # Duel replays: compact recordings of duels, each capped at 50 KB and kept for
 # 100 days (extend with /replay <name> add <days>). Lower sample-interval-ticks

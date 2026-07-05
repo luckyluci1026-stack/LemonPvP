@@ -41,6 +41,7 @@ public final class NameTagListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         manager.remove(event.getPlayer().getUniqueId());
         manager.showVanillaName(event.getPlayer());
+        lastHealthRefresh.remove(event.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -59,6 +60,35 @@ public final class NameTagListener implements Listener {
             Player p = Bukkit.getPlayer(uuid);
             if (p != null && p.isOnline()) manager.create(p);
         }, 2L);
+    }
+
+    // ── Live health line (only active when show-health is enabled) ──────────
+
+    /** uuid -> last health-refresh timestamp (throttles fight spam). */
+    private final java.util.Map<UUID, Long> lastHealthRefresh = new java.util.HashMap<>();
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDamage(org.bukkit.event.entity.EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player p) refreshHealthLine(p);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onRegain(org.bukkit.event.entity.EntityRegainHealthEvent event) {
+        if (event.getEntity() instanceof Player p) refreshHealthLine(p);
+    }
+
+    /** Rebuilds the tag text next tick (post-damage health), max ~6x/second. */
+    private void refreshHealthLine(Player player) {
+        if (!plugin.getConfig().getBoolean("show-health", false)) return;
+        long now = System.currentTimeMillis();
+        Long last = lastHealthRefresh.get(player.getUniqueId());
+        if (last != null && now - last < 150) return;
+        lastHealthRefresh.put(player.getUniqueId(), now);
+        UUID uuid = player.getUniqueId();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null && p.isOnline() && !p.isDead()) manager.update(p);
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

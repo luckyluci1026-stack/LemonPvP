@@ -25,6 +25,10 @@ display:
 # another plugin (e.g. TAB) already manages nametag teams.
 hide-vanilla-nametags: true
 
+# Show a live "❤ 8.5" line under the name (refreshed on damage/regen).
+# Recommended ON for fight servers (FFA/KitPvP), OFF for the lobby.
+show-health: false
+
 # Ticks to wait after a player joins before the first render, so LuckPerms has
 # finished loading their user (20 ticks = 1s).
 update-delay-ticks: 10

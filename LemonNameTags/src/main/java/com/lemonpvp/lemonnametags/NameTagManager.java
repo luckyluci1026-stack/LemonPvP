@@ -66,6 +66,14 @@ public final class NameTagManager {
         String name = gradients.forGroup(group).apply(player.getName());
 
         String full = prefix.isBlank() ? name : prefix + " " + name;
+
+        // Optional second line with live hearts — enable on fight servers via
+        // show-health; the listener refreshes the tag on damage/regen.
+        if (plugin.getConfig().getBoolean("show-health", false)) {
+            double hearts = Math.max(0, player.getHealth()) / 2.0;
+            full += "<newline><red>❤ <white>"
+                    + String.format(java.util.Locale.US, "%.1f", hearts);
+        }
         return MM.deserialize(full);
     }
 
