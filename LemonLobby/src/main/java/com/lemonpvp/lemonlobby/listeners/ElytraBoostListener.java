@@ -54,6 +54,21 @@ public class ElytraBoostListener implements Listener {
     public ElytraBoostListener(LemonLobby plugin) {
         this.plugin = plugin;
         this.elytraKey = new NamespacedKey(plugin, "lobby_elytra");
+        // Inventory-clearing flows (kit editor, admin clears) silently remove
+        // the wings — re-equip every 5s for anyone whose chest slot is empty.
+        org.bukkit.Bukkit.getScheduler().runTaskTimer(plugin, this::reequipAll, 100L, 100L);
+    }
+
+    private void reequipAll() {
+        if (!enabled() || !plugin.getConfig().getBoolean("elytra-boost.give-elytra", true)) return;
+        for (Player p : org.bukkit.Bukkit.getOnlinePlayers()) {
+            GameMode gm = p.getGameMode();
+            if (gm != GameMode.ADVENTURE && gm != GameMode.SURVIVAL) continue;
+            ItemStack chest = p.getInventory().getChestplate();
+            if (chest == null || chest.getType() == Material.AIR) {
+                p.getInventory().setChestplate(buildElytra());
+            }
+        }
     }
 
     private boolean enabled() {

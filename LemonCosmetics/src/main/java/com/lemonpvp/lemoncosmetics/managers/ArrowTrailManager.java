@@ -43,9 +43,12 @@ public class ArrowTrailManager {
             playerArrows.computeIfAbsent(shooterUuid, k -> ConcurrentHashMap.newKeySet()).add(entityId);
         }
 
+        final int[] life = {0};
         BukkitTask task = Bukkit.getScheduler()
                 .runTaskTimer(plugin, () -> {
-                    if (!projectile.isValid() || projectile.isOnGround()) {
+                    // Hard lifetime cap (30s) so a stuck projectile (e.g. a
+                    // loyalty trident wedged mid-return) can't leak its task.
+                    if (++life[0] > 300 || !projectile.isValid() || projectile.isOnGround()) {
                         stopTrail(entityId);
                         if (shooterUuid != null) {
                             Set<Integer> s = playerArrows.get(shooterUuid);

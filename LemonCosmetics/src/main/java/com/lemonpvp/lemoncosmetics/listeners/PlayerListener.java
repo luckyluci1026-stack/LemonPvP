@@ -89,6 +89,9 @@ public class PlayerListener implements Listener {
     }
 
     private void giveCosmeticsItem(Player player) {
+        // LemonPractice owns the lobby hotbar (its cosmetics item sits on
+        // slot 7) — don't overwrite its Settings item on slot 8.
+        if (Bukkit.getPluginManager().getPlugin("LemonPractice") != null) return;
         ItemStack item = new ItemStack(Material.DIAMOND);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {

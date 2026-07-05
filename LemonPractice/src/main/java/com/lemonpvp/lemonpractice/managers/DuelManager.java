@@ -356,16 +356,32 @@ public class DuelManager {
                 plugin.getSpectatorManager().removeSpectator(winner);
                 sendToLobby(winner);
             }
-            if (loser != null && loser.isOnline()) {
-                plugin.getSpectatorManager().removeSpectator(loser);
-                sendToLobby(loser);
-            }
 
             activeDuels.remove(game.getPlayer1Uuid());
             activeDuels.remove(game.getPlayer2Uuid());
             plugin.getArenaManager().markInUse(game.getArena(), false);
             plugin.getArenaManager().resetArena(game.getArena());
         }, 60L);
+
+        // The loser leaves later when the kill-cam is on, so the slow-mo clip
+        // (starts ~30 ticks after duel end) can actually finish playing.
+        long loserDelay = 60L;
+        if (plugin.getConfig().getBoolean("replays.killcam.enabled", true)) {
+            loserDelay = 60L
+                    + plugin.getConfig().getInt("replays.killcam.seconds", 4) * 20L
+                    + 40L;
+        }
+        final java.util.UUID loserUuid = loser != null ? loser.getUniqueId() : null;
+        if (loserUuid != null) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                Player l = Bukkit.getPlayer(loserUuid);
+                if (l != null && l.isOnline()) {
+                    plugin.getReplayManager().stopPlayback(loserUuid); // end a running kill-cam cleanly
+                    plugin.getSpectatorManager().removeSpectator(l);
+                    sendToLobby(l);
+                }
+            }, loserDelay);
+        }
     }
 
     // -----------------------------------------------------------------------
