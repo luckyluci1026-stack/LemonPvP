@@ -32,8 +32,8 @@ public class AowBuildLobbyCommand implements CommandExecutor {
 
         // Safety confirm step: /aowbuildlobby confirm
         if (args.length == 0 || !args[0].equalsIgnoreCase("confirm")) {
-            player.sendMessage("§e⚠ This rebuilds the hub island at (0,64,0) — radius ~60 —");
-            player.sendMessage("§e⚠ AND clears the legacy arena strip from x=80 to x=900!");
+            player.sendMessage("§e⚠ This rebuilds the hub island at (0,64,0) — radius ~100 —");
+            player.sendMessage("§e⚠ AND clears the legacy arena strip from x=100 to x=900!");
             player.sendMessage("§eConfirm with: §f/aowbuildlobby confirm");
             return true;
         }
