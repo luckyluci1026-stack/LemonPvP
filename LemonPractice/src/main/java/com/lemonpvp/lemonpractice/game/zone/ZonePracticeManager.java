@@ -157,10 +157,24 @@ public class ZonePracticeManager {
                 Player winner = Bukkit.getPlayer(winnerUuid);
                 String name = winner != null ? winner.getName() : "Unknown";
                 winnerMsg = "<gold><bold>" + name + "</bold></gold> <green>won the zone!";
+                if (winner != null) tryPlayWinEffect(winner);
             } else {
                 winnerMsg = "<yellow>The zone round has ended.";
             }
             endRound(winnerMsg);
+        }
+    }
+
+    /** Plays the winner's LemonCosmetics win effect (soft dependency). */
+    private void tryPlayWinEffect(Player winner) {
+        try {
+            org.bukkit.plugin.Plugin lc = Bukkit.getPluginManager().getPlugin("LemonCosmetics");
+            if (lc != null && lc.isEnabled()
+                    && lc instanceof com.lemonpvp.lemoncosmetics.LemonCosmetics cosmetics) {
+                cosmetics.getWinEffectManager().play(winner);
+            }
+        } catch (Throwable ignored) {
+            // LemonCosmetics absent or incompatible — celebrations are optional.
         }
     }
 

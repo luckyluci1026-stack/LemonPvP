@@ -282,20 +282,23 @@ public class ExplosionParticleManager {
         }
 
         final Location base = loc.clone().add(0, 0.5, 0);
+        // Opening flash for immediate punch.
+        world.spawnParticle(preset.particle(), base, 50, 0.7, 0.7, 0.7, 0.06);
+
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];
         task[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (base.getWorld() == null || t[0] >= 10) { task[0].cancel(); return; }
-            double r = 0.6 + t[0] * 0.45;
-            int pts = 12 + t[0] * 2;
+            if (base.getWorld() == null || t[0] >= 12) { task[0].cancel(); return; }
+            double r = 0.6 + t[0] * 0.5;
+            int pts = 26 + t[0] * 4;
             for (int i = 0; i < pts; i++) {
-                // Fibonacci-ish sphere shell points.
+                // Fibonacci sphere shell points for an even, dense burst.
                 double theta = i * 2.399963;
                 double y = 1.0 - (i / (double) (pts - 1)) * 2.0;
                 double rr = Math.sqrt(Math.max(0, 1 - y * y));
                 base.getWorld().spawnParticle(preset.particle(),
-                        base.clone().add(Math.cos(theta) * rr * r, y * r * 0.7, Math.sin(theta) * rr * r),
-                        1, 0, 0, 0, 0);
+                        base.clone().add(Math.cos(theta) * rr * r, y * r * 0.75, Math.sin(theta) * rr * r),
+                        1, 0.02, 0.02, 0.02, 0);
             }
             t[0]++;
         }, 0L, 1L);

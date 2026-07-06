@@ -57,7 +57,7 @@ public class ArrowTrailManager {
                         return;
                     }
                     spawnParticle(projectile, trail);
-                }, 0L, 2L);
+                }, 0L, 1L);
         arrowTasks.put(entityId, task);
     }
 
@@ -88,14 +88,15 @@ public class ArrowTrailManager {
             var world = loc.getWorld();
             if (world == null) return;
             if (trail.particle == Particle.DUST) {
+                // Denser dust: a small cluster with a touch of spread so the
+                // trail reads as a solid ribbon, not a dotted line.
                 Particle.DustOptions dust = new Particle.DustOptions(trail.dustColor, trail.dustSize);
-                world.spawnParticle(Particle.DUST, loc, 1, 0, 0, 0, 0, dust);
+                world.spawnParticle(Particle.DUST, loc, 4, 0.08, 0.08, 0.08, 0, dust);
             } else if (trail.particle == Particle.FLAME) {
-                // Flame + smoke alternating based on entity ID % 2
-                Particle p = (projectile.getEntityId() % 2 == 0) ? Particle.FLAME : Particle.SMOKE;
-                world.spawnParticle(p, loc, 1, 0, 0, 0, 0);
+                world.spawnParticle(Particle.FLAME, loc, 3, 0.06, 0.06, 0.06, 0.002);
+                world.spawnParticle(Particle.SMOKE, loc, 1, 0.05, 0.05, 0.05, 0);
             } else {
-                world.spawnParticle(trail.particle, loc, 1, 0, 0, 0, 0);
+                world.spawnParticle(trail.particle, loc, 3, 0.07, 0.07, 0.07, 0.01);
             }
         } catch (Exception ignored) {}
     }

@@ -61,18 +61,29 @@ public class KillEffectManager {
         }
 
         final Location base = loc.clone().add(0, 0.3, 0);
+        // Opening flash: a dense pop so the kill reads instantly.
+        world.spawnParticle(type.particle, base.clone().add(0, 0.6, 0), 40, 0.5, 0.6, 0.5, 0.05);
+
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];
         task[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (loc.getWorld() == null || t[0] >= 12) { task[0].cancel(); return; }
+            if (loc.getWorld() == null || t[0] >= 14) { task[0].cancel(); return; }
             int tick = t[0];
-            double r = 0.4 + tick * 0.28;
-            int pts = 10 + tick;
+            // Two concentric expanding rings for a fuller shockwave.
+            double r = 0.5 + tick * 0.34;
+            double r2 = r * 0.62;
+            int pts = 18 + tick * 2;
             for (int i = 0; i < pts; i++) {
                 double a = i * (Math.PI * 2 / pts);
-                world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r), 1, 0, 0, 0, 0);
+                world.spawnParticle(type.particle,
+                        base.clone().add(Math.cos(a) * r, 0.05, Math.sin(a) * r), 2, 0.04, 0.04, 0.04, 0.01);
+                if (i % 2 == 0) {
+                    world.spawnParticle(type.particle,
+                            base.clone().add(Math.cos(a) * r2, 0.35, Math.sin(a) * r2), 1, 0.03, 0.03, 0.03, 0);
+                }
             }
-            world.spawnParticle(type.particle, base.clone().add(0, tick * 0.12, 0), 3, 0.12, 0.12, 0.12, 0);
+            // Rising twinkling column.
+            world.spawnParticle(type.particle, base.clone().add(0, tick * 0.16, 0), 6, 0.16, 0.16, 0.16, 0.02);
             t[0]++;
         }, 0L, 1L);
     }

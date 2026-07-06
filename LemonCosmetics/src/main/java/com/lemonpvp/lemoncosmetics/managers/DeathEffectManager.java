@@ -111,22 +111,33 @@ public class DeathEffectManager {
         }
 
         final Location base = loc.clone().add(0, 0.3, 0);
+        // Opening ground pool so the death reads instantly.
+        for (int i = 0; i < 24; i++) {
+            double a = i * (Math.PI * 2 / 24);
+            world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * 3.4, 0.1, Math.sin(a) * 3.4),
+                    2, 0.05, 0.05, 0.05, 0);
+        }
+
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];
         task[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (loc.getWorld() == null || t[0] >= 14) { task[0].cancel(); return; }
+            if (loc.getWorld() == null || t[0] >= 16) { task[0].cancel(); return; }
             int tick = t[0];
-            // Ring radius shrinks from ~3.2 to ~0.2.
-            double r = Math.max(0.2, 3.2 - tick * 0.22);
-            int pts = 14 - tick / 2;
+            // Ring radius shrinks from ~3.4 to ~0.2 with a spiral drift inward.
+            double r = Math.max(0.2, 3.4 - tick * 0.21);
+            int pts = 24 - tick;
             for (int i = 0; i < pts; i++) {
-                double a = i * (Math.PI * 2 / pts) + tick * 0.2; // slight rotation
+                double a = i * (Math.PI * 2 / pts) + tick * 0.28;
                 world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * r, 0.1, Math.sin(a) * r),
-                        1, 0, 0, 0, 0);
+                        2, 0.03, 0.03, 0.03, 0);
+                // Second, counter-rotating strand for density.
+                double a2 = -a + tick * 0.15;
+                world.spawnParticle(type.particle, base.clone().add(Math.cos(a2) * r * 0.7, 0.1, Math.sin(a2) * r * 0.7),
+                        1, 0.02, 0.02, 0.02, 0);
             }
             // Rising soul column from the death point.
-            world.spawnParticle(type.particle, base.clone().add(0, 0.4 + tick * 0.18, 0),
-                    2, 0.08, 0.08, 0.08, 0);
+            world.spawnParticle(type.particle, base.clone().add(0, 0.4 + tick * 0.2, 0),
+                    4, 0.1, 0.12, 0.1, 0.01);
             t[0]++;
         }, 0L, 1L);
     }

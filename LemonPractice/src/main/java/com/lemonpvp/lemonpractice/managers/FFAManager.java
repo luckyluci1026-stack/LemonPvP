@@ -288,9 +288,26 @@ public class FFAManager {
             broadcast(MM.deserialize("<gold>" + killer.getName() + "</gold> <yellow>is on a <gold>"
                     + streak + "</gold> killstreak!"));
         }
+        // Big streaks celebrate with the player's own win effect.
+        if (streak > 0 && streak % 10 == 0) {
+            tryPlayWinEffect(killer);
+        }
 
         tryRewardCoins(killer, streak);
         tryUpdateLemonCoreStats(killer, victim);
+    }
+
+    /** Plays a player's LemonCosmetics win effect at their location (soft dependency). */
+    private void tryPlayWinEffect(Player player) {
+        try {
+            org.bukkit.plugin.Plugin lc = Bukkit.getPluginManager().getPlugin("LemonCosmetics");
+            if (lc != null && lc.isEnabled()
+                    && lc instanceof com.lemonpvp.lemoncosmetics.LemonCosmetics cosmetics) {
+                cosmetics.getWinEffectManager().play(player);
+            }
+        } catch (Throwable ignored) {
+            // LemonCosmetics absent or incompatible — celebrations are optional.
+        }
     }
 
     /** Resets the FFA killstreak for a player (called on their death). */
