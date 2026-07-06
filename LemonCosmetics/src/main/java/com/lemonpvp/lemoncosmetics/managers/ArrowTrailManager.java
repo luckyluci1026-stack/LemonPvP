@@ -88,15 +88,14 @@ public class ArrowTrailManager {
             var world = loc.getWorld();
             if (world == null) return;
             if (trail.particle == Particle.DUST) {
-                // Denser dust: a small cluster with a touch of spread so the
-                // trail reads as a solid ribbon, not a dotted line.
+                // Dense dust cluster so the trail reads as a thick solid ribbon.
                 Particle.DustOptions dust = new Particle.DustOptions(trail.dustColor, trail.dustSize);
-                world.spawnParticle(Particle.DUST, loc, 4, 0.08, 0.08, 0.08, 0, dust);
+                world.spawnParticle(Particle.DUST, loc, 9, 0.12, 0.12, 0.12, 0, dust);
             } else if (trail.particle == Particle.FLAME) {
-                world.spawnParticle(Particle.FLAME, loc, 3, 0.06, 0.06, 0.06, 0.002);
-                world.spawnParticle(Particle.SMOKE, loc, 1, 0.05, 0.05, 0.05, 0);
+                world.spawnParticle(Particle.FLAME, loc, 7, 0.1, 0.1, 0.1, 0.003);
+                world.spawnParticle(Particle.SMOKE, loc, 3, 0.08, 0.08, 0.08, 0);
             } else {
-                world.spawnParticle(trail.particle, loc, 3, 0.07, 0.07, 0.07, 0.01);
+                world.spawnParticle(trail.particle, loc, 7, 0.1, 0.1, 0.1, 0.01);
             }
         } catch (Exception ignored) {}
     }

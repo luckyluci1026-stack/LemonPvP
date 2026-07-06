@@ -61,29 +61,33 @@ public class KillEffectManager {
         }
 
         final Location base = loc.clone().add(0, 0.3, 0);
-        // Opening flash: a dense pop so the kill reads instantly.
-        world.spawnParticle(type.particle, base.clone().add(0, 0.6, 0), 40, 0.5, 0.6, 0.5, 0.05);
+        // Opening flash: a big dense pop so the kill reads instantly.
+        world.spawnParticle(type.particle, base.clone().add(0, 0.7, 0), 120, 0.7, 0.8, 0.7, 0.08);
+        world.spawnParticle(type.particle, base, 60, 0.2, 0.1, 0.2, 0.12); // outward blast
 
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];
         task[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (loc.getWorld() == null || t[0] >= 14) { task[0].cancel(); return; }
+            if (loc.getWorld() == null || t[0] >= 18) { task[0].cancel(); return; }
             int tick = t[0];
-            // Two concentric expanding rings for a fuller shockwave.
-            double r = 0.5 + tick * 0.34;
-            double r2 = r * 0.62;
-            int pts = 18 + tick * 2;
+            // Three concentric expanding rings for a full shockwave.
+            double r = 0.5 + tick * 0.36;
+            double r2 = r * 0.66;
+            double r3 = r * 0.34;
+            int pts = 34 + tick * 3;
             for (int i = 0; i < pts; i++) {
                 double a = i * (Math.PI * 2 / pts);
                 world.spawnParticle(type.particle,
-                        base.clone().add(Math.cos(a) * r, 0.05, Math.sin(a) * r), 2, 0.04, 0.04, 0.04, 0.01);
+                        base.clone().add(Math.cos(a) * r, 0.05, Math.sin(a) * r), 3, 0.05, 0.05, 0.05, 0.01);
+                world.spawnParticle(type.particle,
+                        base.clone().add(Math.cos(a) * r2, 0.4, Math.sin(a) * r2), 2, 0.04, 0.04, 0.04, 0.01);
                 if (i % 2 == 0) {
                     world.spawnParticle(type.particle,
-                            base.clone().add(Math.cos(a) * r2, 0.35, Math.sin(a) * r2), 1, 0.03, 0.03, 0.03, 0);
+                            base.clone().add(Math.cos(a) * r3, 0.8, Math.sin(a) * r3), 1, 0.03, 0.03, 0.03, 0);
                 }
             }
             // Rising twinkling column.
-            world.spawnParticle(type.particle, base.clone().add(0, tick * 0.16, 0), 6, 0.16, 0.16, 0.16, 0.02);
+            world.spawnParticle(type.particle, base.clone().add(0, tick * 0.18, 0), 14, 0.22, 0.22, 0.22, 0.03);
             t[0]++;
         }, 0L, 1L);
     }

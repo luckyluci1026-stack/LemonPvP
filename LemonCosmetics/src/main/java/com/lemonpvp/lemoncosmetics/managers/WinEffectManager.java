@@ -148,36 +148,38 @@ public class WinEffectManager {
         if (type.sound != null) world.playSound(loc, type.sound, 1.0f, 1.1f);
 
         final Location base = loc.clone();
-        // Opening ground ring so the win lands with impact.
-        for (int i = 0; i < 32; i++) {
-            double a = i * (Math.PI * 2 / 32);
-            world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * 2.4, 0.1, Math.sin(a) * 2.4),
+        // Opening double ground ring so the win lands with big impact.
+        for (int i = 0; i < 60; i++) {
+            double a = i * (Math.PI * 2 / 60);
+            world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * 2.6, 0.1, Math.sin(a) * 2.6),
+                    3, 0.06, 0.06, 0.06, 0.01);
+            world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * 1.4, 0.1, Math.sin(a) * 1.4),
                     2, 0.05, 0.05, 0.05, 0.01);
         }
 
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];
         task[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (base.getWorld() == null || t[0] >= 34) { task[0].cancel(); return; }
+            if (base.getWorld() == null || t[0] >= 40) { task[0].cancel(); return; }
             int tick = t[0];
             double y = tick * 0.13;
             double angle = tick * 0.42;
-            double r = 1.3;
-            // Four helix strands + an expanding ground ring underneath.
-            for (int strand = 0; strand < 4; strand++) {
-                double a = angle + strand * (Math.PI / 2);
+            double r = 1.4;
+            // Six helix strands + an expanding ground ring underneath.
+            for (int strand = 0; strand < 6; strand++) {
+                double a = angle + strand * (Math.PI / 3);
                 world.spawnParticle(type.particle,
-                        base.clone().add(Math.cos(a) * r, y, Math.sin(a) * r), 3, 0.06, 0.06, 0.06, 0.01);
+                        base.clone().add(Math.cos(a) * r, y, Math.sin(a) * r), 4, 0.07, 0.07, 0.07, 0.01);
             }
-            double gr = 0.5 + tick * 0.18;
-            for (int i = 0; i < 10; i++) {
-                double a = i * (Math.PI * 2 / 10) + tick * 0.1;
+            double gr = 0.5 + tick * 0.2;
+            for (int i = 0; i < 20; i++) {
+                double a = i * (Math.PI * 2 / 20) + tick * 0.1;
                 world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * gr, 0.1, Math.sin(a) * gr),
-                        1, 0.03, 0.03, 0.03, 0);
+                        2, 0.04, 0.04, 0.04, 0);
             }
             // Crown burst at the top on the final ticks.
-            if (tick >= 31) {
-                world.spawnParticle(type.particle, base.clone().add(0, 4.4, 0), 40, 0.8, 0.4, 0.8, 0.08);
+            if (tick >= 35) {
+                world.spawnParticle(type.particle, base.clone().add(0, 4.6, 0), 90, 1.0, 0.5, 1.0, 0.1);
             }
             t[0]++;
         }, 0L, 1L);

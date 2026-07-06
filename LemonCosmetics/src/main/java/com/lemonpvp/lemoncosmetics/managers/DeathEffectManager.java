@@ -111,33 +111,34 @@ public class DeathEffectManager {
         }
 
         final Location base = loc.clone().add(0, 0.3, 0);
-        // Opening ground pool so the death reads instantly.
-        for (int i = 0; i < 24; i++) {
-            double a = i * (Math.PI * 2 / 24);
-            world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * 3.4, 0.1, Math.sin(a) * 3.4),
-                    2, 0.05, 0.05, 0.05, 0);
+        // Opening ground pool + upward gasp so the death reads instantly.
+        for (int i = 0; i < 48; i++) {
+            double a = i * (Math.PI * 2 / 48);
+            world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * 3.6, 0.1, Math.sin(a) * 3.6),
+                    3, 0.06, 0.06, 0.06, 0);
         }
+        world.spawnParticle(type.particle, base.clone().add(0, 1.0, 0), 60, 0.3, 0.9, 0.3, 0.05);
 
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];
         task[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (loc.getWorld() == null || t[0] >= 16) { task[0].cancel(); return; }
+            if (loc.getWorld() == null || t[0] >= 20) { task[0].cancel(); return; }
             int tick = t[0];
-            // Ring radius shrinks from ~3.4 to ~0.2 with a spiral drift inward.
-            double r = Math.max(0.2, 3.4 - tick * 0.21);
-            int pts = 24 - tick;
+            // Ring radius shrinks from ~3.6 to ~0.2 with a spiral drift inward.
+            double r = Math.max(0.2, 3.6 - tick * 0.18);
+            int pts = 40 - tick;
             for (int i = 0; i < pts; i++) {
                 double a = i * (Math.PI * 2 / pts) + tick * 0.28;
                 world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * r, 0.1, Math.sin(a) * r),
-                        2, 0.03, 0.03, 0.03, 0);
+                        3, 0.04, 0.04, 0.04, 0);
                 // Second, counter-rotating strand for density.
                 double a2 = -a + tick * 0.15;
                 world.spawnParticle(type.particle, base.clone().add(Math.cos(a2) * r * 0.7, 0.1, Math.sin(a2) * r * 0.7),
-                        1, 0.02, 0.02, 0.02, 0);
+                        2, 0.03, 0.03, 0.03, 0);
             }
             // Rising soul column from the death point.
-            world.spawnParticle(type.particle, base.clone().add(0, 0.4 + tick * 0.2, 0),
-                    4, 0.1, 0.12, 0.1, 0.01);
+            world.spawnParticle(type.particle, base.clone().add(0, 0.4 + tick * 0.22, 0),
+                    9, 0.14, 0.16, 0.14, 0.02);
             t[0]++;
         }, 0L, 1L);
     }
