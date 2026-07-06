@@ -271,9 +271,12 @@ public class ExplosionParticleManager {
      * Explosion burst: an expanding sphere shell over ~10 ticks. Heavy one-shot
      * particles (EXPLOSION, SONIC_BOOM) are rendered compactly instead.
      */
+    private int pc(int n) { return plugin.particleCount(n); }
+
     private void playBurst(ExplosionPreset preset, Location loc) {
         final World world = loc.getWorld();
         if (world == null) return;
+        if (pc(1) <= 0) return;
         if (preset.sound() != null) world.playSound(loc, preset.sound(), 1.0f, 1.0f);
 
         if (preset.particle() == Particle.EXPLOSION || preset.particle() == Particle.SONIC_BOOM) {
@@ -283,7 +286,7 @@ public class ExplosionParticleManager {
 
         final Location base = loc.clone().add(0, 0.5, 0);
         // Big opening flash for immediate punch.
-        world.spawnParticle(preset.particle(), base, 130, 0.9, 0.9, 0.9, 0.09);
+        world.spawnParticle(preset.particle(), base, pc(130), 0.9, 0.9, 0.9, 0.09);
 
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];
@@ -300,11 +303,11 @@ public class ExplosionParticleManager {
                 double rr = Math.sqrt(Math.max(0, 1 - y * y));
                 base.getWorld().spawnParticle(preset.particle(),
                         base.clone().add(Math.cos(theta) * rr * r, y * r * 0.75, Math.sin(theta) * rr * r),
-                        1, 0.02, 0.02, 0.02, 0);
+                        pc(1), 0.02, 0.02, 0.02, 0);
                 if (i % 2 == 0) {
                     base.getWorld().spawnParticle(preset.particle(),
                             base.clone().add(Math.cos(theta) * rr * r2, y * r2 * 0.75, Math.sin(theta) * rr * r2),
-                            1, 0.02, 0.02, 0.02, 0);
+                            pc(1), 0.02, 0.02, 0.02, 0);
                 }
             }
             t[0]++;

@@ -82,6 +82,8 @@ public class ArrowTrailManager {
         }
     }
 
+    private int pc(int n) { return plugin.particleCount(n); }
+
     private void spawnParticle(Projectile projectile, ArrowTrailType trail) {
         try {
             var loc = projectile.getLocation();
@@ -90,12 +92,12 @@ public class ArrowTrailManager {
             if (trail.particle == Particle.DUST) {
                 // Dense dust cluster so the trail reads as a thick solid ribbon.
                 Particle.DustOptions dust = new Particle.DustOptions(trail.dustColor, trail.dustSize);
-                world.spawnParticle(Particle.DUST, loc, 9, 0.12, 0.12, 0.12, 0, dust);
+                world.spawnParticle(Particle.DUST, loc, pc(9), 0.12, 0.12, 0.12, 0, dust);
             } else if (trail.particle == Particle.FLAME) {
-                world.spawnParticle(Particle.FLAME, loc, 7, 0.1, 0.1, 0.1, 0.003);
-                world.spawnParticle(Particle.SMOKE, loc, 3, 0.08, 0.08, 0.08, 0);
+                world.spawnParticle(Particle.FLAME, loc, pc(7), 0.1, 0.1, 0.1, 0.003);
+                world.spawnParticle(Particle.SMOKE, loc, pc(3), 0.08, 0.08, 0.08, 0);
             } else {
-                world.spawnParticle(trail.particle, loc, 7, 0.1, 0.1, 0.1, 0.01);
+                world.spawnParticle(trail.particle, loc, pc(7), 0.1, 0.1, 0.1, 0.01);
             }
         } catch (Exception ignored) {}
     }

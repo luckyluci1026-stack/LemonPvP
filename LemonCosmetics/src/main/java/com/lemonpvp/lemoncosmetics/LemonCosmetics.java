@@ -31,10 +31,14 @@ public final class LemonCosmetics extends JavaPlugin {
     private CosmeticsMessaging cosmeticsMessaging;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
+    /** Global particle-count multiplier (config {@code cosmetics.particle-density}). */
+    private volatile double particleDensity = 1.0;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
         loadServersConfig();
+        reloadParticleDensity();
 
         database = new CosmeticsDatabase(this);
         try {
@@ -93,6 +97,23 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public ArmorTrimManager getArmorTrimManager() {
         return armorTrimManager;
+    }
+
+    /** Reloads the particle-density multiplier from config (clamped 0.0–4.0). */
+    public void reloadParticleDensity() {
+        particleDensity = Math.max(0.0, Math.min(4.0,
+                getConfig().getDouble("cosmetics.particle-density", 1.0)));
+    }
+
+    /**
+     * Scales a base particle count by the configured density. Returns 0 when
+     * density is 0 (effects off), otherwise at least 1 for any positive base so
+     * a low multiplier never fully hides a single accent particle.
+     */
+    public int particleCount(int base) {
+        if (base <= 0) return 0;
+        if (particleDensity <= 0.0) return 0;
+        return Math.max(1, (int) Math.round(base * particleDensity));
     }
 
     public KillEffectManager getKillEffectManager() {

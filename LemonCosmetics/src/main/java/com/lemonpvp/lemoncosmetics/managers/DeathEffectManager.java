@@ -89,9 +89,12 @@ public class DeathEffectManager {
      * that collapses inward over ~14 ticks while a thin column rises from the
      * death point, with the effect's sound up front.
      */
+    private int pc(int n) { return plugin.particleCount(n); }
+
     private void playCollapse(DeathEffectType type, Location loc) {
         final World world = loc.getWorld();
         if (world == null || type.particle == null) return;
+        if (pc(1) <= 0) return;
         if (type.sound != null) world.playSound(loc, type.sound, 1.0f, 0.9f);
 
         // Heavy one-shot particles get a compact treatment instead of the full ring.
@@ -115,9 +118,9 @@ public class DeathEffectManager {
         for (int i = 0; i < 48; i++) {
             double a = i * (Math.PI * 2 / 48);
             world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * 3.6, 0.1, Math.sin(a) * 3.6),
-                    3, 0.06, 0.06, 0.06, 0);
+                    pc(3), 0.06, 0.06, 0.06, 0);
         }
-        world.spawnParticle(type.particle, base.clone().add(0, 1.0, 0), 60, 0.3, 0.9, 0.3, 0.05);
+        world.spawnParticle(type.particle, base.clone().add(0, 1.0, 0), pc(60), 0.3, 0.9, 0.3, 0.05);
 
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];
@@ -130,15 +133,15 @@ public class DeathEffectManager {
             for (int i = 0; i < pts; i++) {
                 double a = i * (Math.PI * 2 / pts) + tick * 0.28;
                 world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * r, 0.1, Math.sin(a) * r),
-                        3, 0.04, 0.04, 0.04, 0);
+                        pc(3), 0.04, 0.04, 0.04, 0);
                 // Second, counter-rotating strand for density.
                 double a2 = -a + tick * 0.15;
                 world.spawnParticle(type.particle, base.clone().add(Math.cos(a2) * r * 0.7, 0.1, Math.sin(a2) * r * 0.7),
-                        2, 0.03, 0.03, 0.03, 0);
+                        pc(2), 0.03, 0.03, 0.03, 0);
             }
             // Rising soul column from the death point.
             world.spawnParticle(type.particle, base.clone().add(0, 0.4 + tick * 0.22, 0),
-                    9, 0.14, 0.16, 0.14, 0.02);
+                    pc(9), 0.14, 0.16, 0.14, 0.02);
             t[0]++;
         }, 0L, 1L);
     }

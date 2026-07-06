@@ -49,9 +49,13 @@ public class KillEffectManager {
      * column over ~12 ticks, with the effect's sound up front. Used by every
      * effect that doesn't have a bespoke animation class.
      */
+    /** Scales a particle count by the configured density. */
+    private int pc(int n) { return plugin.particleCount(n); }
+
     private void playGeneric(KillEffectType type, Location loc) {
         final World world = loc.getWorld();
         if (world == null || type.particle == null) return;
+        if (pc(1) <= 0) return; // density 0 → effects off
         if (type.sound != null) world.playSound(loc, type.sound, 1.0f, 1.0f);
 
         // SONIC_BOOM is a huge one-shot particle — a ring of them would be absurd.
@@ -62,8 +66,8 @@ public class KillEffectManager {
 
         final Location base = loc.clone().add(0, 0.3, 0);
         // Opening flash: a big dense pop so the kill reads instantly.
-        world.spawnParticle(type.particle, base.clone().add(0, 0.7, 0), 120, 0.7, 0.8, 0.7, 0.08);
-        world.spawnParticle(type.particle, base, 60, 0.2, 0.1, 0.2, 0.12); // outward blast
+        world.spawnParticle(type.particle, base.clone().add(0, 0.7, 0), pc(120), 0.7, 0.8, 0.7, 0.08);
+        world.spawnParticle(type.particle, base, pc(60), 0.2, 0.1, 0.2, 0.12); // outward blast
 
         final int[] t = {0};
         final BukkitTask[] task = new BukkitTask[1];
@@ -78,16 +82,16 @@ public class KillEffectManager {
             for (int i = 0; i < pts; i++) {
                 double a = i * (Math.PI * 2 / pts);
                 world.spawnParticle(type.particle,
-                        base.clone().add(Math.cos(a) * r, 0.05, Math.sin(a) * r), 3, 0.05, 0.05, 0.05, 0.01);
+                        base.clone().add(Math.cos(a) * r, 0.05, Math.sin(a) * r), pc(3), 0.05, 0.05, 0.05, 0.01);
                 world.spawnParticle(type.particle,
-                        base.clone().add(Math.cos(a) * r2, 0.4, Math.sin(a) * r2), 2, 0.04, 0.04, 0.04, 0.01);
+                        base.clone().add(Math.cos(a) * r2, 0.4, Math.sin(a) * r2), pc(2), 0.04, 0.04, 0.04, 0.01);
                 if (i % 2 == 0) {
                     world.spawnParticle(type.particle,
-                            base.clone().add(Math.cos(a) * r3, 0.8, Math.sin(a) * r3), 1, 0.03, 0.03, 0.03, 0);
+                            base.clone().add(Math.cos(a) * r3, 0.8, Math.sin(a) * r3), pc(1), 0.03, 0.03, 0.03, 0);
                 }
             }
             // Rising twinkling column.
-            world.spawnParticle(type.particle, base.clone().add(0, tick * 0.18, 0), 14, 0.22, 0.22, 0.22, 0.03);
+            world.spawnParticle(type.particle, base.clone().add(0, tick * 0.18, 0), pc(14), 0.22, 0.22, 0.22, 0.03);
             t[0]++;
         }, 0L, 1L);
     }

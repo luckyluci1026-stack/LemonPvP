@@ -142,9 +142,12 @@ public class WinEffectManager {
     }
 
     /** Generic celebration: a rising 4-strand fountain around the winner (~34 ticks). */
+    private int pc(int n) { return plugin.particleCount(n); }
+
     private void playSpiral(WinEffectType type, Location loc) {
         final World world = loc.getWorld();
         if (world == null || type.particle == null) return;
+        if (pc(1) <= 0) return;
         if (type.sound != null) world.playSound(loc, type.sound, 1.0f, 1.1f);
 
         final Location base = loc.clone();
@@ -152,9 +155,9 @@ public class WinEffectManager {
         for (int i = 0; i < 60; i++) {
             double a = i * (Math.PI * 2 / 60);
             world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * 2.6, 0.1, Math.sin(a) * 2.6),
-                    3, 0.06, 0.06, 0.06, 0.01);
+                    pc(3), 0.06, 0.06, 0.06, 0.01);
             world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * 1.4, 0.1, Math.sin(a) * 1.4),
-                    2, 0.05, 0.05, 0.05, 0.01);
+                    pc(2), 0.05, 0.05, 0.05, 0.01);
         }
 
         final int[] t = {0};
@@ -169,17 +172,17 @@ public class WinEffectManager {
             for (int strand = 0; strand < 6; strand++) {
                 double a = angle + strand * (Math.PI / 3);
                 world.spawnParticle(type.particle,
-                        base.clone().add(Math.cos(a) * r, y, Math.sin(a) * r), 4, 0.07, 0.07, 0.07, 0.01);
+                        base.clone().add(Math.cos(a) * r, y, Math.sin(a) * r), pc(4), 0.07, 0.07, 0.07, 0.01);
             }
             double gr = 0.5 + tick * 0.2;
             for (int i = 0; i < 20; i++) {
                 double a = i * (Math.PI * 2 / 20) + tick * 0.1;
                 world.spawnParticle(type.particle, base.clone().add(Math.cos(a) * gr, 0.1, Math.sin(a) * gr),
-                        2, 0.04, 0.04, 0.04, 0);
+                        pc(2), 0.04, 0.04, 0.04, 0);
             }
             // Crown burst at the top on the final ticks.
             if (tick >= 35) {
-                world.spawnParticle(type.particle, base.clone().add(0, 4.6, 0), 90, 1.0, 0.5, 1.0, 0.1);
+                world.spawnParticle(type.particle, base.clone().add(0, 4.6, 0), pc(90), 1.0, 0.5, 1.0, 0.1);
             }
             t[0]++;
         }, 0L, 1L);
