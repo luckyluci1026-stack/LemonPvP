@@ -47,6 +47,15 @@ permissions:
   lemoncosmetics.trail.*:
     description: All arrow trails
     default: false
+  lemoncosmetics.deatheffect.*:
+    description: All death effects (free grant)
+    default: false
+  lemoncosmetics.wineffect.*:
+    description: All win effects (free grant)
+    default: false
+  lemoncosmetics.explosion.*:
+    description: All explosion-particle presets (free grant)
+    default: false
   lemoncosmetics.tag.developing:
     description: Developing tag (permission-only)
     default: false
