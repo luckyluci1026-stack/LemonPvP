@@ -5,7 +5,7 @@ api-version: '1.21'
 softdepend: [LuckPerms, LemonCore]
 commands:
   cosmetics:
-    description: Open cosmetics menu
+    description: Open cosmetics menu (/cosmetics reload for admins)
     permission: lemoncosmetics.use
   tags:
     description: Open the tags menu
@@ -15,6 +15,9 @@ permissions:
   lemoncosmetics.use:
     description: Access /cosmetics and /tags commands
     default: true
+  lemoncosmetics.admin:
+    description: Reload LemonCosmetics config, density and explosion presets
+    default: op
   lemoncosmetics.effect.fire_swarm:
     description: Fire Swarm kill effect
     default: false

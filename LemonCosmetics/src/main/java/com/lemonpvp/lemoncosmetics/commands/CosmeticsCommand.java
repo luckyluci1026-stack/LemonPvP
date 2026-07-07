@@ -22,6 +22,23 @@ public class CosmeticsCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        // Admin reload — usable from console too, and by players/staff.
+        if (args.length >= 1 && args[0].equalsIgnoreCase("reload")) {
+            if (!sender.hasPermission("lemoncosmetics.admin")) {
+                sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                        "<red>You don't have permission."));
+                return true;
+            }
+            plugin.reloadConfig();
+            plugin.reloadParticleDensity();
+            plugin.getExplosionParticleManager().reload();
+            sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                    "<green>LemonCosmetics reloaded <gray>(density "
+                    + plugin.getConfig().getDouble("cosmetics.particle-density", 1.0)
+                    + ", " + plugin.getExplosionParticleManager().getAll().size() + " explosion presets)."));
+            return true;
+        }
+
         if (!(sender instanceof Player player)) return true;
 
         if (!player.hasPermission("lemoncosmetics.use")) {
