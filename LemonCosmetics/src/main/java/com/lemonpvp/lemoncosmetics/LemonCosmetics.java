@@ -116,6 +116,11 @@ public final class LemonCosmetics extends JavaPlugin {
         return Math.max(1, (int) Math.round(base * particleDensity));
     }
 
+    /** The effective (clamped) particle-density multiplier currently in effect. */
+    public double getParticleDensity() {
+        return particleDensity;
+    }
+
     public KillEffectManager getKillEffectManager() {
         return killEffectManager;
     }

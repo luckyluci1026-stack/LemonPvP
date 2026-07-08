@@ -364,12 +364,14 @@ public class DuelManager {
         }, 60L);
 
         // The loser leaves later when the kill-cam is on, so the slow-mo clip
-        // (starts ~30 ticks after duel end) can actually finish playing.
+        // can actually finish playing. The clip starts ~30 ticks after duel end
+        // and plays `seconds` of footage at `speed`, i.e. seconds*20/speed real
+        // ticks (default 0.6 speed = slower than real time), so divide by speed.
         long loserDelay = 60L;
         if (plugin.getConfig().getBoolean("replays.killcam.enabled", true)) {
-            loserDelay = 60L
-                    + plugin.getConfig().getInt("replays.killcam.seconds", 4) * 20L
-                    + 40L;
+            int secs = plugin.getConfig().getInt("replays.killcam.seconds", 4);
+            double speed = Math.max(0.1, plugin.getConfig().getDouble("replays.killcam.speed", 0.6));
+            loserDelay = Math.max(60L, 30L + (long) Math.ceil(secs * 20.0 / speed) + 40L);
         }
         final java.util.UUID loserUuid = loser != null ? loser.getUniqueId() : null;
         if (loserUuid != null) {

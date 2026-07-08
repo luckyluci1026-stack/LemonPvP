@@ -34,7 +34,7 @@ public class CosmeticsCommand implements CommandExecutor {
             plugin.getExplosionParticleManager().reload();
             sender.sendMessage(MiniMessage.miniMessage().deserialize(
                     "<green>LemonCosmetics reloaded <gray>(density "
-                    + plugin.getConfig().getDouble("cosmetics.particle-density", 1.0)
+                    + plugin.getParticleDensity()
                     + ", " + plugin.getExplosionParticleManager().getAll().size() + " explosion presets)."));
             return true;
         }

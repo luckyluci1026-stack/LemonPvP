@@ -123,7 +123,7 @@ public class ZonePracticeManager {
         int timeoutSeconds = shrinkSeconds() + 30;
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (active != null && !active.isEnded()) {
-                endRound("<yellow>Time is up! The zone round has ended.");
+                endRound("<yellow>Time is up! The zone round has ended.", null);
             }
         }, timeoutSeconds * 20L);
 
@@ -161,7 +161,7 @@ public class ZonePracticeManager {
             } else {
                 winnerMsg = "<yellow>The zone round has ended.";
             }
-            endRound(winnerMsg);
+            endRound(winnerMsg, winnerUuid);
         }
     }
 
@@ -178,15 +178,23 @@ public class ZonePracticeManager {
         }
     }
 
-    private void endRound(String message) {
+    private void endRound(String message, UUID winnerUuid) {
         ZoneSession session = active;
         if (session == null) return;
 
         for (UUID uuid : session.getParticipants()) {
             Player p = Bukkit.getPlayer(uuid);
-            if (p != null && p.isOnline()) {
-                p.sendMessage(MM.deserialize(
-                        "<gradient:#ff5555:#ffaa00><bold>ZONE</bold></gradient> " + message));
+            if (p == null || !p.isOnline()) continue;
+            p.sendMessage(MM.deserialize(
+                    "<gradient:#ff5555:#ffaa00><bold>ZONE</bold></gradient> " + message));
+            if (uuid.equals(winnerUuid)) {
+                // Keep the winner in the zone briefly so their (deferred) win
+                // effect actually renders where they're standing, then send home.
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    Player w = Bukkit.getPlayer(uuid);
+                    if (w != null && w.isOnline()) returnToLobby(w);
+                }, 45L);
+            } else {
                 returnToLobby(p);
             }
         }

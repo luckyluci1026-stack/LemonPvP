@@ -32,6 +32,7 @@ public class KillEffectManager {
         KillEffectType effectType = plugin.getCosmeticsManager()
                 .getActiveKillEffect(killer.getUniqueId());
         if (effectType == null) return;
+        if (plugin.particleCount(1) <= 0) return; // density 0 → all kill effects off
 
         Bukkit.getScheduler().runTask(plugin, () -> {
             switch (effectType) {
