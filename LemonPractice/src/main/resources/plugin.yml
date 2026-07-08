@@ -46,6 +46,9 @@ permissions:
   lemonpractice.replay:
     description: Watch and manage duel replays
     default: true
+  lemonpractice.admin.replay:
+    description: View, delete, extend and purge every player's replays
+    default: op
 
 commands:
   lpractice:
@@ -100,3 +103,7 @@ commands:
     description: Watch and manage duel replays
     permission: lemonpractice.replay
     usage: /replay <name> [add <days>] | list | info <name> | stop
+  greplay:
+    description: Admin replay browser — view, delete, extend and purge all replays
+    permission: lemonpractice.admin.replay
+    usage: /greplay | <name> | info <name> | delete <name> | extend <name> <days> | purge

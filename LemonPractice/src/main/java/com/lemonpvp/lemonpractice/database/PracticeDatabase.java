@@ -143,6 +143,16 @@ public class PracticeDatabase {
         });
     }
 
+    /** Deletes a single replay by name (admin action). Returns true if a row was removed. */
+    public CompletableFuture<Boolean> deleteReplay(String name) {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM lp_replays WHERE name=?")) {
+                ps.setString(1, name);
+                return ps.executeUpdate() > 0;
+            } catch (SQLException e) { plugin.getLogger().severe("deleteReplay error: " + e.getMessage()); return false; }
+        });
+    }
+
     public CompletableFuture<List<ReplayMeta>> listReplays(int limit) {
         return listReplays(limit, "created_at");
     }

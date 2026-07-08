@@ -42,6 +42,7 @@ public class ReplayBrowserGUI implements Listener {
 
     private final LemonPractice plugin;
     private final Player player;
+    private final boolean admin;
     private Inventory inv;
     private boolean registered;
     private int page;
@@ -49,8 +50,14 @@ public class ReplayBrowserGUI implements Listener {
     private final Map<Integer, String> slotMap = new HashMap<>();
 
     public ReplayBrowserGUI(LemonPractice plugin, Player player) {
+        this(plugin, player, false);
+    }
+
+    /** @param admin when true, the browser shows an admin header and right-click deletes a replay. */
+    public ReplayBrowserGUI(LemonPractice plugin, Player player, boolean admin) {
         this.plugin = plugin;
         this.player = player;
+        this.admin = admin;
     }
 
     public void open() {
@@ -58,8 +65,10 @@ public class ReplayBrowserGUI implements Listener {
             Player p = Bukkit.getPlayer(player.getUniqueId());
             if (p == null) return;
             this.replays = list != null ? list : new ArrayList<>();
-            inv = Bukkit.createInventory(null, SIZE,
-                    MM.deserialize("<!italic><gradient:#fffb00:#00ff00>Replays</gradient> <dark_gray>(" + replays.size() + ")"));
+            String title = admin
+                    ? "<!italic><gradient:#ff5555:#ffaa00>Admin Replays</gradient> <dark_gray>(" + replays.size() + ")"
+                    : "<!italic><gradient:#fffb00:#00ff00>Replays</gradient> <dark_gray>(" + replays.size() + ")";
+            inv = Bukkit.createInventory(null, SIZE, MM.deserialize(title));
             render();
             if (!registered) { Bukkit.getPluginManager().registerEvents(this, plugin); registered = true; }
             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
@@ -109,6 +118,7 @@ public class ReplayBrowserGUI implements Listener {
             lore.add(MM.deserialize("<!italic><gray>Expires in: <white>" + daysLeft + " days"));
             lore.add(Component.empty());
             lore.add(MM.deserialize("<!italic><green>► Click to watch"));
+            if (admin) lore.add(MM.deserialize("<!italic><red>► Right-click to delete"));
             sm.lore(lore);
             item.setItemMeta(sm);
         }
@@ -126,10 +136,31 @@ public class ReplayBrowserGUI implements Listener {
         if (slot == NEXT_SLOT && page < maxPage()) { page++; render(); return; }
         String name = slotMap.get(slot);
         if (name != null) {
+            if (admin && e.isRightClick()) {
+                deleteReplay(p, name);
+                return;
+            }
             unregister();
             p.closeInventory();
             plugin.getReplayManager().play(p, name);
         }
+    }
+
+    /** Admin-only: delete a replay from the DB, then refresh the open browser in place. */
+    private void deleteReplay(Player clicker, String name) {
+        plugin.getDatabase().deleteReplay(name).thenAccept(deleted -> Bukkit.getScheduler().runTask(plugin, () -> {
+            Player p = Bukkit.getPlayer(player.getUniqueId());
+            if (p == null || inv == null) return;
+            if (Boolean.TRUE.equals(deleted)) {
+                replays.removeIf(r -> r.name().equals(name));
+                if (page > maxPage()) page = maxPage();
+                render();
+                p.sendMessage(MM.deserialize("<!italic><red>Deleted replay <yellow>" + name));
+                p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_GRINDSTONE_USE, 0.6f, 1.2f);
+            } else {
+                p.sendMessage(MM.deserialize("<!italic><red>Could not delete <yellow>" + name));
+            }
+        }));
     }
 
     @EventHandler
