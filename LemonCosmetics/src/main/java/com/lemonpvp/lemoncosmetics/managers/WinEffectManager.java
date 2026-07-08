@@ -99,6 +99,7 @@ public class WinEffectManager {
      */
     public void play(Player winner) {
         if (winner == null || !winner.isOnline()) return;
+        if (plugin.particleCount(1) <= 0) return; // density 0 → all win effects off (incl. fireworks)
         PlayerCosmetics cosmetics = plugin.getCosmeticsManager().getPlayerCosmetics(winner.getUniqueId());
         if (cosmetics == null) return;
         WinEffectType effect = WinEffectType.fromId(cosmetics.getActiveWinEffectId()).orElse(null);
