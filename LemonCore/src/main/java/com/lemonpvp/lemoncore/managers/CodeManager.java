@@ -107,11 +107,26 @@ public class CodeManager {
                     ps.executeUpdate();
                 }
 
-                // Increment uses
+                // Atomically claim a use slot. The WHERE guard makes the cap check
+                // and increment a single statement, so two players redeeming a
+                // max_uses=1 code concurrently can't both pass the earlier read-only
+                // check and both get rewarded. 0 rows affected => the cap was reached
+                // (we lost the race), so roll back the redemption just inserted.
+                int claimed;
                 try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE lc_codes SET uses=uses+1 WHERE code=?")) {
+                        "UPDATE lc_codes SET uses=uses+1 WHERE code=? AND (max_uses<=0 OR uses<max_uses)")) {
                     ps.setString(1, code);
-                    ps.executeUpdate();
+                    claimed = ps.executeUpdate();
+                }
+                if (claimed == 0) {
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "DELETE FROM lc_code_redemptions WHERE code=? AND uuid=?")) {
+                        ps.setString(1, code);
+                        ps.setString(2, playerUuid.toString());
+                        ps.executeUpdate();
+                    }
+                    data.result = RedeemResult.MAX_USES;
+                    return data;
                 }
 
                 data.result = RedeemResult.SUCCESS;
