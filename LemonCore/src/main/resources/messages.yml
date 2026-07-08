@@ -40,6 +40,7 @@ mute:
   muted: "{prefix} <red>You are muted and cannot send messages."
   muted-duration: "{prefix} <red>You are muted for <white>{duration}"
   success: "{prefix} <green>Muted <white>{player}"
+  failed: "{prefix} <red>Failed to mute <white>{player}</white> — a database error occurred."
   unmute-success: "{prefix} <green>Unmuted <white>{player}"
   not-muted: "{prefix} <red>{player} is not muted."
 

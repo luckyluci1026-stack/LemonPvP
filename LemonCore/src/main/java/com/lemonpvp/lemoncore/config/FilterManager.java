@@ -95,8 +95,7 @@ public class FilterManager {
     }
 
     public boolean containsNword(String message) {
-        String clean = clean(message);
-        if (isWhitelisted(clean)) return false;
+        String clean = stripWhitelisted(clean(message));
         for (Pattern p : nwordPatterns) {
             if (p.matcher(clean).find()) return true;
         }
@@ -104,20 +103,27 @@ public class FilterManager {
     }
 
     public boolean containsSlur(String message) {
-        String clean = clean(message);
-        if (isWhitelisted(clean)) return false;
+        String clean = stripWhitelisted(clean(message));
         for (Pattern p : slurPatterns) {
             if (p.matcher(clean).find()) return true;
         }
         return false;
     }
 
-    private boolean isWhitelisted(String message) {
-        String lower = message.toLowerCase();
+    /**
+     * Neutralizes only the benign whitelisted words (e.g. "classic", "assassin")
+     * before pattern matching. The old behaviour returned "whitelisted" — and thus
+     * skipped the WHOLE filter — if the message merely contained a whitelisted
+     * substring, giving a trivial one-word bypass ("classic <slur>"). Stripping the
+     * benign token instead exempts the false positive without disarming the line.
+     */
+    private String stripWhitelisted(String message) {
+        String result = message;
         for (String w : whitelist) {
-            if (lower.contains(w.toLowerCase())) return true;
+            if (w == null || w.isEmpty()) continue;
+            result = result.replaceAll("(?i)" + Pattern.quote(w), " ");
         }
-        return false;
+        return result;
     }
 
     private String clean(String message) {

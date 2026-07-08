@@ -36,8 +36,9 @@ public class GMuteCommand implements CommandExecutor {
         if (online != null) {
             plugin.getMuteManager().mutePlayer(online.getUniqueId(), online.getName(), "Muted by admin",
                     senderUuid, sender.getName(), duration)
-                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
-                        sender.sendMessage(plugin.getMessagesManager().get("mute.success", "player", targetName))));
+                    .thenAccept(record -> Bukkit.getScheduler().runTask(plugin, () ->
+                        sender.sendMessage(plugin.getMessagesManager().get(
+                            record != null ? "mute.success" : "mute.failed", "player", targetName))));
         } else {
             plugin.getPlayerDataManager().findUUIDByName(targetName).thenAccept(uuid -> {
                 if (uuid == null) {
@@ -47,8 +48,9 @@ public class GMuteCommand implements CommandExecutor {
                 }
                 plugin.getMuteManager().mutePlayer(uuid, targetName, "Muted by admin",
                         senderUuid, sender.getName(), duration)
-                        .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
-                            sender.sendMessage(plugin.getMessagesManager().get("mute.success", "player", targetName))));
+                        .thenAccept(record -> Bukkit.getScheduler().runTask(plugin, () ->
+                            sender.sendMessage(plugin.getMessagesManager().get(
+                                record != null ? "mute.success" : "mute.failed", "player", targetName))));
             });
         }
         return true;

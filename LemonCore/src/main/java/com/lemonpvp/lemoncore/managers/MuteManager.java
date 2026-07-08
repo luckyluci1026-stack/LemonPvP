@@ -74,7 +74,7 @@ public class MuteManager {
                 if (!rs.next()) return null;
                 MuteRecord r = mapRecord(rs);
                 if (r.isExpired()) {
-                    unmuteById(r.id);
+                    unmuteById(conn, r.id);
                     return null;
                 }
                 return r;
@@ -121,9 +121,14 @@ public class MuteManager {
         });
     }
 
-    private void unmuteById(int id) {
-        try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement("UPDATE lc_mutes SET active=FALSE WHERE id=?")) {
+    /**
+     * Deactivates an expired mute reusing the caller's connection. Called from
+     * inside getActiveMute()'s queryAsync lambda, which already holds a pooled
+     * connection — borrowing a second one here (as it used to) risks exhausting
+     * or deadlocking the pool under a small pool-size. Mirrors BanManager.unbanById.
+     */
+    private void unmuteById(Connection conn, int id) {
+        try (PreparedStatement ps = conn.prepareStatement("UPDATE lc_mutes SET active=FALSE WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
         } catch (SQLException e) {

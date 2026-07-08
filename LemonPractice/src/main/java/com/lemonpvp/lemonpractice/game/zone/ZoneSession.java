@@ -17,8 +17,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -201,21 +203,27 @@ public class ZoneSession {
 
     private void applyDamage() {
         if (ended) return;
+        // Snapshot under the lock, then iterate outside it: player.damage() below
+        // can be lethal and fire PlayerDeathEvent synchronously, which re-enters
+        // removeParticipant()/stop() on this same thread and would otherwise mutate
+        // the set mid-iteration (ConcurrentModificationException). Mirrors FFAManager.
+        List<UUID> snapshot;
         synchronized (participants) {
-            for (UUID uuid : participants) {
-                Player player = Bukkit.getPlayer(uuid);
-                if (player == null || !player.isOnline()) continue;
-                if (player.isDead()) continue;
-                if (!isInside(player.getLocation())) {
-                    player.damage(damagePerSecond);
+            snapshot = new ArrayList<>(participants);
+        }
+        for (UUID uuid : snapshot) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player == null || !player.isOnline()) continue;
+            if (player.isDead()) continue;
+            if (!isInside(player.getLocation())) {
+                player.damage(damagePerSecond);
+                player.sendActionBar(MM.deserialize(
+                        "<red><bold>⚠ Outside the zone! Get back in! ⚠</bold></red>"));
+            } else {
+                double dist = horizontalDistance(player.getLocation());
+                if (dist > currentRadius - 8) {
                     player.sendActionBar(MM.deserialize(
-                            "<red><bold>⚠ Outside the zone! Get back in! ⚠</bold></red>"));
-                } else {
-                    double dist = horizontalDistance(player.getLocation());
-                    if (dist > currentRadius - 8) {
-                        player.sendActionBar(MM.deserialize(
-                                "<yellow>The zone is closing — " + (int) currentRadius + "m radius"));
-                    }
+                            "<yellow>The zone is closing — " + (int) currentRadius + "m radius"));
                 }
             }
         }

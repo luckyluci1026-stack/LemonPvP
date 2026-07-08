@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.HashSet;
 import java.util.Locale;
@@ -113,6 +114,12 @@ public class ChatListener implements Listener {
                 viewer.sendMessage(formatted);
             }
         });
+    }
+
+    /** Evict the chat-cooldown entry so the map doesn't grow unbounded over the server's lifetime. */
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        lastChat.remove(event.getPlayer().getUniqueId());
     }
 
     private void handleNwordOffense(Player player, UUID uuid) {

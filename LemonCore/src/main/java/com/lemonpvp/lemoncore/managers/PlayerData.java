@@ -57,7 +57,7 @@ public class PlayerData {
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public long getCoins() { return coins; }
-    public void setCoins(long coins) { this.coins = coins; }
+    public void setCoins(long coins) { this.coins = Math.max(0, coins); }
     public int getKills() { return kills; }
     public void setKills(int kills) { this.kills = kills; }
     public int getDeaths() { return deaths; }
