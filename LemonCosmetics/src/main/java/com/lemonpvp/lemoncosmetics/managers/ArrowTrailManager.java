@@ -89,6 +89,9 @@ public class ArrowTrailManager {
             var loc = projectile.getLocation();
             var world = loc.getWorld();
             if (world == null) return;
+            // density 0 → trails off. Also avoids spawnParticle's count-0
+            // "directional" special case leaking a stray particle per tick.
+            if (pc(1) <= 0) return;
             if (trail.particle == Particle.DUST) {
                 // Dense dust cluster so the trail reads as a thick solid ribbon.
                 Particle.DustOptions dust = new Particle.DustOptions(trail.dustColor, trail.dustSize);
