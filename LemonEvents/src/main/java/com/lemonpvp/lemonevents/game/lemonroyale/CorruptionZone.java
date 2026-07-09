@@ -66,7 +66,10 @@ public class CorruptionZone {
     }
 
     private void applyDamage() {
-        for (UUID uuid : participants) {
+        // Snapshot: player.damage() below can be lethal and fire PlayerDeathEvent
+        // synchronously, which re-enters the game's eliminate() and removes the
+        // player from this same shared participants set mid-iteration (CME).
+        for (UUID uuid : new java.util.ArrayList<>(participants)) {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null || !player.isOnline()) continue;
             if (!isInside(player.getLocation())) {

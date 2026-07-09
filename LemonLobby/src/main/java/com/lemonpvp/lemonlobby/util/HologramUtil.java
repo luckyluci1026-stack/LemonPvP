@@ -26,6 +26,9 @@ public final class HologramUtil {
             d.setBillboard(Display.Billboard.CENTER);
             d.setShadowed(true);
             d.setDefaultBackground(false);
+            // Non-persistent so a chunk unload / reload / restart mid-animation
+            // can't orphan this short-lived hologram into the region file.
+            d.setPersistent(false);
         });
 
         // Move up by 0.12 blocks every 2 ticks for 10 steps (~1 second, ~1.2 blocks total)
