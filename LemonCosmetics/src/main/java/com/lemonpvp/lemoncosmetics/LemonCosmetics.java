@@ -1,6 +1,7 @@
 package com.lemonpvp.lemoncosmetics;
 
-import com.lemonpvp.lemoncosmetics.commands.CapeCommand;
+import com.lemonpvp.lemoncosmetics.cape.MapCosmeticSlot;
+import com.lemonpvp.lemoncosmetics.commands.MapCosmeticCommand;
 import com.lemonpvp.lemoncosmetics.commands.CosmeticsCommand;
 import com.lemonpvp.lemoncosmetics.database.CosmeticsDatabase;
 import com.lemonpvp.lemoncosmetics.managers.CapeManager;
@@ -81,7 +82,11 @@ public final class LemonCosmetics extends JavaPlugin {
         }
         var capeCmd = getCommand("cape");
         if (capeCmd != null) {
-            capeCmd.setExecutor(new CapeCommand(this));
+            capeCmd.setExecutor(new MapCosmeticCommand(this, MapCosmeticSlot.CAPE, "cape", "lemoncosmetics.cape"));
+        }
+        var bandanaCmd = getCommand("bandana");
+        if (bandanaCmd != null) {
+            bandanaCmd.setExecutor(new MapCosmeticCommand(this, MapCosmeticSlot.BANDANA, "bandana", "lemoncosmetics.bandana"));
         }
 
         getLogger().info("LemonCosmetics enabled.");

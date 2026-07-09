@@ -49,7 +49,7 @@ public class PlayerListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         plugin.getArrowTrailManager().stopAllTrailsForPlayer(player.getUniqueId());
-        plugin.getCapeManager().unequip(player.getUniqueId());
+        plugin.getCapeManager().unequipAll(player.getUniqueId());
         plugin.getCosmeticsManager().unloadPlayer(player.getUniqueId());
     }
 

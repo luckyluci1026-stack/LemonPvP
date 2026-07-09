@@ -3,6 +3,7 @@ package com.lemonpvp.lemoncosmetics.managers;
 import com.lemonpvp.lemoncosmetics.LemonCosmetics;
 import com.lemonpvp.lemoncosmetics.cape.CapeImage;
 import com.lemonpvp.lemoncosmetics.cape.CapeRenderer;
+import com.lemonpvp.lemoncosmetics.cape.MapCosmeticSlot;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,83 +22,106 @@ import org.joml.Vector3f;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * Renders custom, optionally-animated "capes" on players WITHOUT a resource pack.
+ * Renders custom, optionally-animated map-cosmetics on players WITHOUT a
+ * resource pack — currently capes (back) and bandanas (head), one per
+ * {@link MapCosmeticSlot}.
  *
- * <p>Pipeline: an uploaded image ({@code plugins/LemonCosmetics/capes/*.png|gif})
+ * <p>Pipeline: an uploaded image ({@code plugins/LemonCosmetics/<slot>/*.png|gif})
  * is decoded to 128x128 frames ({@link CapeImage}), drawn onto a vanilla map
- * ({@link CapeRenderer}), placed on a {@link ItemDisplay} holding that filled
- * map, and mounted as a passenger on the player so it follows smoothly (client
- * interpolated — no per-tick teleport, no lag). Placement (offset/scale/rotation)
- * is fully config-driven under {@code capes:} so it can be tuned live without a
- * code change.</p>
+ * ({@link CapeRenderer}), placed on an {@link ItemDisplay} holding that filled
+ * map, and mounted as a passenger of the player so it follows smoothly (client
+ * interpolated — no per-tick teleport, no lag). Placement is config-driven under
+ * {@code <slot>.*}. A lightweight refresh loop re-mounts displays that get
+ * detached (e.g. after a teleport), mirroring LemonNameTags.</p>
  */
 public class CapeManager {
 
     private final LemonCosmetics plugin;
-    private final File capeDir;
-    private final java.util.Map<UUID, Active> active = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<MapCosmeticSlot, Active>> active = new ConcurrentHashMap<>();
+    private BukkitTask refreshTask;
 
     private record Active(UUID displayId, MapView map, CapeRenderer renderer,
-                          BukkitTask task, String capeName) {}
+                          BukkitTask task, String fileName) {}
 
     public CapeManager(LemonCosmetics plugin) {
         this.plugin = plugin;
-        this.capeDir = new File(plugin.getDataFolder(), "capes");
-        if (!capeDir.exists() && !capeDir.mkdirs()) {
-            plugin.getLogger().warning("[CapeManager] Could not create capes directory.");
+        for (MapCosmeticSlot slot : MapCosmeticSlot.values()) {
+            File dir = folder(slot);
+            if (!dir.exists() && !dir.mkdirs()) {
+                plugin.getLogger().warning("[CapeManager] Could not create directory " + dir);
+            }
         }
+        startRefreshLoop();
     }
 
-    /** Lists the base names (without extension) of all uploaded cape images. */
-    public List<String> listCapes() {
-        File[] files = capeDir.listFiles((dir, n) -> {
+    private File folder(MapCosmeticSlot slot) {
+        return new File(plugin.getDataFolder(), slot.folder);
+    }
+
+    /** Re-mounts any display that got detached from its player (e.g. on teleport). */
+    private void startRefreshLoop() {
+        refreshTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            for (Map.Entry<UUID, Map<MapCosmeticSlot, Active>> e : active.entrySet()) {
+                Player p = Bukkit.getPlayer(e.getKey());
+                if (p == null || !p.isOnline()) continue;
+                for (Active a : e.getValue().values()) {
+                    Entity disp = Bukkit.getEntity(a.displayId());
+                    if (disp != null && !p.getPassengers().contains(disp)) {
+                        p.addPassenger(disp);
+                    }
+                }
+            }
+        }, 20L, 20L);
+    }
+
+    /** Base names of all uploaded files for a slot. */
+    public List<String> list(MapCosmeticSlot slot) {
+        File[] files = folder(slot).listFiles((dir, n) -> {
             String l = n.toLowerCase(Locale.ROOT);
             return l.endsWith(".png") || l.endsWith(".gif") || l.endsWith(".jpg") || l.endsWith(".jpeg");
         });
         if (files == null) return List.of();
-        return java.util.Arrays.stream(files)
-                .map(File::getName)
-                .sorted()
-                .collect(Collectors.toList());
+        return java.util.Arrays.stream(files).map(File::getName).sorted().collect(Collectors.toList());
     }
 
-    /** Resolves a cape file by name, trying common extensions. */
-    private File resolve(String name) {
-        File direct = new File(capeDir, name);
+    private File resolve(MapCosmeticSlot slot, String name) {
+        File dir = folder(slot);
+        File direct = new File(dir, name);
         if (direct.isFile()) return direct;
         for (String ext : new String[]{".png", ".gif", ".jpg", ".jpeg"}) {
-            File f = new File(capeDir, name + ext);
+            File f = new File(dir, name + ext);
             if (f.isFile()) return f;
         }
         return null;
     }
 
     /**
-     * Equips a cape for the player. Returns false if the file is missing or the
-     * image can't be decoded. Any previously-worn cape is removed first.
+     * Equips a map-cosmetic in the given slot. Returns false if the file is
+     * missing or undecodable. Any cosmetic already in that slot is removed first.
      */
-    public boolean equip(Player player, String name) {
-        File file = resolve(name);
+    public boolean equip(Player player, MapCosmeticSlot slot, String name) {
+        File file = resolve(slot, name);
         if (file == null) return false;
 
         CapeImage image;
         try {
             image = CapeImage.load(file);
         } catch (Exception e) {
-            plugin.getLogger().warning("[CapeManager] Failed to load cape '" + name + "': " + e.getMessage());
+            plugin.getLogger().warning("[CapeManager] Failed to load " + slot + " '" + name + "': " + e.getMessage());
             return false;
         }
 
-        unequip(player.getUniqueId());
+        unequip(player.getUniqueId(), slot);
 
-        // Fresh map dedicated to this cape, with only our renderer.
         MapView map = Bukkit.createMap(player.getWorld());
         for (MapRenderer r : new ArrayList<>(map.getRenderers())) map.removeRenderer(r);
         CapeRenderer renderer = new CapeRenderer(image);
@@ -109,87 +133,97 @@ public class CapeManager {
             mapItem.setItemMeta(mm);
         }
 
-        final Transformation transform = buildTransform();
-        Location spawn = player.getLocation();
-        ItemDisplay display = player.getWorld().spawn(spawn, ItemDisplay.class, d -> {
+        final Transformation transform = buildTransform(slot);
+        ItemDisplay display = player.getWorld().spawn(player.getLocation(), ItemDisplay.class, d -> {
             d.setItemStack(mapItem);
             d.setBillboard(Display.Billboard.FIXED);
             d.setPersistent(false);
             d.setTransformation(transform);
             d.setInterpolationDuration(0);
-            d.setViewRange(cfgFloat("view-range", 2.0f));
-            d.setBrightness(new Display.Brightness(15, 15)); // full-lit so night capes stay visible
+            d.setViewRange(cfgFloat(slot, "view-range", 2.0f));
+            d.setBrightness(new Display.Brightness(15, 15));
         });
 
-        // Mount as a passenger so it follows the player smoothly, client-side.
-        boolean mounted = player.addPassenger(display);
-        if (!mounted) {
-            plugin.getLogger().warning("[CapeManager] Could not mount cape display on " + player.getName());
+        if (!player.addPassenger(display)) {
+            plugin.getLogger().warning("[CapeManager] Could not mount " + slot + " on " + player.getName());
             display.remove();
             return false;
         }
 
-        // Animation ticker (frame advance). Static capes (1 frame) do nothing.
         final int frames = renderer.frameCount();
-        final int period = Math.max(1, plugin.getConfig().getInt("capes.frame-ticks", 2));
-        BukkitTask task;
+        BukkitTask task = null;
         if (frames > 1) {
+            final int period = Math.max(1, (int) cfgFloat(slot, "frame-ticks", slot.frameTicks));
             final int[] f = {0};
+            final UUID uuid = player.getUniqueId();
             task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-                Active a = active.get(player.getUniqueId());
-                if (a == null) return;
+                Map<MapCosmeticSlot, Active> slots = active.get(uuid);
+                if (slots == null || !slots.containsKey(slot)) return;
                 renderer.setFrame(f[0]++);
             }, period, period);
-        } else {
-            task = null;
         }
 
-        active.put(player.getUniqueId(), new Active(display.getUniqueId(), map, renderer, task, file.getName()));
+        active.computeIfAbsent(player.getUniqueId(), k -> new EnumMap<>(MapCosmeticSlot.class))
+                .put(slot, new Active(display.getUniqueId(), map, renderer, task, file.getName()));
         return true;
     }
 
-    /** Removes the player's cape (display entity + animation task), if any. */
-    public void unequip(UUID uuid) {
-        Active a = active.remove(uuid);
+    /** Removes the cosmetic in one slot. */
+    public void unequip(UUID uuid, MapCosmeticSlot slot) {
+        Map<MapCosmeticSlot, Active> slots = active.get(uuid);
+        if (slots == null) return;
+        Active a = slots.remove(slot);
+        if (slots.isEmpty()) active.remove(uuid);
+        removeActive(a);
+    }
+
+    /** Removes every map-cosmetic for the player (e.g. on quit). */
+    public void unequipAll(UUID uuid) {
+        Map<MapCosmeticSlot, Active> slots = active.remove(uuid);
+        if (slots == null) return;
+        for (Active a : slots.values()) removeActive(a);
+    }
+
+    private void removeActive(Active a) {
         if (a == null) return;
         if (a.task() != null) a.task().cancel();
         Entity e = Bukkit.getEntity(a.displayId());
         if (e != null) e.remove();
     }
 
-    /** Name of the cape the player is currently wearing, or null. */
-    public String currentCape(UUID uuid) {
-        Active a = active.get(uuid);
-        return a != null ? a.capeName() : null;
+    /** File currently worn in the slot, or null. */
+    public String current(UUID uuid, MapCosmeticSlot slot) {
+        Map<MapCosmeticSlot, Active> slots = active.get(uuid);
+        Active a = slots != null ? slots.get(slot) : null;
+        return a != null ? a.fileName() : null;
     }
 
-    /** Removes every active cape (plugin disable). */
+    /** Cancels the refresh loop and removes all cosmetics (plugin disable). */
     public void shutdown() {
-        for (UUID uuid : new ArrayList<>(active.keySet())) unequip(uuid);
+        if (refreshTask != null) refreshTask.cancel();
+        for (UUID uuid : new ArrayList<>(active.keySet())) unequipAll(uuid);
     }
 
     // ------------------------------------------------------------------
-    // Placement transform (all values live in config for visual tuning)
+    // Placement transform (slot defaults, overridable in config)
     // ------------------------------------------------------------------
 
-    private Transformation buildTransform() {
+    private Transformation buildTransform(MapCosmeticSlot slot) {
         Vector3f translation = new Vector3f(
-                cfgFloat("offset-x", 0.0f),
-                cfgFloat("offset-y", 0.2f),
-                cfgFloat("offset-z", -0.30f)); // behind the player's back
+                cfgFloat(slot, "offset-x", slot.offX),
+                cfgFloat(slot, "offset-y", slot.offY),
+                cfgFloat(slot, "offset-z", slot.offZ));
         Vector3f scale = new Vector3f(
-                cfgFloat("scale-x", 0.90f),
-                cfgFloat("scale-y", 1.40f),
-                cfgFloat("scale-z", 0.02f)); // thin panel
-        // Stand the flat map upright, then apply a yaw offset if needed.
+                cfgFloat(slot, "scale-x", slot.scaleX),
+                cfgFloat(slot, "scale-y", slot.scaleY),
+                cfgFloat(slot, "scale-z", slot.scaleZ));
         Quaternionf leftRotation = new Quaternionf()
-                .rotateY((float) Math.toRadians(cfgFloat("yaw-offset", 180.0f)))
-                .rotateX((float) Math.toRadians(cfgFloat("pitch", 90.0f)));
-        Quaternionf rightRotation = new Quaternionf();
-        return new Transformation(translation, leftRotation, scale, rightRotation);
+                .rotateY((float) Math.toRadians(cfgFloat(slot, "yaw-offset", slot.yaw)))
+                .rotateX((float) Math.toRadians(cfgFloat(slot, "pitch", slot.pitch)));
+        return new Transformation(translation, leftRotation, scale, new Quaternionf());
     }
 
-    private float cfgFloat(String key, float def) {
-        return (float) plugin.getConfig().getDouble("capes." + key, def);
+    private float cfgFloat(MapCosmeticSlot slot, String key, float def) {
+        return (float) plugin.getConfig().getDouble(slot.configPrefix + "." + key, def);
     }
 }
