@@ -38,6 +38,7 @@ public class TrimPatternGUI implements Listener {
 
     private String selectedPatternId = null;
     private boolean registered = false;
+    private boolean busy = false; // debounce purchases (prevents double-click double-charge)
 
     public TrimPatternGUI(LemonCosmetics plugin, Player player) {
         this.plugin = plugin;
@@ -200,8 +201,11 @@ public class TrimPatternGUI implements Listener {
 
             String patternToBuy = selectedPatternId;
             UUID buyerUuid = player.getUniqueId();
+            if (busy) return;
+            busy = true;
             plugin.getCosmeticsManager().buyTrimPattern(buyerUuid, patternToBuy)
                     .thenAccept(success -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        busy = false;
                         Player p = Bukkit.getPlayer(buyerUuid);
                         if (p == null) return;
                         if (success) {

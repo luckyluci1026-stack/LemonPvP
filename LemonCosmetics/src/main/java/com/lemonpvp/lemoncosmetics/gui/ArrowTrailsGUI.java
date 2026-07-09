@@ -42,6 +42,7 @@ public class ArrowTrailsGUI implements Listener {
     private final Player player;
     private Inventory inventory;
     private boolean registered = false;
+    private boolean busy = false; // debounce purchases (prevents double-click double-charge)
     private int page = 0;
     private final Map<Integer, ArrowTrailType> slotMap = new HashMap<>();
 
@@ -117,8 +118,11 @@ public class ArrowTrailsGUI implements Listener {
         UUID clickerUuid = clicker.getUniqueId();
 
         if (!owned) {
+            if (busy) return;
+            busy = true;
             plugin.getArrowTrailManager().buyTrail(clickerUuid, trail.id)
                     .thenAccept(success -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        busy = false;
                         Player p = Bukkit.getPlayer(clickerUuid);
                         if (p == null) return;
                         if (success) {

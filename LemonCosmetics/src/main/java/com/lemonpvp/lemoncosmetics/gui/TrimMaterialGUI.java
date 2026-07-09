@@ -35,6 +35,7 @@ public class TrimMaterialGUI implements Listener {
     private String selectedMaterialId = null;
     private Inventory inventory;
     private boolean registered = false;
+    private boolean busy = false; // debounce purchases (prevents double-click double-charge)
 
     // Slots for 11 material items centered in a 9×6 grid (row 3, starting slot 19)
     private static final int[] MATERIAL_SLOTS = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31};
@@ -113,8 +114,11 @@ public class TrimMaterialGUI implements Listener {
             int cost = plugin.getConfig().getInt("prices.trim-material", 50);
             UUID buyerUuid = clicker.getUniqueId();
             String buyMatId = selectedMaterialId;
+            if (busy) return;
+            busy = true;
             plugin.getCosmeticsManager().buyTrimMaterial(buyerUuid, buyMatId)
                     .thenAccept(success -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        busy = false;
                         Player p = Bukkit.getPlayer(buyerUuid);
                         if (p == null) return;
                         if (success) {

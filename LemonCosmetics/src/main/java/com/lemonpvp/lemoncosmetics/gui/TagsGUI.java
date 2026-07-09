@@ -45,6 +45,7 @@ public class TagsGUI implements Listener {
     private final Player player;
     private Inventory inventory;
     private boolean registered = false;
+    private boolean busy = false; // debounce purchases (prevents double-click double-charge)
     private int page = 0;
 
     /** Maps inventory slot -> tag shown there, for click handling. */
@@ -288,8 +289,11 @@ public class TagsGUI implements Listener {
                 clicker.sendMessage(MM.deserialize("<red>This tag is only available with permission."));
                 return;
             }
+            if (busy) return;
+            busy = true;
             plugin.getTagManager().buyTag(uuid, tag.id)
                     .thenAccept(success -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        busy = false;
                         Player p = Bukkit.getPlayer(uuid);
                         if (p == null) return;
                         if (success) {
