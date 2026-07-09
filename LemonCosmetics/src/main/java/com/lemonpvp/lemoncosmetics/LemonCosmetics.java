@@ -1,7 +1,9 @@
 package com.lemonpvp.lemoncosmetics;
 
+import com.lemonpvp.lemoncosmetics.commands.CapeCommand;
 import com.lemonpvp.lemoncosmetics.commands.CosmeticsCommand;
 import com.lemonpvp.lemoncosmetics.database.CosmeticsDatabase;
+import com.lemonpvp.lemoncosmetics.managers.CapeManager;
 import com.lemonpvp.lemoncosmetics.listeners.ArrowTrailListener;
 import com.lemonpvp.lemoncosmetics.listeners.KillListener;
 import com.lemonpvp.lemoncosmetics.listeners.PlayerListener;
@@ -28,6 +30,7 @@ public final class LemonCosmetics extends JavaPlugin {
     private ExplosionParticleManager explosionParticleManager;
     private ArrowTrailManager arrowTrailManager;
     private TagManager tagManager;
+    private CapeManager capeManager;
     private CosmeticsMessaging cosmeticsMessaging;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
@@ -57,6 +60,7 @@ public final class LemonCosmetics extends JavaPlugin {
         explosionParticleManager = new ExplosionParticleManager(this);
         arrowTrailManager = new ArrowTrailManager(this);
         tagManager = new TagManager(this);
+        capeManager = new CapeManager(this);
 
         cosmeticsMessaging = new CosmeticsMessaging(this);
         cosmeticsMessaging.register();
@@ -75,12 +79,17 @@ public final class LemonCosmetics extends JavaPlugin {
         if (tagsCmd != null) {
             tagsCmd.setExecutor(new TagsCommand(this));
         }
+        var capeCmd = getCommand("cape");
+        if (capeCmd != null) {
+            capeCmd.setExecutor(new CapeCommand(this));
+        }
 
         getLogger().info("LemonCosmetics enabled.");
     }
 
     @Override
     public void onDisable() {
+        if (capeManager != null) capeManager.shutdown();
         if (arrowTrailManager != null) arrowTrailManager.cancelAll();
         if (cosmeticsMessaging != null) cosmeticsMessaging.unregister();
         if (database != null) database.disconnect();
@@ -143,6 +152,10 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public TagManager getTagManager() {
         return tagManager;
+    }
+
+    public CapeManager getCapeManager() {
+        return capeManager;
     }
 
     public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }

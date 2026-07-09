@@ -11,9 +11,16 @@ commands:
     description: Open the tags menu
     permission: lemoncosmetics.use
     aliases: [tag]
+  cape:
+    description: Wear a custom map-rendered cape (no resource pack)
+    permission: lemoncosmetics.cape
+    usage: /cape <name> | list | off | reload
 permissions:
   lemoncosmetics.use:
     description: Access /cosmetics and /tags commands
+    default: true
+  lemoncosmetics.cape:
+    description: Wear custom capes
     default: true
   lemoncosmetics.admin:
     description: Reload LemonCosmetics config, density and explosion presets
