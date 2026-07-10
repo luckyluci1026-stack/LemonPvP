@@ -129,8 +129,9 @@ public class KitManager {
         PlayerKit kit = new PlayerKit(new UUID(0, 0), gamemode);
 
         ConfigurationSection hotbar = gm.getConfigurationSection("hotbar");
+        ConfigurationSection invSec = gm.getConfigurationSection("inventory");
         ConfigurationSection armor = gm.getConfigurationSection("armor");
-        boolean structured = hotbar != null || armor != null;
+        boolean structured = hotbar != null || invSec != null || armor != null;
 
         if (hotbar != null) {
             for (String slotKey : hotbar.getKeys(false)) {
@@ -138,6 +139,16 @@ public class KitManager {
                 try { slot = Integer.parseInt(slotKey); } catch (NumberFormatException e) { continue; }
                 if (slot < 0 || slot > 8) continue;
                 ItemStack item = buildItem(hotbar.getConfigurationSection(slotKey), gamemode);
+                if (item != null) kit.setSlot(slot, item);
+            }
+        }
+        // Backup items in the main inventory (slots 9–35), e.g. refill pots/steak.
+        if (invSec != null) {
+            for (String slotKey : invSec.getKeys(false)) {
+                int slot;
+                try { slot = Integer.parseInt(slotKey); } catch (NumberFormatException e) { continue; }
+                if (slot < 9 || slot > 35) continue;
+                ItemStack item = buildItem(invSec.getConfigurationSection(slotKey), gamemode);
                 if (item != null) kit.setSlot(slot, item);
             }
         }
@@ -194,6 +205,17 @@ public class KitManager {
             if (sec.contains("name")) meta.setDisplayName(sec.getString("name"));
             if (sec.contains("custom-model-data")) meta.setCustomModelData(sec.getInt("custom-model-data"));
             if (sec.contains("unbreakable")) meta.setUnbreakable(sec.getBoolean("unbreakable", false));
+            // Potions: `potion: STRONG_HEALING` sets the vanilla base type on any
+            // potion/splash/lingering/tipped-arrow item (PotionType enum names).
+            if (sec.contains("potion") && meta instanceof org.bukkit.inventory.meta.PotionMeta pm) {
+                String typeName = String.valueOf(sec.getString("potion")).toUpperCase();
+                try {
+                    pm.setBasePotionType(org.bukkit.potion.PotionType.valueOf(typeName));
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("[KitManager] Unknown potion type '" + typeName
+                            + "' in kit for " + gamemode);
+                }
+            }
             item.setItemMeta(meta);
         }
 
