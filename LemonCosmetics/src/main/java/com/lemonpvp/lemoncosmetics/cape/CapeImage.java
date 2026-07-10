@@ -71,9 +71,16 @@ public final class CapeImage {
                     if (canvas == null) {
                         canvas = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
                     }
-                    // Basic over-compositing: draw this frame onto the running canvas
-                    // so partial/additive GIF frames still render fully.
                     Graphics2D g = canvas.createGraphics();
+                    // Full-size frames REPLACE the canvas (covers disposal=2 GIFs with
+                    // moving content — over-compositing would leave ghost trails).
+                    // Partial frames composite over, as optimized GIFs expect.
+                    if (frame.getWidth() >= canvas.getWidth() && frame.getHeight() >= canvas.getHeight()) {
+                        java.awt.Composite old = g.getComposite();
+                        g.setComposite(java.awt.AlphaComposite.Clear);
+                        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+                        g.setComposite(old);
+                    }
                     g.drawImage(frame, 0, 0, null);
                     g.dispose();
                     frames.add(scale(deepCopy(canvas)));

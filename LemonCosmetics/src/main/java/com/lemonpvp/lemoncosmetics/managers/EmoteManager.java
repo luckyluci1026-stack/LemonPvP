@@ -48,11 +48,31 @@ public class EmoteManager {
 
     private record Active(UUID displayId, BukkitTask task) {}
 
+    /** Default emote pack bundled in the jar; extracted on first run. */
+    private static final String[] DEFAULT_EMOTES = {
+            "gg.gif", "ez.gif", "lol.gif", "nice.gif", "rip.gif", "100.gif",
+            "laugh.gif", "cry.gif", "rage.gif", "wink.gif", "smile.gif",
+            "skull.gif", "heart.gif", "fire.gif", "clown.gif"
+    };
+
     public EmoteManager(LemonCosmetics plugin) {
         this.plugin = plugin;
         this.emoteDir = new File(plugin.getDataFolder(), "emotes");
         if (!emoteDir.exists() && !emoteDir.mkdirs()) {
             plugin.getLogger().warning("[EmoteManager] Could not create emotes directory.");
+        }
+        extractDefaults();
+    }
+
+    /** Copies each bundled default emote that isn't already on disk. */
+    private void extractDefaults() {
+        for (String name : DEFAULT_EMOTES) {
+            if (new File(emoteDir, name).isFile()) continue;
+            try {
+                plugin.saveResource("emotes/" + name, false);
+            } catch (IllegalArgumentException e) {
+                // resource missing from the jar — skip quietly
+            }
         }
     }
 
