@@ -77,8 +77,12 @@ commands:
   top:
     description: Open the network leaderboard
     permission: lemonpractice.use.top
-    aliases: [leaderboard, lb, leaderboards]
     usage: /top
+  leaderboard:
+    description: Open the network leaderboard
+    permission: lemonpractice.use.top
+    aliases: [lb, leaderboards]
+    usage: /leaderboard
   party:
     description: Manage your party
     permission: lemonpractice.use.party

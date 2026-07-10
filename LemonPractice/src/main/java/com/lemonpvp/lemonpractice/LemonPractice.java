@@ -146,6 +146,8 @@ public class LemonPractice extends JavaPlugin {
         getCommand("stats").setTabCompleter(statsCmd);
         TopCommand topCmd = new TopCommand(this);
         getCommand("top").setExecutor(topCmd);
+        var leaderboardCmd = getCommand("leaderboard");
+        if (leaderboardCmd != null) leaderboardCmd.setExecutor(topCmd);
         PartyCommand partyCmd = new PartyCommand(this);
         getCommand("party").setExecutor(partyCmd);
         getCommand("party").setTabCompleter(partyCmd);

@@ -22,6 +22,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class StatsGUI implements Listener {
 
@@ -131,22 +132,49 @@ public class StatsGUI implements Listener {
                 "<gradient:#fffb00:#ff9800><!italic>Cᴏɪɴs",
                 List.of("<gray>Balance: <yellow>✦ <gold>" + coinsShort)));
 
-        inv.setItem(STAT_SLOTS[5], pane(Material.GRAY_STAINED_GLASS_PANE));
-        inv.setItem(STAT_SLOTS[6], pane(Material.GRAY_STAINED_GLASS_PANE));
-
-        // ELO per gamemode (async DB load, then fill on main thread)
+        // ELO per gamemode + an aggregate ranked summary. Load every mode's ELO,
+        // then on the main thread fill the per-mode tiles and derive totals.
         List<Gamemode> gamemodes = plugin.getGamemodeManager().getAllGamemodes().stream()
                 .filter(Gamemode::isEnabled)
+                .limit(GM_SLOTS.length)
                 .toList();
 
-        for (int i = 0; i < Math.min(gamemodes.size(), GM_SLOTS.length); i++) {
-            final int slotIdx = i;
-            final Gamemode gm = gamemodes.get(i);
-            plugin.getEloManager().loadEloData(targetUuid, gm.getId())
-                    .thenAccept(data -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        if (inv != null) inv.setItem(GM_SLOTS[slotIdx], gamemodeItem(gm, data));
-                    }));
+        List<CompletableFuture<EloManager.EloData>> futures = new ArrayList<>();
+        for (Gamemode gm : gamemodes) {
+            futures.add(plugin.getEloManager().loadEloData(targetUuid, gm.getId()));
         }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (inv == null) return;
+                    int totalMatches = 0, eloSum = 0, rankedModes = 0, peakElo = 0;
+                    int placement = plugin.getEloManager().getPlacementCount();
+                    for (int i = 0; i < gamemodes.size(); i++) {
+                        EloManager.EloData data = futures.get(i).join();
+                        inv.setItem(GM_SLOTS[i], gamemodeItem(gamemodes.get(i), data));
+                        int elo = data != null ? data.elo : EloManager.DEFAULT_ELO;
+                        int m = data != null ? data.matchesPlayed : 0;
+                        totalMatches += m;
+                        peakElo = Math.max(peakElo, elo);
+                        if (m >= placement) { eloSum += elo; rankedModes++; }
+                    }
+                    int avgElo = rankedModes > 0 ? eloSum / rankedModes : 0;
+
+                    inv.setItem(STAT_SLOTS[5], statItem(Material.NETHERITE_SWORD,
+                            "<gradient:#b388ff:#7c4dff><!italic>Rᴀɴᴋᴇᴅ Sᴜᴍᴍᴀʀʏ",
+                            List.of(
+                                    "<gray>Total matches: <white>" + totalMatches,
+                                    "<gray>Avg ELO: <white>" + (rankedModes > 0 ? String.valueOf(avgElo) : "—"),
+                                    "<gray>Ranked modes: <white>" + rankedModes + "<dark_gray>/" + gamemodes.size())));
+
+                    com.lemonpvp.lemonpractice.model.RankTier peakTier =
+                            com.lemonpvp.lemonpractice.model.RankTier.fromElo(peakElo);
+                    inv.setItem(STAT_SLOTS[6], statItem(Material.NETHER_STAR,
+                            "<gradient:#fffb00:#ff9800><!italic>Pᴇᴀᴋ Dɪᴠɪsɪᴏɴ",
+                            List.of(
+                                    "<gray>Peak ELO: <white>" + peakElo,
+                                    "<gray>Division: <!italic>" + peakTier.getDisplay())));
+                }));
     }
 
     private ItemStack buildHead() {
