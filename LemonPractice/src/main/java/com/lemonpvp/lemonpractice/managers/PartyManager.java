@@ -119,8 +119,24 @@ public class PartyManager {
             return;
         }
 
-        Party party = parties.computeIfAbsent(sender.getUniqueId(),
-                k -> new Party(sender.getUniqueId()));
+        // The inviter may have joined another party (as a non-leader) after sending
+        // this invite. computeIfAbsent would then return THAT party and silently add
+        // the target to it — leader consent bypassed. Only a still-solo inviter or the
+        // actual leader of their party may pull the target in; otherwise it's stale.
+        Party existing = parties.get(sender.getUniqueId());
+        if (existing != null && !existing.isLeader(sender.getUniqueId())) {
+            target.sendMessage(MM.deserialize("<red><yellow>" + sender.getName()
+                    + "</yellow> can no longer invite you to a party."));
+            return;
+        }
+
+        Party party;
+        if (existing != null) {
+            party = existing;
+        } else {
+            party = new Party(sender.getUniqueId());
+            parties.put(sender.getUniqueId(), party);
+        }
         party.addMember(target.getUniqueId());
         parties.put(target.getUniqueId(), party);
 

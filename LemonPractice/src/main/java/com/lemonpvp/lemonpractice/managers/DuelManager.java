@@ -351,18 +351,6 @@ public class DuelManager {
             plugin.getSpectatorManager().makeSpectator(loser, specSpawn);
         }
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (winner != null && winner.isOnline()) {
-                plugin.getSpectatorManager().removeSpectator(winner);
-                sendToLobby(winner);
-            }
-
-            activeDuels.remove(game.getPlayer1Uuid());
-            activeDuels.remove(game.getPlayer2Uuid());
-            plugin.getArenaManager().markInUse(game.getArena(), false);
-            plugin.getArenaManager().resetArena(game.getArena());
-        }, 60L);
-
         // The loser leaves later when the kill-cam is on, so the slow-mo clip
         // can actually finish playing. The clip starts ~30 ticks after duel end
         // and plays `seconds` of footage at `speed`, i.e. seconds*20/speed real
@@ -373,6 +361,16 @@ public class DuelManager {
             double speed = Math.max(0.1, plugin.getConfig().getDouble("replays.killcam.speed", 0.6));
             loserDelay = Math.max(60L, 30L + (long) Math.ceil(secs * 20.0 / speed) + 40L);
         }
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (winner != null && winner.isOnline()) {
+                plugin.getSpectatorManager().removeSpectator(winner);
+                sendToLobby(winner);
+            }
+            activeDuels.remove(game.getPlayer1Uuid());
+            activeDuels.remove(game.getPlayer2Uuid());
+        }, 60L);
+
         final java.util.UUID loserUuid = loser != null ? loser.getUniqueId() : null;
         if (loserUuid != null) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -384,6 +382,16 @@ public class DuelManager {
                 }
             }, loserDelay);
         }
+
+        // Free & reset the arena only AFTER its last occupant (the kill-cam-viewing
+        // loser) has been teleported out. Freeing it at tick 60 as before let
+        // matchmaking re-book the arena and paste the schematic under a live
+        // occupant. +2 ticks guarantees the loser-exit task above has run first.
+        long arenaFreeDelay = Math.max(60L, loserDelay) + 2L;
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            plugin.getArenaManager().markInUse(game.getArena(), false);
+            plugin.getArenaManager().resetArena(game.getArena());
+        }, arenaFreeDelay);
     }
 
     // -----------------------------------------------------------------------
