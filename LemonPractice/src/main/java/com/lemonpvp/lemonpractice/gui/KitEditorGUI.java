@@ -36,8 +36,13 @@ public class KitEditorGUI {
     public static final String PDC_KIT_ACTION_KEY = "kit_action";
     public static final String PDC_KIT_ACTION_RESET = "reset";
 
-    /** Inventory slot used for the RESET control item (slot 8 = last hotbar slot). */
-    private static final int RESET_SLOT = 8;
+    /**
+     * Inventory slot for the RESET control item: the off-hand (40). The off-hand
+     * is locked during editing and never part of a preset, so the control can't
+     * collide with kit items. (It used to sit in hotbar slot 8, which silently
+     * dropped any preset item there — a full 9-item hotbar could never save.)
+     */
+    private static final int RESET_SLOT = 40;
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
@@ -69,8 +74,8 @@ public class KitEditorGUI {
         if (kit != null) {
             for (Map.Entry<Integer, ItemStack> entry : kit.getSlots().entrySet()) {
                 int slot = entry.getKey();
-                if (slot == RESET_SLOT) continue; // reserved for the control
-                // Sortable area 0–35 plus the armor slots 36–39.
+                // Sortable area 0–35 plus the armor slots 36–39. The RESET control
+                // lives in the off-hand (40), so no kit slot collides with it.
                 if (slot >= 0 && slot <= 39) {
                     player.getInventory().setItem(slot, entry.getValue().clone());
                 }
@@ -85,7 +90,8 @@ public class KitEditorGUI {
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.6f, 1.2f);
         player.sendMessage(MM.deserialize("<!italic><green>Arranging your <yellow>" + gamemode
                 + "<green> kit. <gray>You can only <white>sort<gray> the items — they can't be added or "
-                + "removed. <gray>Close to <white>save<gray>, or click <red>Reset <gray>for the default layout."));
+                + "removed. <gray>Close to <white>save<gray>, or click the <red>Reset <gray>item in your "
+                + "<white>off-hand <gray>for the default layout."));
     }
 
     // -------------------------------------------------------------------------

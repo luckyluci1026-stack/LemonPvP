@@ -122,27 +122,25 @@ public class KitEditorListener implements Listener {
             return;
         }
 
+        // The RESET control sentinel? Checked BEFORE the locked-slot rule below,
+        // because the control now lives in the off-hand (raw 45), which is
+        // otherwise a locked slot — the lock would swallow the click.
+        ItemStack clicked = event.getCurrentItem();
+        if (clicked != null && clicked.hasItemMeta()) {
+            PersistentDataContainer itemPdc = clicked.getItemMeta().getPersistentDataContainer();
+            if ("reset".equals(itemPdc.get(kitActionKey, PersistentDataType.STRING))) {
+                event.setCancelled(true);
+                handleReset(player, gamemode);
+                return;
+            }
+        }
+
         // Lock the crafting grid + result (raw 0–4), armor (raw 5–8) and off-hand
         // (raw 45) so items can't be removed/added — only sorted within 0–35.
         int raw = event.getRawSlot();
         if ((raw >= 0 && raw <= 8) || raw == 45) {
             event.setCancelled(true);
-            return;
         }
-
-        // The RESET control sentinel?
-        ItemStack clicked = event.getCurrentItem();
-        if (clicked == null || !clicked.hasItemMeta()) {
-            return;
-        }
-        PersistentDataContainer itemPdc = clicked.getItemMeta().getPersistentDataContainer();
-        String kitAction = itemPdc.get(kitActionKey, PersistentDataType.STRING);
-        if (!"reset".equals(kitAction)) {
-            return;
-        }
-
-        event.setCancelled(true);
-        handleReset(player, gamemode);
     }
 
     /** Two-step RESET: deletes the saved arrangement so the preset default returns. */
