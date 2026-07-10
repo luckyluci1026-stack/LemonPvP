@@ -19,6 +19,10 @@ commands:
     description: Wear a custom map-rendered bandana (no resource pack)
     permission: lemoncosmetics.bandana
     usage: /bandana <name> | list | off | reload
+  emote:
+    description: Play an animated emote above your head (no resource pack)
+    permission: lemoncosmetics.emote
+    usage: /emote <name> | list | stop
 permissions:
   lemoncosmetics.use:
     description: Access /cosmetics and /tags commands
@@ -28,6 +32,9 @@ permissions:
     default: true
   lemoncosmetics.bandana:
     description: Wear custom bandanas
+    default: true
+  lemoncosmetics.emote:
+    description: Play emotes
     default: true
   lemoncosmetics.admin:
     description: Reload LemonCosmetics config, density and explosion presets

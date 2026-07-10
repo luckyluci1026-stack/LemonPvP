@@ -32,6 +32,7 @@ public final class LemonCosmetics extends JavaPlugin {
     private ArrowTrailManager arrowTrailManager;
     private TagManager tagManager;
     private CapeManager capeManager;
+    private com.lemonpvp.lemoncosmetics.managers.EmoteManager emoteManager;
     private CosmeticsMessaging cosmeticsMessaging;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
@@ -62,6 +63,7 @@ public final class LemonCosmetics extends JavaPlugin {
         arrowTrailManager = new ArrowTrailManager(this);
         tagManager = new TagManager(this);
         capeManager = new CapeManager(this);
+        emoteManager = new com.lemonpvp.lemoncosmetics.managers.EmoteManager(this);
 
         cosmeticsMessaging = new CosmeticsMessaging(this);
         cosmeticsMessaging.register();
@@ -88,12 +90,17 @@ public final class LemonCosmetics extends JavaPlugin {
         if (bandanaCmd != null) {
             bandanaCmd.setExecutor(new MapCosmeticCommand(this, MapCosmeticSlot.BANDANA, "bandana", "lemoncosmetics.bandana"));
         }
+        var emoteCmd = getCommand("emote");
+        if (emoteCmd != null) {
+            emoteCmd.setExecutor(new com.lemonpvp.lemoncosmetics.commands.EmoteCommand(this));
+        }
 
         getLogger().info("LemonCosmetics enabled.");
     }
 
     @Override
     public void onDisable() {
+        if (emoteManager != null) emoteManager.shutdown();
         if (capeManager != null) capeManager.shutdown();
         if (arrowTrailManager != null) arrowTrailManager.cancelAll();
         if (cosmeticsMessaging != null) cosmeticsMessaging.unregister();
@@ -161,6 +168,10 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public CapeManager getCapeManager() {
         return capeManager;
+    }
+
+    public com.lemonpvp.lemoncosmetics.managers.EmoteManager getEmoteManager() {
+        return emoteManager;
     }
 
     public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
