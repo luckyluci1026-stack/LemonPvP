@@ -3,14 +3,17 @@ package com.lemonpvp.lemonqueue.listener;
 import com.lemonpvp.lemonqueue.LemonQueue;
 import com.lemonpvp.lemonqueue.config.QueueConfig;
 import com.lemonpvp.lemonqueue.queue.QueueManager;
+import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import java.util.Optional;
 
@@ -42,6 +45,22 @@ public class ConnectionListener {
 
     private QueueConfig config() {
         return plugin.getConfig();
+    }
+
+    /**
+     * Denies banned players during the proxy handshake — the ban screen shows
+     * at connection time and they never reach a backend (mirrors how
+     * maintenance kicks fully disconnect). The cache is fed by LemonCore's
+     * PlayerBanning plugin message; after a proxy restart the first attempt
+     * falls through to the backend kick, which re-populates the cache.
+     */
+    @Subscribe
+    public void onLogin(LoginEvent event) {
+        String screen = queues.getActiveBanScreen(event.getPlayer().getUniqueId());
+        if (screen != null) {
+            event.setResult(ResultedEvent.ComponentResult.denied(
+                    MiniMessage.miniMessage().deserialize(screen)));
+        }
     }
 
     @Subscribe

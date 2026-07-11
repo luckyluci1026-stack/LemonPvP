@@ -45,7 +45,9 @@ public class PlayerJoinQuitListener implements Listener {
                                 if (ban != null) {
                                     org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
                                         org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayer(uuid);
-                                        if (p != null) plugin.getListenerManager().performBanKick(p, ban);
+                                        // Re-kick on reconnect: no Lemonizer broadcast —
+                                        // that fired once when the ban was issued.
+                                        if (p != null) plugin.getListenerManager().performBanKick(p, ban, false);
                                     });
                                 } else {
                                     // Update scoreboard and apply display name

@@ -60,6 +60,11 @@ public class QueueManager {
     /** UUIDs whose next kick must fully disconnect instead of re-routing to limbo (admin/maintenance kicks). */
     private final Map<UUID, Long> kickingMarks = new ConcurrentHashMap<>();
 
+    /** A ban cached proxy-side so reconnect attempts are denied at login. */
+    private record CachedBan(long expiryEpochMs, String kickScreenMini) {}
+    /** uuid → active ban (expiry 0 = permanent). Populated by LemonCore's PlayerBanning message. */
+    private final Map<UUID, CachedBan> banCache = new ConcurrentHashMap<>();
+
     // volatile so that reloadConfig() is immediately visible to the scheduler threads.
     private volatile Messages msg;
 
@@ -170,6 +175,29 @@ public class QueueManager {
         Long expiry = kickingMarks.remove(uuid);
         if (expiry == null) return false;
         return System.currentTimeMillis() <= expiry;
+    }
+
+    /**
+     * Caches a ban proxy-side so reconnect attempts are denied at LOGIN (the
+     * player never reaches a backend again). Sent by LemonCore alongside the
+     * PlayerBanning mark; expiry 0 = permanent.
+     */
+    public void cacheBan(UUID uuid, long expiryEpochMs, String kickScreenMini) {
+        banCache.put(uuid, new CachedBan(expiryEpochMs, kickScreenMini));
+    }
+
+    /**
+     * The MiniMessage kick screen for the player's cached ban, or {@code null}
+     * when there is none or it has expired (expired entries are evicted).
+     */
+    public String getActiveBanScreen(UUID uuid) {
+        CachedBan ban = banCache.get(uuid);
+        if (ban == null) return null;
+        if (ban.expiryEpochMs() > 0 && System.currentTimeMillis() > ban.expiryEpochMs()) {
+            banCache.remove(uuid);
+            return null;
+        }
+        return ban.kickScreenMini();
     }
 
     /** Removes a player from every queue (call on disconnect / leave). */

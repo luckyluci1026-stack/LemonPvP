@@ -38,8 +38,16 @@ public class PluginMessageListener {
         try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(event.getData()))) {
             String action = in.readUTF();
             if ("PlayerBanning".equals(action)) {
-                String uuidStr = in.readUTF();
-                queueManager.markBanning(UUID.fromString(uuidStr));
+                UUID uuid = UUID.fromString(in.readUTF());
+                queueManager.markBanning(uuid);
+                // Extended payload (newer LemonCore): expiry epoch ms + MiniMessage
+                // kick screen — cached so future logins are denied at the proxy.
+                // Older senders stop after the uuid; the EOF here is expected.
+                try {
+                    long expiryEpochMs = Long.parseLong(in.readUTF());
+                    String kickScreen = in.readUTF();
+                    queueManager.cacheBan(uuid, expiryEpochMs, kickScreen);
+                } catch (IOException | NumberFormatException ignored) {}
             } else if ("PlayerKicking".equals(action)) {
                 String uuidStr = in.readUTF();
                 queueManager.markKicking(UUID.fromString(uuidStr));
