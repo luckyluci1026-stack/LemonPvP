@@ -95,6 +95,17 @@ public class EmoteManager {
         return null;
     }
 
+    /** Range within which viewers receive the emote's map pixels. */
+    private static final double MAP_SEND_RANGE_SQ = 48 * 48;
+
+    private void broadcastMap(Player wearer, MapView map) {
+        for (Player p : wearer.getWorld().getPlayers()) {
+            if (p.getLocation().distanceSquared(wearer.getLocation()) <= MAP_SEND_RANGE_SQ) {
+                p.sendMap(map);
+            }
+        }
+    }
+
     /** Remaining cooldown in seconds, or 0 when ready. */
     public long cooldownLeft(UUID uuid) {
         long until = cooldown.getOrDefault(uuid, 0L);
@@ -153,6 +164,10 @@ public class EmoteManager {
             return false;
         }
 
+        // Vanilla only streams map pixels for maps in hands/item frames — NOT
+        // display entities. Push the pixels ourselves or viewers see blank paper.
+        broadcastMap(player, map);
+
         // Frame ticker + lifetime: gifs play once through (min 2s, max 10s),
         // static images hold for a fixed time.
         final int frameTicks = Math.max(1, plugin.getConfig().getInt("emotes.frame-ticks", 2));
@@ -170,7 +185,11 @@ public class EmoteManager {
                 stop(uuid);
                 return;
             }
-            if (frames > 1) renderer.setFrame(f[0]++);
+            if (frames > 1) {
+                renderer.setFrame(f[0]++);
+                Player wearer = Bukkit.getPlayer(uuid);
+                if (wearer != null && wearer.isOnline()) broadcastMap(wearer, map);
+            }
         }, frameTicks, frameTicks);
 
         active.put(uuid, new Active(display.getUniqueId(), task));

@@ -67,7 +67,27 @@ public class CapeManager {
         return new File(plugin.getDataFolder(), slot.folder);
     }
 
-    /** Re-mounts any display that got detached from its player (e.g. on teleport). */
+    /**
+     * Vanilla only streams map pixels for maps held in hands/item frames — NOT
+     * for maps inside display entities. Without an explicit push, viewers see
+     * blank paper. So we send the map data ourselves to every player near the
+     * wearer (this is why no resource pack is needed).
+     */
+    private static final double MAP_SEND_RANGE_SQ = 48 * 48;
+
+    private void broadcastMap(Player wearer, MapView map) {
+        for (Player p : wearer.getWorld().getPlayers()) {
+            if (p.getLocation().distanceSquared(wearer.getLocation()) <= MAP_SEND_RANGE_SQ) {
+                p.sendMap(map);
+            }
+        }
+    }
+
+    /**
+     * Re-mounts any display that got detached from its player (e.g. on teleport)
+     * and re-broadcasts map data so players who just came into range see the
+     * texture (vanilla never sends it for display entities).
+     */
     private void startRefreshLoop() {
         refreshTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (Map.Entry<UUID, Map<MapCosmeticSlot, Active>> e : active.entrySet()) {
@@ -78,6 +98,7 @@ public class CapeManager {
                     if (disp != null && !p.getPassengers().contains(disp)) {
                         p.addPassenger(disp);
                     }
+                    broadcastMap(p, a.map());
                 }
             }
         }, 20L, 20L);
@@ -150,6 +171,9 @@ public class CapeManager {
             return false;
         }
 
+        // Push the first frame's pixels to everyone nearby right away.
+        broadcastMap(player, map);
+
         final int frames = renderer.frameCount();
         BukkitTask task = null;
         if (frames > 1) {
@@ -160,6 +184,9 @@ public class CapeManager {
                 Map<MapCosmeticSlot, Active> slots = active.get(uuid);
                 if (slots == null || !slots.containsKey(slot)) return;
                 renderer.setFrame(f[0]++);
+                // Stream the new frame to nearby viewers (vanilla won't).
+                Player wearer = Bukkit.getPlayer(uuid);
+                if (wearer != null && wearer.isOnline()) broadcastMap(wearer, map);
             }, period, period);
         }
 
