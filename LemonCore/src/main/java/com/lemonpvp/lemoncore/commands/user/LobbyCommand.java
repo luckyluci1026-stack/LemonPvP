@@ -21,6 +21,18 @@ public class LobbyCommand implements CommandExecutor {
             player.sendMessage(plugin.getMessagesManager().get("no-permission"));
             return true;
         }
+
+        // On fight backends (FFA/duels/…) /lobby /hub /spawn must move the player
+        // to the LOBBY SERVER — a local teleport would strand them on this server.
+        // On the lobby itself it stays a local teleport to the spawn point.
+        String thisServer = plugin.getConfig().getString("server-name", "lobby");
+        String lobbyServer = plugin.getServersConfig().getString("servers.lobby.name", "lobby");
+        if (!thisServer.equalsIgnoreCase(lobbyServer)) {
+            player.sendMessage(plugin.getMessagesManager().get("teleport.spawn"));
+            plugin.getVelocityMessaging().sendToServer(player, lobbyServer);
+            return true;
+        }
+
         plugin.teleportToLobby(player);
         player.sendMessage(plugin.getMessagesManager().get("teleport.spawn"));
         return true;
