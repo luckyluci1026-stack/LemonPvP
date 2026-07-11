@@ -11,12 +11,42 @@ import java.util.List;
 
 public class ScoreboardManager {
 
+    /** Handles both &-codes and §-codes used by LuckPerms prefixes. */
+    private static final net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer LEGACY =
+            net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.builder()
+                    .character('&').hexColors().build();
+
     private final LemonCore plugin;
     private final boolean hasPapi;
 
     public ScoreboardManager(LemonCore plugin) {
         this.plugin = plugin;
         this.hasPapi = Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null;
+    }
+
+    /**
+     * Resolves the player's rank for the {rank} placeholder: the LuckPerms
+     * prefix (converted from legacy &-codes to MiniMessage so it survives
+     * TextUtil.parse), falling back to the capitalised primary group. Returns
+     * null when LuckPerms is absent or has no data yet.
+     */
+    private String resolveRank(Player player) {
+        try {
+            net.luckperms.api.LuckPerms lp = plugin.getLuckPerms();
+            if (lp == null) return null;
+            var adapter = lp.getPlayerAdapter(Player.class);
+            String prefix = adapter.getMetaData(player).getPrefix();
+            if (prefix != null && !prefix.isBlank()) {
+                return net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
+                        .serialize(LEGACY.deserialize(prefix.replace('§', '&').trim()));
+            }
+            var user = adapter.getUser(player);
+            String group = user != null ? user.getPrimaryGroup() : null;
+            if (group == null || group.isBlank()) return null;
+            return "<white>" + Character.toUpperCase(group.charAt(0)) + group.substring(1);
+        } catch (Throwable t) {
+            return null; // LuckPerms missing/incompatible — placeholder falls back
+        }
     }
 
     public void startUpdating() {
@@ -59,9 +89,13 @@ public class ScoreboardManager {
                 line = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, line);
             }
 
-            // Manual internal replacements
+            // Manual internal replacements. {rank}: the ELO badge pushed by
+            // LemonPractice when present, otherwise the LuckPerms rank prefix
+            // (nothing ever populated rankDisplay on lobby servers, so the
+            // placeholder used to always render the fallback star).
             String rank = data.getRankDisplay();
-            if (rank == null || rank.isBlank()) rank = "<gray>✫";
+            if (rank == null || rank.isBlank()) rank = resolveRank(player);
+            if (rank == null || rank.isBlank()) rank = "<gray>Player";
 
             line = line
                     .replace("{kills}", String.valueOf(data.getKills()))

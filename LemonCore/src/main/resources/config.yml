@@ -50,15 +50,15 @@ scoreboard:
   title: "<bold><gradient:#fffb00:#00ff00>LᴇᴍᴏɴPᴠP</gradient></bold>"
   lines:
     - "<dark_gray><st>                </st>"
-    - "<gray>Spieler: <gradient:#fffb00:#00ff00>{player}"
-    - "<gray>Rang: {rank}"
+    - "<gray>Player: <gradient:#fffb00:#00ff00>{player}"
+    - "<gray>Rank: {rank}"
     - " "
     - "<gray>Kills: <green>{kills}"
-    - "<gray>Tode: <red>{deaths}"
+    - "<gray>Deaths: <red>{deaths}"
     - "<gray>K/D: <white>{kdr}"
     - "<gray>Killstreak: <gold>{killstreak}"
     - " "
-    - "<gray>Münzen: <yellow>✦ <gold>{coins_short}"
+    - "<gray>Coins: <yellow>✦ <gold>{coins_short}"
     - "<gray>Online: <green>{online}"
     - "<dark_gray><st>                </st>"
     - "<yellow>play.lemonpvp.de"
@@ -68,7 +68,7 @@ tablist:
   header:
     - ""
     - "<bold><gradient:#fffb00:#00ff00>LᴇᴍᴏɴPᴠP</gradient></bold>"
-    - "<gray>Das deutsche PvP-Practice Netzwerk"
+    - "<gray>The competitive PvP practice network"
     - ""
   footer:
     - ""
