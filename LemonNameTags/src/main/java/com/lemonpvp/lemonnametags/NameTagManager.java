@@ -63,7 +63,12 @@ public final class NameTagManager {
 
         User user = adapter.getUser(player);
         String group = user != null ? user.getPrimaryGroup() : null;
-        String name = gradients.forGroup(group).apply(player.getName());
+        // Use the visible display name (LemonCore sets it for /nick), so the
+        // overhead tag shows the nick instead of exposing the real name.
+        String visibleName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                .plainText().serialize(player.displayName());
+        if (visibleName.isBlank()) visibleName = player.getName();
+        String name = gradients.forGroup(group).apply(visibleName);
 
         String full = prefix.isBlank() ? name : prefix + " " + name;
 
@@ -142,6 +147,12 @@ public final class NameTagManager {
             }
             if (!p.getPassengers().contains(disp)) {
                 p.addPassenger(disp);
+            }
+            // Refresh the text when it changed (nick set/cleared, prefix change) —
+            // equal components send nothing, so the common case stays free.
+            Component fresh = buildText(p);
+            if (!fresh.equals(disp.text())) {
+                disp.text(fresh);
             }
         }
     }
