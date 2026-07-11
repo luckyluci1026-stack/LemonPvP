@@ -76,6 +76,46 @@ public class ConfigManager {
         return get("offend.reason", "Rule violation");
     }
 
+    /** A selectable /offend ban reason: id, display text, duration and GUI icon. */
+    public record OffendReason(String id, String display, long durationSeconds, String icon) {}
+
+    /**
+     * The selectable /offend ban reasons. Configurable under
+     * {@code offend.reasons.<id>: {name, duration, icon}}; when the section is
+     * absent, a built-in set of standard offense categories is used (the last
+     * entry falls back to the legacy single offend.reason/duration pair).
+     */
+    public java.util.List<OffendReason> getOffendReasons() {
+        java.util.List<OffendReason> out = new java.util.ArrayList<>();
+        var section = plugin.getConfig().getConfigurationSection("offend.reasons");
+        if (section != null) {
+            for (String id : section.getKeys(false)) {
+                var s = section.getConfigurationSection(id);
+                if (s == null) continue;
+                out.add(new OffendReason(id.toLowerCase(),
+                        s.getString("name", id),
+                        TextUtil.parseDuration(s.getString("duration", "7d")),
+                        s.getString("icon", "PAPER")));
+            }
+        }
+        if (out.isEmpty()) {
+            out.add(new OffendReason("hacking", "Unfair Advantage (Hacking)",
+                    TextUtil.parseDuration("30d"), "DIAMOND_SWORD"));
+            out.add(new OffendReason("chat", "Chat Abuse",
+                    TextUtil.parseDuration("7d"), "WRITABLE_BOOK"));
+            out.add(new OffendReason("teaming", "Teaming / Cross-Teaming",
+                    TextUtil.parseDuration("7d"), "LEAD"));
+            out.add(new OffendReason("bugabuse", "Bug Abuse",
+                    TextUtil.parseDuration("14d"), "REDSTONE"));
+            out.add(new OffendReason("griefing", "Griefing / Trolling",
+                    TextUtil.parseDuration("14d"), "TNT"));
+            out.add(new OffendReason("evasion", "Ban Evasion (Alt Account)",
+                    TextUtil.parseDuration("30d"), "SKELETON_SKULL"));
+            out.add(new OffendReason("other", getOffendReason(), getOffendDuration(), "PAPER"));
+        }
+        return out;
+    }
+
     /** Fixed reason for the /punish permanent ban. */
     public String getPunishReason() {
         return get("punish.reason", "Severe rule violation");

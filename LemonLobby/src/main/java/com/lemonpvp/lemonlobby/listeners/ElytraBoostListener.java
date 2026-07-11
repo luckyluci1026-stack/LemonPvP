@@ -140,7 +140,7 @@ public class ElytraBoostListener implements Listener {
         }
         lastBoost.put(p.getUniqueId(), now);
 
-        double power = plugin.getConfig().getDouble("elytra-boost.power", 1.6);
+        double power = plugin.getConfig().getDouble("elytra-boost.power", 1.15);
         Vector dir = p.getLocation().getDirection().normalize().multiply(power);
         p.setVelocity(p.getVelocity().add(dir));
 

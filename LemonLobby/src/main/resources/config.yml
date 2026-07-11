@@ -31,7 +31,7 @@ double-jump:
 elytra-boost:
   enabled: true
   give-elytra: true   # auto-equip the locked elytra on join
-  power: 1.6          # boost strength in the look direction
+  power: 1.15         # boost strength in the look direction
   cooldown-ms: 1500   # delay between boosts
 
 # Golden Hour: a server-wide event that multiplies apple-tree rewards for a

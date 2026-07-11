@@ -215,7 +215,9 @@ public class LemonCore extends JavaPlugin {
         var llCmd = getCommand("lemonlang");
         if (llCmd != null) { llCmd.setExecutor(lemonLangCmd); llCmd.setTabCompleter(lemonLangCmd); }
         getCommand("aowcode").setExecutor(new AowCodeCommand(this));
-        getCommand("offend").setExecutor(new OffendCommand(this));
+        OffendCommand offendCmd = new OffendCommand(this);
+        getCommand("offend").setExecutor(offendCmd);
+        getCommand("offend").setTabCompleter(offendCmd);
         getCommand("punish").setExecutor(new PunishCommand(this));
         getCommand("gunban").setExecutor(new GUnbanCommand(this));
         getCommand("gmute").setExecutor(new GMuteCommand(this));

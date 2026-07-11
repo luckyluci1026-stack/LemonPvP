@@ -175,9 +175,9 @@ commands:
     permission: lemoncore.use.code
     usage: /code <code>
   offend:
-    description: Temporarily ban a player (duration + reason from config)
+    description: Temporarily ban a player with a selectable offense category
     permission: lemoncore.admin.offend
-    usage: /offend <player>
+    usage: /offend <player> [reason]
   punish:
     description: Permanently ban a player (reason from config)
     permission: lemoncore.admin.punish
