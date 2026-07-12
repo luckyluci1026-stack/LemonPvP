@@ -112,3 +112,11 @@ hotbar:
     name: "<!italic><gray>Settings</gray>"
     material: COMPASS
     model-data: 0
+
+# Bot fallback: when a queued player finds no opponent within after-seconds,
+# they fight a bot scaled to their ELO (attack speed, sprint, strafing, crits,
+# gapple usage). Bot matches never change ELO or stats.
+queue:
+  bot:
+    enabled: true
+    after-seconds: 15

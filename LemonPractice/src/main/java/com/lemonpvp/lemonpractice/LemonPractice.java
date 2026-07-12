@@ -46,6 +46,7 @@ public class LemonPractice extends JavaPlugin {
     private EloManager eloManager;
     private QueueManager queueManager;
     private DuelManager duelManager;
+    private com.lemonpvp.lemonpractice.managers.BotDuelManager botDuelManager;
     private DuelInviteManager duelInviteManager;
     private SpectatorManager spectatorManager;
     private FFAManager ffaManager;
@@ -100,6 +101,7 @@ public class LemonPractice extends JavaPlugin {
         queueManager = new QueueManager(this);
         queueManager.startTasks();
         duelManager = new DuelManager(this);
+        botDuelManager = new com.lemonpvp.lemonpractice.managers.BotDuelManager(this);
         duelInviteManager = new DuelInviteManager(this);
         spectatorManager = new SpectatorManager(this);
         ffaManager = new FFAManager(this);
@@ -118,6 +120,8 @@ public class LemonPractice extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new LobbyListener(this), this);
         getServer().getPluginManager().registerEvents(new KitEditorListener(this), this);
         getServer().getPluginManager().registerEvents(new DuelListener(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.lemonpvp.lemonpractice.listeners.BotDuelListener(this), this);
         getServer().getPluginManager().registerEvents(new FFAListener(this), this);
         getServer().getPluginManager().registerEvents(
                 new com.lemonpvp.lemonpractice.listeners.KitPreloadListener(this), this);
@@ -193,6 +197,9 @@ public class LemonPractice extends JavaPlugin {
         if (duelManager != null) {
             duelManager.endAllDuels();
         }
+        if (botDuelManager != null) {
+            botDuelManager.shutdown();
+        }
         if (zonePracticeManager != null) {
             zonePracticeManager.shutdown();
         }
@@ -244,6 +251,7 @@ public class LemonPractice extends JavaPlugin {
     public EloManager getEloManager() { return eloManager; }
     public QueueManager getQueueManager() { return queueManager; }
     public DuelManager getDuelManager() { return duelManager; }
+    public com.lemonpvp.lemonpractice.managers.BotDuelManager getBotDuelManager() { return botDuelManager; }
     public DuelInviteManager getDuelInviteManager() { return duelInviteManager; }
     public SpectatorManager getSpectatorManager() { return spectatorManager; }
     public FFAManager getFfaManager() { return ffaManager; }

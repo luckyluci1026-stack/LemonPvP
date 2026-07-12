@@ -128,6 +128,23 @@ public class QueueManager {
                 }
             }
         }
+
+        // Bot fallback: anyone still unmatched after the wait threshold fights a
+        // skill-scaled bot instead of staring at "Finding opponent..." forever.
+        if (plugin.getConfig().getBoolean("queue.bot.enabled", true)) {
+            long afterSecs = plugin.getConfig().getLong("queue.bot.after-seconds", 15);
+            for (QueueEntry entry : new ArrayList<>(queue.values())) {
+                long waited = (System.currentTimeMillis() - entry.joinTimeMs) / 1000L;
+                if (waited < afterSecs) continue;
+                Player p = Bukkit.getPlayer(entry.uuid);
+                if (p == null || !p.isOnline()) { queue.remove(entry.uuid); continue; }
+                queue.remove(entry.uuid);
+                clearActionBar(entry.uuid);
+                String gm = entry.gamemode;
+                Bukkit.getScheduler().runTask(plugin,
+                        () -> plugin.getBotDuelManager().start(p, gm));
+            }
+        }
     }
 
     /**
