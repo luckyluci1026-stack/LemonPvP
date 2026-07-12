@@ -30,11 +30,17 @@ public class AowBuildLobbyCommand implements CommandExecutor {
             return true;
         }
 
-        // Safety confirm step: /aowbuildlobby confirm
-        if (args.length == 0 || !args[0].equalsIgnoreCase("confirm")) {
-            player.sendMessage("§e⚠ This rebuilds the hub island at (0,64,0) — radius ~100 —");
+        // Safety confirm step:
+        //   /aowbuildlobby confirm          -> build the new "Grand Citrus" lobby (v2)
+        //   /aowbuildlobby classic confirm  -> rebuild the previous lobby (kept as backup)
+        boolean classic = args.length >= 1 && args[0].equalsIgnoreCase("classic");
+        boolean confirmed = (args.length >= 1 && args[0].equalsIgnoreCase("confirm"))
+                || (classic && args.length >= 2 && args[1].equalsIgnoreCase("confirm"));
+        if (!confirmed) {
+            player.sendMessage("§e⚠ This rebuilds the hub island at (0,64,0) — radius ~120 —");
             player.sendMessage("§e⚠ AND clears the legacy arena strip from x=100 to x=900!");
-            player.sendMessage("§eConfirm with: §f/aowbuildlobby confirm");
+            player.sendMessage("§eNew lobby:     §f/aowbuildlobby confirm");
+            player.sendMessage("§eOld lobby:     §f/aowbuildlobby classic confirm §7(backup)");
             return true;
         }
 
@@ -45,16 +51,21 @@ public class AowBuildLobbyCommand implements CommandExecutor {
             return true;
         }
 
-        player.sendMessage("§eBuilding lobby spawn island at 0, 64, 0 — please wait...");
+        String variant = classic ? "classic lobby (backup)" : "Grand Citrus lobby (v2)";
+        player.sendMessage("§eBuilding the " + variant + " at 0, 64, 0 — please wait...");
         plugin.getLogger().info("[LemonBuild] " + player.getName()
-                + " startet Lobby-Build in Welt: " + player.getWorld().getName());
+                + " builds " + variant + " in world: " + player.getWorld().getName());
 
         UUID uuid = player.getUniqueId();
         org.bukkit.World world = player.getWorld();
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                new LobbySpawnBuilder(world).build();
+                if (classic) {
+                    new LobbySpawnBuilder(world).build();
+                } else {
+                    new com.lemonpvp.lemonbuild.builder.LobbySpawnBuilderV2(world).build();
+                }
                 plugin.getLogger().info("[LemonBuild] Lobby-Build erfolgreich abgeschlossen.");
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     Player p = Bukkit.getPlayer(uuid);
