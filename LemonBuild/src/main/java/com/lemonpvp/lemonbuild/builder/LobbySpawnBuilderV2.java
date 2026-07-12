@@ -60,6 +60,7 @@ public class LobbySpawnBuilderV2 extends LobbyV2Base {
             skyWork(es);
             lanternChains(es);
             balloons(es);
+            azaleaGrove(es);
             edgeRail(es);
             waterfalls(es);
 
@@ -430,10 +431,37 @@ public class LobbySpawnBuilderV2 extends LobbyV2Base {
         }
     }
 
-    /** Two hot-air balloons drifting over the rim. */
+    /** Six hot-air balloons drifting at staggered heights around the island. */
     private void balloons(EditSession es) {
         balloon(es, CX - 30, Y + 34, CZ + 62, "yellow_wool", "orange_wool");
         balloon(es, CX + 62, Y + 40, CZ - 30, "lime_wool", "yellow_wool");
+        balloon(es, CX + 20, Y + 46, CZ + 84, "white_wool", "yellow_wool");
+        balloon(es, CX - 74, Y + 30, CZ - 52, "orange_wool", "white_wool");
+        balloon(es, CX - 84, Y + 44, CZ + 18, "yellow_wool", "lime_wool");
+        balloon(es, CX + 84, Y + 36, CZ + 52, "lime_wool", "white_wool");
+    }
+
+    /** Azalea grove: leafy azalea-canopy trees dotted across the lawn. */
+    private void azaleaGrove(EditSession es) {
+        int[][] spots = {{-42, -18}, {-16, -52}, {18, 42}, {44, -26},
+                {-52, 44}, {60, 14}, {-8, 56}, {34, -58}};
+        for (int i = 0; i < spots.length; i++) {
+            int txx = CX + spots[i][0], tzz = CZ + spots[i][1];
+            int h = 4 + (i % 3);
+            column(es, txx, tzz, Y + 1, Y + h, OAK_LOG_Y);
+            // Broad azalea canopy: flattened blob + flowering crown + drips.
+            ellipsoid(es, txx, Y + h + 2, tzz, 4.0, 2.2, 4.0, LEAVES);
+            ellipsoid(es, txx, Y + h + 3, tzz, 2.6, 1.6, 2.6, LEAVES_FLW);
+            scatter(es, txx, Y + h + 4, tzz, 2.5, 0.4, 701L + i, LEAVES_FLW);
+            // Hanging leaf drips under the canopy edge.
+            set(es, txx - 3, Y + h + 1, tzz, LEAVES);
+            set(es, txx + 3, Y + h + 1, tzz, LEAVES);
+            set(es, txx, Y + h + 1, tzz - 3, LEAVES_FLW);
+            set(es, txx, Y + h + 1, tzz + 3, LEAVES);
+            // Root flare + moss bed.
+            scatter(es, txx, Y, tzz, 3.5, 0.5, 711L + i, MOSS, PODZOL);
+            set(es, txx, Y + h + 2 + 2, tzz, (i % 2 == 0) ? LANTERN : "air");
+        }
     }
 
     private void balloon(EditSession es, int bx, int by, int bz, String main, String stripe) {

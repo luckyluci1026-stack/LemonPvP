@@ -144,9 +144,10 @@ public class PlayerListener implements Listener {
 
         switch (slot) {
             case 0 -> {
-                // Queue → Practice server
+                // Queue → the duels backend. (The old "practice" entry pointed at
+                // a server name the proxy never had — the sword was a silent no-op.)
                 lobbyMessaging.connectToServer(player,
-                        plugin.getServersConfig().getString("servers.practice.name", "practice"));
+                        plugin.getServersConfig().getString("servers.duels.name", "duels"));
             }
             case 1 -> {
                 // Training Compass - open Training GUI
@@ -158,9 +159,15 @@ public class PlayerListener implements Listener {
                         plugin.getServersConfig().getString("servers.events.name", "events"));
             }
             case 4 -> {
-                // Kit Editor → Practice server
-                lobbyMessaging.connectToServer(player,
-                        plugin.getServersConfig().getString("servers.practice.name", "practice"));
+                // Kit editor: opens RIGHT HERE in the lobby when LemonPractice is
+                // installed alongside (its /kiteditor command); only players on a
+                // lobby without it get sent to the duels server as a fallback.
+                if (Bukkit.getPluginManager().isPluginEnabled("LemonPractice")) {
+                    player.performCommand("kiteditor");
+                } else {
+                    lobbyMessaging.connectToServer(player,
+                            plugin.getServersConfig().getString("servers.duels.name", "duels"));
+                }
             }
             case 6 -> {
                 // Cosmetics

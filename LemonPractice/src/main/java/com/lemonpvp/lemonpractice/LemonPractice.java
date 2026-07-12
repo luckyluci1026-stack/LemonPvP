@@ -174,6 +174,8 @@ public class LemonPractice extends JavaPlugin {
         if (replayCmd != null) replayCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.ReplayCommand(this));
         var greplayCmd = getCommand("greplay");
         if (greplayCmd != null) greplayCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.GReplayCommand(this));
+        var kitEditorCmd = getCommand("kiteditor");
+        if (kitEditorCmd != null) kitEditorCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.KitEditorCommand(this));
 
         // Replay retention cleanup (every 6 hours; first run after 1 min)
         getServer().getScheduler().runTaskTimerAsynchronously(this,

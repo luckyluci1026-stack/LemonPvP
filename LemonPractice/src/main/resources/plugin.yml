@@ -111,3 +111,6 @@ commands:
     description: Admin replay browser — view, delete, extend and purge all replays
     permission: lemonpractice.admin.replay
     usage: /greplay | <name> | info <name> | delete <name> | extend <name> <days> | purge
+  kiteditor:
+    description: Open the kit editor (usable from the lobby hotbar)
+    usage: /kiteditor

@@ -25,14 +25,13 @@ public class LobbyHotbarManager {
 
     public void setupHotbar(Player player) {
         player.getInventory().clear();
-        // Queue sword removed from this (duel/practice) server — queueing is done
-        // from the main lobby. Re-enable by setting hotbar.queue.enabled: true.
-        if (plugin.getConfig().getBoolean("hotbar.queue.enabled", false)) {
+        // Fight-server hotbar: this server exists ONLY for fighting. Queue sword
+        // to re-queue, bed to leave — kit editor, cosmetics and settings all live
+        // on the LOBBY server (LemonLobby's hotbar + /kiteditor).
+        if (plugin.getConfig().getBoolean("hotbar.queue.enabled", true)) {
             placeItem(player, "queue", "queue", Material.IRON_SWORD);
         }
-        placeItem(player, "kit-editor", "kit_editor", Material.BOOK);
-        placeItem(player, "cosmetics",  "cosmetics",  Material.DIAMOND);
-        placeItem(player, "settings",   "settings",   Material.COMPASS);
+        placeItem(player, "leave", "leave", Material.RED_BED);
     }
 
     public void clearHotbar(Player player) {
@@ -75,6 +74,7 @@ public class LobbyHotbarManager {
             case "queue"      -> 0;
             case "kit-editor" -> 4;
             case "cosmetics"  -> 7;
+            case "leave"      -> 8;
             case "settings"   -> 8;
             default           -> 0;
         };

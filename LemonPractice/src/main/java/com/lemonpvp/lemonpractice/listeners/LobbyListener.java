@@ -144,6 +144,8 @@ public class LobbyListener implements Listener {
             case "kit_editor" -> new QueueGUI(plugin, player).openKitEditor();
             case "cosmetics" -> openCosmetics(player);
             case "settings" -> openSettings(player);
+            case "leave" -> plugin.getVelocityMessaging().sendToServer(player,
+                    plugin.getServersConfig().getString("servers.lobby.name", "lobby"));
             default -> plugin.getLogger().warning("Unknown hotbar action: " + hotbarAction);
         }
     }
