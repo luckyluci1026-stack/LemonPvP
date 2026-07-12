@@ -1,7 +1,7 @@
 {
   "id": "lemonresourcepack",
   "name": "LemonResourcePack",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Forces resource pack acceptance on join",
   "authors": ["LemonPvP"],
   "main": "com.lemonpvp.lemonresourcepack.LemonResourcePack"

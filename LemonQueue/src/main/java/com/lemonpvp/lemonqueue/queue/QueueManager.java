@@ -65,12 +65,20 @@ public class QueueManager {
     /** uuid → active ban (expiry 0 = permanent). Populated by LemonCore's PlayerBanning message. */
     private final Map<UUID, CachedBan> banCache = new ConcurrentHashMap<>();
     /**
-     * Safety TTL: entries older than this re-verify against the backend (the
-     * player gets one connect, the backend re-kicks and re-caches if still
-     * banned). Guards against a missed PlayerUnbanning message permanently
-     * locking someone out.
+     * Safety re-check: entries older than this get ONE pass-through to the
+     * backend, which re-kicks and re-caches if the ban is still active (without
+     * the Lemonizer broadcast). Keeps reconnect-spam cheap (denied at login
+     * within the window) while making a stale entry — missed unban message,
+     * old backend jar, anything — impossible to persist beyond 5 minutes.
      */
-    private static final long BAN_CACHE_TTL_MS = 6L * 60 * 60 * 1000;
+    private static final long BAN_CACHE_TTL_MS = 5L * 60 * 1000;
+
+    /** Flushes every cached ban (admin escape hatch: /queue clearbans). */
+    public int clearBanCache() {
+        int n = banCache.size();
+        banCache.clear();
+        return n;
+    }
 
     // volatile so that reloadConfig() is immediately visible to the scheduler threads.
     private volatile Messages msg;

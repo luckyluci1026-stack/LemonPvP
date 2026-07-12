@@ -1,5 +1,5 @@
 name: LemonPractice
-version: "1.0.0"
+version: "1.1.0"
 main: com.lemonpvp.lemonpractice.LemonPractice
 api-version: "1.21"
 description: LemonPvP Practice Plugin

@@ -86,6 +86,14 @@ public class QueueCommand implements SimpleCommand {
                 plugin.reload();
                 source.sendMessage(msg.cmdReloaded());
             }
+            case "clearbans" -> {
+                // Escape hatch: instantly drop every cached login-deny so an
+                // unbanned player can rejoin without waiting for the re-check.
+                if (!source.hasPermission(ADMIN_PERM)) { noPerm(source); return; }
+                int n = queues.clearBanCache();
+                source.sendMessage(net.kyori.adventure.text.Component.text(
+                        "Cleared " + n + " cached ban(s) from the proxy login filter."));
+            }
             default -> source.sendMessage(msg.cmdUnknown());
         }
     }
