@@ -81,6 +81,15 @@ public class LobbySpawnBuilderV2 extends LobbyV2Base {
             skyClouds(es);
             greenUpgrade(es);
             undersideGeode(es);
+
+            // Interior furnishing pass
+            cathedralInterior(es);
+            forgeInterior(es);
+            bazaarInterior(es);
+            hallInterior(es);
+            observatoryInterior(es);
+            spireInterior(es);
+            citadelLounge(es);
         }
     }
 
@@ -779,6 +788,181 @@ public class LobbySpawnBuilderV2 extends LobbyV2Base {
         // Flower drifts.
         scatter(es, CX - 30, Y + 1, CZ - 30, 10, 0.25, 611L, "allium", "azure_bluet");
         scatter(es, CX + 30, Y + 1, CZ + 30, 10, 0.25, 612L, "cornflower", "oxeye_daisy");
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Interior furnishing pass
+    // ────────────────────────────────────────────────────────────────────────
+
+    /** Cathedral: altar, candles, side chapels, soul-lantern ambience. */
+    private void cathedralInterior(EditSession es) {
+        int bz = CZ - 62;
+        // Altar in front of the queue portal: gold table + candelabra.
+        fill(es, CX - 2, Y + 1, bz - 3, CX + 2, Y + 1, bz - 3, "polished_blackstone");
+        fill(es, CX - 2, Y + 2, bz - 3, CX + 2, Y + 2, bz - 3, "gold_block");
+        set(es, CX - 2, Y + 3, bz - 3, "yellow_candle[candles=3,lit=true]");
+        set(es, CX + 2, Y + 3, bz - 3, "yellow_candle[candles=3,lit=true]");
+        set(es, CX, Y + 3, bz - 3, "lime_candle[candles=4,lit=true]");
+        // Side chapels: bookshelf alcoves with lecterns and candles.
+        for (int side = -1; side <= 1; side += 2) {
+            int wx = CX + side * 10;
+            fill(es, wx, Y + 1, bz - 4, wx, Y + 3, bz - 2, "chiseled_bookshelf[facing="
+                    + (side < 0 ? "east" : "west") + "]");
+            set(es, wx - side, Y + 1, bz - 3, "lectern[facing=" + (side < 0 ? "east" : "west") + "]");
+            set(es, wx - side, Y + 2, bz - 3, "candle[candles=2,lit=true]");
+            // Soul lanterns along each nave wall.
+            for (int lz = -2; lz <= 6; lz += 4) {
+                set(es, wx + side, Y + 4, bz + lz, "soul_lantern[hanging=false]");
+            }
+        }
+        // Candle pairs flanking the carpet runner.
+        for (int cz2 = 0; cz2 <= 4; cz2 += 2) {
+            set(es, CX - 2, Y + 1, bz + cz2, "candle[candles=3,lit=true]");
+            set(es, CX + 2, Y + 1, bz + cz2, "candle[candles=3,lit=true]");
+        }
+        // Interior wall banners between the windows.
+        set(es, CX - 11, Y + 6, bz, "yellow_wall_banner[facing=east]");
+        set(es, CX + 11, Y + 6, bz, "lime_wall_banner[facing=west]");
+    }
+
+    /** Forge: storage wall, ceiling chains, extra workstations. */
+    private void forgeInterior(EditSession es) {
+        int bx = CX + 62;
+        // Storage wall (east): barrels + chests stacked two high.
+        for (int wz = -3; wz <= 3; wz += 2) {
+            set(es, bx + 7, Y + 1, CZ + wz, "barrel[facing=west]");
+            set(es, bx + 7, Y + 2, CZ + wz, wz % 4 == 1 ? "chest[facing=west]" : "barrel[facing=west]");
+        }
+        // Extra workstations along the north wall.
+        set(es, bx - 5, Y + 1, CZ - 9, "stonecutter[facing=south]");
+        set(es, bx - 3, Y + 1, CZ - 9, "fletching_table");
+        set(es, bx - 1, Y + 1, CZ - 9, "cartography_table");
+        set(es, bx + 1, Y + 1, CZ - 9, "loom[facing=south]");
+        // Ceiling chains with lanterns over the work floor.
+        for (int cxo = -4; cxo <= 4; cxo += 4) {
+            set(es, bx + cxo, Y + 8, CZ, CHAIN);
+            set(es, bx + cxo, Y + 7, CZ, H_LANTERN);
+        }
+        // Work rug + a decorated pot corner.
+        fill(es, bx - 2, Y + 1, CZ + 1, bx + 1, Y + 1, CZ + 3, "gray_carpet");
+        set(es, bx - 7, Y + 1, CZ + 9, "decorated_pot");
+        set(es, bx - 7, Y + 1, CZ + 8, "decorated_pot");
+    }
+
+    /** Bazaar: goods on the stalls, vault chains, potion & fruit displays. */
+    private void bazaarInterior(EditSession es) {
+        int bz = CZ + 62;
+        // Vault chains with lanterns.
+        for (int fx = -10; fx <= 10; fx += 5) {
+            set(es, CX + fx, Y + 8, bz, CHAIN);
+            set(es, CX + fx, Y + 7, bz, H_LANTERN);
+        }
+        // Central carpet cross between the stalls.
+        fill(es, CX - 12, Y + 1, bz + 2, CX + 12, Y + 1, bz + 2, "yellow_carpet");
+        fill(es, CX, Y + 1, bz - 6, CX, Y + 1, bz + 5, "lime_carpet");
+        // Stall goods: alternating displays on the counter tops.
+        for (int i = 0; i < 6; i++) {
+            int sx = CX - 12 + i * 5 + 1;
+            switch (i % 3) {
+                case 0 -> set(es, sx, Y + 3, bz + 6, "potted_dandelion");
+                case 1 -> set(es, sx, Y + 3, bz + 6, "decorated_pot");
+                case 2 -> set(es, sx, Y + 3, bz + 6, "candle[candles=4,lit=true]");
+            }
+        }
+        // Potion stand corner.
+        set(es, CX + 13, Y + 1, bz - 6, "brewing_stand");
+        set(es, CX + 13, Y + 1, bz - 7, "barrel[facing=up]");
+        set(es, CX + 12, Y + 1, bz - 6, "cauldron");
+        // Fruit crates by the produce stand.
+        set(es, CX - 12, Y + 1, bz - 7, "barrel[facing=up]");
+        set(es, CX - 12, Y + 2, bz - 7, "decorated_pot");
+    }
+
+    /** Hall of fame: spectator benches, red carpet, chandelier row. */
+    private void hallInterior(EditSession es) {
+        int bx = CX - 62;
+        // Red carpet gallery walk in front of the pool.
+        fill(es, bx + 8, Y + 1, CZ - 12, bx + 8, Y + 1, CZ + 12, "red_carpet");
+        // Benches facing the plinths (east side, looking west).
+        for (int pz = -10; pz <= 10; pz += 4) {
+            set(es, bx + 6, Y + 1, CZ + pz, "quartz_stairs[facing=west]");
+            set(es, bx + 6, Y + 1, CZ + pz + 1, "quartz_stairs[facing=west]");
+        }
+        // Chandelier row above the pool.
+        for (int pz = -8; pz <= 8; pz += 4) {
+            set(es, bx + 5, Y + 8, CZ + pz, CHAIN);
+            set(es, bx + 5, Y + 7, CZ + pz, H_LANTERN);
+        }
+        // Potted flowers on the colonnade feet.
+        for (int cz2 = -12; cz2 <= 12; cz2 += 6) {
+            set(es, bx + 7, Y + 1, CZ + cz2, "potted_azalea_bush");
+        }
+    }
+
+    /** Observatory: hollow the (solid) tower, then the astronomer's study. */
+    private void observatoryInterior(EditSession es) {
+        int tx = CX - 48, tz = CZ + 48;
+        // The cylinder was built solid — carve the ground-floor room first.
+        cyl(es, tx, Y + 1, tz, 5.4, 14, "air");
+        disk(es, tx, Y + 15, tz, 5.4, DARK_PLANK);      // ceiling under the dome floor
+        // Study: bookshelf ring segments + desk + alchemy corner.
+        for (int i = 0; i < 10; i++) {
+            double a = i * (Math.PI * 2 / 10);
+            if (i % 3 == 0) continue;                    // gaps for door/windows
+            int sx = tx + (int) Math.round(Math.cos(a) * 5);
+            int sz = tz + (int) Math.round(Math.sin(a) * 5);
+            set(es, sx, Y + 1, sz, "bookshelf");
+            set(es, sx, Y + 2, sz, i % 2 == 0 ? "bookshelf" : "candle[candles=2,lit=true]");
+        }
+        set(es, tx - 2, Y + 1, tz - 2, "cartography_table");
+        set(es, tx - 1, Y + 1, tz - 2, "lectern[facing=south]");
+        set(es, tx + 2, Y + 1, tz + 2, "brewing_stand");
+        set(es, tx + 2, Y + 1, tz + 1, "amethyst_cluster[facing=up]");
+        fill(es, tx - 1, Y + 1, tz, tx + 1, Y + 1, tz, "blue_carpet");
+        set(es, tx, Y + 6, tz, CHAIN);
+        set(es, tx, Y + 5, tz, "soul_lantern[hanging=true]");
+        // Re-cut the doorway (hollowing may have left rim blocks shifted).
+        fill(es, tx + 5, Y + 1, tz - 1, tx + 7, Y + 3, tz + 1, "air");
+    }
+
+    /** Parkour spire: hollow the trunk into a climbable lantern-lit shaft. */
+    private void spireInterior(EditSession es) {
+        int tx = CX + 48, tz = CZ - 48;
+        cyl(es, tx, Y + 1, tz, 4.4, 32, "air");          // carve the solid trunk
+        // Floors every 8 blocks with a ladder column through gaps.
+        for (int f = 1; f <= 3; f++) {
+            int fy = Y + f * 8;
+            disk(es, tx, fy, tz, 4.4, "cherry_slab[type=bottom]");
+            fill(es, tx + 3, fy, tz - 1, tx + 4, fy, tz + 1, "air"); // ladder gap
+            set(es, tx, fy + 3, tz, H_LANTERN);
+        }
+        column(es, tx + 4, tz, Y + 1, Y + 33, "ladder[facing=west]");
+        // Ground floor: bench + banner + entrance.
+        fill(es, tx - 4, Y + 1, tz - 1, tx - 4, Y + 1, tz + 1, "cherry_stairs[facing=east]");
+        set(es, tx, Y + 1, tz, "pink_carpet");
+        fill(es, tx - 6, Y + 1, tz - 1, tx - 5, Y + 3, tz + 1, "air"); // west door
+        // Top landing chest prop + celebratory note block.
+        set(es, tx - 2, Y + 25, tz - 2, "chest[facing=south]");
+        set(es, tx + 2, Y + 25, tz + 2, "note_block");
+    }
+
+    /** Citadel lounge: benches + planters around tier 1 facing the fountain. */
+    private void citadelLounge(EditSession es) {
+        for (int i = 0; i < 12; i++) {
+            double a = i * (Math.PI / 6) + Math.PI / 12;
+            int bx2 = CX + (int) Math.round(Math.cos(a) * 20);
+            int bz2 = CZ + (int) Math.round(Math.sin(a) * 20);
+            if (i % 3 == 0) {
+                set(es, bx2, Y + 2, bz2, MOSS);
+                set(es, bx2, Y + 3, bz2, "potted_flowering_azalea_bush");
+            } else {
+                // Bench facing inward: pick the closest cardinal facing.
+                String facing = Math.abs(bx2 - CX) > Math.abs(bz2 - CZ)
+                        ? (bx2 > CX ? "west" : "east")
+                        : (bz2 > CZ ? "north" : "south");
+                set(es, bx2, Y + 2, bz2, "smooth_sandstone_stairs[facing=" + facing + "]");
+            }
+        }
     }
 
     /** A hidden amethyst geode pocket in the underside spike. */
