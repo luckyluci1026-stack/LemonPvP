@@ -51,6 +51,9 @@ public class PluginMessageListener {
             } else if ("PlayerKicking".equals(action)) {
                 String uuidStr = in.readUTF();
                 queueManager.markKicking(UUID.fromString(uuidStr));
+            } else if ("PlayerUnbanning".equals(action)) {
+                // Backend lifted a ban — clear the login-deny cache immediately.
+                queueManager.uncacheBan(UUID.fromString(in.readUTF()));
             }
         } catch (IOException | IllegalArgumentException ignored) {}
     }

@@ -137,6 +137,22 @@ public class BanManager {
                     ps.setString(1, record.id);
                     ps.executeUpdate();
                 }
+
+                // Tell the proxy to drop its cached login-deny for this player —
+                // without this an unbanned player (especially permabans) would
+                // still be rejected during the proxy handshake.
+                final java.util.UUID unbannedUuid = record.uuid;
+                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                    org.bukkit.entity.Player carrier =
+                            plugin.getVelocityMessaging().getAnyOnlinePlayer();
+                    if (carrier != null) {
+                        plugin.getVelocityMessaging().sendLemonMessage(carrier,
+                                "PlayerUnbanning", unbannedUuid.toString());
+                    } else {
+                        plugin.getLogger().warning("[BanManager] No online player to relay "
+                                + "the unban to the proxy — its cache TTL will clear it.");
+                    }
+                });
                 return record;
             } catch (SQLException e) {
                 plugin.getLogger().severe("Unban error: " + e.getMessage());

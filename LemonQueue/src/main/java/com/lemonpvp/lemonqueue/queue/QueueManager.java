@@ -61,9 +61,16 @@ public class QueueManager {
     private final Map<UUID, Long> kickingMarks = new ConcurrentHashMap<>();
 
     /** A ban cached proxy-side so reconnect attempts are denied at login. */
-    private record CachedBan(long expiryEpochMs, String kickScreenMini) {}
+    private record CachedBan(long expiryEpochMs, String kickScreenMini, long cachedAtMs) {}
     /** uuid → active ban (expiry 0 = permanent). Populated by LemonCore's PlayerBanning message. */
     private final Map<UUID, CachedBan> banCache = new ConcurrentHashMap<>();
+    /**
+     * Safety TTL: entries older than this re-verify against the backend (the
+     * player gets one connect, the backend re-kicks and re-caches if still
+     * banned). Guards against a missed PlayerUnbanning message permanently
+     * locking someone out.
+     */
+    private static final long BAN_CACHE_TTL_MS = 6L * 60 * 60 * 1000;
 
     // volatile so that reloadConfig() is immediately visible to the scheduler threads.
     private volatile Messages msg;
@@ -183,17 +190,25 @@ public class QueueManager {
      * PlayerBanning mark; expiry 0 = permanent.
      */
     public void cacheBan(UUID uuid, long expiryEpochMs, String kickScreenMini) {
-        banCache.put(uuid, new CachedBan(expiryEpochMs, kickScreenMini));
+        banCache.put(uuid, new CachedBan(expiryEpochMs, kickScreenMini, System.currentTimeMillis()));
+    }
+
+    /** Drops the cached ban (player was unbanned on a backend). */
+    public void uncacheBan(UUID uuid) {
+        banCache.remove(uuid);
     }
 
     /**
      * The MiniMessage kick screen for the player's cached ban, or {@code null}
-     * when there is none or it has expired (expired entries are evicted).
+     * when there is none, it expired, or the safety TTL lapsed (stale entries
+     * are evicted so a missed unban can never lock someone out for good).
      */
     public String getActiveBanScreen(UUID uuid) {
         CachedBan ban = banCache.get(uuid);
         if (ban == null) return null;
-        if (ban.expiryEpochMs() > 0 && System.currentTimeMillis() > ban.expiryEpochMs()) {
+        long now = System.currentTimeMillis();
+        if ((ban.expiryEpochMs() > 0 && now > ban.expiryEpochMs())
+                || now - ban.cachedAtMs() > BAN_CACHE_TTL_MS) {
             banCache.remove(uuid);
             return null;
         }
