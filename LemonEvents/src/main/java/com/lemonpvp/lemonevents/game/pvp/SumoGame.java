@@ -71,6 +71,10 @@ public class SumoGame extends AbstractGame {
 
         fighter1 = bracket.get(matchIndex);
         fighter2 = bracket.get(matchIndex + 1);
+        // Re-arm ONLY here: resetting inside onFellOff let the still-running
+        // void-check loop resolve BOTH fighters in the same tick (double
+        // elimination + broken bracket) when both were below the void line.
+        matchResolved = false;
 
         String n1 = getPlayerName(fighter1), n2 = getPlayerName(fighter2);
         broadcastParticipants(MM.deserialize(
@@ -122,7 +126,8 @@ public class SumoGame extends AbstractGame {
         if (winner != null && world != null) winner.teleport(new Location(world, 0.5, 61, 0.5));
 
         matchIndex = 0;
-        matchResolved = false;
+        // matchResolved stays TRUE until startNextMatch re-arms it — the void
+        // loop's same-tick second iteration must stay locked out.
         scheduleTask(Bukkit.getScheduler().runTaskLater(plugin, () -> startNextMatch(), 80L));
     }
 
@@ -144,7 +149,7 @@ public class SumoGame extends AbstractGame {
                 bracket.remove(winnerId);
                 bracket.add(0, winnerId);
                 matchIndex = 0;
-                matchResolved = false;
+                // matchResolved re-arms in startNextMatch.
                 scheduleTask(Bukkit.getScheduler().runTaskLater(plugin, this::startNextMatch, 80L));
             }
         } else if (participants.size() <= 1) {

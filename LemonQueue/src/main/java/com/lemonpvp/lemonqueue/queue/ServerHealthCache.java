@@ -77,6 +77,16 @@ public final class ServerHealthCache {
         return Boolean.TRUE.equals(status.get(serverName));
     }
 
+    /**
+     * Returns {@code true} only when the last ping EXPLICITLY failed. Unknown
+     * servers (never pinged — e.g. queue targets outside the watched set)
+     * return {@code false}, so callers treat them as reachable instead of
+     * skipping their queues forever.
+     */
+    public boolean isKnownOffline(String serverName) {
+        return Boolean.FALSE.equals(status.get(serverName));
+    }
+
     // ── Internal ─────────────────────────────────────────────────────────────
 
     private void pingAll() {

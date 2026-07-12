@@ -265,10 +265,12 @@ public class QueueManager {
         kickingMarks.values().removeIf(expiry -> now > expiry);
 
         for (ServerQueue queue : queues.values()) {
-            // Skip silently when the target is known offline — ServerHealthCache
-            // already logged the state change once; no further spam needed.
+            // Skip silently ONLY when the target is EXPLICITLY known offline.
+            // Unwatched targets (the cache only pings limbo + default target)
+            // were previously treated as offline too, which parked their queued
+            // players in limbo forever.
             String targetName = queue.getTargetServer();
-            if (healthCache != null && !healthCache.isOnline(targetName)) continue;
+            if (healthCache != null && healthCache.isKnownOffline(targetName)) continue;
 
             Optional<RegisteredServer> opt = proxy.getServer(targetName);
             if (opt.isEmpty()) continue;

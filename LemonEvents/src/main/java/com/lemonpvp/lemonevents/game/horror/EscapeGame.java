@@ -19,6 +19,8 @@ public class EscapeGame extends AbstractGame {
     private final int monsterCount;
     private final List<Entity> monsters = new ArrayList<>();
     private Location exitLocation;
+    /** Escapers in ESCAPE ORDER — the first one out of the labyrinth places 1st. */
+    private final List<UUID> escaped = new ArrayList<>();
 
     public EscapeGame(LemonEvents plugin, GameEvent event) {
         super(plugin, event);
@@ -160,21 +162,50 @@ public class EscapeGame extends AbstractGame {
 
     /** Called by EventPlayerListener when a player reaches the exit block. */
     public void onPlayerExit(Player player) {
-        if (!participants.contains(player.getUniqueId())) return;
-        eliminate(player.getUniqueId(), null);
+        UUID uuid = player.getUniqueId();
+        if (!participants.contains(uuid)) return;
+        // Escaping is a WIN, not an elimination: track escape order ourselves.
+        // Routing through eliminate() prepended escapers (later escaper ranked
+        // higher) and its checkWinCondition crowned the last TRAPPED player.
+        participants.remove(uuid);
+        escaped.add(uuid);
         broadcastParticipants(MM.deserialize(
-            "<green>✔ <yellow>" + player.getName() + "</yellow> escaped the labyrinth!"));
+            "<green>✔ <yellow>" + player.getName() + "</yellow> escaped the labyrinth! "
+            + "<gray>(#" + escaped.size() + ")"));
         // Give players back normal effects
         player.removePotionEffect(PotionEffectType.BLINDNESS);
-        player.setGameMode(GameMode.ADVENTURE);
+        player.setGameMode(GameMode.SPECTATOR);
 
-        if (participants.isEmpty()) endGame();
+        if (participants.isEmpty()) {
+            finalizeOrder();
+            endGame();
+        }
+    }
+
+    /**
+     * Escape has no last-man-standing: the round ends when nobody is left
+     * inside. Whoever escaped ranks by escape order; the trapped rank behind.
+     */
+    @Override
+    protected void checkWinCondition() {
+        if (participants.isEmpty()) {
+            finalizeOrder();
+            endGame();
+        }
+    }
+
+    /** Puts escapers (escape order) ahead of everyone who died/quit inside. */
+    private void finalizeOrder() {
+        finishOrder.removeAll(escaped);
+        for (int i = 0; i < escaped.size() && i <= finishOrder.size(); i++) {
+            finishOrder.add(i, escaped.get(i));
+        }
     }
 
     @Override
     protected void onEliminated(Player player, Player killer) {
-        // Escaped players become spectators in a good way
-        player.sendMessage(MM.deserialize("<green>You escaped! Well done!"));
+        // Only deaths/catches route here now — escapers go through onPlayerExit.
+        player.sendMessage(MM.deserialize("<red>The labyrinth got you…"));
         player.setGameMode(GameMode.SPECTATOR);
     }
 

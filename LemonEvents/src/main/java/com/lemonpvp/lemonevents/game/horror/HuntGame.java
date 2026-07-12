@@ -56,12 +56,15 @@ public class HuntGame extends AbstractGame {
                     // Prey wins — all surviving non-hunters win
                     broadcastAll(MM.deserialize(
                         "<green><bold>🏃 The Prey survived! They win!</bold></green>"));
+                    // Hunter prepended FIRST (ends up below the prey), surviving
+                    // prey prepended last = top placements. Previously killed prey
+                    // are already at the back. (The old reverse handed 1st place
+                    // to the first prey the hunter killed.)
                     List<UUID> prey = new ArrayList<>(participants);
                     prey.remove(currentHunter);
-                    prey.forEach(u -> { participants.remove(u); finishOrder.add(0, u); });
                     participants.remove(currentHunter);
                     finishOrder.add(0, currentHunter);
-                    Collections.reverse(finishOrder);
+                    prey.forEach(u -> { participants.remove(u); finishOrder.add(0, u); });
                     endGame();
                     cancel();
                 }

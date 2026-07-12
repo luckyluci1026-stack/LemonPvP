@@ -245,6 +245,15 @@ public class ReplayManager {
 
     public void play(Player viewer, String name) {
         UUID vu = viewer.getUniqueId();
+        // No replays while fighting: playback forces spectator mode and
+        // teleports the viewer, which would rip them out of a live match.
+        if (plugin.getDuelManager().isInDuel(vu)
+                || plugin.getBotDuelManager().isInBotDuel(vu)
+                || plugin.getFfaManager().isInFfa(vu)
+                || plugin.getZonePracticeManager().isInZone(vu)) {
+            viewer.sendMessage(MM.deserialize("<red>You can't watch replays during a fight."));
+            return;
+        }
         stopPlayback(vu); // one at a time
         plugin.getDatabase().loadReplayData(name).thenAccept(bytes -> Bukkit.getScheduler().runTask(plugin, () -> {
             Player v = Bukkit.getPlayer(vu);

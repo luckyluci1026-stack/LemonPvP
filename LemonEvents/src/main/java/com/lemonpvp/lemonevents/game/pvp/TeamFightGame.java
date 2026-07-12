@@ -114,18 +114,16 @@ public class TeamFightGame extends AbstractGame {
         broadcastParticipants(MM.deserialize(
             "<red>A:" + teamA.size() + "</red> vs <blue>B:" + teamB.size() + "</blue>"));
 
+        // Winners prepended last land at index 0 = 1st place (dead players were
+        // already prepended when eliminated). The old trailing reverse flipped
+        // the list, awarding 1st place to the first player eliminated.
         if (teamA.isEmpty()) {
             broadcastAll(MM.deserialize("<blue><bold>Team B wins!</bold></blue>"));
-            // Team B members get higher placements
             new ArrayList<>(teamB).forEach(w -> { participants.remove(w); finishOrder.add(0, w); });
-            new ArrayList<>(teamA).forEach(l -> finishOrder.add(0, l));
-            Collections.reverse(finishOrder);
             endGame();
         } else if (teamB.isEmpty()) {
             broadcastAll(MM.deserialize("<red><bold>Team A wins!</bold></red>"));
             new ArrayList<>(teamA).forEach(w -> { participants.remove(w); finishOrder.add(0, w); });
-            new ArrayList<>(teamB).forEach(l -> finishOrder.add(0, l));
-            Collections.reverse(finishOrder);
             endGame();
         }
     }
@@ -144,12 +142,10 @@ public class TeamFightGame extends AbstractGame {
         if (teamA.isEmpty()) {
             broadcastAll(MM.deserialize("<blue><bold>Team B wins!</bold></blue>"));
             new ArrayList<>(teamB).forEach(w -> { participants.remove(w); finishOrder.add(0, w); });
-            Collections.reverse(finishOrder);
             endGame();
         } else if (teamB.isEmpty()) {
             broadcastAll(MM.deserialize("<red><bold>Team A wins!</bold></red>"));
             new ArrayList<>(teamA).forEach(w -> { participants.remove(w); finishOrder.add(0, w); });
-            Collections.reverse(finishOrder);
             endGame();
         }
     }

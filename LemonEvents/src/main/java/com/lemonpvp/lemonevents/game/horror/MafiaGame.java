@@ -212,21 +212,21 @@ public class MafiaGame extends AbstractGame {
             List<UUID> villagerList = getRoleList(Role.VILLAGER);
             participants.removeAll(mafiaList);
             participants.removeAll(villagerList);
-            // Villagers win: add mafia first (lowest placement), then villagers (top)
+            // Prepend losers first, winners last — the prepend convention already
+            // puts index 0 = 1st place. (The old trailing reverse flipped the list
+            // and handed 1st place to the first player eliminated.)
             mafiaList.forEach(u -> finishOrder.add(0, u));
             villagerList.forEach(u -> finishOrder.add(0, u));
-            Collections.reverse(finishOrder);
             endGame();
         } else if (mafiaAlive >= villagersAlive) {
             broadcastAll(MM.deserialize("<dark_red><bold>😈 Mafia wins! They have taken over the village!</bold></dark_red>"));
-            // Give mafia higher placement
+            // Mafia wins: villagers prepended first (bottom), mafia last (top).
             List<UUID> mafiaList = getRoleList(Role.MAFIA);
             List<UUID> villagerList = getRoleList(Role.VILLAGER);
             participants.removeAll(mafiaList);
             participants.removeAll(villagerList);
-            mafiaList.forEach(u -> finishOrder.add(0, u));
             villagerList.forEach(u -> finishOrder.add(0, u));
-            Collections.reverse(finishOrder);
+            mafiaList.forEach(u -> finishOrder.add(0, u));
             endGame();
         }
     }
