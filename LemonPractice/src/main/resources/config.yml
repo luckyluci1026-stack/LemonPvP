@@ -120,3 +120,10 @@ queue:
   bot:
     enabled: true
     after-seconds: 15
+
+# Ender-pearl cooldown for players in combat (duel/bot/FFA/zone) — the
+# standard 16s from the big practice servers. Shown via the item cooldown
+# overlay + an action-bar countdown when thrown too early.
+pearl-cooldown:
+  enabled: true
+  seconds: 16

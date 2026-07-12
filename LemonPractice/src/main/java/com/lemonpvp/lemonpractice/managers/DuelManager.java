@@ -351,6 +351,13 @@ public class DuelManager {
             plugin.getSpectatorManager().makeSpectator(loser, specSpawn);
         }
 
+        // Rematch offer (standard on the big practice servers): one click sends
+        // a fresh duel invite to the same opponent.
+        if (winner != null && loser != null) {
+            sendRematchLine(winner, loser.getName());
+            sendRematchLine(loser, winner.getName());
+        }
+
         // The loser leaves later when the kill-cam is on, so the slow-mo clip
         // can actually finish playing. The clip starts ~30 ticks after duel end
         // and plays `seconds` of footage at `speed`, i.e. seconds*20/speed real
@@ -450,6 +457,16 @@ public class DuelManager {
         if (player == null || !player.isOnline()) return;
         String lobbyServer = plugin.getServersConfig().getString("servers.lobby.name", "lobby");
         plugin.getVelocityMessaging().sendToServer(player, lobbyServer);
+    }
+
+    /** Clickable [Rematch] line — click runs /duel <opponent>. */
+    private void sendRematchLine(Player to, String opponentName) {
+        if (to == null || !to.isOnline()) return;
+        to.sendMessage(MiniMessage.miniMessage().deserialize(
+                "<!italic><click:run_command:'/duel " + opponentName + "'>"
+                + "<hover:show_text:'<green>Challenge <yellow>" + opponentName + "</yellow> again'>"
+                + "<dark_gray>[<gradient:#fffb00:#00ff00><bold>⚔ Rematch</bold></gradient><dark_gray>]"
+                + "</hover></click> <gray>vs <white>" + opponentName));
     }
 
     /** Plays the winner's LemonCosmetics win effect, if that plugin is present. */
