@@ -68,6 +68,18 @@ public class LobbySpawnBuilderV2 extends LobbyV2Base {
             deckSpeckle(es);
             welcomeArch(es);
             mascotStatue(es);
+
+            // "Even better" pass
+            marqueeSign(es);
+            citadelUpgrade(es);
+            cathedralUpgrade(es);
+            forgeUpgrade(es);
+            bazaarUpgrade(es);
+            hallUpgrade(es);
+            rimBalconies(es);
+            skyClouds(es);
+            greenUpgrade(es);
+            undersideGeode(es);
         }
     }
 
@@ -531,5 +543,226 @@ public class LobbySpawnBuilderV2 extends LobbyV2Base {
         set(es, mx, Y + 11, mz, "end_rod[facing=up]");
         // Lawn ring.
         ring(es, mx, Y + 1, mz, 3.6, 4.4, "yellow_carpet");
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // "Even better" pass
+    // ────────────────────────────────────────────────────────────────────────
+
+    /** 5x5 block font used by the marquee — each letter as 5 row strings. */
+    private static final java.util.Map<Character, String[]> FONT = java.util.Map.of(
+            'L', new String[]{"X....", "X....", "X....", "X....", "XXXXX"},
+            'E', new String[]{"XXXXX", "X....", "XXXX.", "X....", "XXXXX"},
+            'M', new String[]{"X...X", "XX.XX", "X.X.X", "X...X", "X...X"},
+            'O', new String[]{".XXX.", "X...X", "X...X", "X...X", ".XXX."},
+            'N', new String[]{"X...X", "XX..X", "X.X.X", "X..XX", "X...X"},
+            'P', new String[]{"XXXX.", "X...X", "XXXX.", "X....", "X...."},
+            'V', new String[]{"X...X", "X...X", "X...X", ".X.X.", "..X.."});
+
+    /** Giant LEMONPVP marquee floating above the cathedral, facing spawn. */
+    private void marqueeSign(EditSession es) {
+        String text = "LEMONPVP";
+        int width = text.length() * 6 - 1;               // 5 wide + 1 gap
+        int x0 = CX - width / 2;
+        int yTop = Y + 42;
+        int z = CZ - 66;
+        // Backboard.
+        fill(es, x0 - 2, yTop - 6, z + 1, x0 + width + 1, yTop + 1, z + 1, "polished_blackstone");
+        for (int lx = x0 - 2; lx <= x0 + width + 1; lx += 4) {
+            set(es, lx, yTop + 2, z + 1, H_LANTERN);
+        }
+        // Letters.
+        for (int i = 0; i < text.length(); i++) {
+            String[] glyph = FONT.get(text.charAt(i));
+            if (glyph == null) continue;
+            int lx0 = x0 + i * 6;
+            String color = (i % 2 == 0) ? CONCRETE_Y : CONCRETE_L;
+            for (int row = 0; row < 5; row++) {
+                for (int col = 0; col < 5; col++) {
+                    if (glyph[row].charAt(col) == 'X') {
+                        set(es, lx0 + col, yTop - row, z, color);
+                    }
+                }
+            }
+        }
+        // Support chains down to the cathedral spires.
+        column(es, x0 - 2, z + 1, Y + 30, yTop - 7, CHAIN);
+        column(es, x0 + width + 1, z + 1, Y + 30, yTop - 7, CHAIN);
+    }
+
+    /** Citadel: gold tier trims, corner braziers, orbiting glass rings. */
+    private void citadelUpgrade(EditSession es) {
+        // Thin gold trim on each tier lip.
+        for (int i = 0; i < 44; i++) {
+            double a = i * (Math.PI * 2 / 44);
+            if (i % 2 == 0) continue;
+            set(es, CX + (int) Math.round(Math.cos(a) * 22), Y + 1,
+                    CZ + (int) Math.round(Math.sin(a) * 22), GILDED);
+        }
+        // Four braziers between the stair mouths on tier 1.
+        int[][] br = {{16, 16}, {-16, 16}, {16, -16}, {-16, -16}};
+        for (int[] b : br) {
+            int bx = CX + b[0], bz = CZ + b[1];
+            set(es, bx, Y + 2, bz, "polished_blackstone_wall");
+            set(es, bx, Y + 3, bz, "polished_blackstone_slab[type=bottom]");
+            set(es, bx, Y + 4, bz, "campfire[lit=true]");
+        }
+        // Two extra orbit rings around the crown at offset heights.
+        ring(es, CX, Y + 17, CZ, 8.5, 9.2, GLASS_L);
+        ring(es, CX, Y + 23, CZ, 7.0, 7.7, GLASS_Y);
+    }
+
+    /** Cathedral: rose window, buttresses, golden approach. */
+    private void cathedralUpgrade(EditSession es) {
+        int bz = CZ - 62;
+        // Rose window on the south gable above the arch (vertical, hand-drawn —
+        // ring() only paints horizontal annuli).
+        set(es, CX, Y + 10, bz + 7, GLASS_Y);
+        set(es, CX - 1, Y + 10, bz + 7, GLASS_L);
+        set(es, CX + 1, Y + 10, bz + 7, GLASS_L);
+        set(es, CX, Y + 11, bz + 7, GLASS_L);
+        set(es, CX, Y + 9, bz + 7, GLASS_L);
+        set(es, CX - 2, Y + 10, bz + 7, GOLD);
+        set(es, CX + 2, Y + 10, bz + 7, GOLD);
+        set(es, CX, Y + 12, bz + 7, GOLD);
+        // Buttresses along the nave sides.
+        for (int bxo = -9; bxo <= 9; bxo += 6) {
+            set(es, CX + bxo, Y + 1, bz + 8, DS_BRICK);
+            set(es, CX + bxo, Y + 2, bz + 8, DS_STAIR_S);
+            set(es, CX + bxo, Y + 1, bz - 8, DS_BRICK);
+            set(es, CX + bxo, Y + 2, bz - 8, DS_STAIR_N);
+        }
+        // Golden runner from the welcome arch to the portal.
+        for (int d = 30; d <= 54; d += 2) {
+            set(es, CX, Y, CZ - d, GILDED);
+        }
+    }
+
+    /** Forge: entry awning, ingot stacks, quench cauldron, tool wall. */
+    private void forgeUpgrade(EditSession es) {
+        int bx = CX + 62;
+        // Awning over the west entrance.
+        fill(es, bx - 12, Y + 5, CZ - 2, bx - 9, Y + 5, CZ + 2, "dark_oak_slab[type=bottom]");
+        column(es, bx - 12, CZ - 2, Y + 1, Y + 4, "dark_oak_fence");
+        column(es, bx - 12, CZ + 2, Y + 1, Y + 4, "dark_oak_fence");
+        set(es, bx - 11, Y + 4, CZ, H_LANTERN);
+        // Ingot stacks beside the door.
+        set(es, bx - 10, Y + 1, CZ - 4, "iron_block");
+        set(es, bx - 10, Y + 2, CZ - 4, "raw_iron_block");
+        set(es, bx - 10, Y + 1, CZ + 4, "waxed_copper_block");
+        set(es, bx - 9, Y + 1, CZ - 5, "raw_copper_block");
+        // Quench barrel + tool wall inside.
+        set(es, bx + 1, Y + 1, CZ + 8, "water_cauldron[level=3]");
+        fill(es, bx - 1, Y + 3, CZ + 9, bx + 2, Y + 3, CZ + 9, "iron_bars");
+        set(es, bx, Y + 4, CZ + 9, "wall_torch[facing=north]");
+    }
+
+    /** Bazaar: flag lines between stalls, crate piles, produce stand. */
+    private void bazaarUpgrade(EditSession es) {
+        int bz = CZ + 62;
+        // Flag line strung across the hall front.
+        for (int fx = -13; fx <= 13; fx++) {
+            int fy = Y + 6 - (Math.abs(fx) % 3 == 0 ? 0 : 1);
+            if ((fx + 13) % 2 == 0) {
+                set(es, CX + fx, fy, bz - 10, (fx % 4 == 0) ? "yellow_wool" : "lime_wool");
+            }
+        }
+        // Crate piles at the hall corners.
+        fill(es, CX - 15, Y + 1, bz + 6, CX - 14, Y + 1, bz + 7, "barrel[facing=up]");
+        set(es, CX - 15, Y + 2, bz + 7, "barrel[facing=up]");
+        fill(es, CX + 14, Y + 1, bz + 6, CX + 15, Y + 1, bz + 7, "barrel[facing=up]");
+        set(es, CX + 14, Y + 2, bz + 6, "chest[facing=west]");
+        // Produce stand: melons/pumpkins under a small canopy.
+        set(es, CX - 14, Y + 1, bz - 6, "melon");
+        set(es, CX - 13, Y + 1, bz - 6, "pumpkin");
+        set(es, CX - 14, Y + 2, bz - 6, "hay_block");
+        fill(es, CX - 15, Y + 4, bz - 7, CX - 12, Y + 4, bz - 5, "orange_wool");
+    }
+
+    /** Hall of fame: reflecting pool + statue spotlights. */
+    private void hallUpgrade(EditSession es) {
+        int bx = CX - 62;
+        // Reflecting pool in front of the plinth row.
+        fill(es, bx + 4, Y, CZ - 8, bx + 6, Y, CZ + 8, "water");
+        fill(es, bx + 3, Y, CZ - 9, bx + 3, Y, CZ + 9, "quartz_bricks");
+        fill(es, bx + 7, Y, CZ - 9, bx + 7, Y, CZ + 9, "quartz_bricks");
+        set(es, bx + 5, Y, CZ, SEA_LANTERN);
+        // Spotlights washing the amethyst wall.
+        for (int pz = -12; pz <= 12; pz += 6) {
+            set(es, bx - 6, Y + 1, CZ + pz, "polished_blackstone_slab[type=bottom]");
+            set(es, bx - 6, Y + 2, CZ + pz, "end_rod[facing=west]");
+        }
+    }
+
+    /** Four rim balconies jutting over the void at the cardinal points. */
+    private void rimBalconies(EditSession es) {
+        int[][] dirs = {{0, -1}, {0, 1}, {1, 0}, {-1, 0}};
+        for (int[] d : dirs) {
+            int bx = CX + d[0] * 96, bz = CZ + d[1] * 96;
+            disk(es, bx, Y, bz, 4.6, DARK_PLANK);
+            ring(es, bx, Y + 1, bz, 3.8, 4.8, "dark_oak_fence");
+            // Opening back toward the island.
+            fill(es, bx - d[0] * 4 - 1, Y + 1, bz - d[1] * 4 - 1,
+                    bx - d[0] * 3 + 1, Y + 1, bz - d[1] * 3 + 1, "air");
+            // Bench + spyglass tripod.
+            set(es, bx, Y + 1, bz + (d[0] != 0 ? 2 : 0) , "dark_oak_stairs[facing="
+                    + (d[0] != 0 ? "north" : d[1] > 0 ? "south" : "north") + "]");
+            set(es, bx + d[0], Y + 1, bz + d[1], "end_rod[facing=up]");
+            set(es, bx + d[0], Y + 2, bz + d[1], "grindstone[face=floor,facing=north]");
+            set(es, bx - d[0], Y + 2, bz - d[1], H_LANTERN);
+            set(es, bx - d[0], Y + 3, bz - d[1], CHAIN);
+        }
+    }
+
+    /** Puffy wool clouds drifting at different heights. */
+    private void skyClouds(EditSession es) {
+        int[][] clouds = {{-52, 30, 70}, {40, 38, -66}, {-64, 44, -20}, {24, 48, 78}, {70, 36, 24}};
+        for (int i = 0; i < clouds.length; i++) {
+            int cx = CX + clouds[i][0], cy = Y + clouds[i][1], cz = CZ + clouds[i][2];
+            ellipsoid(es, cx, cy, cz, 5 + i % 3, 1.6, 3 + (i + 1) % 3, "white_wool");
+            ellipsoid(es, cx + 3, cy + 1, cz + 1, 3, 1.2, 2, "white_wool");
+        }
+    }
+
+    /** Accent trees, cliff vines and flower drifts across the lawn quadrants. */
+    private void greenUpgrade(EditSession es) {
+        // Birch + cherry accent trees at hand-picked lawn spots.
+        int[][] birch = {{-34, 22}, {22, -36}, {-20, -40}};
+        for (int[] t : birch) {
+            int txx = CX + t[0], tzz = CZ + t[1];
+            column(es, txx, tzz, Y + 1, Y + 5, "birch_log[axis=y]");
+            sphere(es, txx, Y + 7, tzz, 3.0, "birch_leaves[persistent=true]");
+        }
+        int[][] cherry = {{36, 20}, {-24, 34}};
+        for (int[] t : cherry) {
+            int txx = CX + t[0], tzz = CZ + t[1];
+            column(es, txx, tzz, Y + 1, Y + 5, "cherry_log[axis=y]");
+            sphere(es, txx, Y + 7, tzz, 3.4, "cherry_leaves[persistent=true]");
+            scatter(es, txx, Y + 1, tzz, 4, 0.4, 601L + t[0], "pink_petals");
+        }
+        // Vines spilling over the cliff rim.
+        for (int i = 0; i < 30; i++) {
+            double a = i * (Math.PI * 2 / 30) + 0.05;
+            int x = CX + (int) Math.round(Math.cos(a) * 94);
+            int z = CZ + (int) Math.round(Math.sin(a) * 94);
+            int len = 2 + (i % 3);
+            column(es, x, z, Y - len, Y - 1, i % 2 == 0 ? "weeping_vines" : "cave_vines");
+        }
+        // Flower drifts.
+        scatter(es, CX - 30, Y + 1, CZ - 30, 10, 0.25, 611L, "allium", "azure_bluet");
+        scatter(es, CX + 30, Y + 1, CZ + 30, 10, 0.25, 612L, "cornflower", "oxeye_daisy");
+    }
+
+    /** A hidden amethyst geode pocket in the underside spike. */
+    private void undersideGeode(EditSession es) {
+        int gy = Y - 18;
+        hollowSphere(es, CX + 8, gy, CZ - 6, 6.5, 1.2, "smooth_basalt");
+        hollowSphere(es, CX + 8, gy, CZ - 6, 5.3, 1.2, "calcite");
+        hollowSphere(es, CX + 8, gy, CZ - 6, 4.1, 1.2, "amethyst_block");
+        // Open the bottom so it's visible from below.
+        fill(es, CX + 5, gy - 7, CZ - 9, CX + 11, gy - 4, CZ - 3, "air");
+        set(es, CX + 8, gy - 3, CZ - 6, "amethyst_cluster[facing=down]");
+        set(es, CX + 6, gy - 3, CZ - 7, "medium_amethyst_bud[facing=down]");
+        set(es, CX + 10, gy - 3, CZ - 5, "amethyst_cluster[facing=down]");
     }
 }
