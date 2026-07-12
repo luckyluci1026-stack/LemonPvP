@@ -39,6 +39,12 @@ public class HotbarManager {
                 -1
         ));
 
+        player.getInventory().setItem(2, buildItem(
+                Material.FIREWORK_ROCKET,
+                "<gradient:#ff9800:#ff5722>ʙᴏᴏsᴛ</gradient>",
+                -1
+        ));
+
         player.getInventory().setItem(3, buildItem(
                 Material.NETHER_STAR,
                 "<gold>ᴇᴠᴇɴᴛs</gold>",

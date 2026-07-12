@@ -138,7 +138,8 @@ public class LobbySpawnBuilderV2 extends LobbyV2Base {
         disk(es, CX, Y + 5, bz - 3, 4.6, GOLD);
         sphere(es, CX, Y + 7, bz - 3, 2.6, GLASS_Y);
         set(es, CX, Y + 6, bz - 3, "beacon");
-        set(es, CX, Y + 1, bz - 3, "chest[facing=south]");
+        // Ender chest: the daily-reward anchor (LandmarkListener opens the GUI).
+        set(es, CX, Y + 1, bz - 3, "ender_chest[facing=south]");
         ring(es, CX, Y + 1, bz - 3, 4.4, 5.2, "yellow_carpet");
     }
 

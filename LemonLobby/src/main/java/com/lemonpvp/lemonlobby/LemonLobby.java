@@ -76,6 +76,8 @@ public final class LemonLobby extends JavaPlugin {
                 new com.lemonpvp.lemonlobby.listeners.DoubleJumpListener(this), this);
         getServer().getPluginManager().registerEvents(
                 new com.lemonpvp.lemonlobby.listeners.ElytraBoostListener(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.lemonpvp.lemonlobby.listeners.LandmarkListener(this), this);
 
         // Register commands
         var shopCmd = getCommand("shop");

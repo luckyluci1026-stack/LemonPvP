@@ -56,7 +56,19 @@ public class AppleTreeListener implements Listener {
             try { leafMaterials.add(Material.valueOf(s)); } catch (IllegalArgumentException ignored) {}
         }
         for (String s : plugin.getConfig().getStringList("apple-tree.log-materials")) {
-            try { logMaterials.add(Material.valueOf(s)); } catch (IllegalArgumentException ignored) {}
+            try {
+                Material m = Material.valueOf(s);
+                logMaterials.add(m);
+                // Auto-include the debarked/wood variants of every configured log
+                // so stripped trunks (no bark) stay harvestable too.
+                String base = m.name().replace("STRIPPED_", "")
+                        .replace("_WOOD", "").replace("_LOG", "");
+                for (String variant : new String[]{
+                        "STRIPPED_" + base + "_LOG", "STRIPPED_" + base + "_WOOD", base + "_WOOD"}) {
+                    try { logMaterials.add(Material.valueOf(variant)); }
+                    catch (IllegalArgumentException ignored) {}
+                }
+            } catch (IllegalArgumentException ignored) {}
         }
         appleCooldownMs = plugin.getConfig().getLong("apple-tree.apple-cooldown-ticks", 20) * 50L;
         plankCooldownMs = plugin.getConfig().getLong("apple-tree.plank-cooldown-ticks", 100) * 50L;

@@ -30,6 +30,9 @@ public class PlayerListener implements Listener {
     private final HotbarManager hotbarManager;
     private final LobbyMessaging lobbyMessaging;
     private final TrainingGUI trainingGUI;
+    /** Boost-rocket cooldowns (uuid -> last-use epoch ms). */
+    private final java.util.Map<java.util.UUID, Long> boostCooldown =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     public PlayerListener(LemonLobby plugin, HotbarManager hotbarManager,
                           LobbyMessaging lobbyMessaging, TrainingGUI trainingGUI) {
@@ -81,6 +84,8 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onDropItem(PlayerDropItemEvent event) {
+        // Creative players (builders/admins) may manage items freely.
+        if (event.getPlayer().getGameMode() == org.bukkit.GameMode.CREATIVE) return;
         // Block all item drops in the lobby
         event.setCancelled(true);
     }
@@ -92,6 +97,9 @@ public class PlayerListener implements Listener {
         // Delegate to TrainingGUI first
         if (trainingGUI.handleClick(event)) return;
 
+        // Creative players (builders/admins) may rearrange, remove and add items.
+        if (player.getGameMode() == org.bukkit.GameMode.CREATIVE) return;
+
         // Cancel all clicks in the player's own inventory — prevents moving any items
         if (event.getClickedInventory() != null
                 && event.getClickedInventory().equals(player.getInventory())) {
@@ -101,7 +109,8 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onInventoryOpen(InventoryOpenEvent event) {
-        if (!(event.getPlayer() instanceof Player)) return;
+        if (!(event.getPlayer() instanceof Player p)) return;
+        if (p.getGameMode() == org.bukkit.GameMode.CREATIVE) return;
 
         InventoryType type = event.getInventory().getType();
 
@@ -116,7 +125,8 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPickupItem(EntityPickupItemEvent event) {
-        if (!(event.getEntity() instanceof Player)) return;
+        if (!(event.getEntity() instanceof Player p)) return;
+        if (p.getGameMode() == org.bukkit.GameMode.CREATIVE) return;
         event.setCancelled(true);
     }
 
@@ -152,6 +162,25 @@ public class PlayerListener implements Listener {
             case 1 -> {
                 // Training Compass - open Training GUI
                 trainingGUI.open(player);
+            }
+            case 2 -> {
+                // Boost rocket: launch up + forward with a short cooldown.
+                long now = System.currentTimeMillis();
+                Long last = boostCooldown.get(player.getUniqueId());
+                if (last != null && now - last < 5000L) {
+                    double remaining = (5000L - (now - last)) / 1000.0;
+                    player.sendActionBar(MINI_MESSAGE.deserialize("<!italic><gray>Boost ready in <yellow>"
+                            + String.format(java.util.Locale.US, "%.1f", remaining) + "s"));
+                    return;
+                }
+                boostCooldown.put(player.getUniqueId(), now);
+                org.bukkit.util.Vector dir = player.getLocation().getDirection().normalize()
+                        .multiply(1.3).setY(1.0);
+                player.setVelocity(dir);
+                player.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK,
+                        player.getLocation(), 30, 0.3, 0.2, 0.3, 0.08);
+                player.getWorld().playSound(player.getLocation(),
+                        org.bukkit.Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 0.8f, 1.1f);
             }
             case 3 -> {
                 // Events server
