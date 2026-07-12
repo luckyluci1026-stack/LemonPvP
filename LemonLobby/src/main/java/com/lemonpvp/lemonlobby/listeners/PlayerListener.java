@@ -154,10 +154,10 @@ public class PlayerListener implements Listener {
 
         switch (slot) {
             case 0 -> {
-                // Queue → the duels backend. (The old "practice" entry pointed at
-                // a server name the proxy never had — the sword was a silent no-op.)
-                lobbyMessaging.connectToServer(player,
-                        plugin.getServersConfig().getString("servers.duels.name", "duels"));
+                // Queue sword: open the gamemode picker — choosing a mode writes
+                // the pending-queue marker and sends the player to duels, where
+                // LemonPractice auto-queues them on join.
+                new com.lemonpvp.lemonlobby.gui.QueueSelectGUI(plugin, player).open();
             }
             case 1 -> {
                 // Training Compass - open Training GUI

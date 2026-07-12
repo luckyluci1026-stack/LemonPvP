@@ -57,6 +57,13 @@ public class Database {
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             );
             stmt.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS lp_pending_queue (" +
+                "    uuid VARCHAR(36) PRIMARY KEY," +
+                "    gamemode VARCHAR(24) NOT NULL," +
+                "    created_at BIGINT NOT NULL" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            );
+            stmt.executeUpdate(
                 "CREATE TABLE IF NOT EXISTS ll_plank_upgrades (" +
                 "    uuid VARCHAR(36) PRIMARY KEY," +
                 "    tier VARCHAR(16) NOT NULL," +
@@ -234,6 +241,24 @@ public class Database {
             // table may not exist on this server yet — silent, returns empty
         }
         return out;
+    }
+
+    /**
+     * Saves the gamemode a player picked in the lobby queue GUI. The duels
+     * server reads + deletes it on join and auto-queues the player. Blocking —
+     * call async.
+     */
+    public void savePendingQueue(UUID uuid, String gamemode) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "REPLACE INTO lp_pending_queue (uuid, gamemode, created_at) VALUES (?, ?, ?)")) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, gamemode);
+            ps.setLong(3, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to save pending queue: " + e.getMessage());
+        }
     }
 
     /** Saves or overwrites a pending training mode for the given player. Blocking — call async. */

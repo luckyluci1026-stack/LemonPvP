@@ -143,6 +143,40 @@ public class PracticeDatabase {
         });
     }
 
+    /**
+     * Reads the gamemode the player picked in the LOBBY queue GUI and deletes
+     * the marker atomically. Returns null when there is none or it is older
+     * than 2 minutes (stale handoff — e.g. the transfer failed midway).
+     */
+    public CompletableFuture<String> getPendingQueueAndDelete(java.util.UUID uuid) {
+        return queryAsync(conn -> {
+            try {
+                String gamemode = null;
+                long createdAt = 0;
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT gamemode, created_at FROM lp_pending_queue WHERE uuid=?")) {
+                    ps.setString(1, uuid.toString());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            gamemode = rs.getString("gamemode");
+                            createdAt = rs.getLong("created_at");
+                        }
+                    }
+                }
+                if (gamemode == null) return null;
+                try (PreparedStatement del = conn.prepareStatement(
+                        "DELETE FROM lp_pending_queue WHERE uuid=?")) {
+                    del.setString(1, uuid.toString());
+                    del.executeUpdate();
+                }
+                return System.currentTimeMillis() - createdAt <= 120_000L ? gamemode : null;
+            } catch (SQLException e) {
+                plugin.getLogger().severe("getPendingQueueAndDelete: " + e.getMessage());
+                return null;
+            }
+        });
+    }
+
     /** Deletes a single replay by name (admin action). Returns true if a row was removed. */
     public CompletableFuture<Boolean> deleteReplay(String name) {
         return queryAsync(conn -> {
@@ -265,6 +299,13 @@ public class PracticeDatabase {
                     spawn_points TEXT,
                     region_x1 INT, region_y1 INT, region_z1 INT,
                     region_x2 INT, region_y2 INT, region_z2 INT
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lp_pending_queue (
+                    uuid VARCHAR(36) PRIMARY KEY,
+                    gamemode VARCHAR(24) NOT NULL,
+                    created_at BIGINT NOT NULL
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
             stmt.executeUpdate("""
