@@ -71,6 +71,14 @@ public class BotDuelListener implements Listener {
         }
     }
 
+    // Mirror damage flashes onto the packet player model (v2 visuals).
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBotDamaged(org.bukkit.event.entity.EntityDamageEvent event) {
+        if (plugin.getBotDuelManager().isBot(event.getEntity().getUniqueId())) {
+            plugin.getBotDuelManager().notifyBotDamaged(event.getEntity().getUniqueId());
+        }
+    }
+
     // Bystanders can't hit someone else's bot; the bot can't hit bystanders.
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {

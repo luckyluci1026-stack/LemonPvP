@@ -91,6 +91,48 @@ public class NpcReplayActor implements ReplayActor {
                 new EntityData<>(0, EntityDataTypes.BYTE, (byte) (s ? 0x02 : 0x00)))));
     }
 
+    /** Plays the main-arm swing animation (bot attacks, replay hits). */
+    public void swing() {
+        send(new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation(
+                entityId,
+                com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation
+                        .EntityAnimationType.SWING_MAIN_ARM));
+    }
+
+    /** Plays the red-flash hurt animation. */
+    public void hurt() {
+        send(new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation(
+                entityId,
+                com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation
+                        .EntityAnimationType.HURT));
+    }
+
+    /** Shows held item + armor on the NPC (visual only — packets, no server entity). */
+    public void equip(org.bukkit.inventory.ItemStack hand, org.bukkit.inventory.ItemStack helmet,
+                      org.bukkit.inventory.ItemStack chest, org.bukkit.inventory.ItemStack legs,
+                      org.bukkit.inventory.ItemStack boots) {
+        try {
+            List<com.github.retrooper.packetevents.protocol.player.Equipment> eq = new java.util.ArrayList<>();
+            addEquip(eq, com.github.retrooper.packetevents.protocol.player.EquipmentSlot.MAIN_HAND, hand);
+            addEquip(eq, com.github.retrooper.packetevents.protocol.player.EquipmentSlot.HELMET, helmet);
+            addEquip(eq, com.github.retrooper.packetevents.protocol.player.EquipmentSlot.CHEST_PLATE, chest);
+            addEquip(eq, com.github.retrooper.packetevents.protocol.player.EquipmentSlot.LEGGINGS, legs);
+            addEquip(eq, com.github.retrooper.packetevents.protocol.player.EquipmentSlot.BOOTS, boots);
+            if (!eq.isEmpty()) {
+                send(new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment(
+                        entityId, eq));
+            }
+        } catch (Throwable ignored) { }
+    }
+
+    private void addEquip(List<com.github.retrooper.packetevents.protocol.player.Equipment> list,
+                          com.github.retrooper.packetevents.protocol.player.EquipmentSlot slot,
+                          org.bukkit.inventory.ItemStack item) {
+        if (item == null) return;
+        list.add(new com.github.retrooper.packetevents.protocol.player.Equipment(slot,
+                io.github.retrooper.packetevents.util.SpigotConversionUtil.fromBukkitItemStack(item)));
+    }
+
     @Override
     public void remove() {
         send(new WrapperPlayServerDestroyEntities(entityId));

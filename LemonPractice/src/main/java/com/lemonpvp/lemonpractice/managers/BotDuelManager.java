@@ -59,6 +59,9 @@ public class BotDuelManager {
         final UUID botUuid;
         final Difficulty diff;
         BukkitTask aiTask;
+        BukkitTask mirrorTask;
+        /** Packet player-model mirrored onto the invisible zombie (v2), or null (v1 fallback). */
+        com.lemonpvp.lemonpractice.replay.NpcReplayActor npc;
         boolean fighting;
         boolean ended;
         int attackCooldown;
@@ -130,9 +133,12 @@ public class BotDuelManager {
         Location spawn2 = arena.getSpawn2().clone().add(0, 2, 0);
         player.teleport(spawn1);
 
-        // Spawn and outfit the bot.
+        // Spawn and outfit the bot. With PacketEvents present (v2), the zombie
+        // becomes an invisible physics/hitbox shell and a packet PLAYER model is
+        // mirrored onto it for the duelist — the opponent sees a real player.
         String botName = BOT_NAMES[ThreadLocalRandom.current().nextInt(BOT_NAMES.length)]
                 + (100 + ThreadLocalRandom.current().nextInt(900));
+        boolean npcMode = Bukkit.getPluginManager().isPluginEnabled("packetevents");
         PlayerKit preset = plugin.getKitManager().getPresetKit(gamemode);
         Zombie bot = spawn2.getWorld().spawn(spawn2, Zombie.class, z -> {
             z.setAdult();
@@ -141,17 +147,49 @@ public class BotDuelManager {
             z.setPersistent(true);
             z.setRemoveWhenFarAway(false);
             z.setCanPickupItems(false);
-            z.customName(MM.deserialize("<gradient:#fffb00:#00ff00>" + botName + "</gradient> <gray>[BOT]"));
-            z.setCustomNameVisible(true);
             z.setAI(false); // frozen during countdown
             var speedAttr = z.getAttribute(Attribute.MOVEMENT_SPEED);
             if (speedAttr != null) speedAttr.setBaseValue(speedAttr.getBaseValue() * diff.speedMultiplier());
-            equipBot(z, preset);
+            if (npcMode) {
+                // Invisible shell: no visible gear (it would float) — armor and
+                // sword become attribute values; the NPC wears the visuals.
+                z.setInvisible(true);
+                applyCombatAttributes(z, preset);
+            } else {
+                z.customName(MM.deserialize("<gradient:#fffb00:#00ff00>" + botName + "</gradient> <gray>[BOT]"));
+                z.setCustomNameVisible(true);
+                equipBot(z, preset);
+            }
         });
 
         BotDuel duel = new BotDuel(player.getUniqueId(), gamemode, arena, bot.getUniqueId(), diff);
         activeByPlayer.put(player.getUniqueId(), duel);
         activeByBot.put(bot.getUniqueId(), duel);
+
+        if (npcMode) {
+            try {
+                var npc = new com.lemonpvp.lemonpractice.replay.NpcReplayActor(plugin, player, botName);
+                npc.spawn(spawn2);
+                if (preset != null) {
+                    npc.equip(preset.getSlot(0),
+                            preset.getSlot(KitManager.ARMOR_HEAD), preset.getSlot(KitManager.ARMOR_CHEST),
+                            preset.getSlot(KitManager.ARMOR_LEGS), preset.getSlot(KitManager.ARMOR_FEET));
+                }
+                duel.npc = npc;
+                // Mirror the shell every tick so the player model moves fluidly.
+                duel.mirrorTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+                    var e = Bukkit.getEntity(duel.botUuid);
+                    if (e != null && e.isValid() && duel.npc != null) duel.npc.teleport(e.getLocation());
+                }, 1L, 1L);
+            } catch (Throwable t) {
+                // Packet NPC failed — fall back to the visible zombie look.
+                plugin.getLogger().warning("[BotDuel] NPC mirror failed, using zombie visuals: " + t);
+                bot.setInvisible(false);
+                bot.customName(MM.deserialize("<gradient:#fffb00:#00ff00>" + botName + "</gradient> <gray>[BOT]"));
+                bot.setCustomNameVisible(true);
+                equipBot(bot, preset);
+            }
+        }
 
         player.sendMessage(MM.deserialize("<gradient:#fffb00:#00ff00><bold>Bot Match</bold></gradient> "
                 + "<gray>No opponent found — fighting <yellow>" + botName
@@ -180,6 +218,40 @@ public class BotDuelManager {
             p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f);
             startAi(duel);
         }, 20L, 20L);
+    }
+
+    /**
+     * v2 (invisible shell): converts the preset's gear into attribute values so
+     * combat feels identical without rendering floating armor — Prot-4 diamond
+     * is ~20 armor / 8 toughness; the weapon becomes attack damage.
+     */
+    private void applyCombatAttributes(Zombie z, PlayerKit preset) {
+        double armor = 20.0, toughness = 8.0, damage = 7.0;
+        if (preset != null && preset.getSlot(KitManager.ARMOR_CHEST) != null) {
+            String chest = preset.getSlot(KitManager.ARMOR_CHEST).getType().name();
+            if (chest.startsWith("NETHERITE")) { armor = 20.0; toughness = 12.0; }
+            else if (chest.startsWith("DIAMOND")) { armor = 20.0; toughness = 8.0; }
+            else { armor = 15.0; toughness = 0.0; }
+        }
+        if (preset != null && preset.getSlot(0) != null) {
+            String weapon = preset.getSlot(0).getType().name();
+            if (weapon.contains("NETHERITE_SWORD")) damage = 8.0;
+            else if (weapon.contains("DIAMOND_SWORD")) damage = 7.0;
+            else if (weapon.contains("MACE")) damage = 6.0;
+            else if (weapon.contains("TRIDENT")) damage = 9.0;
+        }
+        var a = z.getAttribute(Attribute.ARMOR);
+        if (a != null) a.setBaseValue(armor);
+        var t = z.getAttribute(Attribute.ARMOR_TOUGHNESS);
+        if (t != null) t.setBaseValue(toughness);
+        var d = z.getAttribute(Attribute.ATTACK_DAMAGE);
+        if (d != null) d.setBaseValue(damage);
+    }
+
+    /** Mirrors damage flashes onto the packet player model. */
+    public void notifyBotDamaged(UUID botUuid) {
+        BotDuel duel = activeByBot.get(botUuid);
+        if (duel != null && duel.npc != null) duel.npc.hurt();
     }
 
     private void equipBot(Zombie z, PlayerKit preset) {
@@ -270,6 +342,7 @@ public class BotDuelManager {
             }
             bot.swingMainHand();
             bot.attack(player);
+            if (duel.npc != null) duel.npc.swing();
         }
     }
 
@@ -282,6 +355,10 @@ public class BotDuelManager {
         if (duel.ended) return;
         duel.ended = true;
         if (duel.aiTask != null) duel.aiTask.cancel();
+        if (duel.mirrorTask != null) duel.mirrorTask.cancel();
+        if (duel.npc != null) {
+            try { duel.npc.remove(); } catch (Throwable ignored) {}
+        }
         activeByPlayer.remove(duel.playerUuid);
         activeByBot.remove(duel.botUuid);
 
