@@ -88,6 +88,12 @@
     </dependencyManagement>
 
     <build>
+        <!-- Fixed jar name WITHOUT the version, so builds always produce
+             LemonPractice.jar (not LemonPractice-1.1.0.jar). Copying the jar
+             then always overwrites the old one cleanly — no more stale
+             duplicate jars with different version suffixes shadowing each
+             other in the plugins folder. -->
+        <finalName>${project.artifactId}</finalName>
         <pluginManagement>
             <plugins>
                 <plugin>
