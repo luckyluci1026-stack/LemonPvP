@@ -47,6 +47,9 @@ public class BotDuelManager {
     private final LemonPractice plugin;
     private final Map<UUID, BotDuel> activeByPlayer = new ConcurrentHashMap<>();
     private final Map<UUID, BotDuel> activeByBot = new ConcurrentHashMap<>();
+    /** NPC (fake player-model) entity id → duel, so client attacks on the visible
+     *  model can be redirected to the invisible zombie hitbox (reliable hit reg). */
+    private final Map<Integer, BotDuel> activeByNpcId = new ConcurrentHashMap<>();
 
     /** Difficulty derived from the player's ELO. */
     private record Difficulty(int attackDelayTicks, int attackJitterTicks, double speedMultiplier,
@@ -176,6 +179,7 @@ public class BotDuelManager {
                             preset.getSlot(KitManager.ARMOR_LEGS), preset.getSlot(KitManager.ARMOR_FEET));
                 }
                 duel.npc = npc;
+                activeByNpcId.put(npc.getEntityId(), duel);
                 // Mirror the shell every tick so the player model moves fluidly.
                 duel.mirrorTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
                     var e = Bukkit.getEntity(duel.botUuid);
@@ -254,6 +258,42 @@ public class BotDuelManager {
         if (duel != null && duel.npc != null) duel.npc.hurt();
     }
 
+    /**
+     * Redirects a client's melee attack on the visible NPC model to the invisible
+     * zombie hitbox behind it. Without this the client targets the fake player
+     * entity id (which the server doesn't know) and the hit silently drops — the
+     * "laggy hit reg". Called from the packet listener on the main thread.
+     */
+    public void handleNpcHit(Player attacker, int npcEntityId) {
+        BotDuel duel = activeByNpcId.get(npcEntityId);
+        if (duel == null || duel.ended || !duel.fighting) return;
+        if (!attacker.getUniqueId().equals(duel.playerUuid)) return;
+        var e = Bukkit.getEntity(duel.botUuid);
+        if (!(e instanceof org.bukkit.entity.LivingEntity zombie) || zombie.isDead()) return;
+        double dmg = meleeDamage(attacker);
+        // damage(amount, attacker): applies knockback, armour reduction (from the
+        // shell's kit-derived attributes) and fires EntityDamageByEntityEvent —
+        // exactly like hitting a visible mob, so the hurt flash + death path run.
+        zombie.damage(dmg, attacker);
+    }
+
+    /** Approximates the player's vanilla melee damage (weapon + sharpness + cooldown + crit). */
+    private double meleeDamage(Player attacker) {
+        double base = 1.0;
+        var attr = attacker.getAttribute(Attribute.ATTACK_DAMAGE);
+        if (attr != null) base = attr.getValue();
+        ItemStack weapon = attacker.getInventory().getItemInMainHand();
+        int sharp = weapon.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.SHARPNESS);
+        if (sharp > 0) base += 0.5 * sharp + 0.5;
+        float cd = attacker.getAttackCooldown();          // 0..1 charge
+        base *= (0.2f + cd * cd * 0.8f);
+        if (cd > 0.9f && attacker.getFallDistance() > 0 && !attacker.isOnGround()
+                && !attacker.isInWater() && attacker.getVehicle() == null) {
+            base *= 1.5;                                   // critical hit
+        }
+        return Math.max(0.5, base);
+    }
+
     private void equipBot(Zombie z, PlayerKit preset) {
         EntityEquipment eq = z.getEquipment();
         if (eq == null || preset == null) return;
@@ -287,7 +327,9 @@ public class BotDuelManager {
     // -----------------------------------------------------------------------
 
     private void startAi(BotDuel duel) {
-        duel.aiTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> tick(duel), 2L, 2L);
+        // Every tick (was every 2) — smoother chasing/strafing and more responsive
+        // attacks so the fight doesn't feel choppy.
+        duel.aiTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> tick(duel), 1L, 1L);
     }
 
     private void tick(BotDuel duel) {
@@ -303,7 +345,7 @@ public class BotDuelManager {
 
         // Simulated gapple: pause attacking ~1.6s, then absorb + regen.
         if (duel.eatingTicks > 0) {
-            duel.eatingTicks -= 2;
+            duel.eatingTicks -= 1;
             if (duel.eatingTicks <= 0) {
                 bot.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 2400, 0, false, true));
                 bot.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 1, false, true));
@@ -313,9 +355,12 @@ public class BotDuelManager {
             duel.eatingTicks = 32;
         }
 
+        // Face the player every tick so the model and attacks track smoothly.
+        bot.lookAt(player);
+
         // Movement: chase with a perpendicular strafe offset so the approach
         // looks like a player circling, not a mob beeline.
-        duel.strafeTicks -= 2;
+        duel.strafeTicks -= 1;
         if (duel.strafeTicks <= 0) {
             duel.strafeTicks = 14 + rng.nextInt(16);
             duel.strafeSide = rng.nextBoolean() ? 1 : -1;
@@ -332,7 +377,7 @@ public class BotDuelManager {
         bot.getPathfinder().moveTo(target, 1.15);
 
         // Attack when in reach and off cooldown (skip while "eating").
-        duel.attackCooldown -= 2;
+        duel.attackCooldown -= 1;
         if (duel.eatingTicks <= 0 && distSq <= 10.5 && duel.attackCooldown <= 0) {
             duel.attackCooldown = duel.diff.attackDelayTicks()
                     + rng.nextInt(duel.diff.attackJitterTicks() + 1);
@@ -357,6 +402,7 @@ public class BotDuelManager {
         if (duel.aiTask != null) duel.aiTask.cancel();
         if (duel.mirrorTask != null) duel.mirrorTask.cancel();
         if (duel.npc != null) {
+            activeByNpcId.remove(duel.npc.getEntityId());
             try { duel.npc.remove(); } catch (Throwable ignored) {}
         }
         activeByPlayer.remove(duel.playerUuid);

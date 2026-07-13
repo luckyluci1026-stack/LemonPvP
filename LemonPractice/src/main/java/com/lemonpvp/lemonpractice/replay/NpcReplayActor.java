@@ -91,6 +91,11 @@ public class NpcReplayActor implements ReplayActor {
                 new EntityData<>(0, EntityDataTypes.BYTE, (byte) (s ? 0x02 : 0x00)))));
     }
 
+    /** The fake player entity id — used to redirect a client's attack packets to the real hitbox. */
+    public int getEntityId() {
+        return entityId;
+    }
+
     /** Plays the main-arm swing animation (bot attacks, replay hits). */
     public void swing() {
         send(new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation(

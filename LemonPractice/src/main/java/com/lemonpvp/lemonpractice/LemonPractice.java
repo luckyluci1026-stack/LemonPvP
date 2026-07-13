@@ -126,6 +126,16 @@ public class LemonPractice extends JavaPlugin {
                 new com.lemonpvp.lemonpractice.listeners.PearlCooldownListener(this), this);
         getServer().getPluginManager().registerEvents(
                 new com.lemonpvp.lemonpractice.listeners.PendingQueueListener(this), this);
+        // Reliable bot hit-reg needs PacketEvents to redirect attacks on the fake
+        // player-model to the real hitbox. Guarded so the server runs without it.
+        if (getServer().getPluginManager().isPluginEnabled("packetevents")) {
+            try {
+                com.github.retrooper.packetevents.PacketEvents.getAPI().getEventManager()
+                        .registerListener(new com.lemonpvp.lemonpractice.listeners.BotHitPacketListener(this));
+            } catch (Throwable t) {
+                getLogger().warning("[Bot] Could not register hit-redirect packet listener: " + t.getMessage());
+            }
+        }
         getServer().getPluginManager().registerEvents(new FFAListener(this), this);
         getServer().getPluginManager().registerEvents(
                 new com.lemonpvp.lemonpractice.listeners.KitPreloadListener(this), this);
