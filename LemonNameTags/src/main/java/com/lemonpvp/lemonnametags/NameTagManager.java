@@ -55,7 +55,7 @@ public final class NameTagManager {
 
     // ── Text ──────────────────────────────────────────────────────────────────
 
-    /** Builds "prefix + gradient-name" for the player from their LuckPerms data. */
+    /** Builds "gradient-prefix + white-name" for the player from their LuckPerms data. */
     private Component buildText(Player player) {
         PlayerAdapter<Player> adapter = luckPerms.getPlayerAdapter(Player.class);
         CachedMetaData meta = adapter.getMetaData(player);
@@ -68,7 +68,13 @@ public final class NameTagManager {
         String visibleName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
                 .plainText().serialize(player.displayName());
         if (visibleName.isBlank()) visibleName = player.getName();
-        String name = gradients.forGroup(group).apply(visibleName);
+
+        // The name is plain white by default so only the prefix carries the
+        // rank gradient — cleaner look. Set name-gradient: true to colour the
+        // name by the rank gradient again.
+        String name = plugin.getConfig().getBoolean("name-gradient", false)
+                ? gradients.forGroup(group).apply(visibleName)
+                : "<white>" + visibleName;
 
         String full = prefix.isBlank() ? name : prefix + " " + name;
 

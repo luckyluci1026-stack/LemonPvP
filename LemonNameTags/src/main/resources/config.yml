@@ -25,6 +25,10 @@ display:
 # another plugin (e.g. TAB) already manages nametag teams.
 hide-vanilla-nametags: true
 
+# Colour the NAME by the player's rank gradient too. Default false = the name
+# is plain white and only the prefix carries the gradient (cleaner look).
+name-gradient: false
+
 # Show a live "❤ 8.5" line under the name (refreshed on damage/regen).
 # Recommended ON for fight servers (FFA/KitPvP), OFF for the lobby.
 show-health: false
