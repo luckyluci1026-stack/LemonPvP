@@ -274,7 +274,7 @@ public class DuelManager {
                 "<gradient:#fffb00:#ff9800><bold>" + streak + " Win Streak!</bold></gradient>"));
         int threshold = plugin.getConfig().getInt("streaks.broadcast-threshold", 5);
         if (plugin.getConfig().getBoolean("streaks.broadcast", false)
-                && streak >= threshold && streak % threshold == 0) {
+                && threshold > 0 && streak >= threshold && streak % threshold == 0) {
             Bukkit.broadcast(SB_MM.deserialize("<gradient:#fffb00:#ff9800>" + w.getName()
                     + " is on a " + streak + " win streak!</gradient>"));
         }
