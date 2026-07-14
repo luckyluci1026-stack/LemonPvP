@@ -8,6 +8,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -17,7 +18,11 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
+import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
@@ -86,11 +91,34 @@ public class TrimArmorPieceGUI implements Listener {
             return;
         }
 
+        ArmorSlotType slot;
         try {
-            ArmorSlotType slot = ArmorSlotType.valueOf(slotName.toUpperCase());
-            unregister();
-            new TrimMaterialGUI(plugin, player, selectedPatternId, slot).open();
-        } catch (IllegalArgumentException ignored) {}
+            slot = ArmorSlotType.valueOf(slotName.toUpperCase());
+        } catch (IllegalArgumentException ignored) {
+            return;
+        }
+
+        // Right-click removes the piece's current trim; left-click changes material.
+        if (event.isRightClick()) {
+            PlayerCosmetics cosmetics = plugin.getCosmeticsManager().getPlayerCosmetics(player.getUniqueId());
+            String[] trim = cosmetics != null ? cosmetics.getAppliedTrim(slot.name().toLowerCase()) : null;
+            if (trim == null) {
+                player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.5f, 1.0f);
+                return;
+            }
+            plugin.getCosmeticsManager().removeArmorTrim(player.getUniqueId(), slot)
+                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_GRINDSTONE_USE, 0.5f, 1.2f);
+                        player.sendMessage(MM.deserialize("<!italic><gray>Removed the trim from your <yellow>"
+                                + slot.getDisplayName() + "<gray>."));
+                        if (registered) inventory.setItem(event.getSlot(),
+                                buildPieceItem(slot, plugin.getCosmeticsManager().getPlayerCosmetics(player.getUniqueId())));
+                    }));
+            return;
+        }
+
+        unregister();
+        new TrimMaterialGUI(plugin, player, selectedPatternId, slot).open();
     }
 
     @EventHandler
@@ -114,7 +142,21 @@ public class TrimArmorPieceGUI implements Listener {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
         String[] trim = cosmetics != null ? cosmetics.getAppliedTrim(slot.name().toLowerCase()) : null;
-        if (trim != null) {
+        boolean hasTrim = trim != null && trim.length >= 2;
+
+        // Render a live preview: the piece with its current trim, or — if none —
+        // the selected pattern with a gold material so the player sees the shape.
+        if (meta instanceof ArmorMeta armor) {
+            String previewPattern = hasTrim ? trim[0] : selectedPatternId;
+            String previewMaterial = hasTrim ? trim[1] : "gold";
+            if (previewPattern != null) {
+                TrimPattern pattern = Registry.TRIM_PATTERN.get(NamespacedKey.minecraft(previewPattern));
+                TrimMaterial material = Registry.TRIM_MATERIAL.get(NamespacedKey.minecraft(previewMaterial));
+                if (pattern != null && material != null) armor.setTrim(new ArmorTrim(material, pattern));
+            }
+        }
+
+        if (hasTrim) {
             String patDisp = plugin.getArmorTrimManager().getDisplayName(trim[0]);
             String matDisp = plugin.getArmorTrimManager().getMaterialDisplayName(trim[1]);
             lore.add(MM.deserialize("<!italic><gray>Current trim: <yellow>" + patDisp + " / " + matDisp));
@@ -122,7 +164,8 @@ public class TrimArmorPieceGUI implements Listener {
             lore.add(MM.deserialize("<!italic><gray>Current trim: <gray>None"));
         }
         lore.add(Component.empty());
-        lore.add(MM.deserialize("<!italic><green>Click to change material"));
+        lore.add(MM.deserialize("<!italic><green>Left-click <gray>to choose material"));
+        if (hasTrim) lore.add(MM.deserialize("<!italic><red>Right-click <gray>to remove trim"));
         meta.lore(lore);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 

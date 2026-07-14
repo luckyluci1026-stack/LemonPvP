@@ -183,6 +183,22 @@ public class CosmeticsManager {
                 }));
     }
 
+    /**
+     * Removes the stored trim for the given slot from cache and DB, then strips
+     * it from the player's worn armor if they are online.
+     */
+    public CompletableFuture<Void> removeArmorTrim(UUID uuid, ArmorSlotType slot) {
+        PlayerCosmetics cosmetics = cache.get(uuid);
+        if (cosmetics != null) {
+            cosmetics.setAppliedTrim(slot.name().toLowerCase(), null, null);
+        }
+        return plugin.getDatabase().clearArmorTrim(uuid, slot.name().toLowerCase())
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(uuid);
+                    if (p != null) plugin.getArmorTrimManager().removeTrimFromPlayer(p, slot);
+                }));
+    }
+
     // -------------------------------------------------------------------------
     // LemonCore integration helpers
     // -------------------------------------------------------------------------
