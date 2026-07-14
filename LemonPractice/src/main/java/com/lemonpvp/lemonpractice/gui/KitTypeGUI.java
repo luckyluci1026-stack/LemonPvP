@@ -89,7 +89,8 @@ public class KitTypeGUI implements Listener {
         if (slot == PRESET_SLOT) {
             unregister();
             p.closeInventory();
-            new KitEditorGUI(plugin).openEditor(p, gamemodeId);
+            // GUI editor (chest layout) — arrange the kit into any slot, off-hand included.
+            new KitLayoutGUI(plugin, p, gamemodeId).open();
             return;
         }
         if (slot == CUSTOM_SLOT) {
