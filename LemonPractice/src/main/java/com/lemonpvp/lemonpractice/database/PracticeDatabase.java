@@ -177,6 +177,45 @@ public class PracticeDatabase {
         });
     }
 
+    /**
+     * Bumps the shared admin-kit version. Every server polls {@link #getKitVersion}
+     * and reloads presets when it changes, so a /kitadmin edit propagates network-wide
+     * within a couple of seconds without any player-tied plugin messaging. Returns
+     * the new version.
+     */
+    public CompletableFuture<Long> bumpKitVersion() {
+        return queryAsync(conn -> {
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO lp_kit_versions (scope, version) VALUES ('admin', 1) "
+                        + "ON DUPLICATE KEY UPDATE version = version + 1")) {
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT version FROM lp_kit_versions WHERE scope='admin'")) {
+                    ResultSet rs = ps.executeQuery();
+                    return rs.next() ? rs.getLong(1) : 0L;
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe("bumpKitVersion: " + e.getMessage());
+                return 0L;
+            }
+        });
+    }
+
+    /** Current shared admin-kit version (0 if never set). */
+    public CompletableFuture<Long> getKitVersion() {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT version FROM lp_kit_versions WHERE scope='admin'")) {
+                ResultSet rs = ps.executeQuery();
+                return rs.next() ? rs.getLong(1) : 0L;
+            } catch (SQLException e) {
+                return 0L;
+            }
+        });
+    }
+
     /** Deletes a single replay by name (admin action). Returns true if a row was removed. */
     public CompletableFuture<Boolean> deleteReplay(String name) {
         return queryAsync(conn -> {
@@ -272,6 +311,12 @@ public class PracticeDatabase {
                     elo_change_p2 INT DEFAULT 0,
                     duration_seconds INT DEFAULT 0,
                     played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lp_kit_versions (
+                    scope VARCHAR(24) PRIMARY KEY,
+                    version BIGINT NOT NULL
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
             stmt.executeUpdate("""

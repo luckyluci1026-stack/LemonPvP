@@ -305,15 +305,43 @@ public class KitManager {
         return k != null && !k.getSlots().isEmpty();
     }
 
-    /** Saves an admin preset for a gamemode (persisted + cached), overriding kits.yml. */
+    /** Last shared admin-kit version this server has applied (for the sync poll). */
+    private volatile long lastKitVersion = 0;
+
+    /** Saves an admin preset (persisted + cached), then bumps the shared version so every server reloads. */
     public CompletableFuture<Void> saveAdminKit(String gamemode, PlayerKit kit) {
-        return saveKit(ADMIN_KIT_UUID, gamemode, kit);
+        return saveKit(ADMIN_KIT_UUID, gamemode, kit)
+                .thenCompose(v -> plugin.getDatabase().bumpKitVersion())
+                .thenAccept(newVer -> { if (newVer > 0) lastKitVersion = newVer; });
     }
 
-    /** Deletes the admin preset for a gamemode, reverting to the kits.yml default. */
+    /** Deletes the admin preset (reverting to kits.yml), then bumps the shared version. */
     public CompletableFuture<Void> deleteAdminKit(String gamemode) {
         clearCached(ADMIN_KIT_UUID, gamemode);
-        return plugin.getDatabase().deleteKit(ADMIN_KIT_UUID, gamemode);
+        return plugin.getDatabase().deleteKit(ADMIN_KIT_UUID, gamemode)
+                .thenCompose(v -> plugin.getDatabase().bumpKitVersion())
+                .thenAccept(newVer -> { if (newVer > 0) lastKitVersion = newVer; });
+    }
+
+    /**
+     * Starts the network-wide admin-kit sync: every 2 s this server checks the
+     * shared version and, if another server bumped it (a /kitadmin edit), reloads
+     * the presets from the DB into cache. Robust even for empty servers — no
+     * player-tied plugin messaging. Call once on enable.
+     */
+    public void startAdminKitSync() {
+        plugin.getDatabase().getKitVersion().thenAccept(v -> lastKitVersion = v); // seed with current
+        org.bukkit.Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () ->
+            plugin.getDatabase().getKitVersion().thenAccept(dbVer -> {
+                if (dbVer > lastKitVersion) {
+                    lastKitVersion = dbVer;
+                    // loadKit is async + caches in a ConcurrentHashMap — safe off-thread.
+                    for (Gamemode gm : plugin.getGamemodeManager().getAllGamemodes()) {
+                        loadKit(ADMIN_KIT_UUID, gm.getId());
+                    }
+                    plugin.getLogger().info("[KitManager] Admin presets reloaded from network (v" + dbVer + ").");
+                }
+            }), 40L, 40L);
     }
 
     /** Removes a single (uuid, gamemode) entry from the cache. */

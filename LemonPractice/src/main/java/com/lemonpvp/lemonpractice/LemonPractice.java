@@ -111,6 +111,7 @@ public class LemonPractice extends JavaPlugin {
 
         kitManager = new KitManager(this);
         kitManager.preloadAdminKits(); // load admin-edited presets so they override kits.yml
+        kitManager.startAdminKitSync(); // network-wide realtime sync of preset edits
         kitAdminManager = new com.lemonpvp.lemonpractice.managers.KitAdminManager(this);
         eloManager = new EloManager(this);
         queueManager = new QueueManager(this);
