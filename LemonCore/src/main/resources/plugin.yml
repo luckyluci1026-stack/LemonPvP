@@ -228,13 +228,13 @@ commands:
     permission: lemoncore.use.stats
     usage: /stats [player]
   gwipe:
-    description: Wipe player stats
+    description: Wipe player stats, or list snapshots
     permission: lemoncore.admin.wipe
-    usage: /gwipe <player>
+    usage: /gwipe <player> | /gwipe list <player>
   gunwipe:
-    description: Restore wiped stats
+    description: Restore wiped stats (latest or by id)
     permission: lemoncore.admin.unwipe
-    usage: /gunwipe <player> <date>
+    usage: /gunwipe <player> [latest|<id>]
   settings:
     description: Open settings GUI
     permission: lemoncore.use.stats

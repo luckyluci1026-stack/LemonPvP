@@ -278,11 +278,31 @@ public class LemonCore extends JavaPlugin {
         org.bukkit.command.TabCompleter playerTab = (s, c, l, a) ->
                 a.length == 1 ? onlinePlayers(a[0]) : java.util.List.of();
         for (String cmd : new String[]{"gtp", "offend", "punish", "gmute", "gunban", "gunmute", "gkick",
-                "ghistory", "gwipe", "gunwipe", "gspec", "gpop", "gcheck",
+                "ghistory", "gspec", "gpop", "gcheck",
                 "report", "mreport", "gmreport", "stats"}) {
             var pluginCmd = getCommand(cmd);
             if (pluginCmd != null) pluginCmd.setTabCompleter(playerTab);
         }
+
+        // /gwipe <player> | /gwipe list <player>
+        var gwipeCmd = getCommand("gwipe");
+        if (gwipeCmd != null) gwipeCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
+            case 1 -> {
+                java.util.List<String> out = new java.util.ArrayList<>(onlinePlayers(a[0]));
+                if ("list".startsWith(a[0].toLowerCase())) out.add("list");
+                yield out;
+            }
+            case 2 -> "list".equalsIgnoreCase(a[0]) ? onlinePlayers(a[1]) : java.util.List.of();
+            default -> java.util.List.of();
+        });
+
+        // /gunwipe <player> [latest|<id>]
+        var gunwipeCmd = getCommand("gunwipe");
+        if (gunwipeCmd != null) gunwipeCmd.setTabCompleter((s, c, l, a) -> switch (a.length) {
+            case 1 -> onlinePlayers(a[0]);
+            case 2 -> filterStart(java.util.List.of("latest"), a[1]);
+            default -> java.util.List.of();
+        });
 
         // /grank <add|set|remove|show> <player>
         var grankCmd = getCommand("grank");

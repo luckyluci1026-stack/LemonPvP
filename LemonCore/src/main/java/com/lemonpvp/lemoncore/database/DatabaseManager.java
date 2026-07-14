@@ -223,6 +223,11 @@ public class DatabaseManager {
                     INDEX idx_uuid (uuid)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            // Migration: archive per-gamemode ELO with each wipe so unwipe can
+            // restore it (MySQL has no ADD COLUMN IF NOT EXISTS).
+            try (ResultSet rs = conn.getMetaData().getColumns(conn.getCatalog(), null, "lc_stats_wipes", "elo_data")) {
+                if (!rs.next()) stmt.executeUpdate("ALTER TABLE lc_stats_wipes ADD COLUMN elo_data TEXT");
+            } catch (Exception ignored) {}
             stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS lc_reports (
                     id INT AUTO_INCREMENT PRIMARY KEY,
