@@ -29,6 +29,9 @@ commands:
     description: Restore FFA server from backup
     permission: lemonevents.admin.eventffa
     usage: /aoweventffa
+  host:
+    description: Host a simple event (build a kit, gather players, fight)
+    usage: /host <start|open|begin|join|cancel>
 
 permissions:
   lemonevents.admin.create:
@@ -49,3 +52,9 @@ permissions:
   lemonevents.use.join:
     description: Join events
     default: true
+  lemonevents.host:
+    description: Host simple events (content creators / trusted players)
+    default: op
+  lemonevents.admin.host:
+    description: Manage/cancel any hosted event
+    default: op

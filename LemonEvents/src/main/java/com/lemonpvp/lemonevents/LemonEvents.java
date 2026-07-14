@@ -26,6 +26,7 @@ public final class LemonEvents extends JavaPlugin {
     private LootManager lootManager;
     private MapManager mapManager;
     private EventMessaging messaging;
+    private HostedEventManager hostedEventManager;
 
     private FileConfiguration eventsConfig;
     private FileConfiguration lootConfig;
@@ -53,6 +54,7 @@ public final class LemonEvents extends JavaPlugin {
         lootManager      = new LootManager(this);
         eventManager     = new EventManager(this);
         announcementManager = new AnnouncementManager(this);
+        hostedEventManager = new HostedEventManager(this);
 
         messaging.register();
         lootManager.load();
@@ -60,6 +62,8 @@ public final class LemonEvents extends JavaPlugin {
         announcementManager.start();
 
         getServer().getPluginManager().registerEvents(new EventPlayerListener(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.lemonpvp.lemonevents.listeners.HostedEventListener(this), this);
 
         registerCommands();
 
@@ -69,6 +73,7 @@ public final class LemonEvents extends JavaPlugin {
     @Override
     public void onDisable() {
         if (eventManager != null) eventManager.endAllActiveGames();
+        if (hostedEventManager != null) hostedEventManager.shutdown();
         if (announcementManager != null) announcementManager.stop();
         if (messaging != null) messaging.unregister();
         if (database != null) database.disconnect();
@@ -89,6 +94,13 @@ public final class LemonEvents extends JavaPlugin {
         if (end    != null) end.setExecutor(new EndEventCommand(this));
         if (ffa    != null) ffa.setExecutor(new FFAEventCommand(this));
         if (effa   != null) effa.setExecutor(new EventFFACommand(this));
+
+        var hostCmd = getCommand("host");
+        if (hostCmd != null) {
+            var hostExec = new HostCommand(this);
+            hostCmd.setExecutor(hostExec);
+            hostCmd.setTabCompleter(hostExec);
+        }
 
         // Tab completion: /aowcreateevent <name> <type> ..., others take an event name
         if (create != null) create.setTabCompleter((TabCompleter) (s, c, l, a) ->
@@ -143,6 +155,7 @@ public final class LemonEvents extends JavaPlugin {
     public LootManager getLootManager() { return lootManager; }
     public MapManager getMapManager() { return mapManager; }
     public EventMessaging getMessaging() { return messaging; }
+    public HostedEventManager getHostedEventManager() { return hostedEventManager; }
     public FileConfiguration getServersConfig() { return serversConfig; }
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
