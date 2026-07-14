@@ -17,6 +17,8 @@ public class Arena {
     private int regionX2, regionY2, regionZ2;
     private boolean active = true;
     private boolean inUse = false;
+    /** True for config-defined vanilla biome worlds: no schematic, reset = block rollback, not persisted to DB. */
+    private boolean vanilla = false;
     private String schematicPath;
     private String dupeGroup;
     private final List<String> boundGamemodes = new ArrayList<>();
@@ -54,6 +56,8 @@ public class Arena {
     public void setActive(boolean active) { this.active = active; }
     public boolean isInUse() { return inUse; }
     public void setInUse(boolean inUse) { this.inUse = inUse; }
+    public boolean isVanilla() { return vanilla; }
+    public void setVanilla(boolean vanilla) { this.vanilla = vanilla; }
     public String getSchematicPath() { return schematicPath; }
     public void setSchematicPath(String schematicPath) { this.schematicPath = schematicPath; }
     public String getDupeGroup() { return dupeGroup; }

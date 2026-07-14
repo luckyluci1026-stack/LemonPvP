@@ -42,6 +42,8 @@ public class LemonPractice extends JavaPlugin {
     private PracticeDatabase db;
     private GamemodeManager gamemodeManager;
     private ArenaManager arenaManager;
+    private com.lemonpvp.lemonpractice.managers.ArenaRollbackManager arenaRollbackManager;
+    private com.lemonpvp.lemonpractice.managers.DuelWorldManager duelWorldManager;
     private KitManager kitManager;
     private EloManager eloManager;
     private QueueManager queueManager;
@@ -67,6 +69,7 @@ public class LemonPractice extends JavaPlugin {
     public void onEnable() {
         // 1. Save default resource files
         loadServersConfig();
+        loadDuelWorldsConfig();
         saveDefaultConfig();
         saveResource("gamemodes.yml", false);
         saveResource("kits.yml", false);
@@ -95,6 +98,15 @@ public class LemonPractice extends JavaPlugin {
 
         arenaManager = new ArenaManager(this);
         arenaManager.loadAll();
+
+        arenaRollbackManager = new com.lemonpvp.lemonpractice.managers.ArenaRollbackManager(this);
+        // Vanilla biome duel worlds: load + register one arena per world (DUELS only).
+        if (serverType.equals("DUELS")) {
+            duelWorldManager = new com.lemonpvp.lemonpractice.managers.DuelWorldManager(this);
+            duelWorldManager.loadAndRegister();
+            getServer().getPluginManager().registerEvents(
+                    new com.lemonpvp.lemonpractice.listeners.ArenaRollbackListener(this), this);
+        }
 
         kitManager = new KitManager(this);
         eloManager = new EloManager(this);
@@ -216,6 +228,9 @@ public class LemonPractice extends JavaPlugin {
         if (botDuelManager != null) {
             botDuelManager.shutdown();
         }
+        if (arenaRollbackManager != null) {
+            arenaRollbackManager.shutdown(); // heal any in-progress arenas before stopping
+        }
         if (zonePracticeManager != null) {
             zonePracticeManager.shutdown();
         }
@@ -263,6 +278,8 @@ public class LemonPractice extends JavaPlugin {
     public PracticeDatabase getDatabase() { return db; }
     public GamemodeManager getGamemodeManager() { return gamemodeManager; }
     public ArenaManager getArenaManager() { return arenaManager; }
+    public com.lemonpvp.lemonpractice.managers.ArenaRollbackManager getArenaRollbackManager() { return arenaRollbackManager; }
+    public com.lemonpvp.lemonpractice.managers.DuelWorldManager getDuelWorldManager() { return duelWorldManager; }
     public KitManager getKitManager() { return kitManager; }
     public EloManager getEloManager() { return eloManager; }
     public QueueManager getQueueManager() { return queueManager; }
@@ -280,6 +297,15 @@ public class LemonPractice extends JavaPlugin {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
         if (!f.exists()) saveResource("servers.yml", false);
         serversConfig = YamlConfiguration.loadConfiguration(f);
+    }
+
+    private FileConfiguration duelWorldsConfig;
+    /** Vanilla duel-world list — its own file so no DB credentials sit in it. */
+    public FileConfiguration getDuelWorldsConfig() { return duelWorldsConfig; }
+    private void loadDuelWorldsConfig() {
+        java.io.File f = new java.io.File(getDataFolder(), "duel-worlds.yml");
+        if (!f.exists()) saveResource("duel-worlds.yml", false);
+        duelWorldsConfig = YamlConfiguration.loadConfiguration(f);
     }
 
     public VelocityMessaging getVelocityMessaging() { return velocityMessaging; }

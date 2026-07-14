@@ -85,7 +85,15 @@ public class ArenaManager {
     public void markInUse(Arena arena, boolean inUse) {
         arena.setInUse(inUse);
         arenas.put(arena.getId(), arena);
-        plugin.getDatabase().setArenaInUse(arena.getId(), inUse);
+        // Vanilla (config-defined) arenas aren't in the DB — don't try to persist.
+        if (!arena.isVanilla()) {
+            plugin.getDatabase().setArenaInUse(arena.getId(), inUse);
+        }
+    }
+
+    /** Registers an in-memory vanilla-world arena (from DuelWorldManager, not persisted). */
+    public void registerVanillaArena(Arena arena) {
+        arenas.put(arena.getId(), arena);
     }
 
     // -----------------------------------------------------------------------
@@ -149,6 +157,19 @@ public class ArenaManager {
     // -----------------------------------------------------------------------
 
     public CompletableFuture<Void> resetArena(Arena arena) {
+        // Vanilla biome worlds have no schematic — heal them by rolling back the
+        // blocks changed during the match. Block edits must run on the main
+        // thread; run synchronously when we're already on it (the duel cleanup
+        // task is) so the heal completes before the arena can be re-booked.
+        if (arena.isVanilla()) {
+            if (Bukkit.isPrimaryThread()) {
+                plugin.getArenaRollbackManager().restore(arena.getWorldName());
+            } else {
+                Bukkit.getScheduler().runTask(plugin,
+                        () -> plugin.getArenaRollbackManager().restore(arena.getWorldName()));
+            }
+            return CompletableFuture.completedFuture(null);
+        }
         return CompletableFuture.runAsync(() -> {
             try {
                 String path = arena.getSchematicPath();
