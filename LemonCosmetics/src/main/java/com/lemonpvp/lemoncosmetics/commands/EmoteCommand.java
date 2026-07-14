@@ -5,9 +5,12 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * {@code /emote}:
@@ -19,7 +22,7 @@ import java.util.List;
  * Emotes are gif/png files in {@code plugins/LemonCosmetics/emotes/} — drop a
  * file in, and it's playable. No resource pack.
  */
-public class EmoteCommand implements CommandExecutor {
+public class EmoteCommand implements CommandExecutor, TabCompleter {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final String PREFIX =
@@ -62,6 +65,19 @@ public class EmoteCommand implements CommandExecutor {
             msg(player, "<red>Emote <yellow>" + name + " <red>not found or unreadable. Try <white>/emote list<red>.");
         }
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!(sender instanceof Player player) || !player.hasPermission("lemoncosmetics.emote")) return List.of();
+        if (args.length != 1) return List.of();
+        String prefix = args[0].toLowerCase(Locale.ROOT);
+        List<String> out = new ArrayList<>();
+        for (String sub : List.of("list", "stop")) if (sub.startsWith(prefix)) out.add(sub);
+        for (String e : plugin.getEmoteManager().listEmotes()) {
+            if (e.toLowerCase(Locale.ROOT).startsWith(prefix)) out.add(e);
+        }
+        return out;
     }
 
     private void listEmotes(Player player) {

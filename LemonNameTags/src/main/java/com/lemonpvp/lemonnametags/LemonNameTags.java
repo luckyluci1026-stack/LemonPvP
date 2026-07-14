@@ -127,4 +127,13 @@ public final class LemonNameTags extends JavaPlugin {
         }
         return true;
     }
+
+    @Override
+    public java.util.List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!sender.hasPermission("lemonnametags.admin") || args.length != 1) return java.util.List.of();
+        String prefix = args[0].toLowerCase();
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (String sub : java.util.List.of("reload", "refresh")) if (sub.startsWith(prefix)) out.add(sub);
+        return out;
+    }
 }

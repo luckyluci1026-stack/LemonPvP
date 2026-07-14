@@ -220,6 +220,9 @@ public class LemonCore extends JavaPlugin {
         var llCmd = getCommand("lemonlang");
         if (llCmd != null) { llCmd.setExecutor(lemonLangCmd); llCmd.setTabCompleter(lemonLangCmd); }
         getCommand("aowcode").setExecutor(new AowCodeCommand(this));
+        // /aowcode legacy syntax: arg 2 is the reward type (the no-arg path opens the GUI)
+        getCommand("aowcode").setTabCompleter((s, c, l, a) ->
+                a.length == 2 ? filterStart(java.util.List.of("coins", "rank", "killeffect"), a[1]) : java.util.List.of());
         OffendCommand offendCmd = new OffendCommand(this);
         getCommand("offend").setExecutor(offendCmd);
         getCommand("offend").setTabCompleter(offendCmd);

@@ -6,7 +6,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * {@code /replay}:
@@ -18,7 +23,11 @@ import org.bukkit.entity.Player;
  *   <li>{@code /replay info <name>} — details</li>
  * </ul>
  */
-public class ReplayCommand implements CommandExecutor {
+public class ReplayCommand implements CommandExecutor, TabCompleter {
+
+    private static final List<String> SUBS = List.of(
+            "list", "top", "stop", "play", "pause", "restart",
+            "next", "prev", "speed", "follow", "info", "share");
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private static final String PREFIX =
@@ -28,6 +37,16 @@ public class ReplayCommand implements CommandExecutor {
 
     public ReplayCommand(LemonPractice plugin) {
         this.plugin = plugin;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!(sender instanceof Player player) || !player.hasPermission("lemonpractice.replay")) return List.of();
+        if (args.length != 1) return List.of();
+        String prefix = args[0].toLowerCase(Locale.ROOT);
+        List<String> out = new ArrayList<>();
+        for (String sub : SUBS) if (sub.startsWith(prefix)) out.add(sub);
+        return out;
     }
 
     @Override

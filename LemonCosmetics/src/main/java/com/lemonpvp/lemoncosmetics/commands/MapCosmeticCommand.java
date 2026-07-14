@@ -6,9 +6,12 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Drives {@code /cape} and {@code /bandana} — the same map-cosmetic command for
@@ -21,7 +24,7 @@ import java.util.List;
  * </ul>
  * Files live in {@code plugins/LemonCosmetics/<slot-folder>/} (png/gif/jpg).
  */
-public class MapCosmeticCommand implements CommandExecutor {
+public class MapCosmeticCommand implements CommandExecutor, TabCompleter {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
@@ -76,6 +79,19 @@ public class MapCosmeticCommand implements CommandExecutor {
             }
         }
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!(sender instanceof Player player) || !player.hasPermission(permission)) return List.of();
+        if (args.length != 1) return List.of();
+        String prefix = args[0].toLowerCase(Locale.ROOT);
+        List<String> out = new ArrayList<>();
+        for (String sub : List.of("list", "off", "reload")) if (sub.startsWith(prefix)) out.add(sub);
+        for (String file : plugin.getCapeManager().list(slot)) {
+            if (file.toLowerCase(Locale.ROOT).startsWith(prefix)) out.add(file);
+        }
+        return out;
     }
 
     private void listFiles(Player player) {

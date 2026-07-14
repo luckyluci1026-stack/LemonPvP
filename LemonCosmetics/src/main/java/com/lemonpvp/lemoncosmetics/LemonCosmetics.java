@@ -84,15 +84,21 @@ public final class LemonCosmetics extends JavaPlugin {
         }
         var capeCmd = getCommand("cape");
         if (capeCmd != null) {
-            capeCmd.setExecutor(new MapCosmeticCommand(this, MapCosmeticSlot.CAPE, "cape", "lemoncosmetics.cape"));
+            var capeExec = new MapCosmeticCommand(this, MapCosmeticSlot.CAPE, "cape", "lemoncosmetics.cape");
+            capeCmd.setExecutor(capeExec);
+            capeCmd.setTabCompleter(capeExec);
         }
         var bandanaCmd = getCommand("bandana");
         if (bandanaCmd != null) {
-            bandanaCmd.setExecutor(new MapCosmeticCommand(this, MapCosmeticSlot.BANDANA, "bandana", "lemoncosmetics.bandana"));
+            var bandanaExec = new MapCosmeticCommand(this, MapCosmeticSlot.BANDANA, "bandana", "lemoncosmetics.bandana");
+            bandanaCmd.setExecutor(bandanaExec);
+            bandanaCmd.setTabCompleter(bandanaExec);
         }
         var emoteCmd = getCommand("emote");
         if (emoteCmd != null) {
-            emoteCmd.setExecutor(new com.lemonpvp.lemoncosmetics.commands.EmoteCommand(this));
+            var emoteExec = new com.lemonpvp.lemoncosmetics.commands.EmoteCommand(this);
+            emoteCmd.setExecutor(emoteExec);
+            emoteCmd.setTabCompleter(emoteExec);
         }
 
         getLogger().info("LemonCosmetics enabled.");

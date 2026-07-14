@@ -201,9 +201,17 @@ public class LemonPractice extends JavaPlugin {
             ffaCommand.setTabCompleter(ffaCmd);
         }
         var replayCmd = getCommand("replay");
-        if (replayCmd != null) replayCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.ReplayCommand(this));
+        if (replayCmd != null) {
+            var replayExec = new com.lemonpvp.lemonpractice.commands.ReplayCommand(this);
+            replayCmd.setExecutor(replayExec);
+            replayCmd.setTabCompleter(replayExec);
+        }
         var greplayCmd = getCommand("greplay");
-        if (greplayCmd != null) greplayCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.GReplayCommand(this));
+        if (greplayCmd != null) {
+            var greplayExec = new com.lemonpvp.lemonpractice.commands.GReplayCommand(this);
+            greplayCmd.setExecutor(greplayExec);
+            greplayCmd.setTabCompleter(greplayExec);
+        }
         var kitEditorCmd = getCommand("kiteditor");
         if (kitEditorCmd != null) kitEditorCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.KitEditorCommand(this));
         var kitAdminCmd = getCommand("kitadmin");

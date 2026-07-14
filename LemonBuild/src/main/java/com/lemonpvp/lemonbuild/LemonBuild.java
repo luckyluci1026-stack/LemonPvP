@@ -11,6 +11,9 @@ public final class LemonBuild extends JavaPlugin {
         if (cmd != null) {
             var handler = new AowBuildLobbyCommand(this);
             cmd.setExecutor(handler);
+            cmd.setTabCompleter((s, c, l, a) ->
+                    a.length == 1 && "confirm".startsWith(a[0].toLowerCase())
+                            ? java.util.List.of("confirm") : java.util.List.of());
         }
         getLogger().info("LemonBuild aktiviert.");
     }

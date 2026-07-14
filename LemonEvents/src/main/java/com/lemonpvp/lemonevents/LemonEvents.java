@@ -5,11 +5,18 @@ import com.lemonpvp.lemonevents.database.EventDatabase;
 import com.lemonpvp.lemonevents.listeners.EventPlayerListener;
 import com.lemonpvp.lemonevents.managers.*;
 import com.lemonpvp.lemonevents.messaging.EventMessaging;
+import com.lemonpvp.lemonevents.model.EventStatus;
+import com.lemonpvp.lemonevents.model.EventType;
+import com.lemonpvp.lemonevents.model.GameEvent;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public final class LemonEvents extends JavaPlugin {
 
@@ -82,6 +89,37 @@ public final class LemonEvents extends JavaPlugin {
         if (end    != null) end.setExecutor(new EndEventCommand(this));
         if (ffa    != null) ffa.setExecutor(new FFAEventCommand(this));
         if (effa   != null) effa.setExecutor(new EventFFACommand(this));
+
+        // Tab completion: /aowcreateevent <name> <type> ..., others take an event name
+        if (create != null) create.setTabCompleter((TabCompleter) (s, c, l, a) ->
+                a.length == 2 ? filterEnum(EventType.values(), a[1]) : List.of());
+        if (join  != null) join.setTabCompleter((TabCompleter) (s, c, l, a) ->
+                a.length == 1 ? eventNames(EventStatus.WAITING, a[0]) : List.of());
+        if (start != null) start.setTabCompleter((TabCompleter) (s, c, l, a) ->
+                a.length == 1 ? eventNames(EventStatus.WAITING, a[0]) : List.of());
+        if (end   != null) end.setTabCompleter((TabCompleter) (s, c, l, a) ->
+                a.length == 1 ? eventNames(EventStatus.ACTIVE, a[0]) : List.of());
+        if (ffa   != null) ffa.setTabCompleter((TabCompleter) (s, c, l, a) ->
+                a.length == 1 ? eventNames(null, a[0]) : List.of());
+    }
+
+    /** Suggests event names, optionally filtered to a status, matching the typed prefix. */
+    private List<String> eventNames(EventStatus status, String prefix) {
+        if (eventManager == null) return List.of();
+        String lower = prefix.toLowerCase(Locale.ROOT);
+        List<String> out = new ArrayList<>();
+        for (GameEvent e : eventManager.getAllEvents()) {
+            if (status != null && e.getStatus() != status) continue;
+            if (e.getName().toLowerCase(Locale.ROOT).startsWith(lower)) out.add(e.getName());
+        }
+        return out;
+    }
+
+    private static List<String> filterEnum(Enum<?>[] values, String prefix) {
+        String lower = prefix.toLowerCase(Locale.ROOT);
+        List<String> out = new ArrayList<>();
+        for (Enum<?> v : values) if (v.name().toLowerCase(Locale.ROOT).startsWith(lower)) out.add(v.name());
+        return out;
     }
 
     private void loadExtraConfigs() {
