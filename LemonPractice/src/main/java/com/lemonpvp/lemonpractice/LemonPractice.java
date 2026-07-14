@@ -45,6 +45,7 @@ public class LemonPractice extends JavaPlugin {
     private com.lemonpvp.lemonpractice.managers.ArenaRollbackManager arenaRollbackManager;
     private com.lemonpvp.lemonpractice.managers.DuelWorldManager duelWorldManager;
     private KitManager kitManager;
+    private com.lemonpvp.lemonpractice.managers.KitAdminManager kitAdminManager;
     private EloManager eloManager;
     private QueueManager queueManager;
     private DuelManager duelManager;
@@ -109,6 +110,8 @@ public class LemonPractice extends JavaPlugin {
         }
 
         kitManager = new KitManager(this);
+        kitManager.preloadAdminKits(); // load admin-edited presets so they override kits.yml
+        kitAdminManager = new com.lemonpvp.lemonpractice.managers.KitAdminManager(this);
         eloManager = new EloManager(this);
         queueManager = new QueueManager(this);
         queueManager.startTasks();
@@ -131,6 +134,8 @@ public class LemonPractice extends JavaPlugin {
         // 6. Register all listeners on both servers (listeners check serverType internally)
         getServer().getPluginManager().registerEvents(new LobbyListener(this), this);
         getServer().getPluginManager().registerEvents(new KitEditorListener(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.lemonpvp.lemonpractice.listeners.KitAdminListener(this), this);
         getServer().getPluginManager().registerEvents(new DuelListener(this), this);
         getServer().getPluginManager().registerEvents(
                 new com.lemonpvp.lemonpractice.listeners.BotDuelListener(this), this);
@@ -200,6 +205,12 @@ public class LemonPractice extends JavaPlugin {
         if (greplayCmd != null) greplayCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.GReplayCommand(this));
         var kitEditorCmd = getCommand("kiteditor");
         if (kitEditorCmd != null) kitEditorCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.KitEditorCommand(this));
+        var kitAdminCmd = getCommand("kitadmin");
+        if (kitAdminCmd != null) {
+            var exec = new com.lemonpvp.lemonpractice.commands.KitAdminCommand(this);
+            kitAdminCmd.setExecutor(exec);
+            kitAdminCmd.setTabCompleter(exec);
+        }
 
         // Replay retention cleanup (every 6 hours; first run after 1 min)
         getServer().getScheduler().runTaskTimerAsynchronously(this,
@@ -281,6 +292,7 @@ public class LemonPractice extends JavaPlugin {
     public com.lemonpvp.lemonpractice.managers.ArenaRollbackManager getArenaRollbackManager() { return arenaRollbackManager; }
     public com.lemonpvp.lemonpractice.managers.DuelWorldManager getDuelWorldManager() { return duelWorldManager; }
     public KitManager getKitManager() { return kitManager; }
+    public com.lemonpvp.lemonpractice.managers.KitAdminManager getKitAdminManager() { return kitAdminManager; }
     public EloManager getEloManager() { return eloManager; }
     public QueueManager getQueueManager() { return queueManager; }
     public DuelManager getDuelManager() { return duelManager; }

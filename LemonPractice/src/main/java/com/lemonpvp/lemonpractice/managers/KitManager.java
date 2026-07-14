@@ -115,7 +115,19 @@ public class KitManager {
      * {@code setItem} equips it. A legacy flat {@code <slot>: {...}} layout is
      * still accepted for backward compatibility.
      */
+    /** Sentinel UUID under which admin-edited preset kits are stored (DB-shared, wins over kits.yml). */
+    public static final UUID ADMIN_KIT_UUID = new UUID(0, 0);
+
     public PlayerKit getDefaultKit(String gamemode) {
+        // An admin-edited preset (persisted under the sentinel UUID, shared across
+        // all duel servers via the DB) overrides the kits.yml default.
+        PlayerKit admin = getKit(ADMIN_KIT_UUID, gamemode);
+        if (admin != null && !admin.getSlots().isEmpty()) {
+            PlayerKit copy = new PlayerKit(ADMIN_KIT_UUID, gamemode);
+            admin.getSlots().forEach((slot, item) -> copy.setSlot(slot, item.clone()));
+            return copy;
+        }
+
         ConfigurationSection kitsSection = plugin.getKitsConfig().getConfigurationSection("kits");
         if (kitsSection == null) {
             plugin.getLogger().warning("[KitManager] 'kits' section missing from kits.yml");
@@ -274,5 +286,39 @@ public class KitManager {
         for (Gamemode gm : plugin.getGamemodeManager().getAllGamemodes()) {
             loadKit(playerUuid, gm.getId());
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // Admin preset kits (stored under ADMIN_KIT_UUID, shared via the DB)
+    // -----------------------------------------------------------------------
+
+    /** Loads every admin-edited preset into cache on enable so getDefaultKit sees them. */
+    public void preloadAdminKits() {
+        for (Gamemode gm : plugin.getGamemodeManager().getAllGamemodes()) {
+            loadKit(ADMIN_KIT_UUID, gm.getId());
+        }
+    }
+
+    /** True if a custom admin preset exists for this gamemode (overriding kits.yml). */
+    public boolean hasAdminKit(String gamemode) {
+        PlayerKit k = getKit(ADMIN_KIT_UUID, gamemode);
+        return k != null && !k.getSlots().isEmpty();
+    }
+
+    /** Saves an admin preset for a gamemode (persisted + cached), overriding kits.yml. */
+    public CompletableFuture<Void> saveAdminKit(String gamemode, PlayerKit kit) {
+        return saveKit(ADMIN_KIT_UUID, gamemode, kit);
+    }
+
+    /** Deletes the admin preset for a gamemode, reverting to the kits.yml default. */
+    public CompletableFuture<Void> deleteAdminKit(String gamemode) {
+        clearCached(ADMIN_KIT_UUID, gamemode);
+        return plugin.getDatabase().deleteKit(ADMIN_KIT_UUID, gamemode);
+    }
+
+    /** Removes a single (uuid, gamemode) entry from the cache. */
+    public void clearCached(UUID uuid, String gamemode) {
+        Map<String, PlayerKit> m = cache.get(uuid);
+        if (m != null) m.remove(gamemode.toLowerCase());
     }
 }

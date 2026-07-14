@@ -10,6 +10,9 @@ permissions:
   lemonpractice.admin.reload:
     description: Reload LemonPractice configs without restarting
     default: op
+  lemonpractice.admin.kits:
+    description: Create, edit and delete preset kits
+    default: op
   lemonpractice.admin.arena:
     description: Manage arenas
     default: op
@@ -114,3 +117,7 @@ commands:
   kiteditor:
     description: Open the kit editor (usable from the lobby hotbar)
     usage: /kiteditor
+  kitadmin:
+    description: Create, edit and delete the per-gamemode preset kits
+    permission: lemonpractice.admin.kits
+    usage: /kitadmin | edit <gamemode> | save | cancel | delete <gamemode>
