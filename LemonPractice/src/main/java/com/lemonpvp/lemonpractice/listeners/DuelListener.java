@@ -193,6 +193,7 @@ public class DuelListener implements Listener {
 
         Player player = event.getPlayer();
         player.setGameMode(GameMode.ADVENTURE);
+        plugin.getStreakManager().preload(player.getUniqueId());
     }
 
     // -------------------------------------------------------------------------
@@ -210,5 +211,6 @@ public class DuelListener implements Listener {
             // Treat disconnect as a loss for the quitting player
             plugin.getDuelManager().handleDeath(uuid);
         }
+        plugin.getStreakManager().evict(uuid);
     }
 }

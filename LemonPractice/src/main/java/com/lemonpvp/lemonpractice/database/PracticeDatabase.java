@@ -381,6 +381,14 @@ public class PracticeDatabase {
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            // Duel win streaks: current run + all-time best, one row per player.
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lp_duel_streaks (
+                    uuid VARCHAR(36) PRIMARY KEY,
+                    current_streak INT NOT NULL DEFAULT 0,
+                    best_streak INT NOT NULL DEFAULT 0
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
         }
     }
 
@@ -659,6 +667,41 @@ public class PracticeDatabase {
                 ps.setInt(3, elo); ps.setInt(4, matchesPlayed);
                 ps.executeUpdate();
             } catch (SQLException e) { plugin.getLogger().severe("saveEloData: " + e.getMessage()); }
+        });
+    }
+
+    // -----------------------------------------------------------------------
+    // Duel win streaks
+    // -----------------------------------------------------------------------
+
+    /** A player's win-streak state: the active run and their all-time best. */
+    public record StreakData(int current, int best) {}
+
+    /** Loads a player's streak, or {@code (0, 0)} if they have none yet. */
+    public CompletableFuture<StreakData> getStreak(java.util.UUID uuid) {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT current_streak, best_streak FROM lp_duel_streaks WHERE uuid=?")) {
+                ps.setString(1, uuid.toString());
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) return new StreakData(rs.getInt("current_streak"), rs.getInt("best_streak"));
+                return new StreakData(0, 0);
+            } catch (SQLException e) {
+                plugin.getLogger().severe("getStreak: " + e.getMessage());
+                return new StreakData(0, 0);
+            }
+        });
+    }
+
+    public CompletableFuture<Void> saveStreak(java.util.UUID uuid, int current, int best) {
+        return executeAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO lp_duel_streaks (uuid, current_streak, best_streak) VALUES (?,?,?) " +
+                    "ON DUPLICATE KEY UPDATE current_streak=VALUES(current_streak), best_streak=VALUES(best_streak)")) {
+                ps.setString(1, uuid.toString());
+                ps.setInt(2, current); ps.setInt(3, best);
+                ps.executeUpdate();
+            } catch (SQLException e) { plugin.getLogger().severe("saveStreak: " + e.getMessage()); }
         });
     }
 

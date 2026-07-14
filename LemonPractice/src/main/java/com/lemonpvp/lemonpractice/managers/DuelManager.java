@@ -176,16 +176,19 @@ public class DuelManager {
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         String opponentName = (opponent != null) ? opponent.getName() : "???";
+        int streak = plugin.getStreakManager().getCurrent(viewer.getUniqueId());
 
         List<Component> lines = new ArrayList<>();
         lines.add(SB_MM.deserialize("<dark_gray><st>                </st>"));
-        lines.add(SB_MM.deserialize("<gray>Gegner: <white>" + opponentName));
+        lines.add(SB_MM.deserialize("<gray>Opponent: <white>" + opponentName));
         lines.add(SB_MM.deserialize("<gray>HP: " + formatHp(opponent)));
         lines.add(Component.empty());
-        lines.add(SB_MM.deserialize("<gray>Deine HP: " + formatHp(viewer)));
+        lines.add(SB_MM.deserialize("<gray>Your HP: " + formatHp(viewer)));
+        lines.add(SB_MM.deserialize("<gray>Ping: <white>" + viewer.getPing() + "ms"));
         lines.add(Component.empty());
-        lines.add(SB_MM.deserialize("<gray>Modus: <white>" + capitalize(game.getGamemode())));
-        lines.add(SB_MM.deserialize("<gray>Zeit: <white>" + formatTime(elapsed)));
+        lines.add(SB_MM.deserialize("<gray>Mode: <white>" + capitalize(game.getGamemode())));
+        lines.add(SB_MM.deserialize("<gray>Time: <white>" + formatTime(elapsed)));
+        if (streak > 0) lines.add(SB_MM.deserialize("<gray>Streak: <gold>" + streak));
         lines.add(SB_MM.deserialize("<dark_gray><st>                </st>"));
 
         for (int i = 0; i < lines.size(); i++) {
@@ -240,6 +243,24 @@ public class DuelManager {
         return Character.toUpperCase(s.charAt(0)) + s.substring(1).toLowerCase();
     }
 
+    /**
+     * Shows the winner their current win streak on the action bar, and — only
+     * when explicitly enabled in config — broadcasts notable milestones. The
+     * broadcast defaults to off so the server stays quiet unless asked.
+     */
+    private void announceStreak(UUID winnerUuid, int streak) {
+        Player w = Bukkit.getPlayer(winnerUuid);
+        if (w == null || !w.isOnline() || streak < 2) return;
+        w.sendActionBar(SB_MM.deserialize(
+                "<gradient:#fffb00:#ff9800><bold>" + streak + " Win Streak!</bold></gradient>"));
+        int threshold = plugin.getConfig().getInt("streaks.broadcast-threshold", 5);
+        if (plugin.getConfig().getBoolean("streaks.broadcast", false)
+                && streak >= threshold && streak % threshold == 0) {
+            Bukkit.broadcast(SB_MM.deserialize("<gradient:#fffb00:#ff9800>" + w.getName()
+                    + " is on a " + streak + " win streak!</gradient>"));
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Handle death
     // -----------------------------------------------------------------------
@@ -262,6 +283,12 @@ public class DuelManager {
         if (winnerUuid == null) return;
 
         game.setWinnerUuid(winnerUuid);
+
+        // Win streaks (tracked independently of ranked ELO)
+        final UUID sWinner = winnerUuid, sLoser = loserUuid;
+        plugin.getStreakManager().recordWin(sWinner).thenAccept(streak ->
+                Bukkit.getScheduler().runTask(plugin, () -> announceStreak(sWinner, streak)));
+        plugin.getStreakManager().recordLoss(sLoser);
 
         // Apply ELO — result is internal only, never displayed to players
         plugin.getEloManager().applyDuelResult(winnerUuid, loserUuid, game.getGamemode())

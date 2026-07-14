@@ -47,6 +47,7 @@ public class LemonPractice extends JavaPlugin {
     private KitManager kitManager;
     private com.lemonpvp.lemonpractice.managers.KitAdminManager kitAdminManager;
     private EloManager eloManager;
+    private com.lemonpvp.lemonpractice.managers.StreakManager streakManager;
     private QueueManager queueManager;
     private DuelManager duelManager;
     private com.lemonpvp.lemonpractice.managers.BotDuelManager botDuelManager;
@@ -114,6 +115,7 @@ public class LemonPractice extends JavaPlugin {
         kitManager.startAdminKitSync(); // network-wide realtime sync of preset edits
         kitAdminManager = new com.lemonpvp.lemonpractice.managers.KitAdminManager(this);
         eloManager = new EloManager(this);
+        streakManager = new com.lemonpvp.lemonpractice.managers.StreakManager(this);
         queueManager = new QueueManager(this);
         queueManager.startTasks();
         duelManager = new DuelManager(this);
@@ -303,6 +305,7 @@ public class LemonPractice extends JavaPlugin {
     public KitManager getKitManager() { return kitManager; }
     public com.lemonpvp.lemonpractice.managers.KitAdminManager getKitAdminManager() { return kitAdminManager; }
     public EloManager getEloManager() { return eloManager; }
+    public com.lemonpvp.lemonpractice.managers.StreakManager getStreakManager() { return streakManager; }
     public QueueManager getQueueManager() { return queueManager; }
     public DuelManager getDuelManager() { return duelManager; }
     public com.lemonpvp.lemonpractice.managers.BotDuelManager getBotDuelManager() { return botDuelManager; }
