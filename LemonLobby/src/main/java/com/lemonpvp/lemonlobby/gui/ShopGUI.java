@@ -42,7 +42,15 @@ public class ShopGUI implements Listener {
     private static final int   CURRENT_TIER_SLOT = 16;
     private static final int[] BOOSTER_SLOTS     = {28, 29, 30, 31, 32};
     private static final int   ACTIVE_BOOSTER_SLOT = 34;
+    private static final int   WOOD_RANK_SLOT    = 38;
+    private static final int   APPLE_RANK_SLOT   = 40;
     private static final int   CLOSE_SLOT        = 49;
+
+    // ── Buyable ranks (LuckPerms groups). Costs are config-overridable. ──────────
+    private static final String WOOD_RANK_GROUP  = "wood";
+    private static final String APPLE_RANK_GROUP = "apple";
+    private static final long   WOOD_RANK_DEFAULT_COST  = 25_000; // planks
+    private static final long   APPLE_RANK_DEFAULT_COST = 50_000; // apples
 
     private final LemonLobby plugin;
     private final Player player;
@@ -68,13 +76,18 @@ public class ShopGUI implements Listener {
         for (int s : PLANK_SLOTS)   inv.setItem(s, gray);
         for (int s : BOOSTER_SLOTS) inv.setItem(s, gray);
 
+        inv.setItem(WOOD_RANK_SLOT, gray);
+        inv.setItem(APPLE_RANK_SLOT, gray);
+
         // Section labels
         inv.setItem(9,  sectionLabel("<#D2691E><bold>Tree Upgrades"));
         inv.setItem(27, sectionLabel("<gold><bold>Boosters"));
+        inv.setItem(36, sectionLabel("<#e02f2f><bold>Ranks"));
 
         inv.setItem(BALANCE_SLOT, buildBalanceItem());
         fillPlankTiers();
         fillBoosters();
+        fillRanks();
         inv.setItem(CURRENT_TIER_SLOT,    buildCurrentTierItem());
         inv.setItem(ACTIVE_BOOSTER_SLOT,  buildActiveBoosterItem());
         inv.setItem(CLOSE_SLOT,           buildCloseItem());
@@ -271,6 +284,101 @@ public class ShopGUI implements Listener {
         return item;
     }
 
+    // ── Buyable ranks ──────────────────────────────────────────────────────────
+
+    private long woodRankCost()  { return plugin.getConfig().getLong("shop.ranks.wood.cost",  WOOD_RANK_DEFAULT_COST); }
+    private long appleRankCost() { return plugin.getConfig().getLong("shop.ranks.apple.cost", APPLE_RANK_DEFAULT_COST); }
+
+    private void fillRanks() {
+        inv.setItem(WOOD_RANK_SLOT,  buildRankItem(false));
+        inv.setItem(APPLE_RANK_SLOT, buildRankItem(true));
+    }
+
+    /**
+     * Builds a buyable-rank icon. {@code apple} selects the Apple rank (apple
+     * currency) vs. the Wood rank (plank currency). Shows an owned state, an
+     * affordable "click to buy", or a progress bar toward the cost.
+     */
+    private ItemStack buildRankItem(boolean apple) {
+        String group   = apple ? APPLE_RANK_GROUP : WOOD_RANK_GROUP;
+        String name    = apple ? "Apple" : "Wood";
+        String color   = apple ? "<gradient:#ff5252:#e02f2f>" : "<gradient:#c8935a:#8B5A2B>";
+        Material mat    = apple ? Material.APPLE : Material.OAK_LOG;
+        String currency = apple ? "✿ Apples" : "▬ Planks";
+        long cost       = apple ? appleRankCost() : woodRankCost();
+        long balance    = apple ? getApples() : EconomyBridge.planks(player.getUniqueId());
+        boolean owned   = EconomyBridge.hasRank(player.getUniqueId(), group);
+
+        ItemStack item = new ItemStack(mat);
+        ItemMeta  meta = item.getItemMeta();
+        if (meta == null) return item;
+
+        meta.displayName(MM.deserialize("<!italic><bold>" + color + name + " Rank"));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><gray>A permanent " + color + name + "<gray> rank tag"));
+        lore.add(MM.deserialize("<!italic><gray>shown in chat and the tab list."));
+        lore.add(Component.empty());
+
+        if (owned) {
+            lore.add(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>✔ Owned"));
+        } else {
+            lore.add(MM.deserialize("<!italic><gray>Cost: <white>" + FormatUtil.formatAmount(cost) + " " + currency));
+            String bar = progressBar(balance, cost, PROGRESS_BARS);
+            lore.add(MM.deserialize("<!italic>" + bar));
+            lore.add(Component.empty());
+            if (balance >= cost) {
+                lore.add(MM.deserialize("<!italic><yellow>► Click to buy"));
+            } else {
+                long needed = cost - balance;
+                lore.add(MM.deserialize("<!italic><dark_gray>Still need <white>"
+                        + FormatUtil.formatAmount(needed) + " <gray>" + currency + " <dark_gray>more"));
+            }
+        }
+        lore.add(Component.empty());
+        meta.lore(lore);
+
+        if (owned) {
+            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private void handleRankPurchase(boolean apple) {
+        String group = apple ? APPLE_RANK_GROUP : WOOD_RANK_GROUP;
+        String name  = apple ? "Apple" : "Wood";
+        long cost    = apple ? appleRankCost() : woodRankCost();
+        long balance = apple ? getApples() : EconomyBridge.planks(player.getUniqueId());
+        String cur   = apple ? "✿" : "▬";
+
+        if (EconomyBridge.hasRank(player.getUniqueId(), group)) {
+            player.sendActionBar(MM.deserialize("<!italic><red>You already own the " + name + " rank!"));
+            return;
+        }
+        if (balance < cost) {
+            player.sendActionBar(MM.deserialize("<!italic><red>Not enough " + cur + "! You still need "
+                    + FormatUtil.formatAmount(cost - balance) + " more."));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
+            return;
+        }
+
+        purchasing = true;
+        var pay = apple
+                ? EconomyBridge.removeApples(player.getUniqueId(), cost)
+                : EconomyBridge.removePlanks(player.getUniqueId(), cost);
+        pay.thenCompose(v -> EconomyBridge.grantRank(player.getUniqueId(), group))
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
+                    player.sendActionBar(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>"
+                            + name + " rank unlocked!"));
+                    purchasing = false;
+                    refresh();
+                }));
+    }
+
     // ── Balance item ─────────────────────────────────────────────────────────
 
     private ItemStack buildBalanceItem() {
@@ -304,6 +412,9 @@ public class ShopGUI implements Listener {
         int slot = e.getRawSlot();
         if (slot == CLOSE_SLOT) { player.closeInventory(); return; }
         if (purchasing) return; // debounce
+
+        if (slot == WOOD_RANK_SLOT)  { handleRankPurchase(false); return; }
+        if (slot == APPLE_RANK_SLOT) { handleRankPurchase(true);  return; }
 
         PlankTier[] planks   = PlankTier.values();
         for (int i = 0; i < PLANK_SLOTS.length && i < planks.length; i++) {
@@ -375,6 +486,7 @@ public class ShopGUI implements Listener {
         inv.setItem(ACTIVE_BOOSTER_SLOT, buildActiveBoosterItem());
         fillPlankTiers();
         fillBoosters();
+        fillRanks();
     }
 
     @EventHandler

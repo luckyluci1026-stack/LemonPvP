@@ -65,4 +65,16 @@ public final class EconomyBridge {
         PlayerDataManager m = pdm();
         return m != null ? m.findUUIDByName(name) : CompletableFuture.completedFuture(null);
     }
+
+    /** True if the player already owns the given buyable rank (LuckPerms group). */
+    public static boolean hasRank(UUID uuid, String group) {
+        LemonCore lc = core();
+        return lc != null && lc.hasRankGroup(uuid, group);
+    }
+
+    /** Permanently grants a buyable rank (LuckPerms group) on top of existing ranks. */
+    public static CompletableFuture<Void> grantRank(UUID uuid, String group) {
+        LemonCore lc = core();
+        return lc != null ? lc.grantRankGroup(uuid, group) : CompletableFuture.completedFuture(null);
+    }
 }

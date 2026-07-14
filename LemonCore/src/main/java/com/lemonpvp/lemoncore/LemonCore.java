@@ -402,6 +402,26 @@ public class LemonCore extends JavaPlugin {
             }
         });
     }
+    /** True if the player currently inherits the given LuckPerms group (case-insensitive). */
+    public boolean hasRankGroup(java.util.UUID uuid, String group) {
+        if (luckPerms == null) return false;
+        net.luckperms.api.model.user.User user = luckPerms.getUserManager().getUser(uuid);
+        if (user == null) return false;
+        return user.getNodes(net.luckperms.api.node.NodeType.INHERITANCE).stream()
+                .anyMatch(n -> n.getGroupName().equalsIgnoreCase(group));
+    }
+
+    /**
+     * Permanently grants a LuckPerms group as a purchased ("buyable") rank. The
+     * group is added on top of the player's existing ranks (not set), so a bought
+     * cosmetic rank never overwrites a staff rank. Completes when saved.
+     */
+    public java.util.concurrent.CompletableFuture<Void> grantRankGroup(java.util.UUID uuid, String group) {
+        if (luckPerms == null) return java.util.concurrent.CompletableFuture.completedFuture(null);
+        return luckPerms.getUserManager().modifyUser(uuid, user ->
+                user.data().add(net.luckperms.api.node.types.InheritanceNode.builder(group).build()));
+    }
+
     public long getStartTimeMs() { return startTimeMs; }
     public HttpApiManager getHttpApiManager() { return httpApiManager; }
     public FriendRequestManager getFriendRequestManager() { return friendRequestManager; }
