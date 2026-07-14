@@ -24,6 +24,16 @@ public class AowCodeCommand implements CommandExecutor {
             sender.sendMessage(plugin.getMessagesManager().get("no-permission"));
             return true;
         }
+        // No args -> open the creation wizard GUI (legacy arg syntax kept as fallback)
+        if (args.length == 0) {
+            if (sender instanceof Player p) {
+                new com.lemonpvp.lemoncore.gui.AowCodeGUI(plugin, p).open();
+            } else {
+                sender.sendMessage(plugin.getMessagesManager().get("invalid-usage",
+                        "usage", "/aowcode <name|random26> <rank|coins|killeffect> <value> <max_uses> <duration>"));
+            }
+            return true;
+        }
         if (args.length < 5) {
             sender.sendMessage(plugin.getMessagesManager().get("invalid-usage",
                     "usage", "/aowcode <name|random26> <rank|coins|killeffect> <value> <max_uses> <duration>"));

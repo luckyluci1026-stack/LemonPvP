@@ -62,6 +62,7 @@ public class LemonCore extends JavaPlugin {
     private MotdManager motdManager;
     private ScriptManager scriptManager;
     private LemonLangManager lemonLangManager;
+    private com.lemonpvp.lemoncore.util.ChatInputManager chatInputManager;
     private boolean floodgatePresent;
     private long startTimeMs;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
@@ -147,6 +148,10 @@ public class LemonCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new com.lemonpvp.lemoncore.listeners.KickListener(this), this);
         getServer().getPluginManager().registerEvents(new AdvancementListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerTrackerListener(this), this);
+
+        // Chat-input helper for GUI value prompts (e.g. /aowcode wizard)
+        chatInputManager = new com.lemonpvp.lemoncore.util.ChatInputManager(this);
+        getServer().getPluginManager().registerEvents(chatInputManager, this);
 
         // Register commands
         registerCommands();
@@ -403,6 +408,7 @@ public class LemonCore extends JavaPlugin {
     public MotdManager getMotdManager() { return motdManager; }
     public ScriptManager getScriptManager() { return scriptManager; }
     public LemonLangManager getLemonLangManager() { return lemonLangManager; }
+    public com.lemonpvp.lemoncore.util.ChatInputManager getChatInputManager() { return chatInputManager; }
     /** True if Geyser Floodgate is present — allows Bedrock players to join. */
     public boolean isFloodgatePresent() { return floodgatePresent; }
 }
