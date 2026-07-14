@@ -37,13 +37,21 @@ public class DuelListener implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         event.deathMessage(null);
-        event.getDrops().clear();
-        event.setDroppedExp(0);
 
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
+        boolean inDuel = plugin.getDuelManager().isInDuel(uuid);
 
-        if (plugin.getDuelManager().isInDuel(uuid)) {
+        // Snapshot the loser's final loadout for post-match review BEFORE the
+        // drops are cleared and the inventory is wiped on respawn.
+        if (inDuel) {
+            plugin.getDuelManager().stashLoadout(uuid, plugin.getPostMatchManager().snapshot(player));
+        }
+
+        event.getDrops().clear();
+        event.setDroppedExp(0);
+
+        if (inDuel) {
             plugin.getDuelManager().handleDeath(uuid);
 
             // Auto-respawn after 1 tick so the spectator setup in makeSpectator takes effect

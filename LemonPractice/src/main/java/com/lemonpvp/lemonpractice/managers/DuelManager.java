@@ -31,6 +31,14 @@ public class DuelManager {
     private final LemonPractice plugin;
     /** Both participant UUIDs map to the same DuelGame instance */
     private final Map<UUID, DuelGame> activeDuels = new ConcurrentHashMap<>();
+    /** Loser loadouts captured at death (before drops clear), consumed at match end. */
+    private final Map<UUID, com.lemonpvp.lemonpractice.managers.PostMatchManager.Loadout> stashedLoadouts =
+            new ConcurrentHashMap<>();
+
+    /** Stores a player's final loadout snapshot for post-match review. */
+    public void stashLoadout(UUID uuid, com.lemonpvp.lemonpractice.managers.PostMatchManager.Loadout loadout) {
+        if (loadout != null) stashedLoadouts.put(uuid, loadout);
+    }
 
     public DuelManager(LemonPractice plugin) {
         this.plugin = plugin;
@@ -244,6 +252,17 @@ public class DuelManager {
     }
 
     /**
+     * Captures both players' final loadouts into the post-match manager so
+     * either side can review them. The winner is snapshotted live (still holding
+     * their inventory); the loser's was stashed at death before drops cleared.
+     */
+    private void storePostMatch(UUID winnerUuid, UUID loserUuid, Player winner) {
+        var winnerLoadout = winner != null ? plugin.getPostMatchManager().snapshot(winner) : null;
+        var loserLoadout = stashedLoadouts.remove(loserUuid);
+        plugin.getPostMatchManager().store(winnerUuid, loserUuid, winnerLoadout, loserLoadout);
+    }
+
+    /**
      * Shows the winner their current win streak on the action bar, and — only
      * when explicitly enabled in config — broadcasts notable milestones. The
      * broadcast defaults to off so the server stays quiet unless asked.
@@ -307,6 +326,7 @@ public class DuelManager {
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         Player winner = Bukkit.getPlayer(winnerUuid);
                         Player loser  = Bukkit.getPlayer(loserUuid);
+                        storePostMatch(winnerUuid, loserUuid, winner);
                         finishDuel(game, winner, loser);
                     });
                 })
@@ -493,7 +513,10 @@ public class DuelManager {
                 "<!italic><click:run_command:'/duel " + opponentName + "'>"
                 + "<hover:show_text:'<green>Challenge <yellow>" + opponentName + "</yellow> again'>"
                 + "<dark_gray>[<gradient:#fffb00:#00ff00><bold>⚔ Rematch</bold></gradient><dark_gray>]"
-                + "</hover></click> <gray>vs <white>" + opponentName));
+                + "</hover></click> <gray>vs <white>" + opponentName
+                + "  <click:run_command:'/matchinv'>"
+                + "<hover:show_text:'<green>View both loadouts'>"
+                + "<dark_gray>[<aqua><bold>🎒 Loadouts</bold></aqua><dark_gray>]</hover></click>"));
     }
 
     /** Plays the winner's LemonCosmetics win effect, if that plugin is present. */
