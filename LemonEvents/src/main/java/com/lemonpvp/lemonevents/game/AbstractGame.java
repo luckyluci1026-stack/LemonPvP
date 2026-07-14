@@ -99,6 +99,11 @@ public abstract class AbstractGame {
             broadcastAll(MM.deserialize(
                 "<bold><gradient:#fffb00:#00ff00>🏆 " + winner +
                 " won " + event.getName() + "!</gradient></bold>"));
+            // Epic winner celebration (fireworks + particles + title).
+            Player winnerPlayer = Bukkit.getPlayer(first);
+            if (winnerPlayer != null) {
+                com.lemonpvp.lemonevents.util.WinAnimation.celebrate(plugin, winnerPlayer, event.getName());
+            }
         }
     }
 
