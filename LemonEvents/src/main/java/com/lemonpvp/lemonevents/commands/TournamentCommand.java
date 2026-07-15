@@ -74,7 +74,7 @@ public class TournamentCommand implements CommandExecutor, TabCompleter {
         if (t == null) { msg(sender, "<red>No such tournament."); return; }
         plugin.getTournamentManager().standings(t.getId()).thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
             msg(sender, "<gradient:#fffb00:#00ff00><bold>" + t.getName() + "</bold></gradient> <dark_gray>» standings");
-            if (rows.isEmpty()) { msg(sender, "<gray>No wins recorded yet."); return; }
+            if (rows == null || rows.isEmpty()) { msg(sender, "<gray>No wins recorded yet."); return; }
             int rank = 1;
             for (var s : rows) {
                 if (rank > 15) break;
@@ -87,7 +87,7 @@ public class TournamentCommand implements CommandExecutor, TabCompleter {
         Tournament t = args.length >= 2 ? byId(args[1]) : latest();
         if (t == null) { msg(sender, "<red>No such tournament."); return; }
         plugin.getTournamentManager().finalists(t.getId()).thenAccept(rows -> Bukkit.getScheduler().runTask(plugin, () -> {
-            if (rows.isEmpty()) { msg(sender, "<gray>Finalists aren't set yet for <white>" + t.getName() + "<gray>."); return; }
+            if (rows == null || rows.isEmpty()) { msg(sender, "<gray>Finalists aren't set yet for <white>" + t.getName() + "<gray>."); return; }
             msg(sender, "<gradient:#fffb00:#00ff00><bold>" + t.getName() + "</bold></gradient> <dark_gray>» finalists");
             int seed = 1;
             for (var s : rows) msg(sender, "<gray>#" + (seed++) + " <white>" + nameOf(s.uuid()) + " <dark_gray>(" + s.wins() + " wins)");

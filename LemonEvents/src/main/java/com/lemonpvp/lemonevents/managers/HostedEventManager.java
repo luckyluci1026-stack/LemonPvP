@@ -298,6 +298,7 @@ public class HostedEventManager {
     }
 
     private void returnEveryone() {
+        if (active == null) return; // may have been cancelled already (e.g. during the win celebration)
         Location ret = returnSpawn();
         for (UUID id : new ArrayList<>(active.getParticipants())) {
             Player p = Bukkit.getPlayer(id);

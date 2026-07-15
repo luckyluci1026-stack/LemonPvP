@@ -97,7 +97,8 @@ public class TournamentManager {
         if (t == null || t.getState() != Tournament.State.QUALIFICATION) return;
         t.setState(Tournament.State.FINALS);
         plugin.getDatabase().updateTournament(t);
-        standings(id).thenAccept(all -> {
+        standings(id).thenAccept(result -> {
+            List<Standing> all = result != null ? result : List.of();
             List<Standing> top = all.size() > topN ? new ArrayList<>(all.subList(0, topN)) : new ArrayList<>(all);
             plugin.getDatabase().saveFinalists(id, top);
             Bukkit.getScheduler().runTask(plugin, () -> announceFinalists(t, top));

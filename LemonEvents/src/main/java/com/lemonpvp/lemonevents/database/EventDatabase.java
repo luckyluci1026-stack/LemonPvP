@@ -413,7 +413,8 @@ public class EventDatabase {
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         UUID u = UUID.fromString(rs.getString("winner_uuid"));
-                        if (signups != null && !signups.isEmpty() && !signups.contains(u)) continue;
+                        // Standings are restricted to sign-ups: no sign-ups → no standings.
+                        if (signups == null || !signups.contains(u)) continue;
                         out.add(new Standing(u, rs.getInt("wins")));
                     }
                 }
