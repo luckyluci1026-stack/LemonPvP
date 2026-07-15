@@ -25,6 +25,13 @@ public class HostedEvent {
         ENDED
     }
 
+    public enum Mode {
+        /** Free-for-all: last player standing wins. */
+        FFA,
+        /** Everyone versus the host: the host fights all challengers at once. */
+        HOST_BATTLE
+    }
+
     private final UUID host;
     private final String hostName;
     private final String name;
@@ -38,8 +45,11 @@ public class HostedEvent {
     private final Set<UUID> alive = new LinkedHashSet<>();
 
     private State state = State.SETUP;
+    private Mode mode = Mode.FFA;
     /** True while the pre-fight countdown holds players in place. */
     private boolean frozen = true;
+    /** In HOST_BATTLE, the last challenger to hit the host — credited on the host's death. */
+    private UUID lastHostDamager;
 
     public HostedEvent(UUID host, String hostName, String name) {
         this.host = host;
@@ -65,6 +75,12 @@ public class HostedEvent {
 
     public State getState() { return state; }
     public void setState(State state) { this.state = state; }
+
+    public Mode getMode() { return mode; }
+    public void setMode(Mode mode) { this.mode = mode; }
+
+    public UUID getLastHostDamager() { return lastHostDamager; }
+    public void setLastHostDamager(UUID lastHostDamager) { this.lastHostDamager = lastHostDamager; }
 
     public boolean isFrozen() { return frozen; }
     public void setFrozen(boolean frozen) { this.frozen = frozen; }

@@ -6,9 +6,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.entity.Projectile;
+import org.bukkit.projectiles.ProjectileSource;
 
 import java.util.UUID;
 
@@ -33,6 +36,40 @@ public class HostedEventListener implements Listener {
         if (!ev.getAlive().contains(player.getUniqueId())) return;
         // No damage while the countdown freeze is active.
         if (ev.isFrozen()) event.setCancelled(true);
+    }
+
+    /**
+     * In Host Battle, challengers can't hurt each other (only the host), and the
+     * last challenger to hit the host is remembered so the kill can be credited.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPvp(EntityDamageByEntityEvent event) {
+        if (!(event.getEntity() instanceof Player victim)) return;
+        HostedEvent ev = plugin.getHostedEventManager().getActive();
+        if (ev == null || ev.getState() != HostedEvent.State.RUNNING) return;
+        if (ev.getMode() != HostedEvent.Mode.HOST_BATTLE) return;
+        if (!ev.getAlive().contains(victim.getUniqueId())) return;
+
+        Player damager = resolveDamager(event.getDamager());
+        if (damager == null || !ev.getAlive().contains(damager.getUniqueId())) return;
+
+        UUID host = ev.getHost();
+        boolean victimHost = victim.getUniqueId().equals(host);
+        boolean damagerHost = damager.getUniqueId().equals(host);
+        if (!victimHost && !damagerHost) {
+            event.setCancelled(true); // challengers are on the same side
+        } else if (victimHost) {
+            ev.setLastHostDamager(damager.getUniqueId()); // credit the finishing blow
+        }
+    }
+
+    private Player resolveDamager(org.bukkit.entity.Entity entity) {
+        if (entity instanceof Player p) return p;
+        if (entity instanceof Projectile proj) {
+            ProjectileSource src = proj.getShooter();
+            if (src instanceof Player p) return p;
+        }
+        return null;
     }
 
     @EventHandler

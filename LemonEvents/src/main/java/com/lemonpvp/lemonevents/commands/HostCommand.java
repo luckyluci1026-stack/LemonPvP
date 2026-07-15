@@ -48,6 +48,20 @@ public class HostCommand implements CommandExecutor, TabCompleter {
             }
             case "open" -> { if (!denyHost(player)) plugin.getHostedEventManager().openJoins(player); }
             case "begin", "start-fight" -> { if (!denyHost(player)) plugin.getHostedEventManager().begin(player); }
+            case "mode" -> {
+                if (denyHost(player)) return true;
+                if (args.length < 2) { msg(player, "<red>Usage: <white>/host mode <ffa|hostbattle>"); return true; }
+                String m = args[1].toLowerCase(Locale.ROOT);
+                if (m.startsWith("host") || m.equals("battle") || m.equals("hb")) {
+                    plugin.getHostedEventManager().setMode(player,
+                            com.lemonpvp.lemonevents.model.HostedEvent.Mode.HOST_BATTLE);
+                } else if (m.equals("ffa") || m.startsWith("free")) {
+                    plugin.getHostedEventManager().setMode(player,
+                            com.lemonpvp.lemonevents.model.HostedEvent.Mode.FFA);
+                } else {
+                    msg(player, "<red>Unknown mode. Use <white>ffa <red>or <white>hostbattle<red>.");
+                }
+            }
             case "cancel", "stop" -> plugin.getHostedEventManager().cancel(player);
             default -> sendHelp(player);
         }
@@ -66,6 +80,7 @@ public class HostCommand implements CommandExecutor, TabCompleter {
         msg(p, "<gradient:#fffb00:#00ff00><bold>Host an Event</bold></gradient>");
         if (p.hasPermission(HOST_PERM)) {
             msg(p, "<yellow>/host start <name> <gray>— build the event kit");
+            msg(p, "<yellow>/host mode <ffa|hostbattle> <gray>— FFA or all-vs-host");
             msg(p, "<yellow>/host open <gray>— broadcast & open joins");
             msg(p, "<yellow>/host begin <gray>— teleport everyone & start");
             msg(p, "<yellow>/host cancel <gray>— abort");
@@ -77,15 +92,22 @@ public class HostCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length != 1) return List.of();
-        String prefix = args[0].toLowerCase(Locale.ROOT);
-        List<String> subs = new ArrayList<>();
-        subs.add("join");
-        if (sender.hasPermission(HOST_PERM)) {
-            subs.add("start"); subs.add("open"); subs.add("begin"); subs.add("cancel");
+        if (args.length == 1) {
+            String prefix = args[0].toLowerCase(Locale.ROOT);
+            List<String> subs = new ArrayList<>();
+            subs.add("join");
+            if (sender.hasPermission(HOST_PERM)) {
+                subs.add("start"); subs.add("mode"); subs.add("open"); subs.add("begin"); subs.add("cancel");
+            }
+            List<String> out = new ArrayList<>();
+            for (String s : subs) if (s.startsWith(prefix)) out.add(s);
+            return out;
         }
-        List<String> out = new ArrayList<>();
-        for (String s : subs) if (s.startsWith(prefix)) out.add(s);
-        return out;
+        if (args.length == 2 && args[0].equalsIgnoreCase("mode") && sender.hasPermission(HOST_PERM)) {
+            List<String> out = new ArrayList<>();
+            for (String m : List.of("ffa", "hostbattle")) if (m.startsWith(args[1].toLowerCase(Locale.ROOT))) out.add(m);
+            return out;
+        }
+        return List.of();
     }
 }

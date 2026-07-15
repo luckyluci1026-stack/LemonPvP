@@ -178,12 +178,36 @@ public class HostedEventManager {
     // -- Internals -----------------------------------------------------------
 
     private void checkWin() {
+        if (active.getMode() == HostedEvent.Mode.HOST_BATTLE) {
+            UUID host = active.getHost();
+            boolean hostAlive = active.getAlive().contains(host);
+            long challengers = active.getAlive().stream().filter(u -> !u.equals(host)).count();
+            if (!hostAlive) {
+                // The host fell — credit the challenger who landed the finishing blow.
+                UUID winner = active.getLastHostDamager();
+                if (winner == null || !active.getAlive().contains(winner)) {
+                    winner = active.getAlive().stream().filter(u -> !u.equals(host)).findFirst().orElse(null);
+                }
+                endWithWinner(winner, "<bold><gradient:#00ff88:#00c8ff>⚔ The challengers took down "
+                        + active.getHostName() + "!</gradient></bold>");
+            } else if (challengers == 0) {
+                endWithWinner(host, "<bold><gradient:#ff5252:#ffb300>👑 " + active.getHostName()
+                        + " defeated everyone!</gradient></bold>");
+            }
+            return;
+        }
+        // FFA: last player standing.
         if (active.getAlive().size() > 1) return;
         UUID winnerId = active.getAlive().stream().findFirst().orElse(null);
-        active.setState(HostedEvent.State.ENDED);
+        String name = winnerId != null ? nameOf(winnerId) : "Nobody";
+        endWithWinner(winnerId, "<bold><gradient:#fffb00:#00ff00>🏆 " + name
+                + " won " + active.getName() + "!</gradient></bold>");
+    }
 
-        String winnerName = winnerId != null ? nameOf(winnerId) : "Nobody";
-        broadcast("<bold><gradient:#fffb00:#00ff00>🏆 " + winnerName + " won " + active.getName() + "!</gradient></bold>");
+    /** Ends the event on a decided winner: broadcast, celebration, reward, cleanup. */
+    private void endWithWinner(UUID winnerId, String broadcastLine) {
+        active.setState(HostedEvent.State.ENDED);
+        broadcast(broadcastLine);
 
         Player winner = winnerId != null ? Bukkit.getPlayer(winnerId) : null;
         if (winner != null) {
@@ -203,6 +227,22 @@ public class HostedEventManager {
                 hostSnapshot = null;
             }
         }.runTaskLater(plugin, 140L);
+    }
+
+    /** Sets the event mode (FFA vs Host Battle) before it begins. */
+    public boolean setMode(Player host, HostedEvent.Mode mode) {
+        if (active == null || (active.getState() != HostedEvent.State.SETUP
+                && active.getState() != HostedEvent.State.OPEN)) {
+            msg(host, "<red>You can only change the mode before the event starts.");
+            return false;
+        }
+        if (!host.getUniqueId().equals(active.getHost()) && !host.hasPermission("lemonevents.admin.host")) {
+            msg(host, "<red>Only the host can change the mode.");
+            return false;
+        }
+        active.setMode(mode);
+        msg(host, "<green>Mode set to <white>" + (mode == HostedEvent.Mode.HOST_BATTLE ? "Host Battle (all vs host)" : "Free-for-all") + "<green>.");
+        return true;
     }
 
     private void runCountdown() {
@@ -318,10 +358,12 @@ public class HostedEventManager {
     }
 
     private void broadcastJoin() {
+        String modeLabel = active.getMode() == HostedEvent.Mode.HOST_BATTLE
+                ? " <dark_gray>(<aqua>all vs host</aqua>)" : "";
         String join = "<click:run_command:'/host join'><hover:show_text:'<green>Click to join'>"
                 + "<dark_gray>[<gradient:#fffb00:#00ff00><bold>➜ JOIN</bold></gradient><dark_gray>]</hover></click>";
         Bukkit.broadcast(MM.deserialize("<gradient:#fffb00:#ffa751><bold>EVENT</bold></gradient> <dark_gray>» "
-                + "<white>" + active.getHostName() + " <gray>is hosting <white>" + active.getName() + "<gray>!  " + join));
+                + "<white>" + active.getHostName() + " <gray>is hosting <white>" + active.getName() + modeLabel + "<gray>!  " + join));
         // Best-effort cross-server notice (players still join on this server).
         try {
             plugin.getMessaging().broadcastToAll("§e" + active.getHostName() + " is hosting " + active.getName()
