@@ -4,6 +4,7 @@ import com.lemonpvp.lemonevents.LemonEvents;
 import com.lemonpvp.lemonevents.model.EventStatus;
 import com.lemonpvp.lemonevents.model.EventType;
 import com.lemonpvp.lemonevents.model.GameEvent;
+import com.lemonpvp.lemonevents.model.Tournament;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -82,6 +83,35 @@ public class EventDatabase {
                 "  id INT AUTO_INCREMENT PRIMARY KEY," +
                 "  backup_path VARCHAR(512) NOT NULL," +
                 "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            conn.createStatement().executeUpdate(
+                "CREATE TABLE IF NOT EXISTS lemonevents_tournaments (" +
+                "  id INT AUTO_INCREMENT PRIMARY KEY," +
+                "  name VARCHAR(64) NOT NULL," +
+                "  gamemode VARCHAR(32) NOT NULL," +
+                "  state VARCHAR(16) NOT NULL DEFAULT 'SIGNUP'," +
+                "  start_at BIGINT NOT NULL DEFAULT 0," +
+                "  end_at BIGINT NOT NULL DEFAULT 0," +
+                "  champion_uuid VARCHAR(36) DEFAULT NULL," +
+                "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            conn.createStatement().executeUpdate(
+                "CREATE TABLE IF NOT EXISTS lemonevents_tournament_signups (" +
+                "  tournament_id INT NOT NULL," +
+                "  uuid VARCHAR(36) NOT NULL," +
+                "  signed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                "  PRIMARY KEY (tournament_id, uuid)" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            conn.createStatement().executeUpdate(
+                "CREATE TABLE IF NOT EXISTS lemonevents_tournament_finalists (" +
+                "  tournament_id INT NOT NULL," +
+                "  uuid VARCHAR(36) NOT NULL," +
+                "  seed INT NOT NULL," +
+                "  wins INT NOT NULL DEFAULT 0," +
+                "  PRIMARY KEY (tournament_id, uuid)" +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         }
     }
@@ -270,6 +300,168 @@ public class EventDatabase {
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "clearFfaBackupRecord error", e);
             }
+        });
+    }
+
+    // ── Tournaments ─────────────────────────────────────────────────────────────
+
+    /** A standings row: a player and their win count in the tournament window. */
+    public record Standing(UUID uuid, int wins) {}
+
+    public CompletableFuture<Tournament> createTournament(String name, String gamemode) {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO lemonevents_tournaments (name, gamemode) VALUES (?,?)",
+                    Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, name);
+                ps.setString(2, gamemode.toLowerCase());
+                ps.executeUpdate();
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) return new Tournament(rs.getInt(1), name, gamemode.toLowerCase(),
+                            Tournament.State.SIGNUP, 0, 0, null);
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "createTournament error", e);
+            }
+            return null;
+        });
+    }
+
+    public CompletableFuture<List<Tournament>> loadAllTournaments() {
+        return queryAsync(conn -> {
+            List<Tournament> out = new ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT id, name, gamemode, state, start_at, end_at, champion_uuid FROM lemonevents_tournaments")) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        String champ = rs.getString("champion_uuid");
+                        out.add(new Tournament(rs.getInt("id"), rs.getString("name"), rs.getString("gamemode"),
+                                Tournament.State.valueOf(rs.getString("state")),
+                                rs.getLong("start_at"), rs.getLong("end_at"),
+                                champ != null ? UUID.fromString(champ) : null));
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "loadAllTournaments error", e);
+            }
+            return out;
+        });
+    }
+
+    public CompletableFuture<Void> updateTournament(Tournament t) {
+        return executeAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE lemonevents_tournaments SET state=?, start_at=?, end_at=?, champion_uuid=? WHERE id=?")) {
+                ps.setString(1, t.getState().name());
+                ps.setLong(2, t.getStartAt());
+                ps.setLong(3, t.getEndAt());
+                ps.setString(4, t.getChampion() != null ? t.getChampion().toString() : null);
+                ps.setInt(5, t.getId());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "updateTournament error", e);
+            }
+        });
+    }
+
+    public CompletableFuture<Boolean> signup(int tournamentId, UUID uuid) {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT IGNORE INTO lemonevents_tournament_signups (tournament_id, uuid) VALUES (?,?)")) {
+                ps.setInt(1, tournamentId);
+                ps.setString(2, uuid.toString());
+                return ps.executeUpdate() > 0;
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "signup error", e);
+                return false;
+            }
+        });
+    }
+
+    public CompletableFuture<java.util.Set<UUID>> getSignups(int tournamentId) {
+        return queryAsync(conn -> {
+            java.util.Set<UUID> out = new java.util.HashSet<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT uuid FROM lemonevents_tournament_signups WHERE tournament_id=?")) {
+                ps.setInt(1, tournamentId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) out.add(UUID.fromString(rs.getString("uuid")));
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "getSignups error", e);
+            }
+            return out;
+        });
+    }
+
+    /**
+     * Standings computed from the practice server's match log: each signed-up
+     * player's wins in the tournament gamemode during the qualification window,
+     * highest first. Reads {@code lp_duel_records} (same network database).
+     */
+    public CompletableFuture<List<Standing>> getStandings(String gamemode, long startAt, long endAt,
+                                                          java.util.Set<UUID> signups) {
+        return queryAsync(conn -> {
+            List<Standing> out = new ArrayList<>();
+            String sql = "SELECT winner_uuid, COUNT(*) AS wins FROM lp_duel_records " +
+                    "WHERE gamemode=? AND winner_uuid IS NOT NULL AND played_at BETWEEN ? AND ? " +
+                    "GROUP BY winner_uuid ORDER BY wins DESC";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, gamemode.toLowerCase());
+                ps.setTimestamp(2, new Timestamp(startAt));
+                ps.setTimestamp(3, new Timestamp(endAt > 0 ? endAt : System.currentTimeMillis()));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        UUID u = UUID.fromString(rs.getString("winner_uuid"));
+                        if (signups != null && !signups.isEmpty() && !signups.contains(u)) continue;
+                        out.add(new Standing(u, rs.getInt("wins")));
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "getStandings error", e);
+            }
+            return out;
+        });
+    }
+
+    public CompletableFuture<Void> saveFinalists(int tournamentId, List<Standing> finalists) {
+        return executeAsync(conn -> {
+            try (PreparedStatement del = conn.prepareStatement(
+                    "DELETE FROM lemonevents_tournament_finalists WHERE tournament_id=?")) {
+                del.setInt(1, tournamentId);
+                del.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "saveFinalists delete error", e);
+            }
+            int seed = 1;
+            for (Standing s : finalists) {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO lemonevents_tournament_finalists (tournament_id, uuid, seed, wins) VALUES (?,?,?,?)")) {
+                    ps.setInt(1, tournamentId);
+                    ps.setString(2, s.uuid().toString());
+                    ps.setInt(3, seed++);
+                    ps.setInt(4, s.wins());
+                    ps.executeUpdate();
+                } catch (SQLException e) {
+                    plugin.getLogger().log(Level.SEVERE, "saveFinalists insert error", e);
+                }
+            }
+        });
+    }
+
+    public CompletableFuture<List<Standing>> getFinalists(int tournamentId) {
+        return queryAsync(conn -> {
+            List<Standing> out = new ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT uuid, wins FROM lemonevents_tournament_finalists WHERE tournament_id=? ORDER BY seed ASC")) {
+                ps.setInt(1, tournamentId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) out.add(new Standing(UUID.fromString(rs.getString("uuid")), rs.getInt("wins")));
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "getFinalists error", e);
+            }
+            return out;
         });
     }
 }

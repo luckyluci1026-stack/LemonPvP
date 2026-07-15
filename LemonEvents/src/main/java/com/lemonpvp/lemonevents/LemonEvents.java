@@ -27,6 +27,7 @@ public final class LemonEvents extends JavaPlugin {
     private MapManager mapManager;
     private EventMessaging messaging;
     private HostedEventManager hostedEventManager;
+    private TournamentManager tournamentManager;
 
     private FileConfiguration eventsConfig;
     private FileConfiguration lootConfig;
@@ -55,10 +56,13 @@ public final class LemonEvents extends JavaPlugin {
         eventManager     = new EventManager(this);
         announcementManager = new AnnouncementManager(this);
         hostedEventManager = new HostedEventManager(this);
+        tournamentManager = new TournamentManager(this);
 
         messaging.register();
         lootManager.load();
         eventManager.loadAll();
+        tournamentManager.loadAll();
+        tournamentManager.start();
         announcementManager.start();
 
         getServer().getPluginManager().registerEvents(new EventPlayerListener(this), this);
@@ -100,6 +104,12 @@ public final class LemonEvents extends JavaPlugin {
             var hostExec = new HostCommand(this);
             hostCmd.setExecutor(hostExec);
             hostCmd.setTabCompleter(hostExec);
+        }
+        var tournamentCmd = getCommand("tournament");
+        if (tournamentCmd != null) {
+            var tExec = new TournamentCommand(this);
+            tournamentCmd.setExecutor(tExec);
+            tournamentCmd.setTabCompleter(tExec);
         }
 
         // Tab completion: /aowcreateevent <name> <type> ..., others take an event name
@@ -156,6 +166,18 @@ public final class LemonEvents extends JavaPlugin {
     public MapManager getMapManager() { return mapManager; }
     public EventMessaging getMessaging() { return messaging; }
     public HostedEventManager getHostedEventManager() { return hostedEventManager; }
+    public TournamentManager getTournamentManager() { return tournamentManager; }
+
+    /** Resolves a player name to a UUID (online first, then LemonCore's store). */
+    public java.util.concurrent.CompletableFuture<java.util.UUID> getPlayerUuid(String name) {
+        org.bukkit.entity.Player p = getServer().getPlayerExact(name);
+        if (p != null) return java.util.concurrent.CompletableFuture.completedFuture(p.getUniqueId());
+        org.bukkit.plugin.Plugin lc = getServer().getPluginManager().getPlugin("LemonCore");
+        if (lc instanceof com.lemonpvp.lemoncore.LemonCore core) {
+            return core.getPlayerDataManager().findUUIDByName(name);
+        }
+        return java.util.concurrent.CompletableFuture.completedFuture(null);
+    }
     public FileConfiguration getServersConfig() { return serversConfig; }
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
