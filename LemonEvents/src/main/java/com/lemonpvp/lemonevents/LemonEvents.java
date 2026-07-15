@@ -28,6 +28,7 @@ public final class LemonEvents extends JavaPlugin {
     private EventMessaging messaging;
     private HostedEventManager hostedEventManager;
     private TournamentManager tournamentManager;
+    private com.lemonpvp.lemonevents.util.ChatInputManager chatInputManager;
 
     private FileConfiguration eventsConfig;
     private FileConfiguration lootConfig;
@@ -57,6 +58,8 @@ public final class LemonEvents extends JavaPlugin {
         announcementManager = new AnnouncementManager(this);
         hostedEventManager = new HostedEventManager(this);
         tournamentManager = new TournamentManager(this);
+        chatInputManager = new com.lemonpvp.lemonevents.util.ChatInputManager(this);
+        getServer().getPluginManager().registerEvents(chatInputManager, this);
 
         messaging.register();
         lootManager.load();
@@ -111,6 +114,8 @@ public final class LemonEvents extends JavaPlugin {
             tournamentCmd.setExecutor(tExec);
             tournamentCmd.setTabCompleter(tExec);
         }
+        var panelCmd = getCommand("eventpanel");
+        if (panelCmd != null) panelCmd.setExecutor(new EventPanelCommand(this));
 
         // Tab completion: /aowcreateevent <name> <type> ..., others take an event name
         if (create != null) create.setTabCompleter((TabCompleter) (s, c, l, a) ->
@@ -167,6 +172,7 @@ public final class LemonEvents extends JavaPlugin {
     public EventMessaging getMessaging() { return messaging; }
     public HostedEventManager getHostedEventManager() { return hostedEventManager; }
     public TournamentManager getTournamentManager() { return tournamentManager; }
+    public com.lemonpvp.lemonevents.util.ChatInputManager getChatInputManager() { return chatInputManager; }
 
     /** Resolves a player name to a UUID (online first, then LemonCore's store). */
     public java.util.concurrent.CompletableFuture<java.util.UUID> getPlayerUuid(String name) {

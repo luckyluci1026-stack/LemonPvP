@@ -36,6 +36,11 @@ commands:
     description: Official multi-day tournaments
     aliases: [tourney, tourny]
     usage: /tournament <join|list|top|finals|create|open|close|champion>
+  eventpanel:
+    description: Owner control panel for events and tournaments
+    permission: lemonevents.owner
+    aliases: [eventadmin, epanel]
+    usage: /eventpanel
 
 permissions:
   lemonevents.admin.create:
@@ -64,4 +69,7 @@ permissions:
     default: op
   lemonevents.admin.tournament:
     description: Create and manage tournaments
+    default: op
+  lemonevents.owner:
+    description: Open the owner event/tournament control panel
     default: op
