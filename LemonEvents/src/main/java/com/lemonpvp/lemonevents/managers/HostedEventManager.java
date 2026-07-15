@@ -361,7 +361,9 @@ public class HostedEventManager {
     private void broadcastJoin() {
         String modeLabel = active.getMode() == HostedEvent.Mode.HOST_BATTLE
                 ? " <dark_gray>(<aqua>all vs host</aqua>)" : "";
-        String join = "<click:run_command:'/host join'><hover:show_text:'<green>Click to join'>"
+        // /eventjoin works network-wide (the lobby registers the same name to do a
+        // cross-server hop), so this button works from any server.
+        String join = "<click:run_command:'/eventjoin'><hover:show_text:'<green>Click to join'>"
                 + "<dark_gray>[<gradient:#fffb00:#00ff00><bold>➜ JOIN</bold></gradient><dark_gray>]</hover></click>";
         Bukkit.broadcast(MM.deserialize("<gradient:#fffb00:#ffa751><bold>EVENT</bold></gradient> <dark_gray>» "
                 + "<white>" + active.getHostName() + " <gray>is hosting <white>" + active.getName() + modeLabel + "<gray>!  " + join));

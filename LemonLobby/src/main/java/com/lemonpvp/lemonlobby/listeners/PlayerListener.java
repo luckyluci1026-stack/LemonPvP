@@ -198,6 +198,10 @@ public class PlayerListener implements Listener {
                             plugin.getServersConfig().getString("servers.duels.name", "duels"));
                 }
             }
+            case 5 -> {
+                // Tournament sword: pick a joinable tournament, sign up and queue.
+                new com.lemonpvp.lemonlobby.gui.TournamentSelectGUI(plugin, player).open();
+            }
             case 6 -> {
                 // Cosmetics
                 org.bukkit.plugin.Plugin cosmeticsPlugin = Bukkit.getPluginManager().getPlugin("LemonCosmetics");

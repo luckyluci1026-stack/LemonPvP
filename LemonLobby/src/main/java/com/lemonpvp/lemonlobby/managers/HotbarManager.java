@@ -57,6 +57,12 @@ public class HotbarManager {
                 -1
         ));
 
+        player.getInventory().setItem(5, buildItem(
+                Material.GOLDEN_SWORD,
+                "<gradient:#fffb00:#ffa751>ᴛᴏᴜʀɴᴀᴍᴇɴᴛ</gradient>",
+                -1
+        ));
+
         player.getInventory().setItem(6, buildItem(
                 Material.DIAMOND,
                 "<light_purple>ᴄᴏsᴍᴇᴛɪᴄs</light_purple>",

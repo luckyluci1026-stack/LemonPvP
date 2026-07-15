@@ -9,6 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.entity.Projectile;
 import org.bukkit.projectiles.ProjectileSource;
@@ -94,5 +95,21 @@ public class HostedEventListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         plugin.getHostedEventManager().handleQuit(event.getPlayer().getUniqueId());
+    }
+
+    /**
+     * A player sent here from another server after clicking JOIN: consume the
+     * cross-server handoff marker and add them to the open hosted event.
+     */
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+        plugin.getDatabase().takePendingEventJoin(uuid).thenAccept(wanted -> {
+            if (!Boolean.TRUE.equals(wanted)) return;
+            org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                org.bukkit.entity.Player p = org.bukkit.Bukkit.getPlayer(uuid);
+                if (p != null && p.isOnline()) plugin.getHostedEventManager().join(p);
+            }, 20L);
+        });
     }
 }

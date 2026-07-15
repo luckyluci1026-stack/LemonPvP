@@ -113,7 +113,44 @@ public class EventDatabase {
                 "  wins INT NOT NULL DEFAULT 0," +
                 "  PRIMARY KEY (tournament_id, uuid)" +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            // Cross-server hosted-event join handoff (written by the lobby).
+            conn.createStatement().executeUpdate(
+                "CREATE TABLE IF NOT EXISTS lp_pending_event_join (" +
+                "  uuid VARCHAR(36) PRIMARY KEY," +
+                "  created_at BIGINT NOT NULL" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         }
+    }
+
+    /**
+     * Atomically consumes a pending "join the hosted event" marker for a player
+     * who was sent here from another server, returning true if a fresh one (≤120s)
+     * existed. Stale rows are cleaned up.
+     */
+    public CompletableFuture<Boolean> takePendingEventJoin(UUID uuid) {
+        return queryAsync(conn -> {
+            long cutoff = System.currentTimeMillis() - 120_000L;
+            boolean fresh = false;
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT created_at FROM lp_pending_event_join WHERE uuid=?")) {
+                ps.setString(1, uuid.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) fresh = rs.getLong("created_at") >= cutoff;
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "takePendingEventJoin read error", e);
+                return false;
+            }
+            try (PreparedStatement del = conn.prepareStatement(
+                    "DELETE FROM lp_pending_event_join WHERE uuid=?")) {
+                del.setString(1, uuid.toString());
+                del.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.SEVERE, "takePendingEventJoin delete error", e);
+            }
+            return fresh;
+        });
     }
 
     // ── Async helpers ──────────────────────────────────────────────────────────

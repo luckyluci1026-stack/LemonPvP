@@ -116,6 +116,8 @@ public final class LemonEvents extends JavaPlugin {
         }
         var panelCmd = getCommand("eventpanel");
         if (panelCmd != null) panelCmd.setExecutor(new EventPanelCommand(this));
+        var eventJoinCmd = getCommand("eventjoin");
+        if (eventJoinCmd != null) eventJoinCmd.setExecutor(new EventJoinCommand(this));
 
         // Tab completion: /aowcreateevent <name> <type> ..., others take an event name
         if (create != null) create.setTabCompleter((TabCompleter) (s, c, l, a) ->

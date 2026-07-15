@@ -84,6 +84,14 @@ public class Database {
                 "    streak INT NOT NULL" +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             );
+            // Cross-server hosted-event join handoff: the lobby writes a row when a
+            // player clicks JOIN; the events server reads + deletes it on join.
+            stmt.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS lp_pending_event_join (" +
+                "    uuid VARCHAR(36) PRIMARY KEY," +
+                "    created_at BIGINT NOT NULL" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            );
             // Migration: drop the legacy remaining_uses column if an older schema
             // still has it. Done via metadata so it works on both MySQL (no
             // DROP COLUMN IF EXISTS) and MariaDB. Leaving a NOT NULL column with
@@ -272,6 +280,55 @@ public class Database {
             ps.executeUpdate();
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to save pending training mode: " + e.getMessage());
+        }
+    }
+
+    /** A joinable tournament as seen from the lobby (read from the events tables). */
+    public record TournamentInfo(int id, String name, String gamemode, String state) {}
+
+    /**
+     * Tournaments currently accepting players (SIGNUP or QUALIFICATION), read
+     * from the shared {@code lemonevents_tournaments} table. Blocking — call async.
+     */
+    public java.util.List<TournamentInfo> joinableTournaments() {
+        java.util.List<TournamentInfo> out = new java.util.ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT id, name, gamemode, state FROM lemonevents_tournaments " +
+                     "WHERE state IN ('SIGNUP','QUALIFICATION') ORDER BY id DESC")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) out.add(new TournamentInfo(
+                        rs.getInt("id"), rs.getString("name"), rs.getString("gamemode"), rs.getString("state")));
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to read tournaments: " + e.getMessage());
+        }
+        return out;
+    }
+
+    /** Signs a player up for a tournament (shared events table). Blocking — call async. */
+    public void tournamentSignup(int tournamentId, UUID uuid) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "INSERT IGNORE INTO lemonevents_tournament_signups (tournament_id, uuid) VALUES (?, ?)")) {
+            ps.setInt(1, tournamentId);
+            ps.setString(2, uuid.toString());
+            ps.executeUpdate();
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to sign up for tournament: " + e.getMessage());
+        }
+    }
+
+    /** Marks that a player wants to join the open hosted event on the events server. Blocking — call async. */
+    public void savePendingEventJoin(UUID uuid) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "REPLACE INTO lp_pending_event_join (uuid, created_at) VALUES (?, ?)")) {
+            ps.setString(1, uuid.toString());
+            ps.setLong(2, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to save pending event join: " + e.getMessage());
         }
     }
 

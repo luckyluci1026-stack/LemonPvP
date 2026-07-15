@@ -88,6 +88,8 @@ public final class LemonLobby extends JavaPlugin {
         if (planksCmd != null) planksCmd.setExecutor(new PlanksCommand(this));
         var dailyCmd = getCommand("daily");
         if (dailyCmd != null) dailyCmd.setExecutor(new com.lemonpvp.lemonlobby.commands.DailyCommand(this));
+        var eventJoinCmd = getCommand("eventjoin");
+        if (eventJoinCmd != null) eventJoinCmd.setExecutor(new com.lemonpvp.lemonlobby.commands.EventJoinCommand(this));
         var gapplesCmd = new GApplesCommand(this);
         var gapplesBukkitCmd = getCommand("gapples");
         if (gapplesBukkitCmd != null) { gapplesBukkitCmd.setExecutor(gapplesCmd); gapplesBukkitCmd.setTabCompleter(gapplesCmd); }

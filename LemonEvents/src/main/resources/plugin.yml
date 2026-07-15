@@ -41,6 +41,9 @@ commands:
     permission: lemonevents.owner
     aliases: [eventadmin, epanel]
     usage: /eventpanel
+  eventjoin:
+    description: Join the open hosted event
+    usage: /eventjoin
 
 permissions:
   lemonevents.admin.create:

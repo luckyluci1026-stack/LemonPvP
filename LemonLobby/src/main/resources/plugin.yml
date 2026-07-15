@@ -19,6 +19,9 @@ commands:
     description: Claim your daily reward
     usage: /daily
     aliases: [dailyreward, rewards]
+  eventjoin:
+    description: Join the open hosted event (sends you to the events server)
+    usage: /eventjoin
   gapples:
     description: Verwaltet Spieler-Äpfel
     usage: /gapples add|remove|set|show <spieler> [menge]
