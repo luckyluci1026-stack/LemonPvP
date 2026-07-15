@@ -31,7 +31,7 @@ public class OwnerPanelGUI implements Listener {
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
     private static final int FFA_SLOT = 10, HOSTBATTLE_SLOT = 11, ACTIVE_SLOT = 13,
-            CREATE_TOURNEY_SLOT = 15, TOURNEYS_SLOT = 16, CLOSE_SLOT = 22;
+            CREATE_TOURNEY_SLOT = 15, TOURNEYS_SLOT = 16, CREATE_EVENT_SLOT = 4, CLOSE_SLOT = 22;
 
     private final LemonEvents plugin;
     private final Player owner;
@@ -69,6 +69,10 @@ public class OwnerPanelGUI implements Listener {
         inv.setItem(TOURNEYS_SLOT, named(Material.NETHER_STAR, "<aqua><bold>Manage Tournaments", List.of(
                 "<gray>Open, close and inspect tournaments.",
                 "", "<green>► Click to open")));
+        inv.setItem(CREATE_EVENT_SLOT, named(Material.ENDER_EYE, "<light_purple><bold>Create Scripted Event", List.of(
+                "<gray>Build a LemonRoyale / HungerGames /",
+                "<gray>PvP / Horror event with prizes.",
+                "", "<green>► Click to open the wizard")));
         inv.setItem(CLOSE_SLOT, named(Material.BARRIER, "<red>Close", List.of()));
     }
 
@@ -105,6 +109,7 @@ public class OwnerPanelGUI implements Listener {
             case ACTIVE_SLOT -> handleActive(p, e.isRightClick());
             case CREATE_TOURNEY_SLOT -> promptCreateTournament(p);
             case TOURNEYS_SLOT -> { unregister(); new TournamentListGUI(plugin, p).open(); }
+            case CREATE_EVENT_SLOT -> { unregister(); new EventCreateGUI(plugin, p).open(); }
             case CLOSE_SLOT -> p.closeInventory();
             default -> { /* border */ }
         }
