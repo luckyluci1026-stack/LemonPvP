@@ -33,7 +33,7 @@ commands:
     description: Host a simple event (build a kit, gather players, fight)
     usage: /host <start|mode|open|begin|join|cancel>
   eventpanel:
-    description: Owner control panel for events and tournaments
+    description: Owner control panel for hosting events
     permission: lemonevents.owner
     aliases: [eventadmin, epanel]
     usage: /eventpanel

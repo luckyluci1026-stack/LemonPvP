@@ -80,10 +80,18 @@ public class TeamDuelManager {
         }
     }
 
-    /** Removes any waiting duo containing this player (e.g. on quit). */
+    /** Removes any waiting duo containing this player (e.g. on quit), telling the partner. */
     public void leaveQueue(UUID uuid) {
         for (Deque<List<UUID>> deque : waitingDuos.values()) {
-            deque.removeIf(duo -> duo.contains(uuid));
+            deque.removeIf(duo -> {
+                if (!duo.contains(uuid)) return false;
+                // Let the still-online partner know the 2v2 queue was cancelled.
+                for (UUID member : duo) {
+                    if (member.equals(uuid)) continue;
+                    message(member, "<red>2v2 queue cancelled — your partner left.");
+                }
+                return true;
+            });
         }
     }
 

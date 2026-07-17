@@ -349,10 +349,14 @@ public class PartyManager {
         if (party.size() == 2) {
             var it = party.getMembers().iterator();
             UUID a = it.next(), b = it.next();
-            if (plugin.getTeamDuelManager().isInTeamDuel(a) || plugin.getTeamDuelManager().isInTeamDuel(b)) {
+            if (plugin.getTeamDuelManager().isInTeamDuel(a) || plugin.getTeamDuelManager().isInTeamDuel(b)
+                    || plugin.getDuelManager().isInDuel(a) || plugin.getDuelManager().isInDuel(b)) {
                 leader.sendMessage(MM.deserialize("<red>Your duo is already in a match."));
                 return;
             }
+            // Queuing as a duo overrides any solo queue — a 2v2 needs both free.
+            plugin.getQueueManager().removeFromQueue(a);
+            plugin.getQueueManager().removeFromQueue(b);
             plugin.getTeamDuelManager().queueDuo(a, b, gamemode);
             return;
         }
