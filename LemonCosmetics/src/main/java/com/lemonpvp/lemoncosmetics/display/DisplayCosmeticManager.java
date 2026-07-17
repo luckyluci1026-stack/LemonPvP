@@ -75,6 +75,7 @@ public class DisplayCosmeticManager {
         Set<Player> vs = viewers.remove(wearer);
         wearerWorld.remove(wearer);
         wearerYaw.remove(wearer);
+        wearerPos.remove(wearer);
         if (cs == null || vs == null) return;
         for (Player viewer : vs) for (DisplayCosmetic c : cs) c.remove(viewer);
     }

@@ -34,6 +34,7 @@ public final class LemonCosmetics extends JavaPlugin {
     private CapeManager capeManager;
     private com.lemonpvp.lemoncosmetics.managers.EmoteManager emoteManager;
     private com.lemonpvp.lemoncosmetics.display.DisplayCosmeticManager displayCosmeticManager;
+    private com.lemonpvp.lemoncosmetics.display.CosmeticMoveListener cosmeticMoveListener;
     private CosmeticsMessaging cosmeticsMessaging;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
@@ -109,8 +110,9 @@ public final class LemonCosmetics extends JavaPlugin {
             try {
                 displayCosmeticManager = new com.lemonpvp.lemoncosmetics.display.DisplayCosmeticManager(this);
                 displayCosmeticManager.start();
-                com.github.retrooper.packetevents.PacketEvents.getAPI().getEventManager().registerListener(
-                        new com.lemonpvp.lemoncosmetics.display.CosmeticMoveListener(displayCosmeticManager));
+                cosmeticMoveListener = new com.lemonpvp.lemoncosmetics.display.CosmeticMoveListener(displayCosmeticManager);
+                com.github.retrooper.packetevents.PacketEvents.getAPI().getEventManager()
+                        .registerListener(cosmeticMoveListener);
                 getServer().getPluginManager().registerEvents(
                         new com.lemonpvp.lemoncosmetics.display.DisplayCosmeticQuitListener(displayCosmeticManager), this);
                 var pcosmeticCmd = getCommand("pcosmetic");
@@ -133,6 +135,13 @@ public final class LemonCosmetics extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Unregister the packet listener so a /reload doesn't leave a stale one bound.
+        if (cosmeticMoveListener != null) {
+            try {
+                com.github.retrooper.packetevents.PacketEvents.getAPI().getEventManager()
+                        .unregisterListener(cosmeticMoveListener);
+            } catch (Throwable ignored) { }
+        }
         if (emoteManager != null) emoteManager.shutdown();
         if (capeManager != null) capeManager.shutdown();
         if (arrowTrailManager != null) arrowTrailManager.cancelAll();
