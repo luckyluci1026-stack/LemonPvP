@@ -345,6 +345,18 @@ public class PartyManager {
             return;
         }
 
+        // A duo queues as a TEAM: 2v2 against the next waiting duo.
+        if (party.size() == 2) {
+            var it = party.getMembers().iterator();
+            UUID a = it.next(), b = it.next();
+            if (plugin.getTeamDuelManager().isInTeamDuel(a) || plugin.getTeamDuelManager().isInTeamDuel(b)) {
+                leader.sendMessage(MM.deserialize("<red>Your duo is already in a match."));
+                return;
+            }
+            plugin.getTeamDuelManager().queueDuo(a, b, gamemode);
+            return;
+        }
+
         int queued = 0;
         for (UUID member : party.getMembers()) {
             if (plugin.getQueueManager().isQueued(member)) continue;

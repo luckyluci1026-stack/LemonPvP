@@ -50,6 +50,7 @@ public class LemonPractice extends JavaPlugin {
     private com.lemonpvp.lemonpractice.managers.StreakManager streakManager;
     private com.lemonpvp.lemonpractice.managers.PostMatchManager postMatchManager;
     private com.lemonpvp.lemonpractice.tournament.TournamentManager tournamentManager;
+    private com.lemonpvp.lemonpractice.managers.TeamDuelManager teamDuelManager;
     private QueueManager queueManager;
     private DuelManager duelManager;
     private com.lemonpvp.lemonpractice.managers.BotDuelManager botDuelManager;
@@ -125,6 +126,7 @@ public class LemonPractice extends JavaPlugin {
         queueManager = new QueueManager(this);
         queueManager.startTasks();
         duelManager = new DuelManager(this);
+        teamDuelManager = new com.lemonpvp.lemonpractice.managers.TeamDuelManager(this);
         botDuelManager = new com.lemonpvp.lemonpractice.managers.BotDuelManager(this);
         duelInviteManager = new DuelInviteManager(this);
         spectatorManager = new SpectatorManager(this);
@@ -146,6 +148,8 @@ public class LemonPractice extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new com.lemonpvp.lemonpractice.listeners.KitAdminListener(this), this);
         getServer().getPluginManager().registerEvents(new DuelListener(this), this);
+        getServer().getPluginManager().registerEvents(
+                new com.lemonpvp.lemonpractice.listeners.TeamDuelListener(this), this);
         getServer().getPluginManager().registerEvents(
                 new com.lemonpvp.lemonpractice.listeners.BotDuelListener(this), this);
         getServer().getPluginManager().registerEvents(
@@ -323,6 +327,7 @@ public class LemonPractice extends JavaPlugin {
     public com.lemonpvp.lemonpractice.managers.StreakManager getStreakManager() { return streakManager; }
     public com.lemonpvp.lemonpractice.managers.PostMatchManager getPostMatchManager() { return postMatchManager; }
     public com.lemonpvp.lemonpractice.tournament.TournamentManager getTournamentManager() { return tournamentManager; }
+    public com.lemonpvp.lemonpractice.managers.TeamDuelManager getTeamDuelManager() { return teamDuelManager; }
     public QueueManager getQueueManager() { return queueManager; }
     public DuelManager getDuelManager() { return duelManager; }
     public com.lemonpvp.lemonpractice.managers.BotDuelManager getBotDuelManager() { return botDuelManager; }

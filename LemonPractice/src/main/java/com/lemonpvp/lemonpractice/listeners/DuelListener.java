@@ -137,6 +137,11 @@ public class DuelListener implements Listener {
             return;
         }
 
+        // 2v2 team duels are governed by TeamDuelListener, not the 1v1 rule below.
+        if (plugin.getTeamDuelManager().inSameMatch(damagerUuid, victimUuid)) {
+            return;
+        }
+
         DuelGame damagerGame = plugin.getDuelManager().getDuel(damagerUuid);
         DuelGame victimGame = plugin.getDuelManager().getDuel(victimUuid);
 
