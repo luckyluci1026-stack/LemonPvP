@@ -99,11 +99,10 @@ public class EscapeGame extends AbstractGame {
             p.teleport(new Location(world, -labyrinthSize/2 + 2 + (i % 4), 65, -labyrinthSize/2 + 2));
             p.setGameMode(GameMode.ADVENTURE);
             p.getInventory().clear();
-            // Give "Escape Key" item (CMD 8002) as flavor
+            // Give "Escape Key" flavor item — vanilla tripwire hook, no texturepack
             ItemStack key = new ItemStack(Material.TRIPWIRE_HOOK);
             var meta = key.getItemMeta();
             if (meta != null) {
-                meta.setCustomModelData(8002);
                 meta.displayName(MM.deserialize("<red>Escape Key</red>"));
                 meta.lore(List.of(MM.deserialize("<gray>Find the exit. Survive.")));
                 key.setItemMeta(meta);

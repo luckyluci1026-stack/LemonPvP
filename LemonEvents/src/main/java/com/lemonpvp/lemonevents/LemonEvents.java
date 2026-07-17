@@ -27,7 +27,6 @@ public final class LemonEvents extends JavaPlugin {
     private MapManager mapManager;
     private EventMessaging messaging;
     private HostedEventManager hostedEventManager;
-    private TournamentManager tournamentManager;
     private com.lemonpvp.lemonevents.util.ChatInputManager chatInputManager;
 
     private FileConfiguration eventsConfig;
@@ -57,15 +56,12 @@ public final class LemonEvents extends JavaPlugin {
         eventManager     = new EventManager(this);
         announcementManager = new AnnouncementManager(this);
         hostedEventManager = new HostedEventManager(this);
-        tournamentManager = new TournamentManager(this);
         chatInputManager = new com.lemonpvp.lemonevents.util.ChatInputManager(this);
         getServer().getPluginManager().registerEvents(chatInputManager, this);
 
         messaging.register();
         lootManager.load();
         eventManager.loadAll();
-        tournamentManager.loadAll();
-        tournamentManager.start();
         announcementManager.start();
 
         getServer().getPluginManager().registerEvents(new EventPlayerListener(this), this);
@@ -107,12 +103,6 @@ public final class LemonEvents extends JavaPlugin {
             var hostExec = new HostCommand(this);
             hostCmd.setExecutor(hostExec);
             hostCmd.setTabCompleter(hostExec);
-        }
-        var tournamentCmd = getCommand("tournament");
-        if (tournamentCmd != null) {
-            var tExec = new TournamentCommand(this);
-            tournamentCmd.setExecutor(tExec);
-            tournamentCmd.setTabCompleter(tExec);
         }
         var panelCmd = getCommand("eventpanel");
         if (panelCmd != null) panelCmd.setExecutor(new EventPanelCommand(this));
@@ -173,7 +163,6 @@ public final class LemonEvents extends JavaPlugin {
     public MapManager getMapManager() { return mapManager; }
     public EventMessaging getMessaging() { return messaging; }
     public HostedEventManager getHostedEventManager() { return hostedEventManager; }
-    public TournamentManager getTournamentManager() { return tournamentManager; }
     public com.lemonpvp.lemonevents.util.ChatInputManager getChatInputManager() { return chatInputManager; }
 
     /** Resolves a player name to a UUID (online first, then LemonCore's store). */

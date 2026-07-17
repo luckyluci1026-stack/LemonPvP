@@ -1,7 +1,7 @@
-package com.lemonpvp.lemonevents.commands;
+package com.lemonpvp.lemonpractice.commands;
 
-import com.lemonpvp.lemonevents.LemonEvents;
-import com.lemonpvp.lemonevents.model.Tournament;
+import com.lemonpvp.lemonpractice.LemonPractice;
+import com.lemonpvp.lemonpractice.tournament.Tournament;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -13,20 +13,22 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * {@code /tournament} — player view (join, list, standings, finals) plus admin
- * management (create, open, close, champion). Standings come from ranked-duel
- * wins in the tournament gamemode during its window.
+ * {@code /tournament} on the duels server — where tournaments actually live,
+ * since they are ranked 1v1s. Player view (join, list, standings, finals) plus
+ * admin management (create, open, close, champion).
  */
 public class TournamentCommand implements CommandExecutor, TabCompleter {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final String ADMIN = "lemonevents.admin.tournament";
+    private static final String ADMIN = "lemonpractice.admin.tournament";
 
-    private final LemonEvents plugin;
+    private final LemonPractice plugin;
 
-    public TournamentCommand(LemonEvents plugin) {
+    public TournamentCommand(LemonPractice plugin) {
         this.plugin = plugin;
     }
 
@@ -53,7 +55,7 @@ public class TournamentCommand implements CommandExecutor, TabCompleter {
         if (t == null) { msg(p, "<red>No tournament to join right now."); return; }
         plugin.getTournamentManager().signup(p.getUniqueId(), t.getId()).thenAccept(ok ->
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (ok) msg(p, "<green>You signed up for <white>" + t.getName()
+                    if (Boolean.TRUE.equals(ok)) msg(p, "<green>You signed up for <white>" + t.getName()
                             + "<green>! Play <white>" + t.getGamemode() + " <green>ranked to climb.");
                     else msg(p, "<gray>You're already signed up (or sign-ups are closed).");
                 }));
@@ -127,7 +129,7 @@ public class TournamentCommand implements CommandExecutor, TabCompleter {
         Tournament t = byId(args[1]);
         if (t == null) { msg(sender, "<red>No such tournament."); return; }
         String name = args[2];
-        plugin.getPlayerUuid(name).thenAccept(uuid -> Bukkit.getScheduler().runTask(plugin, () -> {
+        resolveUuid(name).thenAccept(uuid -> Bukkit.getScheduler().runTask(plugin, () -> {
             if (uuid == null) { msg(sender, "<red>Player not found: <white>" + name); return; }
             plugin.getTournamentManager().setChampion(t.getId(), uuid);
             msg(sender, "<green>Crowned <white>" + name + " <green>as champion of <white>" + t.getName() + "<green>.");
@@ -166,7 +168,18 @@ public class TournamentCommand implements CommandExecutor, TabCompleter {
         return best;
     }
 
-    private String nameOf(java.util.UUID id) {
+    /** Resolves a player name to a UUID: online first, then LemonCore's store. */
+    private CompletableFuture<UUID> resolveUuid(String name) {
+        Player online = Bukkit.getPlayerExact(name);
+        if (online != null) return CompletableFuture.completedFuture(online.getUniqueId());
+        org.bukkit.plugin.Plugin lc = Bukkit.getPluginManager().getPlugin("LemonCore");
+        if (lc instanceof com.lemonpvp.lemoncore.LemonCore core) {
+            return core.getPlayerDataManager().findUUIDByName(name);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    private String nameOf(UUID id) {
         var p = Bukkit.getPlayer(id);
         if (p != null) return p.getName();
         String n = Bukkit.getOfflinePlayer(id).getName();
@@ -182,6 +195,14 @@ public class TournamentCommand implements CommandExecutor, TabCompleter {
             if (sender.hasPermission(ADMIN)) subs.addAll(List.of("create", "open", "close", "champion"));
             List<String> out = new ArrayList<>();
             for (String s : subs) if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
+            return out;
+        }
+        if (args.length == 2 && "create".equalsIgnoreCase(args[0]) && sender.hasPermission(ADMIN)) {
+            // Suggest real gamemode ids from the duels server's own registry.
+            List<String> out = new ArrayList<>();
+            for (var gm : plugin.getGamemodeManager().getAllGamemodes()) {
+                if (gm.getId().toLowerCase(Locale.ROOT).startsWith(args[1].toLowerCase(Locale.ROOT))) out.add(gm.getId());
+            }
             return out;
         }
         if (args.length == 2 && sender.hasPermission(ADMIN)

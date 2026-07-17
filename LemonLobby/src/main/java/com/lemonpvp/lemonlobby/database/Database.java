@@ -288,13 +288,14 @@ public class Database {
 
     /**
      * Tournaments currently accepting players (SIGNUP or QUALIFICATION), read
-     * from the shared {@code lemonevents_tournaments} table. Blocking — call async.
+     * from the shared {@code lp_tournaments} table (owned by the duels server —
+     * tournaments are 1v1s and live there). Blocking — call async.
      */
     public java.util.List<TournamentInfo> joinableTournaments() {
         java.util.List<TournamentInfo> out = new java.util.ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "SELECT id, name, gamemode, state FROM lemonevents_tournaments " +
+                     "SELECT id, name, gamemode, state FROM lp_tournaments " +
                      "WHERE state IN ('SIGNUP','QUALIFICATION') ORDER BY id DESC")) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(new TournamentInfo(
@@ -306,11 +307,11 @@ public class Database {
         return out;
     }
 
-    /** Signs a player up for a tournament (shared events table). Blocking — call async. */
+    /** Signs a player up for a tournament (shared duels-server table). Blocking — call async. */
     public void tournamentSignup(int tournamentId, UUID uuid) {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "INSERT IGNORE INTO lemonevents_tournament_signups (tournament_id, uuid) VALUES (?, ?)")) {
+                     "INSERT IGNORE INTO lp_tournament_signups (tournament_id, uuid) VALUES (?, ?)")) {
             ps.setInt(1, tournamentId);
             ps.setString(2, uuid.toString());
             ps.executeUpdate();

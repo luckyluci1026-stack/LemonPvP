@@ -32,10 +32,6 @@ commands:
   host:
     description: Host a simple event (build a kit, gather players, fight)
     usage: /host <start|mode|open|begin|join|cancel>
-  tournament:
-    description: Official multi-day tournaments
-    aliases: [tourney, tourny]
-    usage: /tournament <join|list|top|finals|create|open|close|champion>
   eventpanel:
     description: Owner control panel for events and tournaments
     permission: lemonevents.owner
@@ -69,9 +65,6 @@ permissions:
     default: op
   lemonevents.admin.host:
     description: Manage/cancel any hosted event
-    default: op
-  lemonevents.admin.tournament:
-    description: Create and manage tournaments
     default: op
   lemonevents.owner:
     description: Open the owner event/tournament control panel

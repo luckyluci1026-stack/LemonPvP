@@ -389,6 +389,37 @@ public class PracticeDatabase {
                     best_streak INT NOT NULL DEFAULT 0
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            // Official tournaments live on the duels server (they are 1v1s):
+            // sign-ups + standings from ranked wins during the window.
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lp_tournaments (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(64) NOT NULL,
+                    gamemode VARCHAR(32) NOT NULL,
+                    state VARCHAR(16) NOT NULL DEFAULT 'SIGNUP',
+                    start_at BIGINT NOT NULL DEFAULT 0,
+                    end_at BIGINT NOT NULL DEFAULT 0,
+                    champion_uuid VARCHAR(36) DEFAULT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lp_tournament_signups (
+                    tournament_id INT NOT NULL,
+                    uuid VARCHAR(36) NOT NULL,
+                    signed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (tournament_id, uuid)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lp_tournament_finalists (
+                    tournament_id INT NOT NULL,
+                    uuid VARCHAR(36) NOT NULL,
+                    seed INT NOT NULL,
+                    wins INT NOT NULL DEFAULT 0,
+                    PRIMARY KEY (tournament_id, uuid)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
         }
     }
 
@@ -702,6 +733,169 @@ public class PracticeDatabase {
                 ps.setInt(2, current); ps.setInt(3, best);
                 ps.executeUpdate();
             } catch (SQLException e) { plugin.getLogger().severe("saveStreak: " + e.getMessage()); }
+        });
+    }
+
+    // -----------------------------------------------------------------------
+    // Tournaments (official 1v1 competitions on this server)
+    // -----------------------------------------------------------------------
+
+    /** A standings row: a player and their win count in the tournament window. */
+    public record Standing(java.util.UUID uuid, int wins) {}
+
+    public CompletableFuture<com.lemonpvp.lemonpractice.tournament.Tournament> createTournament(String name, String gamemode) {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO lp_tournaments (name, gamemode) VALUES (?,?)",
+                    java.sql.Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, name);
+                ps.setString(2, gamemode.toLowerCase());
+                ps.executeUpdate();
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) return new com.lemonpvp.lemonpractice.tournament.Tournament(
+                            rs.getInt(1), name, gamemode.toLowerCase(),
+                            com.lemonpvp.lemonpractice.tournament.Tournament.State.SIGNUP, 0, 0, null);
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe("createTournament: " + e.getMessage());
+            }
+            return null;
+        });
+    }
+
+    public CompletableFuture<java.util.List<com.lemonpvp.lemonpractice.tournament.Tournament>> loadAllTournaments() {
+        return queryAsync(conn -> {
+            java.util.List<com.lemonpvp.lemonpractice.tournament.Tournament> out = new java.util.ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT id, name, gamemode, state, start_at, end_at, champion_uuid FROM lp_tournaments")) {
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    String champ = rs.getString("champion_uuid");
+                    out.add(new com.lemonpvp.lemonpractice.tournament.Tournament(
+                            rs.getInt("id"), rs.getString("name"), rs.getString("gamemode"),
+                            com.lemonpvp.lemonpractice.tournament.Tournament.State.valueOf(rs.getString("state")),
+                            rs.getLong("start_at"), rs.getLong("end_at"),
+                            champ != null ? java.util.UUID.fromString(champ) : null));
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe("loadAllTournaments: " + e.getMessage());
+            }
+            return out;
+        });
+    }
+
+    public CompletableFuture<Void> updateTournament(com.lemonpvp.lemonpractice.tournament.Tournament t) {
+        return executeAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE lp_tournaments SET state=?, start_at=?, end_at=?, champion_uuid=? WHERE id=?")) {
+                ps.setString(1, t.getState().name());
+                ps.setLong(2, t.getStartAt());
+                ps.setLong(3, t.getEndAt());
+                ps.setString(4, t.getChampion() != null ? t.getChampion().toString() : null);
+                ps.setInt(5, t.getId());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().severe("updateTournament: " + e.getMessage());
+            }
+        });
+    }
+
+    public CompletableFuture<Boolean> tournamentSignup(int tournamentId, java.util.UUID uuid) {
+        return queryAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT IGNORE INTO lp_tournament_signups (tournament_id, uuid) VALUES (?,?)")) {
+                ps.setInt(1, tournamentId);
+                ps.setString(2, uuid.toString());
+                return ps.executeUpdate() > 0;
+            } catch (SQLException e) {
+                plugin.getLogger().severe("tournamentSignup: " + e.getMessage());
+                return false;
+            }
+        });
+    }
+
+    public CompletableFuture<java.util.Set<java.util.UUID>> getTournamentSignups(int tournamentId) {
+        return queryAsync(conn -> {
+            java.util.Set<java.util.UUID> out = new java.util.HashSet<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT uuid FROM lp_tournament_signups WHERE tournament_id=?")) {
+                ps.setInt(1, tournamentId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) out.add(java.util.UUID.fromString(rs.getString("uuid")));
+            } catch (SQLException e) {
+                plugin.getLogger().severe("getTournamentSignups: " + e.getMessage());
+            }
+            return out;
+        });
+    }
+
+    /**
+     * Standings: each signed-up player's ranked-duel wins in the tournament
+     * gamemode during the qualification window, highest first — read straight
+     * from this server's own lp_duel_records.
+     */
+    public CompletableFuture<java.util.List<Standing>> getTournamentStandings(
+            String gamemode, long startAt, long endAt, java.util.Set<java.util.UUID> signups) {
+        return queryAsync(conn -> {
+            java.util.List<Standing> out = new java.util.ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT winner_uuid, COUNT(*) AS wins FROM lp_duel_records " +
+                    "WHERE gamemode=? AND winner_uuid IS NOT NULL AND played_at BETWEEN ? AND ? " +
+                    "GROUP BY winner_uuid ORDER BY wins DESC")) {
+                ps.setString(1, gamemode.toLowerCase());
+                ps.setTimestamp(2, new java.sql.Timestamp(startAt));
+                ps.setTimestamp(3, new java.sql.Timestamp(endAt > 0 ? endAt : System.currentTimeMillis()));
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    java.util.UUID u = java.util.UUID.fromString(rs.getString("winner_uuid"));
+                    // Standings are restricted to sign-ups: no sign-ups → no standings.
+                    if (signups == null || !signups.contains(u)) continue;
+                    out.add(new Standing(u, rs.getInt("wins")));
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe("getTournamentStandings: " + e.getMessage());
+            }
+            return out;
+        });
+    }
+
+    public CompletableFuture<Void> saveTournamentFinalists(int tournamentId, java.util.List<Standing> finalists) {
+        return executeAsync(conn -> {
+            try (PreparedStatement del = conn.prepareStatement(
+                    "DELETE FROM lp_tournament_finalists WHERE tournament_id=?")) {
+                del.setInt(1, tournamentId);
+                del.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().severe("saveTournamentFinalists delete: " + e.getMessage());
+            }
+            int seed = 1;
+            for (Standing s : finalists) {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO lp_tournament_finalists (tournament_id, uuid, seed, wins) VALUES (?,?,?,?)")) {
+                    ps.setInt(1, tournamentId);
+                    ps.setString(2, s.uuid().toString());
+                    ps.setInt(3, seed++);
+                    ps.setInt(4, s.wins());
+                    ps.executeUpdate();
+                } catch (SQLException e) {
+                    plugin.getLogger().severe("saveTournamentFinalists insert: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    public CompletableFuture<java.util.List<Standing>> getTournamentFinalists(int tournamentId) {
+        return queryAsync(conn -> {
+            java.util.List<Standing> out = new java.util.ArrayList<>();
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT uuid, wins FROM lp_tournament_finalists WHERE tournament_id=? ORDER BY seed ASC")) {
+                ps.setInt(1, tournamentId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) out.add(new Standing(java.util.UUID.fromString(rs.getString("uuid")), rs.getInt("wins")));
+            } catch (SQLException e) {
+                plugin.getLogger().severe("getTournamentFinalists: " + e.getMessage());
+            }
+            return out;
         });
     }
 

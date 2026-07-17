@@ -49,6 +49,7 @@ public class LemonPractice extends JavaPlugin {
     private EloManager eloManager;
     private com.lemonpvp.lemonpractice.managers.StreakManager streakManager;
     private com.lemonpvp.lemonpractice.managers.PostMatchManager postMatchManager;
+    private com.lemonpvp.lemonpractice.tournament.TournamentManager tournamentManager;
     private QueueManager queueManager;
     private DuelManager duelManager;
     private com.lemonpvp.lemonpractice.managers.BotDuelManager botDuelManager;
@@ -118,6 +119,9 @@ public class LemonPractice extends JavaPlugin {
         eloManager = new EloManager(this);
         streakManager = new com.lemonpvp.lemonpractice.managers.StreakManager(this);
         postMatchManager = new com.lemonpvp.lemonpractice.managers.PostMatchManager(this);
+        tournamentManager = new com.lemonpvp.lemonpractice.tournament.TournamentManager(this);
+        tournamentManager.loadAll();
+        tournamentManager.start();
         queueManager = new QueueManager(this);
         queueManager.startTasks();
         duelManager = new DuelManager(this);
@@ -189,6 +193,12 @@ public class LemonPractice extends JavaPlugin {
         var matchInvCmd = getCommand("matchinv");
         if (matchInvCmd != null) matchInvCmd.setExecutor(
                 new com.lemonpvp.lemonpractice.commands.MatchInvCommand(this));
+        var tournamentCmd = getCommand("tournament");
+        if (tournamentCmd != null) {
+            var tExec = new com.lemonpvp.lemonpractice.commands.TournamentCommand(this);
+            tournamentCmd.setExecutor(tExec);
+            tournamentCmd.setTabCompleter(tExec);
+        }
         var leaderboardCmd = getCommand("leaderboard");
         if (leaderboardCmd != null) leaderboardCmd.setExecutor(topCmd);
         PartyCommand partyCmd = new PartyCommand(this);
@@ -312,6 +322,7 @@ public class LemonPractice extends JavaPlugin {
     public EloManager getEloManager() { return eloManager; }
     public com.lemonpvp.lemonpractice.managers.StreakManager getStreakManager() { return streakManager; }
     public com.lemonpvp.lemonpractice.managers.PostMatchManager getPostMatchManager() { return postMatchManager; }
+    public com.lemonpvp.lemonpractice.tournament.TournamentManager getTournamentManager() { return tournamentManager; }
     public QueueManager getQueueManager() { return queueManager; }
     public DuelManager getDuelManager() { return duelManager; }
     public com.lemonpvp.lemonpractice.managers.BotDuelManager getBotDuelManager() { return botDuelManager; }

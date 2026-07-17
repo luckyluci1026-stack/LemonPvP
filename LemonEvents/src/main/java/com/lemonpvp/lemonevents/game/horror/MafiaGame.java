@@ -91,12 +91,11 @@ public class MafiaGame extends AbstractGame {
             p.setGameMode(GameMode.ADVENTURE);
             p.getInventory().clear();
 
-            // Give "Evidence" item (CMD 8003) to villagers
+            // Give "Evidence" item to villagers — vanilla paper, no texturepack
             if (roles.get(uuid) == Role.VILLAGER) {
                 ItemStack evidence = new ItemStack(Material.PAPER);
                 var meta = evidence.getItemMeta();
                 if (meta != null) {
-                    meta.setCustomModelData(8003);
                     meta.displayName(MM.deserialize("<red>Evidence</red>"));
                     meta.lore(List.of(MM.deserialize("<gray>Find the Mafia. Vote them out.")));
                     evidence.setItemMeta(meta);

@@ -10,6 +10,9 @@ permissions:
   lemonpractice.admin.reload:
     description: Reload LemonPractice configs without restarting
     default: op
+  lemonpractice.admin.tournament:
+    description: Create and manage tournaments
+    default: op
   lemonpractice.admin.kits:
     description: Create, edit and delete preset kits
     default: op
@@ -81,6 +84,10 @@ commands:
     description: Review the loadouts from your last duel
     permission: lemonpractice.use.stats
     usage: /matchinv
+  tournament:
+    description: Official multi-day 1v1 tournaments
+    aliases: [tourney, tourny]
+    usage: /tournament <join|list|top|finals|create|open|close|champion>
   top:
     description: Open the network leaderboard
     permission: lemonpractice.use.top

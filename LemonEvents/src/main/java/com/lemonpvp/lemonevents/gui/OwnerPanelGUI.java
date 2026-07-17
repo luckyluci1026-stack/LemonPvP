@@ -21,17 +21,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The owner's control panel for hosting official events and tournaments —
- * deliberately separate from the {@code /host} flow content creators use. Opens
- * with {@code /eventpanel}. Left/right-click actions drive the hosted-event
- * lifecycle and tournament creation; a sub-menu manages existing tournaments.
+ * The owner's control panel for hosting official events — deliberately separate
+ * from the {@code /host} flow content creators use. Opens with
+ * {@code /eventpanel}. Left/right-click actions drive the hosted-event
+ * lifecycle and the scripted-event wizard. Tournaments are 1v1s and are managed
+ * on the duels server via {@code /tournament}.
  */
 public class OwnerPanelGUI implements Listener {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
     private static final int FFA_SLOT = 10, HOSTBATTLE_SLOT = 11, ACTIVE_SLOT = 13,
-            CREATE_TOURNEY_SLOT = 15, TOURNEYS_SLOT = 16, CREATE_EVENT_SLOT = 4, CLOSE_SLOT = 22;
+            CREATE_EVENT_SLOT = 15, TOURNEY_INFO_SLOT = 16, CLOSE_SLOT = 22;
 
     private final LemonEvents plugin;
     private final Player owner;
@@ -63,16 +64,14 @@ public class OwnerPanelGUI implements Listener {
                 "<gray>Everyone versus you (the host).",
                 "", "<green>► Click to build the kit & host")));
         inv.setItem(ACTIVE_SLOT, activeEventItem());
-        inv.setItem(CREATE_TOURNEY_SLOT, named(Material.GOLD_INGOT, "<gold><bold>Create Tournament", List.of(
-                "<gray>Multi-day, standings from ranked wins.",
-                "", "<green>► Click, then type gamemode & name")));
-        inv.setItem(TOURNEYS_SLOT, named(Material.NETHER_STAR, "<aqua><bold>Manage Tournaments", List.of(
-                "<gray>Open, close and inspect tournaments.",
-                "", "<green>► Click to open")));
         inv.setItem(CREATE_EVENT_SLOT, named(Material.ENDER_EYE, "<light_purple><bold>Create Scripted Event", List.of(
                 "<gray>Build a LemonRoyale / HungerGames /",
                 "<gray>PvP / Horror event with prizes.",
                 "", "<green>► Click to open the wizard")));
+        inv.setItem(TOURNEY_INFO_SLOT, named(Material.GOLDEN_SWORD, "<gold><bold>Tournaments", List.of(
+                "<gray>Tournaments are 1v1s and live on",
+                "<gray>the <white>duels server<gray>: manage them",
+                "<gray>there with <white>/tournament<gray>.")));
         inv.setItem(CLOSE_SLOT, named(Material.BARRIER, "<red>Close", List.of()));
     }
 
@@ -107,8 +106,6 @@ public class OwnerPanelGUI implements Listener {
             case FFA_SLOT -> promptAndHost(p, HostedEvent.Mode.FFA);
             case HOSTBATTLE_SLOT -> promptAndHost(p, HostedEvent.Mode.HOST_BATTLE);
             case ACTIVE_SLOT -> handleActive(p, e.isRightClick());
-            case CREATE_TOURNEY_SLOT -> promptCreateTournament(p);
-            case TOURNEYS_SLOT -> { unregister(); new TournamentListGUI(plugin, p).open(); }
             case CREATE_EVENT_SLOT -> { unregister(); new EventCreateGUI(plugin, p).open(); }
             case CLOSE_SLOT -> p.closeInventory();
             default -> { /* border */ }
@@ -143,27 +140,6 @@ public class OwnerPanelGUI implements Listener {
             plugin.getHostedEventManager().begin(p);
         }
         render();
-    }
-
-    private void promptCreateTournament(Player p) {
-        unregister();
-        p.closeInventory();
-        msg(p, "<yellow>Type the gamemode for the tournament <gray>(e.g. <white>nodebuff<gray>).");
-        plugin.getChatInputManager().await(p, gamemode -> {
-            if (gamemode == null || gamemode.isBlank()) { msg(p, "<gray>Cancelled."); return; }
-            msg(p, "<yellow>Now type the tournament name.");
-            plugin.getChatInputManager().await(p, name -> {
-                if (name == null || name.isBlank()) { msg(p, "<gray>Cancelled."); return; }
-                plugin.getTournamentManager().create(name, gamemode).thenAccept(t ->
-                        Bukkit.getScheduler().runTask(plugin, () -> {
-                            if (t != null) {
-                                msg(p, "<green>Created <white>#" + t.getId() + " " + t.getName()
-                                        + " <green>(" + t.getGamemode() + "). Open it in <white>Manage Tournaments<green>.");
-                                new OwnerPanelGUI(plugin, p).open();
-                            } else msg(p, "<red>Failed to create the tournament.");
-                        }));
-            });
-        });
     }
 
     @EventHandler

@@ -12,7 +12,37 @@ import java.util.Map;
 
 public class TextUtil {
 
-    private static final MiniMessage MM = MiniMessage.miniMessage();
+    /** Maps a-z onto Unicode small-cap glyphs (no resource pack needed). */
+    private static final String SMALL_CAPS = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘQʀꜱᴛᴜᴠᴡxʏᴢ";
+
+    /**
+     * Custom {@code <smallcaps>} tag: renders the wrapped text with Unicode
+     * small-cap glyphs, so "<smallcaps>Queue</smallcaps>" shows as "Qᴜᴇᴜᴇ"
+     * without hand-typing the special characters. Works in vanilla clients.
+     */
+    private static final TagResolver SMALLCAPS_TAG = TagResolver.resolver("smallcaps",
+            (args, ctx) -> (net.kyori.adventure.text.minimessage.tag.Modifying)
+                    (current, depth) -> {
+                        if (current instanceof net.kyori.adventure.text.TextComponent tc) {
+                            return tc.content(smallCaps(tc.content()));
+                        }
+                        return current;
+                    });
+
+    private static final MiniMessage MM = MiniMessage.miniMessage().toBuilder()
+            .editTags(t -> t.resolver(SMALLCAPS_TAG))
+            .build();
+
+    /** Converts lowercase letters to Unicode small-caps (uppercase kept as-is). */
+    public static String smallCaps(String text) {
+        if (text == null) return "";
+        StringBuilder sb = new StringBuilder(text.length());
+        for (char c : text.toCharArray()) {
+            char lower = Character.toLowerCase(c);
+            sb.append(lower >= 'a' && lower <= 'z' ? SMALL_CAPS.charAt(lower - 'a') : c);
+        }
+        return sb.toString();
+    }
 
     public static Component parse(String text) {
         if (text == null) return Component.empty();

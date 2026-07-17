@@ -1,4 +1,4 @@
-package com.lemonpvp.lemonevents.model;
+package com.lemonpvp.lemonpractice.tournament;
 
 import java.util.UUID;
 
