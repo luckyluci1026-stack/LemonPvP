@@ -2,7 +2,7 @@ name: LemonCosmetics
 version: "1.1.0"
 main: com.lemonpvp.lemoncosmetics.LemonCosmetics
 api-version: '1.21'
-softdepend: [LuckPerms, LemonCore]
+softdepend: [LuckPerms, LemonCore, packetevents]
 commands:
   cosmetics:
     description: Open cosmetics menu (/cosmetics reload for admins)
@@ -23,6 +23,10 @@ commands:
     description: Play an animated emote above your head (no resource pack)
     permission: lemoncosmetics.emote
     usage: /emote <name> | list | stop
+  pcosmetic:
+    description: Test packet Display cosmetics (3D hat/cape/wings, no resource pack)
+    permission: lemoncosmetics.pcosmetic
+    usage: /pcosmetic <hat|head|cape|wings|off>
 permissions:
   lemoncosmetics.use:
     description: Access /cosmetics and /tags commands
@@ -38,6 +42,9 @@ permissions:
     default: true
   lemoncosmetics.admin:
     description: Reload LemonCosmetics config, density and explosion presets
+    default: op
+  lemoncosmetics.pcosmetic:
+    description: Test packet Display cosmetics
     default: op
   lemoncosmetics.effect.fire_swarm:
     description: Fire Swarm kill effect

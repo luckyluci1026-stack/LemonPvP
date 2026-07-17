@@ -33,6 +33,7 @@ public final class LemonCosmetics extends JavaPlugin {
     private TagManager tagManager;
     private CapeManager capeManager;
     private com.lemonpvp.lemoncosmetics.managers.EmoteManager emoteManager;
+    private com.lemonpvp.lemoncosmetics.display.DisplayCosmeticManager displayCosmeticManager;
     private CosmeticsMessaging cosmeticsMessaging;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
@@ -101,6 +102,32 @@ public final class LemonCosmetics extends JavaPlugin {
             emoteCmd.setTabCompleter(emoteExec);
         }
 
+        // Packet Display cosmetics (3D hats / capes / wings, no resource pack).
+        // Requires PacketEvents at runtime; everything is guarded so the plugin
+        // still loads (without these) if it is absent.
+        if (getServer().getPluginManager().isPluginEnabled("packetevents")) {
+            try {
+                displayCosmeticManager = new com.lemonpvp.lemoncosmetics.display.DisplayCosmeticManager(this);
+                displayCosmeticManager.start();
+                com.github.retrooper.packetevents.PacketEvents.getAPI().getEventManager().registerListener(
+                        new com.lemonpvp.lemoncosmetics.display.CosmeticMoveListener(displayCosmeticManager));
+                getServer().getPluginManager().registerEvents(
+                        new com.lemonpvp.lemoncosmetics.display.DisplayCosmeticQuitListener(displayCosmeticManager), this);
+                var pcosmeticCmd = getCommand("pcosmetic");
+                if (pcosmeticCmd != null) {
+                    var exec = new com.lemonpvp.lemoncosmetics.display.PacketCosmeticCommand(this);
+                    pcosmeticCmd.setExecutor(exec);
+                    pcosmeticCmd.setTabCompleter(exec);
+                }
+                getLogger().info("Packet Display cosmetics enabled (PacketEvents found).");
+            } catch (Throwable t) {
+                displayCosmeticManager = null;
+                getLogger().warning("Packet Display cosmetics disabled: " + t.getMessage());
+            }
+        } else {
+            getLogger().info("PacketEvents not found — packet Display cosmetics disabled.");
+        }
+
         getLogger().info("LemonCosmetics enabled.");
     }
 
@@ -124,6 +151,11 @@ public final class LemonCosmetics extends JavaPlugin {
 
     public ArmorTrimManager getArmorTrimManager() {
         return armorTrimManager;
+    }
+
+    /** The packet Display cosmetic manager, or {@code null} if PacketEvents is absent. */
+    public com.lemonpvp.lemoncosmetics.display.DisplayCosmeticManager getDisplayCosmeticManager() {
+        return displayCosmeticManager;
     }
 
     /** Reloads the particle-density multiplier from config (clamped 0.0–4.0). */
