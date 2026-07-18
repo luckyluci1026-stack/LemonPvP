@@ -35,6 +35,7 @@ public final class LemonCosmetics extends JavaPlugin {
     private com.lemonpvp.lemoncosmetics.managers.EmoteManager emoteManager;
     private com.lemonpvp.lemoncosmetics.display.DisplayCosmeticManager displayCosmeticManager;
     private com.lemonpvp.lemoncosmetics.display.CosmeticMoveListener cosmeticMoveListener;
+    private com.lemonpvp.lemoncosmetics.display.DanceEmoteManager danceEmoteManager;
     private CosmeticsMessaging cosmeticsMessaging;
     private org.bukkit.configuration.file.FileConfiguration serversConfig;
 
@@ -121,6 +122,10 @@ public final class LemonCosmetics extends JavaPlugin {
                     pcosmeticCmd.setExecutor(exec);
                     pcosmeticCmd.setTabCompleter(exec);
                 }
+                // Fortnite-style dance emotes (armor-stand body double) share the
+                // same PacketEvents guard.
+                danceEmoteManager = new com.lemonpvp.lemoncosmetics.display.DanceEmoteManager(this);
+                getServer().getPluginManager().registerEvents(danceEmoteManager, this);
                 getLogger().info("Packet Display cosmetics enabled (PacketEvents found).");
             } catch (Throwable t) {
                 displayCosmeticManager = null;
@@ -135,6 +140,8 @@ public final class LemonCosmetics extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // End running dances first so nobody stays frozen/invisible after a reload.
+        if (danceEmoteManager != null) danceEmoteManager.stopAll();
         // Unregister the packet listener so a /reload doesn't leave a stale one bound.
         if (cosmeticMoveListener != null) {
             try {
@@ -165,6 +172,11 @@ public final class LemonCosmetics extends JavaPlugin {
     /** The packet Display cosmetic manager, or {@code null} if PacketEvents is absent. */
     public com.lemonpvp.lemoncosmetics.display.DisplayCosmeticManager getDisplayCosmeticManager() {
         return displayCosmeticManager;
+    }
+
+    /** The dance-emote manager, or {@code null} if PacketEvents is absent. */
+    public com.lemonpvp.lemoncosmetics.display.DanceEmoteManager getDanceEmoteManager() {
+        return danceEmoteManager;
     }
 
     /** Reloads the particle-density multiplier from config (clamped 0.0–4.0). */

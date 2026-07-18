@@ -20,9 +20,9 @@ commands:
     permission: lemoncosmetics.bandana
     usage: /bandana <name> | list | off | reload
   emote:
-    description: Play an animated emote above your head (no resource pack)
+    description: Play a dance emote or an animated image emote (no resource pack)
     permission: lemoncosmetics.emote
-    usage: /emote <name> | list | stop
+    usage: /emote <wave|dab|spin|floss|robot|name> | list | stop
   pcosmetic:
     description: Test packet Display cosmetics (3D hat/cape/wings, no resource pack)
     permission: lemoncosmetics.pcosmetic

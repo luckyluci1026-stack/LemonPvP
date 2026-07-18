@@ -46,9 +46,17 @@ public class EmoteCommand implements CommandExecutor, TabCompleter {
             listEmotes(player);
             return true;
         }
+        var dances = plugin.getDanceEmoteManager();
         if (args[0].equalsIgnoreCase("stop")) {
             plugin.getEmoteManager().stop(player.getUniqueId());
+            if (dances != null) dances.stop(player.getUniqueId());
             msg(player, "<gray>Emote stopped.");
+            return true;
+        }
+
+        // Fortnite-style dances take priority over image emotes of the same name.
+        if (dances != null && dances.isDance(args[0])) {
+            dances.play(player, args[0]);
             return true;
         }
 
@@ -74,6 +82,10 @@ public class EmoteCommand implements CommandExecutor, TabCompleter {
         String prefix = args[0].toLowerCase(Locale.ROOT);
         List<String> out = new ArrayList<>();
         for (String sub : List.of("list", "stop")) if (sub.startsWith(prefix)) out.add(sub);
+        var dances = plugin.getDanceEmoteManager();
+        if (dances != null) {
+            for (String d : dances.danceIds()) if (d.startsWith(prefix)) out.add(d);
+        }
         for (String e : plugin.getEmoteManager().listEmotes()) {
             if (e.toLowerCase(Locale.ROOT).startsWith(prefix)) out.add(e);
         }
@@ -81,6 +93,16 @@ public class EmoteCommand implements CommandExecutor, TabCompleter {
     }
 
     private void listEmotes(Player player) {
+        var dances = plugin.getDanceEmoteManager();
+        if (dances != null) {
+            StringBuilder db = new StringBuilder();
+            for (String d : dances.danceIds()) {
+                db.append("<click:run_command:'/emote ").append(d).append("'>")
+                  .append("<hover:show_text:'<green>Click to dance'><gold>").append(d)
+                  .append("</gold></hover></click>  ");
+            }
+            msg(player, PREFIX + "<white>Dances: " + db);
+        }
         List<String> emotes = plugin.getEmoteManager().listEmotes();
         if (emotes.isEmpty()) {
             msg(player, "<gray>No emotes uploaded yet. Drop a <white>gif/png <gray>into "
