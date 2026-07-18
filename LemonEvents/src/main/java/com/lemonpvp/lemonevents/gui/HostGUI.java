@@ -33,20 +33,24 @@ public class HostGUI implements Listener {
 
     private static final int FFA_SLOT = 11, HOSTBATTLE_SLOT = 15,
             MODE_SLOT = 10, STATUS_SLOT = 13, ACTION_SLOT = 12, CANCEL_SLOT = 16,
-            JOIN_SLOT = 13, CLOSE_SLOT = 22;
+            JOIN_SLOT = 13, CLOSE_SLOT = 31;
+    /** Row of joined-player heads (Host Battle team picking while joins are open). */
+    private static final int[] HEAD_SLOTS = {18, 19, 20, 21, 22, 23, 24, 25, 26};
 
     private final LemonEvents plugin;
     private final Player viewer;
+    private final org.bukkit.NamespacedKey targetKey;
     private Inventory inv;
     private boolean registered;
 
     public HostGUI(LemonEvents plugin, Player viewer) {
         this.plugin = plugin;
         this.viewer = viewer;
+        this.targetKey = new org.bukkit.NamespacedKey(plugin, "host_team_target");
     }
 
     public void open() {
-        inv = Bukkit.createInventory(null, 27, MM.deserialize(
+        inv = Bukkit.createInventory(null, 36, MM.deserialize(
                 "<!italic><gradient:#fffb00:#ffa751><bold>Host an Event</bold></gradient>"));
         render();
         if (!registered) { Bukkit.getPluginManager().registerEvents(this, plugin); registered = true; }
@@ -61,7 +65,7 @@ public class HostGUI implements Listener {
 
     private void render() {
         ItemStack pane = named(Material.BLACK_STAINED_GLASS_PANE, " ", List.of());
-        for (int i = 0; i < 27; i++) inv.setItem(i, pane);
+        for (int i = 0; i < 36; i++) inv.setItem(i, pane);
         inv.setItem(CLOSE_SLOT, named(Material.BARRIER, "<red>Close", List.of()));
 
         HostedEvent ev = plugin.getHostedEventManager().getActive();
@@ -86,10 +90,16 @@ public class HostGUI implements Listener {
             boolean setup = ev.getState() == HostedEvent.State.SETUP;
             boolean open = ev.getState() == HostedEvent.State.OPEN;
 
-            inv.setItem(STATUS_SLOT, named(Material.BEACON, "<gradient:#fffb00:#00ff00><bold>" + ev.getName(), List.of(
+            List<String> statusLore = new ArrayList<>(List.of(
                     "<gray>Mode: <white>" + (ev.getMode() == HostedEvent.Mode.HOST_BATTLE ? "Host Battle" : "FFA"),
                     "<gray>State: <yellow>" + ev.getState(),
-                    "<gray>Players: <white>" + ev.getParticipants().size())));
+                    "<gray>Players: <white>" + ev.getParticipants().size()));
+            if (ev.getMode() == HostedEvent.Mode.HOST_BATTLE) {
+                statusLore.add("<gray>Your team: <gold>" + (ev.getHostTeam().size() + 1)
+                        + " <dark_gray>(click heads below to change)");
+            }
+            inv.setItem(STATUS_SLOT, named(Material.BEACON,
+                    "<gradient:#fffb00:#00ff00><bold>" + ev.getName(), statusLore));
 
             if (setup || open) {
                 inv.setItem(MODE_SLOT, named(Material.LEVER, "<aqua><bold>Mode: "
@@ -112,6 +122,16 @@ public class HostGUI implements Listener {
             inv.setItem(CANCEL_SLOT, named(Material.RED_DYE, "<red><bold>Cancel Event", List.of(
                     "<gray>Aborts and returns everyone.",
                     "", "<red>► Click to cancel")));
+
+            // Host Battle team picking: joined players as heads while joins are open.
+            if (open && ev.getMode() == HostedEvent.Mode.HOST_BATTLE) {
+                int i = 0;
+                for (java.util.UUID member : ev.getParticipants()) {
+                    if (member.equals(ev.getHost()) || i >= HEAD_SLOTS.length) continue;
+                    boolean onTeam = ev.getHostTeam().contains(member);
+                    inv.setItem(HEAD_SLOTS[i++], participantHead(member, onTeam));
+                }
+            }
             return;
         }
 
@@ -167,7 +187,19 @@ public class HostGUI implements Listener {
                     plugin.getHostedEventManager().cancel(p);
                     p.closeInventory();
                 }
-                default -> { }
+                default -> {
+                    // A participant head: toggle that player onto/off the host team.
+                    ItemStack clicked = e.getCurrentItem();
+                    ItemMeta meta = clicked != null ? clicked.getItemMeta() : null;
+                    String raw = meta != null ? meta.getPersistentDataContainer().get(targetKey,
+                            org.bukkit.persistence.PersistentDataType.STRING) : null;
+                    if (raw != null) {
+                        try {
+                            plugin.getHostedEventManager().toggleHostTeam(p, java.util.UUID.fromString(raw));
+                            click(p); render();
+                        } catch (IllegalArgumentException ignored) { }
+                    }
+                }
             }
             return;
         }
@@ -202,6 +234,34 @@ public class HostGUI implements Listener {
 
     private void unregister() { if (registered) { HandlerList.unregisterAll(this); registered = false; } }
     private void click(Player p) { p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.4f); }
+
+    /** A joined player's head; gold when they're on the host's team. */
+    private ItemStack participantHead(java.util.UUID member, boolean onTeam) {
+        String name = nameOf(member);
+        ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+        if (item.getItemMeta() instanceof org.bukkit.inventory.meta.SkullMeta meta) {
+            Player online = Bukkit.getPlayer(member);
+            if (online != null) meta.setOwningPlayer(online);
+            meta.displayName(MM.deserialize("<!italic>" + (onTeam ? "<gold><bold>★ " : "<white>") + name));
+            List<Component> lore = new ArrayList<>();
+            lore.add(MM.deserialize("<!italic>" + (onTeam
+                    ? "<gold>On your team" : "<gray>Challenger")));
+            lore.add(Component.empty());
+            lore.add(MM.deserialize("<!italic><green>► Click to " + (onTeam ? "make challenger" : "add to your team")));
+            meta.lore(lore);
+            meta.getPersistentDataContainer().set(targetKey,
+                    org.bukkit.persistence.PersistentDataType.STRING, member.toString());
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private String nameOf(java.util.UUID id) {
+        Player p = Bukkit.getPlayer(id);
+        if (p != null) return p.getName();
+        String n = Bukkit.getOfflinePlayer(id).getName();
+        return n != null ? n : id.toString().substring(0, 8);
+    }
 
     private ItemStack named(Material mat, String name, List<String> lore) {
         ItemStack item = new ItemStack(mat);

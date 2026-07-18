@@ -43,6 +43,8 @@ public class HostedEvent {
 
     private final Set<UUID> participants = new LinkedHashSet<>();
     private final Set<UUID> alive = new LinkedHashSet<>();
+    /** Extra players fighting on the host's side in HOST_BATTLE (host not included). */
+    private final Set<UUID> hostTeam = new LinkedHashSet<>();
 
     private State state = State.SETUP;
     private Mode mode = Mode.FFA;
@@ -72,6 +74,10 @@ public class HostedEvent {
 
     public Set<UUID> getParticipants() { return participants; }
     public Set<UUID> getAlive() { return alive; }
+    public Set<UUID> getHostTeam() { return hostTeam; }
+
+    /** True if this player fights on the host's side (the host or a chosen teammate). */
+    public boolean isHostSide(UUID uuid) { return uuid.equals(host) || hostTeam.contains(uuid); }
 
     public State getState() { return state; }
     public void setState(State state) { this.state = state; }

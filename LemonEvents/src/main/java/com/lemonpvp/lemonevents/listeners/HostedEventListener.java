@@ -54,12 +54,12 @@ public class HostedEventListener implements Listener {
         Player damager = resolveDamager(event.getDamager());
         if (damager == null || !ev.getAlive().contains(damager.getUniqueId())) return;
 
-        UUID host = ev.getHost();
-        boolean victimHost = victim.getUniqueId().equals(host);
-        boolean damagerHost = damager.getUniqueId().equals(host);
-        if (!victimHost && !damagerHost) {
-            event.setCancelled(true); // challengers are on the same side
-        } else if (victimHost) {
+        // Two sides: the host's team (host + chosen teammates) and the challengers.
+        boolean victimHostSide = ev.isHostSide(victim.getUniqueId());
+        boolean damagerHostSide = ev.isHostSide(damager.getUniqueId());
+        if (victimHostSide == damagerHostSide) {
+            event.setCancelled(true); // no friendly fire within a side
+        } else if (victimHostSide) {
             ev.setLastHostDamager(damager.getUniqueId()); // credit the finishing blow
         }
     }

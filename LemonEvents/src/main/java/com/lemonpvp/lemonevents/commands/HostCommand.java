@@ -69,6 +69,13 @@ public class HostCommand implements CommandExecutor, TabCompleter {
                     msg(player, "<red>Unknown mode. Use <white>ffa <red>or <white>hostbattle<red>.");
                 }
             }
+            case "team" -> {
+                if (denyHost(player)) return true;
+                if (args.length < 2) { msg(player, "<red>Usage: <white>/host team <player>"); return true; }
+                Player target = org.bukkit.Bukkit.getPlayerExact(args[1]);
+                if (target == null) { msg(player, "<red>Player not found: <white>" + args[1]); return true; }
+                plugin.getHostedEventManager().toggleHostTeam(player, target.getUniqueId());
+            }
             case "cancel", "stop" -> plugin.getHostedEventManager().cancel(player);
             default -> sendHelp(player);
         }
@@ -88,6 +95,7 @@ public class HostCommand implements CommandExecutor, TabCompleter {
         if (p.hasPermission(HOST_PERM)) {
             msg(p, "<yellow>/host start <name> <gray>— build the event kit");
             msg(p, "<yellow>/host mode <ffa|hostbattle> <gray>— FFA or all-vs-host");
+            msg(p, "<yellow>/host team <player> <gray>— pull a joined player onto your side");
             msg(p, "<yellow>/host open <gray>— broadcast & open joins");
             msg(p, "<yellow>/host begin <gray>— teleport everyone & start");
             msg(p, "<yellow>/host cancel <gray>— abort");
@@ -104,7 +112,8 @@ public class HostCommand implements CommandExecutor, TabCompleter {
             List<String> subs = new ArrayList<>();
             subs.add("join");
             if (sender.hasPermission(HOST_PERM)) {
-                subs.add("start"); subs.add("mode"); subs.add("open"); subs.add("begin"); subs.add("cancel");
+                subs.add("start"); subs.add("mode"); subs.add("team");
+                subs.add("open"); subs.add("begin"); subs.add("cancel");
             }
             List<String> out = new ArrayList<>();
             for (String s : subs) if (s.startsWith(prefix)) out.add(s);
@@ -113,6 +122,18 @@ public class HostCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2 && args[0].equalsIgnoreCase("mode") && sender.hasPermission(HOST_PERM)) {
             List<String> out = new ArrayList<>();
             for (String m : List.of("ffa", "hostbattle")) if (m.startsWith(args[1].toLowerCase(Locale.ROOT))) out.add(m);
+            return out;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("team") && sender.hasPermission(HOST_PERM)) {
+            var ev = plugin.getHostedEventManager().getActive();
+            if (ev == null) return List.of();
+            List<String> out = new ArrayList<>();
+            String prefix = args[1].toLowerCase(Locale.ROOT);
+            for (java.util.UUID member : ev.getParticipants()) {
+                if (member.equals(ev.getHost())) continue;
+                Player p = org.bukkit.Bukkit.getPlayer(member);
+                if (p != null && p.getName().toLowerCase(Locale.ROOT).startsWith(prefix)) out.add(p.getName());
+            }
             return out;
         }
         return List.of();

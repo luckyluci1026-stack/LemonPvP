@@ -121,17 +121,61 @@ public class HostedEventManager {
         active.getAlive().clear();
 
         World world = eventWorld();
+        boolean teams = active.getMode() == HostedEvent.Mode.HOST_BATTLE;
         List<UUID> ids = new ArrayList<>(active.getParticipants());
-        for (int i = 0; i < ids.size(); i++) {
-            Player p = Bukkit.getPlayer(ids.get(i));
+        // In Host Battle the host's side spawns at the centre, challengers on the
+        // ring around them — so the siege reads visually.
+        long ringTotal = teams ? ids.stream().filter(u -> !active.isHostSide(u)).count() : ids.size();
+        Location centre = world.getSpawnLocation().clone().add(0.5, 0, 0.5);
+        int ringIndex = 0, centreIndex = 0;
+        for (UUID id : ids) {
+            Player p = Bukkit.getPlayer(id);
             if (p == null || !p.isOnline()) continue;
             active.getAlive().add(p.getUniqueId());
             preparePlayer(p);
-            p.teleport(spreadSpawn(world, i, ids.size()));
+            if (teams && active.isHostSide(id)) {
+                // Cluster the host team at the centre, a couple of blocks apart.
+                Location spot = centre.clone().add((centreIndex % 3) * 2.0 - 2.0, 0, (centreIndex / 3) * 2.0);
+                spot.setY(world.getHighestBlockYAt(spot.getBlockX(), spot.getBlockZ()) + 1);
+                centreIndex++;
+                p.teleport(spot);
+            } else {
+                p.teleport(spreadSpawn(world, ringIndex++, (int) Math.max(1, ringTotal)));
+            }
             applyKit(p);
             p.setWalkSpeed(0f); // frozen during the countdown
         }
         runCountdown();
+        return true;
+    }
+
+    /**
+     * Host Battle: moves a joined challenger onto the host's team (or back off
+     * it). Only while joins are open, so sides are settled before the fight.
+     */
+    public boolean toggleHostTeam(Player host, UUID target) {
+        if (notHostOf(host, HostedEvent.State.OPEN)) return false;
+        if (active.getMode() != HostedEvent.Mode.HOST_BATTLE) {
+            msg(host, "<red>Teams only exist in Host Battle mode.");
+            return false;
+        }
+        if (target.equals(active.getHost())) {
+            msg(host, "<gray>You always fight on your own side.");
+            return false;
+        }
+        if (!active.getParticipants().contains(target)) {
+            msg(host, "<red>That player hasn't joined the event.");
+            return false;
+        }
+        String name = nameOf(target);
+        if (active.getHostTeam().remove(target)) {
+            msg(host, "<gray>" + name + " <gray>is now a <white>challenger<gray>.");
+            message(target, "<gray>You now fight as a <white>challenger<gray>.");
+        } else {
+            active.getHostTeam().add(target);
+            msg(host, "<green>" + name + " <green>joined <white>your team<green>!");
+            message(target, "<green>You now fight on <white>" + active.getHostName() + "'s team<green>!");
+        }
         return true;
     }
 
@@ -152,6 +196,7 @@ public class HostedEventManager {
     public void handleQuit(UUID uuid) {
         if (active == null) return;
         active.getParticipants().remove(uuid);
+        active.getHostTeam().remove(uuid);
         if (active.getState() == HostedEvent.State.RUNNING && active.getAlive().remove(uuid)) {
             checkWin();
         }
@@ -179,20 +224,21 @@ public class HostedEventManager {
 
     private void checkWin() {
         if (active.getMode() == HostedEvent.Mode.HOST_BATTLE) {
-            UUID host = active.getHost();
-            boolean hostAlive = active.getAlive().contains(host);
-            long challengers = active.getAlive().stream().filter(u -> !u.equals(host)).count();
-            if (!hostAlive) {
-                // The host fell — credit the challenger who landed the finishing blow.
+            // The host's SIDE (host + chosen teammates) vs everyone else.
+            boolean hostSideAlive = active.getAlive().stream().anyMatch(active::isHostSide);
+            long challengers = active.getAlive().stream().filter(u -> !active.isHostSide(u)).count();
+            boolean team = !active.getHostTeam().isEmpty();
+            if (!hostSideAlive) {
+                // The whole host side fell — credit the finishing challenger.
                 UUID winner = active.getLastHostDamager();
                 if (winner == null || !active.getAlive().contains(winner)) {
-                    winner = active.getAlive().stream().filter(u -> !u.equals(host)).findFirst().orElse(null);
+                    winner = active.getAlive().stream().filter(u -> !active.isHostSide(u)).findFirst().orElse(null);
                 }
                 endWithWinner(winner, "<bold><gradient:#00ff88:#00c8ff>⚔ The challengers took down "
-                        + active.getHostName() + "!</gradient></bold>");
+                        + active.getHostName() + (team ? "'s team" : "") + "!</gradient></bold>");
             } else if (challengers == 0) {
-                endWithWinner(host, "<bold><gradient:#ff5252:#ffb300>👑 " + active.getHostName()
-                        + " defeated everyone!</gradient></bold>");
+                endWithWinner(active.getHost(), "<bold><gradient:#ff5252:#ffb300>👑 " + active.getHostName()
+                        + (team ? " and their team" : "") + " defeated everyone!</gradient></bold>");
             }
             return;
         }
@@ -241,6 +287,7 @@ public class HostedEventManager {
             return false;
         }
         active.setMode(mode);
+        if (mode == HostedEvent.Mode.FFA) active.getHostTeam().clear(); // teams are a Host Battle concept
         msg(host, "<green>Mode set to <white>" + (mode == HostedEvent.Mode.HOST_BATTLE ? "Host Battle (all vs host)" : "Free-for-all") + "<green>.");
         return true;
     }
@@ -411,5 +458,10 @@ public class HostedEventManager {
 
     private void msg(Player p, String mini) {
         p.sendMessage(MM.deserialize("<!italic>" + mini));
+    }
+
+    private void message(UUID uuid, String mini) {
+        Player p = Bukkit.getPlayer(uuid);
+        if (p != null) msg(p, mini);
     }
 }
