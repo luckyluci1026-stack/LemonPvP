@@ -37,7 +37,14 @@ public class HostCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) { sender.sendMessage("Players only."); return true; }
 
-        String sub = args.length == 0 ? "" : args[0].toLowerCase(Locale.ROOT);
+        // Bare /host (or /host gui) opens the click-driven panel — the GUI is
+        // state-aware: hosts get controls, everyone else gets a JOIN button.
+        if (args.length == 0 || args[0].equalsIgnoreCase("gui")) {
+            new com.lemonpvp.lemonevents.gui.HostGUI(plugin, player).open();
+            return true;
+        }
+
+        String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "join" -> plugin.getHostedEventManager().join(player);
             case "start" -> {

@@ -34,6 +34,11 @@ public class TournamentCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        // Bare /tournament (or /tournament gui) opens the click-driven panel.
+        if (sender instanceof Player p && (args.length == 0 || args[0].equalsIgnoreCase("gui"))) {
+            new com.lemonpvp.lemonpractice.gui.TournamentGUI(plugin, p).open();
+            return true;
+        }
         String sub = args.length == 0 ? "list" : args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "join" -> join(sender, args);

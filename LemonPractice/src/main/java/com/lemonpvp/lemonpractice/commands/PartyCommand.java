@@ -47,8 +47,10 @@ public class PartyCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (args.length == 0) {
-            sendUsage(player);
+        // Bare /party (or /party gui) opens the click-driven panel; the
+        // subcommands keep working as a fallback.
+        if (args.length == 0 || args[0].equalsIgnoreCase("gui")) {
+            new com.lemonpvp.lemonpractice.gui.PartyGUI(plugin, player).open();
             return true;
         }
 

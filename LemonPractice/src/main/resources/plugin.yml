@@ -87,7 +87,7 @@ commands:
   tournament:
     description: Official multi-day 1v1 tournaments
     aliases: [tourney, tourny]
-    usage: /tournament <join|list|top|finals|create|open|close|champion>
+    usage: /tournament — opens the tournament panel (subcommands still work)
   top:
     description: Open the network leaderboard
     permission: lemonpractice.use.top
@@ -100,7 +100,7 @@ commands:
   party:
     description: Manage your party
     permission: lemonpractice.use.party
-    usage: /party <invite|accept|deny|leave|kick|disband|list|promote|queue|chat> [args]
+    usage: /party — opens the party panel (subcommands still work as fallback)
   p:
     description: Party chat shortcut
     permission: lemonpractice.use.party

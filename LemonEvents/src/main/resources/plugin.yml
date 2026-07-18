@@ -31,7 +31,7 @@ commands:
     usage: /aoweventffa
   host:
     description: Host a simple event (build a kit, gather players, fight)
-    usage: /host <start|mode|open|begin|join|cancel>
+    usage: /host — opens the host panel (subcommands still work as fallback)
   eventpanel:
     description: Owner control panel for hosting events
     permission: lemonevents.owner
