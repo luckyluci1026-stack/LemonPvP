@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LemonPvP Status</title>
+<style>
+  :root { --bg:#0f1115; --card:#171a21; --text:#e6e6e6; --sub:#8b929e;
+          --ok:#3ba55c; --warn:#faa61a; --down:#ed4245; --accent:#fffb00; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font:16px/1.5 system-ui, sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:48px 20px; }
+  h1 { font-size:28px; margin-bottom:4px; }
+  h1 span { background:linear-gradient(90deg,#fffb00,#00ff00); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sub { color:var(--sub); margin-bottom:28px; }
+  .banner { border-radius:8px; padding:16px 20px; font-weight:600; margin-bottom:24px; color:#fff; }
+  .banner.ok { background:var(--ok); } .banner.warn { background:var(--warn); } .banner.down { background:var(--down); }
+  .card { background:var(--card); border-radius:8px; overflow:hidden; }
+  .row { display:flex; align-items:center; justify-content:space-between;
+         padding:14px 20px; border-bottom:1px solid rgba(255,255,255,.06); }
+  .row:last-child { border-bottom:none; }
+  .row .meta { color:var(--sub); font-size:13px; }
+  .state { font-weight:600; font-size:14px; }
+  .state.ok { color:var(--ok); } .state.down { color:var(--down); } .state.wait { color:var(--sub); }
+  .foot { color:var(--sub); font-size:13px; margin-top:24px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>LemonPvP</span> Status</h1>
+  <div class="sub">Live health of every server on the network — refreshes every 30 seconds.</div>
+  <div id="banner" class="banner warn">Checking…</div>
+  <div id="cards" class="card"></div>
+  <div class="foot">status.lemonpvp.de — powered by the LemonCore HTTP API</div>
+</div>
+<script>
+// ─── Configure your servers here: name + public /api/status URL ────────────
+// Each backend runs the LemonCore HTTP API; expose ONLY /api/status through
+// your reverse proxy (see API.md). The status endpoint needs no token.
+const SERVERS = [
+  { name: "Lobby",    url: "https://api.lemonpvp.de/lobby/api/status"  },
+  { name: "Duels-01", url: "https://api.lemonpvp.de/duels1/api/status" },
+  { name: "Duels-02", url: "https://api.lemonpvp.de/duels2/api/status" },
+  { name: "Events",   url: "https://api.lemonpvp.de/events/api/status" },
+];
+
+async function check(server) {
+  try {
+    const ctl = new AbortController();
+    setTimeout(() => ctl.abort(), 5000);
+    const res = await fetch(server.url, { signal: ctl.signal, cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    const d = await res.json();
+    return { up: true, players: d.players, max: d.maxPlayers, tps: d.tps,
+             uptime: d.uptimeSeconds, version: d.version };
+  } catch (e) {
+    return { up: false };
+  }
+}
+
+function fmtUptime(s) {
+  if (!s && s !== 0) return "";
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+async function refresh() {
+  const cards = document.getElementById("cards");
+  const banner = document.getElementById("banner");
+  const results = await Promise.all(SERVERS.map(check));
+  cards.innerHTML = "";
+  let down = 0;
+  results.forEach((r, i) => {
+    const row = document.createElement("div");
+    row.className = "row";
+    const left = r.up
+      ? `<div><div>${SERVERS[i].name}</div><div class="meta">${r.players}/${r.max} players · TPS ${(+r.tps).toFixed(1)} · up ${fmtUptime(r.uptime)}</div></div>`
+      : `<div><div>${SERVERS[i].name}</div><div class="meta">No response</div></div>`;
+    row.innerHTML = left + `<div class="state ${r.up ? "ok" : "down"}">${r.up ? "Operational" : "Down"}</div>`;
+    cards.appendChild(row);
+    if (!r.up) down++;
+  });
+  if (down === 0) { banner.className = "banner ok"; banner.textContent = "All systems operational"; }
+  else if (down < results.length) { banner.className = "banner warn"; banner.textContent = down + " server(s) unavailable"; }
+  else { banner.className = "banner down"; banner.textContent = "Major outage — the network is unreachable"; }
+}
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>

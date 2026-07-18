@@ -67,6 +67,12 @@ public class HttpApiManager {
             server.createContext("/api/player/",     ex -> route(ex, e -> handlePlayerRoot(e, apiKey)));
             server.createContext("/api/server/stats", ex -> route(ex, e -> handleStats(e, apiKey)));
             server.createContext("/api/console",     ex -> route(ex, e -> handleConsole(e, apiKey)));
+            // v2 endpoints
+            server.createContext("/api/status",      ex -> route(ex, this::handleStatus)); // public, read-only
+            server.createContext("/api/leaderboard", ex -> route(ex, e -> handleLeaderboard(e, apiKey)));
+            server.createContext("/api/tournaments", ex -> route(ex, e -> handleTournaments(e, apiKey)));
+            server.createContext("/api/history/",    ex -> route(ex, e -> handleHistory(e, apiKey)));
+            server.createContext("/api/broadcast",   ex -> route(ex, e -> handleBroadcast(e, apiKey)));
             server.start();
             log.info("[HttpAPI] Started on " + bindAddress + ":" + port);
         } catch (IOException e) {
@@ -456,6 +462,139 @@ public class HttpApiManager {
             if (d.endsWith("m")) return Long.parseLong(d.replace("m","")) * 60L;
             return Long.parseLong(d);
         } catch (NumberFormatException e) { return -1L; }
+    }
+
+    // ─── v2 endpoints ────────────────────────────────────────────────────────
+
+    /**
+     * GET /api/status — PUBLIC (no token): the health payload the status page
+     * polls. Never exposes player names, only counts + uptime.
+     */
+    private void handleStatus(HttpExchange ex) throws IOException {
+        if (!"GET".equals(ex.getRequestMethod())) { send(ex, 405, error("GET only")); return; }
+        JsonObject o = new JsonObject();
+        o.addProperty("online", true);
+        o.addProperty("server", plugin.getConfig().getString("server-name", Bukkit.getServer().getMotd()));
+        o.addProperty("players", Bukkit.getOnlinePlayers().size());
+        o.addProperty("maxPlayers", Bukkit.getMaxPlayers());
+        o.addProperty("uptimeSeconds", (System.currentTimeMillis() - plugin.getStartTimeMs()) / 1000L);
+        o.addProperty("tps", Math.min(20.0, Bukkit.getServer().getTPS()[0]));
+        o.addProperty("version", Bukkit.getMinecraftVersion());
+        send(ex, 200, GSON.toJson(o));
+    }
+
+    /** GET /api/leaderboard?stat=kills|coins&limit=10 — top players from lc_players. */
+    private void handleLeaderboard(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        String query = ex.getRequestURI().getQuery();
+        String stat = query != null && query.contains("stat=coins") ? "coins" : "kills";
+        int limit = 10;
+        if (query != null && query.contains("limit=")) {
+            try { limit = Math.min(50, Integer.parseInt(query.replaceAll(".*limit=(\\d+).*", "$1"))); }
+            catch (NumberFormatException ignored) {}
+        }
+        final int fLimit = limit;
+        var rows = plugin.getDatabaseManager().queryAsync(conn -> {
+            var arr = new com.google.gson.JsonArray();
+            try (var ps = conn.prepareStatement(
+                    "SELECT username, " + stat + " AS v FROM lc_players ORDER BY " + stat + " DESC LIMIT ?")) {
+                ps.setInt(1, fLimit);
+                var rs = ps.executeQuery();
+                int rank = 1;
+                while (rs.next()) {
+                    JsonObject row = new JsonObject();
+                    row.addProperty("rank", rank++);
+                    row.addProperty("name", rs.getString("username"));
+                    row.addProperty(stat, rs.getLong("v"));
+                    arr.add(row);
+                }
+            } catch (java.sql.SQLException e) { log.warning("[HttpAPI] leaderboard: " + e.getMessage()); }
+            return arr;
+        });
+        send(ex, 200, GSON.toJson(await(rows)));
+    }
+
+    /** GET /api/tournaments — every tournament with state/gamemode (shared table). */
+    private void handleTournaments(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        var rows = plugin.getDatabaseManager().queryAsync(conn -> {
+            var arr = new com.google.gson.JsonArray();
+            try (var ps = conn.prepareStatement(
+                    "SELECT id, name, gamemode, state, start_at, end_at FROM lemonevents_tournaments ORDER BY id DESC")) {
+                var rs = ps.executeQuery();
+                while (rs.next()) {
+                    JsonObject row = new JsonObject();
+                    row.addProperty("id", rs.getInt("id"));
+                    row.addProperty("name", rs.getString("name"));
+                    row.addProperty("gamemode", rs.getString("gamemode"));
+                    row.addProperty("state", rs.getString("state"));
+                    row.addProperty("startAt", rs.getLong("start_at"));
+                    row.addProperty("endAt", rs.getLong("end_at"));
+                    arr.add(row);
+                }
+            } catch (java.sql.SQLException e) { log.warning("[HttpAPI] tournaments: " + e.getMessage()); }
+            return arr;
+        });
+        send(ex, 200, GSON.toJson(await(rows)));
+    }
+
+    /** GET /api/history/{name} — ban + mute history for a player. */
+    private void handleHistory(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        String name = ex.getRequestURI().getPath().substring("/api/history/".length());
+        if (name.isBlank()) { send(ex, 400, error("Missing player name")); return; }
+        UUID uuid = await(plugin.getPlayerDataManager().findUUIDByName(name));
+        if (uuid == null) { send(ex, 404, error("Player not found")); return; }
+        var result = plugin.getDatabaseManager().queryAsync(conn -> {
+            JsonObject o = new JsonObject();
+            for (String[] t : new String[][]{{"bans", "lc_bans", "ban_time"}, {"mutes", "lc_mutes", "mute_time"}}) {
+                var arr = new com.google.gson.JsonArray();
+                try (var ps = conn.prepareStatement(
+                        "SELECT reason, " + t[2] + " AS at, expires, active FROM " + t[1]
+                        + " WHERE uuid=? ORDER BY " + t[2] + " DESC LIMIT 25")) {
+                    ps.setString(1, uuid.toString());
+                    var rs = ps.executeQuery();
+                    while (rs.next()) {
+                        JsonObject row = new JsonObject();
+                        row.addProperty("reason", rs.getString("reason"));
+                        row.addProperty("time", String.valueOf(rs.getTimestamp("at")));
+                        row.addProperty("expires", String.valueOf(rs.getTimestamp("expires")));
+                        row.addProperty("active", rs.getBoolean("active"));
+                        arr.add(row);
+                    }
+                } catch (java.sql.SQLException e) { log.warning("[HttpAPI] history: " + e.getMessage()); }
+                o.add(t[0], arr);
+            }
+            return o;
+        });
+        send(ex, 200, GSON.toJson(await(result)));
+    }
+
+    /** POST /api/broadcast {"message": "<minimessage>"} — network-wide announcement. */
+    private void handleBroadcast(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        if (!"POST".equals(ex.getRequestMethod())) { send(ex, 405, error("POST only")); return; }
+        String body = new String(ex.getRequestBody().readNBytes(MAX_BODY_BYTES), StandardCharsets.UTF_8);
+        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        String message = json.has("message") ? json.get("message").getAsString() : null;
+        if (message == null || message.isBlank()) { send(ex, 400, error("Missing message")); return; }
+        Bukkit.getScheduler().runTask(plugin, () -> Bukkit.broadcast(
+                net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(message)));
+        send(ex, 200, "{\"ok\":true}");
+    }
+
+    /** Joins an async DB future with the standard timeout, surfacing 504 on expiry. */
+    private <T> T await(CompletableFuture<T> future) throws IOException {
+        try {
+            return future.get(FUTURE_TIMEOUT_SECS, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiException(500, "Interrupted");
+        } catch (ExecutionException e) {
+            throw new ApiException(500, "Query failed");
+        } catch (java.util.concurrent.TimeoutException e) {
+            throw new ApiException(504, "Database timeout");
+        }
     }
 
     private void send(HttpExchange ex, int code, String body) throws IOException {
