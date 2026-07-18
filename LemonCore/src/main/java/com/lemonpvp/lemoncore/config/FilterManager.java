@@ -53,45 +53,84 @@ public class FilterManager {
      * - Letters are separated by spaces, dots, underscores, dashes, asterisks, etc.
      * - Common leetspeak substitutions are used (a→4/@, e→3, i→1/!, o→0, s→$, ...)
      * - Characters are repeated (fuuuuck, niiiig...)
+     * - It is misspelled: one letter omitted or two adjacent letters swapped
+     *   (config {@code fuzzy-misspellings}, words of 4+ letters; prefix a word
+     *   with {@code =} in filter.yml to force exact matching for that word)
      */
     private Pattern buildPattern(String word) {
-        // Between consecutive letters we allow any number of non-alphanumeric separators
-        // (catches "f.u.c.k", "f_u_c_k", "f u c k", "f*ck", ...)
-        String sep = "[^a-zA-Z0-9]*";
-
-        StringBuilder sb = new StringBuilder("(?i)");
-        boolean first = true;
-
-        for (char c : word.toCharArray()) {
-            char lc = Character.toLowerCase(c);
-
-            if (lc == ' ') {
-                // Space within a multi-word phrase — require at least one separator
-                sb.append("[\\s._\\-!@#$%^&*]+");
-                first = true; // next char is "first" after the word-gap
-                continue;
-            }
-
-            if (!first) sb.append(sep);
-            first = false;
-
-            // Each character is matched as one-or-more (+) to handle repetition (fuuuck)
-            switch (lc) {
-                case 'a' -> sb.append("[a@4áä]+");
-                case 'e' -> sb.append("[e3é]+");
-                case 'i' -> sb.append("[i1!|íï]+");
-                case 'o' -> sb.append("[o0óö]+");
-                case 'u' -> sb.append("[uüú]+");
-                case 's' -> sb.append("[s$5ß]+");
-                case 'g' -> sb.append("[g9]+");
-                case 'b' -> sb.append("[b8]+");
-                case 't' -> sb.append("[t7+]+");
-                case 'c' -> sb.append("[cç]+");
-                case 'n' -> sb.append("[nñ]+");
-                default  -> sb.append(Pattern.quote(String.valueOf(lc)) + "+");
-            }
+        boolean fuzzy = filterConfig.getBoolean("fuzzy-misspellings", true);
+        if (word.startsWith("=")) {
+            word = word.substring(1);
+            fuzzy = false;
         }
-        return Pattern.compile(sb.toString());
+
+        // Multi-word phrases keep the simple linear build (no fuzzing across gaps).
+        if (word.indexOf(' ') >= 0) {
+            StringBuilder sb = new StringBuilder("(?i)");
+            boolean first = true;
+            for (char c : word.toCharArray()) {
+                char lc = Character.toLowerCase(c);
+                if (lc == ' ') { sb.append("[\\s._\\-!@#$%^&*]+"); first = true; continue; }
+                if (!first) sb.append(SEP);
+                first = false;
+                sb.append(charClass(lc));
+            }
+            return Pattern.compile(sb.toString());
+        }
+
+        List<String> classes = new ArrayList<>();
+        for (char c : word.toCharArray()) classes.add(charClass(Character.toLowerCase(c)));
+
+        List<String> variants = new ArrayList<>();
+        variants.add(join(classes, -1, -1));
+        if (fuzzy && classes.size() >= 4) {
+            // One INTERIOR letter omitted (catches "niga"-style typos) — first and
+            // last letter always stay required, otherwise "uck"-style stubs would
+            // match harmless words like "luck".
+            for (int skip = 1; skip < classes.size() - 1; skip++) variants.add(join(classes, skip, -1));
+            // Or two adjacent letters swapped (catches "ngiga"-style typos).
+            for (int swap = 0; swap < classes.size() - 1; swap++) variants.add(join(classes, -1, swap));
+        }
+        return Pattern.compile("(?i)(?:" + String.join("|", variants) + ")");
+    }
+
+    /** Between consecutive letters any number of non-alphanumeric separators is allowed. */
+    private static final String SEP = "[^a-zA-Z0-9]*";
+
+    /** Joins the char classes with separators, optionally skipping index or swapping index/index+1. */
+    private String join(List<String> classes, int skipIdx, int swapIdx) {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (int i = 0; i < classes.size(); i++) {
+            int idx = i;
+            if (swapIdx >= 0) {
+                if (i == swapIdx) idx = swapIdx + 1;
+                else if (i == swapIdx + 1) idx = swapIdx;
+            }
+            if (idx == skipIdx) continue;
+            if (!first) sb.append(SEP);
+            first = false;
+            sb.append(classes.get(idx));
+        }
+        return sb.toString();
+    }
+
+    /** Leet/diacritic-tolerant class for one letter, one-or-more for repetition. */
+    private String charClass(char lc) {
+        return switch (lc) {
+            case 'a' -> "[a@4áä]+";
+            case 'e' -> "[e3é]+";
+            case 'i' -> "[i1!|íï]+";
+            case 'o' -> "[o0óö]+";
+            case 'u' -> "[uüú]+";
+            case 's' -> "[s$5ß]+";
+            case 'g' -> "[g9]+";
+            case 'b' -> "[b8]+";
+            case 't' -> "[t7+]+";
+            case 'c' -> "[cç]+";
+            case 'n' -> "[nñ]+";
+            default  -> Pattern.quote(String.valueOf(lc)) + "+";
+        };
     }
 
     public boolean containsNword(String message) {

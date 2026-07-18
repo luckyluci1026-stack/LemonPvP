@@ -201,3 +201,7 @@ whitelist:
   - "classic"
   - "assassin"
   - "assumption"
+
+# Also catch misspellings: one interior letter omitted or two adjacent letters
+# swapped (words with 4+ letters). Prefix a word with = to force exact matching.
+fuzzy-misspellings: true

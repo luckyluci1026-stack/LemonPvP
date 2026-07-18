@@ -220,6 +220,23 @@ public class LemonCore extends JavaPlugin {
         var llCmd = getCommand("lemonlang");
         if (llCmd != null) { llCmd.setExecutor(lemonLangCmd); llCmd.setTabCompleter(lemonLangCmd); }
         getCommand("aowcode").setExecutor(new AowCodeCommand(this));
+        // /gfilter reload — hot-reload filter.yml (words, whitelist, fuzzy setting)
+        var gfilterCmd = getCommand("gfilter");
+        if (gfilterCmd != null) {
+            gfilterCmd.setExecutor((s, c, l, a) -> {
+                if (a.length == 1 && a[0].equalsIgnoreCase("reload")) {
+                    filterManager.load();
+                    s.sendMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
+                            .deserialize("<green>Chat filter reloaded from filter.yml."));
+                } else {
+                    s.sendMessage(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage()
+                            .deserialize("<gray>Usage: <white>/gfilter reload"));
+                }
+                return true;
+            });
+            gfilterCmd.setTabCompleter((s, c, l, a) ->
+                    a.length == 1 ? filterStart(java.util.List.of("reload"), a[0]) : java.util.List.of());
+        }
         // /aowcode legacy syntax: arg 2 is the reward type (the no-arg path opens the GUI)
         getCommand("aowcode").setTabCompleter((s, c, l, a) ->
                 a.length == 2 ? filterStart(java.util.List.of("coins", "rank", "killeffect"), a[1]) : java.util.List.of());

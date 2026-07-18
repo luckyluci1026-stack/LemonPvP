@@ -58,8 +58,11 @@ public class StatsGUI implements Listener {
                 MM.deserialize("<!italic><gradient:#fffb00:#00ff00><bold>Sᴛᴀᴛɪsᴛɪᴄs</bold></gradient>"
                         + " <dark_gray>» <white>" + targetName));
 
-        ItemStack black = pane(Material.BLACK_STAINED_GLASS_PANE);
-        ItemStack gray  = pane(Material.GRAY_STAINED_GLASS_PANE);
+        // Lemon-themed frame: yellow corners, lime mid-edge accents, black rim.
+        ItemStack black  = pane(Material.BLACK_STAINED_GLASS_PANE);
+        ItemStack gray   = pane(Material.GRAY_STAINED_GLASS_PANE);
+        ItemStack yellow = pane(Material.YELLOW_STAINED_GLASS_PANE);
+        ItemStack lime   = pane(Material.LIME_STAINED_GLASS_PANE);
 
         for (int s : TOP_BORDER)    inv.setItem(s, black);
         for (int s : ROW1_SIDES)    inv.setItem(s, black);
@@ -69,6 +72,10 @@ public class StatsGUI implements Listener {
         for (int s : ROW3_SIDES)    inv.setItem(s, black);
         for (int s : GM_SLOTS)      inv.setItem(s, gray);
         for (int s : BOTTOM_BORDER) inv.setItem(s, black);
+        inv.setItem(0, yellow); inv.setItem(8, yellow);
+        inv.setItem(36, yellow); inv.setItem(44, yellow);
+        inv.setItem(4, lime); inv.setItem(40, lime);
+        inv.setItem(12, lime); inv.setItem(14, lime);
 
         inv.setItem(HEAD_SLOT, buildHead());
 
@@ -105,31 +112,36 @@ public class StatsGUI implements Listener {
         final long fCoins = coins;
         final double fKdr = kdr;
 
+        int curStreak = plugin.getStreakManager().getCurrent(targetUuid);
+        int bestStreak = plugin.getStreakManager().getBest(targetUuid);
+
         // Kills
         inv.setItem(STAT_SLOTS[0], statItem(Material.DIAMOND_SWORD,
-                "<gradient:#fffb00:#00ff00><!italic>Kɪʟʟs",
-                List.of("<gray>Total: <white>" + fKills)));
+                "<gradient:#fffb00:#00ff00><!italic>⚔ Kɪʟʟs",
+                List.of("<gray>Total: <white>" + fKills,
+                        "<gray>Duel streak: <gold>" + curStreak + " <dark_gray>(best " + bestStreak + ")")));
 
         // Deaths
         inv.setItem(STAT_SLOTS[1], statItem(Material.BONE,
-                "<gradient:#ff6b6b:#cc0000><!italic>Dᴇᴀᴛʜs",
+                "<gradient:#ff6b6b:#cc0000><!italic>☠ Dᴇᴀᴛʜs",
                 List.of("<gray>Total: <white>" + fDeaths)));
 
         // K/D ratio
         String kdrHex = fKdr >= 2.0 ? "#00e676" : fKdr >= 1.0 ? "#fffb00" : "#ff5252";
         inv.setItem(STAT_SLOTS[2], statItem(Material.GOLDEN_SWORD,
-                "<" + kdrHex + "><!italic>K/D-Rᴀᴛɪᴏ",
-                List.of("<gray>Ratio: <" + kdrHex + ">" + String.format("%.2f", fKdr))));
+                "<" + kdrHex + "><!italic>⚖ K/D-Rᴀᴛɪᴏ",
+                List.of("<gray>Ratio: <" + kdrHex + ">" + String.format("%.2f", fKdr),
+                        bar(fKdr, 2.0, kdrHex))));
 
         // Best killstreak
         inv.setItem(STAT_SLOTS[3], statItem(Material.BLAZE_POWDER,
-                "<gradient:#ff9800:#ff5722><!italic>Bᴇsᴛ Sᴛʀᴇᴀᴋ",
+                "<gradient:#ff9800:#ff5722><!italic>🔥 Bᴇsᴛ Sᴛʀᴇᴀᴋ",
                 List.of("<gray>Best Killstreak: <white>" + fBestKs)));
 
         // Coins
         String coinsShort = com.lemonpvp.lemoncore.util.TextUtil.formatCoins(fCoins);
         inv.setItem(STAT_SLOTS[4], statItem(Material.GOLD_NUGGET,
-                "<gradient:#fffb00:#ff9800><!italic>Cᴏɪɴs",
+                "<gradient:#fffb00:#ff9800><!italic>✦ Cᴏɪɴs",
                 List.of("<gray>Balance: <yellow>✦ <gold>" + coinsShort)));
 
         // ELO per gamemode + an aggregate ranked summary. Load every mode's ELO,
@@ -161,7 +173,7 @@ public class StatsGUI implements Listener {
                     int avgElo = rankedModes > 0 ? eloSum / rankedModes : 0;
 
                     inv.setItem(STAT_SLOTS[5], statItem(Material.NETHERITE_SWORD,
-                            "<gradient:#b388ff:#7c4dff><!italic>Rᴀɴᴋᴇᴅ Sᴜᴍᴍᴀʀʏ",
+                            "<gradient:#b388ff:#7c4dff><!italic>🏆 Rᴀɴᴋᴇᴅ Sᴜᴍᴍᴀʀʏ",
                             List.of(
                                     "<gray>Total matches: <white>" + totalMatches,
                                     "<gray>Avg ELO: <white>" + (rankedModes > 0 ? String.valueOf(avgElo) : "—"),
@@ -170,7 +182,7 @@ public class StatsGUI implements Listener {
                     com.lemonpvp.lemonpractice.model.RankTier peakTier =
                             com.lemonpvp.lemonpractice.model.RankTier.fromElo(peakElo);
                     inv.setItem(STAT_SLOTS[6], statItem(Material.NETHER_STAR,
-                            "<gradient:#fffb00:#ff9800><!italic>Pᴇᴀᴋ Dɪᴠɪsɪᴏɴ",
+                            "<gradient:#fffb00:#ff9800><!italic>⭐ Pᴇᴀᴋ Dɪᴠɪsɪᴏɴ",
                             List.of(
                                     "<gray>Peak ELO: <white>" + peakElo,
                                     "<gray>Division: <!italic>" + peakTier.getDisplay())));
@@ -183,12 +195,24 @@ public class StatsGUI implements Listener {
             Player target = Bukkit.getPlayer(targetUuid);
             if (target != null) meta.setOwningPlayer(target);
             meta.displayName(MM.deserialize(
-                    "<!italic><gradient:#fffb00:#00ff00><bold>" + targetName));
-            meta.lore(List.of(
-                    MM.deserialize("<!italic><dark_gray>Statistics of <gray>" + targetName)));
+                    "<!italic><gradient:#fffb00:#00ff00><bold>✦ " + targetName + " ✦"));
+            List<Component> lore = new ArrayList<>();
+            lore.add(Component.empty());
+            lore.add(MM.deserialize("<!italic><dark_gray>» <gray>Player card"));
+            int cur = plugin.getStreakManager().getCurrent(targetUuid);
+            if (cur > 1) lore.add(MM.deserialize("<!italic><gold>🔥 On a " + cur + " win streak"));
+            lore.add(MM.deserialize("<!italic><dark_gray>Divisions & ELO load below…"));
+            lore.add(Component.empty());
+            meta.lore(lore);
             skull.setItemMeta(meta);
         }
         return skull;
+    }
+
+    /** A 10-segment progress bar toward {@code max}, colored with {@code hex}. */
+    private String bar(double value, double max, String hex) {
+        int filled = (int) Math.round(Math.min(1.0, value / max) * 10);
+        return "<" + hex + ">" + "▰".repeat(filled) + "<dark_gray>" + "▱".repeat(10 - filled);
     }
 
     private ItemStack statItem(Material mat, String name, List<String> loreLines) {
