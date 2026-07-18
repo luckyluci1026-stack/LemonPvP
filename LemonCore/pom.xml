@@ -23,6 +23,13 @@
             <groupId>net.luckperms</groupId>
             <artifactId>api</artifactId>
         </dependency>
+        <!-- Optional chat format engine (soft dependency at runtime). -->
+        <dependency>
+            <groupId>com.lemonpvp</groupId>
+            <artifactId>LemonChat</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>

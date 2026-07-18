@@ -108,7 +108,18 @@ public class ChatListener implements Listener {
                     ? nameComp.append(Component.space()).append(TextUtil.parse(tag))
                     : nameComp;
 
-            Component formatted = Component.text("<").append(nameWithTag).append(Component.text("> ")).append(finalMsg);
+            // LemonChat (if installed) renders the LPC-style format with LuckPerms
+            // prefix/suffix; otherwise fall back to the plain <name> message look.
+            Component formatted = null;
+            org.bukkit.plugin.Plugin chat = Bukkit.getPluginManager().getPlugin("LemonChat");
+            if (chat instanceof com.lemonpvp.lemonchat.LemonChat lemonChat && chat.isEnabled()) {
+                try {
+                    formatted = lemonChat.format(player, nameWithTag, finalMsg);
+                } catch (Throwable ignored) { }
+            }
+            if (formatted == null) {
+                formatted = Component.text("<").append(nameWithTag).append(Component.text("> ")).append(finalMsg);
+            }
 
             for (net.kyori.adventure.audience.Audience viewer : viewers) {
                 viewer.sendMessage(formatted);

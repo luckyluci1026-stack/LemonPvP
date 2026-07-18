@@ -61,6 +61,7 @@ public class LemonQueue {
         proxy.getChannelRegistrar().register(lemonChannel);
 
         proxy.getEventManager().register(this, new ConnectionListener(this, queueManager));
+        proxy.getEventManager().register(this, new com.lemonpvp.lemonqueue.listener.VpnBlockerListener(this));
         proxy.getEventManager().register(this, new PingListener(this));
         proxy.getEventManager().register(this, new PluginMessageListener(queueManager));
 

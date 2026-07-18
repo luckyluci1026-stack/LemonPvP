@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>LemonChat</module>
         <module>LemonCore</module>
         <module>LemonCosmetics</module>
         <module>LemonPractice</module>

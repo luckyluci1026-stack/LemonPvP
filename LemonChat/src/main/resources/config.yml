@@ -1,0 +1,15 @@
+# LemonChat — LuckPerms MiniMessage chat formatting + NoChatReports.
+#
+# Placeholders (MiniMessage tags): <prefix> <suffix> <name> <message>
+# <prefix>/<suffix> come from LuckPerms meta (legacy & / § codes are converted).
+# <name> is the display name handed in by LemonCore (nick + cosmetic tag aware).
+format: "<prefix><name> <dark_gray>» <white><message><suffix>"
+
+# Per-group overrides (LuckPerms primary group, lowercase). Optional.
+group-formats:
+  # owner: "<gradient:#fffb00:#00ff00><bold>OWNER</bold></gradient> <name> <dark_gray>» <yellow><message>"
+
+# Standalone mode only (no LemonCore on the server): cancel signed chat and
+# rebroadcast unsigned so messages can't be chat-reported. When LemonCore is
+# installed its chat pipeline already does this and LemonChat only formats.
+no-chat-reports: true

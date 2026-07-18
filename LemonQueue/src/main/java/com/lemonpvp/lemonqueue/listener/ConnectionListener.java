@@ -107,9 +107,18 @@ public class ConnectionListener {
             return;
         }
 
-        // Only redirect to limbo when it is actually reachable.
+        // Only redirect to limbo when it is actually reachable. With no limbo the
+        // player fully disconnects — translate technical reasons (netty/Java
+        // exceptions) into something a normal player understands.
         Optional<RegisteredServer> limbo = proxy.getServer(config.getLimboServer());
-        if (limbo.isEmpty() || !queues.isLimboOnline()) return;
+        if (limbo.isEmpty() || !queues.isLimboOnline()) {
+            Component raw = event.getServerKickReason().orElse(Component.empty());
+            Component friendly = com.lemonpvp.lemonqueue.util.FriendlyErrors.translate(raw);
+            if (friendly != raw) {
+                event.setResult(KickedFromServerEvent.DisconnectPlayer.create(friendly));
+            }
+            return;
+        }
 
         // Redirect to limbo + queue instead of dropping the player.
         event.setResult(KickedFromServerEvent.RedirectPlayer.create(

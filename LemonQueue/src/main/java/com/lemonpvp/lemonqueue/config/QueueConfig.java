@@ -35,6 +35,14 @@ public class QueueConfig {
     private final Map<String, Integer> maxPlayers = new LinkedHashMap<>();
     private final Map<String, Integer> priorities = new LinkedHashMap<>();
 
+    // VPN blocker (vpn-blocker.* section).
+    private boolean vpnEnabled = true;
+    private boolean vpnBlockHosting = true;
+    private String vpnKickMessage = "<gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient>\n\n"
+            + "<yellow>VPN and proxy connections are not allowed.</yellow>\n"
+            + "<gray>Please disable your VPN and reconnect.";
+    private final java.util.Set<String> vpnWhitelist = new java.util.HashSet<>();
+
     public static QueueConfig load(Path dataDir, Logger logger) {
         QueueConfig cfg = new QueueConfig();
         try {
@@ -82,6 +90,15 @@ public class QueueConfig {
                 priorities.put(String.valueOf(e.getKey()), toInt(e.getValue(), 0));
             }
         }
+        if (map.get("vpn-blocker") instanceof Map<?, ?> vbRaw) {
+            @SuppressWarnings("unchecked") Map<String, Object> vb = (Map<String, Object>) vbRaw;
+            vpnEnabled = bool(vb, "enabled", vpnEnabled);
+            vpnBlockHosting = bool(vb, "block-hosting", vpnBlockHosting);
+            vpnKickMessage = str(vb, "kick-message", vpnKickMessage);
+            if (vb.get("whitelist") instanceof Iterable<?> list) {
+                for (Object o : list) vpnWhitelist.add(String.valueOf(o).trim());
+            }
+        }
     }
 
     // ── Accessors ────────────────────────────────────────────────────────
@@ -97,6 +114,10 @@ public class QueueConfig {
     public String getLanguage()         { return language; }
     public Messages getMessages()       { return messages; }
     public Map<String, Integer> getPriorities() { return priorities; }
+    public boolean isVpnBlockerEnabled()   { return vpnEnabled; }
+    public boolean isVpnBlockHosting()     { return vpnBlockHosting; }
+    public String getVpnKickMessage()      { return vpnKickMessage; }
+    public java.util.Set<String> getVpnWhitelist() { return vpnWhitelist; }
 
     /** Max players for a target server; {@link Integer#MAX_VALUE} if uncapped. */
     public int getMaxPlayers(String server) {

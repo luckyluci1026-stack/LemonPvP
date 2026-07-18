@@ -1,0 +1,15 @@
+name: LemonChat
+version: "1.0.0"
+main: com.lemonpvp.lemonchat.LemonChat
+api-version: '1.21'
+description: LuckPerms MiniMessage chat formatting + NoChatReports, all in one
+softdepend: [LuckPerms, LemonCore]
+commands:
+  lemonchat:
+    description: LemonChat admin commands
+    permission: lemonchat.admin
+    usage: /lemonchat reload
+permissions:
+  lemonchat.admin:
+    description: Reload the LemonChat config
+    default: op

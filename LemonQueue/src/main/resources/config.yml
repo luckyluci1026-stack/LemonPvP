@@ -107,3 +107,12 @@ messages:
   leave-proxy: ""
   # Beispiel / Example (eigenes MiniMessage über der Hotbar):
   # actionbar-waiting: "<gradient:#fff700:#00ff7f><bold>Queue</bold></gradient> <gray>{pos}/{total} • {eta}</gray>"
+
+# ── VPN blocker ────────────────────────────────────────────────────────────
+# Blocks VPN/proxy connections at the handshake via ip-api.com (cached 6h,
+# fails open if the API is unreachable). Whitelist trusted IPs below.
+vpn-blocker:
+  enabled: true
+  block-hosting: true
+  kick-message: "<gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient>\n\n<yellow>VPN and proxy connections are not allowed.</yellow>\n<gray>Please disable your VPN and reconnect."
+  whitelist: []

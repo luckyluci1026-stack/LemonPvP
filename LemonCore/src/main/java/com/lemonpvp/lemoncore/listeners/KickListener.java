@@ -41,7 +41,9 @@ public class KickListener implements Listener {
         }
 
         // Re-issue as a proxy-disconnect kick so the player leaves the network.
-        Component reason = event.reason();
+        // Technical reasons (netty/Java exceptions, timeouts) are translated into
+        // something a normal player can understand first.
+        Component reason = com.lemonpvp.lemoncore.util.FriendlyErrors.translate(event.reason());
         event.setCancelled(true);
         plugin.getListenerManager().performKickDisconnect(event.getPlayer(), reason);
     }
