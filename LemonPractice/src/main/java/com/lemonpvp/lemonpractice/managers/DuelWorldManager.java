@@ -34,7 +34,18 @@ public class DuelWorldManager {
         var cfg = plugin.getDuelWorldsConfig();
         if (cfg == null || !cfg.getBoolean("enabled", true)) return;
 
-        List<String> worlds = cfg.getStringList("worlds");
+        List<String> worlds = new java.util.ArrayList<>(cfg.getStringList("worlds"));
+        // Generator shorthand: `biomes: [badlands, taiga]` + `per-biome: 5`
+        // expands to badlands-01..05, taiga-01..05 — so the world count is one
+        // number in the config instead of a hand-written list.
+        List<String> biomes = cfg.getStringList("biomes");
+        int perBiome = cfg.getInt("per-biome", 0);
+        for (String biome : biomes) {
+            for (int i = 1; i <= perBiome; i++) {
+                String name = String.format("%s-%02d", biome, i);
+                if (!worlds.contains(name)) worlds.add(name);
+            }
+        }
         if (worlds.isEmpty()) {
             plugin.getLogger().warning("[DuelWorlds] server-type is DUELS but duel-worlds.yml 'worlds' is empty — "
                     + "no vanilla arenas registered.");

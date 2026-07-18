@@ -300,6 +300,13 @@ public class DatabaseManager {
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
             stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lc_yml_sync (
+                    file VARCHAR(64) PRIMARY KEY,
+                    content MEDIUMTEXT NOT NULL,
+                    version BIGINT NOT NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
+            stmt.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS lc_economy (
                     uuid VARCHAR(36) PRIMARY KEY,
                     apples BIGINT DEFAULT 0,

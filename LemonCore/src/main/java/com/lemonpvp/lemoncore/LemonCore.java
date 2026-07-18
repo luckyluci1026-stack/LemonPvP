@@ -160,6 +160,9 @@ public class LemonCore extends JavaPlugin {
         scoreboardManager.startUpdating();
         tablistManager.startUpdating();
 
+        // Keep servers.yml in sync across the network (edit anywhere, applies everywhere).
+        new ServerRegistrySync(this).start();
+
         // Start HTTP API
         httpApiManager = new HttpApiManager(this);
         httpApiManager.start();
@@ -393,6 +396,8 @@ public class LemonCore extends JavaPlugin {
 
     // Getters
     public org.bukkit.configuration.file.FileConfiguration getServersConfig() { return serversConfig; }
+    /** Re-reads servers.yml from disk (used by the 30s network sync). */
+    public void reloadServersConfig() { loadServersConfig(); }
     private void loadServersConfig() {
         java.io.File f = new java.io.File(getDataFolder(), "servers.yml");
         if (!f.exists()) saveResource("servers.yml", false);

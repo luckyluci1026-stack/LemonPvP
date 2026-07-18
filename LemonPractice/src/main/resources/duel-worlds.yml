@@ -47,3 +47,8 @@ worlds:
   - taiga-03
   - taiga-04
   - taiga-05
+
+# Generator shorthand: instead of listing every world above, name the biomes and
+# how many worlds each should have — badlands-01..NN etc. Both merge with 'worlds'.
+biomes: []
+per-biome: 0
