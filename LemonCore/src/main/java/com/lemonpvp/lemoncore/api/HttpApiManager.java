@@ -61,7 +61,7 @@ public class HttpApiManager {
         }
 
         try {
-            server = HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
+            server = createServer(bindAddress, port);
             executor = Executors.newFixedThreadPool(4);
             server.setExecutor(executor);
             server.createContext("/api/player/",     ex -> route(ex, e -> handlePlayerRoot(e, apiKey)));
@@ -77,6 +77,41 @@ public class HttpApiManager {
             log.info("[HttpAPI] Started on " + bindAddress + ":" + port);
         } catch (IOException e) {
             log.severe("[HttpAPI] Failed to start: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Creates the underlying server — HTTPS when {@code http-api.https.enabled}
+     * is set (TLS terminated in-process via a PKCS12 keystore, e.g. a converted
+     * Let's Encrypt certificate), plain HTTP otherwise. With HTTPS on, binding a
+     * public address is safe; without it keep {@code bind: 127.0.0.1} and put a
+     * TLS reverse proxy in front.
+     */
+    private HttpServer createServer(String bindAddress, int port) throws IOException {
+        if (!plugin.getConfig().getBoolean("http-api.https.enabled", false)) {
+            return HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
+        }
+        String ksPath = plugin.getConfig().getString("http-api.https.keystore", "keystore.p12");
+        String ksPass = plugin.getConfig().getString("http-api.https.password", "");
+        File ksFile = new File(ksPath).isAbsolute() ? new File(ksPath) : new File(plugin.getDataFolder(), ksPath);
+        try {
+            java.security.KeyStore ks = java.security.KeyStore.getInstance("PKCS12");
+            try (FileInputStream in = new FileInputStream(ksFile)) {
+                ks.load(in, ksPass.toCharArray());
+            }
+            javax.net.ssl.KeyManagerFactory kmf = javax.net.ssl.KeyManagerFactory
+                    .getInstance(javax.net.ssl.KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(ks, ksPass.toCharArray());
+            javax.net.ssl.SSLContext ssl = javax.net.ssl.SSLContext.getInstance("TLS");
+            ssl.init(kmf.getKeyManagers(), null, null);
+
+            com.sun.net.httpserver.HttpsServer https =
+                    com.sun.net.httpserver.HttpsServer.create(new InetSocketAddress(bindAddress, port), 0);
+            https.setHttpsConfigurator(new com.sun.net.httpserver.HttpsConfigurator(ssl));
+            log.info("[HttpAPI] HTTPS enabled (keystore: " + ksFile.getName() + ").");
+            return https;
+        } catch (java.security.GeneralSecurityException e) {
+            throw new IOException("TLS setup failed (" + ksFile + "): " + e.getMessage(), e);
         }
     }
 

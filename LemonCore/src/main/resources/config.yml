@@ -125,6 +125,14 @@ anti-swear:
 
 http-api:
   enabled: true
+  # Native HTTPS: put a PKCS12 keystore (e.g. converted Let's Encrypt cert) in
+  # the plugin folder and enable — the API then serves TLS itself, no reverse
+  # proxy needed. Convert a Let's Encrypt cert with:
+  #   openssl pkcs12 -export -in fullchain.pem -inkey privkey.pem -out keystore.p12
+  https:
+    enabled: false
+    keystore: "keystore.p12"
+    password: ""
   # bind: which network interface to listen on.
   #   127.0.0.1 — only reachable from this machine (use when panel is on the same host)
   #   0.0.0.0   — reachable on all interfaces (use when panel is on a different server)

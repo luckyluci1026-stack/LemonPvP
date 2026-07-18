@@ -22,11 +22,32 @@ In `plugins/LemonCore/config.yml` on each server:
 http-api:
   enabled: true
   port: 8080            # pick a unique port per server on the same machine
-  bind: 127.0.0.1       # NEVER bind 0.0.0.0 — expose via reverse proxy only
+  bind: 0.0.0.0         # with HTTPS on this is fine; add a firewall rule anyway
   key: "<GENERATE A LONG RANDOM TOKEN>"   # e.g.: openssl rand -hex 32
+  https:
+    enabled: true
+    keystore: "keystore.p12"
+    password: "<keystore password>"
 ```
 
-Restart the server. The log shows `[HttpAPI] Started on 127.0.0.1:8080`.
+Restart the server. The log shows `[HttpAPI] HTTPS enabled` + `Started on ...`.
+
+### Getting the certificate (Let's Encrypt → PKCS12)
+
+The API serves TLS **itself** — no nginx needed. On the machine, once:
+
+```bash
+certbot certonly --standalone -d api.lemonpvp.de
+openssl pkcs12 -export \
+  -in  /etc/letsencrypt/live/api.lemonpvp.de/fullchain.pem \
+  -inkey /etc/letsencrypt/live/api.lemonpvp.de/privkey.pem \
+  -out plugins/LemonCore/keystore.p12
+```
+
+Enter an export password and put it in the config. Renewals: re-run the
+`openssl` line after certbot renews (cron it monthly) and restart the server
+or `/coderl`-style reload. If you prefer, the reverse-proxy setup in section 4
+is still a valid alternative — pick ONE of the two.
 
 ## 2. Authentication
 
