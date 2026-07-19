@@ -68,6 +68,12 @@ permissions:
   lemoncore.use.stats:
     description: View stats
     default: true
+  lemoncore.use.ping:
+    description: Check your own ping
+    default: true
+  lemoncore.ping.others:
+    description: Check another player's ping
+    default: true
   lemoncore.admin.wipe:
     description: Wipe player stats
     default: op
@@ -161,6 +167,10 @@ commands:
   coins:
     description: Show your coins
     permission: lemoncore.use.stats
+  ping:
+    description: Show your (or another player's) ping
+    permission: lemoncore.use.ping
+    usage: /ping [player]
   gcoins:
     description: Manage player coins
     permission: lemoncore.admin.coins

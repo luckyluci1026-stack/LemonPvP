@@ -274,6 +274,12 @@ public class LemonCore extends JavaPlugin {
         // User commands
         getCommand("rank").setExecutor(luckPerms != null ? new RankCommand(this, luckPerms) : (s, c, l, a) -> { s.sendMessage("LuckPerms not available."); return true; });
         getCommand("coins").setExecutor(new CoinsCommand(this));
+        var pingCmd = getCommand("ping");
+        if (pingCmd != null) {
+            var pingExec = new com.lemonpvp.lemoncore.commands.user.PingCommand(this);
+            pingCmd.setExecutor(pingExec);
+            pingCmd.setTabCompleter(pingExec);
+        }
         getCommand("code").setExecutor(luckPerms != null ? new CodeCommand(this, luckPerms) : new CodeCommand(this, null));
         getCommand("stats").setExecutor(new StatsCommand(this));
         getCommand("settings").setExecutor(new SettingsCommand(this));

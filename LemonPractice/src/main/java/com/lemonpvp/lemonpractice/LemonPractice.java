@@ -48,6 +48,7 @@ public class LemonPractice extends JavaPlugin {
     private com.lemonpvp.lemonpractice.managers.KitAdminManager kitAdminManager;
     private EloManager eloManager;
     private com.lemonpvp.lemonpractice.managers.StreakManager streakManager;
+    private com.lemonpvp.lemonpractice.managers.ComboManager comboManager;
     private com.lemonpvp.lemonpractice.managers.PostMatchManager postMatchManager;
     private com.lemonpvp.lemonpractice.tournament.TournamentManager tournamentManager;
     private com.lemonpvp.lemonpractice.managers.TeamDuelManager teamDuelManager;
@@ -119,6 +120,7 @@ public class LemonPractice extends JavaPlugin {
         kitAdminManager = new com.lemonpvp.lemonpractice.managers.KitAdminManager(this);
         eloManager = new EloManager(this);
         streakManager = new com.lemonpvp.lemonpractice.managers.StreakManager(this);
+        comboManager = new com.lemonpvp.lemonpractice.managers.ComboManager();
         postMatchManager = new com.lemonpvp.lemonpractice.managers.PostMatchManager(this);
         tournamentManager = new com.lemonpvp.lemonpractice.tournament.TournamentManager(this);
         tournamentManager.loadAll();
@@ -325,6 +327,7 @@ public class LemonPractice extends JavaPlugin {
     public com.lemonpvp.lemonpractice.managers.KitAdminManager getKitAdminManager() { return kitAdminManager; }
     public EloManager getEloManager() { return eloManager; }
     public com.lemonpvp.lemonpractice.managers.StreakManager getStreakManager() { return streakManager; }
+    public com.lemonpvp.lemonpractice.managers.ComboManager getComboManager() { return comboManager; }
     public com.lemonpvp.lemonpractice.managers.PostMatchManager getPostMatchManager() { return postMatchManager; }
     public com.lemonpvp.lemonpractice.tournament.TournamentManager getTournamentManager() { return tournamentManager; }
     public com.lemonpvp.lemonpractice.managers.TeamDuelManager getTeamDuelManager() { return teamDuelManager; }

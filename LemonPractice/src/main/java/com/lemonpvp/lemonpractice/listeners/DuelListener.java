@@ -154,6 +154,9 @@ public class DuelListener implements Listener {
         // Must be in FIGHTING state
         if (damagerGame.getState() != DuelState.FIGHTING) {
             event.setCancelled(true);
+        } else {
+            // Valid duel hit — feed the combo counter (feedback only).
+            plugin.getComboManager().onHit(damagerUuid, victimUuid);
         }
     }
 
@@ -225,5 +228,6 @@ public class DuelListener implements Listener {
             plugin.getDuelManager().handleDeath(uuid);
         }
         plugin.getStreakManager().evict(uuid);
+        plugin.getComboManager().clear(uuid);
     }
 }
