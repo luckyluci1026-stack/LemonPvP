@@ -86,8 +86,11 @@ commands:
   spectate:
     description: Watch a running duel live
     permission: lemonpractice.use.spectate
-    aliases: [watch]
+    aliases: [watch, spec]
     usage: /spectate [player|leave]
+  leave:
+    description: Stop spectating, leave the queue, or forfeit your match and return to the lobby
+    usage: /leave
   matchinv:
     description: Review the loadouts from your last duel
     permission: lemonpractice.use.stats

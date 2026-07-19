@@ -204,6 +204,8 @@ public class LemonPractice extends JavaPlugin {
             spectateCmd.setExecutor(specExec);
             spectateCmd.setTabCompleter(specExec);
         }
+        var leaveCmd = getCommand("leave");
+        if (leaveCmd != null) leaveCmd.setExecutor(new com.lemonpvp.lemonpractice.commands.LeaveCommand(this));
         var matchInvCmd = getCommand("matchinv");
         if (matchInvCmd != null) matchInvCmd.setExecutor(
                 new com.lemonpvp.lemonpractice.commands.MatchInvCommand(this));
