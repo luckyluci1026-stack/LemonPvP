@@ -83,12 +83,17 @@ public class FilterManager {
 
         List<String> variants = new ArrayList<>();
         variants.add(join(classes, -1, -1));
-        if (fuzzy && classes.size() >= 4) {
-            // One INTERIOR letter omitted (catches "niga"-style typos) — first and
-            // last letter always stay required, otherwise "uck"-style stubs would
-            // match harmless words like "luck".
+        // Fuzzy variants are matched as substrings, so short words are far too
+        // dangerous: omitting one letter of a 4-letter word produces 3-letter
+        // stubs that live inside everyday words ("shit"→"sit", "damn"→"dan").
+        // Omissions therefore need 6+ letters, transpositions 5+ — long enough
+        // that the variants stop colliding with normal vocabulary.
+        if (fuzzy && classes.size() >= 6) {
+            // One INTERIOR letter omitted (first/last always stay required).
             for (int skip = 1; skip < classes.size() - 1; skip++) variants.add(join(classes, skip, -1));
-            // Or two adjacent letters swapped (catches "ngiga"-style typos).
+        }
+        if (fuzzy && classes.size() >= 5) {
+            // Two adjacent letters swapped (catches "ngiga"-style typos).
             for (int swap = 0; swap < classes.size() - 1; swap++) variants.add(join(classes, -1, swap));
         }
         return Pattern.compile("(?i)(?:" + String.join("|", variants) + ")");

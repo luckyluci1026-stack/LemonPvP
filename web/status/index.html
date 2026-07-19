@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LemonPvP Status</title>
+<style>
+  :root { --bg:#0f1115; --card:#171a21; --text:#e6e6e6; --sub:#8b929e;
+          --ok:#3ba55c; --warn:#faa61a; --down:#ed4245; --bar:#2a2f3a; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font:16px/1.5 system-ui, sans-serif; }
+  .wrap { max-width:820px; margin:0 auto; padding:48px 20px; }
+  header { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  h1 { font-size:28px; }
+  h1 span { background:linear-gradient(90deg,#fffb00,#00ff00); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .updated { color:var(--sub); font-size:13px; }
+  .banner { border-radius:8px; padding:16px 20px; font-weight:600; margin:20px 0 24px; color:#fff; }
+  .banner.ok { background:var(--ok); } .banner.warn { background:var(--warn); } .banner.down { background:var(--down); }
+  .card { background:var(--card); border-radius:8px; overflow:hidden; }
+  .row { padding:16px 20px; border-bottom:1px solid rgba(255,255,255,.06); }
+  .row:last-child { border-bottom:none; }
+  .row .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .row .meta { color:var(--sub); font-size:13px; margin-top:8px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; }
+  .state { font-weight:600; font-size:14px; }
+  .state.ok { color:var(--ok); } .state.down { color:var(--down); }
+  .bars { display:flex; gap:2px; height:34px; }
+  .bars i { flex:1; border-radius:2px; background:var(--bar); }
+  .bars i.g { background:var(--ok); } .bars i.y { background:var(--warn); } .bars i.r { background:var(--down); }
+  .foot { color:var(--sub); font-size:13px; margin-top:24px; text-align:center; }
+  .err { color:var(--down); text-align:center; padding:24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span>LemonPvP</span> Status</h1>
+    <div class="updated" id="updated"></div>
+  </header>
+  <div id="banner" class="banner warn">Checking…</div>
+  <div id="cards" class="card"></div>
+  <div class="foot">Uptime shown for the last 90 days · refreshes every 30 s</div>
+</div>
+<script>
+// The page only talks to its own api.php — tokens & backend URLs stay server-side.
+async function refresh() {
+  const banner = document.getElementById("banner");
+  const cards = document.getElementById("cards");
+  let data;
+  try {
+    const res = await fetch("api.php", { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    data = await res.json();
+  } catch (e) {
+    banner.className = "banner down";
+    banner.textContent = "Status backend unreachable";
+    cards.innerHTML = '<div class="err">Could not load api.php — check the deployment.</div>';
+    return;
+  }
+
+  document.getElementById("updated").textContent =
+      "Updated " + new Date(data.generatedAt).toLocaleTimeString();
+  cards.innerHTML = "";
+  let down = 0;
+
+  for (const s of data.servers) {
+    if (!s.up) down++;
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const bars = s.days.map(d => {
+      if (d === null) return "<i title='no data'></i>";
+      const cls = d >= 0.995 ? "g" : d >= 0.9 ? "y" : "r";
+      return `<i class="${cls}" title="${(d * 100).toFixed(1)}%"></i>`;
+    }).join("");
+
+    const detail = s.up
+        ? `${s.players}/${s.maxPlayers} players · TPS ${(+s.tps).toFixed(1)} · ${s.version ?? ""}`
+        : "No response from this server";
+    const pct = s.uptimePct !== null ? s.uptimePct.toFixed(2) + "% uptime (90d)" : "collecting data…";
+
+    row.innerHTML = `
+      <div class="head">
+        <div>${s.name}</div>
+        <div class="state ${s.up ? "ok" : "down"}">${s.up ? "Operational" : "Down"}</div>
+      </div>
+      <div class="bars">${bars}</div>
+      <div class="meta"><span>${detail}</span><span>${pct}</span></div>`;
+    cards.appendChild(row);
+  }
+
+  if (down === 0) { banner.className = "banner ok"; banner.textContent = "All systems operational"; }
+  else if (down < data.servers.length) { banner.className = "banner warn"; banner.textContent = down + " server(s) unavailable"; }
+  else { banner.className = "banner down"; banner.textContent = "Major outage — the network is unreachable"; }
+}
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>

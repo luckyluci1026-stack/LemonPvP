@@ -116,12 +116,11 @@ Add CORS for the status page's origin if it's on another domain:
 
 ## 5. The status page (status.lemonpvp.de)
 
-`web/status.html` is a self-contained Discord/GitHub-style status page:
-upload it to your webserver as the document root of `status.lemonpvp.de`,
-then edit the `SERVERS` array at the top of the file — one entry per backend
-with its public `/api/status` URL. It polls every 30 s, shows
-Operational / Down per server, player counts, TPS and uptime, and a
-green/yellow/red banner exactly like the big status pages.
+The full page lives in `web/status/` (index.html + api.php + README.md):
+a Discord/GitHub-style page with per-server Operational/Down rows, player
+counts, TPS, uptime and 90-day uptime-history bars. The Bearer token and the
+backend URLs live only in the server-side `api.php` — never in the browser.
+See `web/status/README.md` for the 4-step deployment.
 
 ## 6. Storing stats in your own database via the API
 

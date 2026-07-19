@@ -202,6 +202,8 @@ whitelist:
   - "assassin"
   - "assumption"
 
-# Also catch misspellings: one interior letter omitted or two adjacent letters
-# swapped (words with 4+ letters). Prefix a word with = to force exact matching.
+# Also catch misspellings: one interior letter omitted (words with 6+ letters)
+# or two adjacent letters swapped (5+ letters). Short words stay exact-ish so
+# everyday vocabulary can't false-positive. Prefix a word with = to force
+# exact matching for that word.
 fuzzy-misspellings: true

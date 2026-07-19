@@ -507,15 +507,21 @@ public class HttpApiManager {
      */
     private void handleStatus(HttpExchange ex) throws IOException {
         if (!"GET".equals(ex.getRequestMethod())) { send(ex, 405, error("GET only")); return; }
-        JsonObject o = new JsonObject();
-        o.addProperty("online", true);
-        o.addProperty("server", plugin.getConfig().getString("server-name", Bukkit.getServer().getMotd()));
-        o.addProperty("players", Bukkit.getOnlinePlayers().size());
-        o.addProperty("maxPlayers", Bukkit.getMaxPlayers());
-        o.addProperty("uptimeSeconds", (System.currentTimeMillis() - plugin.getStartTimeMs()) / 1000L);
-        o.addProperty("tps", Math.min(20.0, Bukkit.getServer().getTPS()[0]));
-        o.addProperty("version", Bukkit.getMinecraftVersion());
-        send(ex, 200, GSON.toJson(o));
+        // getOnlinePlayers()/getMaxPlayers()/getTPS() are main-thread-only —
+        // build the snapshot there and hand it back to this executor thread.
+        CompletableFuture<JsonObject> future = new CompletableFuture<>();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            JsonObject o = new JsonObject();
+            o.addProperty("online", true);
+            o.addProperty("server", plugin.getConfig().getString("server-name", Bukkit.getServer().getMotd()));
+            o.addProperty("players", Bukkit.getOnlinePlayers().size());
+            o.addProperty("maxPlayers", Bukkit.getMaxPlayers());
+            o.addProperty("uptimeSeconds", (System.currentTimeMillis() - plugin.getStartTimeMs()) / 1000L);
+            o.addProperty("tps", Math.min(20.0, Bukkit.getServer().getTPS()[0]));
+            o.addProperty("version", Bukkit.getMinecraftVersion());
+            future.complete(o);
+        });
+        send(ex, 200, GSON.toJson(await(future)));
     }
 
     /** GET /api/leaderboard?stat=kills|coins&limit=10 — top players from lc_players. */
@@ -555,7 +561,7 @@ public class HttpApiManager {
         var rows = plugin.getDatabaseManager().queryAsync(conn -> {
             var arr = new com.google.gson.JsonArray();
             try (var ps = conn.prepareStatement(
-                    "SELECT id, name, gamemode, state, start_at, end_at FROM lemonevents_tournaments ORDER BY id DESC")) {
+                    "SELECT id, name, gamemode, state, start_at, end_at FROM lp_tournaments ORDER BY id DESC")) {
                 var rs = ps.executeQuery();
                 while (rs.next()) {
                     JsonObject row = new JsonObject();
