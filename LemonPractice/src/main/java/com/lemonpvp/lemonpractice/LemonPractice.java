@@ -49,6 +49,7 @@ public class LemonPractice extends JavaPlugin {
     private EloManager eloManager;
     private com.lemonpvp.lemonpractice.managers.StreakManager streakManager;
     private com.lemonpvp.lemonpractice.managers.ComboManager comboManager;
+    private com.lemonpvp.lemonpractice.managers.DuelSpectateManager duelSpectateManager;
     private com.lemonpvp.lemonpractice.managers.PostMatchManager postMatchManager;
     private com.lemonpvp.lemonpractice.tournament.TournamentManager tournamentManager;
     private com.lemonpvp.lemonpractice.managers.TeamDuelManager teamDuelManager;
@@ -132,6 +133,7 @@ public class LemonPractice extends JavaPlugin {
         botDuelManager = new com.lemonpvp.lemonpractice.managers.BotDuelManager(this);
         duelInviteManager = new DuelInviteManager(this);
         spectatorManager = new SpectatorManager(this);
+        duelSpectateManager = new com.lemonpvp.lemonpractice.managers.DuelSpectateManager(this);
         ffaManager = new FFAManager(this);
         ffaManager.loadAll();
         ffaManager.startTasks();
@@ -196,6 +198,12 @@ public class LemonPractice extends JavaPlugin {
         getCommand("stats").setTabCompleter(statsCmd);
         TopCommand topCmd = new TopCommand(this);
         getCommand("top").setExecutor(topCmd);
+        var spectateCmd = getCommand("spectate");
+        if (spectateCmd != null) {
+            var specExec = new com.lemonpvp.lemonpractice.commands.SpectateCommand(this);
+            spectateCmd.setExecutor(specExec);
+            spectateCmd.setTabCompleter(specExec);
+        }
         var matchInvCmd = getCommand("matchinv");
         if (matchInvCmd != null) matchInvCmd.setExecutor(
                 new com.lemonpvp.lemonpractice.commands.MatchInvCommand(this));
@@ -328,6 +336,7 @@ public class LemonPractice extends JavaPlugin {
     public EloManager getEloManager() { return eloManager; }
     public com.lemonpvp.lemonpractice.managers.StreakManager getStreakManager() { return streakManager; }
     public com.lemonpvp.lemonpractice.managers.ComboManager getComboManager() { return comboManager; }
+    public com.lemonpvp.lemonpractice.managers.DuelSpectateManager getDuelSpectateManager() { return duelSpectateManager; }
     public com.lemonpvp.lemonpractice.managers.PostMatchManager getPostMatchManager() { return postMatchManager; }
     public com.lemonpvp.lemonpractice.tournament.TournamentManager getTournamentManager() { return tournamentManager; }
     public com.lemonpvp.lemonpractice.managers.TeamDuelManager getTeamDuelManager() { return teamDuelManager; }

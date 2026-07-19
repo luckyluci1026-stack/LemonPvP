@@ -353,6 +353,7 @@ public class DuelManager {
      */
     private void abortDuel(DuelGame game, UUID quitterUuid) {
         game.setState(DuelState.ENDING); // makes the countdown task cancel itself
+        plugin.getDuelSpectateManager().endFor(game);
         plugin.getReplayManager().stop(game);
 
         activeDuels.remove(game.getPlayer1Uuid());
@@ -373,6 +374,7 @@ public class DuelManager {
     }
 
     private void finishDuel(DuelGame game, Player winner, Player loser) {
+        plugin.getDuelSpectateManager().endFor(game);
         plugin.getReplayManager().stopWithKillCam(game, loser != null ? loser.getUniqueId() : null);
         if (winner != null && winner.isOnline()) {
             clearDuelScoreboard(winner);
@@ -454,6 +456,11 @@ public class DuelManager {
 
     public DuelGame getDuel(UUID playerUuid) {
         return activeDuels.get(playerUuid);
+    }
+
+    /** Every distinct running duel (for the spectate browser). */
+    public java.util.Set<DuelGame> getActiveGames() {
+        return new java.util.HashSet<>(activeDuels.values());
     }
 
     public boolean isInDuel(UUID playerUuid) {

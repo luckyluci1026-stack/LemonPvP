@@ -229,5 +229,6 @@ public class DuelListener implements Listener {
         }
         plugin.getStreakManager().evict(uuid);
         plugin.getComboManager().clear(uuid);
+        plugin.getDuelSpectateManager().handleQuit(uuid);
     }
 }
