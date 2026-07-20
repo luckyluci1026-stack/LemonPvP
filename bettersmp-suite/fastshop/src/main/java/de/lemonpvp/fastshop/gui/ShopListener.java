@@ -35,6 +35,9 @@ public final class ShopListener implements org.bukkit.event.Listener {
         } else if (holder instanceof ShopMenus.CategoryHolder categoryHolder) {
             event.setCancelled(true);
             handleCategory(event, categoryHolder);
+        } else if (holder instanceof ShopMenus.ActionHolder actionHolder) {
+            event.setCancelled(true);
+            handleAction(event, actionHolder);
         }
         // SellHolder: Klicks erlaubt (Spieler legt Items ab) -> nicht abbrechen
     }
@@ -87,13 +90,41 @@ public final class ShopListener implements org.bukkit.event.Listener {
         ShopItem item = items.get(index);
         ClickType click = event.getClick();
         if (click == ClickType.LEFT) {
-            plugin.service().buy(player, item, 1);
+            // Bedrock-freundlich: einfacher Klick -> Button-Menue (keine
+            // Rechtsklick-/Shift-Kombis noetig)
+            plugin.menus().openAction(player, holder.categoryId, holder.page, index);
         } else if (click == ClickType.SHIFT_LEFT) {
             plugin.service().buy(player, item, 64);
         } else if (click == ClickType.RIGHT) {
-            plugin.service().sellFromInventory(player, item.material(), false);
+            plugin.service().sellFromInventory(player, item.material(), 1);
         } else if (click == ClickType.SHIFT_RIGHT) {
-            plugin.service().sellFromInventory(player, item.material(), true);
+            plugin.service().sellFromInventory(player, item.material(), -1);
+        }
+    }
+
+    private void handleAction(InventoryClickEvent event, ShopMenus.ActionHolder holder) {
+        if (!(event.getWhoClicked() instanceof Player player)
+                || event.getClickedInventory() == null
+                || !event.getClickedInventory().equals(event.getInventory())) {
+            return;
+        }
+        Category category = plugin.shop().category(holder.categoryId);
+        if (category == null || holder.itemIndex < 0 || holder.itemIndex >= category.items().size()) {
+            plugin.menus().openMain(player);
+            return;
+        }
+        ShopItem item = category.items().get(holder.itemIndex);
+        switch (event.getSlot()) {
+            case 10 -> plugin.service().buy(player, item, 1);
+            case 11 -> plugin.service().buy(player, item, 16);
+            case 12 -> plugin.service().buy(player, item, 64);
+            case 14 -> plugin.service().sellFromInventory(player, item.material(), 1);
+            case 15 -> plugin.service().sellFromInventory(player, item.material(), 16);
+            case 16 -> plugin.service().sellFromInventory(player, item.material(), -1);
+            case 22 -> plugin.menus().openCategory(player, holder.categoryId, holder.page);
+            default -> {
+                // Rahmen/Anzeige - nichts tun
+            }
         }
     }
 

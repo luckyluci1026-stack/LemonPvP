@@ -131,8 +131,8 @@ public final class ShopService {
                 "count", String.valueOf(count), "price", plugin.economy().format(total));
     }
 
-    /** Verkauft aus dem Inventar (GUI-Rechtsklick): 1 Stueck oder alle. */
-    public void sellFromInventory(Player player, Material material, boolean all) {
+    /** Verkauft aus dem Inventar (Shop-GUI): gewuenschte Menge, &lt;= 0 = alle. */
+    public void sellFromInventory(Player player, Material material, int wanted) {
         if (noEconomy(player)) {
             return;
         }
@@ -146,7 +146,7 @@ public final class ShopService {
             plugin.msgs().send(player, "not-enough-items", "item", display(material));
             return;
         }
-        int amount = all ? available : 1;
+        int amount = wanted <= 0 ? available : Math.min(wanted, available);
         removePlain(player, material, amount);
         double price = item.sell() * plugin.shop().sellMultiplier() * amount;
         plugin.economy().deposit(player, price);
