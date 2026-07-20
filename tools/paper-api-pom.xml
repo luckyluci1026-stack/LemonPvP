@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.papermc.paper</groupId>
+    <artifactId>paper-api</artifactId>
+    <version>1.21.11-R0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>Paper-API (local source build)</name>
+    <description>Built locally from the official PaperMC/Paper ver/1.21.11 sources.</description>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <adventure.version>4.26.1</adventure.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>net.kyori</groupId>
+                <artifactId>adventure-bom</artifactId>
+                <version>${adventure.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency><groupId>com.google.guava</groupId><artifactId>guava</artifactId><version>33.3.1-jre</version></dependency>
+        <dependency><groupId>com.google.code.gson</groupId><artifactId>gson</artifactId><version>2.11.0</version></dependency>
+        <dependency><groupId>org.yaml</groupId><artifactId>snakeyaml</artifactId><version>2.2</version></dependency>
+        <dependency><groupId>org.joml</groupId><artifactId>joml</artifactId><version>1.10.8</version></dependency>
+        <dependency><groupId>it.unimi.dsi</groupId><artifactId>fastutil</artifactId><version>8.5.15</version></dependency>
+        <dependency><groupId>org.apache.logging.log4j</groupId><artifactId>log4j-api</artifactId><version>2.24.1</version></dependency>
+        <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId><version>2.0.16</version></dependency>
+        <dependency><groupId>com.mojang</groupId><artifactId>brigadier</artifactId><version>1.3.10</version></dependency>
+        <dependency>
+            <groupId>net.md-5</groupId><artifactId>bungeecord-chat</artifactId><version>1.21-R0.4</version>
+            <exclusions><exclusion><groupId>com.google.guava</groupId><artifactId>guava</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency><groupId>net.kyori</groupId><artifactId>adventure-api</artifactId></dependency>
+        <dependency><groupId>net.kyori</groupId><artifactId>adventure-text-minimessage</artifactId></dependency>
+        <dependency><groupId>net.kyori</groupId><artifactId>adventure-text-serializer-gson</artifactId></dependency>
+        <dependency><groupId>net.kyori</groupId><artifactId>adventure-text-serializer-legacy</artifactId></dependency>
+        <dependency><groupId>net.kyori</groupId><artifactId>adventure-text-serializer-plain</artifactId></dependency>
+        <dependency><groupId>net.kyori</groupId><artifactId>adventure-text-logger-slf4j</artifactId></dependency>
+        <dependency><groupId>org.apache.maven</groupId><artifactId>maven-resolver-provider</artifactId><version>3.9.6</version></dependency>
+        <dependency><groupId>org.apache.maven.resolver</groupId><artifactId>maven-resolver-connector-basic</artifactId><version>1.9.18</version></dependency>
+        <dependency><groupId>org.apache.maven.resolver</groupId><artifactId>maven-resolver-transport-http</artifactId><version>1.9.18</version></dependency>
+        <dependency><groupId>org.jetbrains</groupId><artifactId>annotations</artifactId><version>26.0.2</version><scope>provided</scope></dependency>
+        <dependency><groupId>org.checkerframework</groupId><artifactId>checker-qual</artifactId><version>3.49.2</version></dependency>
+        <dependency><groupId>org.jspecify</groupId><artifactId>jspecify</artifactId><version>1.0.0</version></dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <resources>
+            <resource><directory>src/main/resources</directory></resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>21</release>
+                    <encoding>UTF-8</encoding>
+                    <proc>none</proc>
+                    <fork>true</fork>
+                    <compilerArgs>
+                        <arg>-Xlint:none</arg>
+                        <arg>-nowarn</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Automatic-Module-Name>org.bukkit</Automatic-Module-Name>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

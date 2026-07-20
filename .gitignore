@@ -1,0 +1,7 @@
+target/
+.idea/
+*.iml
+.gradle/
+build/
+.DS_Store
+gen-mvn-settings.sh

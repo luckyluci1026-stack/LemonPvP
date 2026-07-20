@@ -1,0 +1,12 @@
+# ==========================================================
+#  FastShop - Einstellungen
+# ==========================================================
+settings:
+  # Globaler Multiplikator auf alle Verkaufspreise (z.B. 0.9 = 10% weniger)
+  sell-multiplier: 1.0
+  # Titel des Hauptmenues (MiniMessage)
+  menu-title: "<gradient:#F1C40F:#E67E22><bold>Shop</bold></gradient>"
+  # Zeilen des Hauptmenues (1-6)
+  menu-rows: 3
+  # Zeilen einer Kategorie-Seite (1-6), letzte Zeile ist Navigation
+  category-rows: 6

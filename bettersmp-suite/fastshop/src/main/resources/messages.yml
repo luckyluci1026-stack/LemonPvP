@@ -1,0 +1,31 @@
+# FastShop - Nachrichten (MiniMessage + Legacy-Codes)
+prefix: "<gradient:#F1C40F:#E67E22><bold>Shop</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+players-only: "%prefix%<red>Nur fuer Spieler.</red>"
+reloaded: "%prefix%<green>Shop neu geladen.</green>"
+no-economy: "%prefix%<red>Kein Economy-System gefunden (Vault + EssentialsX noetig).</red>"
+
+bought: "%prefix%<green>Gekauft: <white>%amount%x %item%</white> fuer <white>%price%</white>.</green>"
+sold: "%prefix%<green>Verkauft: <white>%amount%x %item%</white> fuer <white>%price%</white>.</green>"
+sold-multi: "%prefix%<green>Verkauft: <white>%count%</white> Item(s) fuer <white>%price%</white>.</green>"
+not-enough-money: "%prefix%<red>Du brauchst <white>%price%</white>, hast aber nur <white>%balance%</white>.</red>"
+not-enough-items: "%prefix%<red>Du hast nicht so viele <white>%item%</white>.</red>"
+inventory-full: "%prefix%<red>Dein Inventar ist voll.</red>"
+not-buyable: "%prefix%<red>Dieses Item kann man nicht kaufen.</red>"
+not-sellable: "%prefix%<red>Dieses Item kann man nicht verkaufen.</red>"
+nothing-in-hand: "%prefix%<red>Du haeltst nichts in der Hand.</red>"
+nothing-sold: "%prefix%<gray>Nichts Verkaufbares gefunden.</gray>"
+
+worth: "%prefix%<gray><white>%item%</white>: Verkauf <white>%sell%</white> ┃ Kauf <white>%buy%</white></gray>"
+worth-none: "%prefix%<gray>Dieses Item hat keinen Wert im Shop.</gray>"
+
+sell-gui-title: "<gradient:#F1C40F:#E67E22>Zum Verkaufen ablegen</gradient>"
+sell-gui-hint: "%prefix%<gray>Lege Items hinein und schliesse das Fenster zum Verkaufen.</gray>"
+
+additem-usage: "%prefix%<gray>/fastshop additem <Kategorie> <Kaufpreis> <Verkaufspreis></gray>"
+additem-done: "%prefix%<green><white>%item%</white> zu <white>%category%</white> hinzugefuegt (Kauf %buy%, Verkauf %sell%).</green>"
+additem-no-category: "%prefix%<red>Kategorie <white>%category%</white> existiert nicht.</red>"
+
+usage-sell: "%prefix%<gray>Nutzung: <white>/sell <hand|all|gui></white></gray>"
+usage-fastshop: "%prefix%<gray>Nutzung: <white>/fastshop <reload|additem></white></gray>"

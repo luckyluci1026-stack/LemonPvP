@@ -1,0 +1,103 @@
+# ==========================================================
+#  FastShop - Katalog
+#  Einfach Kategorien und Items ergaenzen. Preise in der
+#  EssentialsX-Waehrung. buy: -1 = nicht kaufbar, sell: -1 = nicht verkaufbar.
+#  icon/name/slot pro Kategorie; pro Item optional 'name' & 'lore'.
+# ==========================================================
+categories:
+
+  blocks:
+    icon: GRASS_BLOCK
+    name: "&a&lBloecke"
+    slot: 10
+    items:
+      - { material: STONE,        buy: 5,   sell: 1 }
+      - { material: COBBLESTONE,  buy: 3,   sell: 1 }
+      - { material: OAK_LOG,      buy: 12,  sell: 4 }
+      - { material: OAK_PLANKS,   buy: 4,   sell: 1 }
+      - { material: DIRT,         buy: 2,   sell: 1 }
+      - { material: SAND,         buy: 4,   sell: 1 }
+      - { material: GRAVEL,       buy: 4,   sell: 1 }
+      - { material: GLASS,        buy: 6,   sell: 2 }
+      - { material: SANDSTONE,    buy: 8,   sell: 2 }
+      - { material: OBSIDIAN,     buy: 80,  sell: 20 }
+
+  ores:
+    icon: DIAMOND
+    name: "&b&lErze & Barren"
+    slot: 12
+    items:
+      - { material: COAL,           buy: 10,   sell: 3 }
+      - { material: IRON_INGOT,     buy: 40,   sell: 12 }
+      - { material: GOLD_INGOT,     buy: 60,   sell: 18 }
+      - { material: DIAMOND,        buy: 200,  sell: 60 }
+      - { material: EMERALD,        buy: 150,  sell: 45 }
+      - { material: REDSTONE,       buy: 15,   sell: 4 }
+      - { material: LAPIS_LAZULI,   buy: 15,   sell: 4 }
+      - { material: NETHERITE_INGOT, buy: 2000, sell: 600 }
+      - { material: COPPER_INGOT,   buy: 20,   sell: 6 }
+      - { material: QUARTZ,         buy: 12,   sell: 3 }
+
+  food:
+    icon: COOKED_BEEF
+    name: "&6&lEssen"
+    slot: 14
+    items:
+      - { material: WHEAT,         buy: 6,   sell: 2 }
+      - { material: BREAD,         buy: 10,  sell: 3 }
+      - { material: APPLE,         buy: 8,   sell: 2 }
+      - { material: COOKED_BEEF,   buy: 15,  sell: 5 }
+      - { material: COOKED_CHICKEN, buy: 12, sell: 4 }
+      - { material: CARROT,        buy: 5,   sell: 1 }
+      - { material: POTATO,        buy: 5,   sell: 1 }
+      - { material: GOLDEN_APPLE,  buy: 250, sell: 80 }
+      - { material: SUGAR_CANE,    buy: 6,   sell: 2 }
+      - { material: MELON_SLICE,   buy: 3,   sell: 1 }
+
+  farming:
+    icon: WHEAT_SEEDS
+    name: "&2&lFarming & Natur"
+    slot: 16
+    items:
+      - { material: WHEAT_SEEDS,   buy: 3,   sell: 1 }
+      - { material: OAK_SAPLING,   buy: 8,   sell: 2 }
+      - { material: BONE_MEAL,     buy: 5,   sell: 1 }
+      - { material: PUMPKIN,       buy: 10,  sell: 3 }
+      - { material: SUGAR,         buy: 4,   sell: 1 }
+      - { material: EGG,           buy: 5,   sell: 1 }
+      - { material: LEATHER,       buy: 20,  sell: 6 }
+      - { material: STRING,        buy: 8,   sell: 2 }
+      - { material: FEATHER,       buy: 6,   sell: 2 }
+      - { material: SLIME_BALL,    buy: 25,  sell: 8 }
+
+  redstone:
+    icon: REDSTONE_TORCH
+    name: "&c&lRedstone"
+    slot: 30
+    items:
+      - { material: REDSTONE,      buy: 15,  sell: 4 }
+      - { material: REDSTONE_TORCH, buy: 20, sell: 5 }
+      - { material: REPEATER,      buy: 40,  sell: 10 }
+      - { material: COMPARATOR,    buy: 45,  sell: 12 }
+      - { material: PISTON,        buy: 60,  sell: 15 }
+      - { material: STICKY_PISTON, buy: 80,  sell: 20 }
+      - { material: HOPPER,        buy: 120, sell: 35 }
+      - { material: OBSERVER,      buy: 70,  sell: 18 }
+      - { material: LEVER,         buy: 10,  sell: 2 }
+      - { material: REDSTONE_LAMP, buy: 50,  sell: 12 }
+
+  misc:
+    icon: ENDER_PEARL
+    name: "&d&lVerschiedenes"
+    slot: 32
+    items:
+      - { material: TORCH,         buy: 3,   sell: 1 }
+      - { material: ENDER_PEARL,   buy: 60,  sell: 15 }
+      - { material: EXPERIENCE_BOTTLE, buy: 40, sell: -1 }
+      - { material: NAME_TAG,      buy: 100, sell: 20 }
+      - { material: SADDLE,        buy: 150, sell: 30 }
+      - { material: BOOK,          buy: 15,  sell: 4 }
+      - { material: PAPER,         buy: 5,   sell: 1 }
+      - { material: FLINT,         buy: 6,   sell: 2 }
+      - { material: GUNPOWDER,     buy: 20,  sell: 6 }
+      - { material: BLAZE_ROD,     buy: 40,  sell: 12 }

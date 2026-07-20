@@ -1,0 +1,13 @@
+# ============================================================
+#  TAB - Gruppen-Formatierung (von BetterSMP vorbereitet)
+#  Prefixe kommen direkt aus LuckPerms (%luckperms-prefix%).
+#  Eigene Overrides einfach pro Gruppe ergaenzen.
+# ============================================================
+
+_DEFAULT_:
+  tabprefix: "%luckperms-prefix%"
+  customtabname: "%player%"
+  tabsuffix: "%luckperms-suffix%"
+  tagprefix: "%luckperms-prefix%"
+  customtagname: "%player%"
+  tagsuffix: "%luckperms-suffix%"

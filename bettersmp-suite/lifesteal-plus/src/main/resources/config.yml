@@ -1,0 +1,92 @@
+# ==========================================================
+#  Lifesteal+ - Konfiguration
+#  Herzen werden ueber die echte Max-Leben-Eigenschaft verwaltet
+#  und persistieren automatisch mit den Vanilla-Spielerdaten.
+#  Nachrichten: MiniMessage + Legacy-Farbcodes.
+# ==========================================================
+
+hearts:
+  # Herzen beim ersten Beitritt (1 Herz = 2 HP)
+  starting: 10
+  # Absolute Obergrenze
+  maximum: 20
+  # Herzen, die der Killer pro Kill gewinnt
+  gain-per-kill: 1
+  # Herzen, die das Opfer pro Tod verliert
+  lose-per-death: 1
+  # Bei dieser Herzzahl (oder darunter) wird der Spieler eliminiert
+  eliminate-at: 0
+  # Nur bei PvP-Kills Herzen tauschen (true) oder auch bei anderen Toden verlieren (false)
+  only-transfer-on-pvp: true
+  # Verliert man Herzen auch bei nicht-PvP-Tod (Sturz, Lava ...)?
+  lose-on-non-pvp-death: false
+
+# ---------------- Elimination ----------------
+elimination:
+  # SPECTATOR = Zuschauermodus bis Wiederbelebung, BAN = temporaerer Bann
+  mode: SPECTATOR
+  # Nur bei mode BAN: Dauer in Minuten (0 = permanent bis /revive)
+  ban-minutes: 0
+  ban-message: "&cDu wurdest im Lifesteal eliminiert! Lass dich mit einem Herz-Item wiederbeleben."
+  broadcast: "&8[&c☠&8] &e%player% &7wurde eliminiert!"
+
+# ---------------- Herz-Item ----------------
+heart-item:
+  # Rezept aktivieren (Crafting)
+  crafting-enabled: true
+  # Material des Herz-Items
+  material: NETHER_STAR
+  name: "&c&l❤ Herz"
+  lore:
+    - "&7Rechtsklick, um ein Herz zu erhalten."
+    - "&7(erhoeht dein Maximum um 1 Herz)"
+  # Rezept: 3x3, Zeilen mit je 3 Zeichen. Buchstaben werden unten zugeordnet.
+  recipe:
+    shape:
+      - "DGD"
+      - "GNG"
+      - "DGD"
+    ingredients:
+      D: DIAMOND
+      G: GOLD_BLOCK
+      N: NETHERITE_INGOT
+
+# ---------------- Revive-Item ----------------
+revive-item:
+  enabled: true
+  material: TOTEM_OF_UNDYING
+  name: "&a&l✚ Wiederbelebungs-Totem"
+  lore:
+    - "&7Rechtsklick, dann Spielername eingeben,"
+    - "&7um einen eliminierten Spieler wiederzubeleben."
+  crafting-enabled: true
+  recipe:
+    shape:
+      - "GDG"
+      - "DTD"
+      - "GDG"
+    ingredients:
+      G: GOLD_BLOCK
+      D: DIAMOND
+      T: TOTEM_OF_UNDYING
+
+# ---------------- Revive ----------------
+revive:
+  # Kostet /revive dem Ausfuehrenden ein Herz?
+  cost-heart: true
+  # Herzen, mit denen ein wiederbelebter Spieler startet
+  hearts-on-revive: 3
+
+# ---------------- Anti-Farm ----------------
+anti-farm:
+  enabled: true
+  # Sekunden, in denen wiederholte Kills am selben Opfer keine Herzen geben
+  same-victim-cooldown: 300
+  # Gleiche IP-Adresse gibt keine Herzen (Alt-Account-Schutz)
+  block-same-ip: true
+
+# ---------------- BetterSMP CombatLog ----------------
+combatlog:
+  # Reagiere auf BetterSMP-CombatLog: Ausloggen im Kampf = Tod (Herzverlust,
+  # Killer bekommt Herzen gutgeschrieben, ggf. Elimination).
+  enabled: true

@@ -1,0 +1,126 @@
+# ==========================================================
+#  BetterSMP - Konfiguration
+#  Ein Plugin, das dein SMP komplett einrichtet:
+#  Chat (LPC-Stil, MiniMessage), NoChatReports, AntiCombatLog
+#  + Auto-Installation von EssentialsX, LuckPerms, Vault,
+#    PlaceholderAPI und TAB mit fertigen, schoenen Configs.
+#
+#  Farben: MiniMessage (<gray>, <#FFD75A>, <gradient:...>)
+#  UND Legacy-Codes (&7, &#FFD75A) werden ueberall verstanden.
+# ==========================================================
+
+# ----------------------------------------------------------
+# Chat im LPC-MiniMessage-Stil
+# Platzhalter: %prefix% %suffix% %player% %displayname% %message%
+# + alle PlaceholderAPI-Platzhalter (falls installiert)
+# ----------------------------------------------------------
+chat:
+  enabled: true
+
+  # Chat-Nachrichten als System-Nachrichten senden -> Spieler koennen
+  # NICHT ueber das Melde-System (Chat Reports) gemeldet werden.
+  # (Wie NoChatReports / FreedomChat)
+  no-chat-reports: true
+
+  # Format pro LuckPerms-Gruppe. "default" gilt fuer alle ohne eigenen Eintrag.
+  formats:
+    default: "%prefix%<hover:show_text:'<#FFD75A>Nachricht an %player% senden'><click:suggest_command:'/msg %player% '><white>%player%</white></click></hover> <dark_gray>»</dark_gray> <message>"
+
+  # Spieler mit bettersmp.chat.format duerfen Farben/MiniMessage schreiben
+  # Erwaehnungen: @Spielername wird hervorgehoben + Sound
+  mentions:
+    enabled: true
+    color: "<#FFD75A>"
+    sound: "minecraft:block.note_block.pling"
+
+  # Klickbare Links im Chat
+  clickable-links: true
+
+# ----------------------------------------------------------
+# NoChatReports: enforce-secure-profile in server.properties
+# automatisch auf false setzen (wird beim naechsten Neustart aktiv)
+# ----------------------------------------------------------
+patch-server-properties: true
+
+# ----------------------------------------------------------
+# AntiCombatLog
+# ----------------------------------------------------------
+combat:
+  enabled: true
+  # Dauer des Kampf-Tags in Sekunden (wird bei jedem Treffer erneuert)
+  tag-seconds: 15
+  # Bestrafung beim Ausloggen im Kampf: KILL (Tod + Drops) oder NONE
+  punishment: KILL
+  # Gegner wird freigegeben, wenn der andere combat-loggt
+  untag-opponent-on-log: true
+  # Diese Befehle sind im Kampf gesperrt
+  blocked-commands: [tpa, tpahere, tpaccept, home, homes, spawn, warp, warps, back, rtp, wild, enderchest, ec, vanish, fly]
+  # Elytra-Flug im Kampf verhindern
+  block-elytra: true
+  # Actionbar-Countdown anzeigen
+  actionbar: true
+
+# ----------------------------------------------------------
+# Join/Quit-Nachrichten + Willkommen
+# ----------------------------------------------------------
+join-quit:
+  enabled: true
+  join: "<dark_gray>[<green>+</green>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>ist dem Server beigetreten.</gray>"
+  quit: "<dark_gray>[<red>-</red>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>hat den Server verlassen.</gray>"
+  first-join: "<dark_gray>[<#FFD75A>★</#FFD75A>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>ist zum <white>ersten Mal</white> hier! Willkommen!</gray>"
+  first-join-title:
+    enabled: true
+    title: "<gradient:#FFD75A:#FFB02E>Willkommen!</gradient>"
+    subtitle: "<gray>Viel Spass auf dem SMP</gray>"
+  motd:
+    enabled: true
+    delay-ticks: 15
+    lines:
+      - ""
+      - "  <gradient:#FFD75A:#FFB02E><bold>LemonPvP SMP</bold></gradient>"
+      - "  <gray>Willkommen zurueck, <white>%player%</white>!</gray>"
+      - "  <gray>Shop: <#FFD75A>/shop</#FFD75A>  Zufalls-Teleport: <#FFD75A>/rtp</#FFD75A></gray>"
+      - ""
+
+# ----------------------------------------------------------
+# Auto-Installer
+# Laedt fehlende Plugins von den OFFIZIELLEN Quellen
+# (GitHub-Releases, luckperms.net) und legt fertige Configs an.
+# Nach der Installation ist EIN Neustart noetig.
+# ----------------------------------------------------------
+installer:
+  enabled: true
+  # Beim Serverstart automatisch fehlende Plugins herunterladen
+  auto-install-on-start: true
+  # Fertige, schoene Configs fuer EssentialsX & TAB anlegen (nur wenn noch keine existieren)
+  deploy-configs: true
+  # Server nach erfolgreicher Installation automatisch stoppen
+  # (Panel/Host startet ihn neu - z.B. Pterodactyl "Restart on Crash" NICHT noetig,
+  #  einfach manuell starten oder Auto-Restart des Panels nutzen)
+  auto-restart: false
+  # Timeout pro Download in Sekunden
+  timeout-seconds: 30
+  plugins:
+    EssentialsX:
+      enabled: true
+      source: github
+      repo: EssentialsX/Essentials
+      assets: ["EssentialsX-{version}.jar", "EssentialsXSpawn-{version}.jar"]
+    LuckPerms:
+      enabled: true
+      source: luckperms
+    Vault:
+      enabled: true
+      source: github
+      repo: MilkBowl/Vault
+      assets: ["Vault.jar"]
+    PlaceholderAPI:
+      enabled: true
+      source: github
+      repo: PlaceholderAPI/PlaceholderAPI
+      assets: ["PlaceholderAPI-{version}.jar"]
+    TAB:
+      enabled: true
+      source: github
+      repo: NEZNAMY/TAB
+      assets: ["TAB.v{version}.jar"]

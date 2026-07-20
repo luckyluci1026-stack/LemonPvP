@@ -1,0 +1,36 @@
+name: BetterSMP
+version: ${project.version}
+main: de.lemonpvp.bettersmp.BetterSMP
+api-version: '1.21'
+authors: [LemonPvP]
+description: SMP-Kernplugin - MiniMessage-Chat, NoChatReports, AntiCombatLog und Auto-Setup fuer EssentialsX, LuckPerms, Vault, PlaceholderAPI und TAB.
+website: https://github.com/luckyluci1026-stack/LemonPvP
+softdepend: [LuckPerms, PlaceholderAPI, Essentials]
+
+commands:
+  bettersmp:
+    description: BetterSMP-Verwaltung (Status, Installer, Ranks, Reload)
+    usage: "/bettersmp <status|install|update|ranks|deployconfigs|reload>"
+    aliases: [bsmp]
+    permission: bettersmp.admin
+  settings:
+    description: Oeffnet das BetterSMP-Einstellungs-GUI
+    usage: "/settings"
+    aliases: [bsettings, smpsettings]
+    permission: bettersmp.settings
+
+permissions:
+  bettersmp.admin:
+    description: Zugriff auf /bettersmp und /settings
+    default: op
+    children:
+      bettersmp.settings: true
+  bettersmp.settings:
+    description: Darf das Einstellungs-GUI oeffnen und aendern
+    default: op
+  bettersmp.chat.format:
+    description: Darf Farben & MiniMessage im Chat nutzen
+    default: op
+  bettersmp.combat.bypass:
+    description: Wird im PvP nicht als im Kampf markiert
+    default: false

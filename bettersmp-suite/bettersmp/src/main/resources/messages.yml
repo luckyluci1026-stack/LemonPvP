@@ -1,0 +1,42 @@
+# BetterSMP - Nachrichten (MiniMessage + Legacy-Codes moeglich)
+prefix: "<gradient:#FFD75A:#FFB02E><bold>BetterSMP</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
+players-only: "%prefix%<red>Nur fuer Spieler.</red>"
+
+combat:
+  tagged: "%prefix%<red>Du bist im Kampf mit <white>%opponent%</white>! Logge nicht aus! (<white>%seconds%s</white>)</red>"
+  expired: "%prefix%<green>Du bist nicht mehr im Kampf.</green>"
+  actionbar: "<red>⚔ Im Kampf: <white>%seconds%s</white> ⚔</red>"
+  command-blocked: "%prefix%<red>Dieser Befehl ist im Kampf gesperrt! (<white>%seconds%s</white>)</red>"
+  logged-broadcast: "<dark_gray>[<red>⚔</red>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>hat im Kampf ausgeloggt und wurde bestraft!</gray>"
+  opponent-logged: "%prefix%<green>Dein Gegner <white>%player%</white> hat ausgeloggt - du bist wieder frei.</green>"
+
+mentions:
+  notify-actionbar: "<#FFD75A>%player% hat dich im Chat erwaehnt!</#FFD75A>"
+
+installer:
+  checking: "%prefix%<gray>Pruefe Begleit-Plugins ...</gray>"
+  already-installed: "%prefix%<gray>%plugin% ist bereits installiert - uebersprungen.</gray>"
+  downloading: "%prefix%<gray>Lade <white>%plugin%</white> herunter ...</gray>"
+  downloaded: "%prefix%<green>%plugin% installiert: <white>%file%</white></green>"
+  failed: "%prefix%<red>Download von %plugin% fehlgeschlagen: <white>%error%</white></red>"
+  nothing-to-do: "%prefix%<green>Alle Begleit-Plugins sind bereits installiert.</green>"
+  restart-needed: "%prefix%<#FFD75A>Installation abgeschlossen! Bitte starte den Server EINMAL neu, damit die neuen Plugins geladen werden.</#FFD75A>"
+  configs-deployed: "%prefix%<green>Fertige Configs fuer <white>%target%</white> angelegt.</green>"
+  properties-patched: "%prefix%<green>server.properties: enforce-secure-profile=false gesetzt (aktiv nach Neustart).</green>"
+
+ranks:
+  started: "%prefix%<gray>Erstelle LuckPerms-Standard-Raenge (default, vip, mod, admin, owner) ...</gray>"
+  done: "%prefix%<green>Raenge eingerichtet! Vergabe z.B.: <white>/lp user <Name> parent set vip</white></green>"
+  no-luckperms: "%prefix%<red>LuckPerms ist nicht geladen. Erst installieren (/bettersmp install) und neu starten.</red>"
+
+status:
+  header: "%prefix%<white>Status</white>"
+  line: "<dark_gray> • </dark_gray><gray>%plugin%: %status%</gray>"
+  installed: "<green>installiert (%version%)</green>"
+  missing: "<red>fehlt</red>"
+  combat-line: "<dark_gray> • </dark_gray><gray>Spieler im Kampf: <white>%count%</white></gray>"
+
+usage: "%prefix%<gray>Befehle: <white>/bettersmp status</white> | <white>install</white> | <white>update</white> | <white>ranks</white> | <white>deployconfigs</white> | <white>reload</white></gray>"
