@@ -2,7 +2,7 @@ name: BetterRTP
 version: ${project.version}
 main: de.lemonpvp.betterrtp.BetterRTP
 api-version: '1.21'
-authors: [LemonPvP]
+authors: [SMP]
 description: Sehr gutes, vollstaendig asynchrones Random-Teleport-Plugin mit sicherer Positionssuche, Cooldowns, Warmup und Welt-Profilen.
 
 commands:

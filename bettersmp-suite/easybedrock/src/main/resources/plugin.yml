@@ -2,7 +2,7 @@ name: EasyBedrock
 version: ${project.version}
 main: de.lemonpvp.easybedrock.EasyBedrock
 api-version: '1.21'
-authors: [LemonPvP]
+authors: [SMP]
 description: Ein-Klick-Bedrock-Crossplay - installiert Geyser + Floodgate und optimiert sie so, dass ein Bedrock-Spieler etwa so viele Ressourcen braucht wie ein Java-Spieler.
 # Vor Geyser laden, damit die Optimierung greift, bevor Geyser seine Config liest
 loadbefore: [Geyser-Spigot, floodgate]

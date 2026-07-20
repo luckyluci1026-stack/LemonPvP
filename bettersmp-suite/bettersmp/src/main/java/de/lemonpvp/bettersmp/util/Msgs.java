@@ -50,6 +50,7 @@ public final class Msgs {
             text = text.replace("%" + replacements[i] + "%", replacements[i + 1]);
         }
         text = text.replace("%prefix%", raw("prefix"));
+        text = text.replace("%brand%", plugin.getConfig().getString("brand", "SMP"));
         return Text.mm(text);
     }
 

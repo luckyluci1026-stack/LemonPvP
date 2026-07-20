@@ -31,7 +31,7 @@ public final class JoinModule implements Listener {
 
     private String applied(Player player, String path) {
         String text = plugin.getConfig().getString(path, "");
-        text = text.replace("%player%", player.getName());
+        text = text.replace("%player%", player.getName()).replace("%brand%", plugin.brand());
         return plugin.papi().apply(player, text);
     }
 
@@ -68,7 +68,8 @@ public final class JoinModule implements Listener {
                 List<String> lines = plugin.getConfig().getStringList("join-quit.motd.lines");
                 for (String line : lines) {
                     player.sendMessage(Text.mm(plugin.papi()
-                            .apply(player, line.replace("%player%", player.getName()))));
+                            .apply(player, line.replace("%player%", player.getName())
+                                    .replace("%brand%", plugin.brand()))));
                 }
             }, delay);
         }

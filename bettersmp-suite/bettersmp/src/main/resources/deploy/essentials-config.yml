@@ -45,16 +45,8 @@ custom-quit-message: "none"
 announce-format: "none"
 
 # ---------------- Kits ----------------
-kits:
-  starter:
-    delay: 86400
-    items:
-      - stone_sword 1
-      - stone_pickaxe 1
-      - stone_axe 1
-      - stone_shovel 1
-      - bread 16
-      - torch 32
+# Bewusst leer - keine Standard-Kits.
+kits: {}
 
 # ---------------- Sonstiges ----------------
 auto-afk: 300

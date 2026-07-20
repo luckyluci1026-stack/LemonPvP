@@ -1,9 +1,10 @@
 # BetterSMP - Nachrichten (MiniMessage + Legacy-Codes moeglich)
-prefix: "<gradient:#FFD75A:#FFB02E><bold>BetterSMP</bold></gradient> <dark_gray>»</dark_gray> "
+prefix: "<gradient:#FFD75A:#FFB02E><bold>%brand%</bold></gradient> <dark_gray>»</dark_gray> "
 
 no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
 reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
 players-only: "%prefix%<red>Nur fuer Spieler.</red>"
+player-not-found: "%prefix%<red>Spieler nicht gefunden.</red>"
 
 combat:
   tagged: "%prefix%<red>Du bist im Kampf mit <white>%opponent%</white>! Logge nicht aus! (<white>%seconds%s</white>)</red>"
@@ -16,6 +17,47 @@ combat:
 mentions:
   notify-actionbar: "<#FFD75A>%player% hat dich im Chat erwaehnt!</#FFD75A>"
 
+# ---------------- Ban / Mute ----------------
+ban:
+  usage: "%prefix%<gray>Nutzung: <white>/gban <Spieler> <Grund></white></gray>"
+  unknown-reason: "%prefix%<red>Unbekannter Grund <white>%reason%</white>. Verfuegbar: <gray>%list%</gray></red>"
+  success: "%prefix%<green><white>%player%</white> wurde gebannt <gray>(%reason%, %duration%)</gray>.</green>"
+  broadcast: "<dark_gray>[<red>⛔</red>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>wurde von <white>%actor%</white> gebannt <dark_gray>(%reason%)</dark_gray></gray>"
+  already-banned: "%prefix%<red><white>%player%</white> ist bereits gebannt.</red>"
+  exempt: "%prefix%<red><white>%player%</white> kann nicht gebannt werden.</red>"
+  unban-usage: "%prefix%<gray>Nutzung: <white>/gunban <Spieler></white></gray>"
+  unban-success: "%prefix%<green><white>%player%</white> wurde entbannt.</green>"
+  not-banned: "%prefix%<red><white>%player%</white> ist nicht gebannt.</red>"
+
+mute:
+  usage: "%prefix%<gray>Nutzung: <white>/gmute <Spieler> <Grund></white></gray>"
+  unknown-reason: "%prefix%<red>Unbekannter Grund <white>%reason%</white>. Verfuegbar: <gray>%list%</gray></red>"
+  success: "%prefix%<green><white>%player%</white> wurde gemutet <gray>(%reason%, %duration%)</gray>.</green>"
+  broadcast: "<dark_gray>[<gold>🔇</gold>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>wurde von <white>%actor%</white> gemutet <dark_gray>(%reason%)</dark_gray></gray>"
+  already-muted: "%prefix%<red><white>%player%</white> ist bereits gemutet.</red>"
+  exempt: "%prefix%<red><white>%player%</white> kann nicht gemutet werden.</red>"
+  unmute-usage: "%prefix%<gray>Nutzung: <white>/gunmute <Spieler></white></gray>"
+  unmute-success: "%prefix%<green><white>%player%</white> wurde entmutet.</green>"
+  not-muted: "%prefix%<red><white>%player%</white> ist nicht gemutet.</red>"
+
+# ---------------- Dauer-Woerter ----------------
+duration:
+  permanent: "Permanent"
+  never: "Nie"
+  format: "%days%d %hours%h %minutes%m"
+
+# ---------------- Stats ----------------
+stats:
+  header: "<dark_gray>▏</dark_gray> <gradient:#FFD75A:#FFB02E><bold>Statistiken</bold></gradient> <dark_gray>von <white>%player%</white>"
+  line-rank: "<dark_gray> • </dark_gray><gray>Rang: %rank%"
+  line-money: "<dark_gray> • </dark_gray><gray>Geld: <#7CFC00>%money%</#7CFC00>"
+  line-kills: "<dark_gray> • </dark_gray><gray>Kills: <white>%kills%</white>  Tode: <white>%deaths%</white>  K/D: <#FFD75A>%kd%</#FFD75A>"
+  line-mobkills: "<dark_gray> • </dark_gray><gray>Mob-Kills: <white>%mobkills%</white>"
+  line-playtime: "<dark_gray> • </dark_gray><gray>Spielzeit: <white>%playtime%</white>"
+  line-joins: "<dark_gray> • </dark_gray><gray>Beitritte: <white>%joins%</white>  Zuletzt: <white>%lastseen%</white>"
+  loading: "%prefix%<gray>Lade Statistiken ...</gray>"
+
+# ---------------- Installer / Ranks / Status ----------------
 installer:
   checking: "%prefix%<gray>Pruefe Begleit-Plugins ...</gray>"
   already-installed: "%prefix%<gray>%plugin% ist bereits installiert - uebersprungen.</gray>"
@@ -23,13 +65,13 @@ installer:
   downloaded: "%prefix%<green>%plugin% installiert: <white>%file%</white></green>"
   failed: "%prefix%<red>Download von %plugin% fehlgeschlagen: <white>%error%</white></red>"
   nothing-to-do: "%prefix%<green>Alle Begleit-Plugins sind bereits installiert.</green>"
-  restart-needed: "%prefix%<#FFD75A>Installation abgeschlossen! Bitte starte den Server EINMAL neu, damit die neuen Plugins geladen werden.</#FFD75A>"
+  restart-needed: "%prefix%<#FFD75A>Installation abgeschlossen! Bitte starte den Server EINMAL neu.</#FFD75A>"
   configs-deployed: "%prefix%<green>Fertige Configs fuer <white>%target%</white> angelegt.</green>"
   properties-patched: "%prefix%<green>server.properties: enforce-secure-profile=false gesetzt (aktiv nach Neustart).</green>"
 
 ranks:
-  started: "%prefix%<gray>Erstelle LuckPerms-Standard-Raenge (default, vip, mod, admin, owner) ...</gray>"
-  done: "%prefix%<green>Raenge eingerichtet! Vergabe z.B.: <white>/lp user <Name> parent set vip</white></green>"
+  started: "%prefix%<gray>Erstelle LuckPerms-Standard-Raenge ...</gray>"
+  done: "%prefix%<green>Raenge eingerichtet! Vergabe z.B.: <white>/lp user <Name> parent set owner1</white></green>"
   no-luckperms: "%prefix%<red>LuckPerms ist nicht geladen. Erst installieren (/bettersmp install) und neu starten.</red>"
 
 status:
@@ -38,5 +80,6 @@ status:
   installed: "<green>installiert (%version%)</green>"
   missing: "<red>fehlt</red>"
   combat-line: "<dark_gray> • </dark_gray><gray>Spieler im Kampf: <white>%count%</white></gray>"
+  db-line: "<dark_gray> • </dark_gray><gray>Datenbank: <white>%type%</white></gray>"
 
-usage: "%prefix%<gray>Befehle: <white>/bettersmp status</white> | <white>install</white> | <white>update</white> | <white>ranks</white> | <white>deployconfigs</white> | <white>reload</white></gray>"
+usage: "%prefix%<gray>Befehle: <white>/bettersmp status | install | update | ranks | deployconfigs | reload</white></gray>"

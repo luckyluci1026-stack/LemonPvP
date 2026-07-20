@@ -1,0 +1,31 @@
+# ==========================================================
+#  BetterSMP - Mute-Gruende
+#  /gmute <Spieler> <Grund>   ->  Grund = ein Schluessel von unten
+#  /gunmute <Spieler>
+#
+#  Dauer wie bei bans.yml: perm/0 = permanent, sonst z.B. 30m, 6h, 1d
+#
+#  Platzhalter: %player% %reason% %duration% %remaining% %actor% %brand%
+# ==========================================================
+
+settings:
+  # Nachricht, wenn ein gemuteter Spieler zu schreiben versucht
+  message:
+    - "%prefix%<red>Du bist stummgeschaltet.</red>"
+    - "%prefix%<gray>Grund: <white>%reason%</white></gray>"
+    - "%prefix%<gray>Verbleibend: <white>%remaining%</white></gray>"
+  permanent-word: "Permanent"
+
+reasons:
+  spam:
+    duration: 1h
+    display: "Spam"
+  toxic:
+    duration: 6h
+    display: "Beleidigung"
+  caps:
+    duration: 30m
+    display: "Dauer-Grossschrift"
+  ads:
+    duration: 1d
+    display: "Werbung"

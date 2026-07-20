@@ -1,48 +1,57 @@
 package de.lemonpvp.bettersmp;
 
 import de.lemonpvp.bettersmp.api.BetterSMPApi;
+import de.lemonpvp.bettersmp.board.BoardListener;
+import de.lemonpvp.bettersmp.board.BoardManager;
 import de.lemonpvp.bettersmp.chat.ChatModule;
 import de.lemonpvp.bettersmp.combat.CombatListener;
 import de.lemonpvp.bettersmp.combat.CombatManager;
 import de.lemonpvp.bettersmp.command.BetterSMPCommand;
 import de.lemonpvp.bettersmp.command.SettingsCommand;
 import de.lemonpvp.bettersmp.gui.SettingsListener;
+import de.lemonpvp.bettersmp.hook.EconomyHook;
 import de.lemonpvp.bettersmp.hook.LuckPermsHook;
 import de.lemonpvp.bettersmp.hook.PapiHook;
 import de.lemonpvp.bettersmp.join.JoinModule;
+import de.lemonpvp.bettersmp.punish.PunishmentCommands;
+import de.lemonpvp.bettersmp.punish.PunishmentConfig;
+import de.lemonpvp.bettersmp.punish.PunishmentListener;
+import de.lemonpvp.bettersmp.punish.PunishmentManager;
 import de.lemonpvp.bettersmp.setup.ConfigDeployer;
 import de.lemonpvp.bettersmp.setup.Installer;
 import de.lemonpvp.bettersmp.setup.RankSetup;
+import de.lemonpvp.bettersmp.stats.StatsCommand;
+import de.lemonpvp.bettersmp.stats.StatsListener;
+import de.lemonpvp.bettersmp.stats.StatsManager;
+import de.lemonpvp.bettersmp.storage.Database;
 import de.lemonpvp.bettersmp.util.Msgs;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * BetterSMP - SMP-Kernplugin fuer LemonPvP.
+ * BetterSMP - SMP-Kernplugin.
  *
- * Features:
- *  - LPC-MiniMessage-Chat mit LuckPerms-Prefixen + PlaceholderAPI
- *  - NoChatReports (Chat als System-Nachricht + server.properties-Patch)
- *  - AntiCombatLog mit CombatLog-API-Event (fuer Lifesteal+)
- *  - Join/Quit/MOTD/Erst-Join-Titel
- *  - Auto-Installer + fertige Configs fuer EssentialsX, LuckPerms, Vault,
- *    PlaceholderAPI und TAB
- *  - /settings-GUI zum Live-Umschalten aller Module
+ * Chat, NoChatReports, AntiCombatLog, Ban/Mute-System mit Screen, Stats
+ * (MariaDB/SQLite), Raenge mit Gradient-Prefixen, Nametags und Scoreboard -
+ * plus Auto-Installer fuer die Begleit-Plugins.
  */
 public final class BetterSMP extends JavaPlugin {
 
     private Msgs msgs;
     private LuckPermsHook luckPerms;
     private PapiHook papi;
+    private EconomyHook economy;
     private CombatManager combat;
     private Installer installer;
     private ConfigDeployer configDeployer;
     private RankSetup rankSetup;
 
-    private ChatModule chatModule;
-    private CombatListener combatListener;
-    private JoinModule joinModule;
+    private Database database;
+    private PunishmentConfig punishConfig;
+    private PunishmentManager punishments;
+    private StatsManager stats;
+    private BoardManager board;
 
     @Override
     public void onEnable() {
@@ -50,45 +59,61 @@ public final class BetterSMP extends JavaPlugin {
         this.msgs = new Msgs(this);
         this.luckPerms = new LuckPermsHook();
         this.papi = new PapiHook();
+        this.economy = new EconomyHook();
         this.combat = new CombatManager(this);
         this.installer = new Installer(this);
         this.configDeployer = new ConfigDeployer(this);
         this.rankSetup = new RankSetup(this);
 
+        // Datenbank + darauf aufbauende Systeme
+        this.database = new Database(this);
+        database.init();
+        this.punishConfig = new PunishmentConfig(this);
+        this.punishments = new PunishmentManager(this, punishConfig);
+        this.stats = new StatsManager(this);
+        this.board = new BoardManager(this);
+
         BetterSMPApi.init(combat);
         combat.start();
+        stats.start();
+        board.start();
 
-        // Module registrieren
-        this.chatModule = new ChatModule(this);
-        this.combatListener = new CombatListener(this, combat);
-        this.joinModule = new JoinModule(this);
-        Bukkit.getPluginManager().registerEvents(chatModule, this);
-        Bukkit.getPluginManager().registerEvents(combatListener, this);
-        Bukkit.getPluginManager().registerEvents(joinModule, this);
-        Bukkit.getPluginManager().registerEvents(new SettingsListener(this), this);
+        // Listener
+        var pm = Bukkit.getPluginManager();
+        pm.registerEvents(new ChatModule(this), this);
+        pm.registerEvents(new CombatListener(this, combat), this);
+        pm.registerEvents(new JoinModule(this), this);
+        pm.registerEvents(new SettingsListener(this), this);
+        pm.registerEvents(new PunishmentListener(this), this);
+        pm.registerEvents(new StatsListener(this), this);
+        pm.registerEvents(new BoardListener(this), this);
 
         // Befehle
         getCommand("bettersmp").setExecutor(new BetterSMPCommand(this));
         getCommand("settings").setExecutor(new SettingsCommand(this));
+        getCommand("stats").setExecutor(new StatsCommand(this));
+        PunishmentCommands punishmentCommands = new PunishmentCommands(this);
+        for (String cmd : new String[]{"gban", "gunban", "gmute", "gunmute"}) {
+            getCommand(cmd).setExecutor(punishmentCommands);
+        }
 
         logHooks();
-
-        // Erst-Einrichtung nach dem vollstaendigen Serverstart
         Bukkit.getScheduler().runTaskLater(this, this::firstRunSetup, 40L);
-
-        getLogger().info("BetterSMP aktiviert - viel Spass auf LemonPvP!");
+        getLogger().info("BetterSMP aktiviert.");
     }
 
     @Override
     public void onDisable() {
-        if (combat != null) {
-            combat.stop();
-        }
+        if (combat != null) combat.stop();
+        if (stats != null) stats.stop();
+        if (board != null) board.stop();
+        if (database != null) database.shutdown();
     }
 
     private void logHooks() {
         getLogger().info("LuckPerms: " + (luckPerms.isAvailable() ? "verbunden" : "nicht gefunden"));
         getLogger().info("PlaceholderAPI: " + (papi.isAvailable() ? "verbunden" : "nicht gefunden"));
+        getLogger().info("Vault-Economy: " + (economy.isEnabled() ? "verbunden" : "nicht gefunden"));
     }
 
     private void firstRunSetup() {
@@ -105,15 +130,18 @@ public final class BetterSMP extends JavaPlugin {
         }
     }
 
-    /** Registriert Module neu (nach Config-Reload / Toggle). Listener bleiben aktiv,
-     *  ihr Verhalten haengt live an der Config. */
     public void reloadModules() {
-        // Module lesen ihre Schalter direkt aus der Config - hier nichts weiter noetig.
-        // Methode existiert als klarer Hook fuer zukuenftige Erweiterungen.
+        punishConfig.reload();
+        board.loadBoardConfig();
     }
 
     public void setupRanks(CommandSender feedback) {
         rankSetup.run(feedback);
+    }
+
+    /** Server-Name aus der Config (Platzhalter %brand%). */
+    public String brand() {
+        return getConfig().getString("brand", "SMP");
     }
 
     public Msgs msgs() {
@@ -128,6 +156,10 @@ public final class BetterSMP extends JavaPlugin {
         return papi;
     }
 
+    public EconomyHook economy() {
+        return economy;
+    }
+
     public CombatManager combat() {
         return combat;
     }
@@ -138,5 +170,21 @@ public final class BetterSMP extends JavaPlugin {
 
     public ConfigDeployer configDeployer() {
         return configDeployer;
+    }
+
+    public Database database() {
+        return database;
+    }
+
+    public PunishmentManager punishments() {
+        return punishments;
+    }
+
+    public StatsManager stats() {
+        return stats;
+    }
+
+    public BoardManager board() {
+        return board;
     }
 }

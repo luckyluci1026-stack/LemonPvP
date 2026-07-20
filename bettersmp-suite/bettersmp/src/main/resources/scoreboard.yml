@@ -1,0 +1,31 @@
+# ==========================================================
+#  BetterSMP - Scoreboard (Sidebar)
+#  Zeilen von oben nach unten. Leere Zeile "" = Abstand.
+#
+#  Platzhalter:
+#    %brand% %player% %rank% %world%
+#    %online% %max% %ping% %tps%
+#    %x% %y% %z%
+#    %money%            (Vault-/EssentialsX-Guthaben)
+#    %kills% %deaths% %kd% %mobkills% %playtime%
+#    + alle PlaceholderAPI-Platzhalter (falls installiert)
+#
+#  Farben: MiniMessage & Legacy (&7, &#FFD75A).
+# ==========================================================
+
+title: "<gradient:#FFD75A:#FFB02E><bold>%brand%</bold></gradient>"
+
+lines:
+  - "<dark_gray><st>                    </st>"
+  - "<white>Spieler <dark_gray>» <#FFD75A>%player%"
+  - "<white>Rang <dark_gray>» %rank%"
+  - ""
+  - "<white>Geld <dark_gray>» <#7CFC00>%money%"
+  - "<white>Kills <dark_gray>» <#FF6B6B>%kills%"
+  - "<white>Tode <dark_gray>» <#FF6B6B>%deaths%"
+  - "<white>K/D <dark_gray>» <#FFD75A>%kd%"
+  - ""
+  - "<white>Online <dark_gray>» <#FFD75A>%online%<gray>/%max%"
+  - "<white>Ping <dark_gray>» <#FFD75A>%ping%ms"
+  - "<white>TPS <dark_gray>» <#FFD75A>%tps%"
+  - "<dark_gray><st>                    </st>"

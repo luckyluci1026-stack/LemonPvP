@@ -117,6 +117,92 @@ public final class ShopConfig {
         return byMaterial.get(material);
     }
 
+    /** Setzt Kauf-/Verkaufspreis eines Items in einer Kategorie. field = "buy" oder "sell". */
+    public boolean setPrice(String categoryId, Material material, String field, double value) {
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        ConfigurationSection sec = yaml.getConfigurationSection("categories." + categoryId);
+        if (sec == null) {
+            return false;
+        }
+        List<Map<?, ?>> items = sec.getMapList("items");
+        boolean changed = false;
+        List<Map<?, ?>> updated = new ArrayList<>();
+        for (Map<?, ?> raw : items) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> e : raw.entrySet()) {
+                entry.put(String.valueOf(e.getKey()), e.getValue());
+            }
+            if (material.name().equalsIgnoreCase(String.valueOf(entry.get("material")))) {
+                entry.put(field, value);
+                changed = true;
+            }
+            updated.add(entry);
+        }
+        if (!changed) {
+            return false;
+        }
+        sec.set("items", updated);
+        return saveReload(yaml);
+    }
+
+    /** Entfernt ein Item aus einer Kategorie. */
+    public boolean removeItem(String categoryId, Material material) {
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        ConfigurationSection sec = yaml.getConfigurationSection("categories." + categoryId);
+        if (sec == null) {
+            return false;
+        }
+        List<Map<?, ?>> items = sec.getMapList("items");
+        List<Map<?, ?>> kept = new ArrayList<>();
+        boolean removed = false;
+        for (Map<?, ?> raw : items) {
+            if (material.name().equalsIgnoreCase(String.valueOf(raw.get("material")))) {
+                removed = true;
+            } else {
+                kept.add(raw);
+            }
+        }
+        if (!removed) {
+            return false;
+        }
+        sec.set("items", kept);
+        return saveReload(yaml);
+    }
+
+    /** Legt eine neue, leere Kategorie an. */
+    public boolean addCategory(String id, Material icon, int slot, String name) {
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        if (yaml.isConfigurationSection("categories." + id)) {
+            return false;
+        }
+        yaml.set("categories." + id + ".icon", icon.name());
+        yaml.set("categories." + id + ".name", name);
+        yaml.set("categories." + id + ".slot", slot);
+        yaml.set("categories." + id + ".items", new ArrayList<>());
+        return saveReload(yaml);
+    }
+
+    /** Entfernt eine ganze Kategorie. */
+    public boolean removeCategory(String id) {
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        if (!yaml.isConfigurationSection("categories." + id)) {
+            return false;
+        }
+        yaml.set("categories." + id, null);
+        return saveReload(yaml);
+    }
+
+    private boolean saveReload(YamlConfiguration yaml) {
+        try {
+            yaml.save(file);
+            load();
+            return true;
+        } catch (Exception e) {
+            plugin.getLogger().warning("Konnte shop.yml nicht speichern: " + e.getMessage());
+            return false;
+        }
+    }
+
     /** Fuegt ein Item einer bestehenden Kategorie hinzu und speichert shop.yml. */
     public boolean addItem(String categoryId, Material material, double buy, double sell) {
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);

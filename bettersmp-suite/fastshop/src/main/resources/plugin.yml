@@ -2,7 +2,7 @@ name: FastShop
 version: ${project.version}
 main: de.lemonpvp.fastshop.FastShop
 api-version: '1.21'
-authors: [LemonPvP]
+authors: [SMP]
 description: Einfaches, customizables Shop-/Verkaufssystem (/shop, /sell) auf Basis der EssentialsX-/Vault-Economy.
 softdepend: [Vault, Essentials, PlaceholderAPI]
 

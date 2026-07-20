@@ -35,6 +35,11 @@ public final class LuckPermsHook {
         return available ? Bridge.group(player) : "default";
     }
 
+    /** Gewicht der Primaergruppe (fuer Tab-/Nametag-Sortierung). */
+    public int weight(Player player) {
+        return available ? Bridge.weight(player) : 0;
+    }
+
     private static final class Bridge {
 
         private static CachedMetaData meta(Player player) {
@@ -66,6 +71,17 @@ public final class LuckPermsHook {
                         .getUser(player).getPrimaryGroup();
             } catch (Exception e) {
                 return "default";
+            }
+        }
+
+        static int weight(Player player) {
+            try {
+                var lp = LuckPermsProvider.get();
+                String groupName = lp.getPlayerAdapter(Player.class).getUser(player).getPrimaryGroup();
+                var group = lp.getGroupManager().getGroup(groupName);
+                return group == null ? 0 : group.getWeight().orElse(0);
+            } catch (Exception e) {
+                return 0;
             }
         }
     }

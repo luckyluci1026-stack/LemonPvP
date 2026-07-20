@@ -25,7 +25,7 @@ public final class LifestealPapiExpansion extends PlaceholderExpansion {
 
     @Override
     public @NotNull String getAuthor() {
-        return "LemonPvP";
+        return "SMP";
     }
 
     @Override

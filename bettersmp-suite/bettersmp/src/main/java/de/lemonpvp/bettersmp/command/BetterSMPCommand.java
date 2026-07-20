@@ -72,6 +72,8 @@ public final class BetterSMPCommand implements TabExecutor {
                 .filter(p -> plugin.combat().isTagged(p.getUniqueId())).count();
         sender.sendMessage(plugin.msgs().format("status.combat-line",
                 "count", String.valueOf(inCombat)));
+        sender.sendMessage(plugin.msgs().format("status.db-line",
+                "type", plugin.database().typeName()));
     }
 
     @Override

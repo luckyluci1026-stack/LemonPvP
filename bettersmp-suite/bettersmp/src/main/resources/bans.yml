@@ -1,0 +1,61 @@
+# ==========================================================
+#  BetterSMP - Ban-Gruende & Ban-Screen
+#  /gban <Spieler> <Grund>   ->  Grund = ein Schluessel von unten
+#  /gunban <Spieler>
+#
+#  Neue Gruende einfach ergaenzen: Schluessel, Dauer, Anzeigename,
+#  optional ein eigener Screen.
+#
+#  Dauer:  perm / 0 = permanent, sonst Zahl + Einheit
+#          s=Sekunden m=Minuten h=Stunden d=Tage w=Wochen
+#          (z.B. 30m, 12h, 7d, 2w)
+#
+#  Platzhalter (Screen & Nachrichten):
+#    %player% %reason% %duration% %expires% %actor% %brand%
+#
+#  Der Screen ist bewusst schlicht gehalten (Farben + Zeilen) -
+#  so wird er auch fuer Bedrock-/Geyser-Spieler sauber angezeigt.
+# ==========================================================
+
+settings:
+  permanent-word: "Permanent"
+  # Standard-Screen fuer alle Gruende ohne eigenen 'screen'
+  default-screen:
+    - "<gradient:#FF5A5A:#B30000><bold>%brand%</bold></gradient>"
+    - ""
+    - "<red><bold>Du wurdest gebannt</bold></red>"
+    - ""
+    - "<gray>Grund:</gray> <white>%reason%</white>"
+    - "<gray>Dauer:</gray> <white>%duration%</white>"
+    - "<gray>Laeuft ab:</gray> <white>%expires%</white>"
+    - ""
+    - "<gray>Gebannt von:</gray> <white>%actor%</white>"
+    - "<dark_gray>Einspruch ueber deinen Server-Discord</dark_gray>"
+
+reasons:
+  cheating:
+    duration: perm
+    display: "Cheating / unerlaubte Mods"
+  teaming:
+    duration: 7d
+    display: "Verbotenes Teaming"
+  toxic:
+    duration: 3d
+    display: "Beleidigung / toxisches Verhalten"
+  spam:
+    duration: 1d
+    display: "Spam / Werbung"
+  griefing:
+    duration: 14d
+    display: "Griefing"
+  # Beispiel mit eigenem Screen:
+  ban_evasion:
+    duration: perm
+    display: "Ban-Umgehung"
+    screen:
+      - "<gradient:#FF5A5A:#B30000><bold>%brand%</bold></gradient>"
+      - ""
+      - "<red><bold>Permanenter Bann</bold></red>"
+      - "<gray>Grund: <white>%reason%</white>"
+      - ""
+      - "<dark_gray>Ban-Umgehung wird nicht toleriert.</dark_gray>"

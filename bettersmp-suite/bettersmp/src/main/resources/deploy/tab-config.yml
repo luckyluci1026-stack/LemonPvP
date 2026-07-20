@@ -8,7 +8,7 @@
 header-footer:
   enabled: true
   header:
-    - "<#FFD75A>&l☀ LemonPvP SMP ☀"
+    - "<#FFD75A>&l☀ SMP ☀"
     - "&7Willkommen, &f%player%&7!"
     - "&r"
   footer:
@@ -21,15 +21,9 @@ tablist-name-formatting:
   anti-override: true
 
 scoreboard-teams:
-  enabled: true
-  enable-collision: true
-  invisible-nametags: false
-  anti-override: true
-  can-see-friendly-invisibles: false
-  sorting-types:
-    - "GROUPS:owner,admin,mod,vip,default"
-    - "PLACEHOLDER_A_TO_Z:%player%"
-  case-sensitive-sorting: false
+  # AUS - die Nametags macht BetterSMP (Gradient-Prefix, Name weiss).
+  # So gibt es keine Konflikte und neue LuckPerms-Raenge wirken sofort.
+  enabled: false
 
 ping-spoof:
   enabled: false

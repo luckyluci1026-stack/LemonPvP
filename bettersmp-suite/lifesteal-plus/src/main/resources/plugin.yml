@@ -2,7 +2,7 @@ name: LifestealPlus
 version: ${project.version}
 main: de.lemonpvp.lifesteal.LifestealPlus
 api-version: '1.21'
-authors: [LemonPvP]
+authors: [SMP]
 description: Lifesteal mit Herzverlust, Herz-Items, Elimination/Revive und BetterSMP-CombatLog-Integration.
 softdepend: [BetterSMP, PlaceholderAPI]
 
