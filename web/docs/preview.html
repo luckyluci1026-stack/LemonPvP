@@ -144,6 +144,15 @@
     <div class="grp">Emotes</div>
     <ul>
       <li><a href="#emotes">Dance emotes</a></li>
+    </ul>
+    <div class="grp">More from the network</div>
+    <ul>
+      <li><a href="#npc">Packet NPC actors</a></li>
+      <li><a href="#celebration">Win celebration</a></li>
+      <li><a href="#combo">Combo counter</a></li>
+    </ul>
+    <div class="grp">Reference</div>
+    <ul>
       <li><a href="#metadata">Metadata reference</a></li>
       <li><a href="#commands">Commands</a></li>
       <li><a href="#credits">Credits</a></li>
@@ -173,7 +182,8 @@
         drives their appearance and motion frame by frame.</p>
       <p class="sub">The result reads like a modded server but runs on a stock client — a Java player and a
         Geyser/Bedrock player see the same cosmetic. This page explains the five techniques that make it
-        work, plus the emote layer built on top.</p>
+        work, the emote layer built on top, and a few sibling tricks from elsewhere in the network that lean
+        on the same idea.</p>
       <div class="note"><b>Why packets, not real entities?</b> A packet entity has no server-side tick,
         no physics and no persistence. It exists only in the viewer's client, so a thousand capes cost the
         server almost nothing and never desync a save.</div>
@@ -340,6 +350,103 @@ case WAVE -&gt; new Pose(
         damage, teleport, quit, or plugin disable — and every path restores the player's speed and
         visibility. Built-in dances: <code>wave</code>, <code>dab</code>, <code>spin</code>,
         <code>floss</code>, <code>robot</code>.</p>
+    </section>
+
+    <section id="npc">
+      <h2>Packet NPC actors</h2>
+      <p>The same "packets, not real entities" idea powers two other features: <b>bot opponents</b> that
+        fill an empty queue with an AI-controlled fighter, and <b>replay ghosts</b> that walk a spectator
+        through a recorded match. Both need a convincing player model — name, real skin, swing and hurt
+        animations — without the cost of a genuine server entity's pathfinding and tick overhead.</p>
+      <p class="sub">The trick: add a fake entry to the tab list carrying a real player's skin (a
+        <code>Player Info Update</code> packet with a copied <code>GameProfile</code>), spawn it as an
+        ordinary <code>EntityType.PLAYER</code>, then quietly remove the tab-list entry a couple of seconds
+        later so it doesn't linger next to real names — the entity itself stays fully visible in the world.
+        The server then drives the puppet directly: teleport packets for movement, animation packets for
+        swings and hits.</p>
+      <figure class="code">
+        <figcaption><span class="fdot" aria-hidden="true"></span> PacketNpcActor.java</figcaption>
+<pre><span class="c">// A fake Player: listed with a copied skin just long enough to render, then</span>
+<span class="c">// spawned as EntityType.PLAYER. No real server-side entity is ever created.</span>
+public void spawn(Location loc) {
+    UserProfile profile = new UserProfile(uuid, name);
+    copySkin(profile);   <span class="c">// reuse a real player's skin, if they're online</span>
+
+    var info = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
+            profile, <span class="k">true</span>, <span class="k">0</span>, GameMode.SURVIVAL, <span class="k">null</span>, <span class="k">null</span>);
+    send(new WrapperPlayServerPlayerInfoUpdate(
+            EnumSet.of(Action.ADD_PLAYER, Action.UPDATE_LISTED), info));
+
+    send(new WrapperPlayServerSpawnEntity(entityId, uuid, EntityTypes.PLAYER,
+            toPacketLocation(loc), loc.getYaw(), <span class="k">0</span>, <span class="k">null</span>));
+
+    <span class="c">// Show every skin layer (metadata index 17, displayed-skin-parts = 0x7F).</span>
+    send(new WrapperPlayServerEntityMetadata(entityId, List.of(
+            new EntityData&lt;&gt;(<span class="k">17</span>, EntityDataTypes.BYTE, (byte) <span class="k">0x7F</span>))));
+
+    <span class="c">// Drop the tab-list entry shortly after — the puppet stays visible,</span>
+    <span class="c">// it just isn't listed alongside real players any more.</span>
+    Bukkit.getScheduler().runTaskLater(plugin,
+            () -&gt; send(new WrapperPlayServerPlayerInfoRemove(uuid)), <span class="k">40L</span>);
+}</pre>
+      </figure>
+    </section>
+
+    <section id="celebration">
+      <h2>Win celebration</h2>
+      <p>Every match — a duel, a hosted event, a tournament final — ends the same rewarding way: a title
+        card, a burst of coloured fireworks around the winner, and a few seconds of totem-sparkle particles.
+        It's timed and capped so it can never linger or lag the server, and it's shared by every game mode
+        instead of being reimplemented per feature.</p>
+      <figure class="code">
+        <figcaption><span class="fdot" aria-hidden="true"></span> WinAnimation.java</figcaption>
+<pre><span class="c">// Shared by duels, hosted events and tournaments. Runs for 100 ticks (~5s),</span>
+<span class="c">// then cancels itself — capped so it can never linger or lag the server.</span>
+public static void celebrate(Plugin plugin, Player winner, String matchName) {
+    winner.showTitle(Title.title(
+        MM.deserialize(<span class="s">"&lt;gradient:#fffb00:#ffa000&gt;&lt;bold&gt;✦ VICTORY ✦&lt;/bold&gt;&lt;/gradient&gt;"</span>),
+        MM.deserialize(<span class="s">"&lt;gray&gt;You won "</span> + matchName + <span class="s">"&lt;gray&gt;!"</span>),
+        Title.Times.times(Duration.ofMillis(<span class="k">300</span>), Duration.ofMillis(<span class="k">3200</span>), Duration.ofMillis(<span class="k">900</span>))));
+
+    new BukkitRunnable() {
+        int ticks = <span class="k">0</span>;
+        @Override public void run() {
+            if (!winner.isOnline() || ticks &gt;= <span class="k">100</span>) { cancel(); return; }
+            Location loc = winner.getLocation();
+            if (ticks % <span class="k">8</span> == <span class="k">0</span>) spawnFirework(loc);  <span class="c">// a burst roughly every 8 ticks</span>
+            loc.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
+                    loc.add(<span class="k">0</span>, <span class="k">1.1</span>, <span class="k">0</span>), <span class="k">18</span>, <span class="k">0.5</span>, <span class="k">0.9</span>, <span class="k">0.5</span>, <span class="k">0.25</span>);
+            ticks += <span class="k">2</span>;
+        }
+    }.runTaskTimer(plugin, <span class="k">0L</span>, <span class="k">2L</span>);
+}</pre>
+      </figure>
+    </section>
+
+    <section id="combo">
+      <h2>Combo counter</h2>
+      <p>During a duel, landing consecutive hits builds a combo shown on the action bar — the streak colour
+        ramps from grey through yellow to orange the longer it runs. It's read-only feedback: it never
+        touches damage calculation, only what the fighters see.</p>
+      <p class="sub">Two small rules keep it honest: a combo lapses on its own after a few seconds without a
+        landed hit, so it can never carry between separate exchanges — and getting hit resets your own
+        offensive combo, so trading blows doesn't inflate both sides at once.</p>
+      <figure class="code">
+        <figcaption><span class="fdot" aria-hidden="true"></span> ComboManager.java</figcaption>
+<pre><span class="c">// Called on every landed duel hit. Pure feedback — never touches damage.</span>
+public void onHit(UUID attacker, UUID victim) {
+    long now = System.currentTimeMillis();
+    Entry a = combos.computeIfAbsent(attacker, k -&gt; new Entry());
+    if (now - a.lastHit &gt; TIMEOUT_MS) a.combo = <span class="k">0</span>;  <span class="c">// combo lapsed — start over</span>
+    a.combo++;
+    a.lastHit = now;
+
+    Entry v = combos.get(victim);
+    if (v != <span class="k">null</span>) v.combo = <span class="k">0</span>;   <span class="c">// getting hit breaks YOUR offensive combo</span>
+
+    if (a.combo &gt;= <span class="k">2</span>) showCombo(attacker, a.combo);
+}</pre>
+      </figure>
     </section>
 
     <section id="metadata">
