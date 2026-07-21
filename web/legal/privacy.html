@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datenschutzerklärung · LemonPvP</title>
+<meta name="description" content="Datenschutzerklärung des LemonPvP-Netzwerks.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-dark:#07090f; --bg-card:rgba(20,25,40,.6);
+    --lemon-main:#facc15; --lemon-glow:rgba(250,204,21,.4); --lemon-soft:rgba(250,204,21,.08);
+    --text-white:#ffffff; --text-gray:#a1a1aa; --text-dim:#71717a;
+    --border-color:rgba(255,255,255,.08);
+    --radius:16px;
+    --display:"Poppins",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg-dark);color:var(--text-white);font-family:var(--body);
+    line-height:1.75;font-size:16px;-webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(250,204,21,.05) 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(250,204,21,.04) 0%, transparent 40%);
+  }
+  a{color:var(--lemon-main);text-decoration:none}
+  a:hover{text-decoration:underline}
+  h1,h2,h3,.logo{font-family:var(--display)}
+  h1{font-size:2.1rem;font-weight:800;margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:1.15rem;font-weight:700;margin:38px 0 12px;color:var(--text-white)}
+  h2 .n{color:var(--lemon-main);margin-right:8px;font-variant-numeric:tabular-nums}
+  h3{font-size:.98rem;font-weight:700;margin:20px 0 6px;color:var(--text-white)}
+  p,li{color:#d8d8dc}
+  strong{color:var(--text-white)}
+
+  .topbar{border-bottom:1px solid var(--border-color);padding:18px 6%;display:flex;
+       align-items:center;justify-content:space-between;backdrop-filter:blur(10px)}
+  .logo{font-size:19px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;color:var(--text-white)}
+  .logo span{color:var(--lemon-main)}
+  .topbar nav a{color:var(--text-gray);font-size:14px;font-weight:600;margin-left:22px}
+  .topbar nav a:hover{color:var(--lemon-main);text-decoration:none}
+
+  .wrap{max-width:760px;margin:0 auto;padding:56px 22px 90px}
+  .updated{color:var(--text-dim);font-size:.85rem;margin-bottom:34px}
+
+  .draft{background:var(--bg-card);border:1px solid var(--border-color);border-left:3px solid var(--lemon-main);
+       border-radius:14px;padding:20px 24px;margin-bottom:40px;backdrop-filter:blur(10px)}
+  .draft b{color:var(--lemon-main);display:block;font-family:var(--display);font-size:.8rem;
+       text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+  .draft ul{margin:8px 0 0;padding-left:1.2em;font-size:.92rem;color:var(--text-gray)}
+  .draft li{margin:4px 0}
+  mark{background:rgba(250,204,21,.16);color:var(--lemon-main);
+       padding:.05em .35em;border-radius:5px;font-weight:600;font-size:.94em}
+
+  section{border-top:1px solid var(--border-color);padding-top:6px}
+  section:first-of-type{border-top:none}
+
+  .addr{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;
+       padding:16px 20px;margin:14px 0;font-size:.95rem;backdrop-filter:blur(10px)}
+  .addr div{margin:2px 0}
+
+  .datacard{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;
+       padding:14px 18px;margin:12px 0;backdrop-filter:blur(10px)}
+
+  .tablewrap{overflow-x:auto;margin:16px 0;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-card)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:480px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border-color)}
+  th{font-family:var(--display);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);font-weight:700}
+  tr:last-child td{border-bottom:none}
+
+  footer{text-align:center;color:var(--text-dim);font-size:.85rem;padding:30px 20px 60px}
+  :focus-visible{outline:2px solid var(--lemon-main);outline-offset:3px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">Lemon<span>PvP</span></div>
+  <nav>
+    <a href="terms.html">Nutzungsbedingungen</a>
+    <a href="../../">lemonpvp.de</a>
+  </nav>
+</div>
+
+<div class="wrap">
+  <h1>Datenschutzerklärung</h1>
+  <p class="updated">Stand: <mark>[PLATZHALTER: Datum]</mark></p>
+
+  <div class="draft">
+    <b>Entwurf — vor Veröffentlichung prüfen</b>
+    Dieses Dokument ist eine fundierte, an den tatsächlichen Datenflüssen von LemonPvP orientierte
+    Vorlage, <strong>keine Rechtsberatung</strong>. Vor dem Livegang bitte:
+    <ul>
+      <li>Alle <mark>[PLATZHALTER]</mark>-Felder ausfüllen (Anschrift, E-Mail, Hosting-Anbieter,
+        Zahlungsdienstleister, Aufbewahrungsfristen, Datum)</li>
+      <li>Von einer Anwältin/einem Anwalt prüfen lassen — insbesondere Ziffer 5 (Auftragsverarbeiter) und
+        Ziffer 11 (Drittlandtransfer)</li>
+      <li>Falls Analyse- oder Marketing-Cookies eingesetzt werden (Ziffer 9), vorher ein
+        Einwilligungsbanner nach § 25 TTDSG einrichten</li>
+    </ul>
+  </div>
+
+  <section id="s1">
+    <h2><span class="n">1.</span>Verantwortlicher</h2>
+    <p>Verantwortlich für die Datenverarbeitung im Sinne der Datenschutz-Grundverordnung (DSGVO) ist:</p>
+    <div class="addr">
+      <div><strong>Lucas Gaschler</strong></div>
+      <div>[PLATZHALTER: Straße Hausnummer]</div>
+      <div>[PLATZHALTER: PLZ Ort]</div>
+      <div>[PLATZHALTER: Land]</div>
+      <div>E-Mail: [PLATZHALTER: E-Mail-Adresse]</div>
+    </div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">2.</span>Überblick</h2>
+    <p>Wir verarbeiten personenbezogene Daten, um dir das LemonPvP-Netzwerk bereitzustellen, den fairen
+      Spielbetrieb sicherzustellen und gesetzlichen Pflichten nachzukommen. Diese Erklärung beschreibt,
+      welche Daten das betrifft, wofür wir sie verwenden und welche Rechte dir zustehen.</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">3.</span>Welche Daten wir verarbeiten</h2>
+
+    <h3>Minecraft-UUID und Benutzername</h3>
+    <div class="datacard">Zur eindeutigen Identifikation deines Accounts im Netzwerk sowie zur Anzeige in
+      Ranglisten, Statistiken und im Spielgeschehen.</div>
+
+    <h3>IP-Adresse</h3>
+    <div class="datacard">Wird technisch bedingt bei jeder Verbindung verarbeitet
+      (Verbindungsprotokollierung). Zusätzlich wird deine IP-Adresse beim Verbindungsaufbau kurzzeitig an
+      einen externen Dienst zur Erkennung von VPN-/Proxy-Verbindungen übermittelt; das Ergebnis dieser
+      Prüfung wird für einen begrenzten Zeitraum zwischengespeichert (siehe Ziffer 6). Die rohe
+      IP-Adresse wird darüber hinaus nicht dauerhaft gespeichert.</div>
+
+    <h3>Chatnachrichten</h3>
+    <div class="datacard">Nachrichten im Netzwerk-Chat werden automatisiert auf Verstöße gegen unsere
+      Verhaltensregeln geprüft (z. B. beleidigende Sprache). Nachrichten, die zu einer Moderationsmaßnahme
+      führen, können im Rahmen der Verstoßdokumentation gespeichert werden.</div>
+
+    <h3>Spiel- und Statistikdaten</h3>
+    <div class="datacard">Dazu zählen u. a. Kills, Tode, Siege/Niederlagen, ELO-Wertungen, Münzen
+      (Coins), Kill-/Gewinnserien sowie Aufzeichnungen abgeschlossener Duelle (Replays) zur
+      Nachverfolgung von Matches.</div>
+
+    <h3>Moderationsdaten</h3>
+    <div class="datacard">Verwarnungen, Stummschaltungen, Kicks und Bans werden inklusive Begründung und
+      ausführendem Team-Mitglied gespeichert, um wiederholte Verstöße nachvollziehen und Sperren
+      überprüfen zu können.</div>
+
+    <h3>Discord-ID</h3>
+    <div class="datacard">Nur wenn du dein Discord-Konto freiwillig mit deinem Minecraft-Account
+      verknüpfst, verarbeiten wir deine Discord-Nutzer-ID zur Zuordnung, z. B. für Rollen oder
+      Belohnungen.</div>
+
+    <h3>Kaufdaten</h3>
+    <div class="datacard">Bei Käufen im Store werden die zur Zahlungsabwicklung notwendigen Daten von
+      unserem Zahlungsdienstleister <mark>[PLATZHALTER: Zahlungsdienstleister]</mark> verarbeitet.
+      Vollständige Zahlungsdaten (z. B. Kartennummern) speichern wir selbst nicht; wir erhalten lediglich
+      die Bestätigung und den Umfang der Zahlung.</div>
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">4.</span>Zwecke und Rechtsgrundlagen</h2>
+    <p>Wir verarbeiten deine Daten auf folgenden Rechtsgrundlagen:</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Rechtsgrundlage</th><th>Zweck</th></tr></thead>
+        <tbody>
+          <tr><td>Art. 6 Abs. 1 lit. b DSGVO</td><td>Bereitstellung des Dienstes, den du durch die
+            Nutzung des Netzwerks in Anspruch nimmst</td></tr>
+          <tr><td>Art. 6 Abs. 1 lit. f DSGVO</td><td>Berechtigtes Interesse an Sicherheit, Fairness und
+            Missbrauchsprävention (Cheat-Erkennung, VPN-/Proxy-Erkennung, Chat-Moderation)</td></tr>
+          <tr><td>Art. 6 Abs. 1 lit. a DSGVO</td><td>Deine Einwilligung bei optionalen Funktionen wie der
+            Discord-Verknüpfung — jederzeit widerrufbar</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="s5">
+    <h2><span class="n">5.</span>Empfänger und Auftragsverarbeiter</h2>
+    <p>Im Rahmen der Verarbeitung können folgende Dritte Daten erhalten:</p>
+    <ul>
+      <li>Hosting-Anbieter: <mark>[PLATZHALTER: Hosting-Anbieter, Serverstandort]</mark></li>
+      <li>Anbieter des VPN-/Proxy-Erkennungsdienstes (empfängt die IP-Adresse zur Prüfung im Rahmen des
+        Verbindungsaufbaus)</li>
+      <li>Discord Inc., bei freiwilliger Kontoverknüpfung</li>
+      <li>Zahlungsdienstleister <mark>[PLATZHALTER]</mark> bei Käufen im Store</li>
+    </ul>
+    <p>Mit Auftragsverarbeitern haben wir, soweit erforderlich, Verträge zur Auftragsverarbeitung nach
+      Art. 28 DSGVO geschlossen bzw. schließen diese ab.</p>
+  </section>
+
+  <section id="s6">
+    <h2><span class="n">6.</span>Speicherdauer</h2>
+    <ul>
+      <li>Account-bezogene Spiel- und Statistikdaten: solange dein Account aktiv genutzt wird bzw. bis zu
+        einer Löschanfrage, soweit keine gesetzlichen Aufbewahrungsfristen entgegenstehen.</li>
+      <li>Moderationsdaten (Bans/Mutes/Verwarnungen): werden für einen angemessenen Zeitraum zur
+        Rückfallprävention gespeichert — <mark>[PLATZHALTER: konkrete Frist ergänzen, z. B. 24
+        Monate]</mark>.</li>
+      <li>Ergebnisse der VPN-/Proxy-Prüfung: nur kurzzeitig zwischengespeichert (technischer Cache), keine
+        dauerhafte Speicherung der IP-Rohdaten über den Verbindungszeitraum hinaus.</li>
+      <li>Chatnachrichten ohne Verstoß: werden nicht dauerhaft gespeichert.</li>
+    </ul>
+  </section>
+
+  <section id="s7">
+    <h2><span class="n">7.</span>Deine Rechte</h2>
+    <p>Dir stehen nach der DSGVO folgende Rechte zu:</p>
+    <ul>
+      <li>Auskunft über die zu dir gespeicherten Daten (Art. 15 DSGVO)</li>
+      <li>Berichtigung unrichtiger Daten (Art. 16 DSGVO)</li>
+      <li>Löschung — „Recht auf Vergessenwerden" (Art. 17 DSGVO)</li>
+      <li>Einschränkung der Verarbeitung (Art. 18 DSGVO)</li>
+      <li>Datenübertragbarkeit (Art. 20 DSGVO)</li>
+      <li>Widerspruch gegen Verarbeitungen auf Grundlage berechtigten Interesses (Art. 21 DSGVO)</li>
+      <li>Widerruf erteilter Einwilligungen mit Wirkung für die Zukunft (Art. 7 Abs. 3 DSGVO)</li>
+      <li>Beschwerde bei einer Datenschutz-Aufsichtsbehörde (Art. 77 DSGVO)</li>
+    </ul>
+    <p>Zur Ausübung dieser Rechte wende dich an: <mark>[PLATZHALTER: E-Mail-Adresse]</mark></p>
+  </section>
+
+  <section id="s8">
+    <h2><span class="n">8.</span>Kinder und Jugendliche</h2>
+    <p>Der Dienst richtet sich an Nutzer, die die Mindestalters- und Nutzungsanforderungen von
+      Minecraft/Mojang erfüllen. Sind Nutzer minderjährig, ist für bestimmte Verarbeitungen (z. B.
+      freiwillige Discord-Verknüpfung) die Einwilligung der Erziehungsberechtigten erforderlich.</p>
+  </section>
+
+  <section id="s9">
+    <h2><span class="n">9.</span>Cookies auf unseren Webseiten</h2>
+    <p>Unsere Webseiten (lemonpvp.de, store.lemonpvp.de, docs.lemonpvp.de, status.lemonpvp.de) verwenden,
+      soweit nicht anders angegeben, ausschließlich technisch notwendige Cookies bzw. lokale
+      Speicherfunktionen, die für den Betrieb der Seite erforderlich sind.
+      <mark>[PLATZHALTER: Falls Analyse-, Marketing- oder Tracking-Tools eingesetzt werden, ist eine
+      vorherige Einwilligung nach § 25 TTDSG einzuholen und diese Erklärung entsprechend zu
+      ergänzen.]</mark></p>
+  </section>
+
+  <section id="s10">
+    <h2><span class="n">10.</span>Datensicherheit</h2>
+    <p>Wir setzen technische und organisatorische Maßnahmen ein, um deine Daten vor unbefugtem Zugriff,
+      Verlust oder Missbrauch zu schützen, u. a. verschlüsselte Verbindungen (TLS) für Webangebote und
+      Zugriffsbeschränkungen auf unsere Datenbanken.</p>
+  </section>
+
+  <section id="s11">
+    <h2><span class="n">11.</span>Übermittlung in Drittländer</h2>
+    <p>Sofern eingesetzte Dienstleister (z. B. Hosting, Discord) Daten außerhalb der EU/des EWR
+      verarbeiten, stellen wir durch geeignete Garantien (z. B. EU-Standardvertragsklauseln) ein
+      angemessenes Datenschutzniveau sicher. <mark>[PLATZHALTER: konkrete Anbieter/Länder prüfen und
+      ergänzen.]</mark></p>
+  </section>
+
+  <section id="s12">
+    <h2><span class="n">12.</span>Änderungen dieser Datenschutzerklärung</h2>
+    <p>Wir passen diese Erklärung an, sobald sich die Datenverarbeitung oder die Rechtslage ändert. Die
+      jeweils aktuelle Fassung findest du auf dieser Seite.</p>
+  </section>
+
+  <section id="s13">
+    <h2><span class="n">13.</span>Kontakt</h2>
+    <p>Für Fragen zum Datenschutz erreichst du uns unter: <mark>[PLATZHALTER: E-Mail-Adresse]</mark></p>
+  </section>
+</div>
+
+<footer>docs.lemonpvp.de · <a href="terms.html">Nutzungsbedingungen</a></footer>
+</body>
+</html>
