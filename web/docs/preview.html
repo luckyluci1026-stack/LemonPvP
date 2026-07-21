@@ -1,0 +1,426 @@
+<style>
+  :root{
+    --ground:#fbfdf6; --surface:#ffffff; --sunk:#f1f4ea; --line:#e2e7d6;
+    --ink:#1a1e14; --muted:#5c634f; --faint:#8a917a;
+    --lemon:#c8b400; --lemon-bright:#ffe600; --lime:#2fae2f; --lime-bright:#8bff3d;
+    --code-bg:#141710; --code-ink:#e7ecdc; --code-cmt:#8fb87a; --code-str:#e6c86a; --code-kw:#9cd0ff;
+    --radius:12px; --maxw:1160px;
+    --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#0c0e09; --surface:#13160e; --sunk:#0f120b; --line:#242a1a;
+      --ink:#e9ede0; --muted:#a3ab90; --faint:#727a62;
+      --lemon:#ffe600; --lemon-bright:#fff45c; --lime:#8bff3d; --lime-bright:#b6ff86;
+      --code-bg:#0a0c07; --code-ink:#e7ecdc;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0c0e09; --surface:#13160e; --sunk:#0f120b; --line:#242a1a;
+    --ink:#e9ede0; --muted:#a3ab90; --faint:#727a62;
+    --lemon:#ffe600; --lemon-bright:#fff45c; --lime:#8bff3d; --lime-bright:#b6ff86;
+    --code-bg:#0a0c07; --code-ink:#e7ecdc;
+  }
+  :root[data-theme="light"]{
+    --ground:#fbfdf6; --surface:#ffffff; --sunk:#f1f4ea; --line:#e2e7d6;
+    --ink:#1a1e14; --muted:#5c634f; --faint:#8a917a;
+    --lemon:#c8b400; --lemon-bright:#ffe600; --lime:#2fae2f; --lime-bright:#8bff3d;
+    --code-bg:#141710; --code-ink:#e7ecdc;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font);
+       font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  code{font-family:var(--mono);font-size:.88em;background:var(--sunk);border:1px solid var(--line);
+       border-radius:5px;padding:.08em .38em;color:var(--ink)}
+  h1,h2,h3{text-wrap:balance;line-height:1.15;letter-spacing:-.01em}
+  .grad{background:linear-gradient(100deg,var(--lemon-bright),var(--lime));
+        -webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* Layout */
+  .shell{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:240px 1fr;gap:56px;padding:0 28px}
+  nav.side{position:sticky;top:0;align-self:start;height:100vh;padding:30px 0;overflow-y:auto}
+  nav.side .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.05rem;letter-spacing:-.02em;margin-bottom:26px}
+  nav.side .dot{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--lemon-bright),var(--lime));display:inline-block;box-shadow:0 0 0 1px var(--line)}
+  nav.side .grp{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin:22px 0 8px}
+  nav.side ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+  nav.side a{display:block;text-decoration:none;color:var(--muted);font-size:.92rem;padding:5px 12px;border-radius:7px;border-left:2px solid transparent}
+  nav.side a:hover{color:var(--ink);background:var(--sunk)}
+  nav.side a.active{color:var(--ink);border-left-color:var(--lime);background:var(--sunk)}
+  main{min-width:0;padding:44px 0 90px}
+
+  /* Hero */
+  .hero{padding:26px 0 40px;border-bottom:1px solid var(--line);margin-bottom:44px}
+  .eyebrow{font-size:.78rem;text-transform:uppercase;letter-spacing:.16em;color:var(--lime);font-weight:700;margin:0 0 14px}
+  .hero h1{font-size:clamp(2.3rem,5.5vw,3.5rem);font-weight:850;margin:0 0 16px}
+  .hero p.lead{font-size:1.18rem;color:var(--muted);max-width:60ch;margin:0 0 24px}
+  .badges{display:flex;flex-wrap:wrap;gap:9px}
+  .badge{font-size:.78rem;font-weight:600;padding:5px 11px;border-radius:100px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:inline-flex;gap:7px;align-items:center}
+  .badge b{color:var(--ink)}
+  .badge.hl{border-color:color-mix(in srgb,var(--lime) 45%,var(--line));color:var(--ink)}
+  .badge .swatch{width:8px;height:8px;border-radius:50%;background:var(--lime)}
+
+  section{scroll-margin-top:24px;padding:34px 0;border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:none}
+  section > h2{font-size:1.7rem;font-weight:800;margin:0 0 6px;display:flex;align-items:baseline;gap:14px}
+  .num{font-family:var(--mono);font-size:1rem;color:var(--lime);font-weight:700;border:1px solid var(--line);border-radius:8px;padding:2px 9px;background:var(--surface)}
+  section p{max-width:68ch;color:var(--ink)}
+  section p.sub{color:var(--muted);margin-top:2px;max-width:68ch}
+  h3{font-size:1.05rem;margin:26px 0 8px}
+  ul.plain{max-width:68ch;padding-left:1.1em;color:var(--muted)}
+  ul.plain li{margin:5px 0}
+  ul.plain li b{color:var(--ink)}
+
+  /* Callout */
+  .note{max-width:70ch;background:var(--sunk);border:1px solid var(--line);border-left:3px solid var(--lime);
+        border-radius:8px;padding:14px 18px;margin:22px 0;color:var(--muted);font-size:.95rem}
+  .note b{color:var(--ink)}
+
+  /* Code */
+  figure.code{margin:20px 0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--code-bg)}
+  figure.code figcaption{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.76rem;
+        color:var(--faint);padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
+  figure.code figcaption .fdot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,var(--lemon-bright),var(--lime))}
+  figure.code pre{margin:0;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:.86rem;line-height:1.65;color:var(--code-ink)}
+  .c{color:var(--code-cmt)} .s{color:var(--code-str)} .k{color:var(--code-kw)}
+
+  /* Table */
+  .tablewrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:var(--radius)}
+  table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:520px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+  th{background:var(--sunk);font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:700}
+  td:first-child{font-family:var(--mono);color:var(--lime);font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:none}
+  td code{background:transparent;border:0;padding:0}
+
+  /* Pipeline strip */
+  .pipe{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+  .pipe .step{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .pipe .step .n{font-family:var(--mono);color:var(--lime);font-size:.8rem;font-weight:700}
+  .pipe .step .t{font-weight:700;margin:3px 0 2px}
+  .pipe .step .d{font-size:.84rem;color:var(--muted)}
+
+  footer{max-width:var(--maxw);margin:0 auto;padding:34px 28px 60px;color:var(--faint);font-size:.9rem}
+  footer .lic{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;color:var(--muted);max-width:72ch}
+  footer .lic b{color:var(--ink)}
+  footer a{color:var(--lime);text-decoration:none}
+
+  .toggle{position:fixed;top:16px;right:16px;z-index:20;background:var(--surface);border:1px solid var(--line);
+          color:var(--muted);border-radius:100px;padding:7px 13px;font-size:.8rem;cursor:pointer;font-family:var(--font)}
+  .toggle:hover{color:var(--ink)}
+  :focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:4px}
+
+  @media (max-width:880px){
+    .shell{grid-template-columns:1fr;gap:0}
+    nav.side{position:static;height:auto;padding:22px 0 6px;border-bottom:1px solid var(--line)}
+    nav.side ul{flex-direction:row;flex-wrap:wrap}
+    nav.side .grp{display:none}
+    main{padding-top:26px}
+  }
+</style>
+<button class="toggle" id="themeToggle" aria-label="Toggle colour theme">◐ Theme</button>
+<div class="shell">
+  <nav class="side">
+    <div class="brand"><span class="dot" aria-hidden="true"></span> LemonPvP Docs</div>
+    <div class="grp">Overview</div>
+    <ul>
+      <li><a href="#intro" class="active">What it is</a></li>
+      <li><a href="#pipeline">The pipeline</a></li>
+    </ul>
+    <div class="grp">Display cosmetics</div>
+    <ul>
+      <li><a href="#spawn">1 · Spawn by packet</a></li>
+      <li><a href="#transform">2 · Transform &amp; scale</a></li>
+      <li><a href="#textures">3 · Custom textures</a></li>
+      <li><a href="#tracker">4 · No-lag tracker</a></li>
+      <li><a href="#interp">5 · Smooth animation</a></li>
+    </ul>
+    <div class="grp">Emotes</div>
+    <ul>
+      <li><a href="#emotes">Dance emotes</a></li>
+      <li><a href="#metadata">Metadata reference</a></li>
+      <li><a href="#commands">Commands</a></li>
+      <li><a href="#license">License</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">The Emote System</p>
+      <h1>3D cosmetics and <span class="grad">Fortnite-style emotes</span> on vanilla Minecraft.</h1>
+      <p class="lead">No mods. No resource pack. Every hat, cape, wing and dance is drawn entirely by
+        server-sent packets — the client just renders ordinary vanilla display entities and armour stands.</p>
+      <div class="badges">
+        <span class="badge hl"><span class="swatch" aria-hidden="true"></span> <b>Vanilla</b> — no resource pack</span>
+        <span class="badge">Built on <b>PacketEvents</b></span>
+        <span class="badge">Paper <b>1.21</b></span>
+        <span class="badge"><b>MIT</b> licensed</span>
+      </div>
+    </header>
+
+    <section id="intro">
+      <h2>What it is</h2>
+      <p>Most servers ship a resource pack to show custom cosmetics. That forces a download on every
+        player and breaks on Bedrock. LemonPvP takes the opposite route: it never sends a pack at all.
+        Instead it spawns <b>vanilla display entities</b> (<code>item_display</code>, <code>block_display</code>)
+        and <b>armour stands</b> as pure packets, addressed only to the players who should see them, and
+        drives their appearance and motion frame by frame.</p>
+      <p class="sub">The result reads like a modded server but runs on a stock client — a Java player and a
+        Geyser/Bedrock player see the same cosmetic. This page explains the five techniques that make it
+        work, plus the emote layer built on top, and releases the reference code under MIT.</p>
+      <div class="note"><b>Why packets, not real entities?</b> A packet entity has no server-side tick,
+        no physics and no persistence. It exists only in the viewer's client, so a thousand capes cost the
+        server almost nothing and never desync a save.</div>
+    </section>
+
+    <section id="pipeline">
+      <h2>The pipeline</h2>
+      <p>A cosmetic is one display entity glued to a wearer. Five concerns, each a self-contained step:</p>
+      <div class="pipe">
+        <div class="step"><div class="n">01</div><div class="t">Spawn</div><div class="d">send a display entity to nearby players</div></div>
+        <div class="step"><div class="n">02</div><div class="t">Shape</div><div class="d">scale / rotate / translate it into a hat, cape or wing</div></div>
+        <div class="step"><div class="n">03</div><div class="t">Texture</div><div class="d">skin a player-head with any image, no pack</div></div>
+        <div class="step"><div class="n">04</div><div class="t">Track</div><div class="d">move it the instant the wearer moves</div></div>
+        <div class="step"><div class="n">05</div><div class="t">Animate</div><div class="d">let the client tween every frame smoothly</div></div>
+      </div>
+    </section>
+
+    <section id="spawn">
+      <h2><span class="num">1</span> Spawn a display entity by packet</h2>
+      <p>A display entity is spawned with a single <code>Spawn Entity</code> packet. The entity id comes from
+        a client-safe fake-id allocator; the entity type is <code>ITEM_DISPLAY</code> or
+        <code>BLOCK_DISPLAY</code>. The manager sends it to every player currently tracking the wearer, so it
+        appears and disappears with range exactly like a real entity — but nothing is created server-side.</p>
+      <figure class="code">
+        <figcaption><span class="fdot" aria-hidden="true"></span> DisplayCosmeticPackets.java</figcaption>
+<pre><span class="c">// A display entity spawned at a world location. objectData = 0 and no</span>
+<span class="c">// velocity: displays need neither. entityId is a client-safe fake id.</span>
+public static WrapperPlayServerSpawnEntity spawn(int entityId, UUID uuid,
+                                                 EntityType type, Location loc) {
+    var pe = new PeLocation(loc.getX(), loc.getY(), loc.getZ(),
+                            loc.getYaw(), loc.getPitch());
+    return new WrapperPlayServerSpawnEntity(
+            entityId, uuid, type, pe, loc.getYaw(), <span class="k">0</span>, <span class="k">null</span>);
+}</pre>
+      </figure>
+    </section>
+
+    <section id="transform">
+      <h2><span class="num">2</span> Transform &amp; scale</h2>
+      <p>A display entity carries a render transform: the client draws its model through an affine matrix
+        built from four parts. For each model vertex <code>v</code> the client computes</p>
+      <div class="note" style="border-left-color:var(--lemon);font-family:var(--mono);font-size:.9rem;color:var(--ink)">
+        v&prime; = translation + leftRotation · ( scale ⊙ ( rightRotation · v ) )</div>
+      <p class="sub">First rotate the raw model (<code>rightRotation</code>), then scale it per-axis
+        (<code>scale</code>, ⊙ = component-wise multiply), rotate again (<code>leftRotation</code>), and
+        finally move it (<code>translation</code>). Two rotations bracket the scale because that is the
+        singular-value-decomposition form of an arbitrary 3×3 matrix — but for a cosmetic one rotation is
+        plenty, so <code>rightRotation</code> stays identity and the tilt goes in <code>leftRotation</code>.</p>
+      <p>A <b>cape</b> is just a vanilla block (say red concrete) scaled to a thin, tall, wide slab, tilted a
+        few degrees off the shoulders and translated up to back height. A rotation of angle θ about a unit
+        axis (aₓ, aᵧ, a𝓏) is the quaternion below:</p>
+      <figure class="code">
+        <figcaption><span class="fdot" aria-hidden="true"></span> transform &amp; quaternion math</figcaption>
+<pre><span class="c">// Metadata packet: sets the transform AND interpolation duration (see §5).</span>
+public static WrapperPlayServerEntityMetadata transform(int id, Transform t, int interpTicks){
+    return new WrapperPlayServerEntityMetadata(id, List.of(
+        new EntityData&lt;&gt;(<span class="k">8</span>,  EntityDataTypes.INT,        <span class="k">0</span>),           <span class="c">// interpolation delay</span>
+        new EntityData&lt;&gt;(<span class="k">9</span>,  EntityDataTypes.INT,        interpTicks), <span class="c">// interpolation duration</span>
+        new EntityData&lt;&gt;(<span class="k">11</span>, EntityDataTypes.VECTOR3F,   t.translation()),
+        new EntityData&lt;&gt;(<span class="k">12</span>, EntityDataTypes.VECTOR3F,   t.scale()),
+        new EntityData&lt;&gt;(<span class="k">13</span>, EntityDataTypes.QUATERNION, t.leftRotation()),
+        new EntityData&lt;&gt;(<span class="k">14</span>, EntityDataTypes.QUATERNION, t.rightRotation())));
+}
+
+<span class="c">// Quaternion for a rotation of `degrees` about the unit axis (ax, ay, az).</span>
+public static Quaternion4f axisAngle(float ax, float ay, float az, float degrees){
+    double half = Math.toRadians(degrees) / <span class="k">2.0</span>;
+    float s = (float) Math.sin(half);
+    return new Quaternion4f(ax*s, ay*s, az*s, (float) Math.cos(half));
+}</pre>
+      </figure>
+    </section>
+
+    <section id="textures">
+      <h2><span class="num">3</span> Custom textures via player heads</h2>
+      <p>This is the trick that gives detailed 3D hats with no pack. Mojang stores a skin as a signed
+        <code>textures</code> property on a <code>GameProfile</code>: a Base64 blob that decodes to a small
+        JSON pointing at a <code>textures.minecraft.net</code> URL. Put that profile on a
+        <code>player_head</code> item, render it on an item-display, and the vanilla client downloads and
+        draws that skin on the head model — entirely client-side, entirely vanilla.</p>
+      <figure class="code">
+        <figcaption><span class="fdot" aria-hidden="true"></span> SkinTextureUtil.java</figcaption>
+<pre><span class="c">// base64Texture = the value of the profile's "textures" property.</span>
+public static ItemStack head(String base64Texture) {
+    ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+    if (!(item.getItemMeta() instanceof SkullMeta meta)) return item;
+
+    PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID(), <span class="k">null</span>);
+    profile.setProperty(new ProfileProperty(<span class="s">"textures"</span>, base64Texture));
+    meta.setPlayerProfile(profile);            <span class="c">// Paper API, no NMS</span>
+
+    item.setItemMeta(meta);
+    return item;
+}</pre>
+      </figure>
+    </section>
+
+    <section id="tracker">
+      <h2><span class="num">4</span> Latency-free movement tracker</h2>
+      <p>If you move a cosmetic from a server tick, it trails the wearer by a tick — visibly rubber-banding
+        when they sprint. The fix is to update it the moment the movement arrives. A PacketEvents listener
+        intercepts the player's inbound position packet <b>on the Netty I/O thread</b>, before the server has
+        even ticked, and immediately teleports the cosmetic to the new coordinates.</p>
+      <div class="note"><b>Thread safety.</b> The listener never touches live entity state off-thread: it
+        reads the coordinates straight from the packet and uses a cached world + last yaw, then sends
+        packets — which PacketEvents permits off the main thread. That keeps the cosmetic pixel-locked to
+        the body without risking async access.</div>
+      <figure class="code">
+        <figcaption><span class="fdot" aria-hidden="true"></span> CosmeticMoveListener.java</figcaption>
+<pre>@Override
+public void onPacketReceive(PacketReceiveEvent event) {
+    if (!(event.getPlayer() instanceof Player player)) return;
+    UUID uuid = player.getUniqueId();
+    if (!manager.hasCosmetics(uuid)) return;
+
+    var type = event.getPacketType();
+    if (type == PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION) {
+        var w = new WrapperPlayClientPlayerPositionAndRotation(event);
+        var p = w.getPosition();
+        manager.onMovement(uuid, p.getX(), p.getY(), p.getZ(), w.getYaw());
+    } <span class="c">// ... POSITION (no yaw) and ROTATION (turn in place) handled too</span>
+}</pre>
+      </figure>
+    </section>
+
+    <section id="interp">
+      <h2><span class="num">5</span> Smooth animation via client interpolation</h2>
+      <p>Display entities have a built-in tween. Set metadata index <code>9</code>
+        (<code>interpolation_duration</code>) to N ticks and the client smoothly interpolates from its
+        current transform to the next one over those N ticks. So the server sends a fresh rotation only
+        every few ticks, and the vanilla client fills every frame in between — a cape sways and wings flap
+        at the player's full frame-rate for almost no bandwidth.</p>
+      <figure class="code">
+        <figcaption><span class="fdot" aria-hidden="true"></span> the sway loop (every 5 ticks)</figcaption>
+<pre><span class="c">// A cape rocks a few degrees about its back axis. Sent every 5 ticks with</span>
+<span class="c">// interpolation_duration = 5, so the client tweens the whole gap smoothly.</span>
+float angle = center + amplitude * (float) Math.sin(t);
+Transform swung = new Transform(base.translation(), base.scale(),
+        axisAngle(<span class="k">0</span>, <span class="k">0</span>, <span class="k">1</span>, angle), noRotation());
+for (Player viewer : viewers) cosmetic.animate(viewer, swung, <span class="k">/* interpTicks */ 5</span>);</pre>
+      </figure>
+    </section>
+
+    <section id="emotes">
+      <h2>Fortnite-style dance emotes</h2>
+      <p>Emotes reuse the same idea one layer up. When a player emotes, they are frozen and made invisible
+        (a potion effect, no particles), and a packet-only <b>armour-stand body double</b> takes their place
+        — wearing their own head and armour. The double then performs a dance by re-posing its limbs every
+        two ticks through the armour-stand pose metadata (head, body, both arms, both legs), with spins
+        driven by teleport yaw and a light note-block beat underneath.</p>
+      <p class="sub">Each dance is a pure function of time: <code>poseAt(tick)</code> returns the six limb
+        rotations for that frame. Keyframes are cheap sine mixes, so they loop seamlessly and stay easy to
+        tune. Here is the <code>WAVE</code> emote — the right arm sweeps while the head tilts along:</p>
+      <figure class="code">
+        <figcaption><span class="fdot" aria-hidden="true"></span> DanceEmote.java — WAVE</figcaption>
+<pre><span class="c">// Every rotation is a Vector3f of degrees; osc(t, period, amp) is a sine.</span>
+case WAVE -&gt; new Pose(
+    v(<span class="k">0</span>, <span class="k">0</span>, (float) osc(t, <span class="k">20</span>, <span class="k">8</span>)),      <span class="c">// head tilts with the wave</span>
+    v(<span class="k">0</span>, <span class="k">0</span>, (float) osc(t, <span class="k">20</span>, <span class="k">3</span>)),      <span class="c">// tiny body sway</span>
+    v(<span class="k">-10</span>, <span class="k">0</span>, <span class="k">-5</span>),                   <span class="c">// idle left arm</span>
+    v(<span class="k">-150</span>, <span class="k">0</span>, (float) osc(t, <span class="k">10</span>, <span class="k">30</span>)), <span class="c">// raised right arm sweeping</span>
+    v(<span class="k">0</span>, <span class="k">0</span>, <span class="k">0</span>), v(<span class="k">0</span>, <span class="k">0</span>, <span class="k">0</span>), <span class="k">0f</span>);        <span class="c">// legs, yaw offset</span></pre>
+      </figure>
+      <p>The dance always cleans up: it ends on its own after a few seconds, on <code>/emote stop</code>, on
+        damage, teleport, quit, or plugin disable — and every path restores the player's speed and
+        visibility. Built-in dances: <code>wave</code>, <code>dab</code>, <code>spin</code>,
+        <code>floss</code>, <code>robot</code>.</p>
+    </section>
+
+    <section id="metadata">
+      <h2>Metadata reference</h2>
+      <p class="sub">The Display base fields sit at fixed metadata indices (stable Minecraft 1.19.4 → 1.21).
+        Item- and block-displays add their appearance on top.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Index</th><th>Field</th><th>Type</th></tr></thead>
+          <tbody>
+            <tr><td>8</td><td>Interpolation delay</td><td><code>INT</code></td></tr>
+            <tr><td>9</td><td>Interpolation duration</td><td><code>INT</code></td></tr>
+            <tr><td>11</td><td>Translation</td><td><code>VECTOR3F</code></td></tr>
+            <tr><td>12</td><td>Scale</td><td><code>VECTOR3F</code></td></tr>
+            <tr><td>13</td><td>Left rotation</td><td><code>QUATERNION</code></td></tr>
+            <tr><td>14</td><td>Right rotation</td><td><code>QUATERNION</code></td></tr>
+            <tr><td>23</td><td>Item / block state</td><td><code>ITEMSTACK</code> / <code>BLOCK_STATE</code></td></tr>
+            <tr><td>24</td><td>Item display context</td><td><code>BYTE</code> <span style="color:var(--faint)">(5 = HEAD)</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sub">Armour-stand poses (for emotes) live at indices 16–21: head, body, left arm, right arm,
+        left leg, right leg — each a degree <code>ROTATION</code> vector.</p>
+    </section>
+
+    <section id="commands">
+      <h2>Commands</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td>/emote</td><td>Play a dance (wave · dab · spin · floss · robot) or list emotes</td></tr>
+            <tr><td>/emote&nbsp;stop</td><td>End your current emote early</td></tr>
+            <tr><td>/pcosmetic</td><td>Try the packet display cosmetics: hat · head · cape · wings · off</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="license">
+      <h2>License &amp; open source</h2>
+      <p>The Emote System documentation on this page and the reference snippets it contains are released as
+        <b>open source under the MIT License</b>. Use them, learn from them, adapt them into your own
+        plugin — attribution appreciated, not required.</p>
+      <p class="sub">The wider LemonPvP network (moderation, economy, matchmaking, database layers) is not
+        published here, and nothing on this page contains server addresses, tokens or credentials.</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="lic">
+    <b>MIT License</b> — Copyright © LemonPvP.<br><br>
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+    associated documentation files (the “Software”), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+    following condition: the above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software. The Software is provided “as is”, without warranty of
+    any kind.
+  </div>
+  <p style="margin-top:18px">docs.lemonpvp.de · Built on <a href="https://github.com/retrooper/packetevents">PacketEvents</a> · Vanilla-safe, no resource pack.</p>
+</footer>
+
+<script>
+  // Theme toggle: stamp data-theme so it wins over the OS media query both ways.
+  const root = document.documentElement, btn = document.getElementById('themeToggle');
+  btn.addEventListener('click', () => {
+    const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const cur = root.getAttribute('data-theme') || (dark ? 'dark' : 'light');
+    root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+  });
+  // Scrollspy: highlight the nav link for the section in view.
+  const links = [...document.querySelectorAll('nav.side a')];
+  const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(a => a.classList.remove('active'));
+        map.get(e.target.id)?.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  document.querySelectorAll('section[id]').forEach(s => obs.observe(s));
+</script>
