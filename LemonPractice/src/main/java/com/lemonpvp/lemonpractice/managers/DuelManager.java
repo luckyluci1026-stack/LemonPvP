@@ -277,6 +277,16 @@ public class DuelManager {
                 && threshold > 0 && streak >= threshold && streak % threshold == 0) {
             Bukkit.broadcast(SB_MM.deserialize("<gradient:#fffb00:#ff9800>" + w.getName()
                     + " is on a " + streak + " win streak!</gradient>"));
+            sendHighlight("🔥 Win Streak",
+                    "**" + w.getName() + "** is on a **" + streak + "-win streak**!");
+        }
+    }
+
+    /** Posts to the LemonCore highlights webhook, if configured. No-op if LemonCore is absent. */
+    private void sendHighlight(String title, String description) {
+        var lc = Bukkit.getPluginManager().getPlugin("LemonCore");
+        if (lc instanceof com.lemonpvp.lemoncore.LemonCore core) {
+            core.getDiscordWebhookManager().sendHighlight(title, description);
         }
     }
 

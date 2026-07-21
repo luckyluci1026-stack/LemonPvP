@@ -140,6 +140,18 @@ public class DiscordWebhookManager {
         sendWithRetry(url, buildEmbed("✅ Unmuted", description, 0x00FF00));
     }
 
+    /**
+     * A positive gameplay moment worth celebrating publicly — a tournament
+     * champion, a win-streak milestone, and similar. No Discord-link lookup
+     * (unlike the moderation webhooks), since these never need to name staff.
+     * No-op if {@code discord_webhooks.highlights} isn't configured.
+     */
+    public void sendHighlight(String title, String description) {
+        String url = getUrl("highlights");
+        if (url == null) return;
+        sendWithRetry(url, buildPublicEmbed(title, description, 0xFACC15));
+    }
+
     // -------------------------------------------------------------------------
     // Internals
     // -------------------------------------------------------------------------

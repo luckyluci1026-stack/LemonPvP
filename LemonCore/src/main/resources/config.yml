@@ -30,11 +30,14 @@ maintenance:
     event: "<gold>We're preparing a special event!</gold>\n<gray>Join our Discord to be notified:</gray>\n<aqua>{discord}</aqua>"
 
 discord_webhooks:
-  bans:    ""
-  mutes:   ""
-  unbans:  ""
-  unmutes: ""
-  public:  ""
+  bans:       ""
+  mutes:      ""
+  unbans:     ""
+  unmutes:    ""
+  public:     ""
+  # Positive gameplay highlights — tournament champions, win-streak milestones.
+  # Point this at a #highlights channel; separate from moderation webhooks above.
+  highlights: ""
 
 lobby:
   spawn:

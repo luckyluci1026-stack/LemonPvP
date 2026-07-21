@@ -124,6 +124,18 @@ public class TournamentManager {
                 "<gradient:#fffb00:#ffa000><bold>🏆 " + name + " is the " + t.getName() + " champion!</bold></gradient>"));
         var winner = Bukkit.getPlayer(uuid);
         if (winner != null) WinAnimation.celebrate(plugin, winner, t.getName());
+
+        sendHighlight("🏆 Tournament Champion",
+                "**" + name + "** is the champion of **" + t.getName() + "**!\n"
+                + "• Gamemode: " + t.getGamemode());
+    }
+
+    /** Posts to the LemonCore highlights webhook, if configured. No-op if LemonCore is absent. */
+    private void sendHighlight(String title, String description) {
+        var lc = Bukkit.getPluginManager().getPlugin("LemonCore");
+        if (lc instanceof com.lemonpvp.lemoncore.LemonCore core) {
+            core.getDiscordWebhookManager().sendHighlight(title, description);
+        }
     }
 
     private void announceFinalists(Tournament t, List<Standing> top) {
