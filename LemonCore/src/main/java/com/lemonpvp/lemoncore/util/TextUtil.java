@@ -29,7 +29,7 @@ public class TextUtil {
                         return current;
                     });
 
-    private static final MiniMessage MM = MiniMessage.miniMessage().toBuilder()
+    private static final MiniMessage MM = MiniMessage.builder()
             .editTags(t -> t.resolver(SMALLCAPS_TAG))
             .build();
 
