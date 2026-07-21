@@ -4,137 +4,142 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LemonPvP · The Emote System</title>
-<meta name="description" content="How LemonPvP renders 3D cosmetics and Fortnite-style emotes on vanilla Minecraft — no mods, no resource pack. Open source (MIT).">
+<meta name="description" content="How LemonPvP renders 3D cosmetics and Fortnite-style emotes on vanilla Minecraft — no mods, no resource pack.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ground:#fbfdf6; --surface:#ffffff; --sunk:#f1f4ea; --line:#e2e7d6;
-    --ink:#1a1e14; --muted:#5c634f; --faint:#8a917a;
-    --lemon:#c8b400; --lemon-bright:#ffe600; --lime:#2fae2f; --lime-bright:#8bff3d;
-    --code-bg:#141710; --code-ink:#e7ecdc; --code-cmt:#8fb87a; --code-str:#e6c86a; --code-kw:#9cd0ff;
-    --radius:12px; --maxw:1160px;
-    --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --bg:#07090f; --bg-2:#0a0d16;
+    --card:rgba(20,25,40,.6); --card-solid:#121727;
+    --lemon:#facc15; --lemon-soft:#fde047; --glow:rgba(250,204,21,.4); --glow-soft:rgba(250,204,21,.08);
+    --ink:#ffffff; --muted:#a1a1aa; --faint:#71717a;
+    --line:rgba(255,255,255,.06); --line-strong:rgba(255,255,255,.12);
+    --code-bg:#05070c; --code-ink:#e7ebf3; --cmt:#5f7a86; --str:#fde047; --kw:#7cc5ff;
+    --radius:18px;
+    --display:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   }
-  @media (prefers-color-scheme:dark){
-    :root{
-      --ground:#0c0e09; --surface:#13160e; --sunk:#0f120b; --line:#242a1a;
-      --ink:#e9ede0; --muted:#a3ab90; --faint:#727a62;
-      --lemon:#ffe600; --lemon-bright:#fff45c; --lime:#8bff3d; --lime-bright:#b6ff86;
-      --code-bg:#0a0c07; --code-ink:#e7ecdc;
-    }
-  }
-  :root[data-theme="dark"]{
-    --ground:#0c0e09; --surface:#13160e; --sunk:#0f120b; --line:#242a1a;
-    --ink:#e9ede0; --muted:#a3ab90; --faint:#727a62;
-    --lemon:#ffe600; --lemon-bright:#fff45c; --lime:#8bff3d; --lime-bright:#b6ff86;
-    --code-bg:#0a0c07; --code-ink:#e7ecdc;
-  }
-  :root[data-theme="light"]{
-    --ground:#fbfdf6; --surface:#ffffff; --sunk:#f1f4ea; --line:#e2e7d6;
-    --ink:#1a1e14; --muted:#5c634f; --faint:#8a917a;
-    --lemon:#c8b400; --lemon-bright:#ffe600; --lime:#2fae2f; --lime-bright:#8bff3d;
-    --code-bg:#141710; --code-ink:#e7ecdc;
-  }
-
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
-  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font);
-       font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
+    font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+    background-image:
+      radial-gradient(circle at 12% 8%, var(--glow-soft) 0%, transparent 42%),
+      radial-gradient(circle at 88% 22%, var(--glow-soft) 0%, transparent 40%);
+    background-attachment:fixed;
+  }
   a{color:inherit}
-  code{font-family:var(--mono);font-size:.88em;background:var(--sunk);border:1px solid var(--line);
-       border-radius:5px;padding:.08em .38em;color:var(--ink)}
-  h1,h2,h3{text-wrap:balance;line-height:1.15;letter-spacing:-.01em}
-  .grad{background:linear-gradient(100deg,var(--lemon-bright),var(--lime));
-        -webkit-background-clip:text;background-clip:text;color:transparent}
+  h1,h2,h3,.brand,.num,.hero .badge b{font-family:var(--display)}
+  h1,h2,h3{line-height:1.12;letter-spacing:-.015em;text-wrap:balance}
+  code{font-family:var(--mono);font-size:.86em;background:rgba(255,255,255,.05);
+       border:1px solid var(--line);border-radius:6px;padding:.08em .4em;color:#eef1f7}
+  .lemon{color:var(--lemon);text-shadow:0 0 26px var(--glow)}
 
   /* Layout */
-  .shell{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:240px 1fr;gap:56px;padding:0 28px}
-  nav.side{position:sticky;top:0;align-self:start;height:100vh;padding:30px 0;overflow-y:auto}
-  nav.side .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.05rem;letter-spacing:-.02em;margin-bottom:26px}
-  nav.side .dot{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--lemon-bright),var(--lime));display:inline-block;box-shadow:0 0 0 1px var(--line)}
-  nav.side .grp{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);margin:22px 0 8px}
+  .shell{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px 1fr;gap:60px;padding:0 30px}
+  nav.side{position:sticky;top:0;align-self:start;height:100vh;padding:34px 0;overflow-y:auto}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:900;font-size:1.15rem;
+         text-transform:uppercase;letter-spacing:1px;margin-bottom:30px}
+  .brand .cube{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--lemon-soft),var(--lemon));
+       box-shadow:0 0 22px var(--glow);display:inline-block}
+  .brand .lemon{font-weight:900}
+  nav.side .grp{font-size:.7rem;text-transform:uppercase;letter-spacing:.16em;color:var(--faint);
+       font-family:var(--display);font-weight:700;margin:24px 0 9px}
   nav.side ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
-  nav.side a{display:block;text-decoration:none;color:var(--muted);font-size:.92rem;padding:5px 12px;border-radius:7px;border-left:2px solid transparent}
-  nav.side a:hover{color:var(--ink);background:var(--sunk)}
-  nav.side a.active{color:var(--ink);border-left-color:var(--lime);background:var(--sunk)}
-  main{min-width:0;padding:44px 0 90px}
+  nav.side a{display:block;text-decoration:none;color:var(--muted);font-size:.92rem;font-weight:500;
+       padding:6px 14px;border-radius:9px;border-left:2px solid transparent;transition:.2s}
+  nav.side a:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+  nav.side a.active{color:var(--lemon);border-left-color:var(--lemon);background:var(--glow-soft)}
+  main{min-width:0;padding:48px 0 100px;animation:rise .7s ease-out}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
   /* Hero */
-  .hero{padding:26px 0 40px;border-bottom:1px solid var(--line);margin-bottom:44px}
-  .eyebrow{font-size:.78rem;text-transform:uppercase;letter-spacing:.16em;color:var(--lime);font-weight:700;margin:0 0 14px}
-  .hero h1{font-size:clamp(2.3rem,5.5vw,3.5rem);font-weight:850;margin:0 0 16px}
-  .hero p.lead{font-size:1.18rem;color:var(--muted);max-width:60ch;margin:0 0 24px}
-  .badges{display:flex;flex-wrap:wrap;gap:9px}
-  .badge{font-size:.78rem;font-weight:600;padding:5px 11px;border-radius:100px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:inline-flex;gap:7px;align-items:center}
+  .hero{position:relative;z-index:0;padding:24px 0 46px;margin-bottom:20px}
+  .hero::before{content:"";position:absolute;top:-40px;left:-60px;width:420px;height:320px;
+       background:radial-gradient(circle, var(--glow) 0%, transparent 68%);opacity:.16;filter:blur(20px);z-index:-1;pointer-events:none}
+  .eyebrow{font-family:var(--display);font-size:.78rem;text-transform:uppercase;letter-spacing:.18em;
+       color:var(--lemon);font-weight:700;margin:0 0 16px}
+  .hero h1{font-size:clamp(2.4rem,5.6vw,3.9rem);font-weight:900;margin:0 0 18px}
+  .hero p.lead{font-size:1.2rem;color:var(--muted);max-width:60ch;margin:0 0 26px}
+  .badges{display:flex;flex-wrap:wrap;gap:10px}
+  .badge{font-size:.78rem;font-weight:600;padding:7px 14px;border-radius:100px;border:1px solid var(--line-strong);
+       background:var(--card);backdrop-filter:blur(10px);color:var(--muted);display:inline-flex;gap:8px;align-items:center}
   .badge b{color:var(--ink)}
-  .badge.hl{border-color:color-mix(in srgb,var(--lime) 45%,var(--line));color:var(--ink)}
-  .badge .swatch{width:8px;height:8px;border-radius:50%;background:var(--lime)}
+  .badge.hl{border-color:rgba(250,204,21,.45);box-shadow:0 0 24px var(--glow-soft)}
+  .badge.hl .swatch{width:8px;height:8px;border-radius:50%;background:var(--lemon);box-shadow:0 0 10px var(--glow)}
 
-  section{scroll-margin-top:24px;padding:34px 0;border-bottom:1px solid var(--line)}
-  section:last-of-type{border-bottom:none}
-  section > h2{font-size:1.7rem;font-weight:800;margin:0 0 6px;display:flex;align-items:baseline;gap:14px}
-  .num{font-family:var(--mono);font-size:1rem;color:var(--lime);font-weight:700;border:1px solid var(--line);border-radius:8px;padding:2px 9px;background:var(--surface)}
-  section p{max-width:68ch;color:var(--ink)}
-  section p.sub{color:var(--muted);margin-top:2px;max-width:68ch}
-  h3{font-size:1.05rem;margin:26px 0 8px}
-  ul.plain{max-width:68ch;padding-left:1.1em;color:var(--muted)}
-  ul.plain li{margin:5px 0}
-  ul.plain li b{color:var(--ink)}
+  section{scroll-margin-top:24px;padding:40px 0;border-top:1px solid var(--line)}
+  section > h2{font-size:1.85rem;font-weight:800;margin:0 0 8px;display:flex;align-items:center;gap:15px}
+  .num{font-size:1rem;color:var(--lemon);font-weight:800;border:1px solid rgba(250,204,21,.35);
+       border-radius:9px;padding:3px 11px;background:var(--glow-soft);box-shadow:0 0 18px var(--glow-soft)}
+  section p{max-width:70ch;color:#d6d9e0}
+  section p.sub{color:var(--muted);margin-top:2px}
+  h3{font-size:1.08rem;margin:26px 0 8px;font-weight:700}
 
-  /* Callout */
-  .note{max-width:70ch;background:var(--sunk);border:1px solid var(--line);border-left:3px solid var(--lime);
-        border-radius:8px;padding:14px 18px;margin:22px 0;color:var(--muted);font-size:.95rem}
+  /* Glass callout */
+  .note{max-width:72ch;background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--line);
+       border-left:3px solid var(--lemon);border-radius:14px;padding:16px 20px;margin:24px 0;color:var(--muted);font-size:.95rem}
   .note b{color:var(--ink)}
+  .formula{max-width:72ch;background:var(--code-bg);border:1px solid var(--line);border-radius:14px;
+       padding:18px 22px;margin:22px 0;font-family:var(--mono);font-size:.95rem;color:#eef1f7;
+       box-shadow:inset 0 0 40px rgba(250,204,21,.05)}
 
   /* Code */
-  figure.code{margin:20px 0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--code-bg)}
-  figure.code figcaption{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.76rem;
-        color:var(--faint);padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
-  figure.code figcaption .fdot{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,var(--lemon-bright),var(--lime))}
-  figure.code pre{margin:0;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:.86rem;line-height:1.65;color:var(--code-ink)}
-  .c{color:var(--code-cmt)} .s{color:var(--code-str)} .k{color:var(--code-kw)}
+  figure.code{margin:22px 0;border:1px solid var(--line-strong);border-radius:var(--radius);overflow:hidden;
+       background:var(--code-bg);box-shadow:0 24px 60px rgba(0,0,0,.4)}
+  figure.code figcaption{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:.76rem;
+       color:var(--faint);padding:11px 16px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+  figure.code figcaption .fdot{width:9px;height:9px;border-radius:50%;background:var(--lemon);box-shadow:0 0 12px var(--glow)}
+  figure.code pre{margin:0;padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:.85rem;line-height:1.7;color:var(--code-ink)}
+  .c{color:var(--cmt);font-style:italic} .s{color:var(--str)} .k{color:var(--kw)}
+
+  /* Pipeline glass cards */
+  .pipe{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin:26px 0}
+  .step{position:relative;background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--line);
+       border-radius:14px;padding:18px 18px;overflow:hidden;transition:.35s}
+  .step::before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:var(--lemon);
+       transform:scaleX(0);transform-origin:left;transition:transform .35s}
+  .step:hover{transform:translateY(-6px);border-color:rgba(250,204,21,.3);box-shadow:0 18px 40px rgba(0,0,0,.4)}
+  .step:hover::before{transform:scaleX(1)}
+  .step .n{font-family:var(--display);color:var(--lemon);font-size:.82rem;font-weight:800;letter-spacing:.04em}
+  .step .t{font-family:var(--display);font-weight:700;margin:6px 0 3px;font-size:1.05rem}
+  .step .d{font-size:.85rem;color:var(--muted)}
 
   /* Table */
-  .tablewrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:var(--radius)}
+  .tablewrap{overflow-x:auto;margin:22px 0;border:1px solid var(--line-strong);border-radius:var(--radius);background:var(--card);backdrop-filter:blur(10px)}
   table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:520px}
-  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
-  th{background:var(--sunk);font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:700}
-  td:first-child{font-family:var(--mono);color:var(--lime);font-variant-numeric:tabular-nums}
+  th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--display);font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);font-weight:700;background:rgba(255,255,255,.02)}
+  td:first-child{font-family:var(--mono);color:var(--lemon);font-variant-numeric:tabular-nums}
   tr:last-child td{border-bottom:none}
   td code{background:transparent;border:0;padding:0}
 
-  /* Pipeline strip */
-  .pipe{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
-  .pipe .step{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
-  .pipe .step .n{font-family:var(--mono);color:var(--lime);font-size:.8rem;font-weight:700}
-  .pipe .step .t{font-weight:700;margin:3px 0 2px}
-  .pipe .step .d{font-size:.84rem;color:var(--muted)}
+  footer{max-width:1180px;margin:0 auto;padding:40px 30px 70px;color:var(--faint);font-size:.9rem}
+  footer .credits{background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--line);
+       border-radius:var(--radius);padding:22px 24px;color:var(--muted);max-width:72ch}
+  footer .credits b{color:var(--ink)}
+  footer a{color:var(--lemon);text-decoration:none}
+  footer a:hover{text-shadow:0 0 14px var(--glow)}
 
-  footer{max-width:var(--maxw);margin:0 auto;padding:34px 28px 60px;color:var(--faint);font-size:.9rem}
-  footer .lic{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;color:var(--muted);max-width:72ch}
-  footer .lic b{color:var(--ink)}
-  footer a{color:var(--lime);text-decoration:none}
+  :focus-visible{outline:2px solid var(--lemon);outline-offset:3px;border-radius:5px}
 
-  .toggle{position:fixed;top:16px;right:16px;z-index:20;background:var(--surface);border:1px solid var(--line);
-          color:var(--muted);border-radius:100px;padding:7px 13px;font-size:.8rem;cursor:pointer;font-family:var(--font)}
-  .toggle:hover{color:var(--ink)}
-  :focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:4px}
-
-  @media (max-width:880px){
-    .shell{grid-template-columns:1fr;gap:0}
-    nav.side{position:static;height:auto;padding:22px 0 6px;border-bottom:1px solid var(--line)}
+  @media (max-width:900px){
+    .shell{grid-template-columns:1fr;gap:0;padding:0 22px}
+    nav.side{position:static;height:auto;padding:24px 0 6px;border-bottom:1px solid var(--line)}
     nav.side ul{flex-direction:row;flex-wrap:wrap}
     nav.side .grp{display:none}
-    main{padding-top:26px}
+    main{padding-top:28px}
   }
 </style>
 </head>
 <body>
-<button class="toggle" id="themeToggle" aria-label="Toggle colour theme">◐ Theme</button>
 <div class="shell">
   <nav class="side">
-    <div class="brand"><span class="dot" aria-hidden="true"></span> LemonPvP Docs</div>
+    <div class="brand"><span class="cube" aria-hidden="true"></span> Lemon<span class="lemon">PvP</span></div>
     <div class="grp">Overview</div>
     <ul>
       <li><a href="#intro" class="active">What it is</a></li>
@@ -153,21 +158,21 @@
       <li><a href="#emotes">Dance emotes</a></li>
       <li><a href="#metadata">Metadata reference</a></li>
       <li><a href="#commands">Commands</a></li>
-      <li><a href="#license">License</a></li>
+      <li><a href="#credits">Credits</a></li>
     </ul>
   </nav>
 
   <main>
     <header class="hero">
       <p class="eyebrow">The Emote System</p>
-      <h1>3D cosmetics and <span class="grad">Fortnite-style emotes</span> on vanilla Minecraft.</h1>
+      <h1>3D cosmetics and <span class="lemon">Fortnite-style emotes</span> on vanilla Minecraft.</h1>
       <p class="lead">No mods. No resource pack. Every hat, cape, wing and dance is drawn entirely by
         server-sent packets — the client just renders ordinary vanilla display entities and armour stands.</p>
       <div class="badges">
         <span class="badge hl"><span class="swatch" aria-hidden="true"></span> <b>Vanilla</b> — no resource pack</span>
         <span class="badge">Built on <b>PacketEvents</b></span>
         <span class="badge">Paper <b>1.21</b></span>
-        <span class="badge"><b>MIT</b> licensed</span>
+        <span class="badge">Works on <b>Java &amp; Bedrock</b></span>
       </div>
     </header>
 
@@ -180,7 +185,7 @@
         drives their appearance and motion frame by frame.</p>
       <p class="sub">The result reads like a modded server but runs on a stock client — a Java player and a
         Geyser/Bedrock player see the same cosmetic. This page explains the five techniques that make it
-        work, plus the emote layer built on top, and releases the reference code under MIT.</p>
+        work, plus the emote layer built on top.</p>
       <div class="note"><b>Why packets, not real entities?</b> A packet entity has no server-side tick,
         no physics and no persistence. It exists only in the viewer's client, so a thousand capes cost the
         server almost nothing and never desync a save.</div>
@@ -222,8 +227,7 @@ public static WrapperPlayServerSpawnEntity spawn(int entityId, UUID uuid,
       <h2><span class="num">2</span> Transform &amp; scale</h2>
       <p>A display entity carries a render transform: the client draws its model through an affine matrix
         built from four parts. For each model vertex <code>v</code> the client computes</p>
-      <div class="note" style="border-left-color:var(--lemon);font-family:var(--mono);font-size:.9rem;color:var(--ink)">
-        v&prime; = translation + leftRotation · ( scale ⊙ ( rightRotation · v ) )</div>
+      <div class="formula">v&prime; = translation + leftRotation · ( scale ⊙ ( rightRotation · v ) )</div>
       <p class="sub">First rotate the raw model (<code>rightRotation</code>), then scale it per-axis
         (<code>scale</code>, ⊙ = component-wise multiply), rotate again (<code>leftRotation</code>), and
         finally move it (<code>translation</code>). Two rotations bracket the scale because that is the
@@ -231,7 +235,7 @@ public static WrapperPlayServerSpawnEntity spawn(int entityId, UUID uuid,
         plenty, so <code>rightRotation</code> stays identity and the tilt goes in <code>leftRotation</code>.</p>
       <p>A <b>cape</b> is just a vanilla block (say red concrete) scaled to a thin, tall, wide slab, tilted a
         few degrees off the shoulders and translated up to back height. A rotation of angle θ about a unit
-        axis (aₓ, aᵧ, a𝓏) is the quaternion below:</p>
+        axis (ax, ay, az) is the quaternion below:</p>
       <figure class="code">
         <figcaption><span class="fdot" aria-hidden="true"></span> transform &amp; quaternion math</figcaption>
 <pre><span class="c">// Metadata packet: sets the transform AND interpolation duration (see §5).</span>
@@ -387,39 +391,30 @@ case WAVE -&gt; new Pose(
       </div>
     </section>
 
-    <section id="license">
-      <h2>License &amp; open source</h2>
-      <p>The Emote System documentation on this page and the reference snippets it contains are released as
-        <b>open source under the MIT License</b>. Use them, learn from them, adapt them into your own
-        plugin — attribution appreciated, not required.</p>
-      <p class="sub">The wider LemonPvP network (moderation, economy, matchmaking, database layers) is not
-        published here, and nothing on this page contains server addresses, tokens or credentials.</p>
+    <section id="credits">
+      <h2>Credits &amp; license</h2>
+      <p>The Emote System is part of the LemonPvP network. This page documents the emote and cosmetic layer
+        in the open, so other developers can understand the technique behind resource-pack-free 3D
+        cosmetics on Minecraft.</p>
+      <p class="sub">Deliberately scoped to that layer only — the wider network (moderation, economy,
+        matchmaking and database code) is not published here, and nothing on this page contains server
+        addresses, tokens or credentials.</p>
+      <p class="sub">This documentation and its reference snippets are released under the
+        <b>GNU General Public License v3.0</b> — see <code>LICENSE</code>. Anything built on top must stay
+        open source under the same terms.</p>
     </section>
   </main>
 </div>
 
 <footer>
-  <div class="lic">
-    <b>MIT License</b> — Copyright © LemonPvP.<br><br>
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-    associated documentation files (the “Software”), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
-    following condition: the above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software. The Software is provided “as is”, without warranty of
-    any kind.
+  <div class="credits">
+    <b>LemonPvP</b> — The Emote System.<br>
+    Documented for developers · Vanilla-safe, no resource pack · Java &amp; Bedrock · Licensed <b>GPLv3</b>.
   </div>
-  <p style="margin-top:18px">docs.lemonpvp.de · Built on <a href="https://github.com/retrooper/packetevents">PacketEvents</a> · Vanilla-safe, no resource pack.</p>
+  <p style="margin-top:18px">docs.lemonpvp.de · Built on <a href="https://github.com/retrooper/packetevents">PacketEvents</a></p>
 </footer>
 
 <script>
-  // Theme toggle: stamp data-theme so it wins over the OS media query both ways.
-  const root = document.documentElement, btn = document.getElementById('themeToggle');
-  btn.addEventListener('click', () => {
-    const dark = matchMedia('(prefers-color-scheme: dark)').matches;
-    const cur = root.getAttribute('data-theme') || (dark ? 'dark' : 'light');
-    root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
-  });
   // Scrollspy: highlight the nav link for the section in view.
   const links = [...document.querySelectorAll('nav.side a')];
   const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
