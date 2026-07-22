@@ -65,6 +65,7 @@ public class LemonPractice extends JavaPlugin {
     private com.lemonpvp.lemonpractice.managers.ReplayManager replayManager;
     private VelocityMessaging velocityMessaging;
     private String serverType;
+    private Boolean worldEditAvailable;
 
     private FileConfiguration kitsConfig;
     private FileConfiguration gamemodesConfig;
@@ -105,6 +106,16 @@ public class LemonPractice extends JavaPlugin {
 
         arenaManager = new ArenaManager(this);
         arenaManager.loadAll();
+
+        // Schematic-based arena tools need WorldEdit/FAWE; vanilla biome duel worlds do not.
+        // Warn clearly (instead of crashing on enable) when FAWE failed to load.
+        if (!isWorldEditAvailable()) {
+            getLogger().warning("[LemonPractice] WorldEdit/FAWE is not loaded — schematic arena tools "
+                    + "(/aowarena, /aowbuildspawn, custom-arena reset) are disabled. Vanilla biome duel "
+                    + "worlds and the live duel loop work normally. If FAWE failed with "
+                    + "'UnsupportedClassVersionError ... class file version 69.0', its jar is built for a "
+                    + "newer Java than this server (Java 21) — install a FAWE build compiled for Java 21.");
+        }
 
         arenaRollbackManager = new com.lemonpvp.lemonpractice.managers.ArenaRollbackManager(this);
         // Vanilla biome duel worlds: load + register one arena per world (DUELS only).
@@ -370,6 +381,21 @@ public class LemonPractice extends JavaPlugin {
 
     public VelocityMessaging getVelocityMessaging() { return velocityMessaging; }
     public String getServerType() { return serverType; }
+
+    /**
+     * Whether WorldEdit / FastAsyncWorldEdit actually loaded and enabled. Schematic-based arena
+     * tooling needs it; vanilla biome duel worlds and the live duel loop do not. Cached after the
+     * first check — both plugins enable before LemonPractice, so this is accurate during onEnable.
+     */
+    public boolean isWorldEditAvailable() {
+        if (worldEditAvailable == null) {
+            var pm = getServer().getPluginManager();
+            var fawe = pm.getPlugin("FastAsyncWorldEdit");
+            var we = pm.getPlugin("WorldEdit");
+            worldEditAvailable = (fawe != null && fawe.isEnabled()) || (we != null && we.isEnabled());
+        }
+        return worldEditAvailable;
+    }
 
     public FileConfiguration getKitsConfig() { return kitsConfig; }
     public FileConfiguration getGamemodesConfig() { return gamemodesConfig; }

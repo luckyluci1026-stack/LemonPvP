@@ -205,6 +205,11 @@ public class AowArenaCommand implements CommandExecutor, TabCompleter {
 
             case "buildarenas" -> {
                 if (args.length < 2) { player.sendMessage("§cUsage: /aowarena buildarenas <world>"); return true; }
+                if (!plugin.isWorldEditAvailable()) {
+                    player.sendMessage("§cFastAsyncWorldEdit (or WorldEdit) is not loaded on this server, "
+                            + "so arena building is unavailable. Install a FAWE build for this server's Java version.");
+                    return true;
+                }
                 String worldName = args[1];
                 World world = Bukkit.getWorld(worldName);
                 if (world == null) {
