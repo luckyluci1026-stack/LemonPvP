@@ -313,6 +313,17 @@ public class DatabaseManager {
                     planks BIGINT DEFAULT 0
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
             """);
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS lc_chat_log (
+                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                    uuid VARCHAR(36) NOT NULL,
+                    username VARCHAR(32) NOT NULL,
+                    message VARCHAR(512) NOT NULL,
+                    server VARCHAR(32),
+                    ts BIGINT NOT NULL,
+                    INDEX idx_chatlog_uuid_ts (uuid, ts)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """);
         }
     }
 }

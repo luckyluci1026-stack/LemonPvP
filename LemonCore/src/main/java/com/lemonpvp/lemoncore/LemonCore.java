@@ -39,6 +39,7 @@ public class LemonCore extends JavaPlugin {
     private ConfigManager configManager;
     private MessagesManager messagesManager;
     private FilterManager filterManager;
+    private com.lemonpvp.lemoncore.managers.ChatLogManager chatLogManager;
     private PlayerDataManager playerDataManager;
     private BanManager banManager;
     private MuteManager muteManager;
@@ -90,6 +91,10 @@ public class LemonCore extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+
+        // Chat history logging (needs the database)
+        chatLogManager = new com.lemonpvp.lemoncore.managers.ChatLogManager(this);
+        chatLogManager.startPruneTask();
 
         // Hook LuckPerms
         RegisteredServiceProvider<LuckPerms> lpProvider =
@@ -252,6 +257,8 @@ public class LemonCore extends JavaPlugin {
         getCommand("gunmute").setExecutor(new GUnmuteCommand(this));
         getCommand("gkick").setExecutor(new GKickCommand(this));
         getCommand("ghistory").setExecutor(new GHistoryCommand(this));
+        getCommand("gchathistory").setExecutor(
+                new com.lemonpvp.lemoncore.commands.admin.GChatHistoryCommand(this));
         getCommand("greport").setExecutor(new GReportCommand(this));
         getCommand("gbug").setExecutor(new GBugCommand(this));
         getCommand("gmreport").setExecutor(new GMReportCommand(this));
@@ -304,7 +311,7 @@ public class LemonCore extends JavaPlugin {
         org.bukkit.command.TabCompleter playerTab = (s, c, l, a) ->
                 a.length == 1 ? onlinePlayers(a[0]) : java.util.List.of();
         for (String cmd : new String[]{"gtp", "offend", "punish", "gmute", "gunban", "gunmute", "gkick",
-                "ghistory", "gspec", "gpop", "gcheck",
+                "ghistory", "gchathistory", "gspec", "gpop", "gcheck",
                 "report", "mreport", "gmreport", "stats"}) {
             var pluginCmd = getCommand(cmd);
             if (pluginCmd != null) pluginCmd.setTabCompleter(playerTab);
@@ -414,6 +421,7 @@ public class LemonCore extends JavaPlugin {
     public ConfigManager getConfigManager() { return configManager; }
     public MessagesManager getMessagesManager() { return messagesManager; }
     public FilterManager getFilterManager() { return filterManager; }
+    public com.lemonpvp.lemoncore.managers.ChatLogManager getChatLogManager() { return chatLogManager; }
     public PlayerDataManager getPlayerDataManager() { return playerDataManager; }
     public BanManager getBanManager() { return banManager; }
     public MuteManager getMuteManager() { return muteManager; }

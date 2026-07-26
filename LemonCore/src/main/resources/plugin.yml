@@ -219,6 +219,10 @@ commands:
     description: View player history
     permission: lemoncore.admin.history
     usage: /ghistory <player>
+  gchathistory:
+    description: View a player's recent chat messages
+    permission: lemoncore.admin.history
+    usage: /gchathistory <player> [count]
   report:
     description: Report a player
     permission: lemoncore.use.report

@@ -124,6 +124,11 @@ public class ChatListener implements Listener {
             for (net.kyori.adventure.audience.Audience viewer : viewers) {
                 viewer.sendMessage(formatted);
             }
+
+            // Record the delivered message for staff review via /gchathistory.
+            if (plugin.getChatLogManager() != null) {
+                plugin.getChatLogManager().log(uuid, player.getName(), plain);
+            }
         });
     }
 
