@@ -10,6 +10,7 @@ on:
       - flfac-checks
       - flfac-rename
       - flfac-all
+      - 'claude/**'
   workflow_dispatch:
 
 jobs:
