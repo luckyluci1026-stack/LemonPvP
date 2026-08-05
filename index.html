@@ -3,1219 +3,196 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LemonPvP – Minecraft Server</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root {
-  --g1: #fffb00;
-  --g2: #00ff00;
-  --grad: linear-gradient(135deg, #fffb00 0%, #00ff00 100%);
-  --grad-text: linear-gradient(90deg, #fffb00 0%, #00ff00 100%);
-  --bg: #080808;
-  --surface: #111111;
-  --surface2: #161616;
-  --border: rgba(255,255,255,0.06);
-  --border-a: rgba(180,255,0,0.2);
-  --text: #f0f0f0;
-  --muted: #555;
-  --muted2: #888;
-}
-
-html { scroll-behavior: smooth; }
-body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
-
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  opacity: 0.022; pointer-events: none; z-index: 0;
-}
-
-/* ── NAV ── */
-nav {
-  position: fixed; top:0; left:0; right:0; z-index:200;
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 0 32px; height: 64px;
-  background: rgba(8,8,8,0.92);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-}
-.nav-logo {
-  font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; letter-spacing:1px;
-  background: var(--grad-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-}
-.nav-links { display:flex; gap:32px; list-style:none; }
-.nav-links a { color:var(--muted2); text-decoration:none; font-size:.85rem; font-weight:500; transition:color .2s; }
-.nav-links a:hover { color:#fff; }
-.nav-right { display:flex; align-items:center; gap:10px; }
-
-.btn-dc {
-  display:flex; align-items:center; gap:7px;
-  background:rgba(88,101,242,.12); border:1px solid rgba(88,101,242,.28);
-  color:#8b9cf8; font-size:.82rem; font-weight:600; padding:8px 16px; border-radius:7px;
-  text-decoration:none; transition:background .2s, border-color .2s;
-}
-.btn-dc:hover { background:rgba(88,101,242,.22); border-color:rgba(88,101,242,.48); }
-.btn-dc svg { width:15px; height:15px; }
-.btn-dc .dt { }
-
-.ham { display:none; flex-direction:column; gap:5px; cursor:pointer; padding:4px; }
-.ham span { width:22px; height:2px; background:#fff; border-radius:1px; transition:.3s; }
-
-/* ── MOBILE MENU ── */
-.mob-menu {
-  display:none; position:fixed; top:64px; left:0; right:0; z-index:199;
-  background:rgba(8,8,8,.97); backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-  flex-direction:column; padding:20px 28px; gap:4px;
-}
-.mob-menu.open { display:flex; }
-.mob-menu a {
-  color:var(--muted2); text-decoration:none; font-size:.95rem; font-weight:500;
-  padding:12px 0; border-bottom:1px solid var(--border); transition:color .2s;
-}
-.mob-menu a:last-child { border-bottom:none; }
-.mob-menu a:hover { color:#fff; }
-
-/* ── LIVE BAR ── */
-.live-bar {
-  position:relative; z-index:1; margin-top:64px;
-  background:var(--surface); border-bottom:1px solid var(--border);
-}
-.live-inner {
-  display:flex; align-items:center; gap:10px;
-  max-width:1100px; margin:0 auto; padding:12px 28px; flex-wrap:wrap;
-}
-.live-dot {
-  width:7px; height:7px; border-radius:50%; background:var(--g2);
-  box-shadow:0 0 8px var(--g2); flex-shrink:0;
-  animation: blink 2s ease infinite;
-}
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-.live-txt { font-size:.82rem; color:var(--muted2); }
-.live-txt strong { color:#fff; }
-.ver-pill {
-  margin-left:auto; font-size:.72rem; color:var(--muted);
-  border:1px solid var(--border); padding:3px 11px; border-radius:100px; background:var(--bg); white-space:nowrap;
-}
-
-/* ── HERO ── */
-.hero {
-  position:relative; z-index:1;
-  min-height: calc(100vh - 100px);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  text-align:center; padding: 80px 24px 80px; overflow:hidden;
-}
-.hero-glow {
-  position:absolute; top:50%; left:50%;
-  transform:translate(-50%, -58%);
-  width:clamp(300px, 80vw, 860px); height:clamp(300px, 80vw, 860px);
-  background:radial-gradient(circle, rgba(100,255,0,.07) 0%, rgba(255,251,0,.04) 35%, transparent 68%);
-  pointer-events:none;
-}
-.hero-hline {
-  position:absolute; left:0; right:0; height:1px;
-  background:linear-gradient(90deg, transparent, rgba(160,255,0,.1), transparent);
-  pointer-events:none;
-}
-
-.eyebrow {
-  display:inline-flex; align-items:center; gap:8px;
-  font-size:.7rem; font-weight:600; letter-spacing:3px; text-transform:uppercase;
-  color:var(--muted2); background:var(--surface); border:1px solid var(--border);
-  padding:7px 16px; border-radius:100px; margin-bottom:32px;
-  animation: fadeUp .6s ease both;
-}
-.eyebrow-dot {
-  width:6px; height:6px; border-radius:50%; background:var(--g2);
-  box-shadow:0 0 8px var(--g2); animation:blink 2s ease infinite;
-}
-
-h1.hero-title {
-  font-family:'Syne',sans-serif;
-  font-size:clamp(2.8rem, 11vw, 10rem);
-  font-weight:800; line-height:.95; letter-spacing:-3px;
-  animation: fadeUp .7s ease both .1s;
-}
-.t-g { background:var(--grad-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-.t-w { color:#fff; }
-
-.hero-sub {
-  margin-top:20px; font-size:clamp(.9rem,2vw,1.05rem);
-  color:var(--muted2); max-width:440px; line-height:1.75;
-  animation: fadeUp .7s ease both .2s;
-}
-
-/* ── IP ── */
-.ip-wrap { margin-top:48px; animation: fadeUp .7s ease both .3s; }
-.ip-lbl { font-size:.65rem; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); margin-bottom:11px; }
-
-.ip-box {
-  position:relative; display:inline-flex; border-radius:10px; overflow:hidden; cursor:pointer;
-}
-.ip-box::before {
-  content:''; position:absolute; inset:0; border-radius:10px; padding:1.5px;
-  background:var(--grad);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none;
-}
-.ip-addr {
-  padding:14px 30px; background:var(--surface2); color:#fff;
-  font-family:'Syne',sans-serif; font-size:clamp(1rem,4vw,1.45rem);
-  font-weight:700; letter-spacing:3px; user-select:none; white-space:nowrap;
-}
-.ip-copy {
-  padding:14px 20px; border:none; cursor:pointer; background:var(--grad);
-  display:flex; align-items:center; gap:7px;
-  font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:700;
-  letter-spacing:1.5px; text-transform:uppercase; color:#080808;
-  transition:opacity .2s, transform .1s; white-space:nowrap;
-}
-.ip-copy:hover { opacity:.88; }
-.ip-copy:active { transform:scale(.97); }
-.ip-copy svg { width:14px; height:14px; }
-.ip-feed {
-  margin-top:9px; font-size:.72rem; font-weight:600; letter-spacing:2px; text-transform:uppercase;
-  background:var(--grad-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-  opacity:0; transition:opacity .3s;
-}
-.ip-feed.show { opacity:1; }
-
-/* ── STATS ── */
-.stats {
-  display:flex; justify-content:center; flex-wrap:wrap; gap:1px; margin-top:56px;
-  animation: fadeUp .7s ease both .4s;
-}
-.s { background:var(--surface); border:1px solid var(--border); padding:20px 40px; text-align:center; flex:1; min-width:110px; max-width:190px; }
-.s:first-child { border-radius:8px 0 0 8px; }
-.s:last-child  { border-radius:0 8px 8px 0; }
-.s-n { font-family:'Syne',sans-serif; font-size:1.7rem; font-weight:800; background:var(--grad-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-.s-l { font-size:.62rem; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-top:4px; }
-
-/* ── RULE ── */
-.rule { position:relative; z-index:1; height:1px; background:var(--border); }
-
-/* ── SECTIONS ── */
-.sec { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:88px 28px; }
-.sec-head { margin-bottom:48px; }
-.sec-tag { font-size:.65rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
-.sec-title { font-family:'Syne',sans-serif; font-size:clamp(1.8rem,4vw,2.8rem); font-weight:800; color:#fff; letter-spacing:-1px; }
-.sec-title .g { background:var(--grad-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-
-/* ── MODES ── */
-.modes { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:10px; }
-.mode {
-  background:var(--surface); border:1px solid var(--border); border-radius:10px;
-  padding:32px 20px; text-align:center; position:relative; overflow:hidden;
-  transition:border-color .25s, transform .2s;
-}
-.mode::after {
-  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
-  background:var(--grad); transform:scaleX(0); transform-origin:left; transition:transform .3s ease;
-}
-.mode:hover { border-color:var(--border-a); transform:translateY(-3px); }
-.mode:hover::after { transform:scaleX(1); }
-.mode-em { font-size:2.2rem; margin-bottom:14px; }
-.mode-n { font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; background:var(--grad-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-.mode-badge { display:inline-block; margin-top:10px; font-size:.58rem; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; border:1px solid var(--border); padding:3px 9px; border-radius:100px; background:var(--bg); }
-
-/* ── FEATURES ── */
-.feats { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:10px; }
-.feat {
-  background:var(--surface); border:1px solid var(--border); border-radius:10px;
-  padding:28px 24px; position:relative; overflow:hidden;
-  transition:border-color .25s, transform .2s;
-}
-.feat::before {
-  content:''; position:absolute; top:0; left:0; width:3px; height:0;
-  background:var(--grad); transition:height .3s ease;
-}
-.feat:hover { border-color:var(--border-a); transform:translateY(-2px); }
-.feat:hover::before { height:100%; }
-.feat-ico { font-size:1.5rem; margin-bottom:14px; }
-.feat-name { font-family:'Syne',sans-serif; font-size:.95rem; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:.5px; margin-bottom:9px; }
-.feat-desc { color:var(--muted2); font-size:.9rem; line-height:1.7; }
-
-/* ── CTA ── */
-.cta {
-  position:relative; z-index:1; text-align:center; padding:100px 28px;
-  background:linear-gradient(180deg, transparent, rgba(100,255,0,.03), transparent);
-}
-.cta-tag { font-size:.65rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:16px; }
-.cta-h { font-family:'Syne',sans-serif; font-size:clamp(2.2rem,6vw,4rem); font-weight:800; letter-spacing:-1.5px; color:#fff; margin-bottom:12px; }
-.cta-h .g { background:var(--grad-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-.cta-sub { color:var(--muted2); font-size:1rem; margin-bottom:40px; }
-.cta-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
-
-.btn-p {
-  display:inline-flex; align-items:center; gap:8px;
-  background:var(--grad); color:#080808; font-weight:700;
-  font-size:.88rem; letter-spacing:1px; padding:14px 26px; border-radius:8px;
-  border:none; cursor:pointer; text-decoration:none;
-  box-shadow:0 4px 28px rgba(80,255,0,.2);
-  transition:opacity .2s, transform .15s, box-shadow .2s;
-}
-.btn-p:hover { opacity:.9; transform:translateY(-2px); box-shadow:0 8px 40px rgba(80,255,0,.3); }
-.btn-o {
-  display:inline-flex; align-items:center; gap:8px;
-  background:transparent; color:#fff; font-weight:600;
-  font-size:.88rem; letter-spacing:1px; padding:14px 26px; border-radius:8px;
-  border:1px solid var(--border); cursor:pointer; text-decoration:none;
-  transition:border-color .2s, background .2s;
-}
-.btn-o:hover { border-color:var(--border-a); background:var(--surface); }
-.btn-p svg, .btn-o svg { width:15px; height:15px; }
-
-/* ── FOOTER ── */
-footer {
-  position:relative; z-index:1;
-  border-top:1px solid var(--border); padding:28px; text-align:center;
-  color:var(--muted); font-size:.75rem; letter-spacing:.5px;
-}
-footer a { color:var(--muted2); text-decoration:none; }
-footer a:hover { color:#fff; }
-
-/* ── ANIM ── */
-@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-
-/* ── RESPONSIVE ── */
-@media(max-width:700px) {
-  nav { padding:0 18px; }
-  .nav-links { display:none; }
-  .btn-dc .dt { display:none; }
-  .ham { display:flex; }
-  .ip-addr { padding:13px 16px; letter-spacing:2px; }
-  .ip-copy { padding:13px 14px; }
-  .ip-copy .ct { display:none; }
-  .s { min-width:90px; padding:16px 14px; }
-  .s-n { font-size:1.35rem; }
-  .feats { grid-template-columns:1fr; }
-  .modes { grid-template-columns:repeat(2,1fr); gap:8px; }
-  .sec { padding:64px 18px; }
-  .cta { padding:72px 18px; }
-  .live-inner { padding:10px 18px; }
-}
-@media(max-width:360px) {
-  .modes { grid-template-columns:1fr; }
-  .stats { flex-direction:column; align-items:center; gap:6px; }
-  .s { min-width:200px; border-radius:8px !important; }
-}
-</style>
+<title>Ida Hack — HackOS</title>
+<meta name="description" content="Ida Hack – ein süßes Hacker-Rätselspiel. Wähle deine Fraktion: White Hat oder Black Hat.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Quicksand:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<!-- SVG ICON DEFS -->
-<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<!-- dekorativer Hintergrund -->
+<div class="bg-aura" aria-hidden="true"></div>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-sparkles" id="sparkles" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
 
-<!-- ═══════════════════════════════════════════
-     GAMEMODE ITEMS — pixel art, 2px per MC pixel
-     Item area: 16×16 px → 32×32 in SVG (offset 4px each side)
-     x = 4 + col*2 | y = 4 + row*2
-     ═══════════════════════════════════════════ -->
+<div id="app">
 
-<!-- DIAMOND SWORD
-     Tip: upper-right → Pommel: lower-left (Minecraft inventory angle)
-     rotate(45,20,20) = clockwise 45° so a vertical sword tip goes upper-right -->
-<symbol id="i-sword" viewBox="0 0 40 40">
-<g transform="rotate(45,20,20)">
-  <!-- Tip pixel -->
-  <rect x="18" y="1"  w="4" height="2" fill="#92f0f8"/>
-  <!-- Blade - main teal -->
-  <rect x="17" y="3"  width="5" height="18" fill="#58bccc"/>
-  <!-- Blade highlight strip (left face) -->
-  <rect x="17" y="3"  width="3" height="18" fill="#7ad8e8"/>
-  <!-- Blade tip bright -->
-  <rect x="17" y="3"  width="5" height="2"  fill="#a8f0f8"/>
-  <!-- Blade shadow (right edge) -->
-  <rect x="21" y="3"  width="2" height="18" fill="#3890a0"/>
-  <!-- Guard left wing -->
-  <rect x="8"  y="21" width="9" height="4"  fill="#9898a8"/>
-  <!-- Guard right wing -->
-  <rect x="23" y="21" width="9" height="4"  fill="#9898a8"/>
-  <!-- Guard center (over blade) -->
-  <rect x="17" y="21" width="6" height="4"  fill="#a8a8b8"/>
-  <!-- Guard top highlight -->
-  <rect x="8"  y="21" width="24" height="2" fill="#bcbccc"/>
-  <!-- Guard bottom shadow -->
-  <rect x="8"  y="23" width="24" height="2" fill="#6868788"/>
-  <!-- Handle -->
-  <rect x="17" y="25" width="6" height="9"  fill="#7a3810"/>
-  <!-- Handle highlight -->
-  <rect x="17" y="25" width="3" height="9"  fill="#9a5820"/>
-  <!-- Handle top edge -->
-  <rect x="17" y="25" width="6" height="2"  fill="#aa6830"/>
-  <!-- Pommel -->
-  <rect x="14" y="34" width="12" height="5" fill="#9898a8"/>
-  <!-- Pommel highlight -->
-  <rect x="14" y="34" width="12" height="2" fill="#bcbccc"/>
-  <!-- Pommel shadow -->
-  <rect x="14" y="37" width="12" height="2" fill="#606070"/>
-</g>
-</symbol>
+  <!-- ============================================================
+       BILDSCHIRM 1: BOOT + FRAKTIONSWAHL
+  ============================================================= -->
+  <section class="screen screen--boot is-active" id="screenBoot">
+    <div class="boot">
 
-<!-- GOLDEN APPLE (UHC)
-     Red apple body with 8 gold enchant pixels orbiting it -->
-<symbol id="i-uhc" viewBox="0 0 40 40">
-  <!-- Gold enchant particles (8 corners/sides) -->
-  <rect x="4"  y="10" width="4" height="4" fill="#f8c818"/>
-  <rect x="32" y="10" width="4" height="4" fill="#f8c818"/>
-  <rect x="4"  y="22" width="4" height="4" fill="#f8c818"/>
-  <rect x="32" y="22" width="4" height="4" fill="#f8c818"/>
-  <rect x="10" y="4"  width="4" height="4" fill="#f8c818"/>
-  <rect x="26" y="4"  width="4" height="4" fill="#f8c818"/>
-  <rect x="10" y="32" width="4" height="4" fill="#f8c818"/>
-  <rect x="26" y="32" width="4" height="4" fill="#f8c818"/>
-  <!-- Apple base shadow / shape outer -->
-  <rect x="12" y="10" width="16" height="18" fill="#c03418"/>
-  <rect x="10" y="12" width="20" height="14" fill="#c03418"/>
-  <!-- Apple main body (red) -->
-  <rect x="12" y="11" width="16" height="16" fill="#d84020"/>
-  <rect x="10" y="13" width="20" height="12" fill="#d84020"/>
-  <!-- Top indent dip -->
-  <rect x="12" y="10" width="7"  height="2"  fill="#b02810"/>
-  <rect x="21" y="10" width="7"  height="2"  fill="#b02810"/>
-  <!-- Specular highlight (top-left of apple) -->
-  <rect x="12" y="13" width="5"  height="3"  fill="#f46040"/>
-  <rect x="12" y="13" width="2"  height="7"  fill="#f26040"/>
-  <!-- Bottom apple shadow -->
-  <rect x="10" y="24" width="20" height="2"  fill="#a01c06"/>
-  <!-- Stem -->
-  <rect x="18" y="6"  width="4"  height="5"  fill="#3d7810"/>
-  <!-- Leaf -->
-  <rect x="22" y="6"  width="6"  height="4"  fill="#52a020"/>
-  <rect x="22" y="6"  width="6"  height="2"  fill="#68c030"/>
-</symbol>
+      <header class="boot__head">
+        <div class="logo">
+          <span class="logo__heart">💖</span>
+          <span class="logo__text">Ida<span class="logo__accent">HackOS</span></span>
+          <span class="logo__ver">v5.0</span>
+        </div>
+        <p class="boot__tagline">cute terminal · dangerous mind</p>
+      </header>
 
-<!-- GRASS BLOCK (SMP) — side-face view
-     Green top strip, brown dirt body with spots -->
-<symbol id="i-smp" viewBox="0 0 40 40">
-  <!-- Full block back shadow -->
-  <rect x="4"  y="4"  width="32" height="32" fill="#6a3c14"/>
-  <!-- Grass top face -->
-  <rect x="4"  y="4"  width="32" height="9"  fill="#5aab18"/>
-  <!-- Grass top highlight rows -->
-  <rect x="4"  y="4"  width="32" height="3"  fill="#76cb2c"/>
-  <!-- Grass alternating dark pixels (texture) -->
-  <rect x="4"  y="4"  width="4"  height="3"  fill="#64ba20"/>
-  <rect x="12" y="4"  width="4"  height="3"  fill="#64ba20"/>
-  <rect x="20" y="4"  width="4"  height="3"  fill="#64ba20"/>
-  <rect x="28" y="4"  width="4"  height="3"  fill="#64ba20"/>
-  <!-- Dirt face -->
-  <rect x="4"  y="13" width="32" height="23" fill="#9c6430"/>
-  <!-- Dirt top-of-face shading -->
-  <rect x="4"  y="13" width="32" height="2"  fill="#b07a3c"/>
-  <!-- Dirt dark spots (Minecraft dirt texture) -->
-  <rect x="6"  y="17" width="6"  height="4"  fill="#7a4a1c"/>
-  <rect x="18" y="21" width="8"  height="4"  fill="#7a4a1c"/>
-  <rect x="8"  y="27" width="5"  height="4"  fill="#7a4a1c"/>
-  <rect x="26" y="16" width="5"  height="4"  fill="#7a4a1c"/>
-  <rect x="14" y="31" width="7"  height="4"  fill="#7a4a1c"/>
-  <!-- Grass side fringe (green bleeds into top of dirt face) -->
-  <rect x="4"  y="12" width="32" height="3"  fill="#5aab18" opacity=".7"/>
-  <!-- Right face shadow (2px) -->
-  <rect x="32" y="13" width="4"  height="23" fill="#4a2c0c" opacity=".55"/>
-  <!-- Bottom shadow -->
-  <rect x="4"  y="33" width="32" height="3"  fill="#4a2c0c"/>
-</symbol>
-
-<!-- MACE (1.21)
-     Large dark-iron head upper-right, wooden handle lower-left
-     Uses rotate(45,20,20) same as sword -->
-<symbol id="i-mace" viewBox="0 0 40 40">
-<g transform="rotate(45,20,20)">
-  <!-- === HEAD (large, square-ish block) === -->
-  <!-- Head main body -->
-  <rect x="8"  y="1"  width="24" height="20" fill="#70787e"/>
-  <!-- Head top highlight -->
-  <rect x="8"  y="1"  width="24" height="3"  fill="#9aaab0"/>
-  <!-- Head left highlight -->
-  <rect x="8"  y="1"  width="3"  height="20" fill="#8898a0"/>
-  <!-- Head right shadow -->
-  <rect x="29" y="1"  width="3"  height="20" fill="#484e52"/>
-  <!-- Head bottom shadow -->
-  <rect x="8"  y="18" width="24" height="3"  fill="#404448"/>
-  <!-- Head inner detail lines (cross texture) -->
-  <rect x="8"  y="10" width="24" height="2"  fill="#585e62" opacity=".6"/>
-  <rect x="19" y="1"  width="2"  height="20" fill="#585e62" opacity=".6"/>
-  <!-- Side flanges / spikes (left) -->
-  <rect x="2"  y="4"  width="6"  height="7"  fill="#68707a"/>
-  <rect x="2"  y="4"  width="6"  height="2"  fill="#8898a0"/>
-  <rect x="2"  y="12" width="6"  height="7"  fill="#68707a"/>
-  <rect x="2"  y="12" width="6"  height="2"  fill="#8898a0"/>
-  <!-- Side flanges / spikes (right) -->
-  <rect x="32" y="4"  width="6"  height="7"  fill="#68707a"/>
-  <rect x="32" y="4"  width="6"  height="2"  fill="#8898a0"/>
-  <rect x="32" y="12" width="6"  height="7"  fill="#68707a"/>
-  <rect x="32" y="12" width="6"  height="2"  fill="#8898a0"/>
-  <!-- === HANDLE (wood) === -->
-  <rect x="16" y="21" width="8"  height="17" fill="#7a5018"/>
-  <rect x="16" y="21" width="4"  height="17" fill="#9a6828"/>
-  <rect x="16" y="21" width="8"  height="2"  fill="#aa7830"/>
-  <!-- Handle grain lines -->
-  <rect x="16" y="26" width="8"  height="1"  fill="#6a4010" opacity=".5"/>
-  <rect x="16" y="31" width="8"  height="1"  fill="#6a4010" opacity=".5"/>
-  <!-- Pommel -->
-  <rect x="13" y="38" width="14" height="2"  fill="#484e52"/>
-</g>
-</symbol>
-
-<!-- END CRYSTAL (Crystal PvP)
-     Magenta/pink octahedron floating above obsidian pedestal -->
-<symbol id="i-crystal" viewBox="0 0 40 40">
-  <!-- Obsidian base block -->
-  <rect x="10" y="30" width="20" height="8"  fill="#150f20"/>
-  <rect x="10" y="30" width="20" height="2"  fill="#221830"/>
-  <rect x="10" y="36" width="20" height="2"  fill="#0a0810"/>
-  <!-- Left/right side shading on base -->
-  <rect x="10" y="30" width="2"  height="8"  fill="#1e1830" opacity=".6"/>
-  <rect x="28" y="30" width="2"  height="8"  fill="#0a0810" opacity=".8"/>
-  <!-- Beam (energy pillar) -->
-  <rect x="18" y="20" width="4"  height="12" fill="#ee70d8" opacity=".55"/>
-  <rect x="19" y="20" width="2"  height="12" fill="#ffa0e8" opacity=".4"/>
-  <!-- ── Crystal body (octahedron) ── -->
-  <!-- Top tip -->
-  <rect x="19" y="2"  width="2"  height="2"  fill="#ffd8f8"/>
-  <!-- Upper widening rows -->
-  <rect x="16" y="4"  width="8"  height="2"  fill="#ffaaec"/>
-  <rect x="13" y="6"  width="14" height="2"  fill="#ff88e0"/>
-  <rect x="10" y="8"  width="20" height="2"  fill="#ff60cc"/>
-  <!-- Equator (widest) -->
-  <rect x="8"  y="10" width="24" height="4"  fill="#ff40c0"/>
-  <!-- Equator highlight (top face) -->
-  <rect x="8"  y="10" width="24" height="2"  fill="#ff78d8"/>
-  <!-- Lower narrowing rows -->
-  <rect x="10" y="14" width="20" height="2"  fill="#e030a8"/>
-  <rect x="13" y="16" width="14" height="2"  fill="#c82090"/>
-  <rect x="16" y="18" width="8"  height="2"  fill="#b01878"/>
-  <rect x="18" y="20" width="4"  height="2"  fill="#980c60"/>
-  <!-- Inner glow / bright face top-left -->
-  <rect x="10" y="10" width="8"  height="4"  fill="#ff90e0" opacity=".45"/>
-  <rect x="13" y="6"  width="6"  height="4"  fill="#ffccf4" opacity=".4"/>
-  <!-- Right face darker -->
-  <rect x="22" y="10" width="10" height="4"  fill="#880050" opacity=".3"/>
-</symbol>
-
-<!-- SHIELD (Shield Kit) — Minecraft kite shield with banner -->
-<symbol id="i-shield-kit" viewBox="0 0 40 40">
-  <!-- Shield main body -->
-  <rect x="8"  y="3"  width="24" height="4"  fill="#e0e0e0"/>
-  <rect x="5"  y="7"  width="30" height="18" fill="#e0e0e0"/>
-  <rect x="8"  y="25" width="24" height="4"  fill="#e0e0e0"/>
-  <rect x="12" y="29" width="16" height="4"  fill="#e0e0e0"/>
-  <rect x="16" y="33" width="8"  height="4"  fill="#e0e0e0"/>
-  <!-- Top highlight -->
-  <rect x="8"  y="3"  width="24" height="2"  fill="#f4f4f4"/>
-  <!-- Left highlight strip -->
-  <rect x="5"  y="7"  width="3"  height="18" fill="#eeeeee"/>
-  <!-- Right shadow -->
-  <rect x="32" y="7"  width="3"  height="18" fill="#b0b0b0"/>
-  <!-- Bottom shadow -->
-  <rect x="12" y="27" width="20" height="2"  fill="#b0b0b0"/>
-  <!-- === RED CROSS BANNER (default Minecraft shield pattern) === -->
-  <!-- Vertical bar -->
-  <rect x="18" y="5"  width="4"  height="32" fill="#c01818"/>
-  <!-- Horizontal bar -->
-  <rect x="7"  y="13" width="26" height="4"  fill="#c01818"/>
-  <!-- Cross highlight (lighter red on left/top of bars) -->
-  <rect x="18" y="5"  width="2"  height="32" fill="#e02828" opacity=".5"/>
-  <rect x="7"  y="13" width="26" height="2"  fill="#e02828" opacity=".5"/>
-  <!-- Cross shadow (bottom/right of bars) -->
-  <rect x="20" y="5"  width="2"  height="32" fill="#8c0c0c" opacity=".4"/>
-  <rect x="7"  y="15" width="26" height="2"  fill="#8c0c0c" opacity=".4"/>
-</symbol>
-
-<!-- ════════════════════════════════════
-     FEATURE ICONS (outline stroke style)
-     ════════════════════════════════════ -->
-
-<!-- HEART (Hardcore PvP feature) -->
-<symbol id="i-heart-pvp" viewBox="0 0 40 40" fill="none">
-  <path d="M20 34C20 34 4 23.5 4 13.5C4 8.5 7.8 5 12.5 5C15.6 5 18.1 6.9 20 10C21.9 6.9 24.4 5 27.5 5C32.2 5 36 8.5 36 13.5C36 23.5 20 34 20 34Z" stroke="#b8ff00" stroke-width="2.5" stroke-linejoin="round"/>
-  <path d="M9 11C8.2 13 8.5 16 10 18.5" stroke="#b8ff00" stroke-width="2" stroke-linecap="round" opacity=".45"/>
-</symbol>
-
-<!-- SHIELD with check (Anti-Cheat feature) -->
-<symbol id="i-shield" viewBox="0 0 40 40" fill="none">
-  <path d="M20 5L34 11V22C34 30 20 36 20 36S6 30 6 22V11L20 5Z" stroke="#b8ff00" stroke-width="2.2" stroke-linejoin="round"/>
-  <polyline points="14,20 18,25 26,15" stroke="#b8ff00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-</symbol>
-<!-- BOLT (Low Latency) -->
-<symbol id="i-bolt" viewBox="0 0 40 40" fill="none">
-  <polyline points="24,4 14,22 21,22 16,36 26,18 19,18 24,4" stroke="#b8ff00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-</symbol>
-<!-- TROPHY -->
-<symbol id="i-trophy" viewBox="0 0 40 40" fill="none">
-  <path d="M13 7H27V22C27 26.4 23.9 30 20 30C16.1 30 13 26.4 13 22V7Z" stroke="#b8ff00" stroke-width="2.2"/>
-  <path d="M13 11H7C7 11 7 21 13 21" stroke="#b8ff00" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M27 11H33C33 11 33 21 27 21" stroke="#b8ff00" stroke-width="2.2" stroke-linecap="round"/>
-  <line x1="20" y1="30" x2="20" y2="34" stroke="#b8ff00" stroke-width="2.2" stroke-linecap="round"/>
-  <line x1="14" y1="34" x2="26" y2="34" stroke="#b8ff00" stroke-width="2.2" stroke-linecap="round"/>
-</symbol>
-<!-- STAR (Events) -->
-<symbol id="i-star" viewBox="0 0 40 40" fill="none">
-  <polygon points="20,4 23.5,15 35,15 25.5,22 29,33 20,26 11,33 14.5,22 5,15 16.5,15" stroke="#b8ff00" stroke-width="2" stroke-linejoin="round"/>
-</symbol>
-<!-- PEOPLE (Community) -->
-<symbol id="i-people" viewBox="0 0 40 40" fill="none">
-  <circle cx="15" cy="13" r="5.5" stroke="#b8ff00" stroke-width="2"/>
-  <path d="M4 35C4 28 9 24 15 24C21 24 26 28 26 35" stroke="#b8ff00" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="29" cy="13" r="4" stroke="#b8ff00" stroke-width="2"/>
-  <path d="M27 24C31 24 36 27 36 35" stroke="#b8ff00" stroke-width="2" stroke-linecap="round"/>
-</symbol>
-
-<!-- ════════════════════════════════════════════
-     RANK TIER INGOTS — accurate Minecraft colors
-     Same ingot shape: narrow top+bottom, wide middle
-     ════════════════════════════════════════════ -->
-
-<!-- COPPER INGOT (Kupfer) — warm orange #ce7430 -->
-<symbol id="i-kupfer" viewBox="0 0 40 40">
-  <!-- Top narrow section -->
-  <rect x="11" y="6"  width="18" height="5"  fill="#dc7030"/>
-  <!-- Upper body -->
-  <rect x="8"  y="11" width="24" height="3"  fill="#dc7030"/>
-  <!-- Main body -->
-  <rect x="7"  y="14" width="26" height="12" fill="#cc6020"/>
-  <!-- Lower body -->
-  <rect x="8"  y="26" width="24" height="3"  fill="#b84e18"/>
-  <!-- Bottom narrow section -->
-  <rect x="11" y="29" width="18" height="5"  fill="#a03c10"/>
-  <!-- Highlight — top edge -->
-  <rect x="11" y="6"  width="18" height="2"  fill="#f09050"/>
-  <!-- Highlight — top body edge -->
-  <rect x="8"  y="11" width="24" height="2"  fill="#e88040"/>
-  <!-- Highlight — left strip -->
-  <rect x="7"  y="14" width="3"  height="12" fill="#e07838"/>
-  <!-- Top-left brightest corner -->
-  <rect x="11" y="6"  width="6"  height="3"  fill="#f8a860"/>
-  <!-- Shadow — right strip -->
-  <rect x="30" y="14" width="3"  height="12" fill="#a84818"/>
-  <!-- Shadow — bottom body edge -->
-  <rect x="8"  y="24" width="24" height="2"  fill="#b05020"/>
-  <!-- Shadow — bottom narrow -->
-  <rect x="14" y="31" width="12" height="2"  fill="#882e08"/>
-</symbol>
-
-<!-- IRON INGOT (Eisen) — neutral light gray #c8c8c8 -->
-<symbol id="i-iron" viewBox="0 0 40 40">
-  <rect x="11" y="6"  width="18" height="5"  fill="#d8d8d8"/>
-  <rect x="8"  y="11" width="24" height="3"  fill="#d0d0d0"/>
-  <rect x="7"  y="14" width="26" height="12" fill="#c0c0c0"/>
-  <rect x="8"  y="26" width="24" height="3"  fill="#989898"/>
-  <rect x="11" y="29" width="18" height="5"  fill="#787878"/>
-  <!-- Highlights -->
-  <rect x="11" y="6"  width="18" height="2"  fill="#eeeeee"/>
-  <rect x="8"  y="11" width="24" height="2"  fill="#e0e0e0"/>
-  <rect x="7"  y="14" width="3"  height="12" fill="#d4d4d4"/>
-  <rect x="11" y="6"  width="6"  height="3"  fill="#f4f4f4"/>
-  <!-- Shadows -->
-  <rect x="30" y="14" width="3"  height="12" fill="#909090"/>
-  <rect x="8"  y="24" width="24" height="2"  fill="#a0a0a0"/>
-  <rect x="14" y="31" width="12" height="2"  fill="#585858"/>
-</symbol>
-
-<!-- GOLD INGOT (Gold) — bright #f0c000 Minecraft gold -->
-<symbol id="i-gold" viewBox="0 0 40 40">
-  <rect x="11" y="6"  width="18" height="5"  fill="#f8d820"/>
-  <rect x="8"  y="11" width="24" height="3"  fill="#f0c818"/>
-  <rect x="7"  y="14" width="26" height="12" fill="#e8b808"/>
-  <rect x="8"  y="26" width="24" height="3"  fill="#c09000"/>
-  <rect x="11" y="29" width="18" height="5"  fill="#a07000"/>
-  <!-- Highlights -->
-  <rect x="11" y="6"  width="18" height="2"  fill="#fff060"/>
-  <rect x="8"  y="11" width="24" height="2"  fill="#f8e030"/>
-  <rect x="7"  y="14" width="3"  height="12" fill="#f0d020"/>
-  <rect x="11" y="6"  width="6"  height="3"  fill="#fffff0"/>
-  <!-- Shadows -->
-  <rect x="30" y="14" width="3"  height="12" fill="#b08800"/>
-  <rect x="8"  y="24" width="24" height="2"  fill="#c89800"/>
-  <rect x="14" y="31" width="12" height="2"  fill="#806000"/>
-</symbol>
-
-<!-- DIAMOND (gem shape — NOT an ingot) -->
-<symbol id="i-diamond" viewBox="0 0 40 40">
-  <!-- Diamond gem: widest ~1/3 from top, tapering to point at bottom -->
-  <!-- Top tip -->
-  <rect x="18" y="3"  width="4"  height="4"  fill="#b8f8f8"/>
-  <!-- Widening rows -->
-  <rect x="14" y="7"  width="12" height="4"  fill="#80f0f0"/>
-  <rect x="10" y="11" width="20" height="4"  fill="#44dcdc"/>
-  <!-- Widest row -->
-  <rect x="7"  y="15" width="26" height="4"  fill="#20c8cc"/>
-  <!-- Narrowing rows -->
-  <rect x="10" y="19" width="20" height="4"  fill="#10a8b0"/>
-  <rect x="14" y="23" width="12" height="4"  fill="#0888a0"/>
-  <rect x="18" y="27" width="4"  height="4"  fill="#067090"/>
-  <!-- Bottom point -->
-  <rect x="19" y="31" width="2"  height="4"  fill="#045878"/>
-  <!-- Left face highlight (lighter — facing viewer) -->
-  <rect x="7"  y="15" width="11" height="4"  fill="#60e8ec" opacity=".5"/>
-  <rect x="10" y="11" width="8"  height="4"  fill="#90f4f8" opacity=".45"/>
-  <rect x="14" y="7"  width="6"  height="4"  fill="#c0fcfc" opacity=".4"/>
-  <!-- Inner bright top-left sparkle -->
-  <rect x="14" y="11" width="4"  height="4"  fill="#e0fffe" opacity=".55"/>
-  <!-- Right face shadow -->
-  <rect x="20" y="15" width="13" height="4"  fill="#088090" opacity=".4"/>
-</symbol>
-
-<!-- NETHERITE INGOT — very dark with reddish accent -->
-<symbol id="i-netherite" viewBox="0 0 40 40">
-  <rect x="11" y="6"  width="18" height="5"  fill="#625070"/>
-  <rect x="8"  y="11" width="24" height="3"  fill="#524060"/>
-  <rect x="7"  y="14" width="26" height="12" fill="#3c2e4a"/>
-  <rect x="8"  y="26" width="24" height="3"  fill="#201828"/>
-  <rect x="11" y="29" width="18" height="5"  fill="#140e1c"/>
-  <!-- Highlights -->
-  <rect x="11" y="6"  width="18" height="2"  fill="#8878a0"/>
-  <rect x="8"  y="11" width="24" height="2"  fill="#6a5880"/>
-  <rect x="7"  y="14" width="3"  height="12" fill="#544268"/>
-  <rect x="11" y="6"  width="6"  height="3"  fill="#a090b8"/>
-  <!-- Shadows -->
-  <rect x="30" y="14" width="3"  height="12" fill="#18101e"/>
-  <rect x="8"  y="24" width="24" height="2"  fill="#241830"/>
-  <rect x="14" y="31" width="12" height="2"  fill="#0c0810"/>
-  <!-- Characteristic reddish-brown ore stripe (horizontal, through middle) -->
-  <rect x="7"  y="18" width="26" height="3"  fill="#7a2818"/>
-  <rect x="7"  y="18" width="3"  height="3"  fill="#8a3020"/>
-  <rect x="11" y="18" width="4"  height="3"  fill="#6a1e10"/>
-  <rect x="18" y="18" width="5"  height="3"  fill="#8a3020"/>
-  <rect x="26" y="18" width="4"  height="3"  fill="#6a1e10"/>
-  <!-- Stripe highlight -->
-  <rect x="7"  y="18" width="26" height="1"  fill="#9a3820" opacity=".6"/>
-</symbol>
-
-<!-- CROSSED SWORDS (PvP fallback) -->
-<symbol id="i-pvp" viewBox="0 0 40 40" fill="none">
-  <path d="M29 8L11 27" stroke="#b8ff00" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M11 8L29 27" stroke="#b8ff00" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M25 8L31 14" stroke="#b8ff00" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M9 14L15 8"  stroke="#b8ff00" stroke-width="2.5" stroke-linecap="round"/>
-  <circle cx="11" cy="29" r="2.5" fill="#b8ff00"/>
-  <circle cx="29" cy="29" r="2.5" fill="#b8ff00"/>
-</symbol>
-</svg>
-
-<!-- NAV -->
-<nav>
-  <div class="nav-logo">LemonPvP</div>
-  <ul class="nav-links">
-    <li><a href="#modes">Modi</a></li>
-    <li><a href="#features">Features</a></li>
-    <li><a href="#join">Join</a></li>
-  </ul>
-  <div class="nav-right">
-    <a class="btn-dc" href="https://discord.gg/tsJKNEFYmm" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.93 19.93 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.133 13.133 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-      <span class="dt">Discord</span>
-    </a>
-    <div class="ham" onclick="toggleNav(this)"><span></span><span></span><span></span></div>
-  </div>
-</nav>
-
-<!-- MOBILE MENU -->
-<div class="mob-menu" id="mobMenu">
-  <a href="#modes" onclick="closeNav()">Spielmodi</a>
-  <a href="#features" onclick="closeNav()">Features</a>
-  <a href="#join" onclick="closeNav()">Beitreten</a>
-  <a href="https://discord.gg/tsJKNEFYmm" target="_blank" rel="noopener">Discord ↗</a>
-</div>
-
-<!-- LIVE BAR -->
-<div class="live-bar">
-  <div class="live-inner">
-    <div class="live-dot"></div>
-    <span class="live-txt">Server <strong>online</strong> · <strong id="liveCount">247</strong> Spieler aktiv</span>
-    <div class="ver-pill">1.16.1 – 1.21.11</div>
-  </div>
-</div>
-
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-hline" style="top:40%"></div>
-  <div class="hero-hline" style="top:60%"></div>
-
-  <div class="eyebrow">
-    <div class="eyebrow-dot"></div>
-    Minecraft PvP · DE / EU
-  </div>
-
-  <h1 class="hero-title">
-    <span class="t-g">Lemon</span><span class="t-w">PvP</span>
-  </h1>
-
-  <p class="hero-sub">
-    Kämpfe auf einem der besten deutschen PvP-Server.<br>
-    Kein Lag. Kein Kompromiss. Pure Performance.
-  </p>
-
-  <div class="ip-wrap">
-    <p class="ip-lbl">Server-IP — Klicken zum Kopieren</p>
-    <div class="ip-box" onclick="copyIP()">
-      <div class="ip-addr">LemonPvP.de</div>
-      <button class="ip-copy" aria-label="IP kopieren">
-        <svg id="copyIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-        <span class="ct" id="copyTxt">Kopieren</span>
-      </button>
-    </div>
-    <p class="ip-feed" id="ipFeed">✓ Kopiert!</p>
-  </div>
-
-  <div class="stats">
-    <div class="s"><div class="s-n" id="statN">247</div><div class="s-l">Online</div></div>
-    <div class="s"><div class="s-n">1.16–1.21</div><div class="s-l">Version</div></div>
-    <div class="s"><div class="s-n">24/7</div><div class="s-l">Uptime</div></div>
-    <div class="s"><div class="s-n">&lt;5ms</div><div class="s-l">Ping EU</div></div>
-  </div>
-</div>
-
-<div class="rule"></div>
-
-<!-- MODES -->
-<section class="sec" id="modes">
-  <div class="sec-head">
-    <p class="sec-tag">Spielmodi</p>
-    <h2 class="sec-title">Wähl deinen <span class="g">Kampfstil</span></h2>
-  </div>
-    <div class="modes">
-    <div class="mode"><div class="mode-em"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/diamond_sword.png" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/diamond.png'" alt="Sword"></div><div class="mode-n">Sword</div><div class="mode-badge">Aktiv</div></div>
-    <div class="mode"><div class="mode-em"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/golden_apple.png" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/diamond.png'" alt="UHC"></div><div class="mode-n">UHC</div><div class="mode-badge">Aktiv</div></div>
-    <div class="mode"><div class="mode-em"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/block/grass_block_side.png" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/diamond.png'" alt="SMP"></div><div class="mode-n">SMP</div><div class="mode-badge">Aktiv</div></div>
-    <div class="mode"><div class="mode-em"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/mace.png" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/diamond.png'" alt="Mace"></div><div class="mode-n">Mace</div><div class="mode-badge">Aktiv</div></div>
-    <div class="mode"><div class="mode-em"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/end_crystal.png" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/amethyst_shard.png'" alt="Crystal"></div><div class="mode-n">Crystal</div><div class="mode-badge">Aktiv</div></div>
-    <div class="mode"><div class="mode-em"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/shield.png" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/iron_ingot.png'" alt="Shield"></div><div class="mode-n">Shield</div><div class="mode-badge">Aktiv</div></div>
-  </div>
-</section>
-
-<div class="rule"></div>
-
-<!-- FEATURES -->
-<section class="sec" id="features">
-  <div class="sec-head">
-    <p class="sec-tag">Was uns ausmacht</p>
-    <h2 class="sec-title">Server <span class="g">Features</span></h2>
-  </div>
-  <div class="feats">
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-heart-pvp"/></svg></div><div class="feat-name">Hardcore PvP</div><p class="feat-desc">Optimiertes Kampfsystem mit echtem Skill-Gap. Hier zählen deine Moves — nicht dein Rang.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-shield"/></svg></div><div class="feat-name">Anti-Cheat</div><p class="feat-desc">Fortschrittliches System blockiert Hacks in Echtzeit. Fair play, immer.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-bolt"/></svg></div><div class="feat-name">Low Latency</div><p class="feat-desc">EU-Infrastruktur mit unter 5ms für DE-Spieler. Kein Lag, kein Excuse.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-trophy"/></svg></div><div class="feat-name">Rangsystem</div><p class="feat-desc">Climb die Leaderboards. Zeig wer die Nummer 1 auf LemonPvP ist.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-star"/></svg></div><div class="feat-name">Events & Drops</div><p class="feat-desc">Regelmäßige Community-Events, Crate-Drops und exklusive Belohnungen.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-people"/></svg></div><div class="feat-name">Community</div><p class="feat-desc">Aktiver Discord, schneller Support und eine wachsende, engagierte Playerbase.</p></div>
-  </div>
-</section>
-
-<div class="rule"></div>
-
-<!-- LEADERBOARD -->
-<section class="sec" id="leaderboard">
-  <div class="sec-head">
-    <p class="sec-tag">Rangliste</p>
-    <h2 class="sec-title">Top <span class="g">Leaderboard</span></h2>
-  </div>
-
-  <!-- RANK TIERS -->
-  <div class="tiers">
-    <div class="tier" style="--tc:#e8783a"><div class="tier-icon"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/copper_ingot.png" alt="Kupfer"></div><div class="tier-name" style="color:#e8783a">Kupfer</div><div class="tier-range">≤ 500 ELO</div></div>
-    <div class="tier" style="--tc:#c8c8c8"><div class="tier-icon"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/iron_ingot.png" alt="Eisen"></div><div class="tier-name" style="color:#c8c8c8">Eisen</div><div class="tier-range">501 – 750 ELO</div></div>
-    <div class="tier" style="--tc:#ffd700"><div class="tier-icon"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/gold_ingot.png" alt="Gold"></div><div class="tier-name" style="color:#ffd700">Gold</div><div class="tier-range">751 – 1500 ELO</div></div>
-    <div class="tier" style="--tc:#4de8e8"><div class="tier-icon"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/diamond.png" alt="Diamant"></div><div class="tier-name" style="color:#4de8e8">Diamant</div><div class="tier-range">1501 – 2999 ELO</div></div>
-    <div class="tier" style="--tc:#7a6060"><div class="tier-icon"><img class="mc-item" src="https://cdn.jsdelivr.net/gh/misode/mcmeta@assets/assets/minecraft/textures/item/netherite_ingot.png" alt="Netherite"></div><div class="tier-name" style="color:#7a6060">Netherite</div><div class="tier-range">≥ 3000 ELO</div></div>
-  </div>
-
-  <!-- SEARCH -->
-  <div class="lb-search-wrap">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input id="lbSearch" type="text" placeholder="Spieler suchen…" oninput="filterLB(this.value)" autocomplete="off" />
-    <span id="lbSearchClear" onclick="clearSearch()" style="display:none">✕</span>
-  </div>
-
-  <!-- TABLE -->
-  <div class="lb-wrap">
-    <div class="lb-head">
-      <span>#</span>
-      <span>Spieler</span>
-      <span>Rang</span>
-      <span>ELO</span>
-      <span class="lb-h-kd">K/D</span>
-      <span class="lb-h-wins">Wins</span>
-    </div>
-    <div id="lbBody"></div>
-    <div class="lb-no-result" id="lbEmpty" style="display:none">Kein Spieler gefunden</div>
-    <div class="lb-foot">Leaderboard wird bald mit dem Server synchronisiert</div>
-  </div>
-</section>
-
-<!-- PLAYER MODAL -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-  <div class="modal" id="modal">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-header">
-      <div class="modal-avatar" id="mAvatar"></div>
-      <div>
-        <div class="modal-name" id="mName"></div>
-        <div id="mBadge"></div>
+      <div class="boot__window">
+        <div class="win-bar">
+          <span class="dot dot--pink"></span>
+          <span class="dot dot--lilac"></span>
+          <span class="dot dot--white"></span>
+          <span class="win-bar__title">/dev/ida — bootloader</span>
+        </div>
+        <div class="boot__log" id="bootLog"></div>
       </div>
-      <div class="modal-elo-block">
-        <div class="modal-elo" id="mElo"></div>
-        <div class="modal-elo-lbl">ELO</div>
+
+      <button class="btn btn--ghost btn--skip" id="skipBootBtn" type="button">⏩ Boot überspringen</button>
+
+      <!-- Fraktionswahl -->
+      <div class="picker" id="factionPicker" hidden>
+        <h1 class="picker__title">Wähle deine <span class="grad">Fraktion</span></h1>
+        <p class="picker__sub">Deine Entscheidung verändert alle 5 Missionen — und jede Partie würfelt neue Rätsel aus 30 Varianten. Es gibt kein Zurück … na gut, doch.</p>
+
+        <div class="picker__grid">
+          <button class="fcard fcard--white" data-faction="white" type="button">
+            <span class="fcard__badge">Pfad A</span>
+            <span class="fcard__icon">🤍</span>
+            <span class="fcard__name">White Hat</span>
+            <span class="fcard__role">Cyber-Abwehr · Einheit K-7</span>
+            <span class="fcard__desc">Du arbeitest für die Polizei. Spüre das Syndikat auf, sichere Beweise und schließe die Lücken, bevor jemand anderes sie findet.</span>
+            <span class="fcard__tags">
+              <span class="tag">🛡️ Verteidigung</span>
+              <span class="tag">🔍 Forensik</span>
+            </span>
+            <span class="fcard__cta">Zugang anfordern →</span>
+          </button>
+
+          <button class="fcard fcard--black" data-faction="black" type="button">
+            <span class="fcard__badge">Pfad B</span>
+            <span class="fcard__icon">🖤</span>
+            <span class="fcard__name">Black Hat</span>
+            <span class="fcard__role">Cyber-Syndikat · Zelle „Rosenkranz“</span>
+            <span class="fcard__desc">Du arbeitest gegen die Polizei. Brich durch Firewalls, lösche Akten und verschwinde, bevor die Spur zu dir führt.</span>
+            <span class="fcard__tags">
+              <span class="tag">💣 Infiltration</span>
+              <span class="tag">👻 Tarnung</span>
+            </span>
+            <span class="fcard__cta">Verbindung kappen →</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       BILDSCHIRM 2: SPIEL
+  ============================================================= -->
+  <section class="screen screen--game" id="screenGame">
+
+    <header class="hud">
+      <div class="hud__left">
+        <span class="logo logo--small">
+          <span class="logo__heart">💖</span>
+          <span class="logo__text">Ida<span class="logo__accent">HackOS</span></span>
+        </span>
+        <span class="chip" id="factionBadge">—</span>
+      </div>
+
+      <div class="hud__right">
+        <div class="stat">
+          <span class="stat__label">Level</span>
+          <span class="stat__value"><span id="levelValue">1</span><small id="levelTotal">/5</small></span>
+        </div>
+        <div class="stat">
+          <span class="stat__label">Fehlversuche</span>
+          <span class="stat__value" id="wrongValue">0</span>
+        </div>
+        <div class="stat stat--trace">
+          <span class="stat__label">Spur</span>
+          <span class="trace"><span class="trace__fill" id="traceFill"></span></span>
+        </div>
+        <button class="icon-btn" id="soundBtn" type="button" title="Sound an/aus" aria-label="Sound an/aus">🔊</button>
+        <button class="icon-btn" id="restartBtn" type="button" title="Neu starten" aria-label="Neu starten">⟲</button>
+      </div>
+    </header>
+
+    <div class="progress">
+      <div class="progress__track"><div class="progress__fill" id="progressFill"></div></div>
+      <div class="progress__nodes" id="progressNodes"></div>
+    </div>
+
+    <div class="layout">
+
+      <!-- Missions-Karte -->
+      <aside class="panel mission" id="missionPanel">
+        <div class="mission__top">
+          <span class="mission__level" id="missionLevel">Level 1</span>
+          <span class="mission__status" id="missionStatus">aktiv</span>
+        </div>
+        <h2 class="mission__title" id="missionTitle">—</h2>
+        <p class="mission__target"><span>Ziel:</span> <code id="missionTarget">—</code></p>
+        <p class="mission__brief" id="missionBrief">—</p>
+
+        <div class="mission__task">
+          <span class="mission__task-label">Aufgabe</span>
+          <p id="missionTask">—</p>
+        </div>
+
+        <button class="btn btn--hint" id="hintBtn" type="button">💡 Hinweis anfordern</button>
+        <div class="hintbox" id="hintBox" hidden><strong>Hinweis:</strong> <span id="hintText"></span></div>
+      </aside>
+
+      <!-- Terminal -->
+      <main class="panel terminal" id="terminal">
+        <div class="win-bar">
+          <span class="dot dot--pink"></span>
+          <span class="dot dot--lilac"></span>
+          <span class="dot dot--white"></span>
+          <span class="win-bar__title" id="terminalTitle">ida@hackos — /missions</span>
+          <span class="win-bar__live">● live</span>
+        </div>
+
+        <div class="terminal__body" id="terminalBody" aria-live="polite"></div>
+
+        <form class="terminal__form" id="hackForm" autocomplete="off">
+          <label class="prompt" for="answerInput">ida@hackos:~$</label>
+          <input class="terminal__input" id="answerInput" type="text" placeholder="Lösung eingeben …" spellcheck="false" autocomplete="off" disabled>
+          <button class="btn btn--hack" id="hackBtn" type="submit" disabled>Hack ausführen ⚡</button>
+        </form>
+      </main>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       BILDSCHIRM 3: ENDE
+  ============================================================= -->
+  <section class="screen screen--end" id="screenEnd">
+    <div class="end" id="endCard">
+      <div class="end__glow" aria-hidden="true"></div>
+      <span class="end__icon" id="endIcon">💖</span>
+      <h1 class="end__title" id="endTitle">—</h1>
+      <p class="end__sub" id="endSub">—</p>
+
+      <div class="end__log" id="endLog"></div>
+
+      <div class="end__stats">
+        <div class="end__stat"><span id="endTime">0:00</span><small>Zeit</small></div>
+        <div class="end__stat"><span id="endWrong">0</span><small>Fehlversuche</small></div>
+        <div class="end__stat"><span id="endHints">0</span><small>Hinweise</small></div>
+        <div class="end__stat"><span id="endRank">—</span><small>Rang</small></div>
+      </div>
+
+      <div class="end__actions">
+        <button class="btn btn--hack" id="againBtn" type="button">Nochmal spielen 🔁</button>
+        <button class="btn btn--ghost" id="switchBtn" type="button">Fraktion wechseln 🔀</button>
       </div>
     </div>
-    <div class="modal-overall">
-      <div class="modal-stat"><div class="modal-stat-n" id="mKills"></div><div class="modal-stat-l">Kills</div></div>
-      <div class="modal-stat"><div class="modal-stat-n" id="mDeaths"></div><div class="modal-stat-l">Deaths</div></div>
-      <div class="modal-stat"><div class="modal-stat-n" id="mKD"></div><div class="modal-stat-l">K/D</div></div>
-      <div class="modal-stat"><div class="modal-stat-n" id="mWins"></div><div class="modal-stat-l">Wins</div></div>
-      <div class="modal-stat"><div class="modal-stat-n" id="mLosses"></div><div class="modal-stat-l">Losses</div></div>
-    </div>
-    <div class="modal-kits-title">Kit Stats</div>
-    <div class="modal-kits" id="mKits"></div>
-  </div>
+  </section>
+
 </div>
 
-<style>
-/* ── TIERS ── */
-.ic-tier{width:44px;height:44px;display:block}
-.ic-mode{width:44px;height:44px;display:block}
-.mc-item{width:56px;height:56px;image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:crisp-edges;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));margin:0 auto}
-.ic-feat{width:38px;height:38px;display:block}
-.ic-kit{width:26px;height:26px;display:block}
-.tier-icon{margin-bottom:10px}
-.mode-em{margin-bottom:14px;display:flex;justify-content:center;align-items:center}
-.feat-ico{margin-bottom:14px}
-.lb-avatar svg{width:100%;height:100%;border-radius:4px;display:block}
-
-.tiers{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
-.tier{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 14px;text-align:center;transition:border-color .2s,transform .2s;position:relative;overflow:hidden}
-.tier::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--tc,#fff);opacity:.6}
-.tier:hover{border-color:rgba(255,255,255,.14);transform:translateY(-2px)}
-.tier-icon{font-size:1.5rem;margin-bottom:8px}
-.tier-name{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
-.tier-range{font-size:.6rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
-
-/* ── SEARCH ── */
-.lb-search-wrap{
-  display:flex;align-items:center;gap:10px;
-  background:var(--surface);border:1px solid var(--border);border-radius:10px;
-  padding:0 16px;margin-bottom:10px;
-  transition:border-color .2s;
-}
-.lb-search-wrap:focus-within{border-color:var(--border-a)}
-.lb-search-wrap svg{width:16px;height:16px;color:var(--muted);flex-shrink:0}
-#lbSearch{
-  flex:1;background:transparent;border:none;outline:none;
-  color:#fff;font-family:'DM Sans',sans-serif;font-size:.9rem;
-  padding:14px 0;
-}
-#lbSearch::placeholder{color:var(--muted)}
-#lbSearchClear{color:var(--muted);cursor:pointer;font-size:.8rem;padding:4px;transition:color .2s}
-#lbSearchClear:hover{color:#fff}
-
-/* ── TABLE ── */
-.lb-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.lb-head,.lb-row{
-  display:grid;
-  grid-template-columns: 44px 1fr 150px 90px 70px 70px;
-  align-items:center;
-  gap:12px;
-  padding:0 20px;
-}
-.lb-head{height:40px;font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);background:var(--bg)}
-.lb-row{height:60px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
-.lb-row:last-child{border-bottom:none}
-.lb-row:hover{background:rgba(255,255,255,.03)}
-.lb-row:hover .lb-name{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-
-.lb-pos{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:800;color:var(--muted);text-align:center}
-.lb-pos.top1{color:#ffd700}.lb-pos.top2{color:#b0b8c1}.lb-pos.top3{color:#c07844}
-
-.lb-player{display:flex;align-items:center;gap:12px;min-width:0}
-.lb-avatar{width:34px;height:34px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
-.lb-name{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:none}
-
-.lb-rank-cell{display:flex;align-items:center}
-.lb-badge{display:inline-flex;align-items:center;font-size:.62rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:5px 12px;border-radius:100px;border:1px solid;white-space:nowrap}
-.lb-elo{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:800;background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.lb-kd-val,.lb-wins-val{font-size:.85rem;color:var(--muted2)}
-
-.lb-no-result{padding:32px;text-align:center;color:var(--muted);font-size:.85rem;letter-spacing:1px}
-.lb-foot{padding:12px 20px;font-size:.62rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;text-align:center;border-top:1px solid var(--border);background:var(--bg)}
-
-/* ── MODAL ── */
-.modal-overlay{
-  position:fixed;inset:0;z-index:500;
-  background:rgba(0,0,0,.75);backdrop-filter:blur(8px);
-  display:flex;align-items:center;justify-content:center;padding:20px;
-  opacity:0;pointer-events:none;transition:opacity .2s;
-}
-.modal-overlay.open{opacity:1;pointer-events:all}
-.modal{
-  background:var(--surface);border:1px solid var(--border-a);border-radius:14px;
-  width:100%;max-width:500px;max-height:90vh;overflow-y:auto;
-  padding:28px;position:relative;
-  transform:translateY(20px);transition:transform .25s;
-}
-.modal-overlay.open .modal{transform:translateY(0)}
-.modal-close{
-  position:absolute;top:16px;right:16px;background:var(--surface2);border:1px solid var(--border);
-  color:var(--muted2);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:.85rem;
-  display:flex;align-items:center;justify-content:center;transition:color .2s,border-color .2s;
-}
-.modal-close:hover{color:#fff;border-color:rgba(255,255,255,.2)}
-.modal-header{display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap}
-.modal-avatar{width:56px;height:56px;border-radius:12px;overflow:hidden;background:var(--surface2);border:1px solid var(--border-a);flex-shrink:0}
-.modal-name{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#fff;margin-bottom:6px}
-.modal-elo-block{margin-left:auto;text-align:right}
-.modal-elo{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.modal-elo-lbl{font-size:.6rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
-
-.modal-overall{display:flex;gap:2px;margin-bottom:24px;flex-wrap:wrap}
-.modal-stat{flex:1;min-width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 10px;text-align:center}
-.modal-stat-n{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#fff}
-.modal-stat-l{font-size:.6rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-top:4px}
-
-.modal-kits-title{font-size:.62rem;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
-.modal-kits{display:flex;flex-direction:column;gap:8px}
-.modal-kit{
-  display:grid;
-  grid-template-columns: 28px 80px 1fr 60px;
-  align-items:center;gap:12px;
-  background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;
-}
-.modal-kit-icon{font-size:1.1rem;text-align:center}
-.modal-kit-name{font-family:'Syne',sans-serif;font-size:.8rem;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.modal-kit-stats{display:flex;gap:12px;flex-wrap:nowrap;overflow:hidden}
-.modal-kit-s{font-size:.76rem;color:var(--muted2);white-space:nowrap}
-.modal-kit-s strong{color:#fff;font-weight:700}
-.modal-kit-bar-wrap{align-self:center}
-.modal-kit-bar-bg{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
-.modal-kit-bar{height:100%;background:var(--grad);border-radius:2px;transition:width .4s ease}
-
-/* ── RESPONSIVE ── */
-@media(max-width:600px){
-  .lb-head,.lb-row{grid-template-columns:36px 1fr 120px 72px;gap:8px;padding:0 14px}
-  .lb-h-kd,.lb-h-wins,.lb-kd-val,.lb-wins-val{display:none}
-  .tiers{gap:6px}.tier{min-width:90px;padding:14px 10px}
-  .modal{padding:20px}
-  .modal-kit-stats{gap:10px}
-}
-</style>
-
-<script>
-(function(){
-// Minecraft player heads from minotar.net
-function head(name){return`<img src="https://minotar.net/helm/${name}/34" alt="${name}" style="width:34px;height:34px;border-radius:4px;display:block;image-rendering:pixelated" onerror="this.src='https://minotar.net/helm/Steve/34'">`}
-
-const PLAYERS=[
-  {name:'xNovaPvP',   elo:3420,kills:4820,deaths:574, wins:924,losses:210,kits:{Sword:{kills:1240,deaths:120,wins:310},UHC:{kills:890,deaths:88,wins:180},SMP:{kills:1100,deaths:180,wins:220},Mace:{kills:820,deaths:110,wins:144},Crystal:{kills:770,deaths:76,wins:70},Shield:{kills:600,deaths:60,wins:80}}},
-  {name:'CrystalKing',elo:3180,kills:4100,deaths:578, wins:801,losses:198,kits:{Sword:{kills:900,deaths:100,wins:200},UHC:{kills:750,deaths:90,wins:160},SMP:{kills:980,deaths:155,wins:200},Mace:{kills:700,deaths:95,wins:130},Crystal:{kills:770,deaths:138,wins:111},Shield:{kills:400,deaths:60,wins:90}}},
-  {name:'ShadowBlade', elo:2870,kills:3640,deaths:577, wins:650,losses:188,kits:{Sword:{kills:1100,deaths:140,wins:240},UHC:{kills:680,deaths:88,wins:130},SMP:{kills:780,deaths:140,wins:140},Mace:{kills:640,deaths:120,wins:90},Crystal:{kills:440,deaths:89,wins:50},Shield:{kills:300,deaths:55,wins:44}}},
-  {name:'ZeroPing_',  elo:2540,kills:2970,deaths:512, wins:512,losses:160,kits:{Sword:{kills:800,deaths:100,wins:160},UHC:{kills:560,deaths:80,wins:100},SMP:{kills:700,deaths:130,wins:120},Mace:{kills:530,deaths:110,wins:82},Crystal:{kills:380,deaths:92,wins:50},Shield:{kills:220,deaths:50,wins:44}}},
-  {name:'LemonGod',   elo:2210,kills:2490,deaths:479, wins:478,losses:144,kits:{Sword:{kills:700,deaths:90,wins:140},UHC:{kills:480,deaths:78,wins:90},SMP:{kills:580,deaths:120,wins:110},Mace:{kills:430,deaths:100,wins:80},Crystal:{kills:300,deaths:91,wins:58},Shield:{kills:120,deaths:44,wins:30}}},
-  {name:'IronFist99', elo:1850,kills:1830,deaths:389, wins:390,losses:130,kits:{Sword:{kills:540,deaths:88,wins:120},UHC:{kills:340,deaths:65,wins:80},SMP:{kills:440,deaths:100,wins:90},Mace:{kills:310,deaths:80,wins:60},Crystal:{kills:200,deaths:56,wins:40},Shield:{kills:110,deaths:44,wins:26}}},
-  {name:'SwiftArrow', elo:1340,kills:1100,deaths:282, wins:284,losses:110,kits:{Sword:{kills:330,deaths:70,wins:90},UHC:{kills:210,deaths:50,wins:60},SMP:{kills:270,deaths:80,wins:70},Mace:{kills:180,deaths:50,wins:40},Crystal:{kills:110,deaths:32,wins:24},Shield:{kills:70,deaths:28,wins:18}}},
-  {name:'GreenKnight',elo: 980,kills: 590,deaths:190, wins:190,losses: 90,kits:{Sword:{kills:180,deaths:50,wins:60},UHC:{kills:110,deaths:38,wins:40},SMP:{kills:140,deaths:55,wins:44},Mace:{kills:90, deaths:30,wins:28},Crystal:{kills:70, deaths:17,wins:18},Shield:{kills:55,deaths:22,wins:16}}},
-  {name:'StarDust44', elo: 620,kills: 226,deaths:103, wins:103,losses: 68,kits:{Sword:{kills:70, deaths:30,wins:34},UHC:{kills:42, deaths:22,wins:22},SMP:{kills:50, deaths:28,wins:24},Mace:{kills:38, deaths:16,wins:14},Crystal:{kills:26, deaths:7, wins:9},Shield:{kills:18,deaths:12,wins:6}}},
-  {name:'NewcomerX',  elo: 320,kills:  31,deaths: 28, wins: 28,losses: 40,kits:{Sword:{kills:10, deaths:8, wins:10},UHC:{kills:6,  deaths:6, wins:6},SMP:{kills:8,  deaths:8, wins:7},Mace:{kills:5,  deaths:4, wins:3},Crystal:{kills:2,  deaths:2, wins:2},Shield:{kills:2,deaths:2,wins:2}}},
-];
-const ISVG=(id)=>`<svg class="ic-kit" viewBox="0 0 40 40"><use href="#${id}"/></svg>`;
-const KITS=[
-  {key:'Sword',  sv:ISVG('i-sword')  },
-  {key:'UHC',    sv:ISVG('i-uhc')    },
-  {key:'SMP',    sv:ISVG('i-smp')    },
-  {key:'Mace',   sv:ISVG('i-mace')   },
-  {key:'Crystal',sv:ISVG('i-crystal')},
-  {key:'Shield', sv:ISVG('i-shield-kit')},
-];
-
-function getRank(e){
-  if(e>=3000)return{label:'Netherite',color:'#7a6060',bg:'rgba(122,96,96,.12)'};
-  if(e>=1501)return{label:'Diamant',  color:'#4de8e8',bg:'rgba(77,232,232,.1)' };
-  if(e>= 751)return{label:'Gold',     color:'#ffd700',bg:'rgba(255,215,0,.1)'  };
-  if(e>= 501)return{label:'Eisen',    color:'#c8c8c8',bg:'rgba(200,200,200,.1)'};
-  return            {label:'Kupfer',   color:'#e8783a',bg:'rgba(232,120,58,.1)' };
-}
-
-function kd(k,d){return d===0?k.toFixed(1):(k/d).toFixed(2)}
-
-function buildRow(p,i,globalIdx){
-  const r=getRank(p.elo);
-  const pc=globalIdx===0?'top1':globalIdx===1?'top2':globalIdx===2?'top3':'';
-  const pos=globalIdx===0?'<svg width="18" height="18" viewBox="0 0 24 24" fill="#ffd700"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>':globalIdx+1;
-  const row=document.createElement('div');
-  row.className='lb-row';
-  row.innerHTML=`
-    <div class="lb-pos ${pc}">${pos}</div>
-    <div class="lb-player">
-      <div class="lb-avatar">${head(p.name)}</div>
-      <div class="lb-name">${p.name}</div>
-    </div>
-    <div class="lb-rank-cell">
-      <span class="lb-badge" style="color:${r.color};border-color:${r.color}44;background:${r.bg}">${r.label}</span>
-    </div>
-    <div class="lb-elo">${p.elo}</div>
-    <div class="lb-kd-val">${kd(p.kills,p.deaths)}</div>
-    <div class="lb-wins-val">${p.wins}</div>`;
-  row.addEventListener('click',()=>openModal(p));
-  return row;
-}
-
-function renderLB(list){
-  const body=document.getElementById('lbBody');
-  const empty=document.getElementById('lbEmpty');
-  body.innerHTML='';
-  if(!list.length){empty.style.display='block';return;}
-  empty.style.display='none';
-  list.forEach((p,i)=>body.appendChild(buildRow(p,i,PLAYERS.indexOf(p))));
-}
-
-renderLB(PLAYERS);
-
-window.filterLB=function(v){
-  const q=v.trim().toLowerCase();
-  document.getElementById('lbSearchClear').style.display=q?'block':'none';
-  renderLB(q?PLAYERS.filter(p=>p.name.toLowerCase().includes(q)):PLAYERS);
-};
-window.clearSearch=function(){
-  document.getElementById('lbSearch').value='';
-  document.getElementById('lbSearchClear').style.display='none';
-  renderLB(PLAYERS);
-};
-
-window.openModal=function(p){
-  const r=getRank(p.elo);
-  document.getElementById('mAvatar').innerHTML=`<img src="https://minotar.net/helm/${p.name}/56" alt="${p.name}" style="width:56px;height:56px;border-radius:8px;display:block;image-rendering:pixelated" onerror="this.src='https://minotar.net/helm/Steve/56'">`;
-  document.getElementById('mName').textContent=p.name;
-  document.getElementById('mBadge').innerHTML=`<span class="lb-badge" style="color:${r.color};border-color:${r.color}44;background:${r.bg}">${r.label}</span>`;
-  document.getElementById('mElo').textContent=p.elo;
-  document.getElementById('mKills').textContent=p.kills.toLocaleString();
-  document.getElementById('mDeaths').textContent=p.deaths.toLocaleString();
-  document.getElementById('mKD').textContent=kd(p.kills,p.deaths);
-  document.getElementById('mWins').textContent=p.wins.toLocaleString();
-  document.getElementById('mLosses').textContent=p.losses.toLocaleString();
-  const kitsEl=document.getElementById('mKits');
-  kitsEl.innerHTML='';
-  const maxWins=Math.max(...KITS.map(k=>p.kits[k.key].wins));
-  KITS.forEach(k=>{
-    const ks=p.kits[k.key];
-    const pct=maxWins?Math.round((ks.wins/maxWins)*100):0;
-    kitsEl.innerHTML+=`<div class="modal-kit">
-      <div class="modal-kit-icon">${k.sv}</div>
-      <div class="modal-kit-name">${k.key}</div>
-      <div class="modal-kit-stats">
-        <span class="modal-kit-s"><strong>${ks.kills}</strong> Kills</span>
-        <span class="modal-kit-s"><strong>${kd(ks.kills,ks.deaths)}</strong> K/D</span>
-        <span class="modal-kit-s"><strong>${ks.wins}</strong> Wins</span>
-      </div>
-      <div class="modal-kit-bar-wrap">
-        <div class="modal-kit-bar-bg"><div class="modal-kit-bar" style="width:${pct}%"></div></div>
-      </div>
-    </div>`;
-  });
-  document.getElementById('modalOverlay').classList.add('open');
-  document.body.style.overflow='hidden';
-};
-window.closeModal=function(e){
-  if(e&&e.target!==document.getElementById('modalOverlay')&&!e.target.classList.contains('modal-close'))return;
-  document.getElementById('modalOverlay').classList.remove('open');
-  document.body.style.overflow='';
-};
-document.addEventListener('keydown',e=>{if(e.key==='Escape')window.closeModal({target:document.getElementById('modalOverlay')})});
-})();
-</script>
-
-<div class="rule"></div>
-
-<!-- CTA -->
-<div class="cta" id="join">
-  <p class="cta-tag">Bereit?</p>
-  <h2 class="cta-h">Jetzt <span class="g">einloggen</span></h2>
-  <p class="cta-sub">Kopiere die IP, öffne Minecraft und leg los.</p>
-  <div class="cta-btns">
-    <button class="btn-p" onclick="copyIP()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-      IP kopieren
-    </button>
-    <a class="btn-o" href="https://discord.gg/tsJKNEFYmm" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.93 19.93 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.133 13.133 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-      Discord
-    </a>
-  </div>
-</div>
-
-<!-- TOAST -->
-<div id="toast">✓ LemonPvP.de kopiert!</div>
-<style>
-#toast{
-  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--surface);border:1px solid var(--border-a);
-  color:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;
-  padding:12px 22px;border-radius:10px;z-index:999;
-  opacity:0;pointer-events:none;
-  transition:opacity .25s,transform .25s;
-  white-space:nowrap;
-  box-shadow:0 8px 32px rgba(0,0,0,.5);
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#toast::before{
-  content:'';display:inline-block;width:8px;height:8px;border-radius:50%;
-  background:var(--g2);margin-right:8px;box-shadow:0 0 6px var(--g2);
-}
-</style>
-
-<!-- FOOTER -->
-<footer>
-  <p>© 2025 LemonPvP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
-  <p style="margin-top:6px"><a href="https://discord.gg/tsJKNEFYmm" target="_blank">Discord</a> · <a href="#">Impressum</a></p>
-</footer>
-
-<script>
-// Copy IP
-let toastTimer;
-function copyIP() {
-  navigator.clipboard.writeText('LemonPvP.de').then(() => {
-    // Hero feedback
-    const feed = document.getElementById('ipFeed');
-    const ico  = document.getElementById('copyIco');
-    const txt  = document.getElementById('copyTxt');
-    if(feed) feed.classList.add('show');
-    if(txt)  txt.textContent = 'Kopiert!';
-    if(ico)  ico.innerHTML = '<polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2.5" fill="none"/>';
-    // Toast (always visible)
-    const toast = document.getElementById('toast');
-    toast.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      toast.classList.remove('show');
-      if(feed) feed.classList.remove('show');
-      if(txt)  txt.textContent = 'Kopieren';
-      if(ico)  ico.innerHTML = '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>';
-    }, 2500);
-  });
-}
-
-// Live counter
-let cnt = 247;
-setInterval(() => {
-  cnt += Math.floor(Math.random() * 6) - 3;
-  cnt = Math.max(180, Math.min(320, cnt));
-  ['liveCount','statN'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = cnt; });
-}, 5000);
-
-// Mobile nav
-function toggleNav(btn) {
-  const m = document.getElementById('mobMenu');
-  const o = m.classList.toggle('open');
-  const s = btn.querySelectorAll('span');
-  if (o) { s[0].style.transform='rotate(45deg) translate(5px,5px)'; s[1].style.opacity='0'; s[2].style.transform='rotate(-45deg) translate(5px,-5px)'; }
-  else   { s.forEach(x => { x.style.transform=''; x.style.opacity=''; }); }
-}
-function closeNav() {
-  document.getElementById('mobMenu').classList.remove('open');
-  document.querySelectorAll('.ham span').forEach(x => { x.style.transform=''; x.style.opacity=''; });
-}
-</script>
+<script src="script.js"></script>
 </body>
 </html>
