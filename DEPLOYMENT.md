@@ -237,19 +237,60 @@ Antworten — dafür sind die Varianten A–C gedacht.
 
 ---
 
-## 6. Grenzen der aktuellen Version
+## 6. Zwei Betriebsarten
 
-Die App läuft vollständig im Browser und hat **kein Backend**. Daraus folgt:
+Die App erkennt beim Start selbst, ob ein Server erreichbar ist
+(`GET /api/health`), und passt sich an:
 
-| Funktion | Aktueller Stand | Für Produktivbetrieb nötig |
+| | Ohne Server | Mit Server |
 |---|---|---|
-| Konten & Fortschritt | Lokal im Browser gespeichert | Datenbank (z. B. PostgreSQL) |
-| E-Mail-Bestätigung | Code wird angezeigt | Mailversand (SMTP) |
-| 2FA | Fester Code | TOTP-Verfahren |
-| Speicherkontingent | Anzeige (2,5 GB) | Serverseitiger Objektspeicher |
-| Turnstile | Widget im Frontend | Serverseitige Token-Prüfung |
-| Passwörter | Im Klartext im Browser | Hashing (bcrypt/argon2) |
+| Konten | Im Browser (localStorage) | PostgreSQL |
+| Passwörter | Klartext im Browser | scrypt-Hash mit Salt |
+| Sitzung | Kein echter Login | httpOnly-Cookie, Token nur als Hash gespeichert |
+| E-Mail-Bestätigung | Code wird angezeigt | Versand per SMTP |
+| 2FA | Fester Code | Echtes TOTP für Authenticator-Apps |
+| Speicher (2,5 GB) | Nur Anzeige | Verbindlich durchgesetzt |
+| KI-Keys | Im Browser hinterlegt | Bleiben auf dem Server |
+| Fortschritt | Manipulierbar | Serverseitig gedeckelt |
+| Turnstile | Nur Widget | Token wird geprüft |
 
-Deine Hardware ist für ein solches Backend mehr als ausreichend. Der nächste
-sinnvolle Schritt wäre ein schlanker API-Dienst (Node/Fastify oder Go) mit
-PostgreSQL auf der NVMe — dann werden aus den simulierten Funktionen echte.
+Der Betrieb ohne Server bleibt sinnvoll zum Ausprobieren — es muss nichts
+installiert werden. Für den echten Einsatz ist der Server die richtige Wahl.
+
+**Einrichtung:** siehe [`server/README.md`](server/README.md).
+
+```bash
+cd server
+npm install
+cp .env.example .env       # DATABASE_URL und SESSION_SECRET setzen
+npm run migrate
+node src/seed.js --email admin@deine-domain.de
+npm start
+```
+
+### Empfohlene Aufteilung auf deiner Hardware
+
+| Komponente | Ablage | Begründung |
+|---|---|---|
+| PostgreSQL-Daten | NVMe (RAID 1) | Schnelle Schreibzugriffe, gespiegelt |
+| Ollama-Modelle | NVMe | Ladezeit beim Start |
+| App + Server | NVMe | Klein, ändert sich selten |
+| Backups (`pg_dump`) | HDD | Groß, selten gelesen |
+| Logs | HDD | Wachsen stetig |
+
+Tägliches Backup einrichten:
+
+```bash
+# /etc/cron.daily/learndeveloping-backup
+#!/bin/sh
+pg_dump -U learndeveloping learndeveloping | gzip > /mnt/hdd/backups/ld-$(date +\%F).sql.gz
+find /mnt/hdd/backups -name 'ld-*.sql.gz' -mtime +30 -delete
+```
+
+## 7. Was noch fehlt
+
+- **Passwort vergessen** — bisher lässt sich das Passwort nur bei bestehender
+  Anmeldung ändern. Ein Zurücksetzen per E-Mail-Link fehlt noch.
+- **Mehrere Serverprozesse** — der Key-Cooldown liegt im Arbeitsspeicher.
+  Auf einer Maschine mit einem Prozess ist das korrekt; für mehrere Instanzen
+  bräuchte es einen gemeinsamen Zustand (z. B. Redis).

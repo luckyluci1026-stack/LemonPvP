@@ -2792,7 +2792,21 @@ function parseAIJson(text) {
 }
 
 async function checkAnswerWithAI(task, userAnswer, language, lessonTitle, aiCfg = {}) {
-  const { keys = [], provider = "gemini", ollamaModel, langId } = aiCfg;
+  const { keys = [], provider = "gemini", ollamaModel, langId, useServer } = aiCfg;
+
+  // Bevorzugt über den eigenen Server — dort liegen die Keys sicher.
+  if (useServer) {
+    try {
+      return await api.post("/api/ai/check", {
+        language, lessonTitle, question: task.question,
+        expectedConcepts: task.expectedConcepts || [], answer: userAnswer,
+      });
+    } catch (e) {
+      // Server nicht erreichbar oder KI ausgefallen -> lokale Analyse
+      return heuristicCheck(task, userAnswer, langId);
+    }
+  }
+
   const hasAccess = provider === "ollama" || keys.length > 0;
   if (!hasAccess) return heuristicCheck(task, userAnswer, langId);
 
@@ -2837,7 +2851,16 @@ Bitte bewerte diese Antwort.`;
 
 /* ---------------------- KI-Code-Debugging (Playground) ------------------- */
 async function debugCodeWithAI({ html, css, js }, aiCfg = {}) {
-  const { keys = [], provider = "gemini", ollamaModel } = aiCfg;
+  const { keys = [], provider = "gemini", ollamaModel, useServer } = aiCfg;
+
+  if (useServer) {
+    try {
+      return await api.post("/api/ai/debug", { html, css, js });
+    } catch (e) {
+      return heuristicDebug({ html, css, js });
+    }
+  }
+
   const hasAccess = provider === "ollama" || keys.length > 0;
   if (!hasAccess) return heuristicDebug({ html, css, js });
 
@@ -3644,8 +3667,20 @@ function AiSettingsModal({ ctx }) {
 
 /* E-Mail-Verifizierung (simuliert — kein Mailserver vorhanden) */
 function EmailVerifyModal({ ctx }) {
-  const { me, verifyEmail, closeEmailVerify } = ctx;
+  const { me, verifyEmail, closeEmailVerify, serverVerificationCode, pushToast } = ctx;
   const [code, setCode] = useState("");
+  const [resent, setResent] = useState(null);
+  // Mit Server kommt der Code per Mail; nur ohne Mailversand wird er angezeigt.
+  const shownCode = ctx.backend ? (resent || serverVerificationCode) : me?.verificationCode;
+
+  const resend = async () => {
+    try {
+      const res = await api.post("/api/auth/resend-verification");
+      if (res.devVerificationCode) setResent(res.devVerificationCode);
+      pushToast("success", res.devVerificationCode ? "Neuer Code erzeugt." : "Neuer Code wurde versendet.");
+    } catch (e) { pushToast("error", e.message); }
+  };
+
   if (!me) return null;
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" onClick={closeEmailVerify}>
@@ -3656,41 +3691,86 @@ function EmailVerifyModal({ ctx }) {
           <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-[#4F8EF7]/15"><Mail size={22} className="text-[#4F8EF7]" /></div>
           <h3 className="font-display text-xl font-bold">E-Mail bestätigen</h3>
         </div>
-        <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
-          Diese Demo hat keinen echten E-Mail-Versand — in einer produktiven Umgebung würde dieser Code an <strong className="text-[#E8EDF5]">{me.email}</strong> gesendet. Zum Testen zeigen wir ihn dir direkt hier:
-        </p>
-        <div className="p-4 rounded-xl bg-[#0A0E1A] border border-[#2A3F6F] mb-4 text-center">
-          <span className="font-display font-black text-3xl ld-gradient-text font-code">{me.verificationCode}</span>
-        </div>
+        {shownCode ? (
+          <>
+            <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
+              {ctx.backend
+                ? <>Auf diesem Server ist kein Mailversand eingerichtet — sonst ginge der Code an <strong className="text-[#E8EDF5]">{me.email}</strong>. Zum Testen steht er hier:</>
+                : <>Ohne Server gibt es keinen Mailversand — in einer produktiven Umgebung würde dieser Code an <strong className="text-[#E8EDF5]">{me.email}</strong> gesendet. Zum Testen steht er hier:</>}
+            </p>
+            <div className="p-4 rounded-xl bg-[#0A0E1A] border border-[#2A3F6F] mb-4 text-center">
+              <span className="font-display font-black text-3xl ld-gradient-text font-code">{shownCode}</span>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
+            Wir haben dir einen sechsstelligen Code an <strong className="text-[#E8EDF5]">{me.email}</strong> geschickt. Gib ihn hier ein.
+          </p>
+        )}
         <label className="block text-sm text-[#8A9BC0] mb-1.5">Code eingeben</label>
         <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" maxLength={6}
+          onKeyDown={(e) => { if (e.key === "Enter") verifyEmail(code); }}
           className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 mb-4 font-code text-center text-lg tracking-widest text-[#E8EDF5]" />
         <Btn className="w-full" icon={Check} onClick={() => verifyEmail(code)}>Bestätigen</Btn>
+        {ctx.backend && (
+          <button onClick={resend} className="w-full mt-3 text-xs text-[#8A9BC0] hover:text-[#E8EDF5]">
+            Code erneut senden
+          </button>
+        )}
       </Card>
     </div>
   );
 }
 
-/* 2FA-Einrichtung (simuliert — statischer Code statt echtem Authenticator/TOTP) */
+/* 2FA-Einrichtung.
+   Mit Server: echtes TOTP-Geheimnis für Authenticator-Apps, das durch Eingabe
+   eines gültigen Codes bestätigt werden muss.
+   Ohne Server: statischer Code, da kein Zeitgeber-Backend vorhanden ist. */
 function TwoFactorSetupModal({ ctx }) {
-  const { twoFactorSetupCode, closeTwoFactorSetup } = ctx;
+  const { twoFactorSetupCode, closeTwoFactorSetup, confirm2FA } = ctx;
+  const [code, setCode] = useState("");
+  const setup = twoFactorSetupCode || {};
+  const needsConfirm = !!setup.needsConfirm;
+
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" onClick={closeTwoFactorSetup}>
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 overflow-y-auto" onClick={closeTwoFactorSetup}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <Card className="relative z-10 p-7 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+      <Card className="relative z-10 p-7 max-w-md w-full my-8" onClick={(e) => e.stopPropagation()}>
         <button onClick={closeTwoFactorSetup} aria-label="Schließen" className="absolute top-4 right-4 text-[#8A9BC0] hover:text-[#E8EDF5]"><X size={20} /></button>
         <div className="flex items-center gap-3 mb-3">
           <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-[#10B981]/15"><ShieldCheck size={22} className="text-[#10B981]" /></div>
-          <h3 className="font-display text-xl font-bold">2FA aktiviert</h3>
+          <h3 className="font-display text-xl font-bold">{needsConfirm ? "2FA einrichten" : "2FA aktiviert"}</h3>
         </div>
-        <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
-          Merke dir diesen Code gut — du brauchst ihn ab sofort bei jedem Login zusätzlich zu deinem Passwort. Ohne echtes Backend kann diese Demo keinen Authenticator (TOTP) anbinden, daher bleibt der Code statisch.
-        </p>
-        <div className="p-4 rounded-xl bg-[#0A0E1A] border border-[#2A3F6F] mb-2 text-center">
-          <span className="font-display font-black text-3xl ld-gradient-text font-code">{twoFactorSetupCode}</span>
-        </div>
-        <p className="text-xs text-[#4A5A7A] mb-5">Du kannst 2FA jederzeit in deinem Profil wieder deaktivieren.</p>
-        <Btn className="w-full" icon={Check} onClick={closeTwoFactorSetup}>Verstanden</Btn>
+
+        {needsConfirm ? (
+          <>
+            <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
+              Trage dieses Geheimnis in deiner Authenticator-App ein (z.B. Aegis, 1Password, Google Authenticator) und bestätige dann mit dem angezeigten Code.
+            </p>
+            <div className="p-4 rounded-xl bg-[#0A0E1A] border border-[#2A3F6F] mb-2 text-center">
+              <span className="font-code text-lg text-[#4F8EF7] break-all">{setup.secret}</span>
+            </div>
+            <p className="text-xs text-[#4A5A7A] mb-4 break-all">
+              Oder per Link: <span className="font-code text-[#8A9BC0]">{setup.uri}</span>
+            </p>
+            <label className="block text-sm text-[#8A9BC0] mb-1.5">Code aus der App</label>
+            <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" maxLength={6}
+              onKeyDown={(e) => { if (e.key === "Enter") confirm2FA(code); }}
+              className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 mb-4 font-code text-center text-lg tracking-widest text-[#E8EDF5]" />
+            <Btn className="w-full" icon={Check} onClick={() => confirm2FA(code)}>2FA aktivieren</Btn>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
+              Merke dir diesen Code — du brauchst ihn ab sofort bei jedem Login zusätzlich zum Passwort. Ohne Server kann kein zeitbasierter Authenticator angebunden werden, daher bleibt der Code fest.
+            </p>
+            <div className="p-4 rounded-xl bg-[#0A0E1A] border border-[#2A3F6F] mb-2 text-center">
+              <span className="font-display font-black text-3xl ld-gradient-text font-code">{setup.code}</span>
+            </div>
+            <p className="text-xs text-[#4A5A7A] mb-5">Du kannst 2FA jederzeit im Profil wieder deaktivieren.</p>
+            <Btn className="w-full" icon={Check} onClick={closeTwoFactorSetup}>Verstanden</Btn>
+          </>
+        )}
       </Card>
     </div>
   );
@@ -3705,10 +3785,92 @@ function genSchoolCode() {
 }
 const uid = () => "u_" + Math.random().toString(36).slice(2, 9);
 
+/* ============================ API-Client =================================
+   Die App läuft in zwei Betriebsarten:
+
+   1. MIT Server — erkannt über /api/health. Konten, Fortschritt, Projekte und
+      KI-Aufrufe laufen dann über das Backend. Passwörter werden dort gehasht,
+      API-Keys bleiben auf dem Server, das Speicherkontingent wird durchgesetzt.
+
+   2. OHNE Server — alles bleibt lokal im Browser (localStorage), so wie bisher.
+      Praktisch zum Ausprobieren, ohne etwas installieren zu müssen.
+
+   Die Erkennung passiert einmalig beim Start; schlägt sie fehl, wird
+   automatisch der lokale Modus genutzt.
+   ========================================================================= */
+class ApiError extends Error {
+  constructor(message, status, data) {
+    super(message);
+    this.status = status;
+    this.data = data || {};
+  }
+}
+
+const api = {
+  available: false,
+  aiAvailable: false,
+
+  async request(method, path, body) {
+    const res = await fetch(path, {
+      method,
+      credentials: "same-origin",              // Sitzungs-Cookie mitsenden
+      headers: body === undefined ? {} : { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+    if (!res.ok) throw new ApiError(data?.error || `Fehler ${res.status}`, res.status, data);
+    return data;
+  },
+
+  get(path) { return this.request("GET", path); },
+  post(path, body) { return this.request("POST", path, body); },
+  patch(path, body) { return this.request("PATCH", path, body); },
+  put(path, body) { return this.request("PUT", path, body); },
+  del(path) { return this.request("DELETE", path); },
+
+  /** Einmalige Erkennung beim Start. */
+  async probe() {
+    try {
+      const health = await Promise.race([
+        this.get("/api/health"),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 3000)),
+      ]);
+      this.available = !!health?.ok;
+    } catch (e) {
+      this.available = false;
+    }
+    if (this.available) {
+      try {
+        const status = await this.get("/api/ai/status");
+        this.aiAvailable = !!status?.available;
+      } catch (e) { this.aiAvailable = false; }
+    }
+    return this.available;
+  },
+};
+
+/**
+ * Übersetzt einen Nutzer aus dem Backend in die Form, die die Oberfläche
+ * erwartet (dort heißen einige Felder anders und werden direkt gerendert).
+ */
+function fromApiUser(u) {
+  if (!u) return null;
+  return {
+    ...u,
+    completedLessons: u.completedLessons || [],
+    badges: u.badges || [],
+    playground: [],                       // Projekte werden separat geladen
+    joinedAt: u.joinedAt ? new Date(u.joinedAt).toLocaleDateString("de-DE") : "—",
+    lastLogin: u.lastLogin ? new Date(u.lastLogin).toLocaleDateString("de-DE") : "Jetzt",
+  };
+}
+
 /* --------------------- Lokale Speicherung (Browser) ---------------------
-   Diese App hat kein Backend. Damit dein Fortschritt einen Reload übersteht,
-   wird er im localStorage deines Browsers gespeichert — verlässt dein Gerät
-   nie. Gast-Sitzungen (isGuest) werden bewusst NICHT gespeichert.
+   Ohne Backend überlebt der Fortschritt einen Reload im localStorage des
+   Browsers und verlässt das Gerät nie. Gast-Sitzungen (isGuest) werden
+   bewusst NICHT gespeichert.
    ------------------------------------------------------------------------- */
 const STORAGE_KEY = "learndeveloping_v1";
 const API_KEY_STORAGE = "learndeveloping_ai_key";          // alt (Einzel-Key)
@@ -3785,11 +3947,59 @@ export default function App() {
   const [pending2FA, setPending2FA] = useState(null);
   const [twoFactorSetupCode, setTwoFactorSetupCode] = useState(null);
   const [playgroundOpenId, setPlaygroundOpenId] = useState(null);
+  // Betriebsart: null = wird noch erkannt, true = Server, false = lokal
+  const [backend, setBackend] = useState(null);
+  const [booting, setBooting] = useState(true);
+  // Vom Server geliefert, wenn kein Mailversand konfiguriert ist
+  const [serverVerificationCode, setServerVerificationCode] = useState(null);
 
   const me = currentUser ? users.find((u) => u.id === currentUser) : null;
 
-  // Fortschritt automatisch lokal sichern (Gäste ausgenommen)
-  useEffect(() => { savePersisted(users, currentUser, reports); }, [users, currentUser, reports]);
+  // Beim Start prüfen, ob ein Server erreichbar ist, und ggf. die
+  // bestehende Sitzung wiederherstellen.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const hasServer = await api.probe();
+      if (!alive) return;
+      setBackend(hasServer);
+      if (hasServer) {
+        try {
+          const { user } = await api.get("/api/auth/me");
+          if (!alive) return;
+          const mapped = fromApiUser(user);
+          setUsers([mapped]);
+          setCurrentUser(mapped.id);
+          setView(roleHome(mapped.role));
+        } catch (e) {
+          // Nicht angemeldet — Startseite bleibt stehen
+          if (alive) { setUsers([]); setCurrentUser(null); setView("landing"); }
+        }
+      }
+      if (alive) setBooting(false);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // Ohne Server: Fortschritt lokal sichern (Gäste ausgenommen)
+  useEffect(() => {
+    if (backend) return;
+    savePersisted(users, currentUser, reports);
+  }, [users, currentUser, reports, backend]);
+
+  /** Lädt den aktuellen Nutzer neu — nach serverseitigen Änderungen. */
+  const refreshMe = useCallback(async () => {
+    if (!api.available) return null;
+    try {
+      const { user } = await api.get("/api/auth/me");
+      const mapped = fromApiUser(user);
+      setUsers((us) => {
+        const rest = us.filter((u) => u.id !== mapped.id);
+        return [...rest, mapped];
+      });
+      return mapped;
+    } catch (e) { return null; }
+  }, []);
 
   const setApiKeys = useCallback((keys) => {
     const clean = (keys || []).map((k) => String(k).trim()).filter(Boolean);
@@ -3808,8 +4018,10 @@ export default function App() {
     try { localStorage.setItem(OLLAMA_MODEL_STORAGE, m); } catch (e) {}
   }, []);
   // Gebündelte KI-Konfiguration für alle Aufrufstellen
-  const aiConfig = { keys: apiKeys, provider: aiProvider, ollamaModel };
-  const aiReady = aiProvider === "ollama" || apiKeys.length > 0;
+  // Mit Server läuft die KI über das Backend (Keys bleiben dort), ohne Server
+  // über die im Browser hinterlegten Keys.
+  const aiConfig = { keys: apiKeys, provider: aiProvider, ollamaModel, useServer: backend && api.aiAvailable };
+  const aiReady = (backend && api.aiAvailable) || aiProvider === "ollama" || apiKeys.length > 0;
   const openAiSettings = useCallback(() => setAiSettingsOpen(true), []);
   const closeAiSettings = useCallback(() => setAiSettingsOpen(false), []);
   const openEmailVerify = useCallback(() => setEmailVerifyOpen(true), []);
@@ -3825,22 +4037,78 @@ export default function App() {
 
   // 2FA: Aktivieren erzeugt einen einmaligen 6-stelligen Code, der (weil kein
   // Authenticator-Backend existiert) direkt im UI angezeigt wird.
-  const enable2FA = useCallback(() => {
+  const enable2FA = useCallback(async () => {
     if (!me) return;
+    if (api.available) {
+      try {
+        // Der Server erzeugt ein echtes TOTP-Geheimnis für Authenticator-Apps.
+        const { secret, uri } = await api.post("/api/auth/2fa/setup");
+        setTwoFactorSetupCode({ secret, uri, needsConfirm: true });
+      } catch (e) { pushToast("error", e.message); }
+      return;
+    }
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setUsers((us) => us.map((u) => u.id === me.id ? { ...u, twoFactorEnabled: true, twoFactorCode: code } : u));
-    setTwoFactorSetupCode(code);
-  }, [me]);
-  const disable2FA = useCallback(() => {
+    setTwoFactorSetupCode({ code });
+  }, [me, pushToast]);
+
+  /** Schließt die 2FA-Einrichtung ab (nur im Server-Betrieb nötig). */
+  const confirm2FA = useCallback(async (code) => {
+    try {
+      await api.post("/api/auth/2fa/enable", { code });
+      await refreshMe();
+      setTwoFactorSetupCode(null);
+      pushToast("success", "2FA ist aktiviert.");
+      return true;
+    } catch (e) {
+      pushToast("error", e.message);
+      return false;
+    }
+  }, [pushToast, refreshMe]);
+
+  const disable2FA = useCallback(async (password) => {
     if (!me) return;
+    if (api.available) {
+      try {
+        await api.post("/api/auth/2fa/disable", { password });
+        await refreshMe();
+        pushToast("info", "2FA deaktiviert.");
+      } catch (e) { pushToast("error", e.message); }
+      return;
+    }
     setUsers((us) => us.map((u) => u.id === me.id ? { ...u, twoFactorEnabled: false, twoFactorCode: null } : u));
     pushToast("info", "2FA deaktiviert.");
-  }, [me, pushToast]);
+  }, [me, pushToast, refreshMe]);
   const closeTwoFactorSetup = useCallback(() => setTwoFactorSetupCode(null), []);
 
-  // Playground: Projekte speichern/löschen, mit simuliertem 2,5-GB-Kontingent
-  const savePlaygroundProject = useCallback((project) => {
+  /** Lädt die Projekte des angemeldeten Nutzers vom Server. */
+  const loadProjects = useCallback(async () => {
+    if (!api.available || !me || me.isGuest) return;
+    try {
+      const { projects, storage } = await api.get("/api/projects");
+      setUsers((us) => us.map((u) => u.id === me.id
+        ? { ...u, playground: projects, storageUsed: storage.used, storageQuota: storage.quota }
+        : u));
+    } catch (e) {}
+  }, [me]);
+
+  // Playground: Projekte speichern/löschen. Mit Server wird das Kontingent
+  // dort durchgesetzt, ohne Server lokal nachgebildet.
+  const savePlaygroundProject = useCallback(async (project) => {
     if (!me) return false;
+    if (api.available && !me.isGuest) {
+      try {
+        const path = project.id && !String(project.id).startsWith("u_")
+          ? `/api/projects/${project.id}` : "/api/projects";
+        await api.put(path, { name: project.name, html: project.html, css: project.css, js: project.js });
+        await loadProjects();
+        pushToast("success", `Projekt „${project.name}“ gespeichert.`);
+        return true;
+      } catch (e) {
+        pushToast("error", e.message);
+        return false;
+      }
+    }
     const sizeBytes = new Blob([project.html || "", project.css || "", project.js || ""]).size;
     const others = (me.playground || []).filter((p) => p.id !== project.id);
     const usedByOthers = others.reduce((sum, p) => sum + (p.sizeBytes || 0), 0);
@@ -3852,14 +4120,27 @@ export default function App() {
     setUsers((us) => us.map((u) => u.id === me.id ? { ...u, playground: [...others, saved] } : u));
     pushToast("success", `Projekt „${project.name}“ gespeichert.`);
     return true;
-  }, [me, pushToast]);
-  const deletePlaygroundProject = useCallback((id) => {
+  }, [me, pushToast, loadProjects]);
+
+  const deletePlaygroundProject = useCallback(async (id) => {
     if (!me) return;
+    if (api.available && !me.isGuest) {
+      try { await api.del(`/api/projects/${id}`); await loadProjects(); }
+      catch (e) { pushToast("error", e.message); }
+      return;
+    }
     setUsers((us) => us.map((u) => u.id === me.id ? { ...u, playground: (u.playground || []).filter((p) => p.id !== id) } : u));
-  }, [me]);
+  }, [me, pushToast, loadProjects]);
 
   // Melden: KI-Antworten (oder andere Inhalte) für die Admin-Prüfung markieren
-  const reportContent = useCallback((payload) => {
+  const reportContent = useCallback(async (payload) => {
+    if (api.available && me && !me.isGuest) {
+      try {
+        await api.post("/api/reports", payload);
+        pushToast("success", "Danke — dein Hinweis wurde gemeldet.");
+      } catch (e) { pushToast("error", e.message); }
+      return;
+    }
     const report = {
       id: uid(), createdAt: "Jetzt", status: "open",
       reporterId: me ? me.id : null, reporterName: me ? me.name : "Unbekannt",
@@ -3905,7 +4186,25 @@ export default function App() {
     navigate(u.role === "teacher" ? "teacher" : u.role === "admin" ? "admin" : "dashboard");
   };
 
-  const login = (email, password) => {
+  const login = async (email, password, turnstileToken) => {
+    if (api.available) {
+      try {
+        const { user } = await api.post("/api/auth/login", { email, password, turnstileToken });
+        const mapped = fromApiUser(user);
+        setUsers([mapped]);
+        completeLogin(mapped);
+        return true;
+      } catch (e) {
+        if (e.data?.need2fa) {
+          // Zugangsdaten für den zweiten Schritt vormerken (nur im Speicher)
+          setPending2FA({ email, password, turnstileToken });
+          pushToast("info", "2FA aktiv — bitte gib deinen Code ein.");
+          return "2fa";
+        }
+        pushToast("error", e.message);
+        return false;
+      }
+    }
     const u = users.find((x) => x.email.toLowerCase() === email.trim().toLowerCase() && x.password === password);
     if (!u) { pushToast("error", "E-Mail oder Passwort falsch."); return false; }
     if (u.twoFactorEnabled) {
@@ -3917,7 +4216,21 @@ export default function App() {
     return true;
   };
 
-  const verify2FALogin = (code) => {
+  const verify2FALogin = async (code) => {
+    if (api.available) {
+      const pending = pending2FA || {};
+      try {
+        const { user } = await api.post("/api/auth/login", { ...pending, totp: code });
+        const mapped = fromApiUser(user);
+        setUsers([mapped]);
+        setPending2FA(null);
+        completeLogin(mapped);
+        return true;
+      } catch (e) {
+        pushToast("error", e.message);
+        return false;
+      }
+    }
     const u = users.find((x) => x.id === pending2FA);
     if (!u) return false;
     if ((code || "").trim() !== u.twoFactorCode) { pushToast("error", "2FA-Code ist falsch."); return false; }
@@ -3927,9 +4240,34 @@ export default function App() {
   };
   const cancel2FALogin = () => setPending2FA(null);
 
-  const register = (form) => {
+  const register = async (form) => {
     if (!form.name || !form.email || !form.password) { pushToast("error", "Bitte alle Pflichtfelder ausfüllen."); return false; }
     if (form.password !== form.confirm) { pushToast("error", "Passwörter stimmen nicht überein."); return false; }
+
+    if (api.available) {
+      try {
+        const res = await api.post("/api/auth/register", {
+          name: form.name, email: form.email, password: form.password,
+          role: form.role, teacherCode: form.teacherCode, school: form.school,
+          turnstileToken: form.turnstileToken,
+        });
+        const mapped = fromApiUser(res.user);
+        setUsers([mapped]);
+        setCurrentUser(mapped.id);
+        if (res.teacherHint) pushToast("error", res.teacherHint);
+        if (res.schoolCode) pushToast("info", `Dein Schul-Code: ${res.schoolCode}`);
+        // Ohne Mailversand liefert der Server den Code zurück, damit die
+        // Bestätigung auch ohne SMTP getestet werden kann.
+        if (res.devVerificationCode) setServerVerificationCode(res.devVerificationCode);
+        pushToast("success", `Account erstellt — los geht's, ${form.name.split(" ")[0]}!`);
+        navigate(roleHome(mapped.role));
+        return true;
+      } catch (e) {
+        pushToast("error", e.message);
+        return false;
+      }
+    }
+
     if (users.some((u) => !u.isGuest && u.email.toLowerCase() === form.email.trim().toLowerCase())) { pushToast("error", "E-Mail ist bereits registriert."); return false; }
     const id = uid();
     const guest = me && me.isGuest ? me : null; // Gast-Fortschritt beim Registrieren übernehmen
@@ -3965,8 +4303,21 @@ export default function App() {
     return true;
   };
 
-  const verifyEmail = (code) => {
+  const verifyEmail = async (code) => {
     if (!me) return false;
+    if (api.available) {
+      try {
+        await api.post("/api/auth/verify-email", { code });
+        await refreshMe();
+        setServerVerificationCode(null);
+        pushToast("success", "E-Mail-Adresse bestätigt!");
+        closeEmailVerify();
+        return true;
+      } catch (e) {
+        pushToast("error", e.message);
+        return false;
+      }
+    }
     if ((code || "").trim() !== me.verificationCode) { pushToast("error", "Code stimmt nicht überein."); return false; }
     setUsers((us) => us.map((u) => u.id === me.id ? { ...u, emailVerified: true, verificationCode: null } : u));
     pushToast("success", "E-Mail-Adresse bestätigt!");
@@ -3974,7 +4325,13 @@ export default function App() {
     return true;
   };
 
-  const logout = () => { setCurrentUser(null); navigate("landing"); pushToast("info", "Abgemeldet. Bis bald!"); };
+  const logout = async () => {
+    if (api.available) { try { await api.post("/api/auth/logout"); } catch (e) {} }
+    setCurrentUser(null);
+    setUsers((us) => (api.available ? [] : us));
+    navigate("landing");
+    pushToast("info", "Abgemeldet. Bis bald!");
+  };
 
   const continueAsGuest = () => {
     const id = "guest_" + uid();
@@ -3998,10 +4355,51 @@ export default function App() {
 
   // XP / Lektion abschließen
   const addXP = useCallback((amount) => {
+    // Optimistisch anzeigen, damit die Oberfläche sofort reagiert …
     setUsers((us) => us.map((u) => u.id === currentUser ? { ...u, xp: u.xp + amount } : u));
-  }, [currentUser]);
+    // … und serverseitig verbuchen, wo der Wert manipulationssicher liegt.
+    if (api.available && me && !me.isGuest) {
+      api.post("/api/progress/xp", { amount })
+        .then(({ user }) => setUsers((us) => us.map((u) => u.id === user.id ? fromApiUser(user) : u)))
+        .catch(() => {});
+    }
+  }, [currentUser, me]);
 
-  const completeLesson = useCallback((lessonId, bonusXp) => {
+  /** Ermittelt neu verdiente Abzeichen für den aktuellen Stand. */
+  const earnedBadgesFor = (completed, xp) => {
+    const out = ["first_lesson"];
+    if (completed.filter((id) => id.startsWith("javascript_")).length >= 10) out.push("js_beginner");
+    if (getLevelInfo(xp).level >= 10) out.push("mid_wizard");
+    const meta = findLessonMeta(completed[completed.length - 1]);
+    if (meta) {
+      const allIds = allLessonsOf(meta.course).map((l) => l.id);
+      if (allIds.every((id) => completed.includes(id))) out.push("course_complete");
+    }
+    return out;
+  };
+
+  const completeLesson = useCallback(async (lessonId, bonusXp) => {
+    if (api.available && me && !me.isGuest) {
+      const completed = [...(me.completedLessons || []), lessonId];
+      try {
+        const res = await api.post("/api/progress/complete", {
+          lessonId,
+          courseId: findLessonMeta(lessonId)?.course.id,
+          xpReward: bonusXp,
+          badges: earnedBadgesFor(completed, me.xp + bonusXp),
+        });
+        const mapped = fromApiUser(res.user);
+        setUsers((us) => us.map((u) => u.id === mapped.id ? mapped : u));
+        (res.newBadges || []).forEach((b) => {
+          if (BADGES[b]) setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES[b].label}!`), 400);
+        });
+        return;
+      } catch (e) {
+        pushToast("error", "Fortschritt konnte nicht gespeichert werden.");
+        return;
+      }
+    }
+
     setUsers((us) => us.map((u) => {
       if (u.id !== currentUser) return u;
       if (u.completedLessons.includes(lessonId)) return u;
@@ -4022,7 +4420,7 @@ export default function App() {
       newlyEarned.forEach((b) => setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES[b].label}!`), 400));
       return { ...u, completedLessons: completed, xp: newXp, badges };
     }));
-  }, [currentUser, pushToast]);
+  }, [currentUser, pushToast, me]);
 
   const ctx = {
     view, navigate, users, me, setUsers, currentUser,
@@ -4030,6 +4428,7 @@ export default function App() {
     selectedStudent, setSelectedStudent, login, register, logout, continueAsGuest,
     pushToast, showXP, addXP, completeLesson, celebrate, sidebarOpen, setSidebarOpen,
     apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel, aiConfig, aiReady, aiSettingsOpen, openAiSettings, closeAiSettings,
+    backend, booting, refreshMe, loadProjects, serverVerificationCode, confirm2FA,
     pending2FA, verify2FALogin, cancel2FALogin,
     emailVerifyOpen, openEmailVerify, closeEmailVerify, verifyEmail,
     enable2FA, disable2FA, twoFactorSetupCode, closeTwoFactorSetup,
@@ -4039,6 +4438,18 @@ export default function App() {
   };
 
   const LEGAL_VIEWS = ["agb", "impressum", "datenschutz", "kontakt", "ueber-uns"];
+
+  // Solange die Betriebsart geprüft wird, kurz einen Ladezustand zeigen —
+  // sonst würde eine bestehende Server-Sitzung kurz als "abgemeldet" aufblitzen.
+  if (booting) {
+    return (
+      <div className="min-h-screen bg-[#0A0E1A] flex flex-col items-center justify-center gap-4">
+        <GlobalStyles />
+        <Loader2 size={32} className="ld-spin text-[#4F8EF7]" />
+        <p className="text-sm text-[#8A9BC0]">LearnDeveloping wird geladen …</p>
+      </div>
+    );
+  }
 
   let screen = null;
   if (view === "landing") screen = <Landing ctx={ctx} />;
@@ -4431,7 +4842,8 @@ function AuthScreen({ ctx, mode }) {
 
   const submit = () => {
     if (captchaRequired && !captcha) { pushToast("error", "Bitte bestätige zuerst, dass du kein Bot bist."); return; }
-    if (isLogin) login(form.email, form.password); else register(form);
+    if (isLogin) login(form.email, form.password, captcha);
+    else register({ ...form, turnstileToken: captcha });
   };
 
   if (pending2FA) return <TwoFactorLoginStep ctx={ctx} />;
@@ -5324,6 +5736,8 @@ function Profile({ ctx }) {
   const isTeacher = me.role === "teacher";
   const lvl = isStudent ? getLevelInfo(me.xp) : null;
   const [picker, setPicker] = useState(false);
+  const [disable2FAOpen, setDisable2FAOpen] = useState(false);
+  const [disablePw, setDisablePw] = useState("");
   const copy = (txt) => { try { navigator.clipboard.writeText(txt); } catch (e) {} pushToast("success", "In Zwischenablage kopiert!"); };
   const setAvatar = (a) => { setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatar: a, avatarConfig: null } : u)); setPicker(false); pushToast("success", "Avatar aktualisiert!"); };
   const setAvatarConfig = (conf) => setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatarConfig: conf } : u));
@@ -5443,9 +5857,27 @@ function Profile({ ctx }) {
                 <p className="text-xs text-[#8A9BC0]">{me.twoFactorEnabled ? "Beim Login wird zusätzlich dein 2FA-Code abgefragt." : "Zusätzlicher Schutz: Login nur mit Passwort und Code."}</p>
               </div>
               {me.twoFactorEnabled
-                ? <Btn size="sm" variant="danger" icon={X} onClick={disable2FA}>Deaktivieren</Btn>
+                ? <Btn size="sm" variant="danger" icon={X} onClick={() => setDisable2FAOpen(true)}>Deaktivieren</Btn>
                 : <Btn size="sm" icon={ShieldCheck} onClick={enable2FA}>Aktivieren</Btn>}
             </div>
+            {disable2FAOpen && (
+              <div className="p-4 bg-[#0A0E1A]">
+                <p className="text-xs text-[#8A9BC0] mb-2">
+                  {ctx.backend ? "Bestätige mit deinem Passwort, um 2FA zu deaktivieren:" : "2FA wirklich deaktivieren?"}
+                </p>
+                {ctx.backend && (
+                  <input type="password" value={disablePw} onChange={(e) => setDisablePw(e.target.value)} placeholder="Passwort"
+                    className="w-full bg-[#141D35] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 mb-2 text-sm text-[#E8EDF5]" />
+                )}
+                <div className="flex gap-2">
+                  <Btn size="sm" variant="danger" icon={X}
+                    onClick={async () => { await disable2FA(disablePw); setDisable2FAOpen(false); setDisablePw(""); }}>
+                    Deaktivieren
+                  </Btn>
+                  <Btn size="sm" variant="ghost" onClick={() => { setDisable2FAOpen(false); setDisablePw(""); }}>Abbrechen</Btn>
+                </div>
+              </div>
+            )}
           </Card>
         </div>
       )}
@@ -5668,9 +6100,16 @@ function Playground({ ctx }) {
     setPlaygroundOpenId(null);
   }, [playgroundOpenId]);
 
+  // Projekte einmalig vom Server holen, sobald die IDE geöffnet wird
+  useEffect(() => { ctx.loadProjects?.(); }, []);
+
   const projects = me?.playground || [];
-  const usedBytes = projects.reduce((sum, p) => sum + (p.sizeBytes || 0), 0);
-  const quotaPct = Math.min(100, (usedBytes / STORAGE_QUOTA_BYTES) * 100);
+  // Mit Server sind Verbrauch und Kontingent verbindlich, ohne Server errechnet.
+  const quotaBytes = me?.storageQuota || STORAGE_QUOTA_BYTES;
+  const usedBytes = me?.storageUsed != null && ctx.backend
+    ? me.storageUsed
+    : projects.reduce((sum, p) => sum + (p.sizeBytes || 0), 0);
+  const quotaPct = Math.min(100, (usedBytes / quotaBytes) * 100);
 
   const save = () => {
     const id = projectId || uid();
