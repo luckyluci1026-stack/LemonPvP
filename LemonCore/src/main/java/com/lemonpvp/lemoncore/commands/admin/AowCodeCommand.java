@@ -51,7 +51,15 @@ public class AowCodeCommand implements CommandExecutor {
             return true;
         }
 
+        // Reject a malformed duration instead of creating a code that never expires:
+        // parseDuration reserves 0 for an explicit "permanent".
         duration = TextUtil.parseDuration(args[4]);
+        if (duration == TextUtil.INVALID_DURATION) {
+            sender.sendMessage(plugin.getMessagesManager().get("invalid-usage",
+                    "usage", "/aowcode <name|random26> <rank|coins|killeffect> <value> <max_uses>"
+                            + " <duration> — duration e.g. 30d, 12h, or permanent"));
+            return true;
+        }
         UUID creatorUuid = sender instanceof Player p ? p.getUniqueId() : null;
 
         plugin.getCodeManager().createCode(codeName, rewardType, rewardValue, maxUses, duration, creatorUuid)

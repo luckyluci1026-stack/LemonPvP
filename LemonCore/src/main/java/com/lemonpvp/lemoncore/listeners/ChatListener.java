@@ -66,8 +66,9 @@ public class ChatListener implements Listener {
                 event.viewers().clear();
                 event.setCancelled(true);
                 player.sendMessage(plugin.getMessagesManager().get("chat.filtered"));
+                // Fall back to the documented 1d default rather than to 0, which means permanent.
                 long muteSeconds = TextUtil.parseDuration(
-                        plugin.getConfig().getString("anti-swear.other-insult-duration", "1d"));
+                        plugin.getConfig().getString("anti-swear.other-insult-duration", "1d"), 86400L);
                 plugin.getMuteManager().mutePlayer(uuid, player.getName(), "Inappropriate language",
                         null, "Auto-Mute", muteSeconds);
                 return;
@@ -143,12 +144,16 @@ public class ChatListener implements Listener {
         plugin.getOffenseManager().incrementNword(uuid).thenAccept(count -> {
             long banDuration;
             String reason = "Racism";
+            // Fall back to the documented defaults rather than to 0, which means permanent:
+            // only the third offence below is meant to be permanent.
             if (count == 1) {
                 banDuration = TextUtil.parseDuration(
-                        plugin.getConfig().getString("anti-swear.nword.first-offense-duration", "3d"));
+                        plugin.getConfig().getString("anti-swear.nword.first-offense-duration", "3d"),
+                        3L * 86400L);
             } else if (count == 2) {
                 banDuration = TextUtil.parseDuration(
-                        plugin.getConfig().getString("anti-swear.nword.second-offense-duration", "14d"));
+                        plugin.getConfig().getString("anti-swear.nword.second-offense-duration", "14d"),
+                        14L * 86400L);
             } else {
                 banDuration = 0; // Permanent
             }

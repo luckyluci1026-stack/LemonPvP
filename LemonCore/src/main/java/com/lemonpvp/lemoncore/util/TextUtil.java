@@ -83,28 +83,70 @@ public class TextUtil {
         return sb.toString().trim();
     }
 
+    /** Returned by {@link #parseDuration(String)} when the input is not a valid duration. */
+    public static final long INVALID_DURATION = -1L;
+
+    /**
+     * Parses a duration such as {@code 7d}, {@code 12h} or {@code 1d 12h} into seconds.
+     *
+     * <p>Returns {@code 0} <em>only</em> for an explicit {@code "0"} or {@code "permanent"} —
+     * the sentinel the rest of the plugin reads as "never expires". Anything the grammar does
+     * not accept ({@code "30"} with no unit, an unknown unit like {@code "30x"}, stray text,
+     * arithmetic overflow) returns {@link #INVALID_DURATION} rather than {@code 0}: silently
+     * treating a typo as "permanent" would turn a temporary punishment into a permanent one.
+     * Callers with a sensible default should use {@link #parseDuration(String, long)}.
+     */
     public static long parseDuration(String input) {
-        if (input == null || input.equals("0") || input.equalsIgnoreCase("permanent")) return 0;
+        if (input == null) return INVALID_DURATION;
+        String trimmed = input.trim();
+        if (trimmed.isEmpty()) return INVALID_DURATION;
+        if (trimmed.equals("0") || trimmed.equalsIgnoreCase("permanent")) return 0;
+
         long total = 0;
+        boolean sawUnit = false;
         StringBuilder num = new StringBuilder();
-        for (char c : input.toLowerCase().toCharArray()) {
+        for (char c : trimmed.toLowerCase().toCharArray()) {
             if (Character.isDigit(c)) {
                 num.append(c);
-            } else {
-                if (num.length() == 0) continue;
-                long val = Long.parseLong(num.toString());
-                num = new StringBuilder();
-                switch (c) {
-                    case 's' -> total += val;
-                    case 'm' -> total += val * 60;
-                    case 'h' -> total += val * 3600;
-                    case 'd' -> total += val * 86400;
-                    case 'w' -> total += val * 604800;
-                    case 'y' -> total += val * 31536000L;
-                }
+                continue;
             }
+            if (num.length() == 0) {
+                // Tolerate the spacing in "1d 12h"; reject a unit with no number before it.
+                if (Character.isWhitespace(c)) continue;
+                return INVALID_DURATION;
+            }
+            long unitSeconds = switch (c) {
+                case 's' -> 1L;
+                case 'm' -> 60L;
+                case 'h' -> 3600L;
+                case 'd' -> 86400L;
+                case 'w' -> 604800L;
+                case 'y' -> 31536000L;
+                default  -> INVALID_DURATION;
+            };
+            if (unitSeconds == INVALID_DURATION) return INVALID_DURATION;
+            try {
+                total = Math.addExact(total,
+                        Math.multiplyExact(Long.parseLong(num.toString()), unitSeconds));
+            } catch (ArithmeticException | NumberFormatException e) {
+                return INVALID_DURATION; // overflow, or a digit run too long for a long
+            }
+            num = new StringBuilder();
+            sawUnit = true;
         }
-        return total;
+        // Trailing digits with no unit ("30"): reject instead of guessing seconds or days.
+        if (num.length() > 0) return INVALID_DURATION;
+        return sawUnit ? total : INVALID_DURATION;
+    }
+
+    /**
+     * {@link #parseDuration(String)} with a fallback: yields {@code fallbackSeconds} when the
+     * input cannot be parsed, so a malformed value degrades to a sane duration rather than to
+     * "permanent".
+     */
+    public static long parseDuration(String input, long fallbackSeconds) {
+        long parsed = parseDuration(input);
+        return parsed == INVALID_DURATION ? fallbackSeconds : parsed;
     }
 
     public static String generateId(int length) {

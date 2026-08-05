@@ -268,6 +268,10 @@ public class HttpApiManager {
         String reason   = getStr(parsed, "reason", "Staff Panel");
         String duration = getStr(parsed, "duration", "permanent");
         long durationSecs = parseDuration(duration);
+        if (durationSecs == com.lemonpvp.lemoncore.util.TextUtil.INVALID_DURATION) {
+            send(ex, 400, error("Invalid duration: " + duration + " (use e.g. 30d, 12h, or permanent)"));
+            return;
+        }
 
         joinWithTimeout(plugin.getBanManager().banPlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
             .thenAccept(ban -> {
@@ -302,6 +306,10 @@ public class HttpApiManager {
         String reason   = getStr(parsed, "reason", "Staff Panel");
         String duration = getStr(parsed, "duration", "permanent");
         long durationSecs = parseDuration(duration);
+        if (durationSecs == com.lemonpvp.lemoncore.util.TextUtil.INVALID_DURATION) {
+            send(ex, 400, error("Invalid duration: " + duration + " (use e.g. 30d, 12h, or permanent)"));
+            return;
+        }
 
         joinWithTimeout(plugin.getMuteManager().mutePlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
             .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
@@ -489,14 +497,23 @@ public class HttpApiManager {
         catch (Exception e) { return def; }
     }
 
+    /**
+     * Duration for the moderation endpoints, in seconds.
+     *
+     * <p>Returns {@code 0} for an explicit {@code "permanent"} — the sentinel
+     * BanManager/MuteManager read as "never expires" — and
+     * {@link com.lemonpvp.lemoncore.util.TextUtil#INVALID_DURATION} for anything malformed, so
+     * the caller can answer 400 instead of silently issuing a <em>permanent</em> punishment.
+     * A bare number still means seconds, as this endpoint has always accepted.
+     */
     private long parseDuration(String d) {
-        if (d == null || d.equalsIgnoreCase("permanent")) return -1L;
-        try {
-            if (d.endsWith("d")) return Long.parseLong(d.replace("d","")) * 86400L;
-            if (d.endsWith("h")) return Long.parseLong(d.replace("h","")) * 3600L;
-            if (d.endsWith("m")) return Long.parseLong(d.replace("m","")) * 60L;
-            return Long.parseLong(d);
-        } catch (NumberFormatException e) { return -1L; }
+        if (d == null || d.isBlank() || d.equalsIgnoreCase("permanent")) return 0L;
+        String trimmed = d.trim();
+        if (trimmed.chars().allMatch(Character::isDigit)) {
+            try { return Long.parseLong(trimmed); }
+            catch (NumberFormatException e) { return com.lemonpvp.lemoncore.util.TextUtil.INVALID_DURATION; }
+        }
+        return com.lemonpvp.lemoncore.util.TextUtil.parseDuration(trimmed);
     }
 
     // ─── v2 endpoints ────────────────────────────────────────────────────────

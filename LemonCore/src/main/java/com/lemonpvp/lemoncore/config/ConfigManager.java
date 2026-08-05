@@ -36,39 +36,70 @@ public class ConfigManager {
         return plugin.getConfig().getBoolean(path, def);
     }
 
+    /** Fallback when a configured ban duration cannot be parsed (7 days). */
+    private static final long DEFAULT_BAN_SECONDS  = 7L * 86400L;
+    /** Fallback when a configured mute duration cannot be parsed (1 day). */
+    private static final long DEFAULT_MUTE_SECONDS = 86400L;
+
+    /**
+     * Reads a duration from config, warning and falling back when it is malformed.
+     *
+     * <p>Without this, an unquoted numeric YAML value (e.g. {@code hacking: 30} meaning
+     * "30 days") parses to 0, which the plugin reads as <em>permanent</em> — a silent
+     * escalation from a temporary ban to a permanent one.
+     */
+    private long duration(String raw, String configKey, long fallbackSeconds) {
+        long parsed = TextUtil.parseDuration(raw);
+        if (parsed == TextUtil.INVALID_DURATION) {
+            plugin.getLogger().warning("[Config] " + configKey + ": '" + raw + "' is not a valid"
+                    + " duration (expected e.g. 7d, 12h, 30m or permanent). Using "
+                    + TextUtil.formatDuration(fallbackSeconds) + " instead.");
+            return fallbackSeconds;
+        }
+        return parsed;
+    }
+
     public long getBanDuration(String reason) {
-        if (reason == null) return TextUtil.parseDuration(get("ban.default-duration", "7d"));
+        if (reason == null) {
+            return duration(get("ban.default-duration", "7d"), "ban.default-duration", DEFAULT_BAN_SECONDS);
+        }
         String lower = reason.toLowerCase();
         Map<String, Object> reasons = plugin.getConfig().getConfigurationSection("ban.reasons") != null
                 ? plugin.getConfig().getConfigurationSection("ban.reasons").getValues(false)
                 : new HashMap<>();
         for (Map.Entry<String, Object> entry : reasons.entrySet()) {
             if (lower.contains(entry.getKey().toLowerCase()) && !entry.getKey().equals("default")) {
-                return TextUtil.parseDuration(entry.getValue().toString());
+                return duration(entry.getValue().toString(),
+                        "ban.reasons." + entry.getKey(), DEFAULT_BAN_SECONDS);
             }
         }
         Object def = reasons.get("default");
-        return TextUtil.parseDuration(def != null ? def.toString() : get("ban.default-duration", "7d"));
+        if (def != null) return duration(def.toString(), "ban.reasons.default", DEFAULT_BAN_SECONDS);
+        return duration(get("ban.default-duration", "7d"), "ban.default-duration", DEFAULT_BAN_SECONDS);
     }
 
     public long getMuteDuration(String reason) {
-        if (reason == null) return TextUtil.parseDuration(get("mute.default-duration", "1d"));
+        if (reason == null) {
+            return duration(get("mute.default-duration", "1d"), "mute.default-duration", DEFAULT_MUTE_SECONDS);
+        }
         String lower = reason.toLowerCase();
         Map<String, Object> reasons = plugin.getConfig().getConfigurationSection("mute.reasons") != null
                 ? plugin.getConfig().getConfigurationSection("mute.reasons").getValues(false)
                 : new HashMap<>();
         for (Map.Entry<String, Object> entry : reasons.entrySet()) {
             if (lower.contains(entry.getKey().toLowerCase()) && !entry.getKey().equals("default")) {
-                return TextUtil.parseDuration(entry.getValue().toString());
+                return duration(entry.getValue().toString(),
+                        "mute.reasons." + entry.getKey(), DEFAULT_MUTE_SECONDS);
             }
         }
         Object def = reasons.get("default");
-        return TextUtil.parseDuration(def != null ? def.toString() : get("mute.default-duration", "1d"));
+        if (def != null) return duration(def.toString(), "mute.reasons.default", DEFAULT_MUTE_SECONDS);
+        return duration(get("mute.default-duration", "1d"), "mute.default-duration", DEFAULT_MUTE_SECONDS);
     }
 
     /** Duration (seconds) for the /offend quick-ban, from config "offend.duration". */
     public long getOffendDuration() {
-        return TextUtil.parseDuration(get("offend.duration", "7d"));
+        return duration(get("offend.duration", "7d"), "offend.duration", DEFAULT_BAN_SECONDS);
     }
 
     /** Fixed reason for the /offend quick-ban. */
@@ -94,7 +125,8 @@ public class ConfigManager {
                 if (s == null) continue;
                 out.add(new OffendReason(id.toLowerCase(),
                         s.getString("name", id),
-                        TextUtil.parseDuration(s.getString("duration", "7d")),
+                        duration(s.getString("duration", "7d"),
+                                "offend.reasons." + id + ".duration", DEFAULT_BAN_SECONDS),
                         s.getString("icon", "PAPER")));
             }
         }
