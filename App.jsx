@@ -2638,7 +2638,18 @@ const AI_PROVIDERS = {
     keyPlaceholder: "AIza…",
     keyUrl: "https://aistudio.google.com/app/apikey",
     keyUrlLabel: "aistudio.google.com",
-    note: "Google bietet ein kostenloses Kontingent (Gemini Flash) — keine Kreditkarte nötig.",
+    note: "Kostenloses Kontingent (Gemini Flash): ca. 15 Anfragen pro Minute je Key. Mehrere Keys eintragen — sie werden automatisch abwechselnd genutzt.",
+    multiKey: true,
+  },
+  ollama: {
+    label: "Eigener Server (Ollama)",
+    badge: "Selbst gehostet",
+    keyPlaceholder: "http://localhost:11434",
+    keyUrl: "https://ollama.com/download",
+    keyUrlLabel: "ollama.com",
+    note: "Läuft komplett auf deiner eigenen Hardware — keine Kosten, keine Limits, keine Daten an Dritte. Statt eines Keys trägst du die Server-Adresse ein.",
+    multiKey: false,
+    isLocal: true,
   },
   anthropic: {
     label: "Anthropic Claude",
@@ -2646,15 +2657,73 @@ const AI_PROVIDERS = {
     keyPlaceholder: "sk-ant-…",
     keyUrl: "https://console.anthropic.com/settings/keys",
     keyUrlLabel: "console.anthropic.com",
-    note: "Claude rechnet pro Nutzung ab (Bruchteile eines Cents pro Bewertung) — es gibt keinen dauerhaften Gratis-Tarif.",
+    note: "Beste Qualität, rechnet aber pro Nutzung ab (Bruchteile eines Cents pro Bewertung) — kein Gratis-Tarif.",
+    multiKey: true,
   },
 };
 
-// Ruft den gewählten Anbieter auf und gibt den reinen Antworttext zurück.
-async function callAI(provider, apiKey, systemPrompt, userPrompt, maxTokens = 1000) {
+const OLLAMA_DEFAULT_URL = "http://localhost:11434";
+const OLLAMA_DEFAULT_MODEL = "qwen2.5-coder:3b";
+
+/* ------------------------- Key-Pool mit Rotation -------------------------
+   Mehrere API-Keys werden reihum genutzt. Läuft ein Key ins Rate-Limit (429)
+   oder ist sein Kontingent erschöpft (403), wird er für eine Weile pausiert
+   und der nächste Key übernimmt. So summieren sich die Gratis-Kontingente
+   mehrerer Konten zu einem gemeinsamen Durchsatz.
+   ------------------------------------------------------------------------- */
+const keyCooldowns = new Map();   // key -> Zeitpunkt, ab dem er wieder nutzbar ist
+let keyCursor = 0;
+
+function availableKeys(keys) {
+  const now = Date.now();
+  const free = keys.filter((k) => (keyCooldowns.get(k) || 0) <= now);
+  return free.length ? free : keys; // alle pausiert? Dann trotzdem versuchen.
+}
+
+function nextKey(keys) {
+  const pool = availableKeys(keys);
+  const key = pool[keyCursor % pool.length];
+  keyCursor = (keyCursor + 1) % Math.max(pool.length, 1);
+  return key;
+}
+
+function coolDownKey(key, seconds = 60) {
+  keyCooldowns.set(key, Date.now() + seconds * 1000);
+}
+
+function keyPoolStatus(keys) {
+  const now = Date.now();
+  return (keys || []).map((k) => ({
+    masked: k.length > 10 ? k.slice(0, 6) + "…" + k.slice(-4) : k,
+    cooling: (keyCooldowns.get(k) || 0) > now,
+    secondsLeft: Math.max(0, Math.ceil(((keyCooldowns.get(k) || 0) - now) / 1000)),
+  }));
+}
+
+async function callProviderOnce(provider, key, systemPrompt, userPrompt, maxTokens, ollamaModel) {
+  if (provider === "ollama") {
+    const base = (key || OLLAMA_DEFAULT_URL).replace(/\/+$/, "");
+    const res = await fetch(`${base}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: ollamaModel || OLLAMA_DEFAULT_MODEL,
+        stream: false,
+        options: { temperature: 0.3, num_predict: maxTokens },
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+    if (!res.ok) throw Object.assign(new Error("Ollama " + res.status), { status: res.status });
+    const data = await res.json();
+    return data.message.content;
+  }
+
   if (provider === "gemini") {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2665,7 +2734,7 @@ async function callAI(provider, apiKey, systemPrompt, userPrompt, maxTokens = 10
         }),
       }
     );
-    if (!res.ok) throw new Error("Gemini " + res.status);
+    if (!res.ok) throw Object.assign(new Error("Gemini " + res.status), { status: res.status });
     const data = await res.json();
     return data.candidates[0].content.parts[0].text;
   }
@@ -2675,7 +2744,7 @@ async function callAI(provider, apiKey, systemPrompt, userPrompt, maxTokens = 10
     headers: {
       "Content-Type": "application/json",
       "anthropic-version": "2023-06-01",
-      "x-api-key": apiKey,
+      "x-api-key": key,
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
@@ -2685,9 +2754,34 @@ async function callAI(provider, apiKey, systemPrompt, userPrompt, maxTokens = 10
       messages: [{ role: "user", content: userPrompt }],
     }),
   });
-  if (!res.ok) throw new Error("Anthropic " + res.status);
+  if (!res.ok) throw Object.assign(new Error("Anthropic " + res.status), { status: res.status });
   const data = await res.json();
   return data.content[0].text;
+}
+
+// Ruft den gewählten Anbieter auf; probiert bei Limits automatisch weitere Keys.
+async function callAI(provider, keys, systemPrompt, userPrompt, maxTokens = 1000, ollamaModel) {
+  const pool = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
+  if (provider === "ollama") {
+    return callProviderOnce("ollama", pool[0] || OLLAMA_DEFAULT_URL, systemPrompt, userPrompt, maxTokens, ollamaModel);
+  }
+  if (!pool.length) throw new Error("Kein API-Key hinterlegt");
+
+  let lastError;
+  const attempts = Math.min(pool.length, 5);
+  for (let i = 0; i < attempts; i++) {
+    const key = nextKey(pool);
+    try {
+      return await callProviderOnce(provider, key, systemPrompt, userPrompt, maxTokens, ollamaModel);
+    } catch (e) {
+      lastError = e;
+      // 429 = Rate-Limit, 403/402 = Kontingent erschöpft -> Key pausieren, nächsten nehmen
+      if (e.status === 429) coolDownKey(key, 65);
+      else if (e.status === 403 || e.status === 402) coolDownKey(key, 600);
+      else break; // andere Fehler (z.B. ungültige Anfrage) betreffen alle Keys gleich
+    }
+  }
+  throw lastError;
 }
 
 function parseAIJson(text) {
@@ -2697,8 +2791,10 @@ function parseAIJson(text) {
   return JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
 }
 
-async function checkAnswerWithAI(task, userAnswer, language, lessonTitle, apiKey, provider = "gemini") {
-  if (!apiKey) return heuristicCheck(task, userAnswer);
+async function checkAnswerWithAI(task, userAnswer, language, lessonTitle, aiCfg = {}) {
+  const { keys = [], provider = "gemini", ollamaModel, langId } = aiCfg;
+  const hasAccess = provider === "ollama" || keys.length > 0;
+  if (!hasAccess) return heuristicCheck(task, userAnswer, langId);
 
   const systemPrompt = `Du bist ein freundlicher aber präziser Programmier-Lehrer.
 Du bewertest Antworten von Schülern die Programmieren lernen.
@@ -2730,18 +2826,20 @@ Schüler-Antwort: ${userAnswer}
 Bitte bewerte diese Antwort.`;
 
   try {
-    const text = await callAI(provider, apiKey, systemPrompt, userPrompt, 1000);
+    const text = await callAI(provider, keys, systemPrompt, userPrompt, 1000, ollamaModel);
     return { ...parseAIJson(text), offline: false };
   } catch (e) {
     // Graceful Fallback: lokale Heuristik, damit die Plattform auch ohne
     // erreichbare API nutzbar bleibt.
-    return heuristicCheck(task, userAnswer);
+    return heuristicCheck(task, userAnswer, langId);
   }
 }
 
 /* ---------------------- KI-Code-Debugging (Playground) ------------------- */
-async function debugCodeWithAI({ html, css, js }, apiKey, provider = "gemini") {
-  if (!apiKey) return heuristicDebug({ html, css, js });
+async function debugCodeWithAI({ html, css, js }, aiCfg = {}) {
+  const { keys = [], provider = "gemini", ollamaModel } = aiCfg;
+  const hasAccess = provider === "ollama" || keys.length > 0;
+  if (!hasAccess) return heuristicDebug({ html, css, js });
 
   const systemPrompt = `Du bist ein erfahrener Web-Entwickler und hilfst beim Debuggen von HTML/CSS/JavaScript.
 
@@ -2762,7 +2860,7 @@ ANTWORTE NUR IN DIESEM JSON FORMAT (keine anderen Zeichen davor oder danach):
   const userPrompt = `HTML:\n${html || "(leer)"}\n\nCSS:\n${css || "(leer)"}\n\nJavaScript:\n${js || "(leer)"}\n\nBitte analysiere diesen Code.`;
 
   try {
-    const text = await callAI(provider, apiKey, systemPrompt, userPrompt, 1500);
+    const text = await callAI(provider, keys, systemPrompt, userPrompt, 1500, ollamaModel);
     return { ...parseAIJson(text), offline: false };
   } catch (e) {
     return heuristicDebug({ html, css, js });
@@ -2811,11 +2909,132 @@ function heuristicDebug({ html, css, js }) {
 
 function normalizeAlnum(s) { return (s || "").toLowerCase().replace(/[^a-z0-9äöüß]+/g, ""); }
 
-function heuristicCheck(task, userAnswer) {
-  const ans = (userAnswer || "").trim();
-  const low = ans.toLowerCase();
+/* ===================== Lokale Analyse-Engine ("LD-Analyzer") ==============
+   Läuft ohne API-Key komplett im Browser und ersetzt einfaches Text-Suchen
+   durch eine echte Vorverarbeitung: Strings und Kommentare werden entfernt,
+   bevor nach Konzepten gesucht wird — sonst würde ein Kommentar wie
+   "// nutze const" schon als Lösung durchgehen. Zusätzlich werden Struktur
+   (Klammern), Sprach-Idiome und bei Freitext die inhaltliche Abdeckung geprüft.
+   ========================================================================= */
 
-  // Lückentext: pro Lücke vergleichen, aber Satzzeichen/Klammern tolerieren
+// Entfernt Kommentare und Zeichenketten, behält aber die Länge grob bei.
+function stripNoise(code, lang) {
+  let s = String(code || "");
+  if (lang === "python") s = s.replace(/#[^\n]*/g, " ");
+  else if (lang === "sql") s = s.replace(/--[^\n]*/g, " ");
+  else s = s.replace(/\/\/[^\n]*/g, " ");
+  s = s.replace(/\/\*[\s\S]*?\*\//g, " ");      // Blockkommentare
+  s = s.replace(/<!--[\s\S]*?-->/g, " ");       // HTML-Kommentare
+  s = s.replace(/"""[\s\S]*?"""/g, ' "" ');     // Python-Docstrings
+  s = s.replace(/(["'`])(?:\\.|(?!\1)[^\\\n])*\1/g, (m) => m[0] + m[0]); // Strings leeren
+  return s;
+}
+
+// Synonyme/Alternativen, damit sinngleiche Lösungen anerkannt werden.
+const CONCEPT_ALIASES = {
+  "let oder const": ["let", "const"],
+  "variable": ["let", "const", "var", "=", "int", "string", "def", "$"],
+  "string": ['"', "'", "`"],
+  "zahl": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+  "number": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+  "funktion": ["function", "def", "=>", "func", "fun", "fn"],
+  "schleife": ["for", "while", "foreach", "map"],
+  "bedingung": ["if", "switch", "match", "?"],
+  "ausgabe": ["console.log", "print", "println", "cout", "echo", "printf"],
+};
+
+function conceptMatches(concept, cleaned, raw) {
+  const c = String(concept).trim();
+  const lc = c.toLowerCase();
+  const hay = cleaned.toLowerCase();
+
+  // Reine Operatoren/Symbole: direkt im entrauschten Code suchen
+  if (/^[=+\-*/<>!%&|.;:()[\]{}]+$/.test(c)) return cleaned.includes(c);
+
+  // Bekannte Sammelbegriffe über Alias-Liste auflösen
+  for (const [key, alts] of Object.entries(CONCEPT_ALIASES)) {
+    if (lc === key || lc.includes(key)) {
+      // String/Zahl werden am Rohtext geprüft (im entrauschten Code sind sie leer)
+      const source = (key === "string" || key === "zahl" || key === "number") ? raw : cleaned;
+      return alts.some((a) => source.toLowerCase().includes(a));
+    }
+  }
+
+  // HTML-Tags: <h1> soll auch "h1" erkennen und umgekehrt
+  const tagName = lc.replace(/[<>/]/g, "");
+  if (/^[a-z][a-z0-9]*$/.test(tagName) && /<[a-z]/i.test(cleaned)) {
+    if (new RegExp(`</?${tagName}[\\s>]`, "i").test(cleaned)) return true;
+  }
+
+  // Identifier/Schlüsselwort: als ganzes Wort suchen
+  if (/^[\w$äöüß.]+$/i.test(lc)) {
+    const escaped = lc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`(^|[^\\w$])${escaped}([^\\w$]|$)`, "i").test(hay)) return true;
+  }
+
+  // Mehrwort-Konzept: alle sinntragenden Teile müssen vorkommen
+  const parts = lc.split(/\s+oder\s+|[\s,]+/).filter((t) => t.length > 1);
+  if (parts.length > 1) return parts.some((p) => hay.includes(p));
+  return hay.includes(lc);
+}
+
+// Prüft Klammer-Balance und liefert eine Strukturbewertung.
+function structureScore(code) {
+  const pairs = [["{", "}"], ["(", ")"], ["[", "]"]];
+  const problems = [];
+  for (const [o, c] of pairs) {
+    const oc = (code.match(new RegExp("\\" + o, "g")) || []).length;
+    const cc = (code.match(new RegExp("\\" + c, "g")) || []).length;
+    if (oc !== cc) problems.push(`${o}${c}`);
+  }
+  return { ok: problems.length === 0, problems };
+}
+
+// Bewertet Freitext inhaltlich: Abdeckung erwarteter Begriffe + Sprachqualität.
+function explanationScore(answer, task) {
+  const text = String(answer || "").trim();
+  const low = text.toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean);
+  const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 3);
+
+  // Erwartete Begriffe aus Aufgabenstellung ableiten (Code-Spans in `back-ticks`)
+  const fromQuestion = (task.question || "").match(/`([^`]+)`/g) || [];
+  const expected = [...(task.expectedConcepts || []), ...fromQuestion.map((s) => s.replace(/`/g, ""))]
+    .map((s) => String(s).toLowerCase().trim()).filter((s) => s.length > 1);
+  const unique = [...new Set(expected)];
+  const hit = unique.filter((c) => low.includes(c));
+  const coverage = unique.length ? hit.length / unique.length : null;
+
+  // Begründende Sprache ist ein starkes Signal für echtes Verständnis
+  const reasoning = /\b(weil|damit|dadurch|sodass|deshalb|denn|somit|verhindert|ermöglicht|bedeutet|sorgt|schützt)\b/i.test(text);
+
+  let score = 0;
+  score += Math.min(40, words.length * 3);                       // Ausführlichkeit (max 40)
+  score += sentences.length >= 2 ? 15 : sentences.length * 7;    // Struktur (max 15)
+  score += reasoning ? 20 : 0;                                    // Begründung (max 20)
+  score += coverage === null ? 15 : Math.round(coverage * 25);   // Fachbegriffe (max 25)
+  score = Math.max(0, Math.min(100, score));
+
+  const missing = unique.filter((c) => !low.includes(c)).slice(0, 3);
+  const correct = score >= 55 && words.length >= 6;
+
+  let feedback, hint = "";
+  if (correct && score >= 80) feedback = "Sehr gute Erklärung — die Kernidee sitzt und du begründest sie nachvollziehbar.";
+  else if (correct) feedback = "Solide Erklärung. Die Grundidee hast du verstanden.";
+  else if (words.length < 6) { feedback = "Die Erklärung ist noch zu knapp, um dein Verständnis zu zeigen."; hint = "Schreib 1–2 vollständige Sätze und begründe das „Warum“."; }
+  else { feedback = "Die Richtung stimmt, aber es fehlt noch die eigentliche Begründung."; hint = "Erkläre nicht nur *was*, sondern auch *warum* es so ist (z.B. mit „weil …“)."; }
+  if (correct && missing.length && score < 85) hint = `Noch treffender wird es, wenn du auch ${missing.map((m) => `„${m}“`).join(", ")} erwähnst.`;
+
+  return {
+    correct, score, offline: true, feedback, hint,
+    praise: correct ? (score >= 80 ? "Klar auf den Punkt gebracht." : "Verständlich erklärt.") : "",
+  };
+}
+
+function heuristicCheck(task, userAnswer, lang) {
+  const raw = String(userAnswer || "").trim();
+
+  // Lückentext: pro Lücke vergleichen, Satzzeichen/Klammern tolerieren
   // (z.B. "<strong>" als Antwort für erwartetes "strong" akzeptieren).
   if (task.type === "fill_blank" && Array.isArray(task._blankAnswers)) {
     const total = task.blanks.length;
@@ -2838,45 +3057,43 @@ function heuristicCheck(task, userAnswer) {
   }
 
   if (task.type === "code_write") {
+    const cleaned = stripNoise(raw, lang);
+    const hasRealCode = cleaned.replace(/\s/g, "").length > 0;
+    if (!hasRealCode) {
+      return { correct: false, score: 0, offline: true, feedback: "Es ist noch kein Code vorhanden — nur Kommentare oder leere Zeilen.", hint: "Schreib deine Lösung als echten Code, nicht als Kommentar.", praise: "" };
+    }
+
     const concepts = task.expectedConcepts || [];
-    let matched = 0;
     const missing = [];
+    let matched = 0;
     for (const c of concepts) {
-      const lc = c.toLowerCase();
-      let hit;
-      if (/^[=+\-*/<>!%&|]+$/.test(c.trim())) hit = ans.includes(c.trim());            // Operatoren
-      else if (lc.includes("string")) hit = /["'`]/.test(ans);                          // String-Literal
-      else if (lc.includes("number") || lc === "zahl") hit = /\d/.test(ans);            // Zahl
-      else {
-        const tokens = lc.split(/\s+oder\s+|\s+/).filter((t) => t.length > 1);
-        hit = low.includes(lc) || tokens.some((t) => low.includes(t));
-      }
-      if (hit) matched++;
+      if (conceptMatches(c, cleaned, raw)) matched++;
       else missing.push(c);
     }
-    const score = concepts.length ? Math.round((matched / concepts.length) * 100) : (ans ? 80 : 0);
-    const correct = score >= 60 && ans.length > 0;
-    return {
-      correct, score, offline: true,
-      feedback: correct
-        ? `Stark! Deine Lösung enthält die erwarteten Bausteine (${matched}/${concepts.length}).`
-        : `Fast! Es fehlen noch wichtige Bausteine in deiner Lösung.`,
-      hint: correct ? "" : `Achte auf: ${missing.join(", ")}.`,
-      praise: correct ? "Sauber umgesetzt." : "",
-    };
+    const conceptScore = concepts.length ? matched / concepts.length : 0.8;
+    const struct = structureScore(cleaned);
+    let score = Math.round(conceptScore * 85 + (struct.ok ? 15 : 0));
+    score = Math.max(0, Math.min(100, score));
+    const correct = conceptScore >= 0.6 && struct.ok;
+
+    let feedback, hint = "";
+    if (!struct.ok) {
+      feedback = "Die Bausteine stimmen, aber die Klammern sind nicht ausgeglichen.";
+      hint = `Prüfe deine ${struct.problems.join(" und ")}-Klammern — eine Öffnung ohne Schließung.`;
+    } else if (correct && matched === concepts.length) {
+      feedback = `Stark! Deine Lösung enthält alle erwarteten Bausteine (${matched}/${concepts.length}) und ist sauber aufgebaut.`;
+    } else if (correct) {
+      feedback = `Gut gelöst — ${matched} von ${concepts.length} erwarteten Bausteinen sind da.`;
+      hint = `Für die volle Punktzahl fehlt noch: ${missing.join(", ")}.`;
+    } else {
+      feedback = "Da fehlen noch wesentliche Teile der Lösung.";
+      hint = `Achte auf: ${missing.join(", ")}.`;
+    }
+    return { correct, score, offline: true, feedback, hint, praise: correct ? "Sauber umgesetzt." : "" };
   }
+
   // explain / Freitext
-  const words = ans.split(/\s+/).filter(Boolean).length;
-  const correct = words >= 8;
-  const score = Math.max(0, Math.min(100, words * 8));
-  return {
-    correct, score, offline: true,
-    feedback: correct
-      ? "Gute, durchdachte Erklärung — du bringst die Kernidee klar auf den Punkt."
-      : "Deine Erklärung ist noch sehr kurz. Geh etwas mehr ins Detail.",
-    hint: correct ? "" : "Beschreibe das „Warum“ in 1–2 vollständigen Sätzen.",
-    praise: correct ? "Verständlich erklärt." : "",
-  };
+  return explanationScore(raw, task);
 }
 
 /* ========================= Reusable UI ============================= */
@@ -3282,60 +3499,142 @@ function SkeletonFeedback() {
   );
 }
 
-/* KI-Einstellungen: Anbieter wählen + eigenen API-Key hinterlegen */
+/* KI-Einstellungen: Anbieter wählen, mehrere Keys pflegen, Pool-Status sehen */
 function AiSettingsModal({ ctx }) {
-  const { apiKey, setApiKey, aiProvider, setAiProvider, closeAiSettings, pushToast } = ctx;
-  const [value, setValue] = useState(apiKey || "");
+  const { apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel, closeAiSettings, pushToast } = ctx;
   const [provider, setProvider] = useState(aiProvider || "gemini");
+  const [keys, setKeys] = useState(() => (apiKeys.length ? [...apiKeys] : [""]));
+  const [model, setModel] = useState(ollamaModel || OLLAMA_DEFAULT_MODEL);
   const [show, setShow] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
   const cfg = AI_PROVIDERS[provider];
+  const status = keyPoolStatus(apiKeys);
+
+  const setKeyAt = (i, v) => setKeys((ks) => ks.map((k, idx) => (idx === i ? v : k)));
+  const addKey = () => setKeys((ks) => [...ks, ""]);
+  const removeKey = (i) => setKeys((ks) => (ks.length > 1 ? ks.filter((_, idx) => idx !== i) : [""]));
 
   const save = () => {
+    const clean = keys.map((k) => k.trim()).filter(Boolean);
     setAiProvider(provider);
-    setApiKey(value.trim());
-    pushToast(value.trim() ? "success" : "info",
-      value.trim() ? `KI-Key gespeichert — Antworten werden jetzt von ${cfg.label} bewertet.` : "Kein Key — es läuft die Offline-Prüfung.");
+    setOllamaModel(model.trim() || OLLAMA_DEFAULT_MODEL);
+    setApiKeys(clean);
+    const usable = provider === "ollama" || clean.length > 0;
+    pushToast(usable ? "success" : "info",
+      provider === "ollama" ? `Eigener Server aktiv (${model}).`
+        : clean.length ? `${clean.length} Key${clean.length === 1 ? "" : "s"} gespeichert — Bewertung über ${cfg.label}.`
+        : "Kein Key — es läuft die lokale Analyse.");
     closeAiSettings();
+  };
+
+  const testConnection = async () => {
+    setTesting(true); setTestResult(null);
+    const clean = keys.map((k) => k.trim()).filter(Boolean);
+    try {
+      const txt = await callAI(provider, provider === "ollama" ? [clean[0] || OLLAMA_DEFAULT_URL] : clean,
+        "Antworte mit exakt einem Wort.", "Sage: OK", 20, model);
+      setTestResult({ ok: true, msg: `Verbindung steht. Antwort: „${String(txt).trim().slice(0, 40)}"` });
+    } catch (e) {
+      setTestResult({ ok: false, msg: `Fehlgeschlagen: ${e.message}${provider === "ollama" ? " — läuft Ollama und ist OLLAMA_ORIGINS gesetzt?" : ""}` });
+    }
+    setTesting(false);
   };
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 overflow-y-auto" onClick={closeAiSettings}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <Card className="relative z-10 p-7 max-w-md w-full my-8" onClick={(e) => e.stopPropagation()}>
+      <Card className="relative z-10 p-7 max-w-lg w-full my-8" onClick={(e) => e.stopPropagation()}>
         <button onClick={closeAiSettings} aria-label="Schließen" className="absolute top-4 right-4 text-[#8A9BC0] hover:text-[#E8EDF5]"><X size={20} /></button>
         <div className="flex items-center gap-3 mb-3">
           <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-[#7C3AED]/15"><Bot size={22} className="text-[#7C3AED]" /></div>
           <h3 className="font-display text-xl font-bold">KI-Einstellungen</h3>
         </div>
         <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
-          <strong className="text-[#E8EDF5]">Optional.</strong> Ohne Key funktioniert alles — dann prüft eine lokale Offline-Analyse deine Antworten. Für echte KI-Bewertung wähle einen Anbieter:
+          <strong className="text-[#E8EDF5]">Optional.</strong> Ohne Anbieter läuft die eingebaute lokale Analyse — sie prüft Struktur, Konzepte und Begründungen direkt im Browser.
         </p>
 
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="grid grid-cols-3 gap-2 mb-4">
           {Object.entries(AI_PROVIDERS).map(([id, p]) => (
-            <button key={id} onClick={() => setProvider(id)}
-              className={`text-left p-3 rounded-lg border transition-all ${provider === id ? "border-[#4F8EF7] bg-[#4F8EF7]/10" : "border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>
-              <div className="font-medium text-sm text-[#E8EDF5] mb-1">{p.label}</div>
-              <div className={`text-[10px] px-1.5 py-0.5 rounded-full inline-block ${id === "gemini" ? "bg-[#10B981]/15 text-[#10B981]" : "bg-[#F59E0B]/15 text-[#F59E0B]"}`}>{p.badge}</div>
+            <button key={id} onClick={() => {
+                setProvider(id); setTestResult(null);
+                // Beim Wechsel passende Feldwerte setzen: Ollama erwartet eine URL,
+                // die Cloud-Anbieter einen Key — sonst landet der Key im Adressfeld.
+                setKeys((ks) => {
+                  const first = (ks[0] || "").trim();
+                  if (id === "ollama") return [/^https?:\/\//i.test(first) ? first : OLLAMA_DEFAULT_URL];
+                  return /^https?:\/\//i.test(first) ? [""] : ks;
+                });
+              }}
+              className={`text-left p-2.5 rounded-lg border transition-all ${provider === id ? "border-[#4F8EF7] bg-[#4F8EF7]/10" : "border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>
+              <div className="font-medium text-xs text-[#E8EDF5] mb-1 leading-tight">{p.label}</div>
+              <div className={`text-[9px] px-1.5 py-0.5 rounded-full inline-block ${id === "gemini" ? "bg-[#10B981]/15 text-[#10B981]" : id === "ollama" ? "bg-[#4F8EF7]/15 text-[#4F8EF7]" : "bg-[#F59E0B]/15 text-[#F59E0B]"}`}>{p.badge}</div>
             </button>
           ))}
         </div>
 
         <p className="text-xs text-[#8A9BC0] mb-4 leading-relaxed p-2.5 rounded-lg bg-[#0A0E1A] border border-[#1E2D4A]">{cfg.note}</p>
 
-        <label className="block text-sm text-[#8A9BC0] mb-1.5">{cfg.label} API-Key</label>
-        <div className="relative mb-2">
-          <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A5A7A]" />
-          <input type={show ? "text" : "password"} value={value} onChange={(e) => setValue(e.target.value)} placeholder={cfg.keyPlaceholder}
-            className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 pl-9 pr-16 font-code text-sm text-[#E8EDF5] placeholder:text-[#4A5A7A] transition-colors" />
-          <button onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8A9BC0] hover:text-[#E8EDF5]">{show ? "Verbergen" : "Anzeigen"}</button>
-        </div>
-        <p className="text-xs text-[#4A5A7A] mb-5 leading-relaxed">
-          Dein Key bleibt lokal in deinem Browser (localStorage) und wird nur direkt an {cfg.label} gesendet. Key erstellen:{" "}
-          <a href={cfg.keyUrl} target="_blank" rel="noopener noreferrer" className="text-[#4F8EF7] underline">{cfg.keyUrlLabel}</a>.
-        </p>
-        <div className="flex gap-2">
-          {apiKey && <Btn variant="danger" icon={Trash2} onClick={() => { setValue(""); setApiKey(""); pushToast("info", "KI-Key entfernt."); closeAiSettings(); }}>Entfernen</Btn>}
+        {provider === "ollama" ? (
+          <>
+            <label className="block text-sm text-[#8A9BC0] mb-1.5">Server-Adresse</label>
+            <input value={keys[0] || ""} onChange={(e) => setKeyAt(0, e.target.value)} placeholder={OLLAMA_DEFAULT_URL}
+              className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 mb-3 font-code text-sm text-[#E8EDF5]" />
+            <label className="block text-sm text-[#8A9BC0] mb-1.5">Modell</label>
+            <input value={model} onChange={(e) => setModel(e.target.value)} placeholder={OLLAMA_DEFAULT_MODEL}
+              className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 mb-2 font-code text-sm text-[#E8EDF5]" />
+            <p className="text-xs text-[#4A5A7A] mb-4 leading-relaxed">
+              Für CPU-Server empfehlen sich kleine Modelle: <code className="font-code text-[#4F8EF7]">qwen2.5-coder:3b</code> oder <code className="font-code text-[#4F8EF7]">llama3.2:3b</code>.
+              Damit der Browser zugreifen darf, Ollama mit <code className="font-code text-[#4F8EF7]">OLLAMA_ORIGINS=*</code> starten.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-sm text-[#8A9BC0]">{cfg.label} API-Keys</label>
+              <button onClick={() => setShow((s) => !s)} className="text-xs text-[#8A9BC0] hover:text-[#E8EDF5]">{show ? "Verbergen" : "Anzeigen"}</button>
+            </div>
+            <div className="space-y-2 mb-2">
+              {keys.map((k, i) => (
+                <div key={i} className="relative flex gap-2">
+                  <div className="relative flex-1">
+                    <KeyRound size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A5A7A]" />
+                    <input type={show ? "text" : "password"} value={k} onChange={(e) => setKeyAt(i, e.target.value)} placeholder={`${cfg.keyPlaceholder} (Key ${i + 1})`}
+                      className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 pl-8 font-code text-xs text-[#E8EDF5] placeholder:text-[#4A5A7A]" />
+                  </div>
+                  {keys.length > 1 && <button onClick={() => removeKey(i)} aria-label="Key entfernen" className="px-2 text-[#8A9BC0] hover:text-[#EF4444]"><Trash2 size={15} /></button>}
+                </div>
+              ))}
+            </div>
+            <button onClick={addKey} className="text-xs text-[#4F8EF7] hover:underline flex items-center gap-1.5 mb-3"><Plus size={12} />Weiteren Key hinzufügen</button>
+            <p className="text-xs text-[#4A5A7A] mb-3 leading-relaxed">
+              Mehrere Keys (auch aus verschiedenen Konten) werden abwechselnd genutzt. Läuft einer ins Limit, übernimmt automatisch der nächste — so vervielfacht sich dein Gratis-Kontingent. Keys erstellen:{" "}
+              <a href={cfg.keyUrl} target="_blank" rel="noopener noreferrer" className="text-[#4F8EF7] underline">{cfg.keyUrlLabel}</a>.
+            </p>
+            {status.length > 0 && (
+              <div className="mb-3 p-2.5 rounded-lg bg-[#0A0E1A] border border-[#1E2D4A]">
+                <p className="text-[11px] text-[#8A9BC0] mb-1.5">Key-Pool ({status.length} aktiv):</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {status.map((s, i) => (
+                    <span key={i} className={`text-[10px] font-code px-2 py-0.5 rounded-full ${s.cooling ? "bg-[#F59E0B]/15 text-[#F59E0B]" : "bg-[#10B981]/15 text-[#10B981]"}`}>
+                      {s.masked}{s.cooling ? ` · pausiert ${s.secondsLeft}s` : " · bereit"}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {testResult && (
+          <p className={`text-xs mb-3 p-2.5 rounded-lg ${testResult.ok ? "bg-[#10B981]/10 text-[#10B981]" : "bg-[#EF4444]/10 text-[#EF4444]"}`}>{testResult.msg}</p>
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          <Btn variant="secondary" icon={testing ? undefined : Zap} onClick={testConnection} disabled={testing}>
+            {testing ? <><Loader2 size={14} className="ld-spin" />Teste …</> : "Verbindung testen"}
+          </Btn>
+          {apiKeys.length > 0 && <Btn variant="danger" icon={Trash2} onClick={() => { setKeys([""]); setApiKeys([]); pushToast("info", "Keys entfernt."); closeAiSettings(); }}>Alle löschen</Btn>}
           <Btn className="flex-1" icon={Check} onClick={save}>Speichern</Btn>
         </div>
       </Card>
@@ -3412,8 +3711,10 @@ const uid = () => "u_" + Math.random().toString(36).slice(2, 9);
    nie. Gast-Sitzungen (isGuest) werden bewusst NICHT gespeichert.
    ------------------------------------------------------------------------- */
 const STORAGE_KEY = "learndeveloping_v1";
-const API_KEY_STORAGE = "learndeveloping_ai_key";
+const API_KEY_STORAGE = "learndeveloping_ai_key";          // alt (Einzel-Key)
+const API_KEYS_STORAGE = "learndeveloping_ai_keys";        // neu (Key-Pool)
 const AI_PROVIDER_STORAGE = "learndeveloping_ai_provider";
+const OLLAMA_MODEL_STORAGE = "learndeveloping_ollama_model";
 
 function loadPersisted() {
   try {
@@ -3434,11 +3735,21 @@ function savePersisted(users, currentUser, reports) {
   } catch (e) {}
 }
 
-function loadApiKey() {
-  try { return localStorage.getItem(API_KEY_STORAGE) || ""; } catch (e) { return ""; }
+// Mehrere Keys werden als JSON-Array abgelegt; ein alter Einzel-Key wird
+// beim ersten Laden automatisch übernommen.
+function loadApiKeys() {
+  try {
+    const raw = localStorage.getItem(API_KEYS_STORAGE);
+    if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) return arr.filter(Boolean); }
+    const legacy = localStorage.getItem(API_KEY_STORAGE);
+    return legacy ? [legacy] : [];
+  } catch (e) { return []; }
 }
 function loadAiProvider() {
   try { return localStorage.getItem(AI_PROVIDER_STORAGE) || "gemini"; } catch (e) { return "gemini"; }
+}
+function loadOllamaModel() {
+  try { return localStorage.getItem(OLLAMA_MODEL_STORAGE) || OLLAMA_DEFAULT_MODEL; } catch (e) { return OLLAMA_DEFAULT_MODEL; }
 }
 
 function mergeWithDemo(persistedUsers) {
@@ -3466,8 +3777,9 @@ export default function App() {
   const [xpPopup, setXpPopup] = useState(null);
   const [confetti, setConfetti] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [apiKey, setApiKeyState] = useState(loadApiKey);
+  const [apiKeys, setApiKeysState] = useState(loadApiKeys);
   const [aiProvider, setAiProviderState] = useState(loadAiProvider);
+  const [ollamaModel, setOllamaModelState] = useState(loadOllamaModel);
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
   const [emailVerifyOpen, setEmailVerifyOpen] = useState(false);
   const [pending2FA, setPending2FA] = useState(null);
@@ -3479,14 +3791,25 @@ export default function App() {
   // Fortschritt automatisch lokal sichern (Gäste ausgenommen)
   useEffect(() => { savePersisted(users, currentUser, reports); }, [users, currentUser, reports]);
 
-  const setApiKey = useCallback((key) => {
-    setApiKeyState(key);
-    try { key ? localStorage.setItem(API_KEY_STORAGE, key) : localStorage.removeItem(API_KEY_STORAGE); } catch (e) {}
+  const setApiKeys = useCallback((keys) => {
+    const clean = (keys || []).map((k) => String(k).trim()).filter(Boolean);
+    setApiKeysState(clean);
+    try {
+      localStorage.setItem(API_KEYS_STORAGE, JSON.stringify(clean));
+      localStorage.removeItem(API_KEY_STORAGE); // Altbestand aufräumen
+    } catch (e) {}
   }, []);
   const setAiProvider = useCallback((p) => {
     setAiProviderState(p);
     try { localStorage.setItem(AI_PROVIDER_STORAGE, p); } catch (e) {}
   }, []);
+  const setOllamaModel = useCallback((m) => {
+    setOllamaModelState(m);
+    try { localStorage.setItem(OLLAMA_MODEL_STORAGE, m); } catch (e) {}
+  }, []);
+  // Gebündelte KI-Konfiguration für alle Aufrufstellen
+  const aiConfig = { keys: apiKeys, provider: aiProvider, ollamaModel };
+  const aiReady = aiProvider === "ollama" || apiKeys.length > 0;
   const openAiSettings = useCallback(() => setAiSettingsOpen(true), []);
   const closeAiSettings = useCallback(() => setAiSettingsOpen(false), []);
   const openEmailVerify = useCallback(() => setEmailVerifyOpen(true), []);
@@ -3706,7 +4029,7 @@ export default function App() {
     selectedCourse, openCourse, selectedLesson, openLesson,
     selectedStudent, setSelectedStudent, login, register, logout, continueAsGuest,
     pushToast, showXP, addXP, completeLesson, celebrate, sidebarOpen, setSidebarOpen,
-    apiKey, setApiKey, aiProvider, setAiProvider, aiSettingsOpen, openAiSettings, closeAiSettings,
+    apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel, aiConfig, aiReady, aiSettingsOpen, openAiSettings, closeAiSettings,
     pending2FA, verify2FALogin, cancel2FALogin,
     emailVerifyOpen, openEmailVerify, closeEmailVerify, verifyEmail,
     enable2FA, disable2FA, twoFactorSetupCode, closeTwoFactorSetup,
@@ -3754,17 +4077,28 @@ function Landing({ ctx }) {
     <div>
       {/* Top nav */}
       <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-[#0A0E1A]/80 border-b border-[#1E2D4A]">
-        <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between gap-4">
           <Logo onClick={() => navigate("landing")} />
-          <div className="hidden md:flex items-center gap-7 text-sm text-[#8A9BC0]">
-            <a href="#kurse" className="hover:text-[#E8EDF5] transition-colors">Kurse</a>
-            <a href="#features" className="hover:text-[#E8EDF5] transition-colors">Features</a>
-            <a href="#rollen" className="hover:text-[#E8EDF5] transition-colors">Für Schulen</a>
+          <div className="hidden lg:flex items-center gap-6 text-sm text-[#8A9BC0]">
+            <a href="#kurse" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><BookOpen size={13} />Kurse</a>
+            <a href="#ide" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><Code2 size={13} />IDE</a>
+            <a href="#features" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><Sparkles size={13} />Features</a>
+            <a href="#rollen" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><GraduationCap size={13} />Für Schulen</a>
+            <a href="#preise" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><Star size={13} />Preise</a>
+            <button onClick={() => navigate("ueber-uns")} className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><Info size={13} />Über uns</button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             <Btn variant="ghost" size="sm" onClick={() => navigate("login")}>Anmelden</Btn>
             <Btn size="sm" icon={Rocket} onClick={() => navigate("register")}>Jetzt starten</Btn>
           </div>
+        </div>
+        {/* Mobile Navigation */}
+        <div className="lg:hidden flex items-center gap-4 px-5 pb-2.5 overflow-x-auto text-xs text-[#8A9BC0]">
+          <a href="#kurse" className="whitespace-nowrap hover:text-[#E8EDF5]">Kurse</a>
+          <a href="#ide" className="whitespace-nowrap hover:text-[#E8EDF5]">IDE</a>
+          <a href="#features" className="whitespace-nowrap hover:text-[#E8EDF5]">Features</a>
+          <a href="#rollen" className="whitespace-nowrap hover:text-[#E8EDF5]">Für Schulen</a>
+          <a href="#preise" className="whitespace-nowrap hover:text-[#E8EDF5]">Preise</a>
         </div>
       </nav>
 
@@ -3878,11 +4212,11 @@ function Landing({ ctx }) {
         </div>
       </section>
 
-      {/* Playground-Highlight */}
-      <section className="bg-[#0F1629] border-y border-[#1E2D4A] py-20">
+      {/* IDE-Highlight */}
+      <section id="ide" className="bg-[#0F1629] border-y border-[#1E2D4A] py-20">
         <div className="max-w-5xl mx-auto px-5 grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs mb-4 bg-[#4F8EF7]/15 text-[#4F8EF7]"><Code2 size={13} />Code-Editor</span>
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs mb-4 bg-[#4F8EF7]/15 text-[#4F8EF7]"><Code2 size={13} />Integrierte IDE</span>
             <h2 className="font-display text-3xl font-extrabold mb-4">Nicht nur lernen — <span className="ld-gradient-text">bauen</span>.</h2>
             <p className="text-[#8A9BC0] leading-relaxed mb-5">
               Im integrierten Code-Editor schreibst du frei HTML, CSS und JavaScript. Deine Seite wird live gerendert, während du tippst. Speichere deine Projekte und lass sie von der KI debuggen.
@@ -3942,6 +4276,44 @@ function Landing({ ctx }) {
         </div>
       </section>
 
+      {/* Preise */}
+      <section id="preise" className="bg-[#0F1629] border-y border-[#1E2D4A] py-20">
+        <div className="max-w-4xl mx-auto px-5">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-4xl font-extrabold mb-3">Einfach <span className="ld-gradient-text">kostenlos</span></h2>
+            <p className="text-[#8A9BC0] text-lg">Alle Lerninhalte sind frei zugänglich. Keine Paywall, keine Kreditkarte.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="p-8 relative overflow-hidden">
+              <h3 className="font-display text-xl font-bold mb-1">Kostenlos</h3>
+              <p className="font-display text-4xl font-black mb-1">0 €</p>
+              <p className="text-sm text-[#8A9BC0] mb-6">für immer</p>
+              <ul className="space-y-2 mb-6 text-sm text-[#8A9BC0]">
+                {[`Alle ${COURSES.length} Sprachen & ${TOTAL_LESSONS}+ Lektionen`, "IDE mit Live-Vorschau", "Lokale Code-Analyse", "XP, Level & Abzeichen", "Ohne Anmeldung testbar"].map((x, i) => (
+                  <li key={i} className="flex items-start gap-2"><CheckCircle2 size={16} className="text-[#10B981] mt-0.5 shrink-0" />{x}</li>
+                ))}
+              </ul>
+              <Btn className="w-full" icon={Rocket} onClick={() => navigate("register")}>Jetzt starten</Btn>
+            </Card>
+            <Card className="p-8 relative overflow-hidden border-[#4F8EF7]/40">
+              <span className="absolute top-4 right-4 text-[10px] px-2 py-0.5 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7]">Optional</span>
+              <h3 className="font-display text-xl font-bold mb-1">Mit eigener KI</h3>
+              <p className="font-display text-4xl font-black mb-1">0 €<span className="text-base font-normal text-[#8A9BC0]">*</span></p>
+              <p className="text-sm text-[#8A9BC0] mb-6">*eigener Anbieter-Zugang</p>
+              <ul className="space-y-2 mb-6 text-sm text-[#8A9BC0]">
+                {["Alles aus Kostenlos", "KI-Bewertung deiner Antworten", "KI-Code-Debugging", "Gemini: kostenloses Kontingent", "Oder eigener Server via Ollama"].map((x, i) => (
+                  <li key={i} className="flex items-start gap-2"><CheckCircle2 size={16} className="text-[#4F8EF7] mt-0.5 shrink-0" />{x}</li>
+                ))}
+              </ul>
+              <Btn variant="secondary" className="w-full" icon={Bot} onClick={() => navigate("register")}>Mehr erfahren</Btn>
+            </Card>
+          </div>
+          <p className="text-center text-xs text-[#4A5A7A] mt-6">
+            Die Plattform selbst kostet nichts. Für KI-Bewertung nutzt du deinen eigenen Zugang — bei Google Gemini gibt es dafür ein kostenloses Kontingent.
+          </p>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-[#1E2D4A] py-10">
         <div className="max-w-6xl mx-auto px-5 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -3964,6 +4336,55 @@ function Landing({ ctx }) {
 }
 
 /* ============================ Auth ================================= */
+/* ---------------------- Cloudflare Turnstile (Botschutz) ------------------
+   Wird nur angezeigt, wenn in index.html ein Site-Key hinterlegt ist
+   (window.__TURNSTILE_SITE_KEY__). Ohne Key bleibt alles wie bisher nutzbar,
+   damit die App auch lokal ohne Cloudflare läuft.
+   ------------------------------------------------------------------------- */
+function turnstileSiteKey() {
+  try { return (typeof window !== "undefined" && window.__TURNSTILE_SITE_KEY__) || ""; } catch (e) { return ""; }
+}
+
+function Turnstile({ onVerify }) {
+  const ref = useRef(null);
+  const widgetId = useRef(null);
+  const siteKey = turnstileSiteKey();
+
+  useEffect(() => {
+    if (!siteKey || !ref.current) return;
+    let cancelled = false;
+    const render = () => {
+      if (cancelled || !window.turnstile || !ref.current || widgetId.current !== null) return;
+      widgetId.current = window.turnstile.render(ref.current, {
+        sitekey: siteKey,
+        theme: "dark",
+        callback: (token) => onVerify && onVerify(token),
+        "expired-callback": () => onVerify && onVerify(null),
+        "error-callback": () => onVerify && onVerify(null),
+      });
+    };
+    if (window.turnstile) render();
+    else {
+      const timer = setInterval(() => { if (window.turnstile) { clearInterval(timer); render(); } }, 200);
+      setTimeout(() => clearInterval(timer), 10000);
+      return () => { cancelled = true; clearInterval(timer); };
+    }
+    return () => {
+      cancelled = true;
+      try { if (widgetId.current !== null && window.turnstile) window.turnstile.remove(widgetId.current); } catch (e) {}
+      widgetId.current = null;
+    };
+  }, [siteKey]);
+
+  if (!siteKey) return null;
+  return (
+    <div>
+      <div ref={ref} />
+      <p className="text-[10px] text-[#4A5A7A] mt-1.5 flex items-center gap-1"><ShieldCheck size={11} />Botschutz durch Cloudflare Turnstile</p>
+    </div>
+  );
+}
+
 function Field({ label, icon: Icon, ...props }) {
   return (
     <div>
@@ -4001,12 +4422,17 @@ function TwoFactorLoginStep({ ctx }) {
 }
 
 function AuthScreen({ ctx, mode }) {
-  const { navigate, login, register, pending2FA } = ctx;
+  const { navigate, login, register, pending2FA, pushToast } = ctx;
   const isLogin = mode === "login";
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", role: "student", teacherCode: "", school: "" });
+  const [captcha, setCaptcha] = useState(null);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const captchaRequired = !!turnstileSiteKey();
 
-  const submit = () => { if (isLogin) login(form.email, form.password); else register(form); };
+  const submit = () => {
+    if (captchaRequired && !captcha) { pushToast("error", "Bitte bestätige zuerst, dass du kein Bot bist."); return; }
+    if (isLogin) login(form.email, form.password); else register(form);
+  };
 
   if (pending2FA) return <TwoFactorLoginStep ctx={ctx} />;
 
@@ -4051,6 +4477,8 @@ function AuthScreen({ ctx, mode }) {
                 {form.role === "teacher" && <Field label="Schule / Institution" icon={GraduationCap} value={form.school} onChange={set("school")} placeholder="z.B. Gymnasium Berlin" />}
               </>
             )}
+
+            <Turnstile onVerify={setCaptcha} />
 
             <Btn className="w-full" size="lg" onClick={submit} icon={isLogin ? ArrowRight : Rocket}>
               {isLogin ? "Anmelden" : "Account erstellen"}
@@ -4281,7 +4709,7 @@ function LegalPage({ ctx, page }) {
 
 /* ============================ App Shell =========================== */
 function AppShell({ ctx, children }) {
-  const { me, view, navigate, logout, sidebarOpen, setSidebarOpen, apiKey, openAiSettings, openEmailVerify, reports } = ctx;
+  const { me, view, navigate, logout, sidebarOpen, setSidebarOpen, aiReady, openAiSettings, openEmailVerify, reports } = ctx;
   if (!me) return null;
   const lvl = me.role === "student" ? getLevelInfo(me.xp) : null;
   const isAdmin = me.role === "admin";
@@ -4290,13 +4718,13 @@ function AppShell({ ctx, children }) {
   const studentNav = [
     { v: "dashboard", label: "Übersicht", icon: Home },
     { v: "courses", label: "Meine Kurse", icon: BookOpen },
-    { v: "playground", label: "Code-Editor", icon: Code2 },
+    { v: "playground", label: "IDE", icon: Code2 },
     { v: "leaderboard", label: "Rangliste", icon: Trophy },
     { v: "profile", label: "Profil", icon: User },
   ];
   const teacherNav = [
     { v: "teacher", label: "Übersicht", icon: LayoutDashboard },
-    { v: "playground", label: "Code-Editor", icon: Code2 },
+    { v: "playground", label: "IDE", icon: Code2 },
     { v: "leaderboard", label: "Rangliste", icon: Trophy },
     { v: "profile", label: "Profil", icon: User },
   ];
@@ -4370,10 +4798,10 @@ function AppShell({ ctx, children }) {
                 </button>
               )}
               {!isAdmin && (
-                <button onClick={openAiSettings} aria-label="KI-Einstellungen" title={apiKey ? "KI verbunden" : "KI-Key hinzufügen"}
+                <button onClick={openAiSettings} aria-label="KI-Einstellungen" title={aiReady ? "KI verbunden" : "KI einrichten"}
                   className="relative w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors">
                   <Settings size={16} className="text-[#8A9BC0]" />
-                  <span className={`absolute top-1 right-1 w-2 h-2 rounded-full ${apiKey ? "bg-[#10B981]" : "bg-[#4A5A7A]"}`} />
+                  <span className={`absolute top-1 right-1 w-2 h-2 rounded-full ${aiReady ? "bg-[#10B981]" : "bg-[#4A5A7A]"}`} />
                 </button>
               )}
               <button onClick={() => navigate("profile")} aria-label="Profil" className="w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors overflow-hidden"><UserAvatar user={me} size={38} /></button>
@@ -5174,7 +5602,7 @@ const PLAYGROUND_STARTER = {
 };
 
 function Playground({ ctx }) {
-  const { me, savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId, pushToast, apiKey, aiProvider, openAiSettings } = ctx;
+  const { me, savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId, pushToast, aiConfig, openAiSettings } = ctx;
   const [tab, setTab] = useState("html");
   const [name, setName] = useState("Mein Projekt");
   const [html, setHtml] = useState(PLAYGROUND_STARTER.html);
@@ -5184,22 +5612,54 @@ function Playground({ ctx }) {
   const [projectId, setProjectId] = useState(null);
   const [debugResult, setDebugResult] = useState(null);
   const [debugLoading, setDebugLoading] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [rightTab, setRightTab] = useState("preview");
 
   const runDebug = async () => {
     setDebugLoading(true);
     setDebugResult(null);
-    const res = await debugCodeWithAI({ html, css, js }, apiKey, aiProvider);
+    const res = await debugCodeWithAI({ html, css, js }, aiConfig);
     setDebugResult(res);
     setDebugLoading(false);
   };
 
-  // Echtzeit-Vorschau: kurz debounced, damit nicht bei jedem Tastendruck neu gerendert wird
+  // Echtzeit-Vorschau: kurz debounced, damit nicht bei jedem Tastendruck neu gerendert wird.
+  // In die Seite wird eine kleine Brücke injiziert, die console-Ausgaben und
+  // Laufzeitfehler an die IDE zurückmeldet.
   useEffect(() => {
     const t = setTimeout(() => {
-      setSrcDoc(`<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`);
+      setLogs([]);
+      const bridge = `
+        (function () {
+          var send = function (level, args) {
+            try {
+              parent.postMessage({ __ldConsole: true, level: level, text: Array.prototype.map.call(args, function (a) {
+                try { return typeof a === "object" ? JSON.stringify(a) : String(a); } catch (e) { return String(a); }
+              }).join(" ") }, "*");
+            } catch (e) {}
+          };
+          ["log", "info", "warn", "error"].forEach(function (lvl) {
+            var orig = console[lvl];
+            console[lvl] = function () { send(lvl, arguments); if (orig) orig.apply(console, arguments); };
+          });
+          window.addEventListener("error", function (e) { send("error", [e.message + " (Zeile " + e.lineno + ")"]); });
+          window.addEventListener("unhandledrejection", function (e) { send("error", ["Unbehandelte Promise-Ablehnung: " + e.reason]); });
+        })();
+      `;
+      setSrcDoc(`<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${bridge}<\/script><script>${js}<\/script></body></html>`);
     }, 350);
     return () => clearTimeout(t);
   }, [html, css, js]);
+
+  // Konsolen-Ausgaben aus der Vorschau einsammeln
+  useEffect(() => {
+    const onMessage = (e) => {
+      if (!e.data || !e.data.__ldConsole) return;
+      setLogs((l) => [...l.slice(-99), { level: e.data.level, text: e.data.text }]);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
 
   useEffect(() => {
     if (!playgroundOpenId || !me) return;
@@ -5228,7 +5688,7 @@ function Playground({ ctx }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Code2 className="text-[#4F8EF7]" />Code-Editor</h1>
+          <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Code2 className="text-[#4F8EF7]" />IDE</h1>
           <p className="text-[#8A9BC0] mt-1">Freestyle coden — HTML, CSS &amp; JS mit Live-Vorschau in Echtzeit.</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -5263,9 +5723,40 @@ function Playground({ ctx }) {
         </Card>
 
         <Card className="p-4">
-          <div className="flex items-center gap-1.5 mb-3 text-xs text-[#8A9BC0]"><Eye size={13} />Live-Vorschau</div>
-          <div className="rounded-lg overflow-hidden border border-[#1E2D4A] bg-white" style={{ height: 340 }}>
-            <iframe title="Live-Vorschau" srcDoc={srcDoc} sandbox="allow-scripts allow-modals" className="w-full h-full border-0" />
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex p-1 bg-[#0A0E1A] rounded-lg">
+              <button onClick={() => setRightTab("preview")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${rightTab === "preview" ? "text-white" : "text-[#8A9BC0]"}`}
+                style={rightTab === "preview" ? { background: GRADIENT } : undefined}><Eye size={12} />Vorschau</button>
+              <button onClick={() => setRightTab("console")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${rightTab === "console" ? "text-white" : "text-[#8A9BC0]"}`}
+                style={rightTab === "console" ? { background: GRADIENT } : undefined}>
+                <Terminal size={12} />Konsole
+                {logs.length > 0 && <span className={`text-[9px] px-1.5 rounded-full ${logs.some((l) => l.level === "error") ? "bg-[#EF4444]/25 text-[#EF4444]" : "bg-white/20"}`}>{logs.length}</span>}
+              </button>
+            </div>
+            {rightTab === "console" && logs.length > 0 && (
+              <button onClick={() => setLogs([])} className="text-xs text-[#8A9BC0] hover:text-[#E8EDF5] flex items-center gap-1"><Trash2 size={11} />Leeren</button>
+            )}
+          </div>
+          <div className={`rounded-lg overflow-hidden border border-[#1E2D4A] ${rightTab === "preview" ? "bg-white" : "bg-[#0A0E1A]"}`} style={{ height: 340 }}>
+            {rightTab === "preview" ? (
+              <iframe title="Live-Vorschau" srcDoc={srcDoc} sandbox="allow-scripts allow-modals" className="w-full h-full border-0" />
+            ) : (
+              <div className="h-full overflow-y-auto p-3 font-code text-[12px] leading-relaxed">
+                {logs.length === 0 ? (
+                  <p className="text-[#4A5A7A]">Noch keine Ausgaben. Nutze <span className="text-[#4F8EF7]">console.log(...)</span> in deinem JavaScript.</p>
+                ) : logs.map((l, i) => {
+                  const color = l.level === "error" ? "#EF4444" : l.level === "warn" ? "#F59E0B" : l.level === "info" ? "#4F8EF7" : "#C9D6F0";
+                  return (
+                    <div key={i} className="flex gap-2 py-0.5 border-b border-[#1E2D4A]/40 last:border-0">
+                      <span className="text-[#4A5A7A] shrink-0">{l.level === "error" ? "✕" : l.level === "warn" ? "!" : "›"}</span>
+                      <span style={{ color }} className="whitespace-pre-wrap break-all">{l.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -5541,7 +6032,7 @@ function AIFeedback({ result, ctx, reportPayload }) {
 }
 
 function LessonView({ ctx }) {
-  const { selectedLesson, navigate, openCourse, me, addXP, showXP, completeLesson, celebrate, pushToast, logout, apiKey, aiProvider, openAiSettings } = ctx;
+  const { selectedLesson, navigate, openCourse, me, addXP, showXP, completeLesson, celebrate, pushToast, logout, aiConfig, aiReady, openAiSettings } = ctx;
   const lesson = getFullLesson(selectedLesson);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -5600,7 +6091,7 @@ function LessonView({ ctx }) {
     }
 
     setAiLoading(true);
-    const res = await checkAnswerWithAI(checkTask, checkAnswer, lesson._course.name, lesson.title, apiKey, aiProvider);
+    const res = await checkAnswerWithAI(checkTask, checkAnswer, lesson._course.name, lesson.title, { ...aiConfig, langId: lesson._course.id });
     setAiLoading(false);
     setResults((r) => ({ ...r, [task.id]: res }));
     if (res.correct) { reward(task.id); pushToast("success", `Gut gemacht! +${TASK_XP} XP`); if (res.score >= 95 && !me.badges.includes("ai_master")) setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES.ai_master.label}!`), 400); }
@@ -5650,10 +6141,10 @@ function LessonView({ ctx }) {
             <span>{lesson._course.icon} {lesson._course.name}</span><span className="mx-2 text-[#4A5A7A]">/</span><span className="text-[#E8EDF5]">{lesson.title}</span>
           </div>
           <span className="hidden sm:inline text-sm text-[#8A9BC0] shrink-0 whitespace-nowrap">Aufgabe {idx + 1} von {lesson.tasks.length}</span>
-          <button onClick={openAiSettings} aria-label="KI-Einstellungen" title={apiKey ? "KI verbunden" : "KI-Key hinzufügen"}
+          <button onClick={openAiSettings} aria-label="KI-Einstellungen" title={aiReady ? "KI verbunden" : "KI einrichten"}
             className="shrink-0 w-8 h-8 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center relative">
             <Settings size={14} className="text-[#8A9BC0]" />
-            <span className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${apiKey ? "bg-[#10B981]" : "bg-[#4A5A7A]"}`} />
+            <span className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${aiReady ? "bg-[#10B981]" : "bg-[#4A5A7A]"}`} />
           </button>
           <button onClick={logout} aria-label="Abmelden" title="Abmelden"
             className="shrink-0 w-8 h-8 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#EF4444] hover:text-[#EF4444] flex items-center justify-center text-[#8A9BC0]">
