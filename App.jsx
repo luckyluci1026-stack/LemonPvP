@@ -1,16 +1,89 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Code2, Sparkles, Zap, Flame, Star, Shield, Trophy, CheckCircle2, XCircle,
-  BookOpen, GraduationCap, Users, LogOut, ChevronRight, ChevronDown, ChevronLeft,
-  Lock, Copy, Check, ArrowRight, ArrowLeft, Home, User, Award, Bot, Send, Loader2,
-  Menu, X, Mail, Eye, Layers, BarChart3, Clock, Play, Plus, Globe, Palette,
-  Database, Terminal, Rocket, Brain, PenLine, ListChecks, TrendingUp, Crown,
-  Medal, KeyRound, AtSign, Cpu, Coffee, LayoutDashboard
-} from "lucide-react";
+
+/* ----------------------------- Icon-System ------------------------------
+   Font Awesome (Free, via CDN in index.html) statt lucide-react.
+   FaIcon(name) erzeugt eine Komponente mit identischer API wie zuvor
+   (Prop "size", "className"), damit alle bestehenden Stellen im Code
+   unverändert bleiben — nur das Rendering wechselt auf <i class="fa-..."/>.
+   ------------------------------------------------------------------------- */
+function FaIcon(name, style = "solid") {
+  const Icon = ({ size = 16, className = "", title }) => (
+    <i
+      aria-hidden={title ? undefined : "true"}
+      title={title}
+      className={`fa-${style} fa-${name} ${className}`}
+      style={{ fontSize: size, width: size, display: "inline-flex", alignItems: "center", justifyContent: "center", lineHeight: 1, flexShrink: 0 }}
+    />
+  );
+  return Icon;
+}
+
+const Code2 = FaIcon("code");
+const Sparkles = FaIcon("wand-magic-sparkles");
+const Zap = FaIcon("bolt");
+const Flame = FaIcon("fire");
+const Star = FaIcon("star");
+const Shield = FaIcon("shield-halved");
+const Trophy = FaIcon("trophy");
+const CheckCircle2 = FaIcon("circle-check");
+const XCircle = FaIcon("circle-xmark");
+const BookOpen = FaIcon("book-open");
+const GraduationCap = FaIcon("graduation-cap");
+const Users = FaIcon("users");
+const LogOut = FaIcon("right-from-bracket");
+const ChevronRight = FaIcon("chevron-right");
+const ChevronDown = FaIcon("chevron-down");
+const ChevronLeft = FaIcon("chevron-left");
+const Lock = FaIcon("lock");
+const Copy = FaIcon("copy");
+const Check = FaIcon("check");
+const ArrowRight = FaIcon("arrow-right");
+const ArrowLeft = FaIcon("arrow-left");
+const Home = FaIcon("house");
+const User = FaIcon("user");
+const Award = FaIcon("award");
+const Bot = FaIcon("robot");
+const Send = FaIcon("paper-plane");
+const Loader2 = FaIcon("spinner");
+const Menu = FaIcon("bars");
+const X = FaIcon("xmark");
+const Mail = FaIcon("envelope");
+const Eye = FaIcon("eye");
+const Layers = FaIcon("layer-group");
+const BarChart3 = FaIcon("chart-column");
+const Clock = FaIcon("clock");
+const Play = FaIcon("play");
+const Plus = FaIcon("plus");
+const Globe = FaIcon("globe");
+const Palette = FaIcon("palette");
+const Database = FaIcon("database");
+const Terminal = FaIcon("terminal");
+const Rocket = FaIcon("rocket");
+const Brain = FaIcon("brain");
+const PenLine = FaIcon("pen");
+const ListChecks = FaIcon("list-check");
+const TrendingUp = FaIcon("arrow-trend-up");
+const Crown = FaIcon("crown");
+const Medal = FaIcon("medal");
+const KeyRound = FaIcon("key");
+const AtSign = FaIcon("at");
+const Cpu = FaIcon("microchip");
+const Coffee = FaIcon("mug-hot");
+const LayoutDashboard = FaIcon("table-columns");
+const Settings = FaIcon("gear");
+const Trash2 = FaIcon("trash-can");
+const Info = FaIcon("circle-info");
+const Scale = FaIcon("scale-balanced");
+const FileText = FaIcon("file-lines");
+const ShieldCheck = FaIcon("shield-halved");
+const UserRoundPlus = FaIcon("user-plus");
+const Flag = FaIcon("flag");
+const Bug = FaIcon("bug");
+const Wand = FaIcon("wand-magic-sparkles");
 
 /* =========================================================================
    LearnDeveloping — learndeveloping.com
-   Eine Single-File Lernplattform (React + Tailwind + lucide-react)
+   Eine Single-File Lernplattform (React + Tailwind + Font Awesome)
    ========================================================================= */
 
 const GRADIENT = "linear-gradient(135deg, #4F8EF7, #7C3AED)";
@@ -162,8 +235,56 @@ const COURSES = [
     { title: "Advanced", level: "advanced", lessons: ["Templates", "STL (vector, map, algorithm)", "Speicherverwaltung (new/delete)", "Smart Pointer"] },
     { title: "Expert", level: "expert", lessons: ["Move Semantics & Rvalue", "Multithreading (std::thread)", "Systemnahe Programmierung"] },
   ]),
+  buildCourse("c", "C", "🔩", "#5C6BC0", "Die Mutter aller Sprachen — Speicher, Pointer & Systemnähe.", [
+    { title: "Grundlagen", level: "beginner", lessons: ["Aufbau eines C-Programms & Kompilieren", "Variablen & Datentypen", "Operatoren & Ausdrücke", "Kontrollstrukturen", "Funktionen"] },
+    { title: "Speicher & Daten", level: "intermediate", lessons: ["Arrays", "Zeiger (Pointer) verstehen", "Strings in C", "Structs & Unions", "Dynamische Speicherverwaltung (malloc/free)"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Datei-Ein-/Ausgabe", "Präprozessor & Makros", "Modularisierung & Header", "Verkettete Listen"] },
+    { title: "Expert", level: "expert", lessons: ["Bit-Operationen", "Funktionszeiger", "Systemnahe Programmierung & Syscalls"] },
+  ]),
+  buildCourse("typescript", "TypeScript", "🛡️", "#3178C6", "JavaScript mit Typsicherheit — weniger Bugs, besserer Code.", [
+    { title: "Grundlagen", level: "beginner", lessons: ["Was ist TypeScript? Setup & tsc", "Basistypen & Type Annotations", "Arrays, Tupel & Enums", "Funktionen typisieren"] },
+    { title: "Typsystem", level: "intermediate", lessons: ["Interfaces & Type Aliases", "Union & Intersection Types", "Optional & Readonly", "Type Narrowing & Guards", "Klassen in TypeScript"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Generics", "Utility Types (Partial, Pick, Omit)", "Module & Namespaces", "Typisierung von APIs"] },
+    { title: "Expert", level: "expert", lessons: ["Conditional Types", "Mapped Types & Template Literal Types", "Declaration Files (.d.ts)"] },
+  ]),
+  buildCourse("react", "React", "⚛️", "#61DAFB", "Moderne Benutzeroberflächen mit Komponenten & Hooks.", [
+    { title: "Grundlagen", level: "beginner", lessons: ["Was ist React? Erste Komponente", "JSX verstehen", "Props & Komponenten-Komposition", "State mit useState", "Events behandeln"] },
+    { title: "Hooks & Logik", level: "intermediate", lessons: ["Listen & Keys", "Bedingtes Rendering", "useEffect & Seiteneffekte", "Formulare & kontrollierte Inputs", "Eigene Hooks schreiben"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Context API", "useReducer & komplexer State", "Performance (memo, useMemo, useCallback)", "Daten laden & Fehlerbehandlung"] },
+    { title: "Expert", level: "expert", lessons: ["React Router & Navigation", "Testing mit React Testing Library", "Patterns & Architektur größerer Apps"] },
+  ]),
+  buildCourse("vue", "Vue", "💚", "#42B883", "Das progressive Framework — sanfter Einstieg, volle Power.", [
+    { title: "Grundlagen", level: "beginner", lessons: ["Vue einbinden & erste App", "Template-Syntax & Interpolation", "Direktiven (v-if, v-for, v-bind)", "Events mit v-on", "Reaktivität mit ref & reactive"] },
+    { title: "Komponenten", level: "intermediate", lessons: ["Komponenten & Props", "Emits & Kommunikation", "Slots", "Computed & Watch", "Formulare mit v-model"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Composition API vertiefen", "Lifecycle Hooks", "Vue Router", "State Management mit Pinia"] },
+  ]),
+  buildCourse("go", "Go", "🐹", "#00ADD8", "Einfach, schnell, nebenläufig — die Sprache der Cloud.", [
+    { title: "Grundlagen", level: "beginner", lessons: ["Go installieren & Hello World", "Variablen, Typen & Konstanten", "Kontrollstrukturen", "Funktionen & Mehrfachrückgabe", "Arrays, Slices & Maps"] },
+    { title: "Strukturen", level: "intermediate", lessons: ["Structs & Methoden", "Interfaces", "Fehlerbehandlung mit error", "Packages & Module", "Zeiger in Go"] },
+    { title: "Nebenläufigkeit", level: "advanced", lessons: ["Goroutines", "Channels", "select & sync", "Testing in Go"] },
+    { title: "Expert", level: "expert", lessons: ["HTTP-Server bauen", "Context & Timeouts", "Performance & Profiling"] },
+  ]),
+  buildCourse("kotlin", "Kotlin", "🟣", "#7F52FF", "Modernes JVM — prägnant, sicher, Android-first.", [
+    { title: "Grundlagen", level: "beginner", lessons: ["Kotlin Setup & Hello World", "val, var & Datentypen", "Null-Sicherheit verstehen", "Kontrollfluss & when", "Funktionen & Default-Parameter"] },
+    { title: "OOP & Funktional", level: "intermediate", lessons: ["Klassen & Konstruktoren", "Data Classes", "Vererbung & Interfaces", "Collections & Lambdas", "Extension Functions"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Sealed Classes & Pattern Matching", "Generics", "Coroutines — Grundlagen", "Scope Functions (let, apply, run)"] },
+    { title: "Expert", level: "expert", lessons: ["Coroutines & Flow vertiefen", "DSLs bauen", "Android-Grundlagen mit Kotlin"] },
+  ]),
+  buildCourse("rust", "Rust", "🦀", "#DEA584", "Sicher, schnell, ohne Garbage Collector.", [
+    { title: "Grundlagen", level: "beginner", lessons: ["Rust installieren & Cargo", "Variablen & Mutability", "Datentypen & Tupel", "Kontrollfluss", "Funktionen"] },
+    { title: "Ownership", level: "intermediate", lessons: ["Ownership verstehen", "Borrowing & Referenzen", "Slices", "Structs & Methoden", "Enums & Pattern Matching"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Fehlerbehandlung mit Result & Option", "Generics & Traits", "Lifetimes", "Collections (Vec, HashMap)", "Module & Crates"] },
+    { title: "Expert", level: "expert", lessons: ["Smart Pointer (Box, Rc, RefCell)", "Nebenläufigkeit & Threads", "Unsafe Rust & FFI"] },
+  ]),
+  buildCourse("php", "PHP", "🐘", "#777BB4", "Das Rückgrat des Webs — Server-Logik & Datenbanken.", [
+    { title: "Grundlagen", level: "beginner", lessons: ["PHP einrichten & erste Ausgabe", "Variablen & Datentypen", "Operatoren & Strings", "Kontrollstrukturen", "Funktionen"] },
+    { title: "Web & Daten", level: "intermediate", lessons: ["Arrays & Array-Funktionen", "Formulare verarbeiten (GET/POST)", "Sessions & Cookies", "Dateien lesen & schreiben", "Fehlerbehandlung"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["OOP in PHP", "Datenbanken mit PDO", "Sicherheit (SQL-Injection, XSS)", "Composer & Autoloading"] },
+    { title: "Expert", level: "expert", lessons: ["REST-APIs bauen", "Laravel Einführung", "Performance & Caching"] },
+  ]),
 ];
 
+const TOTAL_LESSONS = COURSES.reduce((sum, c) => sum + c.totalLessons, 0);
 const courseById = (id) => COURSES.find((c) => c.id === id);
 const allLessonsOf = (course) => course.modules.flatMap((m) => m.lessons);
 function findLessonMeta(lessonId) {
@@ -175,27 +296,40 @@ function findLessonMeta(lessonId) {
 }
 
 /* ----------------------------- Demo Users ------------------------------ */
+// 2,5 GB simuliertes Speicherkontingent pro Account für Playground-Projekte.
+// Echtes localStorage fasst real nur wenige MB — dies ist eine UX-Anzeige/Obergrenze,
+// keine tatsächliche Festplatten-Reservierung (dafür bräuchte es einen Server).
+const STORAGE_QUOTA_BYTES = 2.5 * 1024 * 1024 * 1024;
+
 const DEMO_USERS = [
   {
     id: "teacher_1", role: "teacher", name: "Prof. Anna Schmidt", email: "lehrer@demo.de",
     password: "lehrer123", school: "Gymnasium Berlin-Mitte", schoolCode: "LRND-4K9M",
     students: ["student_1", "student_2", "student_3"], createdAt: "2024-01-01", avatar: "👩‍🏫",
+    emailVerified: true, twoFactorEnabled: false, playground: [],
   },
   {
     id: "student_1", role: "student", name: "Max Müller", email: "max@demo.de", password: "schueler123",
     teacherId: "teacher_1", xp: 1250, streak: 7, completedLessons: ["html_1_1", "html_1_2", "html_1_3", "javascript_1_1", "javascript_1_2"],
     currentCourse: "javascript", joinedAt: "2024-01-15", lastLogin: "Heute", avatar: "🧑‍💻", badges: ["first_lesson", "week_warrior"],
+    emailVerified: true, twoFactorEnabled: false, playground: [],
   },
   {
     id: "student_2", role: "student", name: "Sarah Becker", email: "sarah@demo.de", password: "schueler123",
     teacherId: "teacher_1", xp: 870, streak: 3, completedLessons: ["html_1_1", "html_1_2", "css_1_1"],
     currentCourse: "html", joinedAt: "2024-02-02", lastLogin: "Vor 2 Std.", avatar: "👩‍💻", badges: ["first_lesson"],
+    emailVerified: true, twoFactorEnabled: false, playground: [],
   },
   {
     id: "student_3", role: "student", name: "Tom Weber", email: "tom@demo.de", password: "schueler123",
     teacherId: "teacher_1", xp: 2100, streak: 14,
     completedLessons: ["html_1_1", "html_1_2", "html_1_3", "html_1_4", "html_2_1", "javascript_1_1", "javascript_1_2", "javascript_1_3"],
     currentCourse: "javascript", joinedAt: "2024-01-08", lastLogin: "Gestern", avatar: "👨‍🎓", badges: ["first_lesson", "week_warrior", "js_beginner"],
+    emailVerified: true, twoFactorEnabled: false, playground: [],
+  },
+  {
+    id: "admin_1", role: "admin", name: "System-Administrator", email: "admin@demo.de", password: "admin123",
+    createdAt: "2024-01-01", avatar: "🛡️", emailVerified: true, twoFactorEnabled: false,
   },
 ];
 
@@ -2491,7 +2625,81 @@ function getFullLesson(lessonId) {
 }
 
 /* ------------------------ KI-Bewertungs-System ------------------------- */
-async function checkAnswerWithAI(task, userAnswer, language, lessonTitle) {
+// Ohne eigenen Anthropic-API-Key kann der Browser die API nicht direkt
+// erreichen (CORS + Auth). Mit Key wird "anthropic-dangerous-direct-browser-access"
+// gesetzt, was Anthropic offiziell für genau diesen Client-seitigen Anwendungsfall
+// unterstützt. Ohne Key läuft automatisch die lokale Offline-Heuristik.
+// Unterstützte KI-Anbieter. Gemini hat ein kostenloses Kontingent, Claude ist
+// kostenpflichtig, liefert aber die besseren Bewertungen.
+const AI_PROVIDERS = {
+  gemini: {
+    label: "Google Gemini",
+    badge: "Kostenlos verfügbar",
+    keyPlaceholder: "AIza…",
+    keyUrl: "https://aistudio.google.com/app/apikey",
+    keyUrlLabel: "aistudio.google.com",
+    note: "Google bietet ein kostenloses Kontingent (Gemini Flash) — keine Kreditkarte nötig.",
+  },
+  anthropic: {
+    label: "Anthropic Claude",
+    badge: "Kostenpflichtig",
+    keyPlaceholder: "sk-ant-…",
+    keyUrl: "https://console.anthropic.com/settings/keys",
+    keyUrlLabel: "console.anthropic.com",
+    note: "Claude rechnet pro Nutzung ab (Bruchteile eines Cents pro Bewertung) — es gibt keinen dauerhaften Gratis-Tarif.",
+  },
+};
+
+// Ruft den gewählten Anbieter auf und gibt den reinen Antworttext zurück.
+async function callAI(provider, apiKey, systemPrompt, userPrompt, maxTokens = 1000) {
+  if (provider === "gemini") {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+          generationConfig: { maxOutputTokens: maxTokens, temperature: 0.3 },
+        }),
+      }
+    );
+    if (!res.ok) throw new Error("Gemini " + res.status);
+    const data = await res.json();
+    return data.candidates[0].content.parts[0].text;
+  }
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "anthropic-version": "2023-06-01",
+      "x-api-key": apiKey,
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
+    }),
+  });
+  if (!res.ok) throw new Error("Anthropic " + res.status);
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+function parseAIJson(text) {
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  return JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
+}
+
+async function checkAnswerWithAI(task, userAnswer, language, lessonTitle, apiKey, provider = "gemini") {
+  if (!apiKey) return heuristicCheck(task, userAnswer);
+
   const systemPrompt = `Du bist ein freundlicher aber präziser Programmier-Lehrer.
 Du bewertest Antworten von Schülern die Programmieren lernen.
 
@@ -2522,21 +2730,8 @@ Schüler-Antwort: ${userAnswer}
 Bitte bewerte diese Antwort.`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
-      }),
-    });
-    if (!response.ok) throw new Error("API " + response.status);
-    const data = await response.json();
-    const text = data.content[0].text;
-    const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-    return { ...parsed, offline: false };
+    const text = await callAI(provider, apiKey, systemPrompt, userPrompt, 1000);
+    return { ...parseAIJson(text), offline: false };
   } catch (e) {
     // Graceful Fallback: lokale Heuristik, damit die Plattform auch ohne
     // erreichbare API nutzbar bleibt.
@@ -2544,9 +2739,104 @@ Bitte bewerte diese Antwort.`;
   }
 }
 
+/* ---------------------- KI-Code-Debugging (Playground) ------------------- */
+async function debugCodeWithAI({ html, css, js }, apiKey, provider = "gemini") {
+  if (!apiKey) return heuristicDebug({ html, css, js });
+
+  const systemPrompt = `Du bist ein erfahrener Web-Entwickler und hilfst beim Debuggen von HTML/CSS/JavaScript.
+
+DEINE AUFGABE:
+- Finde echte Fehler (Syntax, Logik, häufige Stolperfallen)
+- Erkläre jeden Fund kurz und verständlich auf Deutsch
+- Schlage eine konkrete Lösung vor
+- Wenn alles in Ordnung ist, sag das ehrlich und gib höchstens Verbesserungstipps
+
+ANTWORTE NUR IN DIESEM JSON FORMAT (keine anderen Zeichen davor oder danach):
+{
+  "summary": "Kurze Gesamteinschätzung in 1-2 Sätzen",
+  "issues": [
+    { "severity": "error"|"warning"|"info", "where": "html"|"css"|"js", "title": "Kurzer Titel", "detail": "Erklärung", "fix": "Konkreter Lösungsvorschlag" }
+  ]
+}`;
+
+  const userPrompt = `HTML:\n${html || "(leer)"}\n\nCSS:\n${css || "(leer)"}\n\nJavaScript:\n${js || "(leer)"}\n\nBitte analysiere diesen Code.`;
+
+  try {
+    const text = await callAI(provider, apiKey, systemPrompt, userPrompt, 1500);
+    return { ...parseAIJson(text), offline: false };
+  } catch (e) {
+    return heuristicDebug({ html, css, js });
+  }
+}
+
+// Lokale Analyse ohne API-Key: prüft Klammer-/Tag-Balance und typische Fehler.
+function heuristicDebug({ html, css, js }) {
+  const issues = [];
+  const balance = (src, open, close, label, where) => {
+    const o = (src.match(new RegExp("\\" + open, "g")) || []).length;
+    const c = (src.match(new RegExp("\\" + close, "g")) || []).length;
+    if (o !== c) issues.push({ severity: "error", where, title: `${label} unausgeglichen`, detail: `${o}× "${open}" aber ${c}× "${close}" gefunden.`, fix: `Ergänze die fehlende ${o > c ? `"${close}"` : `"${open}"`}.` });
+  };
+  if (js) {
+    balance(js, "{", "}", "Geschweifte Klammern", "js");
+    balance(js, "(", ")", "Runde Klammern", "js");
+    balance(js, "[", "]", "Eckige Klammern", "js");
+    if (/\b(getElementById|querySelector)\s*\(\s*["'][^"']*["']\s*\)\s*\./.test(js) && !/addEventListener|DOMContentLoaded/.test(js)) {
+      issues.push({ severity: "info", where: "js", title: "Direkter DOM-Zugriff", detail: "Der Code greift direkt auf Elemente zu.", fix: "Falls das Element noch nicht existiert, warte auf DOMContentLoaded." });
+    }
+    if (/=\s*=[^=]/.test(js) || /[^=!<>]==[^=]/.test(js)) {
+      issues.push({ severity: "warning", where: "js", title: "Lockerer Vergleich (==)", detail: "== vergleicht mit Typumwandlung und führt zu Überraschungen.", fix: "Nutze === für einen strikten Vergleich." });
+    }
+    if (/\bvar\s+/.test(js)) issues.push({ severity: "info", where: "js", title: "var verwendet", detail: "var ist funktions-scoped und veraltet.", fix: "Nutze let oder const." });
+  }
+  if (css) balance(css, "{", "}", "CSS-Blöcke", "css");
+  if (html) {
+    const tags = ["div", "p", "span", "button", "h1", "ul", "li", "section", "header", "footer", "a"];
+    tags.forEach((t) => {
+      const o = (html.match(new RegExp(`<${t}[\\s>]`, "gi")) || []).length;
+      const c = (html.match(new RegExp(`</${t}>`, "gi")) || []).length;
+      if (o !== c) issues.push({ severity: "warning", where: "html", title: `<${t}> nicht geschlossen`, detail: `${o}× geöffnet, aber ${c}× geschlossen.`, fix: `Schließe alle <${t}>-Elemente mit </${t}>.` });
+    });
+    if (/<img(?![^>]*\balt=)/i.test(html)) issues.push({ severity: "info", where: "html", title: "Bild ohne alt-Attribut", detail: "Bilder brauchen alt-Texte für Barrierefreiheit.", fix: 'Ergänze alt="Beschreibung".' });
+  }
+  const errors = issues.filter((i) => i.severity === "error").length;
+  return {
+    offline: true,
+    summary: issues.length === 0
+      ? "Keine offensichtlichen Fehler gefunden — dein Code sieht strukturell sauber aus."
+      : `${issues.length} Hinweis${issues.length === 1 ? "" : "e"} gefunden${errors ? `, davon ${errors} kritisch` : ""}.`,
+    issues,
+  };
+}
+
+function normalizeAlnum(s) { return (s || "").toLowerCase().replace(/[^a-z0-9äöüß]+/g, ""); }
+
 function heuristicCheck(task, userAnswer) {
   const ans = (userAnswer || "").trim();
   const low = ans.toLowerCase();
+
+  // Lückentext: pro Lücke vergleichen, aber Satzzeichen/Klammern tolerieren
+  // (z.B. "<strong>" als Antwort für erwartetes "strong" akzeptieren).
+  if (task.type === "fill_blank" && Array.isArray(task._blankAnswers)) {
+    const total = task.blanks.length;
+    let matched = 0;
+    const missing = [];
+    task.blanks.forEach((b, i) => {
+      const given = (task._blankAnswers[i] || "").trim().toLowerCase();
+      const target = b.trim().toLowerCase();
+      const hit = given.length > 0 && (given === target || normalizeAlnum(given) === normalizeAlnum(target));
+      if (hit) matched++; else missing.push(b);
+    });
+    const score = total ? Math.round((matched / total) * 100) : 0;
+    const correct = matched === total && total > 0;
+    return {
+      correct, score, offline: true,
+      feedback: correct ? "Alle Lücken korrekt ausgefüllt!" : `${matched} von ${total} Lücken korrekt.`,
+      hint: correct ? "" : `Richtig wäre: ${missing.join(", ")}.`,
+      praise: correct ? "Sauber gelöst!" : "",
+    };
+  }
+
   if (task.type === "code_write") {
     const concepts = task.expectedConcepts || [];
     let matched = 0;
@@ -2992,6 +3282,121 @@ function SkeletonFeedback() {
   );
 }
 
+/* KI-Einstellungen: Anbieter wählen + eigenen API-Key hinterlegen */
+function AiSettingsModal({ ctx }) {
+  const { apiKey, setApiKey, aiProvider, setAiProvider, closeAiSettings, pushToast } = ctx;
+  const [value, setValue] = useState(apiKey || "");
+  const [provider, setProvider] = useState(aiProvider || "gemini");
+  const [show, setShow] = useState(false);
+  const cfg = AI_PROVIDERS[provider];
+
+  const save = () => {
+    setAiProvider(provider);
+    setApiKey(value.trim());
+    pushToast(value.trim() ? "success" : "info",
+      value.trim() ? `KI-Key gespeichert — Antworten werden jetzt von ${cfg.label} bewertet.` : "Kein Key — es läuft die Offline-Prüfung.");
+    closeAiSettings();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 overflow-y-auto" onClick={closeAiSettings}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <Card className="relative z-10 p-7 max-w-md w-full my-8" onClick={(e) => e.stopPropagation()}>
+        <button onClick={closeAiSettings} aria-label="Schließen" className="absolute top-4 right-4 text-[#8A9BC0] hover:text-[#E8EDF5]"><X size={20} /></button>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-[#7C3AED]/15"><Bot size={22} className="text-[#7C3AED]" /></div>
+          <h3 className="font-display text-xl font-bold">KI-Einstellungen</h3>
+        </div>
+        <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
+          <strong className="text-[#E8EDF5]">Optional.</strong> Ohne Key funktioniert alles — dann prüft eine lokale Offline-Analyse deine Antworten. Für echte KI-Bewertung wähle einen Anbieter:
+        </p>
+
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {Object.entries(AI_PROVIDERS).map(([id, p]) => (
+            <button key={id} onClick={() => setProvider(id)}
+              className={`text-left p-3 rounded-lg border transition-all ${provider === id ? "border-[#4F8EF7] bg-[#4F8EF7]/10" : "border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>
+              <div className="font-medium text-sm text-[#E8EDF5] mb-1">{p.label}</div>
+              <div className={`text-[10px] px-1.5 py-0.5 rounded-full inline-block ${id === "gemini" ? "bg-[#10B981]/15 text-[#10B981]" : "bg-[#F59E0B]/15 text-[#F59E0B]"}`}>{p.badge}</div>
+            </button>
+          ))}
+        </div>
+
+        <p className="text-xs text-[#8A9BC0] mb-4 leading-relaxed p-2.5 rounded-lg bg-[#0A0E1A] border border-[#1E2D4A]">{cfg.note}</p>
+
+        <label className="block text-sm text-[#8A9BC0] mb-1.5">{cfg.label} API-Key</label>
+        <div className="relative mb-2">
+          <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A5A7A]" />
+          <input type={show ? "text" : "password"} value={value} onChange={(e) => setValue(e.target.value)} placeholder={cfg.keyPlaceholder}
+            className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 pl-9 pr-16 font-code text-sm text-[#E8EDF5] placeholder:text-[#4A5A7A] transition-colors" />
+          <button onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8A9BC0] hover:text-[#E8EDF5]">{show ? "Verbergen" : "Anzeigen"}</button>
+        </div>
+        <p className="text-xs text-[#4A5A7A] mb-5 leading-relaxed">
+          Dein Key bleibt lokal in deinem Browser (localStorage) und wird nur direkt an {cfg.label} gesendet. Key erstellen:{" "}
+          <a href={cfg.keyUrl} target="_blank" rel="noopener noreferrer" className="text-[#4F8EF7] underline">{cfg.keyUrlLabel}</a>.
+        </p>
+        <div className="flex gap-2">
+          {apiKey && <Btn variant="danger" icon={Trash2} onClick={() => { setValue(""); setApiKey(""); pushToast("info", "KI-Key entfernt."); closeAiSettings(); }}>Entfernen</Btn>}
+          <Btn className="flex-1" icon={Check} onClick={save}>Speichern</Btn>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* E-Mail-Verifizierung (simuliert — kein Mailserver vorhanden) */
+function EmailVerifyModal({ ctx }) {
+  const { me, verifyEmail, closeEmailVerify } = ctx;
+  const [code, setCode] = useState("");
+  if (!me) return null;
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" onClick={closeEmailVerify}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <Card className="relative z-10 p-7 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+        <button onClick={closeEmailVerify} aria-label="Schließen" className="absolute top-4 right-4 text-[#8A9BC0] hover:text-[#E8EDF5]"><X size={20} /></button>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-[#4F8EF7]/15"><Mail size={22} className="text-[#4F8EF7]" /></div>
+          <h3 className="font-display text-xl font-bold">E-Mail bestätigen</h3>
+        </div>
+        <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
+          Diese Demo hat keinen echten E-Mail-Versand — in einer produktiven Umgebung würde dieser Code an <strong className="text-[#E8EDF5]">{me.email}</strong> gesendet. Zum Testen zeigen wir ihn dir direkt hier:
+        </p>
+        <div className="p-4 rounded-xl bg-[#0A0E1A] border border-[#2A3F6F] mb-4 text-center">
+          <span className="font-display font-black text-3xl ld-gradient-text font-code">{me.verificationCode}</span>
+        </div>
+        <label className="block text-sm text-[#8A9BC0] mb-1.5">Code eingeben</label>
+        <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" maxLength={6}
+          className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 mb-4 font-code text-center text-lg tracking-widest text-[#E8EDF5]" />
+        <Btn className="w-full" icon={Check} onClick={() => verifyEmail(code)}>Bestätigen</Btn>
+      </Card>
+    </div>
+  );
+}
+
+/* 2FA-Einrichtung (simuliert — statischer Code statt echtem Authenticator/TOTP) */
+function TwoFactorSetupModal({ ctx }) {
+  const { twoFactorSetupCode, closeTwoFactorSetup } = ctx;
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4" onClick={closeTwoFactorSetup}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <Card className="relative z-10 p-7 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+        <button onClick={closeTwoFactorSetup} aria-label="Schließen" className="absolute top-4 right-4 text-[#8A9BC0] hover:text-[#E8EDF5]"><X size={20} /></button>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-[#10B981]/15"><ShieldCheck size={22} className="text-[#10B981]" /></div>
+          <h3 className="font-display text-xl font-bold">2FA aktiviert</h3>
+        </div>
+        <p className="text-sm text-[#8A9BC0] mb-4 leading-relaxed">
+          Merke dir diesen Code gut — du brauchst ihn ab sofort bei jedem Login zusätzlich zu deinem Passwort. Ohne echtes Backend kann diese Demo keinen Authenticator (TOTP) anbinden, daher bleibt der Code statisch.
+        </p>
+        <div className="p-4 rounded-xl bg-[#0A0E1A] border border-[#2A3F6F] mb-2 text-center">
+          <span className="font-display font-black text-3xl ld-gradient-text font-code">{twoFactorSetupCode}</span>
+        </div>
+        <p className="text-xs text-[#4A5A7A] mb-5">Du kannst 2FA jederzeit in deinem Profil wieder deaktivieren.</p>
+        <Btn className="w-full" icon={Check} onClick={closeTwoFactorSetup}>Verstanden</Btn>
+      </Card>
+    </div>
+  );
+}
+
 /* ============================ Main App ============================= */
 function genSchoolCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -3001,10 +3406,59 @@ function genSchoolCode() {
 }
 const uid = () => "u_" + Math.random().toString(36).slice(2, 9);
 
+/* --------------------- Lokale Speicherung (Browser) ---------------------
+   Diese App hat kein Backend. Damit dein Fortschritt einen Reload übersteht,
+   wird er im localStorage deines Browsers gespeichert — verlässt dein Gerät
+   nie. Gast-Sitzungen (isGuest) werden bewusst NICHT gespeichert.
+   ------------------------------------------------------------------------- */
+const STORAGE_KEY = "learndeveloping_v1";
+const API_KEY_STORAGE = "learndeveloping_ai_key";
+const AI_PROVIDER_STORAGE = "learndeveloping_ai_provider";
+
+function loadPersisted() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.users)) return null;
+    return parsed;
+  } catch (e) { return null; }
+}
+
+function savePersisted(users, currentUser, reports) {
+  try {
+    const persistUsers = users.filter((u) => !u.isGuest);
+    const stillLoggedIn = users.find((u) => u.id === currentUser);
+    const persistCurrent = stillLoggedIn && !stillLoggedIn.isGuest ? currentUser : null;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ users: persistUsers, currentUser: persistCurrent, reports: reports || [] }));
+  } catch (e) {}
+}
+
+function loadApiKey() {
+  try { return localStorage.getItem(API_KEY_STORAGE) || ""; } catch (e) { return ""; }
+}
+function loadAiProvider() {
+  try { return localStorage.getItem(AI_PROVIDER_STORAGE) || "gemini"; } catch (e) { return "gemini"; }
+}
+
+function mergeWithDemo(persistedUsers) {
+  const map = new Map(DEMO_USERS.map((u) => [u.id, u]));
+  (persistedUsers || []).forEach((u) => map.set(u.id, u));
+  return Array.from(map.values());
+}
+
+function roleHome(role) { return role === "teacher" ? "teacher" : role === "admin" ? "admin" : "dashboard"; }
+
 export default function App() {
-  const [view, setView] = useState("landing");
-  const [users, setUsers] = useState(DEMO_USERS);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [view, setView] = useState(() => {
+    const persisted = loadPersisted();
+    if (!persisted?.currentUser) return "landing";
+    const u = mergeWithDemo(persisted.users).find((x) => x.id === persisted.currentUser);
+    return u ? roleHome(u.role) : "landing";
+  });
+  const [users, setUsers] = useState(() => mergeWithDemo(loadPersisted()?.users));
+  const [currentUser, setCurrentUser] = useState(() => loadPersisted()?.currentUser || null);
+  const [reports, setReports] = useState(() => loadPersisted()?.reports || []);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -3012,8 +3466,31 @@ export default function App() {
   const [xpPopup, setXpPopup] = useState(null);
   const [confetti, setConfetti] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [apiKey, setApiKeyState] = useState(loadApiKey);
+  const [aiProvider, setAiProviderState] = useState(loadAiProvider);
+  const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
+  const [emailVerifyOpen, setEmailVerifyOpen] = useState(false);
+  const [pending2FA, setPending2FA] = useState(null);
+  const [twoFactorSetupCode, setTwoFactorSetupCode] = useState(null);
+  const [playgroundOpenId, setPlaygroundOpenId] = useState(null);
 
   const me = currentUser ? users.find((u) => u.id === currentUser) : null;
+
+  // Fortschritt automatisch lokal sichern (Gäste ausgenommen)
+  useEffect(() => { savePersisted(users, currentUser, reports); }, [users, currentUser, reports]);
+
+  const setApiKey = useCallback((key) => {
+    setApiKeyState(key);
+    try { key ? localStorage.setItem(API_KEY_STORAGE, key) : localStorage.removeItem(API_KEY_STORAGE); } catch (e) {}
+  }, []);
+  const setAiProvider = useCallback((p) => {
+    setAiProviderState(p);
+    try { localStorage.setItem(AI_PROVIDER_STORAGE, p); } catch (e) {}
+  }, []);
+  const openAiSettings = useCallback(() => setAiSettingsOpen(true), []);
+  const closeAiSettings = useCallback(() => setAiSettingsOpen(false), []);
+  const openEmailVerify = useCallback(() => setEmailVerifyOpen(true), []);
+  const closeEmailVerify = useCallback(() => setEmailVerifyOpen(false), []);
 
   const celebrate = useCallback(() => { setConfetti(true); setTimeout(() => setConfetti(false), 3200); }, []);
 
@@ -3023,6 +3500,75 @@ export default function App() {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200);
   }, []);
 
+  // 2FA: Aktivieren erzeugt einen einmaligen 6-stelligen Code, der (weil kein
+  // Authenticator-Backend existiert) direkt im UI angezeigt wird.
+  const enable2FA = useCallback(() => {
+    if (!me) return;
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    setUsers((us) => us.map((u) => u.id === me.id ? { ...u, twoFactorEnabled: true, twoFactorCode: code } : u));
+    setTwoFactorSetupCode(code);
+  }, [me]);
+  const disable2FA = useCallback(() => {
+    if (!me) return;
+    setUsers((us) => us.map((u) => u.id === me.id ? { ...u, twoFactorEnabled: false, twoFactorCode: null } : u));
+    pushToast("info", "2FA deaktiviert.");
+  }, [me, pushToast]);
+  const closeTwoFactorSetup = useCallback(() => setTwoFactorSetupCode(null), []);
+
+  // Playground: Projekte speichern/löschen, mit simuliertem 2,5-GB-Kontingent
+  const savePlaygroundProject = useCallback((project) => {
+    if (!me) return false;
+    const sizeBytes = new Blob([project.html || "", project.css || "", project.js || ""]).size;
+    const others = (me.playground || []).filter((p) => p.id !== project.id);
+    const usedByOthers = others.reduce((sum, p) => sum + (p.sizeBytes || 0), 0);
+    if (usedByOthers + sizeBytes > STORAGE_QUOTA_BYTES) {
+      pushToast("error", "Speicherkontingent (2,5 GB) erreicht — lösche ein Projekt, um Platz zu schaffen.");
+      return false;
+    }
+    const saved = { ...project, sizeBytes, updatedAt: "Jetzt" };
+    setUsers((us) => us.map((u) => u.id === me.id ? { ...u, playground: [...others, saved] } : u));
+    pushToast("success", `Projekt „${project.name}“ gespeichert.`);
+    return true;
+  }, [me, pushToast]);
+  const deletePlaygroundProject = useCallback((id) => {
+    if (!me) return;
+    setUsers((us) => us.map((u) => u.id === me.id ? { ...u, playground: (u.playground || []).filter((p) => p.id !== id) } : u));
+  }, [me]);
+
+  // Melden: KI-Antworten (oder andere Inhalte) für die Admin-Prüfung markieren
+  const reportContent = useCallback((payload) => {
+    const report = {
+      id: uid(), createdAt: "Jetzt", status: "open",
+      reporterId: me ? me.id : null, reporterName: me ? me.name : "Unbekannt",
+      ...payload,
+    };
+    setReports((rs) => [report, ...rs]);
+    pushToast("success", "Danke — dein Hinweis wurde gemeldet.");
+  }, [me, pushToast]);
+  const resolveReport = useCallback((id) => setReports((rs) => rs.map((r) => r.id === id ? { ...r, status: "resolved" } : r)), []);
+  const deleteReport = useCallback((id) => setReports((rs) => rs.filter((r) => r.id !== id)), []);
+
+  // Admin: Nutzer verwalten + weitere Admins erstellen
+  const adminUpdateUser = useCallback((userId, patch) => {
+    setUsers((us) => us.map((u) => u.id === userId ? { ...u, ...patch } : u));
+    pushToast("success", "Nutzer aktualisiert.");
+  }, [pushToast]);
+  const adminDeleteUser = useCallback((userId) => {
+    setUsers((us) => us.filter((u) => u.id !== userId));
+    pushToast("info", "Account gelöscht.");
+  }, [pushToast]);
+  const adminCreateAdmin = useCallback((form) => {
+    if (!form.name || !form.email || !form.password) { pushToast("error", "Bitte alle Felder ausfüllen."); return false; }
+    if (users.some((u) => !u.isGuest && u.email.toLowerCase() === form.email.trim().toLowerCase())) { pushToast("error", "E-Mail bereits vergeben."); return false; }
+    const newAdmin = {
+      id: uid(), role: "admin", name: form.name, email: form.email, password: form.password,
+      createdAt: "Heute", avatar: "🛡️", emailVerified: true, twoFactorEnabled: false,
+    };
+    setUsers((us) => [...us, newAdmin]);
+    pushToast("success", `Admin-Account für ${form.name} erstellt.`);
+    return true;
+  }, [users, pushToast]);
+
   const showXP = useCallback((amount) => {
     setXpPopup(amount);
     setTimeout(() => setXpPopup(null), 1600);
@@ -3030,24 +3576,49 @@ export default function App() {
 
   const navigate = useCallback((v) => { setView(v); setSidebarOpen(false); window.scrollTo(0, 0); }, []);
 
+  const completeLogin = (u) => {
+    setCurrentUser(u.id);
+    pushToast("success", `Willkommen zurück, ${u.name.split(" ")[0]}!`);
+    navigate(u.role === "teacher" ? "teacher" : u.role === "admin" ? "admin" : "dashboard");
+  };
+
   const login = (email, password) => {
     const u = users.find((x) => x.email.toLowerCase() === email.trim().toLowerCase() && x.password === password);
     if (!u) { pushToast("error", "E-Mail oder Passwort falsch."); return false; }
-    setCurrentUser(u.id);
-    pushToast("success", `Willkommen zurück, ${u.name.split(" ")[0]}!`);
-    navigate(u.role === "teacher" ? "teacher" : "dashboard");
+    if (u.twoFactorEnabled) {
+      setPending2FA(u.id);
+      pushToast("info", "2FA aktiv — bitte gib deinen Code ein.");
+      return "2fa";
+    }
+    completeLogin(u);
     return true;
   };
+
+  const verify2FALogin = (code) => {
+    const u = users.find((x) => x.id === pending2FA);
+    if (!u) return false;
+    if ((code || "").trim() !== u.twoFactorCode) { pushToast("error", "2FA-Code ist falsch."); return false; }
+    setPending2FA(null);
+    completeLogin(u);
+    return true;
+  };
+  const cancel2FALogin = () => setPending2FA(null);
 
   const register = (form) => {
     if (!form.name || !form.email || !form.password) { pushToast("error", "Bitte alle Pflichtfelder ausfüllen."); return false; }
     if (form.password !== form.confirm) { pushToast("error", "Passwörter stimmen nicht überein."); return false; }
-    if (users.some((u) => u.email.toLowerCase() === form.email.trim().toLowerCase())) { pushToast("error", "E-Mail ist bereits registriert."); return false; }
+    if (users.some((u) => !u.isGuest && u.email.toLowerCase() === form.email.trim().toLowerCase())) { pushToast("error", "E-Mail ist bereits registriert."); return false; }
     const id = uid();
+    const guest = me && me.isGuest ? me : null; // Gast-Fortschritt beim Registrieren übernehmen
+    const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
     let newUser;
     if (form.role === "teacher") {
       const code = genSchoolCode();
-      newUser = { id, role: "teacher", name: form.name, email: form.email, password: form.password, school: form.school || "—", schoolCode: code, students: [], createdAt: "Heute", avatar: "👨‍🏫" };
+      newUser = {
+        id, role: "teacher", name: form.name, email: form.email, password: form.password, school: form.school || "—", schoolCode: code,
+        students: [], createdAt: "Heute", avatar: guest ? guest.avatar : "👨‍🏫",
+        emailVerified: false, verificationCode, twoFactorEnabled: false, playground: [],
+      };
       pushToast("info", `Dein Schul-Code: ${code}`);
     } else {
       let teacherId = null;
@@ -3056,16 +3627,44 @@ export default function App() {
         if (t) { teacherId = t.id; setUsers((us) => us.map((u) => u.id === t.id ? { ...u, students: [...u.students, id] } : u)); }
         else pushToast("error", "Lehrer-Code nicht gefunden — du lernst erstmal selbstständig.");
       }
-      newUser = { id, role: "student", name: form.name, email: form.email, password: form.password, teacherId, xp: 0, streak: 1, completedLessons: [], currentCourse: null, joinedAt: "Heute", lastLogin: "Jetzt", avatar: "🧑‍💻", badges: [] };
+      newUser = {
+        id, role: "student", name: form.name, email: form.email, password: form.password, teacherId,
+        xp: guest ? guest.xp : 0, streak: guest ? guest.streak : 1,
+        completedLessons: guest ? guest.completedLessons : [], currentCourse: guest ? guest.currentCourse : null,
+        joinedAt: "Heute", lastLogin: "Jetzt", avatar: guest ? guest.avatar : "🧑‍💻", badges: guest ? guest.badges : [],
+        emailVerified: false, verificationCode, twoFactorEnabled: false, playground: [],
+      };
     }
-    setUsers((us) => [...us, newUser]);
+    setUsers((us) => [...us.filter((u) => !(guest && u.id === guest.id)), newUser]);
     setCurrentUser(id);
-    pushToast("success", `Account erstellt — los geht's, ${form.name.split(" ")[0]}!`);
+    pushToast("success", guest ? `Account erstellt — dein Gast-Fortschritt wurde übernommen!` : `Account erstellt — los geht's, ${form.name.split(" ")[0]}!`);
     navigate(form.role === "teacher" ? "teacher" : "dashboard");
     return true;
   };
 
+  const verifyEmail = (code) => {
+    if (!me) return false;
+    if ((code || "").trim() !== me.verificationCode) { pushToast("error", "Code stimmt nicht überein."); return false; }
+    setUsers((us) => us.map((u) => u.id === me.id ? { ...u, emailVerified: true, verificationCode: null } : u));
+    pushToast("success", "E-Mail-Adresse bestätigt!");
+    closeEmailVerify();
+    return true;
+  };
+
   const logout = () => { setCurrentUser(null); navigate("landing"); pushToast("info", "Abgemeldet. Bis bald!"); };
+
+  const continueAsGuest = () => {
+    const id = "guest_" + uid();
+    const guestUser = {
+      id, role: "student", name: "Gast", email: "", password: "", teacherId: null,
+      xp: 0, streak: 1, completedLessons: [], currentCourse: null,
+      joinedAt: "Heute", lastLogin: "Jetzt", avatar: "🧑‍💻", badges: [], isGuest: true,
+    };
+    setUsers((us) => [...us, guestUser]);
+    setCurrentUser(id);
+    pushToast("info", "Du lernst als Gast — dein Fortschritt wird NICHT gespeichert.");
+    navigate("dashboard");
+  };
 
   const openCourse = (courseId) => {
     setSelectedCourse(courseId);
@@ -3105,17 +3704,29 @@ export default function App() {
   const ctx = {
     view, navigate, users, me, setUsers, currentUser,
     selectedCourse, openCourse, selectedLesson, openLesson,
-    selectedStudent, setSelectedStudent, login, register, logout,
+    selectedStudent, setSelectedStudent, login, register, logout, continueAsGuest,
     pushToast, showXP, addXP, completeLesson, celebrate, sidebarOpen, setSidebarOpen,
+    apiKey, setApiKey, aiProvider, setAiProvider, aiSettingsOpen, openAiSettings, closeAiSettings,
+    pending2FA, verify2FALogin, cancel2FALogin,
+    emailVerifyOpen, openEmailVerify, closeEmailVerify, verifyEmail,
+    enable2FA, disable2FA, twoFactorSetupCode, closeTwoFactorSetup,
+    savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId,
+    reports, reportContent, resolveReport, deleteReport,
+    adminUpdateUser, adminDeleteUser, adminCreateAdmin,
   };
+
+  const LEGAL_VIEWS = ["agb", "impressum", "datenschutz", "kontakt", "ueber-uns"];
 
   let screen = null;
   if (view === "landing") screen = <Landing ctx={ctx} />;
   else if (view === "login" || view === "register") screen = <AuthScreen ctx={ctx} mode={view} />;
+  else if (LEGAL_VIEWS.includes(view)) screen = <LegalPage ctx={ctx} page={view} />;
   else if (view === "lesson") screen = <LessonView ctx={ctx} />;
   else screen = <AppShell ctx={ctx}>{
     view === "dashboard" ? <StudentDashboard ctx={ctx} /> :
     view === "teacher" ? <TeacherDashboard ctx={ctx} /> :
+    view === "admin" ? <AdminDashboard ctx={ctx} /> :
+    view === "playground" ? <Playground ctx={ctx} /> :
     view === "courses" ? <CoursesOverview ctx={ctx} /> :
     view === "course" ? <CourseView ctx={ctx} /> :
     view === "leaderboard" ? <Leaderboard ctx={ctx} /> :
@@ -3129,6 +3740,9 @@ export default function App() {
       <Toasts toasts={toasts} />
       {xpPopup != null && <XPPopup amount={xpPopup} />}
       {confetti && <Confetti />}
+      {aiSettingsOpen && <AiSettingsModal ctx={ctx} />}
+      {emailVerifyOpen && <EmailVerifyModal ctx={ctx} />}
+      {twoFactorSetupCode && <TwoFactorSetupModal ctx={ctx} />}
     </div>
   );
 }
@@ -3166,32 +3780,50 @@ function Landing({ ctx }) {
             <span className="ld-gradient-text">Richtig lernen.</span>
           </h1>
           <p className="text-lg text-[#8A9BC0] max-w-xl mx-auto mb-9">
-            Von HTML bis C++ — strukturiert, modern und mit KI-Feedback direkt zu deinem Code.
+            Von HTML bis Rust — {COURSES.length} Sprachen, strukturiert aufgebaut, mit KI-Feedback direkt zu deinem Code.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5">
             <Btn size="lg" icon={ArrowRight} onClick={() => navigate("register")}>Jetzt kostenlos starten</Btn>
-            <Btn size="lg" variant="secondary" icon={Eye} onClick={() => ctx.login("max@demo.de", "schueler123")}>Demo ansehen</Btn>
+            <Btn size="lg" variant="secondary" icon={UserRoundPlus} onClick={ctx.continueAsGuest}>Ohne Anmeldung testen</Btn>
           </div>
+          <p className="text-xs text-[#4A5A7A] mb-8">Als Gast wird dein Fortschritt nicht gespeichert — mit Account schon.</p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[#4A5A7A]">
             <span className="flex items-center gap-1.5"><Check size={14} className="text-[#10B981]" />Kostenlos starten</span>
             <span className="flex items-center gap-1.5"><Check size={14} className="text-[#10B981]" />Keine Kreditkarte</span>
-            <span className="flex items-center gap-1.5"><Check size={14} className="text-[#10B981]" />KI-Feedback</span>
+            <span className="flex items-center gap-1.5"><Check size={14} className="text-[#10B981]" />Ohne Anmeldung testbar</span>
           </div>
+        </div>
+      </section>
+
+      {/* Kennzahlen */}
+      <section className="border-y border-[#1E2D4A] bg-[#0F1629]">
+        <div className="max-w-5xl mx-auto px-5 py-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          {[
+            [COURSES.length + "+", "Programmiersprachen"],
+            [TOTAL_LESSONS + "+", "Lektionen"],
+            ["4", "Aufgaben-Typen"],
+            ["100%", "Kostenlos starten"],
+          ].map(([v, l], i) => (
+            <div key={i}>
+              <div className="font-display text-3xl font-extrabold ld-gradient-text mb-1">{v}</div>
+              <div className="text-sm text-[#8A9BC0]">{l}</div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Kurse */}
       <section id="kurse" className="max-w-6xl mx-auto px-5 py-20">
         <div className="text-center mb-12">
-          <h2 className="font-display text-4xl font-extrabold mb-3">7 Sprachen. <span className="ld-gradient-text">Ein Ziel.</span></h2>
-          <p className="text-[#8A9BC0] text-lg">Strukturierte Kurse von Anfänger bis Experte.</p>
+          <h2 className="font-display text-4xl font-extrabold mb-3">{COURSES.length} Sprachen. <span className="ld-gradient-text">Ein Ziel.</span></h2>
+          <p className="text-[#8A9BC0] text-lg">Strukturierte Kurse von Anfänger bis Experte — Web, Systeme, Mobile und mehr.</p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {COURSES.map((c) => (
             <Card key={c.id} hover onClick={() => navigate("register")} className="p-5 group relative overflow-hidden">
               <div className="text-4xl mb-3">{c.icon}</div>
               <h3 className="font-display text-lg font-bold mb-1">{c.name}</h3>
-              <p className="text-sm text-[#8A9BC0] mb-4 leading-snug">{c.description}</p>
+              <p className="text-sm text-[#8A9BC0] mb-4 leading-snug line-clamp-2">{c.description}</p>
               <div className="flex items-center gap-1.5 text-xs text-[#4A5A7A]"><BookOpen size={13} />{c.totalLessons} Lektionen</div>
               <div className="absolute bottom-0 inset-x-0 h-1" style={{ background: c.color }} />
             </Card>
@@ -3202,12 +3834,13 @@ function Landing({ ctx }) {
       {/* Wie es funktioniert */}
       <section id="features" className="bg-[#0F1629] border-y border-[#1E2D4A] py-20">
         <div className="max-w-6xl mx-auto px-5">
-          <h2 className="font-display text-4xl font-extrabold text-center mb-12">So funktioniert's</h2>
+          <h2 className="font-display text-4xl font-extrabold text-center mb-3">So funktioniert's</h2>
+          <p className="text-[#8A9BC0] text-lg text-center mb-12">Lernen, üben, sofort Feedback bekommen.</p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { icon: BookOpen, emoji: "📖", t: "Lerne die Theorie", d: "Klare Erklärungen mit echten Code-Beispielen — kein trockenes Geschwafel." },
-              { icon: PenLine, emoji: "✍️", t: "Löse Aufgaben", d: "Multiple Choice, Code schreiben, Lückentext und freies Erklären." },
-              { icon: Bot, emoji: "🤖", t: "KI prüft dich", d: "Sofortiges, konstruktives Feedback zu deinem Code von Claude AI." },
+              { emoji: "📖", t: "Lerne die Theorie", d: "Klare Erklärungen mit echten Code-Beispielen — kein trockenes Geschwafel." },
+              { emoji: "✍️", t: "Löse Aufgaben", d: "Multiple Choice, Code schreiben, Lückentext und freies Erklären." },
+              { emoji: "🤖", t: "Bekomm Feedback", d: "Sofortige, konstruktive Rückmeldung zu jeder Antwort und jedem Code." },
             ].map((f, i) => (
               <Card key={i} className="p-7 text-center">
                 <div className="text-4xl mb-4">{f.emoji}</div>
@@ -3216,6 +3849,70 @@ function Landing({ ctx }) {
               </Card>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Alle Features */}
+      <section className="max-w-6xl mx-auto px-5 py-20">
+        <div className="text-center mb-12">
+          <h2 className="font-display text-4xl font-extrabold mb-3">Alles drin, was du <span className="ld-gradient-text">brauchst</span></h2>
+          <p className="text-[#8A9BC0] text-lg">Eine Plattform statt zehn Tools.</p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { icon: Code2, color: "#4F8EF7", t: "VS-Code-Editor im Browser", d: "Echter Monaco-Editor mit Syntax-Highlighting, Zeilennummern und Auto-Einrückung." },
+            { icon: Eye, color: "#10B981", t: "Live-Vorschau", d: "Schreib HTML, CSS & JS und sieh das Ergebnis in Echtzeit — ohne Setup." },
+            { icon: Bug, color: "#7C3AED", t: "KI-Code-Debugging", d: "Lass deinen Code analysieren: Fehler finden, verstehen und beheben." },
+            { icon: Trophy, color: "#F7C948", t: "XP, Level & Abzeichen", d: "20 Level, Streaks und Abzeichen halten dich am Ball." },
+            { icon: Users, color: "#4F8EF7", t: "Für Schulen & Klassen", d: "Lehrer verwalten ihre Klasse per Schul-Code und sehen jeden Fortschritt." },
+            { icon: ShieldCheck, color: "#10B981", t: "Sicherer Account", d: "E-Mail-Bestätigung und optionale Zwei-Faktor-Authentifizierung." },
+          ].map((f, i) => (
+            <Card key={i} hover className="p-6">
+              <div className="w-11 h-11 rounded-lg flex items-center justify-center mb-4" style={{ background: f.color + "22" }}>
+                <f.icon size={22} style={{ color: f.color }} />
+              </div>
+              <h3 className="font-display text-lg font-bold mb-2">{f.t}</h3>
+              <p className="text-sm text-[#8A9BC0] leading-relaxed">{f.d}</p>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Playground-Highlight */}
+      <section className="bg-[#0F1629] border-y border-[#1E2D4A] py-20">
+        <div className="max-w-5xl mx-auto px-5 grid md:grid-cols-2 gap-10 items-center">
+          <div>
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs mb-4 bg-[#4F8EF7]/15 text-[#4F8EF7]"><Code2 size={13} />Code-Editor</span>
+            <h2 className="font-display text-3xl font-extrabold mb-4">Nicht nur lernen — <span className="ld-gradient-text">bauen</span>.</h2>
+            <p className="text-[#8A9BC0] leading-relaxed mb-5">
+              Im integrierten Code-Editor schreibst du frei HTML, CSS und JavaScript. Deine Seite wird live gerendert, während du tippst. Speichere deine Projekte und lass sie von der KI debuggen.
+            </p>
+            <ul className="space-y-2 mb-6 text-[#8A9BC0] text-sm">
+              {["Echtzeit-Vorschau ohne Speichern", "Projekte sichern und weiterarbeiten", "KI findet Fehler in deinem Code"].map((x, i) => (
+                <li key={i} className="flex items-start gap-2"><CheckCircle2 size={16} className="text-[#10B981] mt-0.5 shrink-0" />{x}</li>
+              ))}
+            </ul>
+            <Btn icon={ArrowRight} onClick={() => navigate("register")}>Editor ausprobieren</Btn>
+          </div>
+          <Card className="p-0 overflow-hidden">
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-[#0A0E1A] border-b border-[#1E2D4A]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]/60" /><span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]/60" /><span className="w-2.5 h-2.5 rounded-full bg-[#10B981]/60" />
+              <span className="ml-2 font-code text-[11px] text-[#4A5A7A]">solution.html</span>
+            </div>
+            <pre className="p-4 font-code text-[12px] leading-relaxed text-[#C9D6F0] overflow-x-auto"><code>{`<h1>Hallo Welt!</h1>
+<button id="btn">Klick mich</button>
+
+<style>
+  button {
+    background: linear-gradient(
+      135deg, #4F8EF7, #7C3AED);
+    border-radius: 8px;
+  }
+</style>`}</code></pre>
+            <div className="px-4 py-3 border-t border-[#1E2D4A] flex items-center gap-2 text-xs text-[#10B981]">
+              <Eye size={13} />Live-Vorschau aktualisiert sich automatisch
+            </div>
+          </Card>
         </div>
       </section>
 
@@ -3252,10 +3949,12 @@ function Landing({ ctx }) {
             <Logo />
             <p className="text-sm text-[#4A5A7A] mt-2">Code lernen. Richtig lernen.</p>
           </div>
-          <div className="flex gap-6 text-sm text-[#8A9BC0]">
-            <a href="#" className="hover:text-[#E8EDF5]">Über uns</a>
-            <a href="#" className="hover:text-[#E8EDF5]">Datenschutz</a>
-            <a href="#" className="hover:text-[#E8EDF5]">Kontakt</a>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm text-[#8A9BC0]">
+            <button onClick={() => navigate("ueber-uns")} className="hover:text-[#E8EDF5]">Über uns</button>
+            <button onClick={() => navigate("agb")} className="hover:text-[#E8EDF5]">AGB</button>
+            <button onClick={() => navigate("datenschutz")} className="hover:text-[#E8EDF5]">Datenschutz</button>
+            <button onClick={() => navigate("impressum")} className="hover:text-[#E8EDF5]">Impressum</button>
+            <button onClick={() => navigate("kontakt")} className="hover:text-[#E8EDF5]">Kontakt</button>
           </div>
           <p className="text-xs text-[#4A5A7A]">© 2026 LearnDeveloping</p>
         </div>
@@ -3278,13 +3977,38 @@ function Field({ label, icon: Icon, ...props }) {
   );
 }
 
+function TwoFactorLoginStep({ ctx }) {
+  const { navigate, verify2FALogin, cancel2FALogin } = ctx;
+  const [code, setCode] = useState("");
+  return (
+    <div className="min-h-screen flex items-center justify-center px-5 py-12 relative">
+      <TerminalBackground />
+      <div className="relative z-10 w-full max-w-md">
+        <div className="flex justify-center mb-6"><Logo size="lg" onClick={() => navigate("landing")} /></div>
+        <div className="bg-[#0F1629] border border-[#1E2D4A] rounded-2xl p-8 shadow-2xl text-center">
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-[#10B981]/15"><ShieldCheck size={28} className="text-[#10B981]" /></div>
+          <h2 className="font-display text-xl font-bold mb-2">Zwei-Faktor-Code eingeben</h2>
+          <p className="text-sm text-[#8A9BC0] mb-6">Dieser Account ist mit 2FA geschützt. Gib deinen 6-stelligen Code ein.</p>
+          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="123456" maxLength={6}
+            onKeyDown={(e) => { if (e.key === "Enter") verify2FALogin(code); }}
+            className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 mb-4 font-code text-center text-lg tracking-widest text-[#E8EDF5]" />
+          <Btn className="w-full mb-3" icon={Check} onClick={() => verify2FALogin(code)}>Bestätigen</Btn>
+          <button onClick={cancel2FALogin} className="text-sm text-[#8A9BC0] hover:text-[#E8EDF5]">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AuthScreen({ ctx, mode }) {
-  const { navigate, login, register } = ctx;
+  const { navigate, login, register, pending2FA } = ctx;
   const isLogin = mode === "login";
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", role: "student", teacherCode: "", school: "" });
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const submit = () => { if (isLogin) login(form.email, form.password); else register(form); };
+
+  if (pending2FA) return <TwoFactorLoginStep ctx={ctx} />;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-5 py-12 relative">
@@ -3333,15 +4057,20 @@ function AuthScreen({ ctx, mode }) {
             </Btn>
           </div>
 
-          {isLogin && (
-            <div className="mt-6 pt-5 border-t border-[#1E2D4A] text-sm">
-              <p className="text-[#4A5A7A] mb-2 font-medium">Demo-Zugänge:</p>
-              <div className="space-y-1 text-[#8A9BC0]">
-                <p className="flex items-center gap-2">👨‍🏫 <span className="font-code text-xs">lehrer@demo.de / lehrer123</span></p>
-                <p className="flex items-center gap-2">🎓 <span className="font-code text-xs">max@demo.de / schueler123</span></p>
-              </div>
-            </div>
+          {!isLogin && (
+            <p className="text-[11px] text-[#4A5A7A] mt-4 leading-relaxed">
+              Mit der Registrierung akzeptierst du unsere{" "}
+              <button onClick={() => navigate("agb")} className="text-[#4F8EF7] hover:underline">AGB</button> und{" "}
+              <button onClick={() => navigate("datenschutz")} className="text-[#4F8EF7] hover:underline">Datenschutzerklärung</button>.
+            </p>
           )}
+
+          <div className="mt-6 pt-5 border-t border-[#1E2D4A] text-center">
+            <button onClick={ctx.continueAsGuest} className="text-sm text-[#8A9BC0] hover:text-[#E8EDF5] flex items-center justify-center gap-1.5 mx-auto">
+              <UserRoundPlus size={15} />Ohne Anmeldung als Gast testen
+            </button>
+            <p className="text-[11px] text-[#4A5A7A] mt-1">Gast-Fortschritt wird nicht gespeichert.</p>
+          </div>
         </div>
         <button onClick={() => navigate("landing")} className="mt-5 mx-auto flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5]">
           <ChevronLeft size={15} /> Zurück zur Startseite
@@ -3351,24 +4080,231 @@ function AuthScreen({ ctx, mode }) {
   );
 }
 
+/* ========================= Rechtliche Seiten ======================== */
+const LEGAL_META = {
+  agb: { title: "AGB", icon: Scale, subtitle: "Allgemeine Geschäftsbedingungen" },
+  impressum: { title: "Impressum", icon: FileText, subtitle: "Angaben gemäß § 5 TMG" },
+  datenschutz: { title: "Datenschutz", icon: ShieldCheck, subtitle: "Datenschutzerklärung" },
+  kontakt: { title: "Kontakt", icon: Mail, subtitle: "So erreichst du uns" },
+  "ueber-uns": { title: "Über uns", icon: Users, subtitle: "Wer wir sind" },
+};
+
+const LEGAL_CONTENT = {
+  impressum: `# Impressum
+
+Angaben gemäß § 5 TMG
+
+## Anbieter
+
+[Firmenname / Betreibername]
+[Straße und Hausnummer]
+[PLZ und Ort]
+[Land]
+
+## Kontakt
+
+**Telefon:** [Telefonnummer]
+**E-Mail:** contact@learndeveloping.com
+
+## Vertretungsberechtigt
+
+[Name der vertretungsberechtigten Person]
+
+## Registereintrag
+
+**Eintragung im:** [Handelsregister, Amtsgericht]
+**Registernummer:** [HRB-Nummer]
+
+## Umsatzsteuer-ID
+
+Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz: [USt-IdNr.]
+
+## Streitschlichtung
+
+Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: [ec.europa.eu/consumers/odr](https://ec.europa.eu/consumers/odr/). Unsere E-Mail-Adresse findest du oben im Impressum. Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
+
+> 💡 **Hinweis:** Dies ist eine Vorlage. Bitte die eckigen Platzhalter durch die echten Angaben des Betreibers ersetzen, bevor die Seite live geht.`,
+
+  datenschutz: `# Datenschutzerklärung
+
+## 1. Verantwortlicher
+
+[Firmenname]
+[Anschrift]
+E-Mail: contact@learndeveloping.com
+
+## 2. Welche Daten werden verarbeitet?
+
+Bei der Registrierung erhebt LearnDeveloping folgende Angaben: Name, E-Mail-Adresse und — bei Schüler-Accounts optional — ein Lehrer-Code. Fortschrittsdaten wie XP, abgeschlossene Lektionen und Abzeichen werden während der Nutzung erfasst.
+
+> 💡 **Technischer Hinweis:** Alle Daten werden ausschließlich lokal in deinem Browser gespeichert (\`localStorage\`) — es gibt keine Server-Datenbank. Wenn du als **Gast** lernst, wird gar nichts gespeichert; deine Daten verschwinden beim Schließen des Tabs.
+
+## 3. KI-gestützte Bewertung
+
+Bei Code-, Lückentext- und Freitextaufgaben wird deine Antwort zur Bewertung an einen KI-Dienst (Anthropic Claude) übermittelt — aber nur, wenn du selbst einen API-Key in den KI-Einstellungen hinterlegt hast. Übermittelt werden dabei die Aufgabenstellung, der Kursname und deine Antwort, direkt von deinem Browser an Anthropic. Ohne hinterlegten Key läuft eine rein lokale Prüfung, es werden keine Daten übertragen.
+
+## 4. Zweck der Verarbeitung
+
+- Bereitstellung des Lern-Accounts und Fortschritts-Trackings
+- KI-gestützte Bewertung deiner Aufgaben (optional, mit eigenem Key)
+- Anzeige in der Rangliste (Name, Avatar, XP) gegenüber anderen Nutzern derselben Plattform
+
+## 5. Rechtsgrundlage
+
+Die Verarbeitung erfolgt zur Erfüllung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO).
+
+## 6. Deine Rechte
+
+Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Da alle Daten lokal in deinem Browser liegen, kannst du sie jederzeit selbst löschen (Browser-Speicher leeren) oder dich an support@learndeveloping.com wenden.
+
+## 7. Speicherdauer
+
+| Datenart | Speicherort | Speicherdauer |
+|---|---|---|
+| Accountdaten | localStorage (dein Browser) | Bis zur Löschung |
+| Fortschrittsdaten | localStorage (dein Browser) | Bis zur Löschung |
+| Gast-Sitzung | Nur Arbeitsspeicher | Bis zum Schließen des Tabs |
+| API-Key (optional) | localStorage (dein Browser) | Bis zur Entfernung |
+
+> 💡 **Hinweis:** Dies ist eine Vorlage. Bitte an die tatsächliche Datenverarbeitung und Infrastruktur anpassen, bevor die Seite live geht.`,
+
+  agb: `# Allgemeine Geschäftsbedingungen (AGB)
+
+## § 1 Geltungsbereich
+
+Diese AGB gelten für die Nutzung der Lernplattform LearnDeveloping ("Plattform"), betrieben von [Firmenname], für alle Schüler- und Lehrer-Accounts sowie Gast-Sitzungen.
+
+## § 2 Vertragsschluss
+
+Mit Abschluss der Registrierung kommt ein Nutzungsvertrag zwischen dir und [Firmenname] zustande. Die Nutzung der Basisfunktionen ist kostenlos. Eine Nutzung als Gast (ohne Registrierung) ist ohne Vertragsschluss möglich; in diesem Fall wird kein Fortschritt gespeichert.
+
+## § 3 Leistungsbeschreibung
+
+LearnDeveloping stellt interaktive Lerninhalte zu sieben Programmiersprachen bereit, inklusive optionaler KI-gestützter Bewertung von Aufgaben (bei hinterlegtem eigenen API-Key). Ein Anspruch auf ununterbrochene Verfügbarkeit besteht nicht.
+
+## § 4 Pflichten der Nutzer
+
+- Wahrheitsgemäße Angaben bei der Registrierung
+- Keine missbräuchliche Nutzung des Lehrer-/Schul-Codes
+- Sorgfältiger Umgang mit einem selbst hinterlegten KI-API-Key
+
+## § 5 Schüler- und Lehrer-Accounts
+
+Lehrer erhalten einen Schul-Code, über den sich Schüler ihrem Kurs zuordnen können. Lehrer können den Fortschritt der ihnen zugeordneten Schüler einsehen.
+
+## § 6 Geistiges Eigentum
+
+Alle Kursinhalte, Texte und Grafiken sind urheberrechtlich geschützt und dürfen nur im Rahmen der bestimmungsgemäßen Nutzung verwendet werden.
+
+## § 7 Haftung
+
+[Firmenname] haftet nur für Vorsatz und grobe Fahrlässigkeit, soweit gesetzlich zulässig. Für die Richtigkeit KI-generierter Bewertungen wird keine Gewähr übernommen.
+
+## § 8 Kündigung
+
+Nutzer können ihren Account jederzeit selbst löschen (lokale Daten im Browser entfernen) oder [Firmenname] um Löschung bitten.
+
+## § 9 Änderungen der AGB
+
+Änderungen werden den Nutzern rechtzeitig mitgeteilt. Mit fortgesetzter Nutzung nach Änderung gelten die neuen AGB als akzeptiert.
+
+## § 10 Schlussbestimmungen
+
+Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand ist, soweit gesetzlich zulässig, [Ort].
+
+> 💡 **Hinweis:** Dies ist eine Vorlage und ersetzt keine Rechtsberatung. Bitte vor dem Livegang von einer Rechtsanwältin/einem Rechtsanwalt prüfen lassen.`,
+
+  kontakt: `# Kontakt
+
+Wir freuen uns über dein Feedback, Fragen oder Kooperationsanfragen.
+
+## So erreichst du uns
+
+**E-Mail:** contact@learndeveloping.com
+**Telefon:** [Telefonnummer]
+**Adresse:** [Anschrift]
+
+## Support für Schulen
+
+Für Fragen zur Lehrer-Registrierung, Schul-Codes oder technischen Problemen wende dich an: support@learndeveloping.com
+
+> 💡 Antwortzeit in der Regel innerhalb von 1–2 Werktagen.`,
+
+  "ueber-uns": `# Über uns
+
+LearnDeveloping wurde mit einem einfachen Ziel gegründet: Programmieren lernen soll **modern, verständlich und mit echtem Feedback** funktionieren — nicht mit trockenen Videos oder endlosen Dokumentationen.
+
+## Unsere Mission
+
+Wir glauben, dass jede:r Programmieren lernen kann, wenn die Erklärungen klar sind und Fehler sofort verständlich zurückgemeldet werden. Deshalb kombinieren wir strukturierte Kurse mit optionalem KI-gestütztem Feedback zu jeder Aufgabe.
+
+## Für Schulen
+
+Neben Einzellernenden richtet sich LearnDeveloping gezielt an Schulen und Lehrkräfte, die ihren Schüler:innen einen strukturierten Einstieg in die Programmierung ermöglichen möchten — inklusive Fortschritts-Überblick für die Lehrkraft.
+
+> 💡 **Hinweis:** Dies ist eine Platzhalter-Seite für die Produktvorstellung und kann durch echte Unternehmens-/Teaminformationen ersetzt werden.`,
+};
+
+function LegalPage({ ctx, page }) {
+  const { navigate } = ctx;
+  const meta = LEGAL_META[page] || LEGAL_META.impressum;
+  const Icon = meta.icon;
+  return (
+    <div className="min-h-screen relative">
+      <TerminalBackground />
+      <header className="sticky top-0 z-40 backdrop-blur-md bg-[#0A0E1A]/90 border-b border-[#1E2D4A]">
+        <div className="max-w-3xl mx-auto px-4 lg:px-6 h-14 flex items-center gap-3">
+          <button onClick={() => navigate("landing")} className="flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5]"><ArrowLeft size={16} />Zurück</button>
+          <Logo size="sm" onClick={() => navigate("landing")} />
+        </div>
+      </header>
+      <div className="relative z-10 max-w-3xl mx-auto px-5 py-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-[#4F8EF7]/15"><Icon size={22} className="text-[#4F8EF7]" /></div>
+          <div>
+            <h1 className="font-display text-2xl font-bold">{meta.title}</h1>
+            <p className="text-sm text-[#8A9BC0]">{meta.subtitle}</p>
+          </div>
+        </div>
+        <Card className="p-6 lg:p-8">
+          <Markdown text={LEGAL_CONTENT[page] || LEGAL_CONTENT.impressum} />
+        </Card>
+        <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6 text-sm text-[#8A9BC0]">
+          {Object.keys(LEGAL_META).filter((k) => k !== page).map((k) => (
+            <button key={k} onClick={() => navigate(k)} className="hover:text-[#E8EDF5] hover:underline">{LEGAL_META[k].title}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ============================ App Shell =========================== */
 function AppShell({ ctx, children }) {
-  const { me, view, navigate, logout, sidebarOpen, setSidebarOpen } = ctx;
+  const { me, view, navigate, logout, sidebarOpen, setSidebarOpen, apiKey, openAiSettings, openEmailVerify, reports } = ctx;
   if (!me) return null;
   const lvl = me.role === "student" ? getLevelInfo(me.xp) : null;
+  const isAdmin = me.role === "admin";
+  const openReports = (reports || []).filter((r) => r.status === "open").length;
 
   const studentNav = [
     { v: "dashboard", label: "Übersicht", icon: Home },
     { v: "courses", label: "Meine Kurse", icon: BookOpen },
+    { v: "playground", label: "Code-Editor", icon: Code2 },
     { v: "leaderboard", label: "Rangliste", icon: Trophy },
     { v: "profile", label: "Profil", icon: User },
   ];
   const teacherNav = [
     { v: "teacher", label: "Übersicht", icon: LayoutDashboard },
+    { v: "playground", label: "Code-Editor", icon: Code2 },
     { v: "leaderboard", label: "Rangliste", icon: Trophy },
     { v: "profile", label: "Profil", icon: User },
   ];
-  const nav = me.role === "teacher" ? teacherNav : studentNav;
+  const adminNav = [
+    { v: "admin", label: "Admin-Bereich", icon: Shield },
+    { v: "profile", label: "Profil", icon: User },
+  ];
+  const nav = isAdmin ? adminNav : me.role === "teacher" ? teacherNav : studentNav;
   const activeMatch = (v) => view === v || (v === "courses" && view === "course");
 
   const SidebarInner = (
@@ -3428,11 +4364,39 @@ function AppShell({ ctx, children }) {
                   <span className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-[#141D35] border border-[#1E2D4A]"><Flame size={14} className="text-[#F59E0B]" /><span className="font-semibold">{me.streak}</span></span>
                 </>
               )}
-              <button onClick={() => navigate("profile")} aria-label="Profil" className="text-2xl w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors">{me.avatar}</button>
+              {isAdmin && openReports > 0 && (
+                <button onClick={() => navigate("admin")} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-[#EF4444]/10 border border-[#EF4444]/30 text-[#EF4444]">
+                  <FileText size={14} />{openReports} offene Meldung{openReports === 1 ? "" : "en"}
+                </button>
+              )}
+              {!isAdmin && (
+                <button onClick={openAiSettings} aria-label="KI-Einstellungen" title={apiKey ? "KI verbunden" : "KI-Key hinzufügen"}
+                  className="relative w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors">
+                  <Settings size={16} className="text-[#8A9BC0]" />
+                  <span className={`absolute top-1 right-1 w-2 h-2 rounded-full ${apiKey ? "bg-[#10B981]" : "bg-[#4A5A7A]"}`} />
+                </button>
+              )}
+              <button onClick={() => navigate("profile")} aria-label="Profil" className="w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors overflow-hidden"><UserAvatar user={me} size={38} /></button>
             </div>
           </div>
         </header>
-        <main className="px-4 lg:px-8 py-6 max-w-6xl mx-auto">{children}</main>
+        <main className="px-4 lg:px-8 py-6 max-w-6xl mx-auto">
+          {me.isGuest && (
+            <div className="mb-5 flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl bg-[#F59E0B]/10 border border-[#F59E0B]/30">
+              <Info size={16} className="text-[#F59E0B] shrink-0" />
+              <p className="text-sm text-[#C9D6F0] flex-1">Du lernst als Gast — dein Fortschritt wird <strong>nicht gespeichert</strong>.</p>
+              <Btn size="sm" variant="secondary" icon={UserRoundPlus} onClick={() => navigate("register")}>Account erstellen &amp; Fortschritt sichern</Btn>
+            </div>
+          )}
+          {!me.isGuest && me.emailVerified === false && (
+            <div className="mb-5 flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl bg-[#4F8EF7]/10 border border-[#4F8EF7]/30">
+              <Mail size={16} className="text-[#4F8EF7] shrink-0" />
+              <p className="text-sm text-[#C9D6F0] flex-1">Bitte bestätige deine E-Mail-Adresse.</p>
+              <Btn size="sm" variant="secondary" icon={Check} onClick={openEmailVerify}>Jetzt bestätigen</Btn>
+            </div>
+          )}
+          {children}
+        </main>
       </div>
 
       {/* Mobile bottom nav */}
@@ -3772,7 +4736,7 @@ function Leaderboard({ ctx }) {
           return (
             <div key={s.id} className={`flex items-center gap-4 p-4 ${isMe ? "bg-[#4F8EF7]/10" : ""}`}>
               <div className="w-8 text-center font-display font-bold text-lg">{i < 3 ? medal[i] : <span className="text-[#4A5A7A]">{i + 1}</span>}</div>
-              <div className="text-2xl">{s.avatar}</div>
+              <div className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center shrink-0"><UserAvatar user={s} size={36} /></div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{s.name}{isMe && <span className="text-xs text-[#4F8EF7] ml-2">(Du)</span>}</p>
                 <p className="text-xs text-[#8A9BC0]">Level {lvl.level} · {lvl.name}</p>
@@ -3789,28 +4753,177 @@ function Leaderboard({ ctx }) {
 
 /* =========================== Profile ============================== */
 const AVATARS = ["🧑‍💻", "👩‍💻", "👨‍🎓", "👩‍🎓", "🦸", "🦹", "🧙", "🥷", "🤖", "👾", "🐱", "🦊", "🐼", "🦁", "🚀", "⚡"];
+
+/* ---------------------- Avatar-Creator (Charakter-Builder) ----------------
+   Ein zusammengesetzter SVG-Charakter statt eines festen Emojis. Die Auswahl
+   wird als Objekt im Nutzer gespeichert (avatarConfig) und überall gerendert,
+   wo bisher das Emoji stand.
+   ------------------------------------------------------------------------- */
+const AV_SKIN = ["#F5D0A9", "#EBBE94", "#D2A06A", "#A9714B", "#7A4B2A", "#5C3317"];
+const AV_HAIR_COLOR = ["#2C1B18", "#4A2C1A", "#8B5A2B", "#D4A017", "#E8E3DB", "#4F8EF7", "#7C3AED", "#EF4444", "#10B981"];
+const AV_BG = ["#4F8EF7", "#7C3AED", "#10B981", "#F59E0B", "#EF4444", "#0EA5E9", "#EC4899", "#64748B"];
+const AV_HAIR_STYLES = ["kurz", "lang", "locken", "dutt", "glatze", "irokese"];
+const AV_EYES = ["normal", "gluecklich", "cool", "sternchen", "zwinkern"];
+const AV_ACCESSORY = ["keine", "brille", "sonnenbrille", "kopfhoerer", "muetze"];
+
+const DEFAULT_AVATAR_CONFIG = {
+  skin: AV_SKIN[0], hairColor: AV_HAIR_COLOR[0], hairStyle: "kurz",
+  eyes: "normal", accessory: "keine", bg: AV_BG[0],
+};
+
+function CharacterAvatar({ config, size = 64 }) {
+  const c = { ...DEFAULT_AVATAR_CONFIG, ...(config || {}) };
+  const s = size;
+  return (
+    <svg width={s} height={s} viewBox="0 0 100 100" style={{ display: "block", borderRadius: "22%" }} aria-hidden>
+      <rect width="100" height="100" rx="22" fill={c.bg} />
+      <circle cx="50" cy="96" r="30" fill={c.skin} opacity="0.95" />
+      {/* Haare hinten (lang) */}
+      {c.hairStyle === "lang" && <path d="M20 52 Q18 88 30 92 L70 92 Q82 88 80 52 Z" fill={c.hairColor} />}
+      {/* Kopf */}
+      <circle cx="50" cy="50" r="27" fill={c.skin} />
+      {/* Ohren */}
+      <circle cx="23" cy="52" r="5" fill={c.skin} />
+      <circle cx="77" cy="52" r="5" fill={c.skin} />
+      {/* Frisuren */}
+      {c.hairStyle === "kurz" && <path d="M23 46 Q26 22 50 22 Q74 22 77 46 Q72 32 50 32 Q28 32 23 46 Z" fill={c.hairColor} />}
+      {c.hairStyle === "lang" && <path d="M23 48 Q24 22 50 22 Q76 22 77 48 Q70 30 50 30 Q30 30 23 48 Z" fill={c.hairColor} />}
+      {c.hairStyle === "locken" && (
+        <g fill={c.hairColor}>
+          <circle cx="32" cy="30" r="10" /><circle cx="45" cy="24" r="11" /><circle cx="58" cy="24" r="11" /><circle cx="69" cy="31" r="10" />
+        </g>
+      )}
+      {c.hairStyle === "dutt" && (
+        <g fill={c.hairColor}>
+          <circle cx="50" cy="17" r="9" />
+          <path d="M24 46 Q26 24 50 24 Q74 24 76 46 Q70 33 50 33 Q30 33 24 46 Z" />
+        </g>
+      )}
+      {c.hairStyle === "irokese" && <path d="M42 24 Q50 6 58 24 Q54 18 50 18 Q46 18 42 24 Z" fill={c.hairColor} transform="scale(1.6 1) translate(-19 0)" />}
+      {/* Augen */}
+      {c.eyes === "normal" && <g fill="#1B2436"><circle cx="40" cy="50" r="4" /><circle cx="60" cy="50" r="4" /></g>}
+      {c.eyes === "gluecklich" && <g stroke="#1B2436" strokeWidth="3" fill="none" strokeLinecap="round"><path d="M35 52 Q40 46 45 52" /><path d="M55 52 Q60 46 65 52" /></g>}
+      {c.eyes === "cool" && <g fill="#1B2436"><rect x="35" y="47" width="11" height="5" rx="2" /><rect x="54" y="47" width="11" height="5" rx="2" /></g>}
+      {c.eyes === "sternchen" && <g fill="#F7C948"><path d="M40 45 l1.6 4.4 4.4 1.6 -4.4 1.6 -1.6 4.4 -1.6 -4.4 -4.4 -1.6 4.4 -1.6 Z" /><path d="M60 45 l1.6 4.4 4.4 1.6 -4.4 1.6 -1.6 4.4 -1.6 -4.4 -4.4 -1.6 4.4 -1.6 Z" /></g>}
+      {c.eyes === "zwinkern" && <g fill="#1B2436"><circle cx="40" cy="50" r="4" /><path d="M55 51 Q60 46 65 51" stroke="#1B2436" strokeWidth="3" fill="none" strokeLinecap="round" /></g>}
+      {/* Mund */}
+      <path d="M43 62 Q50 69 57 62" stroke="#1B2436" strokeWidth="3" fill="none" strokeLinecap="round" />
+      {/* Accessoires */}
+      {c.accessory === "brille" && (
+        <g stroke="#1B2436" strokeWidth="2.5" fill="none">
+          <circle cx="40" cy="50" r="9" /><circle cx="60" cy="50" r="9" /><path d="M49 50 h2" />
+        </g>
+      )}
+      {c.accessory === "sonnenbrille" && (
+        <g><rect x="30" y="44" width="18" height="11" rx="3" fill="#1B2436" /><rect x="52" y="44" width="18" height="11" rx="3" fill="#1B2436" /><path d="M48 48 h4" stroke="#1B2436" strokeWidth="3" /></g>
+      )}
+      {c.accessory === "kopfhoerer" && (
+        <g fill="#1B2436"><path d="M22 48 a28 28 0 0 1 56 0" stroke="#1B2436" strokeWidth="5" fill="none" /><rect x="16" y="46" width="10" height="16" rx="4" /><rect x="74" y="46" width="10" height="16" rx="4" /></g>
+      )}
+      {c.accessory === "muetze" && (
+        <g><path d="M22 40 Q26 16 50 16 Q74 16 78 40 Z" fill="#EF4444" /><rect x="18" y="38" width="64" height="7" rx="3.5" fill="#B91C1C" /></g>
+      )}
+    </svg>
+  );
+}
+
+// Zeigt entweder den gebauten Charakter oder (Alt-Accounts) das Emoji.
+function UserAvatar({ user, size = 40 }) {
+  if (user?.avatarConfig) return <CharacterAvatar config={user.avatarConfig} size={size} />;
+  return <span style={{ fontSize: size * 0.62, lineHeight: 1 }}>{user?.avatar || "🧑‍💻"}</span>;
+}
+
+function AvatarCreator({ value, onChange }) {
+  const cfg = { ...DEFAULT_AVATAR_CONFIG, ...(value || {}) };
+  const set = (k, v) => onChange({ ...cfg, [k]: v });
+  const Swatches = ({ label, colors, field }) => (
+    <div>
+      <p className="text-xs text-[#8A9BC0] mb-1.5">{label}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {colors.map((col) => (
+          <button key={col} onClick={() => set(field, col)} aria-label={label + " " + col}
+            className={`w-7 h-7 rounded-lg border-2 transition-all ${cfg[field] === col ? "border-[#4F8EF7] scale-110" : "border-transparent"}`}
+            style={{ background: col }} />
+        ))}
+      </div>
+    </div>
+  );
+  const Options = ({ label, options, field, labels }) => (
+    <div>
+      <p className="text-xs text-[#8A9BC0] mb-1.5">{label}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((o) => (
+          <button key={o} onClick={() => set(field, o)}
+            className={`px-2.5 py-1 rounded-lg text-xs border transition-all ${cfg[field] === o ? "border-[#4F8EF7] bg-[#4F8EF7]/10 text-[#4F8EF7]" : "border-[#1E2D4A] text-[#8A9BC0] hover:border-[#2A3F6F]"}`}>
+            {labels?.[o] || o}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+  const randomize = () => onChange({
+    skin: AV_SKIN[Math.floor(Math.random() * AV_SKIN.length)],
+    hairColor: AV_HAIR_COLOR[Math.floor(Math.random() * AV_HAIR_COLOR.length)],
+    hairStyle: AV_HAIR_STYLES[Math.floor(Math.random() * AV_HAIR_STYLES.length)],
+    eyes: AV_EYES[Math.floor(Math.random() * AV_EYES.length)],
+    accessory: AV_ACCESSORY[Math.floor(Math.random() * AV_ACCESSORY.length)],
+    bg: AV_BG[Math.floor(Math.random() * AV_BG.length)],
+  });
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-6">
+      <div className="flex flex-col items-center gap-3 shrink-0">
+        <CharacterAvatar config={cfg} size={120} />
+        <Btn size="sm" variant="secondary" icon={Wand} onClick={randomize}>Zufällig</Btn>
+      </div>
+      <div className="flex-1 space-y-3">
+        <Swatches label="Hautton" colors={AV_SKIN} field="skin" />
+        <Options label="Frisur" options={AV_HAIR_STYLES} field="hairStyle"
+          labels={{ kurz: "Kurz", lang: "Lang", locken: "Locken", dutt: "Dutt", glatze: "Glatze", irokese: "Irokese" }} />
+        <Swatches label="Haarfarbe" colors={AV_HAIR_COLOR} field="hairColor" />
+        <Options label="Augen" options={AV_EYES} field="eyes"
+          labels={{ normal: "Normal", gluecklich: "Fröhlich", cool: "Cool", sternchen: "Sterne", zwinkern: "Zwinkern" }} />
+        <Options label="Accessoire" options={AV_ACCESSORY} field="accessory"
+          labels={{ keine: "Keins", brille: "Brille", sonnenbrille: "Sonnenbrille", kopfhoerer: "Kopfhörer", muetze: "Mütze" }} />
+        <Swatches label="Hintergrund" colors={AV_BG} field="bg" />
+      </div>
+    </div>
+  );
+}
 function Profile({ ctx }) {
-  const { me, pushToast, setUsers } = ctx;
+  const { me, pushToast, setUsers, enable2FA, disable2FA, openEmailVerify } = ctx;
   const isStudent = me.role === "student";
+  const isTeacher = me.role === "teacher";
   const lvl = isStudent ? getLevelInfo(me.xp) : null;
   const [picker, setPicker] = useState(false);
   const copy = (txt) => { try { navigator.clipboard.writeText(txt); } catch (e) {} pushToast("success", "In Zwischenablage kopiert!"); };
-  const setAvatar = (a) => { setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatar: a } : u)); setPicker(false); pushToast("success", "Avatar aktualisiert!"); };
+  const setAvatar = (a) => { setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatar: a, avatarConfig: null } : u)); setPicker(false); pushToast("success", "Avatar aktualisiert!"); };
+  const setAvatarConfig = (conf) => setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatarConfig: conf } : u));
+  const roleLabel = { student: "Schüler", teacher: "Lehrer", admin: "Administrator" }[me.role] || me.role;
+  const RoleIcon = me.role === "student" ? GraduationCap : me.role === "admin" ? Shield : Users;
   return (
     <div className="space-y-6 max-w-3xl">
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row items-center gap-5">
           <button onClick={() => setPicker((p) => !p)} aria-label="Avatar ändern"
-            className="relative text-6xl w-24 h-24 rounded-2xl bg-[#0A0E1A] border border-[#1E2D4A] hover:border-[#4F8EF7] flex items-center justify-center transition-colors group">
-            {me.avatar}
+            className="relative w-24 h-24 rounded-2xl bg-[#0A0E1A] border border-[#1E2D4A] hover:border-[#4F8EF7] flex items-center justify-center transition-colors group overflow-hidden">
+            <UserAvatar user={me} size={94} />
             <span className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-[#141D35] border border-[#1E2D4A] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><PenLine size={12} className="text-[#4F8EF7]" /></span>
           </button>
           <div className="flex-1 text-center sm:text-left">
             <h1 className="font-display text-2xl font-bold">{me.name}</h1>
             <p className="text-[#8A9BC0]">{me.email}</p>
-            <span className="inline-flex items-center gap-1.5 mt-2 text-xs px-2.5 py-1 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7]">
-              {isStudent ? <GraduationCap size={13} /> : <Users size={13} />}{isStudent ? "Schüler" : "Lehrer"}
-            </span>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
+              <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7]">
+                <RoleIcon size={13} />{roleLabel}
+              </span>
+              {!me.isGuest && (
+                me.emailVerified
+                  ? <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-[#10B981]/15 text-[#10B981]"><CheckCircle2 size={13} />E-Mail bestätigt</span>
+                  : <button onClick={openEmailVerify} className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-[#F59E0B]/15 text-[#F59E0B] hover:bg-[#F59E0B]/25"><Mail size={13} />E-Mail bestätigen</button>
+              )}
+              {me.twoFactorEnabled && <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-[#7C3AED]/15 text-[#7C3AED]"><ShieldCheck size={13} />2FA aktiv</span>}
+            </div>
           </div>
           {isStudent && (
             <div className="text-center">
@@ -3821,12 +4934,19 @@ function Profile({ ctx }) {
         </div>
         {picker && (
           <div className="mt-5 pt-5 border-t border-[#1E2D4A]">
-            <p className="text-sm text-[#8A9BC0] mb-3">Wähle deinen Avatar:</p>
-            <div className="flex flex-wrap gap-2">
-              {AVATARS.map((a) => (
-                <button key={a} onClick={() => setAvatar(a)} aria-label={`Avatar ${a}`}
-                  className={`text-2xl w-12 h-12 rounded-xl flex items-center justify-center transition-all ${me.avatar === a ? "bg-[#4F8EF7]/15 border border-[#4F8EF7]" : "bg-[#0A0E1A] border border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>{a}</button>
-              ))}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-medium text-[#E8EDF5]">Deinen Charakter gestalten</p>
+              <Btn size="sm" icon={Check} onClick={() => { setPicker(false); pushToast("success", "Avatar gespeichert!"); }}>Fertig</Btn>
+            </div>
+            <AvatarCreator value={me.avatarConfig} onChange={setAvatarConfig} />
+            <div className="mt-5 pt-4 border-t border-[#1E2D4A]">
+              <p className="text-xs text-[#8A9BC0] mb-2">Oder ein Emoji verwenden:</p>
+              <div className="flex flex-wrap gap-2">
+                {AVATARS.map((a) => (
+                  <button key={a} onClick={() => setAvatar(a)} aria-label={`Avatar ${a}`}
+                    className={`text-xl w-10 h-10 rounded-xl flex items-center justify-center transition-all ${!me.avatarConfig && me.avatar === a ? "bg-[#4F8EF7]/15 border border-[#4F8EF7]" : "bg-[#0A0E1A] border border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>{a}</button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -3862,13 +4982,42 @@ function Profile({ ctx }) {
             </div>
           </div>
         </>
-      ) : (
+      ) : isTeacher ? (
         <div className="grid sm:grid-cols-2 gap-4">
           <StatCard icon={Users} label="Schüler" value={me.students.length} color="#4F8EF7" />
           <Card className="p-4">
             <p className="text-xs text-[#8A9BC0] mb-1">Dein Schul-Code</p>
             <button onClick={() => copy(me.schoolCode)} className="flex items-center gap-2 font-display font-bold text-xl text-[#F7C948]">{me.schoolCode}<Copy size={16} className="text-[#8A9BC0]" /></button>
             <p className="text-xs text-[#4A5A7A] mt-1">{me.school}</p>
+          </Card>
+        </div>
+      ) : null}
+
+      {/* Sicherheit */}
+      {!me.isGuest && (
+        <div>
+          <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2"><ShieldCheck className="text-[#10B981]" size={20} />Sicherheit</h2>
+          <Card className="divide-y divide-[#1E2D4A]">
+            <div className="flex flex-wrap items-center gap-3 p-4">
+              <Mail size={18} className="text-[#4F8EF7] shrink-0" />
+              <div className="flex-1 min-w-[180px]">
+                <p className="text-sm font-medium">E-Mail-Verifizierung</p>
+                <p className="text-xs text-[#8A9BC0]">{me.emailVerified ? "Deine E-Mail-Adresse ist bestätigt." : "Bestätige deine Adresse, um deinen Account abzusichern."}</p>
+              </div>
+              {me.emailVerified
+                ? <span className="text-xs text-[#10B981] flex items-center gap-1"><CheckCircle2 size={14} />Bestätigt</span>
+                : <Btn size="sm" variant="secondary" icon={Check} onClick={openEmailVerify}>Bestätigen</Btn>}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 p-4">
+              <ShieldCheck size={18} className="text-[#7C3AED] shrink-0" />
+              <div className="flex-1 min-w-[180px]">
+                <p className="text-sm font-medium">Zwei-Faktor-Authentifizierung (2FA)</p>
+                <p className="text-xs text-[#8A9BC0]">{me.twoFactorEnabled ? "Beim Login wird zusätzlich dein 2FA-Code abgefragt." : "Zusätzlicher Schutz: Login nur mit Passwort und Code."}</p>
+              </div>
+              {me.twoFactorEnabled
+                ? <Btn size="sm" variant="danger" icon={X} onClick={disable2FA}>Deaktivieren</Btn>
+                : <Btn size="sm" icon={ShieldCheck} onClick={enable2FA}>Aktivieren</Btn>}
+            </div>
           </Card>
         </div>
       )}
@@ -3940,7 +5089,7 @@ function TeacherDashboard({ ctx }) {
                   const lvl = getLevelInfo(s.xp);
                   return (
                     <tr key={s.id} className="border-b border-[#1E2D4A]/50 last:border-0 hover:bg-white/5 cursor-pointer" onClick={() => setDetail(s.id)}>
-                      <td className="px-4 py-3"><div className="flex items-center gap-2"><span className="text-xl">{s.avatar}</span><div><div className="font-medium text-[#E8EDF5]">{s.name}</div><div className="text-xs text-[#4A5A7A]">Lvl {lvl.level}</div></div></div></td>
+                      <td className="px-4 py-3"><div className="flex items-center gap-2"><span className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0"><UserAvatar user={s} size={32} /></span><div><div className="font-medium text-[#E8EDF5]">{s.name}</div><div className="text-xs text-[#4A5A7A]">Lvl {lvl.level}</div></div></div></td>
                       <td className="px-4 py-3">{c ? <span className="flex items-center gap-1.5">{c.icon} {c.name}</span> : <span className="text-[#4A5A7A]">—</span>}</td>
                       <td className="px-4 py-3"><div className="flex items-center gap-2 w-32"><ProgressBar value={p.done} max={p.total || 1} /><span className="text-xs text-[#8A9BC0] whitespace-nowrap">{p.pct}%</span></div></td>
                       <td className="px-4 py-3"><span className="flex items-center gap-1 text-[#F7C948]"><Star size={13} />{s.xp.toLocaleString("de-DE")}</span></td>
@@ -3962,7 +5111,7 @@ function TeacherDashboard({ ctx }) {
           <Card className="relative z-10 p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setDetail(null)} className="absolute top-4 right-4 text-[#8A9BC0] hover:text-[#E8EDF5]"><X size={20} /></button>
             <div className="flex items-center gap-3 mb-4">
-              <span className="text-4xl">{detailStudent.avatar}</span>
+              <span className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shrink-0"><UserAvatar user={detailStudent} size={48} /></span>
               <div><h3 className="font-display text-xl font-bold">{detailStudent.name}</h3><p className="text-sm text-[#8A9BC0]">{detailStudent.email}</p></div>
             </div>
             <div className="grid grid-cols-3 gap-2 mb-4">
@@ -4010,18 +5159,349 @@ function TeacherDashboard({ ctx }) {
   );
 }
 
+/* ========================= Code-Playground ========================= */
+function formatBytes(bytes) {
+  if (!bytes) return "0 KB";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+const PLAYGROUND_STARTER = {
+  html: `<h1>Hallo Welt!</h1>\n<p>Schreib hier deinen eigenen Code — die Vorschau aktualisiert sich in Echtzeit.</p>\n<button id="btn">Klick mich</button>`,
+  css: `body {\n  font-family: sans-serif;\n  background: #0A0E1A;\n  color: #E8EDF5;\n  padding: 2rem;\n}\nbutton {\n  background: linear-gradient(135deg, #4F8EF7, #7C3AED);\n  border: none;\n  color: white;\n  padding: 10px 18px;\n  border-radius: 8px;\n  cursor: pointer;\n}`,
+  js: `document.getElementById('btn').addEventListener('click', () => {\n  alert('Live-Vorschau funktioniert! 🎉');\n});`,
+};
+
+function Playground({ ctx }) {
+  const { me, savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId, pushToast, apiKey, aiProvider, openAiSettings } = ctx;
+  const [tab, setTab] = useState("html");
+  const [name, setName] = useState("Mein Projekt");
+  const [html, setHtml] = useState(PLAYGROUND_STARTER.html);
+  const [css, setCss] = useState(PLAYGROUND_STARTER.css);
+  const [js, setJs] = useState(PLAYGROUND_STARTER.js);
+  const [srcDoc, setSrcDoc] = useState("");
+  const [projectId, setProjectId] = useState(null);
+  const [debugResult, setDebugResult] = useState(null);
+  const [debugLoading, setDebugLoading] = useState(false);
+
+  const runDebug = async () => {
+    setDebugLoading(true);
+    setDebugResult(null);
+    const res = await debugCodeWithAI({ html, css, js }, apiKey, aiProvider);
+    setDebugResult(res);
+    setDebugLoading(false);
+  };
+
+  // Echtzeit-Vorschau: kurz debounced, damit nicht bei jedem Tastendruck neu gerendert wird
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSrcDoc(`<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [html, css, js]);
+
+  useEffect(() => {
+    if (!playgroundOpenId || !me) return;
+    const p = (me.playground || []).find((x) => x.id === playgroundOpenId);
+    if (p) { setProjectId(p.id); setName(p.name); setHtml(p.html); setCss(p.css); setJs(p.js); }
+    setPlaygroundOpenId(null);
+  }, [playgroundOpenId]);
+
+  const projects = me?.playground || [];
+  const usedBytes = projects.reduce((sum, p) => sum + (p.sizeBytes || 0), 0);
+  const quotaPct = Math.min(100, (usedBytes / STORAGE_QUOTA_BYTES) * 100);
+
+  const save = () => {
+    const id = projectId || uid();
+    const ok = savePlaygroundProject({ id, name: name || "Unbenannt", html, css, js });
+    if (ok) setProjectId(id);
+  };
+  const newProject = () => { setProjectId(null); setName("Mein Projekt"); setHtml(PLAYGROUND_STARTER.html); setCss(PLAYGROUND_STARTER.css); setJs(PLAYGROUND_STARTER.js); };
+  const load = (p) => { setProjectId(p.id); setName(p.name); setHtml(p.html); setCss(p.css); setJs(p.js); pushToast("info", `Projekt „${p.name}“ geladen.`); };
+
+  const tabs = [["html", "HTML", "html"], ["css", "CSS", "css"], ["js", "JavaScript", "javascript"]];
+  const codeFor = { html, css, js };
+  const setterFor = { html: setHtml, css: setCss, js: setJs };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Code2 className="text-[#4F8EF7]" />Code-Editor</h1>
+          <p className="text-[#8A9BC0] mt-1">Freestyle coden — HTML, CSS &amp; JS mit Live-Vorschau in Echtzeit.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Btn variant="secondary" size="sm" icon={Plus} onClick={newProject}>Neu</Btn>
+          <Btn variant="secondary" size="sm" icon={debugLoading ? undefined : Bug} onClick={runDebug} disabled={debugLoading}>
+            {debugLoading ? <><Loader2 size={14} className="ld-spin" />Analysiert …</> : "Mit KI debuggen"}
+          </Btn>
+          <Btn size="sm" icon={Check} onClick={save}>Speichern</Btn>
+        </div>
+      </div>
+
+      <Card className="p-4">
+        <div className="flex items-center justify-between text-xs mb-1.5">
+          <span className="text-[#8A9BC0]">Speicher: {formatBytes(usedBytes)} von 2,5 GB verwendet {me?.isGuest && "(Gast — wird nicht gespeichert)"}</span>
+          <span className="text-[#4A5A7A]">{projects.length} Projekt{projects.length === 1 ? "" : "e"}</span>
+        </div>
+        <ProgressBar value={quotaPct} max={100} />
+      </Card>
+
+      <div className="grid lg:grid-cols-2 gap-4">
+        <Card className="p-4">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Projektname"
+            className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 mb-3 text-sm font-medium text-[#E8EDF5]" />
+          <div className="flex p-1 bg-[#0A0E1A] rounded-lg mb-3">
+            {tabs.map(([v, label]) => (
+              <button key={v} onClick={() => setTab(v)}
+                className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${tab === v ? "text-white" : "text-[#8A9BC0]"}`}
+                style={tab === v ? { background: GRADIENT } : undefined}>{label}</button>
+            ))}
+          </div>
+          <MonacoCodeEditor value={codeFor[tab]} onChange={setterFor[tab]} disabled={false} courseId={tabs.find((t) => t[0] === tab)[2]} label={tab.toUpperCase()} />
+        </Card>
+
+        <Card className="p-4">
+          <div className="flex items-center gap-1.5 mb-3 text-xs text-[#8A9BC0]"><Eye size={13} />Live-Vorschau</div>
+          <div className="rounded-lg overflow-hidden border border-[#1E2D4A] bg-white" style={{ height: 340 }}>
+            <iframe title="Live-Vorschau" srcDoc={srcDoc} sandbox="allow-scripts allow-modals" className="w-full h-full border-0" />
+          </div>
+        </Card>
+      </div>
+
+      {/* KI-Debug-Ergebnis */}
+      {debugLoading && (
+        <Card className="p-5">
+          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
+            <Bug size={18} className="text-[#7C3AED]" /><span className="font-display font-bold">KI-Debugging</span>
+            <span className="ml-auto flex items-center gap-1.5 text-xs text-[#8A9BC0]"><Loader2 size={13} className="ld-spin" />analysiert deinen Code …</span>
+          </div>
+          <div className="space-y-2.5"><div className="ld-skeleton h-4 w-1/3" /><div className="ld-skeleton h-3 w-full" /><div className="ld-skeleton h-3 w-4/5" /></div>
+        </Card>
+      )}
+      {debugResult && !debugLoading && (
+        <Card className="p-5">
+          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
+            <Bug size={18} className="text-[#7C3AED]" /><span className="font-display font-bold">KI-Debugging</span>
+            {debugResult.offline && <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B]">Offline-Analyse</span>}
+          </div>
+          <p className="text-sm text-[#C9D6F0] mb-4">{debugResult.summary}</p>
+          {(debugResult.issues || []).length === 0 ? (
+            <p className="text-sm text-[#10B981] flex items-center gap-2"><CheckCircle2 size={16} />Keine Probleme gefunden.</p>
+          ) : (
+            <div className="space-y-2">
+              {debugResult.issues.map((iss, i) => {
+                const sev = { error: ["#EF4444", "Fehler"], warning: ["#F59E0B", "Warnung"], info: ["#4F8EF7", "Hinweis"] }[iss.severity] || ["#8A9BC0", "Hinweis"];
+                return (
+                  <div key={i} className="p-3 rounded-lg bg-[#0A0E1A] border border-[#1E2D4A]">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ color: sev[0], background: sev[0] + "22" }}>{sev[1]}</span>
+                      {iss.where && <span className="text-[10px] font-code uppercase text-[#4A5A7A]">{iss.where}</span>}
+                      <span className="text-sm font-medium text-[#E8EDF5]">{iss.title}</span>
+                    </div>
+                    {iss.detail && <p className="text-xs text-[#8A9BC0] mb-1">{iss.detail}</p>}
+                    {iss.fix && <p className="text-xs text-[#10B981] flex items-start gap-1.5"><span>💡</span><span>{iss.fix}</span></p>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {debugResult.offline && (
+            <button onClick={openAiSettings} className="text-xs text-[#4F8EF7] hover:underline flex items-center gap-1.5 mt-3">
+              <Settings size={12} />Für tiefere Analyse: echte KI aktivieren
+            </button>
+          )}
+        </Card>
+      )}
+
+      {projects.length > 0 && (
+        <div>
+          <h2 className="font-display text-lg font-bold mb-3">Gespeicherte Projekte</h2>
+          <Card className="divide-y divide-[#1E2D4A]">
+            {projects.map((p) => (
+              <div key={p.id} className="flex items-center gap-3 p-4">
+                <Code2 size={18} className="text-[#4F8EF7] shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{p.name}</p>
+                  <p className="text-xs text-[#8A9BC0]">{formatBytes(p.sizeBytes)} · {p.updatedAt}</p>
+                </div>
+                <Btn variant="ghost" size="sm" icon={Play} onClick={() => load(p)}>Laden</Btn>
+                <Btn variant="danger" size="sm" icon={Trash2} onClick={() => deletePlaygroundProject(p.id)} />
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ========================= Admin-Dashboard ========================= */
+function AdminDashboard({ ctx }) {
+  const { me, users, reports, adminUpdateUser, adminDeleteUser, adminCreateAdmin, resolveReport, deleteReport, pushToast } = ctx;
+  const [tab, setTab] = useState("users");
+  const [query, setQuery] = useState("");
+  const [editUser, setEditUser] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [newAdminOpen, setNewAdminOpen] = useState(false);
+  const [newAdminForm, setNewAdminForm] = useState({ name: "", email: "", password: "" });
+
+  const q = query.trim().toLowerCase();
+  const list = users.filter((u) => !u.isGuest && (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+  const openReports = reports.filter((r) => r.status === "open");
+  const resolvedReports = reports.filter((r) => r.status !== "open");
+
+  const openEdit = (u) => { setEditUser(u); setEditForm({ name: u.name, email: u.email, role: u.role }); };
+  const saveEdit = () => { adminUpdateUser(editUser.id, editForm); setEditUser(null); };
+
+  const roleBadge = (role) => {
+    const map = { admin: ["#7C3AED", "Admin"], teacher: ["#4F8EF7", "Lehrer"], student: ["#10B981", "Schüler"] };
+    const [color, label] = map[role] || ["#8A9BC0", role];
+    return <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ color, background: color + "22" }}>{label}</span>;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Shield className="text-[#7C3AED]" />Admin-Bereich</h1>
+        <p className="text-[#8A9BC0] mt-1">Angemeldet als {me.name}</p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard icon={Users} label="Registrierte Accounts" value={users.filter((u) => !u.isGuest).length} color="#4F8EF7" />
+        <StatCard icon={Shield} label="Admins" value={users.filter((u) => u.role === "admin").length} color="#7C3AED" />
+        <StatCard icon={FileText} label="Offene Meldungen" value={openReports.length} color="#EF4444" />
+      </div>
+
+      <div className="flex p-1 bg-[#0A0E1A] rounded-lg max-w-sm">
+        <button onClick={() => setTab("users")} className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${tab === "users" ? "text-white" : "text-[#8A9BC0]"}`} style={tab === "users" ? { background: GRADIENT } : undefined}>Nutzer</button>
+        <button onClick={() => setTab("reports")} className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${tab === "reports" ? "text-white" : "text-[#8A9BC0]"}`} style={tab === "reports" ? { background: GRADIENT } : undefined}>Meldungen{openReports.length > 0 ? ` (${openReports.length})` : ""}</button>
+      </div>
+
+      {tab === "users" ? (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Eye size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4A5A7A]" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nutzer suchen (Name oder E-Mail) …"
+                className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 pl-9 text-sm text-[#E8EDF5] placeholder:text-[#4A5A7A]" />
+            </div>
+            <Btn icon={UserRoundPlus} onClick={() => setNewAdminOpen(true)}>Admin erstellen</Btn>
+          </div>
+          <Card className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
+              <thead><tr className="text-left text-[#8A9BC0] border-b border-[#1E2D4A]">
+                <th className="px-4 py-3 font-medium">Name</th><th className="px-4 py-3 font-medium">E-Mail</th>
+                <th className="px-4 py-3 font-medium">Rolle</th><th className="px-4 py-3 font-medium"></th>
+              </tr></thead>
+              <tbody>
+                {list.map((u) => (
+                  <tr key={u.id} className="border-b border-[#1E2D4A]/50 last:border-0 hover:bg-white/5">
+                    <td className="px-4 py-3"><span className="flex items-center gap-2"><span className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center shrink-0"><UserAvatar user={u} size={28} /></span><span className="font-medium">{u.name}</span></span></td>
+                    <td className="px-4 py-3 text-[#8A9BC0]">{u.email}</td>
+                    <td className="px-4 py-3">{roleBadge(u.role)}</td>
+                    <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                      <button onClick={() => openEdit(u)} className="text-[#4F8EF7] hover:underline text-xs">Bearbeiten</button>
+                      {u.id !== me.id && <button onClick={() => adminDeleteUser(u.id)} className="text-[#EF4444] hover:underline text-xs">Löschen</button>}
+                    </td>
+                  </tr>
+                ))}
+                {list.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-[#4A5A7A]">Keine Nutzer gefunden.</td></tr>}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {reports.length === 0 && (
+            <Card className="p-10 text-center"><FileText size={36} className="mx-auto text-[#4A5A7A] mb-3" /><p className="text-[#8A9BC0]">Noch keine Meldungen.</p></Card>
+          )}
+          {[...openReports, ...resolvedReports].map((r) => (
+            <Card key={r.id} className={`p-4 ${r.status === "open" ? "" : "opacity-60"}`}>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <p className="text-sm font-medium">{r.type === "ai_answer" ? "KI-Antwort gemeldet" : "Inhalt gemeldet"}</p>
+                  <p className="text-xs text-[#8A9BC0]">von {r.reporterName} · {r.createdAt} · {r.lessonTitle || ""}</p>
+                </div>
+                <span className={`text-[11px] px-2 py-0.5 rounded-full ${r.status === "open" ? "bg-[#F59E0B]/15 text-[#F59E0B]" : "bg-[#10B981]/15 text-[#10B981]"}`}>{r.status === "open" ? "Offen" : "Erledigt"}</span>
+              </div>
+              {r.question && <p className="text-xs text-[#8A9BC0] mb-1"><strong className="text-[#C9D6F0]">Aufgabe:</strong> {r.question}</p>}
+              {r.userAnswer && <p className="text-xs text-[#8A9BC0] mb-1"><strong className="text-[#C9D6F0]">Antwort:</strong> {r.userAnswer}</p>}
+              {r.aiFeedback && <p className="text-xs text-[#8A9BC0] mb-1"><strong className="text-[#C9D6F0]">KI-Feedback:</strong> {r.aiFeedback}</p>}
+              {r.reason && <p className="text-xs text-[#8A9BC0] mb-2"><strong className="text-[#C9D6F0]">Grund:</strong> {r.reason}</p>}
+              <div className="flex gap-2 mt-2">
+                {r.status === "open" && <Btn size="sm" variant="secondary" icon={Check} onClick={() => resolveReport(r.id)}>Als erledigt markieren</Btn>}
+                <Btn size="sm" variant="danger" icon={Trash2} onClick={() => deleteReport(r.id)}>Löschen</Btn>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Nutzer bearbeiten */}
+      {editUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setEditUser(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <Card className="relative z-10 p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setEditUser(null)} className="absolute top-4 right-4 text-[#8A9BC0] hover:text-[#E8EDF5]"><X size={20} /></button>
+            <h3 className="font-display text-lg font-bold mb-4">Nutzer bearbeiten</h3>
+            <div className="space-y-3">
+              <Field label="Name" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
+              <Field label="E-Mail" value={editForm.email} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} />
+              <div>
+                <label className="block text-sm text-[#8A9BC0] mb-1.5">Rolle</label>
+                <select value={editForm.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
+                  className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 text-[#E8EDF5]">
+                  <option value="student">Schüler</option>
+                  <option value="teacher">Lehrer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <Btn className="w-full mt-4" icon={Check} onClick={saveEdit}>Speichern</Btn>
+          </Card>
+        </div>
+      )}
+
+      {/* Neuen Admin erstellen */}
+      {newAdminOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setNewAdminOpen(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <Card className="relative z-10 p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setNewAdminOpen(false)} className="absolute top-4 right-4 text-[#8A9BC0] hover:text-[#E8EDF5]"><X size={20} /></button>
+            <h3 className="font-display text-lg font-bold mb-4 flex items-center gap-2"><Shield className="text-[#7C3AED]" size={18} />Neuen Admin erstellen</h3>
+            <div className="space-y-3">
+              <Field label="Name" value={newAdminForm.name} onChange={(e) => setNewAdminForm((f) => ({ ...f, name: e.target.value }))} />
+              <Field label="E-Mail" value={newAdminForm.email} onChange={(e) => setNewAdminForm((f) => ({ ...f, email: e.target.value }))} />
+              <Field label="Passwort" type="password" value={newAdminForm.password} onChange={(e) => setNewAdminForm((f) => ({ ...f, password: e.target.value }))} />
+            </div>
+            <Btn className="w-full mt-4" icon={Check} onClick={() => { if (adminCreateAdmin(newAdminForm)) { setNewAdminOpen(false); setNewAdminForm({ name: "", email: "", password: "" }); } }}>Admin erstellen</Btn>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* =========================== Lesson View ========================== */
 const TASK_XP = 15;
 
-function AIFeedback({ result }) {
+function AIFeedback({ result, ctx, reportPayload }) {
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reason, setReason] = useState("");
   if (!result) return null;
   const good = result.correct;
+  const submitReport = () => {
+    ctx.reportContent({ type: "ai_answer", reason: reason.trim() || "Kein Grund angegeben", ...reportPayload, aiFeedback: result.feedback });
+    setReportOpen(false); setReason("");
+  };
   return (
     <Card className="p-5 mt-5" >
       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
         <Bot size={18} className="text-[#7C3AED]" />
-        <span className="font-display font-bold">KI-Bewertung</span>
-        {result.offline && <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B]">Offline-Heuristik</span>}
+        <span className="font-display font-bold">Bewertung</span>
+        {result.offline && <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B]">Offline-Prüfung</span>}
       </div>
       <div className="flex items-center gap-2 mb-3">
         {good ? <CheckCircle2 size={20} className="text-[#10B981]" /> : <XCircle size={20} className="text-[#EF4444]" />}
@@ -4030,13 +5510,38 @@ function AIFeedback({ result }) {
       </div>
       <p className="text-sm text-[#C9D6F0] leading-relaxed mb-2">{result.feedback}</p>
       {good && result.praise && <p className="text-sm text-[#10B981] mb-2">🎉 {result.praise}</p>}
-      {!good && result.hint && <p className="text-sm text-[#F59E0B] flex items-start gap-1.5"><span>💡</span><span>{result.hint}</span></p>}
+      {!good && result.hint && <p className="text-sm text-[#F59E0B] flex items-start gap-1.5 mb-2"><span>💡</span><span>{result.hint}</span></p>}
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 pt-3 border-t border-[#1E2D4A]">
+        {result.offline && ctx && (
+          <button onClick={ctx.openAiSettings} className="text-xs text-[#4F8EF7] hover:underline flex items-center gap-1.5">
+            <Settings size={12} />Echte KI-Bewertung aktivieren
+          </button>
+        )}
+        {ctx && !reportOpen && (
+          <button onClick={() => setReportOpen(true)} className="text-xs text-[#8A9BC0] hover:text-[#EF4444] flex items-center gap-1.5">
+            <Flag size={12} />Diese Bewertung melden
+          </button>
+        )}
+      </div>
+
+      {reportOpen && (
+        <div className="mt-3 p-3 rounded-lg bg-[#0A0E1A] border border-[#1E2D4A]">
+          <p className="text-xs text-[#8A9BC0] mb-2">Was stimmt mit dieser Bewertung nicht?</p>
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="z.B. Meine Antwort war eigentlich richtig …"
+            className="w-full bg-[#141D35] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2 text-xs text-[#E8EDF5] resize-y mb-2" />
+          <div className="flex gap-2">
+            <Btn size="sm" variant="danger" icon={Flag} onClick={submitReport}>Melden</Btn>
+            <Btn size="sm" variant="ghost" onClick={() => setReportOpen(false)}>Abbrechen</Btn>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
 
 function LessonView({ ctx }) {
-  const { selectedLesson, navigate, openCourse, me, addXP, showXP, completeLesson, celebrate, pushToast } = ctx;
+  const { selectedLesson, navigate, openCourse, me, addXP, showXP, completeLesson, celebrate, pushToast, logout, apiKey, aiProvider, openAiSettings } = ctx;
   const lesson = getFullLesson(selectedLesson);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -4079,20 +5584,27 @@ function LessonView({ ctx }) {
       const correct = ans === task.correctAnswer;
       setResults((r) => ({ ...r, [task.id]: { correct, score: correct ? 100 : 0, feedback: task.explanation } }));
       if (correct) { reward(task.id); pushToast("success", `Richtig! +${TASK_XP} XP`); } else pushToast("error", "Nicht ganz — versuch es nochmal!");
-    } else if (task.type === "fill_blank") {
-      const correct = task.blanks.every((b, i) => (ans?.[i] || "").trim().toLowerCase() === b.toLowerCase());
-      setResults((r) => ({ ...r, [task.id]: { correct, score: correct ? 100 : 0, feedback: correct ? "Alle Lücken korrekt ausgefüllt!" : `Richtig wäre: ${task.blanks.join(", ")}.` } }));
-      if (correct) { reward(task.id); pushToast("success", `Richtig! +${TASK_XP} XP`); } else pushToast("error", "Nicht ganz — schau nochmal hin!");
-    } else {
-      // KI-geprüft
-      if (!String(ans || "").trim()) { pushToast("error", "Bitte gib zuerst eine Antwort ein."); return; }
-      setAiLoading(true);
-      const res = await checkAnswerWithAI(task, ans, lesson._course.name, lesson.title);
-      setAiLoading(false);
-      setResults((r) => ({ ...r, [task.id]: res }));
-      if (res.correct) { reward(task.id); pushToast("success", `Gut gemacht! +${TASK_XP} XP`); if (res.score >= 95 && !me.badges.includes("ai_master")) setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES.ai_master.label}!`), 400); }
-      else pushToast("error", "Versuch es nochmal — du schaffst das!");
+      return;
     }
+
+    // Alle anderen Aufgabentypen (Lückentext, Code, Erklären) werden geprüft —
+    // per echter KI, wenn ein API-Key hinterlegt ist, sonst per Offline-Heuristik.
+    let checkTask = task, checkAnswer = ans;
+    if (task.type === "fill_blank") {
+      if (!(ans || []).some((v) => (v || "").trim())) { pushToast("error", "Bitte fülle mindestens eine Lücke aus."); return; }
+      const filled = task.template.split("___").reduce((acc, seg, i) => acc + seg + (i < task.blanks.length ? `[${(ans[i] || "").trim() || "___"}]` : ""), "");
+      checkTask = { ...task, expectedConcepts: task.blanks, _blankAnswers: ans, question: `${task.question} Satz: "${filled}"` };
+      checkAnswer = filled;
+    } else if (!String(ans || "").trim()) {
+      pushToast("error", "Bitte gib zuerst eine Antwort ein."); return;
+    }
+
+    setAiLoading(true);
+    const res = await checkAnswerWithAI(checkTask, checkAnswer, lesson._course.name, lesson.title, apiKey, aiProvider);
+    setAiLoading(false);
+    setResults((r) => ({ ...r, [task.id]: res }));
+    if (res.correct) { reward(task.id); pushToast("success", `Gut gemacht! +${TASK_XP} XP`); if (res.score >= 95 && !me.badges.includes("ai_master")) setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES.ai_master.label}!`), 400); }
+    else pushToast("error", "Versuch es nochmal — du schaffst das!");
   };
 
   const retry = () => setResults((r) => { const n = { ...r }; delete n[task.id]; return n; });
@@ -4137,7 +5649,16 @@ function LessonView({ ctx }) {
           <div className="flex-1 min-w-0 text-sm text-[#8A9BC0] truncate">
             <span>{lesson._course.icon} {lesson._course.name}</span><span className="mx-2 text-[#4A5A7A]">/</span><span className="text-[#E8EDF5]">{lesson.title}</span>
           </div>
-          <span className="text-sm text-[#8A9BC0] shrink-0 whitespace-nowrap">Aufgabe {idx + 1} von {lesson.tasks.length}</span>
+          <span className="hidden sm:inline text-sm text-[#8A9BC0] shrink-0 whitespace-nowrap">Aufgabe {idx + 1} von {lesson.tasks.length}</span>
+          <button onClick={openAiSettings} aria-label="KI-Einstellungen" title={apiKey ? "KI verbunden" : "KI-Key hinzufügen"}
+            className="shrink-0 w-8 h-8 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center relative">
+            <Settings size={14} className="text-[#8A9BC0]" />
+            <span className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${apiKey ? "bg-[#10B981]" : "bg-[#4A5A7A]"}`} />
+          </button>
+          <button onClick={logout} aria-label="Abmelden" title="Abmelden"
+            className="shrink-0 w-8 h-8 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#EF4444] hover:text-[#EF4444] flex items-center justify-center text-[#8A9BC0]">
+            <LogOut size={14} />
+          </button>
         </div>
         <div className="h-1 bg-[#1A2540]"><div className="h-1 transition-all duration-500" style={{ width: ((idx + (result ? 1 : 0)) / lesson.tasks.length) * 100 + "%", background: GRADIENT }} /></div>
       </header>
@@ -4210,8 +5731,8 @@ function LessonView({ ctx }) {
               {/* Aktionen */}
               <div className="mt-4 flex gap-2">
                 {!result && (
-                  <Btn className="flex-1" onClick={submit} disabled={aiLoading} icon={aiLoading ? undefined : (task.aiCheck ? Bot : Send)}>
-                    {aiLoading ? <><Loader2 size={16} className="ld-spin" />KI prüft …</> : task.aiCheck ? "Mit KI prüfen" : "Antwort prüfen"}
+                  <Btn className="flex-1" onClick={submit} disabled={aiLoading} icon={aiLoading ? undefined : Send}>
+                    {aiLoading ? <><Loader2 size={16} className="ld-spin" />Prüft …</> : "Prüfen"}
                   </Btn>
                 )}
                 {result && !result.correct && <Btn variant="secondary" onClick={retry} icon={ArrowLeft}>Nochmal</Btn>}
@@ -4220,8 +5741,8 @@ function LessonView({ ctx }) {
                   : <Btn className="flex-1" onClick={() => setIdx((i) => i + 1)} icon={ArrowRight}>Nächste Aufgabe</Btn>)}
               </div>
 
-              {/* MC/Fill Feedback */}
-              {result && (task.type === "multiple_choice" || task.type === "fill_blank") && (
+              {/* MC Feedback (Lückentext/Code/Erklären laufen über die KI-Bewertung unten) */}
+              {result && task.type === "multiple_choice" && (
                 <div className={`mt-4 p-3 rounded-lg text-sm ${result.correct ? "bg-[#10B981]/10 text-[#10B981]" : "bg-[#EF4444]/10 text-[#C9D6F0]"}`}>
                   <div className="flex items-center gap-1.5 font-medium mb-1">{result.correct ? <CheckCircle2 size={15} /> : <XCircle size={15} className="text-[#EF4444]" />}{result.correct ? "Richtig!" : "Leider falsch"}</div>
                   <p className="text-[#C9D6F0]">{result.feedback}</p>
@@ -4229,9 +5750,15 @@ function LessonView({ ctx }) {
               )}
             </Card>
 
-            {/* KI-Feedback */}
-            {aiLoading && task.aiCheck && <SkeletonFeedback />}
-            {result && task.aiCheck && <AIFeedback result={result} />}
+            {/* KI-Feedback (Lückentext, Code, Erklären) */}
+            {aiLoading && task.type !== "multiple_choice" && <SkeletonFeedback />}
+            {result && task.type !== "multiple_choice" && (
+              <AIFeedback result={result} ctx={ctx} reportPayload={{
+                lessonTitle: `${lesson._course.name} · ${lesson.title}`,
+                question: task.question,
+                userAnswer: String(Array.isArray(answers[task.id]) ? answers[task.id].join(", ") : (answers[task.id] || "")).slice(0, 400),
+              }} />
+            )}
 
             {/* Tastatur-Hinweis */}
             <p className="text-center text-[11px] text-[#4A5A7A] mt-3">

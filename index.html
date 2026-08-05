@@ -6,10 +6,16 @@
   <title>LearnDeveloping — Code lernen. Richtig lernen.</title>
   <meta name="description" content="KI-gestützte Lernplattform für 7 Programmiersprachen — von HTML bis C++." />
 
+  <!-- Favicon (Inline-SVG, kein externes Asset nötig) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234F8EF7'/%3E%3Cstop offset='1' stop-color='%237C3AED'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='%230A0E1A'/%3E%3Cpath d='M35 30 L18 50 L35 70' stroke='url(%23g)' stroke-width='9' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M65 30 L82 50 L65 70' stroke='url(%23g)' stroke-width='9' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
   <!-- Tailwind (CDN, JIT mit Arbitrary Values) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- React + lucide-react + Monaco (VS-Code-Editor) über Import Map -->
+  <!-- Font Awesome Free (Icon-System) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- React + Monaco (VS-Code-Editor) über Import Map -->
   <script type="importmap">
   {
     "imports": {
@@ -17,7 +23,6 @@
       "react/": "https://esm.sh/react@18.3.1/",
       "react-dom": "https://esm.sh/react-dom@18.3.1",
       "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-      "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
       "@monaco-editor/react": "https://esm.sh/@monaco-editor/react@4.6.0?external=react,react-dom"
     }
   }
