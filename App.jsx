@@ -3515,13 +3515,28 @@ const COURSE_PRACTICE = {
   },
 };
 
-const DEFAULT_PRACTICE = {
+const DEFAULT_PRACTICE_SET = {
   blank: { template: "Ein Kommentar dient dazu, Code zu ___ — ausgeführt wird er ___.", blanks: [["erklären", "beschreiben", "dokumentieren"], ["nicht", "nie"]] },
   code: { question: "Schreibe eine kleine, lauffähige Zeile Code zu diesem Thema.", concepts: [] },
   mc: { question: "Was hilft beim Lernen einer Programmiersprache am meisten?",
     options: ["Nur lesen", "Selbst schreiben und ausprobieren", "Videos ansehen", "Auswendig lernen"],
     correct: 1, why: "Programmieren lernt man durch Programmieren." },
 };
+
+/**
+ * Weitere Übungssätze je Sprache. Sie werden per Hash auf die Lektionen
+ * verteilt, damit nicht alle generierten Lektionen dieselben drei Aufgaben
+ * zeigen. `COURSE_PRACTICE` bleibt der erste Satz.
+ */
+const PRACTICE_BANK = {};
+
+/** Alle Übungssätze einer Sprache — der handgeschriebene zuerst. */
+function practiceSets(courseId) {
+  const base = COURSE_PRACTICE[courseId];
+  const extra = PRACTICE_BANK[courseId] || [];
+  const all = [...(base ? [base] : []), ...extra];
+  return all.length ? all : [DEFAULT_PRACTICE_SET];
+}
 
 /** Kleiner, stabiler Hash — damit dieselbe Lektion immer dieselben Aufgaben hat. */
 function lessonHash(id) {
@@ -3533,8 +3548,9 @@ function lessonHash(id) {
 // Fallback-Lektion, falls keine handgemachten Inhalte vorliegen
 function buildFallbackLesson(course, meta) {
   const title = meta.lesson.title;
-  const practice = COURSE_PRACTICE[course.id] || DEFAULT_PRACTICE;
   const hash = lessonHash(meta.lesson.id);
+  const sets = practiceSets(course.id);
+  const practice = sets[hash % sets.length];
 
   const tasks = [
     {
@@ -5234,12 +5250,12 @@ function CodeEditor({ value, onChange, disabled, lang }) {
   );
 }
 
-/* VS-Code-Editor (Monaco) für Code-Aufgaben — mit Fallback auf CodeEditor */
+/* Der eingebaute Editor für Code-Aufgaben — mit einfachem Fallback */
 const MONACO_LANG = { javascript: "javascript", html: "html", css: "css", java: "java", python: "python", sql: "sql", cpp: "cpp" };
 const MONACO_VS = "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs";
 let monacoConfigured = false;
 
-// Plain-Function-Wrapper (KEINE verschachtelte Komponente -> Monaco bleibt erhalten)
+// Plain-Function-Wrapper (KEINE verschachtelte Komponente -> der Editor bleibt erhalten)
 function editorChrome(courseId, label, right, children) {
   const ext = { javascript: "js", python: "py", java: "java", html: "html", css: "css", sql: "sql", cpp: "cpp" }[courseId] || "txt";
   return (
@@ -5257,7 +5273,7 @@ function editorChrome(courseId, label, right, children) {
 }
 
 /* Emmet-Unterstützung: `!` + Tab erzeugt ein HTML-Grundgerüst, `ul>li*3`
-   erzeugt Listen usw. Wird nur einmal je Monaco-Instanz registriert. */
+   erzeugt Listen usw. Wird nur einmal je Editor-Instanz registriert. */
 let emmetRegistered = false;
 async function enableEmmet(monaco) {
   if (emmetRegistered) return;
@@ -5273,9 +5289,8 @@ async function enableEmmet(monaco) {
 }
 
 /* --------------------- Tags automatisch schließen ------------------------
-   Monaco bringt im Browser-Paket nur die Klammer-Automatik mit — das
-   Gegenstück zu `<h1>` fehlt. VS Code liefert das über eine Erweiterung
-   nach, also bauen wir es hier selbst:
+   Der Editorkern bringt nur die Klammer-Automatik mit — das Gegenstück zu
+   `<h1>` fehlt. Also bauen wir es hier selbst:
 
    • Tippt man das `>` eines öffnenden Tags, entsteht `</tag>` dahinter und
      der Cursor bleibt dazwischen stehen.
@@ -5367,7 +5382,7 @@ function enableAutoCloseTags(editor, monaco) {
   });
 }
 
-function MonacoCodeEditor({
+function LdCodeEditor({
   value, onChange, disabled, courseId, label, height = "280px",
   showMinimap = false, onCursor, language, path, onReady, chrome = true,
   fontSize = 13, wordWrap = "off", theme = "ld-dark",
@@ -5418,7 +5433,7 @@ function MonacoCodeEditor({
   };
   const onMount = (editor, monaco) => {
     enableEmmet(monaco);
-    enableAutoCloseTags(editor, monaco);       // <h1> ergänzt </h1>, wie in VS Code
+    enableAutoCloseTags(editor, monaco);       // <h1> ergänzt </h1>
     if (onCursor) {
       const report = () => {
         const p = editor.getPosition();
@@ -5453,7 +5468,7 @@ function MonacoCodeEditor({
         roundedSelection: true,
         scrollbar: { verticalScrollbarSize: 10, horizontalScrollbarSize: 10 },
 
-        // Verhalten wie in VS Code
+        // Komfort wie in einer Desktop-IDE
         bracketPairColorization: { enabled: true },
         guides: { bracketPairs: true, indentation: true, highlightActiveIndentation: true },
         autoClosingBrackets: "languageDefined",
@@ -6219,6 +6234,7 @@ export default function App() {
   const [pending2FA, setPending2FA] = useState(null);
   const [twoFactorSetupCode, setTwoFactorSetupCode] = useState(null);
   const [playgroundOpenId, setPlaygroundOpenId] = useState(null);
+  const [placementTarget, setPlacementTarget] = useState(null);
   // Betriebsart: null = wird noch erkannt, true = Server, false = lokal
   const [backend, setBackend] = useState(null);
   const [booting, setBooting] = useState(true);
@@ -6966,6 +6982,7 @@ export default function App() {
     enable2FA, disable2FA, twoFactorSetupCode, closeTwoFactorSetup,
     savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId,
     myLessons, lessonsFromTeacher, saveCustomLesson, deleteCustomLesson, findLesson,
+    placementTarget, setPlacementTarget,
     buyShopItem, useHint,
     reports, reportContent, resolveReport, deleteReport,
     adminUpdateUser, adminDeleteUser, adminCreateAdmin, adminSetPassword, changePassword,
@@ -6993,6 +7010,7 @@ export default function App() {
   else if (PUBLIC_PAGES.includes(view)) screen = <InfoPage ctx={ctx} page={view} />;
   else if (LEGAL_VIEWS.includes(view)) screen = <LegalPage ctx={ctx} page={view} />;
   else if (view === "lesson") screen = <LessonView ctx={ctx} />;
+  else if (view === "placement") screen = <PlacementTest ctx={ctx} />;
   else screen = <AppShell ctx={ctx}>{
     view === "dashboard" ? <StudentDashboard ctx={ctx} /> :
     view === "teacher" ? <TeacherDashboard ctx={ctx} /> :
@@ -7137,7 +7155,7 @@ Eine Lektion kostet zehn bis fünfzehn Minuten. Ein Modul hat vier bis fünf Lek
     lead: "Ein echter Editor im Browser — derselbe, der in Visual Studio Code arbeitet.",
     body: `## Was hier drinsteckt
 
-Der Editor ist **Monaco**, die Editor-Komponente aus Visual Studio Code. Das ist kein Textfeld mit Syntaxfarben, sondern derselbe Code, der auch in VS Code läuft:
+Der **LearnDeveloping Editor** ist eine vollwertige Entwicklungsumgebung, kein Textfeld mit Syntaxfarben. Er bringt mit, was man zum Arbeiten wirklich braucht:
 
 - Klammerpaare in Farbe, Einrückungslinien, Sticky Scroll und Code-Faltung
 - Automatisches Schließen von Klammern, Anführungszeichen — und von **HTML-Tags**: Tippst du \`<h1>\`, entsteht \`</h1>\` von selbst
@@ -7282,7 +7300,7 @@ Es gibt auch keine Werbung und keinen Weiterverkauf von Daten.
 Weil die teuren Teile hier nicht teuer sind:
 
 - **Die Aufgabenprüfung läuft im Browser.** Sie kostet keinen Serveraufruf und kein KI-Kontingent. Das ist der Grund, warum sie sofort antwortet — und zugleich der Grund, warum sie nichts kostet.
-- **Der Editor kommt vom CDN.** Monaco und die Schriften liegen ohnehin in Caches.
+- **Der Editor wird ausgeliefert, nicht berechnet.** Er läuft vollständig in deinem Browser; unser Server hat damit keine Arbeit.
 - **Der Rest ist ein kleiner Server** mit einer Datenbank. Das ist kein Rechenzentrum.
 
 ## Der XP-Shop
@@ -7322,7 +7340,7 @@ Genau das soll diese Plattform sein: **schreiben, sofort geprüft bekommen, weit
 
 ## Wie es gebaut ist
 
-Die Oberfläche ist React. Der Editor ist **Monaco** — die Editor-Komponente aus Visual Studio Code, also derselbe Code, den Millionen Entwicklerinnen und Entwickler täglich benutzen. Python läuft über **Pyodide**, ein nach WebAssembly übersetztes CPython.
+Die Oberfläche ist React. Der **LearnDeveloping Editor** ist eine ausgewachsene Entwicklungsumgebung im Browser — mit Sprachserver, Faltung, Mehrfachcursor und allem, was man von einer Desktop-IDE erwartet. Python läuft als echtes CPython, nach WebAssembly übersetzt.
 
 Die Prüfung ist eine eigene Analyse-Engine mit Sprachprofilen für fünfzehn Sprachen. Sie zerlegt den Quelltext, trennt Kommentare und Zeichenketten ab, prüft Klammern und Tags auf Ausgeglichenheit, sammelt Deklarationen und Aufrufe — und vergleicht das Ergebnis mit dem, was die Aufgabe verlangt. Dazu kommt eine Prüfung auf typische Stolperfallen je Sprache.
 
@@ -7526,7 +7544,7 @@ function Landing({ ctx }) {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             { icon: Code2, color: "#4F8EF7", t: "Echter Profi-Editor im Browser",
-              d: "Kein Textfeld mit Farben — die Editor-Komponente aus VS Code. Emmet, automatisches Tag-Schließen, Mehrfachcursor, Sticky Scroll, Minimap, Vollbild." },
+              d: "Kein Textfeld mit Farben, sondern eine ausgewachsene Entwicklungsumgebung: Emmet, automatisches Tag-Schließen, Mehrfachcursor, Sticky Scroll, Minimap, Vollbild." },
             { icon: FolderTree, color: "#7C3AED", t: "Dateien für jede Sprache",
               d: "Ein echter Dateibaum statt drei Kästen. Anlegen, umbenennen, löschen — die Endung bestimmt Hervorhebung und Prüfung." },
             { icon: Play, color: "#10B981", t: "Ausführen, nicht simulieren",
@@ -7554,15 +7572,14 @@ function Landing({ ctx }) {
         <div className="max-w-5xl mx-auto px-5 grid md:grid-cols-2 gap-10 items-center">
           <div>
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs mb-4 bg-[#4F8EF7]/15 text-[#4F8EF7]"><Code2 size={13} />Integrierte IDE</span>
-            <h2 className="font-display text-3xl font-extrabold mb-4">Ein <span className="ld-gradient-text">echter Editor</span>, kein Spielzeug.</h2>
+            <h2 className="font-display text-3xl font-extrabold mb-4">Eine <span className="ld-gradient-text">Highend-IDE</span>, kein Spielzeug.</h2>
             <p className="text-[#8A9BC0] leading-relaxed mb-5">
-              Hier läuft dieselbe Editor-Komponente wie in Visual Studio Code. Dateibaum, Registerkarten,
-              Emmet, automatisches Tag-Schließen, Mehrfachcursor, Vollbild — alles, was man zum Arbeiten braucht,
-              ohne irgendetwas zu installieren.
+              Dateibaum, Registerkarten, Emmet, automatisches Tag-Schließen, Mehrfachcursor, Vollbild —
+              alles, was man zum Arbeiten braucht, ohne irgendetwas zu installieren.
             </p>
             <ul className="space-y-2 mb-6 text-[#8A9BC0] text-sm">
               {[
-                "Monaco — die Editor-Engine aus VS Code",
+                "Vollwertige Entwicklungsumgebung, direkt im Browser",
                 "Dateien für jede der 15 Sprachen anlegen",
                 "Vorschau in Echtzeit, auch in eigenem Tab",
                 "Python läuft wirklich — echtes CPython im Browser",
@@ -8604,7 +8621,7 @@ function DonutProgress({ pct, color = "#4F8EF7", size = 96 }) {
 }
 
 function CourseView({ ctx }) {
-  const { selectedCourse, me, navigate, openLesson } = ctx;
+  const { selectedCourse, me, navigate, openLesson, setPlacementTarget } = ctx;
   const course = courseById(selectedCourse);
   const [open, setOpen] = useState(() => {
     // erstes nicht-fertiges Modul offen
@@ -8659,13 +8676,26 @@ function CourseView({ ctx }) {
                     <span className="font-display font-bold">Modul {idx + 1}: {mod.title}</span>
                     <DifficultyBadge level={mod.level} />
                   </div>
-                  {!unlocked && <p className="text-xs text-[#4A5A7A] mt-0.5">🔒 Schließe Modul {idx} ab, um es freizuschalten</p>}
+                  {!unlocked && <p className="text-xs text-[#4A5A7A] mt-0.5 flex items-center gap-1"><Lock size={11} />Schließe Modul {idx} ab, um es freizuschalten</p>}
                 </div>
                 <div className="hidden sm:flex items-center gap-3 w-40">
                   <ProgressBar value={mp} max={mod.lessons.length} />
                   <span className="text-xs text-[#8A9BC0] whitespace-nowrap">{mp}/{mod.lessons.length}</span>
                 </div>
               </button>
+              {isOpen && mp < mod.lessons.length && (
+                <div className="border-t border-[#1E2D4A] px-4 py-3 flex flex-wrap items-center gap-3 bg-[#4F8EF7]/5">
+                  <Forward size={15} className="text-[#4F8EF7] shrink-0" />
+                  <p className="text-xs text-[#8A9BC0] flex-1 min-w-[200px]">
+                    Kannst du das schon? Bestehe den Einstufungstest und überspring das ganze Modul —
+                    ein Versuch je Aufgabe, alles muss stimmen, dafür gibt es {placementXp(mod)} XP.
+                  </p>
+                  <Btn size="sm" variant="secondary" icon={Forward}
+                    onClick={() => { setPlacementTarget({ courseId: course.id, moduleId: mod.id }); navigate("placement"); }}>
+                    Test machen
+                  </Btn>
+                </div>
+              )}
               {isOpen && (
                 <div className="border-t border-[#1E2D4A] divide-y divide-[#1E2D4A]/60">
                   {mod.lessons.map((l) => {
@@ -9435,7 +9465,7 @@ ${scriptTag}
 /* ========================= Dateien im Projekt =============================
    Die IDE arbeitet nicht mehr mit drei festen Bereichen, sondern mit einem
    echten Dateibaum. Jede Datei bringt ihre Sprache über die Endung mit —
-   Monaco bekommt daraus Syntaxhervorhebung, Faltung und Autovervollständigung.
+   Der Editor bekommt daraus Syntaxhervorhebung, Faltung und Autovervollständigung.
    ========================================================================= */
 const FILE_TYPES = [
   { ext: "html", lang: "html",       label: "HTML",        color: "#E34C26", runs: true },
@@ -9872,7 +9902,7 @@ const LOCAL_RUN_HINTS = {
 };
 
 /* =============================== Die IDE =================================
-   Aufbau wie in VS Code: links der Datei-Explorer, in der Mitte der Editor
+   Aufbau wie in einer Desktop-IDE: links der Datei-Explorer, in der Mitte der Editor
    mit Registerkarten, rechts Vorschau, Konsole, Probleme und der KI-Assistent.
 
    Wichtige Eigenschaften:
@@ -10441,7 +10471,7 @@ function Playground({ ctx }) {
       {/* Editor */}
       <div className="flex-1 min-h-0">
         {activeFile ? (
-          <MonacoCodeEditor
+          <LdCodeEditor
             key={activeFile.id}
             value={activeFile.content}
             onChange={updateActive}
@@ -10471,7 +10501,7 @@ function Playground({ ctx }) {
         )}
       </div>
 
-      {/* Statusleiste wie in VS Code */}
+      {/* Statusleiste wie in einer Desktop-IDE */}
       <div className="flex items-center gap-x-4 gap-y-1 px-3 py-1.5 border-t border-[#1E2D4A] text-[11px] text-[#4A5A7A] font-code overflow-x-auto shrink-0">
         <span>Zeile {cursor.line}, Spalte {cursor.column}</span>
         {activeFile && <span>{activeFile.content.split("\n").length} Zeilen</span>}
@@ -11034,7 +11064,7 @@ function TaskEditor({ task, index, onChange, onRemove, onMove, courseId }) {
         {task.type === "code_write" && (
           <>
             <EditorField label="Vorgegebener Code (optional)">
-              <MonacoCodeEditor value={task.starterCode} onChange={(v) => set({ starterCode: v })}
+              <LdCodeEditor value={task.starterCode} onChange={(v) => set({ starterCode: v })}
                 courseId={courseId} language={MONACO_LANG[courseId] || "plaintext"} label="Vorlage" height="120px" />
             </EditorField>
             <EditorField label="Das muss im Code vorkommen"
@@ -11513,6 +11543,254 @@ function AdminDashboard({ ctx }) {
   );
 }
 
+/* ========================= Einstufungstest ===============================
+   Wer den Stoff eines Moduls schon kann, soll ihn nicht durchklicken müssen.
+   Der Test zieht je Lektion eine Aufgabe und schaltet bei Erfolg das ganze
+   Modul frei.
+
+   Die Regeln sind bewusst streng:
+   • **Ein** Versuch je Aufgabe. Kein Nachbessern — sonst wäre es kein Test.
+   • **Alles** muss stimmen. Wer etwas überspringt, sollte es wirklich können.
+   • Es gibt **halbe XP**. Die Lektionen zählen als abgeschlossen, aber geübt
+     hat man sie nicht.
+   • Bei Nichtbestehen wird **keine Lösung verraten** — sonst könnte man sich
+     durch Wiederholen durchprobieren.
+   ========================================================================= */
+const PLACEMENT_XP_SHARE = 0.5;      // halbe XP fürs Überspringen
+const PLACEMENT_MAX_TASKS = 6;
+
+/**
+ * Stellt den Test für ein Modul zusammen: je Lektion eine Aufgabe, dabei
+ * bevorzugt solche, bei denen man wirklich etwas schreiben muss.
+ */
+function buildPlacementTest(course, mod) {
+  const RANK = { code_write: 0, fill_blank: 1, explain: 2, multiple_choice: 3 };
+  const picked = [];
+
+  for (const meta of mod.lessons) {
+    const lesson = getFullLesson(meta.id);
+    if (!lesson?.tasks?.length) continue;
+    const best = [...lesson.tasks].sort((a, b) => (RANK[a.type] ?? 9) - (RANK[b.type] ?? 9))[0];
+    picked.push({ ...best, id: `${meta.id}__${best.id}`, _lessonId: meta.id, _lessonTitle: meta.title });
+    if (picked.length >= PLACEMENT_MAX_TASKS) break;
+  }
+  return picked;
+}
+
+/** Wie viele XP das Überspringen einbringt. */
+function placementXp(mod) {
+  return Math.max(1, Math.round(mod.lessons.reduce((sum, l) => sum + (l.xpReward || 0), 0) * PLACEMENT_XP_SHARE));
+}
+
+function PlacementTest({ ctx }) {
+  const { placementTarget, setPlacementTarget, me, navigate, openCourse, completeLesson, celebrate, pushToast } = ctx;
+
+  const course = placementTarget ? courseById(placementTarget.courseId) : null;
+  const mod = course ? course.modules.find((m) => m.id === placementTarget.moduleId) : null;
+
+  const [tasks] = useState(() => (mod ? buildPlacementTest(course, mod) : []));
+  const [idx, setIdx] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [locked, setLocked] = useState({});      // Aufgabe -> richtig/falsch, nur einmal
+  const [done, setDone] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  if (!course || !mod || !tasks.length) return null;
+
+  const task = tasks[idx];
+  const isLast = idx === tasks.length - 1;
+  const answered = locked[task.id] !== undefined;
+  const correctCount = Object.values(locked).filter(Boolean).length;
+  const allAnswered = tasks.every((t) => locked[t.id] !== undefined);
+  const passed = allAnswered && correctCount === tasks.length;
+  const reward = placementXp(mod);
+
+  const setAns = (val) => setAnswers((a) => ({ ...a, [task.id]: val }));
+
+  const check = () => {
+    if (answered) return;
+    const ans = answers[task.id];
+    let ok = false;
+
+    if (task.type === "multiple_choice") {
+      if (ans == null) { pushToast("error", "Bitte wähle eine Antwort."); return; }
+      ok = ans === task.correctAnswer;
+    } else if (task.type === "fill_blank") {
+      if (!(ans || []).some((v) => (v || "").trim())) { pushToast("error", "Bitte fülle die Lücken aus."); return; }
+      ok = evaluateFillBlank(task, ans).correct;
+    } else {
+      if (!String(ans || "").trim()) { pushToast("error", "Bitte gib zuerst eine Antwort ein."); return; }
+      ok = analyzeAnswer(task, ans, course.id).correct;
+    }
+
+    setLocked((l) => ({ ...l, [task.id]: ok }));
+    playSound(ok ? "correct" : "wrong");
+    // Im Test gibt es keine Rückmeldung zum Inhalt — nur, ob es gezählt hat.
+    pushToast(ok ? "success" : "error", ok ? "Gezählt." : "Diese Aufgabe zählt als nicht bestanden.");
+  };
+
+  const finish = async () => {
+    setDone(true);
+    if (!passed) {
+      playSound("wrong");
+      return;
+    }
+    setSaving(true);
+    // Jede Lektion des Moduls einzeln gutschreiben — mit halber Belohnung.
+    const open = mod.lessons.filter((l) => !me.completedLessons.includes(l.id));
+    for (const l of open) {
+      await completeLesson(l.id, Math.max(1, Math.round((l.xpReward || 0) * PLACEMENT_XP_SHARE)), {
+        firstTry: 1, taskCount: 1,
+      });
+    }
+    setSaving(false);
+    playSound("lessonComplete");
+    celebrate();
+    pushToast("success", `Bestanden! ${open.length} Lektion${open.length === 1 ? "" : "en"} freigeschaltet.`);
+  };
+
+  const leave = () => { setPlacementTarget(null); openCourse(course.id); };
+
+  /* ------------------------------ Ergebnis ------------------------------- */
+  if (done) {
+    return (
+      <div className="min-h-screen bg-[#0A0E1A] flex items-center justify-center px-5 py-12">
+        <Card className="p-8 max-w-lg w-full text-center">
+          <div className="flex justify-center mb-4">
+            <LdIcon name={passed ? "crown" : "ziel"} size={44} color={passed ? "#10B981" : "#F59E0B"} />
+          </div>
+          <h1 className="font-display text-2xl font-bold mb-2">
+            {passed ? "Bestanden!" : "Noch nicht bestanden"}
+          </h1>
+          <p className="text-[#8A9BC0] mb-1">
+            {correctCount} von {tasks.length} Aufgaben richtig.
+          </p>
+          <p className="text-sm text-[#4A5A7A] mb-6 leading-relaxed">
+            {passed
+              ? `Modul „${mod.title}“ ist freigeschaltet — du hast ${reward} XP bekommen (die Hälfte, weil du die Übungen übersprungen hast).`
+              : "Zum Überspringen muss jede Aufgabe sitzen. Arbeite das Modul durch — danach kannst du es jederzeit erneut versuchen."}
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Btn icon={ArrowRight} disabled={saving} onClick={leave}>
+              {saving ? <><Loader2 size={15} className="ld-spin" />Speichert …</> : "Zum Kurs"}
+            </Btn>
+            {!passed && (
+              <Btn variant="secondary" icon={Play} onClick={() => { setDone(false); setIdx(0); setLocked({}); setAnswers({}); }}>
+                Test wiederholen
+              </Btn>
+            )}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  /* -------------------------------- Test --------------------------------- */
+  return (
+    <div className="min-h-screen bg-[#0A0E1A]">
+      <header className="sticky top-0 z-40 backdrop-blur-md bg-[#0A0E1A]/90 border-b border-[#1E2D4A]">
+        <div className="max-w-3xl mx-auto px-4 lg:px-6 h-14 flex items-center gap-3">
+          <button onClick={leave} className="flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5] shrink-0">
+            <ArrowLeft size={16} /><span className="hidden sm:inline">Abbrechen</span>
+          </button>
+          <div className="flex-1 min-w-0 text-sm text-[#8A9BC0] truncate flex items-center gap-1.5">
+            <CourseIcon course={course} size={15} />
+            <span className="truncate">Einstufungstest · {mod.title}</span>
+          </div>
+          <span className="text-sm text-[#8A9BC0] shrink-0">{idx + 1} / {tasks.length}</span>
+        </div>
+        <div className="h-1 bg-[#1A2540]">
+          <div className="h-1 transition-all duration-500"
+            style={{ width: (Object.keys(locked).length / tasks.length) * 100 + "%", background: GRADIENT }} />
+        </div>
+      </header>
+
+      <div className="max-w-3xl mx-auto px-4 lg:px-6 py-6 space-y-5">
+        <Card className="p-4 flex flex-wrap items-center gap-3 border-[#F59E0B]/30">
+          <LdIcon name="ziel" size={18} color="#F59E0B" />
+          <p className="text-sm text-[#C9D6F0] flex-1">
+            <strong>Ein Versuch je Aufgabe.</strong> Alles muss stimmen — dafür sparst du dir {mod.lessons.length} Lektionen und bekommst {reward} XP.
+          </p>
+        </Card>
+
+        <Card className="p-5">
+          <p className="text-[11px] uppercase tracking-wider text-[#4A5A7A] mb-2">Aus: {task._lessonTitle}</p>
+          <p className="font-medium text-[#E8EDF5] mb-4">{renderInline(task.question, "pq")}</p>
+
+          {task.type === "multiple_choice" && (
+            <div className="space-y-2">
+              {task.options.map((opt, i) => {
+                const sel = answers[task.id] === i;
+                return (
+                  <button key={i} disabled={answered} onClick={() => setAns(i)}
+                    className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3 ${
+                      sel ? "border-[#4F8EF7] bg-[#4F8EF7]/10" : "border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>
+                    <span className="w-6 h-6 rounded-full border border-current text-[#8A9BC0] flex items-center justify-center text-xs shrink-0">
+                      {String.fromCharCode(65 + i)}
+                    </span>
+                    <span className="text-sm text-[#E8EDF5] flex-1">{opt}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {task.type === "code_write" && (
+            <LdCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={answered}
+              courseId={course.id} label={course.name} height="320px" wordWrap="on" />
+          )}
+
+          {task.type === "fill_blank" && (
+            <div className="text-sm leading-loose text-[#C9D6F0]">
+              {task.template.split("___").map((seg, i) => (
+                <React.Fragment key={i}>
+                  {seg}
+                  {i < task.blanks.length && (
+                    <input value={answers[task.id]?.[i] || ""} disabled={answered}
+                      onChange={(e) => setAns(Object.assign([...(answers[task.id] || [])], { [i]: e.target.value }))}
+                      className="inline-block w-24 mx-1 px-2 py-0.5 rounded bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] font-code text-center text-[#4F8EF7]"
+                      placeholder="…" />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+
+          {task.type === "explain" && (
+            <textarea value={answers[task.id] || ""} onChange={(e) => setAns(e.target.value)} rows={5} disabled={answered}
+              className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 text-sm text-[#E8EDF5] resize-y leading-relaxed"
+              placeholder="Schreibe deine Erklärung …" />
+          )}
+
+          <div className="mt-4 flex gap-2">
+            {!answered
+              ? <Btn className="flex-1" icon={Send} onClick={check}>Antwort abgeben</Btn>
+              : isLast
+                ? <Btn className="flex-1" icon={Trophy} onClick={finish}>Test auswerten</Btn>
+                : <Btn className="flex-1" icon={ArrowRight} onClick={() => setIdx((i) => i + 1)}>Nächste Aufgabe</Btn>}
+          </div>
+
+          {answered && (
+            <p className="mt-3 text-center text-xs text-[#4A5A7A]">
+              Abgegeben. Im Test gibt es keine Auflösung — das Ergebnis siehst du am Ende.
+            </p>
+          )}
+        </Card>
+
+        <div className="flex items-center justify-center gap-1.5">
+          {tasks.map((t, i) => (
+            <span key={t.id}
+              className={`h-2 rounded-full transition-all ${
+                i === idx ? "w-6 bg-[#4F8EF7]"
+                : locked[t.id] !== undefined ? "w-2 bg-[#8A9BC0]"
+                : "w-2 bg-[#2A3F6F]"}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* =========================== Lesson View ========================== */
 const TASK_XP = 15;
 
@@ -11867,9 +12145,9 @@ function LessonView({ ctx }) {
                 </div>
               )}
 
-              {/* Code schreiben — VS-Code-Editor (Monaco) */}
+              {/* Code schreiben — im eingebauten Editor */}
               {task.type === "code_write" && (
-                <MonacoCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={solved}
+                <LdCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={solved}
                   courseId={lesson._course.id} label={lesson._course.name} height="420px" wordWrap="on" />
               )}
 
