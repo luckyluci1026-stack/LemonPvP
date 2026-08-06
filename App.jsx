@@ -2700,8 +2700,708 @@ const EXTRA_LESSONS = {
   }
 };
 
+/* ------------------- Fünf ausgeschriebene Lektionen -----------------------
+   Handgeschrieben statt generiert: eigene Theorie, eigene Aufgaben, eigene
+   Prüfkriterien. Sie decken die Stellen ab, an denen erfahrungsgemäß die
+   meisten hängen bleiben.
+   ------------------------------------------------------------------------- */
+const WRITTEN_LESSONS = {
+  html_2_2: {
+    estimatedMinutes: 15,
+    theory: `# Formulare & Inputs
+
+Ein Formular ist die Stelle, an der eine Webseite zuhört statt zu erzählen. Anmeldung, Suche, Bestellung, Kommentar — alles Formulare.
+
+## Der Rahmen: das form-Element
+
+Alles, was zusammen abgeschickt werden soll, steht in einem \`<form>\`:
+
+\`\`\`html
+<form action="/anmelden" method="post">
+  <!-- Felder kommen hier hinein -->
+</form>
+\`\`\`
+
+| Attribut | Bedeutung |
+|----------|-----------|
+| \`action\` | Wohin die Daten geschickt werden |
+| \`method\` | \`get\` (in der Adresszeile sichtbar) oder \`post\` (im Rumpf der Anfrage) |
+
+> ⚠️ Für alles Vertrauliche — Passwörter, Adressen — immer \`post\`. Bei \`get\` landen die Daten in der URL, im Verlauf und in Server-Logs.
+
+## Eingabefelder
+
+Das \`<input>\`-Element ist ein leeres Element: Es hat keinen schließenden Tag. Was es tut, entscheidet \`type\`:
+
+| type | Wofür | Was der Browser dazutut |
+|------|-------|--------------------------|
+| \`text\` | Freier Text | nichts Besonderes |
+| \`email\` | E-Mail-Adresse | prüft grob das Format, zeigt @-Tastatur |
+| \`password\` | Passwort | zeigt Punkte statt Zeichen |
+| \`number\` | Zahl | Pfeile zum Hoch- und Runterzählen |
+| \`checkbox\` | Ja/Nein | Kästchen zum Ankreuzen |
+| \`radio\` | Eins aus mehreren | Gruppe über gleichen \`name\` |
+| \`date\` | Datum | Kalender |
+
+\`\`\`html
+<input type="email" name="mail" placeholder="du@beispiel.de" required>
+\`\`\`
+
+Wichtig ist \`name\`: **Ohne \`name\` wird ein Feld nicht mitgeschickt.** Das ist der häufigste Anfängerfehler bei Formularen.
+
+## Beschriftungen mit label
+
+Jedes Feld braucht eine Beschriftung. Und zwar nicht als loser Text daneben, sondern mit \`<label>\`:
+
+\`\`\`html
+<label for="mail">E-Mail-Adresse</label>
+<input type="email" id="mail" name="mail">
+\`\`\`
+
+Das \`for\` des Labels zeigt auf die \`id\` des Feldes. Der Nutzen ist doppelt:
+
+- Ein Klick auf die Beschriftung setzt den Cursor ins Feld — die Trefferfläche wird größer.
+- Screenreader lesen vor, wozu das Feld gehört. Ohne Label ist ein Formular für blinde Nutzerinnen und Nutzer praktisch unbenutzbar.
+
+## Mehrzeilig und Auswahl
+
+\`\`\`html
+<textarea name="nachricht" rows="5"></textarea>
+
+<select name="land">
+  <option value="de">Deutschland</option>
+  <option value="at">Österreich</option>
+</select>
+\`\`\`
+
+\`<textarea>\` hat — anders als \`<input>\` — einen schließenden Tag, und der Startwert steht dazwischen, nicht in einem \`value\`-Attribut.
+
+## Absenden
+
+\`\`\`html
+<button type="submit">Absenden</button>
+\`\`\`
+
+Steht ein \`<button>\` in einem Formular ohne \`type\`, ist er automatisch ein Absende-Knopf. Wer das nicht will, schreibt \`type="button"\`.
+
+## Prüfen im Browser
+
+\`required\`, \`minlength\`, \`maxlength\`, \`min\`, \`max\` und \`pattern\` lässt der Browser selbst prüfen — ohne eine Zeile JavaScript.
+
+> ⚠️ Diese Prüfung ist Bequemlichkeit, keine Sicherheit. Sie lässt sich in zehn Sekunden umgehen. **Auf dem Server muss immer erneut geprüft werden.**`,
+    tasks: [
+      {
+        id: "hf1", type: "multiple_choice",
+        question: "Ein Eingabefeld wird beim Absenden nicht mitgeschickt. Was fehlt am wahrscheinlichsten?",
+        options: ["Das `id`-Attribut", "Das `name`-Attribut", "Das `placeholder`-Attribut", "Das `class`-Attribut"],
+        correctAnswer: 1,
+        explanation: "Nur Felder mit `name` werden übertragen — `id` dient der Verknüpfung mit dem Label, nicht dem Absenden.",
+        aiCheck: false,
+      },
+      {
+        id: "hf2", type: "multiple_choice",
+        question: "Warum sollte ein Anmeldeformular `method=\"post\"` verwenden?",
+        options: [
+          "Weil post schneller ist",
+          "Weil die Daten sonst in der Adresszeile und im Verlauf landen",
+          "Weil get keine Formulare unterstützt",
+          "Weil post automatisch verschlüsselt",
+        ],
+        correctAnswer: 1,
+        explanation: "Bei `get` stehen die Werte in der URL — sichtbar im Verlauf, in Lesezeichen und in Server-Logs. Verschlüsselt wird dadurch nichts, das macht HTTPS.",
+        aiCheck: false,
+      },
+      {
+        id: "hf3", type: "fill_blank",
+        question: "Fülle die Lücken aus:",
+        template: "Eine Beschriftung schreibst du mit ___ und verbindest sie über das Attribut ___ mit der id des Feldes.",
+        blanks: [["label", "<label>"], ["for", 'for=']],
+        aiCheck: false,
+      },
+      {
+        id: "hf4", type: "code_write",
+        question: "Schreibe ein Formular mit `method=\"post\"`, das ein beschriftetes E-Mail-Feld (id und name jeweils `mail`) und einen Absende-Knopf enthält.",
+        starterCode: "",
+        expectedConcepts: ["<form", "method=", "<label", "for=", "<input", 'type="email"', "name=", "<button"],
+        aiCheck: false,
+      },
+      {
+        id: "hf5", type: "explain",
+        question: "Erkläre kurz, warum die Prüfung mit `required` im Browser nicht ausreicht.",
+        expectedConcepts: ["Server", "umgehen", "Sicherheit"],
+        aiCheck: false,
+      },
+    ],
+  },
+
+  css_2_1: {
+    estimatedMinutes: 15,
+    theory: `# Flexbox — Grundlagen
+
+Vor Flexbox war das Ausrichten von Elementen in CSS eine Sammlung von Tricks. Heute sind es drei Zeilen.
+
+## Der Grundgedanke
+
+Flexbox arbeitet mit **einem Container und seinen direkten Kindern**. Der Container bekommt \`display: flex\`, die Kinder ordnen sich daraufhin entlang einer Achse an:
+
+\`\`\`css
+.container {
+  display: flex;
+}
+\`\`\`
+
+Ab diesem Moment stehen die Kinder **nebeneinander** statt untereinander — auch \`<div>\`-Elemente, die sonst jede Zeile für sich beanspruchen.
+
+## Die zwei Achsen
+
+Das ist der Punkt, an dem Flexbox klickt oder eben nicht:
+
+- Die **Hauptachse** (main axis) verläuft in Richtung von \`flex-direction\`. Standard ist \`row\`, also von links nach rechts.
+- Die **Querachse** (cross axis) steht senkrecht dazu.
+
+\`\`\`css
+.container {
+  display: flex;
+  flex-direction: row;     /* row | row-reverse | column | column-reverse */
+}
+\`\`\`
+
+Setzt du \`flex-direction: column\`, tauschen die Achsen ihre Richtung — und damit auch die Wirkung der beiden folgenden Eigenschaften.
+
+## Ausrichten entlang der Hauptachse
+
+\`justify-content\` verteilt den Platz **in Richtung der Hauptachse**:
+
+| Wert | Wirkung |
+|------|---------|
+| \`flex-start\` | alles an den Anfang (Standard) |
+| \`center\` | alles in die Mitte |
+| \`flex-end\` | alles ans Ende |
+| \`space-between\` | erstes und letztes außen, Rest gleichmäßig dazwischen |
+| \`space-around\` | gleicher Abstand um jedes Element |
+| \`space-evenly\` | überall exakt gleicher Abstand |
+
+## Ausrichten entlang der Querachse
+
+\`align-items\` richtet **quer** aus:
+
+| Wert | Wirkung |
+|------|---------|
+| \`stretch\` | Kinder füllen die Höhe (Standard) |
+| \`center\` | mittig |
+| \`flex-start\` | oben |
+| \`flex-end\` | unten |
+
+## Der Klassiker: mittig zentrieren
+
+Beides zusammen ergibt die Antwort auf die meistgestellte CSS-Frage überhaupt:
+
+\`\`\`css
+.container {
+  display: flex;
+  justify-content: center;   /* waagerecht */
+  align-items: center;       /* senkrecht */
+  height: 100vh;
+}
+\`\`\`
+
+> 💡 Ohne eine Höhe am Container gibt es senkrecht nichts zu zentrieren — der Container ist dann genau so hoch wie sein Inhalt.
+
+## Abstände und Umbruch
+
+\`\`\`css
+.container {
+  display: flex;
+  gap: 16px;          /* Abstand zwischen den Kindern */
+  flex-wrap: wrap;    /* umbrechen statt zusammenquetschen */
+}
+\`\`\`
+
+\`gap\` ersetzt die alte Bastelei mit \`margin\` am letzten Element — es setzt Abstände **zwischen** den Kindern, aber nicht außen.
+
+## Wachsen und schrumpfen
+
+Am Kind, nicht am Container:
+
+\`\`\`css
+.hauptteil { flex: 1; }     /* nimmt sich den restlichen Platz */
+.seitenleiste { flex: 0 0 240px; }  /* bleibt bei 240px */
+\`\`\`
+
+\`flex: 1\` ist die Kurzform für "wachse, schrumpfe, Grundbreite egal" — damit baut man Layouts, die sich von selbst anpassen.`,
+    tasks: [
+      {
+        id: "cf1", type: "multiple_choice",
+        question: "Welche Eigenschaft richtet die Kinder entlang der Hauptachse aus?",
+        options: ["align-items", "justify-content", "flex-wrap", "align-content"],
+        correctAnswer: 1,
+        explanation: "`justify-content` wirkt auf die Hauptachse, `align-items` auf die Querachse.",
+        aiCheck: false,
+      },
+      {
+        id: "cf2", type: "multiple_choice",
+        question: "Was passiert bei `flex-direction: column` mit `justify-content: center`?",
+        options: [
+          "Es zentriert weiterhin waagerecht",
+          "Es zentriert jetzt senkrecht, weil die Hauptachse nach unten zeigt",
+          "Es hat keine Wirkung mehr",
+          "Es kehrt die Reihenfolge um",
+        ],
+        correctAnswer: 1,
+        explanation: "`justify-content` folgt immer der Hauptachse — und die zeigt bei `column` nach unten.",
+        aiCheck: false,
+      },
+      {
+        id: "cf3", type: "fill_blank",
+        question: "Fülle die Lücken aus:",
+        template: "Ein Flex-Container entsteht mit display: ___. Den Abstand zwischen den Kindern setzt du mit ___.",
+        blanks: ["flex", "gap"],
+        aiCheck: false,
+      },
+      {
+        id: "cf4", type: "code_write",
+        question: "Schreibe eine Regel für `.box`, die den Inhalt waagerecht und senkrecht zentriert und 20px Abstand zwischen den Kindern lässt.",
+        starterCode: ".box {\n  \n}",
+        expectedConcepts: ["display", "flex", "justify-content", "center", "align-items", "gap"],
+        aiCheck: false,
+      },
+      {
+        id: "cf5", type: "explain",
+        question: "Erkläre kurz, warum `align-items: center` ohne Höhe am Container oft nichts sichtbar bewirkt.",
+        expectedConcepts: ["Höhe", "Inhalt", "Platz"],
+        aiCheck: false,
+      },
+    ],
+  },
+
+  javascript_2_3: {
+    estimatedMinutes: 15,
+    theory: `# DOM-Manipulation
+
+Der Browser baut aus deinem HTML einen Baum aus Objekten: das **DOM** (Document Object Model). JavaScript kann diesen Baum lesen und verändern — und genau dadurch wird aus einer Seite eine Anwendung.
+
+## Elemente finden
+
+\`\`\`javascript
+const titel = document.getElementById("titel");
+const ersteBox = document.querySelector(".box");
+const alleBoxen = document.querySelectorAll(".box");
+\`\`\`
+
+| Methode | Findet | Gibt zurück |
+|---------|--------|-------------|
+| \`getElementById\` | genau eine id | ein Element oder \`null\` |
+| \`querySelector\` | den ersten Treffer eines CSS-Selektors | ein Element oder \`null\` |
+| \`querySelectorAll\` | alle Treffer | eine Liste (kein echtes Array) |
+
+\`querySelector\` versteht jeden CSS-Selektor: \`"#titel"\`, \`".box"\`, \`"ul > li:first-child"\`.
+
+> ⚠️ Findet der Browser nichts, kommt \`null\` zurück — und der nächste Zugriff darauf wirft \`Cannot read properties of null\`. Das ist der häufigste Fehler überhaupt beim DOM. Meist stimmt nur der Name nicht.
+
+## Inhalt ändern
+
+\`\`\`javascript
+titel.textContent = "Neuer Text";
+box.innerHTML = "<strong>Fett</strong>";
+\`\`\`
+
+Der Unterschied ist wichtig:
+
+- \`textContent\` setzt **Text**. Zeichen wie \`<\` bleiben Zeichen.
+- \`innerHTML\` setzt **HTML**. Der Browser wertet es aus.
+
+Stammt der Inhalt von Nutzereingaben, gehört \`textContent\` benutzt. Sonst kann jemand \`<script>\` einschleusen — das nennt sich **XSS** und ist eine der häufigsten Sicherheitslücken im Web.
+
+## Klassen und Stile
+
+\`\`\`javascript
+box.classList.add("aktiv");
+box.classList.remove("versteckt");
+box.classList.toggle("offen");
+box.style.color = "red";
+\`\`\`
+
+Die Regel dahinter: **Aussehen gehört ins CSS.** Statt einzelne Stile per JavaScript zu setzen, schaltest du besser eine Klasse um und beschreibst das Aussehen im Stylesheet. Das bleibt lesbar, wenn die Seite wächst.
+
+## Elemente erzeugen
+
+\`\`\`javascript
+const li = document.createElement("li");
+li.textContent = "Neuer Eintrag";
+document.querySelector("ul").appendChild(li);
+\`\`\`
+
+Drei Schritte, immer dieselben: erzeugen, füllen, einhängen. Vor dem \`appendChild\` existiert das Element zwar, steht aber nirgends auf der Seite.
+
+## Attribute
+
+\`\`\`javascript
+bild.setAttribute("alt", "Ein Foto");
+const ziel = link.getAttribute("href");
+input.value = "";                 // Formularfelder über .value
+\`\`\`
+
+## Ein vollständiges Beispiel
+
+\`\`\`javascript
+const liste = document.querySelector("#liste");
+const feld = document.querySelector("#eingabe");
+
+document.querySelector("#hinzufuegen").addEventListener("click", () => {
+  if (!feld.value.trim()) return;
+  const eintrag = document.createElement("li");
+  eintrag.textContent = feld.value;
+  liste.appendChild(eintrag);
+  feld.value = "";
+});
+\`\`\`
+
+> 💡 Steht dein \`<script>\` im \`<head>\`, existieren die Elemente beim Ausführen noch nicht. Entweder das Skript ans Ende des \`<body>\` setzen oder \`defer\` benutzen.`,
+    tasks: [
+      {
+        id: "jd1", type: "multiple_choice",
+        question: "Warum ist `textContent` bei Nutzereingaben die bessere Wahl als `innerHTML`?",
+        options: [
+          "Es ist schneller zu tippen",
+          "Es verhindert, dass eingeschleustes HTML ausgeführt wird",
+          "Es funktioniert in mehr Browsern",
+          "Es formatiert den Text automatisch",
+        ],
+        correctAnswer: 1,
+        explanation: "`innerHTML` wertet HTML aus — bei fremden Eingaben öffnet das die Tür für XSS. `textContent` behandelt alles als reinen Text.",
+        aiCheck: false,
+      },
+      {
+        id: "jd2", type: "multiple_choice",
+        question: "`document.getElementById(\"box\")` liefert `null`. Was ist die wahrscheinlichste Ursache?",
+        options: [
+          "Die Seite hat kein CSS",
+          "Es gibt kein Element mit dieser id — oder das Skript läuft, bevor es existiert",
+          "getElementById ist veraltet",
+          "Man muss eine Raute voranstellen: getElementById(\"#box\")",
+        ],
+        correctAnswer: 1,
+        explanation: "Entweder der Name stimmt nicht, oder das Skript läuft zu früh. Eine Raute gehört bei `getElementById` gerade NICHT davor — die braucht nur `querySelector`.",
+        aiCheck: false,
+      },
+      {
+        id: "jd3", type: "fill_blank",
+        question: "Fülle die Lücken aus:",
+        template: "Ein neues Element erzeugst du mit document.___(\"li\") und hängst es mit ___ in den Baum ein.",
+        blanks: [["createElement", "createElement()"], ["appendChild", "appendChild()", "append"]],
+        aiCheck: false,
+      },
+      {
+        id: "jd4", type: "code_write",
+        question: "Hole das Element mit der id `titel` und setze seinen Text auf `Hallo`. Nutze dafür `textContent`.",
+        starterCode: "",
+        expectedConcepts: [["document.getElementById", "document.querySelector"], "titel", "textContent", "Hallo"],
+        aiCheck: false,
+      },
+      {
+        id: "jd5", type: "explain",
+        question: "Erkläre kurz, warum man das Aussehen besser über `classList` steuert als über `element.style`.",
+        expectedConcepts: ["CSS", "Klasse", "trennen"],
+        aiCheck: false,
+      },
+    ],
+  },
+
+  python_2_1: {
+    estimatedMinutes: 15,
+    theory: `# Funktionen & Parameter
+
+Eine Funktion ist ein Stück Code mit einem Namen. Das klingt banal, ändert aber alles: Was einen Namen hat, kann man wiederverwenden, einzeln testen und später austauschen.
+
+## Definieren und aufrufen
+
+\`\`\`python
+def begruessung(name):
+    print(f"Hallo, {name}!")
+
+begruessung("Anna")
+\`\`\`
+
+Drei Dinge sind Pflicht:
+
+1. Das Schlüsselwort \`def\`
+2. Der **Doppelpunkt** am Ende der Zeile
+3. Die **Einrückung** des Rumpfes — vier Leerzeichen sind Konvention
+
+Vergisst du den Doppelpunkt, meldet Python \`SyntaxError\`. Vergisst du die Einrückung, \`IndentationError\`. Beides sind die häufigsten Anfängerfehler in Python.
+
+## Rückgabewerte
+
+\`\`\`python
+def addiere(a, b):
+    return a + b
+
+summe = addiere(3, 4)   # 7
+\`\`\`
+
+\`return\` beendet die Funktion sofort. Steht kein \`return\` da, gibt Python automatisch \`None\` zurück.
+
+> ⚠️ \`print\` und \`return\` sind nicht dasselbe. \`print\` schreibt etwas auf den Bildschirm, \`return\` gibt einen Wert zurück, mit dem weitergerechnet werden kann. Eine Funktion, die nur druckt, lässt sich nicht weiterverwenden.
+
+## Standardwerte
+
+\`\`\`python
+def begruessung(name, gruss="Hallo"):
+    print(f"{gruss}, {name}!")
+
+begruessung("Anna")              # Hallo, Anna!
+begruessung("Ben", "Moin")       # Moin, Ben!
+\`\`\`
+
+Parameter mit Standardwert müssen **hinter** denen ohne stehen.
+
+> ⚠️ Nimm niemals eine Liste als Standardwert (\`def f(x=[])\`). Sie wird nur **einmal** erzeugt und bleibt zwischen den Aufrufen bestehen — ein Klassiker unter den schwer zu findenden Fehlern. Nimm \`None\` und lege die Liste im Rumpf an.
+
+## Benannte Argumente
+
+\`\`\`python
+def rechteck(breite, hoehe):
+    return breite * hoehe
+
+rechteck(hoehe=3, breite=4)    # Reihenfolge egal
+\`\`\`
+
+Das lohnt sich besonders bei Wahrheitswerten: \`sortiere(daten, absteigend=True)\` liest sich deutlich besser als \`sortiere(daten, True)\`.
+
+## Beliebig viele Argumente
+
+\`\`\`python
+def summe(*zahlen):
+    return sum(zahlen)
+
+summe(1, 2, 3)      # 6
+
+def info(**angaben):
+    for schluessel, wert in angaben.items():
+        print(schluessel, wert)
+
+info(name="Anna", alter=17)
+\`\`\`
+
+\`*args\` sammelt Einzelwerte in einem Tupel, \`**kwargs\` benannte Argumente in einem Dictionary.
+
+## Docstrings
+
+\`\`\`python
+def flaeche(radius):
+    """Berechnet die Kreisfläche für den gegebenen Radius."""
+    return 3.14159 * radius ** 2
+\`\`\`
+
+Der Text direkt unter der Definition ist die eingebaute Dokumentation. \`help(flaeche)\` zeigt ihn an — deutlich praktischer als ein Kommentar daneben.
+
+## Sichtbarkeit
+
+Was in einer Funktion entsteht, existiert nur dort:
+
+\`\`\`python
+def f():
+    x = 5
+    print(x)     # geht
+
+f()
+print(x)         # NameError: name 'x' is not defined
+\`\`\`
+
+Das ist Absicht: Funktionen sollen sich nicht gegenseitig in die Quere kommen.`,
+    tasks: [
+      {
+        id: "pf1", type: "multiple_choice",
+        question: "Was gibt eine Funktion ohne `return` zurück?",
+        options: ["0", "None", "Eine leere Zeichenkette", "Sie wirft einen Fehler"],
+        correctAnswer: 1,
+        explanation: "Ohne `return` liefert Python automatisch `None`.",
+        aiCheck: false,
+      },
+      {
+        id: "pf2", type: "multiple_choice",
+        question: "Warum ist `def merke(eintrag, liste=[])` eine schlechte Idee?",
+        options: [
+          "Listen sind als Parameter nicht erlaubt",
+          "Die Liste wird nur einmal erzeugt und behält Werte zwischen den Aufrufen",
+          "Es ist langsamer als ein Tupel",
+          "Der Standardwert wird ignoriert",
+        ],
+        correctAnswer: 1,
+        explanation: "Standardwerte werden einmal bei der Definition ausgewertet. Eine veränderbare Liste sammelt dadurch über alle Aufrufe hinweg Werte an.",
+        aiCheck: false,
+      },
+      {
+        id: "pf3", type: "fill_blank",
+        question: "Fülle die Lücken aus:",
+        template: "Eine Funktion beginnt mit ___, endet die Kopfzeile mit einem ___ und der Rumpf muss ___ sein.",
+        blanks: ["def", ["Doppelpunkt", ":"], ["eingerückt", "eingerueckt", "einrücken"]],
+        aiCheck: false,
+      },
+      {
+        id: "pf4", type: "code_write",
+        question: "Schreibe eine Funktion `verdopple`, die eine Zahl entgegennimmt und das Doppelte **zurückgibt** (nicht ausgibt).",
+        starterCode: "",
+        expectedConcepts: ["def", "verdopple", "return"],
+        aiCheck: false,
+      },
+      {
+        id: "pf5", type: "explain",
+        question: "Erkläre kurz den Unterschied zwischen `print` und `return`.",
+        expectedConcepts: ["Bildschirm", "Wert", "weiterverwenden"],
+        aiCheck: false,
+      },
+    ],
+  },
+
+  sql_2_3: {
+    estimatedMinutes: 16,
+    theory: `# JOINs (INNER, LEFT, RIGHT)
+
+Daten liegen in Datenbanken selten in einer einzigen Tabelle. Kunden hier, Bestellungen dort — verbunden über eine gemeinsame Spalte. Ein JOIN führt sie wieder zusammen.
+
+## Die Ausgangslage
+
+\`\`\`
+kunden                      bestellungen
++----+----------+           +----+-----------+--------+
+| id | name     |           | id | kunden_id | betrag |
++----+----------+           +----+-----------+--------+
+| 1  | Anna     |           | 10 | 1         | 49.90  |
+| 2  | Ben      |           | 11 | 1         | 12.00  |
+| 3  | Clara    |           | 12 | 2         | 99.00  |
++----+----------+           +----+-----------+--------+
+\`\`\`
+
+Clara hat nichts bestellt. Das wird gleich wichtig.
+
+## INNER JOIN — nur was zusammenpasst
+
+\`\`\`sql
+SELECT kunden.name, bestellungen.betrag
+FROM kunden
+INNER JOIN bestellungen ON kunden.id = bestellungen.kunden_id;
+\`\`\`
+
+Ergebnis:
+
+| name | betrag |
+|------|--------|
+| Anna | 49.90 |
+| Anna | 12.00 |
+| Ben  | 99.00 |
+
+**Clara fehlt.** Ein INNER JOIN liefert nur Zeilen, für die es auf **beiden** Seiten einen Treffer gibt. Anna erscheint zweimal, weil sie zwei Bestellungen hat — eine Zeile je Kombination.
+
+Der Teil nach \`ON\` ist die Bedingung, über die verbunden wird. Sie ist keine Formalie: Lässt man sie weg, kombiniert die Datenbank **jede** Zeile mit jeder — bei 1.000 × 1.000 Zeilen sind das eine Million Ergebniszeilen.
+
+## LEFT JOIN — alles von links
+
+\`\`\`sql
+SELECT kunden.name, bestellungen.betrag
+FROM kunden
+LEFT JOIN bestellungen ON kunden.id = bestellungen.kunden_id;
+\`\`\`
+
+| name  | betrag |
+|-------|--------|
+| Anna  | 49.90 |
+| Anna  | 12.00 |
+| Ben   | 99.00 |
+| Clara | NULL |
+
+Alle Zeilen der **linken** Tabelle bleiben erhalten. Wo rechts nichts passt, steht \`NULL\`.
+
+Damit beantwortet man Fragen wie „Wer hat noch **nie** bestellt?":
+
+\`\`\`sql
+SELECT kunden.name
+FROM kunden
+LEFT JOIN bestellungen ON kunden.id = bestellungen.kunden_id
+WHERE bestellungen.id IS NULL;
+\`\`\`
+
+> ⚠️ Auf \`NULL\` prüft man mit \`IS NULL\`, niemals mit \`= NULL\`. Ein Vergleich mit \`NULL\` ergibt weder wahr noch falsch — er ergibt „unbekannt", und die Zeile fällt heraus.
+
+## RIGHT JOIN — alles von rechts
+
+Dasselbe in die andere Richtung: Alle Zeilen der rechten Tabelle bleiben erhalten. In der Praxis selten, weil man die Tabellen genauso gut tauschen und einen LEFT JOIN schreiben kann — das liest sich für die meisten leichter.
+
+## Kurznamen sparen Tipparbeit
+
+\`\`\`sql
+SELECT k.name, SUM(b.betrag) AS umsatz
+FROM kunden AS k
+LEFT JOIN bestellungen AS b ON k.id = b.kunden_id
+GROUP BY k.id, k.name
+ORDER BY umsatz DESC;
+\`\`\`
+
+## Die Reihenfolge der Auswertung
+
+Nicht die Schreibreihenfolge zählt, sondern diese:
+
+1. \`FROM\` und \`JOIN\` — Tabellen verbinden
+2. \`WHERE\` — Zeilen aussortieren
+3. \`GROUP BY\` — zusammenfassen
+4. \`HAVING\` — Gruppen aussortieren
+5. \`SELECT\` — Spalten auswählen
+6. \`ORDER BY\` — sortieren
+
+Daraus folgt eine wichtige Regel: Eine Bedingung auf die rechte Tabelle gehört bei einem LEFT JOIN in die \`ON\`-Klausel, nicht ins \`WHERE\`. Steht sie im \`WHERE\`, filtert sie die \`NULL\`-Zeilen wieder heraus — und aus dem LEFT JOIN wird stillschweigend ein INNER JOIN.`,
+    tasks: [
+      {
+        id: "sj1", type: "multiple_choice",
+        question: "Welche Kunden fehlen im Ergebnis eines INNER JOIN mit Bestellungen?",
+        options: [
+          "Die mit den meisten Bestellungen",
+          "Die ohne jede Bestellung",
+          "Keine, INNER JOIN zeigt immer alle",
+          "Die mit mehr als einer Bestellung",
+        ],
+        correctAnswer: 1,
+        explanation: "Ein INNER JOIN behält nur Zeilen mit Treffer auf beiden Seiten — wer nichts bestellt hat, fällt heraus.",
+        aiCheck: false,
+      },
+      {
+        id: "sj2", type: "multiple_choice",
+        question: "Wie findest du Kunden ohne Bestellung?",
+        options: [
+          "INNER JOIN mit WHERE betrag = 0",
+          "LEFT JOIN und WHERE bestellungen.id IS NULL",
+          "RIGHT JOIN ohne ON",
+          "SELECT DISTINCT auf die Kundentabelle",
+        ],
+        correctAnswer: 1,
+        explanation: "Der LEFT JOIN behält alle Kunden; wo rechts nichts passt, steht NULL — genau danach filtert man.",
+        aiCheck: false,
+      },
+      {
+        id: "sj3", type: "fill_blank",
+        question: "Fülle die Lücken aus:",
+        template: "Die Verbindungsbedingung steht nach dem Schlüsselwort ___. Auf fehlende Werte prüfst du mit ___.",
+        blanks: [["ON", "on"], ["IS NULL", "is null"]],
+        aiCheck: false,
+      },
+      {
+        id: "sj4", type: "code_write",
+        question: "Hole die Namen aller Kunden zusammen mit dem Betrag ihrer Bestellungen — auch die Kunden ohne Bestellung sollen erscheinen.",
+        starterCode: "",
+        expectedConcepts: ["SELECT", "FROM", "kunden", "LEFT", "JOIN", "bestellungen", "ON"],
+        aiCheck: false,
+      },
+      {
+        id: "sj5", type: "explain",
+        question: "Erkläre kurz, warum eine Bedingung auf die rechte Tabelle im WHERE aus einem LEFT JOIN faktisch einen INNER JOIN macht.",
+        expectedConcepts: ["NULL", "filtert", "Reihenfolge"],
+        aiCheck: false,
+      },
+    ],
+  },
+};
+
 // Alle handgemachten Inhalte zusammenführen
-const LESSON_CONTENT = { ...EXTRA_LESSONS, ...BASE_LESSONS };
+const LESSON_CONTENT = { ...EXTRA_LESSONS, ...BASE_LESSONS, ...WRITTEN_LESSONS };
 
 /* ------------------- Übungen für Lektionen ohne Inhalt --------------------
    Nicht jede Lektion hat handgeschriebene Aufgaben. Statt überall dieselbe
@@ -3659,6 +4359,13 @@ function checkConcept(concept, analysis) {
       return { hit: true, concept: c, kind: isKeyword ? "keyword" : "identifier", essential: true,
         note: exact ? null : `Achte auf die Groß- und Kleinschreibung: erwartet wird \`${c}\`.` };
     }
+    // Steht der erwartete Text in einer Zeichenkette? Beim Zerlegen werden
+    // Zeichenketten herausgenommen — ein erwarteter Ausgabetext wie `Hallo`
+    // muss deshalb dort gesucht werden.
+    if (analysis.strings.some((str) => str.toLowerCase().includes(lc))) {
+      return { hit: true, concept: c, kind: "literal", essential: true };
+    }
+
     // Beinahe-Treffer? Dann ist es vermutlich ein Tippfehler.
     const near = analysis.identifiers.find((id) => {
       const d = editDistance(id.toLowerCase(), lc);
@@ -5042,6 +5749,58 @@ function PasswordHints({ password, name, email }) {
   );
 }
 
+/* -------------- Passwörter im lokalen Modus (ohne Server) -----------------
+   Ohne Backend liegen die Konten im Speicher des Browsers. Was dort steht,
+   sieht jeder, der F12 drückt — deshalb steht dort **kein Passwort**, sondern
+   nur ein Hash mit zufälligem Salz (PBKDF2-SHA256).
+
+   Das ersetzt keinen Server: Wer den Browser bedient, ist ohnehin angemeldet.
+   Aber es verhindert, dass ein Passwort im Klartext herumliegt — und Menschen
+   verwenden Passwörter nun einmal mehrfach.
+   ------------------------------------------------------------------------- */
+const PBKDF2_ITERATIONS = 210_000;
+
+const toHex = (buffer) => [...new Uint8Array(buffer)].map((b) => b.toString(16).padStart(2, "0")).join("");
+
+function subtleCrypto() {
+  try { return window.crypto?.subtle || null; } catch (e) { return null; }
+}
+
+async function hashLocalPassword(password, saltHex) {
+  const subtle = subtleCrypto();
+  if (!subtle) return null;                       // kein sicherer Kontext -> siehe unten
+  const salt = saltHex
+    ? Uint8Array.from(saltHex.match(/.{2}/g).map((h) => parseInt(h, 16)))
+    : window.crypto.getRandomValues(new Uint8Array(16));
+  const key = await subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" }, key, 256);
+  return { salt: toHex(salt), hash: toHex(bits) };
+}
+
+/** Prüft ein Passwort gegen ein lokal gespeichertes Konto. */
+async function verifyLocalPassword(password, user) {
+  if (user?.passwordHash && user?.passwordSalt) {
+    const derived = await hashLocalPassword(password, user.passwordSalt);
+    return !!derived && derived.hash === user.passwordHash;
+  }
+  // Altbestand aus früheren Versionen: einmalig im Klartext vergleichen.
+  // Beim nächsten Speichern wird daraus ein Hash (siehe upgradeLocalPassword).
+  return !!user?.password && user.password === password;
+}
+
+/** Erzeugt die Felder, die für ein Konto gespeichert werden. */
+async function localPasswordFields(password) {
+  const derived = await hashLocalPassword(password);
+  // Ohne WebCrypto (etwa über file:// geöffnet) bleibt nur der alte Weg —
+  // dann sagen wir es wenigstens offen im Log.
+  if (!derived) {
+    console.warn("LearnDeveloping: Kein sicherer Kontext — Passwort kann lokal nicht gehasht werden. Bitte über http://localhost öffnen.");
+    return { password };
+  }
+  return { passwordSalt: derived.salt, passwordHash: derived.hash };
+}
+
 function genSchoolCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let s = "";
@@ -5155,7 +5914,12 @@ function loadPersisted() {
 
 function savePersisted(users, currentUser, reports) {
   try {
-    const persistUsers = users.filter((u) => !u.isGuest);
+    // Was im localStorage steht, ist mit F12 einsehbar. Deshalb landen dort
+    // weder Klartext-Passwörter noch Einmal-Codes.
+    const persistUsers = users.filter((u) => !u.isGuest).map((u) => {
+      const { password, verificationCode, twoFactorCode, ...safe } = u;
+      return safe.passwordHash ? safe : { ...safe, password };   // Altbestand nicht wegwerfen
+    });
     const stillLoggedIn = users.find((u) => u.id === currentUser);
     const persistCurrent = stillLoggedIn && !stillLoggedIn.isGuest ? currentUser : null;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ users: persistUsers, currentUser: persistCurrent, reports: reports || [] }));
@@ -5514,8 +6278,9 @@ export default function App() {
         return true;
       } catch (e) { pushToast("error", e.message); return false; }
     }
-    if (currentPassword !== me.password) { pushToast("error", "Das aktuelle Passwort ist falsch."); return false; }
-    setUsers((us) => us.map((u) => u.id === me.id ? { ...u, password: newPassword } : u));
+    if (!(await verifyLocalPassword(currentPassword, me))) { pushToast("error", "Das aktuelle Passwort ist falsch."); return false; }
+    const fields = await localPasswordFields(newPassword);
+    setUsers((us) => us.map((u) => u.id === me.id ? { ...u, password: undefined, ...fields } : u));
     pushToast("success", "Passwort geändert.");
     return true;
   }, [me, pushToast]);
@@ -5535,7 +6300,8 @@ export default function App() {
         return true;
       } catch (e) { pushToast("error", e.message); return false; }
     }
-    setUsers((us) => us.map((u) => u.id === userId ? { ...u, password: newPassword } : u));
+    const fields = await localPasswordFields(newPassword);
+    setUsers((us) => us.map((u) => u.id === userId ? { ...u, password: undefined, ...fields } : u));
     pushToast("success", "Passwort gesetzt.");
     return true;
   }, [me, users, pushToast]);
@@ -5704,7 +6470,7 @@ export default function App() {
     setUsers((us) => us.filter((u) => u.id !== userId));
     pushToast("info", "Account gelöscht.");
   }, [pushToast]);
-  const adminCreateAdmin = useCallback((form) => {
+  const adminCreateAdmin = useCallback(async (form) => {
     if (!form.name || !form.email || !form.password) { pushToast("error", "Bitte alle Felder ausfüllen."); return false; }
     if (!passwordOk(form.password, { name: form.name, email: form.email })) {
       pushToast("error", "Das Passwort erfüllt die Mindestanforderungen nicht.");
@@ -5712,7 +6478,8 @@ export default function App() {
     }
     if (users.some((u) => !u.isGuest && u.email.toLowerCase() === form.email.trim().toLowerCase())) { pushToast("error", "E-Mail bereits vergeben."); return false; }
     const newAdmin = {
-      id: uid(), role: "admin", name: form.name, email: form.email, password: form.password,
+      id: uid(), role: "admin", name: form.name, email: form.email,
+      ...(await localPasswordFields(form.password)),
       createdAt: "Heute", avatar: "🛡️", emailVerified: true, twoFactorEnabled: false,
     };
     setUsers((us) => [...us, newAdmin]);
@@ -5752,7 +6519,13 @@ export default function App() {
         return false;
       }
     }
-    const u = users.find((x) => !x.isGuest && x.email.toLowerCase() === email.trim().toLowerCase() && x.password === password);
+    const candidate = users.find((x) => !x.isGuest && x.email.toLowerCase() === email.trim().toLowerCase());
+    const u = candidate && (await verifyLocalPassword(password, candidate)) ? candidate : null;
+    if (u && !u.passwordHash) {
+      // Altbestand: beim ersten erfolgreichen Login auf einen Hash umstellen.
+      const fields = await localPasswordFields(password);
+      setUsers((us) => us.map((x) => (x.id === u.id ? { ...x, password: undefined, ...fields } : x)));
+    }
     if (!u) {
       pushToast("error", users.some((x) => !x.isGuest)
         ? "E-Mail oder Passwort falsch."
@@ -5828,11 +6601,12 @@ export default function App() {
     const id = uid();
     const guest = me && me.isGuest ? me : null; // Gast-Fortschritt beim Registrieren übernehmen
     const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+    const pw = await localPasswordFields(form.password);
     let newUser;
     if (form.role === "teacher") {
       const code = genSchoolCode();
       newUser = {
-        id, role: "teacher", name: form.name, email: form.email, password: form.password, school: form.school || "—", schoolCode: code,
+        id, role: "teacher", name: form.name, email: form.email, ...pw, school: form.school || "—", schoolCode: code,
         students: [], createdAt: "Heute", avatar: guest ? guest.avatar : "👨‍🏫",
         emailVerified: false, verificationCode, twoFactorEnabled: false, playground: [],
       };
@@ -5845,7 +6619,7 @@ export default function App() {
         else pushToast("error", "Lehrer-Code nicht gefunden — du lernst erstmal selbstständig.");
       }
       newUser = {
-        id, role: "student", name: form.name, email: form.email, password: form.password, teacherId,
+        id, role: "student", name: form.name, email: form.email, ...pw, teacherId,
         xp: guest ? guest.xp : 0, streak: guest ? guest.streak : 1,
         completedLessons: guest ? guest.completedLessons : [], currentCourse: guest ? guest.currentCourse : null,
         joinedAt: "Heute", lastLogin: "Jetzt", avatar: guest ? guest.avatar : "🧑‍💻", badges: guest ? guest.badges : [],
@@ -6105,6 +6879,7 @@ export default function App() {
   else if (view === "login" || view === "register") screen = <AuthScreen ctx={ctx} mode={view} />;
   else if (view === "forgot-password") screen = <ForgotPassword ctx={ctx} />;
   else if (view === "reset-password") screen = <ResetPassword ctx={ctx} />;
+  else if (PUBLIC_PAGES.includes(view)) screen = <InfoPage ctx={ctx} page={view} />;
   else if (LEGAL_VIEWS.includes(view)) screen = <LegalPage ctx={ctx} page={view} />;
   else if (view === "lesson") screen = <LessonView ctx={ctx} />;
   else screen = <AppShell ctx={ctx}>{
@@ -6135,6 +6910,387 @@ export default function App() {
 }
 
 /* ============================ Landing ============================== */
+/* ======================= Eigene Seiten für die Navigation =================
+   Jeder Punkt in der oberen Leiste führt auf eine eigene Seite mit richtigem
+   Inhalt — nicht bloß auf einen Ankerpunkt weiter unten. Der Text steht als
+   Markdown hier, damit er sich pflegen lässt wie ein Dokument.
+   ========================================================================= */
+const PUBLIC_PAGES = ["kurse", "ide", "features", "schulen", "preise", "ueber-uns"];
+
+const PUBLIC_NAV = [
+  { v: "kurse", label: "Kurse", icon: BookOpen },
+  { v: "ide", label: "IDE", icon: Code2 },
+  { v: "features", label: "Features", icon: Sparkles },
+  { v: "schulen", label: "Für Schulen", icon: GraduationCap },
+  { v: "preise", label: "Preise", icon: Star },
+  { v: "ueber-uns", label: "Über uns", icon: Info },
+];
+
+/** Kopfleiste und Fußzeile für alle öffentlichen Seiten. */
+function PublicShell({ ctx, children }) {
+  const { navigate, view } = ctx;
+  return (
+    <div className="min-h-screen flex flex-col">
+      <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-[#0A0E1A]/85 border-b border-[#1E2D4A]">
+        <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between gap-4">
+          <Logo onClick={() => navigate("landing")} />
+          <div className="hidden lg:flex items-center gap-6 text-sm text-[#8A9BC0]">
+            {PUBLIC_NAV.map((n) => (
+              <button key={n.v} onClick={() => navigate(n.v)}
+                className={`transition-colors flex items-center gap-1.5 ${view === n.v ? "text-[#4F8EF7]" : "hover:text-[#E8EDF5]"}`}>
+                <n.icon size={13} />{n.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Btn variant="ghost" size="sm" onClick={() => navigate("login")}>Anmelden</Btn>
+            <Btn size="sm" icon={Rocket} onClick={() => navigate("register")}>Jetzt starten</Btn>
+          </div>
+        </div>
+        <div className="lg:hidden flex items-center gap-4 px-5 pb-2.5 overflow-x-auto text-xs text-[#8A9BC0]">
+          {PUBLIC_NAV.map((n) => (
+            <button key={n.v} onClick={() => navigate(n.v)}
+              className={`whitespace-nowrap ${view === n.v ? "text-[#4F8EF7]" : "hover:text-[#E8EDF5]"}`}>{n.label}</button>
+          ))}
+        </div>
+      </nav>
+
+      <main className="flex-1 pt-24 pb-16">{children}</main>
+
+      <footer className="border-t border-[#1E2D4A] py-10">
+        <div className="max-w-6xl mx-auto px-5 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <Logo />
+            <p className="text-sm text-[#4A5A7A] mt-2">Code lernen. Richtig lernen.</p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm text-[#8A9BC0]">
+            <button onClick={() => navigate("ueber-uns")} className="hover:text-[#E8EDF5]">Über uns</button>
+            <button onClick={() => navigate("agb")} className="hover:text-[#E8EDF5]">AGB</button>
+            <button onClick={() => navigate("impressum")} className="hover:text-[#E8EDF5]">Impressum</button>
+            <button onClick={() => navigate("datenschutz")} className="hover:text-[#E8EDF5]">Datenschutz</button>
+            <button onClick={() => navigate("kontakt")} className="hover:text-[#E8EDF5]">Kontakt</button>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/* ------------------------------ Der Inhalt ------------------------------- */
+const PAGE_CONTENT = {
+  kurse: {
+    icon: BookOpen, color: "#4F8EF7",
+    title: "Kurse",
+    lead: "Fünfzehn Sprachen, vom ersten Tag bis zu den Themen, nach denen im Vorstellungsgespräch gefragt wird.",
+    body: `## Wie ein Kurs aufgebaut ist
+
+Jeder Kurs besteht aus **Modulen**, jedes Modul aus **Lektionen**. Ein Modul öffnet sich erst, wenn das vorherige vollständig ist — nicht um dich zu bremsen, sondern weil die Themen aufeinander aufbauen. Wer Schleifen überspringt, scheitert später an Arrays.
+
+Eine Lektion hat immer denselben Aufbau:
+
+1. **Theorie** links — kurz gehalten, mit Beispielen, die du direkt nachbauen kannst.
+2. **Aufgaben** rechts — Lückentexte, echte Code-Aufgaben, Multiple Choice und gelegentlich eine Erklärung in eigenen Worten.
+3. **Sofortige Bewertung** — jede Antwort wird im Browser geprüft. Ohne Wartezeit, ohne Netzwerk.
+
+Abgeschlossen ist eine Lektion erst, wenn **alle** Aufgaben richtig sind. Durchklicken bringt keine XP.
+
+## Die vier Aufgabentypen
+
+| Typ | Was du tust | Wie geprüft wird |
+|-----|-------------|------------------|
+| Multiple Choice | Eine von mehreren Antworten wählen | Direkter Vergleich |
+| Lückentext | Fehlende Begriffe einsetzen | Schreibweisen, Zahlwörter und Satzzeichen werden toleriert |
+| Code schreiben | Echten Code im Editor tippen | Struktur, Klammern, erwartete Bausteine, typische Stolperfallen |
+| Erklären | Ein Konzept in eigenen Worten | Fachbegriffe, Begründung, Eigenständigkeit |
+
+## Womit du anfangen solltest
+
+- **Noch nie programmiert?** Beginne mit **HTML**. Du siehst sofort ein Ergebnis, und das hält bei der Stange.
+- **Webseiten sollen schön aussehen?** Danach **CSS** — Box-Model, Flexbox, Grid.
+- **Etwas soll passieren, wenn man klickt?** **JavaScript**. Der größte Kurs, und der mit dem breitesten Einsatzgebiet.
+- **Schule oder Studium?** Oft **Java** oder **Python**. Python ist der sanftere Einstieg.
+- **Es soll schnell sein?** **C**, **C++**, **Rust** oder **Go**.
+- **Daten auswerten?** **SQL** — der Kurs, der sich am schnellsten auszahlt.
+
+## Wie lange dauert das?
+
+Eine Lektion kostet zehn bis fünfzehn Minuten. Ein Modul hat vier bis fünf Lektionen, ein Kurs drei bis vier Module. Wer täglich eine Lektion schafft, ist in gut zwei Wochen durch einen Kurs — und hat dabei mehr behalten als bei einem Wochenendmarathon.
+
+> 💡 Die Serie (Streak) zählt Kalendertage, nicht Stunden. Abends eine Lektion und am nächsten Morgen die nächste sind zwei Tage.`,
+    showCourses: true,
+  },
+
+  ide: {
+    icon: Code2, color: "#7C3AED",
+    title: "Die IDE",
+    lead: "Ein echter Editor im Browser — derselbe, der in Visual Studio Code arbeitet.",
+    body: `## Was hier drinsteckt
+
+Der Editor ist **Monaco**, die Editor-Komponente aus Visual Studio Code. Das ist kein Textfeld mit Syntaxfarben, sondern derselbe Code, der auch in VS Code läuft:
+
+- Klammerpaare in Farbe, Einrückungslinien, Sticky Scroll und Code-Faltung
+- Automatisches Schließen von Klammern, Anführungszeichen — und von **HTML-Tags**: Tippst du \`<h1>\`, entsteht \`</h1>\` von selbst
+- **Emmet**: \`!\` + Tab erzeugt ein komplettes HTML-Grundgerüst, \`ul>li*3\` eine Liste
+- Verknüpftes Bearbeiten: Änderst du \`<div>\`, ändert sich der schließende Tag mit
+- Mehrfachcursor mit **Alt**, Zoom mit **Strg + Mausrad**, Zeilenumbruch und Minimap zuschaltbar
+
+## Dateien statt drei Kästen
+
+Ein Projekt ist ein Dateibaum, kein Formular mit drei Feldern. Du legst Dateien für **jede** unterstützte Sprache an — \`index.html\`, \`style.css\`, \`main.py\`, \`Main.java\`, \`server.go\`. Die Endung bestimmt die Sprache, und damit Hervorhebung, Vervollständigung und Prüfung.
+
+Der Editor startet **leer**. Kein Beispielcode, den du erst wegräumen musst.
+
+## Was wirklich läuft
+
+- **HTML, CSS, JavaScript** laufen live in der Vorschau. Verweise zwischen deinen Dateien werden aufgelöst: aus \`<link href="style.css">\` wird der echte Inhalt, wie auf einem Webserver.
+- **Python** läuft ebenfalls — echtes CPython, nach WebAssembly übersetzt. Beim ersten Start werden rund 10 MB geladen, danach ist es sofort da. Was nicht geht: \`input()\` und Netzwerkzugriffe.
+- **Alle anderen Sprachen** kannst du schreiben, prüfen lassen und herunterladen. Ausführen musst du sie auf deinem Rechner — die Konsole zeigt dir den passenden Befehl dafür.
+
+Das ist die ehrliche Antwort: Ein Knopf, der so tut, als würde er Java kompilieren, hilft niemandem.
+
+## Speichern und Mitnehmen
+
+- **Alle 30 Sekunden** wird automatisch gespeichert, \`Strg+S\` jederzeit.
+- **Vorschau in einem eigenen Tab**, der bei jeder Änderung neu lädt — die Scrollposition bleibt erhalten.
+- **Herunterladen** als ZIP mit allen Dateien, oder als eine einzige HTML-Datei mit eingebettetem CSS und JavaScript.
+- **2,5 GB** Speicher pro Konto für deine Projekte.
+
+## Der Assistent
+
+Rechts sitzt ein KI-Assistent, der deinen Code kennt. Er erklärt, sucht Fehler und schlägt Verbesserungen vor. Das ist die **einzige** Stelle mit KI — Aufgaben werden immer lokal geprüft, damit die Bewertung sofort da ist und nichts kostet.
+
+> 💡 Vollbild schaltet die IDE auf die ganze Fensterfläche. Esc bringt dich zurück.`,
+  },
+
+  features: {
+    icon: Sparkles, color: "#F7C948",
+    title: "Features",
+    lead: "Was diese Plattform kann — und warum sie es so macht.",
+    body: `## Bewertung ohne Wartezeit
+
+Antworten werden im Browser geprüft, nicht auf einem Server. Das Ergebnis ist **sofort** da, kostet nichts und funktioniert auch offline.
+
+Die Prüfung ist kein Textvergleich. Für Code wird der Quelltext zerlegt: Kommentare und Zeichenketten werden getrennt, Klammern und Tags auf Ausgeglichenheit geprüft, Deklarationen und Funktionsaufrufe gesammelt. Erst danach wird geschaut, ob die erwarteten Bausteine da sind — und ob typische Stolperfallen der Sprache vorkommen, etwa \`==\` statt \`===\` oder ein fehlender Doppelpunkt in Python.
+
+Bei Freitext wird geprüft, ob wirklich eine Begründung dasteht, ob die Fachbegriffe vorkommen und ob die Antwort eigenständig formuliert ist. Tastaturgeklapper fällt durch: \`fgsugugj\` kann kein deutsches Wort sein.
+
+## Ehrliches Feedback
+
+Eine falsche Antwort verrät nicht sofort die Lösung. Zuerst kommt ein Anhaltspunkt — der erste Buchstabe, die Länge, der fehlende Baustein. Die Auflösung gibt es nach drei Versuchen oder gegen einen Tipp-Joker aus dem Shop.
+
+Und es gibt keinen Weg an einer Aufgabe vorbei: Eine Lektion gilt erst als abgeschlossen, wenn jede Aufgabe richtig ist.
+
+## Motivation, die nicht nervt
+
+- **XP und 20 Level** vom Rookie bis zum Code Wizard
+- **Tagesserie** nach Kalendertagen, mit Schutzschilden aus dem Shop
+- **Sechs Wochenligen** von Bronze bis Meister — die besten drei steigen auf, die letzten drei ab
+- **Abzeichen** für Meilensteine
+- **XP-Shop**: Schutzschilde, Tipp-Joker, doppelte XP, Avatar-Extras, helles Editor-Design
+
+Die XP, die du ausgibst, zählen weiter für dein Level. Einkaufen kostet dich also keinen Fortschritt.
+
+## Klang
+
+Alle Töne entstehen im Browser selbst — richtig, falsch, Aufstieg, Abzeichen, gespeichert. Keine Audiodateien, nichts wird nachgeladen. Ein Schalter oben rechts schaltet sie ab.
+
+## Dein Konto
+
+- Registrierung mit E-Mail-Bestätigung, optional mit **Zwei-Faktor-Authentifizierung** (TOTP, kompatibel mit jeder Authenticator-App)
+- **Mindestanforderungen an Passwörter**, live geprüft beim Tippen
+- **Passwort vergessen** über einen einmaligen Link mit Ablaufzeit
+- **Ohne Anmeldung testen** — als Gast, dann wird allerdings nichts gespeichert
+
+## Ohne Server nutzbar
+
+Die Plattform läuft auch ganz ohne Backend: Dann bleibt alles im Browser, im lokalen Speicher, und verlässt dein Gerät nie. Mit Backend liegen Konten, Fortschritt und Projekte in einer Datenbank, Passwörter als scrypt-Hash, Sitzungen als HMAC-Hash.`,
+  },
+
+  schulen: {
+    icon: GraduationCap, color: "#10B981",
+    title: "Für Schulen",
+    lead: "Eine Klasse in fünf Minuten eingerichtet — ohne Lizenzen, ohne Installation, ohne Kosten.",
+    body: `## So läuft es ab
+
+1. Sie legen ein **Lehrer-Konto** an. Dabei entsteht automatisch ein **Schul-Code** wie \`LRND-4K9M\`.
+2. Sie geben den Code in der Klasse weiter.
+3. Ihre Schülerinnen und Schüler tragen ihn bei der Registrierung ein — fertig. Sie erscheinen in Ihrer Übersicht.
+
+Es braucht keine Installation. Ein Browser genügt, auch auf alten Geräten und auf Tablets.
+
+## Was Sie sehen
+
+Die Klassenübersicht zeigt für jede Person:
+
+- Wie viele Lektionen abgeschlossen sind, und in welchem Kurs
+- Gesammelte XP, Level und aktuelle Tagesserie
+- Wann zuletzt gearbeitet wurde
+- Eine Detailansicht mit dem Fortschritt je Kurs
+
+Damit sehen Sie auf einen Blick, wer hängt und wer vorausläuft — ohne Hefte einzusammeln.
+
+## Eigene Level bauen
+
+Sie sind nicht auf die mitgelieferten Kurse festgelegt. Im Bereich **Eigene Level** schreiben Sie eigene Lektionen:
+
+- **Theorie** als Markdown — Überschriften, Listen, Tabellen, Codeblöcke
+- **Aufgaben** in denselben vier Formen wie in den eingebauten Kursen
+- **Sprache wählbar** — dadurch wird Code passend geprüft
+- **XP festlegen**, Schwierigkeitsgrad setzen
+- **Entwurf oder veröffentlicht** — Entwürfe sieht nur Sie
+
+Veröffentlichte Level erscheinen bei allen, die Ihren Schul-Code genutzt haben, und werden mit derselben Analyse geprüft wie alles andere.
+
+## Datenschutz
+
+- Es werden nur Name und E-Mail-Adresse erhoben — sonst nichts.
+- Betreiben Sie die Plattform selbst, bleiben alle Daten auf Ihrem Server.
+- Ohne Backend verlassen die Daten das Gerät überhaupt nicht.
+- Für die Aufgabenprüfung wird **keine KI** verwendet. Es werden also auch keine Schülerantworten an Dritte gesendet.
+- Der KI-Assistent in der IDE ist optional und wird von der Administration eingerichtet, nicht von den Lernenden.
+
+## Was es kostet
+
+Nichts. Keine Lizenzgebühren, keine Schülerzahlgrenze, keine Testphase, die abläuft.
+
+> 📧 Fragen zum Einsatz an einer Schule? Schreiben Sie an **contact@learndeveloping.com**.`,
+  },
+
+  preise: {
+    icon: Star, color: "#F59E0B",
+    title: "Preise",
+    lead: "Es gibt keine. Das ist die ganze Seite — aber hier steht, warum.",
+    body: `## Kostenlos heißt kostenlos
+
+Alle Kurse, alle Lektionen, die IDE, der Fortschritt, die Ligen, der Shop: frei zugänglich. Keine Kreditkarte, kein Abo, keine Testphase, die nach 14 Tagen zuschlägt, keine Lektion, die plötzlich ein Schloss trägt.
+
+Es gibt auch keine Werbung und keinen Weiterverkauf von Daten.
+
+## Warum das geht
+
+Weil die teuren Teile hier nicht teuer sind:
+
+- **Die Aufgabenprüfung läuft im Browser.** Sie kostet keinen Serveraufruf und kein KI-Kontingent. Das ist der Grund, warum sie sofort antwortet — und zugleich der Grund, warum sie nichts kostet.
+- **Der Editor kommt vom CDN.** Monaco und die Schriften liegen ohnehin in Caches.
+- **Der Rest ist ein kleiner Server** mit einer Datenbank. Das ist kein Rechenzentrum.
+
+## Der XP-Shop
+
+Im Shop gibst du **XP** aus, die du dir erspielt hast — kein Geld. Es gibt keine Möglichkeit, XP zu kaufen, und keine Absicht, eine zu schaffen. Wer schneller vorankommen will, löst Aufgaben.
+
+## Selbst betreiben
+
+Die Plattform lässt sich vollständig selbst hosten: Node.js, dazu PostgreSQL oder SQLite. Für einen Schulserver reicht sehr wenig. Ohne Backend läuft sie sogar ganz ohne Installation im Browser.
+
+## Und der KI-Assistent?
+
+Der Assistent in der IDE ist der einzige Teil, der Rechenzeit außerhalb kostet. Deshalb wird er von der Administration eingerichtet — entweder mit einem kostenlosen Kontingent bei einem Anbieter oder mit einem eigenen Server. Lernende müssen dafür nichts einrichten und nichts bezahlen.
+
+Und wenn er nicht eingerichtet ist, funktioniert alles andere trotzdem: Die Prüfung der Aufgaben hängt nicht daran.`,
+  },
+
+  "ueber-uns": {
+    icon: Info, color: "#0EA5E9",
+    title: "Über uns",
+    lead: "Warum es LearnDeveloping gibt und wie es gebaut ist.",
+    body: `## Die Idee
+
+Programmieren lernt man nicht durch Zuschauen. Videos wirken beim Ansehen einleuchtend und sind eine Woche später weg. Was bleibt, ist das, was man selbst getippt hat — und zwar dann, wenn jemand einem sagt, was daran noch nicht stimmt.
+
+Genau das soll diese Plattform sein: **schreiben, sofort geprüft bekommen, weitermachen.** Kein Warten auf eine Antwort, kein Ladebalken zwischen Frage und Rückmeldung.
+
+## Was uns wichtig ist
+
+**Sofort statt irgendwann.** Die Bewertung passiert im Browser. Kein Server, keine Warteschlange, kein Kontingent. Das ist der Grund, warum die Antwort da ist, bevor du die Hand von der Tastatur nimmst.
+
+**Ehrlich statt gefällig.** Eine falsche Antwort wird als falsch bewertet — auch die, die auf den ersten Blick fast richtig aussieht. Und eine Lektion gilt erst als geschafft, wenn wirklich alles stimmt. Ein Fortschrittsbalken, der lügt, hilft niemandem.
+
+**Erklären statt abhaken.** Statt „Falsch" steht da, welcher Baustein fehlt, welche Klammer nicht geschlossen ist oder welches Schlüsselwort verwechselt wurde. Die Lösung kommt aber nicht sofort — erst ein Anhaltspunkt, dann die Auflösung.
+
+**Ohne Hürden.** Keine Kosten, keine Kreditkarte, keine Installation. Ausprobieren geht sogar ohne Konto.
+
+## Wie es gebaut ist
+
+Die Oberfläche ist React. Der Editor ist **Monaco** — die Editor-Komponente aus Visual Studio Code, also derselbe Code, den Millionen Entwicklerinnen und Entwickler täglich benutzen. Python läuft über **Pyodide**, ein nach WebAssembly übersetztes CPython.
+
+Die Prüfung ist eine eigene Analyse-Engine mit Sprachprofilen für fünfzehn Sprachen. Sie zerlegt den Quelltext, trennt Kommentare und Zeichenketten ab, prüft Klammern und Tags auf Ausgeglichenheit, sammelt Deklarationen und Aufrufe — und vergleicht das Ergebnis mit dem, was die Aufgabe verlangt. Dazu kommt eine Prüfung auf typische Stolperfallen je Sprache.
+
+Das Backend ist Node.js mit Fastify und läuft wahlweise auf PostgreSQL oder SQLite. Passwörter werden mit scrypt gehasht, Sitzungstoken nur als HMAC-Hash gespeichert. Die Plattform funktioniert auch **ganz ohne Backend** — dann bleibt alles im Browser.
+
+## Wo KI vorkommt — und wo nicht
+
+**Nicht** bei der Bewertung von Aufgaben. Das ist eine bewusste Entscheidung: KI-Antworten dauern Sekunden, kosten Geld und sind nicht reproduzierbar. Für eine Lernplattform, die sofort antworten soll, ist das die falsche Technik.
+
+**Doch** im Editor: Dort sitzt ein Assistent, der deinen Code erklärt, Fehler sucht und Verbesserungen vorschlägt. Dort sind ein paar Sekunden in Ordnung, weil du fragst, statt zu warten. Eingerichtet wird er von der Administration — Lernende sehen keine Zugangsdaten.
+
+## Kontakt
+
+- Allgemeine Anfragen: **contact@learndeveloping.com**
+- Hilfe und Fehlermeldungen: **support@learndeveloping.com**
+
+Rückmeldungen zu Aufgaben, die falsch bewertet wurden, sind besonders willkommen — in jeder Bewertung gibt es dafür einen Melden-Knopf. Mehrere Verbesserungen an der Prüfung stammen genau daher.`,
+  },
+};
+
+function InfoPage({ ctx, page }) {
+  const { navigate } = ctx;
+  const content = PAGE_CONTENT[page];
+  if (!content) return null;
+  const Icon = content.icon;
+
+  return (
+    <PublicShell ctx={ctx}>
+      <div className="max-w-3xl mx-auto px-5">
+        <button onClick={() => navigate("landing")} className="flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5] mb-6">
+          <ChevronLeft size={16} />Zur Startseite
+        </button>
+
+        <div className="flex items-start gap-4 mb-4">
+          <span className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
+            style={{ background: content.color + "1F", color: content.color }}>
+            <Icon size={26} />
+          </span>
+          <div>
+            <h1 className="font-display text-4xl font-extrabold">{content.title}</h1>
+            <p className="text-lg text-[#8A9BC0] mt-1 leading-relaxed">{content.lead}</p>
+          </div>
+        </div>
+
+        <Card className="p-7 mt-8"><Markdown text={content.body} /></Card>
+
+        {content.showCourses && (
+          <div className="mt-8">
+            <h2 className="font-display text-2xl font-bold mb-4">Alle {COURSES.length} Kurse</h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {COURSES.map((c) => (
+                <Card key={c.id} hover onClick={() => navigate("register")} className="p-4 flex items-start gap-3">
+                  <span className="text-2xl shrink-0">{c.icon}</span>
+                  <div className="min-w-0">
+                    <p className="font-display font-bold">{c.name}</p>
+                    <p className="text-xs text-[#8A9BC0] leading-relaxed">{c.description}</p>
+                    <p className="text-[11px] text-[#4A5A7A] mt-1">
+                      {c.totalLessons} Lektionen · {c.modules.length} Module
+                    </p>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Card className="p-7 mt-8 text-center">
+          <h2 className="font-display text-2xl font-bold mb-2">Am besten selbst ausprobieren</h2>
+          <p className="text-[#8A9BC0] mb-5">Ohne Anmeldung testbar — dein Fortschritt wird dann allerdings nicht gespeichert.</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Btn icon={Rocket} onClick={() => navigate("register")}>Konto erstellen</Btn>
+            <Btn variant="secondary" icon={ArrowRight} onClick={() => navigate("login")}>Anmelden</Btn>
+          </div>
+        </Card>
+      </div>
+    </PublicShell>
+  );
+}
+
 function Landing({ ctx }) {
   const { navigate } = ctx;
   return (
@@ -6144,12 +7300,11 @@ function Landing({ ctx }) {
         <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between gap-4">
           <Logo onClick={() => navigate("landing")} />
           <div className="hidden lg:flex items-center gap-6 text-sm text-[#8A9BC0]">
-            <a href="#kurse" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><BookOpen size={13} />Kurse</a>
-            <a href="#ide" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><Code2 size={13} />IDE</a>
-            <a href="#features" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><Sparkles size={13} />Features</a>
-            <a href="#rollen" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><GraduationCap size={13} />Für Schulen</a>
-            <a href="#preise" className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><Star size={13} />Preise</a>
-            <button onClick={() => navigate("ueber-uns")} className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5"><Info size={13} />Über uns</button>
+            {PUBLIC_NAV.map((n) => (
+              <button key={n.v} onClick={() => navigate(n.v)} className="hover:text-[#E8EDF5] transition-colors flex items-center gap-1.5">
+                <n.icon size={13} />{n.label}
+              </button>
+            ))}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Btn variant="ghost" size="sm" onClick={() => navigate("login")}>Anmelden</Btn>
@@ -6158,11 +7313,9 @@ function Landing({ ctx }) {
         </div>
         {/* Mobile Navigation */}
         <div className="lg:hidden flex items-center gap-4 px-5 pb-2.5 overflow-x-auto text-xs text-[#8A9BC0]">
-          <a href="#kurse" className="whitespace-nowrap hover:text-[#E8EDF5]">Kurse</a>
-          <a href="#ide" className="whitespace-nowrap hover:text-[#E8EDF5]">IDE</a>
-          <a href="#features" className="whitespace-nowrap hover:text-[#E8EDF5]">Features</a>
-          <a href="#rollen" className="whitespace-nowrap hover:text-[#E8EDF5]">Für Schulen</a>
-          <a href="#preise" className="whitespace-nowrap hover:text-[#E8EDF5]">Preise</a>
+          {PUBLIC_NAV.map((n) => (
+            <button key={n.v} onClick={() => navigate(n.v)} className="whitespace-nowrap hover:text-[#E8EDF5]">{n.label}</button>
+          ))}
         </div>
       </nav>
 
@@ -10057,7 +11210,7 @@ function AdminDashboard({ ctx }) {
       } catch (e) { pushToast("error", e.message); }
       return;
     }
-    if (adminCreateAdmin(newAdminForm)) {
+    if (await adminCreateAdmin(newAdminForm)) {
       setNewAdminOpen(false);
       setNewAdminForm({ name: "", email: "", password: "" });
     }
