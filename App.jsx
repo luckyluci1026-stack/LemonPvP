@@ -80,6 +80,9 @@ const UserRoundPlus = FaIcon("user-plus");
 const Flag = FaIcon("flag");
 const Bug = FaIcon("bug");
 const Wand = FaIcon("wand-magic-sparkles");
+const ExternalLink = FaIcon("arrow-up-right-from-square");
+const Download = FaIcon("download");
+const MapIcon = FaIcon("map");
 
 /* =========================================================================
    LearnDeveloping — learndeveloping.com
@@ -4012,7 +4015,23 @@ function editorChrome(courseId, label, right, children) {
   );
 }
 
-function MonacoCodeEditor({ value, onChange, disabled, courseId, label }) {
+/* Emmet-Unterstützung: `!` + Tab erzeugt ein HTML-Grundgerüst, `ul>li*3`
+   erzeugt Listen usw. Wird nur einmal je Monaco-Instanz registriert. */
+let emmetRegistered = false;
+async function enableEmmet(monaco) {
+  if (emmetRegistered) return;
+  emmetRegistered = true;
+  try {
+    const emmet = await import("emmet-monaco-es");
+    emmet.emmetHTML(monaco, ["html"]);
+    emmet.emmetCSS(monaco, ["css", "scss", "less"]);
+    emmet.emmetJSX(monaco, ["javascript", "typescript"]);
+  } catch (e) {
+    emmetRegistered = false;   // beim nächsten Versuch erneut probieren
+  }
+}
+
+function MonacoCodeEditor({ value, onChange, disabled, courseId, label, height = "280px", showMinimap = false, onCursor }) {
   const [mod, setMod] = useState(null);
   const [failed, setFailed] = useState(false);
 
@@ -4052,20 +4071,64 @@ function MonacoCodeEditor({ value, onChange, disabled, courseId, label }) {
       },
     });
   };
+  const onMount = (editor, monaco) => {
+    enableEmmet(monaco);
+    if (onCursor) {
+      const report = () => {
+        const p = editor.getPosition();
+        if (p) onCursor({ line: p.lineNumber, column: p.column });
+      };
+      editor.onDidChangeCursorPosition(report);
+      report();
+    }
+  };
+
   return editorChrome(courseId, label, <>LearnDeveloping&nbsp;Editor</>,
     <Editor
-      height="280px"
+      height={height}
       language={MONACO_LANG[courseId] || "plaintext"}
       theme="ld-dark"
       value={value}
       beforeMount={beforeMount}
+      onMount={onMount}
       onChange={(v) => onChange(v == null ? "" : v)}
       loading={<div className="p-4 text-sm text-[#8A9BC0] flex items-center gap-2"><Loader2 size={14} className="ld-spin" />Editor wird vorbereitet …</div>}
       options={{
-        readOnly: disabled, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontLigatures: true,
-        minimap: { enabled: false }, scrollBeyondLastLine: false, automaticLayout: true,
-        padding: { top: 10, bottom: 10 }, tabSize: 2, lineNumbersMinChars: 3, renderLineHighlight: "line",
-        smoothScrolling: true, cursorBlinking: "smooth", roundedSelection: true, scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+        readOnly: disabled,
+        fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontLigatures: true,
+        minimap: { enabled: showMinimap, renderCharacters: false },
+        scrollBeyondLastLine: false, automaticLayout: true,
+        padding: { top: 10, bottom: 10 }, tabSize: 2, lineNumbersMinChars: 3,
+        renderLineHighlight: "all",
+        smoothScrolling: true, cursorBlinking: "smooth", cursorSmoothCaretAnimation: "on",
+        roundedSelection: true,
+        scrollbar: { verticalScrollbarSize: 10, horizontalScrollbarSize: 10 },
+
+        // Verhalten wie in VS Code
+        bracketPairColorization: { enabled: true },
+        guides: { bracketPairs: true, indentation: true, highlightActiveIndentation: true },
+        autoClosingBrackets: "languageDefined",
+        autoClosingQuotes: "languageDefined",
+        autoSurround: "languageDefined",
+        autoIndent: "full",
+        formatOnPaste: true,
+        formatOnType: true,
+        linkedEditing: true,               // öffnendes und schließendes Tag zusammen umbenennen
+        matchBrackets: "always",
+        occurrencesHighlight: "singleFile",
+        selectionHighlight: true,
+        folding: true, showFoldingControls: "mouseover",
+        stickyScroll: { enabled: true },
+        suggestOnTriggerCharacters: true,
+        quickSuggestions: { other: true, comments: false, strings: true },
+        wordBasedSuggestions: "allDocuments",
+        tabCompletion: "on",
+        snippetSuggestions: "top",
+        parameterHints: { enabled: true },
+        multiCursorModifier: "alt",
+        mouseWheelZoom: true,
+        dragAndDrop: true,
+        links: true,
       }}
     />
   );
@@ -7112,6 +7175,48 @@ function formatBytes(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
 
+/**
+ * Baut aus den drei Bereichen eine fertige Seite.
+ *
+ * Emmets `!` erzeugt ein vollständiges HTML-Gerüst. Steht im HTML-Bereich
+ * bereits ein ganzes Dokument, wird CSS und JS dort hineingesetzt statt es
+ * ein zweites Mal einzupacken — sonst entstünde verschachteltes HTML.
+ */
+function composeDocument({ html = "", css = "", js = "", title = "Meine Seite", extraScript = "" }) {
+  const styleTag = css.trim() ? `<style>\n${css}\n</style>` : "";
+  const scriptTag = js.trim() ? `<script>\n${js}\n<\/script>` : "";
+  const bridgeTag = extraScript ? `<script>${extraScript}<\/script>` : "";
+  const source = String(html);
+
+  const isFullDocument = /<html[\s>]/i.test(source) || /<!doctype\s+html/i.test(source);
+  if (isFullDocument) {
+    let out = source;
+    // Styles ans Ende des Kopfbereichs, Skripte ans Ende des Körpers
+    if (/<\/head>/i.test(out)) out = out.replace(/<\/head>/i, `${styleTag}\n</head>`);
+    else if (/<html[^>]*>/i.test(out)) out = out.replace(/(<html[^>]*>)/i, `$1\n<head>${styleTag}</head>`);
+    else out = styleTag + out;
+
+    if (/<\/body>/i.test(out)) out = out.replace(/<\/body>/i, `${bridgeTag}\n${scriptTag}\n</body>`);
+    else out += `\n${bridgeTag}\n${scriptTag}`;
+    return out;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${String(title).replace(/[<>]/g, "")}</title>
+${styleTag}
+</head>
+<body>
+${source}
+${bridgeTag}
+${scriptTag}
+</body>
+</html>`;
+}
+
 const PLAYGROUND_STARTER = {
   html: `<h1>Hallo Welt!</h1>\n<p>Schreib hier deinen eigenen Code — die Vorschau aktualisiert sich in Echtzeit.</p>\n<button id="btn">Klick mich</button>`,
   css: `body {\n  font-family: sans-serif;\n  background: #0A0E1A;\n  color: #E8EDF5;\n  padding: 2rem;\n}\nbutton {\n  background: linear-gradient(135deg, #4F8EF7, #7C3AED);\n  border: none;\n  color: white;\n  padding: 10px 18px;\n  border-radius: 8px;\n  cursor: pointer;\n}`,
@@ -7270,6 +7375,10 @@ function Playground({ ctx }) {
   const [debugLoading, setDebugLoading] = useState(false);
   const [logs, setLogs] = useState([]);
   const [rightTab, setRightTab] = useState("preview");
+  const [cursor, setCursor] = useState({ line: 1, column: 1 });
+  const [minimap, setMinimap] = useState(false);
+  const [previewLive, setPreviewLive] = useState(false);
+  const previewWin = useRef(null);
 
   const runDebug = async () => {
     setDebugLoading(true);
@@ -7302,10 +7411,10 @@ function Playground({ ctx }) {
           window.addEventListener("unhandledrejection", function (e) { send("error", ["Unbehandelte Promise-Ablehnung: " + e.reason]); });
         })();
       `;
-      setSrcDoc(`<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${bridge}<\/script><script>${js}<\/script></body></html>`);
+      setSrcDoc(composeDocument({ html, css, js, title: name, extraScript: bridge }));
     }, 350);
     return () => clearTimeout(t);
-  }, [html, css, js]);
+  }, [html, css, js, name]);
 
   // Konsolen-Ausgaben aus der Vorschau einsammeln
   useEffect(() => {
@@ -7316,6 +7425,82 @@ function Playground({ ctx }) {
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, []);
+
+  /* ---------------- Vorschau in eigenem Tab, live aktualisiert -------------
+     Das geöffnete Fenster bleibt bestehen und wird bei jeder Codeänderung
+     neu beschrieben — ohne dass man es erneut öffnen muss.
+     --------------------------------------------------------------------- */
+  // Fertige Seite ohne die Konsolen-Brücke — für Vorschau-Tab und Download
+  const buildPage = useCallback(
+    () => composeDocument({ html, css, js, title: name || "Meine Seite" }),
+    [name, html, css, js]
+  );
+
+  const writeToPreviewWindow = useCallback((win) => {
+    if (!win || win.closed) return false;
+    try {
+      // Scrollposition behalten, damit das Neuladen nicht stört
+      const y = win.scrollY || 0;
+      win.document.open();
+      win.document.write(buildPage());
+      win.document.close();
+      win.scrollTo(0, y);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }, [buildPage]);
+
+  const openPreviewTab = () => {
+    const existing = previewWin.current;
+    if (existing && !existing.closed) {
+      writeToPreviewWindow(existing);
+      existing.focus();
+      pushToast("info", "Vorschau aktualisiert.");
+      return;
+    }
+    const win = window.open("", "ld-preview");
+    if (!win) {
+      pushToast("error", "Der Browser hat das Fenster blockiert — erlaube Pop-ups für diese Seite.");
+      return;
+    }
+    previewWin.current = win;
+    writeToPreviewWindow(win);
+    setPreviewLive(true);
+    pushToast("success", "Vorschau geöffnet — sie aktualisiert sich bei jeder Änderung.");
+  };
+
+  // Bei jeder Codeänderung den geöffneten Tab mitziehen
+  useEffect(() => {
+    if (!previewLive) return;
+    const t = setTimeout(() => {
+      const win = previewWin.current;
+      if (!win || win.closed) { setPreviewLive(false); previewWin.current = null; return; }
+      writeToPreviewWindow(win);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [html, css, js, previewLive, writeToPreviewWindow]);
+
+  // Beim Verlassen der IDE das Vorschaufenster schließen
+  useEffect(() => () => {
+    const win = previewWin.current;
+    if (win && !win.closed) win.close();
+  }, []);
+
+  /** Lädt die Seite als einzelne, in sich geschlossene HTML-Datei herunter. */
+  const downloadPage = () => {
+    const blob = new Blob([buildPage()], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const safeName = (name || "meine-seite").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "meine-seite";
+    a.href = url;
+    a.download = `${safeName}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    pushToast("success", `${safeName}.html heruntergeladen.`);
+  };
 
   useEffect(() => {
     if (!playgroundOpenId || !me) return;
@@ -7356,12 +7541,31 @@ function Playground({ ctx }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <Btn variant="secondary" size="sm" icon={Plus} onClick={newProject}>Neu</Btn>
+          <Btn variant="secondary" size="sm" icon={ExternalLink} onClick={openPreviewTab}>
+            {previewLive ? "Vorschau anzeigen" : "In neuem Tab öffnen"}
+          </Btn>
+          <Btn variant="secondary" size="sm" icon={Download} onClick={downloadPage}>Herunterladen</Btn>
           <Btn variant="secondary" size="sm" icon={debugLoading ? undefined : Bug} onClick={runDebug} disabled={debugLoading}>
-            {debugLoading ? <><Loader2 size={14} className="ld-spin" />Analysiert …</> : "Mit KI debuggen"}
+            {debugLoading ? <><Loader2 size={14} className="ld-spin" />Prüft …</> : "Fehler prüfen"}
           </Btn>
           <Btn size="sm" icon={Check} onClick={save}>Speichern</Btn>
         </div>
       </div>
+
+      {previewLive && (
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 rounded-xl bg-[#10B981]/10 border border-[#10B981]/30">
+          <span className="w-2 h-2 rounded-full bg-[#10B981]" style={{ animation: "ld-pulse 2s ease-in-out infinite" }} />
+          <p className="text-sm text-[#C9D6F0] flex-1">
+            Vorschau-Tab ist verbunden — er lädt bei jeder Änderung automatisch neu.
+          </p>
+          <button onClick={() => {
+            const w = previewWin.current;
+            if (w && !w.closed) w.close();
+            previewWin.current = null;
+            setPreviewLive(false);
+          }} className="text-xs text-[#8A9BC0] hover:text-[#EF4444]">Trennen</button>
+        </div>
+      )}
 
       <Card className="p-4">
         <div className="flex items-center justify-between text-xs mb-1.5">
@@ -7375,14 +7579,33 @@ function Playground({ ctx }) {
         <Card className="p-4">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Projektname"
             className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 mb-3 text-sm font-medium text-[#E8EDF5]" />
-          <div className="flex p-1 bg-[#0A0E1A] rounded-lg mb-3">
-            {tabs.map(([v, label]) => (
-              <button key={v} onClick={() => setTab(v)}
-                className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${tab === v ? "text-white" : "text-[#8A9BC0]"}`}
-                style={tab === v ? { background: GRADIENT } : undefined}>{label}</button>
-            ))}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex flex-1 p-1 bg-[#0A0E1A] rounded-lg">
+              {tabs.map(([v, label]) => (
+                <button key={v} onClick={() => setTab(v)}
+                  className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${tab === v ? "text-white" : "text-[#8A9BC0]"}`}
+                  style={tab === v ? { background: GRADIENT } : undefined}>{label}</button>
+              ))}
+            </div>
+            <button onClick={() => setMinimap((m) => !m)} aria-label="Minimap umschalten"
+              title={minimap ? "Minimap ausblenden" : "Minimap einblenden"}
+              className={`px-2 py-1.5 rounded-lg border text-xs transition-all ${minimap ? "border-[#4F8EF7] text-[#4F8EF7]" : "border-[#1E2D4A] text-[#8A9BC0] hover:border-[#2A3F6F]"}`}>
+              <MapIcon size={13} />
+            </button>
           </div>
-          <MonacoCodeEditor value={codeFor[tab]} onChange={setterFor[tab]} disabled={false} courseId={tabs.find((t) => t[0] === tab)[2]} label={tab.toUpperCase()} />
+
+          <MonacoCodeEditor value={codeFor[tab]} onChange={setterFor[tab]} disabled={false}
+            courseId={tabs.find((t) => t[0] === tab)[2]} label={tab.toUpperCase()}
+            height="400px" showMinimap={minimap} onCursor={setCursor} />
+
+          {/* Statusleiste wie in VS Code */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 px-1 text-[11px] text-[#4A5A7A] font-code">
+            <span>Zeile {cursor.line}, Spalte {cursor.column}</span>
+            <span>{codeFor[tab].split("\n").length} Zeilen</span>
+            <span>Leerzeichen: 2</span>
+            <span className="uppercase">{tab === "js" ? "javascript" : tab}</span>
+            {tab === "html" && <span className="text-[#4F8EF7]">Emmet: <kbd className="px-1 rounded bg-[#141D35]">!</kbd> + Tab</span>}
+          </div>
         </Card>
 
         <Card className="p-4">
