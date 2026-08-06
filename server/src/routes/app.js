@@ -4,6 +4,28 @@ import { requireAuth, updateStreak, rolloverLeague, weekKey } from "./auth.js";
 import { loadFullUser, listUser, serializeProject, serializeLesson } from "../serialize.js";
 
 const MAX_NAME = 80;
+
+/* ------------------ XP nach Anzahl der Versuche ---------------------------
+   Dieselben Zahlen wie im Browser (App.jsx). Entscheidend ist, dass HIER
+   gerechnet wird: Der Client meldet nur, im wievielten Anlauf die Aufgabe saß.
+   Lügt er, bekommt er höchstens so viel wie bei ehrlicher Meldung — mehr als
+   die volle Belohnung ist auf keinem Weg möglich.
+   ------------------------------------------------------------------------- */
+const TASK_XP = 15;
+const ATTEMPT_FACTORS = [1, 0.7, 0.5, 0.3];
+const HINT_FACTOR_CAP = 0.4;
+
+function taskXpFor(attempts, usedHint) {
+  const index = Math.min(Math.max(1, Number(attempts) || 1), ATTEMPT_FACTORS.length) - 1;
+  const factor = usedHint ? Math.min(ATTEMPT_FACTORS[index], HINT_FACTOR_CAP) : ATTEMPT_FACTORS[index];
+  return Math.max(1, Math.round(TASK_XP * factor));
+}
+
+function lessonXpFor(base, firstTry, total) {
+  if (!total) return base;
+  const share = Math.max(0, Math.min(1, Number(firstTry) / Number(total)));
+  return Math.max(1, Math.round(base * (0.5 + 0.5 * share)));
+}
 const MAX_FILES = 100;          // ein Projekt, kein Dateisystem
 const MAX_TASKS = 20;           // Aufgaben je selbst erstellter Lektion
 
@@ -40,10 +62,15 @@ export default async function appRoutes(app) {
   // Eine Lektion abschließen. XP und Abzeichen werden serverseitig vergeben,
   // damit der Fortschritt nicht im Browser manipuliert werden kann.
   app.post("/api/progress/complete", { preHandler: [requireAuth] }, async (request, reply) => {
-    const { lessonId, courseId, xpReward = 0, badges = [] } = request.body || {};
+    const { lessonId, courseId, xpReward = 0, badges = [], firstTry, taskCount } = request.body || {};
     if (!lessonId) return reply.code(400).send({ error: "lessonId fehlt." });
 
-    const xp = Math.max(0, Math.min(500, Number(xpReward) || 0));   // Obergrenze gegen Manipulation
+    const claimed = Math.max(0, Math.min(500, Number(xpReward) || 0));   // Obergrenze gegen Manipulation
+    // Fehlversuche mindern den Lektionsbonus. Gemeldet wird, wie viele
+    // Aufgaben im ersten Anlauf saßen; gerechnet wird hier.
+    const xp = taskCount
+      ? Math.min(claimed, lessonXpFor(claimed, firstTry, taskCount))
+      : claimed;
 
     // Wochenwechsel VOR dem Gutschreiben abhandeln — sonst würde der
     // Rollover die soeben vergebenen Wochen-XP wieder auf null setzen.
@@ -81,8 +108,12 @@ export default async function appRoutes(app) {
   // XP für einzelne richtige Aufgaben. Der Doppel-XP-Kauf wird HIER angewandt,
   // nicht im Browser — sonst könnte man sich den Faktor selbst setzen.
   app.post("/api/progress/xp", { preHandler: [requireAuth] }, async (request, reply) => {
-    const base = Math.max(0, Math.min(100, Number(request.body?.amount) || 0));
-    if (!base) return reply.code(400).send({ error: "Ungültiger XP-Betrag." });
+    const claimed = Math.max(0, Math.min(100, Number(request.body?.amount) || 0));
+    if (!claimed) return reply.code(400).send({ error: "Ungültiger XP-Betrag." });
+    // Der Abzug für Fehlversuche wird serverseitig gerechnet und zusätzlich
+    // gegen den gemeldeten Betrag gedeckelt.
+    const earned = taskXpFor(request.body?.attempts, !!request.body?.usedHint);
+    const base = Math.min(claimed, earned);
     const before = await one("SELECT * FROM users WHERE id = $1", [request.user.id]);
     await rolloverLeague(before);
     const amount = Number(before.boost_until || 0) > Date.now() ? base * 2 : base;

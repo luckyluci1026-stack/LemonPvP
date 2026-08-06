@@ -314,12 +314,12 @@ function getLevelInfo(xp) {
 
 /* ------------------------------ Badges --------------------------------- */
 const BADGES = {
-  first_lesson: { emoji: "🎯", label: "Erste Lektion", desc: "Erste Lektion abgeschlossen" },
-  week_warrior: { emoji: "🔥", label: "7-Tage Streak", desc: "Eine Woche am Stück gelernt" },
-  js_beginner: { emoji: "⚡", label: "JS Starter", desc: "10 JavaScript-Lektionen" },
-  course_complete: { emoji: "🏆", label: "Kurs-Meister", desc: "Einen ganzen Kurs abgeschlossen" },
-  ai_master: { emoji: "🤖", label: "KI-Master", desc: "KI-Score über 95%" },
-  mid_wizard: { emoji: "🌟", label: "Mid Wizard", desc: "Level 10 erreicht" },
+  first_lesson: { icon: "ziel", color: "#10B981", label: "Erste Lektion", desc: "Erste Lektion abgeschlossen" },
+  week_warrior: { icon: "flamme", color: "#F59E0B", label: "7-Tage Streak", desc: "Eine Woche am Stück gelernt" },
+  js_beginner: { icon: "javascript", color: "#F7C948", label: "JS Starter", desc: "10 JavaScript-Lektionen" },
+  course_complete: { icon: "crown", color: "#F7C948", label: "Kurs-Meister", desc: "Einen ganzen Kurs abgeschlossen" },
+  ai_master: { icon: "feedback", color: "#7C3AED", label: "KI-Master", desc: "KI-Score über 95%" },
+  mid_wizard: { icon: "stern", color: "#4F8EF7", label: "Mid Wizard", desc: "Level 10 erreicht" },
 };
 
 /* ------------------------------ Difficulty ----------------------------- */
@@ -3575,7 +3575,7 @@ function buildFallbackLesson(course, meta) {
     estimatedMinutes: 10,
     theory: `# ${title}
 
-Willkommen zu dieser Lektion im Kurs **${course.name}** ${course.icon}.
+Willkommen zu dieser Lektion im Kurs **${course.name}**.
 
 In diesem Abschnitt vertiefst du das Thema **„${title}“**. Lies die Konzepte aufmerksam, baue die Beispiele selbst nach und übe mit den Aufgaben rechts.
 
@@ -4849,6 +4849,115 @@ function analyzeProject({ html, css, js }) {
 
 /* ========================= Reusable UI ============================= */
 
+/* ========================== Eigene Symbole ===============================
+   Emoji sehen auf jedem Betriebssystem anders aus: unter Windows anders als
+   unter macOS, unter Android wieder anders. Für eine Oberfläche, die überall
+   gleich aussehen soll, taugen sie deshalb nicht.
+
+   Diese Symbole sind selbst gezeichnet — schlichte geometrische Formen, die
+   auch bei 16 Pixeln noch lesbar sind. Sie sind bewusst KEINE Nachbauten der
+   offiziellen Sprachlogos, sondern eigene Marken in der jeweiligen Farbe.
+   ========================================================================= */
+function LdIcon({ name, size = 24, color = "currentColor", className = "", title }) {
+  const s = size;
+  const common = {
+    width: s, height: s, viewBox: "0 0 24 24",
+    fill: "none", stroke: color, strokeWidth: 1.9,
+    strokeLinecap: "round", strokeLinejoin: "round",
+    className, "aria-hidden": title ? undefined : true,
+    style: { display: "block", flexShrink: 0 },
+  };
+  const glyphs = {
+    /* ------------------------------ Sprachen ---------------------------- */
+    // Spitze Klammern mit Schrägstrich — das Zeichen für Auszeichnungssprache
+    html: <><path d="M8 6 3 12l5 6" /><path d="M16 6l5 6-5 6" /><path d="M13.5 4l-3 16" /></>,
+    // Pinselstrich
+    css: <><path d="M5 19c1.5-3 3-4 5-4 3 0 3-3 3-5 0-3 2-5 5-5" /><circle cx="6" cy="18" r="2.2" fill={color} stroke="none" /></>,
+    // Blitz
+    javascript: <path d="M13 2 5 13h5l-1 9 9-12h-5l1-8Z" />,
+    // Schild mit Haken
+    typescript: <><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6l-7-3Z" /><path d="M9 12l2.2 2.2L15.5 10" /></>,
+    // Atom
+    react: <><circle cx="12" cy="12" r="2" fill={color} stroke="none" /><ellipse cx="12" cy="12" rx="9.5" ry="4" /><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(60 12 12)" /><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(120 12 12)" /></>,
+    // V aus zwei Winkeln
+    vue: <><path d="M2.5 5h4l5.5 10L17.5 5h4L12 21 2.5 5Z" /><path d="M8 5h2.5l1.5 3 1.5-3H16" /></>,
+    // Zwei ineinandergreifende Bögen
+    python: <><path d="M12 3c-3.3 0-4.5 1.4-4.5 3.5V9h4.5" /><path d="M7.5 9H5.2C3.4 9 2.5 10.4 2.5 12.5S3.4 16 5.2 16h2.3v-2.5c0-2 1.2-3.5 4.5-3.5" /><path d="M12 21c3.3 0 4.5-1.4 4.5-3.5V15H12" /><path d="M16.5 15h2.3c1.8 0 2.7-1.4 2.7-3.5S20.6 8 18.8 8h-2.3v2.5c0 2-1.2 3.5-4.5 3.5" /></>,
+    // Tasse mit Dampf
+    java: <><path d="M4 11h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-5Z" /><path d="M17 12h1.5a2.5 2.5 0 0 1 0 5H17" /><path d="M8 3c-1 1.2-1 2.3 0 3.5M12 2.5c-1.2 1.4-1.2 2.7 0 4" /></>,
+    // Quadrat mit diagonaler Teilung
+    kotlin: <><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" /><path d="M20.5 3.5 3.5 20.5M12 3.5 3.5 12" /></>,
+    // Offener Ring
+    c: <path d="M18 7a7.5 7.5 0 1 0 0 10" />,
+    // Ring mit Pluszeichen
+    cpp: <><path d="M13.5 7.5a6 6 0 1 0 0 9" /><path d="M17 9v5M14.5 11.5h5" /></>,
+    // Kreis mit zwei Punkten und Spur
+    go: <><circle cx="13" cy="12" r="7" /><circle cx="11" cy="10.5" r="1" fill={color} stroke="none" /><circle cx="15" cy="10.5" r="1" fill={color} stroke="none" /><path d="M6 9.5H2M6 14.5H3.5" /></>,
+    // Zahnradring
+    rust: <><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2.4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" /></>,
+    // Ellipse mit Balken
+    php: <><ellipse cx="12" cy="12" rx="10" ry="6.5" /><path d="M7.5 14.5 9 9.5h1.8c1 0 1.5.6 1.2 1.6-.3 1-1 1.5-2 1.5H8.6" /><path d="M14 14.5 15.5 9.5h1.8c1 0 1.5.6 1.2 1.6-.3 1-1 1.5-2 1.5h-1.4" /></>,
+    // Datenbankzylinder
+    sql: <><ellipse cx="12" cy="6" rx="7.5" ry="3" /><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6" /><path d="M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3" /></>,
+
+    /* -------------------------------- Ligen ------------------------------ */
+    medal: <><circle cx="12" cy="14.5" r="6" /><path d="M8.5 9 6 2.5h12L15.5 9" /></>,
+    diamond: <><path d="M12 2.5 21.5 12 12 21.5 2.5 12 12 2.5Z" /><path d="M7.2 12h9.6M12 7.2v9.6" /></>,
+    gem: <><path d="M6 3h12l4 6-10 12L2 9l4-6Z" /><path d="M2 9h20M9 3l-3 6 6 12 6-12-3-6" /></>,
+    crown: <><path d="M3 8l3.5 4L12 5l5.5 7L21 8v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Z" /><circle cx="12" cy="15" r="1.3" fill={color} stroke="none" /></>,
+
+    /* ------------------------------- Schritte ---------------------------- */
+    // Aufgeschlagenes Buch
+    theorie: <><path d="M12 6.5C10 4.8 7.5 4 4 4v13c3.5 0 6 .8 8 2.5 2-1.7 4.5-2.5 8-2.5V4c-3.5 0-6 .8-8 2.5Z" /><path d="M12 6.5v13" /></>,
+    // Stift auf Blatt
+    aufgabe: <><path d="M5 3h9l5 5v6" /><path d="M14 3v5h5" /><path d="M19.5 15.5 13 22H9.5v-3.5l6.5-6.5a1.8 1.8 0 0 1 2.5 0l1 1a1.8 1.8 0 0 1 0 2.5Z" /></>,
+    // Sprechblase mit Haken
+    feedback: <><path d="M21 12a8 8 0 0 1-8 8H8l-5 3 1.5-4.5A8 8 0 1 1 21 12Z" /><path d="M8.5 11.5 11 14l4.5-4.5" /></>,
+
+    /* ------------------------------ Abzeichen ---------------------------- */
+    flamme: <><path d="M12 2c1.5 4 5 5.5 5 10a5 5 0 0 1-10 0c0-1.5.5-2.5 1.5-3.5C9 10.5 10 8 12 2Z" /><path d="M12 21a3 3 0 0 0 3-3c0-1.5-1.5-2.5-3-4.5-1.5 2-3 3-3 4.5a3 3 0 0 0 3 3Z" /></>,
+    stern: <path d="m12 2.8 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.6l6.5-.9L12 2.8Z" />,
+    ziel: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.4" fill={color} stroke="none" /></>,
+    raute: <><path d="M12 2.5 21.5 12 12 21.5 2.5 12 12 2.5Z" /></>,
+  };
+
+  return (
+    <svg {...common} role={title ? "img" : undefined}>
+      {title && <title>{title}</title>}
+      {glyphs[name] || glyphs.raute}
+    </svg>
+  );
+}
+
+// Welches Symbol gehört zu welchem Kurs
+const COURSE_ICONS = {
+  html: "html", css: "css", javascript: "javascript", typescript: "typescript",
+  react: "react", vue: "vue", python: "python", java: "java", kotlin: "kotlin",
+  c: "c", cpp: "cpp", go: "go", rust: "rust", php: "php", sql: "sql",
+};
+
+/** Das Symbol eines Kurses in seiner Farbe. */
+function CourseIcon({ course, size = 24, className = "" }) {
+  if (!course) return null;
+  return (
+    <LdIcon name={COURSE_ICONS[course.id] || "raute"} size={size} color={course.color}
+      className={className} title={course.name} />
+  );
+}
+
+// Ligen: Symbol und Farbe kommen aus LEAGUES
+const LEAGUE_ICONS = {
+  bronze: "medal", silber: "medal", gold: "medal",
+  platin: "diamond", diamant: "gem", meister: "crown",
+};
+
+function LeagueIcon({ league, size = 24, className = "" }) {
+  const l = typeof league === "string" ? leagueById(league) : league;
+  if (!l) return null;
+  return <LdIcon name={LEAGUE_ICONS[l.id] || "medal"} size={size} color={l.color} className={className} title={l.name} />;
+}
+
+
 function renderInline(text, kp) {
   const parts = [];
   const regex = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*]+\*)|(\[[^\]]+\]\([^)]+\))/g;
@@ -6003,12 +6112,12 @@ function advanceStreak(user) {
    Platzierung. Wer oben landet, steigt auf, wer unten bleibt, ab.
    ------------------------------------------------------------------------- */
 const LEAGUES = [
-  { id: "bronze",  name: "Bronze",  emoji: "🥉", color: "#B08D57" },
-  { id: "silber",  name: "Silber",  emoji: "🥈", color: "#A8B3C4" },
-  { id: "gold",    name: "Gold",    emoji: "🥇", color: "#F7C948" },
-  { id: "platin",  name: "Platin",  emoji: "💠", color: "#4F8EF7" },
-  { id: "diamant", name: "Diamant", emoji: "💎", color: "#7C3AED" },
-  { id: "meister", name: "Meister", emoji: "👑", color: "#EF4444" },
+  { id: "bronze",  name: "Bronze", color: "#B08D57" },
+  { id: "silber",  name: "Silber", color: "#A8B3C4" },
+  { id: "gold",    name: "Gold", color: "#F7C948" },
+  { id: "platin",  name: "Platin", color: "#4F8EF7" },
+  { id: "diamant", name: "Diamant", color: "#7C3AED" },
+  { id: "meister", name: "Meister", color: "#EF4444" },
 ];
 
 const PROMOTE_TOP = 3;      // beste drei steigen auf
@@ -6691,7 +6800,7 @@ export default function App() {
   const openLesson = (lessonId) => { setSelectedLesson(lessonId); navigate("lesson"); };
 
   // XP / Lektion abschließen
-  const addXP = useCallback((rawAmount) => {
+  const addXP = useCallback((rawAmount, meta = {}) => {
     // Doppelte XP aus dem Shop wirken auf jede Gutschrift.
     const amount = boostActive(me) ? rawAmount * 2 : rawAmount;
     // Aufstieg erkennen, bevor die XP verbucht werden — dann gibt es Fanfare
@@ -6714,7 +6823,7 @@ export default function App() {
     }));
     // … und serverseitig verbuchen, wo der Wert manipulationssicher liegt.
     if (api.available && me && !me.isGuest) {
-      api.post("/api/progress/xp", { amount: rawAmount })
+      api.post("/api/progress/xp", { amount: rawAmount, attempts: meta.attempts, usedHint: meta.usedHint })
         .then(({ user }) => setUsers((us) => us.map((u) => u.id === user.id ? fromApiUser(user) : u)))
         .catch(() => {});
     }
@@ -6781,7 +6890,7 @@ export default function App() {
   /** Streak-Schutz kaufen — derselbe Weg wie alles andere im Shop. */
   const buyStreakFreeze = useCallback(() => buyShopItem("streak_freeze"), [buyShopItem]);
 
-  const completeLesson = useCallback(async (lessonId, bonusXp) => {
+  const completeLesson = useCallback(async (lessonId, bonusXp, stats = {}) => {
     if (api.available && me && !me.isGuest) {
       const completed = [...(me.completedLessons || []), lessonId];
       try {
@@ -6789,6 +6898,8 @@ export default function App() {
           lessonId,
           courseId: findLessonMeta(lessonId)?.course.id,
           xpReward: bonusXp,
+          firstTry: stats.firstTry,
+          taskCount: stats.taskCount,
           badges: earnedBadgesFor(completed, me.xp + bonusXp),
         });
         const mapped = fromApiUser(res.user);
@@ -7264,7 +7375,7 @@ function InfoPage({ ctx, page }) {
             <div className="grid sm:grid-cols-2 gap-3">
               {COURSES.map((c) => (
                 <Card key={c.id} hover onClick={() => navigate("register")} className="p-4 flex items-start gap-3">
-                  <span className="text-2xl shrink-0">{c.icon}</span>
+                  <CourseIcon course={c} size={26} className="shrink-0" />
                   <div className="min-w-0">
                     <p className="font-display font-bold">{c.name}</p>
                     <p className="text-xs text-[#8A9BC0] leading-relaxed">{c.description}</p>
@@ -7372,7 +7483,7 @@ function Landing({ ctx }) {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {COURSES.map((c) => (
             <Card key={c.id} hover onClick={() => navigate("register")} className="p-5 group relative overflow-hidden">
-              <div className="text-4xl mb-3">{c.icon}</div>
+              <div className="mb-3"><CourseIcon course={c} size={38} /></div>
               <h3 className="font-display text-lg font-bold mb-1">{c.name}</h3>
               <p className="text-sm text-[#8A9BC0] mb-4 leading-snug line-clamp-2">{c.description}</p>
               <div className="flex items-center gap-1.5 text-xs text-[#4A5A7A]"><BookOpen size={13} />{c.totalLessons} Lektionen</div>
@@ -7389,12 +7500,15 @@ function Landing({ ctx }) {
           <p className="text-[#8A9BC0] text-lg text-center mb-12">Lernen, üben, sofort Feedback bekommen.</p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { emoji: "📖", t: "Lerne die Theorie", d: "Klare Erklärungen mit echten Code-Beispielen — kein trockenes Geschwafel." },
-              { emoji: "✍️", t: "Löse Aufgaben", d: "Multiple Choice, Code schreiben, Lückentext und freies Erklären." },
-              { emoji: "🤖", t: "Bekomm Feedback", d: "Sofortige, konstruktive Rückmeldung zu jeder Antwort und jedem Code." },
+              { icon: "theorie", color: "#4F8EF7", t: "Lerne die Theorie", d: "Klare Erklärungen mit echten Code-Beispielen — kein trockenes Geschwafel." },
+              { icon: "aufgabe", color: "#F7C948", t: "Löse Aufgaben", d: "Multiple Choice, Code schreiben, Lückentext und freies Erklären." },
+              { icon: "feedback", color: "#10B981", t: "Bekomm Feedback", d: "Sofortige, konstruktive Rückmeldung zu jeder Antwort und jedem Code." },
             ].map((f, i) => (
               <Card key={i} className="p-7 text-center">
-                <div className="text-4xl mb-4">{f.emoji}</div>
+                <div className="w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                  style={{ background: f.color + "1A" }}>
+                  <LdIcon name={f.icon} size={28} color={f.color} />
+                </div>
                 <h3 className="font-display text-xl font-bold mb-2">{f.t}</h3>
                 <p className="text-[#8A9BC0] leading-relaxed">{f.d}</p>
               </Card>
@@ -7407,16 +7521,22 @@ function Landing({ ctx }) {
       <section className="max-w-6xl mx-auto px-5 py-20">
         <div className="text-center mb-12">
           <h2 className="font-display text-4xl font-extrabold mb-3">Alles drin, was du <span className="ld-gradient-text">brauchst</span></h2>
-          <p className="text-[#8A9BC0] text-lg">Eine Plattform statt zehn Tools.</p>
+          <p className="text-[#8A9BC0] text-lg">Ein Werkzeug statt zehn — und keines davon halb.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            { icon: Code2, color: "#4F8EF7", t: "VS-Code-Editor im Browser", d: "Echter Monaco-Editor mit Syntax-Highlighting, Zeilennummern und Auto-Einrückung." },
-            { icon: Eye, color: "#10B981", t: "Live-Vorschau", d: "Schreib HTML, CSS & JS und sieh das Ergebnis in Echtzeit — ohne Setup." },
-            { icon: Bug, color: "#7C3AED", t: "KI-Code-Debugging", d: "Lass deinen Code analysieren: Fehler finden, verstehen und beheben." },
-            { icon: Trophy, color: "#F7C948", t: "XP, Level & Abzeichen", d: "20 Level, Streaks und Abzeichen halten dich am Ball." },
-            { icon: Users, color: "#4F8EF7", t: "Für Schulen & Klassen", d: "Lehrer verwalten ihre Klasse per Schul-Code und sehen jeden Fortschritt." },
-            { icon: ShieldCheck, color: "#10B981", t: "Sicherer Account", d: "E-Mail-Bestätigung und optionale Zwei-Faktor-Authentifizierung." },
+            { icon: Code2, color: "#4F8EF7", t: "Echter Profi-Editor im Browser",
+              d: "Kein Textfeld mit Farben — die Editor-Komponente aus VS Code. Emmet, automatisches Tag-Schließen, Mehrfachcursor, Sticky Scroll, Minimap, Vollbild." },
+            { icon: FolderTree, color: "#7C3AED", t: "Dateien für jede Sprache",
+              d: "Ein echter Dateibaum statt drei Kästen. Anlegen, umbenennen, löschen — die Endung bestimmt Hervorhebung und Prüfung." },
+            { icon: Play, color: "#10B981", t: "Ausführen, nicht simulieren",
+              d: "HTML, CSS und JS laufen live in der Vorschau. Python läuft als echtes CPython über WebAssembly — mit Konsolenausgabe." },
+            { icon: Save, color: "#F59E0B", t: "Speichert von selbst",
+              d: "Alle 30 Sekunden, dazu Strg+S. Herunterladen als ZIP oder als eine einzige HTML-Datei. 2,5 GB pro Konto." },
+            { icon: Trophy, color: "#F7C948", t: "XP, Ligen & Shop",
+              d: "20 Level, Wochenligen mit Auf- und Abstieg, Tagesserie mit Schutzschild — und ein Shop, in dem XP wirklich etwas bewirken." },
+            { icon: Users, color: "#0EA5E9", t: "Für Schulen & Klassen",
+              d: "Lehrkräfte verwalten ihre Klasse per Schul-Code, sehen jeden Fortschritt und bauen eigene Level." },
           ].map((f, i) => (
             <Card key={i} hover className="p-6">
               <div className="w-11 h-11 rounded-lg flex items-center justify-center mb-4" style={{ background: f.color + "22" }}>
@@ -7434,12 +7554,20 @@ function Landing({ ctx }) {
         <div className="max-w-5xl mx-auto px-5 grid md:grid-cols-2 gap-10 items-center">
           <div>
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs mb-4 bg-[#4F8EF7]/15 text-[#4F8EF7]"><Code2 size={13} />Integrierte IDE</span>
-            <h2 className="font-display text-3xl font-extrabold mb-4">Nicht nur lernen — <span className="ld-gradient-text">bauen</span>.</h2>
+            <h2 className="font-display text-3xl font-extrabold mb-4">Ein <span className="ld-gradient-text">echter Editor</span>, kein Spielzeug.</h2>
             <p className="text-[#8A9BC0] leading-relaxed mb-5">
-              Im integrierten Code-Editor schreibst du frei HTML, CSS und JavaScript. Deine Seite wird live gerendert, während du tippst. Speichere deine Projekte und lass sie von der KI debuggen.
+              Hier läuft dieselbe Editor-Komponente wie in Visual Studio Code. Dateibaum, Registerkarten,
+              Emmet, automatisches Tag-Schließen, Mehrfachcursor, Vollbild — alles, was man zum Arbeiten braucht,
+              ohne irgendetwas zu installieren.
             </p>
             <ul className="space-y-2 mb-6 text-[#8A9BC0] text-sm">
-              {["Echtzeit-Vorschau ohne Speichern", "Projekte sichern und weiterarbeiten", "KI findet Fehler in deinem Code"].map((x, i) => (
+              {[
+                "Monaco — die Editor-Engine aus VS Code",
+                "Dateien für jede der 15 Sprachen anlegen",
+                "Vorschau in Echtzeit, auch in eigenem Tab",
+                "Python läuft wirklich — echtes CPython im Browser",
+                "Autospeichern alle 30 Sekunden, ZIP-Download",
+              ].map((x, i) => (
                 <li key={i} className="flex items-start gap-2"><CheckCircle2 size={16} className="text-[#10B981] mt-0.5 shrink-0" />{x}</li>
               ))}
             </ul>
@@ -7448,7 +7576,8 @@ function Landing({ ctx }) {
           <Card className="p-0 overflow-hidden">
             <div className="flex items-center gap-1.5 px-3 py-2 bg-[#0A0E1A] border-b border-[#1E2D4A]">
               <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]/60" /><span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]/60" /><span className="w-2.5 h-2.5 rounded-full bg-[#10B981]/60" />
-              <span className="ml-2 font-code text-[11px] text-[#4A5A7A]">solution.html</span>
+              <span className="ml-2 font-code text-[11px] text-[#4A5A7A]">index.html</span>
+              <span className="ml-auto font-code text-[10px] text-[#4A5A7A]">LearnDeveloping&nbsp;Editor</span>
             </div>
             <pre className="p-4 font-code text-[12px] leading-relaxed text-[#C9D6F0] overflow-x-auto"><code>{`<h1>Hallo Welt!</h1>
 <button id="btn">Klick mich</button>
@@ -7461,7 +7590,7 @@ function Landing({ ctx }) {
   }
 </style>`}</code></pre>
             <div className="px-4 py-3 border-t border-[#1E2D4A] flex items-center gap-2 text-xs text-[#10B981]">
-              <Eye size={13} />Live-Vorschau aktualisiert sich automatisch
+              <Eye size={13} />Vorschau aktualisiert sich beim Tippen — auch im zweiten Tab
             </div>
           </Card>
         </div>
@@ -7471,17 +7600,21 @@ function Landing({ ctx }) {
       <section id="rollen" className="max-w-5xl mx-auto px-5 py-20">
         <div className="grid md:grid-cols-2 gap-6">
           <Card className="p-8">
-            <div className="text-4xl mb-4">🎓</div>
+            <div className="w-14 h-14 mb-4 rounded-2xl flex items-center justify-center bg-[#4F8EF7]/10">
+              <GraduationCap size={28} className="text-[#4F8EF7]" />
+            </div>
             <h3 className="font-display text-2xl font-bold mb-3">Für Schüler</h3>
             <ul className="space-y-2 mb-6 text-[#8A9BC0]">
-              {["Lerne 7 Sprachen in deinem Tempo", "Sammle XP, Level & Abzeichen", "KI-Feedback zu jedem Code", "Halte deinen Streak am Leben 🔥"].map((x, i) => (
+              {[`Lerne ${COURSES.length} Sprachen in deinem Tempo`, "Sammle XP, Level & Abzeichen", "Sofortige Rückmeldung zu jedem Code", "Halte deine Serie am Leben"].map((x, i) => (
                 <li key={i} className="flex items-start gap-2"><CheckCircle2 size={18} className="text-[#10B981] mt-0.5 shrink-0" />{x}</li>
               ))}
             </ul>
             <Btn icon={GraduationCap} onClick={() => navigate("register")}>Als Schüler starten</Btn>
           </Card>
           <Card className="p-8">
-            <div className="text-4xl mb-4">👨‍🏫</div>
+            <div className="w-14 h-14 mb-4 rounded-2xl flex items-center justify-center bg-[#10B981]/10">
+              <Users size={28} className="text-[#10B981]" />
+            </div>
             <h3 className="font-display text-2xl font-bold mb-3">Für Lehrer</h3>
             <ul className="space-y-2 mb-6 text-[#8A9BC0]">
               {["Eigener Schul-Code für deine Klasse", "Fortschritt aller Schüler im Blick", "Sieh XP, Level & letzte Aktivität", "Schüler in Sekunden einladen"].map((x, i) => (
@@ -7816,12 +7949,12 @@ function AuthScreen({ ctx, mode }) {
                   <label className="block text-sm text-[#8A9BC0] mb-2">Ich bin…</label>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { v: "student", emoji: "🎓", t: "Schüler", d: "Lerne mit KI-Feedback" },
-                      { v: "teacher", emoji: "👨‍🏫", t: "Lehrer", d: "Verwalte Schüler" },
+                      { v: "student", icon: GraduationCap, color: "#4F8EF7", t: "Schüler", d: "Lernen mit sofortiger Rückmeldung" },
+                      { v: "teacher", icon: Users, color: "#10B981", t: "Lehrer", d: "Klasse verwalten, eigene Level bauen" },
                     ].map((r) => (
                       <button key={r.v} onClick={() => setForm((f) => ({ ...f, role: r.v }))}
                         className={`text-left p-3 rounded-lg border transition-all ${form.role === r.v ? "border-[#4F8EF7] bg-[#4F8EF7]/10" : "border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>
-                        <div className="text-2xl mb-1">{r.emoji}</div>
+                        <div className="mb-1.5"><r.icon size={22} style={{ color: r.color }} /></div>
                         <div className="font-medium text-sm text-[#E8EDF5]">{r.t}</div>
                         <div className="text-[11px] text-[#8A9BC0]">{r.d}</div>
                       </button>
@@ -8264,7 +8397,7 @@ function CourseCard({ course, user, onOpen, locked }) {
   return (
     <Card hover className="p-5 relative overflow-hidden flex flex-col">
       <div className="flex items-start justify-between mb-3">
-        <div className="text-4xl">{course.icon}</div>
+        <CourseIcon course={course} size={40} />
         <DifficultyBadge level={course.modules[0].level} />
       </div>
       <h3 className="font-display text-lg font-bold mb-1">{course.name}</h3>
@@ -8354,7 +8487,7 @@ function StudentDashboard({ ctx }) {
       {cur && (
         <Card className="p-6 relative overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-            <div className="text-5xl">{cur.icon}</div>
+            <CourseIcon course={cur} size={48} />
             <div className="flex-1 min-w-0">
               <p className="text-xs text-[#8A9BC0] uppercase tracking-wider mb-1">Aktueller Kurs</p>
               <h2 className="font-display text-2xl font-bold mb-2">{cur.name}</h2>
@@ -8398,7 +8531,7 @@ function StudentDashboard({ ctx }) {
               if (!m) return null;
               return (
                 <div key={id} className="flex items-center gap-3 p-4">
-                  <div className="text-2xl">{m.course.icon}</div>
+                  <CourseIcon course={m.course} size={26} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{m.lesson.title}</p>
                     <p className="text-xs text-[#8A9BC0]">{m.course.name} · {m.module.title}</p>
@@ -8497,7 +8630,7 @@ function CourseView({ ctx }) {
 
       <Card className="p-6 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-center gap-6">
-          <div className="text-6xl">{course.icon}</div>
+          <CourseIcon course={course} size={60} />
           <div className="flex-1 text-center sm:text-left">
             <h1 className="font-display text-3xl font-bold">{course.name}</h1>
             <p className="text-[#8A9BC0] mt-1 mb-2">{course.description}</p>
@@ -8612,7 +8745,7 @@ function Leaderboard({ ctx }) {
       {/* Liga-Übersicht */}
       <Card className="p-5 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-          <div className="text-5xl">{myLeague.emoji}</div>
+          <LeagueIcon league={myLeague} size={48} />
           <div className="flex-1">
             <p className="text-xs text-[#8A9BC0] uppercase tracking-wider mb-1">Deine Liga</p>
             <h2 className="font-display text-2xl font-bold" style={{ color: myLeague.color }}>{myLeague.name}</h2>
@@ -8631,7 +8764,7 @@ function Leaderboard({ ctx }) {
           {LEAGUES.map((l, i) => (
             <div key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] whitespace-nowrap ${l.id === myLeague.id ? "font-medium" : "opacity-40"}`}
               style={l.id === myLeague.id ? { background: l.color + "22", color: l.color } : { color: "#8A9BC0" }}>
-              {l.emoji} {l.name}
+              <LeagueIcon league={l} size={13} />{l.name}
             </div>
           ))}
         </div>
@@ -8992,7 +9125,7 @@ function Profile({ ctx }) {
                 const owned = me.badges.includes(id);
                 return (
                   <Card key={id} className={`p-4 text-center ${owned ? "" : "opacity-40"}`}>
-                    <div className="text-3xl mb-1">{b.emoji}</div>
+                    <div className="flex justify-center mb-2"><LdIcon name={b.icon} size={28} color={b.color} /></div>
                     <p className="text-sm font-medium">{b.label}</p>
                     <p className="text-[11px] text-[#8A9BC0]">{owned ? b.desc : "Noch nicht erreicht"}</p>
                   </Card>
@@ -9180,7 +9313,7 @@ function TeacherDashboard({ ctx }) {
                   return (
                     <tr key={s.id} className="border-b border-[#1E2D4A]/50 last:border-0 hover:bg-white/5 cursor-pointer" onClick={() => setDetail(s.id)}>
                       <td className="px-4 py-3"><div className="flex items-center gap-2"><span className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0"><UserAvatar user={s} size={32} /></span><div><div className="font-medium text-[#E8EDF5]">{s.name}</div><div className="text-xs text-[#4A5A7A]">Lvl {lvl.level}</div></div></div></td>
-                      <td className="px-4 py-3">{c ? <span className="flex items-center gap-1.5">{c.icon} {c.name}</span> : <span className="text-[#4A5A7A]">—</span>}</td>
+                      <td className="px-4 py-3">{c ? <span className="flex items-center gap-1.5"><CourseIcon course={c} size={15} />{c.name}</span> : <span className="text-[#4A5A7A]">—</span>}</td>
                       <td className="px-4 py-3"><div className="flex items-center gap-2 w-32"><ProgressBar value={p.done} max={p.total || 1} /><span className="text-xs text-[#8A9BC0] whitespace-nowrap">{p.pct}%</span></div></td>
                       <td className="px-4 py-3"><span className="flex items-center gap-1 text-[#F7C948]"><Star size={13} />{s.xp.toLocaleString("de-DE")}</span></td>
                       <td className="px-4 py-3 text-[#8A9BC0]">{formatLastSeen(s.lastLogin)}</td>
@@ -9216,7 +9349,7 @@ function TeacherDashboard({ ctx }) {
                 if (p.done === 0) return null;
                 return (
                   <div key={c.id} className="flex items-center gap-2">
-                    <span className="text-lg w-6">{c.icon}</span>
+                    <span className="w-6 flex justify-center"><CourseIcon course={c} size={18} /></span>
                     <span className="text-sm w-24 truncate">{c.name}</span>
                     <ProgressBar value={p.done} max={p.total} />
                     <span className="text-xs text-[#8A9BC0] w-12 text-right">{p.done}/{p.total}</span>
@@ -11044,7 +11177,7 @@ function LessonEditor({ ctx }) {
         <div className="grid sm:grid-cols-3 gap-3">
           <EditorField label="Sprache" hint="Bestimmt, wie Code geprüft wird.">
             <select value={draft.courseId} onChange={(e) => setDraftField({ courseId: e.target.value })} className={inputClass}>
-              {COURSES.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+              {COURSES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </EditorField>
           <EditorField label="Schwierigkeit">
@@ -11383,6 +11516,46 @@ function AdminDashboard({ ctx }) {
 /* =========================== Lesson View ========================== */
 const TASK_XP = 15;
 
+/* --------------------- XP nach Anzahl der Versuche ------------------------
+   Wer eine Aufgabe im ersten Anlauf löst, bekommt die volle Belohnung. Jeder
+   weitere Versuch senkt sie — aber nie auf null: Wer es beim vierten Mal
+   versteht, hat es trotzdem verstanden.
+
+   Dieselben Zahlen stehen im Backend (server/src/routes/app.js). Der Server
+   rechnet selbst nach und deckelt das Ergebnis; der Browser kann sich
+   dadurch nicht mehr geben, als ehrlich möglich wäre.
+   ------------------------------------------------------------------------- */
+const ATTEMPT_FACTORS = [1, 0.7, 0.5, 0.3];      // 1., 2., 3., ab dem 4. Versuch
+const HINT_FACTOR_CAP = 0.4;                      // mit Tipp-Joker höchstens 40 %
+
+/** XP für eine gelöste Aufgabe. */
+function taskXpFor(attempts, usedHint = false) {
+  const index = Math.min(Math.max(1, Number(attempts) || 1), ATTEMPT_FACTORS.length) - 1;
+  const factor = usedHint ? Math.min(ATTEMPT_FACTORS[index], HINT_FACTOR_CAP) : ATTEMPT_FACTORS[index];
+  return Math.max(1, Math.round(TASK_XP * factor));
+}
+
+/**
+ * Anteil des Lektionsbonus. Volle Punkte gibt es nur, wenn jede Aufgabe im
+ * ersten Anlauf saß; darunter bleibt mindestens die Hälfte.
+ */
+function lessonBonusFactor(firstTry, total) {
+  if (!total) return 1;
+  const share = Math.max(0, Math.min(1, firstTry / total));
+  return 0.5 + 0.5 * share;
+}
+
+function lessonXpFor(base, firstTry, total) {
+  return Math.max(1, Math.round((Number(base) || 0) * lessonBonusFactor(firstTry, total)));
+}
+
+/** Kurze Begründung für die Anzeige — „2. Versuch“, „mit Tipp-Joker“. */
+function attemptLabel(attempts, usedHint) {
+  if (usedHint) return "mit Tipp-Joker";
+  if (attempts <= 1) return "erster Versuch";
+  return `${attempts}. Versuch`;
+}
+
 function AIFeedback({ result, ctx, reportPayload }) {
   const [reportOpen, setReportOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -11457,6 +11630,7 @@ function LessonView({ ctx }) {
   const [results, setResults] = useState({});
   const [rewarded, setRewarded] = useState({});
   const [attempts, setAttempts] = useState({});
+  const [hintUsed, setHintUsed] = useState({});
   const [aiLoading, setAiLoading] = useState(false);
   const alreadyDone = lesson ? me.completedLessons.includes(lesson.id) : false;
 
@@ -11470,7 +11644,7 @@ function LessonView({ ctx }) {
       else if (t.type === "multiple_choice") init[t.id] = null;
       else init[t.id] = "";
     });
-    setAnswers(init); setResults({}); setRewarded({}); setAttempts({}); setIdx(0);
+    setAnswers(init); setResults({}); setRewarded({}); setAttempts({}); setHintUsed({}); setIdx(0);
   }, [selectedLesson]);
 
   if (!lesson) return null;
@@ -11498,23 +11672,43 @@ function LessonView({ ctx }) {
     const ok = await useHint();
     if (!ok) return;
     setResults((r) => ({ ...r, [task.id]: { ...result, hint: result.solutionHint } }));
+    setHintUsed((h) => ({ ...h, [task.id]: true }));
     playSound("badge");
   };
 
-  const reward = (tid) => {
-    if (rewarded[tid]) return;
+  /**
+   * Schreibt die XP für eine gelöste Aufgabe gut — einmal je Aufgabe und
+   * abhängig davon, im wievielten Anlauf sie saß.
+   */
+  const reward = (tid, tries) => {
+    if (rewarded[tid]) return 0;
+    const usedHint = !!hintUsed[tid];
+    const amount = taskXpFor(tries, usedHint);
     setRewarded((r) => ({ ...r, [tid]: true }));
-    addXP(TASK_XP); showXP(TASK_XP);
+    addXP(amount, { attempts: tries, usedHint });
+    showXP(amount);
+    return amount;
   };
+
+  // Was es beim nächsten richtigen Versuch gäbe — das steht sichtbar dabei,
+  // damit niemand raten muss, was ein weiterer Fehlversuch kostet.
+  const pendingReward = taskXpFor((attempts[task.id] || 0) + 1, !!hintUsed[task.id]);
 
   const submit = async () => {
     const ans = answers[task.id];
     if (task.type === "multiple_choice") {
       if (ans == null) { pushToast("error", "Bitte wähle eine Antwort."); return; }
       const correct = ans === task.correctAnswer;
+      const mcTries = (attempts[task.id] || 0) + 1;
+      setAttempts((a) => ({ ...a, [task.id]: mcTries }));
       setResults((r) => ({ ...r, [task.id]: { correct, score: correct ? 100 : 0, feedback: task.explanation } }));
       playSound(correct ? "correct" : "wrong");
-      if (correct) { reward(task.id); pushToast("success", `Richtig! +${TASK_XP} XP`); } else pushToast("error", "Nicht ganz — versuch es nochmal!");
+      if (correct) {
+        const gained = reward(task.id, mcTries);
+        pushToast("success", `Richtig! +${gained} XP (${attemptLabel(mcTries, false)})`);
+      } else {
+        pushToast("error", "Nicht ganz — versuch es nochmal!");
+      }
       return;
     }
 
@@ -11544,8 +11738,8 @@ function LessonView({ ctx }) {
     playSound(res.correct ? "correct" : "wrong");
 
     if (res.correct) {
-      reward(task.id);
-      pushToast("success", `Richtig! +${TASK_XP} XP`);
+      const gained = reward(task.id, tries);
+      pushToast("success", `Richtig! +${gained} XP (${attemptLabel(tries, !!hintUsed[task.id])})`);
       if (res.score >= 95 && !me.badges.includes("ai_master")) {
         setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES.ai_master.label}!`), 400);
       }
@@ -11554,6 +11748,17 @@ function LessonView({ ctx }) {
     }
   };
 
+
+  // Eigene Level gehören zu keinem eingebauten Kurs — von dort geht es zurück
+  // zur Übersicht statt in einen Kurs.
+  const leaveLesson = () => {
+    if (lesson.isCustom) navigate(me.role === "teacher" ? "lesson-editor" : "dashboard");
+    else openCourse(lesson._course.id);
+  };
+
+  // Wie viele Aufgaben saßen im ersten Anlauf — ohne Joker?
+  const firstTryCount = lesson.tasks.filter((t) => (attempts[t.id] || 0) <= 1 && !hintUsed[t.id]).length;
+  const lessonBonus = lessonXpFor(lesson.xpReward, firstTryCount, lesson.tasks.length);
 
   const finish = () => {
     // Ohne gelöste Aufgaben gibt es keine XP — sonst könnte man sich die
@@ -11569,15 +11774,18 @@ function LessonView({ ctx }) {
       return;
     }
     if (!alreadyDone) {
-      completeLesson(lesson.id, lesson.xpReward);
+      const total = lesson.tasks.length;
+      completeLesson(lesson.id, lessonBonus, { firstTry: firstTryCount, taskCount: total });
       playSound("lessonComplete");
       celebrate();
-      setTimeout(() => { showXP(lesson.xpReward); }, 200);
-      pushToast("success", `Lektion abgeschlossen! +${lesson.xpReward} XP 🎉`);
-      setTimeout(() => openCourse(lesson._course.id), 1400);
+      setTimeout(() => { showXP(lessonBonus); }, 200);
+      pushToast("success", lessonBonus === lesson.xpReward
+        ? `Fehlerfrei! Volle ${lessonBonus} XP 🎉`
+        : `Lektion abgeschlossen! +${lessonBonus} von ${lesson.xpReward} XP — ${firstTryCount} von ${total} im ersten Anlauf.`);
+      setTimeout(leaveLesson, 1400);
     } else {
       pushToast("info", "Lektion bereits abgeschlossen.");
-      openCourse(lesson._course.id);
+      leaveLesson();
     }
   };
 
@@ -11604,9 +11812,11 @@ function LessonView({ ctx }) {
       {/* Header */}
       <header className="sticky top-0 z-40 backdrop-blur-md bg-[#0A0E1A]/90 border-b border-[#1E2D4A]">
         <div className="max-w-6xl mx-auto px-4 lg:px-6 h-14 flex items-center gap-3">
-          <button onClick={() => openCourse(lesson._course.id)} className="flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5] shrink-0"><ArrowLeft size={16} /><span className="hidden sm:inline">Zurück</span></button>
-          <div className="flex-1 min-w-0 text-sm text-[#8A9BC0] truncate">
-            <span>{lesson._course.icon} {lesson._course.name}</span><span className="mx-2 text-[#4A5A7A]">/</span><span className="text-[#E8EDF5]">{lesson.title}</span>
+          <button onClick={leaveLesson} className="flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5] shrink-0"><ArrowLeft size={16} /><span className="hidden sm:inline">Zurück</span></button>
+          <div className="flex-1 min-w-0 text-sm text-[#8A9BC0] truncate flex items-center gap-1.5">
+            <CourseIcon course={lesson._course} size={15} />
+            <span>{lesson.isCustom ? "Eigenes Level" : lesson._course.name}</span>
+            <span className="mx-1 text-[#4A5A7A]">/</span><span className="text-[#E8EDF5] truncate">{lesson.title}</span>
           </div>
           <span className="hidden sm:inline text-sm text-[#8A9BC0] shrink-0 whitespace-nowrap">Aufgabe {idx + 1} von {lesson.tasks.length}</span>
           <button onClick={logout} aria-label="Abmelden" title="Abmelden"
@@ -11701,10 +11911,18 @@ function LessonView({ ctx }) {
                   : <Btn className="flex-1" onClick={() => setIdx((i) => i + 1)} icon={ArrowRight}>Nächste Aufgabe</Btn>)}
               </div>
 
+              {!solved && (
+                <p className="mt-2 text-center text-[11px] text-[#4A5A7A]">
+                  {wasWrong
+                    ? <>Bei richtiger Antwort jetzt <span className="text-[#F7C948]">+{pendingReward} XP</span> statt {TASK_XP} — jeder Fehlversuch kostet.</>
+                    : <>Richtig im ersten Anlauf: <span className="text-[#F7C948]">+{TASK_XP} XP</span></>}
+                </p>
+              )}
+
               {canSpendHint && (
                 <button onClick={spendHint}
                   className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-[#F7C948]/40 bg-[#F7C948]/10 text-xs text-[#F7C948] hover:bg-[#F7C948]/15">
-                  <Lightbulb size={13} />Tipp-Joker einlösen — Lösung sofort zeigen ({me.hints} übrig)
+                  <Lightbulb size={13} />Tipp-Joker einlösen — Lösung sofort zeigen, dafür höchstens {Math.round(HINT_FACTOR_CAP * 100)} % XP ({me.hints} übrig)
                 </button>
               )}
 

@@ -121,6 +121,49 @@ test("XP-Betrag wird serverseitig begrenzt", async () => {
   assert.equal(r.body.user.xp, 75 + 500, "Auf 500 gedeckelt");
 });
 
+test("Fehlversuche senken die XP für eine Aufgabe", async () => {
+  const vorher = (await api("GET", "/api/auth/me")).body.user.xp;
+
+  // Erster Anlauf: volle 15 XP
+  await api("POST", "/api/progress/xp", { amount: 15, attempts: 1 });
+  const nachErstem = (await api("GET", "/api/auth/me")).body.user.xp;
+  assert.equal(nachErstem - vorher, 15);
+
+  // Dritter Anlauf: nur die Hälfte
+  await api("POST", "/api/progress/xp", { amount: 15, attempts: 3 });
+  const nachDrittem = (await api("GET", "/api/auth/me")).body.user.xp;
+  assert.equal(nachDrittem - nachErstem, 8, "3. Versuch muss weniger geben");
+
+  // Mit Tipp-Joker gedeckelt
+  await api("POST", "/api/progress/xp", { amount: 15, attempts: 1, usedHint: true });
+  const nachJoker = (await api("GET", "/api/auth/me")).body.user.xp;
+  assert.equal(nachJoker - nachDrittem, 6, "Joker muss deckeln");
+});
+
+test("Ein manipulierter Client bekommt trotzdem nicht mehr", async () => {
+  const vorher = (await api("GET", "/api/auth/me")).body.user.xp;
+  // Behauptet den vollen Betrag, meldet aber den vierten Versuch
+  await api("POST", "/api/progress/xp", { amount: 100, attempts: 4 });
+  const nachher = (await api("GET", "/api/auth/me")).body.user.xp;
+  assert.equal(nachher - vorher, 5, "Server muss selbst rechnen");
+});
+
+test("Der Lektionsbonus schrumpft nach Fehlversuchen", async () => {
+  const vorher = (await api("GET", "/api/auth/me")).body.user.xp;
+  // Keine einzige Aufgabe im ersten Anlauf -> halber Bonus
+  const r = await api("POST", "/api/progress/complete", {
+    lessonId: "css_1_1", xpReward: 100, firstTry: 0, taskCount: 4,
+  });
+  assert.equal(r.body.user.xp - vorher, 50);
+
+  const zwischen = r.body.user.xp;
+  // Fehlerfrei -> voller Bonus
+  const r2 = await api("POST", "/api/progress/complete", {
+    lessonId: "css_1_2", xpReward: 100, firstTry: 4, taskCount: 4,
+  });
+  assert.equal(r2.body.user.xp - zwischen, 100);
+});
+
 test("Projekte: anlegen, lesen, löschen mit Speicherverrechnung", async () => {
   const created = await api("PUT", "/api/projects", {
     name: "Mein Projekt", html: "<h1>Hi</h1>", css: "body{}", js: "console.log(1)",
