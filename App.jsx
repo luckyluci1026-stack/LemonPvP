@@ -95,6 +95,11 @@ const PenSquare = FaIcon("pen-to-square");
 const Sparkles2 = FaIcon("wand-sparkles");
 const ClipboardList = FaIcon("clipboard-list");
 const Forward = FaIcon("forward");
+const ChevronUp = FaIcon("chevron-up");
+const Store = FaIcon("store");
+const Lightbulb = FaIcon("lightbulb");
+const Palette2 = FaIcon("swatchbook");
+const Snowflake = FaIcon("snowflake");
 
 /* =========================================================================
    LearnDeveloping — learndeveloping.com
@@ -3621,8 +3626,12 @@ function checkConcept(concept, analysis) {
   //    erwarteter Textinhalt wie "Willkommen" fälschlich als <willkommen>
   //    gesucht.
   if (analysis.profile.blockStyle === "tags") {
-    const tag = lc.replace(/[<>/]/g, "");
-    const isTagSyntax = /^<\/?\w/.test(c);      // ausdrücklich als <tag> geschrieben
+    const tag = lc.replace(/[<>/]/g, "").trim();
+    // Ein Tag ist nur, was auch wirklich wie ein Tag aussieht: `<p>`, `</a>`,
+    // `<img`. Bruchstücke wie `<a href=` oder `src=` sind Attribute — die
+    // werden weiter unten als Text gesucht, sonst würde daraus die unsinnige
+    // Meldung „Das Element <a href=> fehlt“.
+    const isTagSyntax = /^<\/?[a-zA-Z][\w:-]*\s*\/?>?$/.test(c);
     if (isTagSyntax || HTML_TAGS.has(tag)) {
       const opened = new RegExp(`<${tag}[\\s>]`, "i").test(code);
       const closed = new RegExp(`</${tag}>`, "i").test(code);
@@ -3631,10 +3640,11 @@ function checkConcept(concept, analysis) {
       if (opened && !closed) return { hit: false, concept: c, kind: "tag", essential: true, why: `<${tag}> wird geöffnet, aber nie geschlossen.` };
       return { hit: false, concept: c, kind: "tag", essential: true, why: `Das Element <${tag}> fehlt.` };
     }
-    // Kein Tag -> erwarteter Textinhalt
+    // Kein Tag -> Attributschreibweise oder erwarteter Textinhalt
     const inText = analysis.raw.toLowerCase().includes(lc);
-    return { hit: inText, concept: c, kind: "text", essential: false,
-      why: inText ? null : `Der Text „${c}“ kommt nicht vor.` };
+    const isMarkup = /[<>=]/.test(c);           // `src=`, `<a href=` … gehört zwingend dazu
+    return { hit: inText, concept: c, kind: isMarkup ? "markup" : "text", essential: isMarkup,
+      why: inText ? null : isMarkup ? `\`${c}\` fehlt noch.` : `Der Text „${c}“ kommt nicht vor.` };
   }
 
   // 5. Bezeichner und Schlüsselwörter — als ganzes Wort.
@@ -3876,18 +3886,70 @@ const STOPWORDS_DE = new Set([
   "damit", "dadurch", "deshalb", "daher", "somit", "weil", "sodass", "man", "wurde",
 ]);
 
-/**
- * Sieht das überhaupt nach einem Wort aus? Ohne Vokal, mit fünf Konsonanten
- * am Stück oder mit einem absurden Vokalanteil ist es Tastaturgeklapper.
- */
+/* --------------------- Ist das überhaupt ein Wort? -----------------------
+   Tastaturgeklapper („gvsudfjsnvuf“) soll keine Punkte bekommen. Der
+   entscheidende Hinweis sind die Konsonantenpaare: Deutsch erlaubt nur
+   bestimmte Kombinationen, und am Wortanfang noch weniger. „fgsugugj“
+   scheitert daran sofort, „Wartbarkeit“ nicht.
+   ------------------------------------------------------------------------- */
+// Konsonantenpaare, die im Deutschen (und in gängigen Lehnwörtern) vorkommen.
+const CONSONANT_PAIRS = new Set([
+  "bl", "br", "bs", "bt", "ch", "ck", "cl", "cr", "cs", "ct", "dg", "dr", "dt",
+  "fl", "fr", "ft", "gh", "gl", "gn", "gr", "gs", "gt", "hl", "hm", "hn", "hr", "ht",
+  "kl", "kn", "kr", "ks", "kt", "ld", "lf", "lg", "lk", "ll", "lm", "ln", "lp", "ls",
+  "lt", "lv", "lz", "mb", "md", "mm", "mp", "ms", "mt", "nd", "nf", "ng", "nk", "nn",
+  "ns", "nt", "nz", "pf", "ph", "pl", "pr", "ps", "pt", "rb", "rc", "rd", "rf", "rg",
+  "rh", "rk", "rl", "rm", "rn", "rp", "rr", "rs", "rt", "rv", "rz", "sc", "sh", "sk",
+  "sl", "sm", "sn", "sp", "ss", "st", "sz", "tb", "th", "tl", "tr", "ts", "tt", "tw",
+  "tz", "vl", "vr", "wl", "wr", "zt", "zw", "ßt",
+  // Fugen in zusammengesetzten Wörtern: Schlüsselwort, höchst, Halbwissen …
+  "hs", "hw", "lw", "nw", "rw", "nh", "lh", "mh", "zd", "lb", "lc", "mf", "nb", "nm",
+  "dl", "dn", "dm", "tm", "tn", "fs", "gd", "bd", "pp", "bb", "dd", "ff", "gg", "kk",
+]);
+
+// Womit ein deutsches Wort beginnen darf, wenn es mit mehreren Konsonanten anfängt.
+const VALID_ONSETS = new Set([
+  "bl", "br", "ch", "chr", "cl", "cr", "dr", "dw", "fl", "fr", "gl", "gn", "gr",
+  "kl", "kn", "kr", "kw", "pf", "ph", "pl", "pr", "ps", "qu", "rh", "sc", "sch",
+  "schl", "schm", "schn", "schr", "schw", "sh", "sk", "sl", "sm", "sn", "sp", "spl",
+  "spr", "st", "str", "sw", "th", "tr", "tsch", "tw", "vl", "vr", "wr", "zw",
+]);
+
+const VOWELS_DE = /[aeiouäöüy]/;
+
 function looksLikeWord(word) {
   const w = String(word).toLowerCase().replace(/[^a-zäöüß]/g, "");
-  if (w.length < 2) return false;
-  const vowels = (w.match(/[aeiouäöü]/g) || []).length;
+  if (w.length < 2 || w.length > 22) return false;
+
+  const vowels = (w.match(/[aeiouäöüy]/g) || []).length;
   if (!vowels) return false;
   const ratio = vowels / w.length;
-  if (ratio < 0.18 || ratio > 0.85) return false;
-  if (/[bcdfghjklmnpqrstvwxyzß]{5,}/.test(w)) return false;
+  // „Herbst“ hat nur einen Vokal auf sechs Buchstaben — die Grenze muss das aushalten.
+  if (ratio < 0.15 || ratio > 0.85) return false;
+  if (/(.)\1\1/.test(w)) return false;                      // „aaa“ gibt es nicht
+
+  // Konsonantengruppen einsammeln
+  const groups = w.split(VOWELS_DE).filter(Boolean);
+  if (groups.some((g) => g.length > 5)) return false;   // „Primärschlüssel“: rschl
+
+  // Am Wortanfang ist Deutsch besonders streng: „fg…“ oder „gv…“ gibt es nicht.
+  if (!VOWELS_DE.test(w[0])) {
+    const onset = groups[0];
+    if (onset.length > 1 && !VALID_ONSETS.has(onset) && !VALID_ONSETS.has(onset.slice(0, 3)) && !VALID_ONSETS.has(onset.slice(0, 2))) {
+      return false;
+    }
+  }
+
+  // Im Wortinneren darf einmal eine ungewöhnliche Fuge stehen (Komposita wie
+  // „Wartbarkeit“), zweimal nicht mehr.
+  let odd = 0;
+  for (const group of groups) {
+    for (let i = 0; i + 1 < group.length; i++) {
+      if (!CONSONANT_PAIRS.has(group.slice(i, i + 2))) odd++;
+    }
+  }
+  if (odd > 1) return false;
+  if (odd === 1 && ratio < 0.22) return false;
   return true;
 }
 
@@ -4492,7 +4554,7 @@ function enableAutoCloseTags(editor, monaco) {
 function MonacoCodeEditor({
   value, onChange, disabled, courseId, label, height = "280px",
   showMinimap = false, onCursor, language, path, onReady, chrome = true,
-  fontSize = 13, wordWrap = "off",
+  fontSize = 13, wordWrap = "off", theme = "ld-dark",
 }) {
   const [mod, setMod] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -4557,7 +4619,7 @@ function MonacoCodeEditor({
       height={height}
       path={path}
       language={language || MONACO_LANG[courseId] || "plaintext"}
-      theme="ld-dark"
+      theme={theme}
       value={value}
       beforeMount={beforeMount}
       onMount={onMount}
@@ -5279,6 +5341,7 @@ export default function App() {
   const [ollamaModel, setOllamaModelState] = useState(loadOllamaModel);
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(() => audio.enabled);
+  const [remoteLessons, setRemoteLessons] = useState({ mine: [], fromTeacher: [] });
   const [emailVerifyOpen, setEmailVerifyOpen] = useState(false);
   const [pending2FA, setPending2FA] = useState(null);
   const [twoFactorSetupCode, setTwoFactorSetupCode] = useState(null);
@@ -5476,6 +5539,87 @@ export default function App() {
     pushToast("success", "Passwort gesetzt.");
     return true;
   }, [me, users, pushToast]);
+
+  /* ---------------------- Eigene Lektionen (Level) ------------------------
+     Lehrkräfte legen eigene Level an; ihre Klasse sieht die veröffentlichten.
+     Ohne Server liegen sie im Konto der Lehrkraft im selben Browser.
+     ---------------------------------------------------------------------- */
+  const loadCustomLessons = useCallback(async () => {
+    if (!api.available || !me || me.isGuest) return;
+    try {
+      if (me.role === "teacher") {
+        const { lessons } = await api.get("/api/lessons/mine");
+        setRemoteLessons((r) => ({ ...r, mine: lessons || [] }));
+      } else if (me.teacherId) {
+        const { lessons } = await api.get("/api/lessons");
+        setRemoteLessons((r) => ({ ...r, fromTeacher: lessons || [] }));
+      }
+    } catch (e) { /* ohne eigene Level ist die Seite trotzdem benutzbar */ }
+  }, [me]);
+
+  useEffect(() => { loadCustomLessons(); }, [loadCustomLessons]);
+
+  const myLessons = api.available ? remoteLessons.mine : (me?.customLessons || []);
+  const lessonsFromTeacher = api.available
+    ? remoteLessons.fromTeacher
+    : (users.find((u) => u.id === me?.teacherId)?.customLessons || []).filter((l) => l.published);
+
+  const saveCustomLesson = useCallback(async (lesson) => {
+    if (!me || me.role !== "teacher") return false;
+    if (api.available) {
+      try {
+        const path = lesson.id ? `/api/lessons/${lesson.id}` : "/api/lessons";
+        await api.put(path, lesson);
+        await loadCustomLessons();
+        pushToast("success", lesson.published ? "Level veröffentlicht." : "Entwurf gesichert.");
+        return true;
+      } catch (e) { pushToast("error", e.message); return false; }
+    }
+    const id = lesson.id || "cl_" + Math.random().toString(36).slice(2, 9);
+    setUsers((us) => us.map((u) => {
+      if (u.id !== me.id) return u;
+      const existing = u.customLessons || [];
+      const next = existing.some((l) => l.id === id)
+        ? existing.map((l) => (l.id === id ? { ...lesson, id } : l))
+        : [...existing, { ...lesson, id }];
+      return { ...u, customLessons: next };
+    }));
+    pushToast("success", lesson.published ? "Level veröffentlicht." : "Entwurf gesichert.");
+    return true;
+  }, [me, pushToast, loadCustomLessons]);
+
+  const deleteCustomLesson = useCallback(async (id) => {
+    if (!me || me.role !== "teacher") return;
+    if (api.available) {
+      try { await api.del(`/api/lessons/${id}`); await loadCustomLessons(); pushToast("info", "Level gelöscht."); }
+      catch (e) { pushToast("error", e.message); }
+      return;
+    }
+    setUsers((us) => us.map((u) => u.id === me.id
+      ? { ...u, customLessons: (u.customLessons || []).filter((l) => l.id !== id) }
+      : u));
+    pushToast("info", "Level gelöscht.");
+  }, [me, pushToast, loadCustomLessons]);
+
+  /**
+   * Findet eine Lektion — eigene Level zuerst, dann die eingebauten Kurse.
+   * Eigene Level bekommen dieselbe Form wie eingebaute, damit die
+   * Lektionsansicht sie ohne Sonderbehandlung darstellen kann.
+   */
+  const findLesson = useCallback((lessonId) => {
+    const custom = [...myLessons, ...lessonsFromTeacher].find((l) => l.id === lessonId);
+    if (custom) {
+      const course = courseById(custom.courseId) || COURSES[0];
+      return {
+        ...custom,
+        estimatedMinutes: Math.max(5, custom.tasks.length * 3),
+        _course: course,
+        _module: { title: "Eigenes Level", level: custom.level },
+        isCustom: true,
+      };
+    }
+    return getFullLesson(lessonId);
+  }, [myLessons, lessonsFromTeacher]);
 
   /** Lädt die Projekte des angemeldeten Nutzers vom Server. */
   const loadProjects = useCallback(async () => {
@@ -5773,7 +5917,9 @@ export default function App() {
   const openLesson = (lessonId) => { setSelectedLesson(lessonId); navigate("lesson"); };
 
   // XP / Lektion abschließen
-  const addXP = useCallback((amount) => {
+  const addXP = useCallback((rawAmount) => {
+    // Doppelte XP aus dem Shop wirken auf jede Gutschrift.
+    const amount = boostActive(me) ? rawAmount * 2 : rawAmount;
     // Aufstieg erkennen, bevor die XP verbucht werden — dann gibt es Fanfare
     // statt des üblichen kurzen Plopp-Tons.
     if (me && !Number.isNaN(me.xp)) {
@@ -5794,49 +5940,72 @@ export default function App() {
     }));
     // … und serverseitig verbuchen, wo der Wert manipulationssicher liegt.
     if (api.available && me && !me.isGuest) {
-      api.post("/api/progress/xp", { amount })
+      api.post("/api/progress/xp", { amount: rawAmount })
         .then(({ user }) => setUsers((us) => us.map((u) => u.id === user.id ? fromApiUser(user) : u)))
         .catch(() => {});
     }
   }, [currentUser, me, pushToast]);
 
-  /** Streak-Schutz gegen XP kaufen. */
-  const buyStreakFreeze = useCallback(async () => {
-    if (!me) return;
-    if ((me.streakFreezes || 0) >= FREEZE_MAX) {
-      pushToast("info", `Mehr als ${FREEZE_MAX} Schutzschilde kannst du nicht halten.`);
-      return;
+  /**
+   * Einen Artikel im XP-Shop kaufen. Ohne Server wird alles lokal verrechnet,
+   * mit Server prüft dieser Preis und Obergrenzen noch einmal nach.
+   */
+  const buyShopItem = useCallback(async (itemId) => {
+    if (!me) return false;
+    const item = shopItemById(itemId);
+    if (!item) return false;
+    if (me.isGuest) { pushToast("error", "Als Gast kannst du nichts kaufen — erstelle ein Konto."); return false; }
+    if (xpBalance(me) < item.price) {
+      pushToast("error", `Dafür fehlen dir noch ${item.price - xpBalance(me)} XP.`);
+      return false;
     }
-    if (me.xp < FREEZE_COST_XP) {
-      pushToast("error", `Dafür brauchst du ${FREEZE_COST_XP} XP — dir fehlen noch ${FREEZE_COST_XP - me.xp}.`);
-      return;
+    if (item.kind === "unlock" && hasUnlock(me, item.id)) { pushToast("info", "Das hast du schon."); return false; }
+    if (item.kind === "stack" && ownedCount(me, item) >= item.max) {
+      pushToast("info", `Mehr als ${item.max} kannst du davon nicht halten.`);
+      return false;
     }
-    if (api.available && !me.isGuest) {
+
+    if (api.available) {
       try {
-        const { user } = await api.post("/api/progress/streak-freeze");
-        setUsers((us) => us.map((u) => u.id === user.id ? fromApiUser(user) : u));
-        pushToast("success", "Streak-Schutz gekauft! 🧊");
-      } catch (e) { pushToast("error", e.message); }
-      return;
+        const { user } = await api.post("/api/shop/buy", { itemId });
+        setUsers((us) => us.map((u) => (u.id === user.id ? fromApiUser(user) : u)));
+        pushToast("success", `${item.name} gekauft.`);
+        return true;
+      } catch (e) { pushToast("error", e.message); return false; }
     }
-    setUsers((us) => us.map((u) => u.id === me.id
-      ? { ...u, xp: u.xp - FREEZE_COST_XP, streakFreezes: (u.streakFreezes || 0) + 1 }
-      : u));
-    pushToast("success", "Streak-Schutz gekauft! 🧊");
+
+    setUsers((us) => us.map((u) => {
+      if (u.id !== me.id) return u;
+      const next = { ...u, spentXp: (u.spentXp || 0) + item.price };
+      if (item.id === "streak_freeze") next.streakFreezes = (u.streakFreezes || 0) + 1;
+      else if (item.id === "hint") next.hints = (u.hints || 0) + 1;
+      else if (item.kind === "unlock") next.unlocks = [...(u.unlocks || []), item.id];
+      else if (item.kind === "timed") {
+        const from = Math.max(Date.now(), u.boostUntil || 0);
+        next.boostUntil = from + item.hours * 3600_000;
+      }
+      return next;
+    }));
+    pushToast("success", `${item.name} gekauft.`);
+    return true;
   }, [me, pushToast]);
 
-  /** Ermittelt neu verdiente Abzeichen für den aktuellen Stand. */
-  const earnedBadgesFor = (completed, xp) => {
-    const out = ["first_lesson"];
-    if (completed.filter((id) => id.startsWith("javascript_")).length >= 10) out.push("js_beginner");
-    if (getLevelInfo(xp).level >= 10) out.push("mid_wizard");
-    const meta = findLessonMeta(completed[completed.length - 1]);
-    if (meta) {
-      const allIds = allLessonsOf(meta.course).map((l) => l.id);
-      if (allIds.every((id) => completed.includes(id))) out.push("course_complete");
+  /** Einen Tipp-Joker einlösen. */
+  const useHint = useCallback(async () => {
+    if (!me || (me.hints || 0) <= 0) return false;
+    if (api.available) {
+      try {
+        const { user } = await api.post("/api/shop/use-hint");
+        setUsers((us) => us.map((u) => (u.id === user.id ? fromApiUser(user) : u)));
+        return true;
+      } catch (e) { pushToast("error", e.message); return false; }
     }
-    return out;
-  };
+    setUsers((us) => us.map((u) => (u.id === me.id ? { ...u, hints: Math.max(0, (u.hints || 0) - 1) } : u)));
+    return true;
+  }, [me, pushToast]);
+
+  /** Streak-Schutz kaufen — derselbe Weg wie alles andere im Shop. */
+  const buyStreakFreeze = useCallback(() => buyShopItem("streak_freeze"), [buyShopItem]);
 
   const completeLesson = useCallback(async (lessonId, bonusXp) => {
     if (api.available && me && !me.isGuest) {
@@ -5911,6 +6080,8 @@ export default function App() {
     emailVerifyOpen, openEmailVerify, closeEmailVerify, verifyEmail,
     enable2FA, disable2FA, twoFactorSetupCode, closeTwoFactorSetup,
     savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId,
+    myLessons, lessonsFromTeacher, saveCustomLesson, deleteCustomLesson, findLesson,
+    buyShopItem, useHint,
     reports, reportContent, resolveReport, deleteReport,
     adminUpdateUser, adminDeleteUser, adminCreateAdmin, adminSetPassword, changePassword,
   };
@@ -5941,9 +6112,11 @@ export default function App() {
     view === "teacher" ? <TeacherDashboard ctx={ctx} /> :
     view === "admin" ? (canAdmin(me) ? <AdminDashboard ctx={ctx} /> : null) :
     view === "playground" ? <Playground ctx={ctx} /> :
+    view === "lesson-editor" ? (me.role === "teacher" ? <LessonEditor ctx={ctx} /> : null) :
     view === "courses" ? <CoursesOverview ctx={ctx} /> :
     view === "course" ? <CourseView ctx={ctx} /> :
     view === "leaderboard" ? <Leaderboard ctx={ctx} /> :
+    view === "shop" ? <Shop ctx={ctx} /> :
     view === "profile" ? <Profile ctx={ctx} /> : null
   }</AppShell>;
 
@@ -6167,41 +6340,20 @@ function Landing({ ctx }) {
         </div>
       </section>
 
-      {/* Preise */}
+      {/* Alles kostenlos — ohne Preistabelle, weil es nichts zu vergleichen gibt */}
       <section id="preise" className="bg-[#0F1629] border-y border-[#1E2D4A] py-20">
-        <div className="max-w-4xl mx-auto px-5">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-4xl font-extrabold mb-3">Einfach <span className="ld-gradient-text">kostenlos</span></h2>
-            <p className="text-[#8A9BC0] text-lg">Alle Lerninhalte sind frei zugänglich. Keine Paywall, keine Kreditkarte.</p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="p-8 relative overflow-hidden">
-              <h3 className="font-display text-xl font-bold mb-1">Kostenlos</h3>
-              <p className="font-display text-4xl font-black mb-1">0 €</p>
-              <p className="text-sm text-[#8A9BC0] mb-6">für immer</p>
-              <ul className="space-y-2 mb-6 text-sm text-[#8A9BC0]">
-                {[`Alle ${COURSES.length} Sprachen & ${TOTAL_LESSONS}+ Lektionen`, "IDE mit Live-Vorschau", "Lokale Code-Analyse", "XP, Level & Abzeichen", "Ohne Anmeldung testbar"].map((x, i) => (
-                  <li key={i} className="flex items-start gap-2"><CheckCircle2 size={16} className="text-[#10B981] mt-0.5 shrink-0" />{x}</li>
-                ))}
-              </ul>
-              <Btn className="w-full" icon={Rocket} onClick={() => navigate("register")}>Jetzt starten</Btn>
-            </Card>
-            <Card className="p-8 relative overflow-hidden border-[#4F8EF7]/40">
-              <span className="absolute top-4 right-4 text-[10px] px-2 py-0.5 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7]">Optional</span>
-              <h3 className="font-display text-xl font-bold mb-1">Mit eigener KI</h3>
-              <p className="font-display text-4xl font-black mb-1">0 €<span className="text-base font-normal text-[#8A9BC0]">*</span></p>
-              <p className="text-sm text-[#8A9BC0] mb-6">*eigener Anbieter-Zugang</p>
-              <ul className="space-y-2 mb-6 text-sm text-[#8A9BC0]">
-                {["Alles aus Kostenlos", "KI-Bewertung deiner Antworten", "KI-Code-Debugging", "Gemini: kostenloses Kontingent", "Oder eigener Server via Ollama"].map((x, i) => (
-                  <li key={i} className="flex items-start gap-2"><CheckCircle2 size={16} className="text-[#4F8EF7] mt-0.5 shrink-0" />{x}</li>
-                ))}
-              </ul>
-              <Btn variant="secondary" className="w-full" icon={Bot} onClick={() => navigate("register")}>Mehr erfahren</Btn>
-            </Card>
-          </div>
-          <p className="text-center text-xs text-[#4A5A7A] mt-6">
-            Die Plattform selbst kostet nichts. Für KI-Bewertung nutzt du deinen eigenen Zugang — bei Google Gemini gibt es dafür ein kostenloses Kontingent.
+        <div className="max-w-3xl mx-auto px-5 text-center">
+          <h2 className="font-display text-4xl font-extrabold mb-3">Einfach <span className="ld-gradient-text">kostenlos</span></h2>
+          <p className="text-[#8A9BC0] text-lg mb-8">
+            Alle {COURSES.length} Sprachen, alle {TOTAL_LESSONS}+ Lektionen, die IDE und der Fortschritt —
+            ohne Paywall, ohne Kreditkarte, ohne Abo.
           </p>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-[#8A9BC0] mb-8">
+            {["Keine Kreditkarte", "Kein Abo", "Ohne Anmeldung testbar", "Werbefrei"].map((x, i) => (
+              <span key={i} className="flex items-center gap-1.5"><CheckCircle2 size={15} className="text-[#10B981]" />{x}</span>
+            ))}
+          </div>
+          <Btn size="lg" icon={Rocket} onClick={() => navigate("register")}>Jetzt starten</Btn>
         </div>
       </section>
 
@@ -6778,10 +6930,12 @@ function AppShell({ ctx, children }) {
     { v: "courses", label: "Meine Kurse", icon: BookOpen },
     { v: "playground", label: "IDE", icon: Code2 },
     { v: "leaderboard", label: "Rangliste", icon: Trophy },
+    { v: "shop", label: "XP-Shop", icon: Store },
     { v: "profile", label: "Profil", icon: User },
   ];
   const teacherNav = [
     { v: "teacher", label: "Übersicht", icon: LayoutDashboard },
+    { v: "lesson-editor", label: "Eigene Level", icon: Sparkles2 },
     { v: "playground", label: "IDE", icon: Code2 },
     { v: "leaderboard", label: "Rangliste", icon: Trophy },
     { v: "profile", label: "Profil", icon: User },
@@ -6850,7 +7004,11 @@ function AppShell({ ctx, children }) {
             <div className="flex items-center gap-3">
               {me.role === "student" && (
                 <>
-                  <span className="hidden sm:flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-[#141D35] border border-[#1E2D4A]"><Star size={14} className="text-[#F7C948]" /><span className="font-semibold text-[#F7C948]">{me.xp.toLocaleString("de-DE")}</span></span>
+                  <button onClick={() => navigate("shop")} title={`${xpBalance(me).toLocaleString("de-DE")} XP zum Ausgeben — insgesamt ${me.xp.toLocaleString("de-DE")} verdient`}
+                    className="hidden sm:flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#F7C948]/50 transition-colors">
+                    <Star size={14} className="text-[#F7C948]" /><span className="font-semibold text-[#F7C948]">{xpBalance(me).toLocaleString("de-DE")}</span>
+                    {boostActive(me) && <Rocket size={11} className="text-[#EF4444]" title="Doppelte XP aktiv" />}
+                  </button>
                   <span className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-[#141D35] border border-[#1E2D4A]"><Flame size={14} className="text-[#F59E0B]" /><span className="font-semibold">{me.streak}</span></span>
                 </>
               )}
@@ -7395,6 +7553,13 @@ const AV_HAIR_STYLES = ["kurz", "lang", "locken", "dutt", "glatze", "irokese"];
 const AV_EYES = ["normal", "gluecklich", "cool", "sternchen", "zwinkern"];
 const AV_ACCESSORY = ["keine", "brille", "sonnenbrille", "kopfhoerer", "muetze"];
 
+// Erst nach dem Kauf von „Avatar-Extras“ im XP-Shop verfügbar
+const AV_HAIR_STYLES_EXTRA = ["zoepfe", "afro", "undercut"];
+const AV_EYES_EXTRA = ["schlafend", "herzen"];
+const AV_ACCESSORY_EXTRA = ["krone", "headset", "maske"];
+const AV_HAIR_COLOR_EXTRA = ["#EC4899", "#06B6D4", "#84CC16", "#F97316"];
+const AV_BG_EXTRA = ["#111827", "#DB2777", "#059669", "#7C2D12"];
+
 const DEFAULT_AVATAR_CONFIG = {
   skin: AV_SKIN[0], hairColor: AV_HAIR_COLOR[0], hairStyle: "kurz",
   eyes: "normal", accessory: "keine", bg: AV_BG[0],
@@ -7429,12 +7594,41 @@ function CharacterAvatar({ config, size = 64 }) {
         </g>
       )}
       {c.hairStyle === "irokese" && <path d="M42 24 Q50 6 58 24 Q54 18 50 18 Q46 18 42 24 Z" fill={c.hairColor} transform="scale(1.6 1) translate(-19 0)" />}
+      {c.hairStyle === "zoepfe" && (
+        <g fill={c.hairColor}>
+          <path d="M24 46 Q26 22 50 22 Q74 22 76 46 Q70 32 50 32 Q30 32 24 46 Z" />
+          <circle cx="20" cy="58" r="7" /><circle cx="18" cy="70" r="6" />
+          <circle cx="80" cy="58" r="7" /><circle cx="82" cy="70" r="6" />
+        </g>
+      )}
+      {c.hairStyle === "afro" && (
+        <g fill={c.hairColor}>
+          <circle cx="50" cy="30" r="24" />
+          <circle cx="28" cy="40" r="12" /><circle cx="72" cy="40" r="12" />
+          <circle cx="50" cy="50" r="20" fill={c.skin} />
+        </g>
+      )}
+      {c.hairStyle === "undercut" && (
+        <g fill={c.hairColor}>
+          <path d="M25 40 Q28 20 50 20 Q72 20 75 40 Q66 28 50 28 Q34 28 25 40 Z" />
+          <path d="M25 40 h50 v4 h-50 Z" opacity="0.5" />
+        </g>
+      )}
       {/* Augen */}
       {c.eyes === "normal" && <g fill="#1B2436"><circle cx="40" cy="50" r="4" /><circle cx="60" cy="50" r="4" /></g>}
       {c.eyes === "gluecklich" && <g stroke="#1B2436" strokeWidth="3" fill="none" strokeLinecap="round"><path d="M35 52 Q40 46 45 52" /><path d="M55 52 Q60 46 65 52" /></g>}
       {c.eyes === "cool" && <g fill="#1B2436"><rect x="35" y="47" width="11" height="5" rx="2" /><rect x="54" y="47" width="11" height="5" rx="2" /></g>}
       {c.eyes === "sternchen" && <g fill="#F7C948"><path d="M40 45 l1.6 4.4 4.4 1.6 -4.4 1.6 -1.6 4.4 -1.6 -4.4 -4.4 -1.6 4.4 -1.6 Z" /><path d="M60 45 l1.6 4.4 4.4 1.6 -4.4 1.6 -1.6 4.4 -1.6 -4.4 -4.4 -1.6 4.4 -1.6 Z" /></g>}
       {c.eyes === "zwinkern" && <g fill="#1B2436"><circle cx="40" cy="50" r="4" /><path d="M55 51 Q60 46 65 51" stroke="#1B2436" strokeWidth="3" fill="none" strokeLinecap="round" /></g>}
+      {c.eyes === "schlafend" && (
+        <g stroke="#1B2436" strokeWidth="3" fill="none" strokeLinecap="round"><path d="M35 50 Q40 55 45 50" /><path d="M55 50 Q60 55 65 50" /></g>
+      )}
+      {c.eyes === "herzen" && (
+        <g fill="#EF4444">
+          <path d="M40 46 a3.5 3.5 0 0 1 6 3 l-6 6 -6 -6 a3.5 3.5 0 0 1 6 -3 Z" transform="translate(-3 0)" />
+          <path d="M60 46 a3.5 3.5 0 0 1 6 3 l-6 6 -6 -6 a3.5 3.5 0 0 1 6 -3 Z" transform="translate(-3 0)" />
+        </g>
+      )}
       {/* Mund */}
       <path d="M43 62 Q50 69 57 62" stroke="#1B2436" strokeWidth="3" fill="none" strokeLinecap="round" />
       {/* Accessoires */}
@@ -7452,6 +7646,23 @@ function CharacterAvatar({ config, size = 64 }) {
       {c.accessory === "muetze" && (
         <g><path d="M22 40 Q26 16 50 16 Q74 16 78 40 Z" fill="#EF4444" /><rect x="18" y="38" width="64" height="7" rx="3.5" fill="#B91C1C" /></g>
       )}
+      {c.accessory === "krone" && (
+        <g><path d="M30 26 L36 12 L43 22 L50 8 L57 22 L64 12 L70 26 Z" fill="#F7C948" stroke="#B8860B" strokeWidth="1.5" />
+          <circle cx="50" cy="16" r="2.5" fill="#EF4444" /></g>
+      )}
+      {c.accessory === "headset" && (
+        <g>
+          <path d="M22 48 a28 28 0 0 1 56 0" stroke="#1B2436" strokeWidth="5" fill="none" />
+          <rect x="16" y="46" width="10" height="16" rx="4" fill="#1B2436" />
+          <rect x="74" y="46" width="10" height="16" rx="4" fill="#1B2436" />
+          <path d="M74 60 Q64 70 56 66" stroke="#1B2436" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <circle cx="55" cy="66" r="3" fill="#4F8EF7" />
+        </g>
+      )}
+      {c.accessory === "maske" && (
+        <g><rect x="32" y="56" width="36" height="18" rx="6" fill="#E8EDF5" stroke="#8A9BC0" strokeWidth="1.5" />
+          <path d="M32 60 L22 54 M68 60 L78 54" stroke="#8A9BC0" strokeWidth="2" /></g>
+      )}
     </svg>
   );
 }
@@ -7462,7 +7673,15 @@ function UserAvatar({ user, size = 40 }) {
   return <span style={{ fontSize: size * 0.62, lineHeight: 1 }}>{user?.avatar || "🧑‍💻"}</span>;
 }
 
-function AvatarCreator({ value, onChange }) {
+function AvatarCreator({ value, onChange, extras = false }) {
+  // Mit den Avatar-Extras aus dem Shop stehen mehr Frisuren, Augen,
+  // Accessoires und Farben zur Auswahl.
+  const hairStyles = extras ? [...AV_HAIR_STYLES, ...AV_HAIR_STYLES_EXTRA] : AV_HAIR_STYLES;
+  const eyeStyles = extras ? [...AV_EYES, ...AV_EYES_EXTRA] : AV_EYES;
+  const accessories = extras ? [...AV_ACCESSORY, ...AV_ACCESSORY_EXTRA] : AV_ACCESSORY;
+  const hairColors = extras ? [...AV_HAIR_COLOR, ...AV_HAIR_COLOR_EXTRA] : AV_HAIR_COLOR;
+  const backgrounds = extras ? [...AV_BG, ...AV_BG_EXTRA] : AV_BG;
+
   const cfg = { ...DEFAULT_AVATAR_CONFIG, ...(value || {}) };
   const set = (k, v) => onChange({ ...cfg, [k]: v });
   const Swatches = ({ label, colors, field }) => (
@@ -7490,13 +7709,10 @@ function AvatarCreator({ value, onChange }) {
       </div>
     </div>
   );
+  const pick = (list) => list[Math.floor(Math.random() * list.length)];
   const randomize = () => onChange({
-    skin: AV_SKIN[Math.floor(Math.random() * AV_SKIN.length)],
-    hairColor: AV_HAIR_COLOR[Math.floor(Math.random() * AV_HAIR_COLOR.length)],
-    hairStyle: AV_HAIR_STYLES[Math.floor(Math.random() * AV_HAIR_STYLES.length)],
-    eyes: AV_EYES[Math.floor(Math.random() * AV_EYES.length)],
-    accessory: AV_ACCESSORY[Math.floor(Math.random() * AV_ACCESSORY.length)],
-    bg: AV_BG[Math.floor(Math.random() * AV_BG.length)],
+    skin: pick(AV_SKIN), hairColor: pick(hairColors), hairStyle: pick(hairStyles),
+    eyes: pick(eyeStyles), accessory: pick(accessories), bg: pick(backgrounds),
   });
 
   return (
@@ -7507,14 +7723,22 @@ function AvatarCreator({ value, onChange }) {
       </div>
       <div className="flex-1 space-y-3">
         <Swatches label="Hautton" colors={AV_SKIN} field="skin" />
-        <Options label="Frisur" options={AV_HAIR_STYLES} field="hairStyle"
-          labels={{ kurz: "Kurz", lang: "Lang", locken: "Locken", dutt: "Dutt", glatze: "Glatze", irokese: "Irokese" }} />
-        <Swatches label="Haarfarbe" colors={AV_HAIR_COLOR} field="hairColor" />
-        <Options label="Augen" options={AV_EYES} field="eyes"
-          labels={{ normal: "Normal", gluecklich: "Fröhlich", cool: "Cool", sternchen: "Sterne", zwinkern: "Zwinkern" }} />
-        <Options label="Accessoire" options={AV_ACCESSORY} field="accessory"
-          labels={{ keine: "Keins", brille: "Brille", sonnenbrille: "Sonnenbrille", kopfhoerer: "Kopfhörer", muetze: "Mütze" }} />
-        <Swatches label="Hintergrund" colors={AV_BG} field="bg" />
+        <Options label="Frisur" options={hairStyles} field="hairStyle"
+          labels={{ kurz: "Kurz", lang: "Lang", locken: "Locken", dutt: "Dutt", glatze: "Glatze", irokese: "Irokese",
+                    zoepfe: "Zöpfe", afro: "Afro", undercut: "Undercut" }} />
+        <Swatches label="Haarfarbe" colors={hairColors} field="hairColor" />
+        <Options label="Augen" options={eyeStyles} field="eyes"
+          labels={{ normal: "Normal", gluecklich: "Fröhlich", cool: "Cool", sternchen: "Sterne", zwinkern: "Zwinkern",
+                    schlafend: "Verschlafen", herzen: "Herzen" }} />
+        <Options label="Accessoire" options={accessories} field="accessory"
+          labels={{ keine: "Keins", brille: "Brille", sonnenbrille: "Sonnenbrille", kopfhoerer: "Kopfhörer", muetze: "Mütze",
+                    krone: "Krone", headset: "Headset", maske: "Maske" }} />
+        <Swatches label="Hintergrund" colors={backgrounds} field="bg" />
+        {!extras && (
+          <p className="text-[11px] text-[#4A5A7A] pt-1">
+            Mehr Frisuren, Augen und Accessoires gibt es als <span className="text-[#7C3AED]">Avatar-Extras</span> im XP-Shop.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -7580,7 +7804,7 @@ function Profile({ ctx }) {
               <p className="text-sm font-medium text-[#E8EDF5]">Deinen Charakter gestalten</p>
               <Btn size="sm" icon={Check} onClick={() => { setPicker(false); pushToast("success", "Avatar gespeichert!"); }}>Fertig</Btn>
             </div>
-            <AvatarCreator value={me.avatarConfig} onChange={setAvatarConfig} />
+            <AvatarCreator extras={hasUnlock(me, "avatar_extras")} value={me.avatarConfig} onChange={setAvatarConfig} />
             <div className="mt-5 pt-4 border-t border-[#1E2D4A]">
               <p className="text-xs text-[#8A9BC0] mb-2">Oder ein Emoji verwenden:</p>
               <div className="flex flex-wrap gap-2">
@@ -8316,6 +8540,51 @@ function safeSlug(text, fallback) {
   return slug || fallback;
 }
 
+/* ========================= Python im Browser =============================
+   Python läuft hier wirklich — nicht simuliert. Pyodide ist das echte CPython,
+   nach WebAssembly übersetzt. Es wird erst geladen, wenn jemand zum ersten Mal
+   auf „Ausführen“ drückt (rund 10 MB), und bleibt danach im Speicher.
+
+   Was nicht geht: `input()` (es gibt keine Eingabezeile), Netzwerkzugriffe und
+   Pakete, die C-Erweiterungen brauchen. Das sagen wir offen, statt es zu
+   verschweigen.
+   ========================================================================= */
+const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+let pyodidePromise = null;
+
+function getPyodide() {
+  if (!pyodidePromise) {
+    pyodidePromise = (async () => {
+      const mod = await import(/* @vite-ignore */ `${PYODIDE_URL}pyodide.mjs`);
+      return mod.loadPyodide({ indexURL: PYODIDE_URL });
+    })();
+    // Bei einem Fehlschlag darf der nächste Versuch es erneut probieren.
+    pyodidePromise.catch(() => { pyodidePromise = null; });
+  }
+  return pyodidePromise;
+}
+
+// Für alles, was der Browser nicht ausführen kann: der Befehl für den eigenen
+// Rechner. Das ist ehrlicher als ein Knopf, der nichts tut.
+const LOCAL_RUN_HINTS = {
+  java: (f) => `javac ${f} && java ${f.replace(/\.java$/, "")}`,
+  kt: (f) => `kotlinc ${f} -include-runtime -d app.jar && java -jar app.jar`,
+  c: (f) => `gcc ${f} -o programm && ./programm`,
+  cpp: (f) => `g++ ${f} -o programm && ./programm`,
+  cs: (f) => `dotnet run`,
+  go: (f) => `go run ${f}`,
+  rs: (f) => `rustc ${f} && ./${f.replace(/\.rs$/, "")}`,
+  php: (f) => `php ${f}`,
+  rb: (f) => `ruby ${f}`,
+  swift: (f) => `swift ${f}`,
+  sh: (f) => `bash ${f}`,
+  sql: () => `In einer Datenbank ausführen, z.B. psql oder DB Browser for SQLite`,
+  ts: (f) => `npx tsx ${f}`,
+  tsx: (f) => `npm run dev  (Vite/Next)`,
+  jsx: (f) => `npm run dev  (Vite/Next)`,
+  vue: () => `npm run dev  (Vite)`,
+};
+
 /* =============================== Die IDE =================================
    Aufbau wie in VS Code: links der Datei-Explorer, in der Mitte der Editor
    mit Registerkarten, rechts Vorschau, Konsole, Probleme und der KI-Assistent.
@@ -8423,6 +8692,9 @@ function Playground({ ctx }) {
   const [savedAt, setSavedAt] = useState(null);
   const [saving, setSaving] = useState(false);
   const [projectsOpen, setProjectsOpen] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [lightTheme, setLightTheme] = useState(false);
+  const canLightTheme = hasUnlock(me, "light_editor");
 
   const previewWin = useRef(null);
   const saveRef = useRef(null);
@@ -8689,6 +8961,58 @@ function Playground({ ctx }) {
     pushToast("success", `${slug}.html heruntergeladen — alles in einer Datei.`);
   };
 
+  /* ------------------------------ Ausführen ------------------------------
+     Python läuft echt im Browser (Pyodide). Für alle anderen Sprachen gibt es
+     den passenden Befehl für den eigenen Rechner — mit einem Knopf, der so
+     tut als ob, wäre niemandem geholfen.
+     --------------------------------------------------------------------- */
+  const log = (level, text) => setLogs((l) => [...l.slice(-199), { level, text }]);
+
+  const runFile = async () => {
+    if (!activeFile || running) return;
+    const ext = extOf(activeFile.name);
+    setRightTab("console");
+    setPanelOpen(true);
+
+    if (ext === "html") { openPreviewTab(); return; }
+    if (ext === "css" || ext === "js") {
+      log("info", "HTML, CSS und JavaScript laufen dauerhaft in der Vorschau — dort siehst du das Ergebnis sofort.");
+      setRightTab("preview");
+      return;
+    }
+    if (ext !== "py") {
+      const hint = LOCAL_RUN_HINTS[ext];
+      log("info", `${fileTypeOf(activeFile.name).label} kann der Browser nicht ausführen — das braucht die Sprache auf deinem Rechner.`);
+      if (hint) log("info", `Auf deinem Rechner: ${hint(activeFile.name)}`);
+      log("info", "Lade das Projekt herunter (Knopf oben) und führe es dort aus. Prüfen und der KI-Assistent funktionieren hier trotzdem.");
+      return;
+    }
+
+    setRunning(true);
+    log("info", `▶ ${activeFile.name}`);
+    try {
+      if (!pyodidePromise) log("info", "Python-Laufzeit wird geladen — beim ersten Mal etwa 10 MB.");
+      const py = await getPyodide();
+      py.setStdout({ batched: (text) => log("log", text) });
+      py.setStderr({ batched: (text) => log("error", text) });
+      // Andere Python-Dateien des Projekts als Module bereitstellen,
+      // damit `import helfer` funktioniert.
+      for (const file of files) {
+        if (extOf(file.name) === "py" && file.id !== activeFile.id) {
+          py.FS.writeFile(file.name, file.content, { encoding: "utf8" });
+        }
+      }
+      await py.runPythonAsync(activeFile.content);
+      log("info", "✓ Ausführung beendet");
+      playSound("correct");
+    } catch (e) {
+      log("error", String(e?.message || e));
+      playSound("wrong");
+    } finally {
+      setRunning(false);
+    }
+  };
+
   /* ----------------------------- Fehlerprüfung --------------------------- */
   const runCheck = () => {
     const res = analyzeProject({
@@ -8839,6 +9163,7 @@ function Playground({ ctx }) {
             language={langOf(activeFile.name)}
             height="100%"
             chrome={false}
+            theme={lightTheme && canLightTheme ? "vs" : "ld-dark"}
             showMinimap={minimap}
             wordWrap={wrap ? "on" : "off"}
             onCursor={setCursor}
@@ -8851,8 +9176,9 @@ function Playground({ ctx }) {
             <FileCode size={34} className="text-[#2A3F6F]" />
             <p className="text-sm text-[#8A9BC0]">Der Editor ist leer — genau wie er sein soll.</p>
             <p className="text-xs text-[#4A5A7A] max-w-sm leading-relaxed">
-              Leg eine Datei an und leg los. HTML, CSS und JavaScript laufen direkt in der Vorschau;
-              alle anderen Sprachen kannst du schreiben, prüfen lassen und herunterladen.
+              Leg eine Datei an und leg los. HTML, CSS und JavaScript laufen direkt in der Vorschau,
+              Python führst du mit einem Klick aus. Alle anderen Sprachen kannst du schreiben,
+              prüfen lassen und herunterladen.
             </p>
             <Btn size="sm" icon={FilePlus} onClick={() => setNewFileOpen(true)}>Erste Datei anlegen</Btn>
           </div>
@@ -8925,8 +9251,11 @@ function Playground({ ctx }) {
               <p className="text-xs text-[#4A5A7A] max-w-xs leading-relaxed">
                 Der Browser kann nur HTML, CSS und JavaScript ausführen. Leg eine{" "}
                 <span className="font-code text-[#4F8EF7]">index.html</span> an, um deine Seite hier zu sehen.
-                {files.length > 0 && !files.some((f) => runsInBrowser(f.name)) &&
-                  " Dateien wie Python oder Java kannst du hier schreiben, prüfen lassen und herunterladen — ausführen musst du sie auf deinem Rechner."}
+                {files.some((f) => extOf(f.name) === "py")
+                  ? " Python führst du mit „Ausführen“ aus — die Ausgabe erscheint in der Konsole."
+                  : files.length > 0 && !files.some((f) => runsInBrowser(f.name))
+                    ? " Diese Sprache kannst du hier schreiben, prüfen lassen und herunterladen — ausführen musst du sie auf deinem Rechner."
+                    : ""}
               </p>
             </div>
           )
@@ -8969,7 +9298,10 @@ function Playground({ ctx }) {
         ) : (
           <div className="h-full overflow-y-auto p-3 font-code text-[12px] leading-relaxed">
             {logs.length === 0 ? (
-              <p className="text-[#4A5A7A]">Noch keine Ausgaben. Nutze <span className="text-[#4F8EF7]">console.log(...)</span> in deinem JavaScript.</p>
+              <p className="text-[#4A5A7A]">
+                Noch keine Ausgaben. <span className="text-[#4F8EF7]">console.log(...)</span> im JavaScript landet hier —
+                und Python führst du mit <span className="text-[#4F8EF7]">Ausführen</span> direkt aus.
+              </p>
             ) : logs.map((l, i) => {
               const color = l.level === "error" ? "#EF4444" : l.level === "warn" ? "#F59E0B" : l.level === "info" ? "#4F8EF7" : "#C9D6F0";
               return (
@@ -9011,6 +9343,10 @@ function Playground({ ctx }) {
 
         <div className="w-px h-6 bg-[#1E2D4A] mx-0.5" />
 
+        <Btn size="sm" icon={running ? undefined : Play} onClick={runFile} disabled={!activeFile || running}
+          variant={activeFile && extOf(activeFile.name) === "py" ? "primary" : "secondary"}>
+          {running ? <><Loader2 size={13} className="ld-spin" />Läuft …</> : "Ausführen"}
+        </Btn>
         <Btn size="sm" variant="secondary" icon={ExternalLink} onClick={openPreviewTab}>
           {previewLive ? "Vorschau zeigen" : "Neuer Tab"}
         </Btn>
@@ -9021,6 +9357,7 @@ function Playground({ ctx }) {
         <Btn size="sm" variant="secondary" icon={Bug} onClick={runCheck}>Prüfen</Btn>
 
         <div className="ml-auto flex items-center gap-2">
+          {canLightTheme && toolButton(<Palette2 size={13} />, lightTheme ? "Dunkles Design" : "Helles Design", () => setLightTheme((v) => !v), lightTheme)}
           {toolButton(<MapIcon size={13} />, minimap ? "Minimap ausblenden" : "Minimap einblenden", () => setMinimap((v) => !v), minimap)}
           {toolButton(<ClipboardList size={13} />, wrap ? "Zeilenumbruch aus" : "Zeilenumbruch an", () => setWrap((v) => !v), wrap)}
           {toolButton(<Eye size={13} />, panelOpen ? "Seitenbereich ausblenden" : "Seitenbereich einblenden", () => setPanelOpen((v) => !v), panelOpen)}
@@ -9060,6 +9397,562 @@ function Playground({ ctx }) {
   );
 
   return shell;
+}
+
+/* ============================== XP-Shop ==================================
+   Gesammelte XP sollen sich auch ausgeben lassen. Jeder Artikel hier hat eine
+   echte Wirkung — nichts ist bloße Zierde ohne Funktion.
+
+   Die Preise stehen bewusst an einer Stelle und werden serverseitig noch
+   einmal geprüft: sonst könnte man sich im Browser beliebig beschenken.
+   ========================================================================= */
+const SHOP_ITEMS = [
+  {
+    id: "streak_freeze", price: 200, icon: Snowflake, color: "#4F8EF7",
+    name: "Streak-Schutz", kind: "stack", max: 3,
+    short: "Rettet deine Serie, wenn du einen Tag verpasst.",
+    detail: "Wird automatisch eingelöst, sobald genau ein Tag fehlt. Mehr als drei kannst du nicht halten.",
+  },
+  {
+    id: "hint", price: 75, icon: Lightbulb, color: "#F7C948",
+    name: "Tipp-Joker", kind: "stack", max: 20,
+    short: "Zeigt in einer Aufgabe sofort die Auflösung.",
+    detail: "Normalerweise kommt die Lösung erst nach drei Fehlversuchen — mit einem Joker sofort.",
+  },
+  {
+    id: "xp_boost", price: 500, icon: Rocket, color: "#EF4444",
+    name: "Doppelte XP (24 Stunden)", kind: "timed", hours: 24,
+    short: "Einen Tag lang zählt jede Aufgabe doppelt.",
+    detail: "Läuft ab dem Kauf. Ein zweiter Kauf hängt weitere 24 Stunden an.",
+  },
+  {
+    id: "avatar_extras", price: 600, icon: Palette2, color: "#7C3AED",
+    name: "Avatar-Extras", kind: "unlock",
+    short: "Zusätzliche Frisuren, Accessoires und Hintergründe.",
+    detail: "Krone, Kopfhörer mit Mikrofon, Verlaufshintergründe und mehr — dauerhaft freigeschaltet.",
+  },
+  {
+    id: "light_editor", price: 400, icon: Palette2, color: "#10B981",
+    name: "Helles Editor-Design", kind: "unlock",
+    short: "Umschalter für ein helles Farbschema in der IDE.",
+    detail: "Praktisch bei Tageslicht. Der Umschalter erscheint danach in der Werkzeugleiste der IDE.",
+  },
+];
+
+const shopItemById = (id) => SHOP_ITEMS.find((i) => i.id === id);
+
+/** Der Besitzstand eines Kontos in einer einheitlichen Form. */
+function shopState(user) {
+  return {
+    streak_freeze: user?.streakFreezes || 0,
+    hint: user?.hints || 0,
+    unlocks: user?.unlocks || [],
+    boostUntil: user?.boostUntil || 0,
+  };
+}
+
+/**
+ * Ausgeben senkt nicht das Level: `xp` bleibt die Lebensleistung, `spentXp`
+ * merkt sich, was davon schon ausgegeben wurde. Guthaben ist die Differenz.
+ */
+function xpBalance(user) {
+  return Math.max(0, (user?.xp || 0) - (user?.spentXp || 0));
+}
+
+function boostActive(user) {
+  return (user?.boostUntil || 0) > Date.now();
+}
+
+function hasUnlock(user, id) {
+  return (user?.unlocks || []).includes(id);
+}
+
+/** Wie viel besitzt man von einem Artikel schon? */
+function ownedCount(user, item) {
+  const state = shopState(user);
+  if (item.kind === "stack") return state[item.id] || 0;
+  if (item.kind === "unlock") return state.unlocks.includes(item.id) ? 1 : 0;
+  return boostActive(user) ? 1 : 0;
+}
+
+function formatRemaining(ms) {
+  const minutes = Math.max(0, Math.round(ms / 60000));
+  if (minutes < 60) return `${minutes} Min`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} Std ${minutes % 60} Min`;
+}
+
+function Shop({ ctx }) {
+  const { me, buyShopItem, pushToast } = ctx;
+  const [busy, setBusy] = useState(null);
+
+  const buy = async (item) => {
+    setBusy(item.id);
+    const ok = await buyShopItem(item.id);
+    setBusy(null);
+    if (ok) playSound("badge");
+  };
+
+  const boostLeft = boostActive(me) ? me.boostUntil - Date.now() : 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Store className="text-[#F7C948]" />XP-Shop</h1>
+          <p className="text-[#8A9BC0] mt-1">Gesammelte XP ausgeben — jeder Artikel wirkt sich wirklich aus.</p>
+        </div>
+        <Card className="px-5 py-3">
+          <p className="text-xs text-[#8A9BC0]">Dein Guthaben</p>
+          <p className="font-display text-2xl font-bold text-[#F7C948] flex items-center gap-2">
+            <Star size={18} />{xpBalance(me).toLocaleString("de-DE")} XP
+          </p>
+          <p className="text-[11px] text-[#4A5A7A]">insgesamt {(me.xp || 0).toLocaleString("de-DE")} XP verdient</p>
+        </Card>
+      </div>
+
+      {boostLeft > 0 && (
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 rounded-xl bg-[#EF4444]/10 border border-[#EF4444]/30">
+          <Rocket size={16} className="text-[#EF4444]" />
+          <p className="text-sm text-[#C9D6F0] flex-1">
+            Doppelte XP sind aktiv — noch <strong>{formatRemaining(boostLeft)}</strong>.
+          </p>
+        </div>
+      )}
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        {SHOP_ITEMS.map((item) => {
+          const owned = ownedCount(me, item);
+          const maxed = item.kind === "unlock" ? owned > 0 : item.max ? owned >= item.max : false;
+          const affordable = xpBalance(me) >= item.price;
+          const Icon = item.icon;
+          return (
+            <Card key={item.id} className="p-5 flex flex-col">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: item.color + "1F", color: item.color }}>
+                  <Icon size={18} />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display font-bold">{item.name}</p>
+                  <p className="text-xs text-[#8A9BC0]">{item.short}</p>
+                </div>
+                {item.kind === "stack" && owned > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] shrink-0">{owned}×</span>
+                )}
+                {item.kind === "unlock" && owned > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981] shrink-0">Freigeschaltet</span>
+                )}
+              </div>
+
+              <p className="text-xs text-[#4A5A7A] leading-relaxed flex-1">{item.detail}</p>
+
+              <div className="flex items-center gap-3 mt-4 pt-3 border-t border-[#1E2D4A]">
+                <span className="flex items-center gap-1.5 font-semibold text-[#F7C948]"><Star size={14} />{item.price}</span>
+                <span className="flex-1" />
+                {maxed ? (
+                  <span className="text-xs text-[#8A9BC0]">{item.kind === "unlock" ? "Gehört dir" : "Maximum erreicht"}</span>
+                ) : (
+                  <Btn size="sm" icon={busy === item.id ? undefined : Store} disabled={!affordable || busy === item.id}
+                    onClick={() => buy(item)}>
+                    {busy === item.id ? <><Loader2 size={13} className="ld-spin" />Kauft …</>
+                      : affordable ? "Kaufen" : `${item.price - xpBalance(me)} XP fehlen`}
+                  </Btn>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Card className="p-5">
+        <h2 className="font-display font-bold mb-2 flex items-center gap-2"><Info size={16} className="text-[#4F8EF7]" />XP verdienen</h2>
+        <ul className="text-sm text-[#8A9BC0] space-y-1.5 leading-relaxed">
+          <li>• Jede richtig gelöste Aufgabe bringt {TASK_XP} XP.</li>
+          <li>• Für eine abgeschlossene Lektion kommen je nach Schwierigkeit 50 bis 150 XP dazu.</li>
+          <li>• Mit doppelten XP zählt beides zweifach.</li>
+          <li>• Ausgeben senkt nur dein Guthaben — dein Level und die Rangliste bleiben davon unberührt.</li>
+        </ul>
+      </Card>
+    </div>
+  );
+}
+
+/* ==================== Eigene Level (Lehrkräfte) ==========================
+   Lehrkräfte bauen hier eigene Lektionen: Theorie als Markdown und dazu
+   Aufgaben in denselben vier Formen, die auch die mitgelieferten Kurse
+   nutzen. Geprüft wird später mit derselben lokalen Analyse — dadurch
+   verhalten sich eigene Level exakt wie die eingebauten.
+   ========================================================================= */
+const TASK_TYPE_LABELS = {
+  multiple_choice: "Multiple Choice",
+  fill_blank: "Lückentext",
+  code_write: "Code schreiben",
+  explain: "Erklären",
+};
+
+const LEVEL_LABELS = {
+  beginner: "Einsteiger", intermediate: "Fortgeschritten",
+  advanced: "Profi", expert: "Experte",
+};
+
+function emptyTask(type, index) {
+  const base = { id: `t${index + 1}`, type, question: "" };
+  if (type === "multiple_choice") return { ...base, options: ["", ""], correctAnswer: 0, explanation: "" };
+  if (type === "fill_blank") return { ...base, question: "Fülle die Lücken aus:", template: "", blanks: [] };
+  if (type === "code_write") return { ...base, starterCode: "", expectedConcepts: [] };
+  return { ...base, expectedConcepts: [] };
+}
+
+function emptyLesson() {
+  return {
+    id: null, title: "", courseId: "html", level: "beginner",
+    xpReward: 50, theory: "", tasks: [], published: false,
+  };
+}
+
+/** Findet Probleme, bevor gespeichert wird — dieselben Regeln wie im Backend. */
+function lessonProblems(lesson) {
+  const problems = [];
+  if (!lesson.title.trim()) problems.push("Die Lektion braucht einen Titel.");
+  lesson.tasks.forEach((task, i) => {
+    const nr = i + 1;
+    if (!task.question.trim()) problems.push(`Aufgabe ${nr}: Die Frage fehlt.`);
+    if (task.type === "multiple_choice") {
+      const options = task.options.filter((o) => o.trim());
+      if (options.length < 2) problems.push(`Aufgabe ${nr}: Mindestens zwei Antwortmöglichkeiten.`);
+      if (task.correctAnswer >= task.options.length || !task.options[task.correctAnswer]?.trim()) {
+        problems.push(`Aufgabe ${nr}: Markiere die richtige Antwort.`);
+      }
+    }
+    if (task.type === "fill_blank") {
+      const gaps = (task.template || "").split("___").length - 1;
+      if (!gaps) problems.push(`Aufgabe ${nr}: Im Satz fehlt mindestens eine Lücke (___).`);
+      else if (gaps !== task.blanks.length) problems.push(`Aufgabe ${nr}: ${gaps} Lücken, aber ${task.blanks.length} Lösungen.`);
+      else if (task.blanks.some((b) => !String(b).trim())) problems.push(`Aufgabe ${nr}: Eine Lösung ist leer.`);
+    }
+    if (task.type === "code_write" && !task.expectedConcepts.filter((c) => String(c).trim()).length) {
+      problems.push(`Aufgabe ${nr}: Trag ein, was im Code vorkommen muss.`);
+    }
+  });
+  if (lesson.published && !lesson.tasks.length) problems.push("Zum Veröffentlichen braucht es mindestens eine Aufgabe.");
+  return problems;
+}
+
+/** Ein kleines beschriftetes Textfeld. */
+function EditorField({ label, hint, children }) {
+  return (
+    <div>
+      <label className="block text-xs text-[#8A9BC0] mb-1.5">{label}</label>
+      {children}
+      {hint && <p className="text-[11px] text-[#4A5A7A] mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+const inputClass = "w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 text-sm text-[#E8EDF5]";
+
+function TaskEditor({ task, index, onChange, onRemove, onMove, courseId }) {
+  const set = (patch) => onChange({ ...task, ...patch });
+
+  // Lückentext: die Zahl der Lösungen folgt automatisch den ___ im Satz.
+  const syncBlanks = (template) => {
+    const gaps = template.split("___").length - 1;
+    const blanks = Array.from({ length: gaps }, (_, i) => task.blanks[i] ?? "");
+    set({ template, blanks });
+  };
+
+  return (
+    <Card className="p-4">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <span className="w-6 h-6 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7] text-xs flex items-center justify-center font-medium shrink-0">{index + 1}</span>
+        <select value={task.type} onChange={(e) => onChange(emptyTask(e.target.value, index))}
+          className="bg-[#0A0E1A] border border-[#1E2D4A] rounded-lg px-2 py-1.5 text-xs text-[#E8EDF5]">
+          {Object.entries(TASK_TYPE_LABELS).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+        </select>
+        <div className="ml-auto flex items-center gap-1">
+          <button onClick={() => onMove(-1)} aria-label="Nach oben" title="Nach oben"
+            className="w-7 h-7 rounded-lg border border-[#1E2D4A] text-[#8A9BC0] hover:text-[#E8EDF5] flex items-center justify-center"><ChevronUp size={12} /></button>
+          <button onClick={() => onMove(1)} aria-label="Nach unten" title="Nach unten"
+            className="w-7 h-7 rounded-lg border border-[#1E2D4A] text-[#8A9BC0] hover:text-[#E8EDF5] flex items-center justify-center"><ChevronDown size={12} /></button>
+          <button onClick={onRemove} aria-label="Aufgabe löschen" title="Löschen"
+            className="w-7 h-7 rounded-lg border border-[#1E2D4A] text-[#8A9BC0] hover:text-[#EF4444] flex items-center justify-center"><Trash2 size={12} /></button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <EditorField label="Frage">
+          <textarea value={task.question} onChange={(e) => set({ question: e.target.value })} rows={2}
+            placeholder="Was sollen deine Schülerinnen und Schüler beantworten?" className={inputClass} />
+        </EditorField>
+
+        {task.type === "multiple_choice" && (
+          <>
+            <EditorField label="Antwortmöglichkeiten" hint="Klick auf den Kreis, um die richtige zu markieren.">
+              <div className="space-y-2">
+                {task.options.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <button onClick={() => set({ correctAnswer: i })} aria-label={`Antwort ${i + 1} ist richtig`}
+                      className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center ${task.correctAnswer === i ? "border-[#10B981] bg-[#10B981]/20" : "border-[#2A3F6F]"}`}>
+                      {task.correctAnswer === i && <Check size={10} className="text-[#10B981]" />}
+                    </button>
+                    <input value={opt} placeholder={`Antwort ${i + 1}`} className={inputClass}
+                      onChange={(e) => set({ options: Object.assign([...task.options], { [i]: e.target.value }) })} />
+                    {task.options.length > 2 && (
+                      <button onClick={() => set({
+                        options: task.options.filter((_, k) => k !== i),
+                        correctAnswer: task.correctAnswer > i ? task.correctAnswer - 1 : Math.min(task.correctAnswer, task.options.length - 2),
+                      })} aria-label={`Antwort ${i + 1} entfernen`} className="text-[#4A5A7A] hover:text-[#EF4444] shrink-0"><X size={13} /></button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {task.options.length < 6 && (
+                <button onClick={() => set({ options: [...task.options, ""] })}
+                  className="mt-2 text-xs text-[#4F8EF7] hover:underline flex items-center gap-1"><Plus size={11} />Antwort hinzufügen</button>
+              )}
+            </EditorField>
+            <EditorField label="Erklärung (erscheint nach der richtigen Antwort)">
+              <input value={task.explanation} onChange={(e) => set({ explanation: e.target.value })}
+                placeholder="Warum ist das richtig?" className={inputClass} />
+            </EditorField>
+          </>
+        )}
+
+        {task.type === "fill_blank" && (
+          <>
+            <EditorField label="Satz mit Lücken" hint="Schreib ___ (drei Unterstriche) an jede Stelle, die ausgefüllt werden soll.">
+              <textarea value={task.template} onChange={(e) => syncBlanks(e.target.value)} rows={2}
+                placeholder="Eine ___ besteht aus Spalten und ___." className={`${inputClass} font-code`} />
+            </EditorField>
+            {task.blanks.length > 0 && (
+              <EditorField label="Lösungen" hint="Mehrere zulässige Schreibweisen mit Komma trennen — „Tabelle, Relation“.">
+                <div className="space-y-2">
+                  {task.blanks.map((b, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-xs text-[#4A5A7A] w-14 shrink-0">Lücke {i + 1}</span>
+                      <input value={Array.isArray(b) ? b.join(", ") : b} className={`${inputClass} font-code`}
+                        onChange={(e) => {
+                          const parts = e.target.value.split(",").map((v) => v.trim()).filter(Boolean);
+                          const value = parts.length > 1 ? parts : e.target.value;
+                          set({ blanks: Object.assign([...task.blanks], { [i]: value }) });
+                        }} />
+                    </div>
+                  ))}
+                </div>
+              </EditorField>
+            )}
+          </>
+        )}
+
+        {task.type === "code_write" && (
+          <>
+            <EditorField label="Vorgegebener Code (optional)">
+              <MonacoCodeEditor value={task.starterCode} onChange={(v) => set({ starterCode: v })}
+                courseId={courseId} language={MONACO_LANG[courseId] || "plaintext"} label="Vorlage" height="120px" />
+            </EditorField>
+            <EditorField label="Das muss im Code vorkommen"
+              hint="Mit Komma trennen. Alternativen in einer Zeile mit „|“ — etwa „cout|std::cout“.">
+              <input value={(task.expectedConcepts || []).map((c) => (Array.isArray(c) ? c.join("|") : c)).join(", ")}
+                onChange={(e) => set({
+                  expectedConcepts: e.target.value.split(",").map((c) => c.trim()).filter(Boolean)
+                    .map((c) => (c.includes("|") ? c.split("|").map((v) => v.trim()).filter(Boolean) : c)),
+                })}
+                placeholder="const, console.log, name" className={`${inputClass} font-code`} />
+            </EditorField>
+          </>
+        )}
+
+        {task.type === "explain" && (
+          <EditorField label="Erwartete Fachbegriffe (optional)" hint="Mit Komma trennen — sie fließen in die Bewertung ein.">
+            <input value={(task.expectedConcepts || []).join(", ")}
+              onChange={(e) => set({ expectedConcepts: e.target.value.split(",").map((c) => c.trim()).filter(Boolean) })}
+              placeholder="Primärschlüssel, eindeutig" className={inputClass} />
+          </EditorField>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function LessonEditor({ ctx }) {
+  const { me, myLessons, saveCustomLesson, deleteCustomLesson, pushToast, navigate, openLesson } = ctx;
+  const [draft, setDraft] = useState(null);           // null = Übersicht
+  const [saving, setSaving] = useState(false);
+
+  const problems = draft ? lessonProblems(draft) : [];
+
+  const startNew = () => setDraft(emptyLesson());
+  const edit = (lesson) => setDraft({ ...lesson, tasks: lesson.tasks.map((t) => ({ ...t })) });
+
+  const save = async (publish) => {
+    const next = { ...draft, published: publish ?? draft.published };
+    const found = lessonProblems(next);
+    if (found.length) { pushToast("error", found[0]); return; }
+    setSaving(true);
+    const ok = await saveCustomLesson(next);
+    setSaving(false);
+    if (ok) { playSound("save"); setDraft(null); }
+  };
+
+  /* ------------------------------ Übersicht ------------------------------ */
+  if (!draft) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Sparkles2 className="text-[#7C3AED]" />Eigene Level</h1>
+            <p className="text-[#8A9BC0] mt-1">Baue Lektionen für deine Klasse — sie werden genauso geprüft wie die eingebauten.</p>
+          </div>
+          <Btn icon={Plus} onClick={startNew}>Neues Level</Btn>
+        </div>
+
+        {myLessons.length === 0 ? (
+          <Card className="p-10 text-center">
+            <Sparkles2 size={36} className="mx-auto text-[#2A3F6F] mb-3" />
+            <p className="text-[#8A9BC0]">Noch kein eigenes Level.</p>
+            <p className="text-sm text-[#4A5A7A] mt-1 mb-4">Theorie schreiben, Aufgaben anlegen, veröffentlichen — fertig.</p>
+            <Btn icon={Plus} onClick={startNew}>Erstes Level anlegen</Btn>
+          </Card>
+        ) : (
+          <Card className="divide-y divide-[#1E2D4A]">
+            {myLessons.map((lesson) => {
+              const course = courseById(lesson.courseId);
+              return (
+                <div key={lesson.id} className="flex flex-wrap items-center gap-3 p-4">
+                  <span className="text-2xl shrink-0">{course?.icon || "📘"}</span>
+                  <div className="flex-1 min-w-[180px]">
+                    <p className="font-medium flex items-center gap-2 flex-wrap">
+                      {lesson.title}
+                      {lesson.published
+                        ? <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981]">Veröffentlicht</span>
+                        : <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B]">Entwurf</span>}
+                    </p>
+                    <p className="text-xs text-[#8A9BC0]">
+                      {course?.name || lesson.courseId} · {LEVEL_LABELS[lesson.level] || lesson.level} ·{" "}
+                      {lesson.tasks.length} Aufgabe{lesson.tasks.length === 1 ? "" : "n"} · {lesson.xpReward} XP
+                    </p>
+                  </div>
+                  <Btn size="sm" variant="ghost" icon={Eye} onClick={() => openLesson(lesson.id)}>Ansehen</Btn>
+                  <Btn size="sm" variant="secondary" icon={PenSquare} onClick={() => edit(lesson)}>Bearbeiten</Btn>
+                  <Btn size="sm" variant="danger" icon={Trash2}
+                    onClick={() => { if (window.confirm(`„${lesson.title}“ wirklich löschen?`)) deleteCustomLesson(lesson.id); }} />
+                </div>
+              );
+            })}
+          </Card>
+        )}
+
+        <Card className="p-5">
+          <h2 className="font-display font-bold mb-2 flex items-center gap-2"><Info size={16} className="text-[#4F8EF7]" />So funktioniert es</h2>
+          <ul className="text-sm text-[#8A9BC0] space-y-1.5 leading-relaxed">
+            <li>• Ein Level besteht aus einem Theorieteil (Markdown) und beliebig vielen Aufgaben.</li>
+            <li>• Veröffentlichte Level erscheinen bei allen, die deinen Schul-Code <span className="font-code text-[#F7C948]">{me.schoolCode}</span> genutzt haben.</li>
+            <li>• Entwürfe sieht nur du — so kannst du in Ruhe vorbereiten.</li>
+            <li>• Geprüft wird lokal im Browser: sofort, ohne Wartezeit und ohne KI.</li>
+          </ul>
+        </Card>
+      </div>
+    );
+  }
+
+  /* ------------------------------- Editor -------------------------------- */
+  const setDraftField = (patch) => setDraft((d) => ({ ...d, ...patch }));
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button onClick={() => setDraft(null)} className="flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5]">
+          <ChevronLeft size={16} />Zurück zur Übersicht
+        </button>
+        <div className="flex flex-wrap gap-2">
+          <Btn variant="secondary" size="sm" icon={Save} disabled={saving} onClick={() => save(false)}>Als Entwurf sichern</Btn>
+          <Btn size="sm" icon={saving ? undefined : Check} disabled={saving || problems.length > 0} onClick={() => save(true)}>
+            {saving ? <><Loader2 size={14} className="ld-spin" />Speichert …</> : "Veröffentlichen"}
+          </Btn>
+        </div>
+      </div>
+
+      {problems.length > 0 && (
+        <Card className="p-4 border-[#F59E0B]/40">
+          <p className="text-sm font-medium text-[#F59E0B] mb-1.5 flex items-center gap-2"><Info size={14} />Vor dem Veröffentlichen noch offen</p>
+          <ul className="text-xs text-[#C9D6F0] space-y-0.5">
+            {problems.map((p, i) => <li key={i}>• {p}</li>)}
+          </ul>
+        </Card>
+      )}
+
+      <Card className="p-5 space-y-4">
+        <EditorField label="Titel">
+          <input value={draft.title} onChange={(e) => setDraftField({ title: e.target.value })}
+            placeholder="z.B. Primärschlüssel verstehen" className={inputClass} />
+        </EditorField>
+
+        <div className="grid sm:grid-cols-3 gap-3">
+          <EditorField label="Sprache" hint="Bestimmt, wie Code geprüft wird.">
+            <select value={draft.courseId} onChange={(e) => setDraftField({ courseId: e.target.value })} className={inputClass}>
+              {COURSES.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+            </select>
+          </EditorField>
+          <EditorField label="Schwierigkeit">
+            <select value={draft.level} onChange={(e) => setDraftField({ level: e.target.value })} className={inputClass}>
+              {Object.entries(LEVEL_LABELS).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+            </select>
+          </EditorField>
+          <EditorField label="XP für den Abschluss">
+            <input type="number" min="0" max="500" value={draft.xpReward}
+              onChange={(e) => setDraftField({ xpReward: Math.max(0, Math.min(500, Number(e.target.value) || 0)) })}
+              className={inputClass} />
+          </EditorField>
+        </div>
+
+        <EditorField label="Theorie" hint="Markdown: # Überschrift, **fett**, `code`, ```sprache für Codeblöcke.">
+          <textarea value={draft.theory} onChange={(e) => setDraftField({ theory: e.target.value })} rows={10}
+            placeholder={"# Überschrift\n\nErkläre hier das Thema.\n\n```sql\nSELECT * FROM kunden;\n```"}
+            className={`${inputClass} font-code text-[13px] leading-relaxed resize-y`} />
+        </EditorField>
+      </Card>
+
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-lg font-bold flex items-center gap-2"><ListChecks size={18} className="text-[#4F8EF7]" />Aufgaben</h2>
+        <span className="text-xs text-[#8A9BC0]">{draft.tasks.length} von 20</span>
+      </div>
+
+      <div className="space-y-3">
+        {draft.tasks.map((task, i) => (
+          <TaskEditor key={i} task={task} index={i} courseId={draft.courseId}
+            onChange={(next) => setDraftField({ tasks: Object.assign([...draft.tasks], { [i]: next }) })}
+            onRemove={() => setDraftField({ tasks: draft.tasks.filter((_, k) => k !== i) })}
+            onMove={(delta) => {
+              const target = i + delta;
+              if (target < 0 || target >= draft.tasks.length) return;
+              const tasks = [...draft.tasks];
+              [tasks[i], tasks[target]] = [tasks[target], tasks[i]];
+              setDraftField({ tasks });
+            }} />
+        ))}
+      </div>
+
+      {draft.tasks.length < 20 && (
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(TASK_TYPE_LABELS).map(([type, label]) => (
+            <Btn key={type} size="sm" variant="secondary" icon={Plus}
+              onClick={() => setDraftField({ tasks: [...draft.tasks, emptyTask(type, draft.tasks.length)] })}>
+              {label}
+            </Btn>
+          ))}
+        </div>
+      )}
+
+      {/* Vorschau der Theorie */}
+      {draft.theory.trim() && (
+        <div>
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2"><Eye size={18} className="text-[#8A9BC0]" />Vorschau</h2>
+          <Card className="p-6"><Markdown text={draft.theory} /></Card>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ========================= Admin-Dashboard ========================= */
@@ -9404,8 +10297,8 @@ function AIFeedback({ result, ctx, reportPayload }) {
 }
 
 function LessonView({ ctx }) {
-  const { selectedLesson, navigate, openCourse, me, addXP, showXP, completeLesson, celebrate, pushToast, logout, aiConfig, aiReady, openAiSettings } = ctx;
-  const lesson = getFullLesson(selectedLesson);
+  const { selectedLesson, navigate, openCourse, me, addXP, showXP, completeLesson, celebrate, pushToast, logout, findLesson, useHint } = ctx;
+  const lesson = findLesson(selectedLesson);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState({});
@@ -9443,6 +10336,17 @@ function LessonView({ ctx }) {
   // korrigiert direkt im Feld und drückt erneut auf „Prüfen“.
   const solved = !!result?.correct;
   const wasWrong = !!result && !result.correct;
+
+  // Tipp-Joker aus dem Shop: zeigt die Auflösung sofort statt erst nach
+  // drei Fehlversuchen.
+  const canSpendHint = wasWrong && !!result.solutionHint && result.hint !== result.solutionHint && (me.hints || 0) > 0;
+  const spendHint = async () => {
+    if (!canSpendHint) return;
+    const ok = await useHint();
+    if (!ok) return;
+    setResults((r) => ({ ...r, [task.id]: { ...result, hint: result.solutionHint } }));
+    playSound("badge");
+  };
 
   const reward = (tid) => {
     if (rewarded[tid]) return;
@@ -9560,15 +10464,15 @@ function LessonView({ ctx }) {
         <div className="h-1 bg-[#1A2540]"><div className="h-1 transition-all duration-500" style={{ width: (lesson.tasks.filter(isSolved).length / lesson.tasks.length) * 100 + "%", background: GRADIENT }} /></div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 grid lg:grid-cols-5 gap-6">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 grid lg:grid-cols-5 gap-6">
         {/* Theorie */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-2">
           <div className="flex items-center gap-2 mb-3 text-[#8A9BC0]"><BookOpen size={18} /><span className="font-display font-bold text-[#E8EDF5]">Theorie</span><DifficultyBadge level={lesson.level} /><span className="ml-auto flex items-center gap-1 text-xs"><Clock size={13} />{lesson.estimatedMinutes} Min</span></div>
           <Card className="p-6"><Markdown text={lesson.theory} /></Card>
         </div>
 
         {/* Aufgabe */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-3">
           <div className="lg:sticky lg:top-20">
             <div className="flex items-center gap-2 mb-3 text-[#8A9BC0]"><PenLine size={18} /><span className="font-display font-bold text-[#E8EDF5]">Aufgabe</span><span className="ml-auto flex items-center gap-1 text-xs text-[#F7C948]"><Star size={13} />{lesson.xpReward} XP</span></div>
             <Card className="p-5">
@@ -9602,7 +10506,8 @@ function LessonView({ ctx }) {
 
               {/* Code schreiben — VS-Code-Editor (Monaco) */}
               {task.type === "code_write" && (
-                <MonacoCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={solved} courseId={lesson._course.id} label={lesson._course.name} />
+                <MonacoCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={solved}
+                  courseId={lesson._course.id} label={lesson._course.name} height="420px" wordWrap="on" />
               )}
 
               {/* Lückentext */}
@@ -9642,6 +10547,13 @@ function LessonView({ ctx }) {
                         </Btn>)
                   : <Btn className="flex-1" onClick={() => setIdx((i) => i + 1)} icon={ArrowRight}>Nächste Aufgabe</Btn>)}
               </div>
+
+              {canSpendHint && (
+                <button onClick={spendHint}
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-[#F7C948]/40 bg-[#F7C948]/10 text-xs text-[#F7C948] hover:bg-[#F7C948]/15">
+                  <Lightbulb size={13} />Tipp-Joker einlösen — Lösung sofort zeigen ({me.hints} übrig)
+                </button>
+              )}
 
               {/* MC-Feedback; Lückentext, Code und Erklären erscheinen in der Bewertungskarte unten */}
               {result && task.type === "multiple_choice" && (

@@ -163,3 +163,9 @@ CREATE INDEX IF NOT EXISTS custom_lessons_teacher_idx ON custom_lessons (teacher
 -- Spalten, die erst nachträglich hinzugekommen sind (PostgreSQL).
 -- Für SQLite erledigt das db-sqlite.js über LATER_COLUMNS.
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS files TEXT NOT NULL DEFAULT '[]';
+
+-- XP-Shop: ausgegebene XP, Tipp-Joker, Freischaltungen, Doppel-XP
+ALTER TABLE users ADD COLUMN IF NOT EXISTS spent_xp INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS hints INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS unlocks TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS boost_until BIGINT NOT NULL DEFAULT 0;

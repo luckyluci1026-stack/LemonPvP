@@ -58,7 +58,8 @@ export default async function appRoutes(app) {
       );
       const isNew = inserted.rowCount > 0;
       if (isNew && xp > 0) {
-        await client.query("UPDATE users SET xp = xp + $1, weekly_xp = weekly_xp + $1 WHERE id = $2", [xp, request.user.id]);
+        const reward = Number(beforeUser.boost_until || 0) > Date.now() ? xp * 2 : xp;
+        await client.query("UPDATE users SET xp = xp + $1, weekly_xp = weekly_xp + $1 WHERE id = $2", [reward, request.user.id]);
       }
       const earned = [];
       for (const badge of (Array.isArray(badges) ? badges : []).slice(0, 10)) {
@@ -77,39 +78,85 @@ export default async function appRoutes(app) {
     return { ...result, ...streakInfo, user: await loadFullUser(request.user.id) };
   });
 
-  // XP für einzelne richtige Aufgaben
+  // XP für einzelne richtige Aufgaben. Der Doppel-XP-Kauf wird HIER angewandt,
+  // nicht im Browser — sonst könnte man sich den Faktor selbst setzen.
   app.post("/api/progress/xp", { preHandler: [requireAuth] }, async (request, reply) => {
-    const amount = Math.max(0, Math.min(100, Number(request.body?.amount) || 0));
-    if (!amount) return reply.code(400).send({ error: "Ungültiger XP-Betrag." });
+    const base = Math.max(0, Math.min(100, Number(request.body?.amount) || 0));
+    if (!base) return reply.code(400).send({ error: "Ungültiger XP-Betrag." });
     const before = await one("SELECT * FROM users WHERE id = $1", [request.user.id]);
     await rolloverLeague(before);
+    const amount = Number(before.boost_until || 0) > Date.now() ? base * 2 : base;
     await query("UPDATE users SET xp = xp + $1, weekly_xp = weekly_xp + $1 WHERE id = $2", [amount, request.user.id]);
     return { user: await loadFullUser(request.user.id) };
   });
 
-  // Streak-Schutz kaufen — Preis und Obergrenze werden serverseitig geprüft.
-  app.post("/api/progress/streak-freeze", { preHandler: [requireAuth] }, async (request, reply) => {
-    const FREEZE_COST = 200;
-    const FREEZE_MAX = 3;
+  /* ------------------------------- XP-Shop --------------------------------
+     Preise und Obergrenzen stehen hier — im Browser lässt sich beides
+     verändern, hier nicht. Ausgeben senkt nur `spent_xp`; `xp` bleibt stehen,
+     damit Level und Rangliste unberührt bleiben.
+     ---------------------------------------------------------------------- */
+  const SHOP = {
+    streak_freeze: { price: 200, kind: "stack", column: "streak_freezes", max: 3 },
+    hint:          { price: 75,  kind: "stack", column: "hints",          max: 20 },
+    xp_boost:      { price: 500, kind: "timed", hours: 24 },
+    avatar_extras: { price: 600, kind: "unlock" },
+    light_editor:  { price: 400, kind: "unlock" },
+  };
+
+  app.post("/api/shop/buy", { preHandler: [requireAuth] }, async (request, reply) => {
+    const item = SHOP[String(request.body?.itemId || "")];
+    if (!item) return reply.code(400).send({ error: "Diesen Artikel gibt es nicht." });
+
     try {
       await transaction(async (client) => {
         const { rows: [user] } = await client.query(
-          "SELECT xp, streak_freezes FROM users WHERE id = $1 FOR UPDATE", [request.user.id]);
-        if ((user.streak_freezes || 0) >= FREEZE_MAX) {
-          throw Object.assign(new Error(`Mehr als ${FREEZE_MAX} Schutzschilde kannst du nicht halten.`), { statusCode: 409 });
+          "SELECT xp, spent_xp, hints, streak_freezes, unlocks, boost_until FROM users WHERE id = $1 FOR UPDATE",
+          [request.user.id]
+        );
+        const balance = Number(user.xp || 0) - Number(user.spent_xp || 0);
+        if (balance < item.price) {
+          throw Object.assign(new Error(`Dafür fehlen dir noch ${item.price - balance} XP.`), { statusCode: 402 });
         }
-        if (user.xp < FREEZE_COST) {
-          throw Object.assign(new Error("Dafür reichen deine XP nicht."), { statusCode: 402 });
+
+        if (item.kind === "stack") {
+          const owned = Number(user[item.column] || 0);
+          if (owned >= item.max) {
+            throw Object.assign(new Error(`Mehr als ${item.max} kannst du davon nicht halten.`), { statusCode: 409 });
+          }
+          await client.query(
+            `UPDATE users SET spent_xp = spent_xp + $1, ${item.column} = ${item.column} + 1 WHERE id = $2`,
+            [item.price, request.user.id]
+          );
+        } else if (item.kind === "unlock") {
+          let unlocks = [];
+          try { unlocks = JSON.parse(user.unlocks || "[]"); } catch (e) { unlocks = []; }
+          if (unlocks.includes(request.body.itemId)) {
+            throw Object.assign(new Error("Das hast du schon."), { statusCode: 409 });
+          }
+          unlocks.push(request.body.itemId);
+          await client.query("UPDATE users SET spent_xp = spent_xp + $1, unlocks = $2 WHERE id = $3",
+            [item.price, JSON.stringify(unlocks), request.user.id]);
+        } else {
+          // Ein zweiter Kauf hängt weitere Stunden an eine laufende Zeit an.
+          const from = Math.max(Date.now(), Number(user.boost_until || 0));
+          await client.query("UPDATE users SET spent_xp = spent_xp + $1, boost_until = $2 WHERE id = $3",
+            [item.price, from + item.hours * 3600000, request.user.id]);
         }
-        await client.query(
-          "UPDATE users SET xp = xp - $1, streak_freezes = streak_freezes + 1 WHERE id = $2",
-          [FREEZE_COST, request.user.id]);
       });
       return { user: await loadFullUser(request.user.id) };
     } catch (e) {
       if (e.statusCode) return reply.code(e.statusCode).send({ error: e.message });
       throw e;
     }
+  });
+
+  app.post("/api/shop/use-hint", { preHandler: [requireAuth] }, async (request, reply) => {
+    const changed = await one(
+      "UPDATE users SET hints = hints - 1 WHERE id = $1 AND hints > 0 RETURNING id",
+      [request.user.id]
+    );
+    if (!changed) return reply.code(409).send({ error: "Du hast keinen Tipp-Joker mehr." });
+    return { user: await loadFullUser(request.user.id) };
   });
 
   /* ----------------------------- Rangliste -------------------------------- */

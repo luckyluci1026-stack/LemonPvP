@@ -229,6 +229,10 @@ const LATER_COLUMNS = [
   ["users", "week_key", "TEXT"],
   ["users", "streak_freezes", "INTEGER NOT NULL DEFAULT 0"],
   ["projects", "files", "TEXT NOT NULL DEFAULT '[]'"],
+  ["users", "spent_xp", "INTEGER NOT NULL DEFAULT 0"],
+  ["users", "hints", "INTEGER NOT NULL DEFAULT 0"],
+  ["users", "unlocks", "TEXT NOT NULL DEFAULT '[]'"],
+  ["users", "boost_until", "INTEGER NOT NULL DEFAULT 0"],
 ];
 
 export function sqliteMigrate() {
