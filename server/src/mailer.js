@@ -62,6 +62,25 @@ export function verificationMail(name, code) {
   };
 }
 
+export function passwordResetMail(name, link, token) {
+  return {
+    subject: "Passwort zurücksetzen",
+    text: `Hallo ${name},\n\nüber diesen Link setzt du dein Passwort neu:\n${link}\n\nFalls der Link nicht funktioniert, gib diesen Code in der App ein:\n${token}\n\nDer Link ist eine Stunde gültig. Hast du das nicht angefordert, ignoriere diese Nachricht — dein Passwort bleibt unverändert.`,
+    html: shell("Passwort zurücksetzen", `
+      <p style="color:#8A9BC0;line-height:1.6;margin:0 0 16px">Hallo ${name}, hier kannst du ein neues Passwort vergeben:</p>
+      <p style="margin:0 0 16px">
+        <a href="${link}" style="display:inline-block;background:linear-gradient(135deg,#4F8EF7,#7C3AED);
+           color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600">Neues Passwort vergeben</a>
+      </p>
+      <p style="color:#4A5A7A;font-size:13px;margin:0 0 8px">Falls der Knopf nicht funktioniert, nutze diesen Code:</p>
+      <div style="background:#0A0E1A;border:1px solid #2A3F6F;border-radius:8px;padding:12px;
+                  font-family:monospace;font-size:12px;color:#4F8EF7;word-break:break-all">${token}</div>
+      <p style="color:#4A5A7A;font-size:13px;margin:16px 0 0">
+        Gültig für eine Stunde. Hast du das nicht angefordert, ignoriere diese Nachricht — dein Passwort bleibt unverändert.
+      </p>`),
+  };
+}
+
 export function passwordChangedMail(name) {
   return {
     subject: "Dein Passwort wurde geändert",

@@ -5,7 +5,7 @@ import {
   numericCode, schoolCode, generateTotpSecret, verifyTotp, totpUri,
 } from "../security.js";
 import { verifyTurnstile } from "../turnstile.js";
-import { sendMail, verificationMail, passwordChangedMail } from "../mailer.js";
+import { sendMail, verificationMail, passwordChangedMail, passwordResetMail } from "../mailer.js";
 import { publicUser, loadFullUser } from "../serialize.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -202,6 +202,68 @@ export default async function authRoutes(app) {
     return { ok: true };
   });
 
+  /* -------------------------- Passwort vergessen ------------------------ */
+  // Antwortet immer gleich, egal ob die Adresse existiert — sonst ließe sich
+  // darüber herausfinden, wer hier ein Konto hat.
+  app.post("/api/auth/forgot-password", {
+    config: { rateLimit: { max: 5, timeWindow: "1 hour" } },
+  }, async (request) => {
+    const email = String(request.body?.email || "").trim();
+    const generic = { ok: true, message: "Falls ein Konto zu dieser Adresse existiert, wurde eine E-Mail verschickt." };
+    if (!EMAIL_RE.test(email)) return generic;
+
+    const user = await one("SELECT * FROM users WHERE email_lower = lower($1)", [email]);
+    if (!user || user.disabled) {
+      request.log.info({ email }, "Passwort-Anfrage für unbekannte oder gesperrte Adresse");
+      return generic;
+    }
+
+    const { raw, hash } = createSessionToken();     // gleiche Erzeugung, gleicher Schutz
+    await query(
+      "UPDATE users SET reset_token_hash = $1, reset_expires = $2 WHERE id = $3",
+      [hash, new Date(Date.now() + 3600_000), user.id]      // eine Stunde gültig
+    );
+
+    const link = `${config.publicUrl}/?reset=${raw}`;
+    const delivery = await sendMail(request.log, { to: user.email, ...passwordResetMail(user.name, link, raw) });
+
+    // Ohne Mailversand wird das Token zurückgegeben, damit sich der Ablauf
+    // auch lokal ohne SMTP testen lässt.
+    return delivery.delivered ? generic : { ...generic, devResetToken: raw };
+  });
+
+  app.post("/api/auth/reset-password", {
+    config: { rateLimit: { max: 10, timeWindow: "1 hour" } },
+  }, async (request, reply) => {
+    const { token, newPassword } = request.body || {};
+    if (!token) return reply.code(400).send({ error: "Kein Token übermittelt." });
+    if (String(newPassword || "").length < 8) {
+      return reply.code(400).send({ error: "Das neue Passwort muss mindestens 8 Zeichen lang sein." });
+    }
+
+    const user = await one(
+      "SELECT * FROM users WHERE reset_token_hash = $1 AND reset_expires > now()",
+      [hashToken(String(token))]
+    );
+    if (!user) {
+      return reply.code(400).send({ error: "Der Link ist ungültig oder abgelaufen. Fordere einen neuen an." });
+    }
+
+    const hash = await hashPassword(newPassword);
+    await transaction(async (client) => {
+      await client.query(
+        "UPDATE users SET password_hash = $1, reset_token_hash = NULL, reset_expires = NULL WHERE id = $2",
+        [hash, user.id]
+      );
+      // Alle bestehenden Sitzungen beenden — falls jemand Fremdes drin war.
+      await client.query("DELETE FROM sessions WHERE user_id = $1", [user.id]);
+    });
+
+    await sendMail(request.log, { to: user.email, ...passwordChangedMail(user.name) });
+    request.log.info({ userId: user.id }, "Passwort zurückgesetzt");
+    return { ok: true };
+  });
+
   /* ---------------------------- Passwort ändern ------------------------- */
   app.post("/api/auth/change-password", { preHandler: [requireAuth] }, async (request, reply) => {
     const { currentPassword, newPassword } = request.body || {};
@@ -235,14 +297,71 @@ export async function requireAdmin(request, reply) {
   if (request.user.role !== "admin") return reply.code(403).send({ error: "Nur für Administratoren." });
 }
 
-/** Zählt den Tages-Streak hoch bzw. setzt ihn zurück. */
-export async function updateStreak(user) {
-  const today = new Date().toISOString().slice(0, 10);
-  const last = user.last_active ? new Date(user.last_active).toISOString().slice(0, 10) : null;
-  if (last === today) return user.streak;
+const dayKey = (d) => new Date(d).toISOString().slice(0, 10);
 
-  const yesterday = new Date(Date.now() - 86400_000).toISOString().slice(0, 10);
-  const streak = last === yesterday ? user.streak + 1 : 1;
-  await query("UPDATE users SET streak = $1, last_active = CURRENT_DATE WHERE id = $2", [streak, user.id]);
-  return streak;
+/** Kalenderwoche als Schlüssel, Wochenstart ist Montag. */
+export function weekKey(date = new Date()) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  const week = Math.ceil(((d - new Date(d.getFullYear(), 0, 1)) / 86400_000 + 1) / 7);
+  return `${d.getFullYear()}-KW${String(week).padStart(2, "0")}`;
+}
+
+/**
+ * Zählt den Tages-Streak hoch bzw. setzt ihn zurück. Wurde genau ein Tag
+ * verpasst und ist ein Streak-Schutz vorhanden, wird dieser eingelöst.
+ */
+export async function updateStreak(user) {
+  const today = dayKey(Date.now());
+  const last = user.last_active ? dayKey(user.last_active) : null;
+  if (last === today) return { streak: user.streak, usedFreeze: false };
+
+  let streak = 1;
+  let freezes = user.streak_freezes || 0;
+  let usedFreeze = false;
+
+  if (last) {
+    const gap = Math.round((new Date(today) - new Date(last)) / 86400_000);
+    if (gap === 1) streak = user.streak + 1;
+    else if (gap === 2 && freezes > 0) { streak = user.streak + 1; freezes -= 1; usedFreeze = true; }
+  }
+
+  await query(
+    "UPDATE users SET streak = $1, last_active = CURRENT_DATE, streak_freezes = $2 WHERE id = $3",
+    [streak, freezes, user.id]
+  );
+  return { streak, usedFreeze };
+}
+
+/** Setzt die Wochenwertung zurück und wendet Auf-/Abstieg an. */
+const LEAGUE_ORDER = ["bronze", "silber", "gold", "platin", "diamant", "meister"];
+const PROMOTE_TOP = 3;
+const RELEGATE_BOTTOM = 3;
+
+export async function rolloverLeague(user) {
+  const current = weekKey();
+  if (user.week_key === current) return user;
+
+  let league = user.league || "bronze";
+  const idx = LEAGUE_ORDER.indexOf(league);
+
+  // Nur werten, wenn in der Vorwoche tatsächlich gelernt wurde
+  if (user.week_key && (user.weekly_xp || 0) > 0) {
+    const field = await many(
+      `SELECT id, weekly_xp FROM users
+        WHERE league = $1 AND week_key = $2 AND role = 'student' AND NOT disabled
+        ORDER BY weekly_xp DESC`,
+      [league, user.week_key]
+    );
+    const rank = field.findIndex((f) => f.id === user.id) + 1;
+    if (rank > 0) {
+      if (rank <= PROMOTE_TOP && idx < LEAGUE_ORDER.length - 1) league = LEAGUE_ORDER[idx + 1];
+      else if (field.length > RELEGATE_BOTTOM && rank > field.length - RELEGATE_BOTTOM && idx > 0) league = LEAGUE_ORDER[idx - 1];
+    }
+  }
+
+  await query("UPDATE users SET league = $1, weekly_xp = 0, week_key = $2 WHERE id = $3",
+    [league, current, user.id]);
+  return { ...user, league, weekly_xp: 0, week_key: current };
 }

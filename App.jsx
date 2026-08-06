@@ -2628,7 +2628,7 @@ function getFullLesson(lessonId) {
 // Ohne eigenen Anthropic-API-Key kann der Browser die API nicht direkt
 // erreichen (CORS + Auth). Mit Key wird "anthropic-dangerous-direct-browser-access"
 // gesetzt, was Anthropic offiziell für genau diesen Client-seitigen Anwendungsfall
-// unterstützt. Ohne Key läuft automatisch die lokale Offline-Heuristik.
+// unterstützt. Genutzt wird das nur vom Assistenten im Code-Editor.
 // Unterstützte KI-Anbieter. Gemini hat ein kostenloses Kontingent, Claude ist
 // kostenpflichtig, liefert aber die besseren Bewertungen.
 const AI_PROVIDERS = {
@@ -3255,6 +3255,11 @@ const CONCEPT_GROUPS = {
   number: { kind: "number" },
   funktion: { any: ["function", "def", "=>", "func", "fun", "fn"], kind: "function" },
   function: { any: ["function", "def", "=>", "func", "fun", "fn"], kind: "function" },
+  // Kommentare werden beim Tokenisieren entfernt — dafür gibt es eine eigene
+  // Prüfung gegen die gesammelten Kommentare, sonst wäre so eine Aufgabe
+  // grundsätzlich nicht lösbar.
+  kommentar: { kind: "comment" },
+  comment: { kind: "comment" },
   schleife: { any: ["for", "while", "foreach", "map", "loop"], kind: "keyword" },
   bedingung: { any: ["if", "switch", "match", "when"], kind: "keyword" },
   ausgabe: { any: ["console.log", "print", "println", "cout", "echo", "printf", "fmt.println"], kind: "call" },
@@ -3298,20 +3303,38 @@ function checkConcept(concept, analysis) {
   const code = analysis.stripped;
   const lower = code.toLowerCase();
 
-  // 1. Operatoren und Symbole
+  // 1. Kommentar-Zeichen der jeweiligen Sprache (#, //, --) werden beim
+  //    Tokenisieren entfernt und müssen daher gegen die gesammelten
+  //    Kommentare geprüft werden.
+  const commentMarkers = [
+    ...(analysis.profile.lineComment || []),
+    ...(analysis.profile.blockComment || []).map(([open]) => open),
+  ];
+  if (commentMarkers.includes(c)) {
+    return { hit: analysis.comments.length > 0, concept: c, kind: "comment",
+      why: analysis.comments.length ? null : `Es fehlt ein Kommentar (beginnt mit \`${c}\`).` };
+  }
+
+  // 2. Operatoren und Symbole
   if (/^[=+\-*/<>!%&|.;:()[\]{}]+$/.test(c)) {
     return { hit: code.includes(c), concept: c, kind: "operator" };
   }
 
-  // 2. Sammelbegriffe
+  // 3. Sammelbegriffe
   const group = CONCEPT_GROUPS[lc];
   if (group) {
+    if (group.kind === "comment") {
+      const hasComment = analysis.comments.some((k) => k.replace(/^\W+/, "").trim().length > 0);
+      const marker = (analysis.profile.lineComment || [])[0] || "//";
+      return { hit: hasComment, concept: c, kind: "comment", essential: true,
+        why: hasComment ? null : `Es fehlt ein Kommentar — in ${analysis.profile.label} beginnt er mit \`${marker}\`.` };
+    }
     if (group.kind === "string") {
-      return { hit: analysis.hasString, concept: c, kind: "string",
+      return { hit: analysis.hasString, concept: c, kind: "string", essential: true,
         why: analysis.hasString ? null : "Es fehlt eine Zeichenkette in Anführungszeichen." };
     }
     if (group.kind === "number") {
-      return { hit: analysis.hasNumber, concept: c, kind: "number",
+      return { hit: analysis.hasNumber, concept: c, kind: "number", essential: true,
         why: analysis.hasNumber ? null : "Es fehlt eine Zahl." };
     }
     const hit = (group.any || []).some((a) => lower.includes(a.toLowerCase()));
@@ -3319,7 +3342,7 @@ function checkConcept(concept, analysis) {
       why: hit ? null : `Kein passendes Sprachmittel gefunden (erwartet z.B. ${group.any.slice(0, 3).join(", ")}).` };
   }
 
-  // 3. HTML-Tags — nur, wenn es wirklich ein Tag-Name ist. Sonst würde ein
+  // 4. HTML-Tags — nur, wenn es wirklich ein Tag-Name ist. Sonst würde ein
   //    erwarteter Textinhalt wie "Willkommen" fälschlich als <willkommen>
   //    gesucht.
   if (analysis.profile.blockStyle === "tags") {
@@ -3339,7 +3362,7 @@ function checkConcept(concept, analysis) {
       why: inText ? null : `Der Text „${c}“ kommt nicht vor.` };
   }
 
-  // 4. Bezeichner und Schlüsselwörter — als ganzes Wort.
+  // 5. Bezeichner und Schlüsselwörter — als ganzes Wort.
   //    Beides gilt als wesentlich: Wer `const` verlangt, meint nicht `let`,
   //    und ein geforderter Variablenname ist keine Nebensache.
   if (/^[\w$äöüß.!:]+$/i.test(c)) {
@@ -3372,7 +3395,7 @@ function checkConcept(concept, analysis) {
     return { hit: false, concept: c, kind: isKeyword ? "keyword" : "identifier", essential: true, why };
   }
 
-  // 5. Mehrwort-Beschreibung: es genügt ein sinntragender Teil
+  // 6. Mehrwort-Beschreibung: es genügt ein sinntragender Teil
   const parts = lc.split(/\s+oder\s+|[\s,]+/).filter((t) => t.length > 1);
   const hit = parts.length ? parts.some((p) => lower.includes(p)) : lower.includes(lc);
   return { hit, concept: c, kind: "phrase" };
@@ -3479,8 +3502,12 @@ function evaluateFillBlank(task, answers) {
     if (given.toLowerCase() === target.toLowerCase()) {
       return { ok: true, expected: target, given, caseOff: given !== target };
     }
-    // Klammern, Anführungszeichen und Satzzeichen tolerieren: <strong> == strong
-    if (normalizeAlnum(given) === normalizeAlnum(target)) {
+    // Klammern, Anführungszeichen und Satzzeichen tolerieren: <strong> == strong,
+    // print() == print. Achtung: Besteht die Lösung selbst nur aus Sonderzeichen
+    // (etwa "#"), normalisieren beide Seiten zu "" — dann darf dieser Vergleich
+    // nicht greifen, sonst gälte jede Eingabe als richtig.
+    const normTarget = normalizeAlnum(target);
+    if (normTarget && normalizeAlnum(given) === normTarget) {
       return { ok: true, expected: target, given, formatted: true };
     }
     // Tippfehler?
@@ -4025,7 +4052,7 @@ function MonacoCodeEditor({ value, onChange, disabled, courseId, label }) {
       },
     });
   };
-  return editorChrome(courseId, label, <>VS&nbsp;Code · Monaco</>,
+  return editorChrome(courseId, label, <>LearnDeveloping&nbsp;Editor</>,
     <Editor
       height="280px"
       language={MONACO_LANG[courseId] || "plaintext"}
@@ -4069,13 +4096,13 @@ function Confetti() {
   );
 }
 
-/* Skeleton-Loader für KI-Bewertung */
+/* Skeleton-Loader für laufende Prüfungen */
 function SkeletonFeedback() {
   return (
     <Card className="p-5 mt-5">
       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
         <Bot size={18} className="text-[#7C3AED]" />
-        <span className="font-display font-bold">KI-Bewertung</span>
+        <span className="font-display font-bold">Bewertung</span>
         <span className="ml-auto flex items-center gap-1.5 text-xs text-[#8A9BC0]"><Loader2 size={13} className="ld-spin" />analysiert deinen Code …</span>
       </div>
       <div className="space-y-2.5">
@@ -4488,8 +4515,136 @@ function mergeWithDemo(persistedUsers) {
 
 function roleHome(role) { return role === "teacher" ? "teacher" : role === "admin" ? "admin" : "dashboard"; }
 
+/* ----------------------------- Tages-Streak ------------------------------
+   Ohne Server wird die Serie hier gepflegt (mit Server übernimmt das die
+   Datenbank). Gezählt werden Kalendertage, nicht 24-Stunden-Abstände — wer
+   abends und am nächsten Morgen lernt, hat zwei Tage.
+   ------------------------------------------------------------------------- */
+function todayKey(date = new Date()) {
+  // Lokales Datum, nicht UTC — sonst springt die Serie je nach Zeitzone falsch.
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function daysBetween(fromKey, toKey) {
+  const a = new Date(fromKey + "T00:00:00");
+  const b = new Date(toKey + "T00:00:00");
+  return Math.round((b - a) / 86400_000);
+}
+
+/**
+ * Schreibt die Serie fort. Wurde genau ein Tag verpasst und ist ein
+ * Streak-Schutz vorhanden, wird dieser eingelöst und die Serie läuft weiter.
+ */
+function advanceStreak(user) {
+  const today = todayKey();
+  const last = user.lastActive || null;
+  const freezes = user.streakFreezes || 0;
+
+  if (last === today) {
+    return { streak: user.streak || 1, lastActive: today, grew: false, freezes, usedFreeze: false };
+  }
+  if (!last) {
+    return { streak: 1, lastActive: today, grew: true, freezes, usedFreeze: false };
+  }
+
+  const gap = daysBetween(last, today);
+  if (gap === 1) {
+    return { streak: (user.streak || 0) + 1, lastActive: today, grew: true, freezes, usedFreeze: false };
+  }
+  // Genau ein Tag ausgelassen und Schutz vorhanden -> Serie bleibt bestehen
+  if (gap === 2 && freezes > 0) {
+    return { streak: (user.streak || 0) + 1, lastActive: today, grew: true, freezes: freezes - 1, usedFreeze: true };
+  }
+  return { streak: 1, lastActive: today, grew: true, freezes, usedFreeze: false, broken: (user.streak || 0) > 1 };
+}
+
+/* ------------------------------- Ligen -----------------------------------
+   Jede Woche zählt neu: Gesammelte XP der laufenden Woche bestimmen die
+   Platzierung. Wer oben landet, steigt auf, wer unten bleibt, ab.
+   ------------------------------------------------------------------------- */
+const LEAGUES = [
+  { id: "bronze",  name: "Bronze",  emoji: "🥉", color: "#B08D57" },
+  { id: "silber",  name: "Silber",  emoji: "🥈", color: "#A8B3C4" },
+  { id: "gold",    name: "Gold",    emoji: "🥇", color: "#F7C948" },
+  { id: "platin",  name: "Platin",  emoji: "💠", color: "#4F8EF7" },
+  { id: "diamant", name: "Diamant", emoji: "💎", color: "#7C3AED" },
+  { id: "meister", name: "Meister", emoji: "👑", color: "#EF4444" },
+];
+
+const PROMOTE_TOP = 3;      // beste drei steigen auf
+const RELEGATE_BOTTOM = 3;  // schlechteste drei steigen ab
+
+function leagueById(id) { return LEAGUES.find((l) => l.id === id) || LEAGUES[0]; }
+
+/** Kalenderwoche als Schlüssel, z.B. "2026-KW24" — Wochenstart ist Montag. */
+function weekKey(date = new Date()) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // auf Montag zurück
+  return `${d.getFullYear()}-KW${String(Math.ceil(((d - new Date(d.getFullYear(), 0, 1)) / 86400_000 + 1) / 7)).padStart(2, "0")}`;
+}
+
+/** Wie viele Tage bleiben bis zum Wochenwechsel (Montag 00:00). */
+function daysLeftInWeek(date = new Date()) {
+  const dayOfWeek = (date.getDay() + 6) % 7;         // Montag = 0
+  return 7 - dayOfWeek;
+}
+
+/**
+ * Setzt die Wochenwertung zurück, wenn eine neue Woche begonnen hat, und
+ * wendet dabei Auf- bzw. Abstieg an.
+ */
+function rolloverLeague(user, rank, fieldSize) {
+  const current = weekKey();
+  if (user.weekKey === current) return user;
+
+  let leagueId = user.league || "bronze";
+  const idx = LEAGUES.findIndex((l) => l.id === leagueId);
+  // Nur werten, wenn in der Vorwoche überhaupt gelernt wurde
+  if (user.weekKey && (user.weeklyXp || 0) > 0 && rank != null) {
+    if (rank <= PROMOTE_TOP && idx < LEAGUES.length - 1) leagueId = LEAGUES[idx + 1].id;
+    else if (fieldSize > RELEGATE_BOTTOM && rank > fieldSize - RELEGATE_BOTTOM && idx > 0) leagueId = LEAGUES[idx - 1].id;
+  }
+  return { ...user, league: leagueId, weeklyXp: 0, weekKey: current };
+}
+
+// Kosten für einen Streak-Schutz und wie viele man höchstens halten kann
+const FREEZE_COST_XP = 200;
+const FREEZE_MAX = 3;
+
+/**
+ * Die letzten sieben Tage mit echten Wochentagen. Aktiv sind die Tage, die
+ * von der laufenden Serie abgedeckt werden — rückwärts ab dem letzten
+ * aktiven Tag.
+ */
+function streakWeek(user) {
+  const streak = Math.max(0, user?.streak || 0);
+  const last = user?.lastActive;
+  const yesterday = todayKey(new Date(Date.now() - 86400_000));
+
+  let endOffset = null;                       // wie viele Tage der letzte aktive Tag her ist
+  if (last === todayKey()) endOffset = 0;
+  else if (last === yesterday) endOffset = 1;
+  else if (!last && streak > 0) endOffset = 0; // Altbestand ohne Datum
+
+  const out = [];
+  for (let ago = 6; ago >= 0; ago--) {
+    const date = new Date(Date.now() - ago * 86400_000);
+    out.push({
+      label: date.toLocaleDateString("de-DE", { weekday: "short" }).slice(0, 2),
+      active: endOffset !== null && ago >= endOffset && ago < endOffset + streak,
+      isToday: ago === 0,
+    });
+  }
+  return out;
+}
+
 export default function App() {
   const [view, setView] = useState(() => {
+    // Kommt jemand über den Link aus der Passwort-Mail, gleich dorthin springen.
+    try {
+      if (new URLSearchParams(window.location.search).get("reset")) return "reset-password";
+    } catch (e) {}
     const persisted = loadPersisted();
     if (!persisted?.currentUser) return "landing";
     const u = mergeWithDemo(persisted.users).find((x) => x.id === persisted.currentUser);
@@ -4525,6 +4680,11 @@ export default function App() {
   // bestehende Sitzung wiederherstellen.
   useEffect(() => {
     let alive = true;
+    // Wer über den Link aus der Passwort-Mail kommt, soll dort bleiben —
+    // die Sitzungswiederherstellung darf diese Ansicht nicht überschreiben.
+    let inResetFlow = false;
+    try { inResetFlow = !!new URLSearchParams(window.location.search).get("reset"); } catch (e) {}
+
     (async () => {
       const hasServer = await api.probe();
       if (!alive) return;
@@ -4536,10 +4696,13 @@ export default function App() {
           const mapped = fromApiUser(user);
           setUsers([mapped]);
           setCurrentUser(mapped.id);
-          setView(roleHome(mapped.role));
+          if (!inResetFlow) setView(roleHome(mapped.role));
         } catch (e) {
           // Nicht angemeldet — Startseite bleibt stehen
-          if (alive) { setUsers([]); setCurrentUser(null); setView("landing"); }
+          if (alive) {
+            setUsers([]); setCurrentUser(null);
+            if (!inResetFlow) setView("landing");
+          }
         }
       }
       if (alive) setBooting(false);
@@ -4922,7 +5085,11 @@ export default function App() {
   // XP / Lektion abschließen
   const addXP = useCallback((amount) => {
     // Optimistisch anzeigen, damit die Oberfläche sofort reagiert …
-    setUsers((us) => us.map((u) => u.id === currentUser ? { ...u, xp: u.xp + amount } : u));
+    setUsers((us) => us.map((u) => {
+      if (u.id !== currentUser) return u;
+      const rolled = rolloverLeague(u, null, 0);
+      return { ...rolled, xp: rolled.xp + amount, weeklyXp: (rolled.weeklyXp || 0) + amount };
+    }));
     // … und serverseitig verbuchen, wo der Wert manipulationssicher liegt.
     if (api.available && me && !me.isGuest) {
       api.post("/api/progress/xp", { amount })
@@ -4930,6 +5097,31 @@ export default function App() {
         .catch(() => {});
     }
   }, [currentUser, me]);
+
+  /** Streak-Schutz gegen XP kaufen. */
+  const buyStreakFreeze = useCallback(async () => {
+    if (!me) return;
+    if ((me.streakFreezes || 0) >= FREEZE_MAX) {
+      pushToast("info", `Mehr als ${FREEZE_MAX} Schutzschilde kannst du nicht halten.`);
+      return;
+    }
+    if (me.xp < FREEZE_COST_XP) {
+      pushToast("error", `Dafür brauchst du ${FREEZE_COST_XP} XP — dir fehlen noch ${FREEZE_COST_XP - me.xp}.`);
+      return;
+    }
+    if (api.available && !me.isGuest) {
+      try {
+        const { user } = await api.post("/api/progress/streak-freeze");
+        setUsers((us) => us.map((u) => u.id === user.id ? fromApiUser(user) : u));
+        pushToast("success", "Streak-Schutz gekauft! 🧊");
+      } catch (e) { pushToast("error", e.message); }
+      return;
+    }
+    setUsers((us) => us.map((u) => u.id === me.id
+      ? { ...u, xp: u.xp - FREEZE_COST_XP, streakFreezes: (u.streakFreezes || 0) + 1 }
+      : u));
+    pushToast("success", "Streak-Schutz gekauft! 🧊");
+  }, [me, pushToast]);
 
   /** Ermittelt neu verdiente Abzeichen für den aktuellen Stand. */
   const earnedBadgesFor = (completed, xp) => {
@@ -4983,8 +5175,25 @@ export default function App() {
         const allIds = allLessonsOf(meta.course).map((l) => l.id);
         if (allIds.every((id) => completed.includes(id)) && !badges.includes("course_complete")) { badges.push("course_complete"); newlyEarned.push("course_complete"); }
       }
+      // Tages-Streak fortschreiben: heute schon gelernt zählt nicht doppelt,
+      // gestern gelernt zählt hoch, sonst beginnt die Serie neu.
+      const { streak, lastActive, grew, freezes, usedFreeze, broken } = advanceStreak(u);
+      if (grew) {
+        if (streak === 7 && !badges.includes("week_warrior")) { badges.push("week_warrior"); newlyEarned.push("week_warrior"); }
+        if (usedFreeze) setTimeout(() => pushToast("info", `Streak-Schutz eingelöst — deine Serie läuft weiter! 🧊`), 600);
+        else if (broken) setTimeout(() => pushToast("info", "Neue Serie gestartet — dranbleiben lohnt sich!"), 600);
+        else setTimeout(() => pushToast("success", `${streak} Tage in Folge! 🔥`), 600);
+      }
+
+      // Wochenwertung für die Liga mitführen
+      const rolled = rolloverLeague(u, null, 0);
+
       newlyEarned.forEach((b) => setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES[b].label}!`), 400));
-      return { ...u, completedLessons: completed, xp: newXp, badges };
+      return {
+        ...rolled, completedLessons: completed, xp: newXp, badges,
+        streak, lastActive, streakFreezes: freezes,
+        weeklyXp: (rolled.weeklyXp || 0) + bonusXp,
+      };
     }));
   }, [currentUser, pushToast, me]);
 
@@ -4992,7 +5201,7 @@ export default function App() {
     view, navigate, users, me, setUsers, currentUser,
     selectedCourse, openCourse, selectedLesson, openLesson,
     selectedStudent, setSelectedStudent, login, register, logout, continueAsGuest,
-    pushToast, showXP, addXP, completeLesson, celebrate, sidebarOpen, setSidebarOpen,
+    pushToast, showXP, addXP, completeLesson, celebrate, buyStreakFreeze, sidebarOpen, setSidebarOpen,
     apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel, aiConfig, aiReady, aiSettingsOpen, openAiSettings, closeAiSettings,
     backend, booting, refreshMe, loadProjects, serverVerificationCode, confirm2FA,
     pending2FA, verify2FALogin, cancel2FALogin,
@@ -5020,6 +5229,8 @@ export default function App() {
   let screen = null;
   if (view === "landing") screen = <Landing ctx={ctx} />;
   else if (view === "login" || view === "register") screen = <AuthScreen ctx={ctx} mode={view} />;
+  else if (view === "forgot-password") screen = <ForgotPassword ctx={ctx} />;
+  else if (view === "reset-password") screen = <ResetPassword ctx={ctx} />;
   else if (LEGAL_VIEWS.includes(view)) screen = <LegalPage ctx={ctx} page={view} />;
   else if (view === "lesson") screen = <LessonView ctx={ctx} />;
   else screen = <AppShell ctx={ctx}>{
@@ -5375,6 +5586,153 @@ function Field({ label, icon: Icon, ...props }) {
   );
 }
 
+/* ---------------------- Passwort vergessen ------------------------------- */
+// Gemeinsamer Rahmen für beide Schritte, damit sie wie die Anmeldung aussehen.
+function AuthShell({ ctx, icon: Icon, iconColor, title, subtitle, children, footer }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-5 py-12 relative">
+      <TerminalBackground />
+      <div className="relative z-10 w-full max-w-md">
+        <div className="flex justify-center mb-6"><Logo size="lg" onClick={() => ctx.navigate("landing")} /></div>
+        <div className="bg-[#0F1629] border border-[#1E2D4A] rounded-2xl p-8 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: iconColor + "26" }}>
+            <Icon size={28} style={{ color: iconColor }} />
+          </div>
+          <h2 className="font-display text-xl font-bold text-center mb-2">{title}</h2>
+          <p className="text-sm text-[#8A9BC0] text-center mb-6 leading-relaxed">{subtitle}</p>
+          {children}
+        </div>
+        {footer}
+      </div>
+    </div>
+  );
+}
+
+function ForgotPassword({ ctx }) {
+  const { navigate, pushToast, backend } = ctx;
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(null);   // { devToken? }
+
+  const submit = async () => {
+    if (!email.trim()) { pushToast("error", "Bitte gib deine E-Mail-Adresse ein."); return; }
+    setBusy(true);
+    try {
+      const res = await api.post("/api/auth/forgot-password", { email: email.trim() });
+      setSent({ devToken: res.devResetToken });
+    } catch (e) {
+      pushToast("error", e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Ohne Server gibt es keine Konten und damit auch nichts zurückzusetzen.
+  if (!backend) {
+    return (
+      <AuthShell ctx={ctx} icon={Info} iconColor="#F59E0B"
+        title="Nur mit Server verfügbar"
+        subtitle="Ohne angebundenen Server werden Konten nur in diesem Browser gehalten — ein Zurücksetzen per E-Mail gibt es dort nicht."
+        footer={<button onClick={() => navigate("login")} className="mt-5 mx-auto flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5]"><ChevronLeft size={15} />Zurück zur Anmeldung</button>}>
+        <p className="text-xs text-[#4A5A7A] text-center leading-relaxed">
+          Lösche notfalls die gespeicherten Daten deines Browsers und lege ein neues Konto an.
+        </p>
+      </AuthShell>
+    );
+  }
+
+  if (sent) {
+    return (
+      <AuthShell ctx={ctx} icon={Mail} iconColor="#10B981"
+        title="E-Mail unterwegs"
+        subtitle="Falls ein Konto zu dieser Adresse existiert, haben wir dir einen Link zum Zurücksetzen geschickt. Er ist eine Stunde gültig."
+        footer={<button onClick={() => navigate("login")} className="mt-5 mx-auto flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5]"><ChevronLeft size={15} />Zurück zur Anmeldung</button>}>
+        {sent.devToken && (
+          <div className="mb-4">
+            <p className="text-xs text-[#8A9BC0] mb-2">
+              Auf diesem Server ist kein Mailversand eingerichtet — nutze diesen Code direkt:
+            </p>
+            <div className="p-3 rounded-lg bg-[#0A0E1A] border border-[#2A3F6F] font-code text-[11px] text-[#4F8EF7] break-all">
+              {sent.devToken}
+            </div>
+          </div>
+        )}
+        <Btn className="w-full" icon={ArrowRight} onClick={() => navigate("reset-password")}>
+          Weiter zum Zurücksetzen
+        </Btn>
+      </AuthShell>
+    );
+  }
+
+  return (
+    <AuthShell ctx={ctx} icon={KeyRound} iconColor="#4F8EF7"
+      title="Passwort vergessen?"
+      subtitle="Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link, mit dem du ein neues Passwort vergeben kannst."
+      footer={<button onClick={() => navigate("login")} className="mt-5 mx-auto flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5]"><ChevronLeft size={15} />Zurück zur Anmeldung</button>}>
+      <Field label="E-Mail" icon={AtSign} type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+        placeholder="du@beispiel.de" onKeyDown={(e) => { if (e.key === "Enter") submit(); }} />
+      <Btn className="w-full mt-4" size="lg" disabled={busy} icon={busy ? undefined : Send} onClick={submit}>
+        {busy ? <><Loader2 size={16} className="ld-spin" />Wird gesendet …</> : "Link anfordern"}
+      </Btn>
+    </AuthShell>
+  );
+}
+
+function ResetPassword({ ctx }) {
+  const { navigate, pushToast } = ctx;
+  // Kommt der Nutzer über den Link aus der Mail, steht das Token in der Adresse.
+  const [token, setToken] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("reset") || ""; } catch (e) { return ""; }
+  });
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!token.trim()) { pushToast("error", "Bitte trage den Code aus der E-Mail ein."); return; }
+    if (password.length < 8) { pushToast("error", "Das Passwort muss mindestens 8 Zeichen lang sein."); return; }
+    if (password !== confirm) { pushToast("error", "Die Passwörter stimmen nicht überein."); return; }
+    setBusy(true);
+    try {
+      await api.post("/api/auth/reset-password", { token: token.trim(), newPassword: password });
+      pushToast("success", "Passwort geändert — du kannst dich jetzt anmelden.");
+      // Token aus der Adresszeile entfernen, damit es nicht im Verlauf bleibt
+      try { window.history.replaceState({}, "", window.location.pathname); } catch (e) {}
+      navigate("login");
+    } catch (e) {
+      pushToast("error", e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <AuthShell ctx={ctx} icon={ShieldCheck} iconColor="#10B981"
+      title="Neues Passwort vergeben"
+      subtitle="Trage den Code aus der E-Mail ein und wähle ein neues Passwort."
+      footer={<button onClick={() => navigate("login")} className="mt-5 mx-auto flex items-center gap-1.5 text-sm text-[#8A9BC0] hover:text-[#E8EDF5]"><ChevronLeft size={15} />Zurück zur Anmeldung</button>}>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm text-[#8A9BC0] mb-1.5">Code aus der E-Mail</label>
+          <input value={token} onChange={(e) => setToken(e.target.value)} placeholder="Code einfügen"
+            className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 font-code text-xs text-[#E8EDF5] placeholder:text-[#4A5A7A]" />
+        </div>
+        <Field label="Neues Passwort" icon={KeyRound} type="password" value={password}
+          onChange={(e) => setPassword(e.target.value)} placeholder="mindestens 8 Zeichen" />
+        <Field label="Passwort bestätigen" icon={KeyRound} type="password" value={confirm}
+          onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••"
+          onKeyDown={(e) => { if (e.key === "Enter") submit(); }} />
+        <Btn className="w-full" size="lg" disabled={busy} icon={busy ? undefined : Check} onClick={submit}>
+          {busy ? <><Loader2 size={16} className="ld-spin" />Wird gespeichert …</> : "Passwort speichern"}
+        </Btn>
+        <p className="text-[11px] text-[#4A5A7A] text-center leading-relaxed">
+          Zur Sicherheit werden dabei alle bestehenden Anmeldungen beendet.
+        </p>
+      </div>
+    </AuthShell>
+  );
+}
+
 function TwoFactorLoginStep({ ctx }) {
   const { navigate, verify2FALogin, cancel2FALogin } = ctx;
   const [code, setCode] = useState("");
@@ -5461,6 +5819,13 @@ function AuthScreen({ ctx, mode }) {
             <Btn className="w-full" size="lg" onClick={submit} icon={isLogin ? ArrowRight : Rocket}>
               {isLogin ? "Anmelden" : "Account erstellen"}
             </Btn>
+
+            {isLogin && (
+              <button onClick={() => navigate("forgot-password")}
+                className="w-full text-center text-xs text-[#8A9BC0] hover:text-[#4F8EF7]">
+                Passwort vergessen?
+              </button>
+            )}
           </div>
 
           {!isLogin && (
@@ -5819,6 +6184,23 @@ function AppShell({ ctx, children }) {
 }
 
 /* ===================== Student Dashboard ========================== */
+/**
+ * Zeigt den letzten Login lesbar an. Ohne Server stehen dort bereits Texte
+ * wie "Heute", mit Server ein Zeitstempel aus der Datenbank.
+ */
+function formatLastSeen(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (isNaN(d)) return String(value);          // bereits ein Text
+  const minutes = Math.floor((Date.now() - d.getTime()) / 60000);
+  if (minutes < 1) return "Gerade eben";
+  if (minutes < 60) return `Vor ${minutes} Min.`;
+  if (minutes < 60 * 24 && d.toDateString() === new Date().toDateString()) return `Vor ${Math.floor(minutes / 60)} Std.`;
+  const yesterday = new Date(Date.now() - 86400_000);
+  if (d.toDateString() === yesterday.toDateString()) return "Gestern";
+  return d.toLocaleDateString("de-DE");
+}
+
 function courseProgress(course, user) {
   const ids = allLessonsOf(course).map((l) => l.id);
   const done = ids.filter((id) => user.completedLessons.includes(id)).length;
@@ -5894,18 +6276,35 @@ function StudentDashboard({ ctx }) {
       <Card className="p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-5">
           <div className="flex-1">
-            <p className="text-sm font-medium mb-3 flex items-center gap-1.5"><Flame size={15} className="text-[#F59E0B]" />Deine Lern-Woche</p>
-            <div className="flex gap-2">
-              {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d, i) => {
-                const lit = i >= 7 - Math.min(me.streak, 7);
-                return (
-                  <div key={d} className="flex flex-col items-center gap-1.5">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${lit ? "" : "bg-[#1A2540] text-[#4A5A7A]"}`} style={lit ? { background: GRADIENT } : undefined}>{lit ? "🔥" : ""}</div>
-                    <span className="text-[10px] text-[#8A9BC0]">{d}</span>
-                  </div>
-                );
-              })}
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium flex items-center gap-1.5"><Flame size={15} className="text-[#F59E0B]" />Deine Lern-Woche</p>
+              {(me.streakFreezes || 0) > 0 && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7] flex items-center gap-1"
+                  title="Schützt deine Serie an einem verpassten Tag">
+                  🧊 {me.streakFreezes} Schutz
+                </span>
+              )}
             </div>
+            <div className="flex gap-2">
+              {streakWeek(me).map((d, i) => (
+                <div key={i} className="flex flex-col items-center gap-1.5">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${d.active ? "" : "bg-[#1A2540] text-[#4A5A7A]"} ${d.isToday && !d.active ? "ring-1 ring-[#2A3F6F]" : ""}`}
+                    style={d.active ? { background: GRADIENT } : undefined}>{d.active ? "🔥" : ""}</div>
+                  <span className={`text-[10px] ${d.isToday ? "text-[#E8EDF5] font-medium" : "text-[#8A9BC0]"}`}>{d.label}</span>
+                </div>
+              ))}
+            </div>
+            {me.lastActive !== todayKey() && (
+              <p className="text-[11px] text-[#8A9BC0] mt-2">Heute noch nichts gelernt — eine Lektion hält deine Serie am Leben.</p>
+            )}
+            {(me.streakFreezes || 0) < FREEZE_MAX && (
+              <button onClick={ctx.buyStreakFreeze}
+                disabled={me.xp < FREEZE_COST_XP}
+                className="mt-2 text-[11px] text-[#4F8EF7] hover:underline disabled:text-[#4A5A7A] disabled:no-underline disabled:cursor-not-allowed flex items-center gap-1">
+                🧊 Streak-Schutz kaufen ({FREEZE_COST_XP} XP)
+                {me.xp < FREEZE_COST_XP && <span className="text-[#4A5A7A]">— noch {FREEZE_COST_XP - me.xp} XP nötig</span>}
+              </button>
+            )}
           </div>
           <div className="sm:w-72">
             <div className="flex justify-between text-xs mb-1.5"><span className="text-[#8A9BC0]">Bis Level {lvl.next ? lvl.next.level : lvl.level}</span><span className="text-[#F7C948]">{lvl.next ? `noch ${lvl.toNext.toLocaleString("de-DE")} XP` : "Max-Level!"}</span></div>
@@ -6126,33 +6525,131 @@ function CourseView({ ctx }) {
 
 /* ========================= Leaderboard ============================ */
 function Leaderboard({ ctx }) {
-  const { users, me } = ctx;
-  const students = users.filter((u) => u.role === "student").sort((a, b) => b.xp - a.xp);
+  const { users, me, backend } = ctx;
+  // Mit Server werden alle Lernenden verglichen, nicht nur die in diesem Browser.
+  const [remote, setRemote] = useState({ entries: [], loading: !!backend });
+
+  useEffect(() => {
+    if (!backend) return;
+    let alive = true;
+    api.get("/api/leaderboard?limit=50")
+      .then((r) => { if (alive) setRemote({ entries: r.entries || [], loading: false }); })
+      .catch(() => { if (alive) setRemote({ entries: [], loading: false }); });
+    return () => { alive = false; };
+  }, [backend]);
+
+  // Wochenwertung: nur wer in dieser Woche gelernt hat, taucht in der Liga auf
+  const [mode, setMode] = useState("league");
+  const myLeague = leagueById(me.league || "bronze");
+  const all = backend ? remote.entries : users.filter((u) => u.role === "student");
+
+  const leagueField = all
+    .filter((s) => (s.league || "bronze") === myLeague.id && s.weekKey === weekKey())
+    .sort((a, b) => (b.weeklyXp || 0) - (a.weeklyXp || 0));
+  const allTime = [...all].sort((a, b) => b.xp - a.xp);
+  const students = mode === "league" ? leagueField : allTime;
   const medal = ["🥇", "🥈", "🥉"];
+  const daysLeft = daysLeftInWeek();
+
+  if (backend && remote.loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Trophy className="text-[#F7C948]" />Rangliste</h1>
+          <p className="text-[#8A9BC0] mt-1">Die fleißigsten Lernenden der Plattform.</p>
+        </div>
+        <Card className="p-4 space-y-3">
+          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="ld-skeleton h-12" />)}
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Trophy className="text-[#F7C948]" />Rangliste</h1>
-        <p className="text-[#8A9BC0] mt-1">Die fleißigsten Lernenden der Plattform.</p>
+        <p className="text-[#8A9BC0] mt-1">Jede Woche zählt neu — sammle XP und steig auf.</p>
       </div>
-      <Card className="divide-y divide-[#1E2D4A]">
-        {students.map((s, i) => {
-          const lvl = getLevelInfo(s.xp);
-          const isMe = s.id === me.id;
-          return (
-            <div key={s.id} className={`flex items-center gap-4 p-4 ${isMe ? "bg-[#4F8EF7]/10" : ""}`}>
-              <div className="w-8 text-center font-display font-bold text-lg">{i < 3 ? medal[i] : <span className="text-[#4A5A7A]">{i + 1}</span>}</div>
-              <div className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center shrink-0"><UserAvatar user={s} size={36} /></div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{s.name}{isMe && <span className="text-xs text-[#4F8EF7] ml-2">(Du)</span>}</p>
-                <p className="text-xs text-[#8A9BC0]">Level {lvl.level} · {lvl.name}</p>
-              </div>
-              <div className="hidden sm:flex items-center gap-1 text-sm text-[#F59E0B]"><Flame size={14} />{s.streak}</div>
-              <div className="flex items-center gap-1.5 font-semibold text-[#F7C948] w-24 justify-end"><Star size={15} />{s.xp.toLocaleString("de-DE")}</div>
+
+      {/* Liga-Übersicht */}
+      <Card className="p-5 relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+          <div className="text-5xl">{myLeague.emoji}</div>
+          <div className="flex-1">
+            <p className="text-xs text-[#8A9BC0] uppercase tracking-wider mb-1">Deine Liga</p>
+            <h2 className="font-display text-2xl font-bold" style={{ color: myLeague.color }}>{myLeague.name}</h2>
+            <p className="text-sm text-[#8A9BC0] mt-1">
+              {me.weekKey === weekKey() && (me.weeklyXp || 0) > 0
+                ? <>Diese Woche <strong className="text-[#F7C948]">{(me.weeklyXp || 0).toLocaleString("de-DE")} XP</strong> gesammelt</>
+                : "Diese Woche noch keine XP — leg los!"}
+            </p>
+          </div>
+          <div className="text-center sm:text-right">
+            <p className="text-sm text-[#E8EDF5] font-medium">Noch {daysLeft} {daysLeft === 1 ? "Tag" : "Tage"}</p>
+            <p className="text-xs text-[#8A9BC0]">bis zur Wertung</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 mt-4 pt-4 border-t border-[#1E2D4A] overflow-x-auto">
+          {LEAGUES.map((l, i) => (
+            <div key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] whitespace-nowrap ${l.id === myLeague.id ? "font-medium" : "opacity-40"}`}
+              style={l.id === myLeague.id ? { background: l.color + "22", color: l.color } : { color: "#8A9BC0" }}>
+              {l.emoji} {l.name}
             </div>
-          );
-        })}
+          ))}
+        </div>
+        <div className="absolute bottom-0 inset-x-0 h-1" style={{ background: myLeague.color }} />
       </Card>
+
+      <div className="flex p-1 bg-[#0A0E1A] rounded-lg max-w-xs">
+        <button onClick={() => setMode("league")}
+          className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${mode === "league" ? "text-white" : "text-[#8A9BC0]"}`}
+          style={mode === "league" ? { background: GRADIENT } : undefined}>Diese Woche</button>
+        <button onClick={() => setMode("all")}
+          className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${mode === "all" ? "text-white" : "text-[#8A9BC0]"}`}
+          style={mode === "all" ? { background: GRADIENT } : undefined}>Gesamt</button>
+      </div>
+
+      {students.length === 0 ? (
+        <Card className="p-10 text-center">
+          <Trophy size={36} className="mx-auto text-[#4A5A7A] mb-3" />
+          <p className="text-[#8A9BC0]">In dieser Woche hat in deiner Liga noch niemand XP gesammelt.</p>
+          <p className="text-sm text-[#4A5A7A] mt-1">Sei die erste Person — schließ eine Lektion ab.</p>
+        </Card>
+      ) : (
+        <Card className="divide-y divide-[#1E2D4A]">
+          {students.map((s, i) => {
+            const lvl = getLevelInfo(s.xp);
+            const isMe = s.id === me.id;
+            const promoting = mode === "league" && i < PROMOTE_TOP;
+            const relegating = mode === "league" && students.length > RELEGATE_BOTTOM && i >= students.length - RELEGATE_BOTTOM;
+            return (
+              <div key={s.id} className={`flex items-center gap-4 p-4 ${isMe ? "bg-[#4F8EF7]/10" : ""}`}>
+                <div className="w-8 text-center font-display font-bold text-lg">{i < 3 ? medal[i] : <span className="text-[#4A5A7A]">{i + 1}</span>}</div>
+                <div className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center shrink-0"><UserAvatar user={s} size={36} /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">
+                    {s.name}{isMe && <span className="text-xs text-[#4F8EF7] ml-2">(Du)</span>}
+                    {promoting && <span className="text-[10px] text-[#10B981] ml-2">↑ Aufstieg</span>}
+                    {relegating && <span className="text-[10px] text-[#EF4444] ml-2">↓ Abstieg</span>}
+                  </p>
+                  <p className="text-xs text-[#8A9BC0]">Level {lvl.level} · {lvl.name}</p>
+                </div>
+                <div className="hidden sm:flex items-center gap-1 text-sm text-[#F59E0B]"><Flame size={14} />{s.streak}</div>
+                <div className="flex items-center gap-1.5 font-semibold text-[#F7C948] w-24 justify-end">
+                  <Star size={15} />{(mode === "league" ? (s.weeklyXp || 0) : s.xp).toLocaleString("de-DE")}
+                </div>
+              </div>
+            );
+          })}
+        </Card>
+      )}
+
+      {mode === "league" && students.length > 0 && (
+        <p className="text-xs text-[#4A5A7A] text-center">
+          Die besten {PROMOTE_TOP} steigen auf, die letzten {RELEGATE_BOTTOM} steigen ab.
+        </p>
+      )}
     </div>
   );
 }
@@ -6453,17 +6950,39 @@ function Profile({ ctx }) {
 
 /* ====================== Teacher Dashboard ========================= */
 function TeacherDashboard({ ctx }) {
-  const { me, users, pushToast } = ctx;
+  const { me, users, backend, pushToast } = ctx;
   const [invite, setInvite] = useState(false);
   const [detail, setDetail] = useState(null);
-  const students = users.filter((u) => u.role === "student" && (me.students.includes(u.id) || u.teacherId === me.id));
+  // Mit Server kommt die Klassenliste aus der Datenbank — der lokale Zustand
+  // kennt nur die Konten dieses Browsers.
+  const [remote, setRemote] = useState({ students: [], loading: !!backend });
+
+  useEffect(() => {
+    if (!backend) return;
+    let alive = true;
+    api.get("/api/teacher/students")
+      .then((r) => { if (alive) setRemote({ students: r.students || [], loading: false }); })
+      .catch((e) => { if (alive) { setRemote({ students: [], loading: false }); pushToast("error", e.message); } });
+    return () => { alive = false; };
+  }, [backend, pushToast]);
+
+  const students = backend
+    ? remote.students
+    : users.filter((u) => u.role === "student" && ((me.students || []).includes(u.id) || u.teacherId === me.id));
+
   const avgProgress = students.length
     ? Math.round(students.reduce((acc, s) => {
         const c = s.currentCourse ? courseById(s.currentCourse) : COURSES[0];
         return acc + (c ? courseProgress(c, s).pct : 0);
       }, 0) / students.length)
     : 0;
-  const activeToday = students.filter((s) => s.lastLogin === "Heute" || s.lastLogin === "Jetzt").length;
+  const activeToday = students.filter((s) => {
+    if (!backend) return s.lastLogin === "Heute" || s.lastLogin === "Jetzt";
+    // Der Server liefert einen Zeitstempel — heute aktiv heißt: seit Mitternacht
+    if (!s.lastLogin) return false;
+    const d = new Date(s.lastLogin);
+    return !isNaN(d) && d.toDateString() === new Date().toDateString();
+  }).length;
   const copy = (txt) => { try { navigator.clipboard.writeText(txt); } catch (e) {} pushToast("success", "Schul-Code kopiert!"); };
   const detailStudent = detail ? students.find((s) => s.id === detail) : null;
 
@@ -6519,7 +7038,7 @@ function TeacherDashboard({ ctx }) {
                       <td className="px-4 py-3">{c ? <span className="flex items-center gap-1.5">{c.icon} {c.name}</span> : <span className="text-[#4A5A7A]">—</span>}</td>
                       <td className="px-4 py-3"><div className="flex items-center gap-2 w-32"><ProgressBar value={p.done} max={p.total || 1} /><span className="text-xs text-[#8A9BC0] whitespace-nowrap">{p.pct}%</span></div></td>
                       <td className="px-4 py-3"><span className="flex items-center gap-1 text-[#F7C948]"><Star size={13} />{s.xp.toLocaleString("de-DE")}</span></td>
-                      <td className="px-4 py-3 text-[#8A9BC0]">{s.lastLogin}</td>
+                      <td className="px-4 py-3 text-[#8A9BC0]">{formatLastSeen(s.lastLogin)}</td>
                       <td className="px-4 py-3 text-right"><Eye size={16} className="text-[#4A5A7A] inline" /></td>
                     </tr>
                   );
@@ -6926,7 +7445,7 @@ function Playground({ ctx }) {
         <Card className="p-5">
           <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
             <Bug size={18} className="text-[#7C3AED]" /><span className="font-display font-bold">KI-Debugging</span>
-            {debugResult.offline && <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B]">Offline-Analyse</span>}
+            <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981]">Sofort geprüft</span>
           </div>
           <p className="text-sm text-[#C9D6F0] mb-4">{debugResult.summary}</p>
           {(debugResult.issues || []).length === 0 ? (
@@ -6949,11 +7468,9 @@ function Playground({ ctx }) {
               })}
             </div>
           )}
-          {debugResult.offline && (
-            <button onClick={openAiSettings} className="text-xs text-[#4F8EF7] hover:underline flex items-center gap-1.5 mt-3">
-              <Settings size={12} />Für tiefere Analyse: echte KI aktivieren
-            </button>
-          )}
+          <button onClick={() => setRightTab("assistant")} className="text-xs text-[#4F8EF7] hover:underline flex items-center gap-1.5 mt-3">
+            <Bot size={12} />Mit dem KI-Assistenten besprechen
+          </button>
         </Card>
       )}
 
@@ -6981,21 +7498,112 @@ function Playground({ ctx }) {
 
 /* ========================= Admin-Dashboard ========================= */
 function AdminDashboard({ ctx }) {
-  const { me, users, reports, adminUpdateUser, adminDeleteUser, adminCreateAdmin, resolveReport, deleteReport, pushToast } = ctx;
+  const { me, users, reports, backend, adminUpdateUser, adminDeleteUser, adminCreateAdmin, resolveReport, deleteReport, pushToast } = ctx;
   const [tab, setTab] = useState("users");
   const [query, setQuery] = useState("");
   const [editUser, setEditUser] = useState(null);
   const [editForm, setEditForm] = useState(null);
   const [newAdminOpen, setNewAdminOpen] = useState(false);
   const [newAdminForm, setNewAdminForm] = useState({ name: "", email: "", password: "" });
+  // Mit Server kommen Nutzer und Meldungen aus der Datenbank statt aus dem
+  // lokalen Zustand — dort stünden nur die Konten dieses Browsers.
+  const [remote, setRemote] = useState({ users: [], reports: [], stats: null, loading: !!backend });
+
+  const reload = useCallback(async (search) => {
+    if (!backend) return;
+    setRemote((r) => ({ ...r, loading: true }));
+    try {
+      const [u, rep, st] = await Promise.all([
+        api.get(`/api/admin/users${search ? `?q=${encodeURIComponent(search)}` : ""}`),
+        api.get("/api/admin/reports"),
+        api.get("/api/admin/stats").catch(() => null),
+      ]);
+      setRemote({ users: u.users || [], reports: rep.reports || [], stats: st, loading: false });
+    } catch (e) {
+      setRemote((r) => ({ ...r, loading: false }));
+      pushToast("error", e.message);
+    }
+  }, [backend, pushToast]);
+
+  useEffect(() => { reload(); }, [reload]);
+
+  // Suche serverseitig ausführen, aber erst nach kurzer Pause beim Tippen.
+  useEffect(() => {
+    if (!backend) return;
+    const t = setTimeout(() => reload(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query, backend, reload]);
 
   const q = query.trim().toLowerCase();
-  const list = users.filter((u) => !u.isGuest && (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
-  const openReports = reports.filter((r) => r.status === "open");
-  const resolvedReports = reports.filter((r) => r.status !== "open");
+  const list = backend
+    ? remote.users
+    : users.filter((u) => !u.isGuest && (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+  const allReports = backend ? remote.reports : reports;
+  const openReports = allReports.filter((r) => r.status === "open");
+  const resolvedReports = allReports.filter((r) => r.status !== "open");
 
   const openEdit = (u) => { setEditUser(u); setEditForm({ name: u.name, email: u.email, role: u.role }); };
-  const saveEdit = () => { adminUpdateUser(editUser.id, editForm); setEditUser(null); };
+
+  const saveEdit = async () => {
+    if (backend) {
+      try {
+        await api.patch(`/api/admin/users/${editUser.id}`, editForm);
+        pushToast("success", "Nutzer aktualisiert.");
+        setEditUser(null);
+        await reload(query.trim());
+      } catch (e) { pushToast("error", e.message); }
+      return;
+    }
+    adminUpdateUser(editUser.id, editForm);
+    setEditUser(null);
+  };
+
+  const removeUser = async (id) => {
+    if (backend) {
+      try {
+        await api.del(`/api/admin/users/${id}`);
+        pushToast("info", "Konto gelöscht.");
+        await reload(query.trim());
+      } catch (e) { pushToast("error", e.message); }
+      return;
+    }
+    adminDeleteUser(id);
+  };
+
+  const createAdmin = async () => {
+    if (backend) {
+      try {
+        await api.post("/api/admin/users", { ...newAdminForm, role: "admin" });
+        pushToast("success", `Admin-Konto für ${newAdminForm.name} erstellt.`);
+        setNewAdminOpen(false);
+        setNewAdminForm({ name: "", email: "", password: "" });
+        await reload(query.trim());
+      } catch (e) { pushToast("error", e.message); }
+      return;
+    }
+    if (adminCreateAdmin(newAdminForm)) {
+      setNewAdminOpen(false);
+      setNewAdminForm({ name: "", email: "", password: "" });
+    }
+  };
+
+  const setReportStatus = async (id, status) => {
+    if (backend) {
+      try { await api.patch(`/api/admin/reports/${id}`, { status }); await reload(query.trim()); }
+      catch (e) { pushToast("error", e.message); }
+      return;
+    }
+    resolveReport(id);
+  };
+
+  const removeReport = async (id) => {
+    if (backend) {
+      try { await api.del(`/api/admin/reports/${id}`); await reload(query.trim()); }
+      catch (e) { pushToast("error", e.message); }
+      return;
+    }
+    deleteReport(id);
+  };
 
   const roleBadge = (role) => {
     const map = { admin: ["#7C3AED", "Admin"], teacher: ["#4F8EF7", "Lehrer"], student: ["#10B981", "Schüler"] };
@@ -7011,8 +7619,8 @@ function AdminDashboard({ ctx }) {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <StatCard icon={Users} label="Registrierte Accounts" value={users.filter((u) => !u.isGuest).length} color="#4F8EF7" />
-        <StatCard icon={Shield} label="Admins" value={users.filter((u) => u.role === "admin").length} color="#7C3AED" />
+        <StatCard icon={Users} label="Registrierte Accounts" value={backend ? (remote.stats?.users.total ?? list.length) : users.filter((u) => !u.isGuest).length} color="#4F8EF7" />
+        <StatCard icon={Shield} label="Admins" value={backend ? (remote.stats?.users.admins ?? list.filter((u) => u.role === "admin").length) : users.filter((u) => u.role === "admin").length} color="#7C3AED" />
         <StatCard icon={FileText} label="Offene Meldungen" value={openReports.length} color="#EF4444" />
       </div>
 
@@ -7045,7 +7653,7 @@ function AdminDashboard({ ctx }) {
                     <td className="px-4 py-3">{roleBadge(u.role)}</td>
                     <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                       <button onClick={() => openEdit(u)} className="text-[#4F8EF7] hover:underline text-xs">Bearbeiten</button>
-                      {u.id !== me.id && <button onClick={() => adminDeleteUser(u.id)} className="text-[#EF4444] hover:underline text-xs">Löschen</button>}
+                      {u.id !== me.id && <button onClick={() => removeUser(u.id)} className="text-[#EF4444] hover:underline text-xs">Löschen</button>}
                     </td>
                   </tr>
                 ))}
@@ -7073,8 +7681,8 @@ function AdminDashboard({ ctx }) {
               {r.aiFeedback && <p className="text-xs text-[#8A9BC0] mb-1"><strong className="text-[#C9D6F0]">KI-Feedback:</strong> {r.aiFeedback}</p>}
               {r.reason && <p className="text-xs text-[#8A9BC0] mb-2"><strong className="text-[#C9D6F0]">Grund:</strong> {r.reason}</p>}
               <div className="flex gap-2 mt-2">
-                {r.status === "open" && <Btn size="sm" variant="secondary" icon={Check} onClick={() => resolveReport(r.id)}>Als erledigt markieren</Btn>}
-                <Btn size="sm" variant="danger" icon={Trash2} onClick={() => deleteReport(r.id)}>Löschen</Btn>
+                {r.status === "open" && <Btn size="sm" variant="secondary" icon={Check} onClick={() => setReportStatus(r.id, "resolved")}>Als erledigt markieren</Btn>}
+                <Btn size="sm" variant="danger" icon={Trash2} onClick={() => removeReport(r.id)}>Löschen</Btn>
               </div>
             </Card>
           ))}
@@ -7118,7 +7726,7 @@ function AdminDashboard({ ctx }) {
               <Field label="E-Mail" value={newAdminForm.email} onChange={(e) => setNewAdminForm((f) => ({ ...f, email: e.target.value }))} />
               <Field label="Passwort" type="password" value={newAdminForm.password} onChange={(e) => setNewAdminForm((f) => ({ ...f, password: e.target.value }))} />
             </div>
-            <Btn className="w-full mt-4" icon={Check} onClick={() => { if (adminCreateAdmin(newAdminForm)) { setNewAdminOpen(false); setNewAdminForm({ name: "", email: "", password: "" }); } }}>Admin erstellen</Btn>
+            <Btn className="w-full mt-4" icon={Check} onClick={createAdmin}>Admin erstellen</Btn>
           </Card>
         </div>
       )}
@@ -7243,7 +7851,7 @@ function LessonView({ ctx }) {
     }
 
     // Alle anderen Aufgabentypen (Lückentext, Code, Erklären) werden geprüft —
-    // per echter KI, wenn ein API-Key hinterlegt ist, sonst per Offline-Heuristik.
+    // vollständig lokal — die KI ist daran nicht beteiligt.
     let checkTask = task, checkAnswer = ans;
     if (task.type === "fill_blank") {
       if (!(ans || []).some((v) => (v || "").trim())) { pushToast("error", "Bitte fülle mindestens eine Lücke aus."); return; }
@@ -7404,7 +8012,7 @@ function LessonView({ ctx }) {
                   : <Btn className="flex-1" onClick={() => setIdx((i) => i + 1)} icon={ArrowRight}>Nächste Aufgabe</Btn>)}
               </div>
 
-              {/* MC Feedback (Lückentext/Code/Erklären laufen über die KI-Bewertung unten) */}
+              {/* MC-Feedback; Lückentext, Code und Erklären erscheinen in der Bewertungskarte unten */}
               {result && task.type === "multiple_choice" && (
                 <div className={`mt-4 p-3 rounded-lg text-sm ${result.correct ? "bg-[#10B981]/10 text-[#10B981]" : "bg-[#EF4444]/10 text-[#C9D6F0]"}`}>
                   <div className="flex items-center gap-1.5 font-medium mb-1">{result.correct ? <CheckCircle2 size={15} /> : <XCircle size={15} className="text-[#EF4444]" />}{result.correct ? "Richtig!" : "Leider falsch"}</div>

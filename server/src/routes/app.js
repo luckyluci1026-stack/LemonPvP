@@ -1,6 +1,6 @@
 import { config } from "../config.js";
 import { one, many, query, transaction } from "../db.js";
-import { requireAuth, updateStreak } from "./auth.js";
+import { requireAuth, updateStreak, rolloverLeague, weekKey } from "./auth.js";
 import { loadFullUser, listUser, serializeProject } from "../serialize.js";
 
 const MAX_NAME = 80;
@@ -42,6 +42,12 @@ export default async function appRoutes(app) {
     if (!lessonId) return reply.code(400).send({ error: "lessonId fehlt." });
 
     const xp = Math.max(0, Math.min(500, Number(xpReward) || 0));   // Obergrenze gegen Manipulation
+
+    // Wochenwechsel VOR dem Gutschreiben abhandeln — sonst würde der
+    // Rollover die soeben vergebenen Wochen-XP wieder auf null setzen.
+    const beforeUser = await one("SELECT * FROM users WHERE id = $1", [request.user.id]);
+    await rolloverLeague(beforeUser);
+
     const result = await transaction(async (client) => {
       const inserted = await client.query(
         `INSERT INTO completed_lessons (user_id, lesson_id, course_id)
@@ -50,7 +56,7 @@ export default async function appRoutes(app) {
       );
       const isNew = inserted.rowCount > 0;
       if (isNew && xp > 0) {
-        await client.query("UPDATE users SET xp = xp + $1 WHERE id = $2", [xp, request.user.id]);
+        await client.query("UPDATE users SET xp = xp + $1, weekly_xp = weekly_xp + $1 WHERE id = $2", [xp, request.user.id]);
       }
       const earned = [];
       for (const badge of (Array.isArray(badges) ? badges : []).slice(0, 10)) {
@@ -65,16 +71,43 @@ export default async function appRoutes(app) {
     });
 
     const user = await one("SELECT * FROM users WHERE id = $1", [request.user.id]);
-    await updateStreak(user);
-    return { ...result, user: await loadFullUser(request.user.id) };
+    const streakInfo = await updateStreak(user);
+    return { ...result, ...streakInfo, user: await loadFullUser(request.user.id) };
   });
 
   // XP für einzelne richtige Aufgaben
   app.post("/api/progress/xp", { preHandler: [requireAuth] }, async (request, reply) => {
     const amount = Math.max(0, Math.min(100, Number(request.body?.amount) || 0));
     if (!amount) return reply.code(400).send({ error: "Ungültiger XP-Betrag." });
-    await query("UPDATE users SET xp = xp + $1 WHERE id = $2", [amount, request.user.id]);
+    const before = await one("SELECT * FROM users WHERE id = $1", [request.user.id]);
+    await rolloverLeague(before);
+    await query("UPDATE users SET xp = xp + $1, weekly_xp = weekly_xp + $1 WHERE id = $2", [amount, request.user.id]);
     return { user: await loadFullUser(request.user.id) };
+  });
+
+  // Streak-Schutz kaufen — Preis und Obergrenze werden serverseitig geprüft.
+  app.post("/api/progress/streak-freeze", { preHandler: [requireAuth] }, async (request, reply) => {
+    const FREEZE_COST = 200;
+    const FREEZE_MAX = 3;
+    try {
+      await transaction(async (client) => {
+        const { rows: [user] } = await client.query(
+          "SELECT xp, streak_freezes FROM users WHERE id = $1 FOR UPDATE", [request.user.id]);
+        if ((user.streak_freezes || 0) >= FREEZE_MAX) {
+          throw Object.assign(new Error(`Mehr als ${FREEZE_MAX} Schutzschilde kannst du nicht halten.`), { statusCode: 409 });
+        }
+        if (user.xp < FREEZE_COST) {
+          throw Object.assign(new Error("Dafür reichen deine XP nicht."), { statusCode: 402 });
+        }
+        await client.query(
+          "UPDATE users SET xp = xp - $1, streak_freezes = streak_freezes + 1 WHERE id = $2",
+          [FREEZE_COST, request.user.id]);
+      });
+      return { user: await loadFullUser(request.user.id) };
+    } catch (e) {
+      if (e.statusCode) return reply.code(e.statusCode).send({ error: e.message });
+      throw e;
+    }
   });
 
   /* ----------------------------- Rangliste -------------------------------- */
@@ -98,9 +131,10 @@ export default async function appRoutes(app) {
     if (request.user.role !== "teacher") {
       return reply.code(403).send({ error: "Nur für Lehrkräfte." });
     }
+    // Bewusst zwei einfache Abfragen statt einer mit Array-Aggregation:
+    // array_agg gibt es nur in PostgreSQL, so läuft es auch auf SQLite.
     const rows = await many(
-      `SELECT u.*, COUNT(c.lesson_id) AS completed_count,
-              COALESCE(array_agg(c.lesson_id) FILTER (WHERE c.lesson_id IS NOT NULL), '{}') AS completed_lessons
+      `SELECT u.*, COUNT(c.lesson_id) AS completed_count
          FROM users u
          LEFT JOIN completed_lessons c ON c.user_id = u.id
         WHERE u.teacher_id = $1
@@ -108,7 +142,19 @@ export default async function appRoutes(app) {
         ORDER BY u.name`,
       [request.user.id]
     );
-    return { students: rows.map(listUser) };
+    const lessons = await many(
+      `SELECT c.user_id, c.lesson_id
+         FROM completed_lessons c
+         JOIN users u ON u.id = c.user_id
+        WHERE u.teacher_id = $1`,
+      [request.user.id]
+    );
+    const byUser = new Map();
+    for (const l of lessons) {
+      if (!byUser.has(l.user_id)) byUser.set(l.user_id, []);
+      byUser.get(l.user_id).push(l.lesson_id);
+    }
+    return { students: rows.map((r) => listUser({ ...r, completed_lessons: byUser.get(r.id) || [] })) };
   });
 
   /* ------------------------------ Projekte -------------------------------- */

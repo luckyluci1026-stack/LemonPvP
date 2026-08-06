@@ -16,6 +16,16 @@ CREATE TABLE IF NOT EXISTS users (
   verification_code   TEXT,
   verification_expires TIMESTAMPTZ,
 
+  -- Passwort-Zurücksetzen: gespeichert wird nur der Hash des Tokens
+  reset_token_hash    TEXT,
+  reset_expires       TIMESTAMPTZ,
+
+  -- Ligen und Streak-Schutz
+  league              TEXT NOT NULL DEFAULT 'bronze',
+  weekly_xp           INTEGER NOT NULL DEFAULT 0 CHECK (weekly_xp >= 0),
+  week_key            TEXT,
+  streak_freezes      INTEGER NOT NULL DEFAULT 0 CHECK (streak_freezes >= 0),
+
   totp_secret         TEXT,
   totp_enabled        BOOLEAN NOT NULL DEFAULT FALSE,
 
@@ -117,3 +127,14 @@ CREATE TABLE IF NOT EXISTS ai_usage (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS ai_usage_time_idx ON ai_usage (created_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- Nachträgliche Spalten für bereits bestehende Installationen.
+-- CREATE TABLE IF NOT EXISTS oben greift bei vorhandenen Tabellen nicht.
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_hash TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS league TEXT NOT NULL DEFAULT 'bronze';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_xp INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS week_key TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_freezes INTEGER NOT NULL DEFAULT 0;

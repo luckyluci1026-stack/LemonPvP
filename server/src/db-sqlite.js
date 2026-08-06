@@ -38,6 +38,12 @@ CREATE TABLE IF NOT EXISTS users (
   email_verified INTEGER NOT NULL DEFAULT 0,
   verification_code TEXT,
   verification_expires TEXT,
+  reset_token_hash TEXT,
+  reset_expires TEXT,
+  league TEXT NOT NULL DEFAULT 'bronze',
+  weekly_xp INTEGER NOT NULL DEFAULT 0,
+  week_key TEXT,
+  streak_freezes INTEGER NOT NULL DEFAULT 0,
   totp_secret TEXT,
   totp_enabled INTEGER NOT NULL DEFAULT 0,
   teacher_id TEXT REFERENCES users(id) ON DELETE SET NULL,
@@ -198,8 +204,25 @@ export function sqliteQuery(text, params) {
   return { rows: [], rowCount: Number(info.changes || 0) };
 }
 
+// Nachträglich hinzugekommene Spalten. SQLite kennt kein
+// "ADD COLUMN IF NOT EXISTS", daher wird der Bestand vorher abgefragt.
+const LATER_COLUMNS = [
+  ["users", "reset_token_hash", "TEXT"],
+  ["users", "reset_expires", "TEXT"],
+  ["users", "league", "TEXT NOT NULL DEFAULT 'bronze'"],
+  ["users", "weekly_xp", "INTEGER NOT NULL DEFAULT 0"],
+  ["users", "week_key", "TEXT"],
+  ["users", "streak_freezes", "INTEGER NOT NULL DEFAULT 0"],
+];
+
 export function sqliteMigrate() {
   db.exec(SCHEMA);
+  for (const [table, column, type] of LATER_COLUMNS) {
+    const existing = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+    if (!existing.includes(column)) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+    }
+  }
 }
 
 /** Transaktionen — SQLite kennt keine verschachtelten, daher einfach gehalten. */
