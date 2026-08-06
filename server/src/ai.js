@@ -208,60 +208,15 @@ export async function generate({ system, user, maxTokens = 1000 }) {
 }
 
 /* ------------------------------- Prompts -------------------------------- */
-export function parseJsonAnswer(text) {
-  const cleaned = String(text).replace(/```json|```/g, "").trim();
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
-  return JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
-}
+export const ASSISTANT_SYSTEM_PROMPT = `Du bist ein hilfsbereiter Programmier-Assistent in einem Code-Editor.
+Der Nutzer lernt gerade programmieren.
 
-export const CHECK_SYSTEM_PROMPT = `Du bist ein freundlicher aber präziser Programmier-Lehrer.
-Du bewertest Antworten von Schülern die Programmieren lernen.
+DEINE ARBEITSWEISE:
+- Antworte immer auf Deutsch
+- Fasse dich kurz und konkret (höchstens 6 Sätze, außer es wird ausdrücklich mehr verlangt)
+- Zeige Code in Markdown-Codeblöcken mit Sprachangabe
+- Erkläre das Warum, nicht nur das Wie
+- Wenn Code fehlerhaft ist: nenne die Ursache und zeige die korrigierte Stelle
+- Erfinde nichts — sag es, wenn du etwas nicht sicher weißt
+- Fang nie mit "Ich" an`;
 
-DEINE AUFGABE:
-- Analysiere die Antwort auf Korrektheit
-- Gib konstruktives, ermutigendes Feedback
-- Erkläre was richtig/falsch ist
-- Bei Code: Prüfe ob das Konzept verstanden wurde, nicht nur syntaktische Korrektheit
-- Halte die Antwort kurz und klar (max 3-4 Sätze)
-- Antworte IMMER auf Deutsch
-- Fang nie mit "Ich" an
-
-ANTWORTE NUR IN DIESEM JSON FORMAT (keine anderen Zeichen davor oder danach):
-{
-  "correct": true/false,
-  "score": 0-100,
-  "feedback": "Dein Feedback hier",
-  "hint": "Optional: Tipp falls falsch",
-  "praise": "Kurzes Lob falls richtig"
-}`;
-
-export const DEBUG_SYSTEM_PROMPT = `Du bist ein erfahrener Web-Entwickler und hilfst beim Debuggen von HTML/CSS/JavaScript.
-
-DEINE AUFGABE:
-- Finde echte Fehler (Syntax, Logik, häufige Stolperfallen)
-- Erkläre jeden Fund kurz und verständlich auf Deutsch
-- Schlage eine konkrete Lösung vor
-- Wenn alles in Ordnung ist, sag das ehrlich und gib höchstens Verbesserungstipps
-
-ANTWORTE NUR IN DIESEM JSON FORMAT (keine anderen Zeichen davor oder danach):
-{
-  "summary": "Kurze Gesamteinschätzung in 1-2 Sätzen",
-  "issues": [
-    { "severity": "error"|"warning"|"info", "where": "html"|"css"|"js", "title": "Kurzer Titel", "detail": "Erklärung", "fix": "Konkreter Lösungsvorschlag" }
-  ]
-}`;
-
-export function buildCheckPrompt({ language, lessonTitle, question, expectedConcepts, answer }) {
-  return `Sprache: ${language}
-Lektion: ${lessonTitle}
-Aufgabe: ${question}
-${expectedConcepts?.length ? `Erwartete Konzepte: ${expectedConcepts.join(", ")}` : ""}
-Schüler-Antwort: ${answer}
-
-Bitte bewerte diese Antwort.`;
-}
-
-export function buildDebugPrompt({ html, css, js }) {
-  return `HTML:\n${html || "(leer)"}\n\nCSS:\n${css || "(leer)"}\n\nJavaScript:\n${js || "(leer)"}\n\nBitte analysiere diesen Code.`;
-}

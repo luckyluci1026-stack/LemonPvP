@@ -31,33 +31,54 @@ npm run start:local
 Nutzt SQLite über Nodes eingebautes `node:sqlite`. Braucht rund 77 MB
 Arbeitsspeicher und startet in unter drei Sekunden.
 
-## 1a. Wie schnell kommt die Bewertung?
+## 1a. Wie Aufgaben bewertet werden
 
-Die Antwortbewertung erscheint **immer sofort** — unabhängig von Hardware
-und Verbindung. Dahinter steckt ein zweistufiges Verfahren:
+**Lektionen werden ausschließlich lokal geprüft** — im Browser, ohne Netzwerk,
+ohne Kosten, in etwa 15 Millisekunden. Es wird dafür keine KI angefragt, auch
+wenn eine eingerichtet ist.
 
-1. **Sofort (~15 ms):** Die eingebaute Analyse prüft Struktur, erwartete
-   Konzepte und Begründungen direkt im Browser. Das Ergebnis steht samt XP
-   unmittelbar auf dem Bildschirm.
-2. **Nachgeschärft (im Hintergrund):** Ist eine KI eingerichtet, läuft parallel
-   eine Anfrage. Trifft die Antwort ein, ersetzt sie das Sofortergebnis und
-   die Karte wechselt von *Sofort-Prüfung* auf *KI-geprüft*.
+Die KI sitzt stattdessen dort, wo Wartezeit unproblematisch ist: als
+**Assistent im Code-Editor**. Dort kann man Fragen zum eigenen Code stellen,
+und ein paar Sekunden Antwortzeit stören nicht.
 
-Fällt die KI strenger aus als die Sofortprüfung, bleiben bereits vergebene XP
-erhalten — es wird lediglich der zusätzliche Hinweis angezeigt. Umgekehrt
-gibt es XP nach, wenn die KI großzügiger urteilt.
+| Wo | Womit | Wartezeit |
+|---|---|---|
+| Lektionen | Lokale Analyse | ~15 ms |
+| Editor-Assistent | Gemini Flash | 1–3 s |
+| Editor-Assistent | Ollama (eigener Server) | 10–60 s |
 
-Gleiche Antwort zur gleichen Aufgabe wird zwischengespeichert und kommt beim
-zweiten Mal ohne neue Anfrage zurück — das schont knappe Gratis-Kontingente.
+### Was die lokale Analyse leistet
 
-| Weg | Wartezeit |
+Sie durchsucht den Code nicht nach Textbausteinen, sondern zerlegt ihn:
+
+1. **Tokenisieren** — Kommentare und Zeichenketten werden entfernt. Eine
+   auskommentierte Lösung zählt dadurch nicht als Lösung.
+2. **Strukturieren** — Deklarationen, Funktionen, Aufrufe und die
+   Klammer-Balance werden erfasst (bei HTML stattdessen die Tag-Paare).
+3. **Abgleichen** — Erwartete Bausteine werden gegen diese Struktur geprüft.
+4. **Bewerten** — Punktzahl plus konkret formuliertes Feedback.
+
+Dadurch entstehen Rückmeldungen, die auf den tatsächlichen Fehler zeigen:
+
+| Eingabe | Rückmeldung |
 |---|---|
-| Lokale Analyse | ~15 ms |
-| Gemini Flash | 1–3 s (im Hintergrund) |
-| Ollama auf schwacher CPU | 10–60 s (im Hintergrund) |
+| `let farbe = "blau"` statt `const` | „Du hast `let` verwendet — die Aufgabe verlangt `const`." |
+| `const lieblingsfrabe = …` | „Du hast `lieblingsfrabe` geschrieben — erwartet wird `lieblingsfarbe`." |
+| `// const farbe = "blau"` | „Bisher stehen dort nur Kommentare — der eigentliche Code fehlt noch." |
+| `def gruss(name)` ohne `:` | „Doppelpunkt fehlt: Nach der Parameterliste muss ein `:` stehen." |
+| `<h1>Titel` ohne Schluss-Tag | „`<h1>` wird geöffnet, aber nie geschlossen." |
 
-Für einen einzelnen Gemini-Key reicht das Gratis-Kontingent (etwa 15 Anfragen
-pro Minute) beim Lernen allein problemlos aus.
+Ein ausdrücklich verlangtes Schlüsselwort oder ein geforderter Variablenname
+gilt als wesentlich — fehlt er, ist die Aufgabe nicht gelöst, auch wenn
+rechnerisch genug andere Bausteine vorhanden wären.
+
+Bei Freitextaufgaben zählt nicht die Wortzahl, sondern ob wirklich begründet
+wird. Fragt die Aufgabe nach dem *Warum*, reicht eine reine Beschreibung
+nicht; wer die Frage nur umformuliert, wird ebenfalls erkannt.
+
+Der Editor nutzt dieselbe Engine für seine Fehlerprüfung und findet dabei auch
+dateiübergreifende Fehler — etwa ein `getElementById("btn")`, für das im HTML
+kein passendes Element existiert.
 
 **Demo-Zugänge**
 

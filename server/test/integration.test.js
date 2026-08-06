@@ -262,9 +262,9 @@ test("KI-Status meldet fehlende Konfiguration", async () => {
   const r = await api("GET", "/api/ai/status");
   assert.equal(r.status, 200);
   assert.equal(r.body.available, false, "Ohne Keys keine KI");
-  const check = await api("POST", "/api/ai/check", { question: "?", answer: "x" });
-  assert.equal(check.status, 503);
-  assert.equal(check.body.fallbackToLocal, true, "Frontend soll lokal prüfen");
+  // Der Assistent ist der einzige KI-Endpunkt; Lektionen laufen rein lokal.
+  const assist = await api("POST", "/api/ai/assist", { messages: [{ role: "user", content: "hi" }] });
+  assert.equal(assist.status, 503);
 });
 
 test("Aufräumen", async () => {

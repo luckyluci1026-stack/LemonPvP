@@ -118,12 +118,11 @@ Alle Antworten sind JSON. Authentifizierung über das Sitzungs-Cookie.
 | Methode | Pfad | Zweck |
 |---|---|---|
 | GET | `/api/ai/status` | Ist serverseitig eine KI verfügbar? |
-| POST | `/api/ai/check` | Antwort bewerten |
-| POST | `/api/ai/debug` | Code analysieren |
+| POST | `/api/ai/assist` | Assistent im Code-Editor |
 | GET | `/api/ai/pool` | Key-Zustand (nur Admin) |
 
-Fällt die KI aus, antwortet der Server mit `fallbackToLocal: true` — das
-Frontend nutzt dann seine eingebaute lokale Analyse weiter.
+Lektionen werden **nicht** über den Server bewertet — das erledigt die lokale
+Analyse im Browser. Der Assistent ist der einzige KI-Endpunkt im Normalbetrieb.
 
 ### Verwaltung
 | Methode | Pfad | Zweck |

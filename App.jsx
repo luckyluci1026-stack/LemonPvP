@@ -2791,332 +2791,898 @@ function parseAIJson(text) {
   return JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
 }
 
-async function checkAnswerWithAI(task, userAnswer, language, lessonTitle, aiCfg = {}) {
-  const { keys = [], provider = "gemini", ollamaModel, langId, useServer } = aiCfg;
+/* ---------------------- KI-Assistent (nur im Code-Editor) ----------------
+   Lektionen werden ausschließlich lokal bewertet — sofort und kostenlos.
+   Die KI sitzt stattdessen als Gesprächspartner im Editor, wo eine Antwortzeit
+   von ein paar Sekunden völlig in Ordnung ist.
+   ------------------------------------------------------------------------- */
+const ASSISTANT_SYSTEM_PROMPT = `Du bist ein hilfsbereiter Programmier-Assistent in einem Code-Editor.
+Der Nutzer lernt gerade programmieren.
 
-  // Bevorzugt über den eigenen Server — dort liegen die Keys sicher.
-  if (useServer) {
-    try {
-      return await api.post("/api/ai/check", {
-        language, lessonTitle, question: task.question,
-        expectedConcepts: task.expectedConcepts || [], answer: userAnswer,
-      });
-    } catch (e) {
-      // Server nicht erreichbar oder KI ausgefallen -> lokale Analyse
-      return heuristicCheck(task, userAnswer, langId);
-    }
-  }
+DEINE ARBEITSWEISE:
+- Antworte immer auf Deutsch
+- Fasse dich kurz und konkret (höchstens 6 Sätze, außer es wird ausdrücklich mehr verlangt)
+- Zeige Code in Markdown-Codeblöcken mit Sprachangabe
+- Erkläre das Warum, nicht nur das Wie
+- Wenn Code fehlerhaft ist: nenne die Ursache und zeige die korrigierte Stelle
+- Erfinde nichts — sag es, wenn du etwas nicht sicher weißt
+- Fang nie mit "Ich" an`;
 
-  const hasAccess = provider === "ollama" || keys.length > 0;
-  if (!hasAccess) return heuristicCheck(task, userAnswer, langId);
-
-  const systemPrompt = `Du bist ein freundlicher aber präziser Programmier-Lehrer.
-Du bewertest Antworten von Schülern die Programmieren lernen.
-
-DEINE AUFGABE:
-- Analysiere die Antwort auf Korrektheit
-- Gib konstruktives, ermutigendes Feedback
-- Erkläre was richtig/falsch ist
-- Bei Code: Prüfe ob das Konzept verstanden wurde, nicht nur syntaktische Korrektheit
-- Halte die Antwort kurz und klar (max 3-4 Sätze)
-- Antworte IMMER auf Deutsch
-- Fang nie mit "Ich" an
-
-ANTWORTE NUR IN DIESEM JSON FORMAT (keine anderen Zeichen davor oder danach):
-{
-  "correct": true/false,
-  "score": 0-100,
-  "feedback": "Dein Feedback hier",
-  "hint": "Optional: Tipp falls falsch",
-  "praise": "Kurzes Lob falls richtig"
-}`;
-
-  const userPrompt = `Sprache: ${language}
-Lektion: ${lessonTitle}
-Aufgabe: ${task.question}
-${task.expectedConcepts ? `Erwartete Konzepte: ${task.expectedConcepts.join(", ")}` : ""}
-Schüler-Antwort: ${userAnswer}
-
-Bitte bewerte diese Antwort.`;
-
-  try {
-    const text = await callAI(provider, keys, systemPrompt, userPrompt, 1000, ollamaModel);
-    return { ...parseAIJson(text), offline: false };
-  } catch (e) {
-    // Graceful Fallback: lokale Heuristik, damit die Plattform auch ohne
-    // erreichbare API nutzbar bleibt.
-    return heuristicCheck(task, userAnswer, langId);
-  }
+function buildAssistantContext({ html, css, js }) {
+  const part = (label, code) => {
+    const trimmed = String(code || "").trim();
+    return trimmed ? `\n--- ${label} ---\n${trimmed.slice(0, 6000)}` : "";
+  };
+  const ctx = part("HTML", html) + part("CSS", css) + part("JavaScript", js);
+  return ctx ? `Aktueller Code im Editor:${ctx}` : "Der Editor ist noch leer.";
 }
 
-/* ---------------------- KI-Code-Debugging (Playground) ------------------- */
-async function debugCodeWithAI({ html, css, js }, aiCfg = {}) {
+/**
+ * Schickt eine Nachricht an den gewählten Anbieter und liefert reinen Text
+ * zurück. Fällt der Dienst aus, wird eine verständliche Meldung erzeugt
+ * statt einer technischen Fehlermeldung.
+ */
+async function askAssistant(messages, code, aiCfg = {}) {
   const { keys = [], provider = "gemini", ollamaModel, useServer } = aiCfg;
 
+  const history = messages
+    .slice(-8)                                   // Kontext knapp halten — spart Zeit und Kontingent
+    .map((m) => `${m.role === "user" ? "Nutzer" : "Assistent"}: ${m.content}`)
+    .join("\n\n");
+  const userPrompt = `${buildAssistantContext(code)}\n\n--- Verlauf ---\n${history}`;
+
   if (useServer) {
-    try {
-      return await api.post("/api/ai/debug", { html, css, js });
-    } catch (e) {
-      return heuristicDebug({ html, css, js });
-    }
+    const res = await api.post("/api/ai/assist", { messages: messages.slice(-8), code });
+    return res.reply;
   }
 
   const hasAccess = provider === "ollama" || keys.length > 0;
-  if (!hasAccess) return heuristicDebug({ html, css, js });
-
-  const systemPrompt = `Du bist ein erfahrener Web-Entwickler und hilfst beim Debuggen von HTML/CSS/JavaScript.
-
-DEINE AUFGABE:
-- Finde echte Fehler (Syntax, Logik, häufige Stolperfallen)
-- Erkläre jeden Fund kurz und verständlich auf Deutsch
-- Schlage eine konkrete Lösung vor
-- Wenn alles in Ordnung ist, sag das ehrlich und gib höchstens Verbesserungstipps
-
-ANTWORTE NUR IN DIESEM JSON FORMAT (keine anderen Zeichen davor oder danach):
-{
-  "summary": "Kurze Gesamteinschätzung in 1-2 Sätzen",
-  "issues": [
-    { "severity": "error"|"warning"|"info", "where": "html"|"css"|"js", "title": "Kurzer Titel", "detail": "Erklärung", "fix": "Konkreter Lösungsvorschlag" }
-  ]
-}`;
-
-  const userPrompt = `HTML:\n${html || "(leer)"}\n\nCSS:\n${css || "(leer)"}\n\nJavaScript:\n${js || "(leer)"}\n\nBitte analysiere diesen Code.`;
-
-  try {
-    const text = await callAI(provider, keys, systemPrompt, userPrompt, 1500, ollamaModel);
-    return { ...parseAIJson(text), offline: false };
-  } catch (e) {
-    return heuristicDebug({ html, css, js });
-  }
+  if (!hasAccess) throw new Error("Kein KI-Zugang eingerichtet.");
+  return callAI(provider, keys, ASSISTANT_SYSTEM_PROMPT, userPrompt, 900, ollamaModel);
 }
+/* =========================================================================
+   LD-Analyzer — die lokale Analyse-Engine
+   =========================================================================
 
-// Lokale Analyse ohne API-Key: prüft Klammer-/Tag-Balance und typische Fehler.
-function heuristicDebug({ html, css, js }) {
-  const issues = [];
-  const balance = (src, open, close, label, where) => {
-    const o = (src.match(new RegExp("\\" + open, "g")) || []).length;
-    const c = (src.match(new RegExp("\\" + close, "g")) || []).length;
-    if (o !== c) issues.push({ severity: "error", where, title: `${label} unausgeglichen`, detail: `${o}× "${open}" aber ${c}× "${close}" gefunden.`, fix: `Ergänze die fehlende ${o > c ? `"${close}"` : `"${open}"`}.` });
-  };
-  if (js) {
-    balance(js, "{", "}", "Geschweifte Klammern", "js");
-    balance(js, "(", ")", "Runde Klammern", "js");
-    balance(js, "[", "]", "Eckige Klammern", "js");
-    if (/\b(getElementById|querySelector)\s*\(\s*["'][^"']*["']\s*\)\s*\./.test(js) && !/addEventListener|DOMContentLoaded/.test(js)) {
-      issues.push({ severity: "info", where: "js", title: "Direkter DOM-Zugriff", detail: "Der Code greift direkt auf Elemente zu.", fix: "Falls das Element noch nicht existiert, warte auf DOMContentLoaded." });
-    }
-    if (/=\s*=[^=]/.test(js) || /[^=!<>]==[^=]/.test(js)) {
-      issues.push({ severity: "warning", where: "js", title: "Lockerer Vergleich (==)", detail: "== vergleicht mit Typumwandlung und führt zu Überraschungen.", fix: "Nutze === für einen strikten Vergleich." });
-    }
-    if (/\bvar\s+/.test(js)) issues.push({ severity: "info", where: "js", title: "var verwendet", detail: "var ist funktions-scoped und veraltet.", fix: "Nutze let oder const." });
-  }
-  if (css) balance(css, "{", "}", "CSS-Blöcke", "css");
-  if (html) {
-    const tags = ["div", "p", "span", "button", "h1", "ul", "li", "section", "header", "footer", "a"];
-    tags.forEach((t) => {
-      const o = (html.match(new RegExp(`<${t}[\\s>]`, "gi")) || []).length;
-      const c = (html.match(new RegExp(`</${t}>`, "gi")) || []).length;
-      if (o !== c) issues.push({ severity: "warning", where: "html", title: `<${t}> nicht geschlossen`, detail: `${o}× geöffnet, aber ${c}× geschlossen.`, fix: `Schließe alle <${t}>-Elemente mit </${t}>.` });
-    });
-    if (/<img(?![^>]*\balt=)/i.test(html)) issues.push({ severity: "info", where: "html", title: "Bild ohne alt-Attribut", detail: "Bilder brauchen alt-Texte für Barrierefreiheit.", fix: 'Ergänze alt="Beschreibung".' });
-  }
-  const errors = issues.filter((i) => i.severity === "error").length;
-  return {
-    offline: true,
-    summary: issues.length === 0
-      ? "Keine offensichtlichen Fehler gefunden — dein Code sieht strukturell sauber aus."
-      : `${issues.length} Hinweis${issues.length === 1 ? "" : "e"} gefunden${errors ? `, davon ${errors} kritisch` : ""}.`,
-    issues,
-  };
-}
+   Bewertet Antworten vollständig im Browser: kein Netzwerk, keine Kosten,
+   Ergebnis in wenigen Millisekunden. Sie ist der einzige Prüfweg für
+   Lektionen — die KI sitzt stattdessen als Assistent im Code-Editor, wo
+   Wartezeit vertretbar ist.
+
+   Der Ablauf in vier Schritten:
+
+     1. Tokenisieren   — Kommentare und Zeichenketten werden entfernt, damit
+                         ein Kommentar wie "// nutze const" nicht als Lösung
+                         durchgeht. Die Literale bleiben separat erhalten.
+     2. Strukturieren  — Deklarationen, Funktionen, Aufrufe, Klammer-Balance
+                         und Einrückung werden erfasst.
+     3. Abgleichen     — Erwartete Konzepte werden gegen diese Struktur
+                         geprüft, nicht gegen den Rohtext. Dadurch lassen sich
+                         Beinahe-Treffer erkennen (falsches Schlüsselwort,
+                         Tippfehler im Namen, falsche Groß-/Kleinschreibung).
+     4. Bewerten       — Punktzahl plus konkret formuliertes Feedback.
+
+   ========================================================================= */
 
 function normalizeAlnum(s) { return (s || "").toLowerCase().replace(/[^a-z0-9äöüß]+/g, ""); }
 
-/* ===================== Lokale Analyse-Engine ("LD-Analyzer") ==============
-   Läuft ohne API-Key komplett im Browser und ersetzt einfaches Text-Suchen
-   durch eine echte Vorverarbeitung: Strings und Kommentare werden entfernt,
-   bevor nach Konzepten gesucht wird — sonst würde ein Kommentar wie
-   "// nutze const" schon als Lösung durchgehen. Zusätzlich werden Struktur
-   (Klammern), Sprach-Idiome und bei Freitext die inhaltliche Abdeckung geprüft.
-   ========================================================================= */
-
-// Entfernt Kommentare und Zeichenketten, behält aber die Länge grob bei.
-function stripNoise(code, lang) {
-  let s = String(code || "");
-  if (lang === "python") s = s.replace(/#[^\n]*/g, " ");
-  else if (lang === "sql") s = s.replace(/--[^\n]*/g, " ");
-  else s = s.replace(/\/\/[^\n]*/g, " ");
-  s = s.replace(/\/\*[\s\S]*?\*\//g, " ");      // Blockkommentare
-  s = s.replace(/<!--[\s\S]*?-->/g, " ");       // HTML-Kommentare
-  s = s.replace(/"""[\s\S]*?"""/g, ' "" ');     // Python-Docstrings
-  s = s.replace(/(["'`])(?:\\.|(?!\1)[^\\\n])*\1/g, (m) => m[0] + m[0]); // Strings leeren
-  return s;
-}
-
-// Synonyme/Alternativen, damit sinngleiche Lösungen anerkannt werden.
-const CONCEPT_ALIASES = {
-  "let oder const": ["let", "const"],
-  "variable": ["let", "const", "var", "=", "int", "string", "def", "$"],
-  "string": ['"', "'", "`"],
-  "zahl": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
-  "number": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
-  "funktion": ["function", "def", "=>", "func", "fun", "fn"],
-  "schleife": ["for", "while", "foreach", "map"],
-  "bedingung": ["if", "switch", "match", "?"],
-  "ausgabe": ["console.log", "print", "println", "cout", "echo", "printf"],
+/* -------------------------- Sprachprofile ------------------------------- */
+const GENERIC_PROFILE = {
+  label: "Code",
+  lineComment: ["//"],
+  blockComment: [["/*", "*/"]],
+  stringDelims: ['"', "'"],
+  blockStyle: "braces",
+  declare: [],
+  funcDef: [],
+  print: [],
+  pitfalls: [],
 };
 
-function conceptMatches(concept, cleaned, raw) {
-  const c = String(concept).trim();
-  const lc = c.toLowerCase();
-  const hay = cleaned.toLowerCase();
+const LANG_PROFILES = {
+  javascript: {
+    label: "JavaScript",
+    lineComment: ["//"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'", "`"],
+    blockStyle: "braces",
+    declare: [/\b(const|let|var)\s+([A-Za-z_$][\w$]*)/g],
+    funcDef: [/\bfunction\s+([A-Za-z_$][\w$]*)/g, /\b([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>/g],
+    print: ["console.log"],
+    pitfalls: [
+      { re: /[^=!<>]==[^=]/, severity: "warning", title: "Lockerer Vergleich",
+        hint: "`==` vergleicht mit Typumwandlung. Nutze `===` für einen strikten Vergleich." },
+      { re: /\bvar\s+/, severity: "info", title: "`var` ist veraltet",
+        hint: "Nutze `let` (veränderlich) oder `const` (fest)." },
+    ],
+  },
+  typescript: {
+    label: "TypeScript",
+    lineComment: ["//"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'", "`"],
+    blockStyle: "braces",
+    declare: [/\b(const|let|var)\s+([A-Za-z_$][\w$]*)/g],
+    funcDef: [/\bfunction\s+([A-Za-z_$][\w$]*)/g, /\b([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\([^)]*\)\s*(?::[^=]+)?=>/g],
+    print: ["console.log"],
+    pitfalls: [
+      { re: /:\s*any\b/, severity: "info", title: "`any` umgeht die Typprüfung",
+        hint: "Ein genauerer Typ bringt dir die Sicherheit zurück, für die du TypeScript nutzt." },
+    ],
+  },
+  react: {
+    label: "React",
+    lineComment: ["//"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'", "`"],
+    blockStyle: "braces",
+    declare: [/\b(const|let|var)\s+([A-Za-z_$][\w$]*)/g],
+    funcDef: [/\bfunction\s+([A-Z][\w$]*)/g, /\b([A-Z][\w$]*)\s*=\s*\([^)]*\)\s*=>/g],
+    print: ["console.log"],
+    pitfalls: [
+      { re: /\bclass=/, severity: "warning", title: "In JSX heißt es `className`",
+        hint: "`class` ist in JavaScript reserviert — React nutzt deshalb `className`." },
+    ],
+  },
+  vue: {
+    label: "Vue",
+    lineComment: ["//"], blockComment: [["/*", "*/"], ["<!--", "-->"]],
+    stringDelims: ['"', "'", "`"],
+    blockStyle: "braces",
+    declare: [/\b(const|let|var)\s+([A-Za-z_$][\w$]*)/g],
+    funcDef: [/\bfunction\s+([A-Za-z_$][\w$]*)/g],
+    print: ["console.log"],
+    pitfalls: [],
+  },
+  python: {
+    label: "Python",
+    lineComment: ["#"], blockComment: [['"""', '"""'], ["'''", "'''"]],
+    stringDelims: ['"', "'"],
+    blockStyle: "indent",
+    declare: [/^\s*([A-Za-z_]\w*)\s*=(?!=)/gm],
+    funcDef: [/\bdef\s+([A-Za-z_]\w*)/g],
+    print: ["print"],
+    pitfalls: [
+      { re: /\bdef\s+\w+\s*\([^)]*\)\s*[^:\s]/, severity: "error", title: "Doppelpunkt fehlt",
+        hint: "Nach der Parameterliste einer Funktion muss ein `:` stehen." },
+      { re: /\b(if|for|while|else)\b[^\n:]*$/m, severity: "warning", title: "Möglicherweise fehlt ein `:`",
+        hint: "Kontrollstrukturen in Python enden mit einem Doppelpunkt." },
+    ],
+  },
+  java: {
+    label: "Java",
+    lineComment: ["//"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'"],
+    blockStyle: "braces", needsSemicolon: true,
+    declare: [/\b(int|double|float|long|boolean|char|String|var)\s+([A-Za-z_]\w*)\s*[=;]/g],
+    funcDef: [/\b(?:public|private|protected)?\s*(?:static\s+)?[\w<>\[\]]+\s+([A-Za-z_]\w*)\s*\([^)]*\)\s*\{/g],
+    print: ["System.out.println", "System.out.print"],
+    pitfalls: [
+      { re: /"[^"]*"\s*==\s*"/, severity: "warning", title: "Zeichenketten mit `==` verglichen",
+        hint: "In Java vergleicht `==` die Referenz. Nutze `.equals()` für den Inhalt." },
+    ],
+  },
+  kotlin: {
+    label: "Kotlin",
+    lineComment: ["//"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'"],
+    blockStyle: "braces",
+    declare: [/\b(val|var)\s+([A-Za-z_]\w*)/g],
+    funcDef: [/\bfun\s+([A-Za-z_]\w*)/g],
+    print: ["println", "print"],
+    pitfalls: [
+      { re: /!!/, severity: "warning", title: "`!!` umgeht die Null-Sicherheit",
+        hint: "Nutze lieber `?.` oder `?:`, sonst kann es zur Laufzeit knallen." },
+    ],
+  },
+  cpp: {
+    label: "C++",
+    lineComment: ["//"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'"],
+    blockStyle: "braces", needsSemicolon: true,
+    declare: [/\b(int|double|float|char|bool|auto|string|std::string)\s+([A-Za-z_]\w*)/g],
+    funcDef: [/\b[\w:<>]+\s+([A-Za-z_]\w*)\s*\([^)]*\)\s*\{/g],
+    print: ["std::cout", "cout", "printf"],
+    pitfalls: [
+      { re: /\bgets\s*\(/, severity: "error", title: "`gets` ist unsicher",
+        hint: "Nutze `std::getline` — `gets` kann den Puffer überschreiben." },
+    ],
+  },
+  c: {
+    label: "C",
+    lineComment: ["//"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'"],
+    blockStyle: "braces", needsSemicolon: true,
+    declare: [/\b(int|double|float|char|long|short|unsigned)\s+\*?([A-Za-z_]\w*)/g],
+    funcDef: [/\b[\w*]+\s+([A-Za-z_]\w*)\s*\([^)]*\)\s*\{/g],
+    print: ["printf", "puts"],
+    pitfalls: [
+      { re: /\bmalloc\s*\(/, severity: "info", title: "Speicher wieder freigeben",
+        hint: "Zu jedem `malloc` gehört ein `free`." },
+    ],
+  },
+  go: {
+    label: "Go",
+    lineComment: ["//"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "`", "'"],
+    blockStyle: "braces",
+    declare: [/\b(var)\s+([A-Za-z_]\w*)/g, /\b([A-Za-z_]\w*)\s*:=/g],
+    funcDef: [/\bfunc\s+([A-Za-z_]\w*)/g],
+    print: ["fmt.Println", "fmt.Printf", "println"],
+    pitfalls: [
+      { re: /\b_\s*,\s*_\s*:?=/, severity: "info", title: "Rückgabewerte verworfen",
+        hint: "Prüfe zumindest den Fehlerwert, statt ihn zu ignorieren." },
+    ],
+  },
+  rust: {
+    label: "Rust",
+    lineComment: ["//"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'"],
+    blockStyle: "braces",
+    declare: [/\blet\s+(?:mut\s+)?([A-Za-z_]\w*)/g],
+    funcDef: [/\bfn\s+([A-Za-z_]\w*)/g],
+    print: ["println!", "print!"],
+    pitfalls: [
+      { re: /\.unwrap\(\)/, severity: "info", title: "`unwrap()` bricht bei Fehlern ab",
+        hint: "In echtem Code besser `match` oder `?` verwenden." },
+    ],
+  },
+  php: {
+    label: "PHP",
+    lineComment: ["//", "#"], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'"],
+    blockStyle: "braces", needsSemicolon: true,
+    declare: [/\$([A-Za-z_]\w*)\s*=(?!=)/g],
+    funcDef: [/\bfunction\s+([A-Za-z_]\w*)/g],
+    print: ["echo", "print_r", "var_dump"],
+    pitfalls: [
+      { re: /\$_(GET|POST)\[[^\]]+\]\s*(?!.*(?:htmlspecialchars|filter_|intval))/, severity: "warning",
+        title: "Nutzereingabe ungeprüft verwendet",
+        hint: "Eingaben immer prüfen oder maskieren — sonst drohen XSS und SQL-Injection." },
+    ],
+  },
+  sql: {
+    label: "SQL",
+    lineComment: ["--"], blockComment: [["/*", "*/"]],
+    stringDelims: ["'", '"'],
+    blockStyle: "none",
+    declare: [], funcDef: [],
+    print: [],
+    pitfalls: [
+      { re: /\bDELETE\s+FROM\s+\w+\s*;?\s*$/i, severity: "warning", title: "DELETE ohne WHERE",
+        hint: "Ohne `WHERE` löscht das alle Zeilen der Tabelle." },
+      { re: /\bSELECT\s+\*/i, severity: "info", title: "`SELECT *` überträgt alle Spalten",
+        hint: "Benenne die Spalten, die du wirklich brauchst." },
+    ],
+  },
+  html: {
+    label: "HTML",
+    lineComment: [], blockComment: [["<!--", "-->"]],
+    stringDelims: ['"', "'"],
+    blockStyle: "tags",
+    declare: [], funcDef: [], print: [],
+    pitfalls: [
+      { re: /<img(?![^>]*\balt=)/i, severity: "warning", title: "Bild ohne `alt`",
+        hint: "Ein Alternativtext ist für Screenreader und bei fehlendem Bild wichtig." },
+      { re: /<a(?![^>]*\bhref=)/i, severity: "warning", title: "Link ohne `href`",
+        hint: "Ohne `href` ist ein `<a>` kein anklickbarer Link." },
+    ],
+  },
+  css: {
+    label: "CSS",
+    lineComment: [], blockComment: [["/*", "*/"]],
+    stringDelims: ['"', "'"],
+    blockStyle: "braces",
+    declare: [/([-\w]+)\s*:\s*[^;}]+/g],
+    funcDef: [], print: [],
+    pitfalls: [
+      { re: /!important/, severity: "info", title: "`!important` vermeiden",
+        hint: "Es überschreibt alles und macht spätere Anpassungen schwer." },
+      { re: /:\s*[^;}\n]+\n\s*[-\w]+\s*:/, severity: "warning", title: "Semikolon fehlt vermutlich",
+        hint: "Jede CSS-Deklaration endet mit `;`." },
+    ],
+  },
+};
 
-  // Reine Operatoren/Symbole: direkt im entrauschten Code suchen
-  if (/^[=+\-*/<>!%&|.;:()[\]{}]+$/.test(c)) return cleaned.includes(c);
-
-  // Bekannte Sammelbegriffe über Alias-Liste auflösen
-  for (const [key, alts] of Object.entries(CONCEPT_ALIASES)) {
-    if (lc === key || lc.includes(key)) {
-      // String/Zahl werden am Rohtext geprüft (im entrauschten Code sind sie leer)
-      const source = (key === "string" || key === "zahl" || key === "number") ? raw : cleaned;
-      return alts.some((a) => source.toLowerCase().includes(a));
-    }
-  }
-
-  // HTML-Tags: <h1> soll auch "h1" erkennen und umgekehrt
-  const tagName = lc.replace(/[<>/]/g, "");
-  if (/^[a-z][a-z0-9]*$/.test(tagName) && /<[a-z]/i.test(cleaned)) {
-    if (new RegExp(`</?${tagName}[\\s>]`, "i").test(cleaned)) return true;
-  }
-
-  // Identifier/Schlüsselwort: als ganzes Wort suchen
-  if (/^[\w$äöüß.]+$/i.test(lc)) {
-    const escaped = lc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`(^|[^\\w$])${escaped}([^\\w$]|$)`, "i").test(hay)) return true;
-  }
-
-  // Mehrwort-Konzept: alle sinntragenden Teile müssen vorkommen
-  const parts = lc.split(/\s+oder\s+|[\s,]+/).filter((t) => t.length > 1);
-  if (parts.length > 1) return parts.some((p) => hay.includes(p));
-  return hay.includes(lc);
+function profileFor(langId) {
+  return LANG_PROFILES[langId] || GENERIC_PROFILE;
 }
 
-// Prüft Klammer-Balance und liefert eine Strukturbewertung.
-function structureScore(code) {
-  const pairs = [["{", "}"], ["(", ")"], ["[", "]"]];
-  const problems = [];
-  for (const [o, c] of pairs) {
-    const oc = (code.match(new RegExp("\\" + o, "g")) || []).length;
-    const cc = (code.match(new RegExp("\\" + c, "g")) || []).length;
-    if (oc !== cc) problems.push(`${o}${c}`);
+/* --------------------------- Tokenisierung ------------------------------ */
+/**
+ * Entfernt Kommentare und Zeichenketten, merkt sich deren Inhalt aber.
+ * Länge und Zeilenstruktur bleiben erhalten, damit Positionsangaben stimmen.
+ */
+function tokenize(code, profile) {
+  const src = String(code || "");
+  let out = "";
+  const strings = [];
+  const comments = [];
+  let i = 0;
+
+  const startsWith = (s) => src.startsWith(s, i);
+
+  while (i < src.length) {
+    // Blockkommentare
+    let matchedBlock = false;
+    for (const [open, close] of profile.blockComment || []) {
+      if (startsWith(open)) {
+        const end = src.indexOf(close, i + open.length);
+        const stop = end === -1 ? src.length : end + close.length;
+        const body = src.slice(i, stop);
+        comments.push(body);
+        out += body.replace(/[^\n]/g, " ");   // Zeilenumbrüche behalten
+        i = stop;
+        matchedBlock = true;
+        break;
+      }
+    }
+    if (matchedBlock) continue;
+
+    // Zeilenkommentare
+    let matchedLine = false;
+    for (const marker of profile.lineComment || []) {
+      if (startsWith(marker)) {
+        const end = src.indexOf("\n", i);
+        const stop = end === -1 ? src.length : end;
+        comments.push(src.slice(i, stop));
+        out += " ".repeat(stop - i);
+        i = stop;
+        matchedLine = true;
+        break;
+      }
+    }
+    if (matchedLine) continue;
+
+    // Zeichenketten
+    const delim = (profile.stringDelims || []).find((d) => startsWith(d));
+    if (delim) {
+      let j = i + delim.length;
+      let body = "";
+      while (j < src.length) {
+        if (src[j] === "\\") { body += src[j + 1] || ""; j += 2; continue; }
+        if (src.startsWith(delim, j)) break;
+        body += src[j];
+        j++;
+      }
+      strings.push(body);
+      const stop = Math.min(src.length, j + delim.length);
+      // Leere Hülle behalten, damit "hier steht ein String" erkennbar bleibt
+      out += delim + delim + " ".repeat(Math.max(0, stop - i - 2));
+      i = stop;
+      continue;
+    }
+
+    out += src[i];
+    i++;
   }
+
+  return { stripped: out, strings, comments };
+}
+
+/* ------------------------- Strukturanalyse ------------------------------ */
+function collectMatches(regexes, text, nameGroup) {
+  const found = [];
+  for (const re of regexes || []) {
+    const rx = new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g");
+    let m;
+    while ((m = rx.exec(text))) {
+      // Der Name steht je nach Muster in Gruppe 1 oder 2
+      const name = m[nameGroup] || m[2] || m[1];
+      if (name) found.push({ name, keyword: m[2] ? m[1] : null, index: m.index });
+      if (m.index === rx.lastIndex) rx.lastIndex++;   // Endlosschleife verhindern
+    }
+  }
+  return found;
+}
+
+function bracketBalance(text) {
+  const pairs = { "{": "}", "(": ")", "[": "]" };
+  const closing = { "}": "{", ")": "(", "]": "[" };
+  const stack = [];
+  const problems = [];
+  for (const ch of text) {
+    if (pairs[ch]) stack.push(ch);
+    else if (closing[ch]) {
+      if (!stack.length) { problems.push({ kind: "extraClose", ch }); continue; }
+      const top = stack.pop();
+      if (top !== closing[ch]) problems.push({ kind: "mismatch", expected: pairs[top], got: ch });
+    }
+  }
+  stack.forEach((ch) => problems.push({ kind: "unclosed", ch, expected: pairs[ch] }));
   return { ok: problems.length === 0, problems };
 }
 
-// Bewertet Freitext inhaltlich: Abdeckung erwarteter Begriffe + Sprachqualität.
-function explanationScore(answer, task) {
-  const text = String(answer || "").trim();
-  const low = text.toLowerCase();
-  const words = text.split(/\s+/).filter(Boolean);
-  const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 3);
+function tagBalance(html) {
+  const voids = new Set(["br", "hr", "img", "input", "meta", "link", "source", "area", "base", "col", "embed", "track", "wbr"]);
+  const stack = [];
+  const problems = [];
+  const rx = /<\/?([a-zA-Z][\w-]*)[^>]*?(\/?)>/g;
+  let m;
+  while ((m = rx.exec(html))) {
+    const [full, name, selfClose] = m;
+    const tag = name.toLowerCase();
+    if (voids.has(tag) || selfClose === "/") continue;
+    if (full.startsWith("</")) {
+      const idx = stack.lastIndexOf(tag);
+      if (idx === -1) problems.push({ kind: "extraClose", tag });
+      else stack.splice(idx, 1);
+    } else stack.push(tag);
+  }
+  stack.forEach((tag) => problems.push({ kind: "unclosed", tag }));
+  return { ok: problems.length === 0, problems };
+}
 
-  // Erwartete Begriffe aus Aufgabenstellung ableiten (Code-Spans in `back-ticks`)
-  const fromQuestion = (task.question || "").match(/`([^`]+)`/g) || [];
-  const expected = [...(task.expectedConcepts || []), ...fromQuestion.map((s) => s.replace(/`/g, ""))]
-    .map((s) => String(s).toLowerCase().trim()).filter((s) => s.length > 1);
-  const unique = [...new Set(expected)];
-  const hit = unique.filter((c) => low.includes(c));
-  const coverage = unique.length ? hit.length / unique.length : null;
+/**
+ * Führt die Analyse durch und liefert eine strukturierte Sicht auf den Code.
+ */
+function analyzeCode(raw, langId) {
+  const profile = profileFor(langId);
+  const { stripped, strings, comments } = tokenize(raw, profile);
+  const codeOnly = stripped.replace(/\s/g, "");
 
-  // Begründende Sprache ist ein starkes Signal für echtes Verständnis
-  const reasoning = /\b(weil|damit|dadurch|sodass|deshalb|denn|somit|verhindert|ermöglicht|bedeutet|sorgt|schützt)\b/i.test(text);
+  const declarations = collectMatches(profile.declare, stripped, 2);
+  const functions = collectMatches(profile.funcDef, stripped, 1);
+  const identifiers = [...new Set((stripped.match(/[A-Za-z_$][\w$]*/g) || []))];
+  const calls = [...new Set((stripped.match(/([A-Za-z_$][\w$.:!]*)\s*\(/g) || []).map((s) => s.replace(/\s*\($/, "")))];
 
-  let score = 0;
-  score += Math.min(40, words.length * 3);                       // Ausführlichkeit (max 40)
-  score += sentences.length >= 2 ? 15 : sentences.length * 7;    // Struktur (max 15)
-  score += reasoning ? 20 : 0;                                    // Begründung (max 20)
-  score += coverage === null ? 15 : Math.round(coverage * 25);   // Fachbegriffe (max 25)
-  score = Math.max(0, Math.min(100, score));
+  const structure = profile.blockStyle === "tags" ? tagBalance(stripped)
+    : profile.blockStyle === "none" ? { ok: true, problems: [] }
+    : bracketBalance(stripped);
 
-  const missing = unique.filter((c) => !low.includes(c)).slice(0, 3);
-  const correct = score >= 55 && words.length >= 6;
-
-  let feedback, hint = "";
-  if (correct && score >= 80) feedback = "Sehr gute Erklärung — die Kernidee sitzt und du begründest sie nachvollziehbar.";
-  else if (correct) feedback = "Solide Erklärung. Die Grundidee hast du verstanden.";
-  else if (words.length < 6) { feedback = "Die Erklärung ist noch zu knapp, um dein Verständnis zu zeigen."; hint = "Schreib 1–2 vollständige Sätze und begründe das „Warum“."; }
-  else { feedback = "Die Richtung stimmt, aber es fehlt noch die eigentliche Begründung."; hint = "Erkläre nicht nur *was*, sondern auch *warum* es so ist (z.B. mit „weil …“)."; }
-  if (correct && missing.length && score < 85) hint = `Noch treffender wird es, wenn du auch ${missing.map((m) => `„${m}“`).join(", ")} erwähnst.`;
+  const issues = [];
+  for (const p of profile.pitfalls || []) {
+    if (p.re.test(stripped)) issues.push({ severity: p.severity, title: p.title, hint: p.hint });
+  }
 
   return {
-    correct, score, offline: true, feedback, hint,
-    praise: correct ? (score >= 80 ? "Klar auf den Punkt gebracht." : "Verständlich erklärt.") : "",
+    raw, stripped, strings, comments, profile,
+    isEmpty: codeOnly.length === 0,
+    hasOnlyComments: codeOnly.length === 0 && comments.length > 0,
+    lines: raw.split("\n").filter((l) => l.trim()).length,
+    declarations, functions, identifiers, calls,
+    structure, issues,
+    hasString: strings.length > 0,
+    hasNumber: /\d/.test(stripped),
   };
 }
 
-function heuristicCheck(task, userAnswer, lang) {
-  const raw = String(userAnswer || "").trim();
+/* ------------------------- Konzept-Abgleich ------------------------------ */
+// Sammelbegriffe, die je nach Sprache unterschiedlich aussehen.
+const CONCEPT_GROUPS = {
+  variable: { any: ["let", "const", "var", "val", "int", "def", "$", ":=", "="], kind: "declaration" },
+  "let oder const": { any: ["let", "const"], kind: "keyword" },
+  string: { kind: "string" },
+  text: { kind: "string" },
+  zahl: { kind: "number" },
+  number: { kind: "number" },
+  funktion: { any: ["function", "def", "=>", "func", "fun", "fn"], kind: "function" },
+  function: { any: ["function", "def", "=>", "func", "fun", "fn"], kind: "function" },
+  schleife: { any: ["for", "while", "foreach", "map", "loop"], kind: "keyword" },
+  bedingung: { any: ["if", "switch", "match", "when"], kind: "keyword" },
+  ausgabe: { any: ["console.log", "print", "println", "cout", "echo", "printf", "fmt.println"], kind: "call" },
+};
 
-  // Lückentext: pro Lücke vergleichen, Satzzeichen/Klammern tolerieren
-  // (z.B. "<strong>" als Antwort für erwartetes "strong" akzeptieren).
-  if (task.type === "fill_blank" && Array.isArray(task._blankAnswers)) {
-    const total = task.blanks.length;
-    let matched = 0;
-    const missing = [];
-    task.blanks.forEach((b, i) => {
-      const given = (task._blankAnswers[i] || "").trim().toLowerCase();
-      const target = b.trim().toLowerCase();
-      const hit = given.length > 0 && (given === target || normalizeAlnum(given) === normalizeAlnum(target));
-      if (hit) matched++; else missing.push(b);
+const HTML_TAGS = new Set(["html","head","body","title","meta","link","script","style","div","span","p","a","img","ul","ol","li","h1","h2","h3","h4","h5","h6","table","tr","td","th","thead","tbody","form","input","button","label","select","option","textarea","header","footer","main","section","article","nav","aside","video","audio","source","br","hr","strong","em","b","i","u","small","code","pre","blockquote","figure","figcaption","canvas","iframe","details","summary"]);
+const HTML_VOID_TAGS = new Set(["br","hr","img","input","meta","link","source","area","base","col","embed","track","wbr"]);
+
+// Schlüsselwörter, die eine Aufgabe ausdrücklich verlangen kann. Fehlt eines,
+// ist die Lösung nicht "fast richtig", sondern verfehlt die Aufgabenstellung.
+const ESSENTIAL_KEYWORDS = new Set([
+  "const","let","var","val","function","def","fn","fun","func","class","return",
+  "if","else","for","while","switch","match","import","export","async","await",
+  "select","from","where","insert","update","delete","join","group","order",
+  "int","double","float","boolean","char","string","void","public","static",
+]);
+
+/** Levenshtein-Distanz — erkennt Tippfehler in Bezeichnern. */
+function editDistance(a, b) {
+  if (a === b) return 0;
+  if (!a.length || !b.length) return Math.max(a.length, b.length);
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/**
+ * Prüft ein erwartetes Konzept gegen die Analyse.
+ * Liefert nicht nur ja/nein, sondern auch, *warum* es knapp verfehlt wurde —
+ * daraus entsteht das konkrete Feedback.
+ */
+function checkConcept(concept, analysis) {
+  const c = String(concept).trim();
+  const lc = c.toLowerCase();
+  const code = analysis.stripped;
+  const lower = code.toLowerCase();
+
+  // 1. Operatoren und Symbole
+  if (/^[=+\-*/<>!%&|.;:()[\]{}]+$/.test(c)) {
+    return { hit: code.includes(c), concept: c, kind: "operator" };
+  }
+
+  // 2. Sammelbegriffe
+  const group = CONCEPT_GROUPS[lc];
+  if (group) {
+    if (group.kind === "string") {
+      return { hit: analysis.hasString, concept: c, kind: "string",
+        why: analysis.hasString ? null : "Es fehlt eine Zeichenkette in Anführungszeichen." };
+    }
+    if (group.kind === "number") {
+      return { hit: analysis.hasNumber, concept: c, kind: "number",
+        why: analysis.hasNumber ? null : "Es fehlt eine Zahl." };
+    }
+    const hit = (group.any || []).some((a) => lower.includes(a.toLowerCase()));
+    return { hit, concept: c, kind: group.kind,
+      why: hit ? null : `Kein passendes Sprachmittel gefunden (erwartet z.B. ${group.any.slice(0, 3).join(", ")}).` };
+  }
+
+  // 3. HTML-Tags — nur, wenn es wirklich ein Tag-Name ist. Sonst würde ein
+  //    erwarteter Textinhalt wie "Willkommen" fälschlich als <willkommen>
+  //    gesucht.
+  if (analysis.profile.blockStyle === "tags") {
+    const tag = lc.replace(/[<>/]/g, "");
+    const isTagSyntax = /^<\/?\w/.test(c);      // ausdrücklich als <tag> geschrieben
+    if (isTagSyntax || HTML_TAGS.has(tag)) {
+      const opened = new RegExp(`<${tag}[\\s>]`, "i").test(code);
+      const closed = new RegExp(`</${tag}>`, "i").test(code);
+      const isVoid = HTML_VOID_TAGS.has(tag);
+      if (opened && (closed || isVoid)) return { hit: true, concept: c, kind: "tag", essential: true };
+      if (opened && !closed) return { hit: false, concept: c, kind: "tag", essential: true, why: `<${tag}> wird geöffnet, aber nie geschlossen.` };
+      return { hit: false, concept: c, kind: "tag", essential: true, why: `Das Element <${tag}> fehlt.` };
+    }
+    // Kein Tag -> erwarteter Textinhalt
+    const inText = analysis.raw.toLowerCase().includes(lc);
+    return { hit: inText, concept: c, kind: "text", essential: false,
+      why: inText ? null : `Der Text „${c}“ kommt nicht vor.` };
+  }
+
+  // 4. Bezeichner und Schlüsselwörter — als ganzes Wort.
+  //    Beides gilt als wesentlich: Wer `const` verlangt, meint nicht `let`,
+  //    und ein geforderter Variablenname ist keine Nebensache.
+  if (/^[\w$äöüß.!:]+$/i.test(c)) {
+    const isKeyword = ESSENTIAL_KEYWORDS.has(lc);
+    const escaped = c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`(^|[^\\w$])${escaped}([^\\w$]|$)`, "i").test(code)) {
+      // Treffer — aber stimmt die Groß-/Kleinschreibung?
+      const exact = new RegExp(`(^|[^\\w$])${escaped}([^\\w$]|$)`).test(code);
+      return { hit: true, concept: c, kind: isKeyword ? "keyword" : "identifier", essential: true,
+        note: exact ? null : `Achte auf die Groß- und Kleinschreibung: erwartet wird \`${c}\`.` };
+    }
+    // Beinahe-Treffer? Dann ist es vermutlich ein Tippfehler.
+    const near = analysis.identifiers.find((id) => {
+      const d = editDistance(id.toLowerCase(), lc);
+      return d > 0 && d <= Math.max(1, Math.floor(lc.length / 4));
     });
-    const score = total ? Math.round((matched / total) * 100) : 0;
-    const correct = matched === total && total > 0;
+    // Wurde stattdessen ein verwandtes Schlüsselwort verwendet?
+    let why;
+    if (isKeyword) {
+      const used = [...ESSENTIAL_KEYWORDS].find((k) => k !== lc &&
+        new RegExp(`(^|[^\\w$])${k}([^\\w$]|$)`, "i").test(code));
+      why = used
+        ? `Du hast \`${used}\` verwendet — die Aufgabe verlangt \`${c}\`.`
+        : `Das Schlüsselwort \`${c}\` fehlt.`;
+    } else {
+      why = near
+        ? `Du hast \`${near}\` geschrieben — erwartet wird \`${c}\`.`
+        : `\`${c}\` kommt in deiner Lösung nicht vor.`;
+    }
+    return { hit: false, concept: c, kind: isKeyword ? "keyword" : "identifier", essential: true, why };
+  }
+
+  // 5. Mehrwort-Beschreibung: es genügt ein sinntragender Teil
+  const parts = lc.split(/\s+oder\s+|[\s,]+/).filter((t) => t.length > 1);
+  const hit = parts.length ? parts.some((p) => lower.includes(p)) : lower.includes(lc);
+  return { hit, concept: c, kind: "phrase" };
+}
+
+/* ---------------------- Bewertung: Code-Aufgaben -------------------------- */
+function evaluateCode(task, answer, langId) {
+  const analysis = analyzeCode(answer, langId);
+  const label = analysis.profile.label;
+
+  if (analysis.isEmpty) {
     return {
-      correct, score, offline: true,
-      feedback: correct ? "Alle Lücken korrekt ausgefüllt!" : `${matched} von ${total} Lücken korrekt.`,
-      hint: correct ? "" : `Richtig wäre: ${missing.join(", ")}.`,
-      praise: correct ? "Sauber gelöst!" : "",
+      correct: false, score: 0, offline: true,
+      feedback: analysis.hasOnlyComments
+        ? "Bisher stehen dort nur Kommentare — der eigentliche Code fehlt noch."
+        : "Es ist noch kein Code vorhanden.",
+      hint: "Schreib deine Lösung als echten Code, nicht als Kommentar.",
+      praise: "",
     };
   }
 
-  if (task.type === "code_write") {
-    const cleaned = stripNoise(raw, lang);
-    const hasRealCode = cleaned.replace(/\s/g, "").length > 0;
-    if (!hasRealCode) {
-      return { correct: false, score: 0, offline: true, feedback: "Es ist noch kein Code vorhanden — nur Kommentare oder leere Zeilen.", hint: "Schreib deine Lösung als echten Code, nicht als Kommentar.", praise: "" };
-    }
-
-    const concepts = task.expectedConcepts || [];
-    const missing = [];
-    let matched = 0;
-    for (const c of concepts) {
-      if (conceptMatches(c, cleaned, raw)) matched++;
-      else missing.push(c);
-    }
-    const conceptScore = concepts.length ? matched / concepts.length : 0.8;
-    const struct = structureScore(cleaned);
-    let score = Math.round(conceptScore * 85 + (struct.ok ? 15 : 0));
-    score = Math.max(0, Math.min(100, score));
-    const correct = conceptScore >= 0.6 && struct.ok;
-
-    let feedback, hint = "";
-    if (!struct.ok) {
-      feedback = "Die Bausteine stimmen, aber die Klammern sind nicht ausgeglichen.";
-      hint = `Prüfe deine ${struct.problems.join(" und ")}-Klammern — eine Öffnung ohne Schließung.`;
-    } else if (correct && matched === concepts.length) {
-      feedback = `Stark! Deine Lösung enthält alle erwarteten Bausteine (${matched}/${concepts.length}) und ist sauber aufgebaut.`;
-    } else if (correct) {
-      feedback = `Gut gelöst — ${matched} von ${concepts.length} erwarteten Bausteinen sind da.`;
-      hint = `Für die volle Punktzahl fehlt noch: ${missing.join(", ")}.`;
-    } else {
-      feedback = "Da fehlen noch wesentliche Teile der Lösung.";
-      hint = `Achte auf: ${missing.join(", ")}.`;
-    }
-    return { correct, score, offline: true, feedback, hint, praise: correct ? "Sauber umgesetzt." : "" };
+  // Struktur zuerst: Ohne gültige Klammerung ist alles andere hinfällig.
+  if (!analysis.structure.ok) {
+    const p = analysis.structure.problems[0];
+    let detail;
+    if (p.tag) detail = p.kind === "unclosed" ? `<${p.tag}> wird nie geschlossen.` : `</${p.tag}> steht ohne passendes öffnendes Element.`;
+    else if (p.kind === "unclosed") detail = `Eine öffnende \`${p.ch}\` hat keine passende \`${p.expected}\`.`;
+    else if (p.kind === "extraClose") detail = `\`${p.ch}\` schließt etwas, das nie geöffnet wurde.`;
+    else detail = `Erwartet wurde \`${p.expected}\`, gefunden \`${p.got}\`.`;
+    return {
+      correct: false, score: 25, offline: true,
+      feedback: `Der Aufbau stimmt noch nicht: ${detail}`,
+      hint: "Prüfe, ob jede geöffnete Klammer wieder geschlossen wird.",
+      praise: "",
+    };
   }
 
-  // explain / Freitext
-  return explanationScore(raw, task);
+  const concepts = task.expectedConcepts || [];
+  const results = concepts.map((c) => checkConcept(c, analysis));
+  const hits = results.filter((r) => r.hit);
+  const misses = results.filter((r) => !r.hit);
+  const notes = results.map((r) => r.note).filter(Boolean);
+
+  const coverage = concepts.length ? hits.length / concepts.length : 0.85;
+  const blockingIssues = analysis.issues.filter((i) => i.severity === "error");
+  // Ein ausdrücklich verlangtes Schlüsselwort oder ein geforderter Bezeichner
+  // ist keine Nebensache — fehlt er, ist die Aufgabe nicht gelöst, auch wenn
+  // rechnerisch genug andere Bausteine da wären.
+  const missingEssential = misses.filter((m) => m.essential);
+
+  let score = Math.round(coverage * 80 + 20);       // Struktur ist bereits in Ordnung
+  if (blockingIssues.length) score = Math.min(score, 55);
+  if (missingEssential.length) score = Math.min(score, 50);
+  if (notes.length) score = Math.max(0, score - 5);
+  score = Math.max(0, Math.min(100, score));
+
+  const correct = coverage >= 0.6 && !blockingIssues.length && !missingEssential.length;
+
+  // Feedback so konkret wie möglich formulieren
+  let feedback, hint = "";
+  if (blockingIssues.length) {
+    feedback = `${blockingIssues[0].title}: ${blockingIssues[0].hint}`;
+    hint = misses.length ? `Außerdem fehlt noch: ${misses.map((m) => m.concept).join(", ")}.` : "";
+  } else if (correct && !misses.length) {
+    const parts = [];
+    if (analysis.declarations.length) {
+      const d = analysis.declarations[0];
+      parts.push(d.keyword ? `\`${d.keyword} ${d.name}\` ist korrekt deklariert` : `\`${d.name}\` ist gesetzt`);
+    }
+    if (analysis.functions.length) parts.push(`die Funktion \`${analysis.functions[0].name}\` ist definiert`);
+    feedback = parts.length
+      ? `Stark — ${parts.join(" und ")}. Die Lösung enthält alle erwarteten Bausteine und ist sauber aufgebaut.`
+      : `Stark! Alle ${concepts.length} erwarteten Bausteine sind vorhanden und der ${label}-Code ist sauber aufgebaut.`;
+  } else if (correct) {
+    feedback = `Gut gelöst — ${hits.length} von ${concepts.length} Bausteinen sind da.`;
+    hint = misses[0].why || `Für die volle Punktzahl fehlt noch: ${misses.map((m) => m.concept).join(", ")}.`;
+  } else {
+    // Wesentliche Lücken zuerst — sie erklären den Fehlschlag am besten.
+    const explained = missingEssential.find((m) => m.why) || misses.find((m) => m.why) || misses[0];
+    feedback = explained?.why || "Da fehlen noch wesentliche Teile der Lösung.";
+    const rest = misses.filter((m) => m !== explained);
+    hint = rest.length ? `Es fehlt außerdem: ${rest.map((m) => m.concept).join(", ")}.` : "Schau dir die Theorie links noch einmal an.";
+  }
+
+  // Stilhinweise anhängen, ohne die Bewertung zu kippen
+  const styleNote = analysis.issues.find((i) => i.severity !== "error");
+  if (correct && styleNote && !hint) hint = `${styleNote.title}: ${styleNote.hint}`;
+  if (notes.length && !hint) hint = notes[0];
+
+  return {
+    correct, score, offline: true, feedback, hint,
+    praise: correct ? (score >= 95 ? "Vorbildlich umgesetzt." : "Sauber umgesetzt.") : "",
+    details: { concepts: results, issues: analysis.issues, declarations: analysis.declarations },
+  };
+}
+
+/* --------------------- Bewertung: Lückentext ----------------------------- */
+function evaluateFillBlank(task, answers) {
+  const blanks = task.blanks || [];
+  const results = blanks.map((expected, i) => {
+    const given = String(answers?.[i] || "").trim();
+    const target = String(expected).trim();
+    if (!given) return { ok: false, expected: target, given, reason: "leer" };
+    if (given.toLowerCase() === target.toLowerCase()) {
+      return { ok: true, expected: target, given, caseOff: given !== target };
+    }
+    // Klammern, Anführungszeichen und Satzzeichen tolerieren: <strong> == strong
+    if (normalizeAlnum(given) === normalizeAlnum(target)) {
+      return { ok: true, expected: target, given, formatted: true };
+    }
+    // Tippfehler?
+    const d = editDistance(given.toLowerCase(), target.toLowerCase());
+    return { ok: false, expected: target, given, typo: d <= Math.max(1, Math.floor(target.length / 4)) };
+  });
+
+  const hits = results.filter((r) => r.ok).length;
+  const total = blanks.length;
+  const correct = hits === total && total > 0;
+  const score = total ? Math.round((hits / total) * 100) : 0;
+
+  let feedback, hint = "";
+  if (correct) {
+    feedback = "Alle Lücken korrekt ausgefüllt!";
+    const caseOff = results.find((r) => r.caseOff);
+    if (caseOff) hint = `Kleinigkeit: Üblich ist die Schreibweise \`${caseOff.expected}\`.`;
+  } else {
+    const typo = results.find((r) => !r.ok && r.typo);
+    const empty = results.filter((r) => !r.ok && r.reason === "leer");
+    feedback = `${hits} von ${total} Lücken stimmen.`;
+    if (typo) hint = `Fast: Du hast \`${typo.given}\` geschrieben, richtig wäre \`${typo.expected}\`.`;
+    else if (empty.length === total) hint = "Fülle zuerst alle Lücken aus.";
+    else hint = `Richtig wäre: ${results.filter((r) => !r.ok).map((r) => r.expected).join(", ")}.`;
+  }
+
+  return { correct, score, offline: true, feedback, hint, praise: correct ? "Sauber gelöst!" : "" };
+}
+
+/* --------------------- Bewertung: Freitext ------------------------------- */
+// Leichte deutsche Normalisierung: häufige Endungen abschneiden, damit
+// "Variablen", "Variable" und "Variablen-" als dasselbe gelten.
+function stemDe(word) {
+  let w = String(word).toLowerCase().replace(/[^a-zäöüß]/g, "");
+  for (const suffix of ["ungen", "enden", "ende", "erne", "ern", "end", "en", "er", "es", "em", "e", "n", "s"]) {
+    if (w.length > suffix.length + 3 && w.endsWith(suffix)) { w = w.slice(0, -suffix.length); break; }
+  }
+  return w;
+}
+
+const REASONING_WORDS = /\b(weil|da|denn|damit|dadurch|sodass|so dass|deshalb|daher|somit|folglich|verhindert|ermöglicht|schützt|sorgt|bewirkt|bedeutet|führt dazu|vermeidet|garantiert)\b/i;
+const EXAMPLE_WORDS = /\b(zum beispiel|z\.?b\.?|etwa|beispielsweise|wie etwa)\b/i;
+
+function evaluateExplanation(task, answer) {
+  const text = String(answer || "").trim();
+  const words = text.split(/\s+/).filter(Boolean);
+  const sentences = text.split(/[.!?]+/).map((s) => s.trim()).filter((s) => s.length > 3);
+
+  if (words.length < 3) {
+    return { correct: false, score: 0, offline: true,
+      feedback: "Da steht noch fast nichts.",
+      hint: "Schreib mindestens ein bis zwei vollständige Sätze in eigenen Worten.", praise: "" };
+  }
+
+  // Erwartete Begriffe: aus expectedConcepts und den Code-Spans der Frage
+  const fromQuestion = (task.question || "").match(/`([^`]+)`/g) || [];
+  const expected = [...new Set([
+    ...(task.expectedConcepts || []),
+    ...fromQuestion.map((s) => s.replace(/`/g, "")),
+  ].map((s) => String(s).toLowerCase().trim()).filter((s) => s.length > 1))];
+
+  const answerStems = new Set(words.map(stemDe).filter(Boolean));
+  const answerLower = text.toLowerCase();
+  const covered = expected.filter((c) =>
+    answerLower.includes(c) || answerStems.has(stemDe(c)) ||
+    c.split(/\s+/).every((part) => answerStems.has(stemDe(part)))
+  );
+  const missing = expected.filter((c) => !covered.includes(c));
+  const coverage = expected.length ? covered.length / expected.length : null;
+
+  const hasReasoning = REASONING_WORDS.test(text);
+  const hasExample = EXAMPLE_WORDS.test(text);
+  // Fragt die Aufgabe ausdrücklich nach dem Warum, reicht eine reine
+  // Beschreibung nicht aus — dann ist die Begründung der Kern der Antwort.
+  const wantsReason = /\b(warum|wieso|weshalb|begründe|aus welchem grund)\b/i.test(task.question || "");
+
+  // Wurde die Frage nur abgeschrieben? Dann zeigt das kein Verständnis.
+  const questionWords = new Set((task.question || "").toLowerCase().split(/\s+/).map(stemDe).filter((w) => w.length > 3));
+  const ownWords = [...answerStems].filter((w) => w.length > 3 && !questionWords.has(w));
+  const copiedFromQuestion = questionWords.size > 3 && ownWords.length < 3;
+
+  let score = 0;
+  score += Math.min(30, words.length * 2.5);                    // Ausführlichkeit
+  score += sentences.length >= 2 ? 15 : sentences.length * 8;   // Satzbau
+  score += hasReasoning ? 25 : 0;                                // Begründung
+  score += hasExample ? 5 : 0;                                   // Beispiel
+  score += coverage === null ? 20 : Math.round(coverage * 25);   // Fachbegriffe
+  if (copiedFromQuestion) score = Math.min(score, 35);
+  if (wantsReason && !hasReasoning) score = Math.min(score, 50);
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  const correct = score >= 55 && words.length >= 6 && !copiedFromQuestion
+    && !(wantsReason && !hasReasoning);
+
+  let feedback, hint = "";
+  if (copiedFromQuestion) {
+    feedback = "Das ist im Wesentlichen die Frage in anderer Reihenfolge.";
+    hint = "Erkläre es mit eigenen Worten — was passiert da, und warum?";
+  } else if (wantsReason && !hasReasoning) {
+    feedback = "Du beschreibst korrekt, was passiert — die Frage zielt aber auf die Begründung.";
+    hint = "Ergänze das „Warum“, zum Beispiel mit „weil …“ oder „dadurch …“.";
+  } else if (correct && score >= 85) {
+    feedback = hasReasoning
+      ? "Sehr gute Erklärung — du benennst nicht nur das Was, sondern begründest auch das Warum."
+      : "Sehr gute, ausführliche Erklärung mit den passenden Fachbegriffen.";
+  } else if (correct && score >= 70) {
+    feedback = "Solide Erklärung — die Kernidee sitzt.";
+    if (missing.length) hint = `Noch treffender wird es mit ${missing.slice(0, 2).map((m) => `\`${m}\``).join(" und ")}.`;
+    else if (!hasReasoning) hint = "Eine kurze Begründung („weil …“) würde es abrunden.";
+  } else if (correct) {
+    feedback = "Die Grundidee hast du verstanden.";
+    hint = hasReasoning ? "Etwas ausführlicher wäre noch besser." : "Ergänze das „Warum“ — zum Beispiel mit „weil …“.";
+  } else if (words.length < 6) {
+    feedback = "Die Erklärung ist noch zu knapp, um dein Verständnis zu zeigen.";
+    hint = "Ein bis zwei vollständige Sätze reichen schon.";
+  } else if (!hasReasoning) {
+    feedback = "Du beschreibst, was passiert — es fehlt aber die Begründung.";
+    hint = "Erkläre auch, *warum* es so ist (z.B. mit „weil …“ oder „dadurch …“).";
+  } else {
+    feedback = "Die Richtung stimmt, aber es fehlen noch die zentralen Begriffe.";
+    hint = missing.length ? `Gehe auf ${missing.slice(0, 2).map((m) => `\`${m}\``).join(" und ")} ein.` : "Werde etwas konkreter.";
+  }
+
+  return {
+    correct, score, offline: true, feedback, hint,
+    praise: correct ? (score >= 85 ? "Klar auf den Punkt gebracht." : "Verständlich erklärt.") : "",
+    details: { covered, missing, hasReasoning, words: words.length },
+  };
+}
+
+/* ------------------------- Öffentlicher Einstieg -------------------------- */
+/**
+ * Bewertet eine Antwort — vollständig lokal, ohne Netzwerk.
+ * Dies ist der einzige Prüfweg für Lektionen.
+ */
+function analyzeAnswer(task, userAnswer, langId) {
+  if (task.type === "fill_blank") return evaluateFillBlank(task, task._blankAnswers || userAnswer);
+  if (task.type === "code_write") return evaluateCode(task, userAnswer, langId);
+  return evaluateExplanation(task, userAnswer);
+}
+
+/* -------------------- Code-Prüfung für den Editor ------------------------ */
+/**
+ * Analysiert HTML, CSS und JavaScript gemeinsam — für die Fehlerprüfung
+ * im Code-Editor. Nutzt dieselben Sprachprofile.
+ */
+function analyzeProject({ html, css, js }) {
+  const issues = [];
+  const add = (where, severity, title, detail, fix) => issues.push({ where, severity, title, detail, fix });
+
+  for (const [where, code] of [["html", html], ["css", css], ["js", js]]) {
+    if (!String(code || "").trim()) continue;
+    const langId = where === "js" ? "javascript" : where;
+    const a = analyzeCode(code, langId);
+
+    if (!a.structure.ok) {
+      for (const p of a.structure.problems.slice(0, 3)) {
+        if (p.tag) {
+          add(where, "error", `<${p.tag}> nicht geschlossen`,
+            p.kind === "unclosed" ? `Das Element <${p.tag}> wird geöffnet, aber nie geschlossen.` : `</${p.tag}> hat kein passendes öffnendes Element.`,
+            p.kind === "unclosed" ? `Ergänze </${p.tag}>.` : `Entferne das überzählige </${p.tag}>.`);
+        } else if (p.kind === "unclosed") {
+          add(where, "error", `Klammer \`${p.ch}\` nicht geschlossen`, `Eine öffnende \`${p.ch}\` hat keine passende \`${p.expected}\`.`, `Ergänze \`${p.expected}\`.`);
+        } else if (p.kind === "extraClose") {
+          add(where, "error", `Überzählige \`${p.ch}\``, `\`${p.ch}\` schließt etwas, das nie geöffnet wurde.`, `Entferne die Klammer oder ergänze die passende Öffnung.`);
+        } else {
+          add(where, "error", "Klammern falsch verschachtelt", `Erwartet wurde \`${p.expected}\`, gefunden \`${p.got}\`.`, "Prüfe die Reihenfolge der Klammern.");
+        }
+      }
+    }
+    for (const iss of a.issues) add(where, iss.severity, iss.title, iss.hint, iss.hint);
+  }
+
+  // Verbindungen zwischen den Dateien prüfen — das findet echte Fehler.
+  const jsCode = String(js || "");
+  const htmlCode = String(html || "");
+  const idRefs = [...jsCode.matchAll(/getElementById\(\s*["'`]([^"'`]+)["'`]\s*\)/g)].map((m) => m[1]);
+  for (const id of [...new Set(idRefs)]) {
+    if (!new RegExp(`id\\s*=\\s*["']${id}["']`).test(htmlCode)) {
+      add("js", "error", `Element \`#${id}\` existiert nicht`,
+        `Das Skript sucht ein Element mit der id "${id}", im HTML gibt es keines.`,
+        `Ergänze im HTML ein Element mit id="${id}" — oder korrigiere den Namen im Skript.`);
+    }
+  }
+  const classRefs = [...jsCode.matchAll(/querySelector(?:All)?\(\s*["'`]\.([\w-]+)["'`]\s*\)/g)].map((m) => m[1]);
+  for (const cls of [...new Set(classRefs)]) {
+    if (!new RegExp(`class\\s*=\\s*["'][^"']*\\b${cls}\\b`).test(htmlCode)) {
+      add("js", "warning", `Klasse \`.${cls}\` nicht im HTML gefunden`,
+        `Das Skript sucht Elemente mit der Klasse "${cls}".`,
+        `Vergib die Klasse im HTML oder passe den Selektor an.`);
+    }
+  }
+
+  const errors = issues.filter((i) => i.severity === "error").length;
+  const warnings = issues.filter((i) => i.severity === "warning").length;
+  return {
+    offline: true,
+    summary: issues.length === 0
+      ? "Keine Probleme gefunden — der Code ist strukturell sauber."
+      : `${issues.length} Hinweis${issues.length === 1 ? "" : "e"}${errors ? `, davon ${errors} kritisch` : warnings ? `, davon ${warnings} Warnung${warnings === 1 ? "" : "en"}` : ""}.`,
+    issues,
+  };
 }
 
 /* ========================= Reusable UI ============================= */
@@ -3238,7 +3804,7 @@ function DifficultyBadge({ level }) {
   return <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ color: d.color, background: d.color + "22" }}>{d.label}</span>;
 }
 
-function Btn({ children, onClick, variant = "primary", className = "", icon: Icon, disabled, type, size = "md" }) {
+function Btn({ children, onClick, variant = "primary", className = "", icon: Icon, disabled, type, size = "md", ariaLabel }) {
   const base = "inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
   const sz = size === "sm" ? "text-sm px-3 py-1.5" : size === "lg" ? "text-base px-6 py-3.5" : "text-sm px-4 py-2.5";
   const styles = {
@@ -3248,7 +3814,7 @@ function Btn({ children, onClick, variant = "primary", className = "", icon: Ico
     danger: "bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 hover:bg-[#EF4444]/20",
   };
   return (
-    <button type={type} disabled={disabled} onClick={onClick}
+    <button type={type} disabled={disabled} onClick={onClick} aria-label={ariaLabel}
       className={`${base} ${sz} ${styles[variant]} ${className}`}
       style={variant === "primary" ? { background: GRADIENT } : undefined}>
       {Icon && <Icon size={size === "lg" ? 20 : 16} />}{children}
@@ -6033,6 +6599,145 @@ const PLAYGROUND_STARTER = {
   js: `document.getElementById('btn').addEventListener('click', () => {\n  alert('Live-Vorschau funktioniert! 🎉');\n});`,
 };
 
+/* ------------------- KI-Assistent im Code-Editor -------------------------
+   Der einzige Ort, an dem eine KI zum Einsatz kommt. Hier ist eine Antwortzeit
+   von ein paar Sekunden unproblematisch — anders als bei der Aufgabenprüfung,
+   die deshalb rein lokal läuft.
+   ------------------------------------------------------------------------- */
+const ASSISTANT_QUICK_ACTIONS = [
+  { label: "Code erklären", icon: BookOpen, prompt: "Erkläre mir kurz, was mein Code macht." },
+  { label: "Fehler finden", icon: Bug, prompt: "Finde Fehler in meinem Code und erkläre sie." },
+  { label: "Verbessern", icon: Sparkles, prompt: "Wie kann ich meinen Code verbessern? Gib mir 2-3 konkrete Vorschläge." },
+];
+
+/** Rendert eine Assistenten-Antwort mit Codeblöcken. */
+function AssistantMessage({ content }) {
+  const parts = String(content).split(/```(\w*)\n?([\s\S]*?)```/g);
+  const out = [];
+  for (let i = 0; i < parts.length; i += 3) {
+    const text = parts[i];
+    if (text?.trim()) {
+      out.push(
+        <div key={`t${i}`} className="whitespace-pre-wrap leading-relaxed">
+          {text.split("\n").map((line, li) => <div key={li}>{renderInline(line, `a${i}_${li}`)}</div>)}
+        </div>
+      );
+    }
+    const lang = parts[i + 1];
+    const code = parts[i + 2];
+    if (code != null) out.push(<CodeBlock key={`c${i}`} code={code.replace(/\n$/, "")} lang={lang || "code"} />);
+  }
+  return <div className="space-y-1">{out}</div>;
+}
+
+function AssistantPanel({ ctx, code }) {
+  const { aiConfig, aiReady, openAiSettings, pushToast } = ctx;
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, busy]);
+
+  const send = async (text) => {
+    const question = String(text ?? input).trim();
+    if (!question || busy) return;
+    const next = [...messages, { role: "user", content: question }];
+    setMessages(next);
+    setInput("");
+    setBusy(true);
+    try {
+      const reply = await askAssistant(next, code, aiConfig);
+      setMessages([...next, { role: "assistant", content: reply }]);
+    } catch (e) {
+      setMessages([...next, {
+        role: "assistant", error: true,
+        content: `Die KI ist gerade nicht erreichbar (${e.message}). Prüfe deine Einstellungen — die Aufgabenprüfung funktioniert davon unabhängig weiter.`,
+      }]);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!aiReady) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-center p-6 gap-3">
+        <Bot size={32} className="text-[#4A5A7A]" />
+        <p className="text-sm text-[#8A9BC0]">Noch kein KI-Zugang eingerichtet.</p>
+        <p className="text-xs text-[#4A5A7A] max-w-xs leading-relaxed">
+          Der Assistent kann deinen Code erklären, Fehler finden und Verbesserungen vorschlagen.
+          Nutze dafür Google Gemini (kostenloses Kontingent) oder einen eigenen Ollama-Server.
+        </p>
+        <Btn size="sm" icon={Settings} onClick={openAiSettings}>KI einrichten</Btn>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 text-[13px]">
+        {messages.length === 0 && (
+          <div className="text-center py-4">
+            <Bot size={26} className="text-[#7C3AED] mx-auto mb-2" />
+            <p className="text-sm text-[#C9D6F0] mb-1">Frag mich zu deinem Code</p>
+            <p className="text-xs text-[#4A5A7A] mb-4">Ich sehe, was gerade im Editor steht.</p>
+            <div className="flex flex-col gap-1.5">
+              {ASSISTANT_QUICK_ACTIONS.map((a) => (
+                <button key={a.label} onClick={() => send(a.prompt)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-left border border-[#1E2D4A] hover:border-[#4F8EF7] hover:bg-[#4F8EF7]/5 text-[#C9D6F0] transition-all">
+                  <a.icon size={13} className="text-[#4F8EF7] shrink-0" />{a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {messages.map((m, i) => (
+          <div key={i} className={m.role === "user" ? "flex justify-end" : ""}>
+            {m.role === "user" ? (
+              <div className="max-w-[85%] px-3 py-2 rounded-xl rounded-br-sm text-white text-[13px]" style={{ background: GRADIENT }}>
+                {m.content}
+              </div>
+            ) : (
+              <div className={`px-3 py-2 rounded-xl rounded-bl-sm border ${m.error ? "border-[#EF4444]/30 bg-[#EF4444]/5 text-[#C9D6F0]" : "border-[#1E2D4A] bg-[#141D35] text-[#C9D6F0]"}`}>
+                <div className="flex items-center gap-1.5 mb-1.5 text-[10px] text-[#8A9BC0]">
+                  <Bot size={11} className="text-[#7C3AED]" />Assistent
+                </div>
+                <AssistantMessage content={m.content} />
+              </div>
+            )}
+          </div>
+        ))}
+
+        {busy && (
+          <div className="px-3 py-2 rounded-xl rounded-bl-sm border border-[#1E2D4A] bg-[#141D35] inline-flex items-center gap-2 text-xs text-[#8A9BC0]">
+            <Loader2 size={12} className="ld-spin" />denkt nach …
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-[#1E2D4A] p-2">
+        <div className="flex gap-2">
+          <input value={input} onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            placeholder="Frage zu deinem Code …" disabled={busy}
+            className="flex-1 bg-[#141D35] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg px-3 py-2 text-[13px] text-[#E8EDF5] placeholder:text-[#4A5A7A] disabled:opacity-50" />
+          <Btn size="sm" ariaLabel="Frage senden" icon={busy ? undefined : Send} onClick={() => send()} disabled={busy || !input.trim()}>
+            {busy ? <Loader2 size={14} className="ld-spin" /> : ""}
+          </Btn>
+        </div>
+        {messages.length > 0 && (
+          <button onClick={() => setMessages([])} className="text-[10px] text-[#4A5A7A] hover:text-[#8A9BC0] mt-1.5">
+            Verlauf löschen
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Playground({ ctx }) {
   const { me, savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId, pushToast, aiConfig, openAiSettings } = ctx;
   const [tab, setTab] = useState("html");
@@ -6050,7 +6755,7 @@ function Playground({ ctx }) {
   const runDebug = async () => {
     setDebugLoading(true);
     setDebugResult(null);
-    const res = await debugCodeWithAI({ html, css, js }, aiConfig);
+    const res = analyzeProject({ html, css, js });
     setDebugResult(res);
     setDebugLoading(false);
   };
@@ -6173,6 +6878,11 @@ function Playground({ ctx }) {
                 <Terminal size={12} />Konsole
                 {logs.length > 0 && <span className={`text-[9px] px-1.5 rounded-full ${logs.some((l) => l.level === "error") ? "bg-[#EF4444]/25 text-[#EF4444]" : "bg-white/20"}`}>{logs.length}</span>}
               </button>
+              <button onClick={() => setRightTab("assistant")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${rightTab === "assistant" ? "text-white" : "text-[#8A9BC0]"}`}
+                style={rightTab === "assistant" ? { background: GRADIENT } : undefined}>
+                <Bot size={12} />KI
+              </button>
             </div>
             {rightTab === "console" && logs.length > 0 && (
               <button onClick={() => setLogs([])} className="text-xs text-[#8A9BC0] hover:text-[#E8EDF5] flex items-center gap-1"><Trash2 size={11} />Leeren</button>
@@ -6181,6 +6891,8 @@ function Playground({ ctx }) {
           <div className={`rounded-lg overflow-hidden border border-[#1E2D4A] ${rightTab === "preview" ? "bg-white" : "bg-[#0A0E1A]"}`} style={{ height: 340 }}>
             {rightTab === "preview" ? (
               <iframe title="Live-Vorschau" srcDoc={srcDoc} sandbox="allow-scripts allow-modals" className="w-full h-full border-0" />
+            ) : rightTab === "assistant" ? (
+              <AssistantPanel ctx={ctx} code={{ html, css, js }} />
             ) : (
               <div className="h-full overflow-y-auto p-3 font-code text-[12px] leading-relaxed">
                 {logs.length === 0 ? (
@@ -6417,27 +7129,6 @@ function AdminDashboard({ ctx }) {
 /* =========================== Lesson View ========================== */
 const TASK_XP = 15;
 
-/* Zwischenspeicher für KI-Bewertungen: Dieselbe Antwort zur selben Aufgabe
-   wird nicht erneut angefragt — spart Kontingent und antwortet sofort.
-   Bewusst nur im Arbeitsspeicher, damit veraltete Bewertungen nicht ewig
-   bestehen bleiben. */
-const aiResultCache = new Map();
-const AI_CACHE_LIMIT = 200;
-
-function answerCacheKey(taskId, answer) {
-  const normalized = String(answer || "").trim().replace(/\s+/g, " ");
-  return `${taskId}::${normalized}`;
-}
-
-// Map behält Einfügereihenfolge — der älteste Eintrag fliegt zuerst raus.
-const cacheSet = aiResultCache.set.bind(aiResultCache);
-aiResultCache.set = (key, value) => {
-  if (aiResultCache.size >= AI_CACHE_LIMIT) {
-    aiResultCache.delete(aiResultCache.keys().next().value);
-  }
-  return cacheSet(key, value);
-};
-
 function AIFeedback({ result, ctx, reportPayload }) {
   const [reportOpen, setReportOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -6450,44 +7141,41 @@ function AIFeedback({ result, ctx, reportPayload }) {
   return (
     <Card className="p-5 mt-5" >
       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
-        <Bot size={18} className="text-[#7C3AED]" />
+        <ListChecks size={18} className="text-[#10B981]" />
         <span className="font-display font-bold">Bewertung</span>
-        {/* Der Zustand macht transparent, woher das Ergebnis gerade stammt. */}
-        {result.refining ? (
-          <span className="ml-auto flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7]">
-            <Loader2 size={10} className="ld-spin" />KI prüft nach …
-          </span>
-        ) : result.refined ? (
-          <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#7C3AED]/15 text-[#7C3AED]">KI-geprüft</span>
-        ) : result.offline || result.instant ? (
-          <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981]">Sofort-Prüfung</span>
-        ) : null}
+        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981]">Sofort geprüft</span>
       </div>
       <div className="flex items-center gap-2 mb-3">
         {good ? <CheckCircle2 size={20} className="text-[#10B981]" /> : <XCircle size={20} className="text-[#EF4444]" />}
         <span className={`font-semibold ${good ? "text-[#10B981]" : "text-[#EF4444]"}`}>{good ? "Richtig!" : "Noch nicht ganz"}</span>
         {typeof result.score === "number" && <span className="text-sm text-[#8A9BC0]">(Score: {result.score}/100)</span>}
       </div>
-      <p className="text-sm text-[#C9D6F0] leading-relaxed mb-2">{result.feedback}</p>
+      <p className="text-sm text-[#C9D6F0] leading-relaxed mb-2">{renderInline(result.feedback || "", "fb")}</p>
       {good && result.praise && <p className="text-sm text-[#10B981] mb-2">🎉 {result.praise}</p>}
-      {!good && result.hint && <p className="text-sm text-[#F59E0B] flex items-start gap-1.5 mb-2"><span>💡</span><span>{result.hint}</span></p>}
-      {/* Wenn die KI strenger urteilt als die Sofortprüfung, bleibt die
-          bereits vergebene Belohnung bestehen — nur der Hinweis kommt dazu. */}
-      {result.refined && result.wasInstantCorrect && !good && (
-        <p className="text-xs text-[#8A9BC0] mt-2 p-2 rounded-lg bg-[#0A0E1A] border border-[#1E2D4A]">
-          Die Sofort-Prüfung war großzügiger — deine XP behältst du. Schau dir den Hinweis trotzdem an.
-        </p>
+      {!good && result.hint && <p className="text-sm text-[#F59E0B] flex items-start gap-1.5 mb-2"><span>💡</span><span>{renderInline(result.hint, "hint")}</span></p>}
+      {good && result.hint && <p className="text-xs text-[#8A9BC0] flex items-start gap-1.5 mb-2"><span>💡</span><span>{renderInline(result.hint, "hint2")}</span></p>}
+
+      {/* Aufschlüsselung der geprüften Bausteine — macht nachvollziehbar,
+          warum die Bewertung so ausfällt. */}
+      {result.details?.concepts?.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {result.details.concepts.map((c, i) => (
+            <span key={i} className={`text-[10px] font-code px-2 py-0.5 rounded-full flex items-center gap-1 ${c.hit ? "bg-[#10B981]/15 text-[#10B981]" : "bg-[#EF4444]/15 text-[#EF4444]"}`}>
+              {c.hit ? <Check size={9} /> : <X size={9} />}{c.concept}
+            </span>
+          ))}
+        </div>
       )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 pt-3 border-t border-[#1E2D4A]">
-        {result.offline && ctx && (
-          <button onClick={ctx.openAiSettings} className="text-xs text-[#4F8EF7] hover:underline flex items-center gap-1.5">
-            <Settings size={12} />Echte KI-Bewertung aktivieren
-          </button>
-        )}
         {ctx && !reportOpen && (
           <button onClick={() => setReportOpen(true)} className="text-xs text-[#8A9BC0] hover:text-[#EF4444] flex items-center gap-1.5">
             <Flag size={12} />Diese Bewertung melden
+          </button>
+        )}
+        {ctx && (
+          <button onClick={() => ctx.navigate("playground")} className="text-xs text-[#4F8EF7] hover:underline flex items-center gap-1.5">
+            <Bot size={12} />Im Editor mit der KI besprechen
           </button>
         )}
       </div>
@@ -6566,54 +7254,19 @@ function LessonView({ ctx }) {
       pushToast("error", "Bitte gib zuerst eine Antwort ein."); return;
     }
 
-    const taskId = task.id;
-    const cacheKey = answerCacheKey(taskId, checkAnswer);
+    // Lektionen werden ausschließlich lokal bewertet: sofort, kostenlos und
+    // ohne Netzwerk. Die KI sitzt stattdessen als Assistent im Code-Editor.
+    const res = analyzeAnswer(checkTask, checkAnswer, lesson._course.id);
+    setResults((r) => ({ ...r, [task.id]: res }));
 
-    // Bereits bewertet? Dann sofort das gespeicherte Ergebnis zeigen.
-    const cached = aiResultCache.get(cacheKey);
-    if (cached) {
-      setResults((r) => ({ ...r, [taskId]: cached }));
-      if (cached.correct) { reward(taskId); pushToast("success", `Richtig! +${TASK_XP} XP`); }
-      else pushToast("error", "Versuch es nochmal — du schaffst das!");
-      return;
-    }
-
-    // Schritt 1 — Sofortergebnis aus der lokalen Analyse (praktisch ohne
-    // Wartezeit). So bekommt man auch auf schwacher Hardware oder bei
-    // langsamer Verbindung unmittelbar Rückmeldung.
-    const instant = heuristicCheck(checkTask, checkAnswer, lesson._course.id);
-    const willRefine = aiReady;
-    setResults((r) => ({ ...r, [taskId]: { ...instant, instant: true, refining: willRefine } }));
-    if (instant.correct) { reward(taskId); pushToast("success", `Richtig! +${TASK_XP} XP`); }
-    else if (!willRefine) pushToast("error", "Versuch es nochmal — du schaffst das!");
-
-    if (!willRefine) return;
-
-    // Schritt 2 — im Hintergrund die KI befragen und das Ergebnis ersetzen.
-    setAiLoading(true);
-    try {
-      const res = await checkAnswerWithAI(checkTask, checkAnswer, lesson._course.name, lesson.title, { ...aiConfig, langId: lesson._course.id });
-      aiResultCache.set(cacheKey, res);
-      setResults((r) => {
-        // Nur ersetzen, wenn der Nutzer nicht zwischenzeitlich "Nochmal" gedrückt hat
-        if (!r[taskId]) return r;
-        return { ...r, [taskId]: { ...res, refined: true, wasInstantCorrect: instant.correct } };
-      });
-      // Fällt die KI positiver aus als die Sofortprüfung, wird jetzt belohnt.
-      if (res.correct && !instant.correct) {
-        reward(taskId);
-        pushToast("success", `Die KI wertet das als richtig — +${TASK_XP} XP`);
-      } else if (!res.correct && !instant.correct) {
-        pushToast("error", "Versuch es nochmal — du schaffst das!");
-      }
-      if (res.correct && res.score >= 95 && !me.badges.includes("ai_master")) {
+    if (res.correct) {
+      reward(task.id);
+      pushToast("success", `Richtig! +${TASK_XP} XP`);
+      if (res.score >= 95 && !me.badges.includes("ai_master")) {
         setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES.ai_master.label}!`), 400);
       }
-    } catch (e) {
-      // Sofortergebnis bleibt stehen, nur den Hinweis auf die Nachprüfung entfernen
-      setResults((r) => (r[taskId] ? { ...r, [taskId]: { ...r[taskId], refining: false } } : r));
-    } finally {
-      setAiLoading(false);
+    } else {
+      pushToast("error", "Versuch es nochmal — du schaffst das!");
     }
   };
 
