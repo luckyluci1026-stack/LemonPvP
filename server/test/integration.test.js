@@ -4,7 +4,7 @@ import { totpCode, hashPassword } from "../src/security.js";
 import { closeDb, query, usingSqlite } from "../src/db.js";
 
 const BASE = "http://127.0.0.1:3111";
-const ADMIN = { email: "admin@test.de", password: "adminpass123" };
+const ADMIN = { email: "admin@test.de", password: "Adminpass!7x" };
 
 // Jeder Lauf startet mit einer definierten Datenlage, damit Tests nicht
 // von Rückständen vorheriger Läufe abhängen.
@@ -51,7 +51,7 @@ async function api(method, path, body) {
 }
 
 const uniq = Date.now().toString(36);
-const student = { name: "Test Schüler", email: `s_${uniq}@test.de`, password: "supergeheim123" };
+const student = { name: "Test Schüler", email: `s_${uniq}@test.de`, password: "Supergeheim!7" };
 let verificationCode = null;
 
 test("Registrierung legt Konto an und startet Sitzung", async () => {
@@ -79,7 +79,7 @@ test("Doppelte Registrierung wird abgelehnt", async () => {
   assert.equal(r.status, 409);
 });
 
-test("Zu kurzes Passwort wird abgelehnt", async () => {
+test("Zu schwaches Passwort wird abgelehnt", async () => {
   const r = await api("POST", "/api/auth/register", {
     name: "X", email: `kurz_${uniq}@test.de`, password: "1234", role: "student",
   });
@@ -175,7 +175,7 @@ test("2FA: Einrichtung, Aktivierung und Login-Pflicht", async () => {
 test("Login mit falschem Passwort scheitert", async () => {
   const saved = new Map(jar);
   jar.clear();
-  const r = await api("POST", "/api/auth/login", { email: student.email, password: "falschfalsch" });
+  const r = await api("POST", "/api/auth/login", { email: student.email, password: "FalschFalsch!7" });
   assert.equal(r.status, 401);
   assert.ok(!r.body.user);
   jar.clear();
@@ -252,7 +252,7 @@ test("Letzter Administrator kann nicht entfernt werden", async () => {
 
 test("Admin kann weiteren Admin anlegen", async () => {
   const r = await api("POST", "/api/admin/users", {
-    name: "Zweiter Admin", email: `admin2_${uniq}@test.de`, password: "nochngeheim123", role: "admin",
+    name: "Zweiter Admin", email: `admin2_${uniq}@test.de`, password: "Nochngeheim!7", role: "admin",
   });
   assert.equal(r.status, 200);
   assert.equal(r.body.user.role, "admin");

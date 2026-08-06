@@ -5,6 +5,7 @@ import {
   numericCode, schoolCode, generateTotpSecret, verifyTotp, totpUri,
 } from "../security.js";
 import { verifyTurnstile } from "../turnstile.js";
+import { checkPassword } from "../password.js";
 import { sendMail, verificationMail, passwordChangedMail, passwordResetMail } from "../mailer.js";
 import { publicUser, loadFullUser } from "../serialize.js";
 
@@ -48,8 +49,9 @@ export default async function authRoutes(app) {
     if (!EMAIL_RE.test(email.trim())) {
       return reply.code(400).send({ error: "Bitte gib eine gültige E-Mail-Adresse an." });
     }
-    if (String(password).length < 8) {
-      return reply.code(400).send({ error: "Das Passwort muss mindestens 8 Zeichen lang sein." });
+    const strength = checkPassword(password, { name, email });
+    if (!strength.ok) {
+      return reply.code(400).send({ error: strength.problems.join(" "), passwordProblems: strength.problems });
     }
     if (!["student", "teacher"].includes(role)) {
       return reply.code(400).send({ error: "Ungültige Rolle." });
@@ -237,9 +239,6 @@ export default async function authRoutes(app) {
   }, async (request, reply) => {
     const { token, newPassword } = request.body || {};
     if (!token) return reply.code(400).send({ error: "Kein Token übermittelt." });
-    if (String(newPassword || "").length < 8) {
-      return reply.code(400).send({ error: "Das neue Passwort muss mindestens 8 Zeichen lang sein." });
-    }
 
     const user = await one(
       "SELECT * FROM users WHERE reset_token_hash = $1 AND reset_expires > now()",
@@ -247,6 +246,10 @@ export default async function authRoutes(app) {
     );
     if (!user) {
       return reply.code(400).send({ error: "Der Link ist ungültig oder abgelaufen. Fordere einen neuen an." });
+    }
+    const strength = checkPassword(newPassword, { name: user.name, email: user.email });
+    if (!strength.ok) {
+      return reply.code(400).send({ error: strength.problems.join(" "), passwordProblems: strength.problems });
     }
 
     const hash = await hashPassword(newPassword);
@@ -267,12 +270,13 @@ export default async function authRoutes(app) {
   /* ---------------------------- Passwort ändern ------------------------- */
   app.post("/api/auth/change-password", { preHandler: [requireAuth] }, async (request, reply) => {
     const { currentPassword, newPassword } = request.body || {};
-    if (String(newPassword || "").length < 8) {
-      return reply.code(400).send({ error: "Das neue Passwort muss mindestens 8 Zeichen lang sein." });
-    }
     const user = await one("SELECT * FROM users WHERE id = $1", [request.user.id]);
     if (!(await verifyPassword(String(currentPassword || ""), user.password_hash))) {
       return reply.code(401).send({ error: "Das aktuelle Passwort ist falsch." });
+    }
+    const strength = checkPassword(newPassword, { name: user.name, email: user.email });
+    if (!strength.ok) {
+      return reply.code(400).send({ error: strength.problems.join(" "), passwordProblems: strength.problems });
     }
     const hash = await hashPassword(newPassword);
     await transaction(async (client) => {

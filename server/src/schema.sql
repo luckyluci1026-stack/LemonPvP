@@ -77,6 +77,10 @@ CREATE TABLE IF NOT EXISTS projects (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   name       TEXT NOT NULL,
+  -- Ein Projekt besteht aus beliebig vielen Dateien (JSON: [{name, content}]).
+  -- html/css/js bleiben für ältere Datenbestände erhalten und werden beim
+  -- Speichern mitgeführt, damit nichts verloren geht.
+  files      TEXT NOT NULL DEFAULT '[]',
   html       TEXT NOT NULL DEFAULT '',
   css        TEXT NOT NULL DEFAULT '',
   js         TEXT NOT NULL DEFAULT '',
@@ -138,3 +142,24 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS league TEXT NOT NULL DEFAULT 'bronze'
 ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_xp INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS week_key TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_freezes INTEGER NOT NULL DEFAULT 0;
+
+
+-- Eigene Lektionen, die Lehrkräfte selbst anlegen
+CREATE TABLE IF NOT EXISTS custom_lessons (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,
+  course_id   TEXT NOT NULL DEFAULT 'html',
+  level       TEXT NOT NULL DEFAULT 'beginner',
+  xp_reward   INTEGER NOT NULL DEFAULT 50 CHECK (xp_reward >= 0),
+  theory      TEXT NOT NULL DEFAULT '',
+  tasks       TEXT NOT NULL DEFAULT '[]',
+  published   BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS custom_lessons_teacher_idx ON custom_lessons (teacher_id, updated_at DESC);
+
+-- Spalten, die erst nachträglich hinzugekommen sind (PostgreSQL).
+-- Für SQLite erledigt das db-sqlite.js über LATER_COLUMNS.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS files TEXT NOT NULL DEFAULT '[]';

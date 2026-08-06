@@ -83,6 +83,18 @@ const Wand = FaIcon("wand-magic-sparkles");
 const ExternalLink = FaIcon("arrow-up-right-from-square");
 const Download = FaIcon("download");
 const MapIcon = FaIcon("map");
+const VolumeOn = FaIcon("volume-high");
+const VolumeOff = FaIcon("volume-xmark");
+const FilePlus = FaIcon("file-circle-plus");
+const FolderTree = FaIcon("folder-tree");
+const FileCode = FaIcon("file-code");
+const Save = FaIcon("floppy-disk");
+const Expand = FaIcon("expand");
+const Compress = FaIcon("compress");
+const PenSquare = FaIcon("pen-to-square");
+const Sparkles2 = FaIcon("wand-sparkles");
+const ClipboardList = FaIcon("clipboard-list");
+const Forward = FaIcon("forward");
 
 /* =========================================================================
    LearnDeveloping — learndeveloping.com
@@ -124,6 +136,141 @@ function GlobalStyles() {
       @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
     `}} />
   );
+}
+
+/* ============================== Klänge ==================================
+   Sämtliche Töne entstehen im Browser selbst (Web Audio API) — es gibt keine
+   Audiodateien, nichts wird nachgeladen, und es sind keine fremden Klänge
+   im Spiel. Jeder Ton besteht aus Oszillatoren mit kurzen Hüllkurven; das
+   klingt sauber, kostet praktisch nichts und funktioniert offline.
+
+   Browser starten Audio erst nach einer Nutzerinteraktion. Der Klangkontext
+   wird deshalb erst beim ersten Abspielen erzeugt und, falls angehalten,
+   wieder aufgeweckt.
+   ======================================================================== */
+const SOUND_STORAGE = "learndeveloping_sound";
+
+const audio = {
+  ctx: null,
+  volume: 0.3,
+  enabled: (() => {
+    try { return localStorage.getItem(SOUND_STORAGE) !== "off"; } catch (e) { return true; }
+  })(),
+  ensure() {
+    if (!this.enabled) return null;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!this.ctx) this.ctx = new Ctx();
+      if (this.ctx.state === "suspended") this.ctx.resume();
+      return this.ctx;
+    } catch (e) { return null; }
+  },
+  setEnabled(on) {
+    this.enabled = !!on;
+    try { localStorage.setItem(SOUND_STORAGE, on ? "on" : "off"); } catch (e) {}
+    if (on) { const c = this.ensure(); if (c) SOUNDS.click(c); }
+  },
+};
+
+/**
+ * Ein einzelner Ton. Das kurze Ein- und das weiche Ausblenden verhindern das
+ * typische Knacken, das bei hart geschalteten Oszillatoren entsteht.
+ */
+function tone(ctx, { freq, at = 0, dur = 0.18, type = "sine", gain = 1, glide = null }) {
+  const t0 = ctx.currentTime + at;
+  const osc = ctx.createOscillator();
+  const amp = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  if (glide) osc.frequency.exponentialRampToValueAtTime(Math.max(20, glide), t0 + dur);
+  const peak = Math.max(0.0001, gain * audio.volume);
+  amp.gain.setValueAtTime(0.0001, t0);
+  amp.gain.exponentialRampToValueAtTime(peak, t0 + 0.012);
+  amp.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(amp);
+  amp.connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.03);
+}
+
+/** Gefiltertes Rauschen — gibt Klicks und Fehlertönen ihren Körper. */
+function noise(ctx, { at = 0, dur = 0.09, gain = 0.3, freq = 1400, q = 1 }) {
+  const t0 = ctx.currentTime + at;
+  const frames = Math.max(1, Math.floor(ctx.sampleRate * dur));
+  const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < frames; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / frames);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.frequency.value = freq;
+  filter.Q.value = q;
+  const amp = ctx.createGain();
+  amp.gain.setValueAtTime(Math.max(0.0001, gain * audio.volume), t0);
+  amp.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(filter);
+  filter.connect(amp);
+  amp.connect(ctx.destination);
+  src.start(t0);
+  src.stop(t0 + dur);
+}
+
+// Die Klangbibliothek. Frequenzen orientieren sich an Dur-Intervallen —
+// aufwärts klingt nach Erfolg, abwärts nach Fehlschlag.
+const SOUNDS = {
+  // Zwei aufsteigende Terzen: kurz, freundlich, nicht aufdringlich
+  correct: (c) => {
+    tone(c, { freq: 587.33, dur: 0.11, type: "triangle", gain: 0.55 });               // D5
+    tone(c, { freq: 880.00, at: 0.085, dur: 0.20, type: "triangle", gain: 0.5 });     // A5
+  },
+  // Weicher, fallender Ton — deutlich, aber ohne Bestrafungscharakter
+  wrong: (c) => {
+    tone(c, { freq: 311.13, dur: 0.22, type: "sine", gain: 0.45, glide: 196 });
+    noise(c, { at: 0.01, dur: 0.07, gain: 0.12, freq: 500 });
+  },
+  // Dur-Dreiklang aufwärts mit Oktavschluss
+  levelUp: (c) => {
+    const notes = [523.25, 659.25, 783.99, 1046.5];                                    // C-E-G-C
+    notes.forEach((f, i) => tone(c, { freq: f, at: i * 0.075, dur: 0.3, type: "triangle", gain: 0.45 }));
+  },
+  // Fanfare zum Lektionsabschluss
+  lessonComplete: (c) => {
+    const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+    notes.forEach((f, i) => tone(c, { freq: f, at: i * 0.06, dur: 0.35, type: "triangle", gain: 0.4 }));
+    tone(c, { freq: 261.63, at: 0.06, dur: 0.5, type: "sine", gain: 0.25 });
+  },
+  // Heller Glockenschlag für ein neues Abzeichen
+  badge: (c) => {
+    tone(c, { freq: 1174.7, dur: 0.5, type: "sine", gain: 0.35 });
+    tone(c, { freq: 1567.98, at: 0.05, dur: 0.45, type: "sine", gain: 0.22 });
+  },
+  // Leises Ploppen bei jedem XP-Gewinn
+  xp: (c) => tone(c, { freq: 1046.5, dur: 0.09, type: "sine", gain: 0.3, glide: 1318.5 }),
+  // Warmer Doppelton für die Serie
+  streak: (c) => {
+    tone(c, { freq: 440, dur: 0.13, type: "triangle", gain: 0.4 });
+    tone(c, { freq: 659.25, at: 0.1, dur: 0.24, type: "triangle", gain: 0.4 });
+  },
+  // Kurzer Bestätigungston beim Speichern
+  save: (c) => tone(c, { freq: 783.99, dur: 0.12, type: "sine", gain: 0.32, glide: 1046.5 }),
+  // Trockener Klick für Schaltflächen
+  click: (c) => noise(c, { dur: 0.045, gain: 0.16, freq: 2400, q: 2 }),
+  // Fehlermeldung: zwei tiefe Impulse
+  error: (c) => {
+    tone(c, { freq: 220, dur: 0.1, type: "square", gain: 0.18 });
+    tone(c, { freq: 185, at: 0.11, dur: 0.14, type: "square", gain: 0.18 });
+  },
+};
+
+/** Spielt einen Klang, falls Töne eingeschaltet sind. Schlägt nie fehl. */
+function playSound(name) {
+  const ctx = audio.ensure();
+  if (!ctx) return;
+  const make = SOUNDS[name];
+  if (!make) return;
+  try { make(ctx); } catch (e) {}
 }
 
 /* ------------------------------ Levels --------------------------------- */
@@ -298,43 +445,15 @@ function findLessonMeta(lessonId) {
   return null;
 }
 
-/* ----------------------------- Demo Users ------------------------------ */
+/* ------------------------------ Konten --------------------------------- */
 // 2,5 GB simuliertes Speicherkontingent pro Account für Playground-Projekte.
 // Echtes localStorage fasst real nur wenige MB — dies ist eine UX-Anzeige/Obergrenze,
 // keine tatsächliche Festplatten-Reservierung (dafür bräuchte es einen Server).
 const STORAGE_QUOTA_BYTES = 2.5 * 1024 * 1024 * 1024;
 
-const DEMO_USERS = [
-  {
-    id: "teacher_1", role: "teacher", name: "Prof. Anna Schmidt", email: "lehrer@demo.de",
-    password: "lehrer123", school: "Gymnasium Berlin-Mitte", schoolCode: "LRND-4K9M",
-    students: ["student_1", "student_2", "student_3"], createdAt: "2024-01-01", avatar: "👩‍🏫",
-    emailVerified: true, twoFactorEnabled: false, playground: [],
-  },
-  {
-    id: "student_1", role: "student", name: "Max Müller", email: "max@demo.de", password: "schueler123",
-    teacherId: "teacher_1", xp: 1250, streak: 7, completedLessons: ["html_1_1", "html_1_2", "html_1_3", "javascript_1_1", "javascript_1_2"],
-    currentCourse: "javascript", joinedAt: "2024-01-15", lastLogin: "Heute", avatar: "🧑‍💻", badges: ["first_lesson", "week_warrior"],
-    emailVerified: true, twoFactorEnabled: false, playground: [],
-  },
-  {
-    id: "student_2", role: "student", name: "Sarah Becker", email: "sarah@demo.de", password: "schueler123",
-    teacherId: "teacher_1", xp: 870, streak: 3, completedLessons: ["html_1_1", "html_1_2", "css_1_1"],
-    currentCourse: "html", joinedAt: "2024-02-02", lastLogin: "Vor 2 Std.", avatar: "👩‍💻", badges: ["first_lesson"],
-    emailVerified: true, twoFactorEnabled: false, playground: [],
-  },
-  {
-    id: "student_3", role: "student", name: "Tom Weber", email: "tom@demo.de", password: "schueler123",
-    teacherId: "teacher_1", xp: 2100, streak: 14,
-    completedLessons: ["html_1_1", "html_1_2", "html_1_3", "html_1_4", "html_2_1", "javascript_1_1", "javascript_1_2", "javascript_1_3"],
-    currentCourse: "javascript", joinedAt: "2024-01-08", lastLogin: "Gestern", avatar: "👨‍🎓", badges: ["first_lesson", "week_warrior", "js_beginner"],
-    emailVerified: true, twoFactorEnabled: false, playground: [],
-  },
-  {
-    id: "admin_1", role: "admin", name: "System-Administrator", email: "admin@demo.de", password: "admin123",
-    createdAt: "2024-01-01", avatar: "🛡️", emailVerified: true, twoFactorEnabled: false,
-  },
-];
+// Es gibt keine vorgefertigten Konten. Wer die Plattform nutzt, legt sich ein
+// eigenes an — in der Rangliste und in der Verwaltung tauchen ausschließlich
+// echte Konten auf.
 
 /* --------------------------- Lesson Content ---------------------------- */
 const JS_LESSON_1_THEORY = `# Variablen in JavaScript
@@ -797,7 +916,7 @@ const EXTRA_LESSONS = {
         "template": "Ein ID-Selektor beginnt mit ___ und darf pro Seite nur ___ vorkommen.",
         "blanks": [
           "#",
-          "einmal"
+          ["einmal", "1", "einmal pro Seite", "genau einmal", "ein Mal"]
         ],
         "aiCheck": false
       },
@@ -2579,44 +2698,190 @@ const EXTRA_LESSONS = {
 // Alle handgemachten Inhalte zusammenführen
 const LESSON_CONTENT = { ...EXTRA_LESSONS, ...BASE_LESSONS };
 
+/* ------------------- Übungen für Lektionen ohne Inhalt --------------------
+   Nicht jede Lektion hat handgeschriebene Aufgaben. Statt überall dieselbe
+   Erklär-Aufgabe zu stellen, gibt es hier je Sprache echte Übungen:
+   ein Lückentext zur Syntax und eine kleine Code-Aufgabe. Das ist deutlich
+   näher am Programmieren als „Erkläre in eigenen Worten“.
+   ------------------------------------------------------------------------- */
+const COURSE_PRACTICE = {
+  html: {
+    blank: { template: "Ein Absatz steht zwischen ___ und ___.", blanks: ["<p>", "</p>"] },
+    code: { question: "Schreibe eine Überschrift erster Ordnung mit dem Text **Hallo**.", concepts: ["<h1>", "</h1>", "Hallo"] },
+    mc: { question: "Wofür steht das `alt`-Attribut bei einem Bild?",
+      options: ["Für die Bildgröße", "Für einen Alternativtext, wenn das Bild fehlt", "Für die Ausrichtung", "Für den Dateipfad"],
+      correct: 1, why: "Der Alternativtext beschreibt das Bild — für Screenreader und wenn das Bild nicht lädt." },
+  },
+  css: {
+    blank: { template: "Die Textfarbe setzt du mit ___, den Hintergrund mit ___.", blanks: ["color", ["background", "background-color"]] },
+    code: { question: "Gib allen Absätzen die Schriftgröße `16px`.", concepts: ["p", "font-size", "16px"] },
+    mc: { question: "Welcher Selektor spricht die Klasse `box` an?",
+      options: ["#box", ".box", "box", "*box"], correct: 1, why: "Klassen beginnen mit einem Punkt, IDs mit einer Raute." },
+  },
+  javascript: {
+    blank: { template: "Eine Konstante deklarierst du mit ___, eine änderbare Variable mit ___.", blanks: ["const", "let"] },
+    code: { question: "Lege eine Konstante `name` mit deinem Namen an und gib sie in der Konsole aus.", concepts: ["const", "name", "console.log"] },
+    mc: { question: "Was gibt `typeof 42` zurück?",
+      options: ['"integer"', '"number"', '"float"', '"42"'], correct: 1, why: "JavaScript kennt nur einen Zahlentyp: number." },
+  },
+  typescript: {
+    blank: { template: "Ein Typ wird nach einem ___ notiert, z.B. `alter: number`. Ein eigener Typ entsteht mit ___.", blanks: [":", ["type", "interface"]] },
+    code: { question: "Schreibe eine Funktion `verdopple`, die eine `number` entgegennimmt und eine `number` zurückgibt.", concepts: ["function", "verdopple", "number", "return"] },
+    mc: { question: "Was bewirkt `strict` in der tsconfig?",
+      options: ["Schnellere Kompilierung", "Strengere Typprüfungen", "Kleinere Ausgabedateien", "Automatisches Formatieren"],
+      correct: 1, why: "strict aktiviert unter anderem strikte Null-Prüfungen — das fängt viele Fehler früh ab." },
+  },
+  react: {
+    blank: { template: "Zustand bekommst du mit ___, Seiteneffekte mit ___.", blanks: ["useState", "useEffect"] },
+    code: { question: "Schreibe eine Komponente `Hallo`, die `<h1>Hallo</h1>` zurückgibt.", concepts: ["function", "Hallo", "return", "<h1>"] },
+    mc: { question: "Warum braucht jede Liste in React ein `key`?",
+      options: ["Für die Sortierung", "Damit React Elemente wiedererkennt", "Für CSS-Klassen", "Es ist optional"],
+      correct: 1, why: "Der Key sagt React, welches Element welches ist — sonst wird beim Aktualisieren zu viel neu gebaut." },
+  },
+  vue: {
+    blank: { template: "Eine Bedingung schreibst du mit ___, eine Schleife mit ___.", blanks: ["v-if", "v-for"] },
+    code: { question: "Binde die Variable `titel` in einer Überschrift aus (Interpolation).", concepts: ["<h1>", "{{", "titel", "}}"] },
+    mc: { question: "Wofür steht `v-model`?",
+      options: ["Nur Ausgabe", "Zweiwege-Bindung an ein Formularfeld", "Ein Datenbankmodell", "Ein Styling-Helfer"],
+      correct: 1, why: "v-model verbindet Feld und Daten in beide Richtungen." },
+  },
+  python: {
+    blank: { template: "Eine Funktion beginnt mit ___, ausgegeben wird mit ___.", blanks: ["def", ["print", "print()"]] },
+    code: { question: "Schreibe eine Funktion `begruessung`, die `Hallo` ausgibt.", concepts: ["def", "begruessung", "print"] },
+    mc: { question: "Wodurch werden Blöcke in Python abgegrenzt?",
+      options: ["Geschweifte Klammern", "Einrückung", "Semikolons", "begin/end"],
+      correct: 1, why: "Python nutzt die Einrückung — deshalb ist sie dort nicht nur Kosmetik." },
+  },
+  java: {
+    blank: { template: "Die Einstiegsmethode heißt ___ und liegt in einer ___.", blanks: ["main", ["Klasse", "class"]] },
+    code: { question: "Schreibe eine Klasse `Start` mit einer `main`-Methode, die `Hallo` ausgibt.", concepts: ["class", "Start", "main", "System.out.println"] },
+    mc: { question: "Was bedeutet `static` bei einer Methode?",
+      options: ["Sie ist unveränderlich", "Sie gehört zur Klasse, nicht zum Objekt", "Sie ist privat", "Sie läuft schneller"],
+      correct: 1, why: "Statische Methoden rufst du ohne Objekt auf — deshalb ist main statisch." },
+  },
+  kotlin: {
+    blank: { template: "Unveränderlich deklarierst du mit ___, veränderbar mit ___.", blanks: ["val", "var"] },
+    code: { question: "Schreibe eine Funktion `gruss`, die `Hallo` ausgibt.", concepts: ["fun", "gruss", "println"] },
+    mc: { question: "Was bedeutet der Typ `String?`",
+      options: ["Ein Text-Array", "Ein Text, der auch null sein darf", "Ein optionaler Parameter", "Ein Zeichen"],
+      correct: 1, why: "Das Fragezeichen erlaubt null — Kotlins Null-Sicherheit macht das sichtbar." },
+  },
+  c: {
+    blank: { template: "Ein- und Ausgabe bindest du mit `#include` ___ ein, ausgegeben wird mit ___.", blanks: [["<stdio.h>", "stdio.h"], ["printf", "printf()"]] },
+    code: { question: "Schreibe ein vollständiges Programm, das `Hallo` ausgibt.", concepts: ["#include", "int main", "printf", "return"] },
+    mc: { question: "Was steht in einem Zeiger?",
+      options: ["Eine Kopie des Wertes", "Eine Speicheradresse", "Der Datentyp", "Die Größe in Bytes"],
+      correct: 1, why: "Ein Zeiger speichert die Adresse — über sie kommst du an den Wert." },
+  },
+  cpp: {
+    blank: { template: "Text gibst du mit ___ aus, eingelesen wird mit ___.", blanks: [["std::cout", "cout"], ["std::cin", "cin"]] },
+    code: { question: "Schreibe ein Programm, das `Hallo` auf der Konsole ausgibt.", concepts: ["#include", "int main", ["cout", "std::cout"], "return"] },
+    mc: { question: "Wofür stehen Smart Pointer?",
+      options: ["Schnellere Zeiger", "Automatische Speicherfreigabe", "Zeiger auf Funktionen", "Zeiger mit Typprüfung"],
+      correct: 1, why: "unique_ptr und shared_ptr geben den Speicher selbst wieder frei." },
+  },
+  go: {
+    blank: { template: "Eine Funktion beginnt mit ___, ein Paket wird mit ___ deklariert.", blanks: ["func", "package"] },
+    code: { question: "Schreibe ein Programm im Paket `main`, das `Hallo` ausgibt.", concepts: ["package", "func main", ["fmt.Println", "Println"]] },
+    mc: { question: "Was startet `go func() { ... }()`?",
+      options: ["Einen neuen Prozess", "Eine Goroutine", "Einen Thread-Pool", "Eine Endlosschleife"],
+      correct: 1, why: "Goroutinen sind sehr leichtgewichtig — davon laufen problemlos Tausende." },
+  },
+  rust: {
+    blank: { template: "Eine Funktion beginnt mit ___, veränderbar wird eine Variable mit ___.", blanks: ["fn", "mut"] },
+    code: { question: "Schreibe ein Programm, das `Hallo` ausgibt.", concepts: ["fn main", ["println!", "println"]] },
+    mc: { question: "Was besagt Ownership?",
+      options: ["Jeder Wert hat genau einen Eigentümer", "Werte sind immer unveränderlich", "Speicher wird nie freigegeben", "Nur Funktionen besitzen Werte"],
+      correct: 0, why: "Genau ein Eigentümer — endet dessen Gültigkeit, wird der Speicher freigegeben." },
+  },
+  php: {
+    blank: { template: "Ein PHP-Block beginnt mit ___, Variablen beginnen mit ___.", blanks: ["<?php", "$"] },
+    code: { question: "Gib den Text `Hallo` mit PHP aus.", concepts: ["<?php", ["echo", "print"], "Hallo"] },
+    mc: { question: "Womit verhinderst du SQL-Injection am zuverlässigsten?",
+      options: ["Eingaben kürzen", "Vorbereitete Anweisungen (Prepared Statements)", "Anführungszeichen verdoppeln", "Kleinbuchstaben erzwingen"],
+      correct: 1, why: "Prepared Statements trennen Befehl und Daten — dann kann Eingabe kein Befehl mehr werden." },
+  },
+  sql: {
+    blank: { template: "Spalten wählst du mit ___ aus, die Tabelle folgt nach ___.", blanks: ["SELECT", "FROM"] },
+    code: { question: "Hole alle Spalten aus der Tabelle `kunden`.", concepts: ["SELECT", "FROM", "kunden"] },
+    mc: { question: "Was macht ein `INNER JOIN`?",
+      options: ["Alle Zeilen beider Tabellen", "Nur Zeilen mit Treffer in beiden Tabellen", "Nur die linke Tabelle", "Er entfernt Duplikate"],
+      correct: 1, why: "Ohne Treffer auf beiden Seiten fällt die Zeile heraus." },
+  },
+};
+
+const DEFAULT_PRACTICE = {
+  blank: { template: "Ein Kommentar dient dazu, Code zu ___ — ausgeführt wird er ___.", blanks: [["erklären", "beschreiben", "dokumentieren"], ["nicht", "nie"]] },
+  code: { question: "Schreibe eine kleine, lauffähige Zeile Code zu diesem Thema.", concepts: [] },
+  mc: { question: "Was hilft beim Lernen einer Programmiersprache am meisten?",
+    options: ["Nur lesen", "Selbst schreiben und ausprobieren", "Videos ansehen", "Auswendig lernen"],
+    correct: 1, why: "Programmieren lernt man durch Programmieren." },
+};
+
+/** Kleiner, stabiler Hash — damit dieselbe Lektion immer dieselben Aufgaben hat. */
+function lessonHash(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h;
+}
+
 // Fallback-Lektion, falls keine handgemachten Inhalte vorliegen
 function buildFallbackLesson(course, meta) {
   const title = meta.lesson.title;
+  const practice = COURSE_PRACTICE[course.id] || DEFAULT_PRACTICE;
+  const hash = lessonHash(meta.lesson.id);
+
+  const tasks = [
+    {
+      id: "g1", type: "fill_blank",
+      question: "Fülle die Lücken aus:",
+      template: practice.blank.template,
+      blanks: practice.blank.blanks,
+      aiCheck: false,
+    },
+    {
+      id: "g2", type: "code_write",
+      question: practice.code.question,
+      starterCode: "",
+      expectedConcepts: practice.code.concepts,
+      aiCheck: false,
+    },
+    {
+      id: "g3", type: "multiple_choice",
+      question: practice.mc.question,
+      options: practice.mc.options,
+      correctAnswer: practice.mc.correct,
+      explanation: practice.mc.why,
+      aiCheck: false,
+    },
+  ];
+
+  // Nur in etwa jeder vierten Lektion kommt eine Erklär-Aufgabe dazu —
+  // sie hat ihren Platz, soll aber nicht das Bild bestimmen.
+  if (hash % 4 === 0) {
+    tasks.push({
+      id: "g4", type: "explain",
+      question: `Erkläre kurz in eigenen Worten, wozu „${title}“ gut ist.`,
+      aiCheck: false,
+    });
+  }
+
   return {
     estimatedMinutes: 10,
     theory: `# ${title}
 
 Willkommen zu dieser Lektion im Kurs **${course.name}** ${course.icon}.
 
-In diesem Abschnitt vertiefst du das Thema **„${title}“**. Lies die Konzepte aufmerksam, baue die Beispiele selbst nach und teste dein Verständnis mit den Aufgaben rechts.
+In diesem Abschnitt vertiefst du das Thema **„${title}“**. Lies die Konzepte aufmerksam, baue die Beispiele selbst nach und übe mit den Aufgaben rechts.
 
 > 💡 **Tipp:** Aktives Ausprobieren bringt dich beim Programmieren am schnellsten voran. Schreib Code mit, statt ihn nur zu lesen.
 
 ## Lernziele
 
 - Die Kernideen hinter *${title}* verstehen
-- Eigene kleine Beispiele formulieren
-- Das Gelernte in eigenen Worten erklären können`,
-    tasks: [
-      {
-        id: "g1", type: "multiple_choice",
-        question: `Wie lernst du das Thema „${title}“ am effektivsten?`,
-        options: [
-          "Nur die Überschriften überfliegen",
-          "Theorie lesen, Beispiele selbst nachbauen und üben",
-          "Direkt zur nächsten Lektion springen",
-          "Die Aufgaben überspringen",
-        ],
-        correctAnswer: 1,
-        explanation: "Aktives Üben und das Nachbauen von Beispielen festigt dein Wissen am besten.",
-        aiCheck: false,
-      },
-      {
-        id: "g2", type: "explain",
-        question: `Erkläre in eigenen Worten, was du unter „${title}“ verstehst und warum es im ${course.name}-Kontext wichtig ist.`,
-        aiCheck: true,
-      },
-    ],
+- Die Syntax sicher schreiben können
+- Eigene kleine Beispiele bauen`,
+    tasks,
   };
 }
 
@@ -3301,6 +3566,13 @@ function editDistance(a, b) {
  * daraus entsteht das konkrete Feedback.
  */
 function checkConcept(concept, analysis) {
+  // Mehrere zulässige Schreibweisen — `["cout", "std::cout"]`. Eine genügt.
+  if (Array.isArray(concept)) {
+    const tried = concept.map((variant) => checkConcept(variant, analysis));
+    const hit = tried.find((r) => r.hit);
+    if (hit) return { ...hit, concept: concept[0] };
+    return { ...(tried[0] || { hit: false }), concept: concept[0] };
+  }
   const c = String(concept).trim();
   const lc = c.toLowerCase();
   const code = analysis.stripped;
@@ -3495,27 +3767,52 @@ function evaluateCode(task, answer, langId) {
   };
 }
 
-/* --------------------- Bewertung: Lückentext ----------------------------- */
+/* --------------------- Bewertung: Lückentext -----------------------------
+   Eine Lücke darf mehrere richtige Lösungen haben: steht in `blanks` ein
+   Array, zählt jede Schreibweise darin. Zusätzlich gelten Zahlwörter und
+   Ziffern als gleichwertig — wer „1“ statt „einmal“ schreibt, meint dasselbe.
+   ------------------------------------------------------------------------- */
+const NUMBER_WORDS = {
+  null: "0", kein: "0", keine: "0",
+  ein: "1", eine: "1", eins: "1", einmal: "1", einmalig: "1", genaueinmal: "1",
+  zwei: "2", zweimal: "2", drei: "3", dreimal: "3", vier: "4", viermal: "4",
+  fünf: "5", fuenf: "5", sechs: "6", sieben: "7", acht: "8", neun: "9", zehn: "10",
+  beliebig: "*", beliebigoft: "*", mehrfach: "*", mehrmals: "*",
+};
+
+/** Vergleichsform einer Lücke: Groß-/Kleinschreibung, Satzzeichen und
+ *  Zahlwörter werden vereinheitlicht. Reine Sonderzeichen bleiben erhalten. */
+function normBlank(value) {
+  const raw = String(value).trim().toLowerCase();
+  const alnum = normalizeAlnum(raw);
+  const key = alnum || raw;                    // "#" bleibt "#"
+  return NUMBER_WORDS[key] || key;
+}
+
 function evaluateFillBlank(task, answers) {
   const blanks = task.blanks || [];
   const results = blanks.map((expected, i) => {
+    const accepted = (Array.isArray(expected) ? expected : [expected]).map((v) => String(v).trim()).filter(Boolean);
+    const target = accepted[0] || "";
     const given = String(answers?.[i] || "").trim();
-    const target = String(expected).trim();
     if (!given) return { ok: false, expected: target, given, reason: "leer" };
-    if (given.toLowerCase() === target.toLowerCase()) {
-      return { ok: true, expected: target, given, caseOff: given !== target };
-    }
-    // Klammern, Anführungszeichen und Satzzeichen tolerieren: <strong> == strong,
-    // print() == print. Achtung: Besteht die Lösung selbst nur aus Sonderzeichen
-    // (etwa "#"), normalisieren beide Seiten zu "" — dann darf dieser Vergleich
-    // nicht greifen, sonst gälte jede Eingabe als richtig.
-    const normTarget = normalizeAlnum(target);
-    if (normTarget && normalizeAlnum(given) === normTarget) {
-      return { ok: true, expected: target, given, formatted: true };
-    }
-    // Tippfehler?
-    const d = editDistance(given.toLowerCase(), target.toLowerCase());
-    return { ok: false, expected: target, given, typo: d <= Math.max(1, Math.floor(target.length / 4)) };
+
+    // 1. Buchstabengetreu (nur Groß-/Kleinschreibung darf abweichen)
+    const exact = accepted.find((a) => a.toLowerCase() === given.toLowerCase());
+    if (exact) return { ok: true, expected: exact, given, caseOff: given !== exact };
+
+    // 2. Tolerant: Klammern, Anführungszeichen, Satzzeichen und Zahlwörter.
+    //    <strong> == strong, print() == print, einmal == 1.
+    const givenNorm = normBlank(given);
+    const match = accepted.find((a) => { const n = normBlank(a); return n && n === givenNorm; });
+    if (match) return { ok: true, expected: match, given, formatted: true };
+
+    // 3. Tippfehler? Gemessen an der Variante, die am besten passt.
+    const best = accepted.reduce((acc, a) => {
+      const d = editDistance(given.toLowerCase(), a.toLowerCase());
+      return d < acc.d ? { d, a } : acc;
+    }, { d: Infinity, a: target });
+    return { ok: false, expected: target, given, alternatives: accepted.slice(1), typo: best.d <= Math.max(1, Math.floor(best.a.length / 4)) };
   });
 
   const hits = results.filter((r) => r.ok).length;
@@ -3523,7 +3820,7 @@ function evaluateFillBlank(task, answers) {
   const correct = hits === total && total > 0;
   const score = total ? Math.round((hits / total) * 100) : 0;
 
-  let feedback, hint = "";
+  let feedback, hint = "", solutionHint = "";
   if (correct) {
     feedback = "Alle Lücken korrekt ausgefüllt!";
     const caseOff = results.find((r) => r.caseOff);
@@ -3531,13 +3828,29 @@ function evaluateFillBlank(task, answers) {
   } else {
     const typo = results.find((r) => !r.ok && r.typo);
     const empty = results.filter((r) => !r.ok && r.reason === "leer");
+    const wrong = results.map((r, i) => ({ ...r, index: i })).filter((r) => !r.ok);
     feedback = `${hits} von ${total} Lücken stimmen.`;
-    if (typo) hint = `Fast: Du hast \`${typo.given}\` geschrieben, richtig wäre \`${typo.expected}\`.`;
-    else if (empty.length === total) hint = "Fülle zuerst alle Lücken aus.";
-    else hint = `Richtig wäre: ${results.filter((r) => !r.ok).map((r) => r.expected).join(", ")}.`;
+
+    // Die Lösung wird nicht sofort verraten — sonst rät man sich durch.
+    // Stattdessen gibt es einen Anhaltspunkt; die Lektion blendet die
+    // Auflösung erst nach mehreren Versuchen ein.
+    solutionHint = `Richtig wäre: ${wrong.map((r) =>
+      r.alternatives?.length ? `${r.expected} (auch ${r.alternatives.slice(0, 2).join(" / ")})` : r.expected
+    ).join(", ")}.`;
+
+    if (typo) {
+      hint = `Fast — bei \`${typo.given}\` stimmt nur die Schreibweise noch nicht.`;
+    } else if (empty.length === total) {
+      hint = "Fülle zuerst alle Lücken aus.";
+    } else {
+      hint = wrong.map((r) => {
+        const word = String(r.expected);
+        return `Lücke ${r.index + 1}: beginnt mit „${word[0]}“ und hat ${word.length} Zeichen.`;
+      }).join(" ");
+    }
   }
 
-  return { correct, score, offline: true, feedback, hint, praise: correct ? "Sauber gelöst!" : "" };
+  return { correct, score, offline: true, feedback, hint, solutionHint, praise: correct ? "Sauber gelöst!" : "" };
 }
 
 /* --------------------- Bewertung: Freitext ------------------------------- */
@@ -3554,6 +3867,30 @@ function stemDe(word) {
 const REASONING_WORDS = /\b(weil|da|denn|damit|dadurch|sodass|so dass|deshalb|daher|somit|folglich|verhindert|ermöglicht|schützt|sorgt|bewirkt|bedeutet|führt dazu|vermeidet|garantiert)\b/i;
 const EXAMPLE_WORDS = /\b(zum beispiel|z\.?b\.?|etwa|beispielsweise|wie etwa)\b/i;
 
+// Füllwörter zählen nicht als Inhalt — sonst gälte „damit das dann so ist“
+// als ebenso gehaltvoll wie eine echte Begründung.
+const STOPWORDS_DE = new Set([
+  "aber", "also", "auch", "beim", "dann", "dass", "denn", "dies", "diese", "eine", "einen",
+  "einer", "eines", "etwas", "immer", "kann", "können", "mann", "mehr", "muss", "nicht",
+  "noch", "oder", "sehr", "sein", "sich", "sind", "über", "viel", "wenn", "werden", "wird",
+  "damit", "dadurch", "deshalb", "daher", "somit", "weil", "sodass", "man", "wurde",
+]);
+
+/**
+ * Sieht das überhaupt nach einem Wort aus? Ohne Vokal, mit fünf Konsonanten
+ * am Stück oder mit einem absurden Vokalanteil ist es Tastaturgeklapper.
+ */
+function looksLikeWord(word) {
+  const w = String(word).toLowerCase().replace(/[^a-zäöüß]/g, "");
+  if (w.length < 2) return false;
+  const vowels = (w.match(/[aeiouäöü]/g) || []).length;
+  if (!vowels) return false;
+  const ratio = vowels / w.length;
+  if (ratio < 0.18 || ratio > 0.85) return false;
+  if (/[bcdfghjklmnpqrstvwxyzß]{5,}/.test(w)) return false;
+  return true;
+}
+
 function evaluateExplanation(task, answer) {
   const text = String(answer || "").trim();
   const words = text.split(/\s+/).filter(Boolean);
@@ -3563,6 +3900,15 @@ function evaluateExplanation(task, answer) {
     return { correct: false, score: 0, offline: true,
       feedback: "Da steht noch fast nichts.",
       hint: "Schreib mindestens ein bis zwei vollständige Sätze in eigenen Worten.", praise: "" };
+  }
+
+  // Zufallsbuchstaben zuerst abfangen — sonst bekämen sie eine Rückmeldung,
+  // die so klingt, als hätte jemand inhaltlich etwas geschrieben.
+  const realWords = words.filter(looksLikeWord);
+  if (realWords.length / words.length < 0.5) {
+    return { correct: false, score: 0, offline: true,
+      feedback: "Das ergibt noch keinen lesbaren Text.",
+      hint: "Schreib deine Erklärung bitte in ganzen deutschen Sätzen.", praise: "" };
   }
 
   // Erwartete Begriffe: aus expectedConcepts und den Code-Spans der Frage
@@ -3586,15 +3932,26 @@ function evaluateExplanation(task, answer) {
   // Fragt die Aufgabe ausdrücklich nach dem Warum, reicht eine reine
   // Beschreibung nicht aus — dann ist die Begründung der Kern der Antwort.
   const wantsReason = /\b(warum|wieso|weshalb|begründe|aus welchem grund)\b/i.test(task.question || "");
+  // Steht „kurz“ in der Frage, darf die Antwort auch kurz sein.
+  const wantsBrief = /\b(kurz|knapp|in einem satz|in eigenen worten kurz|stichpunkt)/i.test(task.question || "");
 
-  // Wurde die Frage nur abgeschrieben? Dann zeigt das kein Verständnis.
+  // Inhaltstragende Wörter: alles außer Füllwörtern und sehr kurzen Wörtern.
+  // Sie messen Gehalt deutlich besser als die bloße Wortzahl.
+  const contentWords = [...answerStems].filter((w) => w.length > 3 && !STOPWORDS_DE.has(w));
+
+  // Wurde die Frage nur abgeschrieben? Das zeigt kein Verständnis. Entscheidend
+  // ist der ANTEIL übernommener Wörter — eine kurze eigenständige Antwort
+  // („damit es übersichtlicher ist“) darf hier nicht hängenbleiben.
   const questionWords = new Set((task.question || "").toLowerCase().split(/\s+/).map(stemDe).filter((w) => w.length > 3));
-  const ownWords = [...answerStems].filter((w) => w.length > 3 && !questionWords.has(w));
-  const copiedFromQuestion = questionWords.size > 3 && ownWords.length < 3;
+  const ownWords = contentWords.filter((w) => !questionWords.has(w));
+  const borrowedShare = contentWords.length ? 1 - ownWords.length / contentWords.length : 0;
+  const copiedFromQuestion = questionWords.size > 3 && contentWords.length >= 4
+    && borrowedShare >= 0.8 && ownWords.length < 2;
 
   let score = 0;
-  score += Math.min(30, words.length * 2.5);                    // Ausführlichkeit
-  score += sentences.length >= 2 ? 15 : sentences.length * 8;   // Satzbau
+  score += Math.min(25, contentWords.length * 6);                // Gehalt
+  score += Math.min(10, words.length * 0.8);                     // Ausführlichkeit
+  score += sentences.length >= 2 ? 12 : 6;                       // Satzbau
   score += hasReasoning ? 25 : 0;                                // Begründung
   score += hasExample ? 5 : 0;                                   // Beispiel
   score += coverage === null ? 20 : Math.round(coverage * 25);   // Fachbegriffe
@@ -3602,8 +3959,10 @@ function evaluateExplanation(task, answer) {
   if (wantsReason && !hasReasoning) score = Math.min(score, 50);
   score = Math.max(0, Math.min(100, Math.round(score)));
 
-  const correct = score >= 55 && words.length >= 6 && !copiedFromQuestion
-    && !(wantsReason && !hasReasoning);
+  const minWords = wantsBrief ? 4 : 6;
+  const minContent = wantsBrief ? 1 : 2;
+  const correct = score >= 55 && words.length >= minWords && contentWords.length >= minContent
+    && !copiedFromQuestion && !(wantsReason && !hasReasoning);
 
   let feedback, hint = "";
   if (copiedFromQuestion) {
@@ -3621,11 +3980,15 @@ function evaluateExplanation(task, answer) {
     if (missing.length) hint = `Noch treffender wird es mit ${missing.slice(0, 2).map((m) => `\`${m}\``).join(" und ")}.`;
     else if (!hasReasoning) hint = "Eine kurze Begründung („weil …“) würde es abrunden.";
   } else if (correct) {
-    feedback = "Die Grundidee hast du verstanden.";
-    hint = hasReasoning ? "Etwas ausführlicher wäre noch besser." : "Ergänze das „Warum“ — zum Beispiel mit „weil …“.";
-  } else if (words.length < 6) {
-    feedback = "Die Erklärung ist noch zu knapp, um dein Verständnis zu zeigen.";
-    hint = "Ein bis zwei vollständige Sätze reichen schon.";
+    feedback = hasReasoning
+      ? "Das ist ein echter Grund — die Kernidee hast du verstanden."
+      : "Die Grundidee hast du verstanden.";
+    hint = hasReasoning ? "Noch konkreter wird es, wenn du sagst, was genau dadurch besser wird." : "Ergänze das „Warum“ — zum Beispiel mit „weil …“.";
+  } else if (words.length < minWords || contentWords.length < minContent) {
+    feedback = hasReasoning
+      ? "Die Richtung stimmt, die Antwort ist aber noch sehr knapp."
+      : "Die Erklärung ist noch zu knapp, um dein Verständnis zu zeigen.";
+    hint = "Ein vollständiger Satz mit einem konkreten Grund reicht schon.";
   } else if (!hasReasoning) {
     feedback = "Du beschreibst, was passiert — es fehlt aber die Begründung.";
     hint = "Erkläre auch, *warum* es so ist (z.B. mit „weil …“ oder „dadurch …“).";
@@ -4031,7 +4394,106 @@ async function enableEmmet(monaco) {
   }
 }
 
-function MonacoCodeEditor({ value, onChange, disabled, courseId, label, height = "280px", showMinimap = false, onCursor }) {
+/* --------------------- Tags automatisch schließen ------------------------
+   Monaco bringt im Browser-Paket nur die Klammer-Automatik mit — das
+   Gegenstück zu `<h1>` fehlt. VS Code liefert das über eine Erweiterung
+   nach, also bauen wir es hier selbst:
+
+   • Tippt man das `>` eines öffnenden Tags, entsteht `</tag>` dahinter und
+     der Cursor bleibt dazwischen stehen.
+   • Tippt man `</`, wird der zuletzt geöffnete Tag ergänzt.
+
+   Leere Elemente (`<br>`, `<img>` …) und selbstschließende Tags (`<br/>`)
+   bleiben unangetastet.
+   ------------------------------------------------------------------------- */
+const VOID_TAGS = new Set([
+  "area", "base", "br", "col", "embed", "hr", "img", "input",
+  "link", "meta", "param", "source", "track", "wbr", "!doctype",
+]);
+
+// Sprachen mit Tag-Syntax. TypeScript fehlt bewusst: dort wäre `Array<string>`
+// nicht von einem Tag zu unterscheiden.
+const TAG_LANGS = new Set(["html", "xml", "php", "vue", "handlebars", "markdown", "javascript"]);
+
+const TAG_SCAN = /<\/?([a-zA-Z][\w:.-]*)((?:"[^"]*"|'[^']*'|[^'">])*?)(\/?)>/g;
+
+/** Innerster noch offener Tag im Text vor dem Cursor — oder null. */
+function openTagBefore(text) {
+  const stack = [];
+  TAG_SCAN.lastIndex = 0;
+  let m;
+  while ((m = TAG_SCAN.exec(text))) {
+    const [full, name, , selfClose] = m;
+    const lower = name.toLowerCase();
+    if (full[1] === "/") {
+      // Von hinten den passenden offenen Tag entfernen — so stören
+      // unsauber verschachtelte Stellen die Erkennung nicht.
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].toLowerCase() === lower) { stack.splice(i, 1); break; }
+      }
+    } else if (!selfClose && !VOID_TAGS.has(lower)) {
+      stack.push(name);
+    }
+  }
+  return stack.length ? stack[stack.length - 1] : null;
+}
+
+/** Prüft, was nach dem Tippen eines Zeichens ergänzt werden soll. */
+function tagCompletion(before, after, typed) {
+  if (typed === ">") {
+    const m = /<([a-zA-Z][\w:.-]*)((?:"[^"]*"|'[^']*'|[^'">])*)>$/.exec(before);
+    if (!m) return null;
+    if (m[2].trimEnd().endsWith("/")) return null;          // <br/> schließt sich selbst
+    if (VOID_TAGS.has(m[1].toLowerCase())) return null;
+    const closing = `</${m[1]}>`;
+    if (after.startsWith(closing)) return null;             // steht schon da
+    return { insert: closing, caretOffset: 0 };
+  }
+  if (typed === "/") {
+    if (!before.endsWith("</")) return null;
+    const open = openTagBefore(before.slice(0, -2));
+    if (!open) return null;
+    return { insert: `${open}>`, caretOffset: open.length + 1 };
+  }
+  return null;
+}
+
+function enableAutoCloseTags(editor, monaco) {
+  let busy = false;
+  return editor.onDidChangeModelContent((event) => {
+    if (busy || event.changes.length !== 1) return;
+    const change = event.changes[0];
+    if (change.rangeLength !== 0) return;                   // nur echtes Tippen
+    const model = editor.getModel();
+    const pos = editor.getPosition();
+    if (!model || !pos) return;
+    if (!TAG_LANGS.has(model.getLanguageId ? model.getLanguageId() : "")) return;
+
+    const before = model.getValueInRange({
+      startLineNumber: 1, startColumn: 1,
+      endLineNumber: pos.lineNumber, endColumn: pos.column,
+    });
+    const line = model.getLineContent(pos.lineNumber);
+    const completion = tagCompletion(before, line.slice(pos.column - 1), change.text);
+    if (!completion) return;
+
+    busy = true;
+    try {
+      const at = new monaco.Range(pos.lineNumber, pos.column, pos.lineNumber, pos.column);
+      const caret = pos.column + completion.caretOffset;
+      editor.executeEdits("ld-autoclose-tag", [{ range: at, text: completion.insert }],
+        [new monaco.Selection(pos.lineNumber, caret, pos.lineNumber, caret)]);
+    } finally {
+      busy = false;
+    }
+  });
+}
+
+function MonacoCodeEditor({
+  value, onChange, disabled, courseId, label, height = "280px",
+  showMinimap = false, onCursor, language, path, onReady, chrome = true,
+  fontSize = 13, wordWrap = "off",
+}) {
   const [mod, setMod] = useState(null);
   const [failed, setFailed] = useState(false);
 
@@ -4049,11 +4511,16 @@ function MonacoCodeEditor({ value, onChange, disabled, courseId, label, height =
   // CDN nicht erreichbar → klassischer Editor mit Zeilennummern
   if (failed) return <CodeEditor value={value} onChange={onChange} disabled={disabled} lang={label} />;
 
-  if (!mod) return editorChrome(courseId, label, <><Loader2 size={11} className="ld-spin" />Editor lädt …</>,
-    <div className="p-3 space-y-2">
-      <div className="ld-skeleton h-3 w-2/3" /><div className="ld-skeleton h-3 w-1/2" /><div className="ld-skeleton h-3 w-3/4" /><div className="ld-skeleton h-3 w-1/3" />
-    </div>
-  );
+  if (!mod) {
+    const skeleton = (
+      <div className="p-3 space-y-2">
+        <div className="ld-skeleton h-3 w-2/3" /><div className="ld-skeleton h-3 w-1/2" /><div className="ld-skeleton h-3 w-3/4" /><div className="ld-skeleton h-3 w-1/3" />
+      </div>
+    );
+    return chrome
+      ? editorChrome(courseId, label, <><Loader2 size={11} className="ld-spin" />Editor lädt …</>, skeleton)
+      : skeleton;
+  }
 
   const Editor = mod.default;
   const beforeMount = (monaco) => {
@@ -4073,6 +4540,7 @@ function MonacoCodeEditor({ value, onChange, disabled, courseId, label, height =
   };
   const onMount = (editor, monaco) => {
     enableEmmet(monaco);
+    enableAutoCloseTags(editor, monaco);       // <h1> ergänzt </h1>, wie in VS Code
     if (onCursor) {
       const report = () => {
         const p = editor.getPosition();
@@ -4081,12 +4549,14 @@ function MonacoCodeEditor({ value, onChange, disabled, courseId, label, height =
       editor.onDidChangeCursorPosition(report);
       report();
     }
+    if (onReady) onReady(editor, monaco);
   };
 
-  return editorChrome(courseId, label, <>LearnDeveloping&nbsp;Editor</>,
+  const editorEl = (
     <Editor
       height={height}
-      language={MONACO_LANG[courseId] || "plaintext"}
+      path={path}
+      language={language || MONACO_LANG[courseId] || "plaintext"}
       theme="ld-dark"
       value={value}
       beforeMount={beforeMount}
@@ -4095,7 +4565,8 @@ function MonacoCodeEditor({ value, onChange, disabled, courseId, label, height =
       loading={<div className="p-4 text-sm text-[#8A9BC0] flex items-center gap-2"><Loader2 size={14} className="ld-spin" />Editor wird vorbereitet …</div>}
       options={{
         readOnly: disabled,
-        fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontLigatures: true,
+        fontSize, fontFamily: "'JetBrains Mono', monospace", fontLigatures: true,
+        wordWrap,
         minimap: { enabled: showMinimap, renderCharacters: false },
         scrollBeyondLastLine: false, automaticLayout: true,
         padding: { top: 10, bottom: 10 }, tabSize: 2, lineNumbersMinChars: 3,
@@ -4132,6 +4603,10 @@ function MonacoCodeEditor({ value, onChange, disabled, courseId, label, height =
       }}
     />
   );
+
+  // In der IDE steckt der Editor bereits in einem eigenen Rahmen — dort wäre
+  // die kleine Fensterleiste doppelt gemoppelt.
+  return chrome ? editorChrome(courseId, label, <>LearnDeveloping&nbsp;Editor</>, editorEl) : editorEl;
 }
 
 
@@ -4433,6 +4908,78 @@ function TwoFactorSetupModal({ ctx }) {
 }
 
 /* ============================ Main App ============================= */
+/* ------------------------- Passwort-Anforderungen ------------------------
+   Dieselben Regeln wie im Backend (server/src/password.js). Hier dienen sie
+   als Hilfe beim Tippen — verbindlich geprüft wird immer auf dem Server.
+   ------------------------------------------------------------------------- */
+const PASSWORD_MIN_LENGTH = 10;
+
+const COMMON_PASSWORDS = new Set([
+  "passwort", "password", "passwort1", "password1", "passwort123", "password123",
+  "12345678", "123456789", "1234567890", "qwertzuiop", "qwertyuiop", "asdfghjkl",
+  "hallo123", "willkommen", "willkommen1", "administrator", "superadmin",
+  "letmein123", "iloveyou1", "sonnenschein", "fussball1", "geheim123",
+  "passw0rt", "p@ssword", "p@ssw0rt", "abcd1234", "test1234", "start1234",
+]);
+
+/**
+ * Liefert die einzelnen Anforderungen mit ihrem Erfüllungsstand — daraus
+ * wird die Checkliste unter dem Eingabefeld gebaut.
+ */
+function passwordRules(password, { name = "", email = "" } = {}) {
+  const value = String(password || "");
+  const lower = value.toLowerCase();
+  const classes = [
+    /[a-zäöüß]/.test(value), /[A-ZÄÖÜ]/.test(value),
+    /[0-9]/.test(value), /[^A-Za-z0-9ÄÖÜäöüß]/.test(value),
+  ].filter(Boolean).length;
+
+  const ownName = String(name).trim().toLowerCase();
+  const local = String(email).split("@")[0].trim().toLowerCase();
+
+  return [
+    { label: `Mindestens ${PASSWORD_MIN_LENGTH} Zeichen`, ok: value.length >= PASSWORD_MIN_LENGTH },
+    { label: "Drei von vier: Klein-, Großbuchstaben, Ziffern, Sonderzeichen", ok: classes >= 3 },
+    { label: "Kein bekanntes Standardpasswort und kein Tastaturmuster",
+      ok: value.length > 0 && !COMMON_PASSWORDS.has(lower) && !/^(.)\1+$/.test(value)
+        && !/(0123456789|123456789|abcdefgh|qwertz|qwerty|asdfgh)/i.test(lower) },
+    { label: "Enthält weder deinen Namen noch deine E-Mail-Adresse",
+      ok: value.length > 0
+        && !(ownName.length >= 3 && lower.includes(ownName))
+        && !(local.length >= 3 && lower.includes(local)) },
+  ];
+}
+
+function passwordOk(password, context) {
+  return passwordRules(password, context).every((r) => r.ok);
+}
+
+/** Checkliste unter einem Passwortfeld. Erscheint erst beim Tippen. */
+function PasswordHints({ password, name, email }) {
+  if (!password) return null;
+  const rules = passwordRules(password, { name, email });
+  const met = rules.filter((r) => r.ok).length;
+  const tone = met === rules.length ? "#10B981" : met >= 3 ? "#F59E0B" : "#EF4444";
+  return (
+    <div className="mt-2">
+      <div className="flex gap-1 mb-2">
+        {rules.map((r, i) => (
+          <span key={i} className="h-1 flex-1 rounded-full transition-colors"
+            style={{ background: i < met ? tone : "#1E2D4A" }} />
+        ))}
+      </div>
+      <ul className="space-y-0.5">
+        {rules.map((r, i) => (
+          <li key={i} className={`flex items-start gap-1.5 text-[11px] ${r.ok ? "text-[#10B981]" : "text-[#8A9BC0]"}`}>
+            {r.ok ? <Check size={10} className="mt-0.5 shrink-0" /> : <X size={10} className="mt-0.5 shrink-0 text-[#4A5A7A]" />}
+            <span>{r.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function genSchoolCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let s = "";
@@ -4570,13 +5117,17 @@ function loadOllamaModel() {
   try { return localStorage.getItem(OLLAMA_MODEL_STORAGE) || OLLAMA_DEFAULT_MODEL; } catch (e) { return OLLAMA_DEFAULT_MODEL; }
 }
 
-function mergeWithDemo(persistedUsers) {
-  const map = new Map(DEMO_USERS.map((u) => [u.id, u]));
-  (persistedUsers || []).forEach((u) => map.set(u.id, u));
-  return Array.from(map.values());
-}
-
 function roleHome(role) { return role === "teacher" ? "teacher" : role === "admin" ? "admin" : "dashboard"; }
+
+/**
+ * Darf dieses Konto die Verwaltung sehen? Neben der Rolle „admin“ gilt das für
+ * das Konto, das diese Installation angelegt hat (ohne Server gibt es sonst
+ * überhaupt keinen Verwaltungszugang, weil es keine vorgefertigten Konten
+ * mehr gibt).
+ */
+function canAdmin(user) {
+  return !!user && !user.isGuest && (user.role === "admin" || user.isOwner === true);
+}
 
 /* ----------------------------- Tages-Streak ------------------------------
    Ohne Server wird die Serie hier gepflegt (mit Server übernimmt das die
@@ -4710,10 +5261,10 @@ export default function App() {
     } catch (e) {}
     const persisted = loadPersisted();
     if (!persisted?.currentUser) return "landing";
-    const u = mergeWithDemo(persisted.users).find((x) => x.id === persisted.currentUser);
+    const u = (persisted.users || []).find((x) => x.id === persisted.currentUser);
     return u ? roleHome(u.role) : "landing";
   });
-  const [users, setUsers] = useState(() => mergeWithDemo(loadPersisted()?.users));
+  const [users, setUsers] = useState(() => loadPersisted()?.users || []);
   const [currentUser, setCurrentUser] = useState(() => loadPersisted()?.currentUser || null);
   const [reports, setReports] = useState(() => loadPersisted()?.reports || []);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -4727,6 +5278,7 @@ export default function App() {
   const [aiProvider, setAiProviderState] = useState(loadAiProvider);
   const [ollamaModel, setOllamaModelState] = useState(loadOllamaModel);
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
+  const [soundOn, setSoundOn] = useState(() => audio.enabled);
   const [emailVerifyOpen, setEmailVerifyOpen] = useState(false);
   const [pending2FA, setPending2FA] = useState(null);
   const [twoFactorSetupCode, setTwoFactorSetupCode] = useState(null);
@@ -4814,8 +5366,19 @@ export default function App() {
   // über die im Browser hinterlegten Keys.
   const aiConfig = { keys: apiKeys, provider: aiProvider, ollamaModel, useServer: backend && api.aiAvailable };
   const aiReady = (backend && api.aiAvailable) || aiProvider === "ollama" || apiKeys.length > 0;
-  const openAiSettings = useCallback(() => setAiSettingsOpen(true), []);
+  // KI-Zugänge sind Betreibersache: API-Keys gehören nicht in die Hände der
+  // Lernenden. Sichtbar ist der Dialog deshalb nur für die Verwaltung.
+  const aiConfigurable = canAdmin(me);
+  const openAiSettings = useCallback(() => {
+    if (!canAdmin(me)) return;
+    setAiSettingsOpen(true);
+  }, [me]);
   const closeAiSettings = useCallback(() => setAiSettingsOpen(false), []);
+  const toggleSound = useCallback(() => {
+    const next = !audio.enabled;
+    audio.setEnabled(next);       // spielt beim Einschalten einen kurzen Klick
+    setSoundOn(next);
+  }, []);
   const openEmailVerify = useCallback(() => setEmailVerifyOpen(true), []);
   const closeEmailVerify = useCallback(() => setEmailVerifyOpen(false), []);
 
@@ -4824,6 +5387,7 @@ export default function App() {
   const pushToast = useCallback((type, msg) => {
     const id = Math.random().toString(36).slice(2);
     setToasts((t) => [...t, { id, type, msg }]);
+    if (type === "badge") playSound("badge");
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200);
   }, []);
 
@@ -4873,6 +5437,46 @@ export default function App() {
   }, [me, pushToast, refreshMe]);
   const closeTwoFactorSetup = useCallback(() => setTwoFactorSetupCode(null), []);
 
+  /** Eigenes Passwort ändern — das alte muss stimmen. */
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    if (!me || me.isGuest) { pushToast("error", "Dafür brauchst du ein Konto."); return false; }
+    if (!passwordOk(newPassword, { name: me.name, email: me.email })) {
+      pushToast("error", "Das neue Passwort erfüllt die Mindestanforderungen nicht.");
+      return false;
+    }
+    if (api.available) {
+      try {
+        await api.post("/api/auth/change-password", { currentPassword, newPassword });
+        pushToast("success", "Passwort geändert — andere Anmeldungen wurden beendet.");
+        return true;
+      } catch (e) { pushToast("error", e.message); return false; }
+    }
+    if (currentPassword !== me.password) { pushToast("error", "Das aktuelle Passwort ist falsch."); return false; }
+    setUsers((us) => us.map((u) => u.id === me.id ? { ...u, password: newPassword } : u));
+    pushToast("success", "Passwort geändert.");
+    return true;
+  }, [me, pushToast]);
+
+  /** Administratoren setzen das Passwort eines beliebigen Kontos neu. */
+  const adminSetPassword = useCallback(async (userId, newPassword) => {
+    if (!canAdmin(me)) return false;
+    const target = users.find((u) => u.id === userId);
+    if (!passwordOk(newPassword, { name: target?.name, email: target?.email })) {
+      pushToast("error", "Das Passwort erfüllt die Mindestanforderungen nicht.");
+      return false;
+    }
+    if (api.available) {
+      try {
+        await api.patch(`/api/admin/users/${userId}`, { password: newPassword });
+        pushToast("success", "Passwort gesetzt — das Konto wurde überall abgemeldet.");
+        return true;
+      } catch (e) { pushToast("error", e.message); return false; }
+    }
+    setUsers((us) => us.map((u) => u.id === userId ? { ...u, password: newPassword } : u));
+    pushToast("success", "Passwort gesetzt.");
+    return true;
+  }, [me, users, pushToast]);
+
   /** Lädt die Projekte des angemeldeten Nutzers vom Server. */
   const loadProjects = useCallback(async () => {
     if (!api.available || !me || me.isGuest) return;
@@ -4886,31 +5490,34 @@ export default function App() {
 
   // Playground: Projekte speichern/löschen. Mit Server wird das Kontingent
   // dort durchgesetzt, ohne Server lokal nachgebildet.
-  const savePlaygroundProject = useCallback(async (project) => {
+  // Ein Projekt besteht aus beliebig vielen Dateien. `silent` unterdrückt die
+  // Rückmeldung — so stört das automatische Speichern alle 30 Sekunden nicht.
+  const savePlaygroundProject = useCallback(async (project, { silent = false } = {}) => {
     if (!me) return false;
+    const files = (project.files || []).map((f) => ({ name: f.name, content: f.content || "" }));
     if (api.available && !me.isGuest) {
       try {
         const path = project.id && !String(project.id).startsWith("u_")
           ? `/api/projects/${project.id}` : "/api/projects";
-        await api.put(path, { name: project.name, html: project.html, css: project.css, js: project.js });
+        await api.put(path, { name: project.name, files });
         await loadProjects();
-        pushToast("success", `Projekt „${project.name}“ gespeichert.`);
+        if (!silent) pushToast("success", `Projekt „${project.name}“ gespeichert.`);
         return true;
       } catch (e) {
         pushToast("error", e.message);
         return false;
       }
     }
-    const sizeBytes = new Blob([project.html || "", project.css || "", project.js || ""]).size;
+    const sizeBytes = projectBytes(files);
     const others = (me.playground || []).filter((p) => p.id !== project.id);
     const usedByOthers = others.reduce((sum, p) => sum + (p.sizeBytes || 0), 0);
     if (usedByOthers + sizeBytes > STORAGE_QUOTA_BYTES) {
       pushToast("error", "Speicherkontingent (2,5 GB) erreicht — lösche ein Projekt, um Platz zu schaffen.");
       return false;
     }
-    const saved = { ...project, sizeBytes, updatedAt: "Jetzt" };
+    const saved = { id: project.id, name: project.name, files, sizeBytes, updatedAt: "Jetzt" };
     setUsers((us) => us.map((u) => u.id === me.id ? { ...u, playground: [...others, saved] } : u));
-    pushToast("success", `Projekt „${project.name}“ gespeichert.`);
+    if (!silent) pushToast("success", `Projekt „${project.name}“ gespeichert.`);
     return true;
   }, [me, pushToast, loadProjects]);
 
@@ -4955,6 +5562,10 @@ export default function App() {
   }, [pushToast]);
   const adminCreateAdmin = useCallback((form) => {
     if (!form.name || !form.email || !form.password) { pushToast("error", "Bitte alle Felder ausfüllen."); return false; }
+    if (!passwordOk(form.password, { name: form.name, email: form.email })) {
+      pushToast("error", "Das Passwort erfüllt die Mindestanforderungen nicht.");
+      return false;
+    }
     if (users.some((u) => !u.isGuest && u.email.toLowerCase() === form.email.trim().toLowerCase())) { pushToast("error", "E-Mail bereits vergeben."); return false; }
     const newAdmin = {
       id: uid(), role: "admin", name: form.name, email: form.email, password: form.password,
@@ -4997,8 +5608,13 @@ export default function App() {
         return false;
       }
     }
-    const u = users.find((x) => x.email.toLowerCase() === email.trim().toLowerCase() && x.password === password);
-    if (!u) { pushToast("error", "E-Mail oder Passwort falsch."); return false; }
+    const u = users.find((x) => !x.isGuest && x.email.toLowerCase() === email.trim().toLowerCase() && x.password === password);
+    if (!u) {
+      pushToast("error", users.some((x) => !x.isGuest)
+        ? "E-Mail oder Passwort falsch."
+        : "In diesem Browser gibt es noch kein Konto — registriere dich zuerst.");
+      return false;
+    }
     if (u.twoFactorEnabled) {
       setPending2FA(u.id);
       pushToast("info", "2FA aktiv — bitte gib deinen Code ein.");
@@ -5035,6 +5651,10 @@ export default function App() {
   const register = async (form) => {
     if (!form.name || !form.email || !form.password) { pushToast("error", "Bitte alle Pflichtfelder ausfüllen."); return false; }
     if (form.password !== form.confirm) { pushToast("error", "Passwörter stimmen nicht überein."); return false; }
+    if (!passwordOk(form.password, { name: form.name, email: form.email })) {
+      pushToast("error", "Das Passwort erfüllt die Mindestanforderungen nicht.");
+      return false;
+    }
 
     if (api.available) {
       try {
@@ -5087,6 +5707,13 @@ export default function App() {
         joinedAt: "Heute", lastLogin: "Jetzt", avatar: guest ? guest.avatar : "🧑‍💻", badges: guest ? guest.badges : [],
         emailVerified: false, verificationCode, twoFactorEnabled: false, playground: [],
       };
+    }
+    // Ohne Server gibt es keine vorgefertigten Konten. Damit die Verwaltung
+    // trotzdem erreichbar bleibt, wird das allererste Konto zum Inhaber
+    // dieser Installation.
+    if (!users.some((u) => !u.isGuest)) {
+      newUser.isOwner = true;
+      setTimeout(() => pushToast("info", "Du bist das erste Konto — dir gehört diese Installation samt Verwaltung."), 800);
     }
     setUsers((us) => [...us.filter((u) => !(guest && u.id === guest.id)), newUser]);
     setCurrentUser(id);
@@ -5147,6 +5774,18 @@ export default function App() {
 
   // XP / Lektion abschließen
   const addXP = useCallback((amount) => {
+    // Aufstieg erkennen, bevor die XP verbucht werden — dann gibt es Fanfare
+    // statt des üblichen kurzen Plopp-Tons.
+    if (me && !Number.isNaN(me.xp)) {
+      const before = getLevelInfo(me.xp);
+      const after = getLevelInfo(me.xp + amount);
+      if (after.level > before.level) {
+        playSound("levelUp");
+        setTimeout(() => pushToast("badge", `Level ${after.level} erreicht — ${after.name}!`), 300);
+      } else {
+        playSound("xp");
+      }
+    }
     // Optimistisch anzeigen, damit die Oberfläche sofort reagiert …
     setUsers((us) => us.map((u) => {
       if (u.id !== currentUser) return u;
@@ -5159,7 +5798,7 @@ export default function App() {
         .then(({ user }) => setUsers((us) => us.map((u) => u.id === user.id ? fromApiUser(user) : u)))
         .catch(() => {});
     }
-  }, [currentUser, me]);
+  }, [currentUser, me, pushToast]);
 
   /** Streak-Schutz gegen XP kaufen. */
   const buyStreakFreeze = useCallback(async () => {
@@ -5265,14 +5904,15 @@ export default function App() {
     selectedCourse, openCourse, selectedLesson, openLesson,
     selectedStudent, setSelectedStudent, login, register, logout, continueAsGuest,
     pushToast, showXP, addXP, completeLesson, celebrate, buyStreakFreeze, sidebarOpen, setSidebarOpen,
-    apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel, aiConfig, aiReady, aiSettingsOpen, openAiSettings, closeAiSettings,
+    apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel, aiConfig, aiReady, aiConfigurable, aiSettingsOpen, openAiSettings, closeAiSettings,
+    soundOn, toggleSound,
     backend, booting, refreshMe, loadProjects, serverVerificationCode, confirm2FA,
     pending2FA, verify2FALogin, cancel2FALogin,
     emailVerifyOpen, openEmailVerify, closeEmailVerify, verifyEmail,
     enable2FA, disable2FA, twoFactorSetupCode, closeTwoFactorSetup,
     savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId,
     reports, reportContent, resolveReport, deleteReport,
-    adminUpdateUser, adminDeleteUser, adminCreateAdmin,
+    adminUpdateUser, adminDeleteUser, adminCreateAdmin, adminSetPassword, changePassword,
   };
 
   const LEGAL_VIEWS = ["agb", "impressum", "datenschutz", "kontakt", "ueber-uns"];
@@ -5299,7 +5939,7 @@ export default function App() {
   else screen = <AppShell ctx={ctx}>{
     view === "dashboard" ? <StudentDashboard ctx={ctx} /> :
     view === "teacher" ? <TeacherDashboard ctx={ctx} /> :
-    view === "admin" ? <AdminDashboard ctx={ctx} /> :
+    view === "admin" ? (canAdmin(me) ? <AdminDashboard ctx={ctx} /> : null) :
     view === "playground" ? <Playground ctx={ctx} /> :
     view === "courses" ? <CoursesOverview ctx={ctx} /> :
     view === "course" ? <CourseView ctx={ctx} /> :
@@ -5314,7 +5954,7 @@ export default function App() {
       <Toasts toasts={toasts} />
       {xpPopup != null && <XPPopup amount={xpPopup} />}
       {confetti && <Confetti />}
-      {aiSettingsOpen && <AiSettingsModal ctx={ctx} />}
+      {aiSettingsOpen && aiConfigurable && <AiSettingsModal ctx={ctx} />}
       {emailVerifyOpen && <EmailVerifyModal ctx={ctx} />}
       {twoFactorSetupCode && <TwoFactorSetupModal ctx={ctx} />}
     </div>
@@ -5753,7 +6393,7 @@ function ResetPassword({ ctx }) {
 
   const submit = async () => {
     if (!token.trim()) { pushToast("error", "Bitte trage den Code aus der E-Mail ein."); return; }
-    if (password.length < 8) { pushToast("error", "Das Passwort muss mindestens 8 Zeichen lang sein."); return; }
+    if (!passwordOk(password)) { pushToast("error", "Das Passwort erfüllt die Anforderungen noch nicht."); return; }
     if (password !== confirm) { pushToast("error", "Die Passwörter stimmen nicht überein."); return; }
     setBusy(true);
     try {
@@ -5780,8 +6420,11 @@ function ResetPassword({ ctx }) {
           <input value={token} onChange={(e) => setToken(e.target.value)} placeholder="Code einfügen"
             className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 font-code text-xs text-[#E8EDF5] placeholder:text-[#4A5A7A]" />
         </div>
-        <Field label="Neues Passwort" icon={KeyRound} type="password" value={password}
-          onChange={(e) => setPassword(e.target.value)} placeholder="mindestens 8 Zeichen" />
+        <div>
+          <Field label="Neues Passwort" icon={KeyRound} type="password" value={password}
+            onChange={(e) => setPassword(e.target.value)} placeholder={`mindestens ${PASSWORD_MIN_LENGTH} Zeichen`} />
+          <PasswordHints password={password} />
+        </div>
         <Field label="Passwort bestätigen" icon={KeyRound} type="password" value={confirm}
           onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••"
           onKeyDown={(e) => { if (e.key === "Enter") submit(); }} />
@@ -5829,8 +6472,12 @@ function AuthScreen({ ctx, mode }) {
 
   const submit = () => {
     if (captchaRequired && !captcha) { pushToast("error", "Bitte bestätige zuerst, dass du kein Bot bist."); return; }
-    if (isLogin) login(form.email, form.password, captcha);
-    else register({ ...form, turnstileToken: captcha });
+    if (isLogin) { login(form.email, form.password, captcha); return; }
+    if (!passwordOk(form.password, { name: form.name, email: form.email })) {
+      pushToast("error", "Bitte wähle ein stärkeres Passwort — die Anforderungen stehen unter dem Feld.");
+      return;
+    }
+    register({ ...form, turnstileToken: captcha });
   };
 
   if (pending2FA) return <TwoFactorLoginStep ctx={ctx} />;
@@ -5850,8 +6497,12 @@ function AuthScreen({ ctx, mode }) {
           <div className="space-y-4">
             {!isLogin && <Field label="Name" icon={User} value={form.name} onChange={set("name")} placeholder="Max Mustermann" />}
             <Field label="E-Mail" icon={AtSign} type="email" value={form.email} onChange={set("email")} placeholder="du@beispiel.de" />
-            <Field label="Passwort" icon={KeyRound} type="password" value={form.password} onChange={set("password")} placeholder="••••••••"
-              onKeyDown={(e) => { if (e.key === "Enter" && isLogin) submit(); }} />
+            <div>
+              <Field label="Passwort" icon={KeyRound} type="password" value={form.password} onChange={set("password")}
+                placeholder={isLogin ? "••••••••" : `mindestens ${PASSWORD_MIN_LENGTH} Zeichen`}
+                onKeyDown={(e) => { if (e.key === "Enter" && isLogin) submit(); }} />
+              {!isLogin && <PasswordHints password={form.password} name={form.name} email={form.email} />}
+            </div>
 
             {!isLogin && (
               <>
@@ -6115,10 +6766,11 @@ function LegalPage({ ctx, page }) {
 
 /* ============================ App Shell =========================== */
 function AppShell({ ctx, children }) {
-  const { me, view, navigate, logout, sidebarOpen, setSidebarOpen, aiReady, openAiSettings, openEmailVerify, reports } = ctx;
+  const { me, view, navigate, logout, sidebarOpen, setSidebarOpen, aiReady, aiConfigurable, openAiSettings, openEmailVerify, reports, soundOn, toggleSound } = ctx;
   if (!me) return null;
   const lvl = me.role === "student" ? getLevelInfo(me.xp) : null;
   const isAdmin = me.role === "admin";
+  const hasAdminAccess = canAdmin(me);
   const openReports = (reports || []).filter((r) => r.status === "open").length;
 
   const studentNav = [
@@ -6138,7 +6790,11 @@ function AppShell({ ctx, children }) {
     { v: "admin", label: "Admin-Bereich", icon: Shield },
     { v: "profile", label: "Profil", icon: User },
   ];
-  const nav = isAdmin ? adminNav : me.role === "teacher" ? teacherNav : studentNav;
+  const baseNav = isAdmin ? adminNav : me.role === "teacher" ? teacherNav : studentNav;
+  // Inhaber dieser Installation erreichen die Verwaltung zusätzlich zu ihrer Rolle.
+  const nav = hasAdminAccess && !isAdmin
+    ? [...baseNav.slice(0, -1), { v: "admin", label: "Verwaltung", icon: Shield }, baseNav[baseNav.length - 1]]
+    : baseNav;
   const activeMatch = (v) => view === v || (v === "courses" && view === "course");
 
   const SidebarInner = (
@@ -6198,23 +6854,30 @@ function AppShell({ ctx, children }) {
                   <span className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-[#141D35] border border-[#1E2D4A]"><Flame size={14} className="text-[#F59E0B]" /><span className="font-semibold">{me.streak}</span></span>
                 </>
               )}
-              {isAdmin && openReports > 0 && (
+              {hasAdminAccess && openReports > 0 && (
                 <button onClick={() => navigate("admin")} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full bg-[#EF4444]/10 border border-[#EF4444]/30 text-[#EF4444]">
                   <FileText size={14} />{openReports} offene Meldung{openReports === 1 ? "" : "en"}
                 </button>
               )}
-              {!isAdmin && (
+              {aiConfigurable && (
                 <button onClick={openAiSettings} aria-label="KI-Einstellungen" title={aiReady ? "KI verbunden" : "KI einrichten"}
                   className="relative w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors">
                   <Settings size={16} className="text-[#8A9BC0]" />
                   <span className={`absolute top-1 right-1 w-2 h-2 rounded-full ${aiReady ? "bg-[#10B981]" : "bg-[#4A5A7A]"}`} />
                 </button>
               )}
+              <button onClick={toggleSound} aria-label={soundOn ? "Töne ausschalten" : "Töne einschalten"}
+                title={soundOn ? "Töne ausschalten" : "Töne einschalten"}
+                className="w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors">
+                {soundOn ? <VolumeOn size={15} className="text-[#8A9BC0]" /> : <VolumeOff size={15} className="text-[#4A5A7A]" />}
+              </button>
               <button onClick={() => navigate("profile")} aria-label="Profil" className="w-10 h-10 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center transition-colors overflow-hidden"><UserAvatar user={me} size={38} /></button>
             </div>
           </div>
         </header>
-        <main className="px-4 lg:px-8 py-6 max-w-6xl mx-auto">
+        <main className={view === "playground"
+          ? "px-3 lg:px-5 py-4"                      // die IDE bekommt die volle Breite
+          : "px-4 lg:px-8 py-6 max-w-6xl mx-auto"}>
           {me.isGuest && (
             <div className="mb-5 flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl bg-[#F59E0B]/10 border border-[#F59E0B]/30">
               <Info size={16} className="text-[#F59E0B] shrink-0" />
@@ -6857,13 +7520,24 @@ function AvatarCreator({ value, onChange }) {
   );
 }
 function Profile({ ctx }) {
-  const { me, pushToast, setUsers, enable2FA, disable2FA, openEmailVerify } = ctx;
+  const { me, pushToast, setUsers, enable2FA, disable2FA, openEmailVerify, changePassword } = ctx;
   const isStudent = me.role === "student";
   const isTeacher = me.role === "teacher";
   const lvl = isStudent ? getLevelInfo(me.xp) : null;
   const [picker, setPicker] = useState(false);
   const [disable2FAOpen, setDisable2FAOpen] = useState(false);
   const [disablePw, setDisablePw] = useState("");
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNext, setPwNext] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+
+  const submitPassword = async () => {
+    if (pwNext !== pwConfirm) { pushToast("error", "Die neuen Passwörter stimmen nicht überein."); return; }
+    const ok = await changePassword(pwCurrent, pwNext);
+    if (ok) { setPwOpen(false); setPwCurrent(""); setPwNext(""); setPwConfirm(""); }
+  };
+
   const copy = (txt) => { try { navigator.clipboard.writeText(txt); } catch (e) {} pushToast("success", "In Zwischenablage kopiert!"); };
   const setAvatar = (a) => { setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatar: a, avatarConfig: null } : u)); setPicker(false); pushToast("success", "Avatar aktualisiert!"); };
   const setAvatarConfig = (conf) => setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatarConfig: conf } : u));
@@ -6976,6 +7650,37 @@ function Profile({ ctx }) {
                 ? <span className="text-xs text-[#10B981] flex items-center gap-1"><CheckCircle2 size={14} />Bestätigt</span>
                 : <Btn size="sm" variant="secondary" icon={Check} onClick={openEmailVerify}>Bestätigen</Btn>}
             </div>
+            <div className="flex flex-wrap items-center gap-3 p-4">
+              <KeyRound size={18} className="text-[#F59E0B] shrink-0" />
+              <div className="flex-1 min-w-[180px]">
+                <p className="text-sm font-medium">Passwort</p>
+                <p className="text-xs text-[#8A9BC0]">Ändere dein Passwort — dabei werden alle anderen Anmeldungen beendet.</p>
+              </div>
+              <Btn size="sm" variant="secondary" icon={PenSquare} onClick={() => setPwOpen((v) => !v)}>
+                {pwOpen ? "Abbrechen" : "Ändern"}
+              </Btn>
+            </div>
+            {pwOpen && (
+              <div className="p-4 bg-[#0A0E1A] space-y-3">
+                <input type="password" value={pwCurrent} onChange={(e) => setPwCurrent(e.target.value)} placeholder="Aktuelles Passwort"
+                  className="w-full bg-[#141D35] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 text-sm text-[#E8EDF5]" />
+                <div>
+                  <input type="password" value={pwNext} onChange={(e) => setPwNext(e.target.value)} placeholder="Neues Passwort"
+                    className="w-full bg-[#141D35] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 text-sm text-[#E8EDF5]" />
+                  <PasswordHints password={pwNext} name={me.name} email={me.email} />
+                </div>
+                <input type="password" value={pwConfirm} onChange={(e) => setPwConfirm(e.target.value)} placeholder="Neues Passwort bestätigen"
+                  onKeyDown={(e) => { if (e.key === "Enter") submitPassword(); }}
+                  className="w-full bg-[#141D35] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 text-sm text-[#E8EDF5]" />
+                <div className="flex gap-2">
+                  <Btn size="sm" icon={Check} onClick={submitPassword}
+                    disabled={!pwCurrent || !passwordOk(pwNext, { name: me.name, email: me.email }) || pwNext !== pwConfirm}>
+                    Passwort speichern
+                  </Btn>
+                  <Btn size="sm" variant="ghost" onClick={() => { setPwOpen(false); setPwCurrent(""); setPwNext(""); setPwConfirm(""); }}>Abbrechen</Btn>
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-3 p-4">
               <ShieldCheck size={18} className="text-[#7C3AED] shrink-0" />
               <div className="flex-1 min-w-[180px]">
@@ -7217,11 +7922,163 @@ ${scriptTag}
 </html>`;
 }
 
-const PLAYGROUND_STARTER = {
-  html: `<h1>Hallo Welt!</h1>\n<p>Schreib hier deinen eigenen Code — die Vorschau aktualisiert sich in Echtzeit.</p>\n<button id="btn">Klick mich</button>`,
-  css: `body {\n  font-family: sans-serif;\n  background: #0A0E1A;\n  color: #E8EDF5;\n  padding: 2rem;\n}\nbutton {\n  background: linear-gradient(135deg, #4F8EF7, #7C3AED);\n  border: none;\n  color: white;\n  padding: 10px 18px;\n  border-radius: 8px;\n  cursor: pointer;\n}`,
-  js: `document.getElementById('btn').addEventListener('click', () => {\n  alert('Live-Vorschau funktioniert! 🎉');\n});`,
-};
+/* ========================= Dateien im Projekt =============================
+   Die IDE arbeitet nicht mehr mit drei festen Bereichen, sondern mit einem
+   echten Dateibaum. Jede Datei bringt ihre Sprache über die Endung mit —
+   Monaco bekommt daraus Syntaxhervorhebung, Faltung und Autovervollständigung.
+   ========================================================================= */
+const FILE_TYPES = [
+  { ext: "html", lang: "html",       label: "HTML",        color: "#E34C26", runs: true },
+  { ext: "css",  lang: "css",        label: "CSS",         color: "#264DE4", runs: true },
+  { ext: "js",   lang: "javascript", label: "JavaScript",  color: "#F7C948", runs: true },
+  { ext: "jsx",  lang: "javascript", label: "React (JSX)", color: "#61DAFB" },
+  { ext: "ts",   lang: "typescript", label: "TypeScript",  color: "#3178C6" },
+  { ext: "tsx",  lang: "typescript", label: "React (TSX)", color: "#3178C6" },
+  { ext: "vue",  lang: "html",       label: "Vue",         color: "#42B883" },
+  { ext: "py",   lang: "python",     label: "Python",      color: "#3572A5" },
+  { ext: "java", lang: "java",       label: "Java",        color: "#B07219" },
+  { ext: "kt",   lang: "kotlin",     label: "Kotlin",      color: "#7F52FF" },
+  { ext: "c",    lang: "c",          label: "C",           color: "#5C6BC0" },
+  { ext: "h",    lang: "c",          label: "C-Header",    color: "#5C6BC0" },
+  { ext: "cpp",  lang: "cpp",        label: "C++",         color: "#00599C" },
+  { ext: "hpp",  lang: "cpp",        label: "C++-Header",  color: "#00599C" },
+  { ext: "cs",   lang: "csharp",     label: "C#",          color: "#178600" },
+  { ext: "go",   lang: "go",         label: "Go",          color: "#00ADD8" },
+  { ext: "rs",   lang: "rust",       label: "Rust",        color: "#DEA584" },
+  { ext: "php",  lang: "php",        label: "PHP",         color: "#777BB4" },
+  { ext: "rb",   lang: "ruby",       label: "Ruby",        color: "#CC342D" },
+  { ext: "swift", lang: "swift",     label: "Swift",       color: "#F05138" },
+  { ext: "sql",  lang: "sql",        label: "SQL",         color: "#E38C00" },
+  { ext: "sh",   lang: "shell",      label: "Shell",       color: "#89E051" },
+  { ext: "json", lang: "json",       label: "JSON",        color: "#8A9BC0" },
+  { ext: "yml",  lang: "yaml",       label: "YAML",        color: "#8A9BC0" },
+  { ext: "xml",  lang: "xml",        label: "XML",         color: "#8A9BC0" },
+  { ext: "md",   lang: "markdown",   label: "Markdown",    color: "#8A9BC0" },
+  { ext: "txt",  lang: "plaintext",  label: "Text",        color: "#4A5A7A" },
+];
+
+const FALLBACK_TYPE = { ext: "txt", lang: "plaintext", label: "Text", color: "#4A5A7A" };
+
+function extOf(name) {
+  const m = /\.([A-Za-z0-9]+)$/.exec(String(name || ""));
+  return m ? m[1].toLowerCase() : "";
+}
+function fileTypeOf(name) {
+  return FILE_TYPES.find((t) => t.ext === extOf(name)) || FALLBACK_TYPE;
+}
+function langOf(name) { return fileTypeOf(name).lang; }
+
+/** Läuft diese Datei im Browser? Alles andere lässt sich schreiben und
+ *  herunterladen, aber nicht ausführen — das sagen wir offen. */
+function runsInBrowser(name) { return !!fileTypeOf(name).runs; }
+
+const newFileId = () => "f_" + Math.random().toString(36).slice(2, 9);
+
+/** Sorgt für einen eindeutigen Dateinamen im Projekt. */
+function uniqueFileName(files, wanted) {
+  const base = String(wanted || "").trim() || "unbenannt.txt";
+  if (!files.some((f) => f.name.toLowerCase() === base.toLowerCase())) return base;
+  const dot = base.lastIndexOf(".");
+  const stem = dot > 0 ? base.slice(0, dot) : base;
+  const ext = dot > 0 ? base.slice(dot) : "";
+  for (let i = 2; i < 999; i++) {
+    const candidate = `${stem}-${i}${ext}`;
+    if (!files.some((f) => f.name.toLowerCase() === candidate.toLowerCase())) return candidate;
+  }
+  return `${stem}-${Date.now()}${ext}`;
+}
+
+/** Prüft einen Dateinamen. Gibt null zurück, wenn alles in Ordnung ist. */
+function fileNameError(name, files, exceptId) {
+  const trimmed = String(name || "").trim();
+  if (!trimmed) return "Bitte gib einen Dateinamen ein.";
+  if (trimmed.length > 60) return "Der Name ist zu lang (höchstens 60 Zeichen).";
+  if (/[\\/:*?"<>|]/.test(trimmed)) return "Diese Zeichen sind im Dateinamen nicht erlaubt: \\ / : * ? \" < > |";
+  if (files.some((f) => f.id !== exceptId && f.name.toLowerCase() === trimmed.toLowerCase())) {
+    return "Eine Datei mit diesem Namen gibt es schon.";
+  }
+  return null;
+}
+
+/** Bringt gespeicherte Projekte auf die Dateistruktur — auch die alten,
+ *  die noch aus genau drei Feldern (html/css/js) bestanden. */
+function normalizeProject(project) {
+  if (!project) return null;
+  if (Array.isArray(project.files)) {
+    return {
+      ...project,
+      files: project.files
+        .filter((f) => f && typeof f.name === "string" && f.name.trim())
+        .map((f) => ({ id: f.id || newFileId(), name: f.name, content: String(f.content ?? "") })),
+    };
+  }
+  const legacy = [];
+  if (project.html) legacy.push({ id: newFileId(), name: "index.html", content: project.html });
+  if (project.css) legacy.push({ id: newFileId(), name: "style.css", content: project.css });
+  if (project.js) legacy.push({ id: newFileId(), name: "script.js", content: project.js });
+  return { ...project, files: legacy };
+}
+
+function projectBytes(files) {
+  try {
+    return new Blob(files.map((f) => f.name + (f.content || ""))).size;
+  } catch (e) {
+    return files.reduce((sum, f) => sum + (f.name.length + (f.content || "").length), 0);
+  }
+}
+
+/* ---------------------- Aus Dateien eine Seite bauen ---------------------
+   Die Vorschau löst Verweise innerhalb des Projekts auf: aus
+   `<link href="style.css">` wird der Inhalt der Datei, aus
+   `<script src="app.js">` ebenso. Damit verhält sich die Vorschau wie ein
+   echter Webserver, ohne dass es einen gibt.
+   ------------------------------------------------------------------------- */
+function findFile(files, name) {
+  const clean = String(name || "").replace(/^\.?\//, "").split(/[?#]/)[0].toLowerCase();
+  return files.find((f) => f.name.toLowerCase() === clean) || null;
+}
+
+/** Die Datei, mit der die Vorschau startet. */
+function entryFile(files) {
+  return findFile(files, "index.html") || files.find((f) => extOf(f.name) === "html") || null;
+}
+
+function buildProjectPage(files, { title = "Meine Seite", extraScript = "", autoInclude = true } = {}) {
+  const entry = entryFile(files);
+  if (!entry) return null;
+
+  let html = String(entry.content || "");
+  const usedCss = new Set();
+  const usedJs = new Set();
+
+  // <link rel="stylesheet" href="…"> durch den echten Inhalt ersetzen
+  html = html.replace(/<link\b[^>]*href\s*=\s*["']([^"']+)["'][^>]*>/gi, (tag, href) => {
+    if (!/stylesheet/i.test(tag) && !/\.css($|[?#])/i.test(href)) return tag;
+    const file = findFile(files, href);
+    if (!file) return tag;                                   // externe URL unangetastet lassen
+    usedCss.add(file.id);
+    return `<style data-from="${file.name}">\n${file.content}\n</style>`;
+  });
+
+  // <script src="…"> ebenso
+  html = html.replace(/<script\b([^>]*)\ssrc\s*=\s*["']([^"']+)["']([^>]*)><\/script>/gi, (tag, pre, src) => {
+    const file = findFile(files, src);
+    if (!file) return tag;
+    usedJs.add(file.id);
+    return `<script data-from="${file.name}">\n${file.content}\n<\/script>`;
+  });
+
+  // Nicht verlinkte CSS-/JS-Dateien optional automatisch einbinden. Für den
+  // Einstieg ist das bequem; wer es selbst verlinkt, merkt keinen Unterschied.
+  const extraCss = autoInclude
+    ? files.filter((f) => extOf(f.name) === "css" && !usedCss.has(f.id)).map((f) => f.content).join("\n\n")
+    : "";
+  const extraJs = autoInclude
+    ? files.filter((f) => extOf(f.name) === "js" && !usedJs.has(f.id)).map((f) => f.content).join("\n\n")
+    : "";
+
+  return composeDocument({ html, css: extraCss, js: extraJs, title, extraScript });
+}
 
 /* ------------------- KI-Assistent im Code-Editor -------------------------
    Der einzige Ort, an dem eine KI zum Einsatz kommt. Hier ist eine Antwortzeit
@@ -7289,12 +8146,14 @@ function AssistantPanel({ ctx, code }) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-6 gap-3">
         <Bot size={32} className="text-[#4A5A7A]" />
-        <p className="text-sm text-[#8A9BC0]">Noch kein KI-Zugang eingerichtet.</p>
+        <p className="text-sm text-[#8A9BC0]">Der KI-Assistent ist noch nicht verfügbar.</p>
         <p className="text-xs text-[#4A5A7A] max-w-xs leading-relaxed">
-          Der Assistent kann deinen Code erklären, Fehler finden und Verbesserungen vorschlagen.
-          Nutze dafür Google Gemini (kostenloses Kontingent) oder einen eigenen Ollama-Server.
+          Er kann deinen Code erklären, Fehler finden und Verbesserungen vorschlagen.
+          {ctx.aiConfigurable
+            ? " Richte dafür einen Anbieter ein."
+            : " Die Zugänge richtet die Administration ein — die Fehlerprüfung im Editor läuft davon unabhängig."}
         </p>
-        <Btn size="sm" icon={Settings} onClick={openAiSettings}>KI einrichten</Btn>
+        {ctx.aiConfigurable && <Btn size="sm" icon={Settings} onClick={openAiSettings}>KI einrichten</Btn>}
       </div>
     );
   }
@@ -7362,35 +8221,371 @@ function AssistantPanel({ ctx, code }) {
   );
 }
 
+/* ============================== ZIP-Datei ================================
+   Ein Projekt mit mehreren Dateien lässt sich nur sinnvoll als Archiv
+   herunterladen. Hier steht ein minimaler ZIP-Schreiber (Methode „gespeichert“,
+   also ohne Kompression) — das sind wenige Zeilen und spart eine Bibliothek.
+   ========================================================================= */
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    table[i] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+/** Baut ein ZIP-Archiv aus [{ name, content }] und gibt einen Blob zurück. */
+function buildZip(entries) {
+  const enc = new TextEncoder();
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+
+  const push = (arr) => { chunks.push(arr); offset += arr.length; };
+  const u16 = (v) => [v & 0xFF, (v >>> 8) & 0xFF];
+  const u32 = (v) => [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF];
+
+  for (const entry of entries) {
+    const nameBytes = enc.encode(entry.name);
+    const data = enc.encode(String(entry.content ?? ""));
+    const crc = crc32(data);
+    const localOffset = offset;
+
+    push(new Uint8Array([
+      0x50, 0x4B, 0x03, 0x04,        // Signatur „lokaler Dateikopf“
+      20, 0,                          // benötigte Version
+      ...u16(0x0800),                 // Flag: Dateiname ist UTF-8
+      ...u16(0),                      // Methode 0 = gespeichert
+      ...u16(0), ...u16(0),           // Uhrzeit/Datum (fest, damit gleich bleibt, was gleich ist)
+      ...u32(crc), ...u32(data.length), ...u32(data.length),
+      ...u16(nameBytes.length), ...u16(0),
+    ]));
+    push(nameBytes);
+    push(data);
+
+    central.push(new Uint8Array([
+      0x50, 0x4B, 0x01, 0x02,
+      20, 0, 20, 0,
+      ...u16(0x0800), ...u16(0),
+      ...u16(0), ...u16(0),
+      ...u32(crc), ...u32(data.length), ...u32(data.length),
+      ...u16(nameBytes.length), ...u16(0), ...u16(0),
+      ...u16(0), ...u16(0), ...u32(0),
+      ...u32(localOffset),
+      ...nameBytes,
+    ]));
+  }
+
+  const centralStart = offset;
+  central.forEach(push);
+  const centralSize = offset - centralStart;
+
+  push(new Uint8Array([
+    0x50, 0x4B, 0x05, 0x06,
+    ...u16(0), ...u16(0),
+    ...u16(entries.length), ...u16(entries.length),
+    ...u32(centralSize), ...u32(centralStart),
+    ...u16(0),
+  ]));
+
+  return new Blob(chunks, { type: "application/zip" });
+}
+
+/** Löst einen Download im Browser aus. */
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function safeSlug(text, fallback) {
+  const slug = String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return slug || fallback;
+}
+
+/* =============================== Die IDE =================================
+   Aufbau wie in VS Code: links der Datei-Explorer, in der Mitte der Editor
+   mit Registerkarten, rechts Vorschau, Konsole, Probleme und der KI-Assistent.
+
+   Wichtige Eigenschaften:
+   • Start ohne Beispielcode — es steht nichts im Weg.
+   • Dateien für jede unterstützte Sprache anlegen, umbenennen, löschen.
+   • Alle 30 Sekunden wird automatisch gespeichert (Strg+S jederzeit).
+   • Vollbild schaltet die Umgebung auf die ganze Fensterfläche.
+   ========================================================================= */
+const AUTOSAVE_MS = 30_000;
+
+/** Die Datei-Vorlagen, die beim Anlegen als Startpunkt dienen. */
+const FILE_TEMPLATES = {
+  html: '<!DOCTYPE html>\n<html lang="de">\n<head>\n  <meta charset="UTF-8">\n  <title>Meine Seite</title>\n</head>\n<body>\n  \n</body>\n</html>\n',
+  py: '',
+  java: '',
+};
+
+function NewFileDialog({ files, onCreate, onClose }) {
+  const [type, setType] = useState(FILE_TYPES[0]);
+  const [name, setName] = useState("index.html");
+  const [touched, setTouched] = useState(false);
+  const error = touched ? fileNameError(name, files) : null;
+
+  const pick = (t) => {
+    setType(t);
+    // Solange der Name nicht selbst angefasst wurde, passt er sich der Sprache an.
+    if (!touched) {
+      const suggestion = t.ext === "html" ? "index.html"
+        : t.ext === "css" ? "style.css"
+        : t.ext === "js" ? "script.js"
+        : `main.${t.ext}`;
+      setName(suggestion);
+    }
+  };
+
+  const create = () => {
+    const problem = fileNameError(name, files);
+    if (problem) { setTouched(true); return; }
+    onCreate(name.trim());
+  };
+
+  return (
+    <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-[#0F1629] border border-[#1E2D4A] rounded-2xl w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display text-lg font-bold flex items-center gap-2"><FilePlus className="text-[#4F8EF7]" />Neue Datei</h3>
+          <button onClick={onClose} aria-label="Schließen" className="text-[#8A9BC0] hover:text-[#E8EDF5]"><X size={18} /></button>
+        </div>
+
+        <p className="text-xs text-[#8A9BC0] mb-2">Sprache wählen</p>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-52 overflow-y-auto mb-4 pr-1">
+          {FILE_TYPES.map((t) => (
+            <button key={t.ext} onClick={() => pick(t)}
+              className={`px-2 py-2 rounded-lg border text-left transition-all ${type.ext === t.ext ? "border-[#4F8EF7] bg-[#4F8EF7]/10" : "border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>
+              <span className="block w-2 h-2 rounded-full mb-1" style={{ background: t.color }} />
+              <span className="block text-[11px] font-medium text-[#E8EDF5] truncate">{t.label}</span>
+              <span className="block font-code text-[10px] text-[#4A5A7A]">.{t.ext}</span>
+            </button>
+          ))}
+        </div>
+
+        <label className="block text-xs text-[#8A9BC0] mb-1.5">Dateiname</label>
+        <input value={name} autoFocus
+          onChange={(e) => { setName(e.target.value); setTouched(true); }}
+          onKeyDown={(e) => { if (e.key === "Enter") create(); if (e.key === "Escape") onClose(); }}
+          className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 font-code text-sm text-[#E8EDF5]" />
+        {error && <p className="text-xs text-[#EF4444] mt-1.5">{error}</p>}
+
+        <div className="flex gap-2 mt-5">
+          <Btn className="flex-1" icon={Check} onClick={create}>Anlegen</Btn>
+          <Btn variant="ghost" onClick={onClose}>Abbrechen</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Playground({ ctx }) {
-  const { me, savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId, pushToast, aiConfig, openAiSettings } = ctx;
-  const [tab, setTab] = useState("html");
+  const { me, savePlaygroundProject, deletePlaygroundProject, playgroundOpenId, setPlaygroundOpenId, pushToast } = ctx;
+
   const [name, setName] = useState("Mein Projekt");
-  const [html, setHtml] = useState(PLAYGROUND_STARTER.html);
-  const [css, setCss] = useState(PLAYGROUND_STARTER.css);
-  const [js, setJs] = useState(PLAYGROUND_STARTER.js);
-  const [srcDoc, setSrcDoc] = useState("");
+  const [files, setFiles] = useState([]);              // bewusst leer — kein Beispielcode
+  const [activeId, setActiveId] = useState(null);
+  const [tabs, setTabs] = useState([]);                // geöffnete Dateien (IDs)
   const [projectId, setProjectId] = useState(null);
-  const [debugResult, setDebugResult] = useState(null);
-  const [debugLoading, setDebugLoading] = useState(false);
+
+  const [srcDoc, setSrcDoc] = useState("");
   const [logs, setLogs] = useState([]);
   const [rightTab, setRightTab] = useState("preview");
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
-  const [minimap, setMinimap] = useState(false);
+  const [minimap, setMinimap] = useState(true);
+  const [wrap, setWrap] = useState(false);
+  const [explorerOpen, setExplorerOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [autoInclude, setAutoInclude] = useState(true);
   const [previewLive, setPreviewLive] = useState(false);
-  const previewWin = useRef(null);
+  const [problems, setProblems] = useState(null);
+  const [newFileOpen, setNewFileOpen] = useState(false);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const [savedAt, setSavedAt] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [projectsOpen, setProjectsOpen] = useState(false);
 
-  const runDebug = async () => {
-    setDebugLoading(true);
-    setDebugResult(null);
-    const res = analyzeProject({ html, css, js });
-    setDebugResult(res);
-    setDebugLoading(false);
+  const previewWin = useRef(null);
+  const saveRef = useRef(null);
+  const dirtyRef = useRef(false);
+  useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
+
+  const projects = (me?.playground || []).map(normalizeProject);
+  const activeFile = files.find((f) => f.id === activeId) || null;
+
+  /* ------------------------------ Dateien -------------------------------- */
+  const openFile = (id) => {
+    setActiveId(id);
+    setTabs((t) => (t.includes(id) ? t : [...t, id]));
   };
 
-  // Echtzeit-Vorschau: kurz debounced, damit nicht bei jedem Tastendruck neu gerendert wird.
-  // In die Seite wird eine kleine Brücke injiziert, die console-Ausgaben und
-  // Laufzeitfehler an die IDE zurückmeldet.
+  const createFile = (fileName) => {
+    const finalName = uniqueFileName(files, fileName);
+    const file = { id: newFileId(), name: finalName, content: FILE_TEMPLATES[extOf(finalName)] ?? "" };
+    setFiles((f) => [...f, file]);
+    setDirty(true);
+    setNewFileOpen(false);
+    openFile(file.id);
+    playSound("click");
+  };
+
+  const updateActive = (content) => {
+    if (!activeId) return;
+    setFiles((f) => f.map((x) => (x.id === activeId ? { ...x, content } : x)));
+    setDirty(true);
+  };
+
+  const removeFile = (id) => {
+    const file = files.find((f) => f.id === id);
+    if (!file) return;
+    if (!window.confirm(`„${file.name}“ wirklich löschen?`)) return;
+    setFiles((f) => f.filter((x) => x.id !== id));
+    setTabs((t) => t.filter((x) => x !== id));
+    setDirty(true);
+    if (activeId === id) {
+      const rest = files.filter((f) => f.id !== id);
+      setActiveId(rest.length ? rest[0].id : null);
+    }
+  };
+
+  const commitRename = () => {
+    const problem = fileNameError(renameValue, files, renamingId);
+    if (problem) { pushToast("error", problem); return; }
+    setFiles((f) => f.map((x) => (x.id === renamingId ? { ...x, name: renameValue.trim() } : x)));
+    setDirty(true);
+    setRenamingId(null);
+  };
+
+  const closeTab = (id) => {
+    setTabs((t) => t.filter((x) => x !== id));
+    if (activeId === id) {
+      const rest = tabs.filter((x) => x !== id);
+      setActiveId(rest.length ? rest[rest.length - 1] : null);
+    }
+  };
+
+  /* ------------------------------ Speichern ------------------------------ */
+  const doSave = useCallback(async (silent = false) => {
+    if (!me) return false;
+    if (me.isGuest) {
+      if (!silent) pushToast("info", "Als Gast wird nichts gespeichert — erstelle ein Konto, um deine Projekte zu behalten.");
+      return false;
+    }
+    if (!files.length) {
+      if (!silent) pushToast("info", "Leg zuerst eine Datei an.");
+      return false;
+    }
+    setSaving(true);
+    const id = projectId || uid();
+    const ok = await savePlaygroundProject({ id, name: name.trim() || "Unbenannt", files }, { silent });
+    setSaving(false);
+    if (ok) {
+      setProjectId(id);
+      setDirty(false);
+      setSavedAt(new Date());
+      if (!silent) playSound("save");
+    }
+    return ok;
+  }, [me, files, name, projectId, savePlaygroundProject, pushToast]);
+
+  useEffect(() => { saveRef.current = doSave; }, [doSave]);
+
+  // Automatisch speichern — alle 30 Sekunden, aber nur wenn sich etwas geändert hat.
+  useEffect(() => {
+    if (!me || me.isGuest) return;
+    const timer = setInterval(() => {
+      if (dirtyRef.current) saveRef.current?.(true);
+    }, AUTOSAVE_MS);
+    return () => clearInterval(timer);
+  }, [me]);
+
+  // Strg+S bzw. Cmd+S, auch außerhalb des Editors
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        saveRef.current?.();
+      } else if (e.key === "Escape" && fullscreen) {
+        setFullscreen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreen]);
+
+  // Beim Verlassen der Seite noch schnell sichern
+  useEffect(() => {
+    const onLeave = (e) => {
+      if (!dirtyRef.current || !me || me.isGuest) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [me]);
+
+  /* ------------------------------ Projekte ------------------------------- */
+  const loadProject = (project) => {
+    const normalized = normalizeProject(project);
+    setProjectId(normalized.id);
+    setName(normalized.name);
+    setFiles(normalized.files);
+    setTabs(normalized.files.slice(0, 3).map((f) => f.id));
+    setActiveId(normalized.files[0]?.id || null);
+    setDirty(false);
+    setSavedAt(null);
+    setProjectsOpen(false);
+    pushToast("info", `Projekt „${normalized.name}“ geladen.`);
+  };
+
+  const newProject = () => {
+    if (dirty && !window.confirm("Es gibt ungespeicherte Änderungen. Trotzdem ein neues Projekt beginnen?")) return;
+    setProjectId(null);
+    setName("Mein Projekt");
+    setFiles([]);
+    setTabs([]);
+    setActiveId(null);
+    setDirty(false);
+    setSavedAt(null);
+    setProblems(null);
+  };
+
+  useEffect(() => {
+    if (!playgroundOpenId || !me) return;
+    const p = (me.playground || []).find((x) => x.id === playgroundOpenId);
+    if (p) loadProject(p);
+    setPlaygroundOpenId(null);
+  }, [playgroundOpenId, me]);
+
+  useEffect(() => { ctx.loadProjects?.(); }, []);
+
+  /* ------------------------------ Vorschau ------------------------------- */
+  const entry = entryFile(files);
+
+  const buildPage = useCallback(
+    (extraScript = "") => buildProjectPage(files, { title: name || "Meine Seite", extraScript, autoInclude }),
+    [files, name, autoInclude]
+  );
+
   useEffect(() => {
     const t = setTimeout(() => {
       setLogs([]);
@@ -7411,38 +8606,28 @@ function Playground({ ctx }) {
           window.addEventListener("unhandledrejection", function (e) { send("error", ["Unbehandelte Promise-Ablehnung: " + e.reason]); });
         })();
       `;
-      setSrcDoc(composeDocument({ html, css, js, title: name, extraScript: bridge }));
+      setSrcDoc(buildPage(bridge) || "");
     }, 350);
     return () => clearTimeout(t);
-  }, [html, css, js, name]);
+  }, [buildPage]);
 
-  // Konsolen-Ausgaben aus der Vorschau einsammeln
   useEffect(() => {
     const onMessage = (e) => {
       if (!e.data || !e.data.__ldConsole) return;
-      setLogs((l) => [...l.slice(-99), { level: e.data.level, text: e.data.text }]);
+      setLogs((l) => [...l.slice(-199), { level: e.data.level, text: e.data.text }]);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
-  /* ---------------- Vorschau in eigenem Tab, live aktualisiert -------------
-     Das geöffnete Fenster bleibt bestehen und wird bei jeder Codeänderung
-     neu beschrieben — ohne dass man es erneut öffnen muss.
-     --------------------------------------------------------------------- */
-  // Fertige Seite ohne die Konsolen-Brücke — für Vorschau-Tab und Download
-  const buildPage = useCallback(
-    () => composeDocument({ html, css, js, title: name || "Meine Seite" }),
-    [name, html, css, js]
-  );
-
   const writeToPreviewWindow = useCallback((win) => {
     if (!win || win.closed) return false;
+    const page = buildPage();
+    if (!page) return false;
     try {
-      // Scrollposition behalten, damit das Neuladen nicht stört
       const y = win.scrollY || 0;
       win.document.open();
-      win.document.write(buildPage());
+      win.document.write(page);
       win.document.close();
       win.scrollTo(0, y);
       return true;
@@ -7452,6 +8637,7 @@ function Playground({ ctx }) {
   }, [buildPage]);
 
   const openPreviewTab = () => {
+    if (!entry) { pushToast("error", "Für die Vorschau braucht es eine HTML-Datei."); return; }
     const existing = previewWin.current;
     if (existing && !existing.closed) {
       writeToPreviewWindow(existing);
@@ -7460,17 +8646,13 @@ function Playground({ ctx }) {
       return;
     }
     const win = window.open("", "ld-preview");
-    if (!win) {
-      pushToast("error", "Der Browser hat das Fenster blockiert — erlaube Pop-ups für diese Seite.");
-      return;
-    }
+    if (!win) { pushToast("error", "Der Browser hat das Fenster blockiert — erlaube Pop-ups für diese Seite."); return; }
     previewWin.current = win;
     writeToPreviewWindow(win);
     setPreviewLive(true);
     pushToast("success", "Vorschau geöffnet — sie aktualisiert sich bei jeder Änderung.");
   };
 
-  // Bei jeder Codeänderung den geöffneten Tab mitziehen
   useEffect(() => {
     if (!previewLive) return;
     const t = setTimeout(() => {
@@ -7479,249 +8661,410 @@ function Playground({ ctx }) {
       writeToPreviewWindow(win);
     }, 400);
     return () => clearTimeout(t);
-  }, [html, css, js, previewLive, writeToPreviewWindow]);
+  }, [previewLive, writeToPreviewWindow]);
 
-  // Beim Verlassen der IDE das Vorschaufenster schließen
   useEffect(() => () => {
     const win = previewWin.current;
     if (win && !win.closed) win.close();
   }, []);
 
-  /** Lädt die Seite als einzelne, in sich geschlossene HTML-Datei herunter. */
-  const downloadPage = () => {
-    const blob = new Blob([buildPage()], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const safeName = (name || "meine-seite").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "meine-seite";
-    a.href = url;
-    a.download = `${safeName}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    pushToast("success", `${safeName}.html heruntergeladen.`);
+  /* ---------------------------- Herunterladen ---------------------------- */
+  const downloadProject = () => {
+    if (!files.length) { pushToast("info", "Es gibt noch nichts zum Herunterladen."); return; }
+    const slug = safeSlug(name, "projekt");
+    if (files.length === 1) {
+      downloadBlob(new Blob([files[0].content], { type: "text/plain;charset=utf-8" }), files[0].name);
+      pushToast("success", `${files[0].name} heruntergeladen.`);
+      return;
+    }
+    downloadBlob(buildZip(files.map((f) => ({ name: f.name, content: f.content }))), `${slug}.zip`);
+    pushToast("success", `${slug}.zip mit ${files.length} Dateien heruntergeladen.`);
   };
 
-  useEffect(() => {
-    if (!playgroundOpenId || !me) return;
-    const p = (me.playground || []).find((x) => x.id === playgroundOpenId);
-    if (p) { setProjectId(p.id); setName(p.name); setHtml(p.html); setCss(p.css); setJs(p.js); }
-    setPlaygroundOpenId(null);
-  }, [playgroundOpenId]);
+  const downloadSinglePage = () => {
+    const page = buildPage();
+    if (!page) { pushToast("error", "Dafür braucht es eine HTML-Datei."); return; }
+    const slug = safeSlug(name, "meine-seite");
+    downloadBlob(new Blob([page], { type: "text/html;charset=utf-8" }), `${slug}.html`);
+    pushToast("success", `${slug}.html heruntergeladen — alles in einer Datei.`);
+  };
 
-  // Projekte einmalig vom Server holen, sobald die IDE geöffnet wird
-  useEffect(() => { ctx.loadProjects?.(); }, []);
+  /* ----------------------------- Fehlerprüfung --------------------------- */
+  const runCheck = () => {
+    const res = analyzeProject({
+      html: files.filter((f) => extOf(f.name) === "html").map((f) => f.content).join("\n"),
+      css: files.filter((f) => extOf(f.name) === "css").map((f) => f.content).join("\n"),
+      js: files.filter((f) => extOf(f.name) === "js").map((f) => f.content).join("\n"),
+    });
+    setProblems(res);
+    setRightTab("problems");
+    setPanelOpen(true);
+    playSound(res.issues.length ? "wrong" : "correct");
+  };
 
-  const projects = me?.playground || [];
-  // Mit Server sind Verbrauch und Kontingent verbindlich, ohne Server errechnet.
+  /* ------------------------------ Speicher ------------------------------- */
   const quotaBytes = me?.storageQuota || STORAGE_QUOTA_BYTES;
   const usedBytes = me?.storageUsed != null && ctx.backend
     ? me.storageUsed
     : projects.reduce((sum, p) => sum + (p.sizeBytes || 0), 0);
   const quotaPct = Math.min(100, (usedBytes / quotaBytes) * 100);
 
-  const save = () => {
-    const id = projectId || uid();
-    const ok = savePlaygroundProject({ id, name: name || "Unbenannt", html, css, js });
-    if (ok) setProjectId(id);
-  };
-  const newProject = () => { setProjectId(null); setName("Mein Projekt"); setHtml(PLAYGROUND_STARTER.html); setCss(PLAYGROUND_STARTER.css); setJs(PLAYGROUND_STARTER.js); };
-  const load = (p) => { setProjectId(p.id); setName(p.name); setHtml(p.html); setCss(p.css); setJs(p.js); pushToast("info", `Projekt „${p.name}“ geladen.`); };
+  const saveLabel = me?.isGuest
+    ? "Gast — wird nicht gespeichert"
+    : saving ? "Speichert …"
+    : dirty ? "Nicht gespeicherte Änderungen"
+    : savedAt ? `Gespeichert ${savedAt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}`
+    : projectId ? "Gespeichert" : "Noch nicht gespeichert";
 
-  const tabs = [["html", "HTML", "html"], ["css", "CSS", "css"], ["js", "JavaScript", "javascript"]];
-  const codeFor = { html, css, js };
-  const setterFor = { html: setHtml, css: setCss, js: setJs };
+  /* ------------------------------ Bausteine ------------------------------ */
+  const toolButton = (icon, label, onClick, active) => (
+    <button onClick={onClick} title={label} aria-label={label}
+      className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all shrink-0 ${active ? "border-[#4F8EF7] text-[#4F8EF7] bg-[#4F8EF7]/10" : "border-[#1E2D4A] text-[#8A9BC0] hover:border-[#2A3F6F] hover:text-[#E8EDF5]"}`}>
+      {icon}
+    </button>
+  );
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Code2 className="text-[#4F8EF7]" />IDE</h1>
-          <p className="text-[#8A9BC0] mt-1">Freestyle coden — HTML, CSS &amp; JS mit Live-Vorschau in Echtzeit.</p>
+  const explorer = (
+    <div className="flex flex-col h-full bg-[#0B1120] border border-[#1E2D4A] rounded-xl overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[#1E2D4A]">
+        <FolderTree size={13} className="text-[#8A9BC0]" />
+        <span className="text-[11px] uppercase tracking-wider text-[#8A9BC0] flex-1">Explorer</span>
+        <button onClick={() => setNewFileOpen(true)} title="Neue Datei" aria-label="Neue Datei"
+          className="text-[#8A9BC0] hover:text-[#4F8EF7]"><FilePlus size={14} /></button>
+      </div>
+
+      <input value={name} onChange={(e) => { setName(e.target.value); setDirty(true); }} placeholder="Projektname"
+        className="mx-3 my-2 bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#E8EDF5]" />
+
+      <div className="flex-1 overflow-y-auto px-2 pb-2">
+        {files.length === 0 ? (
+          <p className="text-[11px] text-[#4A5A7A] px-2 py-3 leading-relaxed">
+            Noch keine Datei. Leg eine an — für jede Sprache, die du brauchst.
+          </p>
+        ) : files.map((f) => {
+          const type = fileTypeOf(f.name);
+          const isActive = f.id === activeId;
+          return (
+            <div key={f.id}
+              className={`group flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-[13px] ${isActive ? "bg-[#4F8EF7]/12 text-[#E8EDF5]" : "text-[#8A9BC0] hover:bg-white/5"}`}
+              onClick={() => openFile(f.id)}>
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: type.color }} />
+              {renamingId === f.id ? (
+                <input value={renameValue} autoFocus
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={commitRename}
+                  onKeyDown={(e) => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") setRenamingId(null); }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex-1 min-w-0 bg-[#0A0E1A] border border-[#4F8EF7] rounded px-1 font-code text-[12px] text-[#E8EDF5]" />
+              ) : (
+                <span className="flex-1 truncate font-code">{f.name}</span>
+              )}
+              <button onClick={(e) => { e.stopPropagation(); setRenamingId(f.id); setRenameValue(f.name); }}
+                aria-label={`${f.name} umbenennen`} title="Umbenennen"
+                className="opacity-0 group-hover:opacity-100 text-[#4A5A7A] hover:text-[#4F8EF7]"><PenSquare size={11} /></button>
+              <button onClick={(e) => { e.stopPropagation(); removeFile(f.id); }}
+                aria-label={`${f.name} löschen`} title="Löschen"
+                className="opacity-0 group-hover:opacity-100 text-[#4A5A7A] hover:text-[#EF4444]"><Trash2 size={11} /></button>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-[#1E2D4A]">
+        <button onClick={() => setProjectsOpen((v) => !v)}
+          className="w-full flex items-center gap-2 px-3 py-2 text-[11px] uppercase tracking-wider text-[#8A9BC0] hover:text-[#E8EDF5]">
+          <ChevronRight size={10} className={projectsOpen ? "rotate-90 transition-transform" : "transition-transform"} />
+          Projekte<span className="ml-auto text-[#4A5A7A]">{projects.length}</span>
+        </button>
+        {projectsOpen && (
+          <div className="max-h-40 overflow-y-auto px-2 pb-2">
+            {projects.length === 0 ? (
+              <p className="text-[11px] text-[#4A5A7A] px-2 py-2">Noch nichts gespeichert.</p>
+            ) : projects.map((p) => (
+              <div key={p.id} className="group flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px] text-[#8A9BC0] hover:bg-white/5 cursor-pointer"
+                onClick={() => loadProject(p)}>
+                <Code2 size={11} className="text-[#4F8EF7] shrink-0" />
+                <span className="flex-1 truncate">{p.name}</span>
+                <span className="text-[10px] text-[#4A5A7A]">{(p.files || []).length}</span>
+                <button onClick={(e) => { e.stopPropagation(); deletePlaygroundProject(p.id); }}
+                  aria-label={`${p.name} löschen`} className="opacity-0 group-hover:opacity-100 text-[#4A5A7A] hover:text-[#EF4444]"><Trash2 size={11} /></button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="px-3 pb-3 pt-1">
+          <div className="flex items-center justify-between text-[10px] text-[#4A5A7A] mb-1">
+            <span>{formatBytes(usedBytes)} von 2,5 GB</span>
+            <span>{projects.length} Projekt{projects.length === 1 ? "" : "e"}</span>
+          </div>
+          <ProgressBar value={quotaPct} max={100} height="h-1" />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Btn variant="secondary" size="sm" icon={Plus} onClick={newProject}>Neu</Btn>
-          <Btn variant="secondary" size="sm" icon={ExternalLink} onClick={openPreviewTab}>
-            {previewLive ? "Vorschau anzeigen" : "In neuem Tab öffnen"}
-          </Btn>
-          <Btn variant="secondary" size="sm" icon={Download} onClick={downloadPage}>Herunterladen</Btn>
-          <Btn variant="secondary" size="sm" icon={debugLoading ? undefined : Bug} onClick={runDebug} disabled={debugLoading}>
-            {debugLoading ? <><Loader2 size={14} className="ld-spin" />Prüft …</> : "Fehler prüfen"}
-          </Btn>
-          <Btn size="sm" icon={Check} onClick={save}>Speichern</Btn>
+      </div>
+    </div>
+  );
+
+  const editorArea = (
+    <div className="flex flex-col h-full min-w-0 bg-[#0B1120] border border-[#1E2D4A] rounded-xl overflow-hidden">
+      {/* Registerkarten */}
+      <div className="flex items-stretch border-b border-[#1E2D4A] overflow-x-auto shrink-0">
+        {tabs.length === 0 && <div className="px-3 py-2 text-[11px] text-[#4A5A7A]">Keine Datei geöffnet</div>}
+        {tabs.map((id) => {
+          const f = files.find((x) => x.id === id);
+          if (!f) return null;
+          const type = fileTypeOf(f.name);
+          const isActive = id === activeId;
+          return (
+            <div key={id} onClick={() => setActiveId(id)}
+              className={`group flex items-center gap-2 px-3 py-2 cursor-pointer border-r border-[#1E2D4A] whitespace-nowrap ${isActive ? "bg-[#0A0E1A] text-[#E8EDF5]" : "text-[#8A9BC0] hover:text-[#E8EDF5]"}`}
+              style={isActive ? { boxShadow: "inset 0 2px 0 " + type.color } : undefined}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: type.color }} />
+              <span className="font-code text-[12px]">{f.name}</span>
+              <button onClick={(e) => { e.stopPropagation(); closeTab(id); }} aria-label={`${f.name} schließen`}
+                className="text-[#4A5A7A] hover:text-[#EF4444] opacity-0 group-hover:opacity-100"><X size={10} /></button>
+            </div>
+          );
+        })}
+        <button onClick={() => setNewFileOpen(true)} aria-label="Neue Datei"
+          className="px-3 text-[#4A5A7A] hover:text-[#4F8EF7]"><Plus size={12} /></button>
+      </div>
+
+      {/* Editor */}
+      <div className="flex-1 min-h-0">
+        {activeFile ? (
+          <MonacoCodeEditor
+            key={activeFile.id}
+            value={activeFile.content}
+            onChange={updateActive}
+            path={activeFile.name}
+            language={langOf(activeFile.name)}
+            height="100%"
+            chrome={false}
+            showMinimap={minimap}
+            wordWrap={wrap ? "on" : "off"}
+            onCursor={setCursor}
+            onReady={(editor, monaco) => {
+              editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => saveRef.current?.());
+            }}
+          />
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center gap-3 text-center px-6">
+            <FileCode size={34} className="text-[#2A3F6F]" />
+            <p className="text-sm text-[#8A9BC0]">Der Editor ist leer — genau wie er sein soll.</p>
+            <p className="text-xs text-[#4A5A7A] max-w-sm leading-relaxed">
+              Leg eine Datei an und leg los. HTML, CSS und JavaScript laufen direkt in der Vorschau;
+              alle anderen Sprachen kannst du schreiben, prüfen lassen und herunterladen.
+            </p>
+            <Btn size="sm" icon={FilePlus} onClick={() => setNewFileOpen(true)}>Erste Datei anlegen</Btn>
+          </div>
+        )}
+      </div>
+
+      {/* Statusleiste wie in VS Code */}
+      <div className="flex items-center gap-x-4 gap-y-1 px-3 py-1.5 border-t border-[#1E2D4A] text-[11px] text-[#4A5A7A] font-code overflow-x-auto shrink-0">
+        <span>Zeile {cursor.line}, Spalte {cursor.column}</span>
+        {activeFile && <span>{activeFile.content.split("\n").length} Zeilen</span>}
+        <span>UTF-8</span>
+        <span>Leerzeichen: 2</span>
+        {activeFile && <span className="text-[#8A9BC0]">{fileTypeOf(activeFile.name).label}</span>}
+        {activeFile && langOf(activeFile.name) === "html" && (
+          <span className="text-[#4F8EF7]">Emmet: <kbd className="px-1 rounded bg-[#141D35]">!</kbd> + Tab</span>
+        )}
+        <span className={`ml-auto flex items-center gap-1.5 ${dirty ? "text-[#F59E0B]" : "text-[#10B981]"}`}>
+          {saving ? <Loader2 size={10} className="ld-spin" /> : <span className="w-1.5 h-1.5 rounded-full" style={{ background: "currentColor" }} />}
+          {saveLabel}
+        </span>
+      </div>
+    </div>
+  );
+
+  const panelTabs = [
+    ["preview", "Vorschau", Eye],
+    ["console", "Konsole", Terminal],
+    ["problems", "Probleme", Bug],
+    ["assistant", "KI", Bot],
+  ];
+
+  const panel = (
+    <div className="flex flex-col h-full min-w-0 bg-[#0B1120] border border-[#1E2D4A] rounded-xl overflow-hidden">
+      <div className="flex items-center gap-1 px-2 py-1.5 border-b border-[#1E2D4A] shrink-0">
+        {panelTabs.map(([v, label, Icon]) => (
+          <button key={v} onClick={() => setRightTab(v)}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 ${rightTab === v ? "text-white" : "text-[#8A9BC0] hover:text-[#E8EDF5]"}`}
+            style={rightTab === v ? { background: GRADIENT } : undefined}>
+            <Icon size={11} />{label}
+            {v === "console" && logs.length > 0 && (
+              <span className={`text-[9px] px-1.5 rounded-full ${logs.some((l) => l.level === "error") ? "bg-[#EF4444]/25 text-[#EF4444]" : "bg-white/20"}`}>{logs.length}</span>
+            )}
+            {v === "problems" && problems?.issues?.length > 0 && (
+              <span className="text-[9px] px-1.5 rounded-full bg-[#F59E0B]/25 text-[#F59E0B]">{problems.issues.length}</span>
+            )}
+          </button>
+        ))}
+        <div className="ml-auto flex items-center gap-1">
+          {rightTab === "preview" && entry && (
+            <label className="flex items-center gap-1 text-[10px] text-[#4A5A7A] cursor-pointer" title="CSS- und JS-Dateien ohne Verweis automatisch einbinden">
+              <input type="checkbox" checked={autoInclude} onChange={(e) => setAutoInclude(e.target.checked)} className="accent-[#4F8EF7]" />
+              auto
+            </label>
+          )}
+          {rightTab === "console" && logs.length > 0 && (
+            <button onClick={() => setLogs([])} className="text-[10px] text-[#8A9BC0] hover:text-[#E8EDF5] flex items-center gap-1"><Trash2 size={10} />Leeren</button>
+          )}
+          <button onClick={() => setPanelOpen(false)} aria-label="Bereich schließen" className="text-[#4A5A7A] hover:text-[#E8EDF5]"><X size={12} /></button>
         </div>
       </div>
 
-      {previewLive && (
-        <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 rounded-xl bg-[#10B981]/10 border border-[#10B981]/30">
-          <span className="w-2 h-2 rounded-full bg-[#10B981]" style={{ animation: "ld-pulse 2s ease-in-out infinite" }} />
-          <p className="text-sm text-[#C9D6F0] flex-1">
-            Vorschau-Tab ist verbunden — er lädt bei jeder Änderung automatisch neu.
-          </p>
-          <button onClick={() => {
-            const w = previewWin.current;
-            if (w && !w.closed) w.close();
-            previewWin.current = null;
-            setPreviewLive(false);
-          }} className="text-xs text-[#8A9BC0] hover:text-[#EF4444]">Trennen</button>
-        </div>
-      )}
-
-      <Card className="p-4">
-        <div className="flex items-center justify-between text-xs mb-1.5">
-          <span className="text-[#8A9BC0]">Speicher: {formatBytes(usedBytes)} von 2,5 GB verwendet {me?.isGuest && "(Gast — wird nicht gespeichert)"}</span>
-          <span className="text-[#4A5A7A]">{projects.length} Projekt{projects.length === 1 ? "" : "e"}</span>
-        </div>
-        <ProgressBar value={quotaPct} max={100} />
-      </Card>
-
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="p-4">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Projektname"
-            className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 mb-3 text-sm font-medium text-[#E8EDF5]" />
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex flex-1 p-1 bg-[#0A0E1A] rounded-lg">
-              {tabs.map(([v, label]) => (
-                <button key={v} onClick={() => setTab(v)}
-                  className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${tab === v ? "text-white" : "text-[#8A9BC0]"}`}
-                  style={tab === v ? { background: GRADIENT } : undefined}>{label}</button>
-              ))}
+      <div className={`flex-1 min-h-0 ${rightTab === "preview" && entry ? "bg-white" : "bg-[#0A0E1A]"}`}>
+        {rightTab === "preview" ? (
+          entry ? (
+            <iframe title="Live-Vorschau" srcDoc={srcDoc} sandbox="allow-scripts allow-modals" className="w-full h-full border-0" />
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-center gap-2 px-6">
+              <Globe size={28} className="text-[#2A3F6F]" />
+              <p className="text-sm text-[#8A9BC0]">Keine Vorschau möglich.</p>
+              <p className="text-xs text-[#4A5A7A] max-w-xs leading-relaxed">
+                Der Browser kann nur HTML, CSS und JavaScript ausführen. Leg eine{" "}
+                <span className="font-code text-[#4F8EF7]">index.html</span> an, um deine Seite hier zu sehen.
+                {files.length > 0 && !files.some((f) => runsInBrowser(f.name)) &&
+                  " Dateien wie Python oder Java kannst du hier schreiben, prüfen lassen und herunterladen — ausführen musst du sie auf deinem Rechner."}
+              </p>
             </div>
-            <button onClick={() => setMinimap((m) => !m)} aria-label="Minimap umschalten"
-              title={minimap ? "Minimap ausblenden" : "Minimap einblenden"}
-              className={`px-2 py-1.5 rounded-lg border text-xs transition-all ${minimap ? "border-[#4F8EF7] text-[#4F8EF7]" : "border-[#1E2D4A] text-[#8A9BC0] hover:border-[#2A3F6F]"}`}>
-              <MapIcon size={13} />
-            </button>
-          </div>
-
-          <MonacoCodeEditor value={codeFor[tab]} onChange={setterFor[tab]} disabled={false}
-            courseId={tabs.find((t) => t[0] === tab)[2]} label={tab.toUpperCase()}
-            height="400px" showMinimap={minimap} onCursor={setCursor} />
-
-          {/* Statusleiste wie in VS Code */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 px-1 text-[11px] text-[#4A5A7A] font-code">
-            <span>Zeile {cursor.line}, Spalte {cursor.column}</span>
-            <span>{codeFor[tab].split("\n").length} Zeilen</span>
-            <span>Leerzeichen: 2</span>
-            <span className="uppercase">{tab === "js" ? "javascript" : tab}</span>
-            {tab === "html" && <span className="text-[#4F8EF7]">Emmet: <kbd className="px-1 rounded bg-[#141D35]">!</kbd> + Tab</span>}
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex p-1 bg-[#0A0E1A] rounded-lg">
-              <button onClick={() => setRightTab("preview")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${rightTab === "preview" ? "text-white" : "text-[#8A9BC0]"}`}
-                style={rightTab === "preview" ? { background: GRADIENT } : undefined}><Eye size={12} />Vorschau</button>
-              <button onClick={() => setRightTab("console")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${rightTab === "console" ? "text-white" : "text-[#8A9BC0]"}`}
-                style={rightTab === "console" ? { background: GRADIENT } : undefined}>
-                <Terminal size={12} />Konsole
-                {logs.length > 0 && <span className={`text-[9px] px-1.5 rounded-full ${logs.some((l) => l.level === "error") ? "bg-[#EF4444]/25 text-[#EF4444]" : "bg-white/20"}`}>{logs.length}</span>}
-              </button>
-              <button onClick={() => setRightTab("assistant")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${rightTab === "assistant" ? "text-white" : "text-[#8A9BC0]"}`}
-                style={rightTab === "assistant" ? { background: GRADIENT } : undefined}>
-                <Bot size={12} />KI
-              </button>
-            </div>
-            {rightTab === "console" && logs.length > 0 && (
-              <button onClick={() => setLogs([])} className="text-xs text-[#8A9BC0] hover:text-[#E8EDF5] flex items-center gap-1"><Trash2 size={11} />Leeren</button>
-            )}
-          </div>
-          <div className={`rounded-lg overflow-hidden border border-[#1E2D4A] ${rightTab === "preview" ? "bg-white" : "bg-[#0A0E1A]"}`} style={{ height: 340 }}>
-            {rightTab === "preview" ? (
-              <iframe title="Live-Vorschau" srcDoc={srcDoc} sandbox="allow-scripts allow-modals" className="w-full h-full border-0" />
-            ) : rightTab === "assistant" ? (
-              <AssistantPanel ctx={ctx} code={{ html, css, js }} />
+          )
+        ) : rightTab === "assistant" ? (
+          <AssistantPanel ctx={ctx} code={{
+            html: files.filter((f) => extOf(f.name) === "html").map((f) => f.content).join("\n"),
+            css: files.filter((f) => extOf(f.name) === "css").map((f) => f.content).join("\n"),
+            js: files.filter((f) => !["html", "css"].includes(extOf(f.name))).map((f) => `/* ${f.name} */\n${f.content}`).join("\n\n"),
+          }} />
+        ) : rightTab === "problems" ? (
+          <div className="h-full overflow-y-auto p-3 text-[12px]">
+            {!problems ? (
+              <div className="text-center py-6">
+                <Bug size={24} className="mx-auto text-[#2A3F6F] mb-2" />
+                <p className="text-[#4A5A7A] mb-3">Noch nicht geprüft.</p>
+                <Btn size="sm" variant="secondary" icon={Bug} onClick={runCheck}>Jetzt prüfen</Btn>
+              </div>
+            ) : problems.issues.length === 0 ? (
+              <p className="text-[#10B981] flex items-center gap-2"><CheckCircle2 size={14} />{problems.summary}</p>
             ) : (
-              <div className="h-full overflow-y-auto p-3 font-code text-[12px] leading-relaxed">
-                {logs.length === 0 ? (
-                  <p className="text-[#4A5A7A]">Noch keine Ausgaben. Nutze <span className="text-[#4F8EF7]">console.log(...)</span> in deinem JavaScript.</p>
-                ) : logs.map((l, i) => {
-                  const color = l.level === "error" ? "#EF4444" : l.level === "warn" ? "#F59E0B" : l.level === "info" ? "#4F8EF7" : "#C9D6F0";
+              <div className="space-y-2">
+                <p className="text-[#8A9BC0] mb-2">{problems.summary}</p>
+                {problems.issues.map((iss, i) => {
+                  const sev = { error: ["#EF4444", "Fehler"], warning: ["#F59E0B", "Warnung"], info: ["#4F8EF7", "Hinweis"] }[iss.severity] || ["#8A9BC0", "Hinweis"];
                   return (
-                    <div key={i} className="flex gap-2 py-0.5 border-b border-[#1E2D4A]/40 last:border-0">
-                      <span className="text-[#4A5A7A] shrink-0">{l.level === "error" ? "✕" : l.level === "warn" ? "!" : "›"}</span>
-                      <span style={{ color }} className="whitespace-pre-wrap break-all">{l.text}</span>
+                    <div key={i} className="p-2.5 rounded-lg bg-[#0F1629] border border-[#1E2D4A]">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ color: sev[0], background: sev[0] + "22" }}>{sev[1]}</span>
+                        {iss.where && <span className="font-code text-[10px] uppercase text-[#4A5A7A]">{iss.where}</span>}
+                        <span className="text-[#E8EDF5]">{iss.title}</span>
+                      </div>
+                      {iss.detail && <p className="text-[11px] text-[#8A9BC0]">{iss.detail}</p>}
+                      {iss.fix && <p className="text-[11px] text-[#10B981] mt-0.5">💡 {iss.fix}</p>}
                     </div>
                   );
                 })}
               </div>
             )}
           </div>
-        </Card>
+        ) : (
+          <div className="h-full overflow-y-auto p-3 font-code text-[12px] leading-relaxed">
+            {logs.length === 0 ? (
+              <p className="text-[#4A5A7A]">Noch keine Ausgaben. Nutze <span className="text-[#4F8EF7]">console.log(...)</span> in deinem JavaScript.</p>
+            ) : logs.map((l, i) => {
+              const color = l.level === "error" ? "#EF4444" : l.level === "warn" ? "#F59E0B" : l.level === "info" ? "#4F8EF7" : "#C9D6F0";
+              return (
+                <div key={i} className="flex gap-2 py-0.5 border-b border-[#1E2D4A]/40 last:border-0">
+                  <span className="text-[#4A5A7A] shrink-0">{l.level === "error" ? "✕" : l.level === "warn" ? "!" : "›"}</span>
+                  <span style={{ color }} className="whitespace-pre-wrap break-all">{l.text}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  /* -------------------------------- Aufbau ------------------------------- */
+  const shell = (
+    <div className={fullscreen
+      ? "fixed inset-0 z-[70] bg-[#0A0E1A] p-3 flex flex-col gap-2"
+      : "flex flex-col gap-2"}
+      style={fullscreen ? undefined : { height: "calc(100vh - 8.5rem)", minHeight: 520 }}>
+
+      {/* Werkzeugleiste */}
+      <div className="flex items-center gap-2 flex-wrap shrink-0">
+        <div className="flex items-center gap-2 mr-1">
+          <Code2 className="text-[#4F8EF7]" size={18} />
+          <span className="font-display font-bold">IDE</span>
+        </div>
+
+        {toolButton(<FolderTree size={13} />, explorerOpen ? "Explorer ausblenden" : "Explorer einblenden", () => setExplorerOpen((v) => !v), explorerOpen)}
+        {toolButton(<FilePlus size={13} />, "Neue Datei (Explorer)", () => setNewFileOpen(true))}
+
+        <div className="w-px h-6 bg-[#1E2D4A] mx-0.5" />
+
+        <Btn size="sm" icon={saving ? undefined : Save} onClick={() => doSave()} disabled={saving || !files.length}>
+          {saving ? <><Loader2 size={13} className="ld-spin" />Speichert …</> : "Speichern"}
+        </Btn>
+        <Btn size="sm" variant="secondary" icon={Plus} onClick={newProject}>Neu</Btn>
+
+        <div className="w-px h-6 bg-[#1E2D4A] mx-0.5" />
+
+        <Btn size="sm" variant="secondary" icon={ExternalLink} onClick={openPreviewTab}>
+          {previewLive ? "Vorschau zeigen" : "Neuer Tab"}
+        </Btn>
+        <Btn size="sm" variant="secondary" icon={Download} onClick={downloadProject}>
+          {files.length > 1 ? "ZIP" : "Download"}
+        </Btn>
+        {entry && toolButton(<FileCode size={13} />, "Als eine HTML-Datei herunterladen", downloadSinglePage)}
+        <Btn size="sm" variant="secondary" icon={Bug} onClick={runCheck}>Prüfen</Btn>
+
+        <div className="ml-auto flex items-center gap-2">
+          {toolButton(<MapIcon size={13} />, minimap ? "Minimap ausblenden" : "Minimap einblenden", () => setMinimap((v) => !v), minimap)}
+          {toolButton(<ClipboardList size={13} />, wrap ? "Zeilenumbruch aus" : "Zeilenumbruch an", () => setWrap((v) => !v), wrap)}
+          {toolButton(<Eye size={13} />, panelOpen ? "Seitenbereich ausblenden" : "Seitenbereich einblenden", () => setPanelOpen((v) => !v), panelOpen)}
+          {toolButton(fullscreen ? <Compress size={13} /> : <Expand size={13} />, fullscreen ? "Vollbild verlassen (Esc)" : "Vollbild", () => setFullscreen((v) => !v), fullscreen)}
+        </div>
       </div>
 
-      {/* KI-Debug-Ergebnis */}
-      {debugLoading && (
-        <Card className="p-5">
-          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
-            <Bug size={18} className="text-[#7C3AED]" /><span className="font-display font-bold">KI-Debugging</span>
-            <span className="ml-auto flex items-center gap-1.5 text-xs text-[#8A9BC0]"><Loader2 size={13} className="ld-spin" />analysiert deinen Code …</span>
-          </div>
-          <div className="space-y-2.5"><div className="ld-skeleton h-4 w-1/3" /><div className="ld-skeleton h-3 w-full" /><div className="ld-skeleton h-3 w-4/5" /></div>
-        </Card>
-      )}
-      {debugResult && !debugLoading && (
-        <Card className="p-5">
-          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
-            <Bug size={18} className="text-[#7C3AED]" /><span className="font-display font-bold">KI-Debugging</span>
-            <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981]">Sofort geprüft</span>
-          </div>
-          <p className="text-sm text-[#C9D6F0] mb-4">{debugResult.summary}</p>
-          {(debugResult.issues || []).length === 0 ? (
-            <p className="text-sm text-[#10B981] flex items-center gap-2"><CheckCircle2 size={16} />Keine Probleme gefunden.</p>
-          ) : (
-            <div className="space-y-2">
-              {debugResult.issues.map((iss, i) => {
-                const sev = { error: ["#EF4444", "Fehler"], warning: ["#F59E0B", "Warnung"], info: ["#4F8EF7", "Hinweis"] }[iss.severity] || ["#8A9BC0", "Hinweis"];
-                return (
-                  <div key={i} className="p-3 rounded-lg bg-[#0A0E1A] border border-[#1E2D4A]">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ color: sev[0], background: sev[0] + "22" }}>{sev[1]}</span>
-                      {iss.where && <span className="text-[10px] font-code uppercase text-[#4A5A7A]">{iss.where}</span>}
-                      <span className="text-sm font-medium text-[#E8EDF5]">{iss.title}</span>
-                    </div>
-                    {iss.detail && <p className="text-xs text-[#8A9BC0] mb-1">{iss.detail}</p>}
-                    {iss.fix && <p className="text-xs text-[#10B981] flex items-start gap-1.5"><span>💡</span><span>{iss.fix}</span></p>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          <button onClick={() => setRightTab("assistant")} className="text-xs text-[#4F8EF7] hover:underline flex items-center gap-1.5 mt-3">
-            <Bot size={12} />Mit dem KI-Assistenten besprechen
-          </button>
-        </Card>
+      {previewLive && (
+        <div className="flex flex-wrap items-center gap-3 px-3 py-1.5 rounded-lg bg-[#10B981]/10 border border-[#10B981]/30 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-[#10B981]" style={{ animation: "ld-pulse 2s ease-in-out infinite" }} />
+          <p className="text-xs text-[#C9D6F0] flex-1">Vorschau-Tab ist verbunden — er lädt bei jeder Änderung neu.</p>
+          <button onClick={() => {
+            const w = previewWin.current;
+            if (w && !w.closed) w.close();
+            previewWin.current = null;
+            setPreviewLive(false);
+          }} className="text-[11px] text-[#8A9BC0] hover:text-[#EF4444]">Trennen</button>
+        </div>
       )}
 
-      {projects.length > 0 && (
-        <div>
-          <h2 className="font-display text-lg font-bold mb-3">Gespeicherte Projekte</h2>
-          <Card className="divide-y divide-[#1E2D4A]">
-            {projects.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 p-4">
-                <Code2 size={18} className="text-[#4F8EF7] shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{p.name}</p>
-                  <p className="text-xs text-[#8A9BC0]">{formatBytes(p.sizeBytes)} · {p.updatedAt}</p>
-                </div>
-                <Btn variant="ghost" size="sm" icon={Play} onClick={() => load(p)}>Laden</Btn>
-                <Btn variant="danger" size="sm" icon={Trash2} onClick={() => deletePlaygroundProject(p.id)} />
-              </div>
-            ))}
-          </Card>
-        </div>
+      {/* Arbeitsfläche */}
+      <div className="flex-1 min-h-0 flex gap-2">
+        {explorerOpen && <div className="w-52 shrink-0 hidden md:block">{explorer}</div>}
+        <div className="flex-1 min-w-0">{editorArea}</div>
+        {panelOpen && <div className="flex-1 min-w-0 hidden lg:block max-w-[46%]">{panel}</div>}
+      </div>
+
+      {/* Auf kleinen Bildschirmen liegt der Bereich unter dem Editor */}
+      {panelOpen && (
+        <div className="lg:hidden shrink-0" style={{ height: 260 }}>{panel}</div>
+      )}
+
+      {newFileOpen && (
+        <NewFileDialog files={files} onCreate={createFile} onClose={() => setNewFileOpen(false)} />
       )}
     </div>
   );
+
+  return shell;
 }
 
 /* ========================= Admin-Dashboard ========================= */
 function AdminDashboard({ ctx }) {
-  const { me, users, reports, backend, adminUpdateUser, adminDeleteUser, adminCreateAdmin, resolveReport, deleteReport, pushToast } = ctx;
+  const { me, users, reports, backend, adminUpdateUser, adminDeleteUser, adminCreateAdmin, adminSetPassword, resolveReport, deleteReport, pushToast } = ctx;
   const [tab, setTab] = useState("users");
   const [query, setQuery] = useState("");
   const [editUser, setEditUser] = useState(null);
@@ -7765,7 +9108,24 @@ function AdminDashboard({ ctx }) {
   const openReports = allReports.filter((r) => r.status === "open");
   const resolvedReports = allReports.filter((r) => r.status !== "open");
 
-  const openEdit = (u) => { setEditUser(u); setEditForm({ name: u.name, email: u.email, role: u.role }); };
+  const [newPw, setNewPw] = useState("");
+
+  const openEdit = (u) => { setEditUser(u); setEditForm({ name: u.name, email: u.email, role: u.role }); setNewPw(""); };
+
+  // Administratoren dürfen jedes Passwort neu setzen — das Konto wird dabei
+  // überall abgemeldet, damit ein übernommenes Konto sofort dicht ist.
+  const applyNewPassword = async () => {
+    if (backend) {
+      try {
+        await api.patch(`/api/admin/users/${editUser.id}`, { password: newPw });
+        pushToast("success", "Passwort gesetzt — das Konto wurde überall abgemeldet.");
+        setNewPw("");
+      } catch (e) { pushToast("error", e.message); }
+      return;
+    }
+    const ok = await adminSetPassword(editUser.id, newPw);
+    if (ok) setNewPw("");
+  };
 
   const saveEdit = async () => {
     if (backend) {
@@ -7933,6 +9293,20 @@ function AdminDashboard({ ctx }) {
               </div>
             </div>
             <Btn className="w-full mt-4" icon={Check} onClick={saveEdit}>Speichern</Btn>
+
+            <div className="mt-5 pt-4 border-t border-[#1E2D4A]">
+              <p className="text-sm font-medium flex items-center gap-2 mb-1"><KeyRound size={15} className="text-[#F59E0B]" />Passwort neu setzen</p>
+              <p className="text-xs text-[#8A9BC0] mb-2">
+                Das alte Passwort wird nicht gebraucht. Alle Anmeldungen dieses Kontos werden beendet.
+              </p>
+              <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="Neues Passwort"
+                className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-2.5 text-sm text-[#E8EDF5]" />
+              <PasswordHints password={newPw} name={editForm.name} email={editForm.email} />
+              <Btn size="sm" variant="secondary" className="mt-3" icon={KeyRound} onClick={applyNewPassword}
+                disabled={!passwordOk(newPw, { name: editForm.name, email: editForm.email })}>
+                Passwort setzen
+              </Btn>
+            </div>
           </Card>
         </div>
       )}
@@ -7947,7 +9321,10 @@ function AdminDashboard({ ctx }) {
             <div className="space-y-3">
               <Field label="Name" value={newAdminForm.name} onChange={(e) => setNewAdminForm((f) => ({ ...f, name: e.target.value }))} />
               <Field label="E-Mail" value={newAdminForm.email} onChange={(e) => setNewAdminForm((f) => ({ ...f, email: e.target.value }))} />
-              <Field label="Passwort" type="password" value={newAdminForm.password} onChange={(e) => setNewAdminForm((f) => ({ ...f, password: e.target.value }))} />
+              <div>
+                <Field label="Passwort" type="password" value={newAdminForm.password} onChange={(e) => setNewAdminForm((f) => ({ ...f, password: e.target.value }))} />
+                <PasswordHints password={newAdminForm.password} name={newAdminForm.name} email={newAdminForm.email} />
+              </div>
             </div>
             <Btn className="w-full mt-4" icon={Check} onClick={createAdmin}>Admin erstellen</Btn>
           </Card>
@@ -8033,6 +9410,7 @@ function LessonView({ ctx }) {
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState({});
   const [rewarded, setRewarded] = useState({});
+  const [attempts, setAttempts] = useState({});
   const [aiLoading, setAiLoading] = useState(false);
   const alreadyDone = lesson ? me.completedLessons.includes(lesson.id) : false;
 
@@ -8046,16 +9424,25 @@ function LessonView({ ctx }) {
       else if (t.type === "multiple_choice") init[t.id] = null;
       else init[t.id] = "";
     });
-    setAnswers(init); setResults({}); setRewarded({}); setIdx(0);
+    setAnswers(init); setResults({}); setRewarded({}); setAttempts({}); setIdx(0);
   }, [selectedLesson]);
 
   if (!lesson) return null;
   const task = lesson.tasks[idx];
   const result = results[task.id];
   const isLast = idx === lesson.tasks.length - 1;
-  const allChecked = lesson.tasks.every((t) => results[t.id]);
+  // Abgeschlossen ist eine Lektion erst, wenn jede Aufgabe RICHTIG beantwortet
+  // wurde — eine bloß geprüfte falsche Antwort reicht nicht.
+  const isSolved = (t) => !!results[t.id]?.correct;
+  const allSolved = lesson.tasks.every(isSolved);
+  const openCount = lesson.tasks.filter((t) => !isSolved(t)).length;
 
   const setAns = (val) => setAnswers((a) => ({ ...a, [task.id]: val }));
+
+  // Gelöst = richtig geprüft. Eine falsche Antwort sperrt nichts — man
+  // korrigiert direkt im Feld und drückt erneut auf „Prüfen“.
+  const solved = !!result?.correct;
+  const wasWrong = !!result && !result.correct;
 
   const reward = (tid) => {
     if (rewarded[tid]) return;
@@ -8069,6 +9456,7 @@ function LessonView({ ctx }) {
       if (ans == null) { pushToast("error", "Bitte wähle eine Antwort."); return; }
       const correct = ans === task.correctAnswer;
       setResults((r) => ({ ...r, [task.id]: { correct, score: correct ? 100 : 0, feedback: task.explanation } }));
+      playSound(correct ? "correct" : "wrong");
       if (correct) { reward(task.id); pushToast("success", `Richtig! +${TASK_XP} XP`); } else pushToast("error", "Nicht ganz — versuch es nochmal!");
       return;
     }
@@ -8088,7 +9476,15 @@ function LessonView({ ctx }) {
     // Lektionen werden ausschließlich lokal bewertet: sofort, kostenlos und
     // ohne Netzwerk. Die KI sitzt stattdessen als Assistent im Code-Editor.
     const res = analyzeAnswer(checkTask, checkAnswer, lesson._course.id);
-    setResults((r) => ({ ...r, [task.id]: res }));
+    const tries = (attempts[task.id] || 0) + 1;
+    setAttempts((a) => ({ ...a, [task.id]: tries }));
+    // Nach drei Fehlversuchen darf die Lösung stehen — vorher gibt es nur
+    // Anhaltspunkte, damit man nicht einfach durchprobiert.
+    const shown = !res.correct && res.solutionHint && tries >= 3
+      ? { ...res, hint: res.solutionHint }
+      : res;
+    setResults((r) => ({ ...r, [task.id]: shown }));
+    playSound(res.correct ? "correct" : "wrong");
 
     if (res.correct) {
       reward(task.id);
@@ -8101,11 +9497,23 @@ function LessonView({ ctx }) {
     }
   };
 
-  const retry = () => setResults((r) => { const n = { ...r }; delete n[task.id]; return n; });
 
   const finish = () => {
+    // Ohne gelöste Aufgaben gibt es keine XP — sonst könnte man sich die
+    // Belohnung durch bloßes Weiterklicken abholen.
+    if (!allSolved) {
+      const next = lesson.tasks.findIndex((t) => !isSolved(t));
+      pushToast("error", `Noch ${openCount} Aufgabe${openCount === 1 ? "" : "n"} offen — die musst du zuerst lösen.`);
+      if (next >= 0) {
+        const openId = lesson.tasks[next].id;
+        setResults((r) => { const n = { ...r }; delete n[openId]; return n; });   // erneut versuchen
+        setIdx(next);
+      }
+      return;
+    }
     if (!alreadyDone) {
       completeLesson(lesson.id, lesson.xpReward);
+      playSound("lessonComplete");
       celebrate();
       setTimeout(() => { showXP(lesson.xpReward); }, 200);
       pushToast("success", `Lektion abgeschlossen! +${lesson.xpReward} XP 🎉`);
@@ -8121,13 +9529,13 @@ function LessonView({ ctx }) {
     const onKey = (e) => {
       const tag = (e.target.tagName || "").toLowerCase();
       if (tag === "textarea" || tag === "input") return;
-      if (task.type === "multiple_choice" && !result && /^[1-9]$/.test(e.key)) {
+      if (task.type === "multiple_choice" && !solved && /^[1-9]$/.test(e.key)) {
         const n = parseInt(e.key, 10) - 1;
         if (n < task.options.length) { e.preventDefault(); setAns(n); }
       } else if (e.key === "Enter") {
         e.preventDefault();
-        if (!result && !aiLoading) submit();
-        else if (result) { isLast ? finish() : setIdx((i) => i + 1); }
+        if (!solved && !aiLoading) submit();
+        else if (solved) { isLast ? finish() : setIdx((i) => i + 1); }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -8144,17 +9552,12 @@ function LessonView({ ctx }) {
             <span>{lesson._course.icon} {lesson._course.name}</span><span className="mx-2 text-[#4A5A7A]">/</span><span className="text-[#E8EDF5]">{lesson.title}</span>
           </div>
           <span className="hidden sm:inline text-sm text-[#8A9BC0] shrink-0 whitespace-nowrap">Aufgabe {idx + 1} von {lesson.tasks.length}</span>
-          <button onClick={openAiSettings} aria-label="KI-Einstellungen" title={aiReady ? "KI verbunden" : "KI einrichten"}
-            className="shrink-0 w-8 h-8 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#2A3F6F] flex items-center justify-center relative">
-            <Settings size={14} className="text-[#8A9BC0]" />
-            <span className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${aiReady ? "bg-[#10B981]" : "bg-[#4A5A7A]"}`} />
-          </button>
           <button onClick={logout} aria-label="Abmelden" title="Abmelden"
             className="shrink-0 w-8 h-8 rounded-full bg-[#141D35] border border-[#1E2D4A] hover:border-[#EF4444] hover:text-[#EF4444] flex items-center justify-center text-[#8A9BC0]">
             <LogOut size={14} />
           </button>
         </div>
-        <div className="h-1 bg-[#1A2540]"><div className="h-1 transition-all duration-500" style={{ width: ((idx + (result ? 1 : 0)) / lesson.tasks.length) * 100 + "%", background: GRADIENT }} /></div>
+        <div className="h-1 bg-[#1A2540]"><div className="h-1 transition-all duration-500" style={{ width: (lesson.tasks.filter(isSolved).length / lesson.tasks.length) * 100 + "%", background: GRADIENT }} /></div>
       </header>
 
       <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 grid lg:grid-cols-5 gap-6">
@@ -8176,19 +9579,21 @@ function LessonView({ ctx }) {
                 <div className="space-y-2">
                   {task.options.map((opt, i) => {
                     const sel = answers[task.id] === i;
-                    const checked = !!result;
+                    // Nach einer falschen Antwort bleibt die Auswahl offen — man
+                    // wählt einfach neu, statt erst „Nochmal“ drücken zu müssen.
+                    // Die richtige Lösung wird dabei bewusst nicht verraten.
                     const isCorrect = i === task.correctAnswer;
                     let cls = "border-[#1E2D4A] hover:border-[#2A3F6F]";
-                    if (checked && isCorrect) cls = "border-[#10B981] bg-[#10B981]/10";
-                    else if (checked && sel && !isCorrect) cls = "border-[#EF4444] bg-[#EF4444]/10";
+                    if (solved && isCorrect) cls = "border-[#10B981] bg-[#10B981]/10";
+                    else if (wasWrong && sel) cls = "border-[#EF4444] bg-[#EF4444]/10";
                     else if (sel) cls = "border-[#4F8EF7] bg-[#4F8EF7]/10";
                     return (
-                      <button key={i} disabled={checked} onClick={() => setAns(i)}
+                      <button key={i} disabled={solved} onClick={() => setAns(i)}
                         className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3 ${cls}`}>
                         <span className="w-6 h-6 rounded-full border border-current text-[#8A9BC0] flex items-center justify-center text-xs shrink-0">{String.fromCharCode(65 + i)}</span>
                         <span className="text-sm text-[#E8EDF5] flex-1">{opt}</span>
-                        {checked && isCorrect && <CheckCircle2 size={18} className="text-[#10B981]" />}
-                        {checked && sel && !isCorrect && <XCircle size={18} className="text-[#EF4444]" />}
+                        {solved && isCorrect && <CheckCircle2 size={18} className="text-[#10B981]" />}
+                        {wasWrong && sel && <XCircle size={18} className="text-[#EF4444]" />}
                       </button>
                     );
                   })}
@@ -8197,7 +9602,7 @@ function LessonView({ ctx }) {
 
               {/* Code schreiben — VS-Code-Editor (Monaco) */}
               {task.type === "code_write" && (
-                <MonacoCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={!!result} courseId={lesson._course.id} label={lesson._course.name} />
+                <MonacoCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={solved} courseId={lesson._course.id} label={lesson._course.name} />
               )}
 
               {/* Lückentext */}
@@ -8207,7 +9612,7 @@ function LessonView({ ctx }) {
                     <React.Fragment key={i}>
                       {seg}
                       {i < task.blanks.length && (
-                        <input value={answers[task.id]?.[i] || ""} disabled={!!result}
+                        <input value={answers[task.id]?.[i] || ""} disabled={solved}
                           onChange={(e) => setAns(Object.assign([...(answers[task.id] || [])], { [i]: e.target.value }))}
                           className="inline-block w-24 mx-1 px-2 py-0.5 rounded bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] font-code text-center text-[#4F8EF7]" placeholder="…" />
                       )}
@@ -8224,14 +9629,17 @@ function LessonView({ ctx }) {
 
               {/* Aktionen */}
               <div className="mt-4 flex gap-2">
-                {!result && (
+                {!solved && (
                   <Btn className="flex-1" onClick={submit} disabled={aiLoading} icon={aiLoading ? undefined : Send}>
-                    {aiLoading ? <><Loader2 size={16} className="ld-spin" />Prüft …</> : "Prüfen"}
+                    {aiLoading ? <><Loader2 size={16} className="ld-spin" />Prüft …</> : wasWrong ? "Erneut prüfen" : "Prüfen"}
                   </Btn>
                 )}
-                {result && !result.correct && <Btn variant="secondary" onClick={retry} icon={ArrowLeft}>Nochmal</Btn>}
-                {result && (isLast
-                  ? <Btn className="flex-1" onClick={finish} icon={Trophy}>Lektion abschließen</Btn>
+                {solved && (isLast
+                  ? (allSolved
+                      ? <Btn className="flex-1" onClick={finish} icon={Trophy}>Lektion abschließen</Btn>
+                      : <Btn className="flex-1" variant="secondary" onClick={finish} icon={ArrowRight}>
+                          Noch {openCount} Aufgabe{openCount === 1 ? "" : "n"} offen
+                        </Btn>)
                   : <Btn className="flex-1" onClick={() => setIdx((i) => i + 1)} icon={ArrowRight}>Nächste Aufgabe</Btn>)}
               </div>
 
@@ -8239,7 +9647,8 @@ function LessonView({ ctx }) {
               {result && task.type === "multiple_choice" && (
                 <div className={`mt-4 p-3 rounded-lg text-sm ${result.correct ? "bg-[#10B981]/10 text-[#10B981]" : "bg-[#EF4444]/10 text-[#C9D6F0]"}`}>
                   <div className="flex items-center gap-1.5 font-medium mb-1">{result.correct ? <CheckCircle2 size={15} /> : <XCircle size={15} className="text-[#EF4444]" />}{result.correct ? "Richtig!" : "Leider falsch"}</div>
-                  <p className="text-[#C9D6F0]">{result.feedback}</p>
+                  {/* Die Erklärung verrät die Lösung — deshalb erst, wenn sie stimmt. */}
+                  <p className="text-[#C9D6F0]">{result.correct ? result.feedback : "Wähl eine andere Antwort und prüfe erneut."}</p>
                 </div>
               )}
             </Card>
@@ -8258,14 +9667,15 @@ function LessonView({ ctx }) {
 
             {/* Tastatur-Hinweis */}
             <p className="text-center text-[11px] text-[#4A5A7A] mt-3">
-              {task.type === "multiple_choice" ? "Tipp: Tasten 1–4 zum Wählen · " : ""}<kbd className="font-code px-1 py-0.5 rounded bg-[#141D35] border border-[#1E2D4A]">Enter</kbd> zum {result ? "Weiter" : "Prüfen"}
+              {task.type === "multiple_choice" && !solved ? "Tipp: Tasten 1–4 zum Wählen · " : ""}<kbd className="font-code px-1 py-0.5 rounded bg-[#141D35] border border-[#1E2D4A]">Enter</kbd> zum {solved ? "Weiter" : "Prüfen"}
             </p>
 
             {/* Task-Navigation Punkte */}
             <div className="flex items-center justify-center gap-1.5 mt-5">
               {lesson.tasks.map((t, i) => (
                 <button key={t.id} onClick={() => setIdx(i)}
-                  className={`h-2 rounded-full transition-all ${i === idx ? "w-6 bg-[#4F8EF7]" : results[t.id] ? "w-2 bg-[#10B981]" : "w-2 bg-[#2A3F6F]"}`} title={`Aufgabe ${i + 1}`} />
+                  className={`h-2 rounded-full transition-all ${i === idx ? "w-6 bg-[#4F8EF7]" : isSolved(t) ? "w-2 bg-[#10B981]" : results[t.id] ? "w-2 bg-[#EF4444]" : "w-2 bg-[#2A3F6F]"}`}
+                  title={`Aufgabe ${i + 1}${isSolved(t) ? " — gelöst" : results[t.id] ? " — noch offen" : ""}`} />
               ))}
             </div>
           </div>

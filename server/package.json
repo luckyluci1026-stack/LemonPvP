@@ -12,7 +12,7 @@
     "dev": "node --watch src/index.js",
     "migrate": "node src/migrate.js",
     "seed": "node src/seed.js",
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "start:local": "DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen NODE_ENV=development node src/index.js",
     "seed:local": "DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen node src/seed.js"
   },

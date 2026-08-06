@@ -1,4 +1,5 @@
 import { config } from "../config.js";
+import { checkPassword } from "../password.js";
 import { one, many, query } from "../db.js";
 import { requireAdmin } from "./auth.js";
 import { hashPassword } from "../security.js";
@@ -49,7 +50,7 @@ export default async function adminRoutes(app) {
   });
 
   app.patch("/api/admin/users/:id", { preHandler: [requireAdmin] }, async (request, reply) => {
-    const { name, email, role, disabled, emailVerified } = request.body || {};
+    const { name, email, role, disabled, emailVerified, password } = request.body || {};
     const target = await one("SELECT * FROM users WHERE id = $1", [request.params.id]);
     if (!target) return reply.code(404).send({ error: "Konto nicht gefunden." });
 
@@ -79,12 +80,26 @@ export default async function adminRoutes(app) {
     }
     if (disabled !== undefined) { sets.push(`disabled = $${i++}`); values.push(!!disabled); }
     if (emailVerified !== undefined) { sets.push(`email_verified = $${i++}`); values.push(!!emailVerified); }
+    // Administratoren dürfen jedes Passwort neu setzen — die Stärkeprüfung
+    // gilt dabei genauso, und alle Sitzungen des Kontos werden beendet.
+    if (password !== undefined) {
+      const strength = checkPassword(password, { name: name ?? target.name, email: email ?? target.email });
+      if (!strength.ok) {
+        return reply.code(400).send({ error: strength.problems.join(" "), passwordProblems: strength.problems });
+      }
+      sets.push(`password_hash = $${i++}`); values.push(await hashPassword(password));
+    }
     if (!sets.length) return { ok: true };
 
     values.push(target.id);
     await query(`UPDATE users SET ${sets.join(", ")} WHERE id = $${i}`, values);
-    // Gesperrte Konten sofort abmelden
-    if (disabled === true) await query("DELETE FROM sessions WHERE user_id = $1", [target.id]);
+    // Gesperrte Konten und Konten mit neuem Passwort sofort abmelden
+    if (disabled === true || password !== undefined) {
+      await query("DELETE FROM sessions WHERE user_id = $1", [target.id]);
+    }
+    if (password !== undefined) {
+      request.log.info({ actor: request.user.id, target: target.id }, "Passwort durch Administrator gesetzt");
+    }
     return { ok: true };
   });
 
@@ -108,8 +123,9 @@ export default async function adminRoutes(app) {
     if (!name?.trim() || !email?.trim() || !password) {
       return reply.code(400).send({ error: "Name, E-Mail und Passwort sind erforderlich." });
     }
-    if (String(password).length < 8) {
-      return reply.code(400).send({ error: "Das Passwort muss mindestens 8 Zeichen lang sein." });
+    const strength = checkPassword(password, { name, email });
+    if (!strength.ok) {
+      return reply.code(400).send({ error: strength.problems.join(" "), passwordProblems: strength.problems });
     }
     if (!["student", "teacher", "admin"].includes(role)) {
       return reply.code(400).send({ error: "Ungültige Rolle." });

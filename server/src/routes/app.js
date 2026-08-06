@@ -1,9 +1,11 @@
 import { config } from "../config.js";
 import { one, many, query, transaction } from "../db.js";
 import { requireAuth, updateStreak, rolloverLeague, weekKey } from "./auth.js";
-import { loadFullUser, listUser, serializeProject } from "../serialize.js";
+import { loadFullUser, listUser, serializeProject, serializeLesson } from "../serialize.js";
 
 const MAX_NAME = 80;
+const MAX_FILES = 100;          // ein Projekt, kein Dateisystem
+const MAX_TASKS = 20;           // Aufgaben je selbst erstellter Lektion
 
 function byteLength(...parts) {
   return parts.reduce((sum, p) => sum + Buffer.byteLength(String(p || ""), "utf8"), 0);
@@ -172,13 +174,47 @@ export default async function appRoutes(app) {
 
   // Anlegen oder aktualisieren; das Kontingent wird serverseitig durchgesetzt.
   app.put("/api/projects/:id?", { preHandler: [requireAuth] }, async (request, reply) => {
-    const { name, html = "", css = "", js = "" } = request.body || {};
+    const body = request.body || {};
+    const { name } = body;
     if (!name?.trim()) return reply.code(400).send({ error: "Ein Projektname ist erforderlich." });
 
-    const size = byteLength(html, css, js);
+    // Neue Clients schicken eine Dateiliste, ältere die drei festen Felder.
+    const incoming = Array.isArray(body.files) && body.files.length
+      ? body.files
+      : [
+          ...(body.html ? [{ name: "index.html", content: body.html }] : []),
+          ...(body.css ? [{ name: "style.css", content: body.css }] : []),
+          ...(body.js ? [{ name: "script.js", content: body.js }] : []),
+        ];
+
+    if (incoming.length > MAX_FILES) {
+      return reply.code(400).send({ error: `Ein Projekt darf höchstens ${MAX_FILES} Dateien enthalten.` });
+    }
+    const seen = new Set();
+    const files = [];
+    for (const raw of incoming) {
+      const fileName = String(raw?.name || "").trim();
+      if (!fileName) return reply.code(400).send({ error: "Jede Datei braucht einen Namen." });
+      if (fileName.length > 60 || /[\\/:*?"<>|]/.test(fileName)) {
+        return reply.code(400).send({ error: `Ungültiger Dateiname: ${fileName}` });
+      }
+      const key = fileName.toLowerCase();
+      if (seen.has(key)) return reply.code(400).send({ error: `Doppelter Dateiname: ${fileName}` });
+      seen.add(key);
+      files.push({ name: fileName, content: String(raw?.content ?? "") });
+    }
+
+    const serialized = JSON.stringify(files);
+    const size = byteLength(serialized);
     if (size > config.storage.maxProjectBytes) {
       return reply.code(413).send({ error: "Dieses Projekt ist zu groß." });
     }
+
+    // html/css/js weiterhin befüllen — so bleiben ältere Datenbestände lesbar.
+    const pick = (ext) => files.filter((f) => f.name.toLowerCase().endsWith(ext)).map((f) => f.content).join("\n");
+    const html = pick(".html");
+    const css = pick(".css");
+    const js = pick(".js");
 
     const id = request.params.id || null;
     try {
@@ -205,13 +241,13 @@ export default async function appRoutes(app) {
 
         const saved = id
           ? await client.query(
-              `UPDATE projects SET name = $1, html = $2, css = $3, js = $4, size_bytes = $5, updated_at = now()
-               WHERE id = $6 AND user_id = $7 RETURNING *`,
-              [name.trim().slice(0, 120), html, css, js, size, id, request.user.id])
+              `UPDATE projects SET name = $1, files = $2, html = $3, css = $4, js = $5, size_bytes = $6, updated_at = now()
+               WHERE id = $7 AND user_id = $8 RETURNING *`,
+              [name.trim().slice(0, 120), serialized, html, css, js, size, id, request.user.id])
           : await client.query(
-              `INSERT INTO projects (user_id, name, html, css, js, size_bytes)
-               VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-              [request.user.id, name.trim().slice(0, 120), html, css, js, size]);
+              `INSERT INTO projects (user_id, name, files, html, css, js, size_bytes)
+               VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+              [request.user.id, name.trim().slice(0, 120), serialized, html, css, js, size]);
 
         await client.query("UPDATE users SET storage_used = $1 WHERE id = $2", [nextUsed, request.user.id]);
         return saved.rows[0];
@@ -237,6 +273,121 @@ export default async function appRoutes(app) {
       return project;
     });
     if (!removed) return reply.code(404).send({ error: "Projekt nicht gefunden." });
+    return { ok: true };
+  });
+
+  /* ------------------- Eigene Lektionen (Lehrkräfte) ---------------------- */
+  // Lehrkräfte legen eigene Level an; ihre Schülerinnen und Schüler sehen sie,
+  // sobald sie veröffentlicht sind.
+  const TASK_TYPES = ["multiple_choice", "fill_blank", "code_write", "explain"];
+
+  /** Prüft und säubert die Aufgabenliste einer selbst erstellten Lektion. */
+  function sanitizeTasks(input) {
+    if (!Array.isArray(input)) throw Object.assign(new Error("Aufgaben fehlen."), { statusCode: 400 });
+    if (input.length > MAX_TASKS) {
+      throw Object.assign(new Error(`Höchstens ${MAX_TASKS} Aufgaben je Lektion.`), { statusCode: 400 });
+    }
+    return input.map((task, index) => {
+      const type = TASK_TYPES.includes(task?.type) ? task.type : "multiple_choice";
+      const question = String(task?.question || "").trim().slice(0, 500);
+      if (!question) {
+        throw Object.assign(new Error(`Aufgabe ${index + 1} hat keine Frage.`), { statusCode: 400 });
+      }
+      const base = { id: String(task?.id || `t${index + 1}`).slice(0, 20), type, question };
+
+      if (type === "multiple_choice") {
+        const options = (Array.isArray(task.options) ? task.options : []).slice(0, 6)
+          .map((o) => String(o).slice(0, 200)).filter(Boolean);
+        if (options.length < 2) {
+          throw Object.assign(new Error(`Aufgabe ${index + 1} braucht mindestens zwei Antwortmöglichkeiten.`), { statusCode: 400 });
+        }
+        const correct = Number(task.correctAnswer);
+        if (!Number.isInteger(correct) || correct < 0 || correct >= options.length) {
+          throw Object.assign(new Error(`Aufgabe ${index + 1}: Bitte die richtige Antwort markieren.`), { statusCode: 400 });
+        }
+        return { ...base, options, correctAnswer: correct, explanation: String(task.explanation || "").slice(0, 500) };
+      }
+      if (type === "fill_blank") {
+        const template = String(task.template || "").slice(0, 1000);
+        const blanks = (Array.isArray(task.blanks) ? task.blanks : []).slice(0, 8)
+          .map((b) => (Array.isArray(b) ? b.slice(0, 6).map((v) => String(v).slice(0, 100)) : String(b).slice(0, 100)));
+        const gaps = template.split("___").length - 1;
+        if (!gaps || gaps !== blanks.length) {
+          throw Object.assign(new Error(`Aufgabe ${index + 1}: Für jede Lücke (___) braucht es genau eine Lösung.`), { statusCode: 400 });
+        }
+        return { ...base, template, blanks };
+      }
+      if (type === "code_write") {
+        const concepts = (Array.isArray(task.expectedConcepts) ? task.expectedConcepts : []).slice(0, 12)
+          .map((c) => (Array.isArray(c) ? c.slice(0, 5).map((v) => String(v).slice(0, 60)) : String(c).slice(0, 60)));
+        return { ...base, starterCode: String(task.starterCode || "").slice(0, 2000), expectedConcepts: concepts };
+      }
+      return { ...base, expectedConcepts: (Array.isArray(task.expectedConcepts) ? task.expectedConcepts : []).slice(0, 12).map((c) => String(c).slice(0, 60)) };
+    });
+  }
+
+  // Eigene Lektionen der Lehrkraft
+  app.get("/api/lessons/mine", { preHandler: [requireAuth] }, async (request, reply) => {
+    if (request.user.role !== "teacher") return reply.code(403).send({ error: "Nur für Lehrkräfte." });
+    const rows = await many("SELECT * FROM custom_lessons WHERE teacher_id = $1 ORDER BY updated_at DESC", [request.user.id]);
+    return { lessons: rows.map(serializeLesson) };
+  });
+
+  // Lektionen, die für mich sichtbar sind: die meiner Lehrkraft
+  app.get("/api/lessons", { preHandler: [requireAuth] }, async (request) => {
+    if (!request.user.teacher_id) return { lessons: [] };
+    const rows = await many(
+      `SELECT l.*, u.name AS teacher_name
+         FROM custom_lessons l JOIN users u ON u.id = l.teacher_id
+        WHERE l.teacher_id = $1 AND l.published
+        ORDER BY l.created_at`,
+      [request.user.teacher_id]
+    );
+    return { lessons: rows.map(serializeLesson) };
+  });
+
+  app.put("/api/lessons/:id?", { preHandler: [requireAuth] }, async (request, reply) => {
+    if (request.user.role !== "teacher") return reply.code(403).send({ error: "Nur für Lehrkräfte." });
+    const { title, courseId = "html", level = "beginner", xpReward = 50, theory = "", tasks, published = false } = request.body || {};
+    if (!String(title || "").trim()) return reply.code(400).send({ error: "Die Lektion braucht einen Titel." });
+
+    let cleanTasks;
+    try { cleanTasks = sanitizeTasks(tasks); }
+    catch (e) { return reply.code(e.statusCode || 400).send({ error: e.message }); }
+    if (published && !cleanTasks.length) {
+      return reply.code(400).send({ error: "Eine veröffentlichte Lektion braucht mindestens eine Aufgabe." });
+    }
+
+    const values = [
+      String(title).trim().slice(0, 120),
+      String(courseId).slice(0, 40),
+      ["beginner", "intermediate", "advanced", "expert"].includes(level) ? level : "beginner",
+      Math.max(0, Math.min(500, Number(xpReward) || 0)),
+      String(theory).slice(0, 20000),
+      JSON.stringify(cleanTasks),
+      !!published,
+    ];
+
+    const id = request.params.id || null;
+    const row = id
+      ? await one(
+          `UPDATE custom_lessons SET title = $1, course_id = $2, level = $3, xp_reward = $4,
+                  theory = $5, tasks = $6, published = $7, updated_at = now()
+            WHERE id = $8 AND teacher_id = $9 RETURNING *`,
+          [...values, id, request.user.id])
+      : await one(
+          `INSERT INTO custom_lessons (title, course_id, level, xp_reward, theory, tasks, published, teacher_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+          [...values, request.user.id]);
+
+    if (!row) return reply.code(404).send({ error: "Lektion nicht gefunden." });
+    return { lesson: serializeLesson(row) };
+  });
+
+  app.delete("/api/lessons/:id", { preHandler: [requireAuth] }, async (request, reply) => {
+    if (request.user.role !== "teacher") return reply.code(403).send({ error: "Nur für Lehrkräfte." });
+    const row = await one("DELETE FROM custom_lessons WHERE id = $1 AND teacher_id = $2 RETURNING id", [request.params.id, request.user.id]);
+    if (!row) return reply.code(404).send({ error: "Lektion nicht gefunden." });
     return { ok: true };
   });
 

@@ -26,7 +26,7 @@ async function api(method, path, body) {
 }
 
 const uniq = Date.now().toString(36);
-const user = { name: "Reset Tester", email: `reset_${uniq}@test.de`, password: "altespasswort123" };
+const user = { name: "Reset Tester", email: `reset_${uniq}@test.de`, password: "Altespasswort!7" };
 let token = null;
 
 before(async () => {
@@ -58,17 +58,17 @@ test("Bekannte Adresse liefert Token (ohne SMTP)", async () => {
 });
 
 test("Ungültiges Token wird abgelehnt", async () => {
-  const r = await api("POST", "/api/auth/reset-password", { token: "quatsch", newPassword: "neuespasswort123" });
+  const r = await api("POST", "/api/auth/reset-password", { token: "quatsch", newPassword: "Neuespasswort!7" });
   assert.equal(r.status, 400);
 });
 
-test("Zu kurzes Passwort wird abgelehnt", async () => {
+test("Zu schwaches Passwort wird abgelehnt", async () => {
   const r = await api("POST", "/api/auth/reset-password", { token, newPassword: "kurz" });
   assert.equal(r.status, 400);
 });
 
 test("Gültiges Token setzt das Passwort neu", async () => {
-  const r = await api("POST", "/api/auth/reset-password", { token, newPassword: "neuespasswort123" });
+  const r = await api("POST", "/api/auth/reset-password", { token, newPassword: "Neuespasswort!7" });
   assert.equal(r.status, 200);
 });
 
@@ -80,13 +80,13 @@ test("Altes Passwort funktioniert nicht mehr", async () => {
 
 test("Neues Passwort funktioniert", async () => {
   jar.clear();
-  const r = await api("POST", "/api/auth/login", { email: user.email, password: "neuespasswort123" });
+  const r = await api("POST", "/api/auth/login", { email: user.email, password: "Neuespasswort!7" });
   assert.equal(r.status, 200);
   assert.equal(r.body.user.email, user.email);
 });
 
 test("Token ist nach Einlösung verbraucht", async () => {
-  const r = await api("POST", "/api/auth/reset-password", { token, newPassword: "nochmalanders123" });
+  const r = await api("POST", "/api/auth/reset-password", { token, newPassword: "Nochmalanders!7" });
   assert.equal(r.status, 400, "Einmal-Token darf nicht erneut gelten");
 });
 
@@ -96,18 +96,18 @@ test("Abgelaufenes Token wird abgelehnt", async () => {
   // Ablaufzeitpunkt in die Vergangenheit setzen
   await query("UPDATE users SET reset_expires = $1 WHERE email_lower = lower($2)",
     [new Date(Date.now() - 1000), user.email]);
-  const r = await api("POST", "/api/auth/reset-password", { token: t, newPassword: "wiederanders123" });
+  const r = await api("POST", "/api/auth/reset-password", { token: t, newPassword: "Wiederanders!7" });
   assert.equal(r.status, 400);
 });
 
 test("Zurücksetzen beendet alle bestehenden Sitzungen", async () => {
   jar.clear();
-  await api("POST", "/api/auth/login", { email: user.email, password: "neuespasswort123" });
+  await api("POST", "/api/auth/login", { email: user.email, password: "Neuespasswort!7" });
   const before = await api("GET", "/api/auth/me");
   assert.equal(before.status, 200, "vorher angemeldet");
 
   const req = await api("POST", "/api/auth/forgot-password", { email: user.email });
-  await api("POST", "/api/auth/reset-password", { token: req.body.devResetToken, newPassword: "ganzneuespw123" });
+  await api("POST", "/api/auth/reset-password", { token: req.body.devResetToken, newPassword: "Ganzneuespw!7" });
 
   const after = await api("GET", "/api/auth/me");
   assert.equal(after.status, 401, "Sitzung wurde beendet");

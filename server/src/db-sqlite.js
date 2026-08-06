@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
+  files TEXT NOT NULL DEFAULT '[]',
   html TEXT NOT NULL DEFAULT '',
   css TEXT NOT NULL DEFAULT '',
   js TEXT NOT NULL DEFAULT '',
@@ -107,6 +108,20 @@ CREATE TABLE IF NOT EXISTS sessions (
   user_agent TEXT, ip TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   expires_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS custom_lessons (
+  id TEXT PRIMARY KEY,
+  teacher_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  course_id TEXT NOT NULL DEFAULT 'html',
+  level TEXT NOT NULL DEFAULT 'beginner',
+  xp_reward INTEGER NOT NULL DEFAULT 50,
+  theory TEXT NOT NULL DEFAULT '',
+  tasks TEXT NOT NULL DEFAULT '[]',
+  published INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS ai_usage (
@@ -213,6 +228,7 @@ const LATER_COLUMNS = [
   ["users", "weekly_xp", "INTEGER NOT NULL DEFAULT 0"],
   ["users", "week_key", "TEXT"],
   ["users", "streak_freezes", "INTEGER NOT NULL DEFAULT 0"],
+  ["projects", "files", "TEXT NOT NULL DEFAULT '[]'"],
 ];
 
 export function sqliteMigrate() {
