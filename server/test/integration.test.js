@@ -1,7 +1,7 @@
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import { totpCode, hashPassword } from "../src/security.js";
-import { pool, query } from "../src/db.js";
+import { closeDb, query, usingSqlite } from "../src/db.js";
 
 const BASE = "http://127.0.0.1:3111";
 const ADMIN = { email: "admin@test.de", password: "adminpass123" };
@@ -9,7 +9,12 @@ const ADMIN = { email: "admin@test.de", password: "adminpass123" };
 // Jeder Lauf startet mit einer definierten Datenlage, damit Tests nicht
 // von Rückständen vorheriger Läufe abhängen.
 before(async () => {
-  await query("TRUNCATE users, reports, ai_usage RESTART IDENTITY CASCADE");
+  if (usingSqlite) {
+    // SQLite kennt kein TRUNCATE; Fremdschlüssel räumen den Rest auf.
+    for (const t of ["ai_usage", "reports", "users"]) await query(`DELETE FROM ${t}`);
+  } else {
+    await query("TRUNCATE users, reports, ai_usage RESTART IDENTITY CASCADE");
+  }
   const hash = await hashPassword(ADMIN.password);
   await query(
     `INSERT INTO users (role, name, email, password_hash, email_verified, avatar)
@@ -263,5 +268,5 @@ test("KI-Status meldet fehlende Konfiguration", async () => {
 });
 
 test("Aufräumen", async () => {
-  await pool.end();
+  await closeDb();
 });

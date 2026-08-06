@@ -120,7 +120,17 @@ async function callOllama(system, user, maxTokens) {
     body: JSON.stringify({
       model: config.ai.ollamaModel,
       stream: false,
-      options: { temperature: 0.3, num_predict: maxTokens },
+      // Auf schwacher Hardware zählt jede Einsparung:
+      // keep_alive hält das Modell geladen (sonst kostet jeder Aufruf das
+      // erneute Einlesen von mehreren hundert MB), num_predict begrenzt die
+      // Antwortlänge, num_ctx hält den Kontext klein.
+      keep_alive: config.ai.ollamaKeepAlive,
+      options: {
+        temperature: 0.3,
+        num_predict: Math.min(maxTokens, config.ai.ollamaMaxTokens),
+        num_ctx: config.ai.ollamaContext,
+        num_thread: config.ai.ollamaThreads || undefined,
+      },
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
@@ -133,6 +143,32 @@ async function callOllama(system, user, maxTokens) {
   const text = data?.message?.content;
   if (!text) throw new ProviderError("Ollama lieferte keine Antwort", 502);
   return text;
+}
+
+/**
+ * Lädt das Modell vorab in den Speicher, damit die erste echte Anfrage nicht
+ * auf das Einlesen warten muss. Fehler werden bewusst ignoriert — läuft kein
+ * Ollama, ist das kein Grund den Serverstart abzubrechen.
+ */
+export async function warmUpOllama(log) {
+  if (config.ai.provider !== "ollama") return;
+  try {
+    await fetch(`${config.ai.ollamaUrl}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: config.ai.ollamaModel,
+        stream: false,
+        keep_alive: config.ai.ollamaKeepAlive,
+        options: { num_predict: 1 },
+        messages: [{ role: "user", content: "ok" }],
+      }),
+      signal: AbortSignal.timeout(120000),
+    });
+    log?.info(`Ollama-Modell ${config.ai.ollamaModel} ist geladen`);
+  } catch (e) {
+    log?.warn(`Ollama nicht erreichbar (${e.message}) — bis dahin greift die lokale Analyse`);
+  }
 }
 
 /**

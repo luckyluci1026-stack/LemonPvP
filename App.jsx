@@ -6417,6 +6417,27 @@ function AdminDashboard({ ctx }) {
 /* =========================== Lesson View ========================== */
 const TASK_XP = 15;
 
+/* Zwischenspeicher für KI-Bewertungen: Dieselbe Antwort zur selben Aufgabe
+   wird nicht erneut angefragt — spart Kontingent und antwortet sofort.
+   Bewusst nur im Arbeitsspeicher, damit veraltete Bewertungen nicht ewig
+   bestehen bleiben. */
+const aiResultCache = new Map();
+const AI_CACHE_LIMIT = 200;
+
+function answerCacheKey(taskId, answer) {
+  const normalized = String(answer || "").trim().replace(/\s+/g, " ");
+  return `${taskId}::${normalized}`;
+}
+
+// Map behält Einfügereihenfolge — der älteste Eintrag fliegt zuerst raus.
+const cacheSet = aiResultCache.set.bind(aiResultCache);
+aiResultCache.set = (key, value) => {
+  if (aiResultCache.size >= AI_CACHE_LIMIT) {
+    aiResultCache.delete(aiResultCache.keys().next().value);
+  }
+  return cacheSet(key, value);
+};
+
 function AIFeedback({ result, ctx, reportPayload }) {
   const [reportOpen, setReportOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -6431,7 +6452,16 @@ function AIFeedback({ result, ctx, reportPayload }) {
       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
         <Bot size={18} className="text-[#7C3AED]" />
         <span className="font-display font-bold">Bewertung</span>
-        {result.offline && <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#F59E0B]/15 text-[#F59E0B]">Offline-Prüfung</span>}
+        {/* Der Zustand macht transparent, woher das Ergebnis gerade stammt. */}
+        {result.refining ? (
+          <span className="ml-auto flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7]">
+            <Loader2 size={10} className="ld-spin" />KI prüft nach …
+          </span>
+        ) : result.refined ? (
+          <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#7C3AED]/15 text-[#7C3AED]">KI-geprüft</span>
+        ) : result.offline || result.instant ? (
+          <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981]">Sofort-Prüfung</span>
+        ) : null}
       </div>
       <div className="flex items-center gap-2 mb-3">
         {good ? <CheckCircle2 size={20} className="text-[#10B981]" /> : <XCircle size={20} className="text-[#EF4444]" />}
@@ -6441,6 +6471,13 @@ function AIFeedback({ result, ctx, reportPayload }) {
       <p className="text-sm text-[#C9D6F0] leading-relaxed mb-2">{result.feedback}</p>
       {good && result.praise && <p className="text-sm text-[#10B981] mb-2">🎉 {result.praise}</p>}
       {!good && result.hint && <p className="text-sm text-[#F59E0B] flex items-start gap-1.5 mb-2"><span>💡</span><span>{result.hint}</span></p>}
+      {/* Wenn die KI strenger urteilt als die Sofortprüfung, bleibt die
+          bereits vergebene Belohnung bestehen — nur der Hinweis kommt dazu. */}
+      {result.refined && result.wasInstantCorrect && !good && (
+        <p className="text-xs text-[#8A9BC0] mt-2 p-2 rounded-lg bg-[#0A0E1A] border border-[#1E2D4A]">
+          Die Sofort-Prüfung war großzügiger — deine XP behältst du. Schau dir den Hinweis trotzdem an.
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 pt-3 border-t border-[#1E2D4A]">
         {result.offline && ctx && (
@@ -6529,12 +6566,55 @@ function LessonView({ ctx }) {
       pushToast("error", "Bitte gib zuerst eine Antwort ein."); return;
     }
 
+    const taskId = task.id;
+    const cacheKey = answerCacheKey(taskId, checkAnswer);
+
+    // Bereits bewertet? Dann sofort das gespeicherte Ergebnis zeigen.
+    const cached = aiResultCache.get(cacheKey);
+    if (cached) {
+      setResults((r) => ({ ...r, [taskId]: cached }));
+      if (cached.correct) { reward(taskId); pushToast("success", `Richtig! +${TASK_XP} XP`); }
+      else pushToast("error", "Versuch es nochmal — du schaffst das!");
+      return;
+    }
+
+    // Schritt 1 — Sofortergebnis aus der lokalen Analyse (praktisch ohne
+    // Wartezeit). So bekommt man auch auf schwacher Hardware oder bei
+    // langsamer Verbindung unmittelbar Rückmeldung.
+    const instant = heuristicCheck(checkTask, checkAnswer, lesson._course.id);
+    const willRefine = aiReady;
+    setResults((r) => ({ ...r, [taskId]: { ...instant, instant: true, refining: willRefine } }));
+    if (instant.correct) { reward(taskId); pushToast("success", `Richtig! +${TASK_XP} XP`); }
+    else if (!willRefine) pushToast("error", "Versuch es nochmal — du schaffst das!");
+
+    if (!willRefine) return;
+
+    // Schritt 2 — im Hintergrund die KI befragen und das Ergebnis ersetzen.
     setAiLoading(true);
-    const res = await checkAnswerWithAI(checkTask, checkAnswer, lesson._course.name, lesson.title, { ...aiConfig, langId: lesson._course.id });
-    setAiLoading(false);
-    setResults((r) => ({ ...r, [task.id]: res }));
-    if (res.correct) { reward(task.id); pushToast("success", `Gut gemacht! +${TASK_XP} XP`); if (res.score >= 95 && !me.badges.includes("ai_master")) setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES.ai_master.label}!`), 400); }
-    else pushToast("error", "Versuch es nochmal — du schaffst das!");
+    try {
+      const res = await checkAnswerWithAI(checkTask, checkAnswer, lesson._course.name, lesson.title, { ...aiConfig, langId: lesson._course.id });
+      aiResultCache.set(cacheKey, res);
+      setResults((r) => {
+        // Nur ersetzen, wenn der Nutzer nicht zwischenzeitlich "Nochmal" gedrückt hat
+        if (!r[taskId]) return r;
+        return { ...r, [taskId]: { ...res, refined: true, wasInstantCorrect: instant.correct } };
+      });
+      // Fällt die KI positiver aus als die Sofortprüfung, wird jetzt belohnt.
+      if (res.correct && !instant.correct) {
+        reward(taskId);
+        pushToast("success", `Die KI wertet das als richtig — +${TASK_XP} XP`);
+      } else if (!res.correct && !instant.correct) {
+        pushToast("error", "Versuch es nochmal — du schaffst das!");
+      }
+      if (res.correct && res.score >= 95 && !me.badges.includes("ai_master")) {
+        setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES.ai_master.label}!`), 400);
+      }
+    } catch (e) {
+      // Sofortergebnis bleibt stehen, nur den Hinweis auf die Nachprüfung entfernen
+      setResults((r) => (r[taskId] ? { ...r, [taskId]: { ...r[taskId], refining: false } } : r));
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const retry = () => setResults((r) => { const n = { ...r }; delete n[task.id]; return n; });
@@ -6681,7 +6761,9 @@ function LessonView({ ctx }) {
             </Card>
 
             {/* KI-Feedback (Lückentext, Code, Erklären) */}
-            {aiLoading && task.type !== "multiple_choice" && <SkeletonFeedback />}
+            {/* Der Platzhalter erscheint nur, solange noch gar kein Ergebnis
+                vorliegt — sonst würde er das Sofortergebnis verdecken. */}
+            {aiLoading && !result && task.type !== "multiple_choice" && <SkeletonFeedback />}
             {result && task.type !== "multiple_choice" && (
               <AIFeedback result={result} ctx={ctx} reportPayload={{
                 lessonTitle: `${lesson._course.name} · ${lesson.title}`,

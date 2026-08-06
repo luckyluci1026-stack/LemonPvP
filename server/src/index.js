@@ -13,6 +13,7 @@ import authRoutes from "./routes/auth.js";
 import appRoutes from "./routes/app.js";
 import adminRoutes from "./routes/admin.js";
 import aiRoutes from "./routes/ai.js";
+import { warmUpOllama } from "./ai.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -144,6 +145,9 @@ try {
 
   await app.listen({ port: config.port, host: config.host });
   app.log.info(`KI-Anbieter: ${config.ai.provider}`);
+
+  // Modell im Hintergrund vorladen — blockiert den Start nicht
+  if (config.ai.warmUp) warmUpOllama(app.log);
 } catch (e) {
   app.log.error(e, "Serverstart fehlgeschlagen");
   process.exit(1);

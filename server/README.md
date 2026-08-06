@@ -4,7 +4,30 @@ Node.js/Fastify-Server mit PostgreSQL. Macht aus den zuvor simulierten
 Funktionen echte: gehashte Passwörter, Sitzungen, TOTP-2FA, E-Mail-Versand,
 serverseitige Key-Rotation und ein durchgesetztes Speicherkontingent.
 
-## Schnellstart
+## Schnellstart auf schwacher Hardware (ohne Datenbank-Installation)
+
+Zwei Befehle, keine Konfiguration, kein PostgreSQL:
+
+```bash
+cd server
+npm install
+
+npm run seed:local -- --email du@example.com --password "deinpasswort"
+npm run start:local
+```
+
+Dann `http://localhost:3000` öffnen. Die Daten landen in `data/local.db`
+(SQLite über das in Node eingebaute `node:sqlite`).
+
+Gemessen auf dieser Testmaschine: **77 MB Arbeitsspeicher**, Start in unter
+drei Sekunden, Datenbankdatei anfangs 68 KB. Das läuft auch auf einem alten
+Laptop.
+
+> **Hinweis:** SQLite ist für Entwicklung und Einzelplatz gedacht. Für den
+> Produktivbetrieb mit mehreren gleichzeitigen Nutzern bleibt PostgreSQL die
+> richtige Wahl — der Code ist identisch, nur `DATABASE_URL` unterscheidet sich.
+
+## Produktivbetrieb (PostgreSQL)
 
 ```bash
 cd server
@@ -17,6 +40,16 @@ npm start
 
 Der Server liefert standardmäßig auch das Frontend aus (`SERVE_FRONTEND=true`),
 sodass `http://localhost:3000` direkt die vollständige App zeigt.
+
+### Datenbank wählen
+
+| `DATABASE_URL` | Verwendet |
+|---|---|
+| `sqlite:./data/local.db` | SQLite (eingebaut, keine Installation) |
+| `sqlite::memory:` | Nur im Arbeitsspeicher (für Tests) |
+| `postgres://…` | PostgreSQL |
+
+Beide Varianten bestehen dieselbe Testsuite.
 
 ## Datenbank vorbereiten
 

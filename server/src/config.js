@@ -106,6 +106,13 @@ export const config = {
     anthropicKeys: keyList("ANTHROPIC_API_KEYS"),
     ollamaUrl: (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/+$/, ""),
     ollamaModel: process.env.OLLAMA_MODEL || "qwen2.5-coder:3b",
+    // Modell im Speicher halten, statt es bei jedem Aufruf neu zu laden
+    ollamaKeepAlive: process.env.OLLAMA_KEEP_ALIVE || "30m",
+    // Kurze Antworten und kleiner Kontext sparen auf schwacher Hardware am meisten
+    ollamaMaxTokens: int("OLLAMA_MAX_TOKENS", 300),
+    ollamaContext: int("OLLAMA_CONTEXT", 2048),
+    ollamaThreads: int("OLLAMA_THREADS", 0),   // 0 = Ollama entscheidet
+    warmUp: bool("AI_WARMUP", true),
     geminiModel: process.env.GEMINI_MODEL || "gemini-2.0-flash",
     anthropicModel: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
     // Pausen nach Limit-Antworten

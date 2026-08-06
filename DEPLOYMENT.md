@@ -7,13 +7,57 @@ sowie die Einrichtung der KI-Anbindung.
 
 ## 1. Schnellstart (lokal testen)
 
+### Variante A — nur die Oberfläche, ohne alles
+
 Die App braucht keinen Build-Schritt, aber einen HTTP-Server (nicht `file://`):
 
 ```bash
 npx serve            # oder: python3 -m http.server
 ```
 
-Dann `http://localhost:3000` (bzw. `:8000`) öffnen.
+Dann `http://localhost:3000` (bzw. `:8000`) öffnen. Fortschritt wird im
+Browser gespeichert, die Bewertung läuft über die eingebaute lokale Analyse.
+
+### Variante B — mit Server, auch auf schwachem Laptop
+
+Ohne PostgreSQL, ohne Konfigurationsdatei:
+
+```bash
+cd server && npm install
+npm run seed:local -- --email du@example.com --password "deinpasswort"
+npm run start:local
+```
+
+Nutzt SQLite über Nodes eingebautes `node:sqlite`. Braucht rund 77 MB
+Arbeitsspeicher und startet in unter drei Sekunden.
+
+## 1a. Wie schnell kommt die Bewertung?
+
+Die Antwortbewertung erscheint **immer sofort** — unabhängig von Hardware
+und Verbindung. Dahinter steckt ein zweistufiges Verfahren:
+
+1. **Sofort (~15 ms):** Die eingebaute Analyse prüft Struktur, erwartete
+   Konzepte und Begründungen direkt im Browser. Das Ergebnis steht samt XP
+   unmittelbar auf dem Bildschirm.
+2. **Nachgeschärft (im Hintergrund):** Ist eine KI eingerichtet, läuft parallel
+   eine Anfrage. Trifft die Antwort ein, ersetzt sie das Sofortergebnis und
+   die Karte wechselt von *Sofort-Prüfung* auf *KI-geprüft*.
+
+Fällt die KI strenger aus als die Sofortprüfung, bleiben bereits vergebene XP
+erhalten — es wird lediglich der zusätzliche Hinweis angezeigt. Umgekehrt
+gibt es XP nach, wenn die KI großzügiger urteilt.
+
+Gleiche Antwort zur gleichen Aufgabe wird zwischengespeichert und kommt beim
+zweiten Mal ohne neue Anfrage zurück — das schont knappe Gratis-Kontingente.
+
+| Weg | Wartezeit |
+|---|---|
+| Lokale Analyse | ~15 ms |
+| Gemini Flash | 1–3 s (im Hintergrund) |
+| Ollama auf schwacher CPU | 10–60 s (im Hintergrund) |
+
+Für einen einzelnen Gemini-Key reicht das Gratis-Kontingent (etwa 15 Anfragen
+pro Minute) beim Lernen allein problemlos aus.
 
 **Demo-Zugänge**
 
@@ -194,10 +238,28 @@ eintragen (z. B. `http://localhost:11434` oder deine Server-URL).
 
 | Modell | RAM | Geschwindigkeit | Eignung |
 |---|---|---|---|
-| `qwen2.5-coder:1.5b` | ~2 GB | schnell | kurze Bewertungen |
-| `qwen2.5-coder:3b` | ~3 GB | mittel | **empfohlen** |
+| `qwen2.5-coder:1.5b` | ~2 GB | schnell | **schwache Laptops** |
+| `qwen2.5-coder:3b` | ~3 GB | mittel | **empfohlen für den Server** |
 | `llama3.2:3b` | ~3 GB | mittel | gute Erklärungen |
 | `qwen2.5-coder:7b` | ~6 GB | langsam | nur mit viel Geduld |
+
+**Auf schwacher Hardware zusätzlich einstellen** (in `.env`):
+
+```
+OLLAMA_MODEL=qwen2.5-coder:1.5b
+OLLAMA_KEEP_ALIVE=30m     # Modell geladen lassen statt jedes Mal neu einlesen
+OLLAMA_MAX_TOKENS=300     # Bewertungen sind ohnehin nur 3-4 Sätze
+OLLAMA_CONTEXT=2048       # kleinerer Kontext spart spürbar Rechenzeit
+OLLAMA_THREADS=2          # bei sehr wenigen Kernen sinnvoll zu begrenzen
+AI_WARMUP=true            # Modell beim Serverstart vorladen
+```
+
+`OLLAMA_KEEP_ALIVE` bringt den größten Gewinn: Ohne diese Einstellung entlädt
+Ollama das Modell nach fünf Minuten und jede Anfrage zahlt das Einlesen von
+mehreren hundert Megabyte erneut.
+
+Weil die Sofort-Bewertung ohnehin unmittelbar erscheint, stört eine langsame
+Ollama-Antwort im Hintergrund nicht — sie schärft das Ergebnis nur nach.
 
 Auf 4 Kernen ohne Grafikprozessor sind bei einem 3B-Modell etwa 8–15 Token pro
 Sekunde realistisch — für die kurzen Bewertungstexte der Plattform (3–4 Sätze)

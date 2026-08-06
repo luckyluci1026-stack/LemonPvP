@@ -7,7 +7,7 @@
  */
 import crypto from "node:crypto";
 import { config } from "./config.js";
-import { pool, one, migrate } from "./db.js";
+import { closeDb, one, migrate } from "./db.js";
 import { hashPassword } from "./security.js";
 
 function arg(name, fallback) {
@@ -28,7 +28,7 @@ const existing = await one("SELECT id, role FROM users WHERE email_lower = lower
 if (existing) {
   console.error(`\n✗ Es existiert bereits ein Konto mit ${email} (Rolle: ${existing.role}).`);
   console.error("  Nutze eine andere Adresse oder ändere die Rolle im Admin-Bereich.\n");
-  await pool.end();
+  await closeDb();
   process.exit(1);
 }
 
@@ -47,4 +47,4 @@ if (generated) {
 }
 console.log("");
 
-await pool.end();
+await closeDb();
