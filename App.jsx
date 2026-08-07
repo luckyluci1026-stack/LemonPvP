@@ -918,6 +918,23 @@ function findLessonMeta(lessonId) {
   return null;
 }
 
+/* Alle Abzeichen, die sich allein aus Fortschritt und XP ergeben.
+   Der Streak-Orden fehlt hier bewusst: Der hängt an der Tagesserie und wird
+   dort vergeben, wo sie fortgeschrieben wird. Beide Betriebsarten — mit und
+   ohne Server — rechnen über diese eine Stelle, damit sie nicht auseinander
+   laufen. */
+function earnedBadgesFor(completedLessons, xp) {
+  const completed = Array.isArray(completedLessons) ? completedLessons : [];
+  const erledigt = new Set(completed);
+  const badges = [];
+  if (completed.length) badges.push("first_lesson");
+  if (completed.filter((id) => String(id).startsWith("javascript_")).length >= 10) badges.push("js_beginner");
+  if (getLevelInfo(Number(xp) || 0).level >= 10) badges.push("mid_wizard");
+  // Ein einziger vollständig abgeschlossener Kurs genügt.
+  if (COURSES.some((c) => allLessonsOf(c).every((l) => erledigt.has(l.id)))) badges.push("course_complete");
+  return badges;
+}
+
 /* ------------------------------ Konten --------------------------------- */
 // Freies Speicherkontingent pro Account für Playground-Projekte.
 // Echtes localStorage fasst real nur wenige MB — dies ist eine UX-Anzeige/Obergrenze,
@@ -9893,12 +9910,12 @@ export default function App() {
   const setOllamaModel = useCallback((m) => {
     setOllamaModelState(m);
     try { localStorage.setItem(OLLAMA_MODEL_STORAGE, m); } catch (e) {}
+  }, []);
 
   /** Merkt sich das Modell je Anbieter — nicht nur für Ollama. */
   const setAiModels = useCallback((next) => {
     setAiModelsState(next);
     try { localStorage.setItem(AI_MODELS_STORAGE, JSON.stringify(next)); } catch (e) {}
-  }, []);
   }, []);
   // Gebündelte KI-Konfiguration für alle Aufrufstellen
   // Mit Server läuft die KI über das Backend (Keys bleiben dort), ohne Server
@@ -10543,19 +10560,11 @@ export default function App() {
       if (u.id !== currentUser) return u;
       if (u.completedLessons.includes(lessonId)) return u;
       const completed = [...u.completedLessons, lessonId];
-      const badges = [...u.badges];
-      const newlyEarned = [];
-      if (!badges.includes("first_lesson")) { badges.push("first_lesson"); newlyEarned.push("first_lesson"); }
-      const jsDone = completed.filter((id) => id.startsWith("javascript_")).length;
-      if (jsDone >= 10 && !badges.includes("js_beginner")) { badges.push("js_beginner"); newlyEarned.push("js_beginner"); }
       const newXp = u.xp + bonusXp;
-      if (getLevelInfo(newXp).level >= 10 && !badges.includes("mid_wizard")) { badges.push("mid_wizard"); newlyEarned.push("mid_wizard"); }
-      // Kurs komplett?
-      const meta = findLessonMeta(lessonId);
-      if (meta) {
-        const allIds = allLessonsOf(meta.course).map((l) => l.id);
-        if (allIds.every((id) => completed.includes(id)) && !badges.includes("course_complete")) { badges.push("course_complete"); newlyEarned.push("course_complete"); }
-      }
+      // Dieselbe Rechnung wie im Serverbetrieb — siehe earnedBadgesFor.
+      const badges = [...u.badges];
+      const newlyEarned = earnedBadgesFor(completed, newXp).filter((b) => !badges.includes(b));
+      badges.push(...newlyEarned);
       // Tages-Streak fortschreiben: heute schon gelernt zählt nicht doppelt,
       // gestern gelernt zählt hoch, sonst beginnt die Serie neu.
       const { streak, lastActive, grew, freezes, usedFreeze, broken } = advanceStreak(u);
