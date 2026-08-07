@@ -3669,12 +3669,295 @@ const DEFAULT_PRACTICE_SET = {
     correct: 1, why: "Programmieren lernt man durch Programmieren." },
 };
 
-/**
- * Weitere Übungssätze je Sprache. Sie werden per Hash auf die Lektionen
- * verteilt, damit nicht alle generierten Lektionen dieselben drei Aufgaben
- * zeigen. `COURSE_PRACTICE` bleibt der erste Satz.
- */
-const PRACTICE_BANK = {};
+/* --------------------- Weitere Übungssätze je Sprache ---------------------
+   Damit nicht jede generierte Lektion dieselben drei Aufgaben zeigt, gibt es
+   je Sprache mehrere Sätze. Verteilt werden sie über `lessonHash`, also
+   stabil: dieselbe Lektion zeigt immer dieselben Aufgaben.
+   ------------------------------------------------------------------------- */
+const PRACTICE_BANK = {
+  html: [
+    {
+      blank: { template: "Eine ungeordnete Liste steht in ___, jeder Eintrag in ___.", blanks: [["<ul>", "ul"], ["<li>", "li"]] },
+      code: { question: "Schreibe eine Liste mit den beiden Einträgen **Apfel** und **Birne**.", concepts: ["<ul>", "</ul>", "<li>", "</li>", "Apfel", "Birne"] },
+      mc: { question: "Was unterscheidet `<ol>` von `<ul>`?",
+        options: ["<ol> ist nummeriert, <ul> nicht", "<ol> darf nur drei Einträge haben", "<ul> ist veraltet", "Es gibt keinen Unterschied"],
+        correct: 0, why: "`ol` steht für ordered list — die Einträge werden durchnummeriert." },
+    },
+    {
+      blank: { template: "Der sichtbare Inhalt steht im ___, Titel und Meta-Angaben im ___.", blanks: [["<body>", "body"], ["<head>", "head"]] },
+      code: { question: "Schreibe ein vollständiges HTML-Dokument mit dem Titel **Meine Seite**.", concepts: ["<!DOCTYPE", "<html", "<head>", "<title>", "Meine Seite", "<body>"] },
+      mc: { question: "Wozu dient `<meta charset=\"UTF-8\">`?",
+        options: ["Es setzt die Schriftart", "Es legt die Zeichenkodierung fest", "Es aktiviert JavaScript", "Es beschleunigt das Laden"],
+        correct: 1, why: "Ohne die richtige Kodierung erscheinen Umlaute als kaputte Zeichen." },
+    },
+    {
+      blank: { template: "Ein Bereich mit eigener Bedeutung heißt ___, die Hauptnavigation ___.", blanks: [["<section>", "section"], ["<nav>", "nav"]] },
+      code: { question: "Schreibe eine Navigation mit einem Link zur Startseite.", concepts: ["<nav>", "</nav>", "<a", "href="] },
+      mc: { question: "Warum ist `<nav>` besser als `<div class=\"nav\">`?",
+        options: ["Es ist kürzer zu tippen", "Screenreader und Suchmaschinen erkennen die Bedeutung", "Es lädt schneller", "Es braucht kein CSS"],
+        correct: 1, why: "Semantische Elemente tragen ihre Bedeutung im Namen — davon profitiert vor allem die Barrierefreiheit." },
+    },
+  ],
+
+  css: [
+    {
+      blank: { template: "Innenabstand setzt du mit ___, Außenabstand mit ___.", blanks: ["padding", "margin"] },
+      code: { question: "Gib der Klasse `karte` 16px Innenabstand und einen 1px breiten grauen Rahmen.", concepts: [".karte", "padding", "16px", "border", "1px"] },
+      mc: { question: "Was zählt bei `box-sizing: border-box` zur angegebenen Breite?",
+        options: ["Nur der Inhalt", "Inhalt, Innenabstand und Rahmen", "Nur der Inhalt und der Rahmen", "Auch der Außenabstand"],
+        correct: 1, why: "Mit border-box bleibt die angegebene Breite die tatsächliche — Padding und Border fressen sie nicht auf." },
+    },
+    {
+      blank: { template: "Ein Element aus dem Fluss nimmst du mit position: ___, am Fenster verankert wird es mit position: ___.", blanks: ["absolute", "fixed"] },
+      code: { question: "Positioniere `.hinweis` fest 20px vom oberen und rechten Rand.", concepts: [".hinweis", "position", "fixed", "top", "right", "20px"] },
+      mc: { question: "Worauf bezieht sich `position: absolute`?",
+        options: ["Immer auf das Fenster", "Auf den nächsten positionierten Vorfahren", "Auf das body-Element", "Auf das direkte Elternelement"],
+        correct: 1, why: "Gesucht wird der nächste Vorfahre, dessen position nicht static ist — sonst der Ursprung des Dokuments." },
+    },
+    {
+      blank: { template: "Ein Raster erzeugst du mit display: ___, die Spalten legst du mit ___ fest.", blanks: ["grid", "grid-template-columns"] },
+      code: { question: "Baue mit `.raster` drei gleich breite Spalten mit 12px Abstand.", concepts: [".raster", "display", "grid", "grid-template-columns", "gap"] },
+      mc: { question: "Was bedeutet die Einheit `1fr` im Grid?",
+        options: ["Ein festes Pixelmaß", "Einen Anteil am freien Platz", "Eine Prozentangabe", "Die Schriftgröße"],
+        correct: 1, why: "fr steht für fraction — der übrige Platz wird nach diesen Anteilen verteilt." },
+    },
+  ],
+
+  javascript: [
+    {
+      blank: { template: "Über ein Array läufst du mit ___, ein neues Array entsteht mit ___.", blanks: [["forEach", "for"], "map"] },
+      code: { question: "Verdopple jede Zahl im Array `zahlen` und speichere das Ergebnis in `doppelt`.", concepts: ["zahlen", "map", "doppelt", ["const", "let"]] },
+      mc: { question: "Was gibt `[1,2,3].filter(n => n > 1)` zurück?",
+        options: ["true", "[2, 3]", "2", "[1]"],
+        correct: 1, why: "filter liefert ein neues Array mit allen Elementen, für die die Funktion true ergibt." },
+    },
+    {
+      blank: { template: "Eine Bedingung schreibst du mit ___, den Gegenfall mit ___.", blanks: ["if", "else"] },
+      code: { question: "Prüfe, ob `alter` mindestens 18 ist, und gib „volljährig“ oder „minderjährig“ aus.", concepts: ["if", "alter", "18", "else", "console.log"] },
+      mc: { question: "Warum sollte man `===` statt `==` verwenden?",
+        options: ["Es ist schneller", "Es vergleicht ohne stillschweigende Typumwandlung", "Es funktioniert auch mit Objekten", "== ist veraltet"],
+        correct: 1, why: '`"1" == 1` ist true, `"1" === 1` ist false — die Typumwandlung von == überrascht regelmäßig.' },
+    },
+    {
+      blank: { template: "Auf ein Ereignis reagierst du mit ___, ein Element findest du mit ___.", blanks: ["addEventListener", ["querySelector", "getElementById"]] },
+      code: { question: "Reagiere auf einen Klick auf das Element mit der id `knopf` und gib „Hallo“ aus.", concepts: [["document.querySelector", "document.getElementById"], "knopf", "addEventListener", "click", "console.log", "Hallo"] },
+      mc: { question: "Was macht `event.preventDefault()`?",
+        options: ["Es stoppt das Skript", "Es verhindert die Standardaktion des Browsers", "Es löscht das Element", "Es hält die Ereignisweitergabe an"],
+        correct: 1, why: "Bei einem Formular verhindert es etwa das Neuladen der Seite. Die Weitergabe stoppt stopPropagation." },
+    },
+  ],
+
+  typescript: [
+    {
+      blank: { template: "Ein Array aus Zahlen schreibst du als ___, ein Wert, der fehlen darf, bekommt ein ___ hinter den Namen.", blanks: [["number[]", "Array<number>"], "?"] },
+      code: { question: "Schreibe ein Interface `Person` mit `name: string` und optionalem `alter: number`.", concepts: ["interface", "Person", "name", "string", "alter", "number"] },
+      mc: { question: "Was ist der Unterschied zwischen `unknown` und `any`?",
+        options: ["Keiner", "unknown erzwingt eine Prüfung vor der Nutzung", "any ist sicherer", "unknown gibt es nur in Klassen"],
+        correct: 1, why: "any schaltet die Prüfung ab, unknown zwingt dich, den Typ erst einzugrenzen." },
+    },
+    {
+      blank: { template: "Mehrere erlaubte Typen verbindest du mit ___, einen eigenen Namen vergibst du mit ___.", blanks: ["|", ["type", "interface"]] },
+      code: { question: "Definiere einen Typ `Status`, der nur `\"offen\"` oder `\"fertig\"` sein darf.", concepts: ["type", "Status", "offen", "fertig", "|"] },
+      mc: { question: "Wozu dient `as const`?",
+        options: ["Es macht Variablen schneller", "Es macht Werte unveränderlich und den Typ so eng wie möglich", "Es erzwingt eine Klasse", "Es entfernt Typen zur Laufzeit"],
+        correct: 1, why: 'Ohne as const wird `\"offen\"` zu string verallgemeinert — mit bleibt es der exakte Wert.' },
+    },
+  ],
+
+  react: [
+    {
+      blank: { template: "Eine Liste braucht je Element ein ___, damit React die Elemente wiedererkennt.", blanks: ["key"] },
+      code: { question: "Rendere aus dem Array `namen` eine Liste von `<li>`-Elementen mit key.", concepts: ["namen", "map", "<li", "key", "{"] },
+      mc: { question: "Warum darf man den Array-Index selten als key nehmen?",
+        options: ["Er ist zu lang", "Beim Umsortieren zeigt er auf das falsche Element", "React verbietet Zahlen", "Er ist nicht eindeutig genug für CSS"],
+        correct: 1, why: "Ändert sich die Reihenfolge, wandert der Index — React ordnet dann Zustand dem falschen Eintrag zu." },
+    },
+    {
+      blank: { template: "Werte von außen heißen ___, eigener Zustand entsteht mit ___.", blanks: ["props", "useState"] },
+      code: { question: "Schreibe eine Komponente `Zaehler` mit einem Zustand `wert`, der bei Klick um eins steigt.", concepts: ["function", "Zaehler", "useState", "wert", "onClick", "return"] },
+      mc: { question: "Wann läuft `useEffect(fn, [])`?",
+        options: ["Bei jedem Rendern", "Genau einmal nach dem ersten Rendern", "Nie", "Nur beim Entfernen"],
+        correct: 1, why: "Eine leere Abhängigkeitsliste bedeutet: keine Abhängigkeit ändert sich je, also nur einmal." },
+    },
+  ],
+
+  vue: [
+    {
+      blank: { template: "Einen Wert bindest du an ein Attribut mit ___, an ein Formularfeld mit ___.", blanks: [[":", "v-bind"], "v-model"] },
+      code: { question: "Binde die Variable `text` an ein Eingabefeld.", concepts: ["<input", "v-model", "text"] },
+      mc: { question: "Was macht `computed` gegenüber einer normalen Methode?",
+        options: ["Nichts", "Es merkt sich das Ergebnis, bis sich eine Abhängigkeit ändert", "Es läuft asynchron", "Es kann keine Werte zurückgeben"],
+        correct: 1, why: "Computed-Werte werden zwischengespeichert und nur bei Bedarf neu berechnet." },
+    },
+    {
+      blank: { template: "Eine Liste rendest du mit ___, eine Bedingung mit ___.", blanks: ["v-for", "v-if"] },
+      code: { question: "Gib jeden Eintrag aus `punkte` als Listenelement aus.", concepts: ["<li", "v-for", "punkte", ":key"] },
+      mc: { question: "Warum sollte man `v-if` und `v-for` nicht am selben Element benutzen?",
+        options: ["Es ist verboten", "Die Auswertungsreihenfolge führt zu unerwartetem Verhalten", "Es ist zu lang", "v-if kennt keine Listen"],
+        correct: 1, why: "Besser ein umschließendes template mit v-if oder vorher filtern." },
+    },
+  ],
+
+  python: [
+    {
+      blank: { template: "Über eine Liste läufst du mit ___, die Länge bekommst du mit ___.", blanks: [["for", "for-Schleife"], ["len", "len()"]] },
+      code: { question: "Gib jeden Eintrag der Liste `namen` einzeln aus.", concepts: ["for", "namen", "print"] },
+      mc: { question: "Was ergibt `list(range(3))`?",
+        options: ["[1, 2, 3]", "[0, 1, 2]", "[0, 1, 2, 3]", "3"],
+        correct: 1, why: "range beginnt bei 0 und endet vor der angegebenen Zahl." },
+    },
+    {
+      blank: { template: "Ein Wörterbuch schreibst du mit geschweiften ___, auf einen Wert greifst du über den ___ zu.", blanks: [["Klammern", "{}"], ["Schlüssel", "Key"]] },
+      code: { question: "Lege ein Dictionary `person` mit dem Schlüssel `name` an und gib den Wert aus.", concepts: ["person", "name", "print", "{"] },
+      mc: { question: "Was passiert bei `d[\"fehlt\"]`, wenn der Schlüssel nicht existiert?",
+        options: ["Es kommt None zurück", "Es wird ein KeyError ausgelöst", "Der Schlüssel wird angelegt", "Es kommt 0 zurück"],
+        correct: 1, why: "Wer einen Standardwert will, nimmt `d.get(\"fehlt\", 0)`." },
+    },
+    {
+      blank: { template: "Eine Klasse beginnt mit ___, der Konstruktor heißt ___.", blanks: ["class", ["__init__", "init"]] },
+      code: { question: "Schreibe eine Klasse `Hund` mit einem Konstruktor, der `name` speichert.", concepts: ["class", "Hund", "def", "__init__", "self", "name"] },
+      mc: { question: "Wofür steht `self` in einer Methode?",
+        options: ["Für die Klasse selbst", "Für das konkrete Objekt", "Für das Modul", "Es ist optional und bedeutungslos"],
+        correct: 1, why: "self ist die Instanz, auf der die Methode aufgerufen wurde." },
+    },
+  ],
+
+  java: [
+    {
+      blank: { template: "Eine Liste deklarierst du als ___, hinzugefügt wird mit ___.", blanks: [["List", "ArrayList"], ["add", "add()"]] },
+      code: { question: "Lege eine `ArrayList<String>` namens `namen` an und füge `\"Anna\"` hinzu.", concepts: ["ArrayList", "String", "namen", "add", "Anna"] },
+      mc: { question: "Was ist der Unterschied zwischen `int` und `Integer`?",
+        options: ["Keiner", "int ist ein primitiver Typ, Integer ein Objekt", "Integer ist schneller", "int kann null sein"],
+        correct: 1, why: "Nur Integer kann null sein — genau daraus entstehen NullPointerExceptions beim Auspacken." },
+    },
+    {
+      blank: { template: "Eine Schleife über alle Elemente schreibst du mit ___, verglichen werden Zeichenketten mit ___.", blanks: [["for", "for-each"], ["equals", "equals()"]] },
+      code: { question: "Gib jedes Element des Arrays `zahlen` mit einer for-Schleife aus.", concepts: ["for", "zahlen", "System.out.println"] },
+      mc: { question: "Warum vergleicht man Strings nicht mit `==`?",
+        options: ["Es ist langsamer", "== vergleicht die Referenz, nicht den Inhalt", "== gibt es für Strings nicht", "Es ist nur Stilfrage"],
+        correct: 1, why: "Zwei gleich aussehende Strings können unterschiedliche Objekte sein — equals vergleicht den Inhalt." },
+    },
+  ],
+
+  kotlin: [
+    {
+      blank: { template: "Eine Datenklasse deklarierst du mit ___, sicher auf null zugreifen kannst du mit ___.", blanks: [["data class", "data"], ["?.", "?"]] },
+      code: { question: "Schreibe eine Data Class `Punkt` mit den Feldern `x` und `y` vom Typ Int.", concepts: ["data", "class", "Punkt", "val", "Int"] },
+      mc: { question: "Was liefert der Elvis-Operator `?:`",
+        options: ["Den linken Wert oder, falls null, den rechten", "Immer den rechten Wert", "Eine Ausnahme bei null", "Einen Booleschen Wert"],
+        correct: 0, why: "`name ?: \"unbekannt\"` liefert den Ersatzwert nur, wenn links null steht." },
+    },
+    {
+      blank: { template: "Eine Verzweigung über viele Fälle schreibst du mit ___, eine Schleife über eine Liste mit ___.", blanks: ["when", ["for", "forEach"]] },
+      code: { question: "Gib jeden Eintrag der Liste `woerter` aus.", concepts: ["for", "woerter", "println"] },
+      mc: { question: "Was bedeutet `lateinit`?",
+        options: ["Der Wert ist unveränderlich", "Die Initialisierung erfolgt später, aber vor der ersten Nutzung", "Der Typ wird erst zur Laufzeit bestimmt", "Die Variable ist privat"],
+        correct: 1, why: "Zugriff vor der Initialisierung wirft eine UninitializedPropertyAccessException." },
+    },
+  ],
+
+  c: [
+    {
+      blank: { template: "Eine Schleife mit Zähler schreibst du mit ___, eine Zeichenkette endet mit dem Zeichen ___.", blanks: ["for", ["\\0", "0"]] },
+      code: { question: "Gib die Zahlen 0 bis 4 mit einer for-Schleife aus.", concepts: ["for", "printf", "int"] },
+      mc: { question: "Was liefert `sizeof(arr)` für einen Array-Parameter einer Funktion?",
+        options: ["Die Größe des ganzen Arrays", "Die Größe eines Zeigers", "Die Anzahl der Elemente", "Immer 1"],
+        correct: 1, why: "Beim Übergeben zerfällt das Array zu einem Zeiger — die Länge muss man mitgeben." },
+    },
+    {
+      blank: { template: "Speicher forderst du mit ___ an und gibst ihn mit ___ wieder frei.", blanks: [["malloc", "malloc()"], ["free", "free()"]] },
+      code: { question: "Fordere Speicher für 10 int-Werte an und gib ihn danach wieder frei.", concepts: ["malloc", "int", "free"] },
+      mc: { question: "Was ist ein hängender Zeiger (dangling pointer)?",
+        options: ["Ein Zeiger auf NULL", "Ein Zeiger auf bereits freigegebenen Speicher", "Ein nicht initialisierter Zähler", "Ein Zeiger auf den Stack"],
+        correct: 1, why: "Nach free zeigt er auf fremdes Gebiet — Zugriffe sind undefiniertes Verhalten." },
+    },
+  ],
+
+  cpp: [
+    {
+      blank: { template: "Ein dynamisches Array aus der Standardbibliothek heißt ___, hinten angehängt wird mit ___.", blanks: [["vector", "std::vector"], ["push_back", "push_back()"]] },
+      code: { question: "Lege einen `std::vector<int>` namens `zahlen` an und füge die 5 hinzu.", concepts: [["vector", "std::vector"], "zahlen", "push_back"] },
+      mc: { question: "Wofür steht RAII?",
+        options: ["Ein Entwurfsmuster für Threads", "Ressourcen werden an die Lebensdauer eines Objekts gebunden", "Ein Compiler-Schalter", "Eine Namenskonvention"],
+        correct: 1, why: "Der Destruktor gibt frei, was der Konstruktor geholt hat — deshalb braucht man selten delete." },
+    },
+    {
+      blank: { template: "Einen alleinigen Besitzer eines Zeigers modellierst du mit ___, geteilten Besitz mit ___.", blanks: [["unique_ptr", "std::unique_ptr"], ["shared_ptr", "std::shared_ptr"]] },
+      code: { question: "Gib den Text `Hallo` mit std::cout auf der Konsole aus.", concepts: ["#include", "int main", ["cout", "std::cout"], "Hallo"] },
+      mc: { question: "Was macht `std::move`?",
+        options: ["Es verschiebt Speicher physisch", "Es markiert einen Wert als verschiebbar", "Es kopiert schneller", "Es löscht das Objekt"],
+        correct: 1, why: "move castet zu einer Rvalue-Referenz — verschoben wird erst im Move-Konstruktor." },
+    },
+  ],
+
+  go: [
+    {
+      blank: { template: "Eine kurze Deklaration schreibst du mit ___, ein Element hängst du an einen Slice mit ___.", blanks: [":=", ["append", "append()"]] },
+      code: { question: "Lege einen Slice `zahlen` an und hänge die 3 an.", concepts: ["zahlen", ":=", "append"] },
+      mc: { question: "Was ist der Nullwert eines Slice?",
+        options: ["Ein leerer Slice", "nil", "Ein Slice mit einem Element", "Ein Fehler"],
+        correct: 1, why: "Ein nil-Slice verhält sich bei len und append wie ein leerer — das ist Absicht." },
+    },
+    {
+      blank: { template: "Einen Fehler prüfst du mit ___, aufgeschoben ausgeführt wird mit ___.", blanks: [["err", "if err != nil"], "defer"] },
+      code: { question: "Schreibe eine Funktion `teile`, die zwei ints und einen error zurückgibt.", concepts: ["func", "teile", "int", "error", "return"] },
+      mc: { question: "Wann läuft eine mit `defer` registrierte Funktion?",
+        options: ["Sofort", "Beim Verlassen der umgebenden Funktion", "Am Programmende", "Nur bei einem panic"],
+        correct: 1, why: "Auch bei einem panic — deshalb eignet sich defer zum Aufräumen." },
+    },
+  ],
+
+  rust: [
+    {
+      blank: { template: "Ein veränderbares Vec legst du mit ___ an, angehängt wird mit ___.", blanks: [["let mut", "mut"], ["push", "push()"]] },
+      code: { question: "Lege ein veränderbares `Vec<i32>` namens `zahlen` an und füge die 7 hinzu.", concepts: ["let", "mut", "zahlen", "Vec", "push"] },
+      mc: { question: "Wie viele veränderbare Referenzen auf denselben Wert darf es gleichzeitig geben?",
+        options: ["Beliebig viele", "Genau eine", "Zwei", "Keine"],
+        correct: 1, why: "Entweder eine veränderbare oder beliebig viele unveränderbare — nie beides zugleich." },
+    },
+    {
+      blank: { template: "Ein Ergebnis mit Fehlerfall hat den Typ ___, ein möglicherweise fehlender Wert den Typ ___.", blanks: ["Result", "Option"] },
+      code: { question: "Schreibe eine Funktion `laenge`, die einen &str nimmt und die Länge als usize zurückgibt.", concepts: ["fn", "laenge", "usize", "len"] },
+      mc: { question: "Was macht der `?`-Operator?",
+        options: ["Er ignoriert Fehler", "Er gibt den Fehler an die aufrufende Funktion weiter", "Er bricht das Programm ab", "Er wandelt in Option um"],
+        correct: 1, why: "Bei Ok läuft es weiter, bei Err wird sofort zurückgegeben — das spart verschachtelte match-Blöcke." },
+    },
+  ],
+
+  php: [
+    {
+      blank: { template: "Ein assoziatives Array liest du über den ___ aus, ausgegeben wird mit ___.", blanks: [["Schlüssel", "Key"], ["echo", "print"]] },
+      code: { question: "Lege ein Array `person` mit dem Schlüssel `name` an und gib den Wert aus.", concepts: ["<?php", "person", "name", ["echo", "print"]] },
+      mc: { question: "Wozu dient `htmlspecialchars`?",
+        options: ["Es kürzt Texte", "Es maskiert Sonderzeichen und verhindert XSS", "Es prüft die Rechtschreibung", "Es kodiert URLs"],
+        correct: 1, why: "Aus `<script>` wird harmloser Text statt eines ausgeführten Skripts." },
+    },
+    {
+      blank: { template: "Eine Schleife über ein Array schreibst du mit ___, eine Funktion definierst du mit ___.", blanks: ["foreach", "function"] },
+      code: { question: "Schreibe eine Funktion `gruss`, die einen Namen entgegennimmt und zurückgibt.", concepts: ["function", "gruss", "return"] },
+      mc: { question: "Warum sind Prepared Statements sicherer als zusammengesetzte SQL-Strings?",
+        options: ["Sie sind kürzer", "Befehl und Daten bleiben getrennt", "Sie sind schneller", "Sie prüfen die Rechtschreibung"],
+        correct: 1, why: "Eingaben können dadurch nie zu ausführbarem SQL werden." },
+    },
+  ],
+
+  sql: [
+    {
+      blank: { template: "Zeilen filterst du mit ___, sortiert wird mit ___.", blanks: ["WHERE", ["ORDER BY", "ORDER"]] },
+      code: { question: "Hole Name und Preis aus `artikel`, nur wenn der Preis über 10 liegt.", concepts: ["SELECT", "name", "preis", "FROM", "artikel", "WHERE", "10"] },
+      mc: { question: "Wo steht die Bedingung für Gruppen — im WHERE oder im HAVING?",
+        options: ["Im WHERE", "Im HAVING", "In beiden gleichzeitig", "Im SELECT"],
+        correct: 1, why: "WHERE filtert einzelne Zeilen vor der Gruppierung, HAVING die fertigen Gruppen." },
+    },
+    {
+      blank: { template: "Die Anzahl der Zeilen liefert ___, die Summe einer Spalte ___.", blanks: [["COUNT", "COUNT(*)"], ["SUM", "SUM()"]] },
+      code: { question: "Zähle, wie viele Zeilen die Tabelle `kunden` hat.", concepts: ["SELECT", "COUNT", "FROM", "kunden"] },
+      mc: { question: "Was zählt `COUNT(spalte)` im Unterschied zu `COUNT(*)`?",
+        options: ["Beides ist gleich", "Nur Zeilen, in denen die Spalte nicht NULL ist", "Nur eindeutige Werte", "Nur die erste Zeile"],
+        correct: 1, why: "NULL-Werte werden übersprungen — für alle Zeilen nimmt man COUNT(*)." },
+    },
+  ],
+};
 
 /** Alle Übungssätze einer Sprache — der handgeschriebene zuerst. */
 function practiceSets(courseId) {
@@ -7230,6 +7513,7 @@ export default function App() {
       <Toasts toasts={toasts} />
       {xpPopup != null && <XPPopup amount={xpPopup} />}
       {confetti && <Confetti />}
+      <CookieNotice ctx={ctx} />
       {aiSettingsOpen && aiConfigurable && <AiSettingsModal ctx={ctx} />}
       {emailVerifyOpen && <EmailVerifyModal ctx={ctx} />}
       {twoFactorSetupCode && <TwoFactorSetupModal ctx={ctx} />}
@@ -7859,6 +8143,270 @@ function Landing({ ctx }) {
         </div>
       </section>
 
+      {/* So wird geprüft — der Kern des Produkts, sichtbar gemacht */}
+      <section className="max-w-6xl mx-auto px-5 py-20">
+        <div className="text-center mb-12">
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs mb-4 bg-[#10B981]/15 text-[#10B981]">
+            <Zap size={13} />Ohne Wartezeit
+          </span>
+          <h2 className="font-display text-4xl font-extrabold mb-3">
+            So sieht eine <span className="ld-gradient-text">Bewertung</span> aus
+          </h2>
+          <p className="text-[#8A9BC0] text-lg max-w-2xl mx-auto">
+            Kein „Falsch". Sondern: welcher Baustein fehlt, welche Klammer offen ist, welches Schlüsselwort verwechselt wurde.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6 items-start">
+          <Card className="p-0 overflow-hidden">
+            <div className="px-5 py-3 border-b border-[#1E2D4A] flex items-center gap-2">
+              <PenLine size={15} className="text-[#4F8EF7]" />
+              <span className="text-sm font-medium">Aufgabe</span>
+              <span className="ml-auto flex items-center gap-1 text-xs text-[#F7C948]"><Star size={12} />15 XP</span>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-[#E8EDF5] mb-4">
+                Lege eine Konstante <code className="font-code text-[13px] px-1.5 py-0.5 rounded bg-[#0A0E1A] border border-[#1E2D4A] text-[#4F8EF7]">name</code> an
+                und gib sie in der Konsole aus.
+              </p>
+              <div className="rounded-lg border border-[#1E2D4A] bg-[#0A0E1A] overflow-hidden" style={{ borderLeft: "3px solid #4F8EF7" }}>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F1629] border-b border-[#1E2D4A]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]/60" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]/60" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]/60" />
+                  <span className="ml-2 font-code text-[11px] text-[#4A5A7A]">loesung.js</span>
+                </div>
+                <pre className="p-4 font-code text-[12.5px] leading-relaxed text-[#C9D6F0] overflow-x-auto"><code>{`let name = "Anna"
+console.log(name)`}</code></pre>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#1E2D4A]">
+              <ListChecks size={17} className="text-[#4F8EF7]" />
+              <span className="font-display font-bold">Bewertung</span>
+              <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/15 text-[#10B981]">in 14 ms geprüft</span>
+            </div>
+            <p className="flex items-center gap-2 font-medium text-[#EF4444] mb-3">
+              <XCircle size={17} />Noch nicht ganz <span className="text-sm font-normal text-[#8A9BC0]">(Score: 50/100)</span>
+            </p>
+            <p className="text-sm text-[#C9D6F0] mb-2">
+              Du hast <code className="font-code text-[12px] text-[#F59E0B]">let</code> verwendet — die Aufgabe verlangt <code className="font-code text-[12px] text-[#10B981]">const</code>.
+            </p>
+            <p className="text-sm text-[#F59E0B] flex items-start gap-2 mb-4">
+              <Lightbulb size={14} className="mt-0.5 shrink-0" />
+              <span>Ein Wert, der sich nicht ändert, gehört in eine Konstante.</span>
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {[["const", false], ["name", true], ["console.log", true]].map(([c, ok]) => (
+                <span key={c} className={`text-[11px] font-code px-2 py-0.5 rounded-full flex items-center gap-1 ${ok ? "bg-[#10B981]/15 text-[#10B981]" : "bg-[#EF4444]/15 text-[#EF4444]"}`}>
+                  {ok ? <Check size={10} /> : <X size={10} />}{c}
+                </span>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#4A5A7A] mt-4 pt-3 border-t border-[#1E2D4A] leading-relaxed">
+              Diese Prüfung lief im Browser — ohne Server, ohne KI, ohne Kosten.
+              Deshalb steht das Ergebnis da, bevor du die Hand von der Tastatur nimmst.
+            </p>
+          </Card>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
+          {[
+            { icon: Layers, color: "#4F8EF7", t: "Zerlegen", d: "Kommentare und Zeichenketten werden abgetrennt, damit nur echter Code geprüft wird." },
+            { icon: Brain, color: "#7C3AED", t: "Struktur prüfen", d: "Klammern, Blöcke und Tags müssen aufgehen — sonst ist alles Weitere hinfällig." },
+            { icon: ListChecks, color: "#10B981", t: "Bausteine suchen", d: "Deklarationen, Aufrufe und Schlüsselwörter werden mit der Aufgabe abgeglichen." },
+            { icon: Bug, color: "#F59E0B", t: "Stolperfallen", d: "Typische Fehler je Sprache: fehlender Doppelpunkt, == statt ===, malloc ohne free." },
+          ].map((f, i) => (
+            <Card key={i} className="p-5">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: f.color + "1A" }}>
+                <f.icon size={19} style={{ color: f.color }} />
+              </div>
+              <p className="font-display font-bold mb-1.5">{i + 1}. {f.t}</p>
+              <p className="text-xs text-[#8A9BC0] leading-relaxed">{f.d}</p>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Lernweg */}
+      <section className="bg-[#0F1629] border-y border-[#1E2D4A] py-20">
+        <div className="max-w-5xl mx-auto px-5">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-4xl font-extrabold mb-3">Von null zur <span className="ld-gradient-text">eigenen Seite</span></h2>
+            <p className="text-[#8A9BC0] text-lg">Ein Weg, der aufeinander aufbaut — statt zehn angefangener Tutorials.</p>
+          </div>
+          <div className="space-y-3">
+            {[
+              { n: "01", t: "HTML", d: "Struktur einer Seite: Überschriften, Listen, Links, Bilder, Formulare.", w: "2 Wochen", c: "#E34C26" },
+              { n: "02", t: "CSS", d: "Aussehen und Layout: Box-Model, Flexbox, Grid, responsive Design.", w: "3 Wochen", c: "#264DE4" },
+              { n: "03", t: "JavaScript", d: "Interaktion: Variablen, Schleifen, DOM, Events, Fetch, Async.", w: "6 Wochen", c: "#F7C948" },
+              { n: "04", t: "Eigenes Projekt", d: "In der IDE bauen, testen, herunterladen — und wirklich veröffentlichen.", w: "offen", c: "#10B981" },
+            ].map((s, i, arr) => (
+              <div key={s.n} className="flex gap-4">
+                <div className="flex flex-col items-center shrink-0">
+                  <span className="w-11 h-11 rounded-xl flex items-center justify-center font-display font-bold text-sm"
+                    style={{ background: s.c + "1F", color: s.c }}>{s.n}</span>
+                  {i < arr.length - 1 && <span className="w-px flex-1 bg-[#1E2D4A] my-1" />}
+                </div>
+                <Card className="flex-1 p-5 mb-1">
+                  <div className="flex flex-wrap items-center gap-3 mb-1">
+                    <p className="font-display text-lg font-bold">{s.t}</p>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#141D35] text-[#8A9BC0]">ca. {s.w}</span>
+                  </div>
+                  <p className="text-sm text-[#8A9BC0] leading-relaxed">{s.d}</p>
+                </Card>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-sm text-[#4A5A7A] mt-8">
+            Kannst du einen Teil schon? Der Einstufungstest überspringt ganze Module — ein Versuch je Aufgabe, alles muss stimmen.
+          </p>
+        </div>
+      </section>
+
+      {/* Dranbleiben */}
+      <section className="max-w-6xl mx-auto px-5 py-20">
+        <div className="text-center mb-12">
+          <h2 className="font-display text-4xl font-extrabold mb-3">Dranbleiben, ohne sich zu <span className="ld-gradient-text">zwingen</span></h2>
+          <p className="text-[#8A9BC0] text-lg max-w-2xl mx-auto">
+            Programmieren lernt man in kleinen Portionen über Wochen — nicht an einem Wochenende.
+            Alles hier ist darauf gebaut, morgen wiederzukommen.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { icon: "flamme", color: "#F59E0B", t: "Tagesserie", d: "Gezählt werden Kalendertage. Wer abends und am nächsten Morgen lernt, hat zwei." },
+            { icon: "medal", color: "#F7C948", t: "Wochenliga", d: "Sechs Ligen von Bronze bis Meister. Die besten drei steigen auf, die letzten drei ab." },
+            { icon: "stern", color: "#4F8EF7", t: "20 Level", d: "Vom Rookie zum Code Wizard. XP gibt es nur für wirklich gelöste Aufgaben." },
+            { icon: "crown", color: "#7C3AED", t: "XP-Shop", d: "Schutzschilde, Tipp-Joker, doppelte XP — bezahlt wird mit XP, nie mit Geld." },
+          ].map((f, i) => (
+            <Card key={i} hover className="p-6 text-center">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: f.color + "1A" }}>
+                <LdIcon name={f.icon} size={26} color={f.color} />
+              </div>
+              <p className="font-display font-bold mb-1.5">{f.t}</p>
+              <p className="text-xs text-[#8A9BC0] leading-relaxed">{f.d}</p>
+            </Card>
+          ))}
+        </div>
+
+        <Card className="p-6 mt-6">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="flex items-center gap-2 shrink-0">
+              {streakWeek({ streak: 5, lastActive: todayKey() }).map((d, i) => (
+                <div key={i} className="text-center">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-1 ${d.active ? "bg-[#F59E0B]/20" : "bg-[#141D35]"}`}>
+                    <LdIcon name="flamme" size={16} color={d.active ? "#F59E0B" : "#2A3F6F"} />
+                  </div>
+                  <span className="text-[10px] text-[#4A5A7A]">{d.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <p className="font-display font-bold mb-1">Fünf Tage am Stück</p>
+              <p className="text-sm text-[#8A9BC0] leading-relaxed">
+                Verpasst du einen Tag, rettet ein Schutzschild aus dem Shop deine Serie — einmal.
+                Danach fängst du wieder bei eins an. Das ist der Punkt.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* Vergleich */}
+      <section className="bg-[#0F1629] border-y border-[#1E2D4A] py-20">
+        <div className="max-w-4xl mx-auto px-5">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-4xl font-extrabold mb-3">Warum nicht einfach <span className="ld-gradient-text">Videos</span>?</h2>
+            <p className="text-[#8A9BC0] text-lg">Weil Zuschauen sich nach Lernen anfühlt, ohne eines zu sein.</p>
+          </div>
+          <Card className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[560px]">
+              <thead className="border-b border-[#1E2D4A]">
+                <tr className="text-[#8A9BC0]">
+                  <th className="px-5 py-3 font-medium"></th>
+                  <th className="px-5 py-3 font-medium">Video-Kurs</th>
+                  <th className="px-5 py-3 font-medium">Buch</th>
+                  <th className="px-5 py-3 font-display font-bold text-[#4F8EF7]">LearnDeveloping</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1E2D4A]">
+                {[
+                  ["Selbst tippen", "selten", "abtippen", "immer"],
+                  ["Rückmeldung", "keine", "keine", "sofort, in Millisekunden"],
+                  ["Fehler erklärt", "nein", "nein", "welcher Baustein fehlt"],
+                  ["Fortschritt sichtbar", "Prozent des Videos", "Seitenzahl", "gelöste Aufgaben"],
+                  ["Editor dabei", "nein", "nein", "vollwertige IDE"],
+                  ["Kosten", "20–200 €", "30–60 €", "0 €"],
+                ].map((row, i) => (
+                  <tr key={i}>
+                    <td className="px-5 py-3 text-[#E8EDF5] font-medium">{row[0]}</td>
+                    <td className="px-5 py-3 text-[#4A5A7A]">{row[1]}</td>
+                    <td className="px-5 py-3 text-[#4A5A7A]">{row[2]}</td>
+                    <td className="px-5 py-3 text-[#10B981]">{row[3]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+          <p className="text-center text-xs text-[#4A5A7A] mt-5 leading-relaxed">
+            Videos und Bücher sind nicht schlecht — sie sind nur etwas anderes. Sie erklären.
+            Hier schreibst du.
+          </p>
+        </div>
+      </section>
+
+      {/* Häufige Fragen */}
+      <section className="max-w-3xl mx-auto px-5 py-20">
+        <div className="text-center mb-10">
+          <h2 className="font-display text-4xl font-extrabold mb-3">Häufige Fragen</h2>
+          <p className="text-[#8A9BC0] text-lg">Kurz und ohne Marketing.</p>
+        </div>
+        <div className="space-y-3">
+          {[
+            ["Brauche ich Vorkenntnisse?", "Nein. Der HTML-Kurs beginnt bei der Frage, was ein Tag überhaupt ist. Wer schon etwas kann, überspringt Module per Einstufungstest."],
+            ["Muss ich etwas installieren?", "Nein. Editor, Vorschau und Prüfung laufen im Browser. Python führt die Seite sogar selbst aus — ohne Installation."],
+            ["Kostet das wirklich nichts?", "Ja. Keine Kreditkarte, kein Abo, keine Testphase, keine Werbung. Die Prüfung läuft auf deinem Gerät und kostet uns deshalb nichts."],
+            ["Kann ich ohne Konto starten?", "Ja, als Gast. Dann wird allerdings nichts gespeichert — Fortschritt, Serie und Projekte sind beim Neuladen weg."],
+            ["Wie werden meine Antworten geprüft?", "Von einer Analyse, die den Code zerlegt: Kommentare und Zeichenketten abtrennen, Klammern prüfen, Deklarationen und Aufrufe einsammeln, mit der Aufgabe abgleichen. Keine KI, kein Netzwerk."],
+            ["Werden meine Daten weitergegeben?", "Nein. Ohne Konto verlässt nichts dein Gerät. Mit Konto liegen Name, E-Mail und Fortschritt auf dem Server — sonst nichts."],
+            ["Kann ich das im Unterricht einsetzen?", "Ja. Lehrkräfte legen mit einem Schul-Code eine Klasse an, sehen jeden Fortschritt und schreiben eigene Level."],
+            ["Was ist, wenn eine Aufgabe falsch bewertet wird?", "Unter jeder Bewertung gibt es einen Melden-Knopf. Mehrere Verbesserungen an der Prüfung stammen genau daher."],
+          ].map(([q, a], i) => (
+            <details key={i} className="group">
+              <summary className="cursor-pointer list-none">
+                <Card className="p-4 flex items-center gap-3">
+                  <ChevronRight size={15} className="text-[#4F8EF7] shrink-0 transition-transform group-open:rotate-90" />
+                  <span className="font-medium text-[#E8EDF5]">{q}</span>
+                </Card>
+              </summary>
+              <p className="text-sm text-[#8A9BC0] leading-relaxed px-4 py-3 -mt-1">{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* Abschluss */}
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0" style={{ background: "radial-gradient(60% 60% at 50% 40%, rgba(79,142,247,0.10), transparent 70%)" }} />
+        <div className="relative max-w-2xl mx-auto px-5 text-center">
+          <h2 className="font-display text-4xl sm:text-5xl font-extrabold mb-4">
+            Die erste Zeile schreibt sich <span className="ld-gradient-text">nicht von allein</span>.
+          </h2>
+          <p className="text-[#8A9BC0] text-lg mb-8 leading-relaxed">
+            {TOTAL_LESSONS} Lektionen, {COURSES.length} Sprachen, eine vollwertige Entwicklungsumgebung.
+            Kostenlos, ohne Installation, ohne Konto zum Ausprobieren.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Btn size="lg" icon={Rocket} onClick={() => navigate("register")}>Jetzt kostenlos starten</Btn>
+            <Btn size="lg" variant="secondary" icon={Code2} onClick={() => navigate("ide")}>Editor ansehen</Btn>
+          </div>
+          <p className="text-xs text-[#4A5A7A] mt-6">Keine Kreditkarte · Kein Abo · Jederzeit löschbar</p>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-[#1E2D4A] py-10">
         <div className="max-w-6xl mx-auto px-5 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -8383,6 +8931,98 @@ Neben Einzellernenden richtet sich LearnDeveloping gezielt an Schulen und Lehrkr
 
 > 💡 **Hinweis:** Dies ist eine Platzhalter-Seite für die Produktvorstellung und kann durch echte Unternehmens-/Teaminformationen ersetzt werden.`,
 };
+
+/* =========================== Cookie-Hinweis ==============================
+   Ehrlich statt aufdringlich: Diese Seite setzt **keine** Werbe- oder
+   Analyse-Cookies. Gespeichert wird nur, was für den Betrieb nötig ist —
+   der Anmelde-Cookie und dein Fortschritt im lokalen Speicher.
+
+   Für rein technisch notwendige Speicherung braucht es keine Einwilligung,
+   wohl aber eine Information. Genau das ist dieser Hinweis: er erklärt, was
+   gespeichert wird, und verschwindet auf Knopfdruck endgültig.
+   ========================================================================= */
+const COOKIE_NOTICE_KEY = "learndeveloping_cookie_notice";
+
+function cookieNoticeSeen() {
+  try { return localStorage.getItem(COOKIE_NOTICE_KEY) === "v1"; } catch (e) { return true; }
+}
+
+function CookieNotice({ ctx }) {
+  const [open, setOpen] = useState(() => !cookieNoticeSeen());
+  const [details, setDetails] = useState(false);
+  if (!open) return null;
+
+  const close = () => {
+    try { localStorage.setItem(COOKIE_NOTICE_KEY, "v1"); } catch (e) {}
+    setOpen(false);
+  };
+
+  const rows = [
+    { name: "ld_session", art: "Cookie", zweck: "Hält dich angemeldet. Nur mit Konto und nur bei aktivem Server.", dauer: "30 Tage" },
+    { name: "learndeveloping_v1", art: "Lokaler Speicher", zweck: "Dein Fortschritt, wenn kein Server genutzt wird.", dauer: "bis du ihn löschst" },
+    { name: "learndeveloping_sound", art: "Lokaler Speicher", zweck: "Ob Töne ein- oder ausgeschaltet sind.", dauer: "bis du ihn löschst" },
+    { name: "learndeveloping_cookie_notice", art: "Lokaler Speicher", zweck: "Merkt sich, dass du diesen Hinweis gelesen hast.", dauer: "bis du ihn löschst" },
+  ];
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-[90] p-3 sm:p-5" role="dialog" aria-label="Hinweis zu Cookies">
+      <div className="max-w-3xl mx-auto bg-[#0F1629] border border-[#1E2D4A] rounded-2xl shadow-2xl overflow-hidden">
+        <div className="p-5 flex flex-col sm:flex-row items-start gap-4">
+          <span className="w-11 h-11 rounded-xl bg-[#4F8EF7]/10 flex items-center justify-center shrink-0">
+            <ShieldCheck size={20} className="text-[#4F8EF7]" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-bold mb-1">Nur das Nötigste wird gespeichert</p>
+            <p className="text-sm text-[#8A9BC0] leading-relaxed">
+              Kein Tracking, keine Werbung, keine Weitergabe an Dritte. Gespeichert wird ausschließlich,
+              was die Seite zum Funktionieren braucht: dein Anmeldestatus und dein Lernfortschritt.
+              Ohne Konto verlässt überhaupt nichts dein Gerät.
+            </p>
+            <button onClick={() => setDetails((d) => !d)}
+              className="text-xs text-[#4F8EF7] hover:underline mt-2 flex items-center gap-1">
+              <ChevronRight size={10} className={details ? "rotate-90 transition-transform" : "transition-transform"} />
+              {details ? "Details ausblenden" : "Was genau gespeichert wird"}
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <Btn size="sm" variant="ghost" onClick={() => { close(); ctx.navigate("datenschutz"); }}>Datenschutz</Btn>
+            <Btn size="sm" icon={Check} onClick={close}>Verstanden</Btn>
+          </div>
+        </div>
+
+        {details && (
+          <div className="border-t border-[#1E2D4A] overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#0A0E1A] text-[#4A5A7A]">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Name</th>
+                  <th className="px-4 py-2 font-medium">Art</th>
+                  <th className="px-4 py-2 font-medium">Zweck</th>
+                  <th className="px-4 py-2 font-medium">Dauer</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1E2D4A]">
+                {rows.map((r) => (
+                  <tr key={r.name}>
+                    <td className="px-4 py-2 font-code text-[#C9D6F0] whitespace-nowrap">{r.name}</td>
+                    <td className="px-4 py-2 text-[#8A9BC0] whitespace-nowrap">{r.art}</td>
+                    <td className="px-4 py-2 text-[#8A9BC0]">{r.zweck}</td>
+                    <td className="px-4 py-2 text-[#4A5A7A] whitespace-nowrap">{r.dauer}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="px-4 py-3 text-[11px] text-[#4A5A7A] leading-relaxed">
+              Es gibt hier nichts abzulehnen: Ohne diese Einträge kannst du dich nicht anmelden und dein
+              Fortschritt ginge bei jedem Neuladen verloren. Löschen kannst du alles jederzeit über die
+              Einstellungen deines Browsers.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function LegalPage({ ctx, page }) {
   const { navigate } = ctx;
