@@ -4282,12 +4282,1438 @@ const PRACTICE_BANK = {
   ],
 };
 
+/* ===================== Aufgaben zum Thema der Lektion =====================
+   Der Lehrplan hat 2730 Lektionen, die Übungssätze oben decken davon nur die
+   Grundlagen ab. Bisher wurde per Streuwert einer davon gezogen — mit dem
+   Ergebnis, dass die Lektion „Decorators: Funktionen umhüllen" nach einem
+   Dictionary fragte. Eine Aufgabe, die nichts mit dem Thema zu tun hat, ist
+   schlimmer als gar keine: Sie verwirrt und wirkt zufällig.
+
+   Deshalb wird jetzt zuerst am Titel erkannt, worum es geht, und dann eine
+   Aufgabe zu genau diesem Thema gestellt. Nur wenn kein Thema erkennbar ist,
+   greift die alte Rotation als Auffanglösung.
+   ========================================================================= */
+
+/* Titel -> Thema. Die Reihenfolge zählt: Das erste Muster, das passt,
+   gewinnt. Deshalb stehen die spezielleren Begriffe oben — „Array-Methoden"
+   soll als `sammlung` erkannt werden und nicht als `funktion`, nur weil das
+   Wort „Methode" darin vorkommt. */
+const TOPIC_RULES = [
+  /* Sprachspezifisch zuerst: Innerhalb des CSS-Kurses ist „Flexbox-Grundlagen"
+     eine Flexbox-Lektion und keine über Variablen, auch wenn „Grundlagen"
+     darin vorkommt. Diese Regeln gelten ohnehin nur für ihren Kurs. */
+  // ---- HTML ----
+  ["html_formular",  /formular|input|eingabefeld|select|textarea|button|label/i],
+  ["html_tabelle",   /tabelle|table|spalte und zeile/i],
+  ["html_medien",    /bild|image|video|audio|medien|grafik|picture/i],
+  ["html_link",      /link|navigation|anker|verweis|href|menü/i],
+  ["html_liste",     /aufzählung|ungeordnete|geordnete/i],
+  ["html_semantik",  /semantisch|barrierefrei|aria|accessibility|header, main|section|article/i],
+  ["html_meta",      /meta|seo|head\b|titel der seite|open graph|favicon/i],
+  ["html_text",      /überschrift|absatz|text und struktur|hervorheb|zitat|entit/i],
+
+  // ---- CSS ----
+  ["css_grid",       /\bgrid\b|raster/i],
+  ["css_flex",       /flex/i],
+  ["css_responsive", /responsive|media quer|breakpoint|mobil/i],
+  ["css_animation",  /animation|transition|übergang|transform|keyframe/i],
+  ["css_position",   /position|fluss|float|z-index|schweb|sticky/i],
+  ["css_box",        /box-model|box model|abstand|padding|margin|rahmen|border|größe/i],
+  ["css_text",       /schrift|font|typograf/i],
+  ["css_farbe",      /farbe|color|hintergrund|verlauf|gradient/i],
+  ["css_selektor",   /selektor|spezifität|pseudo|klasse und id|kaskade/i],
+
+  // ---- SQL ----
+  ["sql_join",       /join|verknüpf|beziehung|fremdschlüssel/i],
+  ["sql_gruppe",     /gruppier|group by|aggregat|summe|durchschnitt|count|having/i],
+  ["sql_aendern",    /insert|update|delete|daten ändern|einfügen|löschen|schreiben/i],
+  ["sql_entwurf",    /tabelle entwerf|datenmodell|normalis|create table|schema|index/i],
+  ["sql_filter",     /filter|where|bedingung|suchen|like|null/i],
+  ["sql_abfrage",    /abfrage|select|sortier|order by|limit|lesen/i],
+
+  // ---- React / Vue ----
+  ["fe_formular",    /formular|eingabe|v-model|controlled/i],
+  ["fe_liste",       /liste|tabelle|v-for|schlüsselattribut/i],
+  ["fe_effekt",      /useeffect|effekt|lebenszyklus|mounted|nebenwirkung|daten laden/i],
+  ["fe_state",       /state|zustand|usestate|reaktiv|ref\b|store/i],
+  ["fe_props",       /props|eigenschaft|komponente|jsx|template|direktive/i],
+  ["fe_event",       /event|klick|ereignis|onclick|v-on/i],
+
+  // ---- übergreifend, spezifisch zuerst ----
+  ["vererbung",   /vererb|polymorph|interface|schnittstell|trait|abstrakt|superclass/i],
+  ["klasse",      /klasse|objekt(?!literal)|oop|konstruktor|struct|instanz|data class|kapselung/i],
+  ["fehler",      /fehler|ausnahme|exception|try|catch|except|panic|result|error|debug/i],
+  ["async",       /async|await|nebenläufig|nebenlaeufig|coroutine|goroutine|thread|promise|parallel|future/i],
+  ["modul",       /modul|paket|package|import|namespace|bibliothek|crate|pip|npm|abhängigkeit/i],
+  ["datei",       /datei|file|lesen und schreiben|pfad|verzeichnis|csv|stream/i],
+  ["test",        /test|pytest|junit|unittest|qualität|prüfen und messen|assert/i],
+  ["generics",    /generic|template|typparameter|typvariable/i],
+  ["speicher",    /zeiger|pointer|speicher|ownership|borrow|lebensdauer|referenz|malloc|smart pointer/i],
+  ["sammlung",    /liste|array|vektor|slice|sammlung|collection|tupel|menge|set\b|stack|queue|comprehension/i],
+  ["abbildung",   /dictionar|wörterbuch|woerterbuch|hashmap|\bmap\b|schlüssel|key-value|objektliteral|json/i],
+  ["string",      /string|zeichenkette|text verarbeit|zeichen|formatier|regulär|regex/i],
+  ["schleife",    /schleife|loop|iterat|wiederhol|durchlauf|for\b|while/i],
+  ["bedingung",   /bedingung|verzweig|if\b|else|switch|match|kontrollfluss|vergleich|logisch/i],
+  ["funktion",    /funktion|methode|parameter|rückgabe|lambda|closure|rekursion/i],
+  ["operator",    /operator|rechnen|arithmet|zahl|mathemat/i],
+
+  /* Themen, die im Lehrplan eigene Namen tragen, inhaltlich aber auf einem
+     der Bausteine oben aufsetzen. Ohne diese Zeilen bliebe ein Viertel der
+     Lektionen ohne erkanntes Thema — und bekäme wieder eine beliebige
+     Aufgabe. */
+  ["async",       /\bapi\b|rest|http|fetch|anfrage|request|endpunkt|server|route|router|webserver|netzwerk|socket|e-?mail versenden/i],
+  ["fehler",      /sicherheit|injection|\bxss\b|csrf|escap|validier|transaktion|commit|rollback|isolation|absicher|angriff/i],
+  ["abbildung",   /datenbank|\bpdo\b|\borm\b|migration|persistenz|datenhaltung|serialisier/i],
+  ["speicher",    /performance|leistung|optimier|profil|cache|laufzeit|geschwindigkeit|indizes|\bindex\b/i],
+  ["klasse",      /muster|pattern|architektur|entwerf|projekt (?:bauen|planen)|konvention|sauber programmieren|refactor|komponente/i],
+  ["modul",       /ausliefern|deploy|betrieb|veröffentlich|\bbuild\b|bauen und|werkzeug|composer|autoload|linter|formatier/i],
+  ["funktion",    /\bdom\b|queryselector|getelementbyid|scope function|destrukturier|\bdsl\b|infix|hook/i],
+  ["string",      /vorlage|ausgabe puffer|übersetzung|lokalisier|zeit und formate|datum/i],
+  ["generics",    /narrowing|type guard|utility type|conditional type|readonly|optional &|typisierung/i],
+  ["operator",    /\bbit\b|hexadezimal|binär|präprozessor|makro/i],
+  ["sammlung",    /daten aus|datenqualität|bericht|auswert|große datenmengen|text verarbeit/i],
+
+  ["variable",    /variable|datentyp|typen|konstante|deklaration|zuweisung|basics|einstieg|grundlagen|hello world|setup|installier/i],
+];
+
+/* Welche Themen-Vorsilbe gehört zu welchem Kurs. Ohne diese Zuordnung würde
+   eine SQL-Lektion über „Tabellen entwerfen" bei der HTML-Regel für
+   `<table>` landen — beides heißt Tabelle, meint aber Grundverschiedenes. */
+const TOPIC_SCOPES = {
+  html_: ["html"],
+  css_: ["css"],
+  sql_: ["sql"],
+  fe_: ["react", "vue"],
+};
+
+function topicAllowed(topic, courseId) {
+  for (const [prefix, courses] of Object.entries(TOPIC_SCOPES)) {
+    if (topic.startsWith(prefix)) return courses.includes(courseId);
+  }
+  return true;
+}
+
+/** Erkennt das Thema einer Lektion an ihrem Titel. */
+function topicOf(title, courseId) {
+  const text = String(title || "");
+  for (const [topic, re] of TOPIC_RULES) {
+    if (!topicAllowed(topic, courseId)) continue;
+    if (re.test(text)) return topic;
+  }
+  return null;
+}
+
+/* Aufgaben nach Thema. Aufbau wie bei den Übungssätzen oben, aber nach
+   Sprache UND Thema abgelegt — so bekommt jede Lektion eine Aufgabe, die
+   zu ihrer Überschrift passt. */
+const TOPIC_EXERCISES = {
+  c: {
+    bedingung: {
+      blank: { template: "Eine Bedingung steht in ___ Klammern, der Block in ___ Klammern.", blanks: [["runden", "runde", "()"], ["geschweiften", "geschweifte", "{}"]] },
+      code: { question: "Prüfe, ob `alter` mindestens 18 ist, und gib eine passende Meldung aus.",
+        solution: "if (alter >= 18) {\n    printf(\"volljaehrig\\n\");\n} else {\n    printf(\"minderjaehrig\\n\");\n}",
+        concepts: ["if", "alter", "18", "else", "printf"] },
+      mc: { question: "Was ist an `if (x = 5)` gefährlich?",
+        options: ["nichts", "es weist zu statt zu vergleichen und ist immer wahr", "es ist zu langsam", "es ist ein Syntaxfehler"],
+        correct: 1, why: "Der Vergleich heißt `==` — deshalb warnen Compiler an dieser Stelle." },
+    },
+    funktion: {
+      blank: { template: "Vor der Nutzung braucht eine Funktion eine ___, ihr Ergebnis liefert ___.", blanks: [["Deklaration", "Prototyp"], ["return"]] },
+      code: { question: "Schreibe eine Funktion `verdopple`, die eine int nimmt und das Doppelte zurückgibt.",
+        solution: "int verdopple(int zahl) {\n    return zahl * 2;\n}",
+        concepts: ["int", "verdopple", "return"] },
+      mc: { question: "Was bedeutet `void` als Rückgabetyp?",
+        options: ["die Funktion gibt 0 zurück", "die Funktion gibt nichts zurück", "die Funktion hat keine Parameter", "die Funktion ist leer"],
+        correct: 1, why: "`int main(void)` heißt umgekehrt: keine Parameter, aber ein int-Ergebnis." },
+    },
+    klasse: {
+      blank: { template: "Mehrere Felder fasst ein ___ zusammen; auf ein Feld greift man mit dem ___ zu.", blanks: [["struct"], ["Punkt", "."]] },
+      code: { question: "Definiere einen struct `Punkt` mit den Feldern `x` und `y`.",
+        solution: "struct Punkt {\n    int x;\n    int y;\n};",
+        concepts: ["struct", "Punkt", "int", "x", "y"] },
+      mc: { question: "Wie greift man über einen Zeiger auf ein Feld zu?",
+        options: ["mit .", "mit ->", "mit &", "mit *"],
+        correct: 1, why: "`p->x` ist die Kurzform für `(*p).x`." },
+    },
+    sammlung: {
+      blank: { template: "Ein Array beginnt beim Index ___; seine Größe steht ___ fest.", blanks: [["0", "null"], ["beim Übersetzen", "vorher", "fest"]] },
+      code: { question: "Lege ein Array `zahlen` mit drei Werten an und gib das erste aus.",
+        solution: "int zahlen[3] = {1, 2, 3};\nprintf(\"%d\\n\", zahlen[0]);",
+        concepts: ["int", "zahlen", "printf"] },
+      mc: { question: "Was passiert bei einem Zugriff über das Array-Ende hinaus?",
+        options: ["ein Fehler beim Übersetzen", "undefiniertes Verhalten — es kann alles passieren", "es kommt 0 zurück", "das Array wächst"],
+        correct: 1, why: "C prüft die Grenzen nicht — das muss der Code selbst tun." },
+    },
+    schleife: {
+      blank: { template: "Die klassische Zählschleife ist ___, die kopfgesteuerte ___.", blanks: [["for"], ["while"]] },
+      code: { question: "Gib die Zahlen 0 bis 4 mit einer for-Schleife aus.",
+        solution: "for (int i = 0; i < 5; i++) {\n    printf(\"%d\\n\", i);\n}",
+        concepts: ["for", "printf", "int"] },
+      mc: { question: "Woraus besteht der Kopf einer for-Schleife?",
+        options: ["nur aus der Bedingung", "aus Start, Bedingung und Schritt", "aus Start und Ende", "aus einem Zähler"],
+        correct: 1, why: "Alle drei Teile sind optional — `for (;;)` läuft endlos." },
+    },
+    speicher: {
+      blank: { template: "Die Adresse einer Variablen liefert ___, den Wert hinter einem Zeiger ___.", blanks: [["&"], ["*"]] },
+      code: { question: "Fordere Speicher für 10 int-Werte an und gib ihn danach wieder frei.",
+        solution: "#include <stdlib.h>\n\nint *zahlen = malloc(10 * sizeof(int));\n\nfree(zahlen);",
+        concepts: ["malloc", "int", "free"] },
+      mc: { question: "Was passiert, wenn man `free` vergisst?",
+        options: ["nichts", "der Speicher bleibt bis zum Programmende belegt", "das Programm stürzt ab", "der Compiler meckert"],
+        correct: 1, why: "Bei lang laufenden Programmen wächst der Verbrauch dadurch immer weiter." },
+    },
+    string: {
+      blank: { template: "Ein C-String endet mit dem Zeichen ___, seine Länge liefert ___.", blanks: [["\\\\0", "Nullbyte"], ["strlen"]] },
+      code: { question: "Gib die Länge des Strings `name` aus.",
+        solution: "#include <string.h>\n\nprintf(\"%zu\\n\", strlen(name));",
+        concepts: ["#include", "strlen", "name", "printf"] },
+      mc: { question: "Warum ist `strcpy` gefährlich?",
+        options: ["es ist langsam", "es prüft die Zielgröße nicht und kann darüber hinausschreiben", "es ist veraltet", "es kopiert nur ein Zeichen"],
+        correct: 1, why: "Sicherer sind Varianten, denen man die Zielgröße mitgibt." },
+    },
+    variable: {
+      blank: { template: "In C steht der ___ vor dem Namen. Eine ganze Zahl hat den Typ ___.", blanks: [["Typ", "Datentyp"], ["int"]] },
+      code: { question: "Lege eine ganze Zahl `alter` mit dem Wert 17 an und gib sie aus.",
+        solution: "#include <stdio.h>\n\nint main(void) {\n    int alter = 17;\n    printf(\"%d\\n\", alter);\n    return 0;\n}",
+        concepts: ["#include", "int main", "alter", "printf", "return"] },
+      mc: { question: "Was gibt `%d` in printf aus?",
+        options: ["einen String", "eine ganze Zahl", "eine Kommazahl", "ein Zeichen"],
+        correct: 1, why: "Für Kommazahlen nimmt man `%f`, für Strings `%s`." },
+    },
+  },
+  cpp: {
+    bedingung: {
+      blank: { template: "Eine Bedingung steht in ___ Klammern, der Block in ___ Klammern.", blanks: [["runden", "runde", "()"], ["geschweiften", "geschweifte", "{}"]] },
+      code: { question: "Prüfe, ob `alter` mindestens 18 ist, und gib eine passende Meldung aus.",
+        solution: "if (alter >= 18) {\n    std::cout << \"volljaehrig\" << std::endl;\n} else {\n    std::cout << \"minderjaehrig\" << std::endl;\n}",
+        concepts: ["if", "alter", "18", "else", ["cout", "std::cout"]] },
+      mc: { question: "Was ist ein Bereichs-`for` (`for (auto x : v)`)?",
+        options: ["eine Endlosschleife", "eine Schleife über alle Elemente eines Containers", "eine Schleife mit Zähler", "veraltet"],
+        correct: 1, why: "Sie ist kürzer und schließt Zählfehler aus." },
+    },
+    fehler: {
+      blank: { template: "Eine Ausnahme wirft ___, gefangen wird sie mit ___.", blanks: [["throw"], ["catch"]] },
+      code: { question: "Wirf eine Ausnahme, wenn `b` null ist.",
+        solution: "#include <stdexcept>\n\nif (b == 0) {\n    throw std::runtime_error(\"Division durch null\");\n}",
+        concepts: ["#include", "if", "throw"] },
+      mc: { question: "Was fängt `catch (...)`?",
+        options: ["nichts", "jede Ausnahme", "nur Standardausnahmen", "nur eigene Ausnahmen"],
+        correct: 1, why: "Nützlich als letzte Sicherung — aber ohne Typ weiß man nicht, was schiefging." },
+    },
+    funktion: {
+      blank: { template: "Der Rückgabetyp steht ___ dem Namen, ein Ergebnis liefert ___.", blanks: [["vor"], ["return"]] },
+      code: { question: "Schreibe eine Funktion `verdopple`, die eine int nimmt und das Doppelte zurückgibt.",
+        solution: "int verdopple(int zahl) {\n    return zahl * 2;\n}",
+        concepts: ["int", "verdopple", "return"] },
+      mc: { question: "Was bewirkt die Übergabe als `const int&`?",
+        options: ["nichts", "der Wert wird nicht kopiert und kann nicht geändert werden", "der Wert wird kopiert", "die Funktion wird schneller kompiliert"],
+        correct: 1, why: "Bei großen Objekten spart das die Kopie, ohne Änderungen zu erlauben." },
+    },
+    klasse: {
+      blank: { template: "Eine Klasse beginnt mit ___, von außen erreichbar ist der ___-Bereich.", blanks: [["class"], ["public"]] },
+      code: { question: "Schreibe eine Klasse `Hund` mit einem Konstruktor, der `name` speichert.",
+        solution: "class Hund {\npublic:\n    Hund(std::string name) : name_(name) {}\nprivate:\n    std::string name_;\n};",
+        concepts: ["class", "Hund", "public", "private", "name"] },
+      mc: { question: "Was ist der Unterschied zwischen `class` und `struct` in C++?",
+        options: ["ein großer", "nur die Standard-Sichtbarkeit: private bzw. public", "struct hat keine Methoden", "class hat keine Felder"],
+        correct: 1, why: "Technisch sind beide gleichwertig." },
+    },
+    sammlung: {
+      blank: { template: "Ein wachsender Container ist der ___, ein Element hängt ___ an.", blanks: [["vector", "std::vector"], ["push_back"]] },
+      code: { question: "Lege einen `std::vector<int>` namens `zahlen` an und füge die 5 hinzu.",
+        solution: "#include <vector>\n\nstd::vector<int> zahlen;\nzahlen.push_back(5);",
+        concepts: [["vector", "std::vector"], "zahlen", "push_back"] },
+      mc: { question: "Warum meist `std::vector` statt eines C-Arrays?",
+        options: ["es ist schneller", "er verwaltet seinen Speicher selbst und kennt seine Größe", "Arrays gibt es nicht", "aus Gewohnheit"],
+        correct: 1, why: "Der Vector räumt am Ende selbst auf — das erspart die häufigsten Speicherfehler." },
+    },
+    speicher: {
+      blank: { template: "Alleinbesitz zeigt ___ an, geteilten Besitz ___.", blanks: [["unique_ptr", "std::unique_ptr"], ["shared_ptr", "std::shared_ptr"]] },
+      code: { question: "Lege mit `std::unique_ptr` ein `int` auf dem Heap an.",
+        solution: "#include <memory>\n\nauto zahl = std::make_unique<int>(5);",
+        concepts: ["#include", "make_unique", "zahl"] },
+      mc: { question: "Warum Smart Pointer statt `new` und `delete`?",
+        options: ["sie sind schneller", "sie geben den Speicher automatisch frei — auch bei einer Ausnahme", "new ist verboten", "es gibt keinen Unterschied"],
+        correct: 1, why: "Damit verschwindet eine ganze Klasse von Speicherfehlern." },
+    },
+    string: {
+      blank: { template: "Ein Text hat den Typ ___, seine Länge liefert ___.", blanks: [["string", "std::string"], ["size", "length"]] },
+      code: { question: "Gib den Text `Hallo` mit std::cout auf der Konsole aus.",
+        solution: "#include <iostream>\n\nint main() {\n    std::cout << \"Hallo\" << std::endl;\n    return 0;\n}",
+        concepts: ["#include", "int main", ["cout", "std::cout"], "Hallo"] },
+      mc: { question: "Was bewirkt `std::endl` gegenüber `\"\\n\"`?",
+        options: ["nichts", "es leert zusätzlich den Ausgabepuffer", "es ist schneller", "es schreibt zwei Zeilenumbrüche"],
+        correct: 1, why: "In Schleifen ist `\"\\n\"` deshalb oft die bessere Wahl." },
+    },
+    variable: {
+      blank: { template: "Den Typ kann der Compiler mit ___ ableiten; unveränderlich macht ___.", blanks: [["auto"], ["const"]] },
+      code: { question: "Lege eine ganze Zahl `alter` mit 17 an und gib sie aus.",
+        solution: "#include <iostream>\n\nint main() {\n    int alter = 17;\n    std::cout << alter << std::endl;\n    return 0;\n}",
+        concepts: ["#include", "int main", "alter", ["cout", "std::cout"], "return"] },
+      mc: { question: "Was macht `auto` bei `auto x = 5;`?",
+        options: ["x ist typlos", "der Compiler leitet den Typ aus dem Wert ab", "x ist ein Zeiger", "x ist eine Variable ohne Wert"],
+        correct: 1, why: "Der Typ steht trotzdem beim Übersetzen fest — nur ausgeschrieben wird er nicht." },
+    },
+  },
+  css: {
+    css_animation: {
+      blank: { template: "Eine sanfte Änderung erzeugt ___, wiederkehrende Bewegung ___ mit @keyframes.", blanks: [["transition"], ["animation"]] },
+      code: { question: "Lass die Hintergrundfarbe von `.knopf` in 0.3s weich wechseln.",
+        solution: ".knopf {\n  transition: background-color 0.3s;\n}",
+        concepts: [".knopf", "transition", "0.3s"] },
+      mc: { question: "Welche Eigenschaften lassen sich am flüssigsten animieren?",
+        options: ["width und height", "transform und opacity", "margin und padding", "alle gleich gut"],
+        correct: 1, why: "`transform` und `opacity` kommen ohne neues Layout aus — das bleibt ruckelfrei." },
+    },
+    css_box: {
+      blank: { template: "Der Abstand nach innen heißt ___, der nach außen ___.", blanks: [["padding"], ["margin"]] },
+      code: { question: "Gib der Klasse `karte` 16px Innenabstand und einen 1px breiten grauen Rahmen.",
+        solution: ".karte {\n  padding: 16px;\n  border: 1px solid gray;\n}",
+        concepts: [".karte", "padding", "16px", "border", "1px"] },
+      mc: { question: "Was bewirkt `box-sizing: border-box`?",
+        options: ["nichts Sichtbares", "Rahmen und Innenabstand zählen zur angegebenen Breite", "es entfernt den Rahmen", "es zentriert das Element"],
+        correct: 1, why: "Ohne diese Angabe wird ein Element mit `width: 100%` plus Padding breiter als sein Elternteil." },
+    },
+    css_farbe: {
+      blank: { template: "Die Textfarbe setzt ___, die Hintergrundfarbe ___.", blanks: [["color"], ["background-color", "background"]] },
+      code: { question: "Gib der Klasse `hinweis` weißen Text auf blauem Grund.",
+        solution: ".hinweis {\n  color: white;\n  background-color: blue;\n}",
+        concepts: [".hinweis", "color", "background"] },
+      mc: { question: "Was beschreibt der vierte Wert bei `rgba(0, 0, 0, 0.5)`?",
+        options: ["die Helligkeit", "die Deckkraft", "den Farbton", "die Sättigung"],
+        correct: 1, why: "0 ist vollständig durchsichtig, 1 vollständig deckend." },
+    },
+    css_flex: {
+      blank: { template: "Ein Flex-Container entsteht mit display: ___, den Abstand dazwischen setzt ___.", blanks: [["flex"], ["gap"]] },
+      code: { question: "Ordne die Kinder von `.leiste` nebeneinander an, zentriert und mit 12px Abstand.",
+        solution: ".leiste {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n}",
+        concepts: [".leiste", "display", "flex", "gap"] },
+      mc: { question: "Was macht `justify-content` bei `flex-direction: row`?",
+        options: ["verteilt senkrecht", "verteilt waagerecht entlang der Hauptachse", "ändert die Reihenfolge", "setzt die Breite"],
+        correct: 1, why: "`justify-content` arbeitet auf der Hauptachse, `align-items` quer dazu." },
+    },
+    css_grid: {
+      blank: { template: "Ein Raster entsteht mit display: ___, die Spalten legt ___ fest.", blanks: [["grid"], ["grid-template-columns"]] },
+      code: { question: "Baue mit `.raster` drei gleich breite Spalten mit 12px Abstand.",
+        solution: ".raster {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 12px;\n}",
+        concepts: [".raster", "display", "grid", "grid-template-columns", "gap"] },
+      mc: { question: "Was bedeutet die Einheit `1fr`?",
+        options: ["1 Pixel", "ein Anteil am freien Platz", "1 Prozent", "eine feste Breite"],
+        correct: 1, why: "`repeat(3, 1fr)` teilt den Platz in drei gleich große Anteile." },
+    },
+    css_position: {
+      blank: { template: "Fest am Bildschirm klebt ___, relativ zum Elternteil verschiebt ___.", blanks: [["fixed"], ["absolute"]] },
+      code: { question: "Positioniere `.hinweis` fest 20px vom oberen und rechten Rand.",
+        solution: ".hinweis {\n  position: fixed;\n  top: 20px;\n  right: 20px;\n}",
+        concepts: [".hinweis", "position", "fixed", "top", "right", "20px"] },
+      mc: { question: "Worauf bezieht sich `position: absolute`?",
+        options: ["immer auf das Fenster", "auf den nächsten positionierten Vorfahren", "auf das direkte Elternelement", "auf den Bildschirmrand"],
+        correct: 1, why: "Deshalb setzt man am Container oft `position: relative` als Bezugspunkt." },
+    },
+    css_responsive: {
+      blank: { template: "Eine Media Query beginnt mit ___, die Breite prüft man mit ___.", blanks: [["@media"], ["max-width", "min-width"]] },
+      code: { question: "Sorge dafür, dass `.raster` unter 600px nur noch eine Spalte hat.",
+        solution: "@media (max-width: 600px) {\n  .raster {\n    grid-template-columns: 1fr;\n  }\n}",
+        concepts: ["@media", "max-width", "600px", ".raster"] },
+      mc: { question: "Was heißt „mobile first“?",
+        options: ["nur für Handys entwickeln", "zuerst die schmale Ansicht, dann per min-width erweitern", "Handys zuletzt testen", "zwei getrennte Seiten bauen"],
+        correct: 1, why: "Der Grundstil gilt für alle, die Media Queries ergänzen nur nach oben." },
+    },
+    css_selektor: {
+      blank: { template: "Eine Klasse wählst du mit ___ aus, eine id mit ___.", blanks: [[".", "Punkt"], ["#", "Raute"]] },
+      code: { question: "Gib allen Elementen der Klasse `karte` einen Innenabstand von 16px.",
+        solution: ".karte {\n  padding: 16px;\n}",
+        concepts: [".karte", "padding", "16px"] },
+      mc: { question: "Welcher Selektor gewinnt bei gleichem Wert?",
+        options: ["die Klasse", "die id", "das Element", "der zuerst notierte"],
+        correct: 1, why: "Eine id ist spezifischer als eine Klasse, eine Klasse spezifischer als ein Element." },
+    },
+    css_text: {
+      blank: { template: "Die Schriftgröße setzt ___, die Schriftart ___.", blanks: [["font-size"], ["font-family"]] },
+      code: { question: "Gib allen Absätzen die Schriftgröße `16px`.",
+        solution: "p {\n  font-size: 16px;\n}",
+        concepts: ["p", "font-size", "16px"] },
+      mc: { question: "Worauf bezieht sich `1.5em` bei `font-size`?",
+        options: ["auf 15 Pixel", "auf die Schriftgröße des Elternelements", "auf die Bildschirmbreite", "immer auf 16px"],
+        correct: 1, why: "`em` ist relativ zum Elternteil, `rem` zur Wurzel — das macht Skalierung berechenbar." },
+    },
+  },
+  go: {
+    async: {
+      blank: { template: "Eine nebenläufige Ausführung startet ___, Werte tauscht man über einen ___ aus.", blanks: [["go"], ["Channel", "chan"]] },
+      code: { question: "Starte die Funktion `arbeite` nebenläufig.",
+        solution: "go arbeite()",
+        concepts: ["go", "arbeite"] },
+      mc: { question: "Was passiert, wenn `main` endet, während Goroutinen noch laufen?",
+        options: ["sie laufen weiter", "das Programm endet und sie werden abgebrochen", "es gibt einen Fehler", "main wartet automatisch"],
+        correct: 1, why: "Deshalb koordiniert man mit Channels oder einer WaitGroup." },
+    },
+    bedingung: {
+      blank: { template: "Eine Bedingung steht ___ Klammern, der Block immer in ___.", blanks: [["ohne"], ["geschweiften", "geschweifte", "{}"]] },
+      code: { question: "Prüfe, ob `alter` mindestens 18 ist, und gib eine passende Meldung aus.",
+        solution: "if alter >= 18 {\n    fmt.Println(\"volljährig\")\n} else {\n    fmt.Println(\"minderjährig\")\n}",
+        concepts: ["if", "alter", "18", "else", ["fmt.Println", "Println"]] },
+      mc: { question: "Was ist bei `if wert, ok := m[k]; ok {` besonders?",
+        options: ["nichts", "die Variablen gelten nur innerhalb des if", "es ist ungültig", "es ist langsamer"],
+        correct: 1, why: "Diese Kurzform hält den Gültigkeitsbereich klein." },
+    },
+    fehler: {
+      blank: { template: "Ein Fehler ist in Go ein ganz normaler ___ vom Typ ___.", blanks: [["Wert", "Rückgabewert"], ["error"]] },
+      code: { question: "Prüfe den Fehler einer Funktion `lade` und gib ihn aus.",
+        solution: "daten, err := lade()\nif err != nil {\n    fmt.Println(\"Fehler:\", err)\n}",
+        concepts: ["err", "if", "nil", ["fmt.Println", "Println"]] },
+      mc: { question: "Was ist `nil` bei einem error?",
+        options: ["ein leerer Text", "kein Fehler", "ein unbekannter Fehler", "ein Absturz"],
+        correct: 1, why: "Deshalb ist `if err != nil` die häufigste Zeile in Go-Code." },
+    },
+    funktion: {
+      blank: { template: "Eine Funktion beginnt mit ___, der Rückgabetyp steht ___ der Parameterliste.", blanks: [["func"], ["hinter", "nach"]] },
+      code: { question: "Schreibe eine Funktion `teile`, die zwei ints und einen error zurückgibt.",
+        solution: "func teile(a int, b int) (int, error) {\n    if b == 0 {\n        return 0, errors.New(\"Division durch null\")\n    }\n    return a / b, nil\n}",
+        concepts: ["func", "teile", "int", "error", "return"] },
+      mc: { question: "Warum gibt man in Go oft `(wert, error)` zurück?",
+        options: ["aus Tradition", "weil Go keine Ausnahmen kennt und Fehler Werte sind", "für die Geschwindigkeit", "das macht man nicht"],
+        correct: 1, why: "Fehler sind sichtbar im Aufrufer — man kann sie nicht versehentlich übersehen." },
+    },
+    klasse: {
+      blank: { template: "Eigene Datentypen baut man mit ___, Verhalten hängt man als ___ daran.", blanks: [["struct"], ["Methode", "Methoden"]] },
+      code: { question: "Definiere einen Struct `Hund` mit einem Feld `Name`.",
+        solution: "type Hund struct {\n    Name string\n}",
+        concepts: ["type", "Hund", "struct", "Name", "string"] },
+      mc: { question: "Was bedeutet ein großer Anfangsbuchstabe bei einem Feld?",
+        options: ["nichts", "es ist außerhalb des Pakets sichtbar", "es ist konstant", "es ist ein Zeiger"],
+        correct: 1, why: "Groß geschrieben heißt exportiert, klein geschrieben paketintern." },
+    },
+    sammlung: {
+      blank: { template: "Eine wachsende Liste heißt ___, ergänzt wird sie mit ___.", blanks: [["Slice", "slice"], ["append"]] },
+      code: { question: "Lege einen Slice `zahlen` an und hänge die 3 an.",
+        solution: "zahlen := []int{}\nzahlen = append(zahlen, 3)",
+        concepts: ["zahlen", ":=", "append"] },
+      mc: { question: "Warum schreibt man `zahlen = append(zahlen, x)`?",
+        options: ["aus Gewohnheit", "append kann einen neuen Slice zurückgeben, wenn der Platz nicht reicht", "es geht auch ohne", "damit es schneller ist"],
+        correct: 1, why: "Ohne Zuweisung wäre das Ergebnis unter Umständen verloren." },
+    },
+    schleife: {
+      blank: { template: "Go kennt nur eine Schleife: ___. Über Sammlungen läuft man mit ___.", blanks: [["for"], ["range"]] },
+      code: { question: "Gib jeden Eintrag des Slices `namen` aus.",
+        solution: "for _, name := range namen {\n    fmt.Println(name)\n}",
+        concepts: ["for", "range", "namen", ["fmt.Println", "Println"]] },
+      mc: { question: "Was liefert `range` bei einem Slice?",
+        options: ["nur die Werte", "Index und Wert", "nur den Index", "die Länge"],
+        correct: 1, why: "Den Index verwirft man mit `_`, wenn er nicht gebraucht wird." },
+    },
+    variable: {
+      blank: { template: "Kurz deklariert man innerhalb einer Funktion mit ___, ausführlich mit ___.", blanks: [[":="], ["var"]] },
+      code: { question: "Lege eine Variable `alter` mit dem Wert 17 an und gib sie aus.",
+        solution: "alter := 17\nfmt.Println(alter)",
+        concepts: ["alter", "17", ["fmt.Println", "Println"]] },
+      mc: { question: "Was passiert mit einer deklarierten, aber ungenutzten Variablen?",
+        options: ["nichts", "das Programm lässt sich nicht übersetzen", "eine Warnung", "sie wird entfernt"],
+        correct: 1, why: "Go ist hier streng — das hält den Code frei von Resten." },
+    },
+  },
+  html: {
+    html_formular: {
+      blank: { template: "Ein Formular ist ___, ein einzeiliges Eingabefeld ___.", blanks: [["form", "<form>"], ["input", "<input>"]] },
+      code: { question: "Schreibe ein Formular mit einem beschrifteten Feld für den Namen und einem Absende-Knopf.",
+        solution: "<form>\n  <label for=\"name\">Name</label>\n  <input id=\"name\" name=\"name\">\n  <button type=\"submit\">Senden</button>\n</form>",
+        concepts: ["<form>", "</form>", "<label", "<input", "<button"] },
+      mc: { question: "Wozu dient `<label for=\"...\">`?",
+        options: ["nur zur Optik", "es verbindet Beschriftung und Feld — ein Klick springt ins Feld", "es prüft die Eingabe", "es sendet das Formular"],
+        correct: 1, why: "Ohne Verbindung weiß ein Screenreader nicht, wozu das Feld gehört." },
+    },
+    html_link: {
+      blank: { template: "Ein Link ist das Element ___, das Ziel steht im Attribut ___.", blanks: [["a", "<a>"], ["href"]] },
+      code: { question: "Schreibe eine Navigation mit einem Link zur Startseite.",
+        solution: "<nav>\n  <a href=\"index.html\">Startseite</a>\n</nav>",
+        concepts: ["<nav>", "</nav>", "<a", "href="] },
+      mc: { question: "Was bewirkt `target=\"_blank\"`?",
+        options: ["der Link wird deaktiviert", "die Seite öffnet in einem neuen Tab", "der Link wird vorgeladen", "der Link ist nur intern"],
+        correct: 1, why: "Dazu gehört `rel=\"noopener\"`, damit die neue Seite keinen Zugriff auf die alte bekommt." },
+    },
+    html_liste: {
+      blank: { template: "Eine unnummerierte Liste ist ___, jeder Eintrag steht in ___.", blanks: [["ul", "<ul>"], ["li", "<li>"]] },
+      code: { question: "Schreibe eine Liste mit den beiden Einträgen **Apfel** und **Birne**.",
+        solution: "<ul>\n  <li>Apfel</li>\n  <li>Birne</li>\n</ul>",
+        concepts: ["<ul>", "</ul>", "<li>", "</li>", "Apfel", "Birne"] },
+      mc: { question: "Wann nimmt man `<ol>` statt `<ul>`?",
+        options: ["nie", "wenn die Reihenfolge eine Bedeutung hat", "bei mehr als fünf Einträgen", "bei Links"],
+        correct: 1, why: "`<ol>` heißt „ordered“ — Schritt 1, 2, 3 gehören dort hinein." },
+    },
+    html_medien: {
+      blank: { template: "Ein Bild bindet ___ ein, der Alternativtext steht in ___.", blanks: [["img", "<img>"], ["alt"]] },
+      code: { question: "Binde das Bild `logo.png` mit einem sinnvollen Alternativtext ein.",
+        solution: "<img src=\"logo.png\" alt=\"Firmenlogo\">",
+        concepts: ["<img", "src=", "alt="] },
+      mc: { question: "Wofür ist das `alt`-Attribut da?",
+        options: ["für die Bildunterschrift", "für Screenreader und wenn das Bild fehlt", "für die Dateigröße", "für die Suchmaschine allein"],
+        correct: 1, why: "Es beschreibt, was auf dem Bild zu sehen ist — für alle, die es nicht sehen." },
+    },
+    html_meta: {
+      blank: { template: "Der Seitentitel steht in ___, die Zeichenkodierung in einem ___-Element.", blanks: [["title", "<title>"], ["meta", "<meta>"]] },
+      code: { question: "Schreibe ein vollständiges HTML-Dokument mit dem Titel **Meine Seite**.",
+        solution: "<!DOCTYPE html>\n<html lang=\"de\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>Meine Seite</title>\n</head>\n<body>\n  <h1>Meine Seite</h1>\n</body>\n</html>",
+        concepts: ["<!DOCTYPE", "<html", "<head>", "<title>", "Meine Seite", "<body>"] },
+      mc: { question: "Wo steht der `<title>`?",
+        options: ["im body", "im head", "vor dem DOCTYPE", "beliebig"],
+        correct: 1, why: "Er erscheint im Browser-Tab und als Überschrift in Suchergebnissen." },
+    },
+    html_semantik: {
+      blank: { template: "Der Hauptinhalt einer Seite steht in ___, ein eigenständiger Beitrag in ___.", blanks: [["main", "<main>"], ["article", "<article>"]] },
+      code: { question: "Baue ein Grundgerüst aus Kopfbereich, Hauptbereich und Fußbereich.",
+        solution: "<header>Kopf</header>\n<main>Inhalt</main>\n<footer>Fuß</footer>",
+        concepts: ["<header>", "<main>", "<footer>"] },
+      mc: { question: "Warum `<nav>` statt `<div class=\"nav\">`?",
+        options: ["es ist kürzer", "Hilfsmittel erkennen daran, dass es die Navigation ist", "es lädt schneller", "es gibt keinen Unterschied"],
+        correct: 1, why: "Semantische Elemente sagen, *was* etwas ist — nicht nur, wie es aussieht." },
+    },
+    html_tabelle: {
+      blank: { template: "Eine Tabellenzeile ist ___, eine Kopfzelle ___.", blanks: [["tr", "<tr>"], ["th", "<th>"]] },
+      code: { question: "Schreibe eine Tabelle mit einer Kopfzeile **Name** und einer Datenzeile **Ada**.",
+        solution: "<table>\n  <tr><th>Name</th></tr>\n  <tr><td>Ada</td></tr>\n</table>",
+        concepts: ["<table>", "</table>", "<tr>", "<th>", "<td>", "Ada"] },
+      mc: { question: "Wofür ist `<th>` da?",
+        options: ["für breitere Zellen", "für Kopfzellen, die eine Spalte oder Zeile benennen", "für farbige Zellen", "für die erste Zeile immer"],
+        correct: 1, why: "Screenreader lesen die Kopfzelle zu jeder Datenzelle vor — das macht Tabellen verständlich." },
+    },
+    html_text: {
+      blank: { template: "Die wichtigste Überschrift ist ___, ein Absatz steht in ___.", blanks: [["h1", "<h1>"], ["p", "<p>"]] },
+      code: { question: "Schreibe eine Überschrift erster Ordnung mit dem Text **Hallo** und darunter einen Absatz.",
+        solution: "<h1>Hallo</h1>\n<p>Willkommen auf meiner Seite.</p>",
+        concepts: ["<h1>", "</h1>", "Hallo", "<p>"] },
+      mc: { question: "Wie viele `<h1>` gehören auf eine Seite?",
+        options: ["beliebig viele", "genau eines als Hauptüberschrift", "mindestens drei", "keines"],
+        correct: 1, why: "Ein `<h1>` benennt das Thema der Seite — mehrere machen die Gliederung unklar." },
+    },
+  },
+  java: {
+    bedingung: {
+      blank: { template: "Eine Fallunterscheidung schreibt man mit ___, für viele feste Werte eignet sich ___.", blanks: [["if"], ["switch"]] },
+      code: { question: "Prüfe, ob `alter` mindestens 18 ist, und gib „volljährig“ oder „minderjährig“ aus.",
+        solution: "if (alter >= 18) {\n  System.out.println(\"volljährig\");\n} else {\n  System.out.println(\"minderjährig\");\n}",
+        concepts: ["if", "alter", "18", "else", "System.out.println"] },
+      mc: { question: "Was passiert ohne `break` in einem klassischen `switch`?",
+        options: ["nichts", "die Ausführung läuft in den nächsten Fall weiter", "ein Compilerfehler", "der Fall wird übersprungen"],
+        correct: 1, why: "Dieses Durchfallen ist eine klassische Fehlerquelle." },
+    },
+    fehler: {
+      blank: { template: "Riskanter Code steht in ___, die Behandlung in ___.", blanks: [["try"], ["catch"]] },
+      code: { question: "Fange den Fehler beim Umwandeln von `\\\"abc\\\"` in eine Zahl ab.",
+        solution: "try {\n  int zahl = Integer.parseInt(\"abc\");\n} catch (NumberFormatException e) {\n  System.out.println(\"Keine Zahl\");\n}",
+        concepts: ["try", "Integer.parseInt", "catch", "System.out.println"] },
+      mc: { question: "Was ist eine geprüfte (checked) Ausnahme?",
+        options: ["eine, die nie auftritt", "eine, die man behandeln oder weiterreichen muss", "eine Warnung", "eine Ausnahme zur Laufzeit"],
+        correct: 1, why: "Der Compiler besteht darauf — das macht mögliche Fehlerwege sichtbar." },
+    },
+    funktion: {
+      blank: { template: "Eine Methode ohne Rückgabewert hat den Rückgabetyp ___, sonst liefert sie mit ___ ein Ergebnis.", blanks: [["void"], ["return"]] },
+      code: { question: "Schreibe eine Methode `verdopple`, die eine Zahl entgegennimmt und das Doppelte zurückgibt.",
+        solution: "public static int verdopple(int zahl) {\n  return zahl * 2;\n}",
+        concepts: ["public", "int", "verdopple", "return"] },
+      mc: { question: "Was heißt Überladen einer Methode?",
+        options: ["sie ist zu lang", "mehrere Methoden mit gleichem Namen, aber verschiedenen Parametern", "sie ruft sich selbst auf", "sie überschreibt eine geerbte Methode"],
+        correct: 1, why: "Der Compiler wählt anhand der Argumente die passende Fassung." },
+    },
+    klasse: {
+      blank: { template: "Ein Objekt entsteht mit ___, der Konstruktor trägt den Namen der ___.", blanks: [["new"], ["Klasse"]] },
+      code: { question: "Schreibe eine Klasse `Hund` mit einem Konstruktor, der `name` speichert.",
+        solution: "public class Hund {\n  private String name;\n\n  public Hund(String name) {\n    this.name = name;\n  }\n}",
+        concepts: ["class", "Hund", "private", "String", "this", "name"] },
+      mc: { question: "Warum macht man Felder `private`?",
+        options: ["damit sie schneller sind", "damit der Zugriff nur über kontrollierte Methoden läuft", "das ist Vorschrift", "damit sie null sein können"],
+        correct: 1, why: "So kann die Klasse ihre eigenen Regeln durchsetzen, statt sich auf die Aufrufer zu verlassen." },
+    },
+    operator: {
+      blank: { template: "Ganzzahlige Division liefert eine ___, den Rest bekommt man mit ___.", blanks: [["Ganzzahl", "int"], ["%", "Modulo"]] },
+      code: { question: "Berechne den Rest von 17 geteilt durch 5 und gib ihn aus.",
+        solution: "int rest = 17 % 5;\nSystem.out.println(rest);",
+        concepts: ["int", "17", "%", "5", "System.out.println"] },
+      mc: { question: "Was ergibt `7 / 2` mit zwei int-Werten?",
+        options: ["3.5", "3", "4", "ein Fehler"],
+        correct: 1, why: "Bei zwei Ganzzahlen bleibt das Ergebnis ganzzahlig — der Rest fällt weg." },
+    },
+    sammlung: {
+      blank: { template: "Eine wachsende Liste ist die ___, ein Element fügt ___ hinzu.", blanks: [["ArrayList"], ["add", "add()"]] },
+      code: { question: "Lege eine `ArrayList<String>` namens `namen` an und füge `\\\"Anna\\\"` hinzu.",
+        solution: "ArrayList<String> namen = new ArrayList<>();\nnamen.add(\"Anna\");",
+        concepts: ["ArrayList", "String", "namen", "add", "Anna"] },
+      mc: { question: "Warum schreibt man `List<String> namen = new ArrayList<>()`?",
+        options: ["es ist kürzer", "der Code hängt dann nur an der Schnittstelle, nicht an der Umsetzung", "es ist schneller", "ArrayList allein geht nicht"],
+        correct: 1, why: "So lässt sich die Umsetzung später austauschen, ohne den übrigen Code zu ändern." },
+    },
+    schleife: {
+      blank: { template: "Über ein Array läuft am kürzesten die ___-Schleife, mit Zähler die klassische ___-Schleife.", blanks: [["for-each", "foreach"], ["for"]] },
+      code: { question: "Gib jedes Element des Arrays `zahlen` mit einer for-Schleife aus.",
+        solution: "for (int zahl : zahlen) {\n  System.out.println(zahl);\n}",
+        concepts: ["for", "zahlen", "System.out.println"] },
+      mc: { question: "Wann nimmt man `while` statt `for`?",
+        options: ["nie", "wenn die Anzahl der Durchläufe vorher unbekannt ist", "bei Arrays", "bei genau zehn Durchläufen"],
+        correct: 1, why: "`for` passt, wenn man zählt; `while`, wenn man auf eine Bedingung wartet." },
+    },
+    string: {
+      blank: { template: "Inhalte vergleicht man mit ___, die Länge liefert ___.", blanks: [["equals", "equals()"], ["length", "length()"]] },
+      code: { question: "Prüfe, ob der String `name` gleich „Ada“ ist, und gib das Ergebnis aus.",
+        solution: "String name = \"Ada\";\nSystem.out.println(name.equals(\"Ada\"));",
+        concepts: ["String", "name", "equals", "System.out.println"] },
+      mc: { question: "Warum vergleicht `==` bei Strings falsch?",
+        options: ["es geht gar nicht", "es vergleicht die Referenz statt des Inhalts", "es ist langsamer", "es unterscheidet Groß- und Kleinschreibung nicht"],
+        correct: 1, why: "Zwei Strings mit gleichem Inhalt können verschiedene Objekte sein." },
+    },
+    variable: {
+      blank: { template: "Java ist ___ typisiert: Der Typ steht vor dem Namen. Ein fester Wert bekommt ___.", blanks: [["statisch"], ["final"]] },
+      code: { question: "Lege eine ganze Zahl `alter` mit dem Wert 17 an und gib sie aus.",
+        solution: "int alter = 17;\nSystem.out.println(alter);",
+        concepts: ["int", "alter", "17", "System.out.println"] },
+      mc: { question: "Was ist der Unterschied zwischen `int` und `Integer`?",
+        options: ["keiner", "`int` ist ein primitiver Typ, `Integer` ein Objekt", "`Integer` ist kleiner", "`int` kann null sein"],
+        correct: 1, why: "Nur `Integer` kann `null` sein — das ist die häufigste Quelle für NullPointerExceptions." },
+    },
+    vererbung: {
+      blank: { template: "Von einer Klasse erbt man mit ___, eine Schnittstelle setzt man mit ___ um.", blanks: [["extends"], ["implements"]] },
+      code: { question: "Schreibe eine Klasse `Welpe`, die von `Hund` erbt.",
+        solution: "public class Welpe extends Hund {\n  public Welpe(String name) {\n    super(name);\n  }\n}",
+        concepts: ["class", "Welpe", "extends", "Hund", "super"] },
+      mc: { question: "Wie viele Klassen kann eine Java-Klasse gleichzeitig erweitern?",
+        options: ["beliebig viele", "genau eine", "höchstens zwei", "keine"],
+        correct: 1, why: "Mehrfachvererbung gibt es nur bei Schnittstellen — die darf man beliebig viele umsetzen." },
+    },
+  },
+  javascript: {
+    abbildung: {
+      blank: { template: "Auf eine Eigenschaft greifst du mit dem ___ zu. In JSON umgewandelt wird mit ___.", blanks: [["Punkt", "."], ["JSON.stringify", "stringify"]] },
+      code: { question: "Lege ein Objekt `person` mit `name` an und gib die Eigenschaft aus.",
+        solution: "const person = { name: \"Ada\" };\nconsole.log(person.name);",
+        concepts: ["const", "person", "name", "console.log"] },
+      mc: { question: "Was liefert `JSON.parse('{\"a\":1}')`?",
+        options: ["einen String", "ein Objekt", "ein Array", "einen Fehler"],
+        correct: 1, why: "`parse` macht aus Text ein Objekt, `stringify` den umgekehrten Weg." },
+    },
+    async: {
+      blank: { template: "Auf ein Promise wartet man mit ___ innerhalb einer ___-Funktion.", blanks: [["await"], ["async"]] },
+      code: { question: "Schreibe eine asynchrone Funktion `lade`, die Daten von einer URL holt.",
+        solution: "async function lade(url) {\n  const antwort = await fetch(url);\n  return antwort.json();\n}",
+        concepts: ["async", "function", "lade", "await", "fetch"] },
+      mc: { question: "Was liefert eine `async`-Funktion immer zurück?",
+        options: ["den Wert direkt", "ein Promise", "undefined", "einen Callback"],
+        correct: 1, why: "Auch `return 1` wird zu einem Promise, das mit 1 erfüllt wird." },
+    },
+    bedingung: {
+      blank: { template: "Mehrere Fälle prüfst du mit ___ … else if. Für genau einen Wert eignet sich ___.", blanks: [["if"], ["switch"]] },
+      code: { question: "Prüfe, ob `alter` mindestens 18 ist, und gib „volljährig“ oder „minderjährig“ aus.",
+        solution: "if (alter >= 18) {\n  console.log(\"volljährig\");\n} else {\n  console.log(\"minderjährig\");\n}",
+        concepts: ["if", "alter", "18", "else", "console.log"] },
+      mc: { question: "Welcher Wert ist in JavaScript **wahr**?",
+        options: ["\"\"", "0", "\"0\"", "null"],
+        correct: 2, why: "Ein nicht-leerer String ist truthy — auch wenn eine Null darin steht." },
+    },
+    fehler: {
+      blank: { template: "Riskanter Code steht in ___, die Behandlung in ___.", blanks: [["try"], ["catch"]] },
+      code: { question: "Fange den Fehler bei `JSON.parse(\"kaputt\")` ab und gib eine Meldung aus.",
+        solution: "try {\n  JSON.parse(\"kaputt\");\n} catch (fehler) {\n  console.log(\"Ungültiges JSON\");\n}",
+        concepts: ["try", "JSON.parse", "catch", "console.log"] },
+      mc: { question: "Wann läuft ein `finally`-Block?",
+        options: ["nur bei Erfolg", "nur bei Fehler", "in beiden Fällen", "nie"],
+        correct: 2, why: "`finally` ist für Aufräumarbeiten da, die immer nötig sind." },
+    },
+    funktion: {
+      blank: { template: "Eine Pfeilfunktion schreibt man mit ___, ein Ergebnis liefert ___.", blanks: [["=>"], ["return"]] },
+      code: { question: "Schreibe eine Funktion `verdopple`, die eine Zahl entgegennimmt und das Doppelte zurückgibt.",
+        solution: "function verdopple(zahl) {\n  return zahl * 2;\n}",
+        concepts: ["function", "verdopple", "return"] },
+      mc: { question: "Was gibt eine Funktion ohne `return` zurück?",
+        options: ["0", "undefined", "null", "einen Fehler"],
+        correct: 1, why: "`undefined` steht für „kein Wert gesetzt“." },
+    },
+    klasse: {
+      blank: { template: "Eine Klasse beginnt mit ___, der Konstruktor heißt ___.", blanks: [["class"], ["constructor"]] },
+      code: { question: "Schreibe eine Klasse `Hund` mit einem Konstruktor, der `name` speichert.",
+        solution: "class Hund {\n  constructor(name) {\n    this.name = name;\n  }\n}",
+        concepts: ["class", "Hund", "constructor", "this", "name"] },
+      mc: { question: "Worauf zeigt `this` in einer Methode?",
+        options: ["auf die Klasse", "auf das Objekt, für das die Methode aufgerufen wurde", "auf das globale Objekt", "auf undefined"],
+        correct: 1, why: "Über `this` erreicht die Methode die Daten genau dieses Objekts." },
+    },
+    modul: {
+      blank: { template: "Nach außen gibt man etwas mit ___ frei und holt es mit ___ herein.", blanks: [["export"], ["import"]] },
+      code: { question: "Exportiere die Funktion `gruss` aus einer Moduldatei.",
+        solution: "export function gruss(name) {\n  return \"Hallo \" + name;\n}",
+        concepts: ["export", "function", "gruss", "return"] },
+      mc: { question: "Wie viele Default-Exporte darf eine Datei haben?",
+        options: ["beliebig viele", "genau einen", "keinen", "höchstens drei"],
+        correct: 1, why: "Benannte Exporte gibt es beliebig viele, einen Default-Export nur einmal." },
+    },
+    operator: {
+      blank: { template: "Streng verglichen wird mit ___, der Rest einer Division kommt von ___.", blanks: [["===", "==="], ["%", "Modulo"]] },
+      code: { question: "Berechne den Rest von 17 geteilt durch 5 und gib ihn aus.",
+        solution: "const rest = 17 % 5;\nconsole.log(rest);",
+        concepts: ["17", "%", "5", "console.log"] },
+      mc: { question: "Warum `===` statt `==`?",
+        options: ["es ist kürzer", "`==` wandelt vorher den Typ um und vergleicht dann", "`==` funktioniert nicht mit Zahlen", "es gibt keinen Unterschied"],
+        correct: 1, why: "`\"1\" == 1` ist wahr, `\"1\" === 1` nicht — der strikte Vergleich hält Typen auseinander." },
+    },
+    sammlung: {
+      blank: { template: "Ein Element hängt ___ hinten an ein Array, eine neue Liste erzeugt ___.", blanks: [["push", "push()"], ["map", "map()"]] },
+      code: { question: "Verdopple jede Zahl im Array `zahlen` und speichere das Ergebnis in `doppelt`.",
+        solution: "const doppelt = zahlen.map((zahl) => zahl * 2);",
+        concepts: ["zahlen", "map", "doppelt", ["const", "let"]] },
+      mc: { question: "Was ist der Unterschied zwischen `map` und `forEach`?",
+        options: ["keiner", "`map` liefert ein neues Array zurück, `forEach` nicht", "`forEach` ist schneller", "`map` verändert das Original"],
+        correct: 1, why: "`map` bildet ab und gibt zurück, `forEach` führt nur aus." },
+    },
+    schleife: {
+      blank: { template: "Über die Werte eines Arrays läuft ___ … of, über einen Zähler die klassische ___-Schleife.", blanks: [["for"], ["for"]] },
+      code: { question: "Gib jeden Eintrag des Arrays `namen` in der Konsole aus.",
+        solution: "for (const name of namen) {\n  console.log(name);\n}",
+        concepts: ["for", "namen", "console.log"] },
+      mc: { question: "Was liefert `for (const x in array)`?",
+        options: ["die Werte", "die Indizes als Strings", "Paare aus Index und Wert", "nichts"],
+        correct: 1, why: "`for…in` läuft über Schlüssel — bei Arrays sind das die Indizes. Für Werte nimmt man `for…of`." },
+    },
+    speicher: {
+      blank: { template: "Objekte werden als ___ übergeben, Zahlen und Strings als ___.", blanks: [["Referenz"], ["Wert"]] },
+      code: { question: "Erzeuge eine flache Kopie des Objekts `person`.",
+        solution: "const kopie = { ...person };",
+        concepts: ["const", "kopie", "person"] },
+      mc: { question: "Was passiert bei `const b = a`, wenn `a` ein Objekt ist?",
+        options: ["b ist eine Kopie", "b zeigt auf dasselbe Objekt", "a wird gelöscht", "es gibt einen Fehler"],
+        correct: 1, why: "Beide Namen zeigen auf dieselben Daten — eine Änderung ist über beide sichtbar." },
+    },
+    string: {
+      blank: { template: "Ein Template-String steht in ___, Platzhalter darin schreibt man als ___.", blanks: [["Backticks", "`"], ["${}", "${ }"]] },
+      code: { question: "Gib mit einem Template-String aus, wie viele Zeichen `name` hat.",
+        solution: "const name = \"Ada\";\nconsole.log(`${name} hat ${name.length} Zeichen`);",
+        concepts: ["name", "length", "console.log"] },
+      mc: { question: "Was macht `\"hallo\".toUpperCase()`?",
+        options: ["ändert den String direkt", "liefert einen neuen String \"HALLO\"", "liefert undefined", "wirft einen Fehler"],
+        correct: 1, why: "Strings sind unveränderlich — die Methode liefert eine neue Zeichenkette." },
+    },
+    test: {
+      blank: { template: "Ein Testfall beginnt mit ___, die Erwartung schreibt man mit ___.", blanks: [["test", "it"], ["expect"]] },
+      code: { question: "Schreibe einen Test, der prüft, dass `verdopple(2)` gleich 4 ist.",
+        solution: "test(\"verdoppelt\", () => {\n  expect(verdopple(2)).toBe(4);\n});",
+        concepts: ["test", "expect", "verdopple"] },
+      mc: { question: "Was prüft ein guter Test?",
+        options: ["wie der Code geschrieben ist", "was der Code nach außen tut", "wie schnell er läuft", "wie viele Zeilen er hat"],
+        correct: 1, why: "Tests aufs Verhalten überstehen einen Umbau — Tests auf die Umsetzung nicht." },
+    },
+    variable: {
+      blank: { template: "Einen festen Wert deklarierst du mit ___, einen änderbaren mit ___.", blanks: [["const"], ["let"]] },
+      code: { question: "Lege eine Konstante `name` mit deinem Namen an und gib sie in der Konsole aus.",
+        solution: "const name = \"Ada\";\nconsole.log(name);",
+        concepts: ["const", "name", "console.log"] },
+      mc: { question: "Was gibt `typeof 42` zurück?",
+        options: ["\"integer\"", "\"number\"", "\"float\"", "\"42\""],
+        correct: 1, why: "JavaScript kennt nur einen Zahlentyp: number." },
+    },
+  },
+  kotlin: {
+    bedingung: {
+      blank: { template: "In Kotlin ist ___ ein Ausdruck mit Rückgabewert; viele Fälle prüft ___.", blanks: [["if"], ["when"]] },
+      code: { question: "Weise `status` je nach `alter` „volljährig“ oder „minderjährig“ zu.",
+        solution: "val status = if (alter >= 18) \"volljährig\" else \"minderjährig\"",
+        concepts: ["val", "status", "if", "alter", "18", "else"] },
+      mc: { question: "Was ist `when` in Kotlin?",
+        options: ["eine Schleife", "eine Fallunterscheidung, die auch einen Wert liefert", "ein Zeitgeber", "ein Ereignis"],
+        correct: 1, why: "`when` ersetzt `switch` und kann direkt zugewiesen werden." },
+    },
+    fehler: {
+      blank: { template: "Riskanter Code steht in ___, die Behandlung in ___.", blanks: [["try"], ["catch"]] },
+      code: { question: "Fange den Fehler beim Umwandeln von „abc“ in eine Zahl ab.",
+        solution: "val zahl = try {\n    \"abc\".toInt()\n} catch (e: NumberFormatException) {\n    0\n}",
+        concepts: ["try", "toInt", "catch"] },
+      mc: { question: "Was liefert `\"abc\".toIntOrNull()`?",
+        options: ["0", "null", "eine Ausnahme", "einen leeren String"],
+        correct: 1, why: "Die `OrNull`-Varianten ersparen den try-Block, wenn ein Fehlschlag normal ist." },
+    },
+    funktion: {
+      blank: { template: "Eine Funktion beginnt mit ___, der Rückgabetyp steht hinter dem ___.", blanks: [["fun"], [":", "Doppelpunkt"]] },
+      code: { question: "Schreibe eine Funktion `gruss`, die `Hallo` ausgibt.",
+        solution: "fun gruss() {\n    println(\"Hallo\")\n}",
+        concepts: ["fun", "gruss", "println"] },
+      mc: { question: "Was ist eine Ausdrucksfunktion (`fun f() = …`)?",
+        options: ["eine Funktion ohne Namen", "eine Kurzform für Funktionen, die nur einen Ausdruck enthalten", "eine private Funktion", "eine Erweiterung"],
+        correct: 1, why: "Der Rückgabetyp wird dabei meist abgeleitet." },
+    },
+    klasse: {
+      blank: { template: "Eine reine Datenklasse markiert man mit ___, Felder stehen direkt im ___.", blanks: [["data"], ["Konstruktor", "Kopf"]] },
+      code: { question: "Schreibe eine Data Class `Punkt` mit den Feldern `x` und `y` vom Typ Int.",
+        solution: "data class Punkt(val x: Int, val y: Int)",
+        concepts: ["data", "class", "Punkt", "val", "Int"] },
+      mc: { question: "Was bekommt eine `data class` geschenkt?",
+        options: ["nichts", "equals, hashCode, toString und copy", "nur toString", "einen leeren Konstruktor"],
+        correct: 1, why: "Deshalb eignet sie sich für reine Datenträger." },
+    },
+    sammlung: {
+      blank: { template: "Eine unveränderliche Liste erzeugt ___, eine änderbare ___.", blanks: [["listOf"], ["mutableListOf"]] },
+      code: { question: "Lege eine änderbare Liste `namen` an und füge „Anna“ hinzu.",
+        solution: "val namen = mutableListOf<String>()\nnamen.add(\"Anna\")",
+        concepts: ["val", "namen", "mutableListOf", "add", "Anna"] },
+      mc: { question: "Was liefert `liste.map { it * 2 }`?",
+        options: ["die geänderte Liste", "eine neue Liste mit verdoppelten Werten", "die Anzahl", "nichts"],
+        correct: 1, why: "`map` verändert das Original nicht — es bildet ab." },
+    },
+    schleife: {
+      blank: { template: "Über eine Liste läuft ___ … in, über einen Bereich hilft ___.", blanks: [["for"], [".."]] },
+      code: { question: "Gib jeden Eintrag der Liste `woerter` aus.",
+        solution: "for (wort in woerter) {\n    println(wort)\n}",
+        concepts: ["for", "woerter", "println"] },
+      mc: { question: "Was liefert `1..5`?",
+        options: ["1 bis 4", "1 bis 5 einschließlich", "nur 1 und 5", "einen Fehler"],
+        correct: 1, why: "Für eine ausgeschlossene Obergrenze nimmt man `until`." },
+    },
+    string: {
+      blank: { template: "Ein Wert wird im String mit ___ eingesetzt, mehrzeilig geht es mit ___ Anführungszeichen.", blanks: [["$", "Dollarzeichen"], ["drei", "dreifachen", "\"\"\""]] },
+      code: { question: "Gib mit einer Template-Zeichenkette aus, wie viele Zeichen `name` hat.",
+        solution: "val name = \"Ada\"\nprintln(\"$name hat ${name.length} Zeichen\")",
+        concepts: ["val", "name", "length", "println"] },
+      mc: { question: "Was bewirkt `?.` bei `name?.length`?",
+        options: ["nichts", "der Ausdruck ergibt null, statt abzustürzen, wenn name null ist", "es erzwingt einen Wert", "es ist ein Vergleich"],
+        correct: 1, why: "Der sichere Aufruf ist Kotlins Antwort auf die NullPointerException." },
+    },
+    variable: {
+      blank: { template: "Einen festen Wert deklariert ___, einen änderbaren ___.", blanks: [["val"], ["var"]] },
+      code: { question: "Lege eine feste Variable `alter` mit dem Wert 17 an und gib sie aus.",
+        solution: "val alter = 17\nprintln(alter)",
+        concepts: ["val", "alter", "17", "println"] },
+      mc: { question: "Warum bevorzugt man `val`?",
+        options: ["es ist kürzer", "unveränderliche Werte sind leichter nachzuvollziehen", "var ist veraltet", "val ist schneller"],
+        correct: 1, why: "Was sich nicht ändert, kann auch nicht unbemerkt geändert werden." },
+    },
+  },
+  php: {
+    bedingung: {
+      blank: { template: "Eine Fallunterscheidung beginnt mit ___, ein weiterer Fall mit ___.", blanks: [["if"], ["elseif", "else"]] },
+      code: { question: "Prüfe, ob `$alter` mindestens 18 ist, und gib eine passende Meldung aus.",
+        solution: "<?php\nif ($alter >= 18) {\n    echo \"volljährig\";\n} else {\n    echo \"minderjährig\";\n}\n?>",
+        concepts: ["<?php", "if", "alter", "18", "else", ["echo", "print"]] },
+      mc: { question: "Was prüft `===` gegenüber `==`?",
+        options: ["nichts anderes", "zusätzlich den Typ", "nur Zahlen", "nur Strings"],
+        correct: 1, why: "`\"0\" == 0` ist wahr, `\"0\" === 0` nicht." },
+    },
+    datei: {
+      blank: { template: "Den ganzen Inhalt liest ___, geschrieben wird mit ___.", blanks: [["file_get_contents"], ["file_put_contents"]] },
+      code: { question: "Lies die Datei `notizen.txt` ein und gib den Inhalt aus.",
+        solution: "<?php\n$inhalt = file_get_contents(\"notizen.txt\");\necho $inhalt;\n?>",
+        concepts: ["<?php", "file_get_contents", "inhalt", ["echo", "print"]] },
+      mc: { question: "Warum darf ein Dateiname nie direkt aus einer URL kommen?",
+        options: ["er wäre zu lang", "dann ließen sich fremde Dateien vom Server lesen", "er wäre falsch kodiert", "das ist kein Problem"],
+        correct: 1, why: "Ein `../` im Pfad reicht, um aus dem vorgesehenen Verzeichnis auszubrechen." },
+    },
+    fehler: {
+      blank: { template: "Riskanter Code steht in ___, die Behandlung in ___.", blanks: [["try"], ["catch"]] },
+      code: { question: "Fange eine Ausnahme beim Öffnen einer Datenbankverbindung ab.",
+        solution: "<?php\ntry {\n    $db = new PDO($dsn);\n} catch (PDOException $e) {\n    echo \"Verbindung fehlgeschlagen\";\n}\n?>",
+        concepts: ["try", "PDO", "catch", ["echo", "print"]] },
+      mc: { question: "Warum sollte man den Fehlertext nicht ungefiltert anzeigen?",
+        options: ["er ist zu lang", "er kann Pfade, Nutzernamen oder Abfragen verraten", "er ist unverständlich", "er ist immer leer"],
+        correct: 1, why: "Details gehören ins Log, nicht auf die Seite." },
+    },
+    funktion: {
+      blank: { template: "Eine Funktion beginnt mit ___ und liefert mit ___ ein Ergebnis.", blanks: [["function"], ["return"]] },
+      code: { question: "Schreibe eine Funktion `gruss`, die einen Namen entgegennimmt und zurückgibt.",
+        solution: "<?php\nfunction gruss($name) {\n    return \"Hallo \" . $name;\n}\n?>",
+        concepts: ["function", "gruss", "return"] },
+      mc: { question: "Sieht eine Funktion die Variablen von außen?",
+        options: ["ja, immer", "nein, nur ihre Parameter und globale Werte über `global`", "nur Zahlen", "nur innerhalb einer Klasse"],
+        correct: 1, why: "PHP-Funktionen haben einen eigenen Gültigkeitsbereich." },
+    },
+    klasse: {
+      blank: { template: "Eine Klasse beginnt mit ___, auf eigene Felder greift man mit ___ zu.", blanks: [["class"], ["$this", "this"]] },
+      code: { question: "Schreibe eine Klasse `Hund` mit einem Konstruktor, der `$name` speichert.",
+        solution: "<?php\nclass Hund {\n    private $name;\n\n    public function __construct($name) {\n        $this->name = $name;\n    }\n}\n?>",
+        concepts: ["class", "Hund", "private", "__construct", "this", "name"] },
+      mc: { question: "Wie heißt der Konstruktor in PHP?",
+        options: ["gleich wie die Klasse", "__construct", "constructor", "init"],
+        correct: 1, why: "Der Name der Klasse als Konstruktor ist seit PHP 8 nicht mehr erlaubt." },
+    },
+    sammlung: {
+      blank: { template: "Ein Array legt man mit ___ Klammern an, ein Element hängt ___ an.", blanks: [["eckigen", "eckige", "[]"], ["[]", "array_push"]] },
+      code: { question: "Lege ein Array `$person` mit dem Schlüssel `name` an und gib den Wert aus.",
+        solution: "<?php\n$person = [\"name\" => \"Ada\"];\necho $person[\"name\"];\n?>",
+        concepts: ["<?php", "person", "name", ["echo", "print"]] },
+      mc: { question: "Was ist in PHP ein assoziatives Array?",
+        options: ["ein sortiertes Array", "ein Array mit benannten Schlüsseln statt Zahlen", "ein Array aus Objekten", "ein leeres Array"],
+        correct: 1, why: "PHP kennt nur einen Array-Typ — er kann beides gleichzeitig." },
+    },
+    string: {
+      blank: { template: "In ___ Anführungszeichen werden Variablen eingesetzt, in ___ nicht.", blanks: [["doppelten", "doppelte", "\""], ["einfachen", "einfache", "'"]] },
+      code: { question: "Verbinde `$vorname` und `$nachname` zu einem vollen Namen und gib ihn aus.",
+        solution: "<?php\n$voll = $vorname . \" \" . $nachname;\necho $voll;\n?>",
+        concepts: ["<?php", "voll", "vorname", "nachname", ["echo", "print"]] },
+      mc: { question: "Womit verkettet PHP zwei Strings?",
+        options: ["mit +", "mit einem Punkt", "mit &", "mit ,"],
+        correct: 1, why: "`+` ist in PHP nur für Zahlen — für Text nimmt man den Punkt." },
+    },
+    variable: {
+      blank: { template: "Jede Variable beginnt mit ___, ausgegeben wird mit ___.", blanks: [["$", "Dollarzeichen"], ["echo"]] },
+      code: { question: "Lege eine Variable `$name` an und gib sie aus.",
+        solution: "<?php\n$name = \"Ada\";\necho $name;\n?>",
+        concepts: ["<?php", "name", ["echo", "print"]] },
+      mc: { question: "Wie schreibt man einen Kommentar in PHP?",
+        options: ["nur mit #", "mit // oder #", "mit <!-- -->", "gar nicht"],
+        correct: 1, why: "Beides geht, dazu `/* … */` über mehrere Zeilen." },
+    },
+  },
+  python: {
+    abbildung: {
+      blank: { template: "In einem Dictionary steht vor dem Doppelpunkt der ___ und dahinter der ___.", blanks: [["Schlüssel", "key"], ["Wert", "value"]] },
+      code: { question: "Lege ein Dictionary `person` mit dem Schlüssel `name` an, gib den Wert aus und ergänze `jahr`.",
+        solution: "person = {\"name\": \"Ada\"}\nprint(person[\"name\"])\nperson[\"jahr\"] = 1815",
+        concepts: ["dict", "Schlüssel", "Zugriff", "hinzufügen"] },
+      mc: { question: "Was passiert bei `person[\"fehlt\"]`, wenn es den Schlüssel nicht gibt?",
+        options: ["es kommt None zurück", "es kommt ein KeyError", "der Schlüssel wird angelegt", "es kommt ein leerer String"],
+        correct: 1, why: "Für einen Standardwert statt eines Fehlers nimmt man `person.get(\"fehlt\")`." },
+    },
+    async: {
+      blank: { template: "Eine asynchrone Funktion beginnt mit ___ def, und auf ein Ergebnis wartet man mit ___.", blanks: [["async"], ["await"]] },
+      code: { question: "Schreibe eine asynchrone Funktion `lade`, die eine Sekunde wartet.",
+        solution: "import asyncio\n\nasync def lade():\n    await asyncio.sleep(1)",
+        concepts: ["async", "def", "lade", "await"] },
+      mc: { question: "Was bringt `await` gegenüber einem normalen Aufruf?",
+        options: ["nichts", "das Programm kann in der Wartezeit etwas anderes tun", "es macht den Code schneller", "es startet einen neuen Prozess"],
+        correct: 1, why: "Die Wartezeit wird freigegeben — nebenläufig, aber im selben Thread." },
+    },
+    bedingung: {
+      blank: { template: "Nach `if` steht die Bedingung, danach ein ___. Ein weiterer Fall beginnt mit ___.", blanks: [[":", "Doppelpunkt"], ["elif"]] },
+      code: { question: "Prüfe, ob `punkte` mindestens 50 ist, und gib „bestanden“ oder „nicht bestanden“ aus.",
+        solution: "punkte = 60\nif punkte >= 50:\n    print(\"bestanden\")\nelse:\n    print(\"nicht bestanden\")",
+        concepts: ["if", "punkte", "50", "else", "print"] },
+      mc: { question: "Wie prüft man in Python, ob `x` zwischen 1 und 10 liegt?",
+        options: ["1 < x and x < 10 nur so", "1 < x < 10", "x in (1, 10)", "between(1, x, 10)"],
+        correct: 1, why: "Python erlaubt verkettete Vergleiche — das liest sich wie in der Mathematik." },
+    },
+    datei: {
+      blank: { template: "Eine Datei öffnet man mit ___; der ___-Block schließt sie am Ende von allein.", blanks: [["open", "open()"], ["with"]] },
+      code: { question: "Öffne `notizen.txt` zum Lesen und gib den Inhalt aus.",
+        solution: "with open(\"notizen.txt\") as datei:\n    inhalt = datei.read()\n    print(inhalt)",
+        concepts: ["with", "open", "read", "print"] },
+      mc: { question: "Warum ist `with open(...)` besser als `open(...)` allein?",
+        options: ["es ist kürzer", "die Datei wird auch bei einem Fehler zuverlässig geschlossen", "es liest schneller", "es funktioniert mit mehr Dateitypen"],
+        correct: 1, why: "Ohne `with` bleibt die Datei bei einer Ausnahme offen." },
+    },
+    fehler: {
+      blank: { template: "Fehlerhafter Code steht in einem ___-Block, die Behandlung in einem ___-Block.", blanks: [["try"], ["except"]] },
+      code: { question: "Fange den Fehler bei `int(\"abc\")` ab und gib stattdessen eine Meldung aus.",
+        solution: "try:\n    zahl = int(\"abc\")\nexcept ValueError:\n    print(\"Das ist keine Zahl\")",
+        concepts: ["try", "int", "except", "print"] },
+      mc: { question: "Warum ist `except:` ohne Fehlertyp problematisch?",
+        options: ["es ist schneller", "es verschluckt auch Fehler, die man gar nicht erwartet hat", "es funktioniert nur in Python 2", "es fängt gar nichts"],
+        correct: 1, why: "Auch Tippfehler und Abbrüche landen dann still im Block — die Ursache bleibt verborgen." },
+    },
+    funktion: {
+      blank: { template: "Eine Funktion beginnt mit ___ und liefert ein Ergebnis mit ___ zurück.", blanks: [["def"], ["return"]] },
+      code: { question: "Schreibe eine Funktion `verdopple`, die eine Zahl entgegennimmt und das Doppelte zurückgibt.",
+        solution: "def verdopple(zahl):\n    return zahl * 2\n\nprint(verdopple(4))",
+        concepts: ["def", "verdopple", "return"] },
+      mc: { question: "Was gibt eine Funktion ohne `return` zurück?",
+        options: ["0", "None", "einen leeren String", "einen Fehler"],
+        correct: 1, why: "`None` steht für „kein Wert“ — deshalb ist `print` nicht dasselbe wie `return`." },
+    },
+    klasse: {
+      blank: { template: "Der Konstruktor einer Klasse heißt ___, sein erster Parameter ist immer ___.", blanks: [["__init__"], ["self"]] },
+      code: { question: "Schreibe eine Klasse `Hund` mit einem Konstruktor, der `name` speichert.",
+        solution: "class Hund:\n    def __init__(self, name):\n        self.name = name",
+        concepts: ["class", "Hund", "def", "__init__", "self", "name"] },
+      mc: { question: "Wozu dient `self` in einer Methode?",
+        options: ["es ist ein Schlüsselwort ohne Bedeutung", "es verweist auf das Objekt, für das die Methode läuft", "es erzeugt eine neue Instanz", "es steht für die Klasse selbst"],
+        correct: 1, why: "Über `self` greift die Methode auf die Daten genau dieses Objekts zu." },
+    },
+    modul: {
+      blank: { template: "Ein ganzes Modul lädt man mit ___, einzelne Namen daraus mit ___ … import.", blanks: [["import"], ["from"]] },
+      code: { question: "Importiere das Modul `math` und gib die Wurzel aus 16 aus.",
+        solution: "import math\n\nprint(math.sqrt(16))",
+        concepts: ["import", "math", "sqrt", "print"] },
+      mc: { question: "Was macht `from math import sqrt`?",
+        options: ["lädt das ganze Modul", "macht nur `sqrt` direkt verfügbar", "benennt math in sqrt um", "ist ungültig"],
+        correct: 1, why: "Danach schreibt man `sqrt(16)` statt `math.sqrt(16)`." },
+    },
+    operator: {
+      blank: { template: "Ganzzahlig geteilt wird mit ___, den Rest liefert ___.", blanks: [["//", "//-Operator"], ["%", "Modulo"]] },
+      code: { question: "Berechne den Rest von 17 geteilt durch 5 und gib ihn aus.",
+        solution: "rest = 17 % 5\nprint(rest)",
+        concepts: ["17", "%", "5", "print"] },
+      mc: { question: "Was ergibt `7 // 2` in Python?",
+        options: ["3.5", "3", "4", "1"],
+        correct: 1, why: "`//` teilt ganzzahlig und schneidet den Rest ab." },
+    },
+    sammlung: {
+      blank: { template: "Ein Element hängt man mit ___ an eine Liste an. Die Anzahl liefert ___.", blanks: [["append", "append()"], ["len", "len()"]] },
+      code: { question: "Lege eine Liste `tiere` mit „Hund“ an, füge „Katze“ hinzu und gib die Anzahl aus.",
+        solution: "tiere = [\"Hund\"]\ntiere.append(\"Katze\")\nprint(len(tiere))",
+        concepts: ["Liste", "append", "len", "print"] },
+      mc: { question: "Was ist der Unterschied zwischen Liste und Tupel?",
+        options: ["es gibt keinen", "ein Tupel lässt sich nach dem Anlegen nicht mehr ändern", "eine Liste darf nur Zahlen enthalten", "ein Tupel ist immer sortiert"],
+        correct: 1, why: "Tupel sind unveränderlich — das schützt Daten, die sich nicht ändern sollen." },
+    },
+    schleife: {
+      blank: { template: "Über die Elemente einer Liste läuft man mit ___, über einen Zahlenbereich mit ___.", blanks: [["for"], ["range", "range()"]] },
+      code: { question: "Gib die Zahlen 1 bis 5 mit einer for-Schleife aus.",
+        solution: "for zahl in range(1, 6):\n    print(zahl)",
+        concepts: ["for", "range", "print"] },
+      mc: { question: "Wie oft läuft `for i in range(3):`?",
+        options: ["zweimal", "dreimal", "viermal", "unendlich"],
+        correct: 1, why: "`range(3)` liefert 0, 1, 2 — die Obergrenze gehört nicht dazu." },
+    },
+    string: {
+      blank: { template: "Ein f-String beginnt mit ___ vor dem Anführungszeichen, Platzhalter stehen in ___.", blanks: [["f"], ["geschweifte", "geschweiften Klammern", "{}"]] },
+      code: { question: "Gib mit einem f-String aus, wie viele Zeichen der Name `Ada` hat.",
+        solution: "name = \"Ada\"\nprint(f\"{name} hat {len(name)} Zeichen\")",
+        concepts: ["name", "f-string", "len", "print"] },
+      mc: { question: "Was macht `\"hallo\".upper()`?",
+        options: ["ändert den String an Ort und Stelle", "gibt \"HALLO\" als neuen String zurück", "gibt None zurück", "wirft einen Fehler"],
+        correct: 1, why: "Strings sind unveränderlich — Methoden geben immer einen neuen String zurück." },
+    },
+    test: {
+      blank: { template: "Eine Testfunktion beginnt bei pytest mit ___, geprüft wird mit ___.", blanks: [["test", "test_"], ["assert"]] },
+      code: { question: "Schreibe einen Test, der prüft, dass `verdopple(2)` gleich 4 ist.",
+        solution: "def test_verdopple():\n    assert verdopple(2) == 4",
+        concepts: ["def", "test_verdopple", "assert", "verdopple"] },
+      mc: { question: "Warum schreibt man Tests, bevor man umbaut?",
+        options: ["um mehr Zeilen zu haben", "damit auffällt, wenn der Umbau etwas kaputt macht", "weil es Pflicht ist", "damit der Code schneller läuft"],
+        correct: 1, why: "Ein grüner Test vorher und nachher zeigt, dass sich das Verhalten nicht geändert hat." },
+    },
+    variable: {
+      blank: { template: "Eine Variable entsteht in Python durch ___ ohne Typangabe. Den Typ eines Werts liefert ___.", blanks: [["Zuweisung", "="], ["type", "type()"]] },
+      code: { question: "Lege eine Variable `alter` mit dem Wert 17 an und gib sie aus.",
+        solution: "alter = 17\nprint(alter)",
+        concepts: ["alter", "17", "print"] },
+      mc: { question: "Was liefert `type(3.0)`?",
+        options: ["<class 'int'>", "<class 'float'>", "<class 'str'>", "einen Fehler"],
+        correct: 1, why: "Der Punkt macht daraus eine Gleitkommazahl — auch wenn die Nachkommastelle 0 ist." },
+    },
+    vererbung: {
+      blank: { template: "Eine Klasse erbt, indem die Oberklasse in ___ hinter dem Namen steht. Deren Konstruktor ruft man mit ___ auf.", blanks: [["Klammern", "runde Klammern", "()"], ["super", "super()"]] },
+      code: { question: "Schreibe eine Klasse `Welpe`, die von `Hund` erbt.",
+        solution: "class Welpe(Hund):\n    def __init__(self, name):\n        super().__init__(name)",
+        concepts: ["class", "Welpe", "Hund", "super"] },
+      mc: { question: "Was passiert, wenn die Unterklasse eine Methode mit demselben Namen definiert?",
+        options: ["ein Fehler", "sie überschreibt die Methode der Oberklasse", "beide werden nacheinander ausgeführt", "die der Oberklasse gewinnt"],
+        correct: 1, why: "Das nennt man Überschreiben — mit `super()` erreicht man trotzdem die alte Fassung." },
+    },
+  },
+  react: {
+    fe_effekt: {
+      blank: { template: "Nebenwirkungen gehören in ___; wann er läuft, steuert das ___-Array.", blanks: [["useEffect"], ["Abhängigkeiten", "Abhängigkeitsarray"]] },
+      code: { question: "Lade beim ersten Rendern Daten und schreibe sie in den Zustand.",
+        solution: "useEffect(() => {\n  fetch(\"/api/daten\")\n    .then((r) => r.json())\n    .then(setDaten);\n}, []);",
+        concepts: ["useEffect", "fetch", "setDaten"] },
+      mc: { question: "Was bewirkt ein leeres Abhängigkeitsarray `[]`?",
+        options: ["der Effekt läuft bei jedem Rendern", "der Effekt läuft nur einmal nach dem ersten Rendern", "der Effekt läuft nie", "der Effekt läuft beim Aufräumen"],
+        correct: 1, why: "Ohne Abhängigkeiten gibt es nichts, was ihn erneut auslösen könnte." },
+    },
+    fe_event: {
+      blank: { template: "Auf einen Klick reagiert das Attribut ___, übergeben wird dabei eine ___.", blanks: [["onClick"], ["Funktion"]] },
+      code: { question: "Schreibe einen Knopf, der beim Klick „Hallo“ in der Konsole ausgibt.",
+        solution: "<button onClick={() => console.log(\"Hallo\")}>Klick mich</button>",
+        concepts: ["<button", "onClick", "console.log"] },
+      mc: { question: "Was ist der Unterschied zwischen `onClick={f}` und `onClick={f()}`?",
+        options: ["keiner", "die zweite Fassung ruft f sofort beim Rendern auf", "die zweite ist schneller", "die erste funktioniert nicht"],
+        correct: 1, why: "Mit Klammern übergibt man das *Ergebnis* statt der Funktion selbst." },
+    },
+    fe_formular: {
+      blank: { template: "Ein kontrolliertes Feld bekommt seinen Wert über ___ und meldet Änderungen über ___.", blanks: [["value"], ["onChange"]] },
+      code: { question: "Schreibe ein kontrolliertes Eingabefeld, das seinen Wert im Zustand `text` hält.",
+        solution: "<input value={text} onChange={(e) => setText(e.target.value)} />",
+        concepts: ["<input", "value", "onChange", "setText"] },
+      mc: { question: "Was heißt „kontrolliertes Formularfeld“?",
+        options: ["es ist schreibgeschützt", "React hält den Wert im Zustand, nicht der Browser", "es prüft die Eingabe", "es ist ein Pflichtfeld"],
+        correct: 1, why: "Damit ist der Zustand die einzige Wahrheit — Anzeige und Daten können nicht auseinanderlaufen." },
+    },
+    fe_liste: {
+      blank: { template: "Aus einem Array macht ___ eine Liste von Elementen; jedes braucht ein ___-Attribut.", blanks: [["map", "map()"], ["key"]] },
+      code: { question: "Rendere aus dem Array `namen` eine Liste von `<li>`-Elementen mit key.",
+        solution: "<ul>\n  {namen.map((name) => (\n    <li key={name}>{name}</li>\n  ))}\n</ul>",
+        concepts: ["namen", "map", "<li", "key", "{"] },
+      mc: { question: "Wozu dient `key`?",
+        options: ["zur Sortierung", "damit React beim Neurendern erkennt, welches Element welches ist", "als CSS-Klasse", "als Beschriftung"],
+        correct: 1, why: "Ohne stabile keys mischt React bei Änderungen Zustand zwischen Einträgen durcheinander." },
+    },
+    fe_props: {
+      blank: { template: "Werte gibt man einer Komponente als ___ mit, JSX gibt genau ___ Wurzelelement zurück.", blanks: [["Props", "props"], ["ein", "1"]] },
+      code: { question: "Schreibe eine Komponente `Gruss`, die einen Namen als Prop entgegennimmt und anzeigt.",
+        solution: "function Gruss({ name }) {\n  return <h1>Hallo {name}</h1>;\n}",
+        concepts: ["function", "Gruss", "name", "return", "<h1>"] },
+      mc: { question: "Darf eine Komponente ihre Props ändern?",
+        options: ["ja, jederzeit", "nein, sie sind von außen gesetzt und bleiben unverändert", "nur im Konstruktor", "nur mit useState"],
+        correct: 1, why: "Props gehören dem Elternteil — die Komponente liest sie nur." },
+    },
+    fe_state: {
+      blank: { template: "Veränderlichen Zustand legt ___ an; ändern darf man ihn nur über die ___-Funktion.", blanks: [["useState"], ["set", "Setter"]] },
+      code: { question: "Schreibe eine Komponente `Zaehler` mit einem Zustand `wert`, der bei Klick um eins steigt.",
+        solution: "function Zaehler() {\n  const [wert, setWert] = useState(0);\n  return (\n    <button onClick={() => setWert(wert + 1)}>{wert}</button>\n  );\n}",
+        concepts: ["function", "Zaehler", "useState", "wert", "onClick", "return"] },
+      mc: { question: "Warum nicht direkt `wert = wert + 1`?",
+        options: ["es ist zu langsam", "React merkt die Änderung nicht und rendert nicht neu", "es ist ein Syntaxfehler", "es geht nur außerhalb der Komponente"],
+        correct: 1, why: "Erst der Setter sagt React, dass sich etwas geändert hat." },
+    },
+  },
+  rust: {
+    bedingung: {
+      blank: { template: "Eine Fallunterscheidung über viele Möglichkeiten schreibt man mit ___; sie muss ___ sein.", blanks: [["match"], ["vollständig", "erschöpfend"]] },
+      code: { question: "Gib je nach Wert von `zahl` „null“ oder „etwas anderes“ aus.",
+        solution: "match zahl {\n    0 => println!(\"null\"),\n    _ => println!(\"etwas anderes\"),\n}",
+        concepts: ["match", "zahl", ["println!", "println"]] },
+      mc: { question: "Was bedeutet `_` in einem match?",
+        options: ["ein leerer Wert", "alle übrigen Fälle", "ein Fehler", "eine Variable"],
+        correct: 1, why: "Ohne diesen Auffangfall verlangt der Compiler jeden möglichen Wert." },
+    },
+    fehler: {
+      blank: { template: "Ein Ergebnis, das schiefgehen kann, hat den Typ ___ mit den Fällen Ok und ___.", blanks: [["Result"], ["Err"]] },
+      code: { question: "Schreibe eine Funktion `teile`, die bei Division durch null einen Fehler liefert.",
+        solution: "fn teile(a: i32, b: i32) -> Result<i32, String> {\n    if b == 0 {\n        return Err(\"Division durch null\".to_string());\n    }\n    Ok(a / b)\n}",
+        concepts: ["fn", "teile", "Result", "Err", "Ok"] },
+      mc: { question: "Was macht der Operator `?` hinter einem Result?",
+        options: ["nichts", "er gibt den Fehler sofort weiter und packt sonst den Wert aus", "er wirft eine Ausnahme", "er ignoriert den Fehler"],
+        correct: 1, why: "Das ersetzt lange `match`-Blöcke, ohne den Fehler zu verschlucken." },
+    },
+    funktion: {
+      blank: { template: "Eine Funktion beginnt mit ___, der Rückgabetyp steht hinter ___.", blanks: [["fn"], ["->"]] },
+      code: { question: "Schreibe eine Funktion `verdopple`, die eine i32 nimmt und das Doppelte liefert.",
+        solution: "fn verdopple(zahl: i32) -> i32 {\n    zahl * 2\n}",
+        concepts: ["fn", "verdopple", "i32"] },
+      mc: { question: "Warum steht am Ende kein `return` und kein Semikolon?",
+        options: ["das ist ein Fehler", "der letzte Ausdruck ohne Semikolon ist der Rückgabewert", "return ist verboten", "Semikolons sind optional"],
+        correct: 1, why: "Ein Semikolon macht daraus eine Anweisung — und die gibt nichts zurück." },
+    },
+    klasse: {
+      blank: { template: "Eigene Datentypen baut man mit ___, Methoden stehen in einem ___-Block.", blanks: [["struct"], ["impl"]] },
+      code: { question: "Definiere einen Struct `Hund` mit einem Feld `name`.",
+        solution: "struct Hund {\n    name: String,\n}",
+        concepts: ["struct", "Hund", "name", "String"] },
+      mc: { question: "Wozu dient `impl Hund { … }`?",
+        options: ["zur Vererbung", "dort stehen die Methoden des Typs", "zum Importieren", "zur Initialisierung"],
+        correct: 1, why: "Rust trennt Daten (struct) und Verhalten (impl) sauber voneinander." },
+    },
+    sammlung: {
+      blank: { template: "Eine wachsende Liste ist ___, ein Element hängt ___ an.", blanks: [["Vec"], ["push"]] },
+      code: { question: "Lege ein veränderbares `Vec<i32>` namens `zahlen` an und füge die 7 hinzu.",
+        solution: "let mut zahlen: Vec<i32> = Vec::new();\nzahlen.push(7);",
+        concepts: ["let", "mut", "zahlen", "Vec", "push"] },
+      mc: { question: "Was ist der Unterschied zwischen `Vec<T>` und einem Array `[T; N]`?",
+        options: ["keiner", "die Länge eines Arrays steht schon beim Übersetzen fest", "Vec ist schneller", "Arrays können wachsen"],
+        correct: 1, why: "`Vec` liegt auf dem Heap und kann wachsen, ein Array hat feste Größe." },
+    },
+    speicher: {
+      blank: { template: "Jeder Wert hat genau einen ___; ausleihen kann man ihn mit ___.", blanks: [["Besitzer", "Eigentümer", "Owner"], ["&", "Referenz"]] },
+      code: { question: "Schreibe eine Funktion `laenge`, die einen &str nimmt und die Länge als usize zurückgibt.",
+        solution: "fn laenge(text: &str) -> usize {\n    text.len()\n}",
+        concepts: ["fn", "laenge", "usize", "len"] },
+      mc: { question: "Warum nimmt `laenge` ein `&str` statt `String`?",
+        options: ["es ist kürzer", "so bleibt der Wert beim Aufrufer und wird nur ausgeliehen", "String geht nicht", "es ist genauer"],
+        correct: 1, why: "Ohne Referenz würde der Wert übergeben und wäre danach beim Aufrufer weg." },
+    },
+    variable: {
+      blank: { template: "Variablen sind standardmäßig ___; änderbar werden sie mit ___.", blanks: [["unveränderbar", "unveränderlich", "fest"], ["mut"]] },
+      code: { question: "Lege eine veränderbare Variable `zaehler` mit 0 an und erhöhe sie um 1.",
+        solution: "let mut zaehler = 0;\nzaehler = zaehler + 1;",
+        concepts: ["let", "mut", "zaehler"] },
+      mc: { question: "Warum sind Variablen in Rust standardmäßig unveränderlich?",
+        options: ["aus Tradition", "weil unbeabsichtigte Änderungen eine häufige Fehlerquelle sind", "weil es schneller ist", "das stimmt nicht"],
+        correct: 1, why: "Wer ändern will, sagt es ausdrücklich — das macht Absichten sichtbar." },
+    },
+    vererbung: {
+      blank: { template: "Gemeinsames Verhalten beschreibt ein ___, umgesetzt wird es mit ___ … for.", blanks: [["Trait", "trait"], ["impl"]] },
+      code: { question: "Definiere einen Trait `Sprechen` mit der Methode `sprich`.",
+        solution: "trait Sprechen {\n    fn sprich(&self);\n}",
+        concepts: ["trait", "Sprechen", "fn", "sprich"] },
+      mc: { question: "Gibt es in Rust Vererbung wie in Java?",
+        options: ["ja, mit extends", "nein — man setzt stattdessen Traits um", "nur bei Enums", "nur mit unsafe"],
+        correct: 1, why: "Traits beschreiben Fähigkeiten, nicht Abstammung." },
+    },
+  },
+  sql: {
+    sql_abfrage: {
+      blank: { template: "Welche Spalten du willst, steht hinter ___, aus welcher Tabelle hinter ___.", blanks: [["SELECT"], ["FROM"]] },
+      code: { question: "Hole alle Spalten aus der Tabelle `kunden`.",
+        solution: "SELECT * FROM kunden;",
+        concepts: ["SELECT", "FROM", "kunden"] },
+      mc: { question: "Was macht `ORDER BY preis DESC`?",
+        options: ["filtert nach Preis", "sortiert absteigend nach Preis", "gruppiert nach Preis", "löscht teure Zeilen"],
+        correct: 1, why: "`DESC` heißt absteigend, `ASC` (Standard) aufsteigend." },
+    },
+    sql_aendern: {
+      blank: { template: "Neue Zeilen kommen mit ___ INTO hinein, bestehende ändert ___.", blanks: [["INSERT"], ["UPDATE"]] },
+      code: { question: "Füge einen Kunden mit dem Namen `Ada` in die Tabelle `kunden` ein.",
+        solution: "INSERT INTO kunden (name) VALUES ('Ada');",
+        concepts: ["INSERT", "INTO", "kunden", "VALUES", "Ada"] },
+      mc: { question: "Was ist an `DELETE FROM kunden;` gefährlich?",
+        options: ["nichts", "ohne WHERE werden alle Zeilen gelöscht", "es ist zu langsam", "es löscht die Tabelle selbst"],
+        correct: 1, why: "Die Tabelle bleibt, aber sie ist danach leer — deshalb immer erst mit SELECT prüfen." },
+    },
+    sql_entwurf: {
+      blank: { template: "Eine neue Tabelle legt ___ TABLE an, die eindeutige Kennung ist der ___.", blanks: [["CREATE"], ["Primärschlüssel", "PRIMARY KEY"]] },
+      code: { question: "Lege eine Tabelle `kunden` mit `id` als Primärschlüssel und einer Spalte `name` an.",
+        solution: "CREATE TABLE kunden (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);",
+        concepts: ["CREATE", "TABLE", "kunden", "id", "PRIMARY", "name"] },
+      mc: { question: "Wozu dient ein Fremdschlüssel?",
+        options: ["er beschleunigt Abfragen", "er verweist auf den Primärschlüssel einer anderen Tabelle", "er verschlüsselt Daten", "er sortiert die Tabelle"],
+        correct: 1, why: "Er hält die Beziehung sauber: Es kann keine Bestellung ohne passenden Kunden geben." },
+    },
+    sql_filter: {
+      blank: { template: "Zeilen filtert man mit ___, auf einen leeren Wert prüft man mit ___ NULL.", blanks: [["WHERE"], ["IS"]] },
+      code: { question: "Hole Name und Preis aus `artikel`, nur wenn der Preis über 10 liegt.",
+        solution: "SELECT name, preis\nFROM artikel\nWHERE preis > 10;",
+        concepts: ["SELECT", "name", "preis", "FROM", "artikel", "WHERE", "10"] },
+      mc: { question: "Warum funktioniert `WHERE spalte = NULL` nicht?",
+        options: ["NULL ist verboten", "ein Vergleich mit NULL ergibt weder wahr noch falsch", "es fehlen Anführungszeichen", "es ist zu langsam"],
+        correct: 1, why: "NULL heißt „unbekannt“ — deshalb braucht es `IS NULL`." },
+    },
+    sql_gruppe: {
+      blank: { template: "Zeilen fasst ___ BY zusammen, die Bedingung auf Gruppen steht hinter ___.", blanks: [["GROUP"], ["HAVING"]] },
+      code: { question: "Zähle, wie viele Zeilen die Tabelle `kunden` hat.",
+        solution: "SELECT COUNT(*) FROM kunden;",
+        concepts: ["SELECT", "COUNT", "FROM", "kunden"] },
+      mc: { question: "Wo steht die Bedingung für Gruppen — im WHERE oder im HAVING?",
+        options: ["im WHERE", "im HAVING", "in beiden gleichzeitig", "im SELECT"],
+        correct: 1, why: "WHERE filtert einzelne Zeilen vor der Gruppierung, HAVING die fertigen Gruppen." },
+    },
+    sql_join: {
+      blank: { template: "Zwei Tabellen verbindet ___ JOIN, die Bedingung steht hinter ___.", blanks: [["INNER"], ["ON"]] },
+      code: { question: "Verbinde `bestellungen` mit `kunden` über die Spalte `kunde_id`.",
+        solution: "SELECT *\nFROM bestellungen\nINNER JOIN kunden ON kunden.id = bestellungen.kunde_id;",
+        concepts: ["SELECT", "FROM", "bestellungen", "JOIN", "kunden", "ON"] },
+      mc: { question: "Was liefert ein LEFT JOIN zusätzlich?",
+        options: ["nichts", "auch Zeilen der linken Tabelle ohne Partner rechts", "nur die Schnittmenge", "doppelte Zeilen"],
+        correct: 1, why: "Die fehlenden Spalten der rechten Seite sind dann NULL." },
+    },
+  },
+  typescript: {
+    abbildung: {
+      blank: { template: "Die Form eines Objekts beschreibt ein ___, optionale Felder markiert ___.", blanks: [["interface", "Interface"], ["?", "Fragezeichen"]] },
+      code: { question: "Schreibe ein Interface `Person` mit `name: string` und optionalem `alter: number`.",
+        solution: "interface Person {\n  name: string;\n  alter?: number;\n}",
+        concepts: ["interface", "Person", "name", "string", "alter", "number"] },
+      mc: { question: "Was bedeutet `alter?: number`?",
+        options: ["alter darf nur eine Zahl sein", "alter darf fehlen — dann ist es undefined", "alter ist schreibgeschützt", "alter ist immer 0"],
+        correct: 1, why: "Das Fragezeichen macht das Feld optional, nicht `null`-fähig." },
+    },
+    bedingung: {
+      blank: { template: "Ein Typ aus mehreren Möglichkeiten heißt ___-Typ, eingegrenzt wird er durch ___.", blanks: [["Union"], ["Narrowing", "typeof"]] },
+      code: { question: "Definiere einen Typ `Status`, der nur `\\\"offen\\\"` oder `\\\"fertig\\\"` sein darf.",
+        solution: "type Status = \"offen\" | \"fertig\";",
+        concepts: ["type", "Status", "offen", "fertig", "|"] },
+      mc: { question: "Wie grenzt man `string | number` auf `string` ein?",
+        options: ["mit as string", "mit `if (typeof wert === \"string\")`", "gar nicht", "mit any"],
+        correct: 1, why: "Nach der Prüfung weiß der Compiler im Block, dass es ein String ist." },
+    },
+    funktion: {
+      blank: { template: "Parameter- und Rückgabetyp trennt der ___, ein Ergebnis liefert ___.", blanks: [[":", "Doppelpunkt"], ["return"]] },
+      code: { question: "Schreibe eine Funktion `verdopple`, die eine `number` entgegennimmt und eine `number` zurückgibt.",
+        solution: "function verdopple(zahl: number): number {\n  return zahl * 2;\n}",
+        concepts: ["function", "verdopple", "number", "return"] },
+      mc: { question: "Was bedeutet der Rückgabetyp `void`?",
+        options: ["die Funktion gibt null zurück", "die Funktion gibt bewusst nichts zurück", "die Funktion wirft immer", "der Typ ist unbekannt"],
+        correct: 1, why: "`never` wäre der Typ für eine Funktion, die nie normal zurückkehrt." },
+    },
+    generics: {
+      blank: { template: "Ein Typparameter steht in ___ Klammern; üblich ist der Buchstabe ___.", blanks: [["spitzen", "spitzen Klammern", "<>"], ["T"]] },
+      code: { question: "Schreibe eine generische Funktion `erstes`, die das erste Element eines Arrays liefert.",
+        solution: "function erstes<T>(liste: T[]): T {\n  return liste[0];\n}",
+        concepts: ["function", "erstes", "T", "return"] },
+      mc: { question: "Wozu dient ein Typparameter?",
+        options: ["zur Dokumentation", "damit eine Funktion mit vielen Typen arbeitet und der Typ trotzdem erhalten bleibt", "um any zu ersetzen", "für schnellere Ausführung"],
+        correct: 1, why: "Mit `any` wüsste der Aufrufer den Rückgabetyp nicht mehr — mit `T` schon." },
+    },
+    klasse: {
+      blank: { template: "Ein Feld nur innerhalb der Klasse markiert ___, unveränderlich macht es ___.", blanks: [["private"], ["readonly"]] },
+      code: { question: "Schreibe eine Klasse `Hund` mit einem privaten Feld `name`.",
+        solution: "class Hund {\n  private name: string;\n\n  constructor(name: string) {\n    this.name = name;\n  }\n}",
+        concepts: ["class", "Hund", "private", "name", "string", "constructor"] },
+      mc: { question: "Was macht `readonly` bei einem Feld?",
+        options: ["es ist unsichtbar", "es lässt sich nach dem Konstruktor nicht mehr ändern", "es ist statisch", "es ist optional"],
+        correct: 1, why: "Die Prüfung findet beim Übersetzen statt — zur Laufzeit ist es ein normales Feld." },
+    },
+    modul: {
+      blank: { template: "Nach außen sichtbar wird etwas mit ___, hereingeholt mit ___.", blanks: [["export"], ["import"]] },
+      code: { question: "Exportiere ein Interface `Person` aus einer Moduldatei.",
+        solution: "export interface Person {\n  name: string;\n}",
+        concepts: ["export", "interface", "Person", "name", "string"] },
+      mc: { question: "Was macht `import type { Person } from \"./person\"`?",
+        options: ["dasselbe wie ein normaler Import", "importiert nur den Typ — im fertigen JavaScript bleibt nichts übrig", "importiert nur zur Laufzeit", "ist ungültig"],
+        correct: 1, why: "Typ-Importe verschwinden beim Übersetzen vollständig." },
+    },
+    sammlung: {
+      blank: { template: "Ein Array von Zahlen schreibt man als ___, ein Tupel mit fester Länge in ___ Klammern.", blanks: [["number[]", "number[ ]"], ["eckigen", "eckige", "[]"]] },
+      code: { question: "Lege ein typisiertes Array `zahlen` mit drei Zahlen an.",
+        solution: "const zahlen: number[] = [1, 2, 3];",
+        concepts: ["const", "zahlen", "number", "1"] },
+      mc: { question: "Was ist `Array<string>` im Vergleich zu `string[]`?",
+        options: ["etwas anderes", "dasselbe in anderer Schreibweise", "nur für Klassen", "veraltet"],
+        correct: 1, why: "Beide Schreibweisen sind gleichwertig — eine Frage des Stils." },
+    },
+    variable: {
+      blank: { template: "Der Typ steht hinter dem Namen nach einem ___. Für „irgendetwas“ steht ___ — besser vermeiden.", blanks: [[":", "Doppelpunkt"], ["any"]] },
+      code: { question: "Lege eine typisierte Konstante `alter` vom Typ number an und gib sie aus.",
+        solution: "const alter: number = 17;\nconsole.log(alter);",
+        concepts: ["const", "alter", "number", "console.log"] },
+      mc: { question: "Warum ist `any` problematisch?",
+        options: ["es ist langsam", "es schaltet die Typprüfung für diesen Wert ab", "es geht nur in Klassen", "es ist veraltet"],
+        correct: 1, why: "Damit verliert man genau die Sicherheit, für die man TypeScript einsetzt." },
+    },
+  },
+  vue: {
+    fe_effekt: {
+      blank: { template: "Nach dem Einhängen läuft ___, auf Änderungen reagiert ___.", blanks: [["onMounted"], ["watch"]] },
+      code: { question: "Lade beim Einhängen der Komponente Daten und schreibe sie in `daten`.",
+        solution: "onMounted(async () => {\n  const antwort = await fetch(\"/api/daten\");\n  daten.value = await antwort.json();\n});",
+        concepts: ["onMounted", "await", "fetch", "daten"] },
+      mc: { question: "Wann läuft `onMounted`?",
+        options: ["vor dem ersten Rendern", "nachdem die Komponente im DOM steht", "bei jedem Rendern", "beim Entfernen"],
+        correct: 1, why: "Erst dann existieren die Elemente, auf die man zugreifen kann." },
+    },
+    fe_event: {
+      blank: { template: "Auf ein Ereignis hört die Direktive ___, kurz geschrieben mit ___.", blanks: [["v-on"], ["@"]] },
+      code: { question: "Schreibe einen Knopf, der beim Klick die Funktion `zaehle` aufruft.",
+        solution: "<button @click=\"zaehle\">Klick mich</button>",
+        concepts: ["<button", "@click", "zaehle"] },
+      mc: { question: "Was bewirkt `@click.prevent`?",
+        options: ["nichts", "es verhindert die Standardaktion des Browsers", "es blockiert den Klick", "es verzögert den Klick"],
+        correct: 1, why: "Praktisch bei Formularen, damit die Seite nicht neu lädt." },
+    },
+    fe_formular: {
+      blank: { template: "Ein Eingabefeld verbindet man in beide Richtungen mit ___.", blanks: [["v-model"]] },
+      code: { question: "Binde die Variable `text` an ein Eingabefeld.",
+        solution: "<input v-model=\"text\">",
+        concepts: ["<input", "v-model", "text"] },
+      mc: { question: "Was macht `v-model` unter der Haube?",
+        options: ["nur binden", "es verbindet `:value` und `@input` in einem", "es sendet das Formular", "es prüft die Eingabe"],
+        correct: 1, why: "Deshalb heißt es Zwei-Wege-Bindung: Anzeige und Variable bleiben gleich." },
+    },
+    fe_liste: {
+      blank: { template: "Über eine Liste läuft die Direktive ___, jeder Eintrag braucht ein ___.", blanks: [["v-for"], [":key", "key"]] },
+      code: { question: "Gib jeden Eintrag aus `punkte` als Listenelement aus.",
+        solution: "<li v-for=\"punkt in punkte\" :key=\"punkt\">{{ punkt }}</li>",
+        concepts: ["<li", "v-for", "punkte", ":key"] },
+      mc: { question: "Warum braucht `v-for` ein `:key`?",
+        options: ["für die Sortierung", "damit Vue Einträge beim Aktualisieren wiedererkennt", "für die Formatierung", "es ist optional und ohne Wirkung"],
+        correct: 1, why: "Ohne key ordnet Vue Zustand falsch zu, wenn sich die Reihenfolge ändert." },
+    },
+    fe_props: {
+      blank: { template: "Text aus einer Variablen setzt man mit ___ ein, ein Attribut bindet ___ oder der Doppelpunkt.", blanks: [["{{}}", "{{ }}", "Interpolation"], ["v-bind"]] },
+      code: { question: "Binde die Variable `titel` in einer Überschrift aus (Interpolation).",
+        solution: "<h1>{{ titel }}</h1>",
+        concepts: ["<h1>", "{{", "titel", "}}"] },
+      mc: { question: "Wie bindet man `href` an eine Variable?",
+        options: ["href=\"{{ url }}\"", ":href=\"url\"", "href=url", "v-href=url"],
+        correct: 1, why: "In Attributen greift die Interpolation nicht — dafür gibt es `v-bind` bzw. den Doppelpunkt." },
+    },
+    fe_state: {
+      blank: { template: "Einen reaktiven Einzelwert erzeugt ___, im Skript liest man ihn über ___.", blanks: [["ref", "ref()"], [".value", "value"]] },
+      code: { question: "Lege mit der Composition-API einen reaktiven Zähler `wert` an.",
+        solution: "const wert = ref(0);\nwert.value = wert.value + 1;",
+        concepts: ["const", "wert", "ref"] },
+      mc: { question: "Warum braucht `ref` im Skript ein `.value`?",
+        options: ["aus historischen Gründen", "weil ref den Wert in einem Objekt hält, das Vue beobachten kann", "damit es schneller ist", "das braucht es nicht"],
+        correct: 1, why: "In der Vorlage entfällt `.value` — dort packt Vue es selbst aus." },
+    },
+  },
+};
+
 /** Alle Übungssätze einer Sprache — der handgeschriebene zuerst. */
 function practiceSets(courseId) {
   const base = COURSE_PRACTICE[courseId];
   const extra = PRACTICE_BANK[courseId] || [];
   const all = [...(base ? [base] : []), ...extra];
   return all.length ? all : [DEFAULT_PRACTICE_SET];
+}
+
+/* Dasselbe Thema heißt je nach Sprache anders: Was in Python eine „Sammlung"
+   ist, ist in SQL eine Abfrage und in React eine gerenderte Liste. Diese
+   Tabelle übersetzt die allgemeinen Themen in die Begriffswelt der Sprache. */
+const TOPIC_ALIASES = {
+  html: {
+    sammlung: "html_liste", schleife: "html_liste", abbildung: "html_tabelle",
+    variable: "html_text", string: "html_text", funktion: "html_formular",
+    bedingung: "html_formular", klasse: "html_semantik", vererbung: "html_semantik",
+    fehler: "html_semantik", speicher: "html_semantik",
+    modul: "html_meta", datei: "html_meta", test: "html_meta", async: "html_meta",
+  },
+  css: {
+    variable: "css_selektor", klasse: "css_selektor", vererbung: "css_selektor",
+    modul: "css_selektor", test: "css_selektor", fehler: "css_selektor", datei: "css_selektor",
+    string: "css_text", speicher: "css_box", abbildung: "css_box",
+    sammlung: "css_grid", schleife: "css_grid",
+    bedingung: "css_responsive", operator: "css_box",
+    funktion: "css_animation", async: "css_animation",
+  },
+  sql: {
+    variable: "sql_abfrage", sammlung: "sql_abfrage", schleife: "sql_abfrage",
+    string: "sql_filter", bedingung: "sql_filter", fehler: "sql_filter", operator: "sql_filter",
+    funktion: "sql_gruppe", abbildung: "sql_gruppe",
+    klasse: "sql_entwurf", vererbung: "sql_entwurf", modul: "sql_entwurf", speicher: "sql_entwurf",
+    datei: "sql_aendern", async: "sql_aendern", test: "sql_abfrage", generics: "sql_entwurf",
+    html_tabelle: "sql_entwurf",
+  },
+  react: {
+    sammlung: "fe_liste", schleife: "fe_liste", abbildung: "fe_liste",
+    variable: "fe_props", string: "fe_props", funktion: "fe_props", klasse: "fe_props",
+    vererbung: "fe_props", modul: "fe_props", generics: "fe_props", bedingung: "fe_props",
+    speicher: "fe_state", test: "fe_state", operator: "fe_state",
+    async: "fe_effekt", fehler: "fe_effekt", datei: "fe_effekt",
+    html_formular: "fe_formular", css_position: "fe_props", css_selektor: "fe_props",
+  },
+  vue: {
+    sammlung: "fe_liste", schleife: "fe_liste", abbildung: "fe_liste",
+    variable: "fe_props", string: "fe_props", funktion: "fe_props", klasse: "fe_props",
+    vererbung: "fe_props", modul: "fe_props", generics: "fe_props", bedingung: "fe_props",
+    speicher: "fe_state", test: "fe_state", operator: "fe_state",
+    async: "fe_effekt", fehler: "fe_effekt", datei: "fe_effekt",
+    html_formular: "fe_formular", css_position: "fe_props", css_selektor: "fe_props",
+  },
+};
+
+/* Gibt es zu einem Thema in einer Sprache keine Aufgabe, tut es die
+   nächstverwandte: Wer über Generatoren liest, kommt mit einer
+   Schleifen-Aufgabe weiter — mit einer über Dictionaries nicht. */
+const TOPIC_FALLBACKS = {
+  schleife: ["sammlung", "bedingung"],
+  operator: ["variable", "bedingung"],
+  vererbung: ["klasse"],
+  generics: ["funktion", "sammlung"],
+  abbildung: ["sammlung"],
+  modul: ["variable"],
+  datei: ["sammlung", "variable"],
+  async: ["funktion"],
+  test: ["funktion"],
+  speicher: ["variable"],
+  string: ["variable"],
+  fehler: ["bedingung"],
+  klasse: ["funktion"],
+  bedingung: ["variable"],
+  sammlung: ["variable"],
+  funktion: ["variable"],
+};
+
+/** Löst ein erkanntes Thema auf das auf, was diese Sprache anbietet. */
+function resolveTopic(courseId, topic) {
+  if (!topic) return null;
+  const bank = TOPIC_EXERCISES[courseId] || {};
+  const alias = TOPIC_ALIASES[courseId]?.[topic];
+  const kandidaten = [topic, alias, ...(TOPIC_FALLBACKS[topic] || [])].filter(Boolean);
+  for (const kandidat of kandidaten) {
+    if (bank[kandidat]) return kandidat;
+    const weiter = TOPIC_ALIASES[courseId]?.[kandidat];
+    if (weiter && bank[weiter]) return weiter;
+  }
+  return null;
+}
+
+/**
+ * Wählt den Übungssatz für eine Lektion.
+ *
+ * Zuerst am Lektionstitel, dann am Modultitel: Steht dort ein erkennbares
+ * Thema und gibt es dazu eine Aufgabe in dieser Sprache, wird sie gestellt.
+ * Erst wenn beides nichts ergibt, greift die alte Rotation nach Streuwert —
+ * dann ist wenigstens eine gültige Aufgabe da.
+ */
+function practiceFor(courseId, lessonTitle, moduleTitle, hash) {
+  const bank = TOPIC_EXERCISES[courseId] || {};
+  for (const title of [lessonTitle, moduleTitle]) {
+    const topic = resolveTopic(courseId, topicOf(title, courseId));
+    if (topic && bank[topic]) return { set: bank[topic], topic };
+  }
+  const sets = practiceSets(courseId);
+  return { set: sets[hash % sets.length], topic: null };
 }
 
 /** Kleiner, stabiler Hash — damit dieselbe Lektion immer dieselben Aufgaben hat. */
@@ -4297,12 +5723,432 @@ function lessonHash(id) {
   return h;
 }
 
+/* Erklärtext je Thema. Er tritt an die Stelle des früheren Fülltexts
+   („In diesem Abschnitt vertiefst du das Thema …“), der zu jeder Lektion
+   dasselbe sagte und damit nichts. */
+const TOPIC_THEORY = {
+  abbildung: {
+    intro: `Eine **Abbildung** (Dictionary, Map, Objekt) speichert Paare aus **Schlüssel** und **Wert**. Der Zugriff läuft über den Schlüssel statt über eine Position.`,
+    punkte: [
+      `Der Schlüssel ist ein sprechender Name: \`"name"\` statt Position 0.`,
+      `Ein Schlüssel kommt höchstens einmal vor — ein zweites Schreiben überschreibt.`,
+      `Eine Abbildung beschreibt *eine Sache mit Eigenschaften*, eine Liste *mehrere gleichartige Dinge*.`,
+    ],
+    hinweis: `Der Zugriff auf einen fehlenden Schlüssel ist ein Fehler, kein leerer Wert. Dafür gibt es eine Abfrage mit Standardwert.`,
+  },
+  async: {
+    intro: `**Asynchroner Code** wartet nicht untätig. Während eine Antwort aus dem Netz unterwegs ist, kann das Programm etwas anderes tun.`,
+    punkte: [
+      `Der Ablauf bleibt lesbar von oben nach unten — nur die Wartezeit wird freigegeben.`,
+      `Nebenläufig heißt nicht gleichzeitig: Vieles läuft verschränkt in einem einzigen Ablauf.`,
+      `Fehler brauchen dieselbe Sorgfalt wie synchron — nur an anderer Stelle.`,
+    ],
+    hinweis: `Ein vergessenes Warten liefert nicht das Ergebnis, sondern das Versprechen darauf. Das fällt oft erst weiter unten auf.`,
+  },
+  bedingung: {
+    intro: `Mit einer **Bedingung** trifft ein Programm eine Entscheidung: Ein Codeblock läuft nur dann, wenn ein Ausdruck wahr ist.`,
+    punkte: [
+      `Die Bedingung ergibt immer einen Wahrheitswert.`,
+      `Der \`sonst\`-Zweig fängt alle übrigen Fälle ab — er ist optional.`,
+      `Mehrere Fälle hintereinander werden von oben nach unten geprüft; der erste passende gewinnt.`,
+    ],
+    hinweis: `Vergleichen und Zuweisen sehen sich ähnlich, tun aber Grundverschiedenes. Ein einzelnes \`=\` in einer Bedingung ist fast immer ein Fehler.`,
+  },
+  css_animation: {
+    intro: `**Bewegung** lenkt Aufmerksamkeit und erklärt Zusammenhänge — zu viel davon stört und macht manchen Menschen buchstäblich unwohl.`,
+    punkte: [
+      `Ein Übergang animiert eine Änderung von einem Zustand zum anderen.`,
+      `Eine Animation läuft von selbst und kann sich wiederholen.`,
+      `Am flüssigsten laufen Verschiebung und Deckkraft, weil sie kein neues Layout auslösen.`,
+    ],
+    hinweis: `Wer Bewegung reduziert eingestellt hat, sagt damit etwas Ernstes. Diese Einstellung lässt sich in CSS abfragen und respektieren.`,
+  },
+  css_box: {
+    intro: `Jedes Element ist im Layout eine **Box**: Inhalt, Innenabstand, Rahmen und Außenabstand — von innen nach außen.`,
+    punkte: [
+      `Innenabstand liegt innerhalb des Rahmens, Außenabstand außerhalb.`,
+      `Senkrechte Außenabstände benachbarter Elemente fallen zusammen, statt sich zu addieren.`,
+      `Mit \`border-box\` zählen Rahmen und Innenabstand zur angegebenen Breite.`,
+    ],
+    hinweis: `Ohne \`border-box\` wird ein Element mit \`width: 100%\` plus Innenabstand breiter als sein Container — und läuft über.`,
+  },
+  css_farbe: {
+    intro: `**Farbe** trägt Bedeutung — aber nie allein. Was nur über Farbe unterschieden wird, verschwindet für einen Teil der Lesenden.`,
+    punkte: [
+      `Farben lassen sich als Name, als Hex-Wert oder über RGB und HSL angeben.`,
+      `Der vierte Wert steuert die Deckkraft.`,
+      `Der Kontrast zwischen Text und Hintergrund entscheidet über die Lesbarkeit.`,
+    ],
+    hinweis: `Ein Fehlerfeld, das nur rot umrandet ist, sagt bei Rot-Grün-Schwäche gar nichts. Eine Meldung daneben schon.`,
+  },
+  css_flex: {
+    intro: `**Flexbox** ordnet Elemente entlang einer Achse an und verteilt den Platz dazwischen. Das ist das Werkzeug für Leisten, Karten und Knopfgruppen.`,
+    punkte: [
+      `Die Hauptachse bestimmt die Richtung, die Querachse steht senkrecht dazu.`,
+      `Verteilen entlang der Hauptachse, Ausrichten quer dazu.`,
+      `Abstände setzt man mit \`gap\` statt mit Außenabständen an jedem Kind.`,
+    ],
+    hinweis: `Senkrecht zu zentrieren war jahrelang ein Kunststück. Mit Flexbox sind es zwei Zeilen.`,
+  },
+  css_grid: {
+    intro: `**Grid** teilt eine Fläche in Zeilen und Spalten. Anders als Flexbox arbeitet es in zwei Richtungen gleichzeitig.`,
+    punkte: [
+      `Spalten und Zeilen werden am Container festgelegt.`,
+      `Die Einheit \`fr\` verteilt den freien Platz in Anteilen.`,
+      `Elemente lassen sich über mehrere Spalten oder Zeilen spannen.`,
+    ],
+    hinweis: `Grid für das Seitenraster, Flexbox für die Anordnung darin — beides zusammen deckt fast jedes Layout ab.`,
+  },
+  css_position: {
+    intro: `Standardmäßig fließen Elemente von oben nach unten. **Positionierung** nimmt ein Element gezielt aus diesem Fluss heraus.`,
+    punkte: [
+      `\`relative\` verschiebt, ohne den Platz freizugeben.`,
+      `\`absolute\` bezieht sich auf den nächsten positionierten Vorfahren.`,
+      `\`fixed\` bleibt beim Scrollen stehen, \`sticky\` erst ab einem Punkt.`,
+    ],
+    hinweis: `Positionierung ist selten die Lösung für ein Layout. Für Anordnung sind Flexbox und Grid gemacht.`,
+  },
+  css_responsive: {
+    intro: `**Responsive Design** heißt: eine Seite, die sich an den verfügbaren Platz anpasst — nicht eine zweite Seite fürs Handy.`,
+    punkte: [
+      `Der Grundstil gilt für alle, Media Queries ergänzen nach oben.`,
+      `Umbruchpunkte richten sich nach dem Inhalt, nicht nach Gerätemodellen.`,
+      `Bilder und Container brauchen eine Höchstbreite, damit nichts überläuft.`,
+    ],
+    hinweis: `Ein Layout, das erst ab einer bestimmten Breite funktioniert, ist auf dem meistgenutzten Gerät kaputt.`,
+  },
+  css_selektor: {
+    intro: `Ein **Selektor** beantwortet die Frage: Für welche Elemente gilt diese Regel?`,
+    punkte: [
+      `Nach Element, nach Klasse, nach id — von allgemein zu speziell.`,
+      `Bei widersprüchlichen Regeln entscheidet die **Spezifität**, erst danach die Reihenfolge.`,
+      `Pseudo-Klassen treffen Zustände wie „darübergefahren“ oder „angeklickt“.`,
+    ],
+    hinweis: `Wer Spezifität mit \`!important\` löst, verschiebt das Problem nur nach hinten. Meist ist der Selektor zu speziell geworden.`,
+  },
+  css_text: {
+    intro: `**Schrift** entscheidet mehr über Lesbarkeit als jede Farbe. Größe, Zeilenhöhe und Zeilenlänge wirken zusammen.`,
+    punkte: [
+      `Relative Einheiten skalieren mit den Einstellungen der lesenden Person.`,
+      `Eine Zeilenhöhe um 1.5 macht Fließtext deutlich lesbarer.`,
+      `Eine Schriftfamilie wird als Liste angegeben — mit einer Ausweichschrift am Ende.`,
+    ],
+    hinweis: `Feste Pixelgrößen ignorieren, dass jemand die Schrift im Browser größer gestellt hat. Genau darauf sind viele angewiesen.`,
+  },
+  datei: {
+    intro: `Beim Arbeiten mit **Dateien** wird aus flüchtigen Daten etwas Bleibendes. Der Ablauf ist immer derselbe: öffnen, lesen oder schreiben, schließen.`,
+    punkte: [
+      `Der Modus entscheidet, ob gelesen, überschrieben oder angehängt wird.`,
+      `Große Dateien liest man zeilenweise, nicht auf einmal in den Speicher.`,
+      `Sprachen bieten eine Form an, die das Schließen selbst übernimmt — auch wenn zwischendrin ein Fehler auftritt.`,
+    ],
+    hinweis: `Ein Dateiname, der aus einer Nutzereingabe stammt, gehört geprüft. Sonst lässt sich damit aus dem vorgesehenen Verzeichnis ausbrechen.`,
+  },
+  fe_effekt: {
+    intro: `Ein **Effekt** ist alles, was über das reine Anzeigen hinausgeht: Daten laden, einen Zeitgeber starten, auf Ereignisse des Fensters hören.`,
+    punkte: [
+      `Ein Effekt läuft nach dem Zeichnen, nicht währenddessen.`,
+      `Die Abhängigkeiten bestimmen, wann er erneut läuft.`,
+      `Was ein Effekt anlegt, muss er beim Aufräumen wieder entfernen.`,
+    ],
+    hinweis: `Ein Effekt ohne Aufräumen hinterlässt Zeitgeber und Zuhörer, die weiterlaufen — auch wenn die Komponente längst weg ist.`,
+  },
+  fe_event: {
+    intro: `**Ereignisse** verbinden das, was jemand tut, mit dem, was passieren soll.`,
+    punkte: [
+      `Übergeben wird die Funktion selbst, nicht ihr Ergebnis.`,
+      `Das Ereignisobjekt trägt die Einzelheiten — welches Element, welcher Wert.`,
+      `Manche Standardaktionen des Browsers muss man ausdrücklich unterbinden.`,
+    ],
+    hinweis: `Klammern hinter dem Funktionsnamen rufen sie sofort beim Zeichnen auf. Das ist einer der häufigsten Anfängerfehler.`,
+  },
+  fe_formular: {
+    intro: `Ein **kontrolliertes Formularfeld** holt seinen Wert aus dem Zustand und meldet jede Änderung dorthin zurück.`,
+    punkte: [
+      `Anzeige und Daten können dadurch nicht auseinanderlaufen.`,
+      `Prüfungen und Formatierungen greifen an genau einer Stelle.`,
+      `Ein Absenden setzt man ab, indem man die Standardaktion des Browsers unterbindet.`,
+    ],
+    hinweis: `Ohne Zustand kennt nur der Browser den Wert. Spätestens beim Zurücksetzen oder Vorbefüllen wird das zum Problem.`,
+  },
+  fe_liste: {
+    intro: `Aus einer **Liste von Daten** wird eine Liste von Elementen. Das ist der häufigste Fall überhaupt in einer Oberfläche.`,
+    punkte: [
+      `Die Daten werden auf Elemente abgebildet.`,
+      `Jedes Element braucht eine stabile Kennung.`,
+      `Die Kennung soll aus den Daten kommen — der Listenindex ändert sich beim Umsortieren.`,
+    ],
+    hinweis: `Ohne stabile Kennung ordnet das Framework beim Aktualisieren den Zustand falsch zu. Eingaben landen dann in der falschen Zeile.`,
+  },
+  fe_props: {
+    intro: `Eine **Komponente** ist ein wiederverwendbarer Baustein der Oberfläche. Werte kommen von außen hinein — die Komponente liest sie, ändert sie aber nicht.`,
+    punkte: [
+      `Von außen gesetzte Werte gehören dem Elternteil.`,
+      `Eine Komponente beschreibt, wie die Anzeige zu einem gegebenen Zustand aussieht.`,
+      `Kleine Komponenten mit einer Aufgabe lassen sich leichter wiederverwenden und prüfen.`,
+    ],
+    hinweis: `Wenn eine Komponente ihre Eingabewerte ändern will, gehört der Zustand eine Ebene höher.`,
+  },
+  fe_state: {
+    intro: `**Zustand** ist alles, was sich über die Zeit ändert. Er ist die einzige Wahrheit — die Anzeige folgt ihm, nicht umgekehrt.`,
+    punkte: [
+      `Eine Änderung läuft immer über die vorgesehene Funktion, nie durch direktes Überschreiben.`,
+      `Nur dadurch weiß das Framework, dass neu gezeichnet werden muss.`,
+      `Zustand gehört so weit unten wie möglich — und nur so weit oben wie nötig.`,
+    ],
+    hinweis: `Werte, die sich aus dem Zustand berechnen lassen, gehören nicht noch einmal in den Zustand. Sonst laufen sie auseinander.`,
+  },
+  fehler: {
+    intro: `**Fehlerbehandlung** trennt den normalen Ablauf vom Ausnahmefall. Statt abzustürzen, reagiert das Programm gezielt.`,
+    punkte: [
+      `Riskanter Code steht in einem eigenen Block, die Behandlung daneben.`,
+      `Je genauer der abgefangene Fehlertyp, desto aussagekräftiger die Reaktion.`,
+      `Aufräumen (Datei schließen, Verbindung trennen) gehört in den Zweig, der immer läuft.`,
+    ],
+    hinweis: `Fehler pauschal zu verschlucken ist schlimmer als ein Absturz: Das Problem bleibt, nur die Ursache ist nicht mehr zu sehen.`,
+  },
+  funktion: {
+    intro: `Eine **Funktion** ist ein benannter Codeblock, den du beliebig oft aufrufen kannst. Sie ist der wichtigste Baustein gegen Wiederholung.`,
+    punkte: [
+      `**Parameter** sind Platzhalter in der Definition, **Argumente** die echten Werte beim Aufruf.`,
+      `Ein Rückgabewert macht das Ergebnis weiterverwendbar; eine Ausgabe auf dem Bildschirm tut das nicht.`,
+      `Eine gute Funktion tut genau eine Sache — das macht sie testbar und wiederverwendbar.`,
+    ],
+    hinweis: `Ausgeben und Zurückgeben sind zweierlei. Wer nur ausgibt, kann mit dem Ergebnis nicht weiterrechnen.`,
+  },
+  generics: {
+    intro: `**Generics** machen Code für viele Typen nutzbar, ohne die Typprüfung aufzugeben. Der Typ wird zum Parameter.`,
+    punkte: [
+      `Der Aufrufer legt fest, mit welchem Typ gearbeitet wird.`,
+      `Der Rückgabetyp bleibt dadurch bekannt — anders als bei einem „irgendetwas“-Typ.`,
+      `Einschränkungen legen fest, was der Typ mindestens können muss.`,
+    ],
+    hinweis: `Generics lohnen sich, sobald derselbe Ablauf für mehrere Typen gebraucht wird. Vorher machen sie den Code nur schwerer lesbar.`,
+  },
+  html_formular: {
+    intro: `Ein **Formular** sammelt Eingaben und schickt sie weg. Es ist die Stelle, an der aus einer Seite eine Anwendung wird.`,
+    punkte: [
+      `Jedes Feld braucht eine verbundene Beschriftung.`,
+      `Der Typ eines Feldes bestimmt Tastatur, Prüfung und Darstellung.`,
+      `Der \`name\` entscheidet, unter welchem Schlüssel der Wert ankommt.`,
+    ],
+    hinweis: `Die Prüfung im Browser ist Bequemlichkeit, keine Sicherheit. Auf dem Server muss noch einmal geprüft werden.`,
+  },
+  html_link: {
+    intro: `**Links** sind das, was das Web ausmacht. Ein Link verbindet Dokumente miteinander.`,
+    punkte: [
+      `Das Ziel steht im \`href\` — relativ innerhalb der Seite, absolut nach außen.`,
+      `Der Linktext soll auch für sich allein verständlich sein.`,
+      `Ein Sprungziel innerhalb der Seite wird über die \`id\` angesteuert.`,
+    ],
+    hinweis: `„Hier klicken“ sagt nichts. Screenreader lesen Links oft am Stück vor — dann steht dort zehnmal dasselbe.`,
+  },
+  html_liste: {
+    intro: `**Listen** ordnen Aufzählungen. Der Browser und Hilfsmittel sagen dadurch an, wie viele Punkte folgen.`,
+    punkte: [
+      `Ungeordnet, wenn die Reihenfolge egal ist.`,
+      `Geordnet, wenn Schritt 1 vor Schritt 2 kommt.`,
+      `Listen lassen sich verschachteln — jede innere Liste steht in einem Eintrag.`,
+    ],
+    hinweis: `Eine Navigation ist fast immer eine Liste von Links. Das ist kein Zufall, sondern die passende Struktur.`,
+  },
+  html_medien: {
+    intro: `**Bilder und Medien** brauchen mehr als eine Quelle: Sie brauchen eine Beschreibung und eine Vorstellung davon, was passiert, wenn sie fehlen.`,
+    punkte: [
+      `Der Alternativtext beschreibt, was zu sehen ist — nicht, dass es ein Bild ist.`,
+      `Breite und Höhe im Markup verhindern, dass die Seite beim Laden springt.`,
+      `Rein dekorative Bilder bekommen einen leeren Alternativtext, damit sie übersprungen werden.`,
+    ],
+    hinweis: `Ein Bild ohne Alternativtext ist für alle unsichtbar, die es nicht sehen können — und das sind mehr, als man denkt.`,
+  },
+  html_meta: {
+    intro: `Der **Kopfbereich** enthält, was nicht angezeigt wird, aber alles beeinflusst: Titel, Kodierung, Beschreibung und Vorschaubild.`,
+    punkte: [
+      `Der Titel erscheint im Tab und als Überschrift in Suchergebnissen.`,
+      `Die Zeichenkodierung gehört ganz nach oben — sonst zerfallen Umlaute.`,
+      `Die Viewport-Angabe ist die Voraussetzung dafür, dass eine Seite auf dem Handy funktioniert.`,
+    ],
+    hinweis: `Ohne die Viewport-Angabe zeigt ein Handy die Seite verkleinert wie am Bildschirm — kein CSS der Welt hilft dagegen.`,
+  },
+  html_semantik: {
+    intro: `**Semantisches HTML** benennt die Rolle eines Bereichs. Der Unterschied zu einem \`div\` ist nicht sichtbar — aber überall dort spürbar, wo die Seite nicht mit den Augen gelesen wird.`,
+    punkte: [
+      `Kopf-, Haupt-, Seiten- und Fußbereich haben eigene Elemente.`,
+      `Ein eigenständiger Beitrag ist ein \`article\`, ein thematischer Abschnitt eine \`section\`.`,
+      `Hilfsmittel bauen daraus eine Übersicht, über die man direkt springen kann.`,
+    ],
+    hinweis: `Ein \`div\` mit passender Klasse sieht gleich aus und sagt nichts. Der Unterschied zeigt sich erst bei denen, die auf die Struktur angewiesen sind.`,
+  },
+  html_tabelle: {
+    intro: `Eine **Tabelle** stellt Daten in Zeilen und Spalten dar. Sie ist für Daten gedacht, nicht für Layout.`,
+    punkte: [
+      `Kopfzellen benennen, wofür eine Spalte oder Zeile steht.`,
+      `Eine Beschriftung sagt, worum es in der Tabelle überhaupt geht.`,
+      `Kopf-, Rumpf- und Fußbereich gliedern größere Tabellen.`,
+    ],
+    hinweis: `Layout mit Tabellen zu bauen war vor zwanzig Jahren üblich und ist heute ein Problem — für Bildschirmleser wie für schmale Bildschirme.`,
+  },
+  html_text: {
+    intro: `HTML gibt Text eine **Struktur**. Überschriften und Absätze sagen nicht, wie etwas aussieht, sondern welche Rolle es spielt.`,
+    punkte: [
+      `Überschriften bilden eine Gliederung von \`h1\` bis \`h6\` — ohne Stufen zu überspringen.`,
+      `Ein Absatz endet, wo der Gedanke endet, nicht wo die Zeile umbricht.`,
+      `Hervorhebungen tragen Bedeutung: wichtig, betont, hervorgehoben.`,
+    ],
+    hinweis: `Wer Überschriften nach Schriftgröße aussucht, zerstört die Gliederung. Das Aussehen kommt aus CSS.`,
+  },
+  klasse: {
+    intro: `Eine **Klasse** ist der Bauplan für Objekte: Sie beschreibt, welche Daten zusammengehören und was sich damit tun lässt.`,
+    punkte: [
+      `Der **Konstruktor** legt fest, womit ein neues Objekt startet.`,
+      `Felder halten den Zustand, Methoden das Verhalten.`,
+      `Von einer Klasse lassen sich beliebig viele Objekte erzeugen — jedes mit eigenen Daten.`,
+    ],
+    hinweis: `Felder nach außen abzuschotten ist kein Formalismus: Nur so kann die Klasse ihre eigenen Regeln durchsetzen.`,
+  },
+  modul: {
+    intro: `**Module** teilen ein Programm in Dateien mit klaren Aufgaben. Nur was ausdrücklich freigegeben ist, wird von außen sichtbar.`,
+    punkte: [
+      `Ein Modul bündelt Zusammengehöriges an einer Stelle.`,
+      `Der Import macht fremde Namen im eigenen Code nutzbar.`,
+      `Fremde Bibliotheken kommen über einen Paketmanager dazu — mit fester Version, damit es reproduzierbar bleibt.`,
+    ],
+    hinweis: `Kreisförmige Importe (A braucht B, B braucht A) sind ein Zeichen dafür, dass der Schnitt zwischen den Modulen nicht stimmt.`,
+  },
+  operator: {
+    intro: `**Operatoren** verknüpfen Werte zu einem neuen Wert. Rechnen ist nur der Anfang: Auch Vergleiche und logische Verknüpfungen sind Operatoren.`,
+    punkte: [
+      `Arithmetisch: \`+\`, \`-\`, \`*\`, \`/\` und der Rest-Operator \`%\`.`,
+      `Vergleiche liefern immer einen Wahrheitswert — \`wahr\` oder \`falsch\`.`,
+      `Logisch verknüpft: „und“ ist nur wahr, wenn beide Seiten wahr sind; „oder“ schon, wenn eine es ist.`,
+    ],
+    hinweis: `Bei gemischten Rechnungen entscheidet die Reihenfolge (Punkt vor Strich). Klammern machen die Absicht eindeutig.`,
+  },
+  sammlung: {
+    intro: `Eine **Sammlung** hält mehrere Werte unter einem Namen. Statt \`name1\`, \`name2\`, \`name3\` gibt es eine Liste, über die sich rechnen und laufen lässt.`,
+    punkte: [
+      `Der Zugriff erfolgt über die Position, beginnend bei 0.`,
+      `Elemente lassen sich anhängen, entfernen und suchen.`,
+      `Die Anzahl der Elemente fragst du ab, statt sie mitzuzählen.`,
+    ],
+    hinweis: `Ein Zugriff hinter dem letzten Element ist einer der häufigsten Laufzeitfehler. Die Länge kennt die Sammlung selbst.`,
+  },
+  schleife: {
+    intro: `Eine **Schleife** wiederholt Code, ohne ihn mehrfach zu schreiben. Das ist einer der größten Hebel überhaupt: aus drei Zeilen werden Millionen Durchläufe.`,
+    punkte: [
+      `Über eine Sammlung läuft man Element für Element — das ist der häufigste Fall.`,
+      `Mit einem Zähler steuert man, wie oft etwas passiert.`,
+      `Eine kopfgesteuerte Schleife läuft, solange eine Bedingung wahr bleibt — dafür muss sich in der Schleife etwas ändern.`,
+    ],
+    hinweis: `Wenn sich die Abbruchbedingung nie ändert, läuft die Schleife endlos. Prüfe immer, was den Ausstieg herbeiführt.`,
+  },
+  speicher: {
+    intro: `Wer den **Speicher** versteht, versteht die Fehler, die sonst rätselhaft bleiben: Warum ändert sich ein Wert an einer Stelle, die ihn gar nicht anfasst?`,
+    punkte: [
+      `Einfache Werte werden kopiert, zusammengesetzte über eine Referenz weitergegeben.`,
+      `Zwei Namen können auf dieselben Daten zeigen — eine Änderung ist dann über beide sichtbar.`,
+      `Angeforderter Speicher muss wieder frei werden, sonst wächst der Verbrauch immer weiter.`,
+    ],
+    hinweis: `Eine „Kopie“, die keine ist, ist einer der am schwersten zu findenden Fehler. Prüfe im Zweifel, ob wirklich neue Daten entstanden sind.`,
+  },
+  sql_abfrage: {
+    intro: `Eine **Abfrage** beschreibt, *was* du haben willst — nicht, wie die Datenbank es findet. Das ist der große Unterschied zu einer Programmiersprache.`,
+    punkte: [
+      `\`SELECT\` nennt die Spalten, \`FROM\` die Tabelle.`,
+      `Ohne Sortierung ist die Reihenfolge der Zeilen nicht garantiert.`,
+      `Eine Begrenzung der Zeilenzahl gehört zu jeder Abfrage, die man von Hand ausprobiert.`,
+    ],
+    hinweis: `\`SELECT *\` überträgt alle Spalten — auch die großen, die niemand braucht. Benenne, was du wirklich willst.`,
+  },
+  sql_aendern: {
+    intro: `**Daten ändern** verlangt mehr Sorgfalt als Lesen: Eine falsche Abfrage liefert ein falsches Ergebnis, eine falsche Änderung zerstört Daten.`,
+    punkte: [
+      `Einfügen, Ändern und Löschen sind eigene Befehle.`,
+      `Ohne Einschränkung gilt eine Änderung für *alle* Zeilen.`,
+      `Eine Transaktion fasst mehrere Schritte zu einem Ganzen zusammen — alles oder nichts.`,
+    ],
+    hinweis: `Probiere die Einschränkung erst mit einer Leseabfrage aus. Was dort zurückkommt, wird gleich geändert.`,
+  },
+  sql_entwurf: {
+    intro: `Der **Entwurf** entscheidet, wie schwer alles Weitere wird. Eine gute Struktur macht Abfragen kurz und verhindert widersprüchliche Daten.`,
+    punkte: [
+      `Jede Zeile braucht eine eindeutige Kennung.`,
+      `Ein Fremdschlüssel hält Beziehungen sauber — es kann keine Bestellung ohne Kunden geben.`,
+      `Was mehrfach gespeichert wird, läuft irgendwann auseinander.`,
+    ],
+    hinweis: `Ein Index beschleunigt das Lesen und bremst das Schreiben. Er lohnt sich dort, wo oft gesucht wird — nicht überall.`,
+  },
+  sql_filter: {
+    intro: `**Filtern** entscheidet, welche Zeilen ins Ergebnis kommen. Alles Weitere arbeitet nur noch mit dem, was hier übrig bleibt.`,
+    punkte: [
+      `Vergleiche, Bereiche, Listen und Muster stehen zur Verfügung.`,
+      `Mehrere Bedingungen werden mit „und“ bzw. „oder“ verknüpft — Klammern machen die Absicht eindeutig.`,
+      `Ein leerer Wert ist kein Wert: Dafür gibt es eine eigene Prüfung.`,
+    ],
+    hinweis: `Ein Vergleich mit einem leeren Wert ergibt weder wahr noch falsch. Die Zeile fällt dann still heraus.`,
+  },
+  sql_gruppe: {
+    intro: `**Gruppieren** fasst viele Zeilen zu einer zusammen: Anzahl, Summe, Durchschnitt, Minimum, Maximum.`,
+    punkte: [
+      `Was nicht gruppiert wird, muss zusammengefasst werden.`,
+      `Die Bedingung auf einzelne Zeilen steht vor der Gruppierung, die auf Gruppen danach.`,
+      `Die Zählung über alle Zeilen und die über eine Spalte sind nicht dasselbe — leere Werte fallen weg.`,
+    ],
+    hinweis: `Wer vor der Gruppierung filtert, arbeitet mit weniger Daten weiter. Das ist meist auch das, was gemeint war.`,
+  },
+  sql_join: {
+    intro: `Ein **Join** setzt Zeilen aus mehreren Tabellen zusammen. Genau dafür sind relationale Datenbanken gebaut.`,
+    punkte: [
+      `Die Bedingung sagt, welche Zeilen zusammengehören — meist über einen Schlüssel.`,
+      `Der innere Join liefert nur Paare, die es auf beiden Seiten gibt.`,
+      `Ein äußerer Join behält auch die Zeilen ohne Partner; die fehlenden Spalten bleiben leer.`,
+    ],
+    hinweis: `Ein vergessener Verknüpfungsbedingung erzeugt jede Kombination aus beiden Tabellen. Aus zwei mal tausend Zeilen wird eine Million.`,
+  },
+  string: {
+    intro: `Ein **String** ist eine Folge von Zeichen. Jedes Zeichen hat eine Position, und fast jede Sprache bringt eine Sammlung von Methoden zum Suchen, Zerlegen und Zusammensetzen mit.`,
+    punkte: [
+      `Die Position (der **Index**) beginnt bei 0, nicht bei 1.`,
+      `Strings sind in den meisten Sprachen **unveränderlich**: Methoden liefern einen neuen String, statt den alten zu ändern.`,
+      `Werte in Text einzusetzen geht am saubersten über die eingebaute Formatierung, nicht über endloses Aneinanderhängen.`,
+    ],
+    hinweis: `Achte auf Leerzeichen und Groß-/Kleinschreibung — sie sind der häufigste Grund, warum ein Vergleich unerwartet falsch ist.`,
+  },
+  test: {
+    intro: `Ein **Test** ist Code, der anderen Code prüft. Sein eigentlicher Wert zeigt sich beim Umbauen: Er sagt sofort, wenn etwas kaputtgeht.`,
+    punkte: [
+      `Ein Test beschreibt eine Erwartung und vergleicht sie mit dem Ergebnis.`,
+      `Er prüft das *Verhalten*, nicht die innere Umsetzung — sonst bricht er bei jedem Aufräumen.`,
+      `Randfälle sind wertvoller als der Normalfall: leer, null, negativ, zu groß.`,
+    ],
+    hinweis: `Ein Test, der nie fehlschlägt, prüft nichts. Lass ihn einmal absichtlich rot werden.`,
+  },
+  variable: {
+    intro: `Eine **Variable** ist ein Name für einen Wert. Statt eine Zahl immer wieder hinzuschreiben, gibst du ihr einen Namen — und kannst sie später ändern, ohne jede Stelle anzufassen.`,
+    punkte: [
+      `Ein Name sagt, *wofür* der Wert steht: \`preis\` statt \`p\`.`,
+      `Der **Datentyp** entscheidet, was mit dem Wert möglich ist — rechnen, verketten, vergleichen.`,
+      `Was sich nicht ändern soll, wird als Konstante angelegt. Das schützt vor versehentlichem Überschreiben.`,
+    ],
+    hinweis: `Gute Namen sparen später mehr Zeit als jede Abkürzung beim Tippen.`,
+  },
+  vererbung: {
+    intro: `**Vererbung** gibt gemeinsames Verhalten an speziellere Typen weiter. Eine Unterklasse bekommt alles der Oberklasse und ergänzt oder ersetzt Teile davon.`,
+    punkte: [
+      `Eine Methode mit gleichem Namen **überschreibt** die geerbte Fassung.`,
+      `Eine Schnittstelle beschreibt nur, *was* möglich sein muss — nicht, *wie*.`,
+      `Zusammensetzen ist oft die bessere Wahl als Vererben: weniger Kopplung, mehr Freiheit.`,
+    ],
+    hinweis: `Vererbung nur für Wiederverwendung ist eine häufige Falle. Sie sollte eine echte „ist ein“-Beziehung beschreiben.`,
+  },
+};
+
 // Fallback-Lektion, falls keine handgemachten Inhalte vorliegen
 function buildFallbackLesson(course, meta) {
   const title = meta.lesson.title;
   const hash = lessonHash(meta.lesson.id);
-  const sets = practiceSets(course.id);
-  const practice = sets[hash % sets.length];
+  // Die Aufgabe richtet sich nach dem Thema der Lektion, nicht nach dem Zufall.
+  const { set: practice, topic } = practiceFor(course.id, title, meta.module?.title, hash);
 
   const tasks = [
     {
@@ -4348,23 +6194,38 @@ function buildFallbackLesson(course, meta) {
     });
   }
 
-  return {
-    estimatedMinutes: 10,
-    theory: `# ${title}
+  /* Der Erklärtext richtet sich nach dem erkannten Thema. Vorher stand hier
+     für jede der 2700 Lektionen derselbe Satz — das las sich wie ein
+     Platzhalter, weil es einer war. */
+  const lehre = TOPIC_THEORY[topic];
+  const theory = lehre
+    ? `# ${title}
 
-Willkommen zu dieser Lektion im Kurs **${course.name}**.
+${lehre.intro}
 
-In diesem Abschnitt vertiefst du das Thema **„${title}“**. Lies die Konzepte aufmerksam, baue die Beispiele selbst nach und übe mit den Aufgaben rechts.
+## Worauf es ankommt
 
-> [tipp] **Tipp:** Aktives Ausprobieren bringt dich beim Programmieren am schnellsten voran. Schreib Code mit, statt ihn nur zu lesen.
+${lehre.punkte.map((p) => `- ${p}`).join("\n")}
+
+> [warnung] ${lehre.hinweis}
+
+## Für diese Lektion
+
+Diese Grundlagen gelten in ${course.name} genauso. *${title}* baut darauf auf —
+probiere die Beispiele im Editor aus und löse dann die Aufgaben rechts.`
+    : `# ${title}
+
+Diese Lektion gehört zum Kurs **${course.name}** und behandelt *${title}*.
+
+> [tipp] Aktives Ausprobieren bringt dich am schnellsten voran: Schreib den Code mit, statt ihn nur zu lesen.
 
 ## Lernziele
 
 - Die Kernideen hinter *${title}* verstehen
 - Die Syntax sicher schreiben können
-- Eigene kleine Beispiele bauen`,
-    tasks,
-  };
+- Eigene kleine Beispiele bauen`;
+
+  return { estimatedMinutes: 10, theory, tasks };
 }
 
 function getFullLesson(lessonId) {
@@ -4690,10 +6551,14 @@ const LANG_PROFILES = {
     funcDef: [/\bdef\s+([A-Za-z_]\w*)/g],
     print: ["print"],
     pitfalls: [
-      { re: /\bdef\s+\w+\s*\([^)]*\)\s*[^:\s]/, severity: "error", title: "Doppelpunkt fehlt",
-        hint: "Nach der Parameterliste einer Funktion muss ein `:` stehen." },
-      { re: /\b(if|for|while|else)\b[^\n:]*$/m, severity: "warning", title: "Möglicherweise fehlt ein `:`",
-        hint: "Kontrollstrukturen in Python enden mit einem Doppelpunkt." },
+      // Die Doppelpunkt-Prüfung übernimmt statementIssues() — dort ist
+      // bekannt, wo eine Anweisung anfängt und aufhört. Ein Muster über den
+      // ganzen Text hielte weder Rückgabe-Annotationen (`-> None:`) noch
+      // Listen-Abstraktionen (`[x for x in y]`) auseinander.
+      { re: /\bexcept\s*:\s*$/m, severity: "warning", title: "`except` ohne Fehlertyp",
+        hint: "So werden auch Tippfehler und Abbrüche verschluckt. Nenne den Fehler, den du erwartest." },
+      { re: /\bdef\s+\w+\s*\([^)]*=\s*(\[\]|\{\})/, severity: "warning", title: "Veränderlicher Standardwert",
+        hint: "Eine Liste als Standardwert wird nur einmal erzeugt und bleibt zwischen den Aufrufen bestehen." },
     ],
   },
   java: {
@@ -4753,8 +6618,10 @@ const LANG_PROFILES = {
     lineComment: ["//"], blockComment: [["/*", "*/"]],
     stringDelims: ['"', "`", "'"],
     blockStyle: "braces",
-    declare: [/\b(var)\s+([A-Za-z_]\w*)/g, /\b([A-Za-z_]\w*)\s*:=/g],
+      declare: [/\b(var)\s+([A-Za-z_]\w*)/g, /\b([A-Za-z_]\w*)\s*:=/g],
     funcDef: [/\bfunc\s+([A-Za-z_]\w*)/g],
+    // In einem Go-Struct steht `Name string` ohne jedes Satzzeichen.
+    bareDeclarations: true,
     print: ["fmt.Println", "fmt.Printf", "println"],
     pitfalls: [
       { re: /\b_\s*,\s*_\s*:?=/, severity: "info", title: "Rückgabewerte verworfen",
@@ -4928,24 +6795,48 @@ function tokenize(code, profile) {
    Konzepte werden anschließend ausschließlich gegen die live-Zeilen geprüft.
    ------------------------------------------------------------------------- */
 
-// Schlüsselwörter, die für sich allein nichts tun — erst mit Operand wird
-// daraus eine Anweisung. `return` ist die Ausnahme: `return` allein ist gültig.
+/* Schlüsselwörter, die für sich allein nichts tun — erst mit Operand wird
+   daraus eine Anweisung. `return` ist die Ausnahme: `return` allein ist gültig.
+
+   Wichtig ist die Trennung nach Sprachen: `alter` ist in SQL ein Befehl, im
+   Deutschen aber ein völlig normaler Variablenname. Stünde es in der
+   allgemeinen Liste, gälte `alter 18 if else` in JavaScript als Anweisung —
+   und damit wäre der ganze Wortsalat wieder eine gültige Lösung. */
 const STATEMENT_KEYWORDS = [
   "return", "import", "from", "export", "print", "echo", "printf", "puts", "println",
   "use", "using", "package", "include", "require", "class", "struct", "enum", "interface",
   "namespace", "def", "function", "func", "fun", "fn", "if", "elif", "else", "for", "while",
   "switch", "case", "do", "try", "catch", "finally", "throw", "raise", "new", "delete",
   "yield", "await", "async", "const", "let", "var", "val", "static", "public", "private",
-  "protected", "type", "interface", "select", "insert", "update", "delete", "where", "from",
-  "join", "group", "order", "having", "values", "set", "create", "alter", "drop", "with",
+  "protected", "type",
   "int", "float", "double", "char", "bool", "boolean", "string", "void", "auto", "long",
   "unsigned", "short", "mut", "lambda", "global", "nonlocal", "assert", "pass", "break",
-  "continue", "goto", "extends", "implements", "super", "this", "self",
+  "continue", "goto", "extends", "implements", "super", "this", "self", "with",
+  // Python, Kotlin, Rust, C++ und Go bringen eigene Blockwörter mit
+  "except", "match", "case", "when", "defer", "impl", "trait", "object", "suspend",
+  "override", "pub", "unsafe", "typedef", "virtual", "inline", "constexpr", "final",
+  "abstract", "record", "readonly", "declare", "data", "operator", "go", "let",
 ];
 const STATEMENT_KEYWORD_SET = new Set(STATEMENT_KEYWORDS);
 
+// Nur in SQL — dort sind es Befehle, anderswo gewöhnliche Bezeichner.
+const SQL_STATEMENT_KEYWORDS = new Set([
+  "select", "insert", "update", "delete", "where", "from", "join", "inner", "left",
+  "right", "full", "outer", "cross", "group", "order", "having", "values", "set",
+  "create", "alter", "drop", "truncate", "union", "limit", "offset", "into", "on",
+  "as", "distinct", "exists", "between", "like",
+]);
+
 // Zeilen, die nur die Struktur tragen. Sie sind weder Anweisung noch Fehler.
 const DELIMITER_LINE = /^(?:[{}()[\];,:]|\?>|<\?(?:php|=)?|end|endif|fi|done|<\/?[a-zA-Z][\w:-]*\s*\/?>)+$/;
+
+// `public:`, `private:`, `default:` — Gliederung innerhalb einer Klasse bzw.
+// eines switch. Sie tun nichts und sind trotzdem kein Fehler.
+const SECTION_LINE = /^(?:public|private|protected|internal|default|signals|slots)\s*:$/i;
+
+// Ein alleinstehender Wert ist der Ergebniswert eines Blocks — in Kotlin und
+// Rust die übliche Schreibweise. Auch das ist keine wirkungslose Zeile.
+const LITERAL_LINE = /^(?:-?\d+(?:\.\d+)?|true|false|null|nil|none|""|''|"[^"]*"|'[^']*')[,;]?$/i;
 
 // Schlüsselwörter, die auch für sich allein eine gültige Anweisung sind.
 const SOLO_KEYWORDS = new Set(["return", "break", "pass", "continue", "else", "try", "do", "begin"]);
@@ -4959,12 +6850,16 @@ function classifyLine(rawLine, profile) {
   // ganz normale Anweisung, nur eingerahmt.
   line = line.replace(/^<\?(?:php|=)?\s*/i, "").replace(/\s*\?>$/, "").trim();
   if (!line) return "delim";
-  if (DELIMITER_LINE.test(line.replace(/\s+/g, ""))) return "delim";
 
-  // Auszeichnungssprachen: ein Tag ist eine Aussage. Freier Text steht meist
-  // im Inneren eines Elements und wird deshalb nicht als Fehler gewertet —
-  // ob die richtigen Elemente da sind, prüft die Tag-Analyse.
+  // Auszeichnungssprachen zuerst: In HTML ist `<ul>` eine Aussage und keine
+  // bloße Klammer. Freier Text steht meist im Inneren eines Elements und
+  // wird deshalb nicht als Fehler gewertet — ob die richtigen Elemente da
+  // sind, prüft die Tag-Analyse.
   if (profile.blockStyle === "tags") return /[<>]/.test(line) ? "live" : "delim";
+
+  if (DELIMITER_LINE.test(line.replace(/\s+/g, ""))) return "delim";
+  if (SECTION_LINE.test(line)) return "delim";
+  if (LITERAL_LINE.test(line)) return "delim";
 
   // Auszeichnung mitten im Code: JSX, Vue-Vorlagen, HTML in PHP.
   if (/<\/?[a-zA-Z][\w:-]*[^<>]*>/.test(line)) return "live";
@@ -4982,13 +6877,16 @@ function classifyLine(rawLine, profile) {
   if (/[-+*/%&|^]=|:=|=>|->|\?\?|\|\|/.test(line)) return "live";  // zusammengesetzt
   if (/\w\s*[-+*/%]\s*\w/.test(line)) return "live";               // Rechnung
   if (/\w\s*\[/.test(line)) return "live";                         // Indexzugriff
+  // `Name string` — Felddeklaration ohne Satzzeichen (Go-Structs)
+  if (profile.bareDeclarations && /^[A-Za-z_]\w*\s+[A-Za-z_][\w.\[\]*]*$/.test(line)) return "live";
 
   // Schlüsselwort mit Operand: `return x`, `echo "Hi";`, `import fmt`.
   // Der erste Token muss das Schlüsselwort *sein* — `<echo Hallo` ist kein
   // `echo`, sondern ein Tippfehler, und darf nicht als Anweisung durchgehen.
   const words = line.replace(/[;,]+$/, "").split(/\s+/).filter(Boolean);
   const first = (words[0] || "").toLowerCase().replace(/[;:,]+$/, "");
-  if (STATEMENT_KEYWORD_SET.has(first)) {
+  const isSql = profile.label === "SQL";
+  if (STATEMENT_KEYWORD_SET.has(first) || (isSql && SQL_STATEMENT_KEYWORDS.has(first))) {
     if (words.length > 1) return "live";
     return SOLO_KEYWORDS.has(first) ? "live" : "dead";
   }
@@ -5013,7 +6911,9 @@ function classifyLine(rawLine, profile) {
    direkt davor ein `=`, `:`, `(` oder `,` steht, ist es ein Objekt-Literal —
    und dann gehört die nächste Zeile dazu. */
 const OPENS_LITERAL = /(?:[=:(,]\s*[{[]|[([])$/;
-const ENDS_WITH_OPERATOR = /[,+\-*/%&|^=<>?.\\]$/;
+// `<` und `>` fehlen bewusst: Eine Zeile, die auf `>` endet, ist fast immer
+// ein Tag — und dann gehört die nächste Zeile nicht dazu.
+const ENDS_WITH_OPERATOR = /[,+\-*/%&|^=?.\\]$/;
 
 /** Teilt den Code in echte Anweisungen und wirkungslose Zeilen. */
 function splitStatements(stripped, profile) {
@@ -5096,6 +6996,59 @@ function tagBalance(html) {
   return { ok: problems.length === 0, problems };
 }
 
+/* ---------------------- Prüfung auf Satzebene ----------------------------
+   Klammern zu zählen reicht nicht. `for namen print` ist in Python
+   ausgeglichen geklammert (es gibt keine Klammern) und trotzdem kein
+   gültiger Schleifenkopf. Die folgenden Prüfungen schauen sich deshalb jede
+   Anweisung einzeln an — dort, wo eine Sprache eine feste Form verlangt.
+
+   Bewusst nur wenige, dafür verlässliche Regeln: Ein Prüfer, der bei
+   korrektem Code Fehler meldet, ist schlimmer als einer, der etwas übersieht.
+   ------------------------------------------------------------------------- */
+const PY_BLOCK_KEYWORDS = /^(if|elif|else|for|while|def|class|try|except|finally|with|match|case)\b/;
+
+function statementIssues(statements, profile) {
+  const issues = [];
+  const add = (title, hint) => {
+    if (!issues.some((i) => i.title === title)) issues.push({ severity: "error", title, hint });
+  };
+
+  for (const { text } of statements) {
+    // ---- Sprachen mit Einrückungsblöcken: der Doppelpunkt ist Pflicht ----
+    if (profile.blockStyle === "indent" && PY_BLOCK_KEYWORDS.test(text)) {
+      // Eine Zeile, die mit `if`/`for`/… beginnt, eröffnet einen Block und
+      // endet auf `:`. (`[x for x in y]` beginnt nicht mit `for` — solche
+      // Ausdrücke sind hier deshalb nicht betroffen.)
+      if (!/:\s*(#.*)?$/.test(text)) {
+        const keyword = text.match(PY_BLOCK_KEYWORDS)[1];
+        add("Doppelpunkt fehlt",
+          `Nach \`${keyword} …\` muss ein \`:\` stehen — danach folgt der eingerückte Block.`);
+      }
+    }
+
+    // ---- const/let/val ohne Wert -----------------------------------------
+    if (/^(?:export\s+)?(const|val)\s+[A-Za-z_$][\w$]*\s*(?::[^=;]+)?\s*;?$/.test(text)) {
+      add("Der Wert fehlt",
+        "Eine Konstante braucht sofort einen Wert: `const name = \"Ada\";`");
+    }
+
+    // ---- SQL: SELECT ohne Spalten, FROM ohne Tabelle ---------------------
+    if (profile.label === "SQL") {
+      if (/\bselect\s+from\b/i.test(text)) {
+        add("Zwischen SELECT und FROM fehlen die Spalten",
+          "Nach `SELECT` steht, was du haben willst — Spaltennamen oder `*`.");
+      }
+      if (/\bfrom\s*(?:;|$)/i.test(text)) {
+        add("FROM ohne Tabelle", "Nach `FROM` gehört der Name der Tabelle.");
+      }
+      if (/\bwhere\s*(?:;|$)/i.test(text)) {
+        add("WHERE ohne Bedingung", "Nach `WHERE` gehört eine Bedingung, z.B. `preis > 10`.");
+      }
+    }
+  }
+  return issues;
+}
+
 /**
  * Führt die Analyse durch und liefert eine strukturierte Sicht auf den Code.
  */
@@ -5125,7 +7078,7 @@ function analyzeCode(raw, langId) {
     : profile.blockStyle === "none" ? { ok: true, problems: [] }
     : bracketBalance(stripped);
 
-  const issues = [];
+  const issues = statementIssues(live, profile);
   for (const p of profile.pitfalls || []) {
     if (p.re.test(stripped)) issues.push({ severity: p.severity, title: p.title, hint: p.hint });
   }
@@ -5290,7 +7243,12 @@ function checkConcept(concept, analysis) {
        Typposition, ist er damit erfüllt — sonst wird wie bisher nach einem
        echten Literal gesucht. */
     const escapedType = c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const inTypePosition = new RegExp(`:\\s*${escapedType}\\b|\\b${escapedType}(?:\\[\\])?\\s+[A-Za-z_]|<\\s*${escapedType}\\s*>`, "i").test(code);
+    const inTypePosition = new RegExp(
+    `:\\s*${escapedType}\\b`                          // name: string
+    + `|\\b${escapedType}(?:\\[\\])?\\s+[A-Za-z_]`         // String name
+    + `|[A-Za-z_]\\w*\\s+${escapedType}\\b`               // Name string (Go)
+    + `|<\\s*${escapedType}\\s*>`,                      // Vec<String>
+    "i").test(code);
 
     if (group.kind === "string") {
       const hit = analysis.hasString || inTypePosition;
@@ -5302,9 +7260,12 @@ function checkConcept(concept, analysis) {
       return { hit, concept: c, kind: "number", essential: true,
         why: hit ? null : "Es fehlt eine Zahl." };
     }
-    const hit = (group.any || []).some((a) => lower.includes(a.toLowerCase()));
+    const variants = group.any || [];
+    const hit = variants.some((a) => lower.includes(a.toLowerCase()));
     return { hit, concept: c, kind: group.kind,
-      why: hit ? null : `Kein passendes Sprachmittel gefunden (erwartet z.B. ${group.any.slice(0, 3).join(", ")}).` };
+      why: hit ? null : variants.length
+        ? `Kein passendes Sprachmittel gefunden (erwartet z.B. ${variants.slice(0, 3).join(", ")}).`
+        : `\`${c}\` fehlt noch.` };
   }
 
   // 4. HTML-Tags — nur, wenn es wirklich ein Tag-Name ist. Sonst würde ein
@@ -5350,8 +7311,14 @@ function checkConcept(concept, analysis) {
     // Steht der erwartete Text in einer Zeichenkette? Beim Zerlegen werden
     // Zeichenketten herausgenommen — ein erwarteter Ausgabetext wie `Hallo`
     // muss deshalb dort gesucht werden.
+    /* Ein erwarteter Ausgabetext steht zu Recht in Anführungszeichen —
+       `print("Hallo")` erfüllt das Konzept `Hallo`.
+
+       Ein Schlüsselwort dagegen niemals: `print("def begruessung")` ist keine
+       Funktionsdefinition, sondern eine Ausgabe. Wer die Aufgabenstellung in
+       einen String schreibt, hat sie nicht gelöst. */
     const inStrings = analysis.liveStrings || analysis.strings || [];
-    if (inStrings.some((str) => str.toLowerCase().includes(lc))) {
+    if (!isKeyword && inStrings.some((str) => str.toLowerCase().includes(lc))) {
       return { hit: true, concept: c, kind: "literal", essential: true };
     }
 
@@ -5401,11 +7368,14 @@ function evaluateCode(task, answer, langId) {
   /* Zweitwichtigste Frage nach „steht da überhaupt etwas“: Sind es
      Anweisungen? Wer die erwarteten Begriffe untereinander schreibt, hat
      nichts gelöst — und bekommt jetzt auch nichts dafür. */
-  if (!analysis.statements?.length && analysis.deadLines?.length) {
-    const sample = analysis.deadLines.slice(0, 3).map((d) => `\`${d.text}\``).join(", ");
+  if (!analysis.statements?.length) {
+    const dead = analysis.deadLines || [];
+    const sample = dead.slice(0, 3).map((d) => `\`${d.text}\``).join(", ");
     return {
       correct: false, score: 0, offline: true,
-      feedback: `Das sind einzelne Wörter, keine Anweisungen: ${sample}. So bewirkt der Code nichts.`,
+      feedback: dead.length
+        ? `Das sind einzelne Wörter, keine Anweisungen: ${sample}. So bewirkt der Code nichts.`
+        : "Da steht noch keine einzige Anweisung.",
       hint: `Schreib eine vollständige Zeile ${label}-Code — mit Zuweisung, Aufruf oder Struktur, nicht nur die Begriffe.`,
       praise: "",
       details: { deadLines: analysis.deadLines },
