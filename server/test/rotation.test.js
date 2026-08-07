@@ -38,3 +38,40 @@ test("Key-Rotation überspringt limitierte Keys", async () => {
 
   globalThis.fetch = realFetch;
 });
+
+/* ------------------------------ OpenRouter -------------------------------
+   Ein Schlüssel allein reicht dort nicht: Ohne Modell-ID weiß der Dienst
+   nicht, wen er fragen soll, und antwortet mit 404. Genau das war der
+   wahrscheinlichste Stolperstein, weil Modell-IDs aus zweiter Hand oft nicht
+   stimmen — deshalb ist das hier festgehalten. */
+const { config } = await import("../src/config.js");
+const { providerReady } = await import("../src/ai.js");
+
+test("OpenRouter gilt erst mit Schlüssel UND Modell als bereit", () => {
+  const keys = config.ai.openrouterKeys;
+  const model = config.ai.openrouterModel;
+  try {
+    config.ai.openrouterKeys = [];
+    config.ai.openrouterModel = "";
+    assert.equal(providerReady("openrouter"), false, "ohne alles");
+
+    config.ai.openrouterKeys = ["sk-test"];
+    assert.equal(providerReady("openrouter"), false, "Schlüssel ohne Modell reicht nicht");
+
+    config.ai.openrouterModel = "   ";
+    assert.equal(providerReady("openrouter"), false, "Leerzeichen sind kein Modell");
+
+    config.ai.openrouterModel = "anbieter/modell";
+    assert.equal(providerReady("openrouter"), true, "mit beidem bereit");
+  } finally {
+    config.ai.openrouterKeys = keys;
+    config.ai.openrouterModel = model;
+  }
+});
+
+test("im Code steht keine geratene Modell-ID als Vorgabe", () => {
+  // Der Katalog von OpenRouter ändert sich laufend. Eine fest verdrahtete ID
+  // wäre irgendwann falsch und würde still auf die lokale Analyse zurückfallen.
+  assert.equal(process.env.OPENROUTER_MODEL || "", config.ai.openrouterModel,
+    "openrouterModel darf ausschließlich aus der Umgebung kommen");
+});

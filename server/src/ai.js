@@ -17,6 +17,7 @@ const cursors = new Map();        // Provider -> Rundlauf-Zeiger
 function keysFor(provider) {
   if (provider === "gemini") return config.ai.geminiKeys;
   if (provider === "anthropic") return config.ai.anthropicKeys;
+  if (provider === "openrouter") return config.ai.openrouterKeys;
   return [];
 }
 
@@ -53,14 +54,14 @@ export function poolStatus() {
     provider: config.ai.provider,
     gemini: build("gemini"),
     anthropic: build("anthropic"),
+    openrouter: build("openrouter"),
+    openrouterModel: config.ai.openrouterModel || null,
     ollama: config.ai.provider === "ollama" ? { url: config.ai.ollamaUrl, model: config.ai.ollamaModel } : null,
   };
 }
 
 export function aiAvailable() {
-  const p = config.ai.provider;
-  if (p === "ollama") return true;
-  return keysFor(p).length > 0;
+  return providerReady(config.ai.provider);
 }
 
 /* --------------------------- Anbieter-Aufrufe --------------------------- */
@@ -110,6 +111,51 @@ async function callAnthropic(key, system, user, maxTokens) {
   const data = await res.json();
   const text = data?.content?.[0]?.text;
   if (!text) throw new ProviderError("Anthropic lieferte keine Antwort", 502);
+  return text;
+}
+
+/**
+ * OpenRouter — ein Zugang, viele Modelle.
+ *
+ * Die Schnittstelle ist die von OpenAI, deshalb reicht ein einziger Aufruf
+ * für jedes dort verfügbare Modell. Welches genutzt wird, steht in
+ * OPENROUTER_MODEL; im Code ist bewusst KEINE Modell-ID fest verdrahtet, weil
+ * sich der Katalog laufend ändert und eine erfundene ID nur eine 404 liefert.
+ *
+ * Zwei Dinge sind vor dem Einsatz zu klären:
+ *   1. Die genaue ID auf openrouter.ai/models nachschlagen. Modellnamen aus
+ *      zweiter Hand stimmen oft nicht.
+ *   2. Bei kostenlosen Modellen die Datenschutz-Einstellung des Kontos
+ *      prüfen. Sie verlangen häufig, dass Anfragen zum Training verwendet
+ *      werden dürfen — und hier gingen Antworten von Lernenden mit.
+ */
+async function callOpenRouter(key, system, user, maxTokens) {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+      // OpenRouter nutzt beides für die Zuordnung im Konto — rein optional.
+      "HTTP-Referer": config.publicUrl,
+      "X-Title": "LearnDeveloping",
+    },
+    body: JSON.stringify({
+      model: config.ai.openrouterModel,
+      max_tokens: maxTokens,
+      temperature: 0.3,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
+    signal: AbortSignal.timeout(config.ai.requestTimeoutMs),
+  });
+  if (!res.ok) throw new ProviderError(`OpenRouter ${res.status}`, res.status);
+  const data = await res.json();
+  // Manche Modelle melden einen Fehler mit Status 200 im Rumpf.
+  if (data?.error) throw new ProviderError(`OpenRouter: ${data.error.message || "Fehler"}`, data.error.code || 502);
+  const text = data?.choices?.[0]?.message?.content;
+  if (!text) throw new ProviderError("OpenRouter lieferte keine Antwort", 502);
   return text;
 }
 
@@ -195,6 +241,8 @@ export async function generate({ system, user, maxTokens = 1000, provider: force
     try {
       const text = provider === "gemini"
         ? await callGemini(picked.key, system, user, maxTokens)
+        : provider === "openrouter"
+        ? await callOpenRouter(picked.key, system, user, maxTokens)
         : await callAnthropic(picked.key, system, user, maxTokens);
       return { text, provider, keyLabel: label(picked.key, picked.index), durationMs: Date.now() - started };
     } catch (e) {
@@ -213,6 +261,11 @@ export async function generate({ system, user, maxTokens = 1000, provider: force
  */
 export function providerReady(provider) {
   if (provider === "ollama") return true;
+  // Bei OpenRouter genügt der Schlüssel nicht: Ohne Modell-ID weiß der
+  // Dienst nicht, wen er fragen soll, und antwortet mit 404.
+  if (provider === "openrouter") {
+    return keysFor(provider).length > 0 && !!String(config.ai.openrouterModel || "").trim();
+  }
   return keysFor(provider).length > 0;
 }
 

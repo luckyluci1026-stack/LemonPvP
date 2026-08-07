@@ -104,6 +104,13 @@ export const config = {
     provider: process.env.AI_PROVIDER || "gemini",
     geminiKeys: keyList("GEMINI_API_KEYS"),
     anthropicKeys: keyList("ANTHROPIC_API_KEYS"),
+    /* OpenRouter bündelt viele Anbieter hinter einer OpenAI-kompatiblen
+       Schnittstelle. Die Modell-ID steht bewusst nur hier und hat keinen
+       eingebauten Standardwert: Der Katalog ändert sich laufend, und eine
+       geratene ID quittiert OpenRouter mit einem 404. Die gültige Schreibweise
+       steht auf openrouter.ai/models. */
+    openrouterKeys: keyList("OPENROUTER_API_KEYS"),
+    openrouterModel: process.env.OPENROUTER_MODEL || "",
     ollamaUrl: (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/+$/, ""),
     ollamaModel: process.env.OLLAMA_MODEL || "qwen2.5-coder:3b",
     // Modell im Speicher halten, statt es bei jedem Aufruf neu zu laden

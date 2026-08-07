@@ -201,8 +201,8 @@ npx wrangler pages deploy .
 ## 4. KI-Anbindung
 
 Die Plattform funktioniert **vollständig ohne KI-Zugang** — dann läuft die
-eingebaute lokale Analyse (siehe Abschnitt 5). Optional stehen drei Anbieter
-zur Wahl, einstellbar über das Zahnrad-Symbol in der App.
+eingebaute lokale Analyse (siehe Abschnitt 5). Optional stehen vier Anbieter
+zur Wahl (`AI_PROVIDER`): `gemini`, `anthropic`, `openrouter` und `ollama`.
 
 ### Variante A — Google Gemini mit mehreren Keys
 
@@ -227,6 +227,33 @@ Keys erstellen: [aistudio.google.com/app/apikey](https://aistudio.google.com/app
 > Kontingente zu bündeln, kann gegen die Terms of Service des Anbieters
 > verstoßen. Die technische Umsetzung ist neutral — die Entscheidung liegt bei
 > dir. Für den Dauerbetrieb ist Variante B die sauberere Lösung.
+
+### Variante A2 — OpenRouter
+
+Ein Zugang, viele Modelle, OpenAI-kompatible Schnittstelle. Interessant vor
+allem wegen der kostenlos nutzbaren Modelle.
+
+```bash
+OPENROUTER_API_KEYS=sk-or-...
+OPENROUTER_MODEL=anbieter/modell        # exakte ID von openrouter.ai/models
+```
+
+Drei Punkte, die vorher geklärt sein sollten:
+
+1. **Die Modell-ID selbst nachschlagen.** Der Katalog ändert sich laufend.
+   IDs aus Blogposts, Foren oder von einem Chatbot stimmen häufig nicht —
+   OpenRouter antwortet dann mit 404, und die Antwortprüfung fällt still auf
+   die lokale Analyse zurück. Deshalb ist im Code auch keine Vorgabe
+   hinterlegt: Ohne gesetzte `OPENROUTER_MODEL` gilt der Anbieter als nicht
+   bereit und wird gar nicht erst gefragt.
+2. **Datenschutz prüfen.** Für die kostenlosen Modelle verlangt OpenRouter in
+   der Regel, dass Anfragen zum Training verwendet werden dürfen. Hier gingen
+   Antworten von Lernenden mit — an einer Schule ist das eine bewusste
+   Entscheidung, keine Nebensache. Die Einstellung findet sich in den
+   Privacy-Einstellungen des Kontos.
+3. **Kontingente sind eng.** Die freien Stufen erlauben nur wenige Anfragen
+   pro Minute. Als Rückfallebene taugen sie, als alleinige Grundlage für eine
+   Klasse nicht.
 
 ### Variante B — Eigener Server mit Ollama (empfohlen)
 
