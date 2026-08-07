@@ -335,7 +335,10 @@ const XP_BY_LEVEL = { beginner: 50, intermediate: 75, advanced: 100, expert: 125
 // Helper: baut Module/Lektionen mit IDs wie  courseId_<modulnr>_<lektionnr>
 function buildCourse(id, name, icon, color, description, mods) {
   let total = 0;
-  const modules = mods.map((m, mi) => {
+  // Die Erweiterungsmodule sind Teil desselben Kurses und werden hinten
+  // angehängt — die IDs zählen dadurch einfach weiter.
+  const allMods = [...mods, ...(COURSE_EXTENSIONS[id] || [])];
+  const modules = allMods.map((m, mi) => {
     const lessons = m.lessons.map((title, li) => {
       total++;
       return {
@@ -349,6 +352,149 @@ function buildCourse(id, name, icon, color, description, mods) {
   });
   return { id, name, icon, color, description, modules, totalLessons: total };
 }
+
+/* ------------------- Erweiterung des Lehrplans ---------------------------
+   Diese Module setzen die Kurse fort: von den Werkzeugen des Alltags über
+   Testen und Sicherheit bis zu den Themen, nach denen im Vorstellungsgespräch
+   gefragt wird. Sie hängen sich hinten an die vorhandenen Module an.
+   ------------------------------------------------------------------------- */
+const COURSE_EXTENSIONS = {
+  html: [
+    { title: "Interaktive HTML-Elemente", level: "intermediate", lessons: ["Modale Dialoge mit <dialog>, showModal() und dem returnValue", "Akkordeons ohne JavaScript: details, summary und exklusive name-Gruppen", "Popover API: popovertarget, Light-Dismiss und der Top Layer", "Drag & Drop mit draggable, dragover und dem DataTransfer-Objekt", "Inline-Editoren mit contenteditable und plaintext-only absichern"] },
+    { title: "HTML-Werkzeuge und Build", level: "intermediate", lessons: ["Markup prüfen: W3C-Validator und html-validate als CI-Gate", "Emmet-Abkürzungen und Prettier-Formatierung im Editor", "HTML minifizieren mit html-minifier-terser und Whitespace-Fallen", "Wiederverwendbare Partials und Layouts mit Nunjucks und Eleventy"] },
+    { title: "HTML-E-Mails bauen", level: "intermediate", lessons: ["E-Mail-Layouts mit verschachtelten Tabellen und VML-Fallbacks für Outlook", "Inline-CSS erzeugen: Juice, Premailer und <style>-Stripping umgehen", "Bulletproof Buttons und Preheader-Text bei blockierten Bildern", "Dark Mode in Mail-Clients: prefers-color-scheme und invertierte Logos", "E-Mails testen mit Litmus, Email on Acid und MailHog"] },
+    { title: "Parser und Rendering", level: "advanced", lessons: ["Tokenizer und Baumaufbau: wie Browser HTML zu DOM verarbeiten", "Tag-Soup debuggen: implizite Elemente und Fehlerkorrektur des Parsers", "Void-Elemente, Self-Closing-Slash und die hartnäckigen XHTML-Mythen", "SVG und MathML als Foreign Content inline einbetten", "Skriptausführung steuern: defer, async und type=module im Vergleich"] },
+    { title: "Ladeverhalten optimieren", level: "advanced", lessons: ["loading=lazy, decoding=async und fetchpriority sinnvoll kombinieren", "Layout Shifts vermeiden: width, height und aspect-ratio im Markup", "Resource Hints richtig setzen: preload, preconnect, dns-prefetch, modulepreload", "Speculation Rules: Prefetch und Prerender per JSON-Skript steuern", "Critical Rendering Path im Performance-Panel und mit Lighthouse analysieren"] },
+    { title: "Sicheres Markup", level: "advanced", lessons: ["XSS-Vektoren im Markup: innerHTML, javascript:-URLs und on*-Attribute", "Nutzereingaben rendern: Sanitizer API und DOMPurify im Vergleich", "iframes härten mit sandbox, allow und Permissions Policy", "rel=noopener, noreferrer und referrerpolicy für externe Links wählen", "Subresource Integrity und CSP-Nonces im HTML verankern"] },
+    { title: "Web Components", level: "expert", lessons: ["Custom Elements definieren: Lifecycle-Callbacks und observedAttributes", "Shadow DOM: Kapselung, Slots und Styling über ::part und ::slotted", "<template> klonen statt HTML-Strings zusammenzubauen", "Declarative Shadow DOM für Server-Side Rendering und Hydration", "Form-Associated Custom Elements mit ElementInternals bauen"] },
+  ],
+  css: [
+    { title: "Typografie im Web", level: "intermediate", lessons: ["Webfonts einbinden: @font-face, woff2 und Subsetting", "Ladeverhalten steuern: font-display, preload und FOUT vermeiden", "Variable Fonts mit font-variation-settings feinjustieren", "OpenType-Features: Ligaturen, Kapitälchen und Tabellenziffern", "Lesetypografie: Zeilenlänge, hyphens und Umbruchkontrolle"] },
+    { title: "Farbe und Kontrast", level: "intermediate", lessons: ["Farbräume vergleichen: sRGB, HSL, LCH und OKLCH", "Paletten ableiten mit color-mix() und relativer Farbsyntax", "Verläufe steuern: conic, radial und Interpolationsräume", "WCAG-Kontrastwerte messen und Farbfehlsichtigkeit einplanen"] },
+    { title: "Grafikeffekte und Masken", level: "intermediate", lessons: ["filter und backdrop-filter für Unschärfe- und Glaseffekte", "Freistellen mit clip-path und Textumfluss per shape-outside", "Verlaufs- und Bildmasken mit mask-image umsetzen", "Blend Modes: mix-blend-mode und background-blend-mode"] },
+    { title: "Formulare und Bedienelemente", level: "intermediate", lessons: ["Native Controls stylen mit appearance und accent-color", "Checkboxen, Radios und Selects zugänglich nachbauen", "dialog und popover gestalten inklusive ::backdrop", "Sichtbarer Tastaturfokus, Klickflächen und forced-colors-Modus"] },
+    { title: "CSS-Architektur", level: "advanced", lessons: ["Spezifität berechnen und !important-Spiralen auflösen", "BEM in großen Codebasen konsequent durchziehen", "ITCSS: Stylesheets in Schichten und Ordner organisieren", "Utility-First mit Tailwind gegen Komponenten-CSS abwägen", "Styles kapseln im Shadow DOM: :host, ::slotted und ::part"] },
+    { title: "Tooling und Ökosystem", level: "advanced", lessons: ["Sass produktiv: Partials, Mixins und @use statt @import", "PostCSS-Pipeline mit Autoprefixer und postcss-preset-env", "Stylelint konfigurieren und in der CI erzwingen", "Ungenutztes CSS aufspüren mit DevTools Coverage und PurgeCSS"] },
+    { title: "Performance und Rendering", level: "advanced", lessons: ["Kritisches CSS extrahieren und Render-Blocking auflösen", "Reflow und Repaint im Performance-Panel analysieren", "Lange Seiten beschleunigen mit content-visibility und contain", "GPU-Layer und will-change gezielt dosieren"] },
+    { title: "Debugging und Tests", level: "expert", lessons: ["z-index-Fehler über Stacking Contexts erklären und beheben", "Ursachen für horizontales Scrollen systematisch eingrenzen", "Cross-Browser-Bugs mit Feature Queries und Fallbacks absichern", "Visuelle Regressionstests mit Playwright-Screenshots automatisieren"] },
+  ],
+  javascript: [
+    { title: "Daten und Formate", level: "intermediate", lessons: ["Map, Set und WeakMap statt Objekt-Lookups einsetzen", "Rundungsfehler bei Fließkommazahlen erkennen und BigInt nutzen", "Datum, Zeitzonen und relative Zeiten mit Intl formatieren", "JSON-Sonderfälle mit replacer, reviver und structuredClone lösen"] },
+    { title: "Reguläre Ausdrücke", level: "intermediate", lessons: ["Zeichenklassen, Quantifizierer und Anker sicher lesen", "Gruppen, benannte Gruppen und Backreferences nutzen", "Text umbauen mit matchAll und replace-Callbacks", "Catastrophic Backtracking erkennen und ReDoS entschärfen"] },
+    { title: "Testen in JavaScript", level: "intermediate", lessons: ["Vitest einrichten: erster Unit-Test und Watch-Modus", "Spies, Mocks und Fake Timer für Zeit und Zufall", "HTTP-Antworten mit Mock Service Worker simulieren", "DOM-Verhalten mit Testing Library statt Interna prüfen", "End-to-End-Tests mit Playwright und Testläufe in CI"] },
+    { title: "Event Loop und Nebenläufigkeit", level: "advanced", lessons: ["Call Stack, Task Queue und Microtask Queue nachvollziehen", "setTimeout, queueMicrotask und requestAnimationFrame abgrenzen", "Generatoren und yield für pausierbare Abläufe", "Datenströme mit asynchronen Iteratoren und for await...of lesen", "Rechenlast mit Web Workers vom Main Thread nehmen"] },
+    { title: "Debugging und Diagnose", level: "advanced", lessons: ["Conditional Breakpoints und Watch Expressions in den DevTools", "Source Maps erzeugen und Produktions-Stacktraces lesen", "Speicherlecks über Heap Snapshots und Detached DOM Nodes finden", "Laufzeitfehler mit Sentry erfassen, gruppieren und entrauschen"] },
+    { title: "Node.js im Alltag", level: "advanced", lessons: ["CLI-Werkzeuge mit process.argv, stdin und Exit-Codes bauen", "Große Dateien mit Streams und Backpressure verarbeiten", "REST-API mit Express: Routing, Middleware und Fehler-Handler", "Konfiguration über Umgebungsvariablen und .env-Dateien trennen"] },
+    { title: "Build und Ökosystem", level: "advanced", lessons: ["package.json verstehen: Skripte, exports und peerDependencies", "Semantic Versioning, Lockfiles und Dependency-Updates im Team", "Vite konfigurieren: Dev-Server, Aliase und Produktions-Build", "ESLint und Prettier als verbindlichen Team-Standard einrichten"] },
+    { title: "Sicherheit im Web", level: "expert", lessons: ["XSS über innerHTML verhindern und mit DOMPurify sanitizen", "Content Security Policy aufsetzen und Verstöße auswerten", "Sessions, Cookies, SameSite und CSRF-Token absichern", "Supply-Chain-Risiken mit npm audit und Lockfile-Prüfung senken"] },
+  ],
+  typescript: [
+    { title: "Compiler im Griff", level: "intermediate", lessons: ["strict-Modus schrittweise einführen: von noImplicitAny bis strictNullChecks", "target, lib und Downlevel-Ausgabe für Node und Browser wählen", "Typfehler lesen und beheben: TS2322, TS2345, TS7006 im Alltag", "Inkrementelle Builds und Project References im Monorepo", "Typprüfung von der Transpilation trennen: tsc --noEmit neben esbuild"] },
+    { title: "Bestandscode migrieren", level: "intermediate", lessons: ["allowJs und checkJs aktivieren und Fehlerflut eindämmen", "Typen per JSDoc annotieren, ohne Dateien umzuschreiben", "any-Fundstellen aufspüren und durch unknown ersetzen", "@ts-expect-error statt @ts-ignore als sichtbares Migrations-Schuldenbuch"] },
+    { title: "Asynchron und robust", level: "intermediate", lessons: ["Rückgabetypen von async-Funktionen und await korrekt modellieren", "catch liefert unknown: Fehlerobjekte typsicher auswerten", "Result-Typen statt geworfener Exceptions für erwartbare Fehler", "Async Iteratoren für paginierte APIs typisieren"] },
+    { title: "Daten an Systemgrenzen", level: "advanced", lessons: ["JSON.parse liefert any: warum Typen an der Systemgrenze enden", "Laufzeitvalidierung mit Zod und Typen per z.infer ableiten", "Branded Types für IDs, E-Mail-Adressen und Geldbeträge", "API-Typen aus OpenAPI-Schemas generieren und aktuell halten"] },
+    { title: "Tests und Linting", level: "advanced", lessons: ["Unit-Tests mit Vitest in einem TypeScript-Projekt schreiben", "Mocks und Spies typisieren mit vi.mocked und Partial-Stubs", "Typen selbst testen: expectTypeOf und erwartete Typfehler", "typescript-eslint: typbasierte Regeln wie no-floating-promises nutzen"] },
+    { title: "Typen auf Expertenniveau", level: "advanced", lessons: ["Template Literal Types für Routenpfade und Event-Namen", "Variadische Tupel-Typen für Wrapper- und Curry-Funktionen", "Rekursive Typen für verschachtelte Objektpfade wie \"user.address.city\"", "satisfies statt as: prüfen, ohne Literaltypen zu verlieren"] },
+    { title: "Backend und Ökosystem", level: "advanced", lessons: ["Express-Handler, Middleware und Router typsicher aufbauen", "Fremde Bibliothekstypen per Modul-Augmentation erweitern", "Datenbankzugriffe mit Prisma-generierten Typen absichern", "End-to-End-Typsicherheit zwischen Client und Server mit tRPC"] },
+    { title: "Ausliefern und optimieren", level: "expert", lessons: ["Compiler-Laufzeit messen mit --diagnostics und --generateTrace", "Langsame Typen entschärfen und Instanziierungstiefe begrenzen", "Pakete dual ausliefern: exports-Feld für ESM und CommonJS", "Typ-Regressionen in der CI abfangen mit arethetypeswrong und API Extractor"] },
+  ],
+  react: [
+    { title: "Refs und Portale", level: "intermediate", lessons: ["useRef auf DOM-Knoten: Fokus beim Öffnen eines Dialogs setzen", "Veränderliche Werte in Refs: Timer-IDs und Vorgängerwerte ohne Re-Render halten", "forwardRef und useImperativeHandle für eigene Input-Komponenten", "createPortal und useLayoutEffect: Overlays ohne Flackern positionieren"] },
+    { title: "Barrierefreie Interaktion", level: "intermediate", lessons: ["Fokus-Falle und Escape-Handling in einem Modal bauen", "Roving Tabindex für Menüs, Tab-Leisten und Comboboxen", "ARIA-Live-Regionen für Toasts und Ladezustände", "a11y-Fehler aufspüren mit eslint-plugin-jsx-a11y und axe DevTools"] },
+    { title: "Fehler und Resilienz", level: "intermediate", lessons: ["Error Boundaries mit react-error-boundary und Reset-Keys", "Warum Fehler in async Handlern von keiner Boundary gefangen werden", "Laufende Requests abbrechen mit AbortController beim Unmount", "Produktionsfehler auswerten: Sentry mit Source Maps und Release-Tags"] },
+    { title: "Suspense und Nebenläufigkeit", level: "advanced", lessons: ["React.lazy: routenbasiertes Code-Splitting und Chunk-Ladefehler", "Verschachtelte Suspense-Grenzen und die Reihenfolge von Skeletons", "useTransition gegen eingefrorene Eingaben beim Ansichtswechsel", "useDeferredValue für teure Filterlisten mit tausenden Einträgen", "useSyncExternalStore: externe Stores ohne Tearing anbinden"] },
+    { title: "Server-State mit Query", level: "advanced", lessons: ["TanStack Query: Query-Keys, staleTime und Refetch-Verhalten verstehen", "Optimistische Updates mit sauberem Rollback im Fehlerfall", "Endlos-Listen mit useInfiniteQuery und Cursor-Pagination", "Prefetching beim Hover und gezielte Cache-Invalidierung nach Mutationen"] },
+    { title: "React mit TypeScript", level: "advanced", lessons: ["Props typisieren mit Discriminated Unions statt optionaler Flags", "ComponentProps und ElementRef für Wrapper um HTML-Elemente", "Polymorphe Komponenten über die as-Prop und Generics", "API-Antworten zur Laufzeit prüfen mit Zod und abgeleiteten Typen"] },
+    { title: "Sicherheit im Frontend", level: "advanced", lessons: ["XSS über dangerouslySetInnerHTML: Sanitizing mit DOMPurify", "Auth-Tokens speichern: httpOnly-Cookie statt localStorage", "Content Security Policy mit Nonces für ein Vite-Build einrichten", "Supply-Chain-Risiken prüfen: npm audit, Lockfiles und Postinstall-Skripte"] },
+    { title: "React Server Components", level: "expert", lessons: ["Die \"use client\"-Grenze: was auf dem Server bleibt und was nicht", "Datenladen im App Router ohne Request-Wasserfälle", "Server Actions für Mutationen und revalidatePath", "Hydration-Mismatch-Fehler reproduzieren und beheben"] },
+  ],
+  vue: [
+    { title: "Formulare & Validierung", level: "intermediate", lessons: ["Schema-Validierung mit Zod und VeeValidate einbinden", "Fehlermeldungen barrierefrei ausgeben mit aria-invalid und aria-describedby", "Mehrstufige Formulare mit geteiltem Zustand und Entwurfs-Speicherung", "Server-Validierungsfehler (HTTP 422) auf einzelne Felder zurückspielen"] },
+    { title: "Datenabruf & Caching", level: "intermediate", lessons: ["Axios-Instanz mit Basis-URL, Interceptors und normalisierten Fehlern", "Race Conditions bei schnellen Eingaben mit AbortController verhindern", "Caching, Invalidierung und Refetch mit TanStack Query for Vue", "Optimistische Updates mit Rollback nach fehlgeschlagenem Request"] },
+    { title: "Eigene Composables", level: "intermediate", lessons: ["Composable-Parameter flexibel annehmen mit MaybeRefOrGetter und toValue", "Timer und Event-Listener zuverlässig aufräumen statt Speicherlecks", "VueUse produktiv nutzen: useLocalStorage, useIntersectionObserver, useDebounceFn", "Composables ohne Komponente isoliert ausführen mit effectScope"] },
+    { title: "Fortgeschrittene Komponentenmuster", level: "advanced", lessons: ["provide/inject typsicher mit InjectionKey statt String-Schlüsseln", "Modals und Tooltips mit Teleport inklusive Fokus-Falle", "Code-Splitting auf Komponentenebene mit defineAsyncComponent und Suspense", "Eigene Direktiven schreiben: v-click-outside und v-autofocus"] },
+    { title: "TypeScript mit Vue", level: "advanced", lessons: ["Props und Emits typisieren mit defineProps<T> und defineEmits<T>", "Generische Komponenten mit generic=\"T\" für Listen und Tabellen", "Slots, Template-Refs und defineExpose typsicher machen", "Typprüfung im Build erzwingen mit vue-tsc in der CI-Pipeline"] },
+    { title: "Testen von Vue-Apps", level: "advanced", lessons: ["Testsetup mit Vitest, jsdom und Vue Test Utils aufsetzen", "Komponenten aus Nutzersicht testen mit Testing Library statt Interna", "HTTP-Antworten realistisch mocken mit Mock Service Worker", "Pinia-Stores und Router-Abhängigkeiten in Tests isolieren", "End-to-End-Tests mit Playwright: Selektoren, Fixtures, flaky Tests entschärfen"] },
+    { title: "Performance & Profiling", level: "advanced", lessons: ["Renderzeiten messen mit Vue DevTools Timeline und Component Inspector", "Unnötige Re-Renders vermeiden mit v-memo, stabilen Keys und shallowRef", "Lange Listen darstellen mit Virtual Scrolling statt DOM-Flut", "Bundle-Größe analysieren mit rollup-plugin-visualizer und Route-Splitting"] },
+    { title: "Sicherheit & Auslieferung", level: "expert", lessons: ["XSS über v-html verhindern mit DOMPurify und Content Security Policy", "Auth-Tokens sicher halten: httpOnly-Cookies, Refresh-Flow, sauberer Logout", "Vite-Produktionsbuild härten: Umgebungsvariablen, Sourcemaps, Cache-Header", "Hydration-Mismatch bei SSR mit Nuxt erkennen und beheben"] },
+  ],
+  python: [
+    { title: "Werkzeuge und Umgebung", level: "intermediate", lessons: ["Pakete verwalten mit pip, pipx und requirements.txt", "Virtuelle Umgebungen mit venv sauber trennen", "Projekte strukturieren mit pyproject.toml", "Code formatieren mit black und sortieren mit isort", "Statische Prüfung mit ruff und mypy"] },
+    { title: "Datenstrukturen vertiefen", level: "intermediate", lessons: ["collections: defaultdict, Counter und deque", "namedtuple und dataclass für Wertobjekte", "Sortieren mit key-Funktionen und operator.itemgetter", "Mengenoperationen: Schnitt, Vereinigung, Differenz", "Slicing-Tricks und flache gegen tiefe Kopien"] },
+    { title: "Dateien und Formate", level: "intermediate", lessons: ["pathlib statt os.path verwenden", "CSV lesen und schreiben mit dem csv-Modul", "JSON serialisieren, inklusive eigener Encoder", "Konfiguration aus YAML und .env laden", "Große Dateien zeilenweise streamen statt einlesen"] },
+    { title: "Fehler und Protokolle", level: "advanced", lessons: ["Eigene Ausnahmeklassen entwerfen", "try/except/else/finally richtig kombinieren", "logging konfigurieren statt print zu benutzen", "Tracebacks lesen und mit pdb schrittweise debuggen", "Kontextmanager mit with und contextlib bauen"] },
+    { title: "Testen und Qualität", level: "advanced", lessons: ["pytest: Fixtures, Parametrisierung und Marker", "Mocking mit unittest.mock und monkeypatch", "Testabdeckung messen mit coverage", "Doctests und Beispiele in der Dokumentation", "Tests automatisch laufen lassen in der CI"] },
+    { title: "Nebenläufigkeit", level: "advanced", lessons: ["threading und das Global Interpreter Lock verstehen", "multiprocessing für rechenintensive Aufgaben", "asyncio: Tasks, Gather und Timeouts", "Nebenläufige HTTP-Anfragen mit httpx", "Warteschlangen und Producer-Consumer-Muster"] },
+    { title: "Web und Daten", level: "expert", lessons: ["Web-API mit FastAPI und Pydantic bauen", "Datenbanken ansprechen mit SQLAlchemy", "Webseiten auslesen mit requests und BeautifulSoup", "pandas: DataFrames filtern, gruppieren, zusammenführen", "Diagramme erzeugen mit matplotlib"] },
+    { title: "Auslieferung", level: "expert", lessons: ["Skripte als Kommandozeilenwerkzeug mit argparse und Typer", "Pakete bauen und auf PyPI veröffentlichen", "Anwendungen in Docker-Containern ausliefern", "Performance messen mit timeit und cProfile"] },
+  ],
+  java: [
+    { title: "Werkzeuge und Build", level: "intermediate", lessons: ["Maven: pom.xml, Abhängigkeiten und Lebenszyklus", "Gradle als Alternative kennenlernen", "Projektstruktur nach Konvention aufbauen", "Javadoc schreiben und generieren", "Code-Analyse mit SpotBugs und Checkstyle"] },
+    { title: "Moderne Sprachmittel", level: "intermediate", lessons: ["var, Text Blocks und verbesserte switch-Ausdrücke", "Records für unveränderliche Datenklassen", "Sealed Classes und Pattern Matching für instanceof", "Optional richtig einsetzen statt null zurückzugeben", "Enums mit Feldern, Methoden und Konstruktoren"] },
+    { title: "Collections vertiefen", level: "intermediate", lessons: ["equals und hashCode korrekt implementieren", "Comparable und Comparator zum Sortieren", "Iterator, Iterable und die erweiterte for-Schleife", "TreeMap, LinkedHashMap und ihre Reihenfolgen", "Unveränderliche Sammlungen mit List.of und Collectors"] },
+    { title: "Streams und Funktionales", level: "advanced", lessons: ["Stream-Pipelines: filter, map, reduce", "Collectors: groupingBy, joining, partitioningBy", "Eigene funktionale Schnittstellen definieren", "Method References und ihre vier Formen", "Parallele Streams und wann sie schaden"] },
+    { title: "Testen", level: "advanced", lessons: ["JUnit 5: Assertions, Lifecycle und verschachtelte Tests", "Parametrisierte Tests und dynamische Tests", "Mockito: Mocks, Stubs und Verifikation", "Integrationstests mit Testcontainers", "Testabdeckung mit JaCoCo auswerten"] },
+    { title: "Nebenläufigkeit vertiefen", level: "advanced", lessons: ["ExecutorService und Thread-Pools", "CompletableFuture für asynchrone Ketten", "synchronized, volatile und das Java Memory Model", "Atomare Klassen und nebenläufige Sammlungen", "Virtual Threads und strukturierte Nebenläufigkeit"] },
+    { title: "Spring in der Praxis", level: "expert", lessons: ["Dependency Injection und Bean-Lebenszyklus", "REST-Controller mit Spring Web bauen", "Datenzugriff mit Spring Data JPA", "Konfiguration über Profile und application.yml", "Absichern mit Spring Security"] },
+    { title: "Betrieb", level: "expert", lessons: ["Speicherverwaltung und Garbage Collection verstehen", "Anwendungen profilieren mit JFR und VisualVM", "Java-Anwendungen in Containern betreiben"] },
+  ],
+  kotlin: [
+    { title: "Werkzeuge", level: "intermediate", lessons: ["Gradle Kotlin DSL für den Build nutzen", "Multiplattform-Projekte einrichten", "ktlint und detekt als Qualitätsschranke", "Dokumentation mit KDoc und Dokka"] },
+    { title: "Typen und Ausdrücke", level: "intermediate", lessons: ["Typinferenz und explizite Typen abwägen", "Destrukturierung und Component-Funktionen", "Operator Overloading mit operator fun", "Infix-Funktionen für lesbare APIs", "Inline-Klassen für typsichere Wrapper"] },
+    { title: "Sammlungen", level: "intermediate", lessons: ["Sequences gegen Listen: verzögerte Auswertung", "groupBy, associate und fold in der Praxis", "Veränderliche und unveränderliche Sammlungen trennen", "Eigene Iteratoren und Ranges bauen"] },
+    { title: "Fehlerbehandlung", level: "advanced", lessons: ["Result und runCatching statt Ausnahmen", "Eigene Ausnahmen und require/check/assert", "Null-Sicherheit über Modulgrenzen hinweg", "Plattformtypen bei Java-Interoperabilität"] },
+    { title: "Coroutines vertiefen", level: "advanced", lessons: ["Scopes, Jobs und strukturierte Nebenläufigkeit", "Dispatcher wählen: Default, IO und Main", "Abbruch, Timeouts und Aufräumen", "Flow: cold streams, Operatoren und Backpressure", "StateFlow und SharedFlow für Zustände"] },
+    { title: "Testen", level: "advanced", lessons: ["Unit-Tests mit kotlin.test und JUnit 5", "Coroutines testen mit runTest und TestDispatcher", "MockK für Mocks in Kotlin", "Property-based Testing mit Kotest"] },
+    { title: "Interoperabilität und Android", level: "expert", lessons: ["Kotlin und Java im selben Projekt mischen", "Serialisierung mit kotlinx.serialization", "Jetpack Compose: Zustand und Recomposition", "Room und Retrofit anbinden"] },
+  ],
+  c: [
+    { title: "Werkzeugkette", level: "intermediate", lessons: ["Übersetzungsschritte: Präprozessor, Compiler, Linker", "Mehrere Übersetzungseinheiten mit make bauen", "Compiler-Warnungen ernst nehmen: -Wall -Wextra", "Debuggen mit gdb: Breakpoints und Backtraces", "Speicherfehler finden mit Valgrind und ASan"] },
+    { title: "Speicher genau verstehen", level: "intermediate", lessons: ["Stack, Heap und statischer Speicher im Vergleich", "Zeiger auf Zeiger und Zeigerarithmetik", "Arrays, Zerfall zu Zeigern und sizeof-Fallen", "Ausrichtung, Padding und struct-Größen", "const, volatile und restrict richtig einsetzen"] },
+    { title: "Zeichenketten sicher", level: "advanced", lessons: ["Pufferüberläufe verstehen und vermeiden", "strncpy, snprintf und ihre Tücken", "Eigene sichere String-Funktionen schreiben", "Zeichensätze, UTF-8 und mehrere Bytes je Zeichen"] },
+    { title: "Datenstrukturen selbst bauen", level: "advanced", lessons: ["Dynamisches Array mit realloc", "Doppelt verkettete Liste", "Hashtabelle mit Kollisionsbehandlung", "Binärer Suchbaum und Traversierungen", "Stack und Queue mit Ringpuffer"] },
+    { title: "Systemnahe Programmierung", level: "advanced", lessons: ["Dateideskriptoren, open, read und write", "Prozesse mit fork und exec starten", "Signale behandeln", "Interprozesskommunikation über Pipes", "Speicher abbilden mit mmap"] },
+    { title: "Qualität und Portabilität", level: "expert", lessons: ["Unit-Tests in C mit Unity oder Check", "Undefiniertes Verhalten erkennen und meiden", "Portabler Code über Compiler und Plattformen", "Bibliotheken bauen: statisch und dynamisch"] },
+  ],
+  cpp: [
+    { title: "Moderne Werkzeuge", level: "intermediate", lessons: ["CMake: Ziele, Bibliotheken und Installation", "Paketverwaltung mit vcpkg oder Conan", "Sanitizer und clang-tidy in den Build einbinden", "Debuggen mit gdb und lldb"] },
+    { title: "Wertesemantik", level: "intermediate", lessons: ["Rule of Zero, Three und Five", "Kopier- und Verschiebekonstruktoren schreiben", "RAII als Grundprinzip verstehen", "explicit, default und delete gezielt einsetzen", "constexpr und Berechnungen zur Übersetzungszeit"] },
+    { title: "STL im Detail", level: "advanced", lessons: ["Container wählen: vector, deque, list, map", "Iteratoren-Kategorien und ihre Bedeutung", "Algorithmen: sort, transform, accumulate", "Lambdas, Captures und std::function", "Ranges und Views in C++20"] },
+    { title: "Templates vertiefen", level: "advanced", lessons: ["Funktions- und Klassentemplates schreiben", "Spezialisierung und Überladungsauflösung", "Variadic Templates und Parameter Packs", "Concepts für lesbare Fehlermeldungen", "SFINAE verstehen und ersetzen"] },
+    { title: "Nebenläufigkeit", level: "advanced", lessons: ["std::thread, join und detach", "mutex, lock_guard und scoped_lock", "condition_variable für Warteschlangen", "atomic und Speicherordnungen", "async, future und promise"] },
+    { title: "Fehler und Tests", level: "expert", lessons: ["Ausnahmen gegen Fehlercodes abwägen", "noexcept und Ausnahmesicherheit", "Unit-Tests mit GoogleTest oder Catch2", "Benchmarking mit Google Benchmark"] },
+  ],
+  go: [
+    { title: "Werkzeuge", level: "intermediate", lessons: ["Module, go.mod und Versionierung", "go vet, staticcheck und gofmt", "Abhängigkeiten aktualisieren und ersetzen", "Programme bauen für andere Plattformen"] },
+    { title: "Sprachdetails", level: "intermediate", lessons: ["Slices im Detail: Kapazität, Aliasing, copy", "Maps, Iterationsreihenfolge und Nullwerte", "defer, panic und recover richtig einsetzen", "Methoden auf Werten gegen Zeigerempfänger", "Embedding statt Vererbung"] },
+    { title: "Fehlerbehandlung", level: "advanced", lessons: ["Fehler umschließen mit %w und errors.Is", "Eigene Fehlertypen mit errors.As", "Sentinel-Fehler und ihre Grenzen", "Fehler protokollieren gegen Fehler zurückgeben"] },
+    { title: "Nebenläufigkeit vertiefen", level: "advanced", lessons: ["Gepufferte gegen ungepufferte Kanäle", "sync.WaitGroup, Mutex und Once", "context für Abbruch und Fristen", "Muster: Fan-Out, Fan-In, Pipeline", "Wettlaufsituationen finden mit dem Race Detector"] },
+    { title: "Web-Dienste", level: "advanced", lessons: ["HTTP-Server mit net/http und Routing", "Middleware-Ketten selbst schreiben", "JSON kodieren und dekodieren mit Tags", "Datenbanken mit database/sql ansprechen", "Konfiguration und Graceful Shutdown"] },
+    { title: "Testen und Betrieb", level: "expert", lessons: ["Tabellengetriebene Tests schreiben", "httptest für Handler-Tests", "Benchmarks und Profiling mit pprof", "Go-Programme in schlanken Containern ausliefern"] },
+  ],
+  rust: [
+    { title: "Werkzeuge", level: "intermediate", lessons: ["Cargo: Workspaces, Features und Profile", "clippy und rustfmt in den Alltag einbauen", "Dokumentation mit rustdoc und Doctests", "Abhängigkeiten prüfen mit cargo audit"] },
+    { title: "Typen und Traits", level: "intermediate", lessons: ["Trait-Objekte gegen Generics abwägen", "Standard-Traits: From, Into, Display, Debug", "Iteratoren selbst implementieren", "Operatorüberladung über Traits", "Default, Clone und Copy richtig ableiten"] },
+    { title: "Fehlerbehandlung", level: "advanced", lessons: ["Eigene Fehlertypen mit thiserror", "Fehler zusammenführen mit anyhow", "Der ?-Operator über Fehlertypen hinweg", "panic gegen Result: wann was angebracht ist"] },
+    { title: "Lebensdauern vertiefen", level: "advanced", lessons: ["Lebensdauer-Annotationen lesen und schreiben", "Elision-Regeln verstehen", "Structs mit Referenzen halten", "Borrow-Checker-Fehler systematisch auflösen"] },
+    { title: "Nebenläufigkeit", level: "advanced", lessons: ["Send und Sync verstehen", "Arc, Mutex und RwLock kombinieren", "Kanäle mit std::sync::mpsc", "async/await mit tokio", "Streams und Aufgaben planen"] },
+    { title: "Praxis", level: "expert", lessons: ["Makros: deklarativ und prozedural", "Serialisierung mit serde", "Kommandozeilenwerkzeuge mit clap", "Web-Dienste mit axum", "Unsafe kapseln und begründen"] },
+  ],
+  php: [
+    { title: "Moderne Sprachmittel", level: "intermediate", lessons: ["Typdeklarationen, Union Types und never", "Named Arguments und Konstruktor-Promotion", "Enums und readonly-Eigenschaften", "match-Ausdruck gegen switch", "Nullsafe-Operator und Null Coalescing"] },
+    { title: "Werkzeuge", level: "intermediate", lessons: ["Composer: Autoloading, Skripte und Versionen", "PSR-Standards und Code-Stil mit PHP-CS-Fixer", "Statische Analyse mit PHPStan", "Debuggen mit Xdebug"] },
+    { title: "Architektur", level: "advanced", lessons: ["Namespaces und PSR-4 sauber aufsetzen", "Dependency Injection ohne Framework", "Interfaces und Traits sinnvoll einsetzen", "Schichten trennen: Controller, Service, Repository"] },
+    { title: "Datenbanken", level: "advanced", lessons: ["PDO: Prepared Statements und Transaktionen", "Migrationen und Schemaverwaltung", "N+1-Abfragen erkennen und vermeiden", "Verbindungen und Fehler robust behandeln"] },
+    { title: "Sicherheit", level: "advanced", lessons: ["Passwörter mit password_hash speichern", "Sessions absichern und fixieren verhindern", "CSRF-Token und SameSite-Cookies", "Dateiuploads gefahrlos entgegennehmen", "Content Security Policy in PHP setzen"] },
+    { title: "Testen und Betrieb", level: "expert", lessons: ["PHPUnit: Tests, Datenanbieter und Mocks", "HTTP-Tests gegen die eigene API", "Caching mit Redis und OPcache", "Warteschlangen und Hintergrundjobs"] },
+  ],
+  sql: [
+    { title: "Abfragen vertiefen", level: "intermediate", lessons: ["CASE-Ausdrücke für bedingte Spalten", "Mengenoperationen: UNION, INTERSECT, EXCEPT", "NULL-Logik und COALESCE richtig einsetzen", "Datums- und Zeitfunktionen", "Zeichenketten aufbereiten und suchen"] },
+    { title: "Fortgeschrittene Auswertung", level: "advanced", lessons: ["Fensterfunktionen: ROW_NUMBER, RANK, LAG", "Laufende Summen und gleitende Mittel", "Common Table Expressions mit WITH", "Rekursive Abfragen für Hierarchien", "PIVOT-artige Auswertungen bauen"] },
+    { title: "Datenmodellierung", level: "advanced", lessons: ["Normalformen und wann man sie bricht", "Fremdschlüssel und referenzielle Integrität", "Constraints: CHECK, UNIQUE, NOT NULL", "Datentypen richtig wählen", "Beziehungen 1:n und n:m umsetzen"] },
+    { title: "Leistung", level: "advanced", lessons: ["Ausführungspläne lesen mit EXPLAIN", "Indizes entwerfen: zusammengesetzt und abdeckend", "Warum ein Index manchmal ignoriert wird", "Statistiken, Kardinalität und Schätzfehler", "Langsame Abfragen systematisch eingrenzen"] },
+    { title: "Transaktionen und Betrieb", level: "expert", lessons: ["Isolationsstufen und ihre Anomalien", "Sperren, Deadlocks und wie man sie auflöst", "Sicherungen und Wiederherstellung planen", "Berechtigungen und Rollen vergeben", "Migrationen ohne Ausfallzeit"] },
+  ],
+};
 
 const COURSES = [
   buildCourse("html", "HTML", "🌐", "#E34C26", "Die Sprache des Webs — von der ersten Seite bis Accessibility.", [
@@ -368,67 +514,67 @@ const COURSES = [
     { title: "Expert", level: "expert", lessons: ["Closures & Scope", "Prototypen & Vererbung", "Performance-Optimierung"] },
   ]),
   buildCourse("java", "Java", "☕", "#B07219", "Objektorientierung meistern — von Hello World bis Spring.", [
-    { title: "Grundlagen", level: "beginner", lessons: ['Java Setup & "Hello World"', "Variablen & primitive Datentypen", "Operatoren & Ausdrücke", "Bedingungen & Schleifen", "Arrays"] },
+    { title: "Grundlagen", level: "beginner", lessons: ['Java Setup & "Hello World"', "Variablen & primitive Datentypen", "Operatoren & Ausdrücke", "Bedingungen & Schleifen", "Arrays anlegen und durchlaufen"] },
     { title: "OOP", level: "intermediate", lessons: ["Klassen & Objekte", "Konstruktoren & this", "Vererbung & super", "Interfaces & abstrakte Klassen", "Packages & Import"] },
-    { title: "Advanced", level: "advanced", lessons: ["Collections (ArrayList, HashMap)", "Generics", "Exception Handling", "File I/O", "Lambda & Streams"] },
+    { title: "Advanced", level: "advanced", lessons: ["Collections (ArrayList, HashMap)", "Generics: typsichere Container", "Exception Handling", "File I/O", "Lambda & Streams"] },
     { title: "Expert", level: "expert", lessons: ["Multithreading & Concurrency", "Design Patterns", "Spring Framework Einführung"] },
   ]),
   buildCourse("python", "Python", "🐍", "#3572A5", "Der einfache Einstieg — bis hin zu Data Science.", [
     { title: "Grundlagen", level: "beginner", lessons: ["Python installieren & Hello World", "Variablen & Datentypen", "Strings & String-Methoden", "Listen, Tupel, Sets", "Dictionaries"] },
     { title: "Intermediate", level: "intermediate", lessons: ["Funktionen & Parameter", "Module & pip", "Datei-Operationen", "OOP in Python", "List Comprehensions"] },
-    { title: "Advanced", level: "advanced", lessons: ["Decorators", "Generators & Iterators", "Fehlerbehandlung", "Virtual Environments", "APIs mit requests"] },
+    { title: "Advanced", level: "advanced", lessons: ["Decorators: Funktionen umhüllen", "Generators & Iterators", "Fehlerbehandlung", "Virtual Environments", "APIs mit requests"] },
     { title: "Expert", level: "expert", lessons: ["Async Python (asyncio)", "Testing mit pytest", "Data Science Einführung (numpy/pandas)"] },
   ]),
   buildCourse("sql", "SQL", "🗄️", "#E38C00", "Datenbanken verstehen — Abfragen, Joins & Performance.", [
     { title: "Grundlagen", level: "beginner", lessons: ["Was sind Datenbanken?", "SELECT & FROM", "WHERE & Bedingungen", "ORDER BY & LIMIT"] },
     { title: "Intermediate", level: "intermediate", lessons: ["INSERT, UPDATE, DELETE", "CREATE TABLE & Datentypen", "JOINs (INNER, LEFT, RIGHT)", "Aggregat-Funktionen", "GROUP BY & HAVING"] },
-    { title: "Advanced", level: "advanced", lessons: ["Subqueries", "Indizes & Performance", "Transaktionen", "Views & Stored Procedures"] },
+    { title: "Advanced", level: "advanced", lessons: ["Subqueries: Abfragen in Abfragen", "Indizes und ihre Wirkung auf die Laufzeit", "Transaktionen: alles oder nichts", "Views & Stored Procedures"] },
   ]),
   buildCourse("cpp", "C++", "⚙️", "#00599C", "Nah am Metal — Pointer, Templates & Systemnähe.", [
     { title: "Grundlagen", level: "beginner", lessons: ["C++ Grundstruktur & Kompilierung", "Variablen, Typen, Ein/Ausgabe", "Operatoren & Ausdrücke", "Kontrollstrukturen"] },
     { title: "Intermediate", level: "intermediate", lessons: ["Funktionen & Überladen", "Arrays & Strings", "Pointer & Referenzen", "Klassen & OOP", "Vererbung & Polymorphismus"] },
-    { title: "Advanced", level: "advanced", lessons: ["Templates", "STL (vector, map, algorithm)", "Speicherverwaltung (new/delete)", "Smart Pointer"] },
+    { title: "Advanced", level: "advanced", lessons: ["Templates: Code für viele Typen", "STL (vector, map, algorithm)", "Speicherverwaltung (new/delete)", "Smart Pointer"] },
     { title: "Expert", level: "expert", lessons: ["Move Semantics & Rvalue", "Multithreading (std::thread)", "Systemnahe Programmierung"] },
   ]),
   buildCourse("c", "C", "🔩", "#5C6BC0", "Die Mutter aller Sprachen — Speicher, Pointer & Systemnähe.", [
     { title: "Grundlagen", level: "beginner", lessons: ["Aufbau eines C-Programms & Kompilieren", "Variablen & Datentypen", "Operatoren & Ausdrücke", "Kontrollstrukturen", "Funktionen"] },
-    { title: "Speicher & Daten", level: "intermediate", lessons: ["Arrays", "Zeiger (Pointer) verstehen", "Strings in C", "Structs & Unions", "Dynamische Speicherverwaltung (malloc/free)"] },
+    { title: "Speicher & Daten", level: "intermediate", lessons: ["Arrays anlegen und durchlaufen", "Zeiger (Pointer) verstehen", "Strings in C", "Structs & Unions", "Dynamische Speicherverwaltung (malloc/free)"] },
     { title: "Fortgeschritten", level: "advanced", lessons: ["Datei-Ein-/Ausgabe", "Präprozessor & Makros", "Modularisierung & Header", "Verkettete Listen"] },
     { title: "Expert", level: "expert", lessons: ["Bit-Operationen", "Funktionszeiger", "Systemnahe Programmierung & Syscalls"] },
   ]),
   buildCourse("typescript", "TypeScript", "🛡️", "#3178C6", "JavaScript mit Typsicherheit — weniger Bugs, besserer Code.", [
     { title: "Grundlagen", level: "beginner", lessons: ["Was ist TypeScript? Setup & tsc", "Basistypen & Type Annotations", "Arrays, Tupel & Enums", "Funktionen typisieren"] },
     { title: "Typsystem", level: "intermediate", lessons: ["Interfaces & Type Aliases", "Union & Intersection Types", "Optional & Readonly", "Type Narrowing & Guards", "Klassen in TypeScript"] },
-    { title: "Fortgeschritten", level: "advanced", lessons: ["Generics", "Utility Types (Partial, Pick, Omit)", "Module & Namespaces", "Typisierung von APIs"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Generics: typsichere Container", "Utility Types (Partial, Pick, Omit)", "Module & Namespaces", "Typisierung von APIs"] },
     { title: "Expert", level: "expert", lessons: ["Conditional Types", "Mapped Types & Template Literal Types", "Declaration Files (.d.ts)"] },
   ]),
   buildCourse("react", "React", "⚛️", "#61DAFB", "Moderne Benutzeroberflächen mit Komponenten & Hooks.", [
     { title: "Grundlagen", level: "beginner", lessons: ["Was ist React? Erste Komponente", "JSX verstehen", "Props & Komponenten-Komposition", "State mit useState", "Events behandeln"] },
     { title: "Hooks & Logik", level: "intermediate", lessons: ["Listen & Keys", "Bedingtes Rendering", "useEffect & Seiteneffekte", "Formulare & kontrollierte Inputs", "Eigene Hooks schreiben"] },
-    { title: "Fortgeschritten", level: "advanced", lessons: ["Context API", "useReducer & komplexer State", "Performance (memo, useMemo, useCallback)", "Daten laden & Fehlerbehandlung"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Context API: Daten ohne Prop-Drilling", "useReducer & komplexer State", "Performance (memo, useMemo, useCallback)", "Daten laden & Fehlerbehandlung"] },
     { title: "Expert", level: "expert", lessons: ["React Router & Navigation", "Testing mit React Testing Library", "Patterns & Architektur größerer Apps"] },
   ]),
   buildCourse("vue", "Vue", "💚", "#42B883", "Das progressive Framework — sanfter Einstieg, volle Power.", [
     { title: "Grundlagen", level: "beginner", lessons: ["Vue einbinden & erste App", "Template-Syntax & Interpolation", "Direktiven (v-if, v-for, v-bind)", "Events mit v-on", "Reaktivität mit ref & reactive"] },
-    { title: "Komponenten", level: "intermediate", lessons: ["Komponenten & Props", "Emits & Kommunikation", "Slots", "Computed & Watch", "Formulare mit v-model"] },
+    { title: "Komponenten", level: "intermediate", lessons: ["Komponenten & Props", "Emits & Kommunikation", "Slots: Inhalte in Komponenten einsetzen", "Computed & Watch", "Formulare mit v-model"] },
     { title: "Fortgeschritten", level: "advanced", lessons: ["Composition API vertiefen", "Lifecycle Hooks", "Vue Router", "State Management mit Pinia"] },
   ]),
   buildCourse("go", "Go", "🐹", "#00ADD8", "Einfach, schnell, nebenläufig — die Sprache der Cloud.", [
     { title: "Grundlagen", level: "beginner", lessons: ["Go installieren & Hello World", "Variablen, Typen & Konstanten", "Kontrollstrukturen", "Funktionen & Mehrfachrückgabe", "Arrays, Slices & Maps"] },
     { title: "Strukturen", level: "intermediate", lessons: ["Structs & Methoden", "Interfaces", "Fehlerbehandlung mit error", "Packages & Module", "Zeiger in Go"] },
-    { title: "Nebenläufigkeit", level: "advanced", lessons: ["Goroutines", "Channels", "select & sync", "Testing in Go"] },
+    { title: "Nebenläufigkeit", level: "advanced", lessons: ["Goroutines: nebenläufig ohne Threads", "Channels: Daten zwischen Goroutines", "select & sync", "Testing in Go"] },
     { title: "Expert", level: "expert", lessons: ["HTTP-Server bauen", "Context & Timeouts", "Performance & Profiling"] },
   ]),
   buildCourse("kotlin", "Kotlin", "🟣", "#7F52FF", "Modernes JVM — prägnant, sicher, Android-first.", [
     { title: "Grundlagen", level: "beginner", lessons: ["Kotlin Setup & Hello World", "val, var & Datentypen", "Null-Sicherheit verstehen", "Kontrollfluss & when", "Funktionen & Default-Parameter"] },
     { title: "OOP & Funktional", level: "intermediate", lessons: ["Klassen & Konstruktoren", "Data Classes", "Vererbung & Interfaces", "Collections & Lambdas", "Extension Functions"] },
-    { title: "Fortgeschritten", level: "advanced", lessons: ["Sealed Classes & Pattern Matching", "Generics", "Coroutines — Grundlagen", "Scope Functions (let, apply, run)"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Sealed Classes & Pattern Matching", "Generics: typsichere Container", "Coroutines — Grundlagen", "Scope Functions (let, apply, run)"] },
     { title: "Expert", level: "expert", lessons: ["Coroutines & Flow vertiefen", "DSLs bauen", "Android-Grundlagen mit Kotlin"] },
   ]),
   buildCourse("rust", "Rust", "🦀", "#DEA584", "Sicher, schnell, ohne Garbage Collector.", [
     { title: "Grundlagen", level: "beginner", lessons: ["Rust installieren & Cargo", "Variablen & Mutability", "Datentypen & Tupel", "Kontrollfluss", "Funktionen"] },
-    { title: "Ownership", level: "intermediate", lessons: ["Ownership verstehen", "Borrowing & Referenzen", "Slices", "Structs & Methoden", "Enums & Pattern Matching"] },
-    { title: "Fortgeschritten", level: "advanced", lessons: ["Fehlerbehandlung mit Result & Option", "Generics & Traits", "Lifetimes", "Collections (Vec, HashMap)", "Module & Crates"] },
+    { title: "Ownership", level: "intermediate", lessons: ["Ownership verstehen", "Borrowing und Referenzen verstehen", "Slices: Ausschnitte ohne Kopie", "Structs & Methoden", "Enums & Pattern Matching"] },
+    { title: "Fortgeschritten", level: "advanced", lessons: ["Fehlerbehandlung mit Result & Option", "Generics & Traits", "Lifetimes: wie lange Referenzen gelten", "Collections (Vec, HashMap)", "Module & Crates"] },
     { title: "Expert", level: "expert", lessons: ["Smart Pointer (Box, Rc, RefCell)", "Nebenläufigkeit & Threads", "Unsafe Rust & FFI"] },
   ]),
   buildCourse("php", "PHP", "🐘", "#777BB4", "Das Rückgrat des Webs — Server-Logik & Datenbanken.", [
@@ -3580,9 +3726,16 @@ function buildFallbackLesson(course, meta) {
   // Nur in etwa jeder vierten Lektion kommt eine Erklär-Aufgabe dazu —
   // sie hat ihren Platz, soll aber nicht das Bild bestimmen.
   if (hash % 4 === 0) {
+    // Die Begriffe aus dem Titel sind der Themenanker: eine Antwort, die
+    // keinen davon aufgreift, handelt von etwas anderem.
+    const titleTerms = title
+      .split(/[^A-Za-zÄÖÜäöüß]+/)
+      .filter((w) => w.length > 3 && !STOPWORDS_DE.has(w.toLowerCase()))
+      .slice(0, 3);
     tasks.push({
       id: "g4", type: "explain",
       question: `Erkläre kurz in eigenen Worten, wozu „${title}“ gut ist.`,
+      expectedConcepts: titleTerms,
       aiCheck: false,
     });
   }
@@ -4600,6 +4753,13 @@ function stemDe(word) {
 const REASONING_WORDS = /\b(weil|da|denn|damit|dadurch|sodass|so dass|deshalb|daher|somit|folglich|verhindert|ermöglicht|schützt|sorgt|bewirkt|bedeutet|führt dazu|vermeidet|garantiert)\b/i;
 const EXAMPLE_WORDS = /\b(zum beispiel|z\.?b\.?|etwa|beispielsweise|wie etwa)\b/i;
 
+/* Wer einen Vorteil benennt, begründet damit — auch ohne „weil“.
+   „Es ist übersichtlicher“ ist eine Antwort auf ein Warum. */
+// Achtung: `\b` funktioniert vor Umlauten NICHT — `\w` kennt kein „ü“, also
+// gibt es zwischen Leerzeichen und „ü“ keine Wortgrenze. Deshalb wird der
+// Wortanfang hier ausdrücklich über die erlaubten Trennzeichen beschrieben.
+const BENEFIT_WORDS = /(?:^|[^A-Za-zÄÖÜäöüß])(übersichtlich|uebersichtlich|übersicht|lesbar|wartbar|wiederverwend|austauschbar|verständlich|verstaendlich|einfach|schnell|langsam|sicher|unsicher|fehleranfällig|robust|getrennt|trennung|unabhängig|unabhaengig|flexibel|struktur|ordnung|sauber|doppelt|redundan|effizien|performan|barrierefrei|zugänglich|eindeutig|konsistent|klar|übersichtlicher|aufwand|spart|spare|zeitspar)/i;
+
 // Füllwörter zählen nicht als Inhalt — sonst gälte „damit das dann so ist“
 // als ebenso gehaltvoll wie eine echte Begründung.
 const STOPWORDS_DE = new Set([
@@ -4698,8 +4858,13 @@ function evaluateExplanation(task, answer) {
 
   // Erwartete Begriffe: aus expectedConcepts und den Code-Spans der Frage
   const fromQuestion = (task.question || "").match(/`([^`]+)`/g) || [];
+  // Von der Aufgabenstellerin gesetzte Begriffe wiegen schwerer als die, die
+  // ohnehin in der Frage stehen — wer `required` abschreibt, hat nichts gezeigt.
+  const authored = [...new Set((task.expectedConcepts || [])
+    .map((c) => String(Array.isArray(c) ? c[0] : c).toLowerCase().trim())
+    .filter((c) => c.length > 1))];
   const expected = [...new Set([
-    ...(task.expectedConcepts || []),
+    ...authored,
     ...fromQuestion.map((s) => s.replace(/`/g, "")),
   ].map((s) => String(s).toLowerCase().trim()).filter((s) => s.length > 1))];
 
@@ -4712,7 +4877,10 @@ function evaluateExplanation(task, answer) {
   const missing = expected.filter((c) => !covered.includes(c));
   const coverage = expected.length ? covered.length / expected.length : null;
 
-  const hasReasoning = REASONING_WORDS.test(text);
+  const hasConnective = REASONING_WORDS.test(text);
+  // Einen Vorteil zu benennen ist ebenfalls eine Begründung.
+  const hasBenefit = BENEFIT_WORDS.test(text);
+  const hasReasoning = hasConnective || hasBenefit;
   const hasExample = EXAMPLE_WORDS.test(text);
   // Fragt die Aufgabe ausdrücklich nach dem Warum, reicht eine reine
   // Beschreibung nicht aus — dann ist die Begründung der Kern der Antwort.
@@ -4729,9 +4897,35 @@ function evaluateExplanation(task, answer) {
   // („damit es übersichtlicher ist“) darf hier nicht hängenbleiben.
   const questionWords = new Set((task.question || "").toLowerCase().split(/\s+/).map(stemDe).filter((w) => w.length > 3));
   const ownWords = contentWords.filter((w) => !questionWords.has(w));
+  const borrowedWords = contentWords.filter((w) => questionWords.has(w));
   const borrowedShare = contentWords.length ? 1 - ownWords.length / contentWords.length : 0;
   const copiedFromQuestion = questionWords.size > 3 && contentWords.length >= 4
     && borrowedShare >= 0.8 && ownWords.length < 2;
+
+  /* --------------------------- Themenbezug -------------------------------
+     Der entscheidende Punkt: Eine Antwort muss etwas mit der Frage zu tun
+     haben. „weil ich heute Pizza bestellen will“ ist grammatisch einwandfrei,
+     enthält ein „weil“ und besteht aus echten Wörtern — trotzdem ist es keine
+     Antwort. Erkannt wird das über drei Anker:
+       • ein erwarteter Fachbegriff kommt vor,
+       • ein Wort aus der Frage kommt vor (Themenwort),
+       • oder es wird ein Vorteil benannt (bei Warum-Fragen).
+     Fehlt alles drei, ist die Antwort am Thema vorbei.
+     --------------------------------------------------------------------- */
+  const topicAnchors = covered.length + borrowedWords.length + (hasBenefit ? 1 : 0);
+  const offTopic = topicAnchors === 0;
+
+  // Hat die Aufgabe ausdrücklich Fachbegriffe genannt und kommt keiner davon
+  // vor, geht die Antwort am Kern vorbei — egal wie flüssig sie klingt.
+  const coveredAuthored = authored.filter((c) => covered.includes(c));
+  const missesAllConcepts = authored.length >= 1 && coveredAuthored.length === 0;
+
+  if (offTopic) {
+    return { correct: false, score: 0, offline: true,
+      feedback: "Das beantwortet die Frage nicht.",
+      hint: "Beziehe dich auf das Thema der Aufgabe — nutze die Begriffe, um die es geht.",
+      praise: "" };
+  }
 
   let score = 0;
   score += Math.min(25, contentWords.length * 6);                // Gehalt
@@ -4742,17 +4936,22 @@ function evaluateExplanation(task, answer) {
   score += coverage === null ? 20 : Math.round(coverage * 25);   // Fachbegriffe
   if (copiedFromQuestion) score = Math.min(score, 35);
   if (wantsReason && !hasReasoning) score = Math.min(score, 50);
+  if (missesAllConcepts) score = Math.min(score, 45);
   score = Math.max(0, Math.min(100, Math.round(score)));
 
   const minWords = wantsBrief ? 4 : 6;
   const minContent = wantsBrief ? 1 : 2;
   const correct = score >= 55 && words.length >= minWords && contentWords.length >= minContent
-    && !copiedFromQuestion && !(wantsReason && !hasReasoning);
+    && !copiedFromQuestion && !missesAllConcepts
+    && !(wantsReason && !hasReasoning);
 
   let feedback, hint = "";
   if (copiedFromQuestion) {
     feedback = "Das ist im Wesentlichen die Frage in anderer Reihenfolge.";
     hint = "Erkläre es mit eigenen Worten — was passiert da, und warum?";
+  } else if (missesAllConcepts) {
+    feedback = "Die Antwort geht am Kern der Frage vorbei.";
+    hint = `Es geht um ${authored.slice(0, 2).map((m) => `\`${m}\``).join(" und ")} — darauf solltest du eingehen.`;
   } else if (wantsReason && !hasReasoning) {
     feedback = "Du beschreibst korrekt, was passiert — die Frage zielt aber auf die Begründung.";
     hint = "Ergänze das „Warum“, zum Beispiel mit „weil …“ oder „dadurch …“.";
@@ -4785,7 +4984,7 @@ function evaluateExplanation(task, answer) {
   return {
     correct, score, offline: true, feedback, hint,
     praise: correct ? (score >= 85 ? "Klar auf den Punkt gebracht." : "Verständlich erklärt.") : "",
-    details: { covered, missing, hasReasoning, words: words.length },
+    details: { covered, missing, hasReasoning, topicAnchors, words: words.length },
   };
 }
 
@@ -10155,6 +10354,12 @@ function Playground({ ctx }) {
     setDirty(false);
     setSavedAt(null);
     setProblems(null);
+    setLogs([]);
+    // Ein leeres Projekt sieht aus wie „nichts passiert“. Deshalb sagen wir es
+    // und öffnen gleich den Dialog für die erste Datei.
+    pushToast("info", "Neues Projekt begonnen.");
+    setNewFileOpen(true);
+    playSound("click");
   };
 
   useEffect(() => {
@@ -10648,14 +10853,14 @@ function Playground({ ctx }) {
         </div>
 
         {toolButton(<FolderTree size={13} />, explorerOpen ? "Explorer ausblenden" : "Explorer einblenden", () => setExplorerOpen((v) => !v), explorerOpen)}
-        {toolButton(<FilePlus size={13} />, "Neue Datei (Explorer)", () => setNewFileOpen(true))}
+        {toolButton(<FilePlus size={13} />, "Neue Datei anlegen", () => setNewFileOpen(true))}
 
         <div className="w-px h-6 bg-[#1E2D4A] mx-0.5" />
 
         <Btn size="sm" icon={saving ? undefined : Save} onClick={() => doSave()} disabled={saving || !files.length}>
           {saving ? <><Loader2 size={13} className="ld-spin" />Speichert …</> : "Speichern"}
         </Btn>
-        <Btn size="sm" variant="secondary" icon={Plus} onClick={newProject}>Neu</Btn>
+        <Btn size="sm" variant="secondary" icon={Plus} onClick={newProject}>Neues Projekt</Btn>
 
         <div className="w-px h-6 bg-[#1E2D4A] mx-0.5" />
 
