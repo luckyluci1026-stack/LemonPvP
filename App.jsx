@@ -3881,103 +3881,103 @@ const LESSON_CONTENT = { ...EXTRA_LESSONS, ...BASE_LESSONS, ...WRITTEN_LESSONS }
 const COURSE_PRACTICE = {
   html: {
     blank: { template: "Ein Absatz steht zwischen ___ und ___.", blanks: ["<p>", "</p>"] },
-    code: { question: "Schreibe eine Überschrift erster Ordnung mit dem Text **Hallo**.", concepts: ["<h1>", "</h1>", "Hallo"] },
+    code: { question: "Schreibe eine Überschrift erster Ordnung mit dem Text **Hallo**.", solution: "<h1>Hallo</h1>", concepts: ["<h1>", "</h1>", "Hallo"] },
     mc: { question: "Wofür steht das `alt`-Attribut bei einem Bild?",
       options: ["Für die Bildgröße", "Für einen Alternativtext, wenn das Bild fehlt", "Für die Ausrichtung", "Für den Dateipfad"],
       correct: 1, why: "Der Alternativtext beschreibt das Bild — für Screenreader und wenn das Bild nicht lädt." },
   },
   css: {
     blank: { template: "Die Textfarbe setzt du mit ___, den Hintergrund mit ___.", blanks: ["color", ["background", "background-color"]] },
-    code: { question: "Gib allen Absätzen die Schriftgröße `16px`.", concepts: ["p", "font-size", "16px"] },
+    code: { question: "Gib allen Absätzen die Schriftgröße `16px`.", solution: "p {\n  font-size: 16px;\n}", concepts: ["p", "font-size", "16px"] },
     mc: { question: "Welcher Selektor spricht die Klasse `box` an?",
       options: ["#box", ".box", "box", "*box"], correct: 1, why: "Klassen beginnen mit einem Punkt, IDs mit einer Raute." },
   },
   javascript: {
     blank: { template: "Eine Konstante deklarierst du mit ___, eine änderbare Variable mit ___.", blanks: ["const", "let"] },
-    code: { question: "Lege eine Konstante `name` mit deinem Namen an und gib sie in der Konsole aus.", concepts: ["const", "name", "console.log"] },
+    code: { question: "Lege eine Konstante `name` mit deinem Namen an und gib sie in der Konsole aus.", solution: "const name = \"Ada\";\nconsole.log(name);", concepts: ["const", "name", "console.log"] },
     mc: { question: "Was gibt `typeof 42` zurück?",
       options: ['"integer"', '"number"', '"float"', '"42"'], correct: 1, why: "JavaScript kennt nur einen Zahlentyp: number." },
   },
   typescript: {
     blank: { template: "Ein Typ wird nach einem ___ notiert, z.B. `alter: number`. Ein eigener Typ entsteht mit ___.", blanks: [":", ["type", "interface"]] },
-    code: { question: "Schreibe eine Funktion `verdopple`, die eine `number` entgegennimmt und eine `number` zurückgibt.", concepts: ["function", "verdopple", "number", "return"] },
+    code: { question: "Schreibe eine Funktion `verdopple`, die eine `number` entgegennimmt und eine `number` zurückgibt.", solution: "function verdopple(zahl: number): number {\n  return zahl * 2;\n}", concepts: ["function", "verdopple", "number", "return"] },
     mc: { question: "Was bewirkt `strict` in der tsconfig?",
       options: ["Schnellere Kompilierung", "Strengere Typprüfungen", "Kleinere Ausgabedateien", "Automatisches Formatieren"],
       correct: 1, why: "strict aktiviert unter anderem strikte Null-Prüfungen — das fängt viele Fehler früh ab." },
   },
   react: {
     blank: { template: "Zustand bekommst du mit ___, Seiteneffekte mit ___.", blanks: ["useState", "useEffect"] },
-    code: { question: "Schreibe eine Komponente `Hallo`, die `<h1>Hallo</h1>` zurückgibt.", concepts: ["function", "Hallo", "return", "<h1>"] },
+    code: { question: "Schreibe eine Komponente `Hallo`, die `<h1>Hallo</h1>` zurückgibt.", solution: "function Hallo() {\n  return <h1>Hallo</h1>;\n}", concepts: ["function", "Hallo", "return", "<h1>"] },
     mc: { question: "Warum braucht jede Liste in React ein `key`?",
       options: ["Für die Sortierung", "Damit React Elemente wiedererkennt", "Für CSS-Klassen", "Es ist optional"],
       correct: 1, why: "Der Key sagt React, welches Element welches ist — sonst wird beim Aktualisieren zu viel neu gebaut." },
   },
   vue: {
     blank: { template: "Eine Bedingung schreibst du mit ___, eine Schleife mit ___.", blanks: ["v-if", "v-for"] },
-    code: { question: "Binde die Variable `titel` in einer Überschrift aus (Interpolation).", concepts: ["<h1>", "{{", "titel", "}}"] },
+    code: { question: "Binde die Variable `titel` in einer Überschrift aus (Interpolation).", solution: "<h1>{{ titel }}</h1>", concepts: ["<h1>", "{{", "titel", "}}"] },
     mc: { question: "Wofür steht `v-model`?",
       options: ["Nur Ausgabe", "Zweiwege-Bindung an ein Formularfeld", "Ein Datenbankmodell", "Ein Styling-Helfer"],
       correct: 1, why: "v-model verbindet Feld und Daten in beide Richtungen." },
   },
   python: {
     blank: { template: "Eine Funktion beginnt mit ___, ausgegeben wird mit ___.", blanks: ["def", ["print", "print()"]] },
-    code: { question: "Schreibe eine Funktion `begruessung`, die `Hallo` ausgibt.", concepts: ["def", "begruessung", "print"] },
+    code: { question: "Schreibe eine Funktion `begruessung`, die `Hallo` ausgibt.", solution: "def begruessung():\n    print(\"Hallo\")\n\nbegruessung()", concepts: ["def", "begruessung", "print"] },
     mc: { question: "Wodurch werden Blöcke in Python abgegrenzt?",
       options: ["Geschweifte Klammern", "Einrückung", "Semikolons", "begin/end"],
       correct: 1, why: "Python nutzt die Einrückung — deshalb ist sie dort nicht nur Kosmetik." },
   },
   java: {
     blank: { template: "Die Einstiegsmethode heißt ___ und liegt in einer ___.", blanks: ["main", ["Klasse", "class"]] },
-    code: { question: "Schreibe eine Klasse `Start` mit einer `main`-Methode, die `Hallo` ausgibt.", concepts: ["class", "Start", "main", "System.out.println"] },
+    code: { question: "Schreibe eine Klasse `Start` mit einer `main`-Methode, die `Hallo` ausgibt.", solution: "public class Start {\n  public static void main(String[] args) {\n    System.out.println(\"Hallo\");\n  }\n}", concepts: ["class", "Start", "main", "System.out.println"] },
     mc: { question: "Was bedeutet `static` bei einer Methode?",
       options: ["Sie ist unveränderlich", "Sie gehört zur Klasse, nicht zum Objekt", "Sie ist privat", "Sie läuft schneller"],
       correct: 1, why: "Statische Methoden rufst du ohne Objekt auf — deshalb ist main statisch." },
   },
   kotlin: {
     blank: { template: "Unveränderlich deklarierst du mit ___, veränderbar mit ___.", blanks: ["val", "var"] },
-    code: { question: "Schreibe eine Funktion `gruss`, die `Hallo` ausgibt.", concepts: ["fun", "gruss", "println"] },
+    code: { question: "Schreibe eine Funktion `gruss`, die `Hallo` ausgibt.", solution: "fun gruss() {\n    println(\"Hallo\")\n}", concepts: ["fun", "gruss", "println"] },
     mc: { question: "Was bedeutet der Typ `String?`",
       options: ["Ein Text-Array", "Ein Text, der auch null sein darf", "Ein optionaler Parameter", "Ein Zeichen"],
       correct: 1, why: "Das Fragezeichen erlaubt null — Kotlins Null-Sicherheit macht das sichtbar." },
   },
   c: {
     blank: { template: "Ein- und Ausgabe bindest du mit `#include` ___ ein, ausgegeben wird mit ___.", blanks: [["<stdio.h>", "stdio.h"], ["printf", "printf()"]] },
-    code: { question: "Schreibe ein vollständiges Programm, das `Hallo` ausgibt.", concepts: ["#include", "int main", "printf", "return"] },
+    code: { question: "Schreibe ein vollständiges Programm, das `Hallo` ausgibt.", solution: "#include <stdio.h>\n\nint main(void) {\n    printf(\"Hallo\\n\");\n    return 0;\n}", concepts: ["#include", "int main", "printf", "return"] },
     mc: { question: "Was steht in einem Zeiger?",
       options: ["Eine Kopie des Wertes", "Eine Speicheradresse", "Der Datentyp", "Die Größe in Bytes"],
       correct: 1, why: "Ein Zeiger speichert die Adresse — über sie kommst du an den Wert." },
   },
   cpp: {
     blank: { template: "Text gibst du mit ___ aus, eingelesen wird mit ___.", blanks: [["std::cout", "cout"], ["std::cin", "cin"]] },
-    code: { question: "Schreibe ein Programm, das `Hallo` auf der Konsole ausgibt.", concepts: ["#include", "int main", ["cout", "std::cout"], "return"] },
+    code: { question: "Schreibe ein Programm, das `Hallo` auf der Konsole ausgibt.", solution: "#include <iostream>\n\nint main() {\n    std::cout << \"Hallo\" << std::endl;\n    return 0;\n}", concepts: ["#include", "int main", ["cout", "std::cout"], "return"] },
     mc: { question: "Wofür stehen Smart Pointer?",
       options: ["Schnellere Zeiger", "Automatische Speicherfreigabe", "Zeiger auf Funktionen", "Zeiger mit Typprüfung"],
       correct: 1, why: "unique_ptr und shared_ptr geben den Speicher selbst wieder frei." },
   },
   go: {
     blank: { template: "Eine Funktion beginnt mit ___, ein Paket wird mit ___ deklariert.", blanks: ["func", "package"] },
-    code: { question: "Schreibe ein Programm im Paket `main`, das `Hallo` ausgibt.", concepts: ["package", "func main", ["fmt.Println", "Println"]] },
+    code: { question: "Schreibe ein Programm im Paket `main`, das `Hallo` ausgibt.", solution: "package main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Println(\"Hallo\")\n}", concepts: ["package", "func main", ["fmt.Println", "Println"]] },
     mc: { question: "Was startet `go func() { ... }()`?",
       options: ["Einen neuen Prozess", "Eine Goroutine", "Einen Thread-Pool", "Eine Endlosschleife"],
       correct: 1, why: "Goroutinen sind sehr leichtgewichtig — davon laufen problemlos Tausende." },
   },
   rust: {
     blank: { template: "Eine Funktion beginnt mit ___, veränderbar wird eine Variable mit ___.", blanks: ["fn", "mut"] },
-    code: { question: "Schreibe ein Programm, das `Hallo` ausgibt.", concepts: ["fn main", ["println!", "println"]] },
+    code: { question: "Schreibe ein Programm, das `Hallo` ausgibt.", solution: "fn main() {\n    println!(\"Hallo\");\n}", concepts: ["fn main", ["println!", "println"]] },
     mc: { question: "Was besagt Ownership?",
       options: ["Jeder Wert hat genau einen Eigentümer", "Werte sind immer unveränderlich", "Speicher wird nie freigegeben", "Nur Funktionen besitzen Werte"],
       correct: 0, why: "Genau ein Eigentümer — endet dessen Gültigkeit, wird der Speicher freigegeben." },
   },
   php: {
     blank: { template: "Ein PHP-Block beginnt mit ___, Variablen beginnen mit ___.", blanks: ["<?php", "$"] },
-    code: { question: "Gib den Text `Hallo` mit PHP aus.", concepts: ["<?php", ["echo", "print"], "Hallo"] },
+    code: { question: "Gib den Text `Hallo` mit PHP aus.", solution: "<?php\necho \"Hallo\";\n?>", concepts: ["<?php", ["echo", "print"], "Hallo"] },
     mc: { question: "Womit verhinderst du SQL-Injection am zuverlässigsten?",
       options: ["Eingaben kürzen", "Vorbereitete Anweisungen (Prepared Statements)", "Anführungszeichen verdoppeln", "Kleinbuchstaben erzwingen"],
       correct: 1, why: "Prepared Statements trennen Befehl und Daten — dann kann Eingabe kein Befehl mehr werden." },
   },
   sql: {
     blank: { template: "Spalten wählst du mit ___ aus, die Tabelle folgt nach ___.", blanks: ["SELECT", "FROM"] },
-    code: { question: "Hole alle Spalten aus der Tabelle `kunden`.", concepts: ["SELECT", "FROM", "kunden"] },
+    code: { question: "Hole alle Spalten aus der Tabelle `kunden`.", solution: "SELECT * FROM kunden;", concepts: ["SELECT", "FROM", "kunden"] },
     mc: { question: "Was macht ein `INNER JOIN`?",
       options: ["Alle Zeilen beider Tabellen", "Nur Zeilen mit Treffer in beiden Tabellen", "Nur die linke Tabelle", "Er entfernt Duplikate"],
       correct: 1, why: "Ohne Treffer auf beiden Seiten fällt die Zeile heraus." },
@@ -3986,7 +3986,7 @@ const COURSE_PRACTICE = {
 
 const DEFAULT_PRACTICE_SET = {
   blank: { template: "Ein Kommentar dient dazu, Code zu ___ — ausgeführt wird er ___.", blanks: [["erklären", "beschreiben", "dokumentieren"], ["nicht", "nie"]] },
-  code: { question: "Schreibe eine kleine, lauffähige Zeile Code zu diesem Thema.", concepts: [] },
+  code: { question: "Schreibe eine kleine, lauffähige Zeile Code zu diesem Thema.", solution: "// Eine Zeile, die etwas tut — zum Beispiel eine Ausgabe:\nconsole.log(\"Hallo\");", concepts: [] },
   mc: { question: "Was hilft beim Lernen einer Programmiersprache am meisten?",
     options: ["Nur lesen", "Selbst schreiben und ausprobieren", "Videos ansehen", "Auswendig lernen"],
     correct: 1, why: "Programmieren lernt man durch Programmieren." },
@@ -4001,21 +4001,21 @@ const PRACTICE_BANK = {
   html: [
     {
       blank: { template: "Eine ungeordnete Liste steht in ___, jeder Eintrag in ___.", blanks: [["<ul>", "ul"], ["<li>", "li"]] },
-      code: { question: "Schreibe eine Liste mit den beiden Einträgen **Apfel** und **Birne**.", concepts: ["<ul>", "</ul>", "<li>", "</li>", "Apfel", "Birne"] },
+      code: { question: "Schreibe eine Liste mit den beiden Einträgen **Apfel** und **Birne**.", solution: "<ul>\n  <li>Apfel</li>\n  <li>Birne</li>\n</ul>", concepts: ["<ul>", "</ul>", "<li>", "</li>", "Apfel", "Birne"] },
       mc: { question: "Was unterscheidet `<ol>` von `<ul>`?",
         options: ["<ol> ist nummeriert, <ul> nicht", "<ol> darf nur drei Einträge haben", "<ul> ist veraltet", "Es gibt keinen Unterschied"],
         correct: 0, why: "`ol` steht für ordered list — die Einträge werden durchnummeriert." },
     },
     {
       blank: { template: "Der sichtbare Inhalt steht im ___, Titel und Meta-Angaben im ___.", blanks: [["<body>", "body"], ["<head>", "head"]] },
-      code: { question: "Schreibe ein vollständiges HTML-Dokument mit dem Titel **Meine Seite**.", concepts: ["<!DOCTYPE", "<html", "<head>", "<title>", "Meine Seite", "<body>"] },
+      code: { question: "Schreibe ein vollständiges HTML-Dokument mit dem Titel **Meine Seite**.", solution: "<!DOCTYPE html>\n<html lang=\"de\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>Meine Seite</title>\n</head>\n<body>\n  <h1>Meine Seite</h1>\n</body>\n</html>", concepts: ["<!DOCTYPE", "<html", "<head>", "<title>", "Meine Seite", "<body>"] },
       mc: { question: "Wozu dient `<meta charset=\"UTF-8\">`?",
         options: ["Es setzt die Schriftart", "Es legt die Zeichenkodierung fest", "Es aktiviert JavaScript", "Es beschleunigt das Laden"],
         correct: 1, why: "Ohne die richtige Kodierung erscheinen Umlaute als kaputte Zeichen." },
     },
     {
       blank: { template: "Ein Bereich mit eigener Bedeutung heißt ___, die Hauptnavigation ___.", blanks: [["<section>", "section"], ["<nav>", "nav"]] },
-      code: { question: "Schreibe eine Navigation mit einem Link zur Startseite.", concepts: ["<nav>", "</nav>", "<a", "href="] },
+      code: { question: "Schreibe eine Navigation mit einem Link zur Startseite.", solution: "<nav>\n  <a href=\"index.html\">Startseite</a>\n</nav>", concepts: ["<nav>", "</nav>", "<a", "href="] },
       mc: { question: "Warum ist `<nav>` besser als `<div class=\"nav\">`?",
         options: ["Es ist kürzer zu tippen", "Screenreader und Suchmaschinen erkennen die Bedeutung", "Es lädt schneller", "Es braucht kein CSS"],
         correct: 1, why: "Semantische Elemente tragen ihre Bedeutung im Namen — davon profitiert vor allem die Barrierefreiheit." },
@@ -4025,21 +4025,21 @@ const PRACTICE_BANK = {
   css: [
     {
       blank: { template: "Innenabstand setzt du mit ___, Außenabstand mit ___.", blanks: ["padding", "margin"] },
-      code: { question: "Gib der Klasse `karte` 16px Innenabstand und einen 1px breiten grauen Rahmen.", concepts: [".karte", "padding", "16px", "border", "1px"] },
+      code: { question: "Gib der Klasse `karte` 16px Innenabstand und einen 1px breiten grauen Rahmen.", solution: ".karte {\n  padding: 16px;\n  border: 1px solid gray;\n}", concepts: [".karte", "padding", "16px", "border", "1px"] },
       mc: { question: "Was zählt bei `box-sizing: border-box` zur angegebenen Breite?",
         options: ["Nur der Inhalt", "Inhalt, Innenabstand und Rahmen", "Nur der Inhalt und der Rahmen", "Auch der Außenabstand"],
         correct: 1, why: "Mit border-box bleibt die angegebene Breite die tatsächliche — Padding und Border fressen sie nicht auf." },
     },
     {
       blank: { template: "Ein Element aus dem Fluss nimmst du mit position: ___, am Fenster verankert wird es mit position: ___.", blanks: ["absolute", "fixed"] },
-      code: { question: "Positioniere `.hinweis` fest 20px vom oberen und rechten Rand.", concepts: [".hinweis", "position", "fixed", "top", "right", "20px"] },
+      code: { question: "Positioniere `.hinweis` fest 20px vom oberen und rechten Rand.", solution: ".hinweis {\n  position: fixed;\n  top: 20px;\n  right: 20px;\n}", concepts: [".hinweis", "position", "fixed", "top", "right", "20px"] },
       mc: { question: "Worauf bezieht sich `position: absolute`?",
         options: ["Immer auf das Fenster", "Auf den nächsten positionierten Vorfahren", "Auf das body-Element", "Auf das direkte Elternelement"],
         correct: 1, why: "Gesucht wird der nächste Vorfahre, dessen position nicht static ist — sonst der Ursprung des Dokuments." },
     },
     {
       blank: { template: "Ein Raster erzeugst du mit display: ___, die Spalten legst du mit ___ fest.", blanks: ["grid", "grid-template-columns"] },
-      code: { question: "Baue mit `.raster` drei gleich breite Spalten mit 12px Abstand.", concepts: [".raster", "display", "grid", "grid-template-columns", "gap"] },
+      code: { question: "Baue mit `.raster` drei gleich breite Spalten mit 12px Abstand.", solution: ".raster {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 12px;\n}", concepts: [".raster", "display", "grid", "grid-template-columns", "gap"] },
       mc: { question: "Was bedeutet die Einheit `1fr` im Grid?",
         options: ["Ein festes Pixelmaß", "Einen Anteil am freien Platz", "Eine Prozentangabe", "Die Schriftgröße"],
         correct: 1, why: "fr steht für fraction — der übrige Platz wird nach diesen Anteilen verteilt." },
@@ -4049,21 +4049,21 @@ const PRACTICE_BANK = {
   javascript: [
     {
       blank: { template: "Über ein Array läufst du mit ___, ein neues Array entsteht mit ___.", blanks: [["forEach", "for"], "map"] },
-      code: { question: "Verdopple jede Zahl im Array `zahlen` und speichere das Ergebnis in `doppelt`.", concepts: ["zahlen", "map", "doppelt", ["const", "let"]] },
+      code: { question: "Verdopple jede Zahl im Array `zahlen` und speichere das Ergebnis in `doppelt`.", solution: "const doppelt = zahlen.map((zahl) => zahl * 2);", concepts: ["zahlen", "map", "doppelt", ["const", "let"]] },
       mc: { question: "Was gibt `[1,2,3].filter(n => n > 1)` zurück?",
         options: ["true", "[2, 3]", "2", "[1]"],
         correct: 1, why: "filter liefert ein neues Array mit allen Elementen, für die die Funktion true ergibt." },
     },
     {
       blank: { template: "Eine Bedingung schreibst du mit ___, den Gegenfall mit ___.", blanks: ["if", "else"] },
-      code: { question: "Prüfe, ob `alter` mindestens 18 ist, und gib „volljährig“ oder „minderjährig“ aus.", concepts: ["if", "alter", "18", "else", "console.log"] },
+      code: { question: "Prüfe, ob `alter` mindestens 18 ist, und gib „volljährig“ oder „minderjährig“ aus.", solution: "if (alter >= 18) {\n  console.log(\"volljährig\");\n} else {\n  console.log(\"minderjährig\");\n}", concepts: ["if", "alter", "18", "else", "console.log"] },
       mc: { question: "Warum sollte man `===` statt `==` verwenden?",
         options: ["Es ist schneller", "Es vergleicht ohne stillschweigende Typumwandlung", "Es funktioniert auch mit Objekten", "== ist veraltet"],
         correct: 1, why: '`"1" == 1` ist true, `"1" === 1` ist false — die Typumwandlung von == überrascht regelmäßig.' },
     },
     {
       blank: { template: "Auf ein Ereignis reagierst du mit ___, ein Element findest du mit ___.", blanks: ["addEventListener", ["querySelector", "getElementById"]] },
-      code: { question: "Reagiere auf einen Klick auf das Element mit der id `knopf` und gib „Hallo“ aus.", concepts: [["document.querySelector", "document.getElementById"], "knopf", "addEventListener", "click", "console.log", "Hallo"] },
+      code: { question: "Reagiere auf einen Klick auf das Element mit der id `knopf` und gib „Hallo“ aus.", solution: "document.getElementById(\"knopf\").addEventListener(\"click\", () => {\n  console.log(\"Hallo\");\n});", concepts: [["document.querySelector", "document.getElementById"], "knopf", "addEventListener", "click", "console.log", "Hallo"] },
       mc: { question: "Was macht `event.preventDefault()`?",
         options: ["Es stoppt das Skript", "Es verhindert die Standardaktion des Browsers", "Es löscht das Element", "Es hält die Ereignisweitergabe an"],
         correct: 1, why: "Bei einem Formular verhindert es etwa das Neuladen der Seite. Die Weitergabe stoppt stopPropagation." },
@@ -4073,14 +4073,14 @@ const PRACTICE_BANK = {
   typescript: [
     {
       blank: { template: "Ein Array aus Zahlen schreibst du als ___, ein Wert, der fehlen darf, bekommt ein ___ hinter den Namen.", blanks: [["number[]", "Array<number>"], "?"] },
-      code: { question: "Schreibe ein Interface `Person` mit `name: string` und optionalem `alter: number`.", concepts: ["interface", "Person", "name", "string", "alter", "number"] },
+      code: { question: "Schreibe ein Interface `Person` mit `name: string` und optionalem `alter: number`.", solution: "interface Person {\n  name: string;\n  alter?: number;\n}", concepts: ["interface", "Person", "name", "string", "alter", "number"] },
       mc: { question: "Was ist der Unterschied zwischen `unknown` und `any`?",
         options: ["Keiner", "unknown erzwingt eine Prüfung vor der Nutzung", "any ist sicherer", "unknown gibt es nur in Klassen"],
         correct: 1, why: "any schaltet die Prüfung ab, unknown zwingt dich, den Typ erst einzugrenzen." },
     },
     {
       blank: { template: "Mehrere erlaubte Typen verbindest du mit ___, einen eigenen Namen vergibst du mit ___.", blanks: ["|", ["type", "interface"]] },
-      code: { question: "Definiere einen Typ `Status`, der nur `\"offen\"` oder `\"fertig\"` sein darf.", concepts: ["type", "Status", "offen", "fertig", "|"] },
+      code: { question: "Definiere einen Typ `Status`, der nur `\"offen\"` oder `\"fertig\"` sein darf.", solution: "type Status = \"offen\" | \"fertig\";", concepts: ["type", "Status", "offen", "fertig", "|"] },
       mc: { question: "Wozu dient `as const`?",
         options: ["Es macht Variablen schneller", "Es macht Werte unveränderlich und den Typ so eng wie möglich", "Es erzwingt eine Klasse", "Es entfernt Typen zur Laufzeit"],
         correct: 1, why: 'Ohne as const wird `\"offen\"` zu string verallgemeinert — mit bleibt es der exakte Wert.' },
@@ -4090,14 +4090,14 @@ const PRACTICE_BANK = {
   react: [
     {
       blank: { template: "Eine Liste braucht je Element ein ___, damit React die Elemente wiedererkennt.", blanks: ["key"] },
-      code: { question: "Rendere aus dem Array `namen` eine Liste von `<li>`-Elementen mit key.", concepts: ["namen", "map", "<li", "key", "{"] },
+      code: { question: "Rendere aus dem Array `namen` eine Liste von `<li>`-Elementen mit key.", solution: "<ul>\n  {namen.map((name) => (\n    <li key={name}>{name}</li>\n  ))}\n</ul>", concepts: ["namen", "map", "<li", "key", "{"] },
       mc: { question: "Warum darf man den Array-Index selten als key nehmen?",
         options: ["Er ist zu lang", "Beim Umsortieren zeigt er auf das falsche Element", "React verbietet Zahlen", "Er ist nicht eindeutig genug für CSS"],
         correct: 1, why: "Ändert sich die Reihenfolge, wandert der Index — React ordnet dann Zustand dem falschen Eintrag zu." },
     },
     {
       blank: { template: "Werte von außen heißen ___, eigener Zustand entsteht mit ___.", blanks: ["props", "useState"] },
-      code: { question: "Schreibe eine Komponente `Zaehler` mit einem Zustand `wert`, der bei Klick um eins steigt.", concepts: ["function", "Zaehler", "useState", "wert", "onClick", "return"] },
+      code: { question: "Schreibe eine Komponente `Zaehler` mit einem Zustand `wert`, der bei Klick um eins steigt.", solution: "function Zaehler() {\n  const [wert, setWert] = useState(0);\n  return (\n    <button onClick={() => setWert(wert + 1)}>{wert}</button>\n  );\n}", concepts: ["function", "Zaehler", "useState", "wert", "onClick", "return"] },
       mc: { question: "Wann läuft `useEffect(fn, [])`?",
         options: ["Bei jedem Rendern", "Genau einmal nach dem ersten Rendern", "Nie", "Nur beim Entfernen"],
         correct: 1, why: "Eine leere Abhängigkeitsliste bedeutet: keine Abhängigkeit ändert sich je, also nur einmal." },
@@ -4107,14 +4107,14 @@ const PRACTICE_BANK = {
   vue: [
     {
       blank: { template: "Einen Wert bindest du an ein Attribut mit ___, an ein Formularfeld mit ___.", blanks: [[":", "v-bind"], "v-model"] },
-      code: { question: "Binde die Variable `text` an ein Eingabefeld.", concepts: ["<input", "v-model", "text"] },
+      code: { question: "Binde die Variable `text` an ein Eingabefeld.", solution: "<input v-model=\"text\">", concepts: ["<input", "v-model", "text"] },
       mc: { question: "Was macht `computed` gegenüber einer normalen Methode?",
         options: ["Nichts", "Es merkt sich das Ergebnis, bis sich eine Abhängigkeit ändert", "Es läuft asynchron", "Es kann keine Werte zurückgeben"],
         correct: 1, why: "Computed-Werte werden zwischengespeichert und nur bei Bedarf neu berechnet." },
     },
     {
       blank: { template: "Eine Liste rendest du mit ___, eine Bedingung mit ___.", blanks: ["v-for", "v-if"] },
-      code: { question: "Gib jeden Eintrag aus `punkte` als Listenelement aus.", concepts: ["<li", "v-for", "punkte", ":key"] },
+      code: { question: "Gib jeden Eintrag aus `punkte` als Listenelement aus.", solution: "<li v-for=\"punkt in punkte\" :key=\"punkt\">{{ punkt }}</li>", concepts: ["<li", "v-for", "punkte", ":key"] },
       mc: { question: "Warum sollte man `v-if` und `v-for` nicht am selben Element benutzen?",
         options: ["Es ist verboten", "Die Auswertungsreihenfolge führt zu unerwartetem Verhalten", "Es ist zu lang", "v-if kennt keine Listen"],
         correct: 1, why: "Besser ein umschließendes template mit v-if oder vorher filtern." },
@@ -4124,21 +4124,21 @@ const PRACTICE_BANK = {
   python: [
     {
       blank: { template: "Über eine Liste läufst du mit ___, die Länge bekommst du mit ___.", blanks: [["for", "for-Schleife"], ["len", "len()"]] },
-      code: { question: "Gib jeden Eintrag der Liste `namen` einzeln aus.", concepts: ["for", "namen", "print"] },
+      code: { question: "Gib jeden Eintrag der Liste `namen` einzeln aus.", solution: "for name in namen:\n    print(name)", concepts: ["for", "namen", "print"] },
       mc: { question: "Was ergibt `list(range(3))`?",
         options: ["[1, 2, 3]", "[0, 1, 2]", "[0, 1, 2, 3]", "3"],
         correct: 1, why: "range beginnt bei 0 und endet vor der angegebenen Zahl." },
     },
     {
       blank: { template: "Ein Wörterbuch schreibst du mit geschweiften ___, auf einen Wert greifst du über den ___ zu.", blanks: [["Klammern", "{}"], ["Schlüssel", "Key"]] },
-      code: { question: "Lege ein Dictionary `person` mit dem Schlüssel `name` an und gib den Wert aus.", concepts: ["person", "name", "print", "{"] },
+      code: { question: "Lege ein Dictionary `person` mit dem Schlüssel `name` an und gib den Wert aus.", solution: "person = {\"name\": \"Ada\"}\nprint(person[\"name\"])", concepts: ["person", "name", "print", "{"] },
       mc: { question: "Was passiert bei `d[\"fehlt\"]`, wenn der Schlüssel nicht existiert?",
         options: ["Es kommt None zurück", "Es wird ein KeyError ausgelöst", "Der Schlüssel wird angelegt", "Es kommt 0 zurück"],
         correct: 1, why: "Wer einen Standardwert will, nimmt `d.get(\"fehlt\", 0)`." },
     },
     {
       blank: { template: "Eine Klasse beginnt mit ___, der Konstruktor heißt ___.", blanks: ["class", ["__init__", "init"]] },
-      code: { question: "Schreibe eine Klasse `Hund` mit einem Konstruktor, der `name` speichert.", concepts: ["class", "Hund", "def", "__init__", "self", "name"] },
+      code: { question: "Schreibe eine Klasse `Hund` mit einem Konstruktor, der `name` speichert.", solution: "class Hund:\n    def __init__(self, name):\n        self.name = name", concepts: ["class", "Hund", "def", "__init__", "self", "name"] },
       mc: { question: "Wofür steht `self` in einer Methode?",
         options: ["Für die Klasse selbst", "Für das konkrete Objekt", "Für das Modul", "Es ist optional und bedeutungslos"],
         correct: 1, why: "self ist die Instanz, auf der die Methode aufgerufen wurde." },
@@ -4148,14 +4148,14 @@ const PRACTICE_BANK = {
   java: [
     {
       blank: { template: "Eine Liste deklarierst du als ___, hinzugefügt wird mit ___.", blanks: [["List", "ArrayList"], ["add", "add()"]] },
-      code: { question: "Lege eine `ArrayList<String>` namens `namen` an und füge `\"Anna\"` hinzu.", concepts: ["ArrayList", "String", "namen", "add", "Anna"] },
+      code: { question: "Lege eine `ArrayList<String>` namens `namen` an und füge `\"Anna\"` hinzu.", solution: "ArrayList<String> namen = new ArrayList<>();\nnamen.add(\"Anna\");", concepts: ["ArrayList", "String", "namen", "add", "Anna"] },
       mc: { question: "Was ist der Unterschied zwischen `int` und `Integer`?",
         options: ["Keiner", "int ist ein primitiver Typ, Integer ein Objekt", "Integer ist schneller", "int kann null sein"],
         correct: 1, why: "Nur Integer kann null sein — genau daraus entstehen NullPointerExceptions beim Auspacken." },
     },
     {
       blank: { template: "Eine Schleife über alle Elemente schreibst du mit ___, verglichen werden Zeichenketten mit ___.", blanks: [["for", "for-each"], ["equals", "equals()"]] },
-      code: { question: "Gib jedes Element des Arrays `zahlen` mit einer for-Schleife aus.", concepts: ["for", "zahlen", "System.out.println"] },
+      code: { question: "Gib jedes Element des Arrays `zahlen` mit einer for-Schleife aus.", solution: "for (int zahl : zahlen) {\n  System.out.println(zahl);\n}", concepts: ["for", "zahlen", "System.out.println"] },
       mc: { question: "Warum vergleicht man Strings nicht mit `==`?",
         options: ["Es ist langsamer", "== vergleicht die Referenz, nicht den Inhalt", "== gibt es für Strings nicht", "Es ist nur Stilfrage"],
         correct: 1, why: "Zwei gleich aussehende Strings können unterschiedliche Objekte sein — equals vergleicht den Inhalt." },
@@ -4165,14 +4165,14 @@ const PRACTICE_BANK = {
   kotlin: [
     {
       blank: { template: "Eine Datenklasse deklarierst du mit ___, sicher auf null zugreifen kannst du mit ___.", blanks: [["data class", "data"], ["?.", "?"]] },
-      code: { question: "Schreibe eine Data Class `Punkt` mit den Feldern `x` und `y` vom Typ Int.", concepts: ["data", "class", "Punkt", "val", "Int"] },
+      code: { question: "Schreibe eine Data Class `Punkt` mit den Feldern `x` und `y` vom Typ Int.", solution: "data class Punkt(val x: Int, val y: Int)", concepts: ["data", "class", "Punkt", "val", "Int"] },
       mc: { question: "Was liefert der Elvis-Operator `?:`",
         options: ["Den linken Wert oder, falls null, den rechten", "Immer den rechten Wert", "Eine Ausnahme bei null", "Einen Booleschen Wert"],
         correct: 0, why: "`name ?: \"unbekannt\"` liefert den Ersatzwert nur, wenn links null steht." },
     },
     {
       blank: { template: "Eine Verzweigung über viele Fälle schreibst du mit ___, eine Schleife über eine Liste mit ___.", blanks: ["when", ["for", "forEach"]] },
-      code: { question: "Gib jeden Eintrag der Liste `woerter` aus.", concepts: ["for", "woerter", "println"] },
+      code: { question: "Gib jeden Eintrag der Liste `woerter` aus.", solution: "for (wort in woerter) {\n    println(wort)\n}", concepts: ["for", "woerter", "println"] },
       mc: { question: "Was bedeutet `lateinit`?",
         options: ["Der Wert ist unveränderlich", "Die Initialisierung erfolgt später, aber vor der ersten Nutzung", "Der Typ wird erst zur Laufzeit bestimmt", "Die Variable ist privat"],
         correct: 1, why: "Zugriff vor der Initialisierung wirft eine UninitializedPropertyAccessException." },
@@ -4182,14 +4182,14 @@ const PRACTICE_BANK = {
   c: [
     {
       blank: { template: "Eine Schleife mit Zähler schreibst du mit ___, eine Zeichenkette endet mit dem Zeichen ___.", blanks: ["for", ["\\0", "0"]] },
-      code: { question: "Gib die Zahlen 0 bis 4 mit einer for-Schleife aus.", concepts: ["for", "printf", "int"] },
+      code: { question: "Gib die Zahlen 0 bis 4 mit einer for-Schleife aus.", solution: "for (int i = 0; i < 5; i++) {\n    printf(\"%d\\n\", i);\n}", concepts: ["for", "printf", "int"] },
       mc: { question: "Was liefert `sizeof(arr)` für einen Array-Parameter einer Funktion?",
         options: ["Die Größe des ganzen Arrays", "Die Größe eines Zeigers", "Die Anzahl der Elemente", "Immer 1"],
         correct: 1, why: "Beim Übergeben zerfällt das Array zu einem Zeiger — die Länge muss man mitgeben." },
     },
     {
       blank: { template: "Speicher forderst du mit ___ an und gibst ihn mit ___ wieder frei.", blanks: [["malloc", "malloc()"], ["free", "free()"]] },
-      code: { question: "Fordere Speicher für 10 int-Werte an und gib ihn danach wieder frei.", concepts: ["malloc", "int", "free"] },
+      code: { question: "Fordere Speicher für 10 int-Werte an und gib ihn danach wieder frei.", solution: "int *zahlen = malloc(10 * sizeof(int));\n\nfree(zahlen);", concepts: ["malloc", "int", "free"] },
       mc: { question: "Was ist ein hängender Zeiger (dangling pointer)?",
         options: ["Ein Zeiger auf NULL", "Ein Zeiger auf bereits freigegebenen Speicher", "Ein nicht initialisierter Zähler", "Ein Zeiger auf den Stack"],
         correct: 1, why: "Nach free zeigt er auf fremdes Gebiet — Zugriffe sind undefiniertes Verhalten." },
@@ -4199,14 +4199,14 @@ const PRACTICE_BANK = {
   cpp: [
     {
       blank: { template: "Ein dynamisches Array aus der Standardbibliothek heißt ___, hinten angehängt wird mit ___.", blanks: [["vector", "std::vector"], ["push_back", "push_back()"]] },
-      code: { question: "Lege einen `std::vector<int>` namens `zahlen` an und füge die 5 hinzu.", concepts: [["vector", "std::vector"], "zahlen", "push_back"] },
+      code: { question: "Lege einen `std::vector<int>` namens `zahlen` an und füge die 5 hinzu.", solution: "#include <vector>\n\nstd::vector<int> zahlen;\nzahlen.push_back(5);", concepts: [["vector", "std::vector"], "zahlen", "push_back"] },
       mc: { question: "Wofür steht RAII?",
         options: ["Ein Entwurfsmuster für Threads", "Ressourcen werden an die Lebensdauer eines Objekts gebunden", "Ein Compiler-Schalter", "Eine Namenskonvention"],
         correct: 1, why: "Der Destruktor gibt frei, was der Konstruktor geholt hat — deshalb braucht man selten delete." },
     },
     {
       blank: { template: "Einen alleinigen Besitzer eines Zeigers modellierst du mit ___, geteilten Besitz mit ___.", blanks: [["unique_ptr", "std::unique_ptr"], ["shared_ptr", "std::shared_ptr"]] },
-      code: { question: "Gib den Text `Hallo` mit std::cout auf der Konsole aus.", concepts: ["#include", "int main", ["cout", "std::cout"], "Hallo"] },
+      code: { question: "Gib den Text `Hallo` mit std::cout auf der Konsole aus.", solution: "#include <iostream>\n\nint main() {\n    std::cout << \"Hallo\" << std::endl;\n    return 0;\n}", concepts: ["#include", "int main", ["cout", "std::cout"], "Hallo"] },
       mc: { question: "Was macht `std::move`?",
         options: ["Es verschiebt Speicher physisch", "Es markiert einen Wert als verschiebbar", "Es kopiert schneller", "Es löscht das Objekt"],
         correct: 1, why: "move castet zu einer Rvalue-Referenz — verschoben wird erst im Move-Konstruktor." },
@@ -4216,14 +4216,14 @@ const PRACTICE_BANK = {
   go: [
     {
       blank: { template: "Eine kurze Deklaration schreibst du mit ___, ein Element hängst du an einen Slice mit ___.", blanks: [":=", ["append", "append()"]] },
-      code: { question: "Lege einen Slice `zahlen` an und hänge die 3 an.", concepts: ["zahlen", ":=", "append"] },
+      code: { question: "Lege einen Slice `zahlen` an und hänge die 3 an.", solution: "zahlen := []int{}\nzahlen = append(zahlen, 3)", concepts: ["zahlen", ":=", "append"] },
       mc: { question: "Was ist der Nullwert eines Slice?",
         options: ["Ein leerer Slice", "nil", "Ein Slice mit einem Element", "Ein Fehler"],
         correct: 1, why: "Ein nil-Slice verhält sich bei len und append wie ein leerer — das ist Absicht." },
     },
     {
       blank: { template: "Einen Fehler prüfst du mit ___, aufgeschoben ausgeführt wird mit ___.", blanks: [["err", "if err != nil"], "defer"] },
-      code: { question: "Schreibe eine Funktion `teile`, die zwei ints und einen error zurückgibt.", concepts: ["func", "teile", "int", "error", "return"] },
+      code: { question: "Schreibe eine Funktion `teile`, die zwei ints und einen error zurückgibt.", solution: "func teile(a int, b int) (int, error) {\n    if b == 0 {\n        return 0, errors.New(\"Division durch null\")\n    }\n    return a / b, nil\n}", concepts: ["func", "teile", "int", "error", "return"] },
       mc: { question: "Wann läuft eine mit `defer` registrierte Funktion?",
         options: ["Sofort", "Beim Verlassen der umgebenden Funktion", "Am Programmende", "Nur bei einem panic"],
         correct: 1, why: "Auch bei einem panic — deshalb eignet sich defer zum Aufräumen." },
@@ -4233,14 +4233,14 @@ const PRACTICE_BANK = {
   rust: [
     {
       blank: { template: "Ein veränderbares Vec legst du mit ___ an, angehängt wird mit ___.", blanks: [["let mut", "mut"], ["push", "push()"]] },
-      code: { question: "Lege ein veränderbares `Vec<i32>` namens `zahlen` an und füge die 7 hinzu.", concepts: ["let", "mut", "zahlen", "Vec", "push"] },
+      code: { question: "Lege ein veränderbares `Vec<i32>` namens `zahlen` an und füge die 7 hinzu.", solution: "let mut zahlen: Vec<i32> = Vec::new();\nzahlen.push(7);", concepts: ["let", "mut", "zahlen", "Vec", "push"] },
       mc: { question: "Wie viele veränderbare Referenzen auf denselben Wert darf es gleichzeitig geben?",
         options: ["Beliebig viele", "Genau eine", "Zwei", "Keine"],
         correct: 1, why: "Entweder eine veränderbare oder beliebig viele unveränderbare — nie beides zugleich." },
     },
     {
       blank: { template: "Ein Ergebnis mit Fehlerfall hat den Typ ___, ein möglicherweise fehlender Wert den Typ ___.", blanks: ["Result", "Option"] },
-      code: { question: "Schreibe eine Funktion `laenge`, die einen &str nimmt und die Länge als usize zurückgibt.", concepts: ["fn", "laenge", "usize", "len"] },
+      code: { question: "Schreibe eine Funktion `laenge`, die einen &str nimmt und die Länge als usize zurückgibt.", solution: "fn laenge(text: &str) -> usize {\n    text.len()\n}", concepts: ["fn", "laenge", "usize", "len"] },
       mc: { question: "Was macht der `?`-Operator?",
         options: ["Er ignoriert Fehler", "Er gibt den Fehler an die aufrufende Funktion weiter", "Er bricht das Programm ab", "Er wandelt in Option um"],
         correct: 1, why: "Bei Ok läuft es weiter, bei Err wird sofort zurückgegeben — das spart verschachtelte match-Blöcke." },
@@ -4250,14 +4250,14 @@ const PRACTICE_BANK = {
   php: [
     {
       blank: { template: "Ein assoziatives Array liest du über den ___ aus, ausgegeben wird mit ___.", blanks: [["Schlüssel", "Key"], ["echo", "print"]] },
-      code: { question: "Lege ein Array `person` mit dem Schlüssel `name` an und gib den Wert aus.", concepts: ["<?php", "person", "name", ["echo", "print"]] },
+      code: { question: "Lege ein Array `person` mit dem Schlüssel `name` an und gib den Wert aus.", solution: "<?php\n$person = [\"name\" => \"Ada\"];\necho $person[\"name\"];\n?>", concepts: ["<?php", "person", "name", ["echo", "print"]] },
       mc: { question: "Wozu dient `htmlspecialchars`?",
         options: ["Es kürzt Texte", "Es maskiert Sonderzeichen und verhindert XSS", "Es prüft die Rechtschreibung", "Es kodiert URLs"],
         correct: 1, why: "Aus `<script>` wird harmloser Text statt eines ausgeführten Skripts." },
     },
     {
       blank: { template: "Eine Schleife über ein Array schreibst du mit ___, eine Funktion definierst du mit ___.", blanks: ["foreach", "function"] },
-      code: { question: "Schreibe eine Funktion `gruss`, die einen Namen entgegennimmt und zurückgibt.", concepts: ["function", "gruss", "return"] },
+      code: { question: "Schreibe eine Funktion `gruss`, die einen Namen entgegennimmt und zurückgibt.", solution: "<?php\nfunction gruss($name) {\n    return \"Hallo \" . $name;\n}\n?>", concepts: ["function", "gruss", "return"] },
       mc: { question: "Warum sind Prepared Statements sicherer als zusammengesetzte SQL-Strings?",
         options: ["Sie sind kürzer", "Befehl und Daten bleiben getrennt", "Sie sind schneller", "Sie prüfen die Rechtschreibung"],
         correct: 1, why: "Eingaben können dadurch nie zu ausführbarem SQL werden." },
@@ -4267,14 +4267,14 @@ const PRACTICE_BANK = {
   sql: [
     {
       blank: { template: "Zeilen filterst du mit ___, sortiert wird mit ___.", blanks: ["WHERE", ["ORDER BY", "ORDER"]] },
-      code: { question: "Hole Name und Preis aus `artikel`, nur wenn der Preis über 10 liegt.", concepts: ["SELECT", "name", "preis", "FROM", "artikel", "WHERE", "10"] },
+      code: { question: "Hole Name und Preis aus `artikel`, nur wenn der Preis über 10 liegt.", solution: "SELECT name, preis\nFROM artikel\nWHERE preis > 10;", concepts: ["SELECT", "name", "preis", "FROM", "artikel", "WHERE", "10"] },
       mc: { question: "Wo steht die Bedingung für Gruppen — im WHERE oder im HAVING?",
         options: ["Im WHERE", "Im HAVING", "In beiden gleichzeitig", "Im SELECT"],
         correct: 1, why: "WHERE filtert einzelne Zeilen vor der Gruppierung, HAVING die fertigen Gruppen." },
     },
     {
       blank: { template: "Die Anzahl der Zeilen liefert ___, die Summe einer Spalte ___.", blanks: [["COUNT", "COUNT(*)"], ["SUM", "SUM()"]] },
-      code: { question: "Zähle, wie viele Zeilen die Tabelle `kunden` hat.", concepts: ["SELECT", "COUNT", "FROM", "kunden"] },
+      code: { question: "Zähle, wie viele Zeilen die Tabelle `kunden` hat.", solution: "SELECT COUNT(*) FROM kunden;", concepts: ["SELECT", "COUNT", "FROM", "kunden"] },
       mc: { question: "Was zählt `COUNT(spalte)` im Unterschied zu `COUNT(*)`?",
         options: ["Beides ist gleich", "Nur Zeilen, in denen die Spalte nicht NULL ist", "Nur eindeutige Werte", "Nur die erste Zeile"],
         correct: 1, why: "NULL-Werte werden übersprungen — für alle Zeilen nimmt man COUNT(*)." },
@@ -4317,7 +4317,9 @@ function buildFallbackLesson(course, meta) {
       question: practice.code.question,
       starterCode: "",
       expectedConcepts: practice.code.concepts,
-      aiCheck: false,
+      // Wird nach einer falschen Antwort gezeigt — es gibt nur einen Versuch,
+      // also muss danach zu sehen sein, wie es richtig aussieht.
+      solution: practice.code.solution || "",
     },
     {
       id: "g3", type: "multiple_choice",
@@ -4964,12 +4966,18 @@ function classifyLine(rawLine, profile) {
   // ob die richtigen Elemente da sind, prüft die Tag-Analyse.
   if (profile.blockStyle === "tags") return /[<>]/.test(line) ? "live" : "delim";
 
-  // CSS: `farbe: wert;` ist eine Deklaration.
-  if (/^[-\w]+\s*:\s*\S/.test(line) && !/[(){}]/.test(line) && profile.label === "CSS") return "live";
+  // Auszeichnung mitten im Code: JSX, Vue-Vorlagen, HTML in PHP.
+  if (/<\/?[a-zA-Z][\w:-]*[^<>]*>/.test(line)) return "live";
+
+  // `name: wert` — CSS-Deklaration, Feld eines Interfaces, Eintrag eines
+  // Objekt-Literals, Struct-Feld. Überall dasselbe Muster, überall eine
+  // Aussage. (`else:` fällt nicht darunter: dort folgt nichts mehr.)
+  if (/^[-\w$?]+\??\s*:\s*\S/.test(line)) return "live";
 
   if (/\S\s*\{$/.test(line)) return "live";                       // Blockkopf: `body {`, `.karte {`
   if (line.includes("(")) return "live";                          // Aufruf oder Definition
-  if (/\w\s*[<>]=?\s*[\w"'([]/.test(line)) return "live";          // Vergleich oder Markup
+  if (/<<|>>/.test(line)) return "live";                          // Streams und Schiebeoperatoren
+  if (/\w\s*[<>]=?\s*[\w"'([]/.test(line)) return "live";          // Vergleich
   if (/(^|[^=!<>+\-*/%&|^~])=[^=]/.test(line)) return "live";      // Zuweisung
   if (/[-+*/%&|^]=|:=|=>|->|\?\?|\|\|/.test(line)) return "live";  // zusammengesetzt
   if (/\w\s*[-+*/%]\s*\w/.test(line)) return "live";               // Rechnung
@@ -5260,9 +5268,15 @@ function checkConcept(concept, analysis) {
   // 3. Sammelbegriffe
   const group = conceptGroup(lc);
   if (group) {
-    // Datenstrukturen werden gegen echte Syntax geprüft, nicht gegen das Wort.
+    /* Datenstrukturen werden gegen echte Syntax geprüft, nicht gegen das Wort.
+       Vorher steht aber die wörtliche Prüfung: In React heißt ein Attribut
+       tatsächlich `key`, und dann ist das gemeint — nicht der Schlüssel eines
+       Dictionaries. Das ist gefahrlos, weil `code` nur echte Anweisungen
+       enthält: Ein lose hingeschriebenes `dict` steht dort gar nicht erst. */
     if (group.re) {
-      const hit = group.re.test(code);
+      const escaped = c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const literal = new RegExp(`(^|[^\\w-])${escaped}([^\\w-]|$)`, "i").test(code);
+      const hit = literal || group.re.test(code);
       return { hit, concept: c, kind: group.kind, essential: true, why: hit ? null : group.why };
     }
     if (group.kind === "comment") {
@@ -5271,13 +5285,22 @@ function checkConcept(concept, analysis) {
       return { hit: hasComment, concept: c, kind: "comment", essential: true,
         why: hasComment ? null : `Es fehlt ein Kommentar — in ${analysis.profile.label} beginnt er mit \`${marker}\`.` };
     }
+    /* In typisierten Sprachen sind `string` und `number` keine Werte, sondern
+       Typnamen: `name: string` oder `String name = …`. Steht der Begriff in
+       Typposition, ist er damit erfüllt — sonst wird wie bisher nach einem
+       echten Literal gesucht. */
+    const escapedType = c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const inTypePosition = new RegExp(`:\\s*${escapedType}\\b|\\b${escapedType}(?:\\[\\])?\\s+[A-Za-z_]|<\\s*${escapedType}\\s*>`, "i").test(code);
+
     if (group.kind === "string") {
-      return { hit: analysis.hasString, concept: c, kind: "string", essential: true,
-        why: analysis.hasString ? null : "Es fehlt eine Zeichenkette in Anführungszeichen." };
+      const hit = analysis.hasString || inTypePosition;
+      return { hit, concept: c, kind: "string", essential: true,
+        why: hit ? null : "Es fehlt eine Zeichenkette in Anführungszeichen." };
     }
     if (group.kind === "number") {
-      return { hit: analysis.hasNumber, concept: c, kind: "number", essential: true,
-        why: analysis.hasNumber ? null : "Es fehlt eine Zahl." };
+      const hit = analysis.hasNumber || inTypePosition;
+      return { hit, concept: c, kind: "number", essential: true,
+        why: hit ? null : "Es fehlt eine Zahl." };
     }
     const hit = (group.any || []).some((a) => lower.includes(a.toLowerCase()));
     return { hit, concept: c, kind: group.kind,
@@ -5315,9 +5338,12 @@ function checkConcept(concept, analysis) {
   if (/^[\w$äöüß.!:]+$/i.test(c)) {
     const isKeyword = ESSENTIAL_KEYWORDS.has(lc);
     const escaped = c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`(^|[^\\w$])${escaped}([^\\w$]|$)`, "i").test(code)) {
+    // Das `$` vor dem Namen gehört in PHP zur Variablen und in JavaScript oft
+    // zum Bezeichner — `$person` ist die Variable `person`. Deshalb zählt es
+    // nicht als Teil des Wortes, sondern als Trennzeichen davor.
+    if (new RegExp(`(^|[^\\w])${escaped}([^\\w$]|$)`, "i").test(code)) {
       // Treffer — aber stimmt die Groß-/Kleinschreibung?
-      const exact = new RegExp(`(^|[^\\w$])${escaped}([^\\w$]|$)`).test(code);
+      const exact = new RegExp(`(^|[^\\w])${escaped}([^\\w$]|$)`).test(code);
       return { hit: true, concept: c, kind: isKeyword ? "keyword" : "identifier", essential: true,
         note: exact ? null : `Achte auf die Groß- und Kleinschreibung: erwartet wird \`${c}\`.` };
     }
@@ -9248,9 +9274,9 @@ console.log(name)`}</code></pre>
           {[
             ["Brauche ich Vorkenntnisse?", "Nein. Der HTML-Kurs beginnt bei der Frage, was ein Tag überhaupt ist. Wer schon etwas kann, überspringt Module per Einstufungstest."],
             ["Muss ich etwas installieren?", "Nein. Editor, Vorschau und Prüfung laufen im Browser. Python führt die Seite sogar selbst aus — ohne Installation."],
-            ["Kostet das wirklich nichts?", "Ja. Keine Kreditkarte, kein Abo, keine Testphase, keine Werbung. Die Prüfung läuft auf deinem Gerät und kostet uns deshalb nichts."],
+            ["Kostet das wirklich nichts?", "Ja. Keine Kreditkarte, kein Abo, keine Testphase, keine Werbung. Der größte Teil der Prüfung läuft direkt auf deinem Gerät — das hält die Kosten so niedrig, dass wir nichts verlangen müssen."],
             ["Kann ich ohne Konto starten?", "Ja, als Gast. Dann wird allerdings nichts gespeichert — Fortschritt, Serie und Projekte sind beim Neuladen weg."],
-            ["Wie werden meine Antworten geprüft?", "Von einer Analyse, die den Code zerlegt: Kommentare und Zeichenketten abtrennen, Klammern prüfen, Deklarationen und Aufrufe einsammeln, mit der Aufgabe abgleichen. Keine KI, kein Netzwerk."],
+            ["Wie werden meine Antworten geprüft?", "Von einer Analyse direkt in deinem Browser: Kommentare und Zeichenketten abtrennen, Klammern prüfen, echte Anweisungen von losen Wörtern trennen, Deklarationen und Aufrufe mit der Aufgabe abgleichen. Bei offenen Aufgaben — „schreib den Code“, „erkläre …“ — kommt eine Zweitmeinung dazu, weil es dort mehr als einen richtigen Weg gibt. Alles andere bleibt auf deinem Gerät."],
             ["Werden meine Daten weitergegeben?", "Nein. Ohne Konto verlässt nichts dein Gerät. Mit Konto liegen Name, E-Mail und Fortschritt auf dem Server — sonst nichts."],
             ["Kann ich das im Unterricht einsetzen?", "Ja. Lehrkräfte legen mit einem Schul-Code eine Klasse an, sehen jeden Fortschritt und schreiben eigene Level."],
             ["Was ist, wenn eine Aufgabe falsch bewertet wird?", "Unter jeder Bewertung gibt es einen Melden-Knopf. Mehrere Verbesserungen an der Prüfung stammen genau daher."],
@@ -14110,7 +14136,13 @@ function LessonView({ ctx }) {
     if (t.type === "fill_blank") {
       return (t.blanks || []).map((b, i) => `${i + 1}. ${Array.isArray(b) ? b[0] : b}`).join("   ");
     }
-    return t.solution || res?.solutionHint || "";
+    if (t.solution) return t.solution;
+    if (res?.solutionHint) return res.solutionHint;
+    // Ohne hinterlegte Musterlösung wird nicht so getan, als gäbe es eine.
+    // Stattdessen stehen die Bausteine da, auf die es ankam — das ist
+    // ehrlicher und hilft beim nächsten Anlauf genauso.
+    const parts = (t.expectedConcepts || []).map((c) => (Array.isArray(c) ? c[0] : c)).filter(Boolean);
+    return parts.length ? `Darauf kam es an: ${parts.join(", ")}` : "";
   };
 
   const finishTask = (res) => {
@@ -14375,7 +14407,9 @@ function LessonView({ ctx }) {
                   geht nicht mehr, aber man sieht, wie es richtig gewesen wäre. */}
               {wasWrong && task.type !== "multiple_choice" && !!solutionText(task, result) && (
                 <div className="mt-4 p-3 rounded-lg bg-[#10B981]/8 border border-[#10B981]/30">
-                  <p className="text-[11px] text-[#10B981] mb-1.5 flex items-center gap-1.5"><CheckCircle2 size={12} />So wäre es richtig gewesen</p>
+                  <p className="text-[11px] text-[#10B981] mb-1.5 flex items-center gap-1.5">
+                    <CheckCircle2 size={12} />{task.solution ? "So wäre es richtig gewesen" : "Das war gefragt"}
+                  </p>
                   <pre className="font-code text-xs text-[#C9D6F0] whitespace-pre-wrap overflow-x-auto">{solutionText(task, result)}</pre>
                 </div>
               )}
