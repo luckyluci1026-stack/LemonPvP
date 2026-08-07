@@ -6242,6 +6242,10 @@ function getFullLesson(lessonId) {
 // unterstützt. Genutzt wird das nur vom Assistenten im Code-Editor.
 // Unterstützte KI-Anbieter. Gemini hat ein kostenloses Kontingent, Claude ist
 // kostenpflichtig, liefert aber die besseren Bewertungen.
+/* Jeder Anbieter bringt sein Standardmodell mit. Vorher war das Modell im
+   Code festgenagelt — mit der Folge, dass ein Konto ohne Kontingent für genau
+   dieses Modell nur ein „429" sah, ohne dass irgendwo stand, welches Modell
+   überhaupt angefragt wurde. */
 const AI_PROVIDERS = {
   gemini: {
     label: "Google Gemini",
@@ -6249,7 +6253,31 @@ const AI_PROVIDERS = {
     keyPlaceholder: "AIza…",
     keyUrl: "https://aistudio.google.com/app/apikey",
     keyUrlLabel: "aistudio.google.com",
-    note: "Kostenloses Kontingent (Gemini Flash): ca. 15 Anfragen pro Minute je Key. Mehrere Keys eintragen — sie werden automatisch abwechselnd genutzt.",
+    defaultModel: "gemma-4-31b-it",
+    modelHint: "Die Kontingente hängen am Modell, nicht am Schlüssel. Was dein Konto darf, steht unter aistudio.google.com → Rate Limits.",
+    note: "Kostenloses Kontingent je Modell und Schlüssel. Mehrere Keys eintragen — sie werden automatisch abwechselnd genutzt.",
+    multiKey: true,
+  },
+  groq: {
+    label: "Groq",
+    badge: "Kostenlos, sehr schnell",
+    keyPlaceholder: "gsk_…",
+    keyUrl: "https://console.groq.com",
+    keyUrlLabel: "console.groq.com",
+    defaultModel: "llama-3.3-70b-versatile",
+    modelHint: "Der Engpass sind nicht die Anfragen, sondern die Token: 12.000 pro Minute sind mit langem Verlauf schnell weg.",
+    note: "Sehr schnelle Antworten. Modellnamen stehen unter console.groq.com/docs/models.",
+    multiKey: true,
+  },
+  openrouter: {
+    label: "OpenRouter",
+    badge: "Viele Modelle",
+    keyPlaceholder: "sk-or-…",
+    keyUrl: "https://openrouter.ai/keys",
+    keyUrlLabel: "openrouter.ai",
+    defaultModel: "google/gemma-4-31b-it:free",
+    modelHint: "Die genaue ID steht auf openrouter.ai/models — eine geratene ID liefert nur einen 404.",
+    note: "Ein Zugang für viele Modelle. Bei den kostenlosen bitte die Datenschutz-Einstellung des Kontos prüfen.",
     multiKey: true,
   },
   ollama: {
@@ -6258,6 +6286,8 @@ const AI_PROVIDERS = {
     keyPlaceholder: "http://localhost:11434",
     keyUrl: "https://ollama.com/download",
     keyUrlLabel: "ollama.com",
+    defaultModel: "qwen2.5-coder:3b",
+    modelHint: "Den genauen Namen zeigt `ollama list` — 1:1 übernehmen.",
     note: "Läuft komplett auf deiner eigenen Hardware — keine Kosten, keine Limits, keine Daten an Dritte. Statt eines Keys trägst du die Server-Adresse ein.",
     multiKey: false,
     isLocal: true,
@@ -6268,6 +6298,8 @@ const AI_PROVIDERS = {
     keyPlaceholder: "sk-ant-…",
     keyUrl: "https://console.anthropic.com/settings/keys",
     keyUrlLabel: "console.anthropic.com",
+    defaultModel: "claude-sonnet-4-6",
+    modelHint: "Modellnamen stehen unter docs.anthropic.com.",
     note: "Beste Qualität, rechnet aber pro Nutzung ab (Bruchteile eines Cents pro Bewertung) — kein Gratis-Tarif.",
     multiKey: true,
   },
@@ -6311,14 +6343,14 @@ function keyPoolStatus(keys) {
   }));
 }
 
-async function callProviderOnce(provider, key, systemPrompt, userPrompt, maxTokens, ollamaModel) {
+async function callProviderOnce(provider, key, systemPrompt, userPrompt, maxTokens, model) {
   if (provider === "ollama") {
     const base = (key || OLLAMA_DEFAULT_URL).replace(/\/+$/, "");
     const res = await fetch(`${base}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: ollamaModel || OLLAMA_DEFAULT_MODEL,
+        model: model || OLLAMA_DEFAULT_MODEL,
         stream: false,
         options: { temperature: 0.3, num_predict: maxTokens },
         messages: [
@@ -6332,22 +6364,60 @@ async function callProviderOnce(provider, key, systemPrompt, userPrompt, maxToke
     return data.message.content;
   }
 
+  const modell = model || AI_PROVIDERS[provider]?.defaultModel || "";
+
   if (provider === "gemini") {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: { maxOutputTokens: maxTokens, temperature: 0.3 },
-        }),
-      }
-    );
-    if (!res.ok) throw Object.assign(new Error("Gemini " + res.status), { status: res.status });
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modell}:generateContent?key=${encodeURIComponent(key)}`;
+    const anfrage = (mitSystem) => ({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...(mitSystem ? { systemInstruction: { parts: [{ text: systemPrompt }] } } : {}),
+        contents: [{ role: "user", parts: [{ text: mitSystem ? userPrompt : `${systemPrompt}\n\n---\n\n${userPrompt}` }] }],
+        generationConfig: { maxOutputTokens: maxTokens, temperature: 0.3 },
+      }),
+    });
+
+    let res = await fetch(url, anfrage(true));
+    if (res.status === 400) {
+      // Nicht jedes Modell nimmt eine getrennte Systemanweisung an — dann
+      // steht sie eben vorne im Text. Gleiches Ergebnis, klappt überall.
+      const grund = await res.text().catch(() => "");
+      if (/system.?instruction|developer instruction/i.test(grund)) res = await fetch(url, anfrage(false));
+      else throw aiFehler("Google", res.status, grund, modell);
+    }
+    if (!res.ok) throw aiFehler("Google", res.status, await res.text().catch(() => ""), modell);
     const data = await res.json();
-    return data.candidates[0].content.parts[0].text;
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw Object.assign(new Error(`Google lieferte keine Antwort (${modell})`), { status: 502 });
+    return text;
+  }
+
+  // Groq und OpenRouter sprechen beide die OpenAI-Schnittstelle.
+  if (provider === "groq" || provider === "openrouter") {
+    const url = provider === "groq"
+      ? "https://api.groq.com/openai/v1/chat/completions"
+      : "https://openrouter.ai/api/v1/chat/completions";
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: modell,
+        max_tokens: maxTokens,
+        temperature: 0.3,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+    if (!res.ok) {
+      throw aiFehler(provider === "groq" ? "Groq" : "OpenRouter", res.status, await res.text().catch(() => ""), modell);
+    }
+    const data = await res.json();
+    const text = data?.choices?.[0]?.message?.content;
+    if (!text) throw Object.assign(new Error(`Keine Antwort (${modell})`), { status: 502 });
+    return text;
   }
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -6359,22 +6429,48 @@ async function callProviderOnce(provider, key, systemPrompt, userPrompt, maxToke
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
+      model: modell,
       max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     }),
   });
-  if (!res.ok) throw Object.assign(new Error("Anthropic " + res.status), { status: res.status });
+  if (!res.ok) throw aiFehler("Anthropic", res.status, await res.text().catch(() => ""), modell);
   const data = await res.json();
   return data.content[0].text;
 }
 
+/**
+ * Baut eine Fehlermeldung, die weiterhilft.
+ *
+ * „Gemini 429" allein sagt nichts. Entscheidend ist, WELCHES Modell gemeint
+ * war: Kontingente hängen bei Google am Modell, nicht am Schlüssel. Wer für
+ * `gemini-2.0-flash` kein Kontingent hat, bekommt dort einen 429, obwohl der
+ * Schlüssel einwandfrei ist und andere Modelle laufen.
+ */
+function aiFehler(anbieter, status, rohtext, modell) {
+  let detail = "";
+  try {
+    const daten = JSON.parse(rohtext);
+    detail = String(daten?.error?.message || "").slice(0, 160);
+  } catch (e) { /* ohne Detail weiter */ }
+
+  const rat = status === 429
+      ? `Kontingent für „${modell}" erschöpft — bei Google hängt das Limit am Modell, nicht am Schlüssel. Ein anderes Modell in den KI-Einstellungen probieren.`
+    : status === 404 ? `Das Modell „${modell}" gibt es unter diesem Namen nicht.`
+    : status === 400 ? `Anfrage abgelehnt — Schlüssel oder Modellname („${modell}") prüfen.`
+    : status === 401 || status === 403 ? "Der Schlüssel wurde nicht akzeptiert."
+    : "";
+
+  const text = [`${anbieter} ${status}`, rat, detail].filter(Boolean).join(" — ");
+  return Object.assign(new Error(text), { status });
+}
+
 // Ruft den gewählten Anbieter auf; probiert bei Limits automatisch weitere Keys.
-async function callAI(provider, keys, systemPrompt, userPrompt, maxTokens = 1000, ollamaModel) {
+async function callAI(provider, keys, systemPrompt, userPrompt, maxTokens = 1000, model) {
   const pool = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
   if (provider === "ollama") {
-    return callProviderOnce("ollama", pool[0] || OLLAMA_DEFAULT_URL, systemPrompt, userPrompt, maxTokens, ollamaModel);
+    return callProviderOnce("ollama", pool[0] || OLLAMA_DEFAULT_URL, systemPrompt, userPrompt, maxTokens, model);
   }
   if (!pool.length) throw new Error("Kein API-Key hinterlegt");
 
@@ -6383,7 +6479,7 @@ async function callAI(provider, keys, systemPrompt, userPrompt, maxTokens = 1000
   for (let i = 0; i < attempts; i++) {
     const key = nextKey(pool);
     try {
-      return await callProviderOnce(provider, key, systemPrompt, userPrompt, maxTokens, ollamaModel);
+      return await callProviderOnce(provider, key, systemPrompt, userPrompt, maxTokens, model);
     } catch (e) {
       lastError = e;
       // 429 = Rate-Limit, 403/402 = Kontingent erschöpft -> Key pausieren, nächsten nehmen
@@ -6457,7 +6553,7 @@ function buildAssistantContext({ html, css, js }) {
  * statt einer technischen Fehlermeldung.
  */
 async function askAssistant(messages, code, aiCfg = {}, pro = false) {
-  const { keys = [], provider = "gemini", ollamaModel, useServer } = aiCfg;
+  const { keys = [], provider = "gemini", model, ollamaModel, useServer } = aiCfg;
 
   const history = messages
     .slice(-8)                                   // Kontext knapp halten — spart Zeit und Kontingent
@@ -6476,7 +6572,7 @@ async function askAssistant(messages, code, aiCfg = {}, pro = false) {
 
   const hasAccess = provider === "ollama" || keys.length > 0;
   if (!hasAccess) throw new Error("Kein KI-Zugang eingerichtet.");
-  const text = await callAI(provider, keys, ASSISTANT_SYSTEM_PROMPT, userPrompt, 900, ollamaModel);
+  const text = await callAI(provider, keys, ASSISTANT_SYSTEM_PROMPT, userPrompt, 900, model || ollamaModel);
   return { text, pro: false, model: null };
 }
 /* =========================================================================
@@ -8147,7 +8243,7 @@ async function verifyWithAI({ task, answer, local, course, lessonTitle, aiCfg })
       const text = await callAI(
         aiCfg.provider, aiCfg.keys, LESSON_VERIFY_PROMPT,
         verifyPrompt({ task, answer, course, lessonTitle, local }),
-        320, aiCfg.ollamaModel
+        320, aiCfg.model || aiCfg.ollamaModel
       );
       const urteil = parseAIJson(text);
       if (!urteil || typeof urteil.score !== "number") return local;
@@ -8958,10 +9054,14 @@ function SkeletonFeedback() {
 
 /* KI-Einstellungen: Anbieter wählen, mehrere Keys pflegen, Pool-Status sehen */
 function AiSettingsModal({ ctx }) {
-  const { apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel, closeAiSettings, pushToast } = ctx;
+  const { apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel,
+    aiModels, setAiModels, closeAiSettings, pushToast } = ctx;
   const [provider, setProvider] = useState(aiProvider || "gemini");
   const [keys, setKeys] = useState(() => (apiKeys.length ? [...apiKeys] : [""]));
-  const [model, setModel] = useState(ollamaModel || OLLAMA_DEFAULT_MODEL);
+  // Ein Modell je Anbieter — beim Umschalten bleibt das andere erhalten.
+  const [modelle, setModelle] = useState(() => ({ ...aiModels }));
+  const model = modelle[provider] || AI_PROVIDERS[provider]?.defaultModel || "";
+  const setModel = (v) => setModelle((m) => ({ ...m, [provider]: v }));
   const [show, setShow] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
@@ -8974,13 +9074,17 @@ function AiSettingsModal({ ctx }) {
 
   const save = () => {
     const clean = keys.map((k) => k.trim()).filter(Boolean);
+    const sauber = Object.fromEntries(
+      Object.entries(modelle).map(([id, v]) => [id, String(v || "").trim() || AI_PROVIDERS[id]?.defaultModel || ""])
+    );
     setAiProvider(provider);
-    setOllamaModel(model.trim() || OLLAMA_DEFAULT_MODEL);
+    setAiModels(sauber);
+    setOllamaModel(sauber.ollama || OLLAMA_DEFAULT_MODEL);
     setApiKeys(clean);
     const usable = provider === "ollama" || clean.length > 0;
     pushToast(usable ? "success" : "info",
-      provider === "ollama" ? `Eigener Server aktiv (${model}).`
-        : clean.length ? `${clean.length} Key${clean.length === 1 ? "" : "s"} gespeichert — Bewertung über ${cfg.label}.`
+      provider === "ollama" ? `Eigener Server aktiv (${sauber.ollama}).`
+        : clean.length ? `${clean.length} Key${clean.length === 1 ? "" : "s"} gespeichert — ${cfg.label} mit ${sauber[provider]}.`
         : "Kein Key — es läuft die lokale Analyse.");
     closeAiSettings();
   };
@@ -9011,7 +9115,7 @@ function AiSettingsModal({ ctx }) {
           <strong className="text-[#E8EDF5]">Optional.</strong> Ohne Anbieter läuft die eingebaute lokale Analyse — sie prüft Struktur, Konzepte und Begründungen direkt im Browser.
         </p>
 
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
           {Object.entries(AI_PROVIDERS).map(([id, p]) => (
             <button key={id} onClick={() => {
                 setProvider(id); setTestResult(null);
@@ -9025,7 +9129,11 @@ function AiSettingsModal({ ctx }) {
               }}
               className={`text-left p-2.5 rounded-lg border transition-all ${provider === id ? "border-[#4F8EF7] bg-[#4F8EF7]/10" : "border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>
               <div className="font-medium text-xs text-[#E8EDF5] mb-1 leading-tight">{p.label}</div>
-              <div className={`text-[9px] px-1.5 py-0.5 rounded-full inline-block ${id === "gemini" ? "bg-[#10B981]/15 text-[#10B981]" : id === "ollama" ? "bg-[#4F8EF7]/15 text-[#4F8EF7]" : "bg-[#F59E0B]/15 text-[#F59E0B]"}`}>{p.badge}</div>
+              <div className={`text-[9px] px-1.5 py-0.5 rounded-full inline-block ${
+                id === "gemini" || id === "groq" ? "bg-[#10B981]/15 text-[#10B981]"
+                : id === "ollama" ? "bg-[#4F8EF7]/15 text-[#4F8EF7]"
+                : id === "openrouter" ? "bg-[#7C3AED]/15 text-[#7C3AED]"
+                : "bg-[#F59E0B]/15 text-[#F59E0B]"}`}>{p.badge}</div>
             </button>
           ))}
         </div>
@@ -9047,6 +9155,11 @@ function AiSettingsModal({ ctx }) {
           </>
         ) : (
           <>
+            <label className="block text-sm text-[#8A9BC0] mb-1.5">Modell</label>
+            <input value={model} onChange={(e) => setModel(e.target.value)} placeholder={cfg.defaultModel}
+              className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 mb-1.5 font-code text-sm text-[#E8EDF5]" />
+            <p className="text-xs text-[#4A5A7A] mb-4 leading-relaxed">{cfg.modelHint}</p>
+
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm text-[#8A9BC0]">{cfg.label} API-Keys</label>
               <button onClick={() => setShow((s) => !s)} className="text-xs text-[#8A9BC0] hover:text-[#E8EDF5]">{show ? "Verbergen" : "Anzeigen"}</button>
@@ -9446,7 +9559,8 @@ const LEGACY_STORAGE_KEYS = ["learndeveloping_v1"];
 const API_KEY_STORAGE = "learndeveloping_ai_key";          // alt (Einzel-Key)
 const API_KEYS_STORAGE = "learndeveloping_ai_keys";        // neu (Key-Pool)
 const AI_PROVIDER_STORAGE = "learndeveloping_ai_provider";
-const OLLAMA_MODEL_STORAGE = "learndeveloping_ollama_model";
+const OLLAMA_MODEL_STORAGE = "learndeveloping_ollama_model";   // alt, nur noch zum Übernehmen
+const AI_MODELS_STORAGE = "learndeveloping_ai_models";
 
 function loadPersisted() {
   try {
@@ -9490,6 +9604,25 @@ function loadOllamaModel() {
   try { return localStorage.getItem(OLLAMA_MODEL_STORAGE) || OLLAMA_DEFAULT_MODEL; } catch (e) { return OLLAMA_DEFAULT_MODEL; }
 }
 
+/* Ein Modell je Anbieter. Vorher gab es das nur für Ollama, alle anderen
+   Modelle standen fest im Code — wer für genau dieses Modell kein Kontingent
+   hatte, kam nicht weiter und sah nur ein „429". */
+function loadAiModels() {
+  const vorgaben = Object.fromEntries(
+    Object.entries(AI_PROVIDERS).map(([id, p]) => [id, p.defaultModel || ""])
+  );
+  try {
+    const roh = localStorage.getItem(AI_MODELS_STORAGE);
+    const gespeichert = roh ? JSON.parse(roh) : {};
+    // Die frühere Ollama-Einstellung übernehmen, damit nichts verloren geht.
+    const alt = localStorage.getItem(OLLAMA_MODEL_STORAGE);
+    if (alt && !gespeichert.ollama) gespeichert.ollama = alt;
+    return { ...vorgaben, ...gespeichert };
+  } catch (e) {
+    return vorgaben;
+  }
+}
+
 function roleHome(role) { return role === "teacher" ? "teacher" : role === "admin" ? "admin" : "dashboard"; }
 
 /**
@@ -9498,8 +9631,32 @@ function roleHome(role) { return role === "teacher" ? "teacher" : role === "admi
  * überhaupt keinen Verwaltungszugang, weil es keine vorgefertigten Konten
  * mehr gibt).
  */
+/**
+ * Wer darf in die Verwaltung?
+ *
+ * Mit Server entscheidet ausschließlich die Rolle — und zwar der Server, nicht
+ * der Browser: Jeder Verwaltungs-Endpunkt prüft `role === "admin"` selbst.
+ * Was hier passiert, blendet nur die Oberfläche ein oder aus.
+ *
+ * Ohne Server gibt es keine vorgefertigten Konten und niemanden, der den
+ * ersten Administrator anlegen könnte. Damit die Verwaltung überhaupt
+ * erreichbar bleibt, gilt dort das erste angelegte Konto als Inhaber der
+ * Installation. Das ist bewusst KEINE Sicherheitsgrenze: Ohne Server liegt
+ * ohnehin alles im Browser-Speicher und ließe sich dort ändern.
+ *
+ * Wichtig ist die Klammer `!api.available`: Ein Konto, das lokal einmal
+ * Inhaber war, darf sich diese Kennzeichnung nicht mit an einen Server
+ * nehmen. Dort zählt allein die Rolle aus der Datenbank.
+ */
 function canAdmin(user) {
-  return !!user && !user.isGuest && (user.role === "admin" || user.isOwner === true);
+  if (!user || user.isGuest) return false;
+  if (user.role === "admin") return true;
+  return !api.available && user.isOwner === true;
+}
+
+/** Hat dieses Konto die Verwaltung nur, weil es das erste war? */
+function isLocalOwner(user) {
+  return !api.available && user?.isOwner === true && user?.role !== "admin";
 }
 
 /* ----------------------------- Tages-Streak ------------------------------
@@ -9650,6 +9807,7 @@ export default function App() {
   const [apiKeys, setApiKeysState] = useState(loadApiKeys);
   const [aiProvider, setAiProviderState] = useState(loadAiProvider);
   const [ollamaModel, setOllamaModelState] = useState(loadOllamaModel);
+  const [aiModels, setAiModelsState] = useState(loadAiModels);
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(() => audio.enabled);
   const [remoteLessons, setRemoteLessons] = useState({ mine: [], fromTeacher: [] });
@@ -9735,11 +9893,22 @@ export default function App() {
   const setOllamaModel = useCallback((m) => {
     setOllamaModelState(m);
     try { localStorage.setItem(OLLAMA_MODEL_STORAGE, m); } catch (e) {}
+
+  /** Merkt sich das Modell je Anbieter — nicht nur für Ollama. */
+  const setAiModels = useCallback((next) => {
+    setAiModelsState(next);
+    try { localStorage.setItem(AI_MODELS_STORAGE, JSON.stringify(next)); } catch (e) {}
+  }, []);
   }, []);
   // Gebündelte KI-Konfiguration für alle Aufrufstellen
   // Mit Server läuft die KI über das Backend (Keys bleiben dort), ohne Server
   // über die im Browser hinterlegten Keys.
-  const aiConfig = { keys: apiKeys, provider: aiProvider, ollamaModel, useServer: backend && api.aiAvailable };
+  const aiConfig = {
+    keys: apiKeys, provider: aiProvider,
+    // Ohne Server entscheidet diese Angabe, welches Modell angefragt wird.
+    model: aiModels[aiProvider] || AI_PROVIDERS[aiProvider]?.defaultModel || "",
+    ollamaModel, useServer: backend && api.aiAvailable,
+  };
   const aiReady = (backend && api.aiAvailable) || aiProvider === "ollama" || apiKeys.length > 0;
   // KI-Zugänge sind Betreibersache: API-Keys gehören nicht in die Hände der
   // Lernenden. Sichtbar ist der Dialog deshalb nur für die Verwaltung.
@@ -10414,7 +10583,8 @@ export default function App() {
     selectedCourse, openCourse, selectedLesson, openLesson,
     selectedStudent, setSelectedStudent, login, register, logout, continueAsGuest,
     pushToast, showXP, addXP, completeLesson, celebrate, buyStreakFreeze, sidebarOpen, setSidebarOpen,
-    apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel, aiConfig, aiReady, aiConfigurable, aiSettingsOpen, openAiSettings, closeAiSettings,
+    apiKeys, setApiKeys, aiProvider, setAiProvider, ollamaModel, setOllamaModel,
+    aiModels, setAiModels, aiConfig, aiReady, aiConfigurable, aiSettingsOpen, openAiSettings, closeAiSettings,
     soundOn, toggleSound,
     backend, booting, refreshMe, loadProjects, serverVerificationCode, confirm2FA,
     pending2FA, verify2FALogin, cancel2FALogin,
@@ -13085,6 +13255,8 @@ function Profile({ ctx }) {
   const copy = (txt) => { try { navigator.clipboard.writeText(txt); } catch (e) {} pushToast("success", "In Zwischenablage kopiert!"); };
   const setAvatarConfig = (conf) => setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatarConfig: conf } : u));
   const roleLabel = { student: "Schüler", teacher: "Lehrer", admin: "Administrator" }[me.role] || me.role;
+  // Ohne Server hat das erste Konto die Verwaltung — das gehört sichtbar dazu.
+  const ownerHinweis = isLocalOwner(me);
   const RoleIcon = me.role === "student" ? GraduationCap : me.role === "admin" ? Shield : Users;
   return (
     <div className="space-y-6 max-w-3xl">
@@ -13102,6 +13274,12 @@ function Profile({ ctx }) {
               <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7]">
                 <RoleIcon size={13} />{roleLabel}
               </span>
+              {ownerHinweis && (
+                <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-[#F7C948]/15 text-[#F7C948]"
+                  title="Erstes Konto dieser Installation — hat ohne Server Zugriff auf die Verwaltung">
+                  <Shield size={13} />Inhaber
+                </span>
+              )}
               {!me.isGuest && (
                 me.emailVerified
                   ? <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-[#10B981]/15 text-[#10B981]"><CheckCircle2 size={13} />E-Mail bestätigt</span>
@@ -15625,22 +15803,63 @@ function AdminDashboard({ ctx }) {
     deleteReport(id);
   };
 
-  const roleBadge = (role) => {
+  const roleBadge = (role, user) => {
     const map = { admin: ["#7C3AED", "Admin"], teacher: ["#4F8EF7", "Lehrer"], student: ["#10B981", "Schüler"] };
     const [color, label] = map[role] || ["#8A9BC0", role];
-    return <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ color, background: color + "22" }}>{label}</span>;
+    const badge = (c, t, titel) => (
+      <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" title={titel}
+        style={{ color: c, background: c + "22" }}>{t}</span>
+    );
+    // Wer die Verwaltung nur als erstes Konto hat, soll das auch dort lesen.
+    if (isLocalOwner(user)) {
+      return (
+        <span className="flex items-center gap-1.5">
+          {badge(color, label)}
+          {badge("#F7C948", "Inhaber", "Erstes Konto dieser Installation — hat Zugriff auf die Verwaltung")}
+        </span>
+      );
+    }
+    return badge(color, label);
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Shield className="text-[#7C3AED]" />Admin-Bereich</h1>
-        <p className="text-[#8A9BC0] mt-1">Angemeldet als {me.name}</p>
+        <p className="text-[#8A9BC0] mt-1">
+          Angemeldet als {me.name}
+          {isLocalOwner(me) ? " · Inhaber dieser Installation" : me.role === "admin" ? " · Administrator" : ""}
+        </p>
       </div>
+
+      {/* Ohne Server ist der Zugriff eine Notlösung, keine echte Rolle. Das
+          gehört gesagt — sonst wirkt es wie ein Fehler oder wie eine Lücke. */}
+      {isLocalOwner(me) && (
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#F7C948]/10 border border-[#F7C948]/30">
+          <LdIcon name="warnung" size={17} color="#F7C948" className="mt-0.5 shrink-0" />
+          <div className="text-sm text-[#C9D6F0]">
+            <p className="font-medium text-[#F7C948] mb-0.5">Zugriff als erstes Konto, nicht als Administrator</p>
+            <p>
+              Deine Rolle ist <strong>Schüler</strong>. Weil ohne angebundenen Server niemand einen
+              Administrator anlegen kann, bekommt das erste Konto die Verwaltung — damit du hier
+              überhaupt hereinkommst. Das ist eine Notlösung fürs Ausprobieren und <strong>keine
+              Sicherheitsgrenze</strong>: Ohne Server liegt alles im Speicher deines Browsers.
+            </p>
+            <p className="mt-1.5 text-[#8A9BC0]">
+              Im Livebetrieb mit Server gilt das nicht mehr. Den ersten Administrator legst du dort
+              einmalig mit <code className="font-code text-[#4F8EF7]">npm run seed</code> an.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-3">
         <StatCard icon={Users} label="Registrierte Accounts" value={backend ? (remote.stats?.users.total ?? list.length) : users.filter((u) => !u.isGuest).length} color="#4F8EF7" />
-        <StatCard icon={Shield} label="Admins" value={backend ? (remote.stats?.users.admins ?? list.filter((u) => u.role === "admin").length) : users.filter((u) => u.role === "admin").length} color="#7C3AED" />
+        <StatCard icon={Shield} label="Mit Verwaltungszugriff"
+          value={backend
+            ? (remote.stats?.users.admins ?? list.filter((u) => u.role === "admin").length)
+            : users.filter((u) => canAdmin(u)).length}
+          color="#7C3AED" />
         <StatCard icon={FileText} label="Offene Meldungen" value={openReports.length} color="#EF4444" />
       </div>
 
@@ -15670,7 +15889,7 @@ function AdminDashboard({ ctx }) {
                   <tr key={u.id} className="border-b border-[#1E2D4A]/50 last:border-0 hover:bg-white/5">
                     <td className="px-4 py-3"><span className="flex items-center gap-2"><span className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center shrink-0"><UserAvatar user={u} size={28} /></span><span className="font-medium">{u.name}</span></span></td>
                     <td className="px-4 py-3 text-[#8A9BC0]">{u.email}</td>
-                    <td className="px-4 py-3">{roleBadge(u.role)}</td>
+                    <td className="px-4 py-3">{roleBadge(u.role, u)}</td>
                     <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                       <button onClick={() => openEdit(u)} className="text-[#4F8EF7] hover:underline text-xs">Bearbeiten</button>
                       {u.id !== me.id && <button onClick={() => removeUser(u.id)} className="text-[#EF4444] hover:underline text-xs">Löschen</button>}
