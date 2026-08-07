@@ -19,8 +19,10 @@ async function record(request, kind, result, ok, statusCode) {
 export default async function aiRoutes(app) {
   /** Meldet, ob serverseitig eine KI bereitsteht. */
   app.get("/api/ai/status", async () => ({
-    available: aiAvailable(),
+    available: providerReady(config.ai.roles.assist.provider) || aiAvailable(),
     provider: config.ai.provider,
+    // Der stärkere Assistent wird nur angeboten, wenn er auch bereitsteht.
+    pro: providerReady(config.ai.roles.assistPro.provider),
     // Steht die Zweitmeinung für offene Aufgaben bereit? Der Browser fragt
     // sonst gar nicht erst an.
     verify: config.ai.verify.enabled
@@ -35,34 +37,60 @@ export default async function aiRoutes(app) {
     preHandler: [requireAuth],
     config: { rateLimit: { max: config.ai.perUserPerMinute, timeWindow: "1 minute" } },
   }, async (request, reply) => {
-    if (!aiAvailable()) {
+    /* Zwei Stufen: der normale Assistent und — auf ausdrücklichen Wunsch —
+       der stärkere. Der Profi-Agent hängt an einem knappen Token-Kontingent
+       pro Minute, deshalb bekommt er weniger Verlauf und weniger Code mit.
+       Steht er nicht bereit, übernimmt still der normale. */
+    const willPro = request.body?.pro === true;
+    const rolle = willPro && providerReady(config.ai.roles.assistPro.provider)
+      ? config.ai.roles.assistPro
+      : config.ai.roles.assist;
+    const anbieter = providerReady(rolle.provider) ? rolle.provider
+      : providerReady(config.ai.provider) ? config.ai.provider : null;
+    if (!anbieter) {
       return reply.code(503).send({ error: "Serverseitig ist keine KI konfiguriert." });
     }
+
     const { messages = [], code = {} } = request.body || {};
     if (!Array.isArray(messages) || !messages.length) {
       return reply.code(400).send({ error: "messages fehlt." });
     }
 
+    const istPro = rolle === config.ai.roles.assistPro;
+    const codeLimit = istPro ? 2500 : 6000;
+    const verlaufLimit = istPro ? (rolle.historyLimit || 4) : 8;
+
     const context = ["html", "css", "js"]
       .map((k) => {
         const body = String(code[k] || "").trim();
-        return body ? `\n--- ${k.toUpperCase()} ---\n${body.slice(0, 6000)}` : "";
+        return body ? `\n--- ${k.toUpperCase()} ---\n${body.slice(0, codeLimit)}` : "";
       })
       .join("");
-    const history = messages.slice(-8)
-      .map((m) => `${m.role === "user" ? "Nutzer" : "Assistent"}: ${String(m.content || "").slice(0, 4000)}`)
+    const history = messages.slice(-verlaufLimit)
+      .map((m) => `${m.role === "user" ? "Nutzer" : "Assistent"}: ${String(m.content || "").slice(0, istPro ? 1500 : 4000)}`)
       .join("\n\n");
     const userPrompt = `${context ? `Aktueller Code im Editor:${context}` : "Der Editor ist noch leer."}\n\n--- Verlauf ---\n${history}`;
 
     let result;
     try {
-      result = await generate({ system: ASSISTANT_SYSTEM_PROMPT, user: userPrompt, maxTokens: 900 });
+      result = await generate({
+        system: ASSISTANT_SYSTEM_PROMPT,
+        user: userPrompt,
+        maxTokens: istPro ? (rolle.maxTokens || 700) : 900,
+        provider: anbieter,
+        model: rolle.model || undefined,
+      });
     } catch (e) {
-      await record(request, "assist", null, false, e.status);
+      await record(request, istPro ? "assist_pro" : "assist", null, false, e.status);
       return reply.code(502).send({ error: "Die KI ist momentan nicht erreichbar." });
     }
-    await record(request, "assist", result, true, 200);
-    return { reply: String(result.text).slice(0, 8000), provider: result.provider };
+    await record(request, istPro ? "assist_pro" : "assist", result, true, 200);
+    return {
+      reply: String(result.text).slice(0, 8000),
+      provider: result.provider,
+      model: result.model || null,
+      pro: istPro,
+    };
   });
 
   /* ------------------ Zweitmeinung zu einer Lösung ------------------------
@@ -106,12 +134,14 @@ export default async function aiRoutes(app) {
       return reply.code(429).send({ error: "Tageskontingent für die KI-Prüfung erreicht.", tier: "local" });
     }
 
-    // Bis zum Kontingent das gute Modell, danach automatisch das günstige.
-    const wanted = mine < v.primaryPerDay ? v.primaryProvider : v.fallbackProvider;
+    // Bis zum Kontingent der Hauptanbieter, danach automatisch der Ersatz.
+    const istHaupt = mine < v.primaryPerDay;
+    const wanted = istHaupt ? v.primaryProvider : v.fallbackProvider;
     const provider = providerReady(wanted) ? wanted
       : providerReady(v.fallbackProvider) ? v.fallbackProvider
       : providerReady(config.ai.provider) ? config.ai.provider : null;
     if (!provider) return reply.code(503).send({ error: "Serverseitig ist keine KI konfiguriert.", tier: "local" });
+    const modell = (provider === v.primaryProvider ? v.primaryModel : v.fallbackModel) || undefined;
 
     const expected = (Array.isArray(concepts) ? concepts : [])
       .map((c) => (Array.isArray(c) ? c[0] : c)).filter(Boolean).slice(0, 12).join(", ");
@@ -128,7 +158,7 @@ export default async function aiRoutes(app) {
 
     let result;
     try {
-      result = await generate({ system: VERIFY_SYSTEM_PROMPT, user: userPrompt, maxTokens: 320, provider });
+      result = await generate({ system: VERIFY_SYSTEM_PROMPT, user: userPrompt, maxTokens: 320, provider, model: modell });
     } catch (e) {
       await record(request, "verify", null, false, e.status);
       return reply.code(502).send({ error: "Die KI ist momentan nicht erreichbar.", tier: "local" });
@@ -143,6 +173,7 @@ export default async function aiRoutes(app) {
     return {
       ...parsed,
       provider,
+      model: result.model || null,
       tier: provider === v.primaryProvider ? "primary" : "fallback",
       remaining: Math.max(0, v.maxPerDay - mine - 1),
     };

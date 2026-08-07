@@ -114,6 +114,13 @@ export const config = {
        IDs stehen auf openrouter.ai/models. */
     openrouterKeys: keyList("OPENROUTER_API_KEYS"),
     openrouterModel: process.env.OPENROUTER_MODEL || "google/gemma-4-31b-it:free",
+
+    /* Groq — dieselbe Schnittstelle wie OpenAI, außergewöhnlich schnell.
+       Achtung beim kostenlosen Kontingent: 30 Anfragen pro Minute klingt
+       viel, aber 12.000 Token pro Minute sind schnell aufgebraucht. Deshalb
+       ist der mitgeschickte Verlauf für dieses Modell kürzer. */
+    groqKeys: keyList("GROQ_API_KEYS"),
+    groqModel: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
     ollamaUrl: (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/+$/, ""),
     ollamaModel: process.env.OLLAMA_MODEL || "qwen2.5-coder:3b",
     // Modell im Speicher halten, statt es bei jedem Aufruf neu zu laden
@@ -149,12 +156,44 @@ export const config = {
        eng: Gemma über OpenRouter erlaubt etwa 20 Anfragen pro Minute und 200
        pro Tag — und zwar pro KONTO, nicht pro Nutzer. Deshalb ist die globale
        Notbremse wichtiger als die persönliche. */
+    /* ---------------------- Rollen: wer macht was -------------------------
+       Verschiedene Aufgaben brauchen verschiedene Modelle. Statt eines
+       globalen Anbieters bekommt jede Rolle ihren eigenen — leer gelassen
+       heißt „nimm den allgemeinen".
+
+         assist    Der Assistent in der IDE. Antwortet auf Fragen zum Code.
+         assistPro Der stärkere Assistent, den man ausdrücklich anfordert.
+         verify    Die Prüfung der Lektionsantworten (siehe verify unten).
+
+       Ein Beispiel für den Betrieb, den du planst:
+         AI_ASSIST_PROVIDER=gemini      AI_ASSIST_MODEL=gemma-4-31b-it
+         AI_PRO_PROVIDER=groq           AI_PRO_MODEL=llama-3.3-70b-versatile
+         AI_VERIFY_PRIMARY=ollama       OLLAMA_MODEL=gemma-4-e4b
+       Damit läuft die IDE über Googles Kontingent, der Profi-Assistent über
+       Groq, und die Lektionsprüfung bleibt auf der eigenen Maschine. */
+    roles: {
+      assist: {
+        provider: process.env.AI_ASSIST_PROVIDER || process.env.AI_PROVIDER || "gemini",
+        model: process.env.AI_ASSIST_MODEL || "",
+      },
+      assistPro: {
+        provider: process.env.AI_PRO_PROVIDER || "groq",
+        model: process.env.AI_PRO_MODEL || "",
+        // Kurzer Verlauf, weil das Token-Kontingent pro Minute eng ist
+        historyLimit: int("AI_PRO_HISTORY", 4),
+        maxTokens: int("AI_PRO_MAX_TOKENS", 700),
+      },
+    },
+
     verify: {
       enabled: bool("AI_VERIFY_ENABLED", true),
       // Welcher Anbieter zuerst gefragt wird …
       primaryProvider: process.env.AI_VERIFY_PRIMARY || "gemini",
       // … und wohin es geht, wenn jemand das Kontingent ausreizt.
       fallbackProvider: process.env.AI_VERIFY_FALLBACK || "openrouter",
+      // Modell des Hauptanbieters für die Prüfung — leer = dessen Vorgabe
+      primaryModel: process.env.AI_VERIFY_PRIMARY_MODEL || "",
+      fallbackModel: process.env.AI_VERIFY_FALLBACK_MODEL || "",
       // Prüfungen pro Nutzer und Tag beim Hauptanbieter
       primaryPerDay: int("AI_VERIFY_PRIMARY_PER_DAY", 60),
       // Danach nur noch der Ersatzanbieter — bis zu dieser Grenze

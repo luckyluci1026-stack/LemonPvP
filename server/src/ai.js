@@ -18,6 +18,7 @@ function keysFor(provider) {
   if (provider === "gemini") return config.ai.geminiKeys;
   if (provider === "anthropic") return config.ai.anthropicKeys;
   if (provider === "openrouter") return config.ai.openrouterKeys;
+  if (provider === "groq") return config.ai.groqKeys;
   return [];
 }
 
@@ -56,6 +57,8 @@ export function poolStatus() {
     anthropic: build("anthropic"),
     openrouter: build("openrouter"),
     openrouterModel: config.ai.openrouterModel || null,
+    groq: build("groq"),
+    groqModel: config.ai.groqModel || null,
     ollama: config.ai.provider === "ollama" ? { url: config.ai.ollamaUrl, model: config.ai.ollamaModel } : null,
   };
 }
@@ -72,23 +75,94 @@ class ProviderError extends Error {
   }
 }
 
-async function callGemini(key, system, user, maxTokens) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${config.ai.geminiModel}:generateContent?key=${encodeURIComponent(key)}`;
-  const res = await fetch(url, {
+/**
+ * Google (Gemini und Gemma).
+ *
+ * Ein Stolperstein, der viel Zeit kosten kann: Nicht jedes Modell hinter
+ * dieser Schnittstelle nimmt eine getrennte Systemanweisung entgegen. Wo das
+ * nicht geht, kommt ein 400 mit „system_instruction is not enabled" oder
+ * „Developer instruction is not enabled" zurück.
+ *
+ * Statt das zu erraten, wird es ausprobiert: erst mit Systemanweisung, und
+ * wenn genau daran scheitert, noch einmal mit der Anweisung vorne im Text.
+ * Das Ergebnis ist dasselbe, und es funktioniert mit jedem Modell.
+ */
+async function callGemini(key, system, user, maxTokens, model) {
+  const name = model || config.ai.geminiModel;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${name}:generateContent?key=${encodeURIComponent(key)}`;
+
+  const anfrage = (mitSystem) => ({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents: [{ role: "user", parts: [{ text: user }] }],
+      ...(mitSystem ? { systemInstruction: { parts: [{ text: system }] } } : {}),
+      contents: [{
+        role: "user",
+        parts: [{ text: mitSystem ? user : `${system}\n\n---\n\n${user}` }],
+      }],
       generationConfig: { maxOutputTokens: maxTokens, temperature: 0.3 },
     }),
     signal: AbortSignal.timeout(config.ai.requestTimeoutMs),
   });
-  if (!res.ok) throw new ProviderError(`Gemini ${res.status}`, res.status);
+
+  let res = await fetch(url, anfrage(true));
+  if (res.status === 400) {
+    const grund = await res.text().catch(() => "");
+    if (/system.?instruction|developer instruction/i.test(grund)) {
+      // Dieses Modell kennt keine getrennte Systemanweisung — zweiter Anlauf.
+      res = await fetch(url, anfrage(false));
+    } else {
+      throw new ProviderError(`Google 400: ${kurz(grund) || "Anfrage abgelehnt"}`, 400);
+    }
+  }
+  if (!res.ok) {
+    const grund = await res.text().catch(() => "");
+    throw new ProviderError(`Google ${res.status}${grund ? `: ${kurz(grund)}` : ""}`, res.status);
+  }
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new ProviderError("Gemini lieferte keine Antwort", 502);
+  if (!text) {
+    const grund = data?.candidates?.[0]?.finishReason;
+    throw new ProviderError(`Google lieferte keine Antwort${grund ? ` (${grund})` : ""}`, 502);
+  }
   return text;
+}
+
+/** Die Fehlermeldung des Anbieters auf das Wesentliche kürzen. */
+function kurz(rohtext) {
+  try {
+    const daten = JSON.parse(rohtext);
+    return String(daten?.error?.message || "").slice(0, 200);
+  } catch (e) {
+    return String(rohtext).replace(/\s+/g, " ").slice(0, 200);
+  }
+}
+
+/**
+ * Listet die Modelle, die dieser Schlüssel tatsächlich benutzen darf.
+ *
+ * Das ist bei Problemen die einzige verlässliche Auskunft: Was hier nicht
+ * steht, gibt es für diesen Zugang nicht — egal was in irgendeiner Liste
+ * behauptet wird.
+ */
+export async function listGoogleModels(key) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=${encodeURIComponent(key)}`,
+    { signal: AbortSignal.timeout(config.ai.requestTimeoutMs) }
+  );
+  if (!res.ok) {
+    const grund = await res.text().catch(() => "");
+    throw new ProviderError(`Google ${res.status}${grund ? `: ${kurz(grund)}` : ""}`, res.status);
+  }
+  const daten = await res.json();
+  return (daten.models || [])
+    .filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
+    .map((m) => ({
+      id: String(m.name || "").replace(/^models\//, ""),
+      label: m.displayName || "",
+      input: m.inputTokenLimit || 0,
+      output: m.outputTokenLimit || 0,
+    }));
 }
 
 async function callAnthropic(key, system, user, maxTokens) {
@@ -129,7 +203,7 @@ async function callAnthropic(key, system, user, maxTokens) {
  *      prüfen. Sie verlangen häufig, dass Anfragen zum Training verwendet
  *      werden dürfen — und hier gingen Antworten von Lernenden mit.
  */
-async function callOpenRouter(key, system, user, maxTokens) {
+async function callOpenRouter(key, system, user, maxTokens, model) {
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -140,7 +214,7 @@ async function callOpenRouter(key, system, user, maxTokens) {
       "X-Title": "LearnDeveloping",
     },
     body: JSON.stringify({
-      model: config.ai.openrouterModel,
+      model: model || config.ai.openrouterModel,
       max_tokens: maxTokens,
       temperature: 0.3,
       messages: [
@@ -159,12 +233,45 @@ async function callOpenRouter(key, system, user, maxTokens) {
   return text;
 }
 
-async function callOllama(system, user, maxTokens) {
+/**
+ * Groq — dieselbe Schnittstelle wie OpenAI, nur außergewöhnlich schnell.
+ *
+ * Die kostenlosen Kontingente sind großzügig bei den Anfragen, aber knapp bei
+ * den Token: `llama-3.3-70b-versatile` erlaubt 30 Anfragen pro Minute, aber
+ * nur 12.000 Token pro Minute. Ein langer Verlauf im Editor frisst das
+ * schnell auf — deshalb wird der Kontext dort begrenzt.
+ */
+async function callGroq(key, system, user, maxTokens, model) {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: model || config.ai.groqModel,
+      max_tokens: maxTokens,
+      temperature: 0.3,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
+    signal: AbortSignal.timeout(config.ai.requestTimeoutMs),
+  });
+  if (!res.ok) {
+    const grund = await res.text().catch(() => "");
+    throw new ProviderError(`Groq ${res.status}${grund ? `: ${kurz(grund)}` : ""}`, res.status);
+  }
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content;
+  if (!text) throw new ProviderError("Groq lieferte keine Antwort", 502);
+  return text;
+}
+
+async function callOllama(system, user, maxTokens, model) {
   const res = await fetch(`${config.ai.ollamaUrl}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: config.ai.ollamaModel,
+      model: model || config.ai.ollamaModel,
       stream: false,
       // Auf schwacher Hardware zählt jede Einsparung:
       // keep_alive hält das Modell geladen (sonst kostet jeder Aufruf das
@@ -221,13 +328,13 @@ export async function warmUpOllama(log) {
  * Führt einen Aufruf aus und wechselt bei Limits automatisch den Key.
  * Gibt zusätzlich zurück, welcher Key genutzt wurde (für die Statistik).
  */
-export async function generate({ system, user, maxTokens = 1000, provider: forced }) {
+export async function generate({ system, user, maxTokens = 1000, provider: forced, model }) {
   const provider = forced || config.ai.provider;
   const started = Date.now();
 
   if (provider === "ollama") {
-    const text = await callOllama(system, user, maxTokens);
-    return { text, provider, keyLabel: "ollama", durationMs: Date.now() - started };
+    const text = await callOllama(system, user, maxTokens, model);
+    return { text, provider, model: model || config.ai.ollamaModel, keyLabel: "ollama", durationMs: Date.now() - started };
   }
 
   const keys = keysFor(provider);
@@ -240,11 +347,13 @@ export async function generate({ system, user, maxTokens = 1000, provider: force
     if (!picked) break;
     try {
       const text = provider === "gemini"
-        ? await callGemini(picked.key, system, user, maxTokens)
+        ? await callGemini(picked.key, system, user, maxTokens, model)
         : provider === "openrouter"
-        ? await callOpenRouter(picked.key, system, user, maxTokens)
+        ? await callOpenRouter(picked.key, system, user, maxTokens, model)
+        : provider === "groq"
+        ? await callGroq(picked.key, system, user, maxTokens, model)
         : await callAnthropic(picked.key, system, user, maxTokens);
-      return { text, provider, keyLabel: label(picked.key, picked.index), durationMs: Date.now() - started };
+      return { text, provider, model: model || modelOf(provider), keyLabel: label(picked.key, picked.index), durationMs: Date.now() - started };
     } catch (e) {
       lastError = e;
       if (e.status === 429) coolDown(picked.key, config.ai.rateLimitCooldownSec);
@@ -259,6 +368,16 @@ export async function generate({ system, user, maxTokens = 1000, provider: force
  * Steht dieser Anbieter bereit? Wird für die Stufenwahl der Antwortprüfung
  * gebraucht: erst das gute Modell, bei viel Betrieb das günstige.
  */
+/** Das eingestellte Modell eines Anbieters. */
+export function modelOf(provider) {
+  if (provider === "gemini") return config.ai.geminiModel;
+  if (provider === "anthropic") return config.ai.anthropicModel;
+  if (provider === "openrouter") return config.ai.openrouterModel;
+  if (provider === "groq") return config.ai.groqModel;
+  if (provider === "ollama") return config.ai.ollamaModel;
+  return "";
+}
+
 export function providerReady(provider) {
   if (provider === "ollama") return true;
   // Bei OpenRouter genügt der Schlüssel nicht: Ohne Modell-ID weiß der

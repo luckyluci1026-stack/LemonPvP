@@ -15,7 +15,8 @@
     "test": "node --test test/integration.test.js test/reset.test.js test/password.test.js test/rotation.test.js",
     "start:local": "DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen NODE_ENV=development node src/index.js",
     "seed:local": "DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen node src/seed.js",
-    "ai:test": "node tools/ai-check.js"
+    "ai:test": "node tools/ai-check.js",
+    "ai:models": "node tools/ai-models.js"
   },
   "dependencies": {
     "@fastify/cookie": "^9.3.1",

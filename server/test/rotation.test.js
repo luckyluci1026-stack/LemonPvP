@@ -14,9 +14,14 @@ test("Key-Rotation überspringt limitierte Keys", async () => {
   globalThis.fetch = async (url) => {
     const key = new URL(url).searchParams.get("key");
     calls.push(key);
-    if (key === "KEY_A") return { ok: false, status: 429, json: async () => ({}) };
+    // Wie eine echte Response: Der Code liest bei Fehlern den Text mit aus,
+    // um die Meldung des Anbieters weiterzureichen.
+    if (key === "KEY_A") {
+      return { ok: false, status: 429, text: async () => "", json: async () => ({}) };
+    }
     return {
       ok: true, status: 200,
+      text: async () => "",
       json: async () => ({ candidates: [{ content: { parts: [{ text: "OK von B" }] } }] }),
     };
   };
@@ -83,4 +88,85 @@ test("OPENROUTER_MODEL aus der Umgebung hat Vorrang", async () => {
   assert.equal(frisch.config.ai.openrouterModel, "anbieter/eigenes-modell");
   if (vorher === undefined) delete process.env.OPENROUTER_MODEL;
   else process.env.OPENROUTER_MODEL = vorher;
+});
+
+/* -------------------- Systemanweisung: zweiter Anlauf ---------------------
+   Nicht jedes Modell hinter der Google-Schnittstelle nimmt eine getrennte
+   Systemanweisung an. Wo das scheitert, wird sie in den Text eingebettet —
+   sonst stünde der Nutzer vor einem 400 ohne erkennbaren Grund. */
+test("Google: abgelehnte Systemanweisung führt zum zweiten Anlauf", async () => {
+  process.env.AI_PROVIDER = "gemini";
+  process.env.GEMINI_API_KEYS = "KEY_SYS";
+  const { generate } = await import("../src/ai.js?sys=1");
+
+  const koerper = [];
+  const echtesFetch = globalThis.fetch;
+  globalThis.fetch = async (url, opts) => {
+    const daten = JSON.parse(opts.body);
+    koerper.push(daten);
+    if (daten.systemInstruction) {
+      return {
+        ok: false, status: 400,
+        text: async () => JSON.stringify({ error: { message: "Developer instruction is not enabled for models/x" } }),
+        json: async () => ({}),
+      };
+    }
+    return {
+      ok: true, status: 200,
+      text: async () => "",
+      json: async () => ({ candidates: [{ content: { parts: [{ text: "OK ohne System" }] } }] }),
+    };
+  };
+
+  const ergebnis = await generate({ system: "REGELN", user: "FRAGE", maxTokens: 10 });
+  assert.equal(ergebnis.text, "OK ohne System");
+  assert.equal(koerper.length, 2, "genau zwei Versuche");
+  assert.ok(koerper[0].systemInstruction, "erster Versuch mit Systemanweisung");
+  assert.ok(!koerper[1].systemInstruction, "zweiter Versuch ohne");
+  assert.match(koerper[1].contents[0].parts[0].text, /REGELN[\s\S]*FRAGE/,
+    "die Regeln stehen dann vorne im Text");
+
+  globalThis.fetch = echtesFetch;
+});
+
+test("Google: ein anderer 400er wird nicht stillschweigend wiederholt", async () => {
+  process.env.GEMINI_API_KEYS = "KEY_400";
+  const { generate } = await import("../src/ai.js?vier=1");
+  let versuche = 0;
+  const echtesFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    versuche++;
+    return {
+      ok: false, status: 400,
+      text: async () => JSON.stringify({ error: { message: "API key not valid" } }),
+      json: async () => ({}),
+    };
+  };
+  await assert.rejects(
+    () => generate({ system: "s", user: "u", maxTokens: 10 }),
+    /API key not valid/,
+    "die Meldung des Anbieters wird durchgereicht"
+  );
+  assert.equal(versuche, 1, "kein zweiter Anlauf bei anderer Ursache");
+  globalThis.fetch = echtesFetch;
+});
+
+test("Groq gilt erst mit Schlüssel als bereit", () => {
+  const keys = config.ai.groqKeys;
+  try {
+    config.ai.groqKeys = [];
+    assert.equal(providerReady("groq"), false);
+    config.ai.groqKeys = ["gsk_test"];
+    assert.equal(providerReady("groq"), true);
+  } finally {
+    config.ai.groqKeys = keys;
+  }
+});
+
+test("jede Rolle hat einen Anbieter", () => {
+  for (const [name, rolle] of Object.entries(config.ai.roles)) {
+    assert.ok(rolle.provider, `${name} ohne Anbieter`);
+  }
+  assert.ok(config.ai.verify.primaryProvider);
+  assert.ok(config.ai.verify.fallbackProvider);
 });

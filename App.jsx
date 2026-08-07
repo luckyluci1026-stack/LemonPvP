@@ -6433,7 +6433,7 @@ function buildAssistantContext({ html, css, js }) {
  * zurück. Fällt der Dienst aus, wird eine verständliche Meldung erzeugt
  * statt einer technischen Fehlermeldung.
  */
-async function askAssistant(messages, code, aiCfg = {}) {
+async function askAssistant(messages, code, aiCfg = {}, pro = false) {
   const { keys = [], provider = "gemini", ollamaModel, useServer } = aiCfg;
 
   const history = messages
@@ -6443,13 +6443,18 @@ async function askAssistant(messages, code, aiCfg = {}) {
   const userPrompt = `${buildAssistantContext(code)}\n\n--- Verlauf ---\n${history}`;
 
   if (useServer) {
-    const res = await api.post("/api/ai/assist", { messages: messages.slice(-8), code });
-    return res.reply;
+    /* Der Profi-Agent hängt an einem knappen Token-Kontingent pro Minute.
+       Deshalb geht weniger Verlauf mit — der Server kürzt zusätzlich. */
+    const res = await api.post("/api/ai/assist", {
+      messages: messages.slice(pro ? -4 : -8), code, pro,
+    });
+    return { text: res.reply, pro: !!res.pro, model: res.model || null };
   }
 
   const hasAccess = provider === "ollama" || keys.length > 0;
   if (!hasAccess) throw new Error("Kein KI-Zugang eingerichtet.");
-  return callAI(provider, keys, ASSISTANT_SYSTEM_PROMPT, userPrompt, 900, ollamaModel);
+  const text = await callAI(provider, keys, ASSISTANT_SYSTEM_PROMPT, userPrompt, 900, ollamaModel);
+  return { text, pro: false, model: null };
 }
 /* =========================================================================
    LD-Analyzer — die lokale Analyse-Engine
@@ -8190,7 +8195,7 @@ function LdIcon({ name, size = 24, color = "currentColor", className = "", title
     // Spitze Klammern mit Schrägstrich — das Zeichen für Auszeichnungssprache
     html: <><path d="M8 6 3 12l5 6" /><path d="M16 6l5 6-5 6" /><path d="M13.5 4l-3 16" /></>,
     // Pinselstrich
-    css: <><path d="M5 19c1.5-3 3-4 5-4 3 0 3-3 3-5 0-3 2-5 5-5" /><circle cx="6" cy="18" r="2.2" fill={color} stroke="none" /></>,
+    css: <><path d="M4.5 19.5c1.8-3.5 3.5-4.5 5.5-4.5 3.2 0 3.2-3.2 3.2-5.2 0-3 2-5.3 5.3-5.3" /><circle cx="5.5" cy="18.5" r="2.6" fill={color} stroke="none" /><path d="M14 4.5h5.5V10" /></>,
     // Blitz
     javascript: <path d="M13 2 5 13h5l-1 9 9-12h-5l1-8Z" />,
     // Schild mit Haken
@@ -8198,23 +8203,23 @@ function LdIcon({ name, size = 24, color = "currentColor", className = "", title
     // Atom
     react: <><circle cx="12" cy="12" r="2" fill={color} stroke="none" /><ellipse cx="12" cy="12" rx="9.5" ry="4" /><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(60 12 12)" /><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(120 12 12)" /></>,
     // V aus zwei Winkeln
-    vue: <><path d="M2.5 5h4l5.5 10L17.5 5h4L12 21 2.5 5Z" /><path d="M8 5h2.5l1.5 3 1.5-3H16" /></>,
+    vue: <><path d="M2 4.5h4.5L12 15l5.5-10.5H22L12 20 2 4.5Z" /><path d="M7.5 4.5h3L12 7.4l1.5-2.9h3" /></>,
     // Zwei ineinandergreifende Bögen
     python: <><path d="M12 3c-3.3 0-4.5 1.4-4.5 3.5V9h4.5" /><path d="M7.5 9H5.2C3.4 9 2.5 10.4 2.5 12.5S3.4 16 5.2 16h2.3v-2.5c0-2 1.2-3.5 4.5-3.5" /><path d="M12 21c3.3 0 4.5-1.4 4.5-3.5V15H12" /><path d="M16.5 15h2.3c1.8 0 2.7-1.4 2.7-3.5S20.6 8 18.8 8h-2.3v2.5c0 2-1.2 3.5-4.5 3.5" /></>,
     // Tasse mit Dampf
-    java: <><path d="M4 11h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-5Z" /><path d="M17 12h1.5a2.5 2.5 0 0 1 0 5H17" /><path d="M8 3c-1 1.2-1 2.3 0 3.5M12 2.5c-1.2 1.4-1.2 2.7 0 4" /></>,
+    java: <><path d="M4 11h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-5Z" /><path d="M16 12.5h1.8a2.2 2.2 0 0 1 0 4.4H16" /><path d="M9 3.5c-1.2 1.3-1.2 2.5 0 3.8M12.5 2.5c-1.2 1.6-1.2 3 0 4.6" /></>,
     // Quadrat mit diagonaler Teilung
-    kotlin: <><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" /><path d="M20.5 3.5 3.5 20.5M12 3.5 3.5 12" /></>,
+    kotlin: <><path d="M4 4h16L12 12l8 8H4V4Z" /></>,
     // Offener Ring
-    c: <path d="M18 7a7.5 7.5 0 1 0 0 10" />,
+    c: <><path d="M17.5 7.5a7 7 0 1 0 0 9" /><path d="M17.5 5.5v4M17.5 14.5v4" /></>,
     // Ring mit Pluszeichen
     cpp: <><path d="M13.5 7.5a6 6 0 1 0 0 9" /><path d="M17 9v5M14.5 11.5h5" /></>,
     // Kreis mit zwei Punkten und Spur
-    go: <><circle cx="13" cy="12" r="7" /><circle cx="11" cy="10.5" r="1" fill={color} stroke="none" /><circle cx="15" cy="10.5" r="1" fill={color} stroke="none" /><path d="M6 9.5H2M6 14.5H3.5" /></>,
+    go: <><path d="M3 8h7.5M3 12h5M3 16h7.5" /><path d="M13.5 5.5c4 0 6.5 2.6 6.5 6.5s-2.5 6.5-6.5 6.5" /><circle cx="16" cy="12" r="1.4" fill={color} stroke="none" /></>,
     // Zahnradring
-    rust: <><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2.4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" /></>,
+    rust: <><circle cx="12" cy="12" r="7" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" /><path d="M9.5 15.5V8.5h3.2a2 2 0 0 1 0 4H9.5l3.5 3" /></>,
     // Ellipse mit Balken
-    php: <><ellipse cx="12" cy="12" rx="10" ry="6.5" /><path d="M7.5 14.5 9 9.5h1.8c1 0 1.5.6 1.2 1.6-.3 1-1 1.5-2 1.5H8.6" /><path d="M14 14.5 15.5 9.5h1.8c1 0 1.5.6 1.2 1.6-.3 1-1 1.5-2 1.5h-1.4" /></>,
+    php: <><ellipse cx="12" cy="12" rx="10" ry="6.5" /><path d="M8 15V9h2.2a1.9 1.9 0 0 1 0 3.8H8" /><path d="M14 15V9h2.2a1.9 1.9 0 0 1 0 3.8H14" /></>,
     // Datenbankzylinder
     sql: <><ellipse cx="12" cy="6" rx="7.5" ry="3" /><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6" /><path d="M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3" /></>,
 
@@ -8234,7 +8239,7 @@ function LdIcon({ name, size = 24, color = "currentColor", className = "", title
 
     /* ------------------------------ Abzeichen ---------------------------- */
     flamme: <><path d="M12 2c1.5 4 5 5.5 5 10a5 5 0 0 1-10 0c0-1.5.5-2.5 1.5-3.5C9 10.5 10 8 12 2Z" /><path d="M12 21a3 3 0 0 0 3-3c0-1.5-1.5-2.5-3-4.5-1.5 2-3 3-3 4.5a3 3 0 0 0 3 3Z" /></>,
-    stern: <path d="m12 2.8 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.6l6.5-.9L12 2.8Z" />,
+    stern: <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9L12 3Z" />,
     ziel: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.4" fill={color} stroke="none" /></>,
     raute: <><path d="M12 2.5 21.5 12 12 21.5 2.5 12 12 2.5Z" /></>,
 
@@ -9288,6 +9293,7 @@ class ApiError extends Error {
 const api = {
   available: false,
   aiAvailable: false,
+  proAvailable: false,
 
   async request(method, path, body, options = {}) {
     const res = await fetch(path, {
@@ -9325,10 +9331,12 @@ const api = {
       try {
         const status = await this.get("/api/ai/status");
         this.aiAvailable = !!status?.available;
+        // Steht ein stärkerer Assistent bereit? Sonst gibt es den Umschalter nicht.
+        this.proAvailable = !!status?.pro;
         // Nur wenn serverseitig eine KI bereitsteht, wird bei offenen Aufgaben
         // überhaupt eine Zweitmeinung angefragt.
         setAiVerifyAvailable(status?.available && status?.verify !== false);
-      } catch (e) { this.aiAvailable = false; setAiVerifyAvailable(false); }
+      } catch (e) { this.aiAvailable = false; this.proAvailable = false; setAiVerifyAvailable(false); }
     }
     return this.available;
   },
@@ -13689,6 +13697,12 @@ function AssistantPanel({ ctx, code }) {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, busy]);
 
+  /* Zwei Stufen: der schnelle Assistent für den Alltag und ein stärkerer für
+     die kniffligen Fragen. Der starke ist nicht immer eingerichtet — dann
+     erscheint der Umschalter gar nicht erst. */
+  const [pro, setPro] = useState(false);
+  const proVerfuegbar = !!api.proAvailable;
+
   const send = async (text) => {
     const question = String(text ?? input).trim();
     if (!question || busy) return;
@@ -13697,8 +13711,12 @@ function AssistantPanel({ ctx, code }) {
     setInput("");
     setBusy(true);
     try {
-      const reply = await askAssistant(next, code, aiConfig);
-      setMessages([...next, { role: "assistant", content: reply }]);
+      const antwort = await askAssistant(next, code, aiConfig, pro && proVerfuegbar);
+      setMessages([...next, {
+        role: "assistant",
+        content: typeof antwort === "string" ? antwort : antwort.text,
+        pro: typeof antwort === "string" ? false : antwort.pro,
+      }]);
     } catch (e) {
       setMessages([...next, {
         role: "assistant", error: true,
@@ -13733,6 +13751,15 @@ function AssistantPanel({ ctx, code }) {
             <Bot size={26} className="text-[#7C3AED] mx-auto mb-2" />
             <p className="text-sm text-[#C9D6F0] mb-1">Frag mich zu deinem Code</p>
             <p className="text-xs text-[#4A5A7A] mb-4">Ich sehe, was gerade im Editor steht.</p>
+            {proVerfuegbar && (
+              <button onClick={() => setPro((v) => !v)}
+                className={`mb-4 mx-auto flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] border transition-all ${pro
+                  ? "border-[#F7C948] bg-[#F7C948]/10 text-[#F7C948]"
+                  : "border-[#1E2D4A] text-[#8A9BC0] hover:border-[#2A3F6F]"}`}>
+                <Sparkles size={12} />
+                {pro ? "Profi-Modus an — stärker, dafür seltener" : "Profi-Modus einschalten"}
+              </button>
+            )}
             <div className="flex flex-col gap-1.5">
               {ASSISTANT_QUICK_ACTIONS.map((a) => (
                 <button key={a.label} onClick={() => send(a.prompt)}
@@ -13753,7 +13780,8 @@ function AssistantPanel({ ctx, code }) {
             ) : (
               <div className={`px-3 py-2 rounded-xl rounded-bl-sm border ${m.error ? "border-[#EF4444]/30 bg-[#EF4444]/5 text-[#C9D6F0]" : "border-[#1E2D4A] bg-[#141D35] text-[#C9D6F0]"}`}>
                 <div className="flex items-center gap-1.5 mb-1.5 text-[10px] text-[#8A9BC0]">
-                  <Bot size={11} className="text-[#7C3AED]" />Assistent
+                  <Bot size={11} className={m.pro ? "text-[#F7C948]" : "text-[#7C3AED]"} />
+                  {m.pro ? "Profi-Assistent" : "Assistent"}
                 </div>
                 <AssistantMessage content={m.content} />
               </div>

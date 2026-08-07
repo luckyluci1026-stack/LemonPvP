@@ -204,16 +204,45 @@ Die Plattform funktioniert **vollständig ohne KI-Zugang** — dann läuft die
 eingebaute lokale Analyse (siehe Abschnitt 5). Optional stehen vier Anbieter
 zur Wahl (`AI_PROVIDER`): `gemini`, `anthropic`, `openrouter` und `ollama`.
 
+### Rollen: jede Aufgabe ihr eigenes Modell
+
+Statt eines einzigen Anbieters bekommt jede Rolle ihren eigenen:
+
+| Rolle | Was sie tut | Einstellungen |
+|---|---|---|
+| `assist` | Assistent in der IDE | `AI_ASSIST_PROVIDER`, `AI_ASSIST_MODEL` |
+| `assistPro` | Stärkerer Assistent auf Knopfdruck | `AI_PRO_PROVIDER`, `AI_PRO_MODEL` |
+| `verify` | Prüfung der Lektionsantworten | `AI_VERIFY_PRIMARY`, `AI_VERIFY_FALLBACK` |
+
+Ein Aufbau, bei dem jede Rolle auf dem passenden Modell läuft:
+
+```bash
+AI_ASSIST_PROVIDER=gemini    AI_ASSIST_MODEL=gemma-4-31b-it
+AI_PRO_PROVIDER=groq         AI_PRO_MODEL=llama-3.3-70b-versatile
+AI_VERIFY_PRIMARY=ollama     OLLAMA_MODEL=gemma-4-e4b
+AI_VERIFY_FALLBACK=gemini
+```
+
+Die IDE läuft dann über Googles Kontingent, der Profi-Assistent über Groq, und
+die Lektionsprüfung bleibt auf dem eigenen Server — dort fällt kein Kontingent
+an, und die Antworten der Lernenden verlassen das Haus nicht.
+
 ### Schnelltest der Einrichtung
 
 Bevor irgendetwas in der App landet:
 
 ```bash
 cd server
-npm run ai:test              # Haupt- und Ersatzanbieter
-npm run ai:test -- alle      # jeden konfigurierten Anbieter
+npm run ai:models            # welche Google-Modelle dein Schlüssel wirklich kennt
+npm run ai:test              # alle eingestellten Rollen
+npm run ai:test -- alle      # jeden Anbieter
 npm run ai:test -- gemini    # gezielt einen
 ```
+
+`ai:models` ist der erste Griff, wenn etwas nicht läuft: Es fragt Google, welche
+Modell-IDs dieser Schlüssel benutzen darf. Was dort nicht steht, gibt es für
+diesen Zugang nicht — und die Schreibweise zählt (`gemma-4-31b-it` ist etwas
+anderes als `gemma-4-31b`).
 
 Der Test geht durch dieselbe Kette wie im Betrieb — derselbe Systemprompt,
 dieselbe Auswertung — und schickt zwei Proben: eine richtige Lösung und lose
@@ -260,6 +289,24 @@ Keys erstellen: [aistudio.google.com/app/apikey](https://aistudio.google.com/app
 > Kontingente zu bündeln, kann gegen die Terms of Service des Anbieters
 > verstoßen. Die technische Umsetzung ist neutral — die Entscheidung liegt bei
 > dir. Für den Dauerbetrieb ist Variante B die sauberere Lösung.
+
+### Variante A3 — Groq (Profi-Agent in der IDE)
+
+```bash
+GROQ_API_KEYS=gsk_...
+GROQ_MODEL=llama-3.3-70b-versatile
+AI_PRO_PROVIDER=groq
+```
+
+Schlüssel: [console.groq.com](https://console.groq.com)
+
+Beim kostenlosen Kontingent ist **nicht die Zahl der Anfragen der Engpass,
+sondern die Token**: 30 Anfragen pro Minute und 1.000 pro Tag klingen
+großzügig, aber 12.000 Token pro Minute sind mit einem langen Verlauf plus
+viel Code im Editor nach wenigen Fragen aufgebraucht. Deshalb bekommt der
+Profi-Agent weniger Verlauf (`AI_PRO_HISTORY`, Vorgabe 4 statt 8) und weniger
+Code mit als der normale Assistent. In der Oberfläche ist er ein Schalter, den
+man bewusst umlegt — nicht die Voreinstellung.
 
 ### Variante A2 — OpenRouter (als Ersatzanbieter)
 

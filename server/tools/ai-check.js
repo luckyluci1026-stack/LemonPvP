@@ -20,7 +20,7 @@ process.env.SESSION_SECRET ||= "nur-fuer-den-ki-test";
 const { config } = await import("../src/config.js");
 const { generate, providerReady, parseVerdict, VERIFY_SYSTEM_PROMPT } = await import("../src/ai.js");
 
-const ALLE = ["gemini", "anthropic", "openrouter", "ollama"];
+const ALLE = ["gemini", "anthropic", "openrouter", "groq", "ollama"];
 
 /* Zwei Proben: eine richtige und eine, die nur so aussieht. Ein Modell, das
    beide gleich bewertet, taugt für die Prüfung nicht — genau das ist der
@@ -49,6 +49,7 @@ function modellVon(provider) {
   if (provider === "gemini") return config.ai.geminiModel;
   if (provider === "anthropic") return config.ai.anthropicModel;
   if (provider === "openrouter") return config.ai.openrouterModel;
+  if (provider === "groq") return config.ai.groqModel;
   if (provider === "ollama") return `${config.ai.ollamaModel} @ ${config.ai.ollamaUrl}`;
   return "—";
 }
@@ -57,6 +58,7 @@ function keysVon(provider) {
   if (provider === "gemini") return config.ai.geminiKeys;
   if (provider === "anthropic") return config.ai.anthropicKeys;
   if (provider === "openrouter") return config.ai.openrouterKeys;
+  if (provider === "groq") return config.ai.groqKeys;
   return [];
 }
 
@@ -69,7 +71,8 @@ function rat(provider, fehler) {
     // und auf ein Modell, das es nicht gibt. Deshalb beide Möglichkeiten.
     return "Die Anfrage wurde abgelehnt (400). Zwei häufige Ursachen:\n"
       + "    (a) Der Schlüssel ist unvollständig oder ungültig — neu kopieren von aistudio.google.com/app/apikey.\n"
-      + `    (b) Das Modell "${modellVon(provider)}" gibt es unter diesem Namen nicht — Schreibweise auf ai.google.dev prüfen.`;
+      + `    (b) Das Modell "${modellVon(provider)}" heißt anders.\n`
+      + "    Beides klärt `npm run ai:models` in einem Schritt.";
   }
   if (status === 401 || status === 403) {
     return "Der Schlüssel wurde nicht akzeptiert (401/403). Ist er vollständig kopiert und für diese\n"
@@ -77,7 +80,9 @@ function rat(provider, fehler) {
   }
   if (status === 404) {
     return `Das Modell "${modellVon(provider)}" gibt es unter diesem Namen nicht (404).\n`
-      + "    Schreibweise nachschlagen: bei Google unter ai.google.dev, bei OpenRouter unter openrouter.ai/models.";
+      + (provider === "gemini"
+        ? "    Führe `npm run ai:models` aus — das zeigt die IDs, die dein Schlüssel wirklich kennt."
+        : "    Schreibweise nachschlagen: bei OpenRouter unter openrouter.ai/models, bei Groq unter console.groq.com/docs/models.");
   }
   if (status === 429) {
     return "Kontingent erschöpft (429). Kurz warten — im Betrieb wechselt die Rotation automatisch\n"
@@ -162,7 +167,9 @@ async function main() {
     ? ALLE
     : wunsch
       ? [wunsch]
-      : [config.ai.verify.primaryProvider, config.ai.verify.fallbackProvider].filter((v, i, a) => a.indexOf(v) === i);
+      : [config.ai.roles.assist.provider, config.ai.roles.assistPro.provider,
+         config.ai.verify.primaryProvider, config.ai.verify.fallbackProvider]
+          .filter((v, i, a) => v && a.indexOf(v) === i);
 
   if (wunsch && wunsch !== "alle" && wunsch !== "all" && !ALLE.includes(wunsch)) {
     console.error(`Unbekannter Anbieter "${wunsch}". Möglich: ${ALLE.join(", ")}, alle`);
@@ -170,7 +177,10 @@ async function main() {
   }
 
   console.log("KI-Prüfung — lokaler Test");
-  console.log(`Hauptanbieter: ${config.ai.verify.primaryProvider}   Ersatz: ${config.ai.verify.fallbackProvider}`);
+  const r = config.ai.roles;
+  console.log(`IDE-Assistent:  ${r.assist.provider}${r.assist.model ? " / " + r.assist.model : ""}`);
+  console.log(`Profi-Agent:    ${r.assistPro.provider}${r.assistPro.model ? " / " + r.assistPro.model : ""}`);
+  console.log(`Lektionsprüfung: ${config.ai.verify.primaryProvider} → ${config.ai.verify.fallbackProvider} → lokal`);
   console.log(`Kontingent: ${config.ai.verify.primaryPerDay}/Nutzer/Tag beim Hauptanbieter,`
     + ` ${config.ai.verify.maxPerDay} insgesamt, ${config.ai.verify.globalPerDay} über alle Nutzer`);
 
