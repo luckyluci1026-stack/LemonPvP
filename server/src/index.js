@@ -13,7 +13,7 @@ import authRoutes from "./routes/auth.js";
 import appRoutes from "./routes/app.js";
 import adminRoutes from "./routes/admin.js";
 import aiRoutes from "./routes/ai.js";
-import { warmUpOllama } from "./ai.js";
+import { warmUpOllama, checkOllama, ollamaInUse } from "./ai.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -147,7 +147,12 @@ try {
   app.log.info(`KI-Anbieter: ${config.ai.provider}`);
 
   // Modell im Hintergrund vorladen — blockiert den Start nicht
-  if (config.ai.warmUp) warmUpOllama(app.log);
+  /* Auch ohne Vorladen einmal nachsehen, ob Ollama läuft — sonst gilt es als
+     bereit, und jede offene Aufgabe wartet erst die Zeitüberschreitung ab. */
+  if (ollamaInUse()) {
+    if (config.ai.warmUp) warmUpOllama(app.log);
+    else checkOllama(app.log);
+  }
 } catch (e) {
   app.log.error(e, "Serverstart fehlgeschlagen");
   process.exit(1);

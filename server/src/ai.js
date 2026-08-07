@@ -59,7 +59,9 @@ export function poolStatus() {
     openrouterModel: config.ai.openrouterModel || null,
     groq: build("groq"),
     groqModel: config.ai.groqModel || null,
-    ollama: config.ai.provider === "ollama" ? { url: config.ai.ollamaUrl, model: config.ai.ollamaModel } : null,
+    ollama: ollamaInUse()
+      ? { url: config.ai.ollamaUrl, model: config.ai.ollamaModel, reachable: ollamaErreichbar }
+      : null,
   };
 }
 
@@ -303,8 +305,31 @@ async function callOllama(system, user, maxTokens, model) {
  * auf das Einlesen warten muss. Fehler werden bewusst ignoriert — läuft kein
  * Ollama, ist das kein Grund den Serverstart abzubrechen.
  */
+/**
+ * Kurzer Blick, ob Ollama überhaupt antwortet — ohne ein Modell zu laden.
+ * Wird genutzt, wenn das Vorladen abgeschaltet ist.
+ */
+export async function checkOllama(log) {
+  try {
+    const res = await fetch(`${config.ai.ollamaUrl}/api/tags`, { signal: AbortSignal.timeout(3000) });
+    setOllamaReachable(res.ok);
+    if (res.ok) log?.info(`Ollama erreichbar unter ${config.ai.ollamaUrl}`);
+    else log?.warn(`Ollama antwortet mit ${res.status} — die Bewertung läuft rein lokal weiter`);
+  } catch (e) {
+    setOllamaReachable(false);
+    log?.warn(`Ollama nicht erreichbar (${e.message}) — die Bewertung läuft rein lokal weiter`);
+  }
+}
+
+/** Wird Ollama irgendwo gebraucht — als allgemeiner Anbieter oder in einer Rolle? */
+export function ollamaInUse() {
+  const r = config.ai.roles;
+  return [config.ai.provider, r.assist.provider, r.assistPro.provider,
+    config.ai.verify.primaryProvider, config.ai.verify.fallbackProvider].includes("ollama");
+}
+
 export async function warmUpOllama(log) {
-  if (config.ai.provider !== "ollama") return;
+  if (!ollamaInUse()) return;
   try {
     await fetch(`${config.ai.ollamaUrl}/api/chat`, {
       method: "POST",
@@ -318,9 +343,13 @@ export async function warmUpOllama(log) {
       }),
       signal: AbortSignal.timeout(120000),
     });
+    setOllamaReachable(true);
     log?.info(`Ollama-Modell ${config.ai.ollamaModel} ist geladen`);
   } catch (e) {
-    log?.warn(`Ollama nicht erreichbar (${e.message}) — bis dahin greift die lokale Analyse`);
+    // Wichtig: Ab jetzt gilt Ollama als nicht bereit. Sonst würde bei jeder
+    // offenen Aufgabe erst die volle Zeitüberschreitung abgewartet.
+    setOllamaReachable(false);
+    log?.warn(`Ollama nicht erreichbar (${e.message}) — die Bewertung läuft rein lokal weiter`);
   }
 }
 
@@ -333,8 +362,17 @@ export async function generate({ system, user, maxTokens = 1000, provider: force
   const started = Date.now();
 
   if (provider === "ollama") {
-    const text = await callOllama(system, user, maxTokens, model);
-    return { text, provider, model: model || config.ai.ollamaModel, keyLabel: "ollama", durationMs: Date.now() - started };
+    try {
+      const text = await callOllama(system, user, maxTokens, model);
+      setOllamaReachable(true);
+      return { text, provider, model: model || config.ai.ollamaModel, keyLabel: "ollama", durationMs: Date.now() - started };
+    } catch (e) {
+      // Nicht erreichbar heißt: beim nächsten Mal gar nicht erst fragen.
+      if (/fetch failed|ECONNREFUSED|ENOTFOUND|timeout|aborted/i.test(String(e.message))) {
+        setOllamaReachable(false);
+      }
+      throw e;
+    }
   }
 
   const keys = keysFor(provider);
@@ -378,8 +416,21 @@ export function modelOf(provider) {
   return "";
 }
 
+/* Ollama läuft auf dem eigenen Rechner — oder eben nicht. Anders als bei
+   einem Schlüssel lässt sich das nicht am Wert ablesen, sondern nur durch
+   Anfragen. Ohne diese Unterscheidung gälte Ollama immer als bereit, und
+   jede offene Aufgabe liefe erst in die Zeitüberschreitung, bevor lokal
+   bewertet wird. Beim Serverstart wird deshalb einmal nachgesehen, und ein
+   fehlgeschlagener Aufruf merkt sich das.
+
+   null = noch nicht geprüft (im Zweifel versuchen wir es) */
+let ollamaErreichbar = null;
+
+export function setOllamaReachable(wert) { ollamaErreichbar = wert; }
+export function isOllamaReachable() { return ollamaErreichbar; }
+
 export function providerReady(provider) {
-  if (provider === "ollama") return true;
+  if (provider === "ollama") return ollamaErreichbar !== false;
   // Bei OpenRouter genügt der Schlüssel nicht: Ohne Modell-ID weiß der
   // Dienst nicht, wen er fragen soll, und antwortet mit 404.
   if (provider === "openrouter") {

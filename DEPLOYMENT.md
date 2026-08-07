@@ -7,6 +7,39 @@ sowie die Einrichtung der KI-Anbindung.
 
 ## 1. Schnellstart (lokal testen)
 
+### Lokal testen — in drei Befehlen
+
+```bash
+cd server
+npm install
+cp .env.local.example .env      # fertige Einstellungen zum Ausprobieren
+npm run dev                     # legt die Datenbank an und startet
+```
+
+Danach `http://localhost:3000` öffnen. Das war es — keine Datenbank
+installieren, kein API-Schlüssel nötig. Ohne KI bewertet die Plattform
+vollständig lokal im Browser.
+
+**Nicht die `.env.example` nehmen.** Die ist für den Livebetrieb, und vier
+Werte daraus verursachen lokal Fehler, die nichts anzeigt:
+
+| Wert | Was lokal passiert |
+|---|---|
+| `NODE_ENV=production` | Das Sitzungs-Cookie wird „secure" markiert und gilt nur über HTTPS. Über `http://localhost` wirft der Browser es weg — die Anmeldung klappt scheinbar, aber auf der nächsten Seite bist du abgemeldet. Ohne jede Meldung. |
+| `DATABASE_URL=postgres://…` | Der Start scheitert, wenn kein PostgreSQL läuft. Lokal genügt `sqlite:./data/local.db` — SQLite steckt in Node mit drin. |
+| `SESSION_SECRET=` (leer) | In der Produktionsfassung bricht der Start damit ab. |
+| `TRUST_PROXY=true` | Der Server glaubt dem Header `X-Forwarded-For`. Lokal steht kein Proxy davor, also lässt sich damit die Anfragenbegrenzung umgehen. |
+
+Weitere Handgriffe:
+
+```bash
+npm run seed:local     # ein Administrator-Konto anlegen
+rm data/local.db       # alles zurücksetzen, beim nächsten Start neu
+```
+
+Bestätigungscodes für E-Mails werden nicht verschickt, sondern in die
+Serverausgabe geschrieben — dort steht der Code zum Abtippen.
+
 ### Variante A — nur die Oberfläche, ohne alles
 
 Die App braucht keinen Build-Schritt, aber einen HTTP-Server (nicht `file://`):

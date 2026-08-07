@@ -9,14 +9,15 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
+    "dev": "node src/migrate.js && node src/index.js",
     "migrate": "node src/migrate.js",
     "seed": "node src/seed.js",
     "test": "node --test test/integration.test.js test/reset.test.js test/password.test.js test/rotation.test.js",
-    "start:local": "DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen NODE_ENV=development node src/index.js",
+    "start:local": "DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen NODE_ENV=development node src/migrate.js && DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen NODE_ENV=development node src/index.js",
     "seed:local": "DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen node src/seed.js",
     "ai:test": "node tools/ai-check.js",
-    "ai:models": "node tools/ai-models.js"
+    "ai:models": "node tools/ai-models.js",
+    "migrate:local": "DATABASE_URL=sqlite:./data/local.db node src/migrate.js"
   },
   "dependencies": {
     "@fastify/cookie": "^9.3.1",
