@@ -6402,6 +6402,29 @@ function parseAIJson(text) {
   return JSON.parse(start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned);
 }
 
+/* ---------------------- Prüfung offener Aufgaben -------------------------
+   Wortgleich mit dem Prompt im Server (server/src/ai.js). Beide Wege müssen
+   dasselbe Urteil fällen — sonst hinge die Bewertung davon ab, ob gerade ein
+   Server läuft. */
+const LESSON_VERIFY_PROMPT = `Du bewertest Lösungen von Programmier-Anfängerinnen und -Anfängern auf einer deutschen Lernplattform.
+
+Du bekommst: die Aufgabenstellung, die erwarteten Bausteine, die Sprache und die eingereichte Antwort.
+
+BEWERTE STRENG, ABER FAIR:
+- Punkte gibt es nur, wenn die Antwort die Aufgabe tatsächlich löst.
+- Einzelne Wörter oder Stichworte untereinander sind KEINE Lösung — 0 Punkte.
+- Abgeschriebene Aufgabenstellungen sind KEINE Lösung — 0 Punkte.
+- Kleine Schönheitsfehler (fehlendes Semikolon, andere Variablennamen, andere
+  Formulierung) sind kein Grund für einen Abzug, solange die Lösung stimmt.
+- Bei Erklärungen zählt der Inhalt, nicht die Wortzahl.
+
+ANTWORTE AUSSCHLIESSLICH ALS JSON, ohne Codeblock, in genau dieser Form:
+{"score": 0-100, "correct": true|false, "feedback": "ein bis zwei Sätze auf Deutsch", "hint": "ein konkreter nächster Schritt auf Deutsch"}
+
+"correct" ist nur dann true, wenn die Aufgabe wirklich gelöst wurde.
+"feedback" spricht die lernende Person direkt an und benennt konkret, was stimmt oder fehlt.
+Erfinde keine Fehler, die nicht da sind.`;
+
 /* ---------------------- KI-Assistent (nur im Code-Editor) ----------------
    Lektionen werden ausschließlich lokal bewertet — sofort und kostenlos.
    Die KI sitzt stattdessen als Gesprächspartner im Editor, wo eine Antwortzeit
@@ -8029,8 +8052,8 @@ const AI_VERIFY_TIMEOUT_MS = 15000;
 const OPEN_TASK_TYPES = new Set(["code_write", "explain"]);
 
 /** Lohnt sich für diese Aufgabe eine Zweitmeinung? */
-function needsAiVerification(task, local) {
-  if (!aiVerifyAvailable()) return false;
+function needsAiVerification(task, local, aiCfg) {
+  if (!aiVerifyAvailable() && !browserVerifyReady(aiCfg)) return false;
   if (!OPEN_TASK_TYPES.has(task?.type)) return false;
   // Ganz leere oder offensichtlich unsinnige Antworten braucht niemand zu
   // verifizieren — das steht lokal schon fest.
@@ -8038,11 +8061,27 @@ function needsAiVerification(task, local) {
   return true;
 }
 
-/* Der Server meldet beim Start, ob eine KI bereitsteht. Bis dahin wird lokal
-   bewertet — kein Warten, keine Fehlermeldung. */
+/* Zwei Wege führen zur Zweitmeinung:
+
+     mit Server — der Schlüssel liegt dort, der Browser sieht ihn nie. So
+                  sollte es im Betrieb sein.
+     ohne Server — die Seite läuft direkt aus dem Dateisystem oder über einen
+                  einfachen Webserver, und der Schlüssel steht in den
+                  KI-Einstellungen. Nur zum Ausprobieren gedacht: Was dort
+                  liegt, ist mit F12 einsehbar. Die Einstellungen sind
+                  deshalb der Administration vorbehalten.
+
+   Ohne beides bewertet allein die lokale Analyse — kein Warten, keine
+   Fehlermeldung. */
 let aiVerifyState = { available: false };
 function aiVerifyAvailable() { return !!aiVerifyState.available; }
 function setAiVerifyAvailable(v) { aiVerifyState = { available: !!v }; }
+
+/** Steht ohne Server ein Zugang im Browser bereit? */
+function browserVerifyReady(aiCfg) {
+  if (!aiCfg) return false;
+  return aiCfg.provider === "ollama" || (aiCfg.keys || []).length > 0;
+}
 
 /**
  * Führt lokales Ergebnis und KI-Urteil zusammen.
@@ -8071,20 +8110,55 @@ function mergeVerdicts(local, ai) {
 }
 
 /** Holt die Zweitmeinung. Fällt bei jedem Problem auf das lokale Ergebnis zurück. */
-async function verifyWithAI({ task, answer, local, course, lessonTitle }) {
-  if (!api.available) return local;
+/** Baut die Anfrage — für beide Wege identisch. */
+function verifyPrompt({ task, answer, course, lessonTitle, local }) {
+  const erwartet = (task.expectedConcepts || [])
+    .map((c) => (Array.isArray(c) ? c[0] : c)).filter(Boolean).slice(0, 12).join(", ");
+  return [
+    `Aufgabentyp: ${task.type || "offen"}`,
+    `Sprache: ${course?.name || "unbekannt"}`,
+    `Aufgabenstellung: ${lessonTitle ? lessonTitle + " — " : ""}${String(task.question || "").slice(0, 1200)}`,
+    erwartet ? `Erwartete Bausteine: ${erwartet}` : "",
+    `Vorbewertung der lokalen Analyse: ${Number(local.score) || 0}/100, ${local.correct ? "bestanden" : "nicht bestanden"}`,
+    "",
+    "--- Eingereichte Antwort ---",
+    String(answer || "").slice(0, 4000),
+  ].filter(Boolean).join("\n");
+}
+
+async function verifyWithAI({ task, answer, local, course, lessonTitle, aiCfg }) {
   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
   const timer = controller ? setTimeout(() => controller.abort(), AI_VERIFY_TIMEOUT_MS) : null;
   try {
-    const ai = await api.post("/api/ai/verify", {
-      type: task.type,
-      question: `${lessonTitle ? lessonTitle + " — " : ""}${task.question || ""}`,
-      language: course?.name || "",
-      concepts: task.expectedConcepts || [],
-      answer: String(answer || "").slice(0, 4000),
-      local: { score: local.score, correct: local.correct },
-    }, { signal: controller?.signal });
-    return mergeVerdicts(local, ai);
+    if (api.available) {
+      const ai = await api.post("/api/ai/verify", {
+        type: task.type,
+        question: `${lessonTitle ? lessonTitle + " — " : ""}${task.question || ""}`,
+        language: course?.name || "",
+        concepts: task.expectedConcepts || [],
+        answer: String(answer || "").slice(0, 4000),
+        local: { score: local.score, correct: local.correct },
+      }, { signal: controller?.signal });
+      return mergeVerdicts(local, ai);
+    }
+
+    // Ohne Server: derselbe Prompt, nur direkt vom Browser aus.
+    if (browserVerifyReady(aiCfg)) {
+      const text = await callAI(
+        aiCfg.provider, aiCfg.keys, LESSON_VERIFY_PROMPT,
+        verifyPrompt({ task, answer, course, lessonTitle, local }),
+        320, aiCfg.ollamaModel
+      );
+      const urteil = parseAIJson(text);
+      if (!urteil || typeof urteil.score !== "number") return local;
+      return mergeVerdicts(local, {
+        score: Math.max(0, Math.min(100, Math.round(urteil.score))),
+        correct: urteil.correct === true,
+        feedback: String(urteil.feedback || "").slice(0, 600),
+        hint: String(urteil.hint || "").slice(0, 400),
+      });
+    }
+    return local;
   } catch (e) {
     // Kontingent erschöpft, Netz weg, Modell kaputt — alles derselbe Ausgang:
     // Es zählt die lokale Bewertung, und die Lektion läuft normal weiter.
@@ -16189,12 +16263,13 @@ function LessonView({ ctx }) {
 
     // Offene Aufgaben („schreib den Code", „erkläre …") lassen sich nicht
     // vollständig mit Mustern bewerten. Dafür gibt es die Zweitmeinung.
-    if (needsAiVerification(task, local)) {
+    if (needsAiVerification(task, local, ctx.aiConfig)) {
       setAiLoading(true);
       try {
         const verified = await verifyWithAI({
           task, answer: checkAnswer, local,
           course: lesson._course, lessonTitle: lesson.title,
+          aiCfg: ctx.aiConfig,
         });
         finishTask(verified);
       } finally {
