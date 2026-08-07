@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS users (
   streak INTEGER NOT NULL DEFAULT 0,
   last_active TEXT,
   current_course TEXT,
-  avatar TEXT NOT NULL DEFAULT '🧑‍💻',
+  avatar TEXT NOT NULL DEFAULT '',
   avatar_config TEXT,
   storage_used INTEGER NOT NULL DEFAULT 0,
   storage_quota INTEGER NOT NULL DEFAULT 2684354560,
@@ -123,6 +123,18 @@ CREATE TABLE IF NOT EXISTS custom_lessons (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS class_requests (
+  id TEXT PRIMARY KEY,
+  student_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  teacher_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  decided_at TEXT
+);
+CREATE INDEX IF NOT EXISTS class_requests_teacher_idx ON class_requests (teacher_id, status);
+CREATE UNIQUE INDEX IF NOT EXISTS class_requests_open_idx
+  ON class_requests (student_id) WHERE status = 'pending';
 
 CREATE TABLE IF NOT EXISTS ai_usage (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -200,7 +212,7 @@ export function sqliteQuery(text, params) {
   const values = bindParams(expanded.values);
 
   // gen_random_uuid() gibt es in SQLite nicht — IDs werden hier erzeugt.
-  const needsId = /INSERT\s+INTO\s+(users|projects|reports)\b/i.test(sql) && !/\bid\b\s*,/i.test(sql.split("VALUES")[0] || "");
+  const needsId = /INSERT\s+INTO\s+(users|projects|reports|class_requests)\b/i.test(sql) && !/\bid\b\s*,/i.test(sql.split("VALUES")[0] || "");
   let finalSql = sql;
   let finalValues = values;
   if (needsId) {

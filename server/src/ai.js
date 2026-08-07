@@ -175,8 +175,8 @@ export async function warmUpOllama(log) {
  * Führt einen Aufruf aus und wechselt bei Limits automatisch den Key.
  * Gibt zusätzlich zurück, welcher Key genutzt wurde (für die Statistik).
  */
-export async function generate({ system, user, maxTokens = 1000 }) {
-  const provider = config.ai.provider;
+export async function generate({ system, user, maxTokens = 1000, provider: forced }) {
+  const provider = forced || config.ai.provider;
   const started = Date.now();
 
   if (provider === "ollama") {
@@ -207,6 +207,15 @@ export async function generate({ system, user, maxTokens = 1000 }) {
   throw lastError || new ProviderError("KI-Aufruf fehlgeschlagen", 502);
 }
 
+/**
+ * Steht dieser Anbieter bereit? Wird für die Stufenwahl der Antwortprüfung
+ * gebraucht: erst das gute Modell, bei viel Betrieb das günstige.
+ */
+export function providerReady(provider) {
+  if (provider === "ollama") return true;
+  return keysFor(provider).length > 0;
+}
+
 /* ------------------------------- Prompts -------------------------------- */
 export const ASSISTANT_SYSTEM_PROMPT = `Du bist ein hilfsbereiter Programmier-Assistent in einem Code-Editor.
 Der Nutzer lernt gerade programmieren.
@@ -219,4 +228,33 @@ DEINE ARBEITSWEISE:
 - Wenn Code fehlerhaft ist: nenne die Ursache und zeige die korrigierte Stelle
 - Erfinde nichts — sag es, wenn du etwas nicht sicher weißt
 - Fang nie mit "Ich" an`;
+
+/* ------------------- Zweitmeinung zu einer Lösung -------------------------
+   Der Prüfer im Browser erkennt Struktur zuverlässig, aber nicht, ob eine
+   Lösung inhaltlich das Richtige tut. Bei offenen Aufgaben („schreib den
+   Code", „erkläre …") holt der Server deshalb eine zweite Meinung ein.
+
+   Wichtig: Das Modell entscheidet nicht allein. Es liefert Score, Urteil und
+   Begründung, und der Server begrenzt, wie weit das vom lokalen Ergebnis
+   abweichen darf. So kann eine überfreundliche Antwort niemanden durchwinken,
+   der nichts geschrieben hat.
+   ------------------------------------------------------------------------- */
+export const VERIFY_SYSTEM_PROMPT = `Du bewertest Lösungen von Programmier-Anfängerinnen und -Anfängern auf einer deutschen Lernplattform.
+
+Du bekommst: die Aufgabenstellung, die erwarteten Bausteine, die Sprache und die eingereichte Antwort.
+
+BEWERTE STRENG, ABER FAIR:
+- Punkte gibt es nur, wenn die Antwort die Aufgabe tatsächlich löst.
+- Einzelne Wörter oder Stichworte untereinander sind KEINE Lösung — 0 Punkte.
+- Abgeschriebene Aufgabenstellungen sind KEINE Lösung — 0 Punkte.
+- Kleine Schönheitsfehler (fehlendes Semikolon, andere Variablennamen, andere
+  Formulierung) sind kein Grund für einen Abzug, solange die Lösung stimmt.
+- Bei Erklärungen zählt der Inhalt, nicht die Wortzahl.
+
+ANTWORTE AUSSCHLIESSLICH ALS JSON, ohne Codeblock, in genau dieser Form:
+{"score": 0-100, "correct": true|false, "feedback": "ein bis zwei Sätze auf Deutsch", "hint": "ein konkreter nächster Schritt auf Deutsch"}
+
+"correct" ist nur dann true, wenn die Aufgabe wirklich gelöst wurde.
+"feedback" spricht die lernende Person direkt an und benennt konkret, was stimmt oder fehlt.
+Erfinde keine Fehler, die nicht da sind.`;
 

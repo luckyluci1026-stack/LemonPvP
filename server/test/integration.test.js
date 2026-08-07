@@ -11,14 +11,14 @@ const ADMIN = { email: "admin@test.de", password: "Adminpass!7x" };
 before(async () => {
   if (usingSqlite) {
     // SQLite kennt kein TRUNCATE; Fremdschlüssel räumen den Rest auf.
-    for (const t of ["ai_usage", "reports", "users"]) await query(`DELETE FROM ${t}`);
+    for (const t of ["ai_usage", "reports", "class_requests", "users"]) await query(`DELETE FROM ${t}`);
   } else {
-    await query("TRUNCATE users, reports, ai_usage RESTART IDENTITY CASCADE");
+    await query("TRUNCATE users, reports, ai_usage, class_requests RESTART IDENTITY CASCADE");
   }
   const hash = await hashPassword(ADMIN.password);
   await query(
     `INSERT INTO users (role, name, email, password_hash, email_verified, avatar)
-     VALUES ('admin', 'Test Admin', $1, $2, TRUE, '🛡️')`,
+     VALUES ('admin', 'Test Admin', $1, $2, TRUE, '')`,
     [ADMIN.email, hash]
   );
 });
@@ -121,45 +121,45 @@ test("XP-Betrag wird serverseitig begrenzt", async () => {
   assert.equal(r.body.user.xp, 75 + 500, "Auf 500 gedeckelt");
 });
 
-test("Fehlversuche senken die XP für eine Aufgabe", async () => {
+test("Ein schwacher Score senkt die XP für eine Aufgabe", async () => {
   const vorher = (await api("GET", "/api/auth/me")).body.user.xp;
 
-  // Erster Anlauf: volle 15 XP
-  await api("POST", "/api/progress/xp", { amount: 15, attempts: 1 });
-  const nachErstem = (await api("GET", "/api/auth/me")).body.user.xp;
-  assert.equal(nachErstem - vorher, 15);
+  // Volle Punktzahl: volle 15 XP
+  await api("POST", "/api/progress/xp", { amount: 15, score: 100 });
+  const nachVoll = (await api("GET", "/api/auth/me")).body.user.xp;
+  assert.equal(nachVoll - vorher, 15);
 
-  // Dritter Anlauf: nur die Hälfte
-  await api("POST", "/api/progress/xp", { amount: 15, attempts: 3 });
-  const nachDrittem = (await api("GET", "/api/auth/me")).body.user.xp;
-  assert.equal(nachDrittem - nachErstem, 8, "3. Versuch muss weniger geben");
+  // Die Hälfte richtig: die Hälfte der XP
+  await api("POST", "/api/progress/xp", { amount: 15, score: 50 });
+  const nachHalb = (await api("GET", "/api/auth/me")).body.user.xp;
+  assert.equal(nachHalb - nachVoll, 8, "halber Score muss weniger geben");
 
   // Mit Tipp-Joker gedeckelt
-  await api("POST", "/api/progress/xp", { amount: 15, attempts: 1, usedHint: true });
+  await api("POST", "/api/progress/xp", { amount: 15, score: 100, usedHint: true });
   const nachJoker = (await api("GET", "/api/auth/me")).body.user.xp;
-  assert.equal(nachJoker - nachDrittem, 6, "Joker muss deckeln");
+  assert.equal(nachJoker - nachHalb, 6, "Joker muss deckeln");
 });
 
 test("Ein manipulierter Client bekommt trotzdem nicht mehr", async () => {
   const vorher = (await api("GET", "/api/auth/me")).body.user.xp;
-  // Behauptet den vollen Betrag, meldet aber den vierten Versuch
-  await api("POST", "/api/progress/xp", { amount: 100, attempts: 4 });
+  // Behauptet den vollen Betrag, meldet aber einen schwachen Score
+  await api("POST", "/api/progress/xp", { amount: 100, score: 20 });
   const nachher = (await api("GET", "/api/auth/me")).body.user.xp;
-  assert.equal(nachher - vorher, 5, "Server muss selbst rechnen");
+  assert.equal(nachher - vorher, 3, "Server muss selbst rechnen");
 });
 
-test("Der Lektionsbonus schrumpft nach Fehlversuchen", async () => {
+test("Der Lektionsbonus richtet sich nach dem Durchschnitt", async () => {
   const vorher = (await api("GET", "/api/auth/me")).body.user.xp;
-  // Keine einzige Aufgabe im ersten Anlauf -> halber Bonus
+  // Vier Aufgaben mit im Schnitt 50 Punkten -> halber Bonus
   const r = await api("POST", "/api/progress/complete", {
-    lessonId: "css_1_1", xpReward: 100, firstTry: 0, taskCount: 4,
+    lessonId: "css_1_1", xpReward: 100, scoreSum: 200, taskCount: 4,
   });
   assert.equal(r.body.user.xp - vorher, 50);
 
   const zwischen = r.body.user.xp;
   // Fehlerfrei -> voller Bonus
   const r2 = await api("POST", "/api/progress/complete", {
-    lessonId: "css_1_2", xpReward: 100, firstTry: 4, taskCount: 4,
+    lessonId: "css_1_2", xpReward: 100, scoreSum: 400, taskCount: 4,
   });
   assert.equal(r2.body.user.xp - zwischen, 100);
 });
@@ -305,9 +305,94 @@ test("KI-Status meldet fehlende Konfiguration", async () => {
   const r = await api("GET", "/api/ai/status");
   assert.equal(r.status, 200);
   assert.equal(r.body.available, false, "Ohne Keys keine KI");
-  // Der Assistent ist der einzige KI-Endpunkt; Lektionen laufen rein lokal.
+  assert.equal(r.body.verify, false, "Ohne Keys auch keine Zweitmeinung");
   const assist = await api("POST", "/api/ai/assist", { messages: [{ role: "user", content: "hi" }] });
   assert.equal(assist.status, 503);
+});
+
+test("Ohne KI scheitert die Zweitmeinung sauber — die Lektion läuft lokal weiter", async () => {
+  const r = await api("POST", "/api/ai/verify", {
+    type: "code_write", question: "Schreibe eine Variable", answer: "const x = 1;",
+    local: { score: 90, correct: true },
+  });
+  assert.equal(r.status, 503, "ohne Keys gibt es 503");
+  assert.equal(r.body.tier, "local", "der Browser erfährt, dass lokal gewertet wird");
+});
+
+/* ---------------- Klasse beitreten: Anfrage und Freigabe ----------------- */
+test("Lehrer-Code nachträglich: Anfrage, Freigabe, Zuordnung", async () => {
+  // Eine Lehrkraft anlegen und ihren Code holen
+  const lehrer = { name: "Frau Lehner", email: `lehrer_${uniq}@test.de`, password: "Unterricht!8k" };
+  const reg = await api("POST", "/api/auth/register", { ...lehrer, role: "teacher", school: "Testschule" });
+  assert.equal(reg.status, 200);
+  const code = reg.body.schoolCode;
+  assert.ok(code, "Lehrkraft bekommt einen Code");
+  const lehrerCookies = new Map(jar);
+
+  // Eine Schülerin ohne Lehrer-Code registrieren
+  jar.clear();
+  const schuelerin = { name: "Ida Klein", email: `schuelerin_${uniq}@test.de`, password: "Lernenist!9m" };
+  const sreg = await api("POST", "/api/auth/register", { ...schuelerin, role: "student" });
+  assert.equal(sreg.status, 200);
+  assert.equal(sreg.body.user.teacherId, null, "zunächst keiner Klasse zugeordnet");
+  const schuelerCookies = new Map(jar);
+
+  // Falscher Code wird abgewiesen
+  const falsch = await api("POST", "/api/class/request", { code: "GIBTSNICHT" });
+  assert.equal(falsch.status, 404);
+
+  // Richtiger Code erzeugt eine Anfrage — noch keine Zuordnung
+  const anfrage = await api("POST", "/api/class/request", { code });
+  assert.equal(anfrage.status, 200);
+  assert.equal(anfrage.body.request.status, "pending");
+  const nochNicht = await api("GET", "/api/auth/me");
+  assert.equal(nochNicht.body.user.teacherId, null, "vor der Freigabe keine Zuordnung");
+
+  const offen = await api("GET", "/api/class/request");
+  assert.equal(offen.body.request.status, "pending");
+
+  // Die Lehrkraft sieht die Anfrage
+  jar.clear(); for (const [k, v] of lehrerCookies) jar.set(k, v);
+  const liste = await api("GET", "/api/teacher/requests");
+  assert.equal(liste.status, 200);
+  assert.equal(liste.body.requests.length, 1);
+  assert.equal(liste.body.requests[0].name, schuelerin.name);
+
+  // …und bestätigt sie
+  const ja = await api("POST", `/api/teacher/requests/${liste.body.requests[0].id}`, { approve: true });
+  assert.equal(ja.status, 200);
+  assert.equal(ja.body.approved, true);
+
+  const klasse = await api("GET", "/api/teacher/students");
+  assert.equal(klasse.body.students.length, 1);
+  assert.equal(klasse.body.students[0].name, schuelerin.name);
+
+  // Die Schülerin gehört jetzt zur Klasse, die Anfrage ist erledigt
+  jar.clear(); for (const [k, v] of schuelerCookies) jar.set(k, v);
+  const jetzt = await api("GET", "/api/auth/me");
+  assert.ok(jetzt.body.user.teacherId, "nach der Freigabe zugeordnet");
+  const keine = await api("GET", "/api/class/request");
+  assert.equal(keine.body.request, null, "keine offene Anfrage mehr");
+});
+
+test("Eine abgelehnte Anfrage ordnet niemanden zu", async () => {
+  const lehrer = { name: "Herr Ross", email: `lehrer2_${uniq}@test.de`, password: "Klassenraum!4z" };
+  const reg = await api("POST", "/api/auth/register", { ...lehrer, role: "teacher", school: "Testschule" });
+  const code = reg.body.schoolCode;
+  const lehrerCookies = new Map(jar);
+
+  jar.clear();
+  await api("POST", "/api/auth/register", {
+    name: "Ben Groß", email: `schueler2_${uniq}@test.de`, password: "Zweiterweg!6t", role: "student",
+  });
+  await api("POST", "/api/class/request", { code });
+
+  jar.clear(); for (const [k, v] of lehrerCookies) jar.set(k, v);
+  const liste = await api("GET", "/api/teacher/requests");
+  const nein = await api("POST", `/api/teacher/requests/${liste.body.requests[0].id}`, { approve: false });
+  assert.equal(nein.body.approved, false);
+  const klasse = await api("GET", "/api/teacher/students");
+  assert.equal(klasse.body.students.length, 0, "abgelehnt heißt nicht zugeordnet");
 });
 
 test("Aufräumen", async () => {

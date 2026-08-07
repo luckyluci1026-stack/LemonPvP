@@ -35,7 +35,7 @@ if (existing) {
 const hash = await hashPassword(password);
 const user = await one(
   `INSERT INTO users (role, name, email, password_hash, email_verified, avatar, storage_quota)
-   VALUES ('admin', $1, $2, $3, TRUE, '🛡️', $4) RETURNING id, email`,
+   VALUES ('admin', $1, $2, $3, TRUE, '', $4) RETURNING id, email`,
   [name, email, hash, config.storage.quotaBytes]
 );
 

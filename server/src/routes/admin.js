@@ -137,7 +137,7 @@ export default async function adminRoutes(app) {
     const created = await one(
       `INSERT INTO users (role, name, email, password_hash, email_verified, avatar, storage_quota)
        VALUES ($1, $2, $3, $4, TRUE, $5, $6) RETURNING *`,
-      [role, name.trim(), email.trim(), hash, role === "admin" ? "🛡️" : "🧑‍💻", config.storage.quotaBytes]
+      [role, name.trim(), email.trim(), hash, "", config.storage.quotaBytes]
     );
     request.log.info({ actor: request.user.id, created: created.id, role }, "Konto durch Administrator angelegt");
     return { user: listUser({ ...created, completed_count: 0 }) };

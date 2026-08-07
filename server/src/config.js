@@ -121,10 +121,34 @@ export const config = {
     requestTimeoutMs: int("AI_TIMEOUT_MS", 60000),
     // Anfragen pro Nutzer und Minute
     perUserPerMinute: int("AI_PER_USER_PER_MINUTE", 20),
+
+    /* --------------- Antwortprüfung: Stufen und Kostenbremse --------------
+       Die Prüfung offener Aufgaben läuft standardmäßig über das gute (teurere)
+       Modell. Wer auffällig viel prüfen lässt, landet automatisch beim
+       günstigen Anbieter — und wer es maßlos übertreibt, bekommt nur noch die
+       lokale Analyse. Damit bleibt die Monatsrechnung planbar, ohne dass
+       normale Lernende etwas davon merken.
+
+       Richtwert: 60 Prüfungen/Tag entsprechen bei ~1.500 Token pro Aufruf
+       grob 10-15 € im Monat für einen aktiven Einzelnutzer. */
+    verify: {
+      enabled: bool("AI_VERIFY_ENABLED", true),
+      // Welcher Anbieter zuerst gefragt wird …
+      primaryProvider: process.env.AI_VERIFY_PRIMARY || "anthropic",
+      // … und wohin es geht, wenn jemand das Kontingent ausreizt.
+      fallbackProvider: process.env.AI_VERIFY_FALLBACK || "gemini",
+      // Prüfungen pro Nutzer und Tag mit dem guten Modell
+      primaryPerDay: int("AI_VERIFY_PRIMARY_PER_DAY", 60),
+      // Danach nur noch das günstige Modell — bis zu dieser Grenze
+      maxPerDay: int("AI_VERIFY_MAX_PER_DAY", 250),
+      // Notbremse über alle Nutzer hinweg
+      globalPerDay: int("AI_VERIFY_GLOBAL_PER_DAY", 5000),
+      timeoutMs: int("AI_VERIFY_TIMEOUT_MS", 12000),
+    },
   },
 
   storage: {
-    quotaBytes: int("STORAGE_QUOTA_BYTES", 2.5 * 1024 * 1024 * 1024),
+    quotaBytes: int("STORAGE_QUOTA_BYTES", 1 * 1024 * 1024 * 1024),
     maxProjectBytes: int("MAX_PROJECT_BYTES", 5 * 1024 * 1024),
   },
 };

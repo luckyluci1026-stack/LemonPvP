@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS users (
   last_active         DATE,
   current_course      TEXT,
 
-  avatar              TEXT NOT NULL DEFAULT '🧑‍💻',
+  avatar              TEXT NOT NULL DEFAULT '',
   avatar_config       JSONB,
 
   storage_used        BIGINT NOT NULL DEFAULT 0 CHECK (storage_used >= 0),
@@ -159,6 +159,22 @@ CREATE TABLE IF NOT EXISTS custom_lessons (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS custom_lessons_teacher_idx ON custom_lessons (teacher_id, updated_at DESC);
+
+-- Anfragen, einer Klasse beizutreten. Der Lehrer-Code allein verbindet nicht
+-- mehr automatisch: Wer ihn nachträglich eingibt, stellt eine Anfrage, die
+-- die Lehrkraft bestätigen muss. So landet niemand ungefragt in einer Klasse.
+CREATE TABLE IF NOT EXISTS class_requests (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  teacher_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status      TEXT NOT NULL DEFAULT 'pending',   -- pending | approved | rejected
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  decided_at  TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS class_requests_teacher_idx ON class_requests (teacher_id, status);
+-- Höchstens eine offene Anfrage je Schülerin/Schüler
+CREATE UNIQUE INDEX IF NOT EXISTS class_requests_open_idx
+  ON class_requests (student_id) WHERE status = 'pending';
 
 -- Spalten, die erst nachträglich hinzugekommen sind (PostgreSQL).
 -- Für SQLite erledigt das db-sqlite.js über LATER_COLUMNS.

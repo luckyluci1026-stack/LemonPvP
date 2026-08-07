@@ -1,7 +1,7 @@
 import { config } from "../config.js";
 import { query } from "../db.js";
 import { requireAuth } from "./auth.js";
-import { generate, aiAvailable, poolStatus, ASSISTANT_SYSTEM_PROMPT } from "../ai.js";
+import { generate, aiAvailable, poolStatus, providerReady, ASSISTANT_SYSTEM_PROMPT, VERIFY_SYSTEM_PROMPT } from "../ai.js";
 
 async function record(request, kind, result, ok, statusCode) {
   try {
@@ -15,11 +15,42 @@ async function record(request, kind, result, ok, statusCode) {
   }
 }
 
+/**
+ * Liest das Urteil aus der Modellantwort. Modelle packen JSON gerne in einen
+ * Codeblock oder schreiben einen Satz davor — beides wird toleriert. Was
+ * danach nicht plausibel ist, wird verworfen; dann bleibt es beim lokalen
+ * Ergebnis, statt eine erfundene Bewertung anzuzeigen.
+ */
+export function parseVerdict(text) {
+  const raw = String(text || "");
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  let data;
+  try { data = JSON.parse(match[0]); } catch (e) { return null; }
+  if (!data || typeof data !== "object") return null;
+
+  const score = Number(data.score);
+  if (!Number.isFinite(score)) return null;
+  const feedback = String(data.feedback || "").trim();
+  if (!feedback) return null;
+
+  return {
+    score: Math.max(0, Math.min(100, Math.round(score))),
+    correct: data.correct === true,
+    feedback: feedback.slice(0, 600),
+    hint: String(data.hint || "").trim().slice(0, 400),
+  };
+}
+
 export default async function aiRoutes(app) {
   /** Meldet, ob serverseitig eine KI bereitsteht. */
   app.get("/api/ai/status", async () => ({
     available: aiAvailable(),
     provider: config.ai.provider,
+    // Steht die Zweitmeinung für offene Aufgaben bereit? Der Browser fragt
+    // sonst gar nicht erst an.
+    verify: config.ai.verify.enabled
+      && (providerReady(config.ai.verify.primaryProvider) || providerReady(config.ai.verify.fallbackProvider)),
   }));
 
 
@@ -58,6 +89,89 @@ export default async function aiRoutes(app) {
     }
     await record(request, "assist", result, true, 200);
     return { reply: String(result.text).slice(0, 8000), provider: result.provider };
+  });
+
+  /* ------------------ Zweitmeinung zu einer Lösung ------------------------
+     Der Browser hat bereits lokal bewertet und schickt sein Ergebnis mit. Die
+     KI schaut nur noch einmal drüber — und darf das lokale Urteil nur in
+     engen Grenzen verschieben. Antwortet sie nicht oder unsinnig, bleibt es
+     beim lokalen Ergebnis; die Lektion läuft also auch ohne KI weiter.
+     --------------------------------------------------------------------- */
+  app.post("/api/ai/verify", {
+    preHandler: [requireAuth],
+    config: { rateLimit: { max: config.ai.perUserPerMinute, timeWindow: "1 minute" } },
+  }, async (request, reply) => {
+    const v = config.ai.verify;
+    if (!v.enabled) return reply.code(503).send({ error: "Die Antwortprüfung per KI ist abgeschaltet.", tier: "local" });
+
+    const { question = "", answer = "", language = "", concepts = [], type = "", local = {} } = request.body || {};
+    if (!String(answer).trim()) return reply.code(400).send({ error: "answer fehlt." });
+
+    /* Stufenwahl. Gezählt wird über die vorhandene Nutzungstabelle, damit es
+       keine zweite Buchführung braucht. */
+    let mine = 0, all = 0;
+    try {
+      const counts = await query(
+        // Bewusst ohne FILTER-Klausel — so läuft die Abfrage auf PostgreSQL
+        // und im schlanken SQLite-Modus gleichermaßen.
+        `SELECT
+           SUM(CASE WHEN user_id = $1 THEN 1 ELSE 0 END) AS mine,
+           COUNT(*)                                      AS all_users
+         FROM ai_usage
+         WHERE kind = 'verify' AND ok = TRUE AND created_at > now() - INTERVAL '1 day'`,
+        [request.user.id]
+      );
+      mine = Number(counts.rows[0]?.mine || 0);
+      all = Number(counts.rows[0]?.all_users || 0);
+    } catch (e) {
+      request.log.warn({ err: e }, "KI-Kontingent konnte nicht gelesen werden");
+    }
+
+    if (mine >= v.maxPerDay || all >= v.globalPerDay) {
+      // Wer das ausreizt, prüft nicht mehr, sondern probiert etwas aus.
+      return reply.code(429).send({ error: "Tageskontingent für die KI-Prüfung erreicht.", tier: "local" });
+    }
+
+    // Bis zum Kontingent das gute Modell, danach automatisch das günstige.
+    const wanted = mine < v.primaryPerDay ? v.primaryProvider : v.fallbackProvider;
+    const provider = providerReady(wanted) ? wanted
+      : providerReady(v.fallbackProvider) ? v.fallbackProvider
+      : providerReady(config.ai.provider) ? config.ai.provider : null;
+    if (!provider) return reply.code(503).send({ error: "Serverseitig ist keine KI konfiguriert.", tier: "local" });
+
+    const expected = (Array.isArray(concepts) ? concepts : [])
+      .map((c) => (Array.isArray(c) ? c[0] : c)).filter(Boolean).slice(0, 12).join(", ");
+    const userPrompt = [
+      `Aufgabentyp: ${String(type).slice(0, 40) || "offen"}`,
+      `Sprache: ${String(language).slice(0, 30) || "unbekannt"}`,
+      `Aufgabenstellung: ${String(question).slice(0, 1200)}`,
+      expected ? `Erwartete Bausteine: ${expected}` : "",
+      `Vorbewertung der lokalen Analyse: ${Number(local.score) || 0}/100, ${local.correct ? "bestanden" : "nicht bestanden"}`,
+      "",
+      "--- Eingereichte Antwort ---",
+      String(answer).slice(0, 4000),
+    ].filter(Boolean).join("\n");
+
+    let result;
+    try {
+      result = await generate({ system: VERIFY_SYSTEM_PROMPT, user: userPrompt, maxTokens: 320, provider });
+    } catch (e) {
+      await record(request, "verify", null, false, e.status);
+      return reply.code(502).send({ error: "Die KI ist momentan nicht erreichbar.", tier: "local" });
+    }
+
+    const parsed = parseVerdict(result.text);
+    if (!parsed) {
+      await record(request, "verify", result, false, 502);
+      return reply.code(502).send({ error: "Unerwartete Antwort der KI.", tier: "local" });
+    }
+    await record(request, "verify", result, true, 200);
+    return {
+      ...parsed,
+      provider,
+      tier: provider === v.primaryProvider ? "primary" : "fallback",
+      remaining: Math.max(0, v.maxPerDay - mine - 1),
+    };
   });
 
   /* --------------------- Zustand des Key-Pools (Admin) -------------------- */

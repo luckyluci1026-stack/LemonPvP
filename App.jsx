@@ -88,6 +88,7 @@ const VolumeOff = FaIcon("volume-xmark");
 const FilePlus = FaIcon("file-circle-plus");
 const FolderTree = FaIcon("folder-tree");
 const FileCode = FaIcon("file-code");
+const ImagePlus = FaIcon("image");
 const Save = FaIcon("floppy-disk");
 const Expand = FaIcon("expand");
 const Compress = FaIcon("compress");
@@ -818,87 +819,87 @@ const COURSE_EXTENSIONS = {
 };
 
 const COURSES = [
-  buildCourse("html", "HTML", "🌐", "#E34C26", "Die Sprache des Webs — von der ersten Seite bis Accessibility.", [
+  buildCourse("html", "HTML", "html", "#E34C26", "Die Sprache des Webs — von der ersten Seite bis Accessibility.", [
     { title: "Einstieg", level: "beginner", lessons: ["Was ist HTML? Dein erstes Dokument", "Überschriften, Absätze & Text-Formatierung", "Links & Bilder", "Listen (ul, ol, li)"] },
     { title: "Erste Struktur", level: "intermediate", lessons: ["Tabellen erstellen", "Formulare & Inputs", "Semantisches HTML", "HTML5 Multimedia (video, audio)"] },
     { title: "Erste Vertiefung", level: "advanced", lessons: ["Meta-Tags & SEO-Basics", "Accessibility (ARIA, Alt-Texte)"] },
   ]),
-  buildCourse("css", "CSS", "🎨", "#264DE4", "Style deinen Code — Layout, Animationen & modernes CSS.", [
+  buildCourse("css", "CSS", "css", "#264DE4", "Style deinen Code — Layout, Animationen & modernes CSS.", [
     { title: "Einstieg", level: "beginner", lessons: ["CSS einbinden, Selektoren & Eigenschaften", "Farben, Hintergründe & Schriften", "Das Box-Model", "Display & Visibility"] },
     { title: "Erstes Layout", level: "intermediate", lessons: ["Flexbox — Grundlagen", "Flexbox — Advanced", "CSS Grid", "Responsive Design & Media Queries"] },
     { title: "Erste Vertiefung", level: "advanced", lessons: ["CSS Animationen & Transitions", "CSS Variablen & Custom Properties", "Pseudo-Klassen & Pseudo-Elemente", "Modern CSS (Nesting, Container Queries)"] },
   ]),
-  buildCourse("javascript", "JavaScript", "⚡", "#F7C948", "Bring Leben ins Web — von Variablen bis Async/Await.", [
+  buildCourse("javascript", "JavaScript", "javascript", "#F7C948", "Bring Leben ins Web — von Variablen bis Async/Await.", [
     { title: "Einstieg", level: "beginner", lessons: ["Variablen & Datentypen", "Datentypen & Operatoren", "Bedingungen (if/else, switch)", "Schleifen (for, while, forEach)", "Funktionen"] },
     { title: "Erste Vertiefung", level: "intermediate", lessons: ["Arrays & Array-Methoden", "Objekte & JSON", "DOM-Manipulation", "Events & Event-Listener", "Fehlerbehandlung (try/catch)"] },
     { title: "Erste Praxis", level: "advanced", lessons: ["ES6+ Features", "Promises & Async/Await", "Fetch API & REST-Requests", "Klassen & OOP in JS", "Module (import/export)"] },
     { title: "Erste Kür", level: "expert", lessons: ["Closures & Scope", "Prototypen & Vererbung", "Performance-Optimierung"] },
   ]),
-  buildCourse("java", "Java", "☕", "#B07219", "Objektorientierung meistern — von Hello World bis Spring.", [
+  buildCourse("java", "Java", "java", "#B07219", "Objektorientierung meistern — von Hello World bis Spring.", [
     { title: "Einstieg", level: "beginner", lessons: ['Java Setup & "Hello World"', "Variablen & primitive Datentypen", "Operatoren & Ausdrücke", "Bedingungen & Schleifen", "Arrays anlegen und durchlaufen"] },
     { title: "Erste Objekte", level: "intermediate", lessons: ["Klassen & Objekte", "Konstruktoren & this", "Vererbung & super", "Interfaces & abstrakte Klassen", "Packages & Import"] },
     { title: "Erste Praxis", level: "advanced", lessons: ["Collections (ArrayList, HashMap)", "Generics: typsichere Container", "Exception Handling", "File I/O", "Lambda & Streams"] },
     { title: "Erste Kür", level: "expert", lessons: ["Multithreading & Concurrency", "Design Patterns", "Spring Framework Einführung"] },
   ]),
-  buildCourse("python", "Python", "🐍", "#3572A5", "Der einfache Einstieg — bis hin zu Data Science.", [
+  buildCourse("python", "Python", "python", "#3572A5", "Der einfache Einstieg — bis hin zu Data Science.", [
     { title: "Einstieg", level: "beginner", lessons: ["Python installieren & Hello World", "Variablen & Datentypen", "Strings & String-Methoden", "Listen, Tupel, Sets", "Dictionaries"] },
     { title: "Erste Vertiefung", level: "intermediate", lessons: ["Funktionen & Parameter", "Module & pip", "Datei-Operationen", "OOP in Python", "List Comprehensions"] },
     { title: "Erste Praxis", level: "advanced", lessons: ["Decorators: Funktionen umhüllen", "Generators & Iterators", "Fehlerbehandlung", "Virtual Environments", "APIs mit requests"] },
     { title: "Erste Kür", level: "expert", lessons: ["Async Python (asyncio)", "Testing mit pytest", "Data Science Einführung (numpy/pandas)"] },
   ]),
-  buildCourse("sql", "SQL", "🗄️", "#E38C00", "Datenbanken verstehen — Abfragen, Joins & Performance.", [
+  buildCourse("sql", "SQL", "sql", "#E38C00", "Datenbanken verstehen — Abfragen, Joins & Performance.", [
     { title: "Einstieg", level: "beginner", lessons: ["Was sind Datenbanken?", "SELECT & FROM", "WHERE & Bedingungen", "ORDER BY & LIMIT"] },
     { title: "Erste Vertiefung", level: "intermediate", lessons: ["INSERT, UPDATE, DELETE", "CREATE TABLE & Datentypen", "JOINs (INNER, LEFT, RIGHT)", "Aggregat-Funktionen", "GROUP BY & HAVING"] },
     { title: "Erste Praxis", level: "advanced", lessons: ["Subqueries: Abfragen in Abfragen", "Indizes und ihre Wirkung auf die Laufzeit", "Transaktionen: alles oder nichts", "Views & Stored Procedures"] },
   ]),
-  buildCourse("cpp", "C++", "⚙️", "#00599C", "Nah am Metal — Pointer, Templates & Systemnähe.", [
+  buildCourse("cpp", "C++", "cpp", "#00599C", "Nah am Metal — Pointer, Templates & Systemnähe.", [
     { title: "Einstieg", level: "beginner", lessons: ["C++ Grundstruktur & Kompilierung", "Variablen, Typen, Ein/Ausgabe", "Operatoren & Ausdrücke", "Kontrollstrukturen"] },
     { title: "Erste Vertiefung", level: "intermediate", lessons: ["Funktionen & Überladen", "Arrays & Strings", "Pointer & Referenzen", "Klassen & OOP", "Vererbung & Polymorphismus"] },
     { title: "Erste Praxis", level: "advanced", lessons: ["Templates: Code für viele Typen", "STL (vector, map, algorithm)", "Speicherverwaltung (new/delete)", "Smart Pointer"] },
     { title: "Erste Kür", level: "expert", lessons: ["Move Semantics & Rvalue", "Multithreading (std::thread)", "Systemnahe Programmierung"] },
   ]),
-  buildCourse("c", "C", "🔩", "#5C6BC0", "Die Mutter aller Sprachen — Speicher, Pointer & Systemnähe.", [
+  buildCourse("c", "C", "c", "#5C6BC0", "Die Mutter aller Sprachen — Speicher, Pointer & Systemnähe.", [
     { title: "Einstieg", level: "beginner", lessons: ["Aufbau eines C-Programms & Kompilieren", "Variablen & Datentypen", "Operatoren & Ausdrücke", "Kontrollstrukturen", "Funktionen"] },
     { title: "Speicher & Daten", level: "intermediate", lessons: ["Arrays anlegen und durchlaufen", "Zeiger (Pointer) verstehen", "Strings in C", "Structs & Unions", "Dynamische Speicherverwaltung (malloc/free)"] },
     { title: "Erste Vertiefung", level: "advanced", lessons: ["Datei-Ein-/Ausgabe", "Präprozessor & Makros", "Modularisierung & Header", "Verkettete Listen"] },
     { title: "Erste Kür", level: "expert", lessons: ["Bit-Operationen", "Funktionszeiger", "Systemnahe Programmierung & Syscalls"] },
   ]),
-  buildCourse("typescript", "TypeScript", "🛡️", "#3178C6", "JavaScript mit Typsicherheit — weniger Bugs, besserer Code.", [
+  buildCourse("typescript", "TypeScript", "typescript", "#3178C6", "JavaScript mit Typsicherheit — weniger Bugs, besserer Code.", [
     { title: "Einstieg", level: "beginner", lessons: ["Was ist TypeScript? Setup & tsc", "Basistypen & Type Annotations", "Arrays, Tupel & Enums", "Funktionen typisieren"] },
     { title: "Typsystem", level: "intermediate", lessons: ["Interfaces & Type Aliases", "Union & Intersection Types", "Optional & Readonly", "Type Narrowing & Guards", "Klassen in TypeScript"] },
     { title: "Erste Vertiefung", level: "advanced", lessons: ["Generics: typsichere Container", "Utility Types (Partial, Pick, Omit)", "Module & Namespaces", "Typisierung von APIs"] },
     { title: "Erste Kür", level: "expert", lessons: ["Conditional Types", "Mapped Types & Template Literal Types", "Declaration Files (.d.ts)"] },
   ]),
-  buildCourse("react", "React", "⚛️", "#61DAFB", "Moderne Benutzeroberflächen mit Komponenten & Hooks.", [
+  buildCourse("react", "React", "react", "#61DAFB", "Moderne Benutzeroberflächen mit Komponenten & Hooks.", [
     { title: "Einstieg", level: "beginner", lessons: ["Was ist React? Erste Komponente", "JSX verstehen", "Props & Komponenten-Komposition", "State mit useState", "Events behandeln"] },
     { title: "Hooks & Logik", level: "intermediate", lessons: ["Listen & Keys", "Bedingtes Rendering", "useEffect & Seiteneffekte", "Formulare & kontrollierte Inputs", "Eigene Hooks schreiben"] },
     { title: "Erste Vertiefung", level: "advanced", lessons: ["Context API: Daten ohne Prop-Drilling", "useReducer & komplexer State", "Performance (memo, useMemo, useCallback)", "Daten laden & Fehlerbehandlung"] },
     { title: "Erste Kür", level: "expert", lessons: ["React Router & Navigation", "Testing mit React Testing Library", "Patterns & Architektur größerer Apps"] },
   ]),
-  buildCourse("vue", "Vue", "💚", "#42B883", "Das progressive Framework — sanfter Einstieg, volle Power.", [
+  buildCourse("vue", "Vue", "vue", "#42B883", "Das progressive Framework — sanfter Einstieg, volle Power.", [
     { title: "Einstieg", level: "beginner", lessons: ["Vue einbinden & erste App", "Template-Syntax & Interpolation", "Direktiven (v-if, v-for, v-bind)", "Events mit v-on", "Reaktivität mit ref & reactive"] },
     { title: "Komponenten", level: "intermediate", lessons: ["Komponenten & Props", "Emits & Kommunikation", "Slots: Inhalte in Komponenten einsetzen", "Computed & Watch", "Formulare mit v-model"] },
     { title: "Erste Vertiefung", level: "advanced", lessons: ["Composition API vertiefen", "Lifecycle Hooks", "Vue Router", "State Management mit Pinia"] },
   ]),
-  buildCourse("go", "Go", "🐹", "#00ADD8", "Einfach, schnell, nebenläufig — die Sprache der Cloud.", [
+  buildCourse("go", "Go", "go", "#00ADD8", "Einfach, schnell, nebenläufig — die Sprache der Cloud.", [
     { title: "Einstieg", level: "beginner", lessons: ["Go installieren & Hello World", "Variablen, Typen & Konstanten", "Kontrollstrukturen", "Funktionen & Mehrfachrückgabe", "Arrays, Slices & Maps"] },
     { title: "Strukturen", level: "intermediate", lessons: ["Structs & Methoden", "Interfaces", "Fehlerbehandlung mit error", "Packages & Module", "Zeiger in Go"] },
     { title: "Nebenläufigkeit", level: "advanced", lessons: ["Goroutines: nebenläufig ohne Threads", "Channels: Daten zwischen Goroutines", "select & sync", "Testing in Go"] },
     { title: "Erste Kür", level: "expert", lessons: ["HTTP-Server bauen", "Context & Timeouts", "Performance & Profiling"] },
   ]),
-  buildCourse("kotlin", "Kotlin", "🟣", "#7F52FF", "Modernes JVM — prägnant, sicher, Android-first.", [
+  buildCourse("kotlin", "Kotlin", "kotlin", "#7F52FF", "Modernes JVM — prägnant, sicher, Android-first.", [
     { title: "Einstieg", level: "beginner", lessons: ["Kotlin Setup & Hello World", "val, var & Datentypen", "Null-Sicherheit verstehen", "Kontrollfluss & when", "Funktionen & Default-Parameter"] },
     { title: "OOP & Funktional", level: "intermediate", lessons: ["Klassen & Konstruktoren", "Data Classes", "Vererbung & Interfaces", "Collections & Lambdas", "Extension Functions"] },
     { title: "Erste Vertiefung", level: "advanced", lessons: ["Sealed Classes & Pattern Matching", "Generics: typsichere Container", "Coroutines — Grundlagen", "Scope Functions (let, apply, run)"] },
     { title: "Erste Kür", level: "expert", lessons: ["Coroutines & Flow vertiefen", "DSLs bauen", "Android-Grundlagen mit Kotlin"] },
   ]),
-  buildCourse("rust", "Rust", "🦀", "#DEA584", "Sicher, schnell, ohne Garbage Collector.", [
+  buildCourse("rust", "Rust", "rust", "#DEA584", "Sicher, schnell, ohne Garbage Collector.", [
     { title: "Einstieg", level: "beginner", lessons: ["Rust installieren & Cargo", "Variablen & Mutability", "Datentypen & Tupel", "Kontrollfluss", "Funktionen"] },
     { title: "Ownership", level: "intermediate", lessons: ["Ownership verstehen", "Borrowing und Referenzen verstehen", "Slices: Ausschnitte ohne Kopie", "Structs & Methoden", "Enums & Pattern Matching"] },
     { title: "Erste Vertiefung", level: "advanced", lessons: ["Fehlerbehandlung mit Result & Option", "Generics & Traits", "Lifetimes: wie lange Referenzen gelten", "Collections (Vec, HashMap)", "Module & Crates"] },
     { title: "Erste Kür", level: "expert", lessons: ["Smart Pointer (Box, Rc, RefCell)", "Nebenläufigkeit & Threads", "Unsafe Rust & FFI"] },
   ]),
-  buildCourse("php", "PHP", "🐘", "#777BB4", "Das Rückgrat des Webs — Server-Logik & Datenbanken.", [
+  buildCourse("php", "PHP", "php", "#777BB4", "Das Rückgrat des Webs — Server-Logik & Datenbanken.", [
     { title: "Einstieg", level: "beginner", lessons: ["PHP einrichten & erste Ausgabe", "Variablen & Datentypen", "Operatoren & Strings", "Kontrollstrukturen", "Funktionen"] },
     { title: "Web & Daten", level: "intermediate", lessons: ["Arrays & Array-Funktionen", "Formulare verarbeiten (GET/POST)", "Sessions & Cookies", "Dateien lesen & schreiben", "Fehlerbehandlung"] },
     { title: "Erste Vertiefung", level: "advanced", lessons: ["OOP in PHP", "Datenbanken mit PDO", "Sicherheit (SQL-Injection, XSS)", "Composer & Autoloading"] },
@@ -918,10 +919,11 @@ function findLessonMeta(lessonId) {
 }
 
 /* ------------------------------ Konten --------------------------------- */
-// 2,5 GB simuliertes Speicherkontingent pro Account für Playground-Projekte.
+// Freies Speicherkontingent pro Account für Playground-Projekte.
 // Echtes localStorage fasst real nur wenige MB — dies ist eine UX-Anzeige/Obergrenze,
 // keine tatsächliche Festplatten-Reservierung (dafür bräuchte es einen Server).
-const STORAGE_QUOTA_BYTES = 2.5 * 1024 * 1024 * 1024;
+const STORAGE_QUOTA_BYTES = 1 * 1024 * 1024 * 1024;
+const STORAGE_QUOTA_LABEL = "1 GB";
 
 // Es gibt keine vorgefertigten Konten. Wer die Plattform nutzt, legt sich ein
 // eigenes an — in der Rangliste und in der Verwaltung tauchen ausschließlich
@@ -941,7 +943,7 @@ let name = "Alice";        // Kann später geändert werden
 const alter = 17;          // Kann NICHT geändert werden
 \`\`\`
 
-> 💡 **Faustregel:** Nutze immer \`const\` — außer du weißt, dass der Wert sich ändern soll.
+> [tipp] **Faustregel:** Nutze immer \`const\` — außer du weißt, dass der Wert sich ändern soll.
 
 ## Datentypen
 
@@ -1027,7 +1029,7 @@ const BASE_LESSONS = {
 </html>
 \`\`\`
 
-> 💡 Jedes HTML-Element besteht aus einem **Start-Tag** \`<p>\`, Inhalt und einem **End-Tag** \`</p>\`.
+> [tipp] Jedes HTML-Element besteht aus einem **Start-Tag** \`<p>\`, Inhalt und einem **End-Tag** \`</p>\`.
 
 ## Die wichtigsten Bereiche
 
@@ -1073,7 +1075,7 @@ const BASE_LESSONS = {
 const EXTRA_LESSONS = {
   "cpp_1_1": {
     "estimatedMinutes": 15,
-    "theory": "# C++ Grundstruktur & Kompilierung\n\nC++ ist eine **kompilierte** Sprache: Du schreibst Quellcode, ein Compiler übersetzt ihn in Maschinencode, und erst danach läuft das Programm. Das unterscheidet C++ von Sprachen wie Python, die direkt interpretiert werden.\n\n## Das kleinste lauffähige Programm\n\nJedes C++-Programm braucht eine Funktion namens `main`. Sie ist der **Einstiegspunkt** – hier startet die Ausführung.\n\n```cpp\n#include <iostream>\n\nint main() {\n    std::cout << \"Hallo Welt!\" << std::endl;\n    return 0;\n}\n```\n\n## Die Bestandteile\n\n| Zeile | Bedeutung |\n|-------|-----------|\n| `#include <iostream>` | bindet die Bibliothek für Ein-/Ausgabe ein |\n| `int main()` | die Hauptfunktion, gibt einen `int` zurück |\n| `std::cout` | gibt Text auf der Konsole aus |\n| `return 0;` | meldet dem Betriebssystem: alles ok |\n\nDie Zeile `#include` ist eine **Präprozessor-Direktive**. Sie wird vor dem eigentlichen Kompilieren verarbeitet und macht Funktionen wie `std::cout` verfügbar.\n\n## Kompilieren mit g++\n\nAuf der Kommandozeile übersetzt du den Code so:\n\n```cpp\n// im Terminal:\n// g++ hallo.cpp -o hallo\n// ./hallo\n```\n\nMit `-o hallo` legst du den Namen der ausführbaren Datei fest. Ohne `-o` heißt sie standardmäßig `a.out`.\n\n> 💡 Ein `return 0;` am Ende von `main` signalisiert Erfolg. Ein Wert ungleich 0 bedeutet üblicherweise, dass ein Fehler aufgetreten ist.",
+    "theory": "# C++ Grundstruktur & Kompilierung\n\nC++ ist eine **kompilierte** Sprache: Du schreibst Quellcode, ein Compiler übersetzt ihn in Maschinencode, und erst danach läuft das Programm. Das unterscheidet C++ von Sprachen wie Python, die direkt interpretiert werden.\n\n## Das kleinste lauffähige Programm\n\nJedes C++-Programm braucht eine Funktion namens `main`. Sie ist der **Einstiegspunkt** – hier startet die Ausführung.\n\n```cpp\n#include <iostream>\n\nint main() {\n    std::cout << \"Hallo Welt!\" << std::endl;\n    return 0;\n}\n```\n\n## Die Bestandteile\n\n| Zeile | Bedeutung |\n|-------|-----------|\n| `#include <iostream>` | bindet die Bibliothek für Ein-/Ausgabe ein |\n| `int main()` | die Hauptfunktion, gibt einen `int` zurück |\n| `std::cout` | gibt Text auf der Konsole aus |\n| `return 0;` | meldet dem Betriebssystem: alles ok |\n\nDie Zeile `#include` ist eine **Präprozessor-Direktive**. Sie wird vor dem eigentlichen Kompilieren verarbeitet und macht Funktionen wie `std::cout` verfügbar.\n\n## Kompilieren mit g++\n\nAuf der Kommandozeile übersetzt du den Code so:\n\n```cpp\n// im Terminal:\n// g++ hallo.cpp -o hallo\n// ./hallo\n```\n\nMit `-o hallo` legst du den Namen der ausführbaren Datei fest. Ohne `-o` heißt sie standardmäßig `a.out`.\n\n> [tipp] Ein `return 0;` am Ende von `main` signalisiert Erfolg. Ein Wert ungleich 0 bedeutet üblicherweise, dass ein Fehler aufgetreten ist.",
     "tasks": [
       {
         "id": "c11_1",
@@ -1145,7 +1147,7 @@ const EXTRA_LESSONS = {
   },
   "cpp_1_2": {
     "estimatedMinutes": 15,
-    "theory": "# Variablen, Typen, Ein- und Ausgabe\n\nEine **Variable** ist ein benannter Speicherplatz für einen Wert. In C++ musst du beim Anlegen immer den **Datentyp** angeben – die Sprache ist *statisch typisiert*.\n\n## Grundlegende Datentypen\n\n| Typ | Beispiel | Beschreibung |\n|-----|----------|--------------|\n| `int` | `int alter = 25;` | Ganzzahlen |\n| `double` | `double preis = 3.99;` | Kommazahlen |\n| `char` | `char buchstabe = 'A';` | einzelnes Zeichen |\n| `bool` | `bool aktiv = true;` | Wahrheitswert |\n| `std::string` | `std::string name = \"Lea\";` | Zeichenkette |\n\nFür `std::string` brauchst du zusätzlich `#include <string>`.\n\n## Ausgabe mit std::cout\n\nMit dem Operator `<<` schiebst du Werte in den Ausgabestrom:\n\n```cpp\n#include <iostream>\n#include <string>\n\nint main() {\n    std::string name = \"Lea\";\n    int alter = 25;\n    std::cout << \"Name: \" << name << \", Alter: \" << alter << std::endl;\n    return 0;\n}\n```\n\n## Eingabe mit std::cin\n\nMit `std::cin` und dem Operator `>>` liest du eine Eingabe vom Benutzer in eine Variable:\n\n```cpp\nint zahl;\nstd::cout << \"Gib eine Zahl ein: \";\nstd::cin >> zahl;\n```\n\nBeachte die **Richtung der Pfeile**: Bei der Ausgabe zeigen sie zu `cout` hin (`<<`), bei der Eingabe von `cin` weg in die Variable (`>>`).\n\n> 💡 `std::endl` fügt einen Zeilenumbruch ein und leert zusätzlich den Ausgabepuffer. Für reinen Umbruch ist auch `\"\\n\"` möglich und oft schneller.",
+    "theory": "# Variablen, Typen, Ein- und Ausgabe\n\nEine **Variable** ist ein benannter Speicherplatz für einen Wert. In C++ musst du beim Anlegen immer den **Datentyp** angeben – die Sprache ist *statisch typisiert*.\n\n## Grundlegende Datentypen\n\n| Typ | Beispiel | Beschreibung |\n|-----|----------|--------------|\n| `int` | `int alter = 25;` | Ganzzahlen |\n| `double` | `double preis = 3.99;` | Kommazahlen |\n| `char` | `char buchstabe = 'A';` | einzelnes Zeichen |\n| `bool` | `bool aktiv = true;` | Wahrheitswert |\n| `std::string` | `std::string name = \"Lea\";` | Zeichenkette |\n\nFür `std::string` brauchst du zusätzlich `#include <string>`.\n\n## Ausgabe mit std::cout\n\nMit dem Operator `<<` schiebst du Werte in den Ausgabestrom:\n\n```cpp\n#include <iostream>\n#include <string>\n\nint main() {\n    std::string name = \"Lea\";\n    int alter = 25;\n    std::cout << \"Name: \" << name << \", Alter: \" << alter << std::endl;\n    return 0;\n}\n```\n\n## Eingabe mit std::cin\n\nMit `std::cin` und dem Operator `>>` liest du eine Eingabe vom Benutzer in eine Variable:\n\n```cpp\nint zahl;\nstd::cout << \"Gib eine Zahl ein: \";\nstd::cin >> zahl;\n```\n\nBeachte die **Richtung der Pfeile**: Bei der Ausgabe zeigen sie zu `cout` hin (`<<`), bei der Eingabe von `cin` weg in die Variable (`>>`).\n\n> [tipp] `std::endl` fügt einen Zeilenumbruch ein und leert zusätzlich den Ausgabepuffer. Für reinen Umbruch ist auch `\"\\n\"` möglich und oft schneller.",
     "tasks": [
       {
         "id": "c12_1",
@@ -1212,7 +1214,7 @@ const EXTRA_LESSONS = {
   },
   "cpp_1_3": {
     "estimatedMinutes": 15,
-    "theory": "# Operatoren & Ausdrücke\n\nEin **Ausdruck** kombiniert Werte und Variablen mit **Operatoren** zu einem neuen Wert. C++ kennt viele Kategorien von Operatoren.\n\n## Arithmetische Operatoren\n\n| Operator | Bedeutung | Beispiel | Ergebnis |\n|----------|-----------|----------|----------|\n| `+` | Addition | `3 + 4` | `7` |\n| `-` | Subtraktion | `5 - 2` | `3` |\n| `*` | Multiplikation | `6 * 2` | `12` |\n| `/` | Division | `7 / 2` | `3` |\n| `%` | Rest (Modulo) | `7 % 2` | `1` |\n\nAchtung: Bei zwei `int`-Operanden ist `/` eine **Ganzzahldivision** – `7 / 2` ergibt `3`, nicht `3.5`. Erst wenn ein `double` beteiligt ist (z. B. `7.0 / 2`), erhältst du `3.5`.\n\n## Vergleichs- und logische Operatoren\n\n```cpp\nbool a = (5 > 3);      // true\nbool b = (4 == 4);     // true, == prüft Gleichheit\nbool c = (a && b);     // true, logisches UND\nbool d = (a || false); // true, logisches ODER\nbool e = !a;           // false, Negation\n```\n\nVerwechsle `=` (Zuweisung) nicht mit `==` (Vergleich)!\n\n## Kurzschreibweisen\n\n```cpp\nint x = 10;\nx += 5;   // x = x + 5  -> 15\nx++;      // x = x + 1  -> 16\nx *= 2;   // x = x * 2  -> 32\n```\n\n> 💡 Der Modulo-Operator `%` ist sehr nützlich, um zu prüfen, ob eine Zahl gerade ist: `zahl % 2 == 0` ist genau dann `true`, wenn `zahl` gerade ist.",
+    "theory": "# Operatoren & Ausdrücke\n\nEin **Ausdruck** kombiniert Werte und Variablen mit **Operatoren** zu einem neuen Wert. C++ kennt viele Kategorien von Operatoren.\n\n## Arithmetische Operatoren\n\n| Operator | Bedeutung | Beispiel | Ergebnis |\n|----------|-----------|----------|----------|\n| `+` | Addition | `3 + 4` | `7` |\n| `-` | Subtraktion | `5 - 2` | `3` |\n| `*` | Multiplikation | `6 * 2` | `12` |\n| `/` | Division | `7 / 2` | `3` |\n| `%` | Rest (Modulo) | `7 % 2` | `1` |\n\nAchtung: Bei zwei `int`-Operanden ist `/` eine **Ganzzahldivision** – `7 / 2` ergibt `3`, nicht `3.5`. Erst wenn ein `double` beteiligt ist (z. B. `7.0 / 2`), erhältst du `3.5`.\n\n## Vergleichs- und logische Operatoren\n\n```cpp\nbool a = (5 > 3);      // true\nbool b = (4 == 4);     // true, == prüft Gleichheit\nbool c = (a && b);     // true, logisches UND\nbool d = (a || false); // true, logisches ODER\nbool e = !a;           // false, Negation\n```\n\nVerwechsle `=` (Zuweisung) nicht mit `==` (Vergleich)!\n\n## Kurzschreibweisen\n\n```cpp\nint x = 10;\nx += 5;   // x = x + 5  -> 15\nx++;      // x = x + 1  -> 16\nx *= 2;   // x = x * 2  -> 32\n```\n\n> [tipp] Der Modulo-Operator `%` ist sehr nützlich, um zu prüfen, ob eine Zahl gerade ist: `zahl % 2 == 0` ist genau dann `true`, wenn `zahl` gerade ist.",
     "tasks": [
       {
         "id": "c13_1",
@@ -1284,7 +1286,7 @@ const EXTRA_LESSONS = {
   },
   "cpp_1_4": {
     "estimatedMinutes": 15,
-    "theory": "# Kontrollstrukturen\n\nMit **Kontrollstrukturen** steuerst du, *welcher* Code ausgeführt wird und *wie oft*. Ohne sie liefe ein Programm einfach von oben nach unten durch.\n\n## Verzweigung mit if / else\n\n```cpp\nint alter = 17;\nif (alter >= 18) {\n    std::cout << \"volljaehrig\";\n} else {\n    std::cout << \"minderjaehrig\";\n}\n```\n\nDie **Bedingung** in den runden Klammern muss einen Wahrheitswert ergeben. Ist sie `true`, läuft der `if`-Block, sonst der `else`-Block. Für mehrere Fälle hängst du `else if` an.\n\n## Die while-Schleife\n\nEine `while`-Schleife wiederholt ihren Block, **solange** die Bedingung `true` ist:\n\n```cpp\nint i = 0;\nwhile (i < 3) {\n    std::cout << i << \" \";\n    i++;            // ohne diese Zeile: Endlosschleife!\n}\n// Ausgabe: 0 1 2\n```\n\n## Die for-Schleife\n\nDie `for`-Schleife bündelt Start, Bedingung und Schritt in einer Zeile:\n\n```cpp\nfor (int i = 0; i < 3; i++) {\n    std::cout << i << \" \";\n}\n// Ausgabe: 0 1 2\n```\n\n| Teil | Beispiel | Wann läuft er? |\n|------|----------|----------------|\n| Initialisierung | `int i = 0` | einmal am Anfang |\n| Bedingung | `i < 3` | vor jedem Durchlauf |\n| Schritt | `i++` | nach jedem Durchlauf |\n\n> 💡 Nutze `for`, wenn die Anzahl der Wiederholungen bekannt ist, und `while`, wenn sie von einer Bedingung abhängt, deren Ende du noch nicht kennst.",
+    "theory": "# Kontrollstrukturen\n\nMit **Kontrollstrukturen** steuerst du, *welcher* Code ausgeführt wird und *wie oft*. Ohne sie liefe ein Programm einfach von oben nach unten durch.\n\n## Verzweigung mit if / else\n\n```cpp\nint alter = 17;\nif (alter >= 18) {\n    std::cout << \"volljaehrig\";\n} else {\n    std::cout << \"minderjaehrig\";\n}\n```\n\nDie **Bedingung** in den runden Klammern muss einen Wahrheitswert ergeben. Ist sie `true`, läuft der `if`-Block, sonst der `else`-Block. Für mehrere Fälle hängst du `else if` an.\n\n## Die while-Schleife\n\nEine `while`-Schleife wiederholt ihren Block, **solange** die Bedingung `true` ist:\n\n```cpp\nint i = 0;\nwhile (i < 3) {\n    std::cout << i << \" \";\n    i++;            // ohne diese Zeile: Endlosschleife!\n}\n// Ausgabe: 0 1 2\n```\n\n## Die for-Schleife\n\nDie `for`-Schleife bündelt Start, Bedingung und Schritt in einer Zeile:\n\n```cpp\nfor (int i = 0; i < 3; i++) {\n    std::cout << i << \" \";\n}\n// Ausgabe: 0 1 2\n```\n\n| Teil | Beispiel | Wann läuft er? |\n|------|----------|----------------|\n| Initialisierung | `int i = 0` | einmal am Anfang |\n| Bedingung | `i < 3` | vor jedem Durchlauf |\n| Schritt | `i++` | nach jedem Durchlauf |\n\n> [tipp] Nutze `for`, wenn die Anzahl der Wiederholungen bekannt ist, und `while`, wenn sie von einer Bedingung abhängt, deren Ende du noch nicht kennst.",
     "tasks": [
       {
         "id": "c14_1",
@@ -1351,7 +1353,7 @@ const EXTRA_LESSONS = {
   },
   "css_1_1": {
     "estimatedMinutes": 10,
-    "theory": "# CSS einbinden, Selektoren & Eigenschaften\n\n**CSS** (Cascading Style Sheets) bestimmt, wie HTML-Elemente aussehen. Es gibt drei Wege, CSS einzubinden:\n\n## Die drei Einbindungsarten\n\n| Methode | Wo? | Beispiel |\n| --- | --- | --- |\n| **inline** | direkt am Element | `<p style=\"color: red;\">` |\n| **internal** | im `<style>`-Tag im `<head>` | `<style> p { color: red; } </style>` |\n| **external** | eigene `.css`-Datei | `<link rel=\"stylesheet\" href=\"style.css\">` |\n\nDie **externe** Variante ist meist die beste Wahl: Sie trennt Inhalt (HTML) von Gestaltung (CSS) und lässt sich auf mehreren Seiten wiederverwenden.\n\n## Selektoren & Eigenschaften\n\nEine CSS-Regel besteht aus einem **Selektor** und einem **Deklarationsblock** mit `Eigenschaft: Wert;`-Paaren.\n\n```css\n/* Element-Selektor: alle <p> */\np {\n  color: navy;\n  font-size: 16px;\n}\n\n/* Klassen-Selektor: alle Elemente mit class=\"hinweis\" */\n.hinweis {\n  background-color: yellow;\n}\n\n/* ID-Selektor: das Element mit id=\"header\" */\n#header {\n  text-align: center;\n}\n```\n\n- **Element-Selektor**: `p`, `h1`, `div` – wählt nach Tag-Name.\n- **Klassen-Selektor**: beginnt mit `.` – wiederverwendbar, mehrfach pro Seite.\n- **ID-Selektor**: beginnt mit `#` – sollte **nur einmal** pro Seite vorkommen.\n\n> 💡 Eine `class` darfst du beliebig oft verwenden, eine `id` muss eindeutig sein. Klassen sind im Alltag deutlich häufiger.",
+    "theory": "# CSS einbinden, Selektoren & Eigenschaften\n\n**CSS** (Cascading Style Sheets) bestimmt, wie HTML-Elemente aussehen. Es gibt drei Wege, CSS einzubinden:\n\n## Die drei Einbindungsarten\n\n| Methode | Wo? | Beispiel |\n| --- | --- | --- |\n| **inline** | direkt am Element | `<p style=\"color: red;\">` |\n| **internal** | im `<style>`-Tag im `<head>` | `<style> p { color: red; } </style>` |\n| **external** | eigene `.css`-Datei | `<link rel=\"stylesheet\" href=\"style.css\">` |\n\nDie **externe** Variante ist meist die beste Wahl: Sie trennt Inhalt (HTML) von Gestaltung (CSS) und lässt sich auf mehreren Seiten wiederverwenden.\n\n## Selektoren & Eigenschaften\n\nEine CSS-Regel besteht aus einem **Selektor** und einem **Deklarationsblock** mit `Eigenschaft: Wert;`-Paaren.\n\n```css\n/* Element-Selektor: alle <p> */\np {\n  color: navy;\n  font-size: 16px;\n}\n\n/* Klassen-Selektor: alle Elemente mit class=\"hinweis\" */\n.hinweis {\n  background-color: yellow;\n}\n\n/* ID-Selektor: das Element mit id=\"header\" */\n#header {\n  text-align: center;\n}\n```\n\n- **Element-Selektor**: `p`, `h1`, `div` – wählt nach Tag-Name.\n- **Klassen-Selektor**: beginnt mit `.` – wiederverwendbar, mehrfach pro Seite.\n- **ID-Selektor**: beginnt mit `#` – sollte **nur einmal** pro Seite vorkommen.\n\n> [tipp] Eine `class` darfst du beliebig oft verwenden, eine `id` muss eindeutig sein. Klassen sind im Alltag deutlich häufiger.",
     "tasks": [
       {
         "id": "c11_1",
@@ -1415,7 +1417,7 @@ const EXTRA_LESSONS = {
   },
   "css_1_2": {
     "estimatedMinutes": 11,
-    "theory": "# Farben, Hintergründe & Schriften\n\nCSS bietet viele Möglichkeiten, Farben und Schriften festzulegen. Das macht eine Seite lesbar und ansprechend.\n\n## Farben angeben\n\nFarben lassen sich auf mehrere Arten definieren:\n\n| Format | Beispiel | Bedeutung |\n| --- | --- | --- |\n| **Name** | `red` | benannte Farbe |\n| **Hex** | `#ff0000` | Rot-Grün-Blau als Hexadezimal |\n| **RGB** | `rgb(255, 0, 0)` | Rot-Grün-Blau 0–255 |\n| **RGBA** | `rgba(255, 0, 0, 0.5)` | RGB + Transparenz (Alpha) |\n\nBei Hex-Werten stehen je zwei Zeichen für Rot, Grün und Blau: `#ff0000` ist reines Rot.\n\n## Hintergründe & Schriften\n\n```css\nbody {\n  background-color: #f0f0f0;\n  color: #333333;\n  font-family: Arial, sans-serif;\n  font-size: 16px;\n}\n\nh1 {\n  color: rgb(0, 102, 204);\n  font-size: 2rem;\n}\n```\n\n- `color` setzt die **Textfarbe**.\n- `background-color` setzt die **Hintergrundfarbe**.\n- `font-family` legt die **Schriftart** fest; mit Kommas gibst du Alternativen an (Fallback).\n- `font-size` bestimmt die **Schriftgröße**, z. B. in `px` oder `rem`.\n\n> 💡 Gib bei `font-family` immer eine allgemeine Familie wie `sans-serif` als letzte Option an. Falls keine der vorderen Schriften verfügbar ist, nutzt der Browser eine passende Standardschrift.",
+    "theory": "# Farben, Hintergründe & Schriften\n\nCSS bietet viele Möglichkeiten, Farben und Schriften festzulegen. Das macht eine Seite lesbar und ansprechend.\n\n## Farben angeben\n\nFarben lassen sich auf mehrere Arten definieren:\n\n| Format | Beispiel | Bedeutung |\n| --- | --- | --- |\n| **Name** | `red` | benannte Farbe |\n| **Hex** | `#ff0000` | Rot-Grün-Blau als Hexadezimal |\n| **RGB** | `rgb(255, 0, 0)` | Rot-Grün-Blau 0–255 |\n| **RGBA** | `rgba(255, 0, 0, 0.5)` | RGB + Transparenz (Alpha) |\n\nBei Hex-Werten stehen je zwei Zeichen für Rot, Grün und Blau: `#ff0000` ist reines Rot.\n\n## Hintergründe & Schriften\n\n```css\nbody {\n  background-color: #f0f0f0;\n  color: #333333;\n  font-family: Arial, sans-serif;\n  font-size: 16px;\n}\n\nh1 {\n  color: rgb(0, 102, 204);\n  font-size: 2rem;\n}\n```\n\n- `color` setzt die **Textfarbe**.\n- `background-color` setzt die **Hintergrundfarbe**.\n- `font-family` legt die **Schriftart** fest; mit Kommas gibst du Alternativen an (Fallback).\n- `font-size` bestimmt die **Schriftgröße**, z. B. in `px` oder `rem`.\n\n> [tipp] Gib bei `font-family` immer eine allgemeine Familie wie `sans-serif` als letzte Option an. Falls keine der vorderen Schriften verfügbar ist, nutzt der Browser eine passende Standardschrift.",
     "tasks": [
       {
         "id": "c12_1",
@@ -1479,7 +1481,7 @@ const EXTRA_LESSONS = {
   },
   "css_1_3": {
     "estimatedMinutes": 12,
-    "theory": "# Das Box-Model\n\nJedes HTML-Element ist im Layout eine rechteckige **Box**. Das **Box-Model** beschreibt, aus welchen Schichten diese Box besteht – von innen nach außen.\n\n## Die vier Schichten\n\n| Schicht | Eigenschaft | Bedeutung |\n| --- | --- | --- |\n| **Content** | `width`, `height` | der eigentliche Inhalt |\n| **Padding** | `padding` | Innenabstand zum Rand |\n| **Border** | `border` | der Rahmen |\n| **Margin** | `margin` | Außenabstand zu anderen Elementen |\n\n```css\n.box {\n  width: 200px;\n  padding: 20px;\n  border: 2px solid black;\n  margin: 10px;\n}\n```\n\n## box-sizing\n\nStandardmäßig (`box-sizing: content-box`) addiert der Browser Padding und Border **zur** `width` dazu. Die Box oben ist also tatsächlich 200 + 2·20 + 2·2 = **244px** breit.\n\nMit `box-sizing: border-box` zählen Padding und Border **in** die angegebene Breite hinein – die Box bleibt 200px breit:\n\n```css\n* {\n  box-sizing: border-box;\n}\n```\n\n> 💡 Viele Entwickler setzen `box-sizing: border-box` global auf alle Elementen (`*`). Das macht Größen viel leichter berechenbar, weil `width` dann die komplette sichtbare Breite ist.\n\nDu kannst Abstände auch einzeln angeben, z. B. `margin-top`, `padding-left`. Bei `margin: 10px 20px;` gilt der erste Wert für oben/unten, der zweite für links/rechts.",
+    "theory": "# Das Box-Model\n\nJedes HTML-Element ist im Layout eine rechteckige **Box**. Das **Box-Model** beschreibt, aus welchen Schichten diese Box besteht – von innen nach außen.\n\n## Die vier Schichten\n\n| Schicht | Eigenschaft | Bedeutung |\n| --- | --- | --- |\n| **Content** | `width`, `height` | der eigentliche Inhalt |\n| **Padding** | `padding` | Innenabstand zum Rand |\n| **Border** | `border` | der Rahmen |\n| **Margin** | `margin` | Außenabstand zu anderen Elementen |\n\n```css\n.box {\n  width: 200px;\n  padding: 20px;\n  border: 2px solid black;\n  margin: 10px;\n}\n```\n\n## box-sizing\n\nStandardmäßig (`box-sizing: content-box`) addiert der Browser Padding und Border **zur** `width` dazu. Die Box oben ist also tatsächlich 200 + 2·20 + 2·2 = **244px** breit.\n\nMit `box-sizing: border-box` zählen Padding und Border **in** die angegebene Breite hinein – die Box bleibt 200px breit:\n\n```css\n* {\n  box-sizing: border-box;\n}\n```\n\n> [tipp] Viele Entwickler setzen `box-sizing: border-box` global auf alle Elementen (`*`). Das macht Größen viel leichter berechenbar, weil `width` dann die komplette sichtbare Breite ist.\n\nDu kannst Abstände auch einzeln angeben, z. B. `margin-top`, `padding-left`. Bei `margin: 10px 20px;` gilt der erste Wert für oben/unten, der zweite für links/rechts.",
     "tasks": [
       {
         "id": "c13_1",
@@ -1543,7 +1545,7 @@ const EXTRA_LESSONS = {
   },
   "css_1_4": {
     "estimatedMinutes": 10,
-    "theory": "# Display & Visibility\n\nDie Eigenschaft `display` bestimmt, **wie** ein Element im Layout fließt. Sie ist eine der wichtigsten Eigenschaften in CSS.\n\n## Die wichtigsten display-Werte\n\n| Wert | Verhalten |\n| --- | --- |\n| `block` | nimmt die volle Breite ein, beginnt in neuer Zeile (z. B. `<div>`, `<p>`) |\n| `inline` | fließt im Text, `width`/`height` wirken **nicht** (z. B. `<span>`, `<a>`) |\n| `inline-block` | fließt wie inline, akzeptiert aber `width`/`height` |\n| `none` | Element wird **komplett entfernt**, nimmt keinen Platz ein |\n\n```css\n.menue-eintrag {\n  display: inline-block;\n  width: 120px;\n  padding: 8px;\n}\n\n.versteckt {\n  display: none;\n}\n```\n\n## display: none vs. visibility: hidden\n\nBeide verstecken ein Element, aber unterschiedlich:\n\n```css\n.weg   { display: none; }       /* Platz verschwindet komplett */\n.unsichtbar { visibility: hidden; } /* Platz bleibt leer reserviert */\n```\n\n- `display: none` entfernt das Element aus dem Layout – es hinterlässt **keine Lücke**.\n- `visibility: hidden` macht das Element unsichtbar, der **Platz bleibt** aber erhalten.\n\n> 💡 Merke: `display: none` ist wie \"gibt es nicht\", `visibility: hidden` ist wie \"ist da, aber durchsichtig\". Für ein- und ausklappbare Menüs nutzt man meist `display: none`.",
+    "theory": "# Display & Visibility\n\nDie Eigenschaft `display` bestimmt, **wie** ein Element im Layout fließt. Sie ist eine der wichtigsten Eigenschaften in CSS.\n\n## Die wichtigsten display-Werte\n\n| Wert | Verhalten |\n| --- | --- |\n| `block` | nimmt die volle Breite ein, beginnt in neuer Zeile (z. B. `<div>`, `<p>`) |\n| `inline` | fließt im Text, `width`/`height` wirken **nicht** (z. B. `<span>`, `<a>`) |\n| `inline-block` | fließt wie inline, akzeptiert aber `width`/`height` |\n| `none` | Element wird **komplett entfernt**, nimmt keinen Platz ein |\n\n```css\n.menue-eintrag {\n  display: inline-block;\n  width: 120px;\n  padding: 8px;\n}\n\n.versteckt {\n  display: none;\n}\n```\n\n## display: none vs. visibility: hidden\n\nBeide verstecken ein Element, aber unterschiedlich:\n\n```css\n.weg   { display: none; }       /* Platz verschwindet komplett */\n.unsichtbar { visibility: hidden; } /* Platz bleibt leer reserviert */\n```\n\n- `display: none` entfernt das Element aus dem Layout – es hinterlässt **keine Lücke**.\n- `visibility: hidden` macht das Element unsichtbar, der **Platz bleibt** aber erhalten.\n\n> [tipp] Merke: `display: none` ist wie \"gibt es nicht\", `visibility: hidden` ist wie \"ist da, aber durchsichtig\". Für ein- und ausklappbare Menüs nutzt man meist `display: none`.",
     "tasks": [
       {
         "id": "c14_1",
@@ -1605,7 +1607,7 @@ const EXTRA_LESSONS = {
   },
   "html_1_2": {
     "estimatedMinutes": 12,
-    "theory": "# Überschriften, Absätze & Text-Formatierung\n\nIn dieser Lektion lernst du, wie du Text in HTML strukturierst. Das sind die wichtigsten Bausteine fast jeder Webseite.\n\n## Überschriften (h1 bis h6)\n\nHTML kennt **sechs Überschriftenebenen**: von `<h1>` (die wichtigste) bis `<h6>` (die unwichtigste). Pro Seite solltest du nur **eine** `<h1>` verwenden, denn sie beschreibt das Hauptthema.\n\n| Tag    | Bedeutung            | Größe (Standard) |\n|--------|----------------------|------------------|\n| `h1`   | Hauptüberschrift     | sehr groß        |\n| `h2`   | Unterüberschrift     | groß             |\n| `h3`   | Abschnitts­titel      | mittel           |\n| `h6`   | kleinste Überschrift | klein            |\n\n## Absätze und Zeilenumbrüche\n\nFür Fließtext nutzt du den Absatz `<p>`. Ein Browser fügt vor und nach einem Absatz automatisch etwas Abstand ein. Brauchst du nur einen Zeilenumbruch ohne Abstand, verwendest du `<br>` – ein leeres Element ohne schließenden Tag.\n\n## Text hervorheben\n\n- `<strong>` macht Text **wichtig** (meist fett dargestellt).\n- `<em>` betont Text *(meist kursiv dargestellt)*.\n\n```html\n<h1>Mein Blog</h1>\n<h2>Erster Beitrag</h2>\n<p>Das ist <strong>sehr wichtig</strong>.<br>\nUnd das ist <em>betont</em>.</p>\n```\n\n> 💡 Tipp: Wähle Überschriften nach ihrer **Bedeutung**, nicht nach der Größe! Für reine Optik benutzt du später CSS.",
+    "theory": "# Überschriften, Absätze & Text-Formatierung\n\nIn dieser Lektion lernst du, wie du Text in HTML strukturierst. Das sind die wichtigsten Bausteine fast jeder Webseite.\n\n## Überschriften (h1 bis h6)\n\nHTML kennt **sechs Überschriftenebenen**: von `<h1>` (die wichtigste) bis `<h6>` (die unwichtigste). Pro Seite solltest du nur **eine** `<h1>` verwenden, denn sie beschreibt das Hauptthema.\n\n| Tag    | Bedeutung            | Größe (Standard) |\n|--------|----------------------|------------------|\n| `h1`   | Hauptüberschrift     | sehr groß        |\n| `h2`   | Unterüberschrift     | groß             |\n| `h3`   | Abschnitts­titel      | mittel           |\n| `h6`   | kleinste Überschrift | klein            |\n\n## Absätze und Zeilenumbrüche\n\nFür Fließtext nutzt du den Absatz `<p>`. Ein Browser fügt vor und nach einem Absatz automatisch etwas Abstand ein. Brauchst du nur einen Zeilenumbruch ohne Abstand, verwendest du `<br>` – ein leeres Element ohne schließenden Tag.\n\n## Text hervorheben\n\n- `<strong>` macht Text **wichtig** (meist fett dargestellt).\n- `<em>` betont Text *(meist kursiv dargestellt)*.\n\n```html\n<h1>Mein Blog</h1>\n<h2>Erster Beitrag</h2>\n<p>Das ist <strong>sehr wichtig</strong>.<br>\nUnd das ist <em>betont</em>.</p>\n```\n\n> [tipp] Tipp: Wähle Überschriften nach ihrer **Bedeutung**, nicht nach der Größe! Für reine Optik benutzt du später CSS.",
     "tasks": [
       {
         "id": "h12_1",
@@ -1671,7 +1673,7 @@ const EXTRA_LESSONS = {
   },
   "html_1_3": {
     "estimatedMinutes": 12,
-    "theory": "# Links & Bilder\n\nDas Web lebt von Verlinkungen und Bildern. In dieser Lektion lernst du, wie du beides in HTML einbindest.\n\n## Links mit dem a-Element\n\nEin Link (Hyperlink) wird mit dem `<a>`-Tag erstellt. Das wichtigste Attribut ist `href` (steht für *hypertext reference*) – es gibt das Ziel des Links an.\n\n```html\n<a href=\"https://example.com\">Zu example.com</a>\n```\n\nMit dem Attribut `target=\"_blank\"` öffnet sich der Link in einem **neuen Tab**:\n\n```html\n<a href=\"https://example.com\" target=\"_blank\">In neuem Tab öffnen</a>\n```\n\n## Bilder mit dem img-Element\n\nBilder bindest du mit `<img>` ein. Es ist ein leeres Element (kein schließender Tag) und hat zwei wichtige Attribute:\n\n| Attribut | Bedeutung                                            |\n|----------|------------------------------------------------------|\n| `src`    | Quelle (Pfad oder URL) des Bildes                    |\n| `alt`    | Alternativtext, falls das Bild nicht lädt            |\n\n```html\n<img src=\"katze.jpg\" alt=\"Eine schlafende Katze\">\n```\n\nDer `alt`-Text ist sehr wichtig: Screenreader lesen ihn vor, und er erscheint, wenn das Bild nicht geladen werden kann.\n\n> 💡 Tipp: Vergiss niemals das `alt`-Attribut! Es macht deine Seite **barrierefrei** und hilft auch Suchmaschinen, das Bild zu verstehen.",
+    "theory": "# Links & Bilder\n\nDas Web lebt von Verlinkungen und Bildern. In dieser Lektion lernst du, wie du beides in HTML einbindest.\n\n## Links mit dem a-Element\n\nEin Link (Hyperlink) wird mit dem `<a>`-Tag erstellt. Das wichtigste Attribut ist `href` (steht für *hypertext reference*) – es gibt das Ziel des Links an.\n\n```html\n<a href=\"https://example.com\">Zu example.com</a>\n```\n\nMit dem Attribut `target=\"_blank\"` öffnet sich der Link in einem **neuen Tab**:\n\n```html\n<a href=\"https://example.com\" target=\"_blank\">In neuem Tab öffnen</a>\n```\n\n## Bilder mit dem img-Element\n\nBilder bindest du mit `<img>` ein. Es ist ein leeres Element (kein schließender Tag) und hat zwei wichtige Attribute:\n\n| Attribut | Bedeutung                                            |\n|----------|------------------------------------------------------|\n| `src`    | Quelle (Pfad oder URL) des Bildes                    |\n| `alt`    | Alternativtext, falls das Bild nicht lädt            |\n\n```html\n<img src=\"katze.jpg\" alt=\"Eine schlafende Katze\">\n```\n\nDer `alt`-Text ist sehr wichtig: Screenreader lesen ihn vor, und er erscheint, wenn das Bild nicht geladen werden kann.\n\n> [tipp] Tipp: Vergiss niemals das `alt`-Attribut! Es macht deine Seite **barrierefrei** und hilft auch Suchmaschinen, das Bild zu verstehen.",
     "tasks": [
       {
         "id": "h13_1",
@@ -1744,7 +1746,7 @@ const EXTRA_LESSONS = {
   },
   "html_1_4": {
     "estimatedMinutes": 12,
-    "theory": "# Listen (ul, ol, li)\n\nListen helfen dir, Inhalte übersichtlich aufzuzählen. HTML kennt zwei Haupttypen von Listen.\n\n## Ungeordnete Listen\n\nEine **ungeordnete** Liste (`<ul>` für *unordered list*) zeigt Punkte ohne feste Reihenfolge – meist mit Aufzählungszeichen (Bullets). Jeder Eintrag steht in einem `<li>` (*list item*).\n\n```html\n<ul>\n  <li>Äpfel</li>\n  <li>Bananen</li>\n  <li>Kirschen</li>\n</ul>\n```\n\n## Geordnete Listen\n\nEine **geordnete** Liste (`<ol>` für *ordered list*) nummeriert die Einträge automatisch. Auch hier nutzt du `<li>` für jeden Punkt.\n\n```html\n<ol>\n  <li>Wasser kochen</li>\n  <li>Teebeutel einlegen</li>\n  <li>Genießen</li>\n</ol>\n```\n\n| Tag   | Bedeutung           | Darstellung      |\n|-------|---------------------|------------------|\n| `ul`  | ungeordnete Liste   | Punkte (•)       |\n| `ol`  | geordnete Liste     | Zahlen (1, 2, 3) |\n| `li`  | Listeneintrag       | ein Punkt        |\n\n## Verschachtelte Listen\n\nDu kannst eine Liste **in** einem `<li>` einer anderen Liste platzieren:\n\n```html\n<ul>\n  <li>Obst\n    <ul>\n      <li>Apfel</li>\n    </ul>\n  </li>\n</ul>\n```\n\n> 💡 Tipp: Nimm `<ol>`, wenn die **Reihenfolge zählt** (z. B. ein Rezept), und `<ul>`, wenn sie egal ist.",
+    "theory": "# Listen (ul, ol, li)\n\nListen helfen dir, Inhalte übersichtlich aufzuzählen. HTML kennt zwei Haupttypen von Listen.\n\n## Ungeordnete Listen\n\nEine **ungeordnete** Liste (`<ul>` für *unordered list*) zeigt Punkte ohne feste Reihenfolge – meist mit Aufzählungszeichen (Bullets). Jeder Eintrag steht in einem `<li>` (*list item*).\n\n```html\n<ul>\n  <li>Äpfel</li>\n  <li>Bananen</li>\n  <li>Kirschen</li>\n</ul>\n```\n\n## Geordnete Listen\n\nEine **geordnete** Liste (`<ol>` für *ordered list*) nummeriert die Einträge automatisch. Auch hier nutzt du `<li>` für jeden Punkt.\n\n```html\n<ol>\n  <li>Wasser kochen</li>\n  <li>Teebeutel einlegen</li>\n  <li>Genießen</li>\n</ol>\n```\n\n| Tag   | Bedeutung           | Darstellung      |\n|-------|---------------------|------------------|\n| `ul`  | ungeordnete Liste   | Punkte (•)       |\n| `ol`  | geordnete Liste     | Zahlen (1, 2, 3) |\n| `li`  | Listeneintrag       | ein Punkt        |\n\n## Verschachtelte Listen\n\nDu kannst eine Liste **in** einem `<li>` einer anderen Liste platzieren:\n\n```html\n<ul>\n  <li>Obst\n    <ul>\n      <li>Apfel</li>\n    </ul>\n  </li>\n</ul>\n```\n\n> [tipp] Tipp: Nimm `<ol>`, wenn die **Reihenfolge zählt** (z. B. ein Rezept), und `<ul>`, wenn sie egal ist.",
     "tasks": [
       {
         "id": "h14_1",
@@ -1816,7 +1818,7 @@ const EXTRA_LESSONS = {
   },
   "java_1_1": {
     "estimatedMinutes": 15,
-    "theory": "# Java Setup & Hello World\n\nWillkommen bei **Java**! Java ist eine objektorientierte Programmiersprache, die plattformunabhängig läuft. Dein Code wird vom **Compiler** (`javac`) in *Bytecode* übersetzt, den die **JVM** (Java Virtual Machine) auf jedem Betriebssystem ausführen kann.\n\n## Dein erstes Programm\n\nIn Java lebt jeder Code innerhalb einer **Klasse**. Der Dateiname muss exakt dem Klassennamen entsprechen, also `HelloWorld.java`.\n\n```java\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hallo Welt!\");\n    }\n}\n```\n\nDie Methode `main` ist der **Einstiegspunkt**: Hier startet die Ausführung. Mit `System.out.println(...)` gibst du Text auf der Konsole aus und springst danach in eine neue Zeile. Jede Anweisung endet mit einem **Semikolon** `;`.\n\n## Die Bestandteile von main\n\n| Teil | Bedeutung |\n|------|-----------|\n| `public` | Von überall sichtbar |\n| `static` | Ohne Objekt aufrufbar |\n| `void` | Kein Rückgabewert |\n| `String[] args` | Kommandozeilen-Argumente |\n\n> 💡 Merksatz: `public static void main(String[] args)` ist die exakte Signatur, die die JVM sucht. Schon ein Tippfehler verhindert den Start.\n\n## Kompilieren & Ausführen\n\nDu übersetzt mit `javac HelloWorld.java` und startest mit `java HelloWorld` (ohne `.class`-Endung). Der Unterschied zu `println` ist `print`: Letzteres gibt **ohne** Zeilenumbruch aus.",
+    "theory": "# Java Setup & Hello World\n\nWillkommen bei **Java**! Java ist eine objektorientierte Programmiersprache, die plattformunabhängig läuft. Dein Code wird vom **Compiler** (`javac`) in *Bytecode* übersetzt, den die **JVM** (Java Virtual Machine) auf jedem Betriebssystem ausführen kann.\n\n## Dein erstes Programm\n\nIn Java lebt jeder Code innerhalb einer **Klasse**. Der Dateiname muss exakt dem Klassennamen entsprechen, also `HelloWorld.java`.\n\n```java\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hallo Welt!\");\n    }\n}\n```\n\nDie Methode `main` ist der **Einstiegspunkt**: Hier startet die Ausführung. Mit `System.out.println(...)` gibst du Text auf der Konsole aus und springst danach in eine neue Zeile. Jede Anweisung endet mit einem **Semikolon** `;`.\n\n## Die Bestandteile von main\n\n| Teil | Bedeutung |\n|------|-----------|\n| `public` | Von überall sichtbar |\n| `static` | Ohne Objekt aufrufbar |\n| `void` | Kein Rückgabewert |\n| `String[] args` | Kommandozeilen-Argumente |\n\n> [tipp] Merksatz: `public static void main(String[] args)` ist die exakte Signatur, die die JVM sucht. Schon ein Tippfehler verhindert den Start.\n\n## Kompilieren & Ausführen\n\nDu übersetzt mit `javac HelloWorld.java` und startest mit `java HelloWorld` (ohne `.class`-Endung). Der Unterschied zu `println` ist `print`: Letzteres gibt **ohne** Zeilenumbruch aus.",
     "tasks": [
       {
         "id": "j11_1",
@@ -1879,7 +1881,7 @@ const EXTRA_LESSONS = {
   },
   "java_1_2": {
     "estimatedMinutes": 15,
-    "theory": "# Variablen & primitive Datentypen\n\nEine **Variable** ist ein benannter Speicherplatz für einen Wert. Java ist **statisch typisiert**: Du musst beim Anlegen den **Datentyp** angeben. Das Format lautet `Typ name = wert;`.\n\n## Die wichtigsten Typen\n\n```java\nint alter = 30;\ndouble preis = 9.99;\nboolean istAktiv = true;\nchar buchstabe = 'A';\nString name = \"Lemon\";\n```\n\nBeachte: `char` nutzt **einfache** Anführungszeichen (`'A'`), `String` dagegen **doppelte** (`\"Lemon\"`).\n\n## Übersicht\n\n| Typ | Beispiel | Beschreibung |\n|------|----------|--------------|\n| `int` | `42` | Ganzzahl |\n| `double` | `3.14` | Kommazahl |\n| `boolean` | `true` / `false` | Wahrheitswert |\n| `char` | `'X'` | Einzelnes Zeichen |\n| `String` | `\"Text\"` | Zeichenkette |\n\n`String` ist streng genommen **kein** primitiver Typ, sondern eine Klasse, wird aber wie ein Grundtyp benutzt.\n\n> 💡 Tipp: Wähle `int` für ganze Zahlen und `double` für alles mit Nachkommastellen. Eine ganze Zahl wie `5` als Kommazahl schreibst du `5.0`.\n\n## Variablen verwenden\n\n```java\nint x = 10;\nx = x + 5;\nSystem.out.println(x); // gibt 15 aus\n```\n\nMit `final` machst du eine Variable zu einer **Konstanten**, die sich nicht mehr ändern lässt: `final int MAX = 100;`.",
+    "theory": "# Variablen & primitive Datentypen\n\nEine **Variable** ist ein benannter Speicherplatz für einen Wert. Java ist **statisch typisiert**: Du musst beim Anlegen den **Datentyp** angeben. Das Format lautet `Typ name = wert;`.\n\n## Die wichtigsten Typen\n\n```java\nint alter = 30;\ndouble preis = 9.99;\nboolean istAktiv = true;\nchar buchstabe = 'A';\nString name = \"Lemon\";\n```\n\nBeachte: `char` nutzt **einfache** Anführungszeichen (`'A'`), `String` dagegen **doppelte** (`\"Lemon\"`).\n\n## Übersicht\n\n| Typ | Beispiel | Beschreibung |\n|------|----------|--------------|\n| `int` | `42` | Ganzzahl |\n| `double` | `3.14` | Kommazahl |\n| `boolean` | `true` / `false` | Wahrheitswert |\n| `char` | `'X'` | Einzelnes Zeichen |\n| `String` | `\"Text\"` | Zeichenkette |\n\n`String` ist streng genommen **kein** primitiver Typ, sondern eine Klasse, wird aber wie ein Grundtyp benutzt.\n\n> [tipp] Tipp: Wähle `int` für ganze Zahlen und `double` für alles mit Nachkommastellen. Eine ganze Zahl wie `5` als Kommazahl schreibst du `5.0`.\n\n## Variablen verwenden\n\n```java\nint x = 10;\nx = x + 5;\nSystem.out.println(x); // gibt 15 aus\n```\n\nMit `final` machst du eine Variable zu einer **Konstanten**, die sich nicht mehr ändern lässt: `final int MAX = 100;`.",
     "tasks": [
       {
         "id": "j12_1",
@@ -1943,7 +1945,7 @@ const EXTRA_LESSONS = {
   },
   "java_1_3": {
     "estimatedMinutes": 15,
-    "theory": "# Operatoren & Ausdrücke\n\nMit **Operatoren** verknüpfst du Werte zu **Ausdrücken**, die ein Ergebnis liefern. Java kennt arithmetische, Vergleichs- und logische Operatoren.\n\n## Arithmetik\n\n```java\nint a = 10, b = 3;\nSystem.out.println(a + b); // 13\nSystem.out.println(a - b); // 7\nSystem.out.println(a * b); // 30\nSystem.out.println(a / b); // 3  (Ganzzahldivision!)\nSystem.out.println(a % b); // 1  (Rest / Modulo)\n```\n\nAchtung: `10 / 3` ergibt `3`, weil beide Operanden `int` sind. Für `3.33...` brauchst du `double`: `10.0 / 3`.\n\n## Vergleich & Logik\n\n| Operator | Bedeutung |\n|----------|-----------|\n| `==` | gleich |\n| `!=` | ungleich |\n| `>` `<` | größer / kleiner |\n| `&&` | logisches UND |\n| `\\|\\|` | logisches ODER |\n| `!` | Negation |\n\n```java\nboolean ergebnis = (5 > 3) && (2 < 1); // false\n```\n\nVergleichsoperatoren liefern immer einen `boolean`.\n\n> 💡 Verwechsle nicht `=` (Zuweisung) mit `==` (Vergleich). `x = 5` setzt den Wert, `x == 5` prüft auf Gleichheit.\n\n## Kurzformen\n\nStatt `x = x + 1` schreibst du `x += 1` oder kurz `x++`. Diese **Inkrement**- und **Dekrement**-Operatoren (`++`, `--`) sind besonders in Schleifen praktisch.",
+    "theory": "# Operatoren & Ausdrücke\n\nMit **Operatoren** verknüpfst du Werte zu **Ausdrücken**, die ein Ergebnis liefern. Java kennt arithmetische, Vergleichs- und logische Operatoren.\n\n## Arithmetik\n\n```java\nint a = 10, b = 3;\nSystem.out.println(a + b); // 13\nSystem.out.println(a - b); // 7\nSystem.out.println(a * b); // 30\nSystem.out.println(a / b); // 3  (Ganzzahldivision!)\nSystem.out.println(a % b); // 1  (Rest / Modulo)\n```\n\nAchtung: `10 / 3` ergibt `3`, weil beide Operanden `int` sind. Für `3.33...` brauchst du `double`: `10.0 / 3`.\n\n## Vergleich & Logik\n\n| Operator | Bedeutung |\n|----------|-----------|\n| `==` | gleich |\n| `!=` | ungleich |\n| `>` `<` | größer / kleiner |\n| `&&` | logisches UND |\n| `\\|\\|` | logisches ODER |\n| `!` | Negation |\n\n```java\nboolean ergebnis = (5 > 3) && (2 < 1); // false\n```\n\nVergleichsoperatoren liefern immer einen `boolean`.\n\n> [tipp] Verwechsle nicht `=` (Zuweisung) mit `==` (Vergleich). `x = 5` setzt den Wert, `x == 5` prüft auf Gleichheit.\n\n## Kurzformen\n\nStatt `x = x + 1` schreibst du `x += 1` oder kurz `x++`. Diese **Inkrement**- und **Dekrement**-Operatoren (`++`, `--`) sind besonders in Schleifen praktisch.",
     "tasks": [
       {
         "id": "j13_1",
@@ -2006,7 +2008,7 @@ const EXTRA_LESSONS = {
   },
   "java_1_4": {
     "estimatedMinutes": 15,
-    "theory": "# Bedingungen & Schleifen\n\nProgramme treffen **Entscheidungen** und wiederholen Aufgaben. Dafür gibt es Bedingungen (`if`/`else`) und Schleifen (`for`, `while`).\n\n## Bedingungen\n\n```java\nint note = 2;\nif (note == 1) {\n    System.out.println(\"Sehr gut!\");\n} else if (note <= 3) {\n    System.out.println(\"Gut bestanden.\");\n} else {\n    System.out.println(\"Geht noch besser.\");\n}\n```\n\nDie Bedingung in den Klammern muss einen `boolean` ergeben. Nur der **erste** zutreffende Block wird ausgeführt.\n\n## Die for-Schleife\n\n```java\nfor (int i = 0; i < 5; i++) {\n    System.out.println(\"Durchlauf \" + i);\n}\n```\n\nSie besteht aus drei Teilen: **Initialisierung**, **Bedingung** und **Schrittweite**.\n\n## Die while-Schleife\n\n```java\nint zahl = 3;\nwhile (zahl > 0) {\n    System.out.println(zahl);\n    zahl--;\n}\n```\n\n| Schleife | Wann nutzen? |\n|----------|--------------|\n| `for` | Anzahl der Durchläufe bekannt |\n| `while` | Wiederholung bis Bedingung false |\n\n> 💡 Vorsicht vor **Endlosschleifen**: Vergisst du, die Bedingung irgendwann auf `false` zu setzen, läuft die Schleife ewig. Sorge dafür, dass sich der Zustand ändert (z.B. `zahl--`).\n\nMit `break` brichst du eine Schleife sofort ab, mit `continue` springst du zum nächsten Durchlauf.",
+    "theory": "# Bedingungen & Schleifen\n\nProgramme treffen **Entscheidungen** und wiederholen Aufgaben. Dafür gibt es Bedingungen (`if`/`else`) und Schleifen (`for`, `while`).\n\n## Bedingungen\n\n```java\nint note = 2;\nif (note == 1) {\n    System.out.println(\"Sehr gut!\");\n} else if (note <= 3) {\n    System.out.println(\"Gut bestanden.\");\n} else {\n    System.out.println(\"Geht noch besser.\");\n}\n```\n\nDie Bedingung in den Klammern muss einen `boolean` ergeben. Nur der **erste** zutreffende Block wird ausgeführt.\n\n## Die for-Schleife\n\n```java\nfor (int i = 0; i < 5; i++) {\n    System.out.println(\"Durchlauf \" + i);\n}\n```\n\nSie besteht aus drei Teilen: **Initialisierung**, **Bedingung** und **Schrittweite**.\n\n## Die while-Schleife\n\n```java\nint zahl = 3;\nwhile (zahl > 0) {\n    System.out.println(zahl);\n    zahl--;\n}\n```\n\n| Schleife | Wann nutzen? |\n|----------|--------------|\n| `for` | Anzahl der Durchläufe bekannt |\n| `while` | Wiederholung bis Bedingung false |\n\n> [tipp] Vorsicht vor **Endlosschleifen**: Vergisst du, die Bedingung irgendwann auf `false` zu setzen, läuft die Schleife ewig. Sorge dafür, dass sich der Zustand ändert (z.B. `zahl--`).\n\nMit `break` brichst du eine Schleife sofort ab, mit `continue` springst du zum nächsten Durchlauf.",
     "tasks": [
       {
         "id": "j14_1",
@@ -2069,7 +2071,7 @@ const EXTRA_LESSONS = {
   },
   "java_1_5": {
     "estimatedMinutes": 15,
-    "theory": "# Arrays\n\nEin **Array** speichert mehrere Werte **desselben Typs** unter einem Namen. Die Größe ist nach dem Anlegen **fest**.\n\n## Array anlegen\n\n```java\nint[] zahlen = {10, 20, 30};\nString[] namen = new String[3];\nnamen[0] = \"Lemon\";\n```\n\nDu kannst ein Array direkt mit Werten füllen oder mit `new Typ[länge]` eine leere Hülle erzeugen. Die Elemente erreichst du über einen **Index**, der bei **0** beginnt.\n\n## Zugriff & Länge\n\n```java\nint[] werte = {5, 8, 13};\nSystem.out.println(werte[0]);     // 5\nSystem.out.println(werte.length); // 3\n```\n\n| Ausdruck | Bedeutung |\n|----------|-----------|\n| `arr[0]` | erstes Element |\n| `arr[arr.length - 1]` | letztes Element |\n| `arr.length` | Anzahl Elemente |\n\n> 💡 Ein Zugriff außerhalb der Grenzen, z.B. `werte[3]` bei nur 3 Elementen, löst eine `ArrayIndexOutOfBoundsException` aus. Gültige Indizes gehen von `0` bis `length - 1`.\n\n## Durchlaufen\n\n```java\nint[] werte = {5, 8, 13};\nfor (int i = 0; i < werte.length; i++) {\n    System.out.println(werte[i]);\n}\n// Alternative: for-each\nfor (int w : werte) {\n    System.out.println(w);\n}\n```\n\nDie **for-each**-Schleife ist kompakter, wenn du nur die Werte (und nicht den Index) brauchst.",
+    "theory": "# Arrays\n\nEin **Array** speichert mehrere Werte **desselben Typs** unter einem Namen. Die Größe ist nach dem Anlegen **fest**.\n\n## Array anlegen\n\n```java\nint[] zahlen = {10, 20, 30};\nString[] namen = new String[3];\nnamen[0] = \"Lemon\";\n```\n\nDu kannst ein Array direkt mit Werten füllen oder mit `new Typ[länge]` eine leere Hülle erzeugen. Die Elemente erreichst du über einen **Index**, der bei **0** beginnt.\n\n## Zugriff & Länge\n\n```java\nint[] werte = {5, 8, 13};\nSystem.out.println(werte[0]);     // 5\nSystem.out.println(werte.length); // 3\n```\n\n| Ausdruck | Bedeutung |\n|----------|-----------|\n| `arr[0]` | erstes Element |\n| `arr[arr.length - 1]` | letztes Element |\n| `arr.length` | Anzahl Elemente |\n\n> [tipp] Ein Zugriff außerhalb der Grenzen, z.B. `werte[3]` bei nur 3 Elementen, löst eine `ArrayIndexOutOfBoundsException` aus. Gültige Indizes gehen von `0` bis `length - 1`.\n\n## Durchlaufen\n\n```java\nint[] werte = {5, 8, 13};\nfor (int i = 0; i < werte.length; i++) {\n    System.out.println(werte[i]);\n}\n// Alternative: for-each\nfor (int w : werte) {\n    System.out.println(w);\n}\n```\n\nDie **for-each**-Schleife ist kompakter, wenn du nur die Werte (und nicht den Index) brauchst.",
     "tasks": [
       {
         "id": "j15_1",
@@ -2133,7 +2135,7 @@ const EXTRA_LESSONS = {
   },
   "javascript_1_2": {
     "estimatedMinutes": 16,
-    "theory": "# Datentypen & Operatoren\n\nIn JavaScript verarbeitest du ständig Werte: Zahlen, Texte und Wahrheitswerte. Mit **Operatoren** verknüpfst, vergleichst und kombinierst du diese Werte.\n\n## Arithmetische Operatoren\n\nSie rechnen mit Zahlen vom Typ `number`:\n\n```javascript\nconsole.log(10 + 3);   // 13\nconsole.log(10 - 3);   // 7\nconsole.log(10 * 3);   // 30\nconsole.log(10 / 3);   // 3.3333333333333335\nconsole.log(10 % 3);   // 1  (Rest der Division, \"Modulo\")\nconsole.log(2 ** 3);   // 8  (Potenz)\n```\n\n## Vergleichsoperatoren\n\nSie liefern immer einen `boolean` (`true` oder `false`).\n\n| Operator | Bedeutung            | Beispiel        | Ergebnis |\n|----------|----------------------|-----------------|----------|\n| `===`    | strikt gleich        | `3 === \"3\"`     | `false`  |\n| `==`     | locker gleich        | `3 == \"3\"`      | `true`   |\n| `!==`    | strikt ungleich      | `5 !== 5`       | `false`  |\n| `>` `<`  | größer / kleiner     | `5 > 2`         | `true`   |\n\nDer Unterschied zwischen `==` und `===` ist wichtig: `==` wandelt Typen vorher um (**Type Coercion**), `===` vergleicht Wert **und** Typ.\n\n> 💡 **Faustregel:** Nutze fast immer `===` und `!==`. So vermeidest du überraschende Fehler durch automatische Typumwandlung.\n\n## Logische Operatoren\n\nSie verknüpfen Wahrheitswerte:\n\n```javascript\nconsole.log(true && false); // false  (UND: beide müssen true sein)\nconsole.log(true || false); // true   (ODER: einer reicht)\nconsole.log(!true);         // false  (NICHT: kehrt um)\n```\n\nSo baust du komplexe Bedingungen, etwa \"Alter über 18 **und** Ticket vorhanden\".",
+    "theory": "# Datentypen & Operatoren\n\nIn JavaScript verarbeitest du ständig Werte: Zahlen, Texte und Wahrheitswerte. Mit **Operatoren** verknüpfst, vergleichst und kombinierst du diese Werte.\n\n## Arithmetische Operatoren\n\nSie rechnen mit Zahlen vom Typ `number`:\n\n```javascript\nconsole.log(10 + 3);   // 13\nconsole.log(10 - 3);   // 7\nconsole.log(10 * 3);   // 30\nconsole.log(10 / 3);   // 3.3333333333333335\nconsole.log(10 % 3);   // 1  (Rest der Division, \"Modulo\")\nconsole.log(2 ** 3);   // 8  (Potenz)\n```\n\n## Vergleichsoperatoren\n\nSie liefern immer einen `boolean` (`true` oder `false`).\n\n| Operator | Bedeutung            | Beispiel        | Ergebnis |\n|----------|----------------------|-----------------|----------|\n| `===`    | strikt gleich        | `3 === \"3\"`     | `false`  |\n| `==`     | locker gleich        | `3 == \"3\"`      | `true`   |\n| `!==`    | strikt ungleich      | `5 !== 5`       | `false`  |\n| `>` `<`  | größer / kleiner     | `5 > 2`         | `true`   |\n\nDer Unterschied zwischen `==` und `===` ist wichtig: `==` wandelt Typen vorher um (**Type Coercion**), `===` vergleicht Wert **und** Typ.\n\n> [tipp] **Faustregel:** Nutze fast immer `===` und `!==`. So vermeidest du überraschende Fehler durch automatische Typumwandlung.\n\n## Logische Operatoren\n\nSie verknüpfen Wahrheitswerte:\n\n```javascript\nconsole.log(true && false); // false  (UND: beide müssen true sein)\nconsole.log(true || false); // true   (ODER: einer reicht)\nconsole.log(!true);         // false  (NICHT: kehrt um)\n```\n\nSo baust du komplexe Bedingungen, etwa \"Alter über 18 **und** Ticket vorhanden\".",
     "tasks": [
       {
         "id": "dt1",
@@ -2196,7 +2198,7 @@ const EXTRA_LESSONS = {
   },
   "javascript_1_3": {
     "estimatedMinutes": 15,
-    "theory": "# Bedingungen: if/else und switch\n\nProgramme müssen Entscheidungen treffen. Mit **Bedingungen** führst du Code nur dann aus, wenn ein Ausdruck `true` ist.\n\n## Die if/else-Anweisung\n\n```javascript\nconst alter = 17;\n\nif (alter >= 18) {\n  console.log(\"Du bist volljährig.\");\n} else if (alter >= 16) {\n  console.log(\"Fast volljährig.\");\n} else {\n  console.log(\"Noch minderjährig.\");\n}\n// Ausgabe: \"Fast volljährig.\"\n```\n\nGeprüft wird von oben nach unten. Der **erste** Block, dessen Bedingung `true` ist, läuft – der Rest wird übersprungen.\n\n## Truthy und Falsy\n\nBedingungen müssen kein echtes `boolean` sein. JavaScript wertet Werte als **truthy** oder **falsy** aus.\n\n| Falsy-Werte        | Truthy (Beispiele) |\n|--------------------|--------------------|\n| `false`, `0`       | `\"text\"`           |\n| `\"\"` (leerer String) | `42`             |\n| `null`, `undefined` | `[]`, `{}`        |\n| `NaN`              | `-1`               |\n\n## Die switch-Anweisung\n\nPraktisch, wenn du **eine** Variable gegen viele feste Werte prüfst:\n\n```javascript\nconst tag = \"Mo\";\n\nswitch (tag) {\n  case \"Sa\":\n  case \"So\":\n    console.log(\"Wochenende!\");\n    break;\n  default:\n    console.log(\"Arbeitstag.\");\n}\n// Ausgabe: \"Arbeitstag.\"\n```\n\n> 💡 **Wichtig:** Vergiss das `break` nicht! Ohne `break` läuft die Ausführung in den nächsten `case` hinein (\"Fall-through\"). Das ist eine häufige Fehlerquelle.\n\n`switch` vergleicht übrigens mit `===`, also strikt nach Wert und Typ.",
+    "theory": "# Bedingungen: if/else und switch\n\nProgramme müssen Entscheidungen treffen. Mit **Bedingungen** führst du Code nur dann aus, wenn ein Ausdruck `true` ist.\n\n## Die if/else-Anweisung\n\n```javascript\nconst alter = 17;\n\nif (alter >= 18) {\n  console.log(\"Du bist volljährig.\");\n} else if (alter >= 16) {\n  console.log(\"Fast volljährig.\");\n} else {\n  console.log(\"Noch minderjährig.\");\n}\n// Ausgabe: \"Fast volljährig.\"\n```\n\nGeprüft wird von oben nach unten. Der **erste** Block, dessen Bedingung `true` ist, läuft – der Rest wird übersprungen.\n\n## Truthy und Falsy\n\nBedingungen müssen kein echtes `boolean` sein. JavaScript wertet Werte als **truthy** oder **falsy** aus.\n\n| Falsy-Werte        | Truthy (Beispiele) |\n|--------------------|--------------------|\n| `false`, `0`       | `\"text\"`           |\n| `\"\"` (leerer String) | `42`             |\n| `null`, `undefined` | `[]`, `{}`        |\n| `NaN`              | `-1`               |\n\n## Die switch-Anweisung\n\nPraktisch, wenn du **eine** Variable gegen viele feste Werte prüfst:\n\n```javascript\nconst tag = \"Mo\";\n\nswitch (tag) {\n  case \"Sa\":\n  case \"So\":\n    console.log(\"Wochenende!\");\n    break;\n  default:\n    console.log(\"Arbeitstag.\");\n}\n// Ausgabe: \"Arbeitstag.\"\n```\n\n> [tipp] **Wichtig:** Vergiss das `break` nicht! Ohne `break` läuft die Ausführung in den nächsten `case` hinein (\"Fall-through\"). Das ist eine häufige Fehlerquelle.\n\n`switch` vergleicht übrigens mit `===`, also strikt nach Wert und Typ.",
     "tasks": [
       {
         "id": "bd1",
@@ -2260,7 +2262,7 @@ const EXTRA_LESSONS = {
   },
   "javascript_1_4": {
     "estimatedMinutes": 16,
-    "theory": "# Schleifen: for, while und forEach\n\nMit **Schleifen** wiederholst du Code, ohne ihn mehrfach zu schreiben. Das ist eines der mächtigsten Werkzeuge der Programmierung.\n\n## Die for-Schleife\n\nIdeal, wenn du die Anzahl der Durchläufe kennst:\n\n```javascript\nfor (let i = 0; i < 3; i++) {\n  console.log(\"Durchlauf \" + i);\n}\n// Durchlauf 0\n// Durchlauf 1\n// Durchlauf 2\n```\n\nSie besteht aus drei Teilen: **Startwert** (`let i = 0`), **Bedingung** (`i < 3`) und **Schritt** (`i++`).\n\n## Die while-Schleife\n\nLäuft, solange eine Bedingung `true` ist – die Anzahl ist vorher oft unbekannt:\n\n```javascript\nlet zahl = 1;\nwhile (zahl <= 3) {\n  console.log(zahl);\n  zahl++;\n}\n// 1, 2, 3\n```\n\n> 💡 **Vorsicht vor Endlosschleifen!** Wenn die Bedingung nie `false` wird (z. B. weil du `zahl++` vergisst), läuft das Programm ewig und friert ein.\n\n## forEach für Arrays\n\nUm über jedes Element eines Arrays zu gehen, ist `forEach` am elegantesten:\n\n```javascript\nconst farben = [\"rot\", \"grün\", \"blau\"];\nfarben.forEach((farbe, index) => {\n  console.log(index + \": \" + farbe);\n});\n// 0: rot, 1: grün, 2: blau\n```\n\n## Vergleich\n\n| Schleife   | Wann verwenden?                          |\n|------------|------------------------------------------|\n| `for`      | feste Anzahl an Durchläufen              |\n| `while`    | unbekannte Anzahl, bedingt abhängig      |\n| `forEach`  | jedes Element eines Arrays durchgehen    |\n\nMit `break` brichst du eine Schleife vorzeitig ab, mit `continue` überspringst du den aktuellen Durchlauf.",
+    "theory": "# Schleifen: for, while und forEach\n\nMit **Schleifen** wiederholst du Code, ohne ihn mehrfach zu schreiben. Das ist eines der mächtigsten Werkzeuge der Programmierung.\n\n## Die for-Schleife\n\nIdeal, wenn du die Anzahl der Durchläufe kennst:\n\n```javascript\nfor (let i = 0; i < 3; i++) {\n  console.log(\"Durchlauf \" + i);\n}\n// Durchlauf 0\n// Durchlauf 1\n// Durchlauf 2\n```\n\nSie besteht aus drei Teilen: **Startwert** (`let i = 0`), **Bedingung** (`i < 3`) und **Schritt** (`i++`).\n\n## Die while-Schleife\n\nLäuft, solange eine Bedingung `true` ist – die Anzahl ist vorher oft unbekannt:\n\n```javascript\nlet zahl = 1;\nwhile (zahl <= 3) {\n  console.log(zahl);\n  zahl++;\n}\n// 1, 2, 3\n```\n\n> [tipp] **Vorsicht vor Endlosschleifen!** Wenn die Bedingung nie `false` wird (z. B. weil du `zahl++` vergisst), läuft das Programm ewig und friert ein.\n\n## forEach für Arrays\n\nUm über jedes Element eines Arrays zu gehen, ist `forEach` am elegantesten:\n\n```javascript\nconst farben = [\"rot\", \"grün\", \"blau\"];\nfarben.forEach((farbe, index) => {\n  console.log(index + \": \" + farbe);\n});\n// 0: rot, 1: grün, 2: blau\n```\n\n## Vergleich\n\n| Schleife   | Wann verwenden?                          |\n|------------|------------------------------------------|\n| `for`      | feste Anzahl an Durchläufen              |\n| `while`    | unbekannte Anzahl, bedingt abhängig      |\n| `forEach`  | jedes Element eines Arrays durchgehen    |\n\nMit `break` brichst du eine Schleife vorzeitig ab, mit `continue` überspringst du den aktuellen Durchlauf.",
     "tasks": [
       {
         "id": "sl1",
@@ -2325,7 +2327,7 @@ const EXTRA_LESSONS = {
   },
   "javascript_1_5": {
     "estimatedMinutes": 17,
-    "theory": "# Funktionen\n\nEine **Funktion** ist ein wiederverwendbarer Codeblock mit einem Namen. Du definierst Logik einmal und rufst sie beliebig oft auf – das hält Code übersichtlich und vermeidet Wiederholung.\n\n## Deklaration und Aufruf\n\n```javascript\nfunction begruessen(name) {\n  return \"Hallo, \" + name + \"!\";\n}\n\nconst nachricht = begruessen(\"Lena\");\nconsole.log(nachricht); // \"Hallo, Lena!\"\n```\n\n- `name` ist ein **Parameter** (Platzhalter).\n- `\"Lena\"` ist das **Argument** (der echte Wert beim Aufruf).\n- `return` gibt einen Wert zurück. Ohne `return` liefert die Funktion `undefined`.\n\n## Mehrere Parameter\n\n```javascript\nfunction addiere(a, b) {\n  return a + b;\n}\nconsole.log(addiere(4, 7)); // 11\n```\n\n## Arrow-Funktionen\n\nEine kürzere Schreibweise, besonders beliebt für kleine Funktionen:\n\n```javascript\nconst quadrat = (x) => {\n  return x * x;\n};\n\n// Noch kürzer: bei einem einzigen Ausdruck darf return entfallen\nconst verdoppeln = (x) => x * 2;\n\nconsole.log(quadrat(5));    // 25\nconsole.log(verdoppeln(5)); // 10\n```\n\n> 💡 Bei einer Arrow-Funktion mit nur einer Zeile kannst du die geschweiften Klammern **und** das `return` weglassen – der Ausdruck wird automatisch zurückgegeben.\n\n## Überblick\n\n| Begriff      | Bedeutung                                  |\n|--------------|--------------------------------------------|\n| Parameter    | Platzhalter in der Definition              |\n| Argument     | tatsächlicher Wert beim Aufruf             |\n| `return`     | gibt ein Ergebnis zurück                   |\n| Arrow `=>`   | kompakte Funktionssyntax                   |\n\nFunktionen sind die Bausteine, mit denen du größere Programme strukturierst.",
+    "theory": "# Funktionen\n\nEine **Funktion** ist ein wiederverwendbarer Codeblock mit einem Namen. Du definierst Logik einmal und rufst sie beliebig oft auf – das hält Code übersichtlich und vermeidet Wiederholung.\n\n## Deklaration und Aufruf\n\n```javascript\nfunction begruessen(name) {\n  return \"Hallo, \" + name + \"!\";\n}\n\nconst nachricht = begruessen(\"Lena\");\nconsole.log(nachricht); // \"Hallo, Lena!\"\n```\n\n- `name` ist ein **Parameter** (Platzhalter).\n- `\"Lena\"` ist das **Argument** (der echte Wert beim Aufruf).\n- `return` gibt einen Wert zurück. Ohne `return` liefert die Funktion `undefined`.\n\n## Mehrere Parameter\n\n```javascript\nfunction addiere(a, b) {\n  return a + b;\n}\nconsole.log(addiere(4, 7)); // 11\n```\n\n## Arrow-Funktionen\n\nEine kürzere Schreibweise, besonders beliebt für kleine Funktionen:\n\n```javascript\nconst quadrat = (x) => {\n  return x * x;\n};\n\n// Noch kürzer: bei einem einzigen Ausdruck darf return entfallen\nconst verdoppeln = (x) => x * 2;\n\nconsole.log(quadrat(5));    // 25\nconsole.log(verdoppeln(5)); // 10\n```\n\n> [tipp] Bei einer Arrow-Funktion mit nur einer Zeile kannst du die geschweiften Klammern **und** das `return` weglassen – der Ausdruck wird automatisch zurückgegeben.\n\n## Überblick\n\n| Begriff      | Bedeutung                                  |\n|--------------|--------------------------------------------|\n| Parameter    | Platzhalter in der Definition              |\n| Argument     | tatsächlicher Wert beim Aufruf             |\n| `return`     | gibt ein Ergebnis zurück                   |\n| Arrow `=>`   | kompakte Funktionssyntax                   |\n\nFunktionen sind die Bausteine, mit denen du größere Programme strukturierst.",
     "tasks": [
       {
         "id": "fn1",
@@ -2389,7 +2391,7 @@ const EXTRA_LESSONS = {
   },
   "javascript_2_1": {
     "estimatedMinutes": 17,
-    "theory": "# Arrays & Array-Methoden\n\nEin **Array** ist eine geordnete Liste von Werten. Du speicherst damit mehrere Daten unter einem Namen – jedes Element hat einen **Index**, der bei `0` beginnt.\n\n```javascript\nconst fruechte = [\"Apfel\", \"Banane\", \"Kirsche\"];\nconsole.log(fruechte[0]);     // \"Apfel\"\nconsole.log(fruechte.length); // 3\n```\n\n## Elemente hinzufügen: push\n\n`push` hängt ein Element ans Ende an und verändert das Array direkt:\n\n```javascript\nconst zahlen = [1, 2];\nzahlen.push(3);\nconsole.log(zahlen); // [1, 2, 3]\n```\n\n## map: jedes Element umwandeln\n\n`map` erzeugt ein **neues** Array, indem es eine Funktion auf jedes Element anwendet:\n\n```javascript\nconst zahlen = [1, 2, 3];\nconst verdoppelt = zahlen.map((n) => n * 2);\nconsole.log(verdoppelt); // [2, 4, 6]\nconsole.log(zahlen);     // [1, 2, 3] bleibt unverändert\n```\n\n## filter: Elemente auswählen\n\n`filter` behält nur die Elemente, für die die Funktion `true` zurückgibt:\n\n```javascript\nconst zahlen = [1, 2, 3, 4, 5];\nconst gerade = zahlen.filter((n) => n % 2 === 0);\nconsole.log(gerade); // [2, 4]\n```\n\n> 💡 `map` und `filter` verändern das Original **nicht** – sie geben ein neues Array zurück. `push` dagegen verändert das bestehende Array.\n\n## Übersicht\n\n| Methode    | Zweck                          | Verändert Original? |\n|------------|--------------------------------|---------------------|\n| `push`     | Element ans Ende anhängen       | Ja                  |\n| `map`      | jedes Element umwandeln         | Nein                |\n| `filter`   | Elemente nach Bedingung wählen  | Nein                |\n| `length`   | Anzahl der Elemente (Property)  | –                   |",
+    "theory": "# Arrays & Array-Methoden\n\nEin **Array** ist eine geordnete Liste von Werten. Du speicherst damit mehrere Daten unter einem Namen – jedes Element hat einen **Index**, der bei `0` beginnt.\n\n```javascript\nconst fruechte = [\"Apfel\", \"Banane\", \"Kirsche\"];\nconsole.log(fruechte[0]);     // \"Apfel\"\nconsole.log(fruechte.length); // 3\n```\n\n## Elemente hinzufügen: push\n\n`push` hängt ein Element ans Ende an und verändert das Array direkt:\n\n```javascript\nconst zahlen = [1, 2];\nzahlen.push(3);\nconsole.log(zahlen); // [1, 2, 3]\n```\n\n## map: jedes Element umwandeln\n\n`map` erzeugt ein **neues** Array, indem es eine Funktion auf jedes Element anwendet:\n\n```javascript\nconst zahlen = [1, 2, 3];\nconst verdoppelt = zahlen.map((n) => n * 2);\nconsole.log(verdoppelt); // [2, 4, 6]\nconsole.log(zahlen);     // [1, 2, 3] bleibt unverändert\n```\n\n## filter: Elemente auswählen\n\n`filter` behält nur die Elemente, für die die Funktion `true` zurückgibt:\n\n```javascript\nconst zahlen = [1, 2, 3, 4, 5];\nconst gerade = zahlen.filter((n) => n % 2 === 0);\nconsole.log(gerade); // [2, 4]\n```\n\n> [tipp] `map` und `filter` verändern das Original **nicht** – sie geben ein neues Array zurück. `push` dagegen verändert das bestehende Array.\n\n## Übersicht\n\n| Methode    | Zweck                          | Verändert Original? |\n|------------|--------------------------------|---------------------|\n| `push`     | Element ans Ende anhängen       | Ja                  |\n| `map`      | jedes Element umwandeln         | Nein                |\n| `filter`   | Elemente nach Bedingung wählen  | Nein                |\n| `length`   | Anzahl der Elemente (Property)  | –                   |",
     "tasks": [
       {
         "id": "ar1",
@@ -2467,7 +2469,7 @@ const EXTRA_LESSONS = {
   },
   "javascript_2_2": {
     "estimatedMinutes": 17,
-    "theory": "# Objekte & JSON\n\nEin **Objekt** speichert Daten als **Schlüssel-Wert-Paare** (Properties). Während ein Array eine Liste ist, beschreibt ein Objekt eine \"Sache\" mit benannten Eigenschaften.\n\n```javascript\nconst person = {\n  name: \"Mia\",\n  alter: 28,\n  istAdmin: false,\n};\n```\n\n## Zugriff auf Properties\n\nEs gibt zwei Wege:\n\n```javascript\nconsole.log(person.name);      // \"Mia\"  (Punkt-Notation)\nconsole.log(person[\"alter\"]);  // 28     (Klammer-Notation)\n\nperson.alter = 29;             // Wert ändern\nperson.stadt = \"Berlin\";       // neue Property hinzufügen\n```\n\n> 💡 Die Punkt-Notation ist kürzer und üblicher. Die Klammer-Notation brauchst du, wenn der Schlüssel in einer Variablen steckt oder Sonderzeichen enthält.\n\n## JSON\n\n**JSON** (JavaScript Object Notation) ist ein Textformat zum Austausch von Daten, z. B. mit einem Server. Es sieht aus wie ein JS-Objekt, ist aber ein **String**.\n\n```javascript\nconst obj = { name: \"Mia\", alter: 28 };\n\n// Objekt -> JSON-String\nconst text = JSON.stringify(obj);\nconsole.log(text); // '{\"name\":\"Mia\",\"alter\":28}'\n\n// JSON-String -> Objekt\nconst zurueck = JSON.parse(text);\nconsole.log(zurueck.name); // \"Mia\"\n```\n\n## Übersicht\n\n| Funktion           | Eingabe        | Ausgabe        |\n|--------------------|----------------|----------------|\n| `JSON.stringify`   | Objekt         | JSON-String    |\n| `JSON.parse`       | JSON-String    | Objekt         |\n\nMerke: In JSON müssen alle Schlüssel in **doppelten** Anführungszeichen stehen, und es sind keine Funktionen erlaubt – nur Daten.",
+    "theory": "# Objekte & JSON\n\nEin **Objekt** speichert Daten als **Schlüssel-Wert-Paare** (Properties). Während ein Array eine Liste ist, beschreibt ein Objekt eine \"Sache\" mit benannten Eigenschaften.\n\n```javascript\nconst person = {\n  name: \"Mia\",\n  alter: 28,\n  istAdmin: false,\n};\n```\n\n## Zugriff auf Properties\n\nEs gibt zwei Wege:\n\n```javascript\nconsole.log(person.name);      // \"Mia\"  (Punkt-Notation)\nconsole.log(person[\"alter\"]);  // 28     (Klammer-Notation)\n\nperson.alter = 29;             // Wert ändern\nperson.stadt = \"Berlin\";       // neue Property hinzufügen\n```\n\n> [tipp] Die Punkt-Notation ist kürzer und üblicher. Die Klammer-Notation brauchst du, wenn der Schlüssel in einer Variablen steckt oder Sonderzeichen enthält.\n\n## JSON\n\n**JSON** (JavaScript Object Notation) ist ein Textformat zum Austausch von Daten, z. B. mit einem Server. Es sieht aus wie ein JS-Objekt, ist aber ein **String**.\n\n```javascript\nconst obj = { name: \"Mia\", alter: 28 };\n\n// Objekt -> JSON-String\nconst text = JSON.stringify(obj);\nconsole.log(text); // '{\"name\":\"Mia\",\"alter\":28}'\n\n// JSON-String -> Objekt\nconst zurueck = JSON.parse(text);\nconsole.log(zurueck.name); // \"Mia\"\n```\n\n## Übersicht\n\n| Funktion           | Eingabe        | Ausgabe        |\n|--------------------|----------------|----------------|\n| `JSON.stringify`   | Objekt         | JSON-String    |\n| `JSON.parse`       | JSON-String    | Objekt         |\n\nMerke: In JSON müssen alle Schlüssel in **doppelten** Anführungszeichen stehen, und es sind keine Funktionen erlaubt – nur Daten.",
     "tasks": [
       {
         "id": "ob1",
@@ -2545,7 +2547,7 @@ const EXTRA_LESSONS = {
   },
   "python_1_1": {
     "estimatedMinutes": 14,
-    "theory": "# Python installieren & Hello World\n\nWillkommen zu deinem ersten Schritt mit **Python**! Python ist eine der beliebtesten Programmiersprachen, weil sie gut lesbar und einfach zu lernen ist.\n\n## Python installieren\n\nLade Python von [python.org](https://www.python.org) herunter. Prüfe danach im Terminal, ob alles funktioniert:\n\n```bash\npython --version\n```\n\nDu solltest etwas wie `Python 3.12.0` sehen.\n\n## Dein erstes Programm\n\nMit der Funktion `print()` gibst du Text auf dem Bildschirm aus:\n\n```python\nprint(\"Hello, World!\")\n# Diese Zeile ist ein Kommentar und wird ignoriert\nprint(\"Ich lerne Python\")\n```\n\nDie Ausgabe lautet:\n\n```\nHello, World!\nIch lerne Python\n```\n\n## Kommentare\n\nKommentare beginnen mit `#` und werden von Python **nicht** ausgeführt. Sie dienen als Notizen für Menschen.\n\n| Schreibweise | Bedeutung |\n| --- | --- |\n| `# Text` | Einzeiliger Kommentar |\n| `print(\"Hi\")` | Gibt `Hi` aus |\n| `print()` | Gibt eine Leerzeile aus |\n\n> 💡 **Tipp:** Der Text in `print()` muss in Anführungszeichen stehen (`\"...\"` oder `'...'`). Vergisst du sie, behandelt Python den Text als Variablennamen und es kommt zu einem Fehler.\n\nMehrere Werte kannst du durch Kommas getrennt ausgeben. Python fügt automatisch ein Leerzeichen ein:\n\n```python\nprint(\"Alter:\", 25)\n# Ausgabe: Alter: 25\n```",
+    "theory": "# Python installieren & Hello World\n\nWillkommen zu deinem ersten Schritt mit **Python**! Python ist eine der beliebtesten Programmiersprachen, weil sie gut lesbar und einfach zu lernen ist.\n\n## Python installieren\n\nLade Python von [python.org](https://www.python.org) herunter. Prüfe danach im Terminal, ob alles funktioniert:\n\n```bash\npython --version\n```\n\nDu solltest etwas wie `Python 3.12.0` sehen.\n\n## Dein erstes Programm\n\nMit der Funktion `print()` gibst du Text auf dem Bildschirm aus:\n\n```python\nprint(\"Hello, World!\")\n# Diese Zeile ist ein Kommentar und wird ignoriert\nprint(\"Ich lerne Python\")\n```\n\nDie Ausgabe lautet:\n\n```\nHello, World!\nIch lerne Python\n```\n\n## Kommentare\n\nKommentare beginnen mit `#` und werden von Python **nicht** ausgeführt. Sie dienen als Notizen für Menschen.\n\n| Schreibweise | Bedeutung |\n| --- | --- |\n| `# Text` | Einzeiliger Kommentar |\n| `print(\"Hi\")` | Gibt `Hi` aus |\n| `print()` | Gibt eine Leerzeile aus |\n\n> [tipp] **Tipp:** Der Text in `print()` muss in Anführungszeichen stehen (`\"...\"` oder `'...'`). Vergisst du sie, behandelt Python den Text als Variablennamen und es kommt zu einem Fehler.\n\nMehrere Werte kannst du durch Kommas getrennt ausgeben. Python fügt automatisch ein Leerzeichen ein:\n\n```python\nprint(\"Alter:\", 25)\n# Ausgabe: Alter: 25\n```",
     "tasks": [
       {
         "id": "p11_1",
@@ -2608,7 +2610,7 @@ const EXTRA_LESSONS = {
   },
   "python_1_2": {
     "estimatedMinutes": 14,
-    "theory": "# Variablen & Datentypen\n\nEine **Variable** ist ein Name, unter dem du einen Wert speicherst. In Python erstellst du sie mit dem Zuweisungsoperator `=`.\n\n```python\nname = \"Anna\"\nalter = 25\ngroesse = 1.72\nist_student = True\n```\n\n## Die wichtigsten Datentypen\n\nPython erkennt den Datentyp automatisch anhand des Werts. Mit `type()` kannst du ihn überprüfen:\n\n```python\nprint(type(alter))   # <class 'int'>\nprint(type(groesse)) # <class 'float'>\nprint(type(name))    # <class 'str'>\nprint(type(ist_student)) # <class 'bool'>\n```\n\n| Typ | Beschreibung | Beispiel |\n| --- | --- | --- |\n| `int` | Ganze Zahl | `42` |\n| `float` | Kommazahl | `3.14` |\n| `str` | Zeichenkette (Text) | `\"Hallo\"` |\n| `bool` | Wahrheitswert | `True` / `False` |\n\n## Typen umwandeln\n\nDu kannst Werte zwischen Typen konvertieren:\n\n```python\nzahl = int(\"10\")     # str -> int, ergibt 10\ntext = str(99)       # int -> str, ergibt \"99\"\nkomma = float(3)     # int -> float, ergibt 3.0\n```\n\n> 💡 **Achtung:** Variablennamen sind in Python **case-sensitive**. `Alter` und `alter` sind zwei verschiedene Variablen!\n\nEin häufiger Fehler ist das Verwechseln von `int` und `str`. `5 + 3` ergibt `8`, aber `\"5\" + \"3\"` ergibt `\"53\"`, weil Strings aneinandergehängt werden.",
+    "theory": "# Variablen & Datentypen\n\nEine **Variable** ist ein Name, unter dem du einen Wert speicherst. In Python erstellst du sie mit dem Zuweisungsoperator `=`.\n\n```python\nname = \"Anna\"\nalter = 25\ngroesse = 1.72\nist_student = True\n```\n\n## Die wichtigsten Datentypen\n\nPython erkennt den Datentyp automatisch anhand des Werts. Mit `type()` kannst du ihn überprüfen:\n\n```python\nprint(type(alter))   # <class 'int'>\nprint(type(groesse)) # <class 'float'>\nprint(type(name))    # <class 'str'>\nprint(type(ist_student)) # <class 'bool'>\n```\n\n| Typ | Beschreibung | Beispiel |\n| --- | --- | --- |\n| `int` | Ganze Zahl | `42` |\n| `float` | Kommazahl | `3.14` |\n| `str` | Zeichenkette (Text) | `\"Hallo\"` |\n| `bool` | Wahrheitswert | `True` / `False` |\n\n## Typen umwandeln\n\nDu kannst Werte zwischen Typen konvertieren:\n\n```python\nzahl = int(\"10\")     # str -> int, ergibt 10\ntext = str(99)       # int -> str, ergibt \"99\"\nkomma = float(3)     # int -> float, ergibt 3.0\n```\n\n> [tipp] **Achtung:** Variablennamen sind in Python **case-sensitive**. `Alter` und `alter` sind zwei verschiedene Variablen!\n\nEin häufiger Fehler ist das Verwechseln von `int` und `str`. `5 + 3` ergibt `8`, aber `\"5\" + \"3\"` ergibt `\"53\"`, weil Strings aneinandergehängt werden.",
     "tasks": [
       {
         "id": "p12_1",
@@ -2681,7 +2683,7 @@ const EXTRA_LESSONS = {
   },
   "python_1_3": {
     "estimatedMinutes": 14,
-    "theory": "# Strings & String-Methoden\n\nEin **String** (`str`) ist eine Zeichenkette. Jedes Zeichen hat eine Position, einen sogenannten **Index**, beginnend bei `0`.\n\n```python\nwort = \"Python\"\nprint(wort[0])   # P\nprint(wort[-1])  # n (letztes Zeichen)\n```\n\n## Slicing\n\nMit `[start:ende]` schneidest du Teile heraus. Der Endindex ist **nicht** enthalten:\n\n```python\nwort = \"Python\"\nprint(wort[0:3])  # Pyt\nprint(wort[2:])   # thon\nprint(wort[:2])   # Py\n```\n\n## Nützliche String-Methoden\n\n| Methode | Beschreibung | Beispiel |\n| --- | --- | --- |\n| `.upper()` | Grossbuchstaben | `\"hi\".upper()` → `\"HI\"` |\n| `.lower()` | Kleinbuchstaben | `\"HI\".lower()` → `\"hi\"` |\n| `.strip()` | Leerzeichen entfernen | `\" hi \".strip()` → `\"hi\"` |\n| `.replace(a, b)` | Ersetzen | `\"ab\".replace(\"a\",\"x\")` → `\"xb\"` |\n| `len(s)` | Länge | `len(\"hi\")` → `2` |\n\n## f-Strings\n\nMit einem **f-String** fügst du Variablen direkt in Text ein. Stelle dem String einfach ein `f` voran und schreibe die Variable in geschweifte Klammern:\n\n```python\nname = \"Anna\"\nalter = 25\nprint(f\"{name} ist {alter} Jahre alt.\")\n# Anna ist 25 Jahre alt.\n```\n\n> 💡 **Tipp:** Strings sind in Python **unveränderlich** (immutable). Methoden wie `.upper()` ändern den Original-String nicht, sondern geben einen **neuen** String zurück.",
+    "theory": "# Strings & String-Methoden\n\nEin **String** (`str`) ist eine Zeichenkette. Jedes Zeichen hat eine Position, einen sogenannten **Index**, beginnend bei `0`.\n\n```python\nwort = \"Python\"\nprint(wort[0])   # P\nprint(wort[-1])  # n (letztes Zeichen)\n```\n\n## Slicing\n\nMit `[start:ende]` schneidest du Teile heraus. Der Endindex ist **nicht** enthalten:\n\n```python\nwort = \"Python\"\nprint(wort[0:3])  # Pyt\nprint(wort[2:])   # thon\nprint(wort[:2])   # Py\n```\n\n## Nützliche String-Methoden\n\n| Methode | Beschreibung | Beispiel |\n| --- | --- | --- |\n| `.upper()` | Grossbuchstaben | `\"hi\".upper()` → `\"HI\"` |\n| `.lower()` | Kleinbuchstaben | `\"HI\".lower()` → `\"hi\"` |\n| `.strip()` | Leerzeichen entfernen | `\" hi \".strip()` → `\"hi\"` |\n| `.replace(a, b)` | Ersetzen | `\"ab\".replace(\"a\",\"x\")` → `\"xb\"` |\n| `len(s)` | Länge | `len(\"hi\")` → `2` |\n\n## f-Strings\n\nMit einem **f-String** fügst du Variablen direkt in Text ein. Stelle dem String einfach ein `f` voran und schreibe die Variable in geschweifte Klammern:\n\n```python\nname = \"Anna\"\nalter = 25\nprint(f\"{name} ist {alter} Jahre alt.\")\n# Anna ist 25 Jahre alt.\n```\n\n> [tipp] **Tipp:** Strings sind in Python **unveränderlich** (immutable). Methoden wie `.upper()` ändern den Original-String nicht, sondern geben einen **neuen** String zurück.",
     "tasks": [
       {
         "id": "p13_1",
@@ -2752,7 +2754,7 @@ const EXTRA_LESSONS = {
   },
   "python_1_4": {
     "estimatedMinutes": 14,
-    "theory": "# Listen, Tupel, Sets\n\nPython bietet mehrere Möglichkeiten, mehrere Werte in einer Variable zu speichern. Die drei wichtigsten sind **Liste**, **Tupel** und **Set**.\n\n## Listen\n\nEine **Liste** ist geordnet und **veränderbar**. Du erstellst sie mit eckigen Klammern `[]`:\n\n```python\nfarben = [\"rot\", \"grün\", \"blau\"]\nfarben.append(\"gelb\")   # hinzufügen\nprint(farben[0])        # rot\nfarben[1] = \"schwarz\"   # ändern\n```\n\n## Tupel\n\nEin **Tupel** ist geordnet, aber **unveränderbar** (immutable). Du erstellst es mit runden Klammern `()`:\n\n```python\npunkt = (10, 20)\nprint(punkt[0])  # 10\n# punkt[0] = 5  -> Fehler! Tupel sind unveränderbar\n```\n\n## Sets\n\nEin **Set** ist eine ungeordnete Sammlung **ohne Duplikate**. Du erstellst es mit geschweiften Klammern `{}`:\n\n```python\nzahlen = {1, 2, 2, 3}\nprint(zahlen)  # {1, 2, 3} – Duplikat entfernt\n```\n\n## Vergleich\n\n| Typ | Klammern | Geordnet | Veränderbar | Duplikate |\n| --- | --- | --- | --- | --- |\n| Liste | `[]` | Ja | Ja | Ja |\n| Tupel | `()` | Ja | Nein | Ja |\n| Set | `{}` | Nein | Ja | Nein |\n\n> 💡 **Merke:** Nutze eine **Liste**, wenn sich die Daten ändern können, ein **Tupel** für feste Werte (z. B. Koordinaten) und ein **Set**, wenn du eindeutige Werte brauchst.\n\nMit `len()` ermittelst du bei allen dreien die Anzahl der Elemente.",
+    "theory": "# Listen, Tupel, Sets\n\nPython bietet mehrere Möglichkeiten, mehrere Werte in einer Variable zu speichern. Die drei wichtigsten sind **Liste**, **Tupel** und **Set**.\n\n## Listen\n\nEine **Liste** ist geordnet und **veränderbar**. Du erstellst sie mit eckigen Klammern `[]`:\n\n```python\nfarben = [\"rot\", \"grün\", \"blau\"]\nfarben.append(\"gelb\")   # hinzufügen\nprint(farben[0])        # rot\nfarben[1] = \"schwarz\"   # ändern\n```\n\n## Tupel\n\nEin **Tupel** ist geordnet, aber **unveränderbar** (immutable). Du erstellst es mit runden Klammern `()`:\n\n```python\npunkt = (10, 20)\nprint(punkt[0])  # 10\n# punkt[0] = 5  -> Fehler! Tupel sind unveränderbar\n```\n\n## Sets\n\nEin **Set** ist eine ungeordnete Sammlung **ohne Duplikate**. Du erstellst es mit geschweiften Klammern `{}`:\n\n```python\nzahlen = {1, 2, 2, 3}\nprint(zahlen)  # {1, 2, 3} – Duplikat entfernt\n```\n\n## Vergleich\n\n| Typ | Klammern | Geordnet | Veränderbar | Duplikate |\n| --- | --- | --- | --- | --- |\n| Liste | `[]` | Ja | Ja | Ja |\n| Tupel | `()` | Ja | Nein | Ja |\n| Set | `{}` | Nein | Ja | Nein |\n\n> [tipp] **Merke:** Nutze eine **Liste**, wenn sich die Daten ändern können, ein **Tupel** für feste Werte (z. B. Koordinaten) und ein **Set**, wenn du eindeutige Werte brauchst.\n\nMit `len()` ermittelst du bei allen dreien die Anzahl der Elemente.",
     "tasks": [
       {
         "id": "p14_1",
@@ -2823,7 +2825,7 @@ const EXTRA_LESSONS = {
   },
   "python_1_5": {
     "estimatedMinutes": 14,
-    "theory": "# Dictionaries\n\nEin **Dictionary** (`dict`) speichert Daten als **Schlüssel-Wert-Paare** (key-value). Statt über einen Index greifst du über den Schlüssel auf den Wert zu.\n\n```python\nperson = {\n    \"name\": \"Anna\",\n    \"alter\": 25,\n    \"stadt\": \"Berlin\"\n}\nprint(person[\"name\"])  # Anna\n```\n\n## Werte hinzufügen und ändern\n\n```python\nperson[\"beruf\"] = \"Lehrerin\"  # neues Paar hinzufügen\nperson[\"alter\"] = 26          # Wert ändern\n```\n\n## Sicherer Zugriff mit get()\n\nGreifst du auf einen nicht vorhandenen Schlüssel mit `[]` zu, entsteht ein `KeyError`. Die Methode `.get()` gibt stattdessen `None` (oder einen Standardwert) zurück:\n\n```python\nprint(person.get(\"email\"))            # None\nprint(person.get(\"email\", \"fehlt\"))   # fehlt\n```\n\n## Wichtige Methoden\n\n| Methode | Beschreibung |\n| --- | --- |\n| `.keys()` | Alle Schlüssel |\n| `.values()` | Alle Werte |\n| `.items()` | Alle Paare als Tupel |\n| `.get(k)` | Wert sicher abrufen |\n\nDu kannst über ein Dictionary auch iterieren:\n\n```python\nfor schluessel, wert in person.items():\n    print(schluessel, \"->\", wert)\n```\n\n> 💡 **Merke:** Schlüssel müssen **eindeutig** und unveränderbar sein (z. B. Strings oder Zahlen). Wird ein Schlüssel doppelt vergeben, überschreibt der letzte Wert den vorherigen.",
+    "theory": "# Dictionaries\n\nEin **Dictionary** (`dict`) speichert Daten als **Schlüssel-Wert-Paare** (key-value). Statt über einen Index greifst du über den Schlüssel auf den Wert zu.\n\n```python\nperson = {\n    \"name\": \"Anna\",\n    \"alter\": 25,\n    \"stadt\": \"Berlin\"\n}\nprint(person[\"name\"])  # Anna\n```\n\n## Werte hinzufügen und ändern\n\n```python\nperson[\"beruf\"] = \"Lehrerin\"  # neues Paar hinzufügen\nperson[\"alter\"] = 26          # Wert ändern\n```\n\n## Sicherer Zugriff mit get()\n\nGreifst du auf einen nicht vorhandenen Schlüssel mit `[]` zu, entsteht ein `KeyError`. Die Methode `.get()` gibt stattdessen `None` (oder einen Standardwert) zurück:\n\n```python\nprint(person.get(\"email\"))            # None\nprint(person.get(\"email\", \"fehlt\"))   # fehlt\n```\n\n## Wichtige Methoden\n\n| Methode | Beschreibung |\n| --- | --- |\n| `.keys()` | Alle Schlüssel |\n| `.values()` | Alle Werte |\n| `.items()` | Alle Paare als Tupel |\n| `.get(k)` | Wert sicher abrufen |\n\nDu kannst über ein Dictionary auch iterieren:\n\n```python\nfor schluessel, wert in person.items():\n    print(schluessel, \"->\", wert)\n```\n\n> [tipp] **Merke:** Schlüssel müssen **eindeutig** und unveränderbar sein (z. B. Strings oder Zahlen). Wird ein Schlüssel doppelt vergeben, überschreibt der letzte Wert den vorherigen.",
     "tasks": [
       {
         "id": "p15_1",
@@ -2895,7 +2897,7 @@ const EXTRA_LESSONS = {
   },
   "sql_1_1": {
     "estimatedMinutes": 12,
-    "theory": "# Was sind Datenbanken?\n\nEine **Datenbank** ist ein organisierter Speicher für Daten. In einer **relationalen Datenbank** werden Daten in **Tabellen** abgelegt – ganz ähnlich wie in einer Tabellenkalkulation.\n\n## Tabellen, Zeilen und Spalten\n\nEine **Tabelle** besteht aus **Spalten** (engl. *columns*) und **Zeilen** (engl. *rows*).\n\n- Jede **Spalte** beschreibt ein Merkmal, z. B. `name` oder `email`.\n- Jede **Zeile** ist ein einzelner Datensatz, z. B. ein konkreter Kunde.\n\nHier ein Beispiel für eine Tabelle `kunden`:\n\n| id | name      | stadt     |\n|----|-----------|-----------|\n| 1  | Anna      | Berlin    |\n| 2  | Ben       | Hamburg   |\n| 3  | Clara     | München   |\n\n## Der Primärschlüssel\n\nJede Tabelle sollte einen **Primärschlüssel** (engl. *primary key*) besitzen. Das ist eine Spalte, deren Wert jede Zeile **eindeutig** identifiziert. Oben ist das die Spalte `id`.\n\n```sql\nCREATE TABLE kunden (\n  id INTEGER PRIMARY KEY,\n  name TEXT,\n  stadt TEXT\n);\n```\n\nEin Primärschlüssel darf **nicht doppelt** vorkommen und **nicht leer** (NULL) sein.\n\n> 💡 Merke: Der Primärschlüssel ist wie eine Ausweisnummer – kein zweiter Datensatz darf denselben Wert haben.\n\nSo weißt du immer genau, welche Zeile gemeint ist, selbst wenn zwei Kunden denselben Namen tragen.",
+    "theory": "# Was sind Datenbanken?\n\nEine **Datenbank** ist ein organisierter Speicher für Daten. In einer **relationalen Datenbank** werden Daten in **Tabellen** abgelegt – ganz ähnlich wie in einer Tabellenkalkulation.\n\n## Tabellen, Zeilen und Spalten\n\nEine **Tabelle** besteht aus **Spalten** (engl. *columns*) und **Zeilen** (engl. *rows*).\n\n- Jede **Spalte** beschreibt ein Merkmal, z. B. `name` oder `email`.\n- Jede **Zeile** ist ein einzelner Datensatz, z. B. ein konkreter Kunde.\n\nHier ein Beispiel für eine Tabelle `kunden`:\n\n| id | name      | stadt     |\n|----|-----------|-----------|\n| 1  | Anna      | Berlin    |\n| 2  | Ben       | Hamburg   |\n| 3  | Clara     | München   |\n\n## Der Primärschlüssel\n\nJede Tabelle sollte einen **Primärschlüssel** (engl. *primary key*) besitzen. Das ist eine Spalte, deren Wert jede Zeile **eindeutig** identifiziert. Oben ist das die Spalte `id`.\n\n```sql\nCREATE TABLE kunden (\n  id INTEGER PRIMARY KEY,\n  name TEXT,\n  stadt TEXT\n);\n```\n\nEin Primärschlüssel darf **nicht doppelt** vorkommen und **nicht leer** (NULL) sein.\n\n> [tipp] Merke: Der Primärschlüssel ist wie eine Ausweisnummer – kein zweiter Datensatz darf denselben Wert haben.\n\nSo weißt du immer genau, welche Zeile gemeint ist, selbst wenn zwei Kunden denselben Namen tragen.",
     "tasks": [
       {
         "id": "s11_q1",
@@ -2958,7 +2960,7 @@ const EXTRA_LESSONS = {
   },
   "sql_1_2": {
     "estimatedMinutes": 12,
-    "theory": "# SELECT & FROM\n\nMit **SELECT** liest du Daten aus einer Datenbank. Es ist der wichtigste Befehl in SQL und der erste, den du wirklich brauchst.\n\n## Der Aufbau\n\nEine einfache Abfrage besteht aus zwei Teilen:\n\n- **SELECT** gibt an, **welche Spalten** du sehen willst.\n- **FROM** gibt an, **aus welcher Tabelle** die Daten kommen.\n\n```sql\nSELECT name, stadt\nFROM kunden;\n```\n\nDiese Abfrage liefert nur die Spalten `name` und `stadt` aus der Tabelle `kunden`.\n\n## Alle Spalten mit *\n\nMöchtest du **alle Spalten** sehen, benutze den Stern `*`:\n\n```sql\nSELECT * FROM kunden;\n```\n\nBeispiel-Datensätze der Tabelle `kunden`:\n\n| id | name  | stadt    |\n|----|-------|----------|\n| 1  | Anna  | Berlin   |\n| 2  | Ben   | Hamburg  |\n\n## Wichtige Details\n\n- Jede Anweisung endet mit einem **Semikolon** `;`.\n- SQL-Schlüsselwörter werden oft **GROSS** geschrieben, das ist aber nur Stil – `select` funktioniert auch.\n- Die Reihenfolge der Spalten nach `SELECT` bestimmt die Reihenfolge in der Ausgabe.\n\n> 💡 Tipp: Benutze `*` zum schnellen Stöbern, aber wähle in echten Programmen lieber gezielt die Spalten aus, die du wirklich brauchst – das ist schneller und klarer.",
+    "theory": "# SELECT & FROM\n\nMit **SELECT** liest du Daten aus einer Datenbank. Es ist der wichtigste Befehl in SQL und der erste, den du wirklich brauchst.\n\n## Der Aufbau\n\nEine einfache Abfrage besteht aus zwei Teilen:\n\n- **SELECT** gibt an, **welche Spalten** du sehen willst.\n- **FROM** gibt an, **aus welcher Tabelle** die Daten kommen.\n\n```sql\nSELECT name, stadt\nFROM kunden;\n```\n\nDiese Abfrage liefert nur die Spalten `name` und `stadt` aus der Tabelle `kunden`.\n\n## Alle Spalten mit *\n\nMöchtest du **alle Spalten** sehen, benutze den Stern `*`:\n\n```sql\nSELECT * FROM kunden;\n```\n\nBeispiel-Datensätze der Tabelle `kunden`:\n\n| id | name  | stadt    |\n|----|-------|----------|\n| 1  | Anna  | Berlin   |\n| 2  | Ben   | Hamburg  |\n\n## Wichtige Details\n\n- Jede Anweisung endet mit einem **Semikolon** `;`.\n- SQL-Schlüsselwörter werden oft **GROSS** geschrieben, das ist aber nur Stil – `select` funktioniert auch.\n- Die Reihenfolge der Spalten nach `SELECT` bestimmt die Reihenfolge in der Ausgabe.\n\n> [tipp] Tipp: Benutze `*` zum schnellen Stöbern, aber wähle in echten Programmen lieber gezielt die Spalten aus, die du wirklich brauchst – das ist schneller und klarer.",
     "tasks": [
       {
         "id": "s12_q1",
@@ -3023,7 +3025,7 @@ const EXTRA_LESSONS = {
   },
   "sql_1_3": {
     "estimatedMinutes": 12,
-    "theory": "# WHERE & Bedingungen\n\nMit **WHERE** filterst du Zeilen. Nur Zeilen, für die die Bedingung **wahr** ist, kommen in das Ergebnis.\n\n## Vergleichsoperatoren\n\n```sql\nSELECT name, alter\nFROM kunden\nWHERE alter > 18;\n```\n\nDie wichtigsten Operatoren:\n\n| Operator | Bedeutung           | Beispiel           |\n|----------|---------------------|--------------------|\n| `=`      | gleich              | `stadt = 'Berlin'` |\n| `>`      | größer als          | `alter > 18`       |\n| `<`      | kleiner als         | `preis < 100`      |\n| `<>`     | ungleich            | `stadt <> 'Bonn'`  |\n\n> 💡 Achtung: In SQL bedeutet ein einzelnes `=` \"ist gleich\" (kein `==` wie in vielen Programmiersprachen). Texte stehen in **einfachen Anführungszeichen**: `'Berlin'`.\n\n## AND und OR\n\nMehrere Bedingungen verknüpfst du mit **AND** (beide müssen wahr sein) oder **OR** (mindestens eine muss wahr sein):\n\n```sql\nSELECT name FROM kunden\nWHERE stadt = 'Berlin' AND alter > 30;\n\nSELECT name FROM kunden\nWHERE stadt = 'Berlin' OR stadt = 'Hamburg';\n```\n\n## Mustersuche mit LIKE\n\n`LIKE` sucht nach **Textmustern**. Das Prozentzeichen `%` steht für beliebig viele Zeichen:\n\n```sql\nSELECT name FROM kunden\nWHERE name LIKE 'A%';\n```\n\nDas findet alle Namen, die mit **A** beginnen, z. B. *Anna* oder *Anton*. `'%a'` findet Namen, die auf *a* enden, und `'%nn%'` findet *nn* an beliebiger Stelle.",
+    "theory": "# WHERE & Bedingungen\n\nMit **WHERE** filterst du Zeilen. Nur Zeilen, für die die Bedingung **wahr** ist, kommen in das Ergebnis.\n\n## Vergleichsoperatoren\n\n```sql\nSELECT name, alter\nFROM kunden\nWHERE alter > 18;\n```\n\nDie wichtigsten Operatoren:\n\n| Operator | Bedeutung           | Beispiel           |\n|----------|---------------------|--------------------|\n| `=`      | gleich              | `stadt = 'Berlin'` |\n| `>`      | größer als          | `alter > 18`       |\n| `<`      | kleiner als         | `preis < 100`      |\n| `<>`     | ungleich            | `stadt <> 'Bonn'`  |\n\n> [tipp] Achtung: In SQL bedeutet ein einzelnes `=` \"ist gleich\" (kein `==` wie in vielen Programmiersprachen). Texte stehen in **einfachen Anführungszeichen**: `'Berlin'`.\n\n## AND und OR\n\nMehrere Bedingungen verknüpfst du mit **AND** (beide müssen wahr sein) oder **OR** (mindestens eine muss wahr sein):\n\n```sql\nSELECT name FROM kunden\nWHERE stadt = 'Berlin' AND alter > 30;\n\nSELECT name FROM kunden\nWHERE stadt = 'Berlin' OR stadt = 'Hamburg';\n```\n\n## Mustersuche mit LIKE\n\n`LIKE` sucht nach **Textmustern**. Das Prozentzeichen `%` steht für beliebig viele Zeichen:\n\n```sql\nSELECT name FROM kunden\nWHERE name LIKE 'A%';\n```\n\nDas findet alle Namen, die mit **A** beginnen, z. B. *Anna* oder *Anton*. `'%a'` findet Namen, die auf *a* enden, und `'%nn%'` findet *nn* an beliebiger Stelle.",
     "tasks": [
       {
         "id": "s13_q1",
@@ -3095,7 +3097,7 @@ const EXTRA_LESSONS = {
   },
   "sql_1_4": {
     "estimatedMinutes": 12,
-    "theory": "# ORDER BY & LIMIT\n\nStandardmäßig kommen die Zeilen einer Abfrage in **keiner garantierten Reihenfolge** zurück. Mit **ORDER BY** sortierst du das Ergebnis.\n\n## Sortieren mit ORDER BY\n\n```sql\nSELECT name, preis\nFROM produkte\nORDER BY preis;\n```\n\n- **ASC** (*ascending*) = aufsteigend (klein nach groß). Das ist der **Standard**.\n- **DESC** (*descending*) = absteigend (groß nach klein).\n\n```sql\nSELECT name, preis\nFROM produkte\nORDER BY preis DESC;\n```\n\nBeispieldaten der Tabelle `produkte`:\n\n| id | name    | preis |\n|----|---------|-------|\n| 1  | Apfel   | 2     |\n| 2  | Birne   | 3     |\n| 3  | Kirsche | 5     |\n\nSortiert nach `preis DESC` käme zuerst *Kirsche*, dann *Birne*, dann *Apfel*.\n\n## Begrenzen mit LIMIT\n\n**LIMIT** begrenzt die Anzahl der zurückgegebenen Zeilen:\n\n```sql\nSELECT name, preis\nFROM produkte\nORDER BY preis DESC\nLIMIT 1;\n```\n\nDiese Abfrage liefert das **teuerste Produkt** – sortieren absteigend nach Preis und nur die erste Zeile nehmen.\n\n> 💡 Reihenfolge merken: `SELECT` → `FROM` → `WHERE` → `ORDER BY` → `LIMIT`. Diese Reihenfolge ist fest vorgeschrieben.\n\nSo kombinierst du Sortierung und Begrenzung, um z. B. die \"Top 3\" oder den günstigsten Eintrag zu finden.",
+    "theory": "# ORDER BY & LIMIT\n\nStandardmäßig kommen die Zeilen einer Abfrage in **keiner garantierten Reihenfolge** zurück. Mit **ORDER BY** sortierst du das Ergebnis.\n\n## Sortieren mit ORDER BY\n\n```sql\nSELECT name, preis\nFROM produkte\nORDER BY preis;\n```\n\n- **ASC** (*ascending*) = aufsteigend (klein nach groß). Das ist der **Standard**.\n- **DESC** (*descending*) = absteigend (groß nach klein).\n\n```sql\nSELECT name, preis\nFROM produkte\nORDER BY preis DESC;\n```\n\nBeispieldaten der Tabelle `produkte`:\n\n| id | name    | preis |\n|----|---------|-------|\n| 1  | Apfel   | 2     |\n| 2  | Birne   | 3     |\n| 3  | Kirsche | 5     |\n\nSortiert nach `preis DESC` käme zuerst *Kirsche*, dann *Birne*, dann *Apfel*.\n\n## Begrenzen mit LIMIT\n\n**LIMIT** begrenzt die Anzahl der zurückgegebenen Zeilen:\n\n```sql\nSELECT name, preis\nFROM produkte\nORDER BY preis DESC\nLIMIT 1;\n```\n\nDiese Abfrage liefert das **teuerste Produkt** – sortieren absteigend nach Preis und nur die erste Zeile nehmen.\n\n> [tipp] Reihenfolge merken: `SELECT` → `FROM` → `WHERE` → `ORDER BY` → `LIMIT`. Diese Reihenfolge ist fest vorgeschrieben.\n\nSo kombinierst du Sortierung und Begrenzung, um z. B. die \"Top 3\" oder den günstigsten Eintrag zu finden.",
     "tasks": [
       {
         "id": "s14_q1",
@@ -3194,7 +3196,7 @@ Alles, was zusammen abgeschickt werden soll, steht in einem \`<form>\`:
 | \`action\` | Wohin die Daten geschickt werden |
 | \`method\` | \`get\` (in der Adresszeile sichtbar) oder \`post\` (im Rumpf der Anfrage) |
 
-> ⚠️ Für alles Vertrauliche — Passwörter, Adressen — immer \`post\`. Bei \`get\` landen die Daten in der URL, im Verlauf und in Server-Logs.
+> [warnung] Für alles Vertrauliche — Passwörter, Adressen — immer \`post\`. Bei \`get\` landen die Daten in der URL, im Verlauf und in Server-Logs.
 
 ## Eingabefelder
 
@@ -3255,7 +3257,7 @@ Steht ein \`<button>\` in einem Formular ohne \`type\`, ist er automatisch ein A
 
 \`required\`, \`minlength\`, \`maxlength\`, \`min\`, \`max\` und \`pattern\` lässt der Browser selbst prüfen — ohne eine Zeile JavaScript.
 
-> ⚠️ Diese Prüfung ist Bequemlichkeit, keine Sicherheit. Sie lässt sich in zehn Sekunden umgehen. **Auf dem Server muss immer erneut geprüft werden.**`,
+> [warnung] Diese Prüfung ist Bequemlichkeit, keine Sicherheit. Sie lässt sich in zehn Sekunden umgehen. **Auf dem Server muss immer erneut geprüft werden.**`,
     tasks: [
       {
         id: "hf1", type: "multiple_choice",
@@ -3372,7 +3374,7 @@ Beides zusammen ergibt die Antwort auf die meistgestellte CSS-Frage überhaupt:
 }
 \`\`\`
 
-> 💡 Ohne eine Höhe am Container gibt es senkrecht nichts zu zentrieren — der Container ist dann genau so hoch wie sein Inhalt.
+> [tipp] Ohne eine Höhe am Container gibt es senkrecht nichts zu zentrieren — der Container ist dann genau so hoch wie sein Inhalt.
 
 ## Abstände und Umbruch
 
@@ -3463,7 +3465,7 @@ const alleBoxen = document.querySelectorAll(".box");
 
 \`querySelector\` versteht jeden CSS-Selektor: \`"#titel"\`, \`".box"\`, \`"ul > li:first-child"\`.
 
-> ⚠️ Findet der Browser nichts, kommt \`null\` zurück — und der nächste Zugriff darauf wirft \`Cannot read properties of null\`. Das ist der häufigste Fehler überhaupt beim DOM. Meist stimmt nur der Name nicht.
+> [warnung] Findet der Browser nichts, kommt \`null\` zurück — und der nächste Zugriff darauf wirft \`Cannot read properties of null\`. Das ist der häufigste Fehler überhaupt beim DOM. Meist stimmt nur der Name nicht.
 
 ## Inhalt ändern
 
@@ -3523,7 +3525,7 @@ document.querySelector("#hinzufuegen").addEventListener("click", () => {
 });
 \`\`\`
 
-> 💡 Steht dein \`<script>\` im \`<head>\`, existieren die Elemente beim Ausführen noch nicht. Entweder das Skript ans Ende des \`<body>\` setzen oder \`defer\` benutzen.`,
+> [tipp] Steht dein \`<script>\` im \`<head>\`, existieren die Elemente beim Ausführen noch nicht. Entweder das Skript ans Ende des \`<body>\` setzen oder \`defer\` benutzen.`,
     tasks: [
       {
         id: "jd1", type: "multiple_choice",
@@ -3608,7 +3610,7 @@ summe = addiere(3, 4)   # 7
 
 \`return\` beendet die Funktion sofort. Steht kein \`return\` da, gibt Python automatisch \`None\` zurück.
 
-> ⚠️ \`print\` und \`return\` sind nicht dasselbe. \`print\` schreibt etwas auf den Bildschirm, \`return\` gibt einen Wert zurück, mit dem weitergerechnet werden kann. Eine Funktion, die nur druckt, lässt sich nicht weiterverwenden.
+> [warnung] \`print\` und \`return\` sind nicht dasselbe. \`print\` schreibt etwas auf den Bildschirm, \`return\` gibt einen Wert zurück, mit dem weitergerechnet werden kann. Eine Funktion, die nur druckt, lässt sich nicht weiterverwenden.
 
 ## Standardwerte
 
@@ -3622,7 +3624,7 @@ begruessung("Ben", "Moin")       # Moin, Ben!
 
 Parameter mit Standardwert müssen **hinter** denen ohne stehen.
 
-> ⚠️ Nimm niemals eine Liste als Standardwert (\`def f(x=[])\`). Sie wird nur **einmal** erzeugt und bleibt zwischen den Aufrufen bestehen — ein Klassiker unter den schwer zu findenden Fehlern. Nimm \`None\` und lege die Liste im Rumpf an.
+> [warnung] Nimm niemals eine Liste als Standardwert (\`def f(x=[])\`). Sie wird nur **einmal** erzeugt und bleibt zwischen den Aufrufen bestehen — ein Klassiker unter den schwer zu findenden Fehlern. Nimm \`None\` und lege die Liste im Rumpf an.
 
 ## Benannte Argumente
 
@@ -3788,7 +3790,7 @@ LEFT JOIN bestellungen ON kunden.id = bestellungen.kunden_id
 WHERE bestellungen.id IS NULL;
 \`\`\`
 
-> ⚠️ Auf \`NULL\` prüft man mit \`IS NULL\`, niemals mit \`= NULL\`. Ein Vergleich mit \`NULL\` ergibt weder wahr noch falsch — er ergibt „unbekannt", und die Zeile fällt heraus.
+> [warnung] Auf \`NULL\` prüft man mit \`IS NULL\`, niemals mit \`= NULL\`. Ein Vergleich mit \`NULL\` ergibt weder wahr noch falsch — er ergibt „unbekannt", und die Zeile fällt heraus.
 
 ## RIGHT JOIN — alles von rechts
 
@@ -4352,7 +4354,7 @@ Willkommen zu dieser Lektion im Kurs **${course.name}**.
 
 In diesem Abschnitt vertiefst du das Thema **„${title}“**. Lies die Konzepte aufmerksam, baue die Beispiele selbst nach und übe mit den Aufgaben rechts.
 
-> 💡 **Tipp:** Aktives Ausprobieren bringt dich beim Programmieren am schnellsten voran. Schreib Code mit, statt ihn nur zu lesen.
+> [tipp] **Tipp:** Aktives Ausprobieren bringt dich beim Programmieren am schnellsten voran. Schreib Code mit, statt ihn nur zu lesen.
 
 ## Lernziele
 
@@ -4840,10 +4842,13 @@ function tokenize(code, profile) {
   const src = String(code || "");
   let out = "";
   const strings = [];
+  const stringMeta = [];          // dieselben Zeichenketten mit Zeilennummer
   const comments = [];
   let i = 0;
+  let line = 0;                   // 0-basierte Zeile der aktuellen Position
 
   const startsWith = (s) => src.startsWith(s, i);
+  const countLines = (text) => { for (const ch of text) if (ch === "\n") line++; };
 
   while (i < src.length) {
     // Blockkommentare
@@ -4855,6 +4860,7 @@ function tokenize(code, profile) {
         const body = src.slice(i, stop);
         comments.push(body);
         out += body.replace(/[^\n]/g, " ");   // Zeilenumbrüche behalten
+        countLines(body);
         i = stop;
         matchedBlock = true;
         break;
@@ -4889,18 +4895,144 @@ function tokenize(code, profile) {
         j++;
       }
       strings.push(body);
+      stringMeta.push({ text: body, line });
       const stop = Math.min(src.length, j + delim.length);
       // Leere Hülle behalten, damit "hier steht ein String" erkennbar bleibt
       out += delim + delim + " ".repeat(Math.max(0, stop - i - 2));
+      countLines(src.slice(i, stop));
       i = stop;
       continue;
     }
 
+    if (src[i] === "\n") line++;
     out += src[i];
     i++;
   }
 
-  return { stripped: out, strings, comments };
+  return { stripped: out, strings, stringMeta, comments };
+}
+
+/* ------------------- Anweisung oder bloß ein Wort? -----------------------
+   Der wichtigste Unterschied für eine faire Bewertung: `len` ist kein Code.
+   Wer die erwarteten Begriffe einfach untereinander schreibt, hat nichts
+   gelöst — auch wenn jedes Wort im Text vorkommt. Deshalb wird jede Zeile
+   eingeordnet, bevor irgendein Konzept gesucht wird:
+
+     live  — eine echte Anweisung (Zuweisung, Aufruf, Kontrollstruktur …)
+     delim — reine Struktur (`}`, `<?php`, `else:`) — zählt weder positiv
+             noch negativ
+     dead  — ein einzelnes Wort oder Bruchstück, das nichts bewirkt
+
+   Konzepte werden anschließend ausschließlich gegen die live-Zeilen geprüft.
+   ------------------------------------------------------------------------- */
+
+// Schlüsselwörter, die für sich allein nichts tun — erst mit Operand wird
+// daraus eine Anweisung. `return` ist die Ausnahme: `return` allein ist gültig.
+const STATEMENT_KEYWORDS = [
+  "return", "import", "from", "export", "print", "echo", "printf", "puts", "println",
+  "use", "using", "package", "include", "require", "class", "struct", "enum", "interface",
+  "namespace", "def", "function", "func", "fun", "fn", "if", "elif", "else", "for", "while",
+  "switch", "case", "do", "try", "catch", "finally", "throw", "raise", "new", "delete",
+  "yield", "await", "async", "const", "let", "var", "val", "static", "public", "private",
+  "protected", "type", "interface", "select", "insert", "update", "delete", "where", "from",
+  "join", "group", "order", "having", "values", "set", "create", "alter", "drop", "with",
+  "int", "float", "double", "char", "bool", "boolean", "string", "void", "auto", "long",
+  "unsigned", "short", "mut", "lambda", "global", "nonlocal", "assert", "pass", "break",
+  "continue", "goto", "extends", "implements", "super", "this", "self",
+];
+const STATEMENT_KEYWORD_SET = new Set(STATEMENT_KEYWORDS);
+
+// Zeilen, die nur die Struktur tragen. Sie sind weder Anweisung noch Fehler.
+const DELIMITER_LINE = /^(?:[{}()[\];,:]|\?>|<\?(?:php|=)?|end|endif|fi|done|<\/?[a-zA-Z][\w:-]*\s*\/?>)+$/;
+
+// Schlüsselwörter, die auch für sich allein eine gültige Anweisung sind.
+const SOLO_KEYWORDS = new Set(["return", "break", "pass", "continue", "else", "try", "do", "begin"]);
+
+/** Sieht diese (bereits von Kommentaren befreite) Zeile nach einer Anweisung aus? */
+function classifyLine(rawLine, profile) {
+  let line = String(rawLine).trim();
+  if (!line) return "blank";
+
+  // PHP-Umschalter am Zeilenrand abstreifen — `<?php echo "Hi"; ?>` ist eine
+  // ganz normale Anweisung, nur eingerahmt.
+  line = line.replace(/^<\?(?:php|=)?\s*/i, "").replace(/\s*\?>$/, "").trim();
+  if (!line) return "delim";
+  if (DELIMITER_LINE.test(line.replace(/\s+/g, ""))) return "delim";
+
+  // Auszeichnungssprachen: ein Tag ist eine Aussage. Freier Text steht meist
+  // im Inneren eines Elements und wird deshalb nicht als Fehler gewertet —
+  // ob die richtigen Elemente da sind, prüft die Tag-Analyse.
+  if (profile.blockStyle === "tags") return /[<>]/.test(line) ? "live" : "delim";
+
+  // CSS: `farbe: wert;` ist eine Deklaration.
+  if (/^[-\w]+\s*:\s*\S/.test(line) && !/[(){}]/.test(line) && profile.label === "CSS") return "live";
+
+  if (/\S\s*\{$/.test(line)) return "live";                       // Blockkopf: `body {`, `.karte {`
+  if (line.includes("(")) return "live";                          // Aufruf oder Definition
+  if (/\w\s*[<>]=?\s*[\w"'([]/.test(line)) return "live";          // Vergleich oder Markup
+  if (/(^|[^=!<>+\-*/%&|^~])=[^=]/.test(line)) return "live";      // Zuweisung
+  if (/[-+*/%&|^]=|:=|=>|->|\?\?|\|\|/.test(line)) return "live";  // zusammengesetzt
+  if (/\w\s*[-+*/%]\s*\w/.test(line)) return "live";               // Rechnung
+  if (/\w\s*\[/.test(line)) return "live";                         // Indexzugriff
+
+  // Schlüsselwort mit Operand: `return x`, `echo "Hi";`, `import fmt`.
+  // Der erste Token muss das Schlüsselwort *sein* — `<echo Hallo` ist kein
+  // `echo`, sondern ein Tippfehler, und darf nicht als Anweisung durchgehen.
+  const words = line.replace(/[;,]+$/, "").split(/\s+/).filter(Boolean);
+  const first = (words[0] || "").toLowerCase().replace(/[;:,]+$/, "");
+  if (STATEMENT_KEYWORD_SET.has(first)) {
+    if (words.length > 1) return "live";
+    return SOLO_KEYWORDS.has(first) ? "live" : "dead";
+  }
+  if (SOLO_KEYWORDS.has(first.replace(/:$/, ""))) return "live";   // `else:`
+
+  return "dead";
+}
+
+/* Fortsetzungszeilen erkennen: alles, was innerhalb einer offenen runden oder
+   eckigen Klammer steht oder auf einen Operator folgt, gehört zur Anweisung
+   darüber und wird nicht einzeln bewertet. Sonst gälte
+
+       const zahlen = [
+         1,
+         2,
+       ];
+
+   als drei wirkungslose Zeilen.
+
+   Geschweifte Klammern zählen bewusst nicht mit: in C-artigen Sprachen öffnen
+   sie einen *Block*, dessen Zeilen eigenständige Anweisungen sind. Nur wenn
+   direkt davor ein `=`, `:`, `(` oder `,` steht, ist es ein Objekt-Literal —
+   und dann gehört die nächste Zeile dazu. */
+const OPENS_LITERAL = /(?:[=:(,]\s*[{[]|[([])$/;
+const ENDS_WITH_OPERATOR = /[,+\-*/%&|^=<>?.\\]$/;
+
+/** Teilt den Code in echte Anweisungen und wirkungslose Zeilen. */
+function splitStatements(stripped, profile) {
+  const live = [], dead = [], liveLines = new Set();
+  let depth = 0;
+  let carry = false;                 // vorige Zeile endete mitten im Ausdruck
+
+  stripped.split("\n").forEach((text, index) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const continuation = depth > 0 || carry;
+
+    // Klammerstand für die nächste Zeile fortschreiben
+    for (const ch of trimmed) {
+      if (ch === "(" || ch === "[") depth++;
+      else if (ch === ")" || ch === "]") depth = Math.max(0, depth - 1);
+    }
+    carry = OPENS_LITERAL.test(trimmed) || ENDS_WITH_OPERATOR.test(trimmed);
+
+    if (continuation) { liveLines.add(index); return; }   // gehört zur Zeile davor
+
+    const kind = classifyLine(text, profile);
+    if (kind === "live") { live.push({ text: trimmed, line: index + 1 }); liveLines.add(index); }
+    else if (kind === "delim") liveLines.add(index);
+    else dead.push({ text: trimmed, line: index + 1 });
+  });
+  return { live, dead, liveLines };
 }
 
 /* ------------------------- Strukturanalyse ------------------------------ */
@@ -4961,13 +5093,25 @@ function tagBalance(html) {
  */
 function analyzeCode(raw, langId) {
   const profile = profileFor(langId);
-  const { stripped, strings, comments } = tokenize(raw, profile);
+  const { stripped, strings, stringMeta, comments } = tokenize(raw, profile);
   const codeOnly = stripped.replace(/\s/g, "");
 
-  const declarations = collectMatches(profile.declare, stripped, 2);
-  const functions = collectMatches(profile.funcDef, stripped, 1);
-  const identifiers = [...new Set((stripped.match(/[A-Za-z_$][\w$]*/g) || []))];
-  const calls = [...new Set((stripped.match(/([A-Za-z_$][\w$.:!]*)\s*\(/g) || []).map((s) => s.replace(/\s*\($/, "")))];
+  // Nur was in einer echten Anweisung steht, zählt. Die wirkungslosen Zeilen
+  // werden getrennt gemerkt, damit die Rückmeldung sie benennen kann.
+  const { live, dead, liveLines } = splitStatements(stripped, profile);
+  // Alles außer den wirkungslosen Zeilen — Fortsetzungs- und Klammerzeilen
+  // gehören zur Anweisung darüber und müssen erhalten bleiben.
+  const effective = stripped.split("\n").filter((_, i) => liveLines.has(i)).join("\n");
+  // Dieselben Zeilen im Originaltext — dort stehen Zeichenketten und
+  // Attributwerte noch drin, die beim Zerlegen entfernt wurden.
+  const rawLines = String(raw || "").split("\n");
+  const effectiveRaw = rawLines.filter((_, i) => liveLines.has(i)).join("\n");
+  const liveStrings = (stringMeta || []).filter((s) => liveLines.has(s.line)).map((s) => s.text);
+
+  const declarations = collectMatches(profile.declare, effective, 2);
+  const functions = collectMatches(profile.funcDef, effective, 1);
+  const identifiers = [...new Set((effective.match(/[A-Za-z_$][\w$]*/g) || []))];
+  const calls = [...new Set((effective.match(/([A-Za-z_$][\w$.:!]*)\s*\(/g) || []).map((s) => s.replace(/\s*\($/, "")))];
 
   const structure = profile.blockStyle === "tags" ? tagBalance(stripped)
     : profile.blockStyle === "none" ? { ok: true, problems: [] }
@@ -4979,14 +5123,15 @@ function analyzeCode(raw, langId) {
   }
 
   return {
-    raw, stripped, strings, comments, profile,
+    raw, stripped, effective, effectiveRaw, strings, stringMeta, liveStrings, comments, profile,
+    statements: live, deadLines: dead,
     isEmpty: codeOnly.length === 0,
     hasOnlyComments: codeOnly.length === 0 && comments.length > 0,
     lines: raw.split("\n").filter((l) => l.trim()).length,
     declarations, functions, identifiers, calls,
     structure, issues,
-    hasString: strings.length > 0,
-    hasNumber: /\d/.test(stripped),
+    hasString: liveStrings.length > 0,
+    hasNumber: /\d/.test(effective),
   };
 }
 
@@ -4997,6 +5142,7 @@ const CONCEPT_GROUPS = {
   "let oder const": { any: ["let", "const"], kind: "keyword" },
   string: { kind: "string" },
   text: { kind: "string" },
+  zeichenkette: { kind: "string" },
   zahl: { kind: "number" },
   number: { kind: "number" },
   funktion: { any: ["function", "def", "=>", "func", "fun", "fn"], kind: "function" },
@@ -5009,7 +5155,43 @@ const CONCEPT_GROUPS = {
   schleife: { any: ["for", "while", "foreach", "map", "loop"], kind: "keyword" },
   bedingung: { any: ["if", "switch", "match", "when"], kind: "keyword" },
   ausgabe: { any: ["console.log", "print", "println", "cout", "echo", "printf", "fmt.println"], kind: "call" },
+
+  /* --------- Datenstrukturen: gemeint ist der Bauplan, nicht das Wort -------
+     „Liste“ ist keine Zeichenfolge, die im Code stehen müsste, sondern eine
+     Struktur. Wer `liste` hinschreibt, hat keine gebaut. Deshalb werden diese
+     Begriffe gegen echte Syntax geprüft. */
+  liste: { re: /\[[^\]]*\]|\b(?:list|array|vector|arraylist|slice)\s*[({<]/i, kind: "struktur",
+    why: "Es fehlt eine Liste — die schreibt man mit eckigen Klammern, z.B. `[1, 2, 3]`." },
+  list: { alias: "liste" },
+  array: { alias: "liste" },
+  dictionary: { re: /\{[^}]*:[^}]*\}|\{\s*\}|\b(?:dict|map|hashmap|object)\s*[({<]/i, kind: "struktur",
+    why: "Es fehlt ein Dictionary — das schreibt man mit geschweiften Klammern, z.B. `{\"a\": 1}`." },
+  dict: { alias: "dictionary" },
+  wörterbuch: { alias: "dictionary" },
+  objekt: { alias: "dictionary" },
+  schlüssel: { re: /\{[^}]*:|\[\s*["'][^"']*["']\s*\]|\.\w+\s*=|\bkeys?\s*\(/i, kind: "struktur",
+    why: "Es fehlt ein Schlüssel — im Dictionary steht er vor dem Doppelpunkt bzw. in den eckigen Klammern." },
+  key: { alias: "schlüssel" },
+  zugriff: { re: /\[[^\]]+\]|\.\w+/, kind: "struktur",
+    why: "Es fehlt der Zugriff auf ein Element — z.B. `daten[\"name\"]` oder `objekt.name`." },
+  zugreifen: { alias: "zugriff" },
+  hinzufügen: { re: /\.\s*(?:append|push|add|insert|put|set|extend)\s*\(|\[[^\]]+\]\s*=|\+=/i, kind: "struktur",
+    why: "Es wird nichts hinzugefügt — dafür gibt es z.B. `.append(...)`, `.push(...)` oder eine Zuweisung." },
+  einfügen: { alias: "hinzufügen" },
+  "f-string": { re: /\bf["']|\.format\s*\(|\$\{|`[^`]*\$\{/i, kind: "struktur",
+    why: "Es fehlt ein f-String — er beginnt mit `f` direkt vor dem Anführungszeichen: `f\"Hallo {name}\"`." },
+  fstring: { alias: "f-string" },
+  "template-string": { alias: "f-string" },
+  schleifenkopf: { alias: "schleife" },
 };
+
+/** Sammelbegriff auflösen — Aliase zeigen auf denselben Eintrag. */
+function conceptGroup(lc) {
+  let group = CONCEPT_GROUPS[lc];
+  let guard = 0;
+  while (group?.alias && guard++ < 5) group = CONCEPT_GROUPS[group.alias];
+  return group;
+}
 
 const HTML_TAGS = new Set(["html","head","body","title","meta","link","script","style","div","span","p","a","img","ul","ol","li","h1","h2","h3","h4","h5","h6","table","tr","td","th","thead","tbody","form","input","button","label","select","option","textarea","header","footer","main","section","article","nav","aside","video","audio","source","br","hr","strong","em","b","i","u","small","code","pre","blockquote","figure","figcaption","canvas","iframe","details","summary"]);
 const HTML_VOID_TAGS = new Set(["br","hr","img","input","meta","link","source","area","base","col","embed","track","wbr"]);
@@ -5053,7 +5235,9 @@ function checkConcept(concept, analysis) {
   }
   const c = String(concept).trim();
   const lc = c.toLowerCase();
-  const code = analysis.stripped;
+  // Gesucht wird ausschließlich in echten Anweisungen. Ein Wort, das lose in
+  // einer Zeile steht, bewirkt nichts und darf deshalb auch nichts erfüllen.
+  const code = analysis.effective != null ? analysis.effective : analysis.stripped;
   const lower = code.toLowerCase();
 
   // 1. Kommentar-Zeichen der jeweiligen Sprache (#, //, --) werden beim
@@ -5074,8 +5258,13 @@ function checkConcept(concept, analysis) {
   }
 
   // 3. Sammelbegriffe
-  const group = CONCEPT_GROUPS[lc];
+  const group = conceptGroup(lc);
   if (group) {
+    // Datenstrukturen werden gegen echte Syntax geprüft, nicht gegen das Wort.
+    if (group.re) {
+      const hit = group.re.test(code);
+      return { hit, concept: c, kind: group.kind, essential: true, why: hit ? null : group.why };
+    }
     if (group.kind === "comment") {
       const hasComment = analysis.comments.some((k) => k.replace(/^\W+/, "").trim().length > 0);
       const marker = (analysis.profile.lineComment || [])[0] || "//";
@@ -5114,7 +5303,7 @@ function checkConcept(concept, analysis) {
       return { hit: false, concept: c, kind: "tag", essential: true, why: `Das Element <${tag}> fehlt.` };
     }
     // Kein Tag -> Attributschreibweise oder erwarteter Textinhalt
-    const inText = analysis.raw.toLowerCase().includes(lc);
+    const inText = (analysis.effectiveRaw != null ? analysis.effectiveRaw : analysis.raw).toLowerCase().includes(lc);
     const isMarkup = /[<>=]/.test(c);           // `src=`, `<a href=` … gehört zwingend dazu
     return { hit: inText, concept: c, kind: isMarkup ? "markup" : "text", essential: isMarkup,
       why: inText ? null : isMarkup ? `\`${c}\` fehlt noch.` : `Der Text „${c}“ kommt nicht vor.` };
@@ -5135,7 +5324,8 @@ function checkConcept(concept, analysis) {
     // Steht der erwartete Text in einer Zeichenkette? Beim Zerlegen werden
     // Zeichenketten herausgenommen — ein erwarteter Ausgabetext wie `Hallo`
     // muss deshalb dort gesucht werden.
-    if (analysis.strings.some((str) => str.toLowerCase().includes(lc))) {
+    const inStrings = analysis.liveStrings || analysis.strings || [];
+    if (inStrings.some((str) => str.toLowerCase().includes(lc))) {
       return { hit: true, concept: c, kind: "literal", essential: true };
     }
 
@@ -5182,6 +5372,20 @@ function evaluateCode(task, answer, langId) {
     };
   }
 
+  /* Zweitwichtigste Frage nach „steht da überhaupt etwas“: Sind es
+     Anweisungen? Wer die erwarteten Begriffe untereinander schreibt, hat
+     nichts gelöst — und bekommt jetzt auch nichts dafür. */
+  if (!analysis.statements?.length && analysis.deadLines?.length) {
+    const sample = analysis.deadLines.slice(0, 3).map((d) => `\`${d.text}\``).join(", ");
+    return {
+      correct: false, score: 0, offline: true,
+      feedback: `Das sind einzelne Wörter, keine Anweisungen: ${sample}. So bewirkt der Code nichts.`,
+      hint: `Schreib eine vollständige Zeile ${label}-Code — mit Zuweisung, Aufruf oder Struktur, nicht nur die Begriffe.`,
+      praise: "",
+      details: { deadLines: analysis.deadLines },
+    };
+  }
+
   // Struktur zuerst: Ohne gültige Klammerung ist alles andere hinfällig.
   if (!analysis.structure.ok) {
     const p = analysis.structure.problems[0];
@@ -5211,17 +5415,28 @@ function evaluateCode(task, answer, langId) {
   // rechnerisch genug andere Bausteine da wären.
   const missingEssential = misses.filter((m) => m.essential);
 
-  let score = Math.round(coverage * 80 + 20);       // Struktur ist bereits in Ordnung
-  if (blockingIssues.length) score = Math.min(score, 55);
-  if (missingEssential.length) score = Math.min(score, 50);
+  // Wirkungslose Zeilen zwischen echten Anweisungen: kein Totalausfall, aber
+  // eine Lösung ist das auch nicht.
+  const dead = analysis.deadLines || [];
+
+  // Der Score bildet ab, wie viel der Aufgabe wirklich umgesetzt wurde —
+  // ohne Sockelbetrag fürs bloße Vorhandensein von Text.
+  let score = Math.round(coverage * 100);
+  if (dead.length) score = Math.max(0, score - Math.min(40, dead.length * 15));
+  if (blockingIssues.length) score = Math.min(score, 45);
+  if (missingEssential.length) score = Math.min(score, 55);
   if (notes.length) score = Math.max(0, score - 5);
   score = Math.max(0, Math.min(100, score));
 
-  const correct = coverage >= 0.6 && !blockingIssues.length && !missingEssential.length;
+  const correct = coverage >= 0.75 && !blockingIssues.length && !missingEssential.length && !dead.length;
 
   // Feedback so konkret wie möglich formulieren
   let feedback, hint = "";
-  if (blockingIssues.length) {
+  if (dead.length && !blockingIssues.length && !missingEssential.length) {
+    const sample = dead.slice(0, 2).map((d) => `Zeile ${d.line} (\`${d.text}\`)`).join(" und ");
+    feedback = `${sample} ${dead.length > 1 ? "bewirken" : "bewirkt"} nichts — dort steht nur ein Wort, keine Anweisung.`;
+    hint = "Entferne die Zeile oder mach eine vollständige Anweisung daraus.";
+  } else if (blockingIssues.length) {
     feedback = `${blockingIssues[0].title}: ${blockingIssues[0].hint}`;
     hint = misses.length ? `Außerdem fehlt noch: ${misses.map((m) => m.concept).join(", ")}.` : "";
   } else if (correct && !misses.length) {
@@ -5270,6 +5485,56 @@ const NUMBER_WORDS = {
   beliebig: "*", beliebigoft: "*", mehrfach: "*", mehrmals: "*",
 };
 
+/* Gleichbedeutende Schreibweisen. Wer „key" statt „Schlüssel" schreibt oder
+   „{}" statt „geschweifte Klammern", hat die Frage genauso beantwortet — das
+   darf nicht als Fehler zählen. Jede Zeile ist eine Gruppe; alles innerhalb
+   einer Gruppe gilt als gleichwertig. */
+const BLANK_SYNONYMS = [
+  ["schlüssel", "schluessel", "key", "keys"],
+  ["wert", "werte", "value", "values"],
+  ["geschweifte", "geschweiften", "geschweifteklammern", "geschweiftenklammern", "{}", "{", "}", "curly"],
+  ["eckige", "eckigen", "eckigeklammern", "eckigenklammern", "[]", "[", "]", "bracket"],
+  ["runde", "runden", "rundeklammern", "rundenklammern", "()", "(", ")"],
+  ["spitze", "spitzen", "spitzeklammern", "<>"],
+  ["liste", "listen", "list", "array", "arrays"],
+  ["dictionary", "dictionaries", "dict", "wörterbuch", "woerterbuch", "map"],
+  ["tupel", "tuple"],
+  ["menge", "set", "sets"],
+  ["funktion", "funktionen", "function", "def", "methode"],
+  ["variable", "variablen"],
+  ["schleife", "schleifen", "loop", "for"],
+  ["bedingung", "bedingungen", "if", "verzweigung"],
+  ["zeichenkette", "zeichenketten", "string", "strings", "text"],
+  ["ganzzahl", "integer", "int"],
+  ["kommazahl", "gleitkommazahl", "float", "double"],
+  ["wahrheitswert", "boolean", "bool"],
+  ["tabelle", "tabellen", "table"],
+  ["spalte", "spalten", "column", "columns", "feld", "felder"],
+  ["zeile", "zeilen", "row", "rows", "datensatz", "datensätze"],
+  ["element", "elemente", "tag", "tags"],
+  ["attribut", "attribute", "attributes"],
+  ["klasse", "klassen", "class", "classes"],
+  ["kommentar", "kommentare", "comment"],
+  ["veränderbar", "veraenderbar", "änderbar", "mutable", "veränderlich"],
+  ["unveränderbar", "unveraenderbar", "konstant", "immutable", "fest"],
+  ["index", "position", "stelle"],
+  ["parameter", "argument", "argumente", "parameters"],
+  ["rückgabewert", "rueckgabewert", "return", "ergebnis"],
+  ["eigenschaft", "eigenschaften", "property", "properties"],
+];
+
+// Nachschlagetabelle: normierte Schreibweise → Gruppennummer
+const BLANK_SYNONYM_INDEX = (() => {
+  const map = new Map();
+  BLANK_SYNONYMS.forEach((group, gi) => {
+    for (const word of group) {
+      const key = normalizeAlnum(word) || word;
+      if (!map.has(key)) map.set(key, gi);
+    }
+  });
+  return map;
+})();
+
 /** Vergleichsform einer Lücke: Groß-/Kleinschreibung, Satzzeichen und
  *  Zahlwörter werden vereinheitlicht. Reine Sonderzeichen bleiben erhalten. */
 function normBlank(value) {
@@ -5277,6 +5542,30 @@ function normBlank(value) {
   const alnum = normalizeAlnum(raw);
   const key = alnum || raw;                    // "#" bleibt "#"
   return NUMBER_WORDS[key] || key;
+}
+
+/** Meinen beide Eingaben dasselbe? */
+function sameMeaning(given, expected) {
+  const a = normBlank(given), b = normBlank(expected);
+  if (a === b) return true;
+  const ga = BLANK_SYNONYM_INDEX.get(a), gb = BLANK_SYNONYM_INDEX.get(b);
+  return ga !== undefined && ga === gb;
+}
+
+/**
+ * Beinahe richtig geschrieben? „veränderb" ist erkennbar „veränderbar" —
+ * das ist ein Tippfehler, keine falsche Antwort. Damit daraus nicht
+ * versehentlich ein Freibrief wird, müssen die ersten drei Zeichen stimmen
+ * und der Abstand klein bleiben.
+ */
+function blankTypoOk(given, expected) {
+  const a = String(given).trim().toLowerCase();
+  const b = String(expected).trim().toLowerCase();
+  if (a.length < 3 || b.length < 4) return false;
+  if (a.slice(0, 3) !== b.slice(0, 3)) return false;
+  const d = editDistance(a, b);
+  if (d === 0) return true;
+  return d <= Math.max(1, Math.floor(b.length / 4));
 }
 
 function evaluateFillBlank(task, answers) {
@@ -5291,18 +5580,23 @@ function evaluateFillBlank(task, answers) {
     const exact = accepted.find((a) => a.toLowerCase() === given.toLowerCase());
     if (exact) return { ok: true, expected: exact, given, caseOff: given !== exact };
 
-    // 2. Tolerant: Klammern, Anführungszeichen, Satzzeichen und Zahlwörter.
-    //    <strong> == strong, print() == print, einmal == 1.
-    const givenNorm = normBlank(given);
-    const match = accepted.find((a) => { const n = normBlank(a); return n && n === givenNorm; });
+    // 2. Tolerant: Klammern, Anführungszeichen, Satzzeichen, Zahlwörter —
+    //    und gleichbedeutende Begriffe: „key" ist „Schlüssel", „{}" sind die
+    //    geschweiften Klammern.
+    const match = accepted.find((a) => sameMeaning(given, a));
     if (match) return { ok: true, expected: match, given, formatted: true };
 
-    // 3. Tippfehler? Gemessen an der Variante, die am besten passt.
+    // 3. Nur vertippt? Dann zählt die Lücke — mit einem Hinweis auf die
+    //    richtige Schreibweise, aber ohne Punktabzug.
+    const nearly = accepted.find((a) => blankTypoOk(given, a));
+    if (nearly) return { ok: true, expected: nearly, given, spelling: true };
+
+    // 4. Knapp daneben, aber nicht knapp genug — dafür gibt es einen Hinweis.
     const best = accepted.reduce((acc, a) => {
       const d = editDistance(given.toLowerCase(), a.toLowerCase());
       return d < acc.d ? { d, a } : acc;
     }, { d: Infinity, a: target });
-    return { ok: false, expected: target, given, alternatives: accepted.slice(1), typo: best.d <= Math.max(1, Math.floor(best.a.length / 4)) };
+    return { ok: false, expected: target, given, alternatives: accepted.slice(1), typo: best.d <= Math.max(2, Math.floor(best.a.length / 3)) };
   });
 
   const hits = results.filter((r) => r.ok).length;
@@ -5313,8 +5607,10 @@ function evaluateFillBlank(task, answers) {
   let feedback, hint = "", solutionHint = "";
   if (correct) {
     feedback = "Alle Lücken korrekt ausgefüllt!";
+    const spelling = results.find((r) => r.spelling);
     const caseOff = results.find((r) => r.caseOff);
-    if (caseOff) hint = `Kleinigkeit: Üblich ist die Schreibweise \`${caseOff.expected}\`.`;
+    if (spelling) hint = `Zählt — geschrieben wird es \`${spelling.expected}\`.`;
+    else if (caseOff) hint = `Kleinigkeit: Üblich ist die Schreibweise \`${caseOff.expected}\`.`;
   } else {
     const typo = results.find((r) => !r.ok && r.typo);
     const empty = results.filter((r) => !r.ok && r.reason === "leer");
@@ -5440,6 +5736,95 @@ function looksLikeWord(word) {
   return true;
 }
 
+/* ------------------- Kennt die Plattform dieses Wort? --------------------
+   Die Lautregeln oben erkennen Tastaturgeklapper, aber keinen Quatsch, der
+   sich aussprechen lässt: „ligma sigma ohio skibidy rizzler" besteht jede
+   phonotaktische Prüfung und ist trotzdem keine Erklärung.
+
+   Deshalb kommt eine zweite Stufe dazu: ein Wortschatz aus dem eigenen
+   Material. Alles, was in einer Theorie, einer Frage, einer Antwortoption
+   oder einem Lektionstitel dieser Plattform vorkommt, gilt als bekannt —
+   dazu eine Grundliste des alltäglichen Deutsch. Was dann noch übrig
+   bleibt, ist mit hoher Wahrscheinlichkeit kein Fachbeitrag.
+   ------------------------------------------------------------------------- */
+const GERMAN_BASE_WORDS = `
+ich du er sie es wir ihr mich dich sich uns euch mein dein sein unser euer ihre
+der die das den dem des ein eine einen einem einer eines kein keine keinen
+und oder aber denn sondern weil dass wenn als wie wo was wer warum wieso weshalb
+nicht nur noch schon auch sehr mehr weniger viel wenig alle jeder jede jedes
+ist sind war waren bin bist hat haben hatte hatten wird werden wurde wurden
+kann kannst können konnte könnte muss müssen musste sollte soll darf dürfen
+mag möchte will wollen lassen lässt geht gehen kommt kommen macht machen
+sagt sagen zeigt zeigen gibt geben nimmt nehmen setzt setzen stellt stellen
+schreibt schreiben liest lesen speichert speichern lädt laden startet starten
+öffnet öffnen schließt schließen läuft laufen ruft rufen prüft prüfen
+nutzt nutzen verwendet verwenden braucht brauchen benötigt benötigen
+bedeutet bedeuten heißt heißen bleibt bleiben passiert passieren
+funktioniert funktionieren enthält enthalten besteht bestehen gehört gehören
+erzeugt erzeugen erstellt erstellen ändert ändern löscht löschen fügt hinzu
+findet finden sucht suchen vergleicht vergleichen berechnet berechnen
+verhindert verhindern ermöglicht ermöglichen sorgt sorgen führt führen
+für mit von zu bei nach vor über unter durch ohne gegen um an auf aus in
+im am zum zur beim vom ins ans dabei darin daraus damit dadurch deshalb daher
+dann also somit folglich außerdem zudem jedoch trotzdem dennoch zwar
+immer nie oft selten manchmal meistens gerade eben sofort später früher
+gut besser beste schlecht schlechter groß größer klein kleiner lang kurz
+neu alt richtig falsch wichtig einfach schwer leicht schnell langsam
+klar deutlich genau ungenau sicher unsicher möglich unmöglich nötig
+gleich verschieden ähnlich anders zusammen getrennt einzeln mehrere
+oben unten links rechts innen außen vorne hinten erste zweite letzte nächste
+zeit mal stelle teil art weise beispiel grund fehler problem lösung
+sache ding punkt seite ende anfang schritt regel form inhalt zweck
+name wert zahl text zeichen buchstabe wort satz zeile spalte
+mensch nutzer person leser schüler lehrer entwickler programmierer
+programm rechner computer browser bildschirm speicher datei ordner
+übersichtlich übersicht lesbar wartbar wiederverwendbar austauschbar
+verständlich robust flexibel struktur ordnung sauber doppelt redundant
+effizient performant barrierefrei zugänglich eindeutig konsistent
+veränderbar unveränderbar konstant fest änderbar aufwand spart zeit
+lernen üben verstehen merken wiederholen erklären beschreiben zeigen
+`;
+
+let vocabularyCache = null;
+/** Wortschatz aus dem eigenen Lernmaterial — einmal aufgebaut, dann gemerkt. */
+function knownVocabulary() {
+  if (vocabularyCache) return vocabularyCache;
+  const set = new Set();
+  const add = (text) => {
+    for (const w of String(text || "").toLowerCase().match(/[a-zäöüß]{3,}/g) || []) {
+      const stem = stemDe(w);
+      if (stem.length >= 3) set.add(stem);
+      if (w.length >= 3) set.add(w);
+    }
+  };
+  add(GERMAN_BASE_WORDS);
+  try {
+    for (const lesson of Object.values(LESSON_CONTENT || {})) {
+      add(lesson.theory); add(lesson.title);
+      for (const t of lesson.tasks || []) {
+        add(t.question); add(t.explanation); add(t.template);
+        (t.options || []).forEach(add);
+      }
+    }
+  } catch (e) { /* Wortschatz bleibt auf der Grundliste */ }
+  vocabularyCache = set;
+  return set;
+}
+
+/** Ein Wort, das die Plattform kennt — oder wenigstens ein Fachbegriff. */
+function isKnownWord(word) {
+  const raw = String(word || "").toLowerCase().replace(/[^a-z0-9äöüß_.]/g, "");
+  if (!raw) return false;
+  if (/[0-9_.]/.test(raw)) return true;                    // Code-Bezeichner
+  const vocab = knownVocabulary();
+  if (vocab.has(raw) || vocab.has(stemDe(raw))) return true;
+  // Zusammensetzungen: „Schlüsselwort" = „Schlüssel" + „Wort"
+  for (let cut = 4; cut <= raw.length - 4; cut++) {
+    if (vocab.has(raw.slice(0, cut)) && vocab.has(stemDe(raw.slice(cut)))) return true;
+  }
+  return false;
+}
+
 function evaluateExplanation(task, answer) {
   const text = String(answer || "").trim();
   const words = text.split(/\s+/).filter(Boolean);
@@ -5494,7 +5879,13 @@ function evaluateExplanation(task, answer) {
 
   // Inhaltstragende Wörter: alles außer Füllwörtern und sehr kurzen Wörtern.
   // Sie messen Gehalt deutlich besser als die bloße Wortzahl.
-  const contentWords = [...answerStems].filter((w) => w.length > 3 && !STOPWORDS_DE.has(w));
+  const allContentWords = [...answerStems].filter((w) => w.length > 3 && !STOPWORDS_DE.has(w));
+  // …und davon zählt nur, was die Plattform als Wort kennt. Sonst ließe sich
+  // jede Bewertung mit ausgedachten Wörtern hochschreiben.
+  const unknownWords = allContentWords.filter((w) => !isKnownWord(w));
+  const contentWords = allContentWords.filter((w) => isKnownWord(w));
+  const nonsenseShare = allContentWords.length ? unknownWords.length / allContentWords.length : 0;
+  const mostlyNonsense = allContentWords.length >= 4 && nonsenseShare > 0.5;
 
   // Wurde die Frage nur abgeschrieben? Das zeigt kein Verständnis. Entscheidend
   // ist der ANTEIL übernommener Wörter — eine kurze eigenständige Antwort
@@ -5528,6 +5919,16 @@ function evaluateExplanation(task, answer) {
     return { correct: false, score: 0, offline: true,
       feedback: "Das beantwortet die Frage nicht.",
       hint: "Beziehe dich auf das Thema der Aufgabe — nutze die Begriffe, um die es geht.",
+      praise: "" };
+  }
+
+  // Ausgedachte Wörter zwischen ein paar Fachbegriffen sind keine Erklärung,
+  // auch wenn sie sich aussprechen lassen.
+  if (mostlyNonsense) {
+    const sample = unknownWords.slice(0, 3).map((w) => `„${w}“`).join(", ");
+    return { correct: false, score: 0, offline: true,
+      feedback: `Der größte Teil der Antwort besteht aus Wörtern, die nichts mit dem Thema zu tun haben (${sample}).`,
+      hint: "Erkläre in normalen deutschen Sätzen, worum es in der Lektion geht.",
       praise: "" };
   }
 
@@ -5603,6 +6004,95 @@ function analyzeAnswer(task, userAnswer, langId) {
   return evaluateExplanation(task, userAnswer);
 }
 
+/* ==================== Zweitmeinung durch die KI ==========================
+   Struktur lässt sich zuverlässig mit Mustern prüfen: fehlende Klammern,
+   falsche Schlüsselwörter, Wörter ohne Anweisung. Ob eine Lösung inhaltlich
+   das Richtige tut, lässt sich so nicht entscheiden — bei „schreib eine
+   Funktion, die …" gibt es viele richtige Wege.
+
+   Für genau diese offenen Aufgaben holt die Lektion eine zweite Meinung ein.
+   Der Ablauf ist bewusst so gebaut, dass die Plattform ohne KI vollständig
+   funktioniert:
+
+     1. Der Browser bewertet lokal — sofort und kostenlos.
+     2. Nur bei offenen Aufgaben geht die Antwort zusätzlich an den Server.
+     3. Antwortet die KI nicht, zu langsam oder unsinnig, bleibt es beim
+        lokalen Ergebnis. Es gibt keinen Zustand, in dem eine Lektion hängt.
+
+   Die Schlüssel liegen ausschließlich auf dem Server. Der Browser sieht nur
+   das Urteil.
+   ========================================================================= */
+const AI_VERIFY_TIMEOUT_MS = 15000;
+
+// Aufgabentypen, bei denen Muster allein nicht ausreichen.
+const OPEN_TASK_TYPES = new Set(["code_write", "explain"]);
+
+/** Lohnt sich für diese Aufgabe eine Zweitmeinung? */
+function needsAiVerification(task, local) {
+  if (!aiVerifyAvailable()) return false;
+  if (!OPEN_TASK_TYPES.has(task?.type)) return false;
+  // Ganz leere oder offensichtlich unsinnige Antworten braucht niemand zu
+  // verifizieren — das steht lokal schon fest.
+  if (local && local.score === 0 && local.correct === false) return false;
+  return true;
+}
+
+/* Der Server meldet beim Start, ob eine KI bereitsteht. Bis dahin wird lokal
+   bewertet — kein Warten, keine Fehlermeldung. */
+let aiVerifyState = { available: false };
+function aiVerifyAvailable() { return !!aiVerifyState.available; }
+function setAiVerifyAvailable(v) { aiVerifyState = { available: !!v }; }
+
+/**
+ * Führt lokales Ergebnis und KI-Urteil zusammen.
+ *
+ * Die KI darf korrigieren, aber nicht überstimmen, wo die lokale Analyse
+ * sicher ist: Wer nichts geschrieben hat, besteht auch dann nicht, wenn das
+ * Modell freundlich gestimmt ist. Umgekehrt darf die KI eine Lösung
+ * durchwinken, die lokal nur an einer Formulierung gescheitert wäre.
+ */
+function mergeVerdicts(local, ai) {
+  if (!ai) return local;
+  // Struktureller Totalausfall bleibt einer — dagegen kommt kein Urteil an.
+  if (local.score === 0 && !local.correct) return local;
+
+  const score = Math.round((local.score + ai.score * 2) / 3);   // KI wiegt schwerer
+  const correct = ai.correct && score >= 60;
+  return {
+    ...local,
+    correct,
+    score: Math.max(0, Math.min(100, score)),
+    feedback: ai.feedback || local.feedback,
+    hint: ai.hint || local.hint,
+    verified: true,
+    provider: ai.provider || null,
+  };
+}
+
+/** Holt die Zweitmeinung. Fällt bei jedem Problem auf das lokale Ergebnis zurück. */
+async function verifyWithAI({ task, answer, local, course, lessonTitle }) {
+  if (!api.available) return local;
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), AI_VERIFY_TIMEOUT_MS) : null;
+  try {
+    const ai = await api.post("/api/ai/verify", {
+      type: task.type,
+      question: `${lessonTitle ? lessonTitle + " — " : ""}${task.question || ""}`,
+      language: course?.name || "",
+      concepts: task.expectedConcepts || [],
+      answer: String(answer || "").slice(0, 4000),
+      local: { score: local.score, correct: local.correct },
+    }, { signal: controller?.signal });
+    return mergeVerdicts(local, ai);
+  } catch (e) {
+    // Kontingent erschöpft, Netz weg, Modell kaputt — alles derselbe Ausgang:
+    // Es zählt die lokale Bewertung, und die Lektion läuft normal weiter.
+    return local;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 /* -------------------- Code-Prüfung für den Editor ------------------------ */
 /**
  * Analysiert HTML, CSS und JavaScript gemeinsam — für die Fehlerprüfung
@@ -5632,6 +6122,19 @@ function analyzeProject({ html, css, js }) {
         }
       }
     }
+    // Zeilen, die aus einem einzelnen Wort bestehen, tun nichts. In JavaScript
+    // ist das gültige Syntax und wird deshalb von keiner Klammerprüfung
+    // gefunden — auffallen sollte es trotzdem.
+    for (const d of (a.deadLines || []).slice(0, 5)) {
+      add(where, "warning", `Zeile ${d.line} bewirkt nichts`,
+        `\`${d.text.slice(0, 60)}\` ist ein einzelner Ausdruck ohne Wirkung — hier wird nichts zugewiesen, aufgerufen oder zurückgegeben.`,
+        "Entferne die Zeile oder mach eine vollständige Anweisung daraus.");
+    }
+    if ((a.deadLines || []).length > 5) {
+      add(where, "warning", `${a.deadLines.length - 5} weitere wirkungslose Zeilen`,
+        "Auch dort stehen einzelne Wörter ohne Wirkung.", "Räum die Datei auf.");
+    }
+
     for (const iss of a.issues) add(where, iss.severity, iss.title, iss.hint, iss.hint);
   }
 
@@ -5738,6 +6241,22 @@ function LdIcon({ name, size = 24, color = "currentColor", className = "", title
     stern: <path d="m12 2.8 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.6l6.5-.9L12 2.8Z" />,
     ziel: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.4" fill={color} stroke="none" /></>,
     raute: <><path d="M12 2.5 21.5 12 12 21.5 2.5 12 12 2.5Z" /></>,
+
+    /* ----------------------- Hinweise und Zustände ----------------------- */
+    // Glühbirne — steht überall dort, wo bisher 💡 stand
+    tipp: <><path d="M9 18h6M10 21h4" /><path d="M12 2a6.5 6.5 0 0 0-3.8 11.8c.5.4.8 1 .8 1.7v.5h6v-.5c0-.7.3-1.3.8-1.7A6.5 6.5 0 0 0 12 2Z" /></>,
+    // Warndreieck — ersetzt ⚠️
+    warnung: <><path d="M12 3.5 22 20H2L12 3.5Z" /><path d="M12 9.5v4.5" /><circle cx="12" cy="17" r="1" fill={color} stroke="none" /></>,
+    // Briefumschlag — ersetzt 📧
+    mail: <><rect x="2.5" y="5" width="19" height="14" rx="2.5" /><path d="m3 7 9 6 9-6" /></>,
+    // Winkende Hand — ersetzt 👋 in der Begrüßung
+    winken: <><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12" /><path d="M11 11.5V4.5a1.5 1.5 0 0 1 3 0V12" /><path d="M14 12V6.5a1.5 1.5 0 0 1 3 0V14" /><path d="M8 13v-1a1.5 1.5 0 0 0-3 0v3c0 3.3 2.7 6 6 6h1.5a5.5 5.5 0 0 0 5.5-5.5V12" /></>,
+    // Konfetti — ersetzt 🎉
+    konfetti: <><path d="M3 21 8.5 8.5 15.5 15.5 3 21Z" /><path d="M14 3.5v2M19.5 5.5l-1.4 1.4M21 11h-2M17 2.5l.8 2M11.5 7l1.5-.6" /></>,
+    // Schneeflocke — ersetzt 🧊 beim Streak-Schutz
+    schneeflocke: <><path d="M12 2v20M3.4 7l17.2 10M20.6 7 3.4 17" /><path d="m9 4 3 2 3-2M9 20l3-2 3 2" /><path d="m4.6 10.5.4-3.4 3.3-.9M19.4 13.5l-.4 3.4-3.3.9M19.4 10.5l-.4-3.4-3.3-.9M4.6 13.5l.4 3.4 3.3.9" /></>,
+    // Pokal
+    pokal: <><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" /><path d="M7 6H4.5v1.5A3.5 3.5 0 0 0 8 11M17 6h2.5v1.5A3.5 3.5 0 0 1 16 11" /><path d="M12 14v4M8.5 21h7l-.7-3h-5.6L8.5 21Z" /></>,
   };
 
   return (
@@ -5844,11 +6363,24 @@ function Markdown({ text }) {
       );
       continue;
     }
-    // Blockquote
+    // Blockquote — Hinweiskästen tragen eine Markierung am Anfang
+    // (`[tipp]`, `[warnung]`, `[mail]`). Daraus wird ein eigenes Symbol
+    // statt eines Betriebssystem-Emojis.
     if (line.trim().startsWith(">")) {
       const buf = [];
       while (i < lines.length && lines[i].trim().startsWith(">")) { buf.push(lines[i].replace(/^\s*>\s?/, "")); i++; }
-      blocks.push(<blockquote key={key++} className="my-4 pl-4 py-2 border-l-2 border-[#4F8EF7] bg-[#4F8EF7]/5 rounded-r-lg text-[#C9D6F0]">{renderInline(buf.join(" "), "bq" + key)}</blockquote>);
+      let body = buf.join(" ");
+      const marker = body.match(/^\s*\[(tipp|warnung|mail)\]\s*/i);
+      const kind = marker ? marker[1].toLowerCase() : null;
+      if (marker) body = body.slice(marker[0].length);
+      const tone = kind === "warnung" ? "#F59E0B" : kind === "mail" ? "#10B981" : "#4F8EF7";
+      blocks.push(
+        <blockquote key={key++} className="my-4 pl-4 py-2 border-l-2 rounded-r-lg text-[#C9D6F0] flex gap-2.5"
+          style={{ borderColor: tone, background: tone + "0D" }}>
+          {kind && <LdIcon name={kind} size={17} color={tone} className="mt-0.5 shrink-0" />}
+          <span>{renderInline(body, "bq" + key)}</span>
+        </blockquote>
+      );
       continue;
     }
     // Headings
@@ -5924,7 +6456,7 @@ function Card({ children, className = "", onClick, hover }) {
 /* Animated terminal background for the landing hero */
 const TERMINAL_LINES = [
   "const learn = (lang) => `${lang} mastered`;",
-  "function helloWorld() { return '👋'; }",
+  "function helloWorld() { return 'Hallo Welt'; }",
   "for (let i = 0; i < lessons.length; i++) {",
   "  await checkAnswer(lessons[i]);",
   "}",
@@ -5933,7 +6465,7 @@ const TERMINAL_LINES = [
   "  levelUp() { this.xp += 50; }",
   "}",
   "SELECT * FROM students WHERE streak > 7;",
-  "print('Python ist einfach 🐍')",
+  "print('Python ist einfach')",
   "public static void main(String[] args) {}",
   "#include <iostream>",
   "std::cout << \"C++ nah am Metal\" << std::endl;",
@@ -6337,7 +6869,7 @@ function SkeletonFeedback() {
       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[#1E2D4A]">
         <Bot size={18} className="text-[#7C3AED]" />
         <span className="font-display font-bold">Bewertung</span>
-        <span className="ml-auto flex items-center gap-1.5 text-xs text-[#8A9BC0]"><Loader2 size={13} className="ld-spin" />analysiert deinen Code …</span>
+        <span className="ml-auto flex items-center gap-1.5 text-xs text-[#8A9BC0]"><Loader2 size={13} className="ld-spin" />Verifiziere Antwort, bitte warten …</span>
       </div>
       <div className="space-y-2.5">
         <div className="ld-skeleton h-4 w-1/3" />
@@ -6761,12 +7293,13 @@ const api = {
   available: false,
   aiAvailable: false,
 
-  async request(method, path, body) {
+  async request(method, path, body, options = {}) {
     const res = await fetch(path, {
       method,
       credentials: "same-origin",              // Sitzungs-Cookie mitsenden
       headers: body === undefined ? {} : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
+      signal: options.signal,                  // erlaubt ein Zeitlimit von außen
     });
     const text = await res.text();
     let data = null;
@@ -6776,7 +7309,7 @@ const api = {
   },
 
   get(path) { return this.request("GET", path); },
-  post(path, body) { return this.request("POST", path, body); },
+  post(path, body, options) { return this.request("POST", path, body, options); },
   patch(path, body) { return this.request("PATCH", path, body); },
   put(path, body) { return this.request("PUT", path, body); },
   del(path) { return this.request("DELETE", path); },
@@ -6796,7 +7329,10 @@ const api = {
       try {
         const status = await this.get("/api/ai/status");
         this.aiAvailable = !!status?.available;
-      } catch (e) { this.aiAvailable = false; }
+        // Nur wenn serverseitig eine KI bereitsteht, wird bei offenen Aufgaben
+        // überhaupt eine Zweitmeinung angefragt.
+        setAiVerifyAvailable(status?.available && status?.verify !== false);
+      } catch (e) { this.aiAvailable = false; setAiVerifyAvailable(false); }
     }
     return this.available;
   },
@@ -6823,7 +7359,12 @@ function fromApiUser(u) {
    Browsers und verlässt das Gerät nie. Gast-Sitzungen (isGuest) werden
    bewusst NICHT gespeichert.
    ------------------------------------------------------------------------- */
-const STORAGE_KEY = "learndeveloping_v1";
+/* v2: Aus früheren Ständen konnten noch erfundene Beispiel-Accounts im
+   Browser liegen (sie tauchten in der Rangliste auf, obwohl es sie im Code
+   längst nicht mehr gibt). Mit dem neuen Schlüssel startet der Speicher
+   einmalig sauber; der alte Eintrag wird beim ersten Laden entfernt. */
+const STORAGE_KEY = "learndeveloping_v2";
+const LEGACY_STORAGE_KEYS = ["learndeveloping_v1"];
 const API_KEY_STORAGE = "learndeveloping_ai_key";          // alt (Einzel-Key)
 const API_KEYS_STORAGE = "learndeveloping_ai_keys";        // neu (Key-Pool)
 const AI_PROVIDER_STORAGE = "learndeveloping_ai_provider";
@@ -6831,6 +7372,7 @@ const OLLAMA_MODEL_STORAGE = "learndeveloping_ollama_model";
 
 function loadPersisted() {
   try {
+    for (const old of LEGACY_STORAGE_KEYS) localStorage.removeItem(old);
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
@@ -7350,7 +7892,7 @@ export default function App() {
     const others = (me.playground || []).filter((p) => p.id !== project.id);
     const usedByOthers = others.reduce((sum, p) => sum + (p.sizeBytes || 0), 0);
     if (usedByOthers + sizeBytes > STORAGE_QUOTA_BYTES) {
-      pushToast("error", "Speicherkontingent (2,5 GB) erreicht — lösche ein Projekt, um Platz zu schaffen.");
+      pushToast("error", `Speicherkontingent (${STORAGE_QUOTA_LABEL}) erreicht — lösche ein Projekt, um Platz zu schaffen.`);
       return false;
     }
     const saved = { id: project.id, name: project.name, files, sizeBytes, updatedAt: "Jetzt" };
@@ -7408,17 +7950,34 @@ export default function App() {
     const newAdmin = {
       id: uid(), role: "admin", name: form.name, email: form.email,
       ...(await localPasswordFields(form.password)),
-      createdAt: "Heute", avatar: "🛡️", emailVerified: true, twoFactorEnabled: false,
+      createdAt: "Heute", emailVerified: true, twoFactorEnabled: false,
     };
     setUsers((us) => [...us, newAdmin]);
     pushToast("success", `Admin-Account für ${form.name} erstellt.`);
     return true;
   }, [users, pushToast]);
 
+  /* Zwei Gutschriften kurz hintereinander (Aufgabe + Lektionsbonus) haben sich
+     bisher gegenseitig abgeräumt: Der Timer der ersten hat das Popup der
+     zweiten gelöscht, und weil das Element bestehen blieb, lief die Animation
+     nicht neu an — die Zahl sprang einfach um. Jetzt bekommt jede Einblendung
+     eine eigene Nummer (als React-key ⇒ Neustart der Animation) und der alte
+     Timer wird verworfen. */
+  const xpTimer = useRef(null);
+  const xpSeq = useRef(0);
   const showXP = useCallback((amount) => {
-    setXpPopup(amount);
-    setTimeout(() => setXpPopup(null), 1600);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    if (xpTimer.current) clearTimeout(xpTimer.current);
+    xpSeq.current += 1;
+    const id = xpSeq.current;
+    setXpPopup({ amount, id });
+    xpTimer.current = setTimeout(() => {
+      // Nur wegräumen, wenn inzwischen keine neuere Einblendung kam
+      setXpPopup((cur) => (cur && cur.id === id ? null : cur));
+      xpTimer.current = null;
+    }, 1600);
   }, []);
+  useEffect(() => () => { if (xpTimer.current) clearTimeout(xpTimer.current); }, []);
 
   const navigate = useCallback((v) => { setView(v); setSidebarOpen(false); window.scrollTo(0, 0); }, []);
 
@@ -7535,7 +8094,7 @@ export default function App() {
       const code = genSchoolCode();
       newUser = {
         id, role: "teacher", name: form.name, email: form.email, ...pw, school: form.school || "—", schoolCode: code,
-        students: [], createdAt: "Heute", avatar: guest ? guest.avatar : "👨‍🏫",
+        students: [], createdAt: "Heute",
         emailVerified: false, verificationCode, twoFactorEnabled: false, playground: [],
       };
       pushToast("info", `Dein Schul-Code: ${code}`);
@@ -7550,7 +8109,7 @@ export default function App() {
         id, role: "student", name: form.name, email: form.email, ...pw, teacherId,
         xp: guest ? guest.xp : 0, streak: guest ? guest.streak : 1,
         completedLessons: guest ? guest.completedLessons : [], currentCourse: guest ? guest.currentCourse : null,
-        joinedAt: "Heute", lastLogin: "Jetzt", avatar: guest ? guest.avatar : "🧑‍💻", badges: guest ? guest.badges : [],
+        joinedAt: "Heute", lastLogin: "Jetzt", badges: guest ? guest.badges : [],
         emailVerified: false, verificationCode, twoFactorEnabled: false, playground: [],
       };
     }
@@ -7603,7 +8162,7 @@ export default function App() {
     const guestUser = {
       id, role: "student", name: "Gast", email: "", password: "", teacherId: null,
       xp: 0, streak: 1, completedLessons: [], currentCourse: null,
-      joinedAt: "Heute", lastLogin: "Jetzt", avatar: "🧑‍💻", badges: [], isGuest: true,
+      joinedAt: "Heute", lastLogin: "Jetzt", badges: [], isGuest: true,
     };
     setUsers((us) => [...us, guestUser]);
     setCurrentUser(id);
@@ -7642,7 +8201,7 @@ export default function App() {
     }));
     // … und serverseitig verbuchen, wo der Wert manipulationssicher liegt.
     if (api.available && me && !me.isGuest) {
-      api.post("/api/progress/xp", { amount: rawAmount, attempts: meta.attempts, usedHint: meta.usedHint })
+      api.post("/api/progress/xp", { amount: rawAmount, score: meta.score, usedHint: meta.usedHint })
         .then(({ user }) => setUsers((us) => us.map((u) => u.id === user.id ? fromApiUser(user) : u)))
         .catch(() => {});
     }
@@ -7717,7 +8276,7 @@ export default function App() {
           lessonId,
           courseId: findLessonMeta(lessonId)?.course.id,
           xpReward: bonusXp,
-          firstTry: stats.firstTry,
+          scoreSum: stats.scoreSum,
           taskCount: stats.taskCount,
           badges: earnedBadgesFor(completed, me.xp + bonusXp),
         });
@@ -7755,9 +8314,9 @@ export default function App() {
       const { streak, lastActive, grew, freezes, usedFreeze, broken } = advanceStreak(u);
       if (grew) {
         if (streak === 7 && !badges.includes("week_warrior")) { badges.push("week_warrior"); newlyEarned.push("week_warrior"); }
-        if (usedFreeze) setTimeout(() => pushToast("info", `Streak-Schutz eingelöst — deine Serie läuft weiter! 🧊`), 600);
+        if (usedFreeze) setTimeout(() => pushToast("info", `Streak-Schutz eingelöst — deine Serie läuft weiter.`), 600);
         else if (broken) setTimeout(() => pushToast("info", "Neue Serie gestartet — dranbleiben lohnt sich!"), 600);
-        else setTimeout(() => pushToast("success", `${streak} Tage in Folge! 🔥`), 600);
+        else setTimeout(() => pushToast("success", `${streak} Tage in Folge!`), 600);
       }
 
       // Wochenwertung für die Liga mitführen
@@ -7832,7 +8391,7 @@ export default function App() {
       <GlobalStyles />
       {screen}
       <Toasts toasts={toasts} />
-      {xpPopup != null && <XPPopup amount={xpPopup} />}
+      {xpPopup != null && <XPPopup key={xpPopup.id} amount={xpPopup.amount} />}
       {confetti && <Confetti />}
       <CookieNotice ctx={ctx} />
       {aiSettingsOpen && aiConfigurable && <AiSettingsModal ctx={ctx} />}
@@ -7949,7 +8508,7 @@ Abgeschlossen ist eine Lektion erst, wenn **alle** Aufgaben richtig sind. Durchk
 
 Eine Lektion kostet zehn bis fünfzehn Minuten. Ein Modul hat vier bis fünf Lektionen, ein Kurs drei bis vier Module. Wer täglich eine Lektion schafft, ist in gut zwei Wochen durch einen Kurs — und hat dabei mehr behalten als bei einem Wochenendmarathon.
 
-> 💡 Die Serie (Streak) zählt Kalendertage, nicht Stunden. Abends eine Lektion und am nächsten Morgen die nächste sind zwei Tage.`,
+> [tipp] Die Serie (Streak) zählt Kalendertage, nicht Stunden. Abends eine Lektion und am nächsten Morgen die nächste sind zwei Tage.`,
     showCourses: true,
   },
 
@@ -7986,13 +8545,13 @@ Das ist die ehrliche Antwort: Ein Knopf, der so tut, als würde er Java kompilie
 - **Alle 30 Sekunden** wird automatisch gespeichert, \`Strg+S\` jederzeit.
 - **Vorschau in einem eigenen Tab**, der bei jeder Änderung neu lädt — die Scrollposition bleibt erhalten.
 - **Herunterladen** als ZIP mit allen Dateien, oder als eine einzige HTML-Datei mit eingebettetem CSS und JavaScript.
-- **2,5 GB** Speicher pro Konto für deine Projekte.
+- **1 GB** Speicher pro Konto für deine Projekte.
 
 ## Der Assistent
 
 Rechts sitzt ein KI-Assistent, der deinen Code kennt. Er erklärt, sucht Fehler und schlägt Verbesserungen vor. Das ist die **einzige** Stelle mit KI — Aufgaben werden immer lokal geprüft, damit die Bewertung sofort da ist und nichts kostet.
 
-> 💡 Vollbild schaltet die IDE auf die ganze Fensterfläche. Esc bringt dich zurück.`,
+> [tipp] Vollbild schaltet die IDE auf die ganze Fensterfläche. Esc bringt dich zurück.`,
   },
 
   features: {
@@ -8086,7 +8645,7 @@ Veröffentlichte Level erscheinen bei allen, die Ihren Schul-Code genutzt haben,
 
 Nichts. Keine Lizenzgebühren, keine Schülerzahlgrenze, keine Testphase, die abläuft.
 
-> 📧 Fragen zum Einsatz an einer Schule? Schreiben Sie an **contact@learndeveloping.com**.`,
+> [mail] Fragen zum Einsatz an einer Schule? Schreiben Sie an **contact@learndeveloping.com**.`,
   },
 
   preise: {
@@ -8354,7 +8913,7 @@ function Landing({ ctx }) {
             { icon: Play, color: "#10B981", t: "Ausführen, nicht simulieren",
               d: "HTML, CSS und JS laufen live in der Vorschau. Python läuft als echtes CPython über WebAssembly — mit Konsolenausgabe." },
             { icon: Save, color: "#F59E0B", t: "Speichert von selbst",
-              d: "Alle 30 Sekunden, dazu Strg+S. Herunterladen als ZIP oder als eine einzige HTML-Datei. 2,5 GB pro Konto." },
+              d: "Alle 30 Sekunden, dazu Strg+S. Herunterladen als ZIP oder als eine einzige HTML-Datei. 1 GB pro Konto." },
             { icon: Trophy, color: "#F7C948", t: "XP, Ligen & Shop",
               d: "20 Level, Wochenligen mit Auf- und Abstieg, Tagesserie mit Schutzschild — und ein Shop, in dem XP wirklich etwas bewirken." },
             { icon: Users, color: "#0EA5E9", t: "Für Schulen & Klassen",
@@ -9097,6 +9656,51 @@ const LEGAL_META = {
   "ueber-uns": { title: "Über uns", icon: Users, subtitle: "Wer wir sind" },
 };
 
+/* ------------------------ Angaben zum Betreiber --------------------------
+   Impressum und Datenschutzerklärung brauchen echte Angaben — die kann und
+   darf niemand erfinden. Sie stehen deshalb an genau EINER Stelle und werden
+   in alle Rechtstexte eingesetzt.
+
+   Was hier leer bleibt, erscheint auf der Seite als deutlich markierte Lücke,
+   und Administratorinnen und Administratoren sehen zusätzlich einen Hinweis.
+   Für Besucherinnen und Besucher gibt es dagegen keine „das ist nur eine
+   Vorlage"-Meldung mehr.
+   ------------------------------------------------------------------------- */
+const SITE_OPERATOR = {
+  name: "",                                  // z.B. "LearnDeveloping GmbH"
+  street: "",
+  city: "",
+  country: "Deutschland",
+  phone: "",
+  email: "contact@learndeveloping.com",
+  represented: "",                           // vertretungsberechtigte Person
+  register: "",                              // z.B. "Handelsregister, Amtsgericht Musterstadt"
+  registerNumber: "",
+  vatId: "",
+};
+
+// Welche Angaben für ein vollständiges Impressum gebraucht werden
+const OPERATOR_REQUIRED = ["name", "street", "city", "email"];
+
+function operatorIncomplete() {
+  return OPERATOR_REQUIRED.filter((k) => !String(SITE_OPERATOR[k] || "").trim());
+}
+
+const OPERATOR_LABELS = {
+  name: "Name des Betreibers", street: "Straße und Hausnummer", city: "PLZ und Ort",
+  country: "Land", phone: "Telefonnummer", email: "E-Mail-Adresse",
+  represented: "vertretungsberechtigte Person", register: "Registergericht",
+  registerNumber: "Registernummer", vatId: "Umsatzsteuer-ID",
+};
+
+/** Setzt die Betreiberangaben in einen Rechtstext ein. */
+function fillOperator(text) {
+  return String(text || "").replace(/\{\{(\w+)\}\}/g, (_m, key) => {
+    const value = String(SITE_OPERATOR[key] || "").trim();
+    return value || `— ${OPERATOR_LABELS[key] || key} —`;
+  });
+}
+
 const LEGAL_CONTENT = {
   impressum: `# Impressum
 
@@ -9104,48 +9708,47 @@ Angaben gemäß § 5 TMG
 
 ## Anbieter
 
-[Firmenname / Betreibername]
-[Straße und Hausnummer]
-[PLZ und Ort]
-[Land]
+{{name}}
+{{street}}
+{{city}}
+{{country}}
 
 ## Kontakt
 
-**Telefon:** [Telefonnummer]
-**E-Mail:** contact@learndeveloping.com
+**Telefon:** {{phone}}
+**E-Mail:** {{email}}
 
 ## Vertretungsberechtigt
 
-[Name der vertretungsberechtigten Person]
+{{represented}}
 
 ## Registereintrag
 
-**Eintragung im:** [Handelsregister, Amtsgericht]
-**Registernummer:** [HRB-Nummer]
+**Eintragung im:** {{register}}
+**Registernummer:** {{registerNumber}}
 
 ## Umsatzsteuer-ID
 
-Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz: [USt-IdNr.]
+Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz: {{vatId}}
 
 ## Streitschlichtung
 
 Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: [ec.europa.eu/consumers/odr](https://ec.europa.eu/consumers/odr/). Unsere E-Mail-Adresse findest du oben im Impressum. Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
-
-> 💡 **Hinweis:** Dies ist eine Vorlage. Bitte die eckigen Platzhalter durch die echten Angaben des Betreibers ersetzen, bevor die Seite live geht.`,
+`,
 
   datenschutz: `# Datenschutzerklärung
 
 ## 1. Verantwortlicher
 
-[Firmenname]
-[Anschrift]
-E-Mail: contact@learndeveloping.com
+{{name}}
+{{street}}, {{city}}
+E-Mail: {{email}}
 
 ## 2. Welche Daten werden verarbeitet?
 
 Bei der Registrierung erhebt LearnDeveloping folgende Angaben: Name, E-Mail-Adresse und — bei Schüler-Accounts optional — ein Lehrer-Code. Fortschrittsdaten wie XP, abgeschlossene Lektionen und Abzeichen werden während der Nutzung erfasst.
 
-> 💡 **Technischer Hinweis:** Alle Daten werden ausschließlich lokal in deinem Browser gespeichert (\`localStorage\`) — es gibt keine Server-Datenbank. Wenn du als **Gast** lernst, wird gar nichts gespeichert; deine Daten verschwinden beim Schließen des Tabs.
+> [tipp] **Technischer Hinweis:** LearnDeveloping läuft in zwei Betriebsarten. Ohne angebundenen Server bleiben alle Daten ausschließlich im Speicher deines Browsers (\`localStorage\`) und verlassen dein Gerät nicht. Mit Server werden Konto- und Fortschrittsdaten in einer Datenbank des Betreibers gespeichert. Als **Gast** wird in beiden Fällen nichts dauerhaft gespeichert; deine Daten verschwinden beim Schließen des Tabs.
 
 ## 3. KI-gestützte Bewertung
 
@@ -9173,18 +9776,17 @@ Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Vera
 | Fortschrittsdaten | localStorage (dein Browser) | Bis zur Löschung |
 | Gast-Sitzung | Nur Arbeitsspeicher | Bis zum Schließen des Tabs |
 | API-Key (optional) | localStorage (dein Browser) | Bis zur Entfernung |
-
-> 💡 **Hinweis:** Dies ist eine Vorlage. Bitte an die tatsächliche Datenverarbeitung und Infrastruktur anpassen, bevor die Seite live geht.`,
+`,
 
   agb: `# Allgemeine Geschäftsbedingungen (AGB)
 
 ## § 1 Geltungsbereich
 
-Diese AGB gelten für die Nutzung der Lernplattform LearnDeveloping ("Plattform"), betrieben von [Firmenname], für alle Schüler- und Lehrer-Accounts sowie Gast-Sitzungen.
+Diese AGB gelten für die Nutzung der Lernplattform LearnDeveloping ("Plattform"), betrieben von {{name}}, für alle Schüler- und Lehrer-Accounts sowie Gast-Sitzungen.
 
 ## § 2 Vertragsschluss
 
-Mit Abschluss der Registrierung kommt ein Nutzungsvertrag zwischen dir und [Firmenname] zustande. Die Nutzung der Basisfunktionen ist kostenlos. Eine Nutzung als Gast (ohne Registrierung) ist ohne Vertragsschluss möglich; in diesem Fall wird kein Fortschritt gespeichert.
+Mit Abschluss der Registrierung kommt ein Nutzungsvertrag zwischen dir und {{name}} zustande. Die Nutzung der Basisfunktionen ist kostenlos. Eine Nutzung als Gast (ohne Registrierung) ist ohne Vertragsschluss möglich; in diesem Fall wird kein Fortschritt gespeichert.
 
 ## § 3 Leistungsbeschreibung
 
@@ -9206,11 +9808,11 @@ Alle Kursinhalte, Texte und Grafiken sind urheberrechtlich geschützt und dürfe
 
 ## § 7 Haftung
 
-[Firmenname] haftet nur für Vorsatz und grobe Fahrlässigkeit, soweit gesetzlich zulässig. Für die Richtigkeit KI-generierter Bewertungen wird keine Gewähr übernommen.
+{{name}} haftet nur für Vorsatz und grobe Fahrlässigkeit, soweit gesetzlich zulässig. Für die Richtigkeit KI-generierter Bewertungen wird keine Gewähr übernommen.
 
 ## § 8 Kündigung
 
-Nutzer können ihren Account jederzeit selbst löschen (lokale Daten im Browser entfernen) oder [Firmenname] um Löschung bitten.
+Nutzer können ihren Account jederzeit selbst löschen (lokale Daten im Browser entfernen) oder {{name}} um Löschung bitten.
 
 ## § 9 Änderungen der AGB
 
@@ -9219,8 +9821,7 @@ Nutzer können ihren Account jederzeit selbst löschen (lokale Daten im Browser 
 ## § 10 Schlussbestimmungen
 
 Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand ist, soweit gesetzlich zulässig, [Ort].
-
-> 💡 **Hinweis:** Dies ist eine Vorlage und ersetzt keine Rechtsberatung. Bitte vor dem Livegang von einer Rechtsanwältin/einem Rechtsanwalt prüfen lassen.`,
+`,
 
   kontakt: `# Kontakt
 
@@ -9228,15 +9829,15 @@ Wir freuen uns über dein Feedback, Fragen oder Kooperationsanfragen.
 
 ## So erreichst du uns
 
-**E-Mail:** contact@learndeveloping.com
-**Telefon:** [Telefonnummer]
-**Adresse:** [Anschrift]
+**E-Mail:** {{email}}
+**Telefon:** {{phone}}
+**Adresse:** {{street}}, {{city}}
 
 ## Support für Schulen
 
 Für Fragen zur Lehrer-Registrierung, Schul-Codes oder technischen Problemen wende dich an: support@learndeveloping.com
 
-> 💡 Antwortzeit in der Regel innerhalb von 1–2 Werktagen.`,
+> [tipp] Antwortzeit in der Regel innerhalb von 1–2 Werktagen.`,
 
   "ueber-uns": `# Über uns
 
@@ -9249,8 +9850,7 @@ Wir glauben, dass jede:r Programmieren lernen kann, wenn die Erklärungen klar s
 ## Für Schulen
 
 Neben Einzellernenden richtet sich LearnDeveloping gezielt an Schulen und Lehrkräfte, die ihren Schüler:innen einen strukturierten Einstieg in die Programmierung ermöglichen möchten — inklusive Fortschritts-Überblick für die Lehrkraft.
-
-> 💡 **Hinweis:** Dies ist eine Platzhalter-Seite für die Produktvorstellung und kann durch echte Unternehmens-/Teaminformationen ersetzt werden.`,
+`,
 };
 
 /* =========================== Cookie-Hinweis ==============================
@@ -9346,9 +9946,12 @@ function CookieNotice({ ctx }) {
 }
 
 function LegalPage({ ctx, page }) {
-  const { navigate } = ctx;
+  const { navigate, me } = ctx;
   const meta = LEGAL_META[page] || LEGAL_META.impressum;
   const Icon = meta.icon;
+  // Der Hinweis auf fehlende Betreiberangaben geht ausschließlich an die
+  // Administration — Besucherinnen und Besucher bekommen ihn nie zu sehen.
+  const missing = me?.role === "admin" ? operatorIncomplete() : [];
   return (
     <div className="min-h-screen relative">
       <TerminalBackground />
@@ -9366,8 +9969,18 @@ function LegalPage({ ctx, page }) {
             <p className="text-sm text-[#8A9BC0]">{meta.subtitle}</p>
           </div>
         </div>
+        {missing.length > 0 && (
+          <div className="mb-5 flex items-start gap-3 px-4 py-3 rounded-xl bg-[#F59E0B]/10 border border-[#F59E0B]/30">
+            <LdIcon name="warnung" size={17} color="#F59E0B" className="mt-0.5 shrink-0" />
+            <div className="text-sm text-[#C9D6F0]">
+              <p className="font-medium text-[#F59E0B] mb-0.5">Nur für die Administration sichtbar</p>
+              <p>Es fehlen noch Betreiberangaben: {missing.map((k) => OPERATOR_LABELS[k]).join(", ")}.
+                Sie stehen in <code className="font-code text-[#4F8EF7]">SITE_OPERATOR</code> in <code className="font-code text-[#4F8EF7]">App.jsx</code>.</p>
+            </div>
+          </div>
+        )}
         <Card className="p-6 lg:p-8">
-          <Markdown text={LEGAL_CONTENT[page] || LEGAL_CONTENT.impressum} />
+          <Markdown text={fillOperator(LEGAL_CONTENT[page] || LEGAL_CONTENT.impressum)} />
         </Card>
         <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6 text-sm text-[#8A9BC0]">
           {Object.keys(LEGAL_META).filter((k) => k !== page).map((k) => (
@@ -9380,6 +9993,26 @@ function LegalPage({ ctx, page }) {
 }
 
 /* ============================ App Shell =========================== */
+/** Fußbereich für den angemeldeten Bereich — schlanker als der auf der Startseite. */
+function AppFooter({ navigate }) {
+  const links = [
+    ["ueber-uns", "Über uns"], ["agb", "AGB"], ["datenschutz", "Datenschutz"],
+    ["impressum", "Impressum"], ["kontakt", "Kontakt"],
+  ];
+  return (
+    <footer className="mt-12 pt-6 border-t border-[#1E2D4A] pb-24 lg:pb-6">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs text-[#8A9BC0]">
+          {links.map(([v, label]) => (
+            <button key={v} onClick={() => navigate(v)} className="hover:text-[#E8EDF5] transition-colors">{label}</button>
+          ))}
+        </div>
+        <p className="text-[11px] text-[#4A5A7A]">© 2026 LearnDeveloping</p>
+      </div>
+    </footer>
+  );
+}
+
 function AppShell({ ctx, children }) {
   const { me, view, navigate, logout, sidebarOpen, setSidebarOpen, aiReady, aiConfigurable, openAiSettings, openEmailVerify, reports, soundOn, toggleSound } = ctx;
   if (!me) return null;
@@ -9429,7 +10062,7 @@ function AppShell({ ctx, children }) {
         <div className="px-4 py-4 border-t border-[#1E2D4A] space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="flex items-center gap-1.5 text-[#8A9BC0]"><Flame size={15} className="text-[#F59E0B]" />Streak</span>
-            <span className="font-semibold text-[#E8EDF5]">{me.streak} 🔥</span>
+            <span className="font-semibold text-[#E8EDF5] flex items-center gap-1">{me.streak}<LdIcon name="flamme" size={14} color="#F59E0B" /></span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="flex items-center gap-1.5 text-[#8A9BC0]"><Star size={15} className="text-[#F7C948]" />XP</span>
@@ -9514,6 +10147,12 @@ function AppShell({ ctx, children }) {
             </div>
           )}
           {children}
+
+          {/* Fußbereich — steht auch im angemeldeten Bereich unter jeder
+              Seite, damit Impressum, Datenschutz und Kontakt von überall
+              erreichbar sind. Nur die IDE bleibt frei, dort zählt jede
+              Bildschirmzeile. */}
+          {view !== "playground" && <AppFooter navigate={navigate} />}
         </main>
       </div>
 
@@ -9608,14 +10247,14 @@ function StudentDashboard({ ctx }) {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-bold">{greet}, {me.name.split(" ")[0]}! 👋</h1>
+        <h1 className="font-display text-3xl font-bold flex items-center gap-2">{greet}, {me.name.split(" ")[0]}!<LdIcon name="winken" size={26} color="#F7C948" /></h1>
         <p className="text-[#8A9BC0] mt-1">Bereit, heute etwas Neues zu lernen?</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard icon={Star} label="Gesamt-XP" value={me.xp.toLocaleString("de-DE")} color="#F7C948" />
         <StatCard icon={Shield} label={`Level · ${lvl.name}`} value={lvl.level} color="#4F8EF7" />
-        <StatCard icon={Flame} label="Tage-Streak" value={`${me.streak} 🔥`} color="#F59E0B" />
+        <StatCard icon={Flame} label="Tage-Streak" value={me.streak} color="#F59E0B" />
         <StatCard icon={CheckCircle2} label="Lektionen" value={me.completedLessons.length} color="#10B981" />
       </div>
 
@@ -9628,7 +10267,7 @@ function StudentDashboard({ ctx }) {
               {(me.streakFreezes || 0) > 0 && (
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#4F8EF7]/15 text-[#4F8EF7] flex items-center gap-1"
                   title="Schützt deine Serie an einem verpassten Tag">
-                  🧊 {me.streakFreezes} Schutz
+                  <LdIcon name="schneeflocke" size={13} color="#4F8EF7" />{me.streakFreezes} Schutz
                 </span>
               )}
             </div>
@@ -9636,7 +10275,7 @@ function StudentDashboard({ ctx }) {
               {streakWeek(me).map((d, i) => (
                 <div key={i} className="flex flex-col items-center gap-1.5">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${d.active ? "" : "bg-[#1A2540] text-[#4A5A7A]"} ${d.isToday && !d.active ? "ring-1 ring-[#2A3F6F]" : ""}`}
-                    style={d.active ? { background: GRADIENT } : undefined}>{d.active ? "🔥" : ""}</div>
+                    style={d.active ? { background: GRADIENT } : undefined}>{d.active ? <LdIcon name="flamme" size={13} color="#FFFFFF" /> : null}</div>
                   <span className={`text-[10px] ${d.isToday ? "text-[#E8EDF5] font-medium" : "text-[#8A9BC0]"}`}>{d.label}</span>
                 </div>
               ))}
@@ -9648,7 +10287,7 @@ function StudentDashboard({ ctx }) {
               <button onClick={ctx.buyStreakFreeze}
                 disabled={me.xp < FREEZE_COST_XP}
                 className="mt-2 text-[11px] text-[#4F8EF7] hover:underline disabled:text-[#4A5A7A] disabled:no-underline disabled:cursor-not-allowed flex items-center gap-1">
-                🧊 Streak-Schutz kaufen ({FREEZE_COST_XP} XP)
+                <LdIcon name="schneeflocke" size={14} color="#4F8EF7" />Streak-Schutz kaufen ({FREEZE_COST_XP} XP)
                 {me.xp < FREEZE_COST_XP && <span className="text-[#4A5A7A]">— noch {FREEZE_COST_XP - me.xp} XP nötig</span>}
               </button>
             )}
@@ -9908,7 +10547,8 @@ function Leaderboard({ ctx }) {
     .sort((a, b) => (b.weeklyXp || 0) - (a.weeklyXp || 0));
   const allTime = [...all].sort((a, b) => b.xp - a.xp);
   const students = mode === "league" ? leagueField : allTime;
-  const medal = ["🥇", "🥈", "🥉"];
+  // Eigene Medaillen statt Betriebssystem-Emojis — Gold, Silber, Bronze
+  const medalColor = ["#F7C948", "#C0C8D8", "#CD7F32"];
   const daysLeft = daysLeftInWeek();
 
   if (backend && remote.loading) {
@@ -9985,7 +10625,7 @@ function Leaderboard({ ctx }) {
             const relegating = mode === "league" && students.length > RELEGATE_BOTTOM && i >= students.length - RELEGATE_BOTTOM;
             return (
               <div key={s.id} className={`flex items-center gap-4 p-4 ${isMe ? "bg-[#4F8EF7]/10" : ""}`}>
-                <div className="w-8 text-center font-display font-bold text-lg">{i < 3 ? medal[i] : <span className="text-[#4A5A7A]">{i + 1}</span>}</div>
+                <div className="w-8 flex justify-center font-display font-bold text-lg">{i < 3 ? <LdIcon name="medal" size={22} color={medalColor[i]} title={`Platz ${i + 1}`} /> : <span className="text-[#4A5A7A]">{i + 1}</span>}</div>
                 <div className="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center shrink-0"><UserAvatar user={s} size={36} /></div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">
@@ -10015,8 +10655,6 @@ function Leaderboard({ ctx }) {
 }
 
 /* =========================== Profile ============================== */
-const AVATARS = ["🧑‍💻", "👩‍💻", "👨‍🎓", "👩‍🎓", "🦸", "🦹", "🧙", "🥷", "🤖", "👾", "🐱", "🦊", "🐼", "🦁", "🚀", "⚡"];
-
 /* ---------------------- Avatar-Creator (Charakter-Builder) ----------------
    Ein zusammengesetzter SVG-Charakter statt eines festen Emojis. Die Auswahl
    wird als Objekt im Nutzer gespeichert (avatarConfig) und überall gerendert,
@@ -10143,10 +10781,36 @@ function CharacterAvatar({ config, size = 64 }) {
   );
 }
 
-// Zeigt entweder den gebauten Charakter oder (Alt-Accounts) das Emoji.
+/* Ohne eigene Auswahl bekommt jeder Account trotzdem einen eigenen Charakter:
+   aus Name und Kennung wird eine Zahl gebildet, die Hautton, Frisur, Augen,
+   Accessoire und Hintergrund festlegt. Dadurch sieht jedes Profil anders aus,
+   bleibt aber über Sitzungen hinweg gleich — und es taucht nirgends mehr ein
+   Betriebssystem-Emoji auf. */
+function seedNumber(text) {
+  let h = 2166136261;
+  for (const ch of String(text || "anonym")) {
+    h ^= ch.charCodeAt(0);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
+function defaultAvatarConfig(seedText) {
+  const n = seedNumber(seedText);
+  const pick = (list, shift) => list[Math.floor(n / Math.pow(7, shift)) % list.length];
+  return {
+    skin: pick(AV_SKIN, 0),
+    hairColor: pick(AV_HAIR_COLOR, 1),
+    hairStyle: pick(AV_HAIR_STYLES, 2),
+    eyes: pick(AV_EYES, 3),
+    accessory: pick(AV_ACCESSORY, 4),
+    bg: pick(AV_BG, 5),
+  };
+}
+
 function UserAvatar({ user, size = 40 }) {
-  if (user?.avatarConfig) return <CharacterAvatar config={user.avatarConfig} size={size} />;
-  return <span style={{ fontSize: size * 0.62, lineHeight: 1 }}>{user?.avatar || "🧑‍💻"}</span>;
+  const config = user?.avatarConfig || defaultAvatarConfig(user?.id || user?.email || user?.name);
+  return <CharacterAvatar config={config} size={size} />;
 }
 
 function AvatarCreator({ value, onChange, extras = false }) {
@@ -10219,6 +10883,108 @@ function AvatarCreator({ value, onChange, extras = false }) {
     </div>
   );
 }
+/* ------------------- Nachträglich einer Klasse beitreten ------------------
+   Beim Registrieren ist der Lehrer-Code optional, und viele haben ihn dann
+   noch gar nicht. Er lässt sich deshalb jederzeit hier nachtragen — aber er
+   verbindet nicht sofort: Die Lehrkraft muss die Anfrage bestätigen.
+   ------------------------------------------------------------------------- */
+function ClassJoinCard({ ctx }) {
+  const { me, users, backend, pushToast, setUsers } = ctx;
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState(null);
+
+  useEffect(() => {
+    if (!backend || me.isGuest) return;
+    let alive = true;
+    api.get("/api/class/request")
+      .then((r) => { if (alive) setPending(r.request || null); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [backend, me.isGuest]);
+
+  // Ohne Server steht der Stand direkt im Nutzer.
+  const localTeacher = !backend && me.pendingTeacherId
+    ? users.find((u) => u.id === me.pendingTeacherId) : null;
+  const open = backend ? pending : (localTeacher ? { teacherName: localTeacher.name, school: localTeacher.school } : null);
+  const teacher = me.teacherId ? users.find((u) => u.id === me.teacherId) : null;
+
+  const send = async () => {
+    const value = code.trim();
+    if (!value) { pushToast("error", "Bitte gib den Lehrer-Code ein."); return; }
+    setBusy(true);
+    try {
+      if (backend) {
+        const r = await api.post("/api/class/request", { code: value });
+        setPending(r.request);
+      } else {
+        const t = users.find((u) => u.role === "teacher" && (u.schoolCode || "").toLowerCase() === value.toLowerCase());
+        if (!t) { pushToast("error", "Diesen Lehrer-Code gibt es nicht."); return; }
+        setUsers((us) => us.map((u) => u.id === me.id ? { ...u, pendingTeacherId: t.id } : u));
+      }
+      setCode("");
+      playSound("correct");
+      pushToast("success", "Anfrage gesendet — deine Lehrkraft muss sie noch bestätigen.");
+    } catch (e) {
+      pushToast("error", e.message);
+    } finally { setBusy(false); }
+  };
+
+  const withdraw = async () => {
+    setBusy(true);
+    try {
+      if (backend) { await api.del("/api/class/request"); setPending(null); }
+      else setUsers((us) => us.map((u) => u.id === me.id ? { ...u, pendingTeacherId: null } : u));
+      pushToast("info", "Anfrage zurückgezogen.");
+    } catch (e) { pushToast("error", e.message); }
+    finally { setBusy(false); }
+  };
+
+  if (me.isGuest) return null;
+
+  return (
+    <div>
+      <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2"><Users className="text-[#4F8EF7]" size={20} />Klasse</h2>
+      <Card className="p-5">
+        {me.teacherId ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <CheckCircle2 size={18} className="text-[#10B981] shrink-0" />
+            <div className="flex-1 min-w-[180px]">
+              <p className="text-sm font-medium text-[#E8EDF5]">Du gehörst zu einer Klasse</p>
+              <p className="text-xs text-[#8A9BC0]">{teacher ? `${teacher.name}${teacher.school ? " · " + teacher.school : ""}` : "Deine Lehrkraft sieht deinen Fortschritt."}</p>
+            </div>
+          </div>
+        ) : open ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <Loader2 size={18} className="text-[#F59E0B] shrink-0 ld-spin" />
+            <div className="flex-1 min-w-[180px]">
+              <p className="text-sm font-medium text-[#E8EDF5]">Anfrage läuft</p>
+              <p className="text-xs text-[#8A9BC0]">
+                {open.teacherName ? `${open.teacherName} muss die Anfrage noch bestätigen.` : "Deine Lehrkraft muss die Anfrage noch bestätigen."}
+              </p>
+            </div>
+            <Btn size="sm" variant="ghost" disabled={busy} onClick={withdraw}>Zurückziehen</Btn>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-[#8A9BC0] mb-3">
+              Du hast einen Lehrer-Code bekommen? Trag ihn hier ein. Deine Lehrkraft bestätigt die
+              Anfrage — erst danach sieht sie deinen Fortschritt.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => { if (e.key === "Enter") send(); }}
+                placeholder="z.B. LRND-4K9M" maxLength={20}
+                className="flex-1 min-w-[160px] bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg px-3 py-2 text-sm font-code text-[#F7C948] tracking-wider" />
+              <Btn icon={Send} disabled={busy} onClick={send}>Anfrage senden</Btn>
+            </div>
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}
+
 function Profile({ ctx }) {
   const { me, pushToast, setUsers, enable2FA, disable2FA, openEmailVerify, changePassword } = ctx;
   const isStudent = me.role === "student";
@@ -10239,7 +11005,6 @@ function Profile({ ctx }) {
   };
 
   const copy = (txt) => { try { navigator.clipboard.writeText(txt); } catch (e) {} pushToast("success", "In Zwischenablage kopiert!"); };
-  const setAvatar = (a) => { setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatar: a, avatarConfig: null } : u)); setPicker(false); pushToast("success", "Avatar aktualisiert!"); };
   const setAvatarConfig = (conf) => setUsers((us) => us.map((u) => u.id === me.id ? { ...u, avatarConfig: conf } : u));
   const roleLabel = { student: "Schüler", teacher: "Lehrer", admin: "Administrator" }[me.role] || me.role;
   const RoleIcon = me.role === "student" ? GraduationCap : me.role === "admin" ? Shield : Users;
@@ -10280,16 +11045,7 @@ function Profile({ ctx }) {
               <p className="text-sm font-medium text-[#E8EDF5]">Deinen Charakter gestalten</p>
               <Btn size="sm" icon={Check} onClick={() => { setPicker(false); pushToast("success", "Avatar gespeichert!"); }}>Fertig</Btn>
             </div>
-            <AvatarCreator extras={hasUnlock(me, "avatar_extras")} value={me.avatarConfig} onChange={setAvatarConfig} />
-            <div className="mt-5 pt-4 border-t border-[#1E2D4A]">
-              <p className="text-xs text-[#8A9BC0] mb-2">Oder ein Emoji verwenden:</p>
-              <div className="flex flex-wrap gap-2">
-                {AVATARS.map((a) => (
-                  <button key={a} onClick={() => setAvatar(a)} aria-label={`Avatar ${a}`}
-                    className={`text-xl w-10 h-10 rounded-xl flex items-center justify-center transition-all ${!me.avatarConfig && me.avatar === a ? "bg-[#4F8EF7]/15 border border-[#4F8EF7]" : "bg-[#0A0E1A] border border-[#1E2D4A] hover:border-[#2A3F6F]"}`}>{a}</button>
-                ))}
-              </div>
-            </div>
+            <AvatarCreator extras={hasUnlock(me, "avatar_extras")} value={me.avatarConfig || defaultAvatarConfig(me.id)} onChange={setAvatarConfig} />
           </div>
         )}
       </Card>
@@ -10299,7 +11055,7 @@ function Profile({ ctx }) {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard icon={Star} label="Gesamt-XP" value={me.xp.toLocaleString("de-DE")} color="#F7C948" />
             <StatCard icon={Shield} label="Level" value={lvl.level} color="#4F8EF7" />
-            <StatCard icon={Flame} label="Streak" value={`${me.streak} 🔥`} color="#F59E0B" />
+            <StatCard icon={Flame} label="Streak" value={me.streak} color="#F59E0B" />
             <StatCard icon={CheckCircle2} label="Lektionen" value={me.completedLessons.length} color="#10B981" />
           </div>
           {lvl.next && (
@@ -10334,6 +11090,9 @@ function Profile({ ctx }) {
           </Card>
         </div>
       ) : null}
+
+      {/* Klasse — Lehrer-Code lässt sich jederzeit nachtragen */}
+      {isStudent && <ClassJoinCard ctx={ctx} />}
 
       {/* Sicherheit */}
       {!me.isGuest && (
@@ -10418,21 +11177,56 @@ function Profile({ ctx }) {
 
 /* ====================== Teacher Dashboard ========================= */
 function TeacherDashboard({ ctx }) {
-  const { me, users, backend, pushToast } = ctx;
+  const { me, users, backend, pushToast, setUsers } = ctx;
   const [invite, setInvite] = useState(false);
   const [detail, setDetail] = useState(null);
   // Mit Server kommt die Klassenliste aus der Datenbank — der lokale Zustand
   // kennt nur die Konten dieses Browsers.
   const [remote, setRemote] = useState({ students: [], loading: !!backend });
+  const [requests, setRequests] = useState([]);
+  const [deciding, setDeciding] = useState(null);
 
-  useEffect(() => {
+  const loadClass = useCallback(() => {
     if (!backend) return;
-    let alive = true;
     api.get("/api/teacher/students")
-      .then((r) => { if (alive) setRemote({ students: r.students || [], loading: false }); })
-      .catch((e) => { if (alive) { setRemote({ students: [], loading: false }); pushToast("error", e.message); } });
-    return () => { alive = false; };
+      .then((r) => setRemote({ students: r.students || [], loading: false }))
+      .catch((e) => { setRemote({ students: [], loading: false }); pushToast("error", e.message); });
+    api.get("/api/teacher/requests")
+      .then((r) => setRequests(r.requests || []))
+      .catch(() => setRequests([]));
   }, [backend, pushToast]);
+
+  useEffect(() => { loadClass(); }, [loadClass]);
+
+  /* Ohne Server liegen die Anfragen im lokalen Zustand: Wer den Code eingibt,
+     bekommt ein `pendingTeacherId` und taucht hier auf. */
+  const localRequests = backend ? [] : users.filter((u) => u.pendingTeacherId === me.id);
+  const openRequests = backend ? requests : localRequests.map((u) => ({
+    id: u.id, studentId: u.id, name: u.name, email: u.email, xp: u.xp || 0,
+  }));
+
+  const decide = async (req, approve) => {
+    setDeciding(req.id);
+    try {
+      if (backend) {
+        await api.post(`/api/teacher/requests/${req.id}`, { approve });
+        loadClass();
+      } else {
+        setUsers((us) => us.map((u) => u.id === req.studentId
+          ? { ...u, pendingTeacherId: null, teacherId: approve ? me.id : u.teacherId }
+          : u.id === me.id && approve
+            ? { ...u, students: [...new Set([...(u.students || []), req.studentId])] }
+            : u));
+      }
+      playSound(approve ? "correct" : "click");
+      pushToast(approve ? "success" : "info",
+        approve ? `${req.name} gehört jetzt zu deiner Klasse.` : `Anfrage von ${req.name} abgelehnt.`);
+    } catch (e) {
+      pushToast("error", e.message);
+    } finally {
+      setDeciding(null);
+    }
+  };
 
   const students = backend
     ? remote.students
@@ -10473,6 +11267,37 @@ function TeacherDashboard({ ctx }) {
           <button onClick={() => copy(me.schoolCode)} className="flex items-center gap-2 font-display font-bold text-lg text-[#F7C948]">{me.schoolCode}<Copy size={15} className="text-[#8A9BC0]" /></button>
         </Card>
       </div>
+
+      {/* Offene Beitrittsanfragen — der Code allein verbindet niemanden mehr */}
+      {openRequests.length > 0 && (
+        <Card className="p-5 border-[#F7C948]/40">
+          <div className="flex items-center gap-2 mb-3">
+            <UserRoundPlus size={18} className="text-[#F7C948]" />
+            <h2 className="font-display text-lg font-bold">
+              {openRequests.length} Beitrittsanfrage{openRequests.length === 1 ? "" : "n"}
+            </h2>
+          </div>
+          <p className="text-sm text-[#8A9BC0] mb-4">
+            Diese Personen haben deinen Code eingegeben. Erst mit deiner Bestätigung siehst du ihren
+            Fortschritt und sie bekommen deine eigenen Level.
+          </p>
+          <div className="space-y-2">
+            {openRequests.map((r) => (
+              <div key={r.id} className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-[#0A0E1A] border border-[#1E2D4A]">
+                <span className="w-9 h-9 rounded-lg overflow-hidden shrink-0"><UserAvatar user={{ id: r.studentId, name: r.name }} size={36} /></span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-[#E8EDF5] truncate">{r.name}</p>
+                  <p className="text-xs text-[#4A5A7A] truncate">{r.email}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Btn size="sm" icon={Check} disabled={deciding === r.id} onClick={() => decide(r, true)}>Aufnehmen</Btn>
+                  <Btn size="sm" variant="ghost" disabled={deciding === r.id} onClick={() => decide(r, false)}>Ablehnen</Btn>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div>
         <h2 className="font-display text-xl font-bold mb-4">Schüler</h2>
@@ -10530,7 +11355,7 @@ function TeacherDashboard({ ctx }) {
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="text-center p-2 rounded-lg bg-[#0A0E1A]"><div className="text-[#F7C948] font-bold">{detailStudent.xp}</div><div className="text-[10px] text-[#8A9BC0]">XP</div></div>
               <div className="text-center p-2 rounded-lg bg-[#0A0E1A]"><div className="text-[#4F8EF7] font-bold">{getLevelInfo(detailStudent.xp).level}</div><div className="text-[10px] text-[#8A9BC0]">Level</div></div>
-              <div className="text-center p-2 rounded-lg bg-[#0A0E1A]"><div className="text-[#F59E0B] font-bold">{detailStudent.streak} 🔥</div><div className="text-[10px] text-[#8A9BC0]">Streak</div></div>
+              <div className="text-center p-2 rounded-lg bg-[#0A0E1A]"><div className="text-[#F59E0B] font-bold flex items-center justify-center gap-1">{detailStudent.streak}<LdIcon name="flamme" size={13} color="#F59E0B" /></div><div className="text-[10px] text-[#8A9BC0]">Streak</div></div>
             </div>
             <p className="text-sm text-[#8A9BC0] mb-2">Fortschritt pro Kurs:</p>
             <div className="space-y-2 max-h-52 overflow-y-auto">
@@ -10659,12 +11484,40 @@ const FILE_TYPES = [
 
 const FALLBACK_TYPE = { ext: "txt", lang: "plaintext", label: "Text", color: "#4A5A7A" };
 
+/* --------------------------- Bilder im Projekt ---------------------------
+   Bilder lassen sich per Drag & Drop in den Editor ziehen. Sie landen als
+   ganz normale Datei im Projekt — der Inhalt ist eine data:-URL. Damit
+   funktioniert alles Übrige unverändert weiter: Speichern, ZIP-Export und
+   vor allem die Vorschau, denn `<img src="logo.png">` wird beim Bauen der
+   Seite genauso aufgelöst wie ein Stylesheet.
+
+   Der Preis dafür ist die Base64-Kodierung: Ein Bild belegt rund ein Drittel
+   mehr Platz als auf der Festplatte. Deshalb die Größenbegrenzung.
+   ------------------------------------------------------------------------- */
+const IMAGE_TYPES = [
+  { ext: "png",  label: "PNG-Bild",  mime: "image/png" },
+  { ext: "jpg",  label: "JPEG-Bild", mime: "image/jpeg" },
+  { ext: "jpeg", label: "JPEG-Bild", mime: "image/jpeg" },
+  { ext: "gif",  label: "GIF-Bild",  mime: "image/gif" },
+  { ext: "webp", label: "WebP-Bild", mime: "image/webp" },
+  { ext: "svg",  label: "SVG-Grafik", mime: "image/svg+xml" },
+  { ext: "avif", label: "AVIF-Bild", mime: "image/avif" },
+  { ext: "ico",  label: "Symbol",    mime: "image/x-icon" },
+];
+const IMAGE_EXTS = new Set(IMAGE_TYPES.map((t) => t.ext));
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;        // 2 MB je Bild
+
 function extOf(name) {
   const m = /\.([A-Za-z0-9]+)$/.exec(String(name || ""));
   return m ? m[1].toLowerCase() : "";
 }
+function isImageFile(name) { return IMAGE_EXTS.has(extOf(name)); }
+
 function fileTypeOf(name) {
-  return FILE_TYPES.find((t) => t.ext === extOf(name)) || FALLBACK_TYPE;
+  const ext = extOf(name);
+  const image = IMAGE_TYPES.find((t) => t.ext === ext);
+  if (image) return { ...image, lang: "plaintext", color: "#7C3AED", image: true };
+  return FILE_TYPES.find((t) => t.ext === ext) || FALLBACK_TYPE;
 }
 function langOf(name) { return fileTypeOf(name).lang; }
 
@@ -10768,6 +11621,24 @@ function buildProjectPage(files, { title = "Meine Seite", extraScript = "", auto
     return `<script data-from="${file.name}">\n${file.content}\n<\/script>`;
   });
 
+  /* Bilder aus dem Projekt auflösen: `<img src="logo.png">` verweist auf eine
+     Datei, die nur im Browser existiert. In der Vorschau wird daraus die
+     gespeicherte data:-URL — sonst bliebe an der Stelle ein leeres Kästchen. */
+  const imageSrc = (value) => {
+    const file = findFile(files, value);
+    return file && isImageFile(file.name) ? file.content : null;
+  };
+  html = html.replace(/(<img\b[^>]*?\ssrc\s*=\s*)(["'])([^"']+)\2/gi, (tag, head, quote, src) => {
+    const data = imageSrc(src);
+    return data ? `${head}${quote}${data}${quote}` : tag;
+  });
+  // …auch in CSS, wo Bilder über url(…) eingebunden werden.
+  const resolveUrls = (text) => String(text || "").replace(/url\(\s*(["']?)([^"')]+)\1\s*\)/gi, (tag, quote, src) => {
+    const data = imageSrc(src);
+    return data ? `url(${quote}${data}${quote})` : tag;
+  });
+  html = resolveUrls(html);
+
   // Nicht verlinkte CSS-/JS-Dateien optional automatisch einbinden. Für den
   // Einstieg ist das bequem; wer es selbst verlinkt, merkt keinen Unterschied.
   const extraCss = autoInclude
@@ -10777,7 +11648,7 @@ function buildProjectPage(files, { title = "Meine Seite", extraScript = "", auto
     ? files.filter((f) => extOf(f.name) === "js" && !usedJs.has(f.id)).map((f) => f.content).join("\n\n")
     : "";
 
-  return composeDocument({ html, css: extraCss, js: extraJs, title, extraScript });
+  return composeDocument({ html, css: resolveUrls(extraCss), js: extraJs, title, extraScript });
 }
 
 /* ------------------- KI-Assistent im Code-Editor -------------------------
@@ -11202,6 +12073,72 @@ function Playground({ ctx }) {
     setDirty(true);
   };
 
+  /* ------------------ Bilder per Drag & Drop einfügen ---------------------
+     Ein Bild ins Fenster gezogen wird zu einer ganz normalen Projektdatei.
+     Gespeichert wird es als data:-URL — dadurch funktioniert die Vorschau
+     ohne Server, und der ZIP-Export nimmt die Datei genauso mit.
+     --------------------------------------------------------------------- */
+  const [dragOver, setDragOver] = useState(false);
+
+  const readAsDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Die Datei konnte nicht gelesen werden."));
+    reader.readAsDataURL(file);
+  });
+
+  const addDroppedFiles = async (list) => {
+    const incoming = Array.from(list || []);
+    if (!incoming.length) return;
+
+    const added = [];
+    for (const file of incoming) {
+      const isImage = isImageFile(file.name) || String(file.type || "").startsWith("image/");
+      if (!isImage) {
+        pushToast("error", `„${file.name}“ ist kein Bild — ziehe PNG, JPG, GIF, WebP oder SVG hierher.`);
+        continue;
+      }
+      if (file.size > MAX_IMAGE_BYTES) {
+        pushToast("error", `„${file.name}“ ist zu groß (${formatBytes(file.size)}). Erlaubt sind ${formatBytes(MAX_IMAGE_BYTES)} je Bild.`);
+        continue;
+      }
+      try {
+        added.push({ id: newFileId(), name: file.name, content: await readAsDataUrl(file) });
+      } catch (e) {
+        pushToast("error", `„${file.name}“ konnte nicht gelesen werden.`);
+      }
+    }
+    if (!added.length) return;
+
+    // Namen erst hier eindeutig machen — sonst kollidieren mehrere Bilder
+    // aus demselben Vorgang miteinander.
+    setFiles((current) => {
+      const next = [...current];
+      for (const file of added) {
+        file.name = uniqueFileName(next, file.name);
+        next.push(file);
+      }
+      return next;
+    });
+    setDirty(true);
+    openFile(added[added.length - 1].id);
+    playSound("correct");
+    pushToast("success", added.length === 1
+      ? `„${added[0].name}“ hinzugefügt — binde es mit <img src="${added[0].name}"> ein.`
+      : `${added.length} Bilder hinzugefügt.`);
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    addDroppedFiles(e.dataTransfer?.files);
+  };
+  const onDragOver = (e) => {
+    if (!Array.from(e.dataTransfer?.types || []).includes("Files")) return;
+    e.preventDefault();
+    setDragOver(true);
+  };
+
   const removeFile = (id) => {
     const file = files.find((f) => f.id === id);
     if (!file) return;
@@ -11600,7 +12537,7 @@ function Playground({ ctx }) {
         )}
         <div className="px-3 pb-3 pt-1">
           <div className="flex items-center justify-between text-[10px] text-[#4A5A7A] mb-1">
-            <span>{formatBytes(usedBytes)} von 2,5 GB</span>
+            <span>{formatBytes(usedBytes)} von {formatBytes(quotaBytes)}</span>
             <span>{projects.length} Projekt{projects.length === 1 ? "" : "e"}</span>
           </div>
           <ProgressBar value={quotaPct} max={100} height="h-1" />
@@ -11636,7 +12573,22 @@ function Playground({ ctx }) {
 
       {/* Editor */}
       <div className="flex-1 min-h-0">
-        {activeFile ? (
+        {activeFile && isImageFile(activeFile.name) ? (
+          /* Bilder werden nicht bearbeitet, sondern gezeigt — mit dem
+             Codeschnipsel zum Einbinden gleich daneben. */
+          <div className="h-full flex flex-col items-center justify-center gap-4 p-6 overflow-auto">
+            <img src={activeFile.content} alt={activeFile.name}
+              className="max-w-full max-h-[55%] object-contain rounded-lg border border-[#1E2D4A]" />
+            <div className="text-center">
+              <p className="font-code text-sm text-[#E8EDF5]">{activeFile.name}</p>
+              <p className="text-xs text-[#4A5A7A] mt-0.5">{formatBytes((activeFile.content || "").length)} · im Projekt gespeichert</p>
+            </div>
+            <div className="w-full max-w-md">
+              <p className="text-xs text-[#8A9BC0] mb-1.5">So bindest du es ein:</p>
+              <CodeBlock lang="html" code={`<img src="${activeFile.name}" alt="Beschreibung">`} />
+            </div>
+          </div>
+        ) : activeFile ? (
           <LdCodeEditor
             key={activeFile.id}
             value={activeFile.content}
@@ -11660,7 +12612,7 @@ function Playground({ ctx }) {
             <p className="text-xs text-[#4A5A7A] max-w-sm leading-relaxed">
               Leg eine Datei an und leg los. HTML, CSS und JavaScript laufen direkt in der Vorschau,
               Python führst du mit einem Klick aus. Alle anderen Sprachen kannst du schreiben,
-              prüfen lassen und herunterladen.
+              prüfen lassen und herunterladen. Bilder ziehst du einfach ins Fenster.
             </p>
             <Btn size="sm" icon={FilePlus} onClick={() => setNewFileOpen(true)}>Erste Datei anlegen</Btn>
           </div>
@@ -11770,7 +12722,7 @@ function Playground({ ctx }) {
                         <span className="text-[#E8EDF5]">{iss.title}</span>
                       </div>
                       {iss.detail && <p className="text-[11px] text-[#8A9BC0]">{iss.detail}</p>}
-                      {iss.fix && <p className="text-[11px] text-[#10B981] mt-0.5">💡 {iss.fix}</p>}
+                      {iss.fix && <p className="text-[11px] text-[#10B981] mt-0.5"> [tipp] {iss.fix}</p>}
                     </div>
                   );
                 })}
@@ -11801,10 +12753,22 @@ function Playground({ ctx }) {
 
   /* -------------------------------- Aufbau ------------------------------- */
   const shell = (
-    <div className={fullscreen
+    <div className={`relative ${fullscreen
       ? "fixed inset-0 z-[70] bg-[#0A0E1A] p-3 flex flex-col gap-2"
-      : "flex flex-col gap-2"}
-      style={fullscreen ? undefined : { height: "calc(100vh - 8.5rem)", minHeight: 520 }}>
+      : "flex flex-col gap-2"}`}
+      style={fullscreen ? undefined : { height: "calc(100vh - 8.5rem)", minHeight: 520 }}
+      onDragOver={onDragOver}
+      onDragLeave={(e) => { if (e.currentTarget === e.target) setDragOver(false); }}
+      onDrop={onDrop}>
+
+      {/* Ablagefläche für Bilder — erscheint nur, während etwas gezogen wird */}
+      {dragOver && (
+        <div className="absolute inset-0 z-[60] rounded-xl border-2 border-dashed border-[#4F8EF7] bg-[#0A0E1A]/85 backdrop-blur-sm flex flex-col items-center justify-center gap-2 pointer-events-none">
+          <ImagePlus size={38} className="text-[#4F8EF7]" />
+          <p className="font-display font-bold text-[#E8EDF5]">Bild hier ablegen</p>
+          <p className="text-xs text-[#8A9BC0]">PNG, JPG, GIF, WebP oder SVG · bis {formatBytes(MAX_IMAGE_BYTES)}</p>
+        </div>
+      )}
 
       {/* Werkzeugleiste */}
       <div className="flex items-center gap-2 flex-wrap shrink-0">
@@ -12302,7 +13266,7 @@ function LessonEditor({ ctx }) {
               const course = courseById(lesson.courseId);
               return (
                 <div key={lesson.id} className="flex flex-wrap items-center gap-3 p-4">
-                  <span className="text-2xl shrink-0">{course?.icon || "📘"}</span>
+                  <CourseIcon course={course} size={26} className="shrink-0" />
                   <div className="flex-1 min-w-[180px]">
                     <p className="font-medium flex items-center gap-2 flex-wrap">
                       {lesson.title}
@@ -12806,7 +13770,7 @@ function PlacementTest({ ctx }) {
     const open = mod.lessons.filter((l) => !me.completedLessons.includes(l.id));
     for (const l of open) {
       await completeLesson(l.id, Math.max(1, Math.round((l.xpReward || 0) * PLACEMENT_XP_SHARE)), {
-        firstTry: 1, taskCount: 1,
+        scoreSum: 100, taskCount: 1,
       });
     }
     setSaving(false);
@@ -12960,44 +13924,51 @@ function PlacementTest({ ctx }) {
 /* =========================== Lesson View ========================== */
 const TASK_XP = 15;
 
-/* --------------------- XP nach Anzahl der Versuche ------------------------
-   Wer eine Aufgabe im ersten Anlauf löst, bekommt die volle Belohnung. Jeder
-   weitere Versuch senkt sie — aber nie auf null: Wer es beim vierten Mal
-   versteht, hat es trotzdem verstanden.
+/* ------------------------- XP nach Ergebnis ------------------------------
+   Jede Aufgabe wird EINMAL beantwortet. Danach steht die Lösung da und es
+   geht weiter — nachbessern gibt es nicht, denn dann würde jeder so lange
+   raten, bis es passt.
+
+   Dafür ist die Belohnung nicht mehr alles-oder-nichts: Sie richtet sich
+   nach dem erreichten Score. Wer 70 von 100 Punkten holt, bekommt 70 % der
+   XP. Wer gar nichts trifft, bekommt nichts.
 
    Dieselben Zahlen stehen im Backend (server/src/routes/app.js). Der Server
    rechnet selbst nach und deckelt das Ergebnis; der Browser kann sich
    dadurch nicht mehr geben, als ehrlich möglich wäre.
    ------------------------------------------------------------------------- */
-const ATTEMPT_FACTORS = [1, 0.7, 0.5, 0.3];      // 1., 2., 3., ab dem 4. Versuch
-const HINT_FACTOR_CAP = 0.4;                      // mit Tipp-Joker höchstens 40 %
+const HINT_FACTOR_CAP = 0.4;      // mit Tipp-Joker höchstens 40 % der XP
 
-/** XP für eine gelöste Aufgabe. */
-function taskXpFor(attempts, usedHint = false) {
-  const index = Math.min(Math.max(1, Number(attempts) || 1), ATTEMPT_FACTORS.length) - 1;
-  const factor = usedHint ? Math.min(ATTEMPT_FACTORS[index], HINT_FACTOR_CAP) : ATTEMPT_FACTORS[index];
-  return Math.max(1, Math.round(TASK_XP * factor));
+/** XP für eine beantwortete Aufgabe — anteilig zum Score. */
+function taskXpFor(score, usedHint = false) {
+  const share = Math.max(0, Math.min(1, (Number(score) || 0) / 100));
+  const factor = usedHint ? Math.min(share, HINT_FACTOR_CAP) : share;
+  const xp = Math.round(TASK_XP * factor);
+  // Wer inhaltlich etwas getroffen hat, geht nicht ganz leer aus.
+  return share > 0 ? Math.max(1, xp) : 0;
 }
 
 /**
- * Anteil des Lektionsbonus. Volle Punkte gibt es nur, wenn jede Aufgabe im
- * ersten Anlauf saß; darunter bleibt mindestens die Hälfte.
+ * Anteil des Lektionsbonus. Er richtet sich nach dem Durchschnitt aller
+ * Aufgaben-Scores: fehlerfrei gibt es alles, sonst entsprechend weniger.
  */
-function lessonBonusFactor(firstTry, total) {
+function lessonBonusFactor(scoreSum, total) {
   if (!total) return 1;
-  const share = Math.max(0, Math.min(1, firstTry / total));
-  return 0.5 + 0.5 * share;
+  const avg = Math.max(0, Math.min(100, (Number(scoreSum) || 0) / total));
+  return avg / 100;
 }
 
-function lessonXpFor(base, firstTry, total) {
-  return Math.max(1, Math.round((Number(base) || 0) * lessonBonusFactor(firstTry, total)));
+function lessonXpFor(base, scoreSum, total) {
+  const value = Math.round((Number(base) || 0) * lessonBonusFactor(scoreSum, total));
+  return Math.max(0, value);
 }
 
-/** Kurze Begründung für die Anzeige — „2. Versuch“, „mit Tipp-Joker“. */
-function attemptLabel(attempts, usedHint) {
+/** Kurze Begründung für die Anzeige — „100 %“, „mit Tipp-Joker“. */
+function attemptLabel(score, usedHint) {
   if (usedHint) return "mit Tipp-Joker";
-  if (attempts <= 1) return "erster Versuch";
-  return `${attempts}. Versuch`;
+  const s = Math.round(Number(score) || 0);
+  if (s >= 100) return "volle Punktzahl";
+  return `${s} von 100 Punkten`;
 }
 
 function AIFeedback({ result, ctx, reportPayload }) {
@@ -13022,9 +13993,9 @@ function AIFeedback({ result, ctx, reportPayload }) {
         {typeof result.score === "number" && <span className="text-sm text-[#8A9BC0]">(Score: {result.score}/100)</span>}
       </div>
       <p className="text-sm text-[#C9D6F0] leading-relaxed mb-2">{renderInline(result.feedback || "", "fb")}</p>
-      {good && result.praise && <p className="text-sm text-[#10B981] mb-2">🎉 {result.praise}</p>}
-      {!good && result.hint && <p className="text-sm text-[#F59E0B] flex items-start gap-1.5 mb-2"><span>💡</span><span>{renderInline(result.hint, "hint")}</span></p>}
-      {good && result.hint && <p className="text-xs text-[#8A9BC0] flex items-start gap-1.5 mb-2"><span>💡</span><span>{renderInline(result.hint, "hint2")}</span></p>}
+      {good && result.praise && <p className="text-sm text-[#10B981] mb-2 flex items-center gap-1.5"><LdIcon name="konfetti" size={14} color="#10B981" />{result.praise}</p>}
+      {!good && result.hint && <p className="text-sm text-[#F59E0B] flex items-start gap-1.5 mb-2"><span> [tipp] </span><span>{renderInline(result.hint, "hint")}</span></p>}
+      {good && result.hint && <p className="text-xs text-[#8A9BC0] flex items-start gap-1.5 mb-2"><span> [tipp] </span><span>{renderInline(result.hint, "hint2")}</span></p>}
 
       {/* Aufschlüsselung der geprüften Bausteine — macht nachvollziehbar,
           warum die Bewertung so ausfällt. */}
@@ -13095,69 +14066,83 @@ function LessonView({ ctx }) {
   const task = lesson.tasks[idx];
   const result = results[task.id];
   const isLast = idx === lesson.tasks.length - 1;
-  // Abgeschlossen ist eine Lektion erst, wenn jede Aufgabe RICHTIG beantwortet
-  // wurde — eine bloß geprüfte falsche Antwort reicht nicht.
-  const isSolved = (t) => !!results[t.id]?.correct;
-  const allSolved = lesson.tasks.every(isSolved);
-  const openCount = lesson.tasks.filter((t) => !isSolved(t)).length;
+
+  /* Eine Aufgabe wird EINMAL beantwortet. Danach ist sie erledigt — richtig
+     oder falsch. Bei einer falschen Antwort steht die Lösung sofort da; es
+     geht weiter, aber es gibt weniger XP. Das ist ehrlicher als beliebig oft
+     probieren zu dürfen, und niemand hängt an einer Aufgabe fest. */
+  const isAnswered = (t) => !!results[t.id];
+  const allAnswered = lesson.tasks.every(isAnswered);
+  const openCount = lesson.tasks.filter((t) => !isAnswered(t)).length;
 
   const setAns = (val) => setAnswers((a) => ({ ...a, [task.id]: val }));
 
-  // Gelöst = richtig geprüft. Eine falsche Antwort sperrt nichts — man
-  // korrigiert direkt im Feld und drückt erneut auf „Prüfen“.
+  const answered = !!result;
   const solved = !!result?.correct;
-  const wasWrong = !!result && !result.correct;
+  const wasWrong = answered && !result.correct;
 
-  // Tipp-Joker aus dem Shop: zeigt die Auflösung sofort statt erst nach
-  // drei Fehlversuchen.
-  const canSpendHint = wasWrong && !!result.solutionHint && result.hint !== result.solutionHint && (me.hints || 0) > 0;
+  // Tipp-Joker aus dem Shop: zeigt die Auflösung, BEVOR man abgibt.
+  const canSpendHint = !answered && !!task.solution && !hintUsed[task.id] && (me.hints || 0) > 0;
   const spendHint = async () => {
     if (!canSpendHint) return;
     const ok = await useHint();
     if (!ok) return;
-    setResults((r) => ({ ...r, [task.id]: { ...result, hint: result.solutionHint } }));
     setHintUsed((h) => ({ ...h, [task.id]: true }));
     playSound("badge");
   };
 
-  /**
-   * Schreibt die XP für eine gelöste Aufgabe gut — einmal je Aufgabe und
-   * abhängig davon, im wievielten Anlauf sie saß.
-   */
-  const reward = (tid, tries) => {
+  /** Schreibt die XP für eine beantwortete Aufgabe gut — einmal je Aufgabe. */
+  const reward = (tid, score) => {
     if (rewarded[tid]) return 0;
     const usedHint = !!hintUsed[tid];
-    const amount = taskXpFor(tries, usedHint);
+    const amount = taskXpFor(score, usedHint);
     setRewarded((r) => ({ ...r, [tid]: true }));
-    addXP(amount, { attempts: tries, usedHint });
-    showXP(amount);
+    if (amount > 0) { addXP(amount, { score, usedHint }); showXP(amount); }
     return amount;
   };
 
-  // Was es beim nächsten richtigen Versuch gäbe — das steht sichtbar dabei,
-  // damit niemand raten muss, was ein weiterer Fehlversuch kostet.
-  const pendingReward = taskXpFor((attempts[task.id] || 0) + 1, !!hintUsed[task.id]);
+  // Was bei einer perfekten Antwort herauskäme — steht sichtbar dabei.
+  const pendingReward = taskXpFor(100, !!hintUsed[task.id]);
+
+  /** Die Musterlösung für die Anzeige nach einer falschen Antwort. */
+  const solutionText = (t, res) => {
+    if (t.type === "multiple_choice") return t.options?.[t.correctAnswer] ?? "";
+    if (t.type === "fill_blank") {
+      return (t.blanks || []).map((b, i) => `${i + 1}. ${Array.isArray(b) ? b[0] : b}`).join("   ");
+    }
+    return t.solution || res?.solutionHint || "";
+  };
+
+  const finishTask = (res) => {
+    setResults((r) => ({ ...r, [task.id]: res }));
+    setAttempts((a) => ({ ...a, [task.id]: 1 }));
+    playSound(res.correct ? "correct" : "wrong");
+    const gained = reward(task.id, res.score);
+    if (res.correct) {
+      pushToast("success", `Richtig! +${gained} XP (${attemptLabel(res.score, !!hintUsed[task.id])})`);
+      if (res.score >= 95 && !me.badges.includes("ai_master")) {
+        setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES.ai_master.label}!`), 400);
+      }
+    } else if (gained > 0) {
+      pushToast("info", `Nicht ganz — ${res.score} von 100 Punkten, dafür +${gained} XP. Die Lösung steht unten.`);
+    } else {
+      pushToast("error", "Das war leider falsch — die Lösung steht unten.");
+    }
+  };
 
   const submit = async () => {
+    if (answered || aiLoading) return;          // nur ein Versuch
     const ans = answers[task.id];
     if (task.type === "multiple_choice") {
       if (ans == null) { pushToast("error", "Bitte wähle eine Antwort."); return; }
       const correct = ans === task.correctAnswer;
-      const mcTries = (attempts[task.id] || 0) + 1;
-      setAttempts((a) => ({ ...a, [task.id]: mcTries }));
-      setResults((r) => ({ ...r, [task.id]: { correct, score: correct ? 100 : 0, feedback: task.explanation } }));
-      playSound(correct ? "correct" : "wrong");
-      if (correct) {
-        const gained = reward(task.id, mcTries);
-        pushToast("success", `Richtig! +${gained} XP (${attemptLabel(mcTries, false)})`);
-      } else {
-        pushToast("error", "Nicht ganz — versuch es nochmal!");
-      }
+      finishTask({
+        correct, score: correct ? 100 : 0,
+        feedback: task.explanation || (correct ? "Richtig." : "Das war nicht die richtige Antwort."),
+      });
       return;
     }
 
-    // Alle anderen Aufgabentypen (Lückentext, Code, Erklären) werden geprüft —
-    // vollständig lokal — die KI ist daran nicht beteiligt.
     let checkTask = task, checkAnswer = ans;
     if (task.type === "fill_blank") {
       if (!(ans || []).some((v) => (v || "").trim())) { pushToast("error", "Bitte fülle mindestens eine Lücke aus."); return; }
@@ -13168,28 +14153,26 @@ function LessonView({ ctx }) {
       pushToast("error", "Bitte gib zuerst eine Antwort ein."); return;
     }
 
-    // Lektionen werden ausschließlich lokal bewertet: sofort, kostenlos und
-    // ohne Netzwerk. Die KI sitzt stattdessen als Assistent im Code-Editor.
-    const res = analyzeAnswer(checkTask, checkAnswer, lesson._course.id);
-    const tries = (attempts[task.id] || 0) + 1;
-    setAttempts((a) => ({ ...a, [task.id]: tries }));
-    // Nach drei Fehlversuchen darf die Lösung stehen — vorher gibt es nur
-    // Anhaltspunkte, damit man nicht einfach durchprobiert.
-    const shown = !res.correct && res.solutionHint && tries >= 3
-      ? { ...res, hint: res.solutionHint }
-      : res;
-    setResults((r) => ({ ...r, [task.id]: shown }));
-    playSound(res.correct ? "correct" : "wrong");
+    // Erst die lokale Analyse: sie ist sofort da, kostet nichts und trifft bei
+    // Lückentext und Multiple Choice ohnehin die endgültige Entscheidung.
+    const local = analyzeAnswer(checkTask, checkAnswer, lesson._course.id);
 
-    if (res.correct) {
-      const gained = reward(task.id, tries);
-      pushToast("success", `Richtig! +${gained} XP (${attemptLabel(tries, !!hintUsed[task.id])})`);
-      if (res.score >= 95 && !me.badges.includes("ai_master")) {
-        setTimeout(() => pushToast("badge", `Neues Abzeichen: ${BADGES.ai_master.label}!`), 400);
+    // Offene Aufgaben („schreib den Code", „erkläre …") lassen sich nicht
+    // vollständig mit Mustern bewerten. Dafür gibt es die Zweitmeinung.
+    if (needsAiVerification(task, local)) {
+      setAiLoading(true);
+      try {
+        const verified = await verifyWithAI({
+          task, answer: checkAnswer, local,
+          course: lesson._course, lessonTitle: lesson.title,
+        });
+        finishTask(verified);
+      } finally {
+        setAiLoading(false);
       }
-    } else {
-      pushToast("error", "Versuch es nochmal — du schaffst das!");
+      return;
     }
+    finishTask(local);
   };
 
 
@@ -13200,33 +14183,29 @@ function LessonView({ ctx }) {
     else openCourse(lesson._course.id);
   };
 
-  // Wie viele Aufgaben saßen im ersten Anlauf — ohne Joker?
-  const firstTryCount = lesson.tasks.filter((t) => (attempts[t.id] || 0) <= 1 && !hintUsed[t.id]).length;
-  const lessonBonus = lessonXpFor(lesson.xpReward, firstTryCount, lesson.tasks.length);
+  // Der Lektionsbonus richtet sich nach dem Durchschnitt aller Aufgaben.
+  const scoreSum = lesson.tasks.reduce((sum, t) => sum + (Number(results[t.id]?.score) || 0), 0);
+  const solvedCount = lesson.tasks.filter((t) => results[t.id]?.correct).length;
+  const lessonBonus = lessonXpFor(lesson.xpReward, scoreSum, lesson.tasks.length);
 
   const finish = () => {
-    // Ohne gelöste Aufgaben gibt es keine XP — sonst könnte man sich die
-    // Belohnung durch bloßes Weiterklicken abholen.
-    if (!allSolved) {
-      const next = lesson.tasks.findIndex((t) => !isSolved(t));
-      pushToast("error", `Noch ${openCount} Aufgabe${openCount === 1 ? "" : "n"} offen — die musst du zuerst lösen.`);
-      if (next >= 0) {
-        const openId = lesson.tasks[next].id;
-        setResults((r) => { const n = { ...r }; delete n[openId]; return n; });   // erneut versuchen
-        setIdx(next);
-      }
+    // Weiterklicken allein bringt nichts: Jede Aufgabe muss beantwortet sein.
+    if (!allAnswered) {
+      const next = lesson.tasks.findIndex((t) => !isAnswered(t));
+      pushToast("error", `Noch ${openCount} Aufgabe${openCount === 1 ? "" : "n"} offen — die musst du zuerst beantworten.`);
+      if (next >= 0) setIdx(next);
       return;
     }
     if (!alreadyDone) {
       const total = lesson.tasks.length;
-      completeLesson(lesson.id, lessonBonus, { firstTry: firstTryCount, taskCount: total });
+      completeLesson(lesson.id, lessonBonus, { scoreSum, taskCount: total });
       playSound("lessonComplete");
       celebrate();
-      setTimeout(() => { showXP(lessonBonus); }, 200);
-      pushToast("success", lessonBonus === lesson.xpReward
-        ? `Fehlerfrei! Volle ${lessonBonus} XP 🎉`
-        : `Lektion abgeschlossen! +${lessonBonus} von ${lesson.xpReward} XP — ${firstTryCount} von ${total} im ersten Anlauf.`);
-      setTimeout(leaveLesson, 1400);
+      setTimeout(() => { showXP(lessonBonus); }, 900);   // erst nach dem Aufgaben-Popup
+      pushToast("success", solvedCount === total
+        ? `Fehlerfrei! Volle ${lessonBonus} XP.`
+        : `Lektion abgeschlossen! +${lessonBonus} von ${lesson.xpReward} XP — ${solvedCount} von ${total} richtig.`);
+      setTimeout(leaveLesson, 1800);
     } else {
       pushToast("info", "Lektion bereits abgeschlossen.");
       leaveLesson();
@@ -13238,13 +14217,13 @@ function LessonView({ ctx }) {
     const onKey = (e) => {
       const tag = (e.target.tagName || "").toLowerCase();
       if (tag === "textarea" || tag === "input") return;
-      if (task.type === "multiple_choice" && !solved && /^[1-9]$/.test(e.key)) {
+      if (task.type === "multiple_choice" && !answered && /^[1-9]$/.test(e.key)) {
         const n = parseInt(e.key, 10) - 1;
         if (n < task.options.length) { e.preventDefault(); setAns(n); }
       } else if (e.key === "Enter") {
         e.preventDefault();
-        if (!solved && !aiLoading) submit();
-        else if (solved) { isLast ? finish() : setIdx((i) => i + 1); }
+        if (!answered && !aiLoading) submit();
+        else if (answered) { isLast ? finish() : setIdx((i) => i + 1); }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -13268,7 +14247,7 @@ function LessonView({ ctx }) {
             <LogOut size={14} />
           </button>
         </div>
-        <div className="h-1 bg-[#1A2540]"><div className="h-1 transition-all duration-500" style={{ width: (lesson.tasks.filter(isSolved).length / lesson.tasks.length) * 100 + "%", background: GRADIENT }} /></div>
+        <div className="h-1 bg-[#1A2540]"><div className="h-1 transition-all duration-500" style={{ width: (lesson.tasks.filter(isAnswered).length / lesson.tasks.length) * 100 + "%", background: GRADIENT }} /></div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 grid lg:grid-cols-5 gap-6">
@@ -13290,20 +14269,19 @@ function LessonView({ ctx }) {
                 <div className="space-y-2">
                   {task.options.map((opt, i) => {
                     const sel = answers[task.id] === i;
-                    // Nach einer falschen Antwort bleibt die Auswahl offen — man
-                    // wählt einfach neu, statt erst „Nochmal“ drücken zu müssen.
-                    // Die richtige Lösung wird dabei bewusst nicht verraten.
+                    // Nach dem Abgeben steht die richtige Antwort da — grün
+                    // markiert, die eigene falsche Wahl rot daneben.
                     const isCorrect = i === task.correctAnswer;
                     let cls = "border-[#1E2D4A] hover:border-[#2A3F6F]";
-                    if (solved && isCorrect) cls = "border-[#10B981] bg-[#10B981]/10";
+                    if (answered && isCorrect) cls = "border-[#10B981] bg-[#10B981]/10";
                     else if (wasWrong && sel) cls = "border-[#EF4444] bg-[#EF4444]/10";
                     else if (sel) cls = "border-[#4F8EF7] bg-[#4F8EF7]/10";
                     return (
-                      <button key={i} disabled={solved} onClick={() => setAns(i)}
+                      <button key={i} disabled={answered} onClick={() => setAns(i)}
                         className={`w-full text-left px-4 py-3 rounded-lg border transition-all flex items-center gap-3 ${cls}`}>
                         <span className="w-6 h-6 rounded-full border border-current text-[#8A9BC0] flex items-center justify-center text-xs shrink-0">{String.fromCharCode(65 + i)}</span>
                         <span className="text-sm text-[#E8EDF5] flex-1">{opt}</span>
-                        {solved && isCorrect && <CheckCircle2 size={18} className="text-[#10B981]" />}
+                        {answered && isCorrect && <CheckCircle2 size={18} className="text-[#10B981]" />}
                         {wasWrong && sel && <XCircle size={18} className="text-[#EF4444]" />}
                       </button>
                     );
@@ -13313,7 +14291,7 @@ function LessonView({ ctx }) {
 
               {/* Code schreiben — im eingebauten Editor */}
               {task.type === "code_write" && (
-                <LdCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={solved}
+                <LdCodeEditor value={answers[task.id] || ""} onChange={setAns} disabled={answered || aiLoading}
                   courseId={lesson._course.id} label={lesson._course.name} height="420px" wordWrap="on" />
               )}
 
@@ -13324,9 +14302,9 @@ function LessonView({ ctx }) {
                     <React.Fragment key={i}>
                       {seg}
                       {i < task.blanks.length && (
-                        <input value={answers[task.id]?.[i] || ""} disabled={solved}
+                        <input value={answers[task.id]?.[i] || ""} disabled={answered}
                           onChange={(e) => setAns(Object.assign([...(answers[task.id] || [])], { [i]: e.target.value }))}
-                          className="inline-block w-24 mx-1 px-2 py-0.5 rounded bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] font-code text-center text-[#4F8EF7]" placeholder="…" />
+                          className="inline-block w-24 mx-1 px-2 py-0.5 rounded bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] font-code text-center text-[#4F8EF7] disabled:opacity-60" placeholder="…" />
                       )}
                     </React.Fragment>
                   ))}
@@ -13335,54 +14313,75 @@ function LessonView({ ctx }) {
 
               {/* Erklären */}
               {task.type === "explain" && (
-                <textarea value={answers[task.id] || ""} onChange={(e) => setAns(e.target.value)} rows={5}
-                  className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 text-sm text-[#E8EDF5] resize-y leading-relaxed" placeholder="Schreibe deine Erklärung …" />
+                <textarea value={answers[task.id] || ""} onChange={(e) => setAns(e.target.value)} rows={5} disabled={answered || aiLoading}
+                  className="w-full bg-[#0A0E1A] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg p-3 text-sm text-[#E8EDF5] resize-y leading-relaxed disabled:opacity-70" placeholder="Schreibe deine Erklärung …" />
               )}
 
-              {/* Aktionen */}
+              {/* Aktionen — eine Antwort, dann geht es weiter */}
               <div className="mt-4 flex gap-2">
-                {!solved && (
+                {!answered && (
                   <Btn className="flex-1" onClick={submit} disabled={aiLoading} icon={aiLoading ? undefined : Send}>
-                    {aiLoading ? <><Loader2 size={16} className="ld-spin" />Prüft …</> : wasWrong ? "Erneut prüfen" : "Prüfen"}
+                    {aiLoading
+                      ? <><Loader2 size={16} className="ld-spin" />Verifiziere Antwort, bitte warten …</>
+                      : "Antwort abgeben"}
                   </Btn>
                 )}
-                {solved && (isLast
-                  ? (allSolved
-                      ? <Btn className="flex-1" onClick={finish} icon={Trophy}>Lektion abschließen</Btn>
-                      : <Btn className="flex-1" variant="secondary" onClick={finish} icon={ArrowRight}>
-                          Noch {openCount} Aufgabe{openCount === 1 ? "" : "n"} offen
-                        </Btn>)
+                {answered && (isLast
+                  ? <Btn className="flex-1" onClick={finish} icon={Trophy}>Lektion abschließen</Btn>
                   : <Btn className="flex-1" onClick={() => setIdx((i) => i + 1)} icon={ArrowRight}>Nächste Aufgabe</Btn>)}
               </div>
 
-              {!solved && (
+              {!answered && !aiLoading && (
                 <p className="mt-2 text-center text-[11px] text-[#4A5A7A]">
-                  {wasWrong
-                    ? <>Bei richtiger Antwort jetzt <span className="text-[#F7C948]">+{pendingReward} XP</span> statt {TASK_XP} — jeder Fehlversuch kostet.</>
-                    : <>Richtig im ersten Anlauf: <span className="text-[#F7C948]">+{TASK_XP} XP</span></>}
+                  Du hast <span className="text-[#E8EDF5]">einen Versuch</span> — die XP richten sich danach,
+                  wie viel stimmt. Alles richtig: <span className="text-[#F7C948]">+{pendingReward} XP</span>
+                </p>
+              )}
+              {aiLoading && (
+                <p className="mt-2 text-center text-[11px] text-[#4F8EF7]">
+                  Deine Lösung wird inhaltlich geprüft — das dauert ein paar Sekunden.
                 </p>
               )}
 
               {canSpendHint && (
                 <button onClick={spendHint}
                   className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-[#F7C948]/40 bg-[#F7C948]/10 text-xs text-[#F7C948] hover:bg-[#F7C948]/15">
-                  <Lightbulb size={13} />Tipp-Joker einlösen — Lösung sofort zeigen, dafür höchstens {Math.round(HINT_FACTOR_CAP * 100)} % XP ({me.hints} übrig)
+                  <Lightbulb size={13} />Tipp-Joker einlösen — Lösung vorher zeigen, dafür höchstens {Math.round(HINT_FACTOR_CAP * 100)} % XP ({me.hints} übrig)
                 </button>
+              )}
+
+              {/* Mit dem Joker steht die Musterlösung schon vor dem Abgeben da. */}
+              {hintUsed[task.id] && !answered && !!solutionText(task, null) && (
+                <div className="mt-3 p-3 rounded-lg bg-[#F7C948]/10 border border-[#F7C948]/30">
+                  <p className="text-[11px] text-[#F7C948] mb-1.5 flex items-center gap-1.5"><Lightbulb size={12} />Musterlösung</p>
+                  <pre className="font-code text-xs text-[#C9D6F0] whitespace-pre-wrap">{solutionText(task, null)}</pre>
+                </div>
               )}
 
               {/* MC-Feedback; Lückentext, Code und Erklären erscheinen in der Bewertungskarte unten */}
               {result && task.type === "multiple_choice" && (
-                <div className={`mt-4 p-3 rounded-lg text-sm ${result.correct ? "bg-[#10B981]/10 text-[#10B981]" : "bg-[#EF4444]/10 text-[#C9D6F0]"}`}>
-                  <div className="flex items-center gap-1.5 font-medium mb-1">{result.correct ? <CheckCircle2 size={15} /> : <XCircle size={15} className="text-[#EF4444]" />}{result.correct ? "Richtig!" : "Leider falsch"}</div>
-                  {/* Die Erklärung verrät die Lösung — deshalb erst, wenn sie stimmt. */}
-                  <p className="text-[#C9D6F0]">{result.correct ? result.feedback : "Wähl eine andere Antwort und prüfe erneut."}</p>
+                <div className={`mt-4 p-3 rounded-lg text-sm ${result.correct ? "bg-[#10B981]/10" : "bg-[#EF4444]/10"}`}>
+                  <div className={`flex items-center gap-1.5 font-medium mb-1 ${result.correct ? "text-[#10B981]" : "text-[#EF4444]"}`}>
+                    {result.correct ? <CheckCircle2 size={15} /> : <XCircle size={15} />}{result.correct ? "Richtig!" : "Leider falsch"}
+                  </div>
+                  {!result.correct && (
+                    <p className="text-[#E8EDF5] mb-1">Richtig wäre: <strong>{task.options?.[task.correctAnswer]}</strong></p>
+                  )}
+                  <p className="text-[#C9D6F0]">{result.feedback}</p>
+                </div>
+              )}
+
+              {/* Nach einer falschen Antwort steht die Lösung da — nachbessern
+                  geht nicht mehr, aber man sieht, wie es richtig gewesen wäre. */}
+              {wasWrong && task.type !== "multiple_choice" && !!solutionText(task, result) && (
+                <div className="mt-4 p-3 rounded-lg bg-[#10B981]/8 border border-[#10B981]/30">
+                  <p className="text-[11px] text-[#10B981] mb-1.5 flex items-center gap-1.5"><CheckCircle2 size={12} />So wäre es richtig gewesen</p>
+                  <pre className="font-code text-xs text-[#C9D6F0] whitespace-pre-wrap overflow-x-auto">{solutionText(task, result)}</pre>
                 </div>
               )}
             </Card>
 
-            {/* KI-Feedback (Lückentext, Code, Erklären) */}
-            {/* Der Platzhalter erscheint nur, solange noch gar kein Ergebnis
-                vorliegt — sonst würde er das Sofortergebnis verdecken. */}
+            {/* Bewertung (Lückentext, Code, Erklären) */}
             {aiLoading && !result && task.type !== "multiple_choice" && <SkeletonFeedback />}
             {result && task.type !== "multiple_choice" && (
               <AIFeedback result={result} ctx={ctx} reportPayload={{
@@ -13394,15 +14393,15 @@ function LessonView({ ctx }) {
 
             {/* Tastatur-Hinweis */}
             <p className="text-center text-[11px] text-[#4A5A7A] mt-3">
-              {task.type === "multiple_choice" && !solved ? "Tipp: Tasten 1–4 zum Wählen · " : ""}<kbd className="font-code px-1 py-0.5 rounded bg-[#141D35] border border-[#1E2D4A]">Enter</kbd> zum {solved ? "Weiter" : "Prüfen"}
+              {task.type === "multiple_choice" && !answered ? "Tipp: Tasten 1–4 zum Wählen · " : ""}<kbd className="font-code px-1 py-0.5 rounded bg-[#141D35] border border-[#1E2D4A]">Enter</kbd> zum {answered ? "Weiter" : "Abgeben"}
             </p>
 
             {/* Task-Navigation Punkte */}
             <div className="flex items-center justify-center gap-1.5 mt-5">
               {lesson.tasks.map((t, i) => (
                 <button key={t.id} onClick={() => setIdx(i)}
-                  className={`h-2 rounded-full transition-all ${i === idx ? "w-6 bg-[#4F8EF7]" : isSolved(t) ? "w-2 bg-[#10B981]" : results[t.id] ? "w-2 bg-[#EF4444]" : "w-2 bg-[#2A3F6F]"}`}
-                  title={`Aufgabe ${i + 1}${isSolved(t) ? " — gelöst" : results[t.id] ? " — noch offen" : ""}`} />
+                  className={`h-2 rounded-full transition-all ${i === idx ? "w-6 bg-[#4F8EF7]" : results[t.id]?.correct ? "w-2 bg-[#10B981]" : results[t.id] ? "w-2 bg-[#EF4444]" : "w-2 bg-[#2A3F6F]"}`}
+                  title={`Aufgabe ${i + 1}${results[t.id]?.correct ? " — richtig" : results[t.id] ? " — falsch" : " — offen"}`} />
               ))}
             </div>
           </div>

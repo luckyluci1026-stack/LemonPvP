@@ -5,26 +5,29 @@ import { loadFullUser, listUser, serializeProject, serializeLesson } from "../se
 
 const MAX_NAME = 80;
 
-/* ------------------ XP nach Anzahl der Versuche ---------------------------
+/* ----------------------- XP nach Ergebnis ---------------------------------
    Dieselben Zahlen wie im Browser (App.jsx). Entscheidend ist, dass HIER
-   gerechnet wird: Der Client meldet nur, im wievielten Anlauf die Aufgabe saß.
-   Lügt er, bekommt er höchstens so viel wie bei ehrlicher Meldung — mehr als
-   die volle Belohnung ist auf keinem Weg möglich.
+   gerechnet wird: Der Client meldet nur den erreichten Score. Lügt er,
+   bekommt er höchstens so viel wie bei ehrlicher Meldung — mehr als die volle
+   Belohnung ist auf keinem Weg möglich.
+
+   Es gibt genau einen Versuch je Aufgabe; die Belohnung richtet sich danach,
+   wie viel der Aufgabe gelöst wurde.
    ------------------------------------------------------------------------- */
 const TASK_XP = 15;
-const ATTEMPT_FACTORS = [1, 0.7, 0.5, 0.3];
 const HINT_FACTOR_CAP = 0.4;
 
-function taskXpFor(attempts, usedHint) {
-  const index = Math.min(Math.max(1, Number(attempts) || 1), ATTEMPT_FACTORS.length) - 1;
-  const factor = usedHint ? Math.min(ATTEMPT_FACTORS[index], HINT_FACTOR_CAP) : ATTEMPT_FACTORS[index];
-  return Math.max(1, Math.round(TASK_XP * factor));
+function taskXpFor(score, usedHint) {
+  const share = Math.max(0, Math.min(1, (Number(score) || 0) / 100));
+  const factor = usedHint ? Math.min(share, HINT_FACTOR_CAP) : share;
+  const xp = Math.round(TASK_XP * factor);
+  return share > 0 ? Math.max(1, xp) : 0;
 }
 
-function lessonXpFor(base, firstTry, total) {
+function lessonXpFor(base, scoreSum, total) {
   if (!total) return base;
-  const share = Math.max(0, Math.min(1, Number(firstTry) / Number(total)));
-  return Math.max(1, Math.round(base * (0.5 + 0.5 * share)));
+  const avg = Math.max(0, Math.min(100, (Number(scoreSum) || 0) / Number(total)));
+  return Math.max(0, Math.round(base * (avg / 100)));
 }
 const MAX_FILES = 100;          // ein Projekt, kein Dateisystem
 const MAX_TASKS = 20;           // Aufgaben je selbst erstellter Lektion
@@ -62,14 +65,14 @@ export default async function appRoutes(app) {
   // Eine Lektion abschließen. XP und Abzeichen werden serverseitig vergeben,
   // damit der Fortschritt nicht im Browser manipuliert werden kann.
   app.post("/api/progress/complete", { preHandler: [requireAuth] }, async (request, reply) => {
-    const { lessonId, courseId, xpReward = 0, badges = [], firstTry, taskCount } = request.body || {};
+    const { lessonId, courseId, xpReward = 0, badges = [], scoreSum, taskCount } = request.body || {};
     if (!lessonId) return reply.code(400).send({ error: "lessonId fehlt." });
 
     const claimed = Math.max(0, Math.min(500, Number(xpReward) || 0));   // Obergrenze gegen Manipulation
-    // Fehlversuche mindern den Lektionsbonus. Gemeldet wird, wie viele
-    // Aufgaben im ersten Anlauf saßen; gerechnet wird hier.
+    // Der Lektionsbonus richtet sich nach dem Durchschnitt aller Aufgaben.
+    // Gemeldet wird die Summe der Scores; gerechnet wird hier.
     const xp = taskCount
-      ? Math.min(claimed, lessonXpFor(claimed, firstTry, taskCount))
+      ? Math.min(claimed, lessonXpFor(claimed, scoreSum, taskCount))
       : claimed;
 
     // Wochenwechsel VOR dem Gutschreiben abhandeln — sonst würde der
@@ -110,9 +113,9 @@ export default async function appRoutes(app) {
   app.post("/api/progress/xp", { preHandler: [requireAuth] }, async (request, reply) => {
     const claimed = Math.max(0, Math.min(100, Number(request.body?.amount) || 0));
     if (!claimed) return reply.code(400).send({ error: "Ungültiger XP-Betrag." });
-    // Der Abzug für Fehlversuche wird serverseitig gerechnet und zusätzlich
-    // gegen den gemeldeten Betrag gedeckelt.
-    const earned = taskXpFor(request.body?.attempts, !!request.body?.usedHint);
+    // Der Abzug für eine unvollständige Lösung wird serverseitig gerechnet
+    // und zusätzlich gegen den gemeldeten Betrag gedeckelt.
+    const earned = taskXpFor(request.body?.score, !!request.body?.usedHint);
     const base = Math.min(claimed, earned);
     const before = await one("SELECT * FROM users WHERE id = $1", [request.user.id]);
     await rolloverLeague(before);
@@ -235,6 +238,93 @@ export default async function appRoutes(app) {
       byUser.get(l.user_id).push(l.lesson_id);
     }
     return { students: rows.map((r) => listUser({ ...r, completed_lessons: byUser.get(r.id) || [] })) };
+  });
+
+  /* --------------- Klasse: nachträglich beitreten (mit Freigabe) ----------
+     Der Lehrer-Code allein verbindet nichts. Wer ihn eingibt, stellt eine
+     Anfrage — erst mit der Bestätigung der Lehrkraft sieht sie Fortschritt
+     und eigene Level werden freigeschaltet. Das schützt beide Seiten: Niemand
+     landet ungefragt in einer fremden Klasse, und eine Lehrkraft bekommt
+     keine fremden Schülerinnen und Schüler untergeschoben.
+     --------------------------------------------------------------------- */
+  app.post("/api/class/request", { preHandler: [requireAuth] }, async (request, reply) => {
+    if (request.user.role !== "student") {
+      return reply.code(403).send({ error: "Nur Schüler-Accounts können einer Klasse beitreten." });
+    }
+    const code = String(request.body?.code || "").trim();
+    if (!code) return reply.code(400).send({ error: "Bitte gib einen Lehrer-Code ein." });
+
+    const teacher = await one(
+      "SELECT id, name, school FROM users WHERE role = 'teacher' AND upper(school_code) = upper($1) AND NOT disabled",
+      [code]
+    );
+    if (!teacher) return reply.code(404).send({ error: "Diesen Lehrer-Code gibt es nicht." });
+    if (teacher.id === request.user.teacher_id) {
+      return reply.code(409).send({ error: "Du gehörst bereits zu dieser Klasse." });
+    }
+
+    // Eine offene Anfrage genügt — eine zweite ersetzt die erste.
+    await query("UPDATE class_requests SET status = 'withdrawn', decided_at = now() WHERE student_id = $1 AND status = 'pending'", [request.user.id]);
+    const row = await one(
+      "INSERT INTO class_requests (student_id, teacher_id) VALUES ($1, $2) RETURNING *",
+      [request.user.id, teacher.id]
+    );
+    return { request: { id: row.id, teacherName: teacher.name, school: teacher.school, status: "pending" } };
+  });
+
+  /** Der eigene Stand: läuft gerade eine Anfrage? */
+  app.get("/api/class/request", { preHandler: [requireAuth] }, async (request) => {
+    const row = await one(
+      `SELECT r.id, r.status, u.name AS teacher_name, u.school
+         FROM class_requests r JOIN users u ON u.id = r.teacher_id
+        WHERE r.student_id = $1 AND r.status = 'pending'`,
+      [request.user.id]
+    );
+    return { request: row ? { id: row.id, status: row.status, teacherName: row.teacher_name, school: row.school } : null };
+  });
+
+  /** Eine laufende Anfrage zurückziehen. */
+  app.delete("/api/class/request", { preHandler: [requireAuth] }, async (request) => {
+    await query("UPDATE class_requests SET status = 'withdrawn', decided_at = now() WHERE student_id = $1 AND status = 'pending'", [request.user.id]);
+    return { ok: true };
+  });
+
+  /** Offene Anfragen an mich als Lehrkraft. */
+  app.get("/api/teacher/requests", { preHandler: [requireAuth] }, async (request, reply) => {
+    if (request.user.role !== "teacher") return reply.code(403).send({ error: "Nur für Lehrkräfte." });
+    const rows = await many(
+      `SELECT r.id, r.created_at, u.id AS student_id, u.name, u.email, u.xp
+         FROM class_requests r JOIN users u ON u.id = r.student_id
+        WHERE r.teacher_id = $1 AND r.status = 'pending'
+        ORDER BY r.created_at`,
+      [request.user.id]
+    );
+    return {
+      requests: rows.map((r) => ({
+        id: r.id, studentId: r.student_id, name: r.name, email: r.email,
+        xp: Number(r.xp) || 0, createdAt: r.created_at,
+      })),
+    };
+  });
+
+  /** Anfrage bestätigen oder ablehnen. */
+  app.post("/api/teacher/requests/:id", { preHandler: [requireAuth] }, async (request, reply) => {
+    if (request.user.role !== "teacher") return reply.code(403).send({ error: "Nur für Lehrkräfte." });
+    const approve = request.body?.approve === true;
+    const row = await one(
+      "SELECT * FROM class_requests WHERE id = $1 AND teacher_id = $2 AND status = 'pending'",
+      [request.params.id, request.user.id]
+    );
+    if (!row) return reply.code(404).send({ error: "Diese Anfrage gibt es nicht mehr." });
+
+    await query(
+      "UPDATE class_requests SET status = $1, decided_at = now() WHERE id = $2",
+      [approve ? "approved" : "rejected", row.id]
+    );
+    if (approve) {
+      await query("UPDATE users SET teacher_id = $1 WHERE id = $2", [request.user.id, row.student_id]);
+    }
+    return { ok: true, approved: approve };
   });
 
   /* ------------------------------ Projekte -------------------------------- */
