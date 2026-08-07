@@ -69,9 +69,18 @@ test("OpenRouter gilt erst mit Schlüssel UND Modell als bereit", () => {
   }
 });
 
-test("im Code steht keine geratene Modell-ID als Vorgabe", () => {
-  // Der Katalog von OpenRouter ändert sich laufend. Eine fest verdrahtete ID
-  // wäre irgendwann falsch und würde still auf die lokale Analyse zurückfallen.
-  assert.equal(process.env.OPENROUTER_MODEL || "", config.ai.openrouterModel,
-    "openrouterModel darf ausschließlich aus der Umgebung kommen");
+test("die Modell-ID hat die Form anbieter/modell", () => {
+  // Ein Tippfehler hier führt zu einem 404, und die Prüfung fiele still auf
+  // die lokale Analyse zurück. Die Form lässt sich wenigstens festhalten.
+  assert.match(config.ai.openrouterModel, /^[\w.-]+\/[\w.:-]+$/,
+    "erwartet wird etwas wie google/gemma-4-31b-it:free");
+});
+
+test("OPENROUTER_MODEL aus der Umgebung hat Vorrang", async () => {
+  const vorher = process.env.OPENROUTER_MODEL;
+  process.env.OPENROUTER_MODEL = "anbieter/eigenes-modell";
+  const frisch = await import("../src/config.js?openrouter=1");
+  assert.equal(frisch.config.ai.openrouterModel, "anbieter/eigenes-modell");
+  if (vorher === undefined) delete process.env.OPENROUTER_MODEL;
+  else process.env.OPENROUTER_MODEL = vorher;
 });

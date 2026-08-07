@@ -204,7 +204,40 @@ Die Plattform funktioniert **vollständig ohne KI-Zugang** — dann läuft die
 eingebaute lokale Analyse (siehe Abschnitt 5). Optional stehen vier Anbieter
 zur Wahl (`AI_PROVIDER`): `gemini`, `anthropic`, `openrouter` und `ollama`.
 
-### Variante A — Google Gemini mit mehreren Keys
+### Schnelltest der Einrichtung
+
+Bevor irgendetwas in der App landet:
+
+```bash
+cd server
+npm run ai:test              # Haupt- und Ersatzanbieter
+npm run ai:test -- alle      # jeden konfigurierten Anbieter
+npm run ai:test -- gemini    # gezielt einen
+```
+
+Der Test geht durch dieselbe Kette wie im Betrieb — derselbe Systemprompt,
+dieselbe Auswertung — und schickt zwei Proben: eine richtige Lösung und lose
+Wörter, die nur so aussehen. Ein Modell, das beide gleich bewertet, taugt für
+die Prüfung nicht. Es wird weder ein laufender Server noch eine Datenbank
+gebraucht; Fehler werden in Klartext übersetzt (falscher Schlüssel, unbekannte
+Modell-ID, Kontingent erschöpft).
+
+### Variante A — Google mit eigenem API-Key (Vorgabe)
+
+```bash
+GEMINI_API_KEYS=AIza...
+GEMINI_MODEL=gemma-4-31b-it     # oder gemini-2.0-flash
+AI_VERIFY_PRIMARY=gemini
+```
+
+Keys erstellen: [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+
+`gemma-4-31b-it` läuft über dieselbe Schnittstelle wie die Gemini-Modelle und
+unterstützt dort auch Systemanweisungen — der Aufruf im Code ist für beide
+derselbe. Das Modell ist kostenlos nutzbar und bringt ein Kontextfenster von
+256k Token mit, was für die Antwortprüfung mehr als ausreicht.
+
+### Variante A1 — Gemini mit mehreren Keys
 
 Das kostenlose Kontingent liegt bei rund **15 Anfragen pro Minute je Key**.
 Mehrere Keys aus verschiedenen Konten lassen sich eintragen und werden
@@ -228,14 +261,15 @@ Keys erstellen: [aistudio.google.com/app/apikey](https://aistudio.google.com/app
 > verstoßen. Die technische Umsetzung ist neutral — die Entscheidung liegt bei
 > dir. Für den Dauerbetrieb ist Variante B die sauberere Lösung.
 
-### Variante A2 — OpenRouter
+### Variante A2 — OpenRouter (als Ersatzanbieter)
 
 Ein Zugang, viele Modelle, OpenAI-kompatible Schnittstelle. Interessant vor
 allem wegen der kostenlos nutzbaren Modelle.
 
 ```bash
 OPENROUTER_API_KEYS=sk-or-...
-OPENROUTER_MODEL=anbieter/modell        # exakte ID von openrouter.ai/models
+OPENROUTER_MODEL=google/gemma-4-31b-it:free
+AI_VERIFY_FALLBACK=openrouter
 ```
 
 Drei Punkte, die vorher geklärt sein sollten:
@@ -251,9 +285,11 @@ Drei Punkte, die vorher geklärt sein sollten:
    Antworten von Lernenden mit — an einer Schule ist das eine bewusste
    Entscheidung, keine Nebensache. Die Einstellung findet sich in den
    Privacy-Einstellungen des Kontos.
-3. **Kontingente sind eng.** Die freien Stufen erlauben nur wenige Anfragen
-   pro Minute. Als Rückfallebene taugen sie, als alleinige Grundlage für eine
-   Klasse nicht.
+3. **Kontingente sind eng.** Bei `google/gemma-4-31b-it:free` sind es etwa
+   20 Anfragen pro Minute und 200 pro Tag — und zwar **pro Konto, nicht pro
+   Nutzer**. Deshalb ist `AI_VERIFY_GLOBAL_PER_DAY` (Vorgabe 180) die
+   wichtigere Bremse, nicht das persönliche Kontingent. Für eine ganze Klasse
+   reicht die freie Stufe allein nicht.
 
 ### Variante B — Eigener Server mit Ollama (empfohlen)
 

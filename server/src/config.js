@@ -105,12 +105,15 @@ export const config = {
     geminiKeys: keyList("GEMINI_API_KEYS"),
     anthropicKeys: keyList("ANTHROPIC_API_KEYS"),
     /* OpenRouter bündelt viele Anbieter hinter einer OpenAI-kompatiblen
-       Schnittstelle. Die Modell-ID steht bewusst nur hier und hat keinen
-       eingebauten Standardwert: Der Katalog ändert sich laufend, und eine
-       geratene ID quittiert OpenRouter mit einem 404. Die gültige Schreibweise
-       steht auf openrouter.ai/models. */
+       Schnittstelle. Die Vorgabe ist ein kostenloses Modell mit sehr großem
+       Kontextfenster (262k Token).
+
+       Der Katalog ändert sich laufend — läuft die Prüfung plötzlich immer
+       lokal durch, ist ein 404 wegen einer nicht mehr existierenden ID der
+       erste Verdacht. `npm run ai:test` sagt genau das. Die aktuell gültigen
+       IDs stehen auf openrouter.ai/models. */
     openrouterKeys: keyList("OPENROUTER_API_KEYS"),
-    openrouterModel: process.env.OPENROUTER_MODEL || "",
+    openrouterModel: process.env.OPENROUTER_MODEL || "google/gemma-4-31b-it:free",
     ollamaUrl: (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/+$/, ""),
     ollamaModel: process.env.OLLAMA_MODEL || "qwen2.5-coder:3b",
     // Modell im Speicher halten, statt es bei jedem Aufruf neu zu laden
@@ -120,7 +123,11 @@ export const config = {
     ollamaContext: int("OLLAMA_CONTEXT", 2048),
     ollamaThreads: int("OLLAMA_THREADS", 0),   // 0 = Ollama entscheidet
     warmUp: bool("AI_WARMUP", true),
-    geminiModel: process.env.GEMINI_MODEL || "gemini-2.0-flash",
+    /* Gemma 4 läuft über dieselbe Google-Schnittstelle wie Gemini und
+       unterstützt dort auch systemInstruction — der Aufruf unten ist deshalb
+       für beide derselbe. Wer lieber ein Gemini-Modell möchte, trägt in
+       GEMINI_MODEL z.B. `gemini-2.0-flash` ein. */
+    geminiModel: process.env.GEMINI_MODEL || "gemma-4-31b-it",
     anthropicModel: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
     // Pausen nach Limit-Antworten
     rateLimitCooldownSec: int("AI_COOLDOWN_RATE_LIMIT", 65),
@@ -129,27 +136,32 @@ export const config = {
     // Anfragen pro Nutzer und Minute
     perUserPerMinute: int("AI_PER_USER_PER_MINUTE", 20),
 
-    /* --------------- Antwortprüfung: Stufen und Kostenbremse --------------
-       Die Prüfung offener Aufgaben läuft standardmäßig über das gute (teurere)
-       Modell. Wer auffällig viel prüfen lässt, landet automatisch beim
-       günstigen Anbieter — und wer es maßlos übertreibt, bekommt nur noch die
-       lokale Analyse. Damit bleibt die Monatsrechnung planbar, ohne dass
-       normale Lernende etwas davon merken.
+    /* ------------------- Antwortprüfung: Stufen und Bremse ----------------
+       Drei Stufen, damit weder eine Rechnung noch ein Rate-Limit überrascht:
 
-       Richtwert: 60 Prüfungen/Tag entsprechen bei ~1.500 Token pro Aufruf
-       grob 10-15 € im Monat für einen aktiven Einzelnutzer. */
+         1. Der eingestellte Hauptanbieter (Vorgabe: Google mit eigenem Key).
+         2. Ist das Tageskontingent eines Nutzers ausgereizt, übernimmt der
+            Ersatzanbieter.
+         3. Darüber hinaus bewertet nur noch die lokale Analyse — die Lektion
+            läuft normal weiter, es gibt lediglich keine Zweitmeinung mehr.
+
+       Die Zahlen sind bewusst niedrig angesetzt. Kostenlose Kontingente sind
+       eng: Gemma über OpenRouter erlaubt etwa 20 Anfragen pro Minute und 200
+       pro Tag — und zwar pro KONTO, nicht pro Nutzer. Deshalb ist die globale
+       Notbremse wichtiger als die persönliche. */
     verify: {
       enabled: bool("AI_VERIFY_ENABLED", true),
       // Welcher Anbieter zuerst gefragt wird …
-      primaryProvider: process.env.AI_VERIFY_PRIMARY || "anthropic",
+      primaryProvider: process.env.AI_VERIFY_PRIMARY || "gemini",
       // … und wohin es geht, wenn jemand das Kontingent ausreizt.
-      fallbackProvider: process.env.AI_VERIFY_FALLBACK || "gemini",
-      // Prüfungen pro Nutzer und Tag mit dem guten Modell
+      fallbackProvider: process.env.AI_VERIFY_FALLBACK || "openrouter",
+      // Prüfungen pro Nutzer und Tag beim Hauptanbieter
       primaryPerDay: int("AI_VERIFY_PRIMARY_PER_DAY", 60),
-      // Danach nur noch das günstige Modell — bis zu dieser Grenze
-      maxPerDay: int("AI_VERIFY_MAX_PER_DAY", 250),
-      // Notbremse über alle Nutzer hinweg
-      globalPerDay: int("AI_VERIFY_GLOBAL_PER_DAY", 5000),
+      // Danach nur noch der Ersatzanbieter — bis zu dieser Grenze
+      maxPerDay: int("AI_VERIFY_MAX_PER_DAY", 150),
+      // Notbremse über alle Nutzer hinweg. Bei einem kostenlosen Kontingent
+      // von 200 Anfragen am Tag hier deutlich darunter bleiben.
+      globalPerDay: int("AI_VERIFY_GLOBAL_PER_DAY", 180),
       timeoutMs: int("AI_VERIFY_TIMEOUT_MS", 12000),
     },
   },

@@ -1,7 +1,8 @@
 import { config } from "../config.js";
 import { query } from "../db.js";
 import { requireAuth } from "./auth.js";
-import { generate, aiAvailable, poolStatus, providerReady, ASSISTANT_SYSTEM_PROMPT, VERIFY_SYSTEM_PROMPT } from "../ai.js";
+import { generate, aiAvailable, poolStatus, providerReady, parseVerdict,
+         ASSISTANT_SYSTEM_PROMPT, VERIFY_SYSTEM_PROMPT } from "../ai.js";
 
 async function record(request, kind, result, ok, statusCode) {
   try {
@@ -13,33 +14,6 @@ async function record(request, kind, result, ok, statusCode) {
   } catch (e) {
     request.log.warn({ err: e }, "KI-Statistik konnte nicht gespeichert werden");
   }
-}
-
-/**
- * Liest das Urteil aus der Modellantwort. Modelle packen JSON gerne in einen
- * Codeblock oder schreiben einen Satz davor — beides wird toleriert. Was
- * danach nicht plausibel ist, wird verworfen; dann bleibt es beim lokalen
- * Ergebnis, statt eine erfundene Bewertung anzuzeigen.
- */
-export function parseVerdict(text) {
-  const raw = String(text || "");
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) return null;
-  let data;
-  try { data = JSON.parse(match[0]); } catch (e) { return null; }
-  if (!data || typeof data !== "object") return null;
-
-  const score = Number(data.score);
-  if (!Number.isFinite(score)) return null;
-  const feedback = String(data.feedback || "").trim();
-  if (!feedback) return null;
-
-  return {
-    score: Math.max(0, Math.min(100, Math.round(score))),
-    correct: data.correct === true,
-    feedback: feedback.slice(0, 600),
-    hint: String(data.hint || "").trim().slice(0, 400),
-  };
 }
 
 export default async function aiRoutes(app) {
