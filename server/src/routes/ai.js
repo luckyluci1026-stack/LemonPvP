@@ -1,9 +1,9 @@
 import { config } from "../config.js";
 import { query } from "../db.js";
 import { requireAuth } from "./auth.js";
-import { generate, aiAvailable, poolStatus, providerReady, parseVerdict, parseDispatch,
-         schaetzeTokens, ASSISTANT_SYSTEM_PROMPT, VERIFY_SYSTEM_PROMPT,
-         DISPATCH_SYSTEM_PROMPT } from "../ai.js";
+import { generate, generateChain, ketteLesen, aiAvailable, poolStatus, providerReady,
+         parseVerdict, parseDispatch, schaetzeTokens, ASSISTANT_SYSTEM_PROMPT,
+         VERIFY_SYSTEM_PROMPT, DISPATCH_SYSTEM_PROMPT } from "../ai.js";
 
 async function record(request, kind, result, ok, statusCode, tokens = 0) {
   try {
@@ -183,18 +183,42 @@ export default async function aiRoutes(app) {
     const istLokal = anbieter === disponent.provider && entscheidung?.ziel === "lokal";
     const istProJetzt = rolle === config.ai.roles.assistPro;
 
+    const antwortLaenge = istLokal ? disponent.localMaxTokens
+      : istBau
+        ? (istProJetzt ? Math.max(rolle.maxTokens || 700, 1600) : 2400)
+        : (istProJetzt ? (rolle.maxTokens || 700) : 900);
+
+    /* Beim Profi-Agenten wird eine Kette durchlaufen statt eines einzelnen
+       Anbieters: Läuft der erste in sein Kontingent, übernimmt der nächste.
+
+       Die Reihenfolge richtet sich nach der Größe der Anfrage. Kurze gehen
+       zuerst an den schnellen mit vielen Anfragen pro Minute, lange an den
+       mit dem größeren Textkontingent — sonst rennt die kurze Anfrage in
+       ein Limit, das die lange verursacht hat. */
+    const proKette = istProJetzt ? ketteLesen(config.ai.roles.assistPro.chain) : [];
+    if (proKette.length) {
+      const gross = schaetzeTokens(ASSISTANT_SYSTEM_PROMPT, userPrompt)
+        >= config.ai.roles.assistPro.bigTokens;
+      if (gross) {
+        const gr = config.ai.roles.assistPro.bigProvider;
+        proKette.sort((a, b) => (b.provider === gr) - (a.provider === gr));
+      }
+    }
+
     let result;
     try {
-      result = await generate({
-        system: ASSISTANT_SYSTEM_PROMPT,
-        user: userPrompt,
-        maxTokens: istLokal ? disponent.localMaxTokens
-          : istBau
-            ? (istProJetzt ? Math.max(rolle.maxTokens || 700, 1600) : 2400)
-            : (istProJetzt ? (rolle.maxTokens || 700) : 900),
-        provider: anbieter,
-        model: rolle.model || undefined,
-      });
+      result = proKette.length
+        ? await generateChain({
+            kette: proKette.map((g) => (g.model ? `${g.provider}:${g.model}` : g.provider)),
+            system: ASSISTANT_SYSTEM_PROMPT, user: userPrompt, maxTokens: antwortLaenge,
+          })
+        : await generate({
+            system: ASSISTANT_SYSTEM_PROMPT,
+            user: userPrompt,
+            maxTokens: antwortLaenge,
+            provider: anbieter,
+            model: rolle.model || undefined,
+          });
     } catch (e) {
       await record(request, istProJetzt ? "assist_pro" : "assist", null, false, e.status);
       return reply.code(502).send({ error: "Die KI ist momentan nicht erreichbar." });

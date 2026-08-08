@@ -121,6 +121,18 @@ export const config = {
        ist der mitgeschickte Verlauf für dieses Modell kürzer. */
     groqKeys: keyList("GROQ_API_KEYS"),
     groqModel: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+
+    /* Cerebras — ebenfalls OpenAI-kompatibel, und außergewöhnlich schnell:
+       gpt-oss-120b liefert dort mehrere tausend Token je Sekunde.
+
+       gpt-oss ist ein Modell, das laut denkt. Sein Gedankengang kommt in
+       einem eigenen Feld zurück und wird nicht mit angezeigt; wie ausführlich
+       es denkt, steuert `reasoning_effort`. Für einen Assistenten im Editor
+       ist „low" richtig — die Antwort kommt schneller, und es geht weniger
+       Kontingent für Überlegungen drauf, die ohnehin niemand liest. */
+    cerebrasKeys: keyList("CEREBRAS_API_KEYS"),
+    cerebrasModel: process.env.CEREBRAS_MODEL || "gpt-oss-120b",
+    cerebrasReasoning: process.env.CEREBRAS_REASONING || "low",
     ollamaUrl: (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/+$/, ""),
     ollamaModel: process.env.OLLAMA_MODEL || "qwen2.5-coder:3b",
     // Modell im Speicher halten, statt es bei jedem Aufruf neu zu laden
@@ -201,6 +213,27 @@ export const config = {
         // Kurzer Verlauf, weil das Token-Kontingent pro Minute eng ist
         historyLimit: int("AI_PRO_HISTORY", 4),
         maxTokens: int("AI_PRO_MAX_TOKENS", 700),
+
+        /* ------------------------- Die Kette ---------------------------
+           Kontingente sind bei jedem Anbieter anders geschnitten: Groq
+           erlaubt viele Anfragen pro Minute bei wenig Text, Cerebras
+           umgekehrt viel Text bei weniger Anfragen. Wer nur einen einträgt,
+           steht bei dessen Limit still, obwohl der andere frei wäre.
+
+           Ein Eintrag ist entweder nur der Anbieter (`groq`) oder Anbieter
+           und Modell (`groq:llama-3.1-8b-instant`). Damit lässt sich
+           derselbe Anbieter mit einem kleineren Modell ein zweites Mal
+           anhängen, wenn das große sein Limit erreicht hat.
+
+           Bei langen Anfragen wird die Reihenfolge umgedreht: Dann kommt
+           der mit dem größeren Textkontingent zuerst, statt den schnellen
+           erst ins Limit laufen zu lassen. Die Schwelle steht in
+           `bigTokens`, gemessen in geschätzten Token der Anfrage. */
+        chain: keyList("AI_PRO_CHAIN").length
+          ? keyList("AI_PRO_CHAIN")
+          : ["groq", "cerebras"],
+        bigProvider: process.env.AI_PRO_BIG_PROVIDER || "cerebras",
+        bigTokens: int("AI_PRO_BIG_TOKENS", 1500),
       },
 
       /* ------------------------- Der Disponent -------------------------

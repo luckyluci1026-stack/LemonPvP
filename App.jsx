@@ -8518,6 +8518,16 @@ const AI_PROVIDERS = {
     note: "Kostenloses Kontingent je Modell und Schlüssel. Mehrere Keys eintragen — sie werden automatisch abwechselnd genutzt.",
     multiKey: true,
   },
+  cerebras: {
+    label: "Cerebras",
+    badge: "Sehr schnell",
+    keyPlaceholder: "csk-…",
+    keyUrl: "https://cloud.cerebras.ai",
+    keyUrlLabel: "cloud.cerebras.ai",
+    defaultModel: "gpt-oss-120b",
+    modelHint: "gpt-oss-120b denkt laut. Der Gedankengang kommt getrennt zurück und wird nicht angezeigt — wie ausführlich gedacht wird, steuert die Einstellung „reasoning_effort“ (hier: niedrig).",
+    note: "Mehrere tausend Token je Sekunde. Modellnamen stehen unter inference-docs.cerebras.ai.",
+  },
   groq: {
     label: "Groq",
     badge: "Kostenlos, sehr schnell",
@@ -8603,6 +8613,18 @@ function keyPoolStatus(keys) {
   }));
 }
 
+/* Anbieter mit der Schnittstelle von OpenAI. Die Unterschiede sind die
+   Adresse und — bei Cerebras — wie ausführlich das Modell denken soll. */
+const OPENAI_KOMPATIBLE = {
+  groq: { label: "Groq", url: "https://api.groq.com/openai/v1/chat/completions" },
+  openrouter: { label: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions" },
+  cerebras: {
+    label: "Cerebras",
+    url: "https://api.cerebras.ai/v1/chat/completions",
+    zusatz: { reasoning_effort: "low" },
+  },
+};
+
 async function callProviderOnce(provider, key, systemPrompt, userPrompt, maxTokens, model) {
   if (provider === "ollama") {
     const base = (key || OLLAMA_DEFAULT_URL).replace(/\/+$/, "");
@@ -8654,11 +8676,11 @@ async function callProviderOnce(provider, key, systemPrompt, userPrompt, maxToke
   }
 
   // Groq und OpenRouter sprechen beide die OpenAI-Schnittstelle.
-  if (provider === "groq" || provider === "openrouter") {
-    const url = provider === "groq"
-      ? "https://api.groq.com/openai/v1/chat/completions"
-      : "https://openrouter.ai/api/v1/chat/completions";
-    const res = await fetch(url, {
+  /* Groq, OpenRouter und Cerebras sprechen alle die Schnittstelle von OpenAI
+     — ein Aufruf genügt für alle drei. */
+  if (OPENAI_KOMPATIBLE[provider]) {
+    const anbieter = OPENAI_KOMPATIBLE[provider];
+    const res = await fetch(anbieter.url, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
@@ -8669,12 +8691,15 @@ async function callProviderOnce(provider, key, systemPrompt, userPrompt, maxToke
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
+        ...(anbieter.zusatz || {}),
       }),
     });
     if (!res.ok) {
-      throw aiFehler(provider === "groq" ? "Groq" : "OpenRouter", res.status, await res.text().catch(() => ""), modell);
+      throw aiFehler(anbieter.label, res.status, await res.text().catch(() => ""), modell);
     }
     const data = await res.json();
+    /* Bewusst nur `content`: gpt-oss liefert seinen Gedankengang in einem
+       eigenen Feld `reasoning`. Der gehört nicht in den Editor. */
     const text = data?.choices?.[0]?.message?.content;
     if (!text) throw Object.assign(new Error(`Keine Antwort (${modell})`), { status: 502 });
     return text;

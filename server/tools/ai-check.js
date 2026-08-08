@@ -20,7 +20,7 @@ process.env.SESSION_SECRET ||= "nur-fuer-den-ki-test";
 const { config } = await import("../src/config.js");
 const { generate, providerReady, parseVerdict, VERIFY_SYSTEM_PROMPT } = await import("../src/ai.js");
 
-const ALLE = ["gemini", "anthropic", "openrouter", "groq", "ollama"];
+const ALLE = ["gemini", "anthropic", "openrouter", "groq", "cerebras", "ollama"];
 
 /* Zwei Proben: eine richtige und eine, die nur so aussieht. Ein Modell, das
    beide gleich bewertet, taugt für die Prüfung nicht — genau das ist der
@@ -50,6 +50,7 @@ function modellVon(provider) {
   if (provider === "anthropic") return config.ai.anthropicModel;
   if (provider === "openrouter") return config.ai.openrouterModel;
   if (provider === "groq") return config.ai.groqModel;
+  if (provider === "cerebras") return config.ai.cerebrasModel;
   if (provider === "ollama") return `${config.ai.ollamaModel} @ ${config.ai.ollamaUrl}`;
   return "—";
 }
@@ -59,6 +60,7 @@ function keysVon(provider) {
   if (provider === "anthropic") return config.ai.anthropicKeys;
   if (provider === "openrouter") return config.ai.openrouterKeys;
   if (provider === "groq") return config.ai.groqKeys;
+  if (provider === "cerebras") return config.ai.cerebrasKeys;
   return [];
 }
 
@@ -82,7 +84,8 @@ function rat(provider, fehler) {
     return `Das Modell "${modellVon(provider)}" gibt es unter diesem Namen nicht (404).\n`
       + (provider === "gemini"
         ? "    Führe `npm run ai:models` aus — das zeigt die IDs, die dein Schlüssel wirklich kennt."
-        : "    Schreibweise nachschlagen: bei OpenRouter unter openrouter.ai/models, bei Groq unter console.groq.com/docs/models.");
+        : "    Schreibweise nachschlagen: OpenRouter unter openrouter.ai/models, Groq unter\n"
+          + "    console.groq.com/docs/models, Cerebras unter inference-docs.cerebras.ai.");
   }
   if (status === 429) {
     return "Kontingent erschöpft (429). Kurz warten — im Betrieb wechselt die Rotation automatisch\n"

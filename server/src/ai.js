@@ -19,6 +19,7 @@ function keysFor(provider) {
   if (provider === "anthropic") return config.ai.anthropicKeys;
   if (provider === "openrouter") return config.ai.openrouterKeys;
   if (provider === "groq") return config.ai.groqKeys;
+  if (provider === "cerebras") return config.ai.cerebrasKeys;
   return [];
 }
 
@@ -59,6 +60,8 @@ export function poolStatus() {
     openrouterModel: config.ai.openrouterModel || null,
     groq: build("groq"),
     groqModel: config.ai.groqModel || null,
+    cerebras: build("cerebras"),
+    cerebrasModel: config.ai.cerebrasModel || null,
     ollama: ollamaInUse()
       ? { url: config.ai.ollamaUrl, model: config.ai.ollamaModel, reachable: ollamaErreichbar }
       : null,
@@ -190,81 +193,74 @@ async function callAnthropic(key, system, user, maxTokens) {
   return text;
 }
 
-/**
- * OpenRouter — ein Zugang, viele Modelle.
- *
- * Die Schnittstelle ist die von OpenAI, deshalb reicht ein einziger Aufruf
- * für jedes dort verfügbare Modell. Welches genutzt wird, steht in
- * OPENROUTER_MODEL; im Code ist bewusst KEINE Modell-ID fest verdrahtet, weil
- * sich der Katalog laufend ändert und eine erfundene ID nur eine 404 liefert.
- *
- * Zwei Dinge sind vor dem Einsatz zu klären:
- *   1. Die genaue ID auf openrouter.ai/models nachschlagen. Modellnamen aus
- *      zweiter Hand stimmen oft nicht.
- *   2. Bei kostenlosen Modellen die Datenschutz-Einstellung des Kontos
- *      prüfen. Sie verlangen häufig, dass Anfragen zum Training verwendet
- *      werden dürfen — und hier gingen Antworten von Lernenden mit.
- */
-async function callOpenRouter(key, system, user, maxTokens, model) {
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+/* ------------------ Anbieter mit OpenAI-kompatibler Schnittstelle ---------
+   OpenRouter, Groq und Cerebras sprechen alle dasselbe Protokoll. Der Aufruf
+   stand dreimal fast gleich im Code; jetzt einmal, mit den Unterschieden als
+   Angabe.
+
+   Ein Punkt gehört erklärt: `gpt-oss` bei Cerebras ist ein Modell, das laut
+   denkt. Sein Gedankengang kommt in einem EIGENEN Feld zurück (`reasoning`),
+   nicht im Inhalt. Gelesen wird deshalb ausschließlich `content` — sonst
+   stünde im Editor wieder das Protokoll statt der Antwort.
+   ------------------------------------------------------------------------ */
+const OPENAI_KOMPATIBEL = {
+  openrouter: {
+    label: "OpenRouter",
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    modell: () => config.ai.openrouterModel,
+    // OpenRouter nutzt beides für die Zuordnung im Konto — rein optional.
+    kopf: () => ({ "HTTP-Referer": config.publicUrl, "X-Title": "LearnDeveloping" }),
+  },
+  groq: {
+    label: "Groq",
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    modell: () => config.ai.groqModel,
+  },
+  cerebras: {
+    label: "Cerebras",
+    url: "https://api.cerebras.ai/v1/chat/completions",
+    modell: () => config.ai.cerebrasModel,
+    /* gpt-oss denkt so ausführlich, wie man es einstellt. Für einen
+       Assistenten im Editor ist „low" richtig: Die Antwort kommt schneller,
+       und es wird weniger Kontingent für Nachdenken verbraucht, das ohnehin
+       niemand zu sehen bekommt. */
+    zusatz: () => ({ reasoning_effort: config.ai.cerebrasReasoning }),
+  },
+};
+
+async function callOpenAiKompatibel(anbieter, key, system, user, maxTokens, model) {
+  const cfg = OPENAI_KOMPATIBEL[anbieter];
+  const res = await fetch(cfg.url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${key}`,
-      // OpenRouter nutzt beides für die Zuordnung im Konto — rein optional.
-      "HTTP-Referer": config.publicUrl,
-      "X-Title": "LearnDeveloping",
+      ...(cfg.kopf ? cfg.kopf() : {}),
     },
     body: JSON.stringify({
-      model: model || config.ai.openrouterModel,
+      model: model || cfg.modell(),
       max_tokens: maxTokens,
       temperature: 0.3,
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
       ],
-    }),
-    signal: AbortSignal.timeout(config.ai.requestTimeoutMs),
-  });
-  if (!res.ok) throw new ProviderError(`OpenRouter ${res.status}`, res.status);
-  const data = await res.json();
-  // Manche Modelle melden einen Fehler mit Status 200 im Rumpf.
-  if (data?.error) throw new ProviderError(`OpenRouter: ${data.error.message || "Fehler"}`, data.error.code || 502);
-  const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new ProviderError("OpenRouter lieferte keine Antwort", 502);
-  return text;
-}
-
-/**
- * Groq — dieselbe Schnittstelle wie OpenAI, nur außergewöhnlich schnell.
- *
- * Die kostenlosen Kontingente sind großzügig bei den Anfragen, aber knapp bei
- * den Token: `llama-3.3-70b-versatile` erlaubt 30 Anfragen pro Minute, aber
- * nur 12.000 Token pro Minute. Ein langer Verlauf im Editor frisst das
- * schnell auf — deshalb wird der Kontext dort begrenzt.
- */
-async function callGroq(key, system, user, maxTokens, model) {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model: model || config.ai.groqModel,
-      max_tokens: maxTokens,
-      temperature: 0.3,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
+      ...(cfg.zusatz ? cfg.zusatz() : {}),
     }),
     signal: AbortSignal.timeout(config.ai.requestTimeoutMs),
   });
   if (!res.ok) {
     const grund = await res.text().catch(() => "");
-    throw new ProviderError(`Groq ${res.status}${grund ? `: ${kurz(grund)}` : ""}`, res.status);
+    throw new ProviderError(`${cfg.label} ${res.status}${grund ? `: ${kurz(grund)}` : ""}`, res.status);
   }
   const data = await res.json();
+  // Manche Modelle melden einen Fehler mit Status 200 im Rumpf.
+  if (data?.error) {
+    throw new ProviderError(`${cfg.label}: ${data.error.message || "Fehler"}`, data.error.code || 502);
+  }
+  // Bewusst nur `content` — ein etwaiges `reasoning` bleibt liegen.
   const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new ProviderError("Groq lieferte keine Antwort", 502);
+  if (!text) throw new ProviderError(`${cfg.label} lieferte keine Antwort`, 502);
   return text;
 }
 
@@ -391,10 +387,8 @@ export async function generate({ system, user, maxTokens = 1000, provider: force
     try {
       const text = provider === "gemini"
         ? await callGemini(picked.key, system, user, maxTokens, model)
-        : provider === "openrouter"
-        ? await callOpenRouter(picked.key, system, user, maxTokens, model)
-        : provider === "groq"
-        ? await callGroq(picked.key, system, user, maxTokens, model)
+        : OPENAI_KOMPATIBEL[provider]
+        ? await callOpenAiKompatibel(provider, picked.key, system, user, maxTokens, model)
         : await callAnthropic(picked.key, system, user, maxTokens);
       return { text, provider, model: model || modelOf(provider), keyLabel: label(picked.key, picked.index), durationMs: Date.now() - started };
     } catch (e) {
@@ -475,11 +469,65 @@ export function schaetzeTokens(...texte) {
   return Math.ceil(zeichen / 4);
 }
 
+/* ------------------------- Mehrere Anbieter nacheinander ------------------
+   Kontingente sind bei jedem Anbieter anders geschnitten. Groq erlaubt viele
+   Anfragen pro Minute, aber wenig Text; Cerebras umgekehrt: viel Text, dafür
+   weniger Anfragen. Wer nur einen einträgt, steht bei dessen Limit still,
+   obwohl der andere frei wäre.
+
+   Deshalb eine Kette. Ein Eintrag ist entweder nur der Anbieter (`groq`) oder
+   Anbieter und Modell (`groq:llama-3.3-70b-versatile`) — so lässt sich
+   derselbe Anbieter mit einem kleineren Modell ein zweites Mal in die Kette
+   stellen, wenn das große sein Limit erreicht hat.
+
+   Gewechselt wird nur bei Kontingent- und Ausfallfehlern. Ein 400 wegen eines
+   falschen Modellnamens bleibt ein Fehler und wird gemeldet — sonst sucht die
+   Kette reihum weiter und verdeckt einen Tippfehler in der Konfiguration.
+   ------------------------------------------------------------------------ */
+const WEITER_BEI = new Set([408, 402, 403, 429, 500, 502, 503, 504]);
+
+/** Zerlegt „groq:llama-3.3-70b" in Anbieter und Modell. */
+export function ketteLesen(eintraege) {
+  return (Array.isArray(eintraege) ? eintraege : String(eintraege || "").split(","))
+    .map((e) => String(e).trim())
+    .filter(Boolean)
+    .map((e) => {
+      const i = e.indexOf(":");
+      return i > 0
+        ? { provider: e.slice(0, i).trim(), model: e.slice(i + 1).trim() }
+        : { provider: e, model: "" };
+    });
+}
+
+export async function generateChain({ kette, system, user, maxTokens }) {
+  const bereit = ketteLesen(kette).filter((g) => providerReady(g.provider));
+  if (!bereit.length) throw new ProviderError("Kein Anbieter bereit", 503);
+
+  let letzter;
+  for (const glied of bereit) {
+    try {
+      const r = await generate({
+        system, user, maxTokens,
+        provider: glied.provider,
+        model: glied.model || undefined,
+      });
+      return { ...r, kette: bereit.map((g) => g.provider) };
+    } catch (e) {
+      letzter = e;
+      const ausfall = WEITER_BEI.has(e.status)
+        || /fetch failed|ECONNREFUSED|ENOTFOUND|timeout|aborted/i.test(String(e.message));
+      if (!ausfall) throw e;
+    }
+  }
+  throw letzter;
+}
+
 export function modelOf(provider) {
   if (provider === "gemini") return config.ai.geminiModel;
   if (provider === "anthropic") return config.ai.anthropicModel;
   if (provider === "openrouter") return config.ai.openrouterModel;
   if (provider === "groq") return config.ai.groqModel;
+  if (provider === "cerebras") return config.ai.cerebrasModel;
   if (provider === "ollama") return config.ai.ollamaModel;
   return "";
 }
