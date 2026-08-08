@@ -10463,7 +10463,52 @@ const EXAMPLE_WORDS = /\b(zum beispiel|z\.?b\.?|etwa|beispielsweise|wie etwa)\b/
 // Achtung: `\b` funktioniert vor Umlauten NICHT — `\w` kennt kein „ü“, also
 // gibt es zwischen Leerzeichen und „ü“ keine Wortgrenze. Deshalb wird der
 // Wortanfang hier ausdrücklich über die erlaubten Trennzeichen beschrieben.
-const BENEFIT_WORDS = /(?:^|[^A-Za-zÄÖÜäöüß])(übersichtlich|uebersichtlich|übersicht|lesbar|wartbar|wiederverwend|austauschbar|verständlich|verstaendlich|einfach|schnell|langsam|sicher|unsicher|fehleranfällig|robust|getrennt|trennung|unabhängig|unabhaengig|flexibel|struktur|ordn|geordnet|sortier|gliedert|gliederung|sauber|doppelt|redundan|effizien|performan|barrierefrei|zugänglich|eindeutig|konsistent|klar|übersichtlicher|aufwand|spart|spare|zeitspar)/i;
+/* Ein Vorteil zu benennen ist eine Begründung — auch ohne „weil". Neben
+   Eigenschaften („übersichtlich") zählen dazu die Verben, mit denen man
+   sagt, was jemand davon hat: verstehen, erklären, nachvollziehen, helfen,
+   sich erinnern. Ohne sie galt „Kommentare erklären die Absicht hinter dem
+   Code" als bloße Beschreibung. */
+const BENEFIT_WORDS = /(?:^|[^A-Za-zÄÖÜäöüß])(übersichtlich|uebersichtlich|übersicht|lesbar|wartbar|wiederverwend|austauschbar|verständlich|verstaendlich|einfach|schnell|langsam|sicher|unsicher|fehleranfällig|robust|getrennt|trennung|unabhängig|unabhaengig|flexibel|struktur|ordn|geordnet|sortier|gliedert|gliederung|sauber|doppelt|redundan|effizien|performan|barrierefrei|zugänglich|eindeutig|konsistent|klar|übersichtlicher|aufwand|spart|spare|zeitspar|versteh|verstand|erklär|erklaer|nachvollzieh|hilft|helfen|erinner|merkt|merken|nachschau|nachlesen)/i;
+
+/* Wörter, die eine Meinung ankündigen, aber selbst nichts erklären.
+   „weil ich denke, dass …“ ist so lange keine Begründung, wie hinter dem
+   „dass“ nichts Eigenes steht. */
+const MEINUNG_STEMS = new Set([
+  "denk", "denke", "glaub", "glaube", "mein", "meine", "find", "finde",
+  "vermut", "vermute", "schaetz", "schätz",
+]);
+
+/* Hilfs- und Modalverben tragen ebenfalls nichts bei. „weil kommentare
+   ignoriert WERDEN" ist genauso zirkulär wie ohne das Wort — es steht nur
+   da, um den Satz zu bauen. Die kürzeren stehen schon in den Füllwörtern;
+   hier fehlen die Formen, die länger als drei Zeichen sind. */
+const HILFSVERB_STEMS = new Set([
+  "werd", "wurd", "worden", "geworden", "wird", "sein", "gewesen",
+  "hab", "habe", "haben", "hatt", "gehabt", "kann", "koenn", "könn",
+  "muss", "müss", "muess", "soll", "sollt", "dürf", "duerf", "mag",
+  "moecht", "möcht", "will", "woll", "lass", "gelass", "tun", "getan",
+]);
+
+/**
+ * Zerlegt einen Text in Wortstämme — ohne Satzzeichen.
+ *
+ * Anführungszeichen, Kommas und Klammern gehören nicht zum Wort. Werden sie
+ * mitgeschleppt, vergleicht man „worten," mit „worten" und findet nichts.
+ */
+function wortstaemme(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[^a-zäöüß]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(stemDe)
+    .filter(Boolean);
+}
+
+/** Trägt dieses Wort überhaupt Inhalt? */
+function traegtInhalt(stamm) {
+  return !MEINUNG_STEMS.has(stamm) && !HILFSVERB_STEMS.has(stamm);
+}
 
 /* Eine Zweckangabe: „damit man …“, „um … zu …“, „dient dazu“. Sie ist die
    grammatische Form, in der eine Wozu-Frage beantwortet wird. */
@@ -10685,7 +10730,12 @@ function evaluateExplanation(task, answer) {
     ...fromQuestion.map((s) => s.replace(/`/g, "")),
   ].map((s) => String(s).toLowerCase().trim()).filter((s) => s.length > 1))];
 
-  const answerStems = new Set(words.map(stemDe).filter(Boolean));
+  /* Beide Seiten gleich behandeln. Vorher wurde die Antwort an Leerzeichen
+     zerlegt und die Frage ebenso — mit dem Ergebnis, dass in der Frage
+     „Worten," und „«Tabellen" mitsamt Satzzeichen im Vergleich landeten und
+     kein einziges Wort der Antwort je als übernommen erkannt wurde. Wer die
+     Frage abschrieb, kam damit durch. */
+  const answerStems = new Set(wortstaemme(text));
   const answerLower = text.toLowerCase();
   const covered = expected.filter((c) =>
     answerLower.includes(c) || answerStems.has(stemDe(c)) ||
@@ -10697,7 +10747,10 @@ function evaluateExplanation(task, answer) {
   const hasConnective = REASONING_WORDS.test(text);
   // Einen Vorteil zu benennen ist ebenfalls eine Begründung.
   const hasBenefit = BENEFIT_WORDS.test(text);
-  const hasReasoning = hasConnective || hasBenefit;
+  /* `hasReasoning` wird weiter unten noch daran gemessen, ob nach dem
+     Bindewort auch etwas Eigenes steht — ein „weil" ohne Inhalt dahinter ist
+     keine Begründung. */
+  const hatBindewort = hasConnective || hasBenefit;
   const hasExample = EXAMPLE_WORDS.test(text);
   // Fragt die Aufgabe ausdrücklich nach dem Warum, reicht eine reine
   // Beschreibung nicht aus — dann ist die Begründung der Kern der Antwort.
@@ -10718,12 +10771,48 @@ function evaluateExplanation(task, answer) {
   // Wurde die Frage nur abgeschrieben? Das zeigt kein Verständnis. Entscheidend
   // ist der ANTEIL übernommener Wörter — eine kurze eigenständige Antwort
   // („damit es übersichtlicher ist“) darf hier nicht hängenbleiben.
-  const questionWords = new Set((task.question || "").toLowerCase().split(/\s+/).map(stemDe).filter((w) => w.length > 3));
+  const questionLower = String(task.question || "").toLowerCase();
+  const questionWords = new Set(wortstaemme(questionLower).filter((w) => w.length > 3));
   const ownWords = contentWords.filter((w) => !questionWords.has(w));
   const borrowedWords = contentWords.filter((w) => questionWords.has(w));
   const borrowedShare = contentWords.length ? 1 - ownWords.length / contentWords.length : 0;
   const copiedFromQuestion = questionWords.size > 3 && contentWords.length >= 4
     && borrowedShare >= 0.8 && ownWords.length < 2;
+
+  /* --------------------------- Der Zirkelschluss --------------------------
+     „weil ich denke es ist ein kommentar der ignoriert wird" — auf die Frage,
+     warum man Kommentare schreibt, obwohl Python sie ignoriert. Diese Antwort
+     bestand mit 71 von 100 Punkten, und das war falsch: Sie sagt nichts, was
+     nicht schon in der Frage steht.
+
+     Der Prüfer sah ein „weil" und wertete das als Begründung. Ein Bindewort
+     ist aber nur die Ankündigung eines Grundes — der Grund selbst muss
+     danach noch kommen. Übrig blieb hier allein „denke", und eine
+     Meinungsbekundung ist kein Inhalt.
+
+     Gemessen wird deshalb, was an EIGENEM Inhalt übrig bleibt: Wörter, die
+     weder aus der Frage stammen noch bloß eine Meinung ankündigen. Bleibt
+     davon nichts, ist es ein Zirkelschluss — egal wie viele Bindewörter
+     darin vorkommen. */
+  /* Gemessen wird an `allContentWords`, nicht an `contentWords`: Der zweite
+     Satz enthält nur Wörter aus dem Wortschatz der Plattform, und der kennt
+     „gemacht" oder „weiß" nicht. Für die Frage „steckt hier eigener Inhalt"
+     ist aber Plausibilität das richtige Maß — sonst fällt korrektes Deutsch
+     durch, nur weil ein Alltagswort in keiner Liste steht. Erfundene Wörter
+     fängt `mostlyNonsense` weiter oben ohnehin ab. */
+  const eigeneInhalte = allContentWords
+    .filter((w) => !questionWords.has(w) && traegtInhalt(w));
+  const uebernommen = allContentWords.filter((w) => questionWords.has(w));
+  const zirkulaer = uebernommen.length >= 1 && eigeneInhalte.length === 0;
+
+  /* Eine Begründung braucht beides: ein Signal, dass hier begründet wird,
+     UND etwas Eigenes dahinter. Nur eines von beidem reicht nicht.
+
+     Ohne das Signal wäre jede Aufzählung eine Begründung — „HTML enthält
+     die Inhalte und CSS die Farben" beschreibt korrekt und begründet nichts.
+     Ohne den eigenen Inhalt wäre jedes „weil" eine Begründung, auch wenn
+     danach nur die Frage wiederholt wird. */
+  const hasReasoning = hatBindewort && eigeneInhalte.length >= 1;
 
   /* --------------------------- Themenbezug -------------------------------
      Der entscheidende Punkt: Eine Antwort muss etwas mit der Frage zu tun
@@ -10740,16 +10829,31 @@ function evaluateExplanation(task, answer) {
      zwar keinen Fachbegriff getroffen, geht aber ersichtlich nicht am Thema
      vorbei — 0 Punkte wären hier eine Fehlbewertung. Der Anker greift nur bei
      Zweckfragen, sonst wäre jedes „damit“ ein Freifahrtschein. */
-  const wantsPurpose = /(wozu|wof[üu]r|welchen zweck|gut ist|gut sind|nutzen von|sinn von)/i.test(task.question || "");
+  /* Nach dem Zweck wird auf viele Arten gefragt: „wozu", „wofür", aber auch
+     „warum ist es sinnvoll". Bei jeder dieser Fragen ist eine Zweckangabe
+     („damit man …") eine gültige Antwortform und damit ein Themenanker —
+     sonst fällt „damit man bei einer Änderung nur eine Stelle anfassen muss"
+     als themenfremd durch, obwohl es genau die Antwort ist. */
+  const wantsPurpose = /(wozu|wof[üu]r|welchen zweck|gut ist|gut sind|nutzen|sinn von|sinnvoll|vorteil)/i.test(task.question || "");
   const namesPurpose = PURPOSE_WORDS.test(text);
   const topicAnchors = covered.length + borrowedWords.length
-    + (hasBenefit ? 1 : 0) + (wantsPurpose && namesPurpose ? 1 : 0);
+    + (hasBenefit ? 1 : 0) + ((wantsPurpose || wantsReason) && namesPurpose ? 1 : 0);
   const offTopic = topicAnchors === 0;
 
   // Hat die Aufgabe ausdrücklich Fachbegriffe genannt und kommt keiner davon
   // vor, geht die Antwort am Kern vorbei — egal wie flüssig sie klingt.
-  const coveredAuthored = authored.filter((c) => covered.includes(c));
-  const missesAllConcepts = authored.length >= 1 && coveredAuthored.length === 0;
+  /* Ein Begriff, der schon in der Aufgabenstellung steht, beweist nichts,
+     wenn er in der Antwort auftaucht — und sein Fehlen beweist ebenso wenig.
+     Auf die Frage „warum verwendet man KOMMENTARE" ist „damit andere den
+     Code verstehen" eine gute Antwort, auch ohne das Wort zu wiederholen.
+     Gefordert werden deshalb nur Begriffe, die NICHT schon dastehen.
+
+     Was die Lektion darüber hinaus ausdrücklich verlangt, bleibt Pflicht.
+     Eine Ausnahme für „aber die Antwort ist doch ausführlich" wäre falsch:
+     Ausführlich ist auch, wer über sein Mittagessen schreibt. */
+  const gefordert = authored.filter((c) => !questionWords.has(stemDe(c)) && !questionLower.includes(c));
+  const coveredAuthored = gefordert.filter((c) => covered.includes(c));
+  const missesAllConcepts = gefordert.length >= 1 && coveredAuthored.length === 0;
 
   if (offTopic) {
     return { correct: false, score: 0, offline: true,
@@ -10769,30 +10873,47 @@ function evaluateExplanation(task, answer) {
   }
 
   let score = 0;
-  score += Math.min(25, contentWords.length * 6);                // Gehalt
+  /* Gehalt in zwei Stufen.
+
+     Wörter aus dem Wortschatz der Plattform zählen voll — das hält eine
+     ausschweifende Antwort über das Mittagessen klein, denn „pizza" und
+     „futtere" stehen dort nicht.
+
+     Plausible Wörter außerhalb der Liste zählen ein wenig mit, aber gedeckelt.
+     Sonst scheitert eine richtige Erklärung daran, dass „gemacht" oder „weiß"
+     in keiner Fachwortliste steht — und genau das ist vorgekommen. Sechs
+     Punkte reichen nie für sich allein, verschieben aber eine knappe
+     Entscheidung in die richtige Richtung. */
+  score += Math.min(25, contentWords.length * 6 + Math.min(6, unknownWords.length * 2));
   score += Math.min(10, words.length * 0.8);                     // Ausführlichkeit
   score += sentences.length >= 2 ? 12 : 6;                       // Satzbau
   score += hasReasoning ? 25 : 0;                                // Begründung
   score += hasExample ? 5 : 0;                                   // Beispiel
   score += coverage === null ? 20 : Math.round(coverage * 25);   // Fachbegriffe
   if (copiedFromQuestion) score = Math.min(score, 35);
+  if (zirkulaer) score = Math.min(score, 30);
   if (wantsReason && !hasReasoning) score = Math.min(score, 50);
   if (missesAllConcepts) score = Math.min(score, 45);
   score = Math.max(0, Math.min(100, Math.round(score)));
 
   const minWords = wantsBrief ? 4 : 6;
   const minContent = wantsBrief ? 1 : 2;
-  const correct = score >= 55 && words.length >= minWords && contentWords.length >= minContent
-    && !copiedFromQuestion && !missesAllConcepts
+  const correct = score >= 55 && words.length >= minWords && allContentWords.length >= minContent
+    && !copiedFromQuestion && !zirkulaer && !missesAllConcepts
     && !(wantsReason && !hasReasoning);
 
   let feedback, hint = "";
-  if (copiedFromQuestion) {
+  if (zirkulaer) {
+    feedback = "Das wiederholt nur, was in der Frage steht — eine Begründung ist es noch nicht.";
+    hint = wantsReason
+      ? "Sag, was man DADURCH gewinnt: Wem hilft es, und wann?"
+      : "Nenne etwas, das nicht schon in der Aufgabe steht.";
+  } else if (copiedFromQuestion) {
     feedback = "Das ist im Wesentlichen die Frage in anderer Reihenfolge.";
     hint = "Erkläre es mit eigenen Worten — was passiert da, und warum?";
   } else if (missesAllConcepts) {
     feedback = "Die Antwort geht am Kern der Frage vorbei.";
-    hint = `Es geht um ${authored.slice(0, 2).map((m) => `\`${m}\``).join(" und ")} — darauf solltest du eingehen.`;
+    hint = `Es geht um ${gefordert.slice(0, 2).map((m) => `\`${m}\``).join(" und ")} — darauf solltest du eingehen.`;
   } else if (wantsReason && !hasReasoning) {
     feedback = "Du beschreibst korrekt, was passiert — die Frage zielt aber auf die Begründung.";
     hint = "Ergänze das „Warum“, zum Beispiel mit „weil …“ oder „dadurch …“.";
@@ -10809,7 +10930,7 @@ function evaluateExplanation(task, answer) {
       ? "Das ist ein echter Grund — die Kernidee hast du verstanden."
       : "Die Grundidee hast du verstanden.";
     hint = hasReasoning ? "Noch konkreter wird es, wenn du sagst, was genau dadurch besser wird." : "Ergänze das „Warum“ — zum Beispiel mit „weil …“.";
-  } else if (words.length < minWords || contentWords.length < minContent) {
+  } else if (words.length < minWords || allContentWords.length < minContent) {
     feedback = hasReasoning
       ? "Die Richtung stimmt, die Antwort ist aber noch sehr knapp."
       : "Die Erklärung ist noch zu knapp, um dein Verständnis zu zeigen.";
