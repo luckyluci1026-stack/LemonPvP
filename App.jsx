@@ -9514,23 +9514,68 @@ function bracketBalance(text) {
   return { ok: problems.length === 0, problems };
 }
 
+/* Elemente, die nur an einer bestimmten Stelle stehen dürfen. Ein `<li>`
+   außerhalb einer Liste ist kein Schönheitsfehler: Der Browser hängt es
+   irgendwohin, Bildschirmleser sagen keine Liste an, und die Gestaltung
+   greift nicht. Ausgeglichene Klammern allein merken davon nichts —
+   `<ul></ul><li></li>` geht auf und ist trotzdem falsch. */
+const TAG_ELTERN = {
+  li: ["ul", "ol", "menu"],
+  td: ["tr"],
+  th: ["tr"],
+  tr: ["table", "thead", "tbody", "tfoot"],
+  thead: ["table"], tbody: ["table"], tfoot: ["table"], caption: ["table"],
+  option: ["select", "datalist", "optgroup"],
+  optgroup: ["select"],
+  dt: ["dl"], dd: ["dl"],
+  figcaption: ["figure"],
+  legend: ["fieldset"],
+  summary: ["details"],
+  source: ["picture", "video", "audio"],
+  track: ["video", "audio"],
+};
+
 function tagBalance(html) {
   const voids = new Set(["br", "hr", "img", "input", "meta", "link", "source", "area", "base", "col", "embed", "track", "wbr"]);
   const stack = [];
   const problems = [];
+  const falschePlatzierung = new Set();
   const rx = /<\/?([a-zA-Z][\w-]*)[^>]*?(\/?)>/g;
   let m;
   while ((m = rx.exec(html))) {
     const [full, name, selfClose] = m;
     const tag = name.toLowerCase();
+    const schliessend = full.startsWith("</");
+
+    // Beim Öffnen prüfen, ob das Element überhaupt hierhin darf.
+    if (!schliessend) {
+      const eltern = TAG_ELTERN[tag];
+      if (eltern && !falschePlatzierung.has(tag) && !eltern.some((e) => stack.includes(e))) {
+        problems.push({ kind: "wrongParent", tag, eltern });
+        falschePlatzierung.add(tag);   // einmal melden genügt
+      }
+    }
+
     if (voids.has(tag) || selfClose === "/") continue;
-    if (full.startsWith("</")) {
+    if (schliessend) {
       const idx = stack.lastIndexOf(tag);
       if (idx === -1) problems.push({ kind: "extraClose", tag });
       else stack.splice(idx, 1);
     } else stack.push(tag);
   }
   stack.forEach((tag) => problems.push({ kind: "unclosed", tag }));
+
+  /* Ein `<img` ohne `>` ist gar kein Element — der Browser liest weiter, bis
+     er irgendwann eines findet, und schluckt alles dazwischen. Die Prüfung
+     oben merkt davon nichts, weil sie nur vollständige Tags findet. Deshalb:
+     Was bleibt übrig, wenn man alle richtigen Tags entfernt? */
+  const ohneTags = html
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<!\w[^>]*>/g, "")
+    .replace(/<\/?[a-zA-Z][\w-]*[^>]*?\/?>/g, "");
+  const angefangen = ohneTags.match(/<\/?([a-zA-Z][\w-]*)/);
+  if (angefangen) problems.push({ kind: "unterminated", tag: angefangen[1] });
+
   return { ok: problems.length === 0, problems };
 }
 
@@ -9925,20 +9970,55 @@ function evaluateCode(task, answer, langId) {
   if (!analysis.structure.ok) {
     const p = analysis.structure.problems[0];
     let detail;
-    if (p.tag) detail = p.kind === "unclosed" ? `<${p.tag}> wird nie geschlossen.` : `</${p.tag}> steht ohne passendes öffnendes Element.`;
-    else if (p.kind === "unclosed") detail = `Eine öffnende \`${p.ch}\` hat keine passende \`${p.expected}\`.`;
+    let hinweis = "Prüfe, ob jede geöffnete Klammer wieder geschlossen wird.";
+    if (p.kind === "wrongParent") {
+      const erlaubt = p.eltern.map((e) => `<${e}>`).join(" oder ");
+      detail = `<${p.tag}> steht nicht in ${erlaubt}.`;
+      hinweis = `Ein <${p.tag}> gehört immer innerhalb von ${erlaubt} — sonst ist es für den Browser kein Teil davon.`;
+    } else if (p.kind === "unterminated") {
+      detail = `Das Element \`<${p.tag}\` wird nie mit \`>\` abgeschlossen.`;
+      hinweis = "Jedes Tag endet mit `>` — ohne das liest der Browser den Rest als Text.";
+    } else if (p.tag) {
+      detail = p.kind === "unclosed" ? `<${p.tag}> wird nie geschlossen.` : `</${p.tag}> steht ohne passendes öffnendes Element.`;
+    } else if (p.kind === "unclosed") detail = `Eine öffnende \`${p.ch}\` hat keine passende \`${p.expected}\`.`;
     else if (p.kind === "extraClose") detail = `\`${p.ch}\` schließt etwas, das nie geöffnet wurde.`;
     else detail = `Erwartet wurde \`${p.expected}\`, gefunden \`${p.got}\`.`;
     return {
       correct: false, score: 25, offline: true,
       feedback: `Der Aufbau stimmt noch nicht: ${detail}`,
-      hint: "Prüfe, ob jede geöffnete Klammer wieder geschlossen wird.",
+      hint: hinweis,
       praise: "",
     };
   }
 
   const concepts = task.expectedConcepts || [];
   const results = concepts.map((c) => checkConcept(c, analysis));
+
+  /* Ein Bezeichner darf nicht schon deshalb als erfüllt gelten, weil er
+     irgendwo im Text vorkommt. Verlangt die Aufgabe eine Konstante `name`,
+     dann genügt `const person = { name: "Ada" }` nicht — dort ist `name` ein
+     Schlüssel, keine Variable.
+
+     Woher wissen wir, was verlangt ist? Aus der Musterlösung: Was dort
+     deklariert wird, muss auch in der Antwort deklariert sein. Ohne
+     Musterlösung bleibt es bei der bisherigen, großzügigeren Prüfung. */
+  const muster = task.solution ? analyzeCode(task.solution, langId) : null;
+  if (muster) {
+    const musterNamen = new Set((muster.declarations || []).map((d) => String(d.name).toLowerCase()));
+    (muster.functions || []).forEach((f) => musterNamen.add(String(f.name).toLowerCase()));
+    const eigeneNamen = new Set((analysis.declarations || []).map((d) => String(d.name).toLowerCase()));
+    (analysis.functions || []).forEach((f) => eigeneNamen.add(String(f.name).toLowerCase()));
+
+    for (const r of results) {
+      if (!r.hit || r.kind !== "identifier") continue;
+      const name = String(r.concept).replace(/^[$@]/, "").toLowerCase();
+      if (!musterNamen.has(name) || eigeneNamen.has(name)) continue;
+      r.hit = false;
+      r.essential = true;
+      r.why = `\`${r.concept}\` kommt zwar vor, wird aber nirgends angelegt — verlangt ist eine eigene Deklaration.`;
+    }
+  }
+
   const hits = results.filter((r) => r.hit);
   const misses = results.filter((r) => !r.hit);
   const notes = results.map((r) => r.note).filter(Boolean);
@@ -10728,7 +10808,16 @@ function analyzeProject({ html, css, js }) {
 
     if (!a.structure.ok) {
       for (const p of a.structure.problems.slice(0, 3)) {
-        if (p.tag) {
+        if (p.kind === "unterminated") {
+          add(where, "error", `<${p.tag} wird nicht abgeschlossen`,
+            `Das Element <${p.tag} hat kein \`>\`. Der Browser liest deshalb weiter, bis er irgendwo eines findet — alles dazwischen verschwindet.`,
+            "Setze ein `>` ans Ende des Tags.");
+        } else if (p.kind === "wrongParent") {
+          const erlaubt = p.eltern.map((e) => `<${e}>`).join(" oder ");
+          add(where, "error", `<${p.tag}> an der falschen Stelle`,
+            `<${p.tag}> steht nicht innerhalb von ${erlaubt}. Der Browser hängt es dann irgendwohin, und Bildschirmleser erkennen den Zusammenhang nicht.`,
+            `Setze das <${p.tag}> in ein ${erlaubt}.`);
+        } else if (p.tag) {
           add(where, "error", `<${p.tag}> nicht geschlossen`,
             p.kind === "unclosed" ? `Das Element <${p.tag}> wird geöffnet, aber nie geschlossen.` : `</${p.tag}> hat kein passendes öffnendes Element.`,
             p.kind === "unclosed" ? `Ergänze </${p.tag}>.` : `Entferne das überzählige </${p.tag}>.`);
