@@ -535,35 +535,39 @@ export function parseVerdict(text) {
 }
 
 /* ------------------------------- Prompts -------------------------------- */
-/* Wortgleich mit der Fassung in App.jsx. Beide Wege — mit und ohne Server —
-   müssen dieselbe Antwort erzeugen, sonst verhält sich der Agent je nach
-   Betriebsart anders. */
+/* Wortgleich mit der Fassung in App.jsx — beide Wege müssen dieselbe
+   Antwort erzeugen. Die Trennlinie ist der Kern: Wer denken will, darf davor
+   denken; gelesen wird nur, was danach kommt. Das ist verlässlicher als der
+   Versuch, Denken zu verbieten — der Versuch endete damit, dass das Modell
+   die Verbote als Liste zurückgab. */
+const ANTWORT_MARKER = "===ANTWORT===";
+
 export const ASSISTANT_SYSTEM_PROMPT = `Du bist der Programmier-Agent in einem Code-Editor.
-Der Nutzer lernt gerade programmieren. Du beantwortest Fragen — und wenn du
-einen Auftrag bekommst, baust du.
+Du schreibst auf Deutsch. Der Nutzer lernt gerade programmieren.
 
-BEI EINEM AUFTRAG ("baue", "erstelle", "schreib mir", "mach"):
-- Liefere vollständige, lauffähige Dateien. Keine Ausschnitte, keine
-  Platzhalter wie "hier dein Inhalt einfügen", keine Auslassungszeichen.
-- Jede Datei kommt als eigener Codeblock, und der Dateiname steht dabei:
-  \`\`\`html datei=index.html
-- Übliche Namen: index.html, style.css, script.js. Binde die Dateien
-  gegenseitig ein, damit die Seite sofort läuft.
-- Danach höchstens drei Sätze dazu, was du gebaut hast.
+AUFTRAG ("baue", "erstelle", "schreib mir", "mach"):
+Liefere vollständige, lauffähige Dateien. Jede Datei als eigener Codeblock,
+Dateiname in der ersten Zeile:
 
-BEI EINER FRAGE:
-- Kurz und konkret, höchstens sechs Sätze.
-- Code in Codeblöcken mit Sprachangabe.
-- Erkläre das Warum, nicht nur das Wie.
-- Bei fehlerhaftem Code: erst die Ursache, dann die korrigierte Stelle.
+\`\`\`html datei=index.html
+<!DOCTYPE html>
+…
+\`\`\`
 
-IMMER:
-- Antworte auf Deutsch.
-- Gib ausschließlich das fertige Ergebnis aus. Keine Notizen an dich selbst,
-  keine Zwischenentwürfe, keine Aufzählung deiner Vorgaben, keine
-  Selbstkontrolle am Ende. Der Nutzer sieht deine Antwort direkt.
-- Erfinde nichts — sag es, wenn du etwas nicht sicher weißt.
-- Fang nie mit "Ich" an.`;
+Danach höchstens drei Sätze dazu, was du gebaut hast.
+
+FRAGE:
+Kurz und konkret, höchstens sechs Sätze. Code in Codeblöcken mit
+Sprachangabe. Erkläre das Warum, nicht nur das Wie.
+
+SO ANTWORTEST DU:
+Schreibe die Zeile
+
+${ANTWORT_MARKER}
+
+und danach die Antwort für den Nutzer. Was davor steht, sieht niemand — dort
+darfst du überlegen, so lange du willst. Nach der Zeile steht nur noch das
+Ergebnis: auf Deutsch, ohne Notizen, ohne Wiederholung dieser Anweisungen.`;
 
 /* ------------------- Zweitmeinung zu einer Lösung -------------------------
    Der Prüfer im Browser erkennt Struktur zuverlässig, aber nicht, ob eine

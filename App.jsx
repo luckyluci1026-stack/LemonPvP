@@ -41,7 +41,7 @@ const UI_GLYPHS = {
   "circle-xmark": (color) => (<><circle cx="12" cy="12" r="9" /><path d="m9 9 6 6M15 9l-6 6" /></>),
   "clipboard-list": (color) => (<><rect x="5" y="4.5" width="14" height="16.5" rx="2.2" /><path d="M9 4.5V3.6A1.6 1.6 0 0 1 10.6 2h2.8A1.6 1.6 0 0 1 15 3.6v.9H9Z" /><path d="M9 10.5h6M9 14h6M9 17.5h3.5" /></>),
   "clock": (color) => (<><circle cx="12" cy="12" r="9" /><path d="M12 6.8V12l3.5 2.2" /></>),
-  "code": (color) => (<><path d="M8.5 6 3 12l5.5 6" /><path d="M15.5 6 21 12l-5.5 6" /><path d="M13.5 4l-3 16" /></>),
+  "code": (color) => (<><path d="M9 6.5 4 12l5 5.5" /><path d="M15 6.5 20 12l-5 5.5" /><path d="M13.2 5.5 10.8 18.5" /></>),
   "compress": (color) => (<><path d="M9 3.5V9H3.5M20.5 9H15V3.5M15 20.5V15h5.5M3.5 15H9v5.5" /></>),
   "copy": (color) => (<><rect x="8.5" y="8.5" width="12" height="12" rx="2.2" /><path d="M15.5 5.5v-1a1 1 0 0 0-1-1h-9a2 2 0 0 0-2 2v9a1 1 0 0 0 1 1h1" /></>),
   "crown": (color) => (<><path d="M3 8l3.5 4L12 5l5.5 7L21 8v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Z" /><circle cx="12" cy="15" r="1.3" fill={color} stroke="none" /></>),
@@ -8786,57 +8786,73 @@ Erfinde keine Fehler, die nicht da sind.`;
    Die KI sitzt stattdessen als Gesprächspartner im Editor, wo eine Antwortzeit
    von ein paar Sekunden völlig in Ordnung ist.
    ------------------------------------------------------------------------- */
+const ANTWORT_MARKER = "===ANTWORT===";
+
+/* Der Prompt war zu lang und zu selbstbezüglich. „Keine Notizen an dich
+   selbst, keine Zwischenentwürfe, keine Aufzählung deiner Vorgaben" — ein
+   kleines Modell liest das als Liste und gibt sie zurück. Genau das stand
+   dann im Editor: „Constraints: Answer in German. No self-notes, no drafts."
+
+   Deshalb umgekehrt: wenige Regeln, positiv formuliert, und eine feste
+   Trennlinie. Wer denken will, darf davor denken — gelesen wird nur, was
+   danach kommt. Das ist verlässlicher als jeder Versuch, Denken zu
+   verbieten, und wir können exakt danach schneiden. */
 const ASSISTANT_SYSTEM_PROMPT = `Du bist der Programmier-Agent in einem Code-Editor.
-Der Nutzer lernt gerade programmieren. Du beantwortest Fragen — und wenn du
-einen Auftrag bekommst, baust du.
+Du schreibst auf Deutsch. Der Nutzer lernt gerade programmieren.
 
-BEI EINEM AUFTRAG ("baue", "erstelle", "schreib mir", "mach"):
-- Liefere vollständige, lauffähige Dateien. Keine Ausschnitte, keine
-  Platzhalter wie "hier dein Inhalt einfügen", keine Auslassungszeichen.
-- Jede Datei kommt als eigener Codeblock, und der Dateiname steht dabei:
-  \`\`\`html datei=index.html
-- Übliche Namen: index.html, style.css, script.js. Binde die Dateien
-  gegenseitig ein, damit die Seite sofort läuft.
-- Danach höchstens drei Sätze dazu, was du gebaut hast.
+AUFTRAG ("baue", "erstelle", "schreib mir", "mach"):
+Liefere vollständige, lauffähige Dateien. Jede Datei als eigener Codeblock,
+Dateiname in der ersten Zeile:
 
-BEI EINER FRAGE:
-- Kurz und konkret, höchstens sechs Sätze.
-- Code in Codeblöcken mit Sprachangabe.
-- Erkläre das Warum, nicht nur das Wie.
-- Bei fehlerhaftem Code: erst die Ursache, dann die korrigierte Stelle.
+\`\`\`html datei=index.html
+<!DOCTYPE html>
+…
+\`\`\`
 
-IMMER:
-- Antworte auf Deutsch.
-- Gib ausschließlich das fertige Ergebnis aus. Keine Notizen an dich selbst,
-  keine Zwischenentwürfe, keine Aufzählung deiner Vorgaben, keine
-  Selbstkontrolle am Ende. Der Nutzer sieht deine Antwort direkt.
-- Erfinde nichts — sag es, wenn du etwas nicht sicher weißt.
-- Fang nie mit "Ich" an.`;
+Danach höchstens drei Sätze dazu, was du gebaut hast.
+
+FRAGE:
+Kurz und konkret, höchstens sechs Sätze. Code in Codeblöcken mit
+Sprachangabe. Erkläre das Warum, nicht nur das Wie.
+
+SO ANTWORTEST DU:
+Schreibe die Zeile
+
+${ANTWORT_MARKER}
+
+und danach die Antwort für den Nutzer. Was davor steht, sieht niemand — dort
+darfst du überlegen, so lange du willst. Nach der Zeile steht nur noch das
+Ergebnis: auf Deutsch, ohne Notizen, ohne Wiederholung dieser Anweisungen.`;
 
 /* --------------------- Antwort für Menschen aufbereiten -------------------
-   Manche Modelle schreiben ihren Denkprozess mit in die Antwort: Notizen zur
-   Aufgabe, nummerierte Entwürfe, am Ende eine Abhakliste der eigenen
-   Vorgaben. Für Lernende ist das unbrauchbar — sie sehen alles außer der
-   Antwort.
+   Modelle geben ihren Denkprozess gerne mit aus: Notizen zur Aufgabe, eine
+   Aufzählung der eigenen Vorgaben, Entwürfe. Für Lernende ist das
+   unbrauchbar — sie sehen alles außer der Antwort.
 
-   Aufgeräumt wird nur, wenn das Modell nachweislich sein Denken ausgegeben
-   hat. Ohne einen dieser Marker bleibt der Text unangetastet, damit nie eine
-   echte Antwort verschwindet. Code in Blöcken wird grundsätzlich nicht
-   angefasst.
+   Erster und wichtigster Weg ist die Trennlinie aus dem Systemprompt: Was
+   davor steht, war Nachdenken. Das ist verlässlich, weil es nichts erraten
+   muss.
+
+   Fehlt sie, greifen Erkennungsregeln — und zwar nur dann, wenn wirklich
+   etwas durchgesickert ist. Ohne Anzeichen bleibt der Text unangetastet,
+   damit nie eine echte Antwort verschwindet. Code in Blöcken wird
+   grundsätzlich nicht angefasst.
    ------------------------------------------------------------------------ */
 const DENK_TAGS = /<(think|thinking|reasoning|scratchpad|analysis)>[\s\S]*?<\/\1>/gi;
+
+// Die Trennlinie — auch wenn das Modell die Gleichheitszeichen anders zählt.
+const MARKER_ZEILE = /^[\s*>#-]*=*\s*ANTWORT\s*=*[\s*>#-]*$/i;
 
 // „Draft 2 (Applying constraints):" — der letzte Anlauf ist die Antwort.
 const ENTWURF_MARKER = /^[\s>*\-–—]*(?:\*\*)?(?:draft|entwurf|final answer|endgültige antwort|antwort)\s*\d*\s*(?:\([^)]*\))?\s*(?:\*\*)?\s*[:.]\s*\*?\s*/i;
 
 /* Zeilen der Form „Label: Wert", mit denen sich ein Modell selbst briefed.
    Feste Etiketten aufzulisten reicht nicht — es erfindet ständig neue
-   („Language Mismatch", „Comment Syntax", „Indentation"). Erkannt wird
+   („Language Mismatch", „Current state", „Files needed"). Erkannt wird
    deshalb die Form: ein bis vier englische Fachwörter, Doppelpunkt, Rest.
-   Deutsche Zeilen wie „Fehler: …" bleiben dadurch unangetastet, weil
-   „Fehler“ nicht in der Wortliste steht. */
+   Deutsche Zeilen wie „Fehler: …" bleiben dadurch unangetastet. */
 const META_WORT = new Set([
-  "user", "users", "user's", "current", "context", "role", "constraint",
+  "user", "users", "user's", "current", "state", "context", "role", "constraint",
   "constraints", "check", "draft", "plan", "analysis", "reasoning", "thought",
   "thoughts", "language", "mismatch", "length", "format", "output", "tone",
   "goal", "task", "step", "note", "notes", "code", "request", "input",
@@ -8844,19 +8860,20 @@ const META_WORT = new Set([
   "problem", "suggestion", "approach", "strategy", "structure", "response",
   "answer", "final", "summary", "self", "mental", "applying", "rules", "rule",
   "instruction", "instructions", "scratchpad", "editor", "snippet", "content",
+  "file", "files", "needed", "page", "pages", "styling", "layout", "nav",
+  "navigation", "gradient", "colors", "color", "target", "action", "actions",
   // die deutschen Entsprechungen, falls das Modell übersetzt
   "nutzereingabe", "kontext", "rolle", "vorgaben", "einschränkungen",
   "selbstkontrolle", "gedanken", "entwurf", "analyse", "ziel", "länge",
   "ausgabe", "schritt", "anforderung", "anforderungen",
 ]);
-const ETIKETT_ZEILE = /^[\s>*\-–—]*(?:\*\*)?([A-Za-zÄÖÜäöüß'’]+(?:[ -][A-Za-zÄÖÜäöüß'’]+){0,3})(?:\*\*)?\s*:\s/;
+const ETIKETT_ZEILE = /^[\s>*\-–—]*(?:\*\*)?([A-Za-zÄÖÜäöüß'’]+(?:[ -][A-Za-zÄÖÜäöüß'’]+){0,3})(?:\*\*)?\s*:(?:\s|$)/;
 
 /** Ist das eine Zeile, mit der sich das Modell selbst instruiert? */
 function istDenkZeile(zeile) {
   const t = ETIKETT_ZEILE.exec(zeile);
   if (!t) return false;
   const woerter = t[1].toLowerCase().split(/[ -]+/).filter(Boolean);
-  // „Step 1“, „Draft 2“ — die Nummer gehört zum Etikett und zählt nicht mit.
   const ohneZahlen = woerter.filter((w) => !/^\d+$/.test(w));
   if (!ohneZahlen.length) return false;
   return ohneZahlen.every((w) => META_WORT.has(w));
@@ -8865,48 +8882,99 @@ function istDenkZeile(zeile) {
 // „German? Yes." — das Modell hakt seine eigenen Vorgaben ab.
 const HAKEN_ZEILE = /^[\s>*\-–—]*[^?\n]{1,70}\?\s*(?:ja|nein|yes|no)\b[.!]?\s*$/i;
 
+/* Zeilen, die keine deutsche Antwort sind.
+   Statt englische Wörter aufzuzählen — davon gibt es zu viele — wird nach
+   deutschen gesucht. Der Agent antwortet auf Deutsch; eine längere Zeile
+   ohne ein einziges deutsches Funktionswort und ohne Umlaut ist deshalb
+   keine Antwort, sondern Nachdenken.
+
+   „in", „an" und „am" fehlen in der Liste bewusst: Sie sind im Englischen
+   genauso häufig und würden englische Zeilen als deutsch durchwinken. */
+const DEUTSCHE_WOERTER = /(?:^|[^A-Za-zÄÖÜäöüß])(der|die|das|den|dem|des|ein|eine|einen|einem|einer|und|oder|ist|sind|war|wird|werden|nicht|kein|keine|mit|von|zu|zum|zur|auf|aus|es|sich|du|dir|dein|deine|hier|dann|noch|auch|als|wie|wenn|weil|damit|also|man|kann|kannst|muss|soll|sollte|hat|haben|steht|gibt|mehr|nur|schon|jetzt|bei|über|unter|ohne|durch|jede|jeder|jedes|beim|dafür|dabei)(?=[^A-Za-zÄÖÜäöüß]|$)/i;
+
+// Nur als Zusatzbeleg — die Hauptregel ist das Fehlen deutscher Wörter.
+const ENGLISCHE_WOERTER = /(?:^|[^A-Za-z])(the|is|are|was|were|an|to|of|and|for|with|should|shall|will|would|needs?|wants?|it's|its|this|that|since|because|let's|make|create|convert|update|treat|but|in)(?=[^A-Za-z]|$)/gi;
+
+function wirktEnglisch(zeile) {
+  // Code-Abschnitte in Backticks zählen nicht mit — dort steht ohnehin Englisch.
+  const t = String(zeile).replace(/`[^`]*`/g, " ").trim();
+  if (/[äöüßÄÖÜ]/.test(t)) return false;               // Umlaut: sicher deutsch
+  if (DEUTSCHE_WOERTER.test(t)) return false;          // deutsches Wort: Antwort
+  const woerter = t.split(/\s+/).filter((w) => /[A-Za-zÄÖÜäöüß]{2,}/.test(w));
+  if (woerter.length < 3) return false;                // zu kurz zum Urteilen
+  const englisch = (t.match(ENGLISCHE_WOERTER) || []).length;
+  return woerter.length >= 4 || englisch >= 2;
+}
+
 /** Entfernt ein ausgegebenes Denkprotokoll, ohne die Antwort zu beschädigen. */
 function bereinigeAntwort(roh) {
   const text = String(roh || "").replace(DENK_TAGS, "").replace(/\r\n/g, "\n");
   const original = text.trim();
+  if (!original) return "";
   const zeilen = original.split("\n");
 
-  /* Erst feststellen, ob überhaupt etwas durchgesickert ist — und zwar nur
-     außerhalb von Codeblöcken. In einem Kommentar darf „Plan:" stehen. */
+  /* Weg 1: die Trennlinie. Alles davor war Nachdenken — und zwar auf
+     Ansage, deshalb muss hier nichts geraten werden. */
   let inBlock = false;
+  let letzterMarker = -1;
+  zeilen.forEach((z, i) => {
+    if (/^\s*```/.test(z)) { inBlock = !inBlock; return; }
+    if (!inBlock && MARKER_ZEILE.test(z)) letzterMarker = i;
+  });
+  if (letzterMarker >= 0) {
+    const danach = zeilen.slice(letzterMarker + 1).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+    if (danach) return danach;
+  }
+
+  /* Eine Antwort aus ein oder zwei Zeilen ist nie ein Denkprotokoll — dafür
+     ist zu wenig Platz. „Format: JSON." sieht wie eine Notiz aus und ist doch
+     eine Antwort. Solche kurzen Texte bleiben unangetastet. */
+  if (zeilen.filter((z) => z.trim()).length < 3) return original;
+
+  /* Weg 2: Erkennungsregeln — aber nur, wenn nachweislich etwas
+     durchgesickert ist. */
+  inBlock = false;
   let leck = false;
   for (const z of zeilen) {
     if (/^\s*```/.test(z)) { inBlock = !inBlock; continue; }
     if (inBlock) continue;
-    if (ENTWURF_MARKER.test(z) || istDenkZeile(z) || HAKEN_ZEILE.test(z)) { leck = true; break; }
+    if (ENTWURF_MARKER.test(z) || istDenkZeile(z) || HAKEN_ZEILE.test(z) || wirktEnglisch(z)) { leck = true; break; }
   }
   if (!leck) return original;
 
   inBlock = false;
   const behalten = [];
-  let abEntwurf = -1;                       // ab hier steht der letzte Anlauf
+  let abEntwurf = -1;
   for (const z of zeilen) {
     if (/^\s*```/.test(z)) { inBlock = !inBlock; behalten.push(z); continue; }
     if (inBlock) { behalten.push(z); continue; }
     if (ENTWURF_MARKER.test(z)) {
-      // Der Marker fliegt raus, was dahinter auf derselben Zeile steht bleibt.
       const rest = z.replace(ENTWURF_MARKER, "").trim();
       abEntwurf = behalten.length;
-      if (rest) behalten.push(rest);
+      if (rest && !wirktEnglisch(rest)) behalten.push(rest);
       continue;
     }
-    if (istDenkZeile(z) || HAKEN_ZEILE.test(z)) continue;
+    if (istDenkZeile(z) || HAKEN_ZEILE.test(z) || wirktEnglisch(z)) continue;
     behalten.push(z);
   }
 
   const sauber = (abEntwurf >= 0 ? behalten.slice(abEntwurf) : behalten)
     .join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
-  /* Zwei Sicherheitsnetze: Bleibt kaum etwas übrig, war die Erkennung zu
-     streng. Und Code, der im Original stand, darf nie verloren gehen. */
-  if (sauber.length < 20) return original;
-  if (original.includes("```") && !sauber.includes("```")) return original;
-  return sauber;
+  /* Bleibt Code übrig, ist das die Antwort — bei einem Bauauftrag sogar die
+     ganze. Bleibt gar nichts, war die Ausgabe reines Nachdenken; dann ist
+     ein ehrlicher Satz besser als eine Wand englischer Notizen. */
+  if (sauber.includes("```")) return sauber;
+  if (sauber.length >= 20) return sauber;
+  if (original.includes("```")) {
+    return original.split("\n").filter((z, i, alle) => {
+      let drin = false;
+      for (let k = 0; k < i; k++) if (/^\s*```/.test(alle[k])) drin = !drin;
+      return drin || /^\s*```/.test(z);
+    }).join("\n").trim() || original;
+  }
+  return "Die Antwort war unbrauchbar — das Modell hat nur seine eigenen Notizen ausgegeben. "
+    + "Frag noch einmal, am besten mit einem klaren Auftrag wie „Baue mir eine Startseite mit …“.";
 }
 
 /* --------------------- Dateien aus einer Antwort lesen --------------------
@@ -10980,12 +11048,13 @@ function LdIcon({ name, size = 24, color = "currentColor", className = "", title
   };
   const glyphs = {
     /* ------------------------------ Sprachen ---------------------------- */
-    // Spitze Klammern mit Schrägstrich — das Zeichen für Auszeichnungssprache
-    html: <><path d="M8 6 3 12l5 6" /><path d="M16 6l5 6-5 6" /><path d="M13.5 4l-3 16" /></>,
-    /* Die Kaskade: drei Ebenen, die von oben nach unten wirken — und ein
-       Tropfen, der durch alle drei hindurchfaellt. Das C in CSS steht fuer
-       genau diesen Vorgang, nicht fuer einen Pinsel. */
-    css: <><path d="M4 6.5h16" /><path d="M6 11.5h12" /><path d="M8 16.5h8" /><path d="M12 3v18" strokeDasharray="2 3" /><circle cx="12" cy="20.5" r="2" fill={color} stroke="none" /></>,
+    /* Ein Etikett — genau das ist ein Tag. Die spitzen Klammern allein waren
+       dasselbe Zeichen wie das Logo der Plattform und dadurch verwechselbar. */
+    html: <><path d="M2.5 8.5 8 3h11a2.5 2.5 0 0 1 2.5 2.5v13A2.5 2.5 0 0 1 19 21H8l-5.5-5.5Z" /><circle cx="7.5" cy="12" r="1.6" fill={color} stroke="none" /><path d="M12 9.5h6M12 14.5h6" /></>,
+    /* Die geschweiften Klammern: die Form jeder einzelnen CSS-Regel. Darin
+       drei Punkte fuer die Deklarationen. Wer je eine Regel geschrieben hat,
+       erkennt das sofort. */
+    css: <><path d="M9.5 3.5C7 3.5 7 6 7 8s-.5 3.5-2.5 4c2 .5 2.5 2 2.5 4s0 4.5 2.5 4.5" /><path d="M14.5 3.5C17 3.5 17 6 17 8s.5 3.5 2.5 4c-2 .5-2.5 2-2.5 4s0 4.5-2.5 4.5" /><circle cx="12" cy="12" r="1.1" fill={color} stroke="none" /></>,
     // Blitz
     javascript: <path d="M13 2 5 13h5l-1 9 9-12h-5l1-8Z" />,
     // Schild mit Haken
@@ -10994,10 +11063,12 @@ function LdIcon({ name, size = 24, color = "currentColor", className = "", title
     react: <><circle cx="12" cy="12" r="2" fill={color} stroke="none" /><ellipse cx="12" cy="12" rx="9.5" ry="4" /><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(60 12 12)" /><ellipse cx="12" cy="12" rx="9.5" ry="4" transform="rotate(120 12 12)" /></>,
     // V aus zwei Winkeln
     vue: <><path d="M2 4.5h4.5L12 15l5.5-10.5H22L12 20 2 4.5Z" /><path d="M7.5 4.5h3L12 7.4l1.5-2.9h3" /></>,
-    // Zwei ineinandergreifende Bögen
-    python: <><path d="M12 3c-3.3 0-4.5 1.4-4.5 3.5V9h4.5" /><path d="M7.5 9H5.2C3.4 9 2.5 10.4 2.5 12.5S3.4 16 5.2 16h2.3v-2.5c0-2 1.2-3.5 4.5-3.5" /><path d="M12 21c3.3 0 4.5-1.4 4.5-3.5V15H12" /><path d="M16.5 15h2.3c1.8 0 2.7-1.4 2.7-3.5S20.6 8 18.8 8h-2.3v2.5c0 2-1.2 3.5-4.5 3.5" /></>,
-    // Tasse mit Dampf
-    java: <><path d="M4 11h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-5Z" /><path d="M16 12.5h1.8a2.2 2.2 0 0 1 0 4.4H16" /><path d="M9 3.5c-1.2 1.3-1.2 2.5 0 3.8M12.5 2.5c-1.2 1.6-1.2 3 0 4.6" /></>,
+    /* Eine Schlange. Die beiden ineinandergreifenden Boegen waren als Umriss
+       kaum als etwas zu erkennen. */
+    python: <><path d="M5 20h9a4 4 0 0 0 0-8H8a4 4 0 0 1 0-8h7" /><circle cx="17.5" cy="4" r="2.5" /><circle cx="18.3" cy="3.4" r="0.7" fill={color} stroke="none" /></>,
+    /* Eine Tasse mit Untertasse. Die alte war zu breit und der Henkel klebte
+       aussen an; so liest sie sich auch bei 16 Pixeln als Tasse. */
+    java: <><path d="M5.5 9.5h10v5.5a4 4 0 0 1-4 4h-2a4 4 0 0 1-4-4V9.5Z" /><path d="M15.5 11h1.6a2.1 2.1 0 0 1 0 4.2h-1.6" /><path d="M3.5 21.5h15" /><path d="M9 2.5c-1 1.2-1 2.2 0 3.4M12.5 2c-1 1.4-1 2.6 0 4" /></>,
     // Quadrat mit diagonaler Teilung
     kotlin: <><path d="M4 4h16L12 12l8 8H4V4Z" /></>,
     // Offener Ring
@@ -11008,10 +11079,9 @@ function LdIcon({ name, size = 24, color = "currentColor", className = "", title
     go: <><path d="M3 8h7.5M3 12h5M3 16h7.5" /><path d="M13.5 5.5c4 0 6.5 2.6 6.5 6.5s-2.5 6.5-6.5 6.5" /><circle cx="16" cy="12" r="1.4" fill={color} stroke="none" /></>,
     // Zahnradring
     rust: <><circle cx="12" cy="12" r="7" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" /><path d="M9.5 15.5V8.5h3.2a2 2 0 0 1 0 4H9.5l3.5 3" /></>,
-    /* Das oeffnende Tag `<?`: der Winkel, mit dem in einer HTML-Datei der
-       Servercode beginnt, plus ein Fragezeichen. Wer PHP kennt, erkennt es
-       sofort; die offizielle Ellipse mit den Buchstaben ist es bewusst nicht. */
-    php: <><rect x="2.5" y="4.5" width="19" height="15" rx="3" /><path d="M8.5 9.5 6 12l2.5 2.5" /><path d="M12.5 10.2a1.9 1.9 0 1 1 2.4 2.3c-.7.3-1.1.9-1.1 1.6" /><circle cx="13.8" cy="16.6" r="1" fill={color} stroke="none" /></>,
+    /* Das Dollarzeichen: In PHP beginnt jede Variable damit — kein anderes
+       Zeichen ist so eindeutig diese Sprache. */
+    php: <><path d="M16 7.5c-1-1.2-2.4-1.8-4-1.8-2.2 0-3.8 1-3.8 2.8 0 3.9 8 2.1 8 6.2 0 2-1.9 3.1-4.2 3.1-1.8 0-3.3-.6-4.3-1.9" /><path d="M12 3v18" /></>,
     // Datenbankzylinder
     sql: <><ellipse cx="12" cy="6" rx="7.5" ry="3" /><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6" /><path d="M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3" /></>,
 
@@ -12270,6 +12340,61 @@ function roleHome(role) { return role === "teacher" ? "teacher" : role === "admi
  * Inhaber war, darf sich diese Kennzeichnung nicht mit an einen Server
  * nehmen. Dort zählt allein die Rolle aus der Datenbank.
  */
+/* Wer hier landet, hat keinen Verwaltungszugang. Vorher stand an dieser
+   Stelle eine leere Seite — man sah nichts und erfuhr auch nicht, warum.
+   Jetzt steht hier, woran es liegt und was zu tun ist. */
+function AdminZugangFehlt({ ctx }) {
+  const mitServer = api.available;
+  return (
+    <div className="max-w-2xl mx-auto py-16 px-4 text-center">
+      <Shield size={38} className="text-[#2A3F6F] mx-auto mb-4" />
+      <h1 className="font-display text-2xl font-bold mb-2">Kein Verwaltungszugang</h1>
+      <p className="text-[#8A9BC0] mb-6 leading-relaxed">
+        Dieses Konto hat nicht die Rolle „Administrator“.
+      </p>
+
+      <div className="text-left bg-[#141D35] border border-[#1E2D4A] rounded-xl p-5 text-sm text-[#C9D6F0] leading-relaxed">
+        {mitServer ? (
+          <>
+            <p className="mb-3">
+              Mit angebundenem Server entscheidet allein die Datenbank über die Rolle —
+              sie lässt sich nicht im Browser setzen. Den ersten Administrator legst du
+              auf dem Server an:
+            </p>
+            <pre className="font-code text-[12px] bg-[#0B1120] border border-[#1E2D4A] rounded-lg p-3 overflow-x-auto mb-3">
+{`cd server
+npm run seed -- --email du@example.com --password "DeinPasswort"`}
+            </pre>
+            <p className="text-[#8A9BC0]">
+              Ohne <span className="font-code">--password</span> wird eines erzeugt und
+              einmalig ausgegeben. Danach meldest du dich mit dieser Adresse an.
+              Weitere Rollen vergibst du anschließend hier im Verwaltungsbereich.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="mb-3">
+              Ohne Server gehört die Installation dem <strong>ersten angelegten Konto</strong>.
+              Fehlt dieses Kennzeichen — etwa nach geleertem Browserspeicher —, übernimmt
+              es beim nächsten Laden automatisch das älteste Konto.
+            </p>
+            <p className="text-[#8A9BC0]">
+              Lade die Seite einmal neu. Bist du mit einem zweiten Konto angemeldet, melde
+              dich mit dem ersten an.
+            </p>
+          </>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <Btn variant="secondary" icon={ArrowLeft} onClick={() => ctx.navigate(roleHome(ctx.me?.role))}>
+          Zurück
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
 function canAdmin(user) {
   if (!user || user.isGuest) return false;
   if (user.role === "admin") return true;
@@ -12850,6 +12975,27 @@ export default function App() {
 
   const navigate = useCallback((v) => { setView(v); setSidebarOpen(false); window.scrollTo(0, 0); }, []);
 
+  /* ------------------- Zugang zur Verwaltung wiederherstellen -------------
+     Ohne Server wird das erste Konto zum Inhaber dieser Installation. Geht
+     dieses Kennzeichen verloren — geleerter Browserspeicher, ein Konto aus
+     einer älteren Fassung, übertragene Daten —, käme niemand mehr in die
+     Verwaltung, und es gäbe auch keinen Weg zurück: Die Rolle lässt sich nur
+     dort ändern.
+
+     Deshalb: Gibt es überhaupt kein verwaltendes Konto, übernimmt das
+     älteste. Das ist keine Lücke — ohne Server liegen sämtliche Daten
+     ohnehin in diesem Browser, und wer ihn öffnen kann, kann alles ändern.
+     Mit Server passiert das nicht; dort entscheidet allein die Datenbank.
+     ------------------------------------------------------------------- */
+  useEffect(() => {
+    if (backend !== false || api.available) return;
+    const echte = users.filter((u) => !u.isGuest);
+    if (!echte.length) return;
+    if (echte.some((u) => u.isOwner === true || u.role === "admin")) return;
+    setUsers((us) => us.map((u) => (u.id === echte[0].id ? { ...u, isOwner: true } : u)));
+    pushToast("info", "Die Verwaltung war ohne Zugang — dieses Konto ist jetzt Inhaber der Installation.");
+  }, [users, backend, pushToast]);
+
   const completeLogin = (u) => {
     setCurrentUser(u.id);
     pushToast("success", `Willkommen zurück, ${u.name.split(" ")[0]}!`);
@@ -13238,7 +13384,7 @@ export default function App() {
   else screen = <AppShell ctx={ctx}>{
     view === "dashboard" ? <StudentDashboard ctx={ctx} /> :
     view === "teacher" ? <TeacherDashboard ctx={ctx} /> :
-    view === "admin" ? (canAdmin(me) ? <AdminDashboard ctx={ctx} /> : null) :
+    view === "admin" ? (canAdmin(me) ? <AdminDashboard ctx={ctx} /> : <AdminZugangFehlt ctx={ctx} />) :
     view === "playground" ? <Playground ctx={ctx} /> :
     view === "lesson-editor" ? (me.role === "teacher" ? <LessonEditor ctx={ctx} /> : null) :
     view === "courses" ? <CoursesOverview ctx={ctx} /> :
