@@ -1,3 +1,21 @@
+/**
+ * Ende-zu-Ende-Test gegen einen LAUFENDEN Server.
+ *
+ * Vorher in einem zweiten Terminal starten:
+ *
+ *   cd server
+ *   rm -f data/test.db*
+ *   DATABASE_URL=sqlite:./data/test.db SESSION_SECRET=test node src/migrate.js
+ *   RATE_LIMIT=false DATABASE_URL=sqlite:./data/test.db SESSION_SECRET=test \
+ *     PORT=3111 NODE_ENV=development SMTP_ENABLED=false node src/index.js
+ *
+ * Dann in einem anderen:  npm test
+ *
+ * RATE_LIMIT=false ist wichtig. Die Testdateien laufen nebeneinander und
+ * teilen sich dieselbe Absenderadresse, also auch dasselbe Kontingent der
+ * Anfragenbegrenzung. Mit ihr scheitert die Anmeldung ab einer gewissen Zahl
+ * von Testdateien mit 429 — und zwar an der Suite selbst, nicht am Code.
+ */
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import { totpCode, hashPassword } from "../src/security.js";

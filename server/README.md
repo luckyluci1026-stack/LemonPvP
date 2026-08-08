@@ -177,17 +177,34 @@ Die Tests laufen gegen einen echten Server samt Datenbank und leeren die
 Tabellen zu Beginn — daher **niemals gegen die Produktionsdatenbank starten**.
 
 ```bash
-# Terminal 1
-DATABASE_URL=postgres://... PORT=3111 npm start
+# Terminal 1 — mit SQLite, ohne Installation
+rm -f data/test.db*
+DATABASE_URL=sqlite:./data/test.db SESSION_SECRET=test node src/migrate.js
+RATE_LIMIT=false DATABASE_URL=sqlite:./data/test.db SESSION_SECRET=test \
+  PORT=3111 NODE_ENV=development SMTP_ENABLED=false node src/index.js
 
 # Terminal 2
-node --test "test/*.test.js"
+npm test
 ```
+
+**`RATE_LIMIT=false` ist nötig.** Die Testdateien laufen nebeneinander und
+teilen sich dieselbe Absenderadresse, also auch dasselbe Kontingent der
+Anfragenbegrenzung. Mit ihr scheitert die Anmeldung ab einer gewissen Zahl
+von Testdateien mit einem 429 — an der Suite selbst, nicht am Code. Im
+Betrieb bleibt die Begrenzung selbstverständlich an; sie ist der Schutz
+gegen das Ausprobieren von Passwörtern.
 
 Abgedeckt sind unter anderem: Registrierung, doppelte E-Mail, Passwortlänge,
 E-Mail-Verifizierung, XP-Deckelung, doppelte Lektionen, Projektkontingent,
-2FA-Einrichtung und Login-Pflicht, Rollentrennung, Schutz des letzten Admins
-sowie die Key-Rotation bei Rate-Limits.
+2FA-Einrichtung und Login-Pflicht, Rollentrennung, Schutz des letzten Admins,
+die Key-Rotation bei Rate-Limits, die Anbieterkette des Profi-Agenten sowie
+die Einrichtung von NVIDIA NIM.
+
+Zwei Testdateien brauchen weder Server noch Datenbank und laufen allein:
+
+```bash
+node --test test/kette.test.js test/nvidia.test.js
+```
 
 ## Grenzen
 

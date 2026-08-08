@@ -20,7 +20,7 @@ process.env.SESSION_SECRET ||= "nur-fuer-den-ki-test";
 const { config } = await import("../src/config.js");
 const { generate, providerReady, parseVerdict, VERIFY_SYSTEM_PROMPT } = await import("../src/ai.js");
 
-const ALLE = ["gemini", "anthropic", "openrouter", "groq", "cerebras", "ollama"];
+const ALLE = ["gemini", "anthropic", "openrouter", "groq", "cerebras", "nvidia", "ollama"];
 
 /* Zwei Proben: eine richtige und eine, die nur so aussieht. Ein Modell, das
    beide gleich bewertet, taugt für die Prüfung nicht — genau das ist der
@@ -51,6 +51,7 @@ function modellVon(provider) {
   if (provider === "openrouter") return config.ai.openrouterModel;
   if (provider === "groq") return config.ai.groqModel;
   if (provider === "cerebras") return config.ai.cerebrasModel;
+  if (provider === "nvidia") return config.ai.nvidiaModel || "— kein Modell eingetragen —";
   if (provider === "ollama") return `${config.ai.ollamaModel} @ ${config.ai.ollamaUrl}`;
   return "—";
 }
@@ -61,6 +62,7 @@ function keysVon(provider) {
   if (provider === "openrouter") return config.ai.openrouterKeys;
   if (provider === "groq") return config.ai.groqKeys;
   if (provider === "cerebras") return config.ai.cerebrasKeys;
+  if (provider === "nvidia") return config.ai.nvidiaKeys;
   return [];
 }
 
@@ -118,6 +120,8 @@ async function pruefe(provider) {
       console.log(`  Trage ${provider.toUpperCase()}_API_KEYS in server/.env ein.`);
     } else if (provider === "openrouter") {
       console.log("  OPENROUTER_MODEL fehlt.");
+    } else if (provider === "nvidia") {
+      console.log("  NVIDIA_MODEL fehlt — die ID steht auf build.nvidia.com am Modell.");
     }
     return null;
   }

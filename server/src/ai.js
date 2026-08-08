@@ -20,6 +20,7 @@ function keysFor(provider) {
   if (provider === "openrouter") return config.ai.openrouterKeys;
   if (provider === "groq") return config.ai.groqKeys;
   if (provider === "cerebras") return config.ai.cerebrasKeys;
+  if (provider === "nvidia") return config.ai.nvidiaKeys;
   return [];
 }
 
@@ -62,6 +63,8 @@ export function poolStatus() {
     groqModel: config.ai.groqModel || null,
     cerebras: build("cerebras"),
     cerebrasModel: config.ai.cerebrasModel || null,
+    nvidia: build("nvidia"),
+    nvidiaModel: config.ai.nvidiaModel || null,
     ollama: ollamaInUse()
       ? { url: config.ai.ollamaUrl, model: config.ai.ollamaModel, reachable: ollamaErreichbar }
       : null,
@@ -215,6 +218,11 @@ const OPENAI_KOMPATIBEL = {
     label: "Groq",
     url: "https://api.groq.com/openai/v1/chat/completions",
     modell: () => config.ai.groqModel,
+  },
+  nvidia: {
+    label: "NVIDIA NIM",
+    url: "https://integrate.api.nvidia.com/v1/chat/completions",
+    modell: () => config.ai.nvidiaModel,
   },
   cerebras: {
     label: "Cerebras",
@@ -528,6 +536,7 @@ export function modelOf(provider) {
   if (provider === "openrouter") return config.ai.openrouterModel;
   if (provider === "groq") return config.ai.groqModel;
   if (provider === "cerebras") return config.ai.cerebrasModel;
+  if (provider === "nvidia") return config.ai.nvidiaModel;
   if (provider === "ollama") return config.ai.ollamaModel;
   return "";
 }
@@ -549,8 +558,16 @@ export function providerReady(provider) {
   if (provider === "ollama") return ollamaErreichbar !== false;
   // Bei OpenRouter genügt der Schlüssel nicht: Ohne Modell-ID weiß der
   // Dienst nicht, wen er fragen soll, und antwortet mit 404.
+  /* Bei OpenRouter und NVIDIA genügt der Schlüssel nicht: Beide bündeln
+     hunderte Modelle hinter einer Adresse. Ohne Modell-ID weiß der Dienst
+     nicht, wen er fragen soll, und antwortet mit 404. Eine Vorgabe im Code
+     wäre hier falsch — die Kataloge ändern sich laufend, und eine erfundene
+     ID kostet nur Suchzeit. */
   if (provider === "openrouter") {
     return keysFor(provider).length > 0 && !!String(config.ai.openrouterModel || "").trim();
+  }
+  if (provider === "nvidia") {
+    return keysFor(provider).length > 0 && !!String(config.ai.nvidiaModel || "").trim();
   }
   return keysFor(provider).length > 0;
 }

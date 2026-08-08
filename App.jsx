@@ -8518,6 +8518,17 @@ const AI_PROVIDERS = {
     note: "Kostenloses Kontingent je Modell und Schlüssel. Mehrere Keys eintragen — sie werden automatisch abwechselnd genutzt.",
     multiKey: true,
   },
+  nvidia: {
+    label: "NVIDIA NIM",
+    badge: "Viele Modelle",
+    keyPlaceholder: "nvapi-…",
+    keyUrl: "https://build.nvidia.com",
+    keyUrlLabel: "build.nvidia.com",
+    // Bewusst keine Vorgabe: Der Katalog ändert sich laufend.
+    defaultModel: "",
+    modelHint: "Die genaue Modell-ID steht auf build.nvidia.com am jeweiligen Modell, z. B. „z-ai/glm-5.2“. Ohne ID antwortet der Dienst mit 404 — das sieht aus wie ein Schlüsselproblem, ist aber keins.",
+    note: "Über hundert Modelle hinter einer Adresse. Neben dem Limit pro Minute läuft ein Guthaben mit — beides zusammen ist nicht klar dokumentiert.",
+  },
   cerebras: {
     label: "Cerebras",
     badge: "Sehr schnell",
@@ -8617,6 +8628,7 @@ function keyPoolStatus(keys) {
    Adresse und — bei Cerebras — wie ausführlich das Modell denken soll. */
 const OPENAI_KOMPATIBLE = {
   groq: { label: "Groq", url: "https://api.groq.com/openai/v1/chat/completions" },
+  nvidia: { label: "NVIDIA NIM", url: "https://integrate.api.nvidia.com/v1/chat/completions" },
   openrouter: { label: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions" },
   cerebras: {
     label: "Cerebras",

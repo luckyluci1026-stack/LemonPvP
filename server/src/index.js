@@ -51,7 +51,14 @@ app.addContentTypeParser("application/json", { parseAs: "string" }, (request, bo
   }
 });
 
-await app.register(rateLimit, {
+/* Die Anfragenbegrenzung lässt sich abschalten.
+   Im Betrieb bleibt sie an — sie ist der Schutz gegen Ausprobieren von
+   Passwörtern. Beim automatisierten Testen ist sie dagegen im Weg: Die
+   Testdateien laufen nebeneinander und teilen sich dieselbe Absenderadresse,
+   also auch dasselbe Kontingent. Ob die Anmeldung im 14. oder 16. Versuch
+   passiert, hängt dann von der Zahl der Testdateien ab — und die Suite
+   scheitert an sich selbst statt an einem Fehler im Code. */
+if (config.security.rateLimit) await app.register(rateLimit, {
   global: true,
   max: 300,
   timeWindow: "1 minute",

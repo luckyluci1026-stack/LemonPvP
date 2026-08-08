@@ -66,6 +66,18 @@ export const config = {
   // Wird die App hinter Cloudflare/nginx betrieben, liefert der Proxy die echte IP
   trustProxy: bool("TRUST_PROXY", true),
 
+  security: {
+    /* Die Anfragenbegrenzung schützt vor allem die Anmeldung: Sie macht das
+       Ausprobieren von Passwörtern unbrauchbar langsam. Im Betrieb bleibt sie
+       deshalb an.
+
+       Abschalten ist nur für automatisierte Tests gedacht. Dort laufen die
+       Testdateien nebeneinander und teilen sich dieselbe Absenderadresse —
+       ohne diesen Schalter scheitert die Suite an ihrem eigenen Limit, sobald
+       eine Datei dazukommt. */
+    rateLimit: bool("RATE_LIMIT", true),
+  },
+
   // Statisches Frontend mit ausliefern (index.html + App.jsx)
   serveFrontend: bool("SERVE_FRONTEND", true),
   frontendDir: process.env.FRONTEND_DIR || "..",
@@ -133,6 +145,22 @@ export const config = {
     cerebrasKeys: keyList("CEREBRAS_API_KEYS"),
     cerebrasModel: process.env.CEREBRAS_MODEL || "gpt-oss-120b",
     cerebrasReasoning: process.env.CEREBRAS_REASONING || "low",
+
+    /* NVIDIA NIM — über hundert Modelle hinter einer OpenAI-kompatiblen
+       Adresse, darunter welche, die es sonst kaum frei gibt.
+
+       Bewusst OHNE Vorgabe für das Modell: Der Katalog ändert sich laufend,
+       und eine erfundene ID liefert nur eine 404, die aussieht wie ein
+       Schlüsselproblem. Die genaue Schreibweise steht auf build.nvidia.com
+       am jeweiligen Modell.
+
+       Zum Kontingent: Neben der Begrenzung pro Minute läuft dort ein
+       Guthaben mit. Wie beides zusammenspielt, ist nicht klar dokumentiert —
+       verlass dich nicht auf Zahlen aus zweiter Hand, sondern nimm NVIDIA
+       als zusätzliches Glied der Kette. Fällt es aus, übernimmt das
+       nächste. */
+    nvidiaKeys: keyList("NVIDIA_API_KEYS"),
+    nvidiaModel: process.env.NVIDIA_MODEL || "",
     ollamaUrl: (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/+$/, ""),
     ollamaModel: process.env.OLLAMA_MODEL || "qwen2.5-coder:3b",
     // Modell im Speicher halten, statt es bei jedem Aufruf neu zu laden
