@@ -244,6 +244,8 @@ const LATER_COLUMNS = [
   ["users", "spent_xp", "INTEGER NOT NULL DEFAULT 0"],
   ["users", "hints", "INTEGER NOT NULL DEFAULT 0"],
   ["users", "unlocks", "TEXT NOT NULL DEFAULT '[]'"],
+  // Sitzungsbremse für den Agenten: geschätzte Token je Aufruf
+  ["ai_usage", "tokens", "INTEGER NOT NULL DEFAULT 0"],
   ["users", "boost_until", "INTEGER NOT NULL DEFAULT 0"],
 ];
 

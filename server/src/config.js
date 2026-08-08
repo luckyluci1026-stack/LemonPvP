@@ -143,6 +143,25 @@ export const config = {
     // Anfragen pro Nutzer und Minute
     perUserPerMinute: int("AI_PER_USER_PER_MINUTE", 20),
 
+    /* ------------------ Sitzungsbremse für den Agenten -------------------
+       Der Agent im Editor ist der einzige Teil, der außerhalb Rechenzeit
+       kostet. Eine Minutenbremse allein hilft dagegen nicht: Wer sie
+       einhält, kann trotzdem den ganzen Nachmittag Anfragen stellen und ein
+       Tageskontingent für alle anderen aufbrauchen.
+
+       Deshalb ein gleitendes Fenster. Wer es ausschöpft, bekommt eine
+       Meldung mit der Restzeit — nicht einfach einen Fehler. Alles andere
+       an der Plattform läuft dabei unverändert weiter; die Aufgabenprüfung
+       hängt nicht am Agenten.
+
+       Die Werte sind großzügig für normales Arbeiten und eng für den Fall,
+       dass jemand das Fenster offen lässt und Anfragen laufen lässt. */
+    agent: {
+      windowHours: int("AI_AGENT_WINDOW_HOURS", 4),
+      maxRequests: int("AI_AGENT_MAX_REQUESTS", 20),
+      maxTokens: int("AI_AGENT_MAX_TOKENS", 8000),
+    },
+
     /* ------------------- Antwortprüfung: Stufen und Bremse ----------------
        Drei Stufen, damit weder eine Rechnung noch ein Rate-Limit überrascht:
 
@@ -182,6 +201,32 @@ export const config = {
         // Kurzer Verlauf, weil das Token-Kontingent pro Minute eng ist
         historyLimit: int("AI_PRO_HISTORY", 4),
         maxTokens: int("AI_PRO_MAX_TOKENS", 700),
+      },
+
+      /* ------------------------- Der Disponent -------------------------
+         Steht ein Modell auf eigener Hardware bereit, bekommt es die
+         Anfrage zuerst. Es beantwortet sie nicht selbst, sondern entscheidet,
+         wer sie bearbeitet, und schreibt dazu einen kurzen Auftrag:
+
+           lokal    — es macht es selbst. Kurze Fragen, Tippfehler, ein
+                      bis drei Sätze Erklärung. Kostet nichts und verlässt
+                      das eigene Netz nicht.
+           standard — das mittlere Modell beim Anbieter (assist).
+           profi    — das große Modell (assistPro), für ganze Dateien.
+
+         Der Gewinn ist nicht nur Geld: Was der Disponent selbst erledigt,
+         wird gar nicht erst übertragen. Ist er nicht erreichbar, geht die
+         Anfrage wie bisher direkt an den eingestellten Anbieter — es gibt
+         keinen Zustand, in dem der Agent deshalb ausfällt.
+         ---------------------------------------------------------------- */
+      dispatch: {
+        enabled: bool("AI_DISPATCH_ENABLED", true),
+        provider: process.env.AI_DISPATCH_PROVIDER || "ollama",
+        model: process.env.AI_DISPATCH_MODEL || "",
+        // Die Entscheidung ist kurz — mehr Platz braucht sie nicht.
+        maxTokens: int("AI_DISPATCH_MAX_TOKENS", 160),
+        // Was der Disponent selbst beantworten darf, bleibt knapp.
+        localMaxTokens: int("AI_DISPATCH_LOCAL_MAX_TOKENS", 700),
       },
     },
 

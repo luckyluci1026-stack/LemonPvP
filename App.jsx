@@ -504,6 +504,21 @@ function buildCourse(id, name, icon, color, description, mods) {
     });
     return { id: `${id}_m${mi + 1}`, title: m.title, level: m.level, lessons };
   });
+
+  /* Der Lehrplan soll ansteigen. Vorher stand in jedem Kurs Modul 1 auf
+     leicht, Modul 3 auf schwer — und Modul 5 wieder auf leicht, weil die
+     Erweiterungsmodule hinten angehängt wurden und dort von vorne anfingen.
+
+     Sortiert wird ERST NACH der Vergabe der Kennungen. Die hängen an der
+     ursprünglichen Position, und daran wiederum hängen die handgeschriebenen
+     Inhalte und der Fortschritt aller Lernenden. Es ändert sich also nur die
+     Reihenfolge in der Anzeige, keine einzige Kennung.
+
+     Die Sortierung ist stabil: Module derselben Stufe behalten ihre bisherige
+     Reihenfolge, die Einstiegsmodule bleiben damit vorn. */
+  const RANG = { beginner: 0, intermediate: 1, advanced: 2, expert: 3 };
+  modules.sort((a, b) => (RANG[a.level] ?? 9) - (RANG[b.level] ?? 9));
+
   return { id, name, icon, color, description, modules, totalLessons: total };
 }
 
@@ -8949,6 +8964,67 @@ function istBauauftrag(text) {
   return BAU_GEGENSTAND.test(t);
 }
 
+/* -------------------- Sitzungsbremse für den Agenten ----------------------
+   Der Agent ist der einzige Teil, der außerhalb Rechenzeit kostet. Ein
+   Limit pro Minute hilft dagegen nicht: Wer es einhält, kann trotzdem den
+   ganzen Nachmittag Anfragen stellen. Gezählt wird deshalb in einem
+   gleitenden Fenster — Anfragen und Text.
+
+   Mit Server ist der Server maßgeblich; er zählt dasselbe noch einmal und
+   lässt sich nicht überreden. Was hier steht, ist die Anzeige und die
+   Bremse für den Betrieb ohne Server.
+   ------------------------------------------------------------------------- */
+const AGENT_LIMITS = { fensterStunden: 4, maxAnfragen: 20, maxTokens: 8000 };
+const AGENT_BUDGET_STORAGE = "learndeveloping_agent_budget";
+
+/** Rund vier Zeichen ergeben ein Token — für eine Bremse genügt das. */
+function schaetzeTokens(...texte) {
+  const zeichen = texte.filter(Boolean).map(String).join("").length;
+  return Math.ceil(zeichen / 4);
+}
+
+function ladeAgentBudget() {
+  try {
+    const roh = JSON.parse(localStorage.getItem(AGENT_BUDGET_STORAGE) || "null");
+    if (!roh || typeof roh.start !== "number") return null;
+    // Fenster abgelaufen? Dann zählt alles wieder von vorn.
+    if (Date.now() - roh.start > AGENT_LIMITS.fensterStunden * 3600_000) return null;
+    return { start: roh.start, anfragen: Number(roh.anfragen) || 0, tokens: Number(roh.tokens) || 0 };
+  } catch (e) { return null; }
+}
+
+/** Aktueller Stand — auch wenn noch nichts verbraucht wurde. */
+function agentBudgetStand() {
+  const b = ladeAgentBudget() || { start: Date.now(), anfragen: 0, tokens: 0 };
+  const verbleibendMs = Math.max(0, b.start + AGENT_LIMITS.fensterStunden * 3600_000 - Date.now());
+  return {
+    ...b,
+    restAnfragen: Math.max(0, AGENT_LIMITS.maxAnfragen - b.anfragen),
+    restTokens: Math.max(0, AGENT_LIMITS.maxTokens - b.tokens),
+    restMinuten: Math.ceil(verbleibendMs / 60000),
+    erschoepft: b.anfragen >= AGENT_LIMITS.maxAnfragen || b.tokens >= AGENT_LIMITS.maxTokens,
+  };
+}
+
+function bucheAgentAnfrage(tokens) {
+  const b = ladeAgentBudget() || { start: Date.now(), anfragen: 0, tokens: 0 };
+  const neu = { start: b.start, anfragen: b.anfragen + 1, tokens: b.tokens + Math.max(0, tokens || 0) };
+  try { localStorage.setItem(AGENT_BUDGET_STORAGE, JSON.stringify(neu)); } catch (e) {}
+  return neu;
+}
+
+/** Verständlicher Satz, wenn das Kontingent alle ist. */
+function agentLimitText(stand) {
+  const woran = stand.anfragen >= AGENT_LIMITS.maxAnfragen
+    ? `${AGENT_LIMITS.maxAnfragen} Anfragen`
+    : `rund ${AGENT_LIMITS.maxTokens.toLocaleString("de-DE")} Token`;
+  const wann = stand.restMinuten > 90
+    ? `in gut ${Math.round(stand.restMinuten / 60)} Stunden`
+    : `in ${stand.restMinuten} Minuten`;
+  return `Kontingent erreicht — ${woran} in ${AGENT_LIMITS.fensterStunden} Stunden. Es geht ${wann} weiter. `
+    + "Alles andere läuft davon unabhängig: Die Aufgabenprüfung hängt nicht am Agenten.";
+}
+
 function buildAssistantContext({ html, css, js }) {
   const part = (label, code) => {
     const trimmed = String(code || "").trim();
@@ -8978,7 +9054,12 @@ async function askAssistant(messages, code, aiCfg = {}, pro = false, bau = false
     const res = await api.post("/api/ai/assist", {
       messages: messages.slice(pro ? -4 : -8), code, pro, build: bau,
     });
-    return { text: res.reply, pro: !!res.pro, model: res.model || null };
+    return {
+      text: res.reply, pro: !!res.pro, model: res.model || null,
+      // Läuft ein Disponent auf eigener Hardware, steht hier, wer es gemacht hat.
+      disponiert: res.disponiert || null,
+      kontingent: res.kontingent || null,
+    };
   }
 
   const hasAccess = provider === "ollama" || keys.length > 0;
@@ -10901,8 +10982,10 @@ function LdIcon({ name, size = 24, color = "currentColor", className = "", title
     /* ------------------------------ Sprachen ---------------------------- */
     // Spitze Klammern mit Schrägstrich — das Zeichen für Auszeichnungssprache
     html: <><path d="M8 6 3 12l5 6" /><path d="M16 6l5 6-5 6" /><path d="M13.5 4l-3 16" /></>,
-    // Pinselstrich
-    css: <><path d="M4.5 19.5c1.8-3.5 3.5-4.5 5.5-4.5 3.2 0 3.2-3.2 3.2-5.2 0-3 2-5.3 5.3-5.3" /><circle cx="5.5" cy="18.5" r="2.6" fill={color} stroke="none" /><path d="M14 4.5h5.5V10" /></>,
+    /* Die Kaskade: drei Ebenen, die von oben nach unten wirken — und ein
+       Tropfen, der durch alle drei hindurchfaellt. Das C in CSS steht fuer
+       genau diesen Vorgang, nicht fuer einen Pinsel. */
+    css: <><path d="M4 6.5h16" /><path d="M6 11.5h12" /><path d="M8 16.5h8" /><path d="M12 3v18" strokeDasharray="2 3" /><circle cx="12" cy="20.5" r="2" fill={color} stroke="none" /></>,
     // Blitz
     javascript: <path d="M13 2 5 13h5l-1 9 9-12h-5l1-8Z" />,
     // Schild mit Haken
@@ -10925,8 +11008,10 @@ function LdIcon({ name, size = 24, color = "currentColor", className = "", title
     go: <><path d="M3 8h7.5M3 12h5M3 16h7.5" /><path d="M13.5 5.5c4 0 6.5 2.6 6.5 6.5s-2.5 6.5-6.5 6.5" /><circle cx="16" cy="12" r="1.4" fill={color} stroke="none" /></>,
     // Zahnradring
     rust: <><circle cx="12" cy="12" r="7" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" /><path d="M9.5 15.5V8.5h3.2a2 2 0 0 1 0 4H9.5l3.5 3" /></>,
-    // Ellipse mit Balken
-    php: <><ellipse cx="12" cy="12" rx="10" ry="6.5" /><path d="M8 15V9h2.2a1.9 1.9 0 0 1 0 3.8H8" /><path d="M14 15V9h2.2a1.9 1.9 0 0 1 0 3.8H14" /></>,
+    /* Das oeffnende Tag `<?`: der Winkel, mit dem in einer HTML-Datei der
+       Servercode beginnt, plus ein Fragezeichen. Wer PHP kennt, erkennt es
+       sofort; die offizielle Ellipse mit den Buchstaben ist es bewusst nicht. */
+    php: <><rect x="2.5" y="4.5" width="19" height="15" rx="3" /><path d="M8.5 9.5 6 12l2.5 2.5" /><path d="M12.5 10.2a1.9 1.9 0 1 1 2.4 2.3c-.7.3-1.1.9-1.1 1.6" /><circle cx="13.8" cy="16.6" r="1" fill={color} stroke="none" /></>,
     // Datenbankzylinder
     sql: <><ellipse cx="12" cy="6" rx="7.5" ry="3" /><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6" /><path d="M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3" /></>,
 
@@ -16477,6 +16562,10 @@ function buildProjectPage(files, { title = "Meine Seite", extraScript = "", auto
    von ein paar Sekunden unproblematisch — anders als bei der Aufgabenprüfung,
    die deshalb rein lokal läuft.
    ------------------------------------------------------------------------- */
+/* Wie die Zuteilung des Disponenten in der Oberfläche heißt. „standard“ und
+   „profi“ sagen Lernenden nichts — die Modellnamen aber auch nicht. */
+const DISPO_LABEL = { lokal: "eigener Rechner", standard: "Standardmodell", profi: "Profi-Modell" };
+
 const ASSISTANT_QUICK_ACTIONS = [
   // Der Auftrag steht oben: Er ist das, was der Agent kann und ein reines
   // Frage-Antwort-Fenster nicht.
@@ -16524,9 +16613,23 @@ function AssistantPanel({ ctx, code, verlauf, setVerlauf, busy, setBusy, pro, se
      erscheint der Umschalter gar nicht erst. */
   const proVerfuegbar = !!api.proAvailable;
 
+  const [budget, setBudget] = useState(agentBudgetStand);
+
   const send = async (text) => {
     const question = String(text ?? input).trim();
     if (!question || busy) return;
+
+    /* Vor dem Senden prüfen. Der Server zählt dasselbe noch einmal und ist
+       maßgeblich — hier geht es darum, nicht erst zu tippen und dann eine
+       Absage zu bekommen. */
+    const stand = agentBudgetStand();
+    if (stand.erschoepft) {
+      setBudget(stand);
+      setVerlauf([...verlauf, { role: "assistant", error: true, content: agentLimitText(stand) }]);
+      setInput("");
+      return;
+    }
+
     const next = [...verlauf, { role: "user", content: question }];
     setVerlauf(next);
     setInput("");
@@ -16538,10 +16641,14 @@ function AssistantPanel({ ctx, code, verlauf, setVerlauf, busy, setBusy, pro, se
       const antwort = await askAssistant(next, code, aiConfig, pro && proVerfuegbar, bau);
       const roh = typeof antwort === "string" ? antwort : antwort.text;
       const inhalt = bereinigeAntwort(roh);
+      bucheAgentAnfrage(schaetzeTokens(question, buildAssistantContext(code), roh));
+      setBudget(agentBudgetStand());
       setVerlauf([...next, {
         role: "assistant",
         content: inhalt,
         pro: typeof antwort === "string" ? false : antwort.pro,
+        // Wer hat entschieden — nur im Serverbetrieb mit Disponent belegt.
+        disponiert: typeof antwort === "string" ? null : antwort.disponiert || null,
         dateien: onApplyFiles ? dateienAusAntwort(inhalt, bau) : [],
       }]);
     } catch (e) {
@@ -16612,6 +16719,11 @@ function AssistantPanel({ ctx, code, verlauf, setVerlauf, busy, setBusy, pro, se
                 <div className="flex items-center gap-1.5 mb-1.5 text-[10px] text-[#8A9BC0]">
                   <Bot size={11} className={m.pro ? "text-[#F7C948]" : "text-[#7C3AED]"} />
                   {m.pro ? "Profi-Agent" : "Agent"}
+                  {m.disponiert && (
+                    <span className="text-[#4A5A7A]" title={m.disponiert.grund}>
+                      · zugeteilt: {DISPO_LABEL[m.disponiert.ziel] || m.disponiert.ziel}
+                    </span>
+                  )}
                 </div>
                 <AssistantMessage content={m.content} />
 
@@ -16655,11 +16767,18 @@ function AssistantPanel({ ctx, code, verlauf, setVerlauf, busy, setBusy, pro, se
             {busy ? <Loader2 size={14} className="ld-spin" /> : ""}
           </Btn>
         </div>
-        {verlauf.length > 0 && (
-          <button onClick={() => setVerlauf([])} className="text-[10px] text-[#4A5A7A] hover:text-[#8A9BC0] mt-1.5">
-            Verlauf löschen
-          </button>
-        )}
+        <div className="flex items-center gap-3 mt-1.5">
+          {verlauf.length > 0 && (
+            <button onClick={() => setVerlauf([])} className="text-[10px] text-[#4A5A7A] hover:text-[#8A9BC0]">
+              Verlauf löschen
+            </button>
+          )}
+          {/* Der Stand ist da, bevor er knapp wird — nicht erst als Absage. */}
+          <span className={`ml-auto text-[10px] ${budget.erschoepft ? "text-[#EF4444]" : "text-[#4A5A7A]"}`}
+            title={`Zurückgesetzt wird alle ${AGENT_LIMITS.fensterStunden} Stunden. Noch ${budget.restMinuten} Minuten.`}>
+            {budget.restAnfragen} von {AGENT_LIMITS.maxAnfragen} Anfragen frei
+          </span>
+        </div>
       </div>
     </div>
   );

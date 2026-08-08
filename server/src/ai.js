@@ -324,7 +324,12 @@ export async function checkOllama(log) {
 /** Wird Ollama irgendwo gebraucht — als allgemeiner Anbieter oder in einer Rolle? */
 export function ollamaInUse() {
   const r = config.ai.roles;
+  /* Der Disponent gehört ausdrücklich dazu. Fehlte er hier, würde beim Start
+     nie geprüft, ob Ollama überhaupt läuft — und `providerReady("ollama")`
+     meldete „bereit", weil unbekannt nicht als „aus" gilt. Der Status hätte
+     dann einen Disponenten angezeigt, den es gar nicht gibt. */
   return [config.ai.provider, r.assist.provider, r.assistPro.provider,
+    r.dispatch.enabled ? r.dispatch.provider : null,
     config.ai.verify.primaryProvider, config.ai.verify.fallbackProvider].includes("ollama");
 }
 
@@ -407,6 +412,69 @@ export async function generate({ system, user, maxTokens = 1000, provider: force
  * gebraucht: erst das gute Modell, bei viel Betrieb das günstige.
  */
 /** Das eingestellte Modell eines Anbieters. */
+/* ---------------------------- Der Disponent -------------------------------
+   Ein kleines Modell auf eigener Hardware liest die Anfrage zuerst und
+   entscheidet, wer sie bearbeitet. Der Prompt ist bewusst eng gehalten:
+   Kleine Modelle halten sich an eine Vorgabe umso besser, je weniger
+   Spielraum sie lässt.
+   ------------------------------------------------------------------------- */
+export const DISPATCH_SYSTEM_PROMPT = `Du bist der Disponent eines Programmier-Teams in einem Code-Editor.
+
+Du beantwortest die Anfrage NICHT. Du entscheidest nur, wer sie bearbeitet,
+und schreibst dazu einen kurzen Auftrag.
+
+Zur Wahl stehen drei:
+- "lokal": du selbst. Für kurze Fragen, Erklärungen in ein bis drei Sätzen,
+  Tippfehler, kleine Korrekturen an einer einzelnen Stelle.
+- "standard": das mittlere Modell. Für normale Fragen, Fehlersuche im Code
+  und Änderungen an einer Datei.
+- "profi": das große Modell. Für ganze Dateien, mehrere Dateien auf einmal,
+  Umbauten und schwierige Fehler.
+
+Antworte mit GENAU einem JSON-Objekt und sonst nichts — kein Text davor,
+keiner danach, keine Codeblöcke:
+
+{"ziel": "standard", "auftrag": "…", "grund": "…"}
+
+Regeln:
+- "ziel" ist genau eines von: lokal, standard, profi
+- "auftrag": ein bis zwei Sätze auf Deutsch, was zu tun ist. KEIN Code.
+- "grund": höchstens acht Wörter.`;
+
+const ZIELE = new Set(["lokal", "standard", "profi"]);
+
+/** Liest die Entscheidung des Disponenten. Unbrauchbares ergibt null. */
+export function parseDispatch(text) {
+  const roh = String(text || "");
+  // Manche Modelle verpacken das JSON trotz Vorgabe in einen Codeblock.
+  const ohneZaun = roh.replace(/```(?:json)?/gi, "");
+  const start = ohneZaun.indexOf("{");
+  const ende = ohneZaun.lastIndexOf("}");
+  if (start < 0 || ende <= start) return null;
+  let daten;
+  try { daten = JSON.parse(ohneZaun.slice(start, ende + 1)); } catch { return null; }
+  const ziel = String(daten?.ziel || "").toLowerCase().trim();
+  if (!ZIELE.has(ziel)) return null;
+  return {
+    ziel,
+    auftrag: String(daten.auftrag || "").slice(0, 400).trim(),
+    grund: String(daten.grund || "").slice(0, 120).trim(),
+  };
+}
+
+/**
+ * Grobe Schätzung des Verbrauchs.
+ *
+ * Ein echter Tokenizer je Anbieter wäre genauer, aber jeder zählt anders,
+ * und für eine Bremse genügt die Größenordnung: rund vier Zeichen ergeben
+ * ein Token. Lieber leicht überschätzen als jemanden versehentlich
+ * durchlassen — deshalb wird aufgerundet.
+ */
+export function schaetzeTokens(...texte) {
+  const zeichen = texte.filter(Boolean).map(String).join("").length;
+  return Math.ceil(zeichen / 4);
+}
+
 export function modelOf(provider) {
   if (provider === "gemini") return config.ai.geminiModel;
   if (provider === "anthropic") return config.ai.anthropicModel;
