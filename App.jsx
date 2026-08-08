@@ -8903,7 +8903,11 @@ function wirktEnglisch(zeile) {
   const woerter = t.split(/\s+/).filter((w) => /[A-Za-zÄÖÜäöüß]{2,}/.test(w));
   if (woerter.length < 3) return false;                // zu kurz zum Urteilen
   const englisch = (t.match(ENGLISCHE_WOERTER) || []).length;
-  return woerter.length >= 4 || englisch >= 2;
+  /* Ab vier Wörtern genügt das Fehlen jedes deutschen Worts. Bei genau drei
+     ("Answer in German.") braucht es zusätzlich ein englisches Funktionswort,
+     damit eine knappe deutsche Zeile ohne Füllwörter — „Ergebnis: 42 Zeilen
+     Code" — nicht versehentlich verschwindet. */
+  return woerter.length >= 4 || englisch >= 1;
 }
 
 /** Entfernt ein ausgegebenes Denkprotokoll, ohne die Antwort zu beschädigen. */
@@ -15584,7 +15588,10 @@ function Leaderboard({ ctx }) {
   // Wochenwertung: nur wer in dieser Woche gelernt hat, taucht in der Liga auf
   const [mode, setMode] = useState("league");
   const myLeague = leagueById(me.league || "bronze");
-  const all = backend ? remote.entries : users.filter((u) => u.role === "student");
+  /* Gäste haben ebenfalls die Rolle „student", gehören aber nicht in die
+     Wertung: Sie sind nach dem Schließen des Tabs weg, und bei jedem Besuch
+     stünde ein weiterer „Gast" in der Liste. */
+  const all = backend ? remote.entries : users.filter((u) => u.role === "student" && !u.isGuest);
 
   const leagueField = all
     .filter((s) => (s.league || "bronze") === myLeague.id && s.weekKey === weekKey())
@@ -16746,7 +16753,12 @@ function AssistantMessage({ content }) {
    Vorschau oder Konsole abgebaut — mit eigenem Zustand wäre das Gespräch
    danach weg, und eine gerade laufende Antwort ebenfalls. */
 function AssistantPanel({ ctx, code, verlauf, setVerlauf, busy, setBusy, pro, setPro, onApplyFiles }) {
-  const { aiConfig, aiReady, openAiSettings } = ctx;
+  const { aiConfig, aiReady, openAiSettings, me } = ctx;
+  /* Der Agent ist der einzige Teil, der außerhalb Rechenzeit kostet. Ein Gast
+     lässt sich nicht wiedererkennen: Nach einem Neuladen ist er jemand anders,
+     und damit wäre jede Sitzungsbremse wirkungslos. Deshalb nur mit Konto.
+     Der Server verlangt ohnehin eine Anmeldung — hier steht nur, warum. */
+  const angemeldet = !!me && !me.isGuest;
   const [input, setInput] = useState("");
   const scrollRef = useRef(null);
 
@@ -16763,7 +16775,7 @@ function AssistantPanel({ ctx, code, verlauf, setVerlauf, busy, setBusy, pro, se
 
   const send = async (text) => {
     const question = String(text ?? input).trim();
-    if (!question || busy) return;
+    if (!question || busy || !angemeldet) return;
 
     /* Vor dem Senden prüfen. Der Server zählt dasselbe noch einmal und ist
        maßgeblich — hier geht es darum, nicht erst zu tippen und dann eine
@@ -16806,6 +16818,21 @@ function AssistantPanel({ ctx, code, verlauf, setVerlauf, busy, setBusy, pro, se
       setBusy(false);
     }
   };
+
+  if (!angemeldet) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-center p-6 gap-3">
+        <Lock size={30} className="text-[#4A5A7A]" />
+        <p className="text-sm text-[#8A9BC0]">Der Agent braucht ein Konto.</p>
+        <p className="text-xs text-[#4A5A7A] max-w-xs leading-relaxed">
+          Als Gast steht er nicht zur Verfügung: Ohne Konto lässt sich das
+          Kontingent nicht zuordnen. Editor, Vorschau und die Fehlerprüfung
+          funktionieren als Gast ganz normal weiter.
+        </p>
+        <Btn size="sm" icon={User} onClick={() => ctx.navigate("register")}>Konto anlegen</Btn>
+      </div>
+    );
+  }
 
   if (!aiReady) {
     return (
