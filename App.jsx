@@ -6197,11 +6197,16 @@ function buildFallbackLesson(course, meta) {
   // Nur in etwa jeder vierten Lektion kommt eine Erklär-Aufgabe dazu —
   // sie hat ihren Platz, soll aber nicht das Bild bestimmen.
   if (hash % 4 === 0) {
-    // Die Begriffe aus dem Titel sind der Themenanker: eine Antwort, die
-    // keinen davon aufgreift, handelt von etwas anderem.
+    /* Die Begriffe aus dem Titel sind der Themenanker: eine Antwort, die
+       keinen davon aufgreift, handelt von etwas anderem. Die Tätigkeitsverben
+       gehören aber nicht dazu — aus „Tabellen erstellen“ ist „Tabellen“ der
+       Begriff, „erstellen“ steht in jedem zweiten Lektionstitel und sagt
+       nichts über das Thema. */
     const titleTerms = title
       .split(/[^A-Za-zÄÖÜäöüß]+/)
-      .filter((w) => w.length > 3 && !STOPWORDS_DE.has(w.toLowerCase()))
+      .filter((w) => w.length > 3
+        && !STOPWORDS_DE.has(w.toLowerCase())
+        && !TITEL_FUELLVERBEN.has(w.toLowerCase()))
       .slice(0, 3);
     tasks.push({
       id: "g4", type: "explain",
@@ -6543,17 +6548,183 @@ Erfinde keine Fehler, die nicht da sind.`;
    Die KI sitzt stattdessen als Gesprächspartner im Editor, wo eine Antwortzeit
    von ein paar Sekunden völlig in Ordnung ist.
    ------------------------------------------------------------------------- */
-const ASSISTANT_SYSTEM_PROMPT = `Du bist ein hilfsbereiter Programmier-Assistent in einem Code-Editor.
-Der Nutzer lernt gerade programmieren.
+const ASSISTANT_SYSTEM_PROMPT = `Du bist der Programmier-Agent in einem Code-Editor.
+Der Nutzer lernt gerade programmieren. Du beantwortest Fragen — und wenn du
+einen Auftrag bekommst, baust du.
 
-DEINE ARBEITSWEISE:
-- Antworte immer auf Deutsch
-- Fasse dich kurz und konkret (höchstens 6 Sätze, außer es wird ausdrücklich mehr verlangt)
-- Zeige Code in Markdown-Codeblöcken mit Sprachangabe
-- Erkläre das Warum, nicht nur das Wie
-- Wenn Code fehlerhaft ist: nenne die Ursache und zeige die korrigierte Stelle
-- Erfinde nichts — sag es, wenn du etwas nicht sicher weißt
-- Fang nie mit "Ich" an`;
+BEI EINEM AUFTRAG ("baue", "erstelle", "schreib mir", "mach"):
+- Liefere vollständige, lauffähige Dateien. Keine Ausschnitte, keine
+  Platzhalter wie "hier dein Inhalt einfügen", keine Auslassungszeichen.
+- Jede Datei kommt als eigener Codeblock, und der Dateiname steht dabei:
+  \`\`\`html datei=index.html
+- Übliche Namen: index.html, style.css, script.js. Binde die Dateien
+  gegenseitig ein, damit die Seite sofort läuft.
+- Danach höchstens drei Sätze dazu, was du gebaut hast.
+
+BEI EINER FRAGE:
+- Kurz und konkret, höchstens sechs Sätze.
+- Code in Codeblöcken mit Sprachangabe.
+- Erkläre das Warum, nicht nur das Wie.
+- Bei fehlerhaftem Code: erst die Ursache, dann die korrigierte Stelle.
+
+IMMER:
+- Antworte auf Deutsch.
+- Gib ausschließlich das fertige Ergebnis aus. Keine Notizen an dich selbst,
+  keine Zwischenentwürfe, keine Aufzählung deiner Vorgaben, keine
+  Selbstkontrolle am Ende. Der Nutzer sieht deine Antwort direkt.
+- Erfinde nichts — sag es, wenn du etwas nicht sicher weißt.
+- Fang nie mit "Ich" an.`;
+
+/* --------------------- Antwort für Menschen aufbereiten -------------------
+   Manche Modelle schreiben ihren Denkprozess mit in die Antwort: Notizen zur
+   Aufgabe, nummerierte Entwürfe, am Ende eine Abhakliste der eigenen
+   Vorgaben. Für Lernende ist das unbrauchbar — sie sehen alles außer der
+   Antwort.
+
+   Aufgeräumt wird nur, wenn das Modell nachweislich sein Denken ausgegeben
+   hat. Ohne einen dieser Marker bleibt der Text unangetastet, damit nie eine
+   echte Antwort verschwindet. Code in Blöcken wird grundsätzlich nicht
+   angefasst.
+   ------------------------------------------------------------------------ */
+const DENK_TAGS = /<(think|thinking|reasoning|scratchpad|analysis)>[\s\S]*?<\/\1>/gi;
+
+// „Draft 2 (Applying constraints):" — der letzte Anlauf ist die Antwort.
+const ENTWURF_MARKER = /^[\s>*\-–—]*(?:\*\*)?(?:draft|entwurf|final answer|endgültige antwort|antwort)\s*\d*\s*(?:\([^)]*\))?\s*(?:\*\*)?\s*[:.]\s*\*?\s*/i;
+
+/* Zeilen der Form „Label: Wert", mit denen sich ein Modell selbst briefed.
+   Feste Etiketten aufzulisten reicht nicht — es erfindet ständig neue
+   („Language Mismatch", „Comment Syntax", „Indentation"). Erkannt wird
+   deshalb die Form: ein bis vier englische Fachwörter, Doppelpunkt, Rest.
+   Deutsche Zeilen wie „Fehler: …" bleiben dadurch unangetastet, weil
+   „Fehler“ nicht in der Wortliste steht. */
+const META_WORT = new Set([
+  "user", "users", "user's", "current", "context", "role", "constraint",
+  "constraints", "check", "draft", "plan", "analysis", "reasoning", "thought",
+  "thoughts", "language", "mismatch", "length", "format", "output", "tone",
+  "goal", "task", "step", "note", "notes", "code", "request", "input",
+  "requirement", "requirements", "syntax", "comment", "indentation", "issue",
+  "problem", "suggestion", "approach", "strategy", "structure", "response",
+  "answer", "final", "summary", "self", "mental", "applying", "rules", "rule",
+  "instruction", "instructions", "scratchpad", "editor", "snippet", "content",
+  // die deutschen Entsprechungen, falls das Modell übersetzt
+  "nutzereingabe", "kontext", "rolle", "vorgaben", "einschränkungen",
+  "selbstkontrolle", "gedanken", "entwurf", "analyse", "ziel", "länge",
+  "ausgabe", "schritt", "anforderung", "anforderungen",
+]);
+const ETIKETT_ZEILE = /^[\s>*\-–—]*(?:\*\*)?([A-Za-zÄÖÜäöüß'’]+(?:[ -][A-Za-zÄÖÜäöüß'’]+){0,3})(?:\*\*)?\s*:\s/;
+
+/** Ist das eine Zeile, mit der sich das Modell selbst instruiert? */
+function istDenkZeile(zeile) {
+  const t = ETIKETT_ZEILE.exec(zeile);
+  if (!t) return false;
+  const woerter = t[1].toLowerCase().split(/[ -]+/).filter(Boolean);
+  // „Step 1“, „Draft 2“ — die Nummer gehört zum Etikett und zählt nicht mit.
+  const ohneZahlen = woerter.filter((w) => !/^\d+$/.test(w));
+  if (!ohneZahlen.length) return false;
+  return ohneZahlen.every((w) => META_WORT.has(w));
+}
+
+// „German? Yes." — das Modell hakt seine eigenen Vorgaben ab.
+const HAKEN_ZEILE = /^[\s>*\-–—]*[^?\n]{1,70}\?\s*(?:ja|nein|yes|no)\b[.!]?\s*$/i;
+
+/** Entfernt ein ausgegebenes Denkprotokoll, ohne die Antwort zu beschädigen. */
+function bereinigeAntwort(roh) {
+  const text = String(roh || "").replace(DENK_TAGS, "").replace(/\r\n/g, "\n");
+  const original = text.trim();
+  const zeilen = original.split("\n");
+
+  /* Erst feststellen, ob überhaupt etwas durchgesickert ist — und zwar nur
+     außerhalb von Codeblöcken. In einem Kommentar darf „Plan:" stehen. */
+  let inBlock = false;
+  let leck = false;
+  for (const z of zeilen) {
+    if (/^\s*```/.test(z)) { inBlock = !inBlock; continue; }
+    if (inBlock) continue;
+    if (ENTWURF_MARKER.test(z) || istDenkZeile(z) || HAKEN_ZEILE.test(z)) { leck = true; break; }
+  }
+  if (!leck) return original;
+
+  inBlock = false;
+  const behalten = [];
+  let abEntwurf = -1;                       // ab hier steht der letzte Anlauf
+  for (const z of zeilen) {
+    if (/^\s*```/.test(z)) { inBlock = !inBlock; behalten.push(z); continue; }
+    if (inBlock) { behalten.push(z); continue; }
+    if (ENTWURF_MARKER.test(z)) {
+      // Der Marker fliegt raus, was dahinter auf derselben Zeile steht bleibt.
+      const rest = z.replace(ENTWURF_MARKER, "").trim();
+      abEntwurf = behalten.length;
+      if (rest) behalten.push(rest);
+      continue;
+    }
+    if (istDenkZeile(z) || HAKEN_ZEILE.test(z)) continue;
+    behalten.push(z);
+  }
+
+  const sauber = (abEntwurf >= 0 ? behalten.slice(abEntwurf) : behalten)
+    .join("\n").replace(/\n{3,}/g, "\n\n").trim();
+
+  /* Zwei Sicherheitsnetze: Bleibt kaum etwas übrig, war die Erkennung zu
+     streng. Und Code, der im Original stand, darf nie verloren gehen. */
+  if (sauber.length < 20) return original;
+  if (original.includes("```") && !sauber.includes("```")) return original;
+  return sauber;
+}
+
+/* --------------------- Dateien aus einer Antwort lesen --------------------
+   Ein Auftrag ist erst erledigt, wenn der Code im Editor steht — nicht, wenn
+   er zum Abtippen danebensteht. Der Agent nennt den Dateinamen am Codeblock;
+   hier wird er herausgelesen.
+   ------------------------------------------------------------------------ */
+const CODEBLOCK = /```([^\n]*)\n([\s\S]*?)```/g;
+const NAME_MIT_SCHLUESSEL = /(?:datei|file|filename|dateiname|name|path|pfad)\s*[:=]\s*["'`]?([\w./-]+\.[A-Za-z0-9]{1,6})/i;
+const NAME_ROH = /(?:^|[\s:=(])([\w-]+(?:\/[\w-]+)*\.[A-Za-z0-9]{1,6})(?=$|[\s,)"'`])/;
+const STANDARD_DATEI = {
+  html: "index.html", css: "style.css", js: "script.js", javascript: "script.js",
+  json: "daten.json", py: "main.py", python: "main.py", md: "README.md",
+};
+const MAX_AGENT_DATEIEN = 8;
+
+/**
+ * Liest die Dateien heraus, die der Agent geliefert hat.
+ * Ohne ausdrücklichen Auftrag werden nur Blöcke mit Dateinamen übernommen —
+ * ein Beispielschnipsel in einer Erklärung soll nichts überschreiben.
+ */
+function dateienAusAntwort(text, mitStandardnamen = false) {
+  const gefunden = [];
+  const belegt = new Set();
+  CODEBLOCK.lastIndex = 0;
+  let treffer;
+  while ((treffer = CODEBLOCK.exec(String(text || ""))) && gefunden.length < MAX_AGENT_DATEIEN) {
+    const info = treffer[1].trim();
+    const inhalt = treffer[2].replace(/\s+$/, "");
+    if (!inhalt.trim()) continue;
+    const sprache = (info.split(/[\s:=]+/)[0] || "").toLowerCase();
+    const name = (info.match(NAME_MIT_SCHLUESSEL) || [])[1]
+      || (info.match(NAME_ROH) || [])[1]
+      || (mitStandardnamen ? STANDARD_DATEI[sprache] : "")
+      || "";
+    if (!name) continue;
+    const schluessel = name.toLowerCase();
+    if (belegt.has(schluessel)) continue;   // bei Wiederholung gilt die erste
+    belegt.add(schluessel);
+    gefunden.push({ name, content: inhalt });
+  }
+  return gefunden;
+}
+
+/* Ein Auftrag klingt anders als eine Frage. Erkannt wird er am Verb — und
+   daran, dass ein Gegenstand genannt wird, der sich bauen lässt. */
+const BAU_VERB = /(^|\s)(bau|baue|bauen|erstell|erstelle|erzeug|erzeuge|generier|generiere|schreib|schreibe|mach|mache|leg|lege|programmier|programmiere|entwirf|entwickle|implementier|implementiere|setz|setze|füg|füge|ergänz|ergänze)\b/i;
+const BAU_GEGENSTAND = /\b(seite|website|webseite|homepage|datei|dateien|projekt|formular|men[üu]|navigation|nav|layout|komponente|app|anwendung|spiel|rechner|galerie|tabelle|liste|button|knopf|karte|slider|header|footer|portfolio|blog|landing|startseite|kontaktformular|design|struktur|gerüst|grundger[üu]st)\b/i;
+
+/** Will der Nutzer etwas gebaut haben — oder nur etwas wissen? */
+function istBauauftrag(text) {
+  const t = String(text || "");
+  if (!BAU_VERB.test(t)) return false;
+  if (/\b(warum|wieso|weshalb|was ist|was macht|was bedeutet|erkl[äa]r|wie funktioniert)\b/i.test(t)) return false;
+  return BAU_GEGENSTAND.test(t);
+}
 
 function buildAssistantContext({ html, css, js }) {
   const part = (label, code) => {
@@ -6569,12 +6740,12 @@ function buildAssistantContext({ html, css, js }) {
  * zurück. Fällt der Dienst aus, wird eine verständliche Meldung erzeugt
  * statt einer technischen Fehlermeldung.
  */
-async function askAssistant(messages, code, aiCfg = {}, pro = false) {
+async function askAssistant(messages, code, aiCfg = {}, pro = false, bau = false) {
   const { keys = [], provider = "gemini", model, ollamaModel, useServer } = aiCfg;
 
   const history = messages
     .slice(-8)                                   // Kontext knapp halten — spart Zeit und Kontingent
-    .map((m) => `${m.role === "user" ? "Nutzer" : "Assistent"}: ${m.content}`)
+    .map((m) => `${m.role === "user" ? "Nutzer" : "Agent"}: ${m.content}`)
     .join("\n\n");
   const userPrompt = `${buildAssistantContext(code)}\n\n--- Verlauf ---\n${history}`;
 
@@ -6582,14 +6753,17 @@ async function askAssistant(messages, code, aiCfg = {}, pro = false) {
     /* Der Profi-Agent hängt an einem knappen Token-Kontingent pro Minute.
        Deshalb geht weniger Verlauf mit — der Server kürzt zusätzlich. */
     const res = await api.post("/api/ai/assist", {
-      messages: messages.slice(pro ? -4 : -8), code, pro,
+      messages: messages.slice(pro ? -4 : -8), code, pro, build: bau,
     });
     return { text: res.reply, pro: !!res.pro, model: res.model || null };
   }
 
   const hasAccess = provider === "ollama" || keys.length > 0;
   if (!hasAccess) throw new Error("Kein KI-Zugang eingerichtet.");
-  const text = await callAI(provider, keys, ASSISTANT_SYSTEM_PROMPT, userPrompt, 900, model || ollamaModel);
+  // Eine vollständige Seite passt nicht in die Länge einer Antwort auf eine
+  // Frage. Mehr Platz gibt es deshalb nur, wenn wirklich gebaut werden soll.
+  const text = await callAI(provider, keys, ASSISTANT_SYSTEM_PROMPT, userPrompt,
+    bau ? 2400 : 900, model || ollamaModel);
   return { text, pro: false, model: null };
 }
 /* =========================================================================
@@ -7498,6 +7672,7 @@ function evaluateCode(task, answer, langId) {
   if (analysis.isEmpty) {
     return {
       correct: false, score: 0, offline: true,
+      unverwertbar: true,
       feedback: analysis.hasOnlyComments
         ? "Bisher stehen dort nur Kommentare — der eigentliche Code fehlt noch."
         : "Es ist noch kein Code vorhanden.",
@@ -7513,7 +7688,7 @@ function evaluateCode(task, answer, langId) {
     const dead = analysis.deadLines || [];
     const sample = dead.slice(0, 3).map((d) => `\`${d.text}\``).join(", ");
     return {
-      correct: false, score: 0, offline: true,
+      correct: false, score: 0, offline: true, unverwertbar: true,
       feedback: dead.length
         ? `Das sind einzelne Wörter, keine Anweisungen: ${sample}. So bewirkt der Code nichts.`
         : "Da steht noch keine einzige Anweisung.",
@@ -7795,7 +7970,25 @@ const EXAMPLE_WORDS = /\b(zum beispiel|z\.?b\.?|etwa|beispielsweise|wie etwa)\b/
 // Achtung: `\b` funktioniert vor Umlauten NICHT — `\w` kennt kein „ü“, also
 // gibt es zwischen Leerzeichen und „ü“ keine Wortgrenze. Deshalb wird der
 // Wortanfang hier ausdrücklich über die erlaubten Trennzeichen beschrieben.
-const BENEFIT_WORDS = /(?:^|[^A-Za-zÄÖÜäöüß])(übersichtlich|uebersichtlich|übersicht|lesbar|wartbar|wiederverwend|austauschbar|verständlich|verstaendlich|einfach|schnell|langsam|sicher|unsicher|fehleranfällig|robust|getrennt|trennung|unabhängig|unabhaengig|flexibel|struktur|ordnung|sauber|doppelt|redundan|effizien|performan|barrierefrei|zugänglich|eindeutig|konsistent|klar|übersichtlicher|aufwand|spart|spare|zeitspar)/i;
+const BENEFIT_WORDS = /(?:^|[^A-Za-zÄÖÜäöüß])(übersichtlich|uebersichtlich|übersicht|lesbar|wartbar|wiederverwend|austauschbar|verständlich|verstaendlich|einfach|schnell|langsam|sicher|unsicher|fehleranfällig|robust|getrennt|trennung|unabhängig|unabhaengig|flexibel|struktur|ordn|geordnet|sortier|gliedert|gliederung|sauber|doppelt|redundan|effizien|performan|barrierefrei|zugänglich|eindeutig|konsistent|klar|übersichtlicher|aufwand|spart|spare|zeitspar)/i;
+
+/* Eine Zweckangabe: „damit man …“, „um … zu …“, „dient dazu“. Sie ist die
+   grammatische Form, in der eine Wozu-Frage beantwortet wird. */
+const PURPOSE_WORDS = /(?:^|[^A-Za-zÄÖÜäöüß])(damit|dafür,?\s+dass|dient\s+(?:dazu|zum|zur)|hilft\s+(?:dabei|beim)|um\s+[^.!?]{2,60}?\s+zu\s+\w)/i;
+
+/* Verben, die in Lektionstiteln als Tätigkeit stehen und nichts über das
+   Thema aussagen. Als geforderter Fachbegriff wären sie eine Falle: Wer
+   „Tabellen“ erklärt, hat die Frage beantwortet — auch ohne „erstellen“. */
+const TITEL_FUELLVERBEN = new Set([
+  "erstellen", "erzeugen", "anlegen", "bauen", "schreiben", "nutzen", "benutzen",
+  "verwenden", "einsetzen", "arbeiten", "verstehen", "kennenlernen", "lernen",
+  "lesen", "prüfen", "pruefen", "messen", "wählen", "waehlen", "setzen",
+  "einbinden", "definieren", "aufrufen", "ausgeben", "speichern", "laden",
+  "gestalten", "formatieren", "steuern", "abfragen", "erkennen", "vermeiden",
+  "umgehen", "beheben", "finden", "suchen", "zeigen", "geben", "machen",
+  "grundlagen", "einführung", "einfuehrung", "überblick", "ueberblick",
+  "praxis", "basics", "sinnvoll", "richtig", "eigene", "eigenen",
+]);
 
 // Füllwörter zählen nicht als Inhalt — sonst gälte „damit das dann so ist“
 // als ebenso gehaltvoll wie eine echte Begründung.
@@ -7967,8 +8160,13 @@ function evaluateExplanation(task, answer) {
   const words = text.split(/\s+/).filter(Boolean);
   const sentences = text.split(/[.!?]+/).map((s) => s.trim()).filter((s) => s.length > 3);
 
+  /* `unverwertbar` heißt: Das ist gar keine Antwort — leer, unlesbar, kein
+     Code. Solche Fälle brauchen keine Zweitmeinung, da steht das Ergebnis
+     ohne KI fest. Eine inhaltlich schwache, aber lesbare Antwort ist NICHT
+     unverwertbar: Genau dort ist das lokale Urteil unsicher, und genau dort
+     wird die KI gebraucht. */
   if (words.length < 3) {
-    return { correct: false, score: 0, offline: true,
+    return { correct: false, score: 0, offline: true, unverwertbar: true,
       feedback: "Da steht noch fast nichts.",
       hint: "Schreib mindestens ein bis zwei vollständige Sätze in eigenen Worten.", praise: "" };
   }
@@ -7977,7 +8175,7 @@ function evaluateExplanation(task, answer) {
   // die so klingt, als hätte jemand inhaltlich etwas geschrieben.
   const realWords = words.filter(looksLikeWord);
   if (realWords.length / words.length < 0.5) {
-    return { correct: false, score: 0, offline: true,
+    return { correct: false, score: 0, offline: true, unverwertbar: true,
       feedback: "Das ergibt noch keinen lesbaren Text.",
       hint: "Schreib deine Erklärung bitte in ganzen deutschen Sätzen.", praise: "" };
   }
@@ -8044,7 +8242,15 @@ function evaluateExplanation(task, answer) {
        • oder es wird ein Vorteil benannt (bei Warum-Fragen).
      Fehlt alles drei, ist die Antwort am Thema vorbei.
      --------------------------------------------------------------------- */
-  const topicAnchors = covered.length + borrowedWords.length + (hasBenefit ? 1 : 0);
+  /* Vierter Anker: Fragt die Aufgabe „wozu ist das gut?“, dann IST eine
+     Zweckangabe die Antwort auf die Frage. „damit man Daten ordnen kann“ hat
+     zwar keinen Fachbegriff getroffen, geht aber ersichtlich nicht am Thema
+     vorbei — 0 Punkte wären hier eine Fehlbewertung. Der Anker greift nur bei
+     Zweckfragen, sonst wäre jedes „damit“ ein Freifahrtschein. */
+  const wantsPurpose = /(wozu|wof[üu]r|welchen zweck|gut ist|gut sind|nutzen von|sinn von)/i.test(task.question || "");
+  const namesPurpose = PURPOSE_WORDS.test(text);
+  const topicAnchors = covered.length + borrowedWords.length
+    + (hasBenefit ? 1 : 0) + (wantsPurpose && namesPurpose ? 1 : 0);
   const offTopic = topicAnchors === 0;
 
   // Hat die Aufgabe ausdrücklich Fachbegriffe genannt und kommt keiner davon
@@ -8063,7 +8269,7 @@ function evaluateExplanation(task, answer) {
   // auch wenn sie sich aussprechen lassen.
   if (mostlyNonsense) {
     const sample = unknownWords.slice(0, 3).map((w) => `„${w}“`).join(", ");
-    return { correct: false, score: 0, offline: true,
+    return { correct: false, score: 0, offline: true, unverwertbar: true,
       feedback: `Der größte Teil der Antwort besteht aus Wörtern, die nichts mit dem Thema zu tun haben (${sample}).`,
       hint: "Erkläre in normalen deutschen Sätzen, worum es in der Lektion geht.",
       praise: "" };
@@ -8168,9 +8374,11 @@ const OPEN_TASK_TYPES = new Set(["code_write", "explain"]);
 function needsAiVerification(task, local, aiCfg) {
   if (!aiVerifyAvailable() && !browserVerifyReady(aiCfg)) return false;
   if (!OPEN_TASK_TYPES.has(task?.type)) return false;
-  // Ganz leere oder offensichtlich unsinnige Antworten braucht niemand zu
-  // verifizieren — das steht lokal schon fest.
-  if (local && local.score === 0 && local.correct === false) return false;
+  /* Früher stieg die Prüfung bei Score 0 aus. Das war genau falsch herum: Die
+     0 kommt oft von einer strengen Regel, und dann wird die Zweitmeinung am
+     dringendsten gebraucht. Übersprungen wird nur, was nachweislich gar keine
+     Antwort ist — leer, unlesbar, ohne eine einzige Anweisung. */
+  if (local?.unverwertbar) return false;
   return true;
 }
 
@@ -13922,6 +14130,9 @@ function buildProjectPage(files, { title = "Meine Seite", extraScript = "", auto
    die deshalb rein lokal läuft.
    ------------------------------------------------------------------------- */
 const ASSISTANT_QUICK_ACTIONS = [
+  // Der Auftrag steht oben: Er ist das, was der Agent kann und ein reines
+  // Frage-Antwort-Fenster nicht.
+  { label: "Startseite bauen", icon: FilePlus, prompt: "Baue mir eine einfache Startseite mit Überschrift, kurzem Text und einer Navigation. Liefere index.html und style.css." },
   { label: "Code erklären", icon: BookOpen, prompt: "Erkläre mir kurz, was mein Code macht." },
   { label: "Fehler finden", icon: Bug, prompt: "Finde Fehler in meinem Code und erkläre sie." },
   { label: "Verbessern", icon: Sparkles, prompt: "Wie kann ich meinen Code verbessern? Gib mir 2-3 konkrete Vorschläge." },
@@ -13947,41 +14158,48 @@ function AssistantMessage({ content }) {
   return <div className="space-y-1">{out}</div>;
 }
 
-function AssistantPanel({ ctx, code }) {
-  const { aiConfig, aiReady, openAiSettings, pushToast } = ctx;
-  const [messages, setMessages] = useState([]);
+/* Verlauf, Ladezustand und Profi-Schalter liegen bewusst NICHT hier, sondern
+   in der Editor-Ansicht darüber. Diese Komponente wird beim Wechsel auf
+   Vorschau oder Konsole abgebaut — mit eigenem Zustand wäre das Gespräch
+   danach weg, und eine gerade laufende Antwort ebenfalls. */
+function AssistantPanel({ ctx, code, verlauf, setVerlauf, busy, setBusy, pro, setPro, onApplyFiles }) {
+  const { aiConfig, aiReady, openAiSettings } = ctx;
   const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, busy]);
+  }, [verlauf, busy]);
 
-  /* Zwei Stufen: der schnelle Assistent für den Alltag und ein stärkerer für
+  /* Zwei Stufen: der schnelle Agent für den Alltag und ein stärkerer für
      die kniffligen Fragen. Der starke ist nicht immer eingerichtet — dann
      erscheint der Umschalter gar nicht erst. */
-  const [pro, setPro] = useState(false);
   const proVerfuegbar = !!api.proAvailable;
 
   const send = async (text) => {
     const question = String(text ?? input).trim();
     if (!question || busy) return;
-    const next = [...messages, { role: "user", content: question }];
-    setMessages(next);
+    const next = [...verlauf, { role: "user", content: question }];
+    setVerlauf(next);
     setInput("");
     setBusy(true);
+    // Ein Auftrag braucht mehr Platz für die Antwort als eine Frage — und nur
+    // bei einem Auftrag dürfen Codeblöcke ohne Namen zu Dateien werden.
+    const bau = istBauauftrag(question);
     try {
-      const antwort = await askAssistant(next, code, aiConfig, pro && proVerfuegbar);
-      setMessages([...next, {
+      const antwort = await askAssistant(next, code, aiConfig, pro && proVerfuegbar, bau);
+      const roh = typeof antwort === "string" ? antwort : antwort.text;
+      const inhalt = bereinigeAntwort(roh);
+      setVerlauf([...next, {
         role: "assistant",
-        content: typeof antwort === "string" ? antwort : antwort.text,
+        content: inhalt,
         pro: typeof antwort === "string" ? false : antwort.pro,
+        dateien: onApplyFiles ? dateienAusAntwort(inhalt, bau) : [],
       }]);
     } catch (e) {
-      setMessages([...next, {
+      setVerlauf([...next, {
         role: "assistant", error: true,
-        content: `Die KI ist gerade nicht erreichbar (${e.message}). Prüfe deine Einstellungen — die Aufgabenprüfung funktioniert davon unabhängig weiter.`,
+        content: `Der Agent ist gerade nicht erreichbar (${e.message}). Prüfe deine Einstellungen — die Aufgabenprüfung funktioniert davon unabhängig weiter.`,
       }]);
     } finally {
       setBusy(false);
@@ -13992,9 +14210,9 @@ function AssistantPanel({ ctx, code }) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-6 gap-3">
         <Bot size={32} className="text-[#4A5A7A]" />
-        <p className="text-sm text-[#8A9BC0]">Der KI-Assistent ist noch nicht verfügbar.</p>
+        <p className="text-sm text-[#8A9BC0]">Der Agent ist noch nicht verfügbar.</p>
         <p className="text-xs text-[#4A5A7A] max-w-xs leading-relaxed">
-          Er kann deinen Code erklären, Fehler finden und Verbesserungen vorschlagen.
+          Er kann deinen Code erklären, Fehler finden — und ganze Dateien für dich bauen.
           {ctx.aiConfigurable
             ? " Richte dafür einen Anbieter ein."
             : " Die Zugänge richtet die Administration ein — die Fehlerprüfung im Editor läuft davon unabhängig."}
@@ -14007,11 +14225,14 @@ function AssistantPanel({ ctx, code }) {
   return (
     <div className="h-full flex flex-col">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 text-[13px]">
-        {messages.length === 0 && (
+        {verlauf.length === 0 && (
           <div className="text-center py-4">
             <Bot size={26} className="text-[#7C3AED] mx-auto mb-2" />
-            <p className="text-sm text-[#C9D6F0] mb-1">Frag mich zu deinem Code</p>
-            <p className="text-xs text-[#4A5A7A] mb-4">Ich sehe, was gerade im Editor steht.</p>
+            <p className="text-sm text-[#C9D6F0] mb-1">Frag oder beauftrage mich</p>
+            <p className="text-xs text-[#4A5A7A] mb-4">
+              Ich sehe, was im Editor steht. „Baue mir eine Seite“ — und du bekommst
+              fertige Dateien, die du mit einem Klick übernimmst.
+            </p>
             {proVerfuegbar && (
               <button onClick={() => setPro((v) => !v)}
                 className={`mb-4 mx-auto flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] border transition-all ${pro
@@ -14032,7 +14253,7 @@ function AssistantPanel({ ctx, code }) {
           </div>
         )}
 
-        {messages.map((m, i) => (
+        {verlauf.map((m, i) => (
           <div key={i} className={m.role === "user" ? "flex justify-end" : ""}>
             {m.role === "user" ? (
               <div className="max-w-[85%] px-3 py-2 rounded-xl rounded-br-sm text-white text-[13px]" style={{ background: GRADIENT }}>
@@ -14042,9 +14263,28 @@ function AssistantPanel({ ctx, code }) {
               <div className={`px-3 py-2 rounded-xl rounded-bl-sm border ${m.error ? "border-[#EF4444]/30 bg-[#EF4444]/5 text-[#C9D6F0]" : "border-[#1E2D4A] bg-[#141D35] text-[#C9D6F0]"}`}>
                 <div className="flex items-center gap-1.5 mb-1.5 text-[10px] text-[#8A9BC0]">
                   <Bot size={11} className={m.pro ? "text-[#F7C948]" : "text-[#7C3AED]"} />
-                  {m.pro ? "Profi-Assistent" : "Assistent"}
+                  {m.pro ? "Profi-Agent" : "Agent"}
                 </div>
                 <AssistantMessage content={m.content} />
+
+                {/* Hat der Agent Dateien geliefert, gehören sie in den Editor —
+                    aber erst auf Klick. Ungefragt Code zu überschreiben wäre
+                    das Letzte, was man von einem Werkzeug erwartet. */}
+                {m.dateien?.length > 0 && onApplyFiles && (
+                  <div className="mt-2.5 pt-2.5 border-t border-[#1E2D4A]">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                      {m.dateien.map((d) => (
+                        <span key={d.name}
+                          className="font-code text-[10px] px-1.5 py-0.5 rounded bg-[#0B1120] border border-[#1E2D4A] text-[#4F8EF7]">
+                          {d.name}
+                        </span>
+                      ))}
+                    </div>
+                    <Btn size="sm" icon={FilePlus} onClick={() => onApplyFiles(m.dateien)}>
+                      {m.dateien.length === 1 ? "Datei übernehmen" : `${m.dateien.length} Dateien übernehmen`}
+                    </Btn>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -14061,14 +14301,14 @@ function AssistantPanel({ ctx, code }) {
         <div className="flex gap-2">
           <input value={input} onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder="Frage zu deinem Code …" disabled={busy}
+            placeholder="Frage oder Auftrag …" disabled={busy}
             className="flex-1 bg-[#141D35] border border-[#1E2D4A] focus:border-[#4F8EF7] rounded-lg px-3 py-2 text-[13px] text-[#E8EDF5] placeholder:text-[#4A5A7A] disabled:opacity-50" />
-          <Btn size="sm" ariaLabel="Frage senden" icon={busy ? undefined : Send} onClick={() => send()} disabled={busy || !input.trim()}>
+          <Btn size="sm" ariaLabel="Absenden" icon={busy ? undefined : Send} onClick={() => send()} disabled={busy || !input.trim()}>
             {busy ? <Loader2 size={14} className="ld-spin" /> : ""}
           </Btn>
         </div>
-        {messages.length > 0 && (
-          <button onClick={() => setMessages([])} className="text-[10px] text-[#4A5A7A] hover:text-[#8A9BC0] mt-1.5">
+        {verlauf.length > 0 && (
+          <button onClick={() => setVerlauf([])} className="text-[10px] text-[#4A5A7A] hover:text-[#8A9BC0] mt-1.5">
             Verlauf löschen
           </button>
         )}
@@ -14328,6 +14568,13 @@ function Playground({ ctx }) {
   const [lightTheme, setLightTheme] = useState(false);
   const canLightTheme = hasUnlock(me, "light_editor");
 
+  /* Das Gespräch mit dem Agenten gehört hierher, nicht in seine Registerkarte:
+     Die wird beim Wechsel auf Vorschau abgebaut, und damit wäre der Verlauf
+     weg — samt einer Antwort, die noch unterwegs ist. */
+  const [agentVerlauf, setAgentVerlauf] = useState([]);
+  const [agentBusy, setAgentBusy] = useState(false);
+  const [agentPro, setAgentPro] = useState(false);
+
   const previewWin = useRef(null);
   const saveRef = useRef(null);
   const dirtyRef = useRef(false);
@@ -14356,6 +14603,48 @@ function Playground({ ctx }) {
     if (!activeId) return;
     setFiles((f) => f.map((x) => (x.id === activeId ? { ...x, content } : x)));
     setDirty(true);
+  };
+
+  /* -------------------- Dateien vom Agenten übernehmen -------------------
+     Gleichnamige Dateien werden ersetzt, nicht danebengelegt — sonst stehen
+     nach drei Anläufen fünf index.html im Projekt und die Vorschau zeigt die
+     falsche. Ausgelöst wird das nur durch einen Klick des Nutzers.
+     --------------------------------------------------------------------- */
+  const uebernehmeAgentDateien = (dateien) => {
+    const liste = (Array.isArray(dateien) ? dateien : []).filter((d) => d?.name);
+    if (!liste.length) return;
+
+    const naechste = [...files];
+    const beruehrt = [];
+    let ersetzt = 0;
+    for (const d of liste) {
+      const inhalt = String(d.content ?? "");
+      const i = naechste.findIndex((f) => f.name.toLowerCase() === String(d.name).toLowerCase());
+      if (i >= 0) {
+        naechste[i] = { ...naechste[i], content: inhalt };
+        beruehrt.push(naechste[i].id);
+        ersetzt++;
+      } else {
+        const neu = { id: newFileId(), name: uniqueFileName(naechste, d.name), content: inhalt };
+        naechste.push(neu);
+        beruehrt.push(neu.id);
+      }
+    }
+
+    setFiles(naechste);
+    setTabs((t) => [...new Set([...t, ...beruehrt])]);
+    setActiveId(beruehrt[0]);
+    setDirty(true);
+    playSound("success");
+
+    const wort = liste.length === 1 ? "Datei" : "Dateien";
+    pushToast("success", ersetzt
+      ? `${liste.length} ${wort} übernommen — ${ersetzt} ersetzt${ersetzt === liste.length ? "" : ", der Rest neu angelegt"}.`
+      : `${liste.length} ${wort} angelegt.`);
+
+    // Eine fertige Seite will man sehen, nicht lesen. Der Verlauf bleibt
+    // erhalten, weil er nicht in der Registerkarte liegt.
+    if (liste.some((d) => extOf(d.name) === "html")) setRightTab("preview");
   };
 
   /* ------------------ Bilder per Drag & Drop einfügen ---------------------
@@ -14926,7 +15215,7 @@ function Playground({ ctx }) {
     ["preview", "Vorschau", Eye],
     ["console", "Konsole", Terminal],
     ["problems", "Probleme", Bug],
-    ["assistant", "KI", Bot],
+    ["assistant", "Agent", Bot],
   ];
 
   const panel = (
@@ -14979,11 +15268,16 @@ function Playground({ ctx }) {
             </div>
           )
         ) : rightTab === "assistant" ? (
-          <AssistantPanel ctx={ctx} code={{
-            html: files.filter((f) => extOf(f.name) === "html").map((f) => f.content).join("\n"),
-            css: files.filter((f) => extOf(f.name) === "css").map((f) => f.content).join("\n"),
-            js: files.filter((f) => !["html", "css"].includes(extOf(f.name))).map((f) => `/* ${f.name} */\n${f.content}`).join("\n\n"),
-          }} />
+          <AssistantPanel ctx={ctx}
+            verlauf={agentVerlauf} setVerlauf={setAgentVerlauf}
+            busy={agentBusy} setBusy={setAgentBusy}
+            pro={agentPro} setPro={setAgentPro}
+            onApplyFiles={uebernehmeAgentDateien}
+            code={{
+              html: files.filter((f) => extOf(f.name) === "html").map((f) => f.content).join("\n"),
+              css: files.filter((f) => extOf(f.name) === "css").map((f) => f.content).join("\n"),
+              js: files.filter((f) => !["html", "css"].includes(extOf(f.name))).map((f) => `/* ${f.name} */\n${f.content}`).join("\n\n"),
+            }} />
         ) : rightTab === "problems" ? (
           <div className="h-full overflow-y-auto p-3 text-[12px]">
             {!problems ? (

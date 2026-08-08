@@ -59,6 +59,10 @@ export default async function aiRoutes(app) {
     const istPro = rolle === config.ai.roles.assistPro;
     const codeLimit = istPro ? 2500 : 6000;
     const verlaufLimit = istPro ? (rolle.historyLimit || 4) : 8;
+    /* Ein Bauauftrag soll vollständige Dateien liefern. In die Länge einer
+       Antwort auf eine Frage passt keine ganze Seite — sie bricht dann
+       mitten im HTML ab. */
+    const istBau = request.body?.build === true;
 
     const context = ["html", "css", "js"]
       .map((k) => {
@@ -76,7 +80,9 @@ export default async function aiRoutes(app) {
       result = await generate({
         system: ASSISTANT_SYSTEM_PROMPT,
         user: userPrompt,
-        maxTokens: istPro ? (rolle.maxTokens || 700) : 900,
+        maxTokens: istBau
+          ? (istPro ? Math.max(rolle.maxTokens || 700, 1600) : 2400)
+          : (istPro ? (rolle.maxTokens || 700) : 900),
         provider: anbieter,
         model: rolle.model || undefined,
       });
