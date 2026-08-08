@@ -16,8 +16,12 @@
   <!-- Tailwind (CDN, JIT mit Arbitrary Values) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Font Awesome Free (Icon-System) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!--
+    Symbole: keine. Sie stehen als SVG-Pfade direkt in App.jsx.
+    Vorher lag hier eine Font-Awesome-Einbindung von cdnjs. Ohne Netz war
+    dann jedes Symbol ein leerer Kasten, und jeder Aufruf meldete die
+    IP-Adresse der Lernenden an einen Dienst außerhalb der EU.
+  -->
 
   <!--
     Cloudflare Turnstile (Botschutz bei Registrierung/Login).

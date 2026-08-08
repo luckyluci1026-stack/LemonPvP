@@ -1,106 +1,209 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
 /* ----------------------------- Icon-System ------------------------------
-   Font Awesome (Free, via CDN in index.html) statt lucide-react.
-   FaIcon(name) erzeugt eine Komponente mit identischer API wie zuvor
-   (Prop "size", "className"), damit alle bestehenden Stellen im Code
-   unverändert bleiben — nur das Rendering wechselt auf <i class="fa-..."/>.
+   Alle Symbole sind selbst gezeichnet und stehen direkt hier im Code.
+
+   Vorher kamen sie als Schriftart von einem fremden CDN. Das hatte zwei
+   Haken: Ohne Netzzugang — Schulnetz, Werbeblocker, Bahnfahrt — war jedes
+   Symbol ein leerer Kasten, und jeder Seitenaufruf meldete die IP-Adresse
+   der Lernenden an einen Dienst außerhalb der EU. Mit eigenen Pfaden gibt
+   es beides nicht mehr, und die Symbole sind sofort da statt erst nach dem
+   Laden einer Schriftdatei.
+
+   Sie sind im selben Raster gezeichnet wie die Sprachsymbole weiter unten
+   (LdIcon): 24x24, Strichstärke 1.9, runde Enden. Vorher standen gefüllte
+   Flächen neben gezeichneten Umrissen — das sah nach zwei verschiedenen
+   Programmen aus.
+
+   UiIcon(name) hat dieselbe Schnittstelle wie der frühere Erzeuger, damit
+   keine der rund 700 Aufrufstellen angefasst werden musste.
    ------------------------------------------------------------------------- */
-function FaIcon(name, style = "solid") {
-  const Icon = ({ size = 16, className = "", title }) => (
-    <i
-      aria-hidden={title ? undefined : "true"}
-      title={title}
-      className={`fa-${style} fa-${name} ${className}`}
-      style={{ fontSize: size, width: size, display: "inline-flex", alignItems: "center", justifyContent: "center", lineHeight: 1, flexShrink: 0 }}
-    />
+const UI_GLYPHS = {
+  "arrow-left": (color) => (<><path d="M20 12H5" /><path d="m11 6-6 6 6 6" /></>),
+  "arrow-right": (color) => (<><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></>),
+  "arrow-trend-up": (color) => (<><path d="M3 17.5 9.5 11l4 4L21 7.5" /><path d="M15 7.5h6v6" /></>),
+  "arrow-up-right-from-square": (color) => (<><path d="M13.5 4H20v6.5" /><path d="M20 4 11 13" /><path d="M18 14.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4.5" /></>),
+  "at": (color) => (<><circle cx="12" cy="12" r="3.6" /><path d="M15.6 8.4v5a2.6 2.6 0 0 0 5.2 0V12a8.8 8.8 0 1 0-3.6 7.1" /></>),
+  "award": (color) => (<><circle cx="12" cy="9" r="6" /><path d="m8.5 14.2-1.5 7 5-2.6 5 2.6-1.5-7" /><path d="m12 6 1 2.1 2.3.3-1.7 1.6.4 2.3L12 11.2l-2 1.1.4-2.3L8.7 8.4l2.3-.3L12 6Z" /></>),
+  "bars": (color) => (<><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17" /></>),
+  "bolt": (color) => (<><path d="M13 2 5 13h5l-1 9 9-12h-5l1-8Z" /></>),
+  "book-open": (color) => (<><path d="M12 6.5C10 4.8 7.5 4 4 4v13c3.5 0 6 .8 8 2.5 2-1.7 4.5-2.5 8-2.5V4c-3.5 0-6 .8-8 2.5Z" /><path d="M12 6.5v13" /></>),
+  "brain": (color) => (<><path d="M12 4.5a3 3 0 0 0-5.6-1.2A3 3 0 0 0 3.5 8a3.2 3.2 0 0 0 .6 4.4A3 3 0 0 0 6 17.6 3 3 0 0 0 12 19V4.5Z" /><path d="M12 4.5a3 3 0 0 1 5.6-1.2A3 3 0 0 1 20.5 8a3.2 3.2 0 0 1-.6 4.4A3 3 0 0 1 18 17.6 3 3 0 0 1 12 19" /></>),
+  "bug": (color) => (<><rect x="8" y="7" width="8" height="12" rx="4" /><path d="M9.5 7a2.5 2.5 0 0 1 5 0" /><path d="M8 11H4.5M16 11H19.5M8 15H4.5M16 15H19.5M9 8 6.5 5.5M15 8l2.5-2.5M10 19l-2 2.5M14 19l2 2.5" /></>),
+  "chart-column": (color) => (<><path d="M3.5 20.5h17" /><path d="M6.5 17.5v-5M11 17.5v-9M15.5 17.5v-6M20 17.5v-11" /></>),
+  "check": (color) => (<><path d="M4.5 12.5 9.5 17.5 19.5 6.5" /></>),
+  "chevron-down": (color) => (<><path d="m5 9 7 7 7-7" /></>),
+  "chevron-left": (color) => (<><path d="m15 5-7 7 7 7" /></>),
+  "chevron-right": (color) => (<><path d="m9 5 7 7-7 7" /></>),
+  "chevron-up": (color) => (<><path d="m5 15 7-7 7 7" /></>),
+  "circle-check": (color) => (<><circle cx="12" cy="12" r="9" /><path d="m8 12 2.8 2.8L16 9.5" /></>),
+  "circle-info": (color) => (<><circle cx="12" cy="12" r="9" /><path d="M12 11v5.5" /><circle cx="12" cy="7.8" r="1.1" fill={color} stroke="none" /></>),
+  "circle-xmark": (color) => (<><circle cx="12" cy="12" r="9" /><path d="m9 9 6 6M15 9l-6 6" /></>),
+  "clipboard-list": (color) => (<><rect x="5" y="4.5" width="14" height="16.5" rx="2.2" /><path d="M9 4.5V3.6A1.6 1.6 0 0 1 10.6 2h2.8A1.6 1.6 0 0 1 15 3.6v.9H9Z" /><path d="M9 10.5h6M9 14h6M9 17.5h3.5" /></>),
+  "clock": (color) => (<><circle cx="12" cy="12" r="9" /><path d="M12 6.8V12l3.5 2.2" /></>),
+  "code": (color) => (<><path d="M8.5 6 3 12l5.5 6" /><path d="M15.5 6 21 12l-5.5 6" /><path d="M13.5 4l-3 16" /></>),
+  "compress": (color) => (<><path d="M9 3.5V9H3.5M20.5 9H15V3.5M15 20.5V15h5.5M3.5 15H9v5.5" /></>),
+  "copy": (color) => (<><rect x="8.5" y="8.5" width="12" height="12" rx="2.2" /><path d="M15.5 5.5v-1a1 1 0 0 0-1-1h-9a2 2 0 0 0-2 2v9a1 1 0 0 0 1 1h1" /></>),
+  "crown": (color) => (<><path d="M3 8l3.5 4L12 5l5.5 7L21 8v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Z" /><circle cx="12" cy="15" r="1.3" fill={color} stroke="none" /></>),
+  "database": (color) => (<><ellipse cx="12" cy="6" rx="7.5" ry="3" /><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6" /><path d="M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3" /></>),
+  "download": (color) => (<><path d="M12 3.5v11" /><path d="m7.5 10.5 4.5 4.5 4.5-4.5" /><path d="M4 17.5v1.5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5" /></>),
+  "envelope": (color) => (<><rect x="2.5" y="5" width="19" height="14" rx="2.5" /><path d="m3 7 9 6 9-6" /></>),
+  "expand": (color) => (<><path d="M3.5 9V3.5H9M15 3.5h5.5V9M20.5 15v5.5H15M9 20.5H3.5V15" /></>),
+  "eye": (color) => (<><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="3" /></>),
+  "file-circle-plus": (color) => (<><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" /><path d="M13 3v5h5V9" /><circle cx="17" cy="17" r="4.5" /><path d="M17 15v4M15 17h4" /></>),
+  "file-code": (color) => (<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" /><path d="M14 3v5h5" /><path d="m10.5 12.5-1.5 2 1.5 2M13.5 12.5l1.5 2-1.5 2" /></>),
+  "file-lines": (color) => (<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" /><path d="M14 3v5h5" /><path d="M8.5 13h7M8.5 16.5h4.5" /></>),
+  "fire": (color) => (<><path d="M12 2c1.5 4 5 5.5 5 10a5 5 0 0 1-10 0c0-1.5.5-2.5 1.5-3.5C9 10.5 10 8 12 2Z" /><path d="M12 21a3 3 0 0 0 3-3c0-1.5-1.5-2.5-3-4.5-1.5 2-3 3-3 4.5a3 3 0 0 0 3 3Z" /></>),
+  "flag": (color) => (<><path d="M5 21V4" /><path d="M5 5h10.5l-1.5 3 1.5 3H5" /></>),
+  "floppy-disk": (color) => (<><path d="M5 3.5h11L20.5 8v12.5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z" /><path d="M7.5 3.5v5h8v-5" /><rect x="7.5" y="13" width="9" height="8.5" rx="1" /></>),
+  "folder-tree": (color) => (<><path d="M3 4.5h5l1.5 2H14a1.5 1.5 0 0 1 1.5 1.5v1.5" /><path d="M3 4.5v11A1.5 1.5 0 0 0 4.5 17H8" /><rect x="11" y="11" width="10.5" height="4" rx="1.2" /><rect x="11" y="18" width="10.5" height="4" rx="1.2" transform="translate(0 -2)" /><path d="M8 13h3M8 17h3" /></>),
+  "forward": (color) => (<><path d="m3 6 8 6-8 6V6Z" /><path d="m12 6 8 6-8 6V6Z" /></>),
+  "gear": (color) => (<><circle cx="12" cy="12" r="3.2" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1" /></>),
+  "globe": (color) => (<><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3c2.4 2.5 3.6 5.5 3.6 9S14.4 18.5 12 21c-2.4-2.5-3.6-5.5-3.6-9S9.6 5.5 12 3Z" /></>),
+  "graduation-cap": (color) => (<><path d="M12 4 2.5 8.5 12 13l9.5-4.5L12 4Z" /><path d="M6.5 10.8V16c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-5.2" /><path d="M21.5 8.5v6" /></>),
+  "house": (color) => (<><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9.5V19a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5V9.5" /><path d="M9.5 20.5V14h5v6.5" /></>),
+  "image": (color) => (<><rect x="3" y="4.5" width="18" height="15" rx="2.2" /><circle cx="8.5" cy="10" r="1.8" /><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5" /></>),
+  "key": (color) => (<><circle cx="8" cy="8" r="4.5" /><path d="m11.2 11.2 8.3 8.3" /><path d="m16.5 16.5 2-2M19 19l2-2" /></>),
+  "layer-group": (color) => (<><path d="m12 3 9 4.5-9 4.5-9-4.5L12 3Z" /><path d="m3 12 9 4.5 9-4.5" /><path d="m3 16.5 9 4.5 9-4.5" /></>),
+  "lightbulb": (color) => (<><path d="M9 18h6M10 21h4" /><path d="M12 2a6.5 6.5 0 0 0-3.8 11.8c.5.4.8 1 .8 1.7v.5h6v-.5c0-.7.3-1.3.8-1.7A6.5 6.5 0 0 0 12 2Z" /></>),
+  "list-check": (color) => (<><path d="M10 6.5h11M10 12h11M10 17.5h11" /><path d="m3 6 1.6 1.6L7.4 4.5M3 17.5l1.6 1.6 2.8-3.1" /><path d="M3.5 12h3" /></>),
+  "lock": (color) => (<><rect x="4.5" y="10" width="15" height="10.5" rx="2.2" /><path d="M8 10V7.5a4 4 0 0 1 8 0V10" /><circle cx="12" cy="15.2" r="1.3" fill={color} stroke="none" /></>),
+  "map": (color) => (<><path d="m9 4-6 2.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Z" /><path d="M9 4v13M15 6.5v13" /></>),
+  "medal": (color) => (<><circle cx="12" cy="14.5" r="6" /><path d="M8.5 9 6 2.5h12L15.5 9" /><path d="m12 12 .9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2L9 14.2l2-.3.9-1.9Z" /></>),
+  "microchip": (color) => (<><rect x="7" y="7" width="10" height="10" rx="1.6" /><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4" /></>),
+  "mug-hot": (color) => (<><path d="M4 8h12v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z" /><path d="M16 10h1.8a2.5 2.5 0 0 1 0 5H16" /><path d="M8 2.5c-1 1-1 2 0 3M12 2.5c-1 1.2-1 2.3 0 3.5" /></>),
+  "palette": (color) => (<><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-1 2-1.8s-.6-1.2-.6-2 .7-1.4 1.6-1.4h1.6a4.4 4.4 0 0 0 4.4-4.4C21 6.4 17 3.5 12 3.5Z" /><circle cx="8" cy="9" r="1.3" fill={color} stroke="none" /><circle cx="12" cy="7" r="1.3" fill={color} stroke="none" /><circle cx="16" cy="9.5" r="1.3" fill={color} stroke="none" /><circle cx="7.5" cy="14" r="1.3" fill={color} stroke="none" /></>),
+  "paper-plane": (color) => (<><path d="M21 3 2.5 10.5 10 13l2.5 7.5L21 3Z" /><path d="M10 13 21 3" /></>),
+  "pen": (color) => (<><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4.5 1.5L5 15 16.5 3.5Z" /><path d="m14.5 5.5 3 3" /></>),
+  "pen-to-square": (color) => (<><path d="M18.5 4.5a2.1 2.1 0 0 1 3 3L12 17l-4 1 1-4 9.5-9.5Z" /><path d="M19 14.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4.5" /></>),
+  "play": (color) => (<><path d="M7 4.5 19.5 12 7 19.5V4.5Z" /></>),
+  "plus": (color) => (<><path d="M12 5v14M5 12h14" /></>),
+  "right-from-bracket": (color) => (<><path d="M14 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H14" /><path d="M10.5 12H21" /><path d="m17 8 4 4-4 4" /></>),
+  "robot": (color) => (<><rect x="4" y="8" width="16" height="11" rx="3" /><path d="M12 4.5V8" /><circle cx="12" cy="3.5" r="1.4" fill={color} stroke="none" /><path d="M2.5 12v3M21.5 12v3" /><circle cx="9" cy="13" r="1.3" fill={color} stroke="none" /><circle cx="15" cy="13" r="1.3" fill={color} stroke="none" /></>),
+  "rocket": (color) => (<><path d="M13 3c4 1.5 6.5 5 6.5 9.5L15 17H9l-4.5-4.5C4.5 8 7 4.5 11 3h2Z" /><circle cx="12" cy="9.5" r="2.2" /><path d="M9 17c-1.5 1-2 2.5-2 4.5 2 0 3.5-.5 4.5-2M15 17c1.5 1 2 2.5 2 4.5-2 0-3.5-.5-4.5-2" /></>),
+  "scale-balanced": (color) => (<><path d="M12 4v17M7 21h10" /><path d="M4.5 7.5h15" /><circle cx="12" cy="4" r="1.4" fill={color} stroke="none" /><path d="M4.5 7.5 2 14a3 3 0 0 0 5 0L4.5 7.5Z" /><path d="M19.5 7.5 17 14a3 3 0 0 0 5 0l-2.5-6.5Z" /></>),
+  "shield-check": (color) => (<><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6l-7-3Z" /><path d="m8.8 11.8 2.4 2.4 4.2-4.6" /></>),
+  "shield-halved": (color) => (<><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6l-7-3Z" /><path d="M12 3v18" /></>),
+  "snowflake": (color) => (<><path d="M12 2v20M3.4 7l17.2 10M20.6 7 3.4 17" /><path d="m9 4 3 2 3-2M9 20l3-2 3 2" /><path d="m4.6 10.5.4-3.4 3.3-.9M19.4 13.5l-.4 3.4-3.3.9M19.4 10.5l-.4-3.4-3.3-.9M4.6 13.5l.4 3.4 3.3.9" /></>),
+  "spinner": (color) => (<><path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4" /><path d="m6.2 6.2 2.8 2.8M15 15l2.8 2.8M17.8 6.2 15 9M9 15l-2.8 2.8" /></>),
+  "star": (color) => (<><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9L12 3Z" /></>),
+  "store": (color) => (<><path d="M4 10v9a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-9" /><path d="M3 6.5 4.5 3h15L21 6.5a2.6 2.6 0 0 1-4.5 2.2A2.6 2.6 0 0 1 12 8.7a2.6 2.6 0 0 1-4.5 0A2.6 2.6 0 0 1 3 6.5Z" /><path d="M9.5 20.5V14h5v6.5" /></>),
+  "swatchbook": (color) => (<><rect x="3" y="3" width="6" height="18" rx="2" /><path d="M9 8.5h5.5a2 2 0 0 1 2 2V21" /><path d="M9 3h5.5a2 2 0 0 1 2 2v3" /><circle cx="6" cy="17.5" r="1.3" fill={color} stroke="none" /><path d="M16.5 12.5H19a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2h-2.5" /></>),
+  "table-columns": (color) => (<><rect x="3" y="4.5" width="18" height="15" rx="2.2" /><path d="M3 9h18" /><path d="M11 9v10.5" /></>),
+  "terminal": (color) => (<><rect x="2.5" y="4" width="19" height="16" rx="2.5" /><path d="m7 9 3.5 3L7 15" /><path d="M13 15h4" /></>),
+  "trash-can": (color) => (<><path d="M4.5 6.5h15" /><path d="M9 6.5V4.8A1.3 1.3 0 0 1 10.3 3.5h3.4A1.3 1.3 0 0 1 15 4.8v1.7" /><path d="M6.5 6.5 7.4 20a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.9-13.5" /><path d="M10.5 10.5v7M13.5 10.5v7" /></>),
+  "trophy": (color) => (<><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" /><path d="M7 6H4.5v1.5A3.5 3.5 0 0 0 8 11M17 6h2.5v1.5A3.5 3.5 0 0 1 16 11" /><path d="M12 14v4M8.5 21h7l-.7-3h-5.6L8.5 21Z" /></>),
+  "user": (color) => (<><circle cx="12" cy="8" r="4" /><path d="M4.5 20.5c0-3.6 3.4-6 7.5-6s7.5 2.4 7.5 6" /></>),
+  "user-plus": (color) => (<><circle cx="9.5" cy="8" r="4" /><path d="M2.5 20.5c0-3.6 3.1-6 7-6 1 0 2 .2 2.8.5" /><path d="M18 14.5v6M15 17.5h6" /></>),
+  "users": (color) => (<><circle cx="9" cy="8" r="3.6" /><path d="M2.5 20c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5" /><path d="M16 5.2a3.6 3.6 0 0 1 0 6.6" /><path d="M18 14.9c2.1.7 3.5 2.4 3.5 5.1" /></>),
+  "volume-high": (color) => (<><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1Z" /><path d="M15.5 9.5a4 4 0 0 1 0 5M18 7a7.5 7.5 0 0 1 0 10" /></>),
+  "volume-xmark": (color) => (<><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1Z" /><path d="m16 9.5 5 5M21 9.5l-5 5" /></>),
+  "wand-magic-sparkles": (color) => (<><path d="M4 20 15 9" /><path d="m14 5.5 4.5 4.5" /><path d="M18.5 3.5 20 6l2.5 1.5L20 9l-1.5 2.5L17 9l-2.5-1.5L17 6l1.5-2.5Z" /><path d="M5.5 3v3M4 4.5h3M6 15v2.5M4.8 16.2h2.5" /></>),
+  "wand-sparkles": (color) => (<><path d="M3.5 20.5 14 10" /><path d="m12.5 6 5.5 5.5" /><path d="M17.5 3v3.5M15.8 4.8h3.5M20 12v3M18.5 13.5h3" /></>),
+  "xmark": (color) => (<><path d="M6 6 18 18M18 6 6 18" /></>),
+};
+
+function UiIcon(name) {
+  const Icon = ({ size = 16, className = "", title, color = "currentColor" }) => (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke={color} strokeWidth={1.9}
+      strokeLinecap="round" strokeLinejoin="round"
+      className={className}
+      role={title ? "img" : undefined}
+      aria-hidden={title ? undefined : true}
+      style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}
+    >
+      {title && <title>{title}</title>}
+      {UI_GLYPHS[name] ? UI_GLYPHS[name](color) : null}
+    </svg>
   );
   return Icon;
 }
 
-const Code2 = FaIcon("code");
-const Sparkles = FaIcon("wand-magic-sparkles");
-const Zap = FaIcon("bolt");
-const Flame = FaIcon("fire");
-const Star = FaIcon("star");
-const Shield = FaIcon("shield-halved");
-const Trophy = FaIcon("trophy");
-const CheckCircle2 = FaIcon("circle-check");
-const XCircle = FaIcon("circle-xmark");
-const BookOpen = FaIcon("book-open");
-const GraduationCap = FaIcon("graduation-cap");
-const Users = FaIcon("users");
-const LogOut = FaIcon("right-from-bracket");
-const ChevronRight = FaIcon("chevron-right");
-const ChevronDown = FaIcon("chevron-down");
-const ChevronLeft = FaIcon("chevron-left");
-const Lock = FaIcon("lock");
-const Copy = FaIcon("copy");
-const Check = FaIcon("check");
-const ArrowRight = FaIcon("arrow-right");
-const ArrowLeft = FaIcon("arrow-left");
-const Home = FaIcon("house");
-const User = FaIcon("user");
-const Award = FaIcon("award");
-const Bot = FaIcon("robot");
-const Send = FaIcon("paper-plane");
-const Loader2 = FaIcon("spinner");
-const Menu = FaIcon("bars");
-const X = FaIcon("xmark");
-const Mail = FaIcon("envelope");
-const Eye = FaIcon("eye");
-const Layers = FaIcon("layer-group");
-const BarChart3 = FaIcon("chart-column");
-const Clock = FaIcon("clock");
-const Play = FaIcon("play");
-const Plus = FaIcon("plus");
-const Globe = FaIcon("globe");
-const Palette = FaIcon("palette");
-const Database = FaIcon("database");
-const Terminal = FaIcon("terminal");
-const Rocket = FaIcon("rocket");
-const Brain = FaIcon("brain");
-const PenLine = FaIcon("pen");
-const ListChecks = FaIcon("list-check");
-const TrendingUp = FaIcon("arrow-trend-up");
-const Crown = FaIcon("crown");
-const Medal = FaIcon("medal");
-const KeyRound = FaIcon("key");
-const AtSign = FaIcon("at");
-const Cpu = FaIcon("microchip");
-const Coffee = FaIcon("mug-hot");
-const LayoutDashboard = FaIcon("table-columns");
-const Settings = FaIcon("gear");
-const Trash2 = FaIcon("trash-can");
-const Info = FaIcon("circle-info");
-const Scale = FaIcon("scale-balanced");
-const FileText = FaIcon("file-lines");
-const ShieldCheck = FaIcon("shield-halved");
-const UserRoundPlus = FaIcon("user-plus");
-const Flag = FaIcon("flag");
-const Bug = FaIcon("bug");
-const Wand = FaIcon("wand-magic-sparkles");
-const ExternalLink = FaIcon("arrow-up-right-from-square");
-const Download = FaIcon("download");
-const MapIcon = FaIcon("map");
-const VolumeOn = FaIcon("volume-high");
-const VolumeOff = FaIcon("volume-xmark");
-const FilePlus = FaIcon("file-circle-plus");
-const FolderTree = FaIcon("folder-tree");
-const FileCode = FaIcon("file-code");
-const ImagePlus = FaIcon("image");
-const Save = FaIcon("floppy-disk");
-const Expand = FaIcon("expand");
-const Compress = FaIcon("compress");
-const PenSquare = FaIcon("pen-to-square");
-const Sparkles2 = FaIcon("wand-sparkles");
-const ClipboardList = FaIcon("clipboard-list");
-const Forward = FaIcon("forward");
-const ChevronUp = FaIcon("chevron-up");
-const Store = FaIcon("store");
-const Lightbulb = FaIcon("lightbulb");
-const Palette2 = FaIcon("swatchbook");
-const Snowflake = FaIcon("snowflake");
+const Code2 = UiIcon("code");
+const Sparkles = UiIcon("wand-magic-sparkles");
+const Zap = UiIcon("bolt");
+const Flame = UiIcon("fire");
+const Star = UiIcon("star");
+const Shield = UiIcon("shield-halved");
+const Trophy = UiIcon("trophy");
+const CheckCircle2 = UiIcon("circle-check");
+const XCircle = UiIcon("circle-xmark");
+const BookOpen = UiIcon("book-open");
+const GraduationCap = UiIcon("graduation-cap");
+const Users = UiIcon("users");
+const LogOut = UiIcon("right-from-bracket");
+const ChevronRight = UiIcon("chevron-right");
+const ChevronDown = UiIcon("chevron-down");
+const ChevronLeft = UiIcon("chevron-left");
+const Lock = UiIcon("lock");
+const Copy = UiIcon("copy");
+const Check = UiIcon("check");
+const ArrowRight = UiIcon("arrow-right");
+const ArrowLeft = UiIcon("arrow-left");
+const Home = UiIcon("house");
+const User = UiIcon("user");
+const Award = UiIcon("award");
+const Bot = UiIcon("robot");
+const Send = UiIcon("paper-plane");
+const Loader2 = UiIcon("spinner");
+const Menu = UiIcon("bars");
+const X = UiIcon("xmark");
+const Mail = UiIcon("envelope");
+const Eye = UiIcon("eye");
+const Layers = UiIcon("layer-group");
+const BarChart3 = UiIcon("chart-column");
+const Clock = UiIcon("clock");
+const Play = UiIcon("play");
+const Plus = UiIcon("plus");
+const Globe = UiIcon("globe");
+const Palette = UiIcon("palette");
+const Database = UiIcon("database");
+const Terminal = UiIcon("terminal");
+const Rocket = UiIcon("rocket");
+const Brain = UiIcon("brain");
+const PenLine = UiIcon("pen");
+const ListChecks = UiIcon("list-check");
+const TrendingUp = UiIcon("arrow-trend-up");
+const Crown = UiIcon("crown");
+const Medal = UiIcon("medal");
+const KeyRound = UiIcon("key");
+const AtSign = UiIcon("at");
+const Cpu = UiIcon("microchip");
+const Coffee = UiIcon("mug-hot");
+const LayoutDashboard = UiIcon("table-columns");
+const Settings = UiIcon("gear");
+const Trash2 = UiIcon("trash-can");
+const Info = UiIcon("circle-info");
+const Scale = UiIcon("scale-balanced");
+const FileText = UiIcon("file-lines");
+const ShieldCheck = UiIcon("shield-check");
+const UserRoundPlus = UiIcon("user-plus");
+const Flag = UiIcon("flag");
+const Bug = UiIcon("bug");
+const Wand = UiIcon("wand-sparkles");
+const ExternalLink = UiIcon("arrow-up-right-from-square");
+const Download = UiIcon("download");
+const MapIcon = UiIcon("map");
+const VolumeOn = UiIcon("volume-high");
+const VolumeOff = UiIcon("volume-xmark");
+const FilePlus = UiIcon("file-circle-plus");
+const FolderTree = UiIcon("folder-tree");
+const FileCode = UiIcon("file-code");
+const ImagePlus = UiIcon("image");
+const Save = UiIcon("floppy-disk");
+const Expand = UiIcon("expand");
+const Compress = UiIcon("compress");
+const PenSquare = UiIcon("pen-to-square");
+const Sparkles2 = UiIcon("wand-sparkles");
+const ClipboardList = UiIcon("clipboard-list");
+const Forward = UiIcon("forward");
+const ChevronUp = UiIcon("chevron-up");
+const Store = UiIcon("store");
+const Lightbulb = UiIcon("lightbulb");
+const Palette2 = UiIcon("swatchbook");
+const Snowflake = UiIcon("snowflake");
 
 /* =========================================================================
    LearnDeveloping — learndeveloping.com
