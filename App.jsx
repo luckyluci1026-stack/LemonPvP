@@ -216,7 +216,8 @@ const GRADIENT = "linear-gradient(135deg, #4F8EF7, #7C3AED)";
 function GlobalStyles() {
   return (
     <style dangerouslySetInnerHTML={{ __html: `
-      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+      /* Die Schriften liegen unter fonts/ im Projekt und werden in
+         index.html eingebunden — nicht von Google nachgeladen. */
       * { box-sizing: border-box; }
       html, body, #root { height: 100%; }
       body { margin: 0; background: #0A0E1A; color: #E8EDF5; font-family: 'Inter', system-ui, sans-serif; }
@@ -14431,38 +14432,74 @@ Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS
 {{street}}, {{city}}
 E-Mail: {{email}}
 
-## 2. Welche Daten werden verarbeitet?
+## 2. Zwei Betriebsarten — und was das für deine Daten heißt
 
-Bei der Registrierung erhebt LearnDeveloping folgende Angaben: Name, E-Mail-Adresse und — bei Schüler-Accounts optional — ein Lehrer-Code. Fortschrittsdaten wie XP, abgeschlossene Lektionen und Abzeichen werden während der Nutzung erfasst.
+Diese Erklärung beschreibt beide Fälle getrennt, weil sie sich grundlegend unterscheiden.
 
-> [tipp] **Technischer Hinweis:** LearnDeveloping läuft in zwei Betriebsarten. Ohne angebundenen Server bleiben alle Daten ausschließlich im Speicher deines Browsers (\`localStorage\`) und verlassen dein Gerät nicht. Mit Server werden Konto- und Fortschrittsdaten in einer Datenbank des Betreibers gespeichert. Als **Gast** wird in beiden Fällen nichts dauerhaft gespeichert; deine Daten verschwinden beim Schließen des Tabs.
+**Ohne angebundenen Server** bleibt alles im Speicher deines Browsers. Es gibt kein Konto auf einem fremden Rechner, keine Übertragung, keine Löschanfrage — der Browser-Speicher zu leeren genügt.
 
-## 3. KI-gestützte Bewertung
+**Mit Server** liegen Konto- und Fortschrittsdaten in der Datenbank des Betreibers. Wer das ist, steht oben unter Punkt 1.
 
-Bei Code-, Lückentext- und Freitextaufgaben wird deine Antwort zur Bewertung an einen KI-Dienst (Anthropic Claude) übermittelt — aber nur, wenn du selbst einen API-Key in den KI-Einstellungen hinterlegt hast. Übermittelt werden dabei die Aufgabenstellung, der Kursname und deine Antwort, direkt von deinem Browser an Anthropic. Ohne hinterlegten Key läuft eine rein lokale Prüfung, es werden keine Daten übertragen.
+Als **Gast** wird in beiden Fällen nichts dauerhaft gespeichert. Die Daten verschwinden, sobald du den Tab schließt.
 
-## 4. Zweck der Verarbeitung
+## 3. Welche Daten werden verarbeitet?
 
-- Bereitstellung des Lern-Accounts und Fortschritts-Trackings
-- KI-gestützte Bewertung deiner Aufgaben (optional, mit eigenem Key)
-- Anzeige in der Rangliste (Name, Avatar, XP) gegenüber anderen Nutzern derselben Plattform
+Bei der Registrierung: Name, E-Mail-Adresse, Passwort und — bei Schülerkonten optional — ein Lehrer-Code. Das Passwort wird niemals im Klartext gespeichert, sondern nur als scrypt-Hash.
 
-## 5. Rechtsgrundlage
+Während der Nutzung entstehen Fortschrittsdaten: erreichte XP, abgeschlossene Lektionen, Abzeichen, Tagesserie und Ligaplatzierung. Dazu kommt der Inhalt der Projekte, die du im Editor anlegst.
 
-Die Verarbeitung erfolgt zur Erfüllung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO).
+Im Serverbetrieb wird zusätzlich der Zeitpunkt der letzten Anmeldung gespeichert. Sitzungen werden nicht im Klartext hinterlegt, sondern nur als HMAC-Hash — aus dem gespeicherten Wert lässt sich kein gültiger Zugang zurückrechnen.
 
-## 6. Deine Rechte
+## 4. Bewertung der Aufgaben
 
-Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Da alle Daten lokal in deinem Browser liegen, kannst du sie jederzeit selbst löschen (Browser-Speicher leeren) oder dich an support@learndeveloping.com wenden.
+**Aufgaben werden lokal in deinem Browser bewertet.** Dafür verlässt keine Antwort dein Gerät. Das ist keine Datensparsamkeit aus Prinzip, sondern die Bauweise: Die Bewertung soll sofort da sein.
 
-## 7. Speicherdauer
+Bei **offenen Aufgaben** („schreib den Code", „erkläre …") kann zusätzlich eine zweite Meinung eingeholt werden, wenn der Betreiber das eingerichtet hat. Dann werden Aufgabenstellung, Kursname und deine Antwort an den eingerichteten KI-Anbieter übermittelt. Ist nichts eingerichtet, gilt allein das lokale Ergebnis — die Lektion funktioniert vollständig ohne.
 
-| Datenart | Speicherort | Speicherdauer |
+Dasselbe gilt für den **Agenten im Editor**: Was du ihn fragst, und der Code, der gerade im Editor steht, gehen an den eingerichteten Anbieter.
+
+Welcher Anbieter das ist, entscheidet die Administration. Zur Auswahl stehen Google, Anthropic, Groq, OpenRouter oder ein selbst betriebener Dienst auf eigener Hardware — bei letzterem verlässt auch hier nichts das eigene Netz. **Lernende richten nichts davon ein und sehen keine Zugangsdaten.**
+
+## 5. Dienste, die beim Aufruf der Seite kontaktiert werden
+
+Damit die Seite läuft, lädt der Browser einige Bestandteile nach. Dabei wird jeweils die IP-Adresse übertragen:
+
+| Dienst | Wofür | Wann |
 |---|---|---|
-| Accountdaten | localStorage (dein Browser) | Bis zur Löschung |
-| Fortschrittsdaten | localStorage (dein Browser) | Bis zur Löschung |
-| Gast-Sitzung | Nur Arbeitsspeicher | Bis zum Schließen des Tabs |
-| API-Key (optional) | localStorage (dein Browser) | Bis zur Entfernung |
+| jsDelivr, esm.sh, unpkg | React und der Code-Editor | bei jedem Aufruf |
+| cdn.tailwindcss.com | Gestaltung der Oberfläche | bei jedem Aufruf |
+| Cloudflare Turnstile | Botprüfung bei Registrierung und Anmeldung | nur wenn eingerichtet |
+
+**Nicht** kontaktiert werden: Google Fonts und Icon-Dienste. Schriften und Symbole liegen im Projekt selbst.
+
+Es gibt **keine** Analysewerkzeuge, **keine** Werbenetzwerke, **keine** Zählpixel und **kein** Nutzungs-Tracking.
+
+## 6. Cookies
+
+Im Serverbetrieb wird genau ein Cookie gesetzt: die Sitzungskennung nach der Anmeldung. Sie ist technisch notwendig und wird gelöscht, wenn du dich abmeldest. Werbe- oder Analyse-Cookies gibt es nicht.
+
+## 7. Zweck und Rechtsgrundlage
+
+- Bereitstellung des Kontos und des Lernfortschritts — Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung)
+- Anzeige in der Rangliste mit Name, Avatar und XP gegenüber anderen Nutzenden derselben Plattform — Art. 6 Abs. 1 lit. b DSGVO
+- Botprüfung bei Registrierung und Anmeldung — Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am Schutz vor automatisierten Zugriffen)
+- Zweite Meinung durch eine KI, sofern eingerichtet — Art. 6 Abs. 1 lit. b DSGVO
+
+## 8. Speicherdauer
+
+| Datenart | Wo | Wie lange |
+|---|---|---|
+| Kontodaten | Datenbank des Betreibers bzw. Browser-Speicher | bis zur Löschung des Kontos |
+| Fortschrittsdaten | ebenso | bis zur Löschung des Kontos |
+| Projekte aus dem Editor | ebenso | bis du sie löschst |
+| Sitzungskennung | Cookie und Datenbank (nur als Hash) | bis zur Abmeldung, längstens 30 Tage |
+| Gast-Sitzung | nur Arbeitsspeicher | bis zum Schließen des Tabs |
+
+## 9. Deine Rechte
+
+Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Außerdem steht dir ein Beschwerderecht bei einer Datenschutz-Aufsichtsbehörde zu.
+
+Ohne angebundenen Server kannst du sämtliche Daten selbst löschen, indem du den Browser-Speicher leerst. Im Serverbetrieb wendest du dich an die oben genannte Adresse.
 `,
 
   agb: `# Allgemeine Geschäftsbedingungen (AGB)

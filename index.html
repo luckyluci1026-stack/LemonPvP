@@ -17,11 +17,16 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!--
-    Symbole: keine. Sie stehen als SVG-Pfade direkt in App.jsx.
-    Vorher lag hier eine Font-Awesome-Einbindung von cdnjs. Ohne Netz war
-    dann jedes Symbol ein leerer Kasten, und jeder Aufruf meldete die
-    IP-Adresse der Lernenden an einen Dienst außerhalb der EU.
+    Symbole: keine Einbindung nötig. Sie stehen als SVG-Pfade in App.jsx.
+    Vorher lag hier eine Icon-Schriftart von cdnjs. Ohne Netz war dann jedes
+    Symbol ein leerer Kasten, und jeder Aufruf meldete die IP-Adresse der
+    Lernenden an einen Dienst außerhalb der EU.
+
+    Die Schriften liegen aus demselben Grund im Projekt statt bei Google.
+    Alle drei stehen unter der SIL Open Font License.
   -->
+  <link rel="preload" href="fonts/Inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="fonts/fonts.css">
 
   <!--
     Cloudflare Turnstile (Botschutz bei Registrierung/Login).
