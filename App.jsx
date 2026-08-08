@@ -4390,6 +4390,49 @@ const TOPIC_RULES = [
   ["operator",    /\bbit\b|hexadezimal|binär|präprozessor|makro/i],
   ["sammlung",    /daten aus|datenqualität|bericht|auswert|große datenmengen|text verarbeit/i],
 
+  /* Die letzten Nachzügler. Ohne diese Zeilen blieben 111 Lektionen ohne
+     erkanntes Thema — und damit ohne Erklärtext, ohne Codebeispiel und mit
+     einer beliebig gewählten Aufgabe. Die Titel sind zu speziell, als dass
+     ein allgemeines Wort sie träfe; deshalb stehen sie hier namentlich. */
+  // ---- HTML: neuere Elemente und alles rund um den Kopfbereich ----
+  ["html_semantik",  /dialog|showmodal|akkordeon|popover|draggable|custom element|eigene elemente|\bslot\b|ziehen und ablegen|inline-styles|styles inline/i],
+  ["html_formular",  /datalist|eingabehilf/i],
+  ["html_meta",      /\bscript\b|noscript|skripte einbinden/i],
+  // ---- CSS: Effekte, Druck und wiederkehrende Layoutaufgaben ----
+  ["css_farbe",      /filter|unschärfe|sättigung|clip-path|mask-image|maske|mischmodus|mischmodi|glaseffekt/i],
+  ["css_responsive", /druck|nesting|container quer/i],
+  ["css_selektor",   /fokuszust|fokus sichtbar|checkbox|radio|klickfläche|eingabefelder .*styl/i],
+  ["css_grid",       /kopfzeile mit|seitenleiste|zwei spalten|fußzeile am/i],
+  // ---- JavaScript: Ereignisse im Browser ----
+  ["funktion",       /bubbling|capturing|delegation|preventdefault|stoppropagation|domcontentloaded|eigene ereignisse|tastaturereignis|maus-, tastatur|eingaben mit input|dsls?\b/i],
+  ["variable",       /\bes6\b|es6\+|es20\d\d/i],
+  ["async",          /entprell|drossel|debounce|throttle|vorschläge|nachladen|ohne neuladen|context & timeout|timeouts/i],
+  // ---- Python und PHP: Sprachmittel mit eigenen Namen ----
+  ["schleife",       /generator|yield|itertools/i],
+  ["funktion",       /dekorator|decorator|reflection|late static binding|annotation/i],
+  ["datei",          /kontextmanager|sqlite/i],
+  ["modul",          /virtual environment|\bvenv\b|typalias/i],
+  ["sammlung",       /pandas|numpy|data science|diagramm|session|cookie|get\/post|formulare verarbeiten/i],
+  ["string",         /auslesen|routing|token|antworten verarbeit|apis anbinden/i],
+  ["fehler",         /statuscode|protokollier|logging/i],
+  ["bedingung",      /rate limit/i],
+  ["klasse",         /spring\b|laravel/i],
+  ["async",          /e-?mails? versenden/i],
+  // ---- SQL: Aufgaben, die im Lehrplan eigene Namen tragen ----
+  ["sql_gruppe",     /top-werte|je gruppe|doppelte datensätze/i],
+  ["sql_filter",     /zeiträume|überlappend/i],
+  ["sql_join",       /zusammenführen/i],
+  ["sql_abfrage",    /views?\b|stored procedure/i],
+  // ---- C++ und C: Container, Algorithmen, Initialisierung ----
+  ["sammlung",       /vector|deque|\blist\b|container|sort\b|stable_sort|find und|transform|accumulate|copy und|erase-remove|ranges|ringpuffer/i],
+  ["speicher",       /move semantic|rvalue|lvalue|verschieben|elidier|systemnah|syscall|unsafe|\bffi\b/i],
+  ["variable",       /\bauto\b|initialisierung|explicit|\bconst\b|chrono|zeitmessung|zeitpunkte und dauern|reproduzierbar/i],
+  // ---- TypeScript, React, Vue, Kotlin ----
+  ["generics",       /union|intersection/i],
+  ["fe_state",       /rerender|batching|übergänge und priorität|aktualisierung/i],
+  ["fe_effekt",      /benachrichtigung|scrollverhalten/i],
+  ["fe_event",       /drag and drop|tastenkürzel/i],
+
   ["variable",    /variable|datentyp|typen|konstante|deklaration|zuweisung|basics|einstieg|grundlagen|hello world|setup|installier/i],
 ];
 
@@ -5742,7 +5785,13 @@ function lessonHash(id) {
 
 /* Erklärtext je Thema. Er tritt an die Stelle des früheren Fülltexts
    („In diesem Abschnitt vertiefst du das Thema …“), der zu jeder Lektion
-   dasselbe sagte und damit nichts. */
+   dasselbe sagte und damit nichts.
+
+   Aufbau: `intro` führt hin, `punkte` nennt das Wesentliche, `vertiefung`
+   erklärt den Hintergrund, den man sonst erst nach dem dritten Fehler
+   versteht, `hinweis` warnt vor der häufigsten Falle, `fehler` listet, was
+   erfahrungsgemäß schiefgeht. Das passende Codebeispiel steht in
+   TOPIC_SNIPPETS — sprachabhängig und deshalb dort. */
 const TOPIC_THEORY = {
   abbildung: {
     intro: `Eine **Abbildung** (Dictionary, Map, Objekt) speichert Paare aus **Schlüssel** und **Wert**. Der Zugriff läuft über den Schlüssel statt über eine Position.`,
@@ -5750,8 +5799,16 @@ const TOPIC_THEORY = {
       `Der Schlüssel ist ein sprechender Name: \`"name"\` statt Position 0.`,
       `Ein Schlüssel kommt höchstens einmal vor — ein zweites Schreiben überschreibt.`,
       `Eine Abbildung beschreibt *eine Sache mit Eigenschaften*, eine Liste *mehrere gleichartige Dinge*.`,
+      `Die Reihenfolge ist kein verlässliches Merkmal — wer sortiert braucht, sortiert ausdrücklich.`,
+      `Über eine Abbildung lässt sich laufen: über die Schlüssel, die Werte oder beide zusammen.`,
     ],
+    vertiefung: `Der große Vorteil steckt in der Geschwindigkeit: Eine Abbildung findet einen Wert, ohne alle anderen anzusehen. Ob zehn oder zehn Millionen Einträge darin liegen, macht für einen einzelnen Zugriff kaum einen Unterschied. Eine Liste müsste dafür von vorne durchgehen. Genau deshalb ist die Abbildung die richtige Wahl, sobald du etwas *nachschlagen* willst statt es *durchzuzählen*.`,
     hinweis: `Der Zugriff auf einen fehlenden Schlüssel ist ein Fehler, kein leerer Wert. Dafür gibt es eine Abfrage mit Standardwert.`,
+    fehler: [
+      `Einen Schlüssel abfragen, den es nicht gibt — je nach Sprache ein Absturz oder ein stiller Leerwert.`,
+      `Eine Abbildung ändern, während man gerade über sie läuft.`,
+      `Zahlen und Zeichenketten als Schlüssel verwechseln: \`1\` und \`"1"\` sind nicht dasselbe.`,
+    ],
   },
   async: {
     intro: `**Asynchroner Code** wartet nicht untätig. Während eine Antwort aus dem Netz unterwegs ist, kann das Programm etwas anderes tun.`,
@@ -5759,8 +5816,16 @@ const TOPIC_THEORY = {
       `Der Ablauf bleibt lesbar von oben nach unten — nur die Wartezeit wird freigegeben.`,
       `Nebenläufig heißt nicht gleichzeitig: Vieles läuft verschränkt in einem einzigen Ablauf.`,
       `Fehler brauchen dieselbe Sorgfalt wie synchron — nur an anderer Stelle.`,
+      `Wer wartet, blockiert den Aufrufer — nicht das ganze Programm.`,
+      `Mehrere unabhängige Aufgaben startet man zusammen und wartet einmal auf alle. Nacheinander zu warten verschenkt genau den Vorteil.`,
     ],
+    vertiefung: `Das häufigste Missverständnis: Asynchron heißt nicht *schneller*, sondern *nicht blockierend*. Eine Anfrage ans Netz dauert genauso lang wie vorher — aber die Zeit dazwischen steht für anderes zur Verfügung. Deshalb bringt asynchroner Code dort am meisten, wo auf etwas gewartet wird (Netz, Festplatte, Datenbank), und fast nichts bei reiner Rechenarbeit.`,
     hinweis: `Ein vergessenes Warten liefert nicht das Ergebnis, sondern das Versprechen darauf. Das fällt oft erst weiter unten auf.`,
+    fehler: [
+      `Das Warten vergessen: Zurück kommt dann das Versprechen auf ein Ergebnis, nicht das Ergebnis.`,
+      `In einer Schleife nacheinander warten, obwohl die Aufgaben nichts voneinander wissen.`,
+      `Fehler nicht abfangen — eine gescheiterte asynchrone Aufgabe verschwindet sonst geräuschlos.`,
+    ],
   },
   bedingung: {
     intro: `Mit einer **Bedingung** trifft ein Programm eine Entscheidung: Ein Codeblock läuft nur dann, wenn ein Ausdruck wahr ist.`,
@@ -5768,8 +5833,16 @@ const TOPIC_THEORY = {
       `Die Bedingung ergibt immer einen Wahrheitswert.`,
       `Der \`sonst\`-Zweig fängt alle übrigen Fälle ab — er ist optional.`,
       `Mehrere Fälle hintereinander werden von oben nach unten geprüft; der erste passende gewinnt.`,
+      `Verschachtelte Bedingungen lassen sich fast immer flach schreiben — früh aussteigen statt tief einrücken.`,
+      `Was zwei Zweige gemeinsam haben, gehört vor die Bedingung, nicht doppelt hinein.`,
     ],
+    vertiefung: `Bedingungen werden **von links nach rechts** ausgewertet und brechen ab, sobald das Ergebnis feststeht. Bei \`x != null und x.name == "Ada"\` wird der zweite Teil gar nicht mehr angefasst, wenn der erste falsch ist. Das ist kein Zufall, sondern eine Zusage der Sprache — und die übliche Art, einen Zugriff auf etwas Nichtvorhandenes zu verhindern. Die Reihenfolge der Teilbedingungen ist damit kein Geschmacksfrage.`,
     hinweis: `Vergleichen und Zuweisen sehen sich ähnlich, tun aber Grundverschiedenes. Ein einzelnes \`=\` in einer Bedingung ist fast immer ein Fehler.`,
+    fehler: [
+      `\`=\` statt \`==\` schreiben: Das weist zu, statt zu vergleichen, und ist danach fast immer wahr.`,
+      `Mit Fließkommazahlen auf Gleichheit prüfen — \`0.1 + 0.2\` ist nicht exakt \`0.3\`.`,
+      `Einen Fall vergessen: Was passiert bei leerer Eingabe, bei 0, bei einem negativen Wert?`,
+    ],
   },
   css_animation: {
     intro: `**Bewegung** lenkt Aufmerksamkeit und erklärt Zusammenhänge — zu viel davon stört und macht manchen Menschen buchstäblich unwohl.`,
@@ -5777,8 +5850,16 @@ const TOPIC_THEORY = {
       `Ein Übergang animiert eine Änderung von einem Zustand zum anderen.`,
       `Eine Animation läuft von selbst und kann sich wiederholen.`,
       `Am flüssigsten laufen Verschiebung und Deckkraft, weil sie kein neues Layout auslösen.`,
+      `Eine Dauer zwischen 150 und 300 Millisekunden wirkt bei Bedienelementen richtig — darüber fühlt es sich zäh an.`,
+      `Eine Bewegung ohne Zweck ist Dekoration. Sie sollte zeigen, was sich wohin verändert hat.`,
     ],
+    vertiefung: `Der Browser rechnet Bewegung in zwei Stufen: Layout (wo liegt was) und Zusammensetzen (was kommt aufs Bild). Änderungen an Breite, Höhe oder Position lösen die teure erste Stufe aus — bei jedem einzelnen Bild. Verschiebung (\`transform\`) und Deckkraft (\`opacity\`) überspringen sie. Das ist der Grund, warum dieselbe Animation einmal flüssig und einmal ruckelig aussieht.`,
     hinweis: `Wer Bewegung reduziert eingestellt hat, sagt damit etwas Ernstes. Diese Einstellung lässt sich in CSS abfragen und respektieren.`,
+    fehler: [
+      `Breite oder Höhe animieren, wo eine Verschiebung dasselbe Bild erzeugt — nur ohne Ruckeln.`,
+      `Bewegung ohne Rücksicht auf die Systemeinstellung „Bewegung reduzieren“.`,
+      `Eine Endlosanimation, die nie zur Ruhe kommt und dauerhaft Rechenzeit kostet.`,
+    ],
   },
   css_box: {
     intro: `Jedes Element ist im Layout eine **Box**: Inhalt, Innenabstand, Rahmen und Außenabstand — von innen nach außen.`,
@@ -5786,8 +5867,16 @@ const TOPIC_THEORY = {
       `Innenabstand liegt innerhalb des Rahmens, Außenabstand außerhalb.`,
       `Senkrechte Außenabstände benachbarter Elemente fallen zusammen, statt sich zu addieren.`,
       `Mit \`border-box\` zählen Rahmen und Innenabstand zur angegebenen Breite.`,
+      `Ein Rahmen zählt zur Breite dazu — schon ein einziges Pixel verschiebt ein sonst passendes Layout.`,
+      `\`box-sizing: border-box\` einmal global zu setzen, erspart hundert Einzelkorrekturen.`,
     ],
+    vertiefung: `Der Zusammenfall senkrechter Außenabstände überrascht fast alle: Zwei Absätze mit je 20 Pixeln Abstand stehen nicht 40, sondern 20 Pixel auseinander. Der größere Wert gewinnt, die Abstände addieren sich nicht. Waagerecht passiert das nicht. Wer den Effekt nicht will, arbeitet mit Innenabstand oder legt die Elemente in einen Flex- oder Grid-Container — dort gilt die Regel nicht.`,
     hinweis: `Ohne \`border-box\` wird ein Element mit \`width: 100%\` plus Innenabstand breiter als sein Container — und läuft über.`,
+    fehler: [
+      `Eine feste Höhe vorgeben, obwohl der Inhalt wachsen kann — der Text läuft dann heraus.`,
+      `Abstände abwechselnd oben und unten setzen; besser konsequent in eine Richtung.`,
+      `Einen Rahmen erst beim Überfahren hinzufügen — dann springt das Layout. Besser vorher durchsichtig setzen.`,
+    ],
   },
   css_farbe: {
     intro: `**Farbe** trägt Bedeutung — aber nie allein. Was nur über Farbe unterschieden wird, verschwindet für einen Teil der Lesenden.`,
@@ -5795,8 +5884,16 @@ const TOPIC_THEORY = {
       `Farben lassen sich als Name, als Hex-Wert oder über RGB und HSL angeben.`,
       `Der vierte Wert steuert die Deckkraft.`,
       `Der Kontrast zwischen Text und Hintergrund entscheidet über die Lesbarkeit.`,
+      `HSL ist zum Nachdenken gemacht: Farbton, Sättigung, Helligkeit — Abstufungen entstehen durch Ändern eines einzigen Werts.`,
+      `Farben gehören einmal als Variable definiert und danach nur noch benutzt.`,
     ],
+    vertiefung: `Für Fließtext gilt ein Kontrastverhältnis von mindestens 4,5:1, für große Schrift 3:1. Das ist keine Geschmacksfrage, sondern messbar — jedes Entwicklerwerkzeug im Browser zeigt den Wert an. Hellgrau auf Weiß fällt fast immer durch. Wer im Dunkelmodus dieselbe Palette verwendet, prüft am besten beide Richtungen: Ein Blau, das auf Weiß gut liest, ist auf Schwarz oft zu dunkel.`,
     hinweis: `Ein Fehlerfeld, das nur rot umrandet ist, sagt bei Rot-Grün-Schwäche gar nichts. Eine Meldung daneben schon.`,
+    fehler: [
+      `Rot und Grün als einziges Unterscheidungsmerkmal — für einen Teil der Lesenden sehen sie gleich aus.`,
+      `Zu geringer Kontrast, weil es auf dem eigenen hellen Bildschirm noch geht.`,
+      `Dieselbe Farbe an zwanzig Stellen hart eingetragen und später einzeln nachziehen müssen.`,
+    ],
   },
   css_flex: {
     intro: `**Flexbox** ordnet Elemente entlang einer Achse an und verteilt den Platz dazwischen. Das ist das Werkzeug für Leisten, Karten und Knopfgruppen.`,
@@ -5804,8 +5901,16 @@ const TOPIC_THEORY = {
       `Die Hauptachse bestimmt die Richtung, die Querachse steht senkrecht dazu.`,
       `Verteilen entlang der Hauptachse, Ausrichten quer dazu.`,
       `Abstände setzt man mit \`gap\` statt mit Außenabständen an jedem Kind.`,
+      `\`justify-content\` verteilt entlang der Hauptachse, \`align-items\` quer dazu — das zu verwechseln ist der häufigste Fehler.`,
+      `\`gap\` ersetzt Abstände über Außenabstände und lässt keinen Rest am Rand übrig.`,
     ],
+    vertiefung: `Flexbox denkt in einer Richtung. Sobald sowohl Zeilen als auch Spalten aufgehen sollen, ist Grid das passendere Werkzeug — und umgekehrt: Eine Navigationsleiste, eine Knopfreihe, eine Karte mit Bild und Text nebeneinander sind Flexbox-Fälle. Die Achse wird über \`flex-direction\` umgeschaltet, und damit tauschen \`justify-content\` und \`align-items\` ihre Bedeutung.`,
     hinweis: `Senkrecht zu zentrieren war jahrelang ein Kunststück. Mit Flexbox sind es zwei Zeilen.`,
+    fehler: [
+      `Feste Breiten in einem Flex-Container — genau die Anpassung, für die er gedacht ist, wird damit ausgeschaltet.`,
+      `\`align-items: center\` erwarten, wo \`justify-content: center\` gemeint war.`,
+      `Vergessen, dass Flex-Elemente standardmäßig nicht umbrechen (\`flex-wrap\`).`,
+    ],
   },
   css_grid: {
     intro: `**Grid** teilt eine Fläche in Zeilen und Spalten. Anders als Flexbox arbeitet es in zwei Richtungen gleichzeitig.`,
@@ -5813,8 +5918,16 @@ const TOPIC_THEORY = {
       `Spalten und Zeilen werden am Container festgelegt.`,
       `Die Einheit \`fr\` verteilt den freien Platz in Anteilen.`,
       `Elemente lassen sich über mehrere Spalten oder Zeilen spannen.`,
+      `\`fr\` verteilt den übrigen Platz — anders als Prozentwerte rechnet es Abstände korrekt mit ein.`,
+      `\`repeat(auto-fit, minmax(200px, 1fr))\` ergibt ein Raster, das ohne eine einzige Media Query umbricht.`,
     ],
+    vertiefung: `Grid erlaubt es, das Layout **im Stylesheet zu beschreiben** statt in der HTML-Struktur. Mit benannten Bereichen (\`grid-template-areas\`) steht die Anordnung als lesbares Muster da, und für schmale Bildschirme wird nur dieses Muster ausgetauscht — das HTML bleibt unangetastet. Das ist der eigentliche Gewinn gegenüber verschachtelten Containern.`,
     hinweis: `Grid für das Seitenraster, Flexbox für die Anordnung darin — beides zusammen deckt fast jedes Layout ab.`,
+    fehler: [
+      `Für eine einzelne Reihe ein Grid aufsetzen, wo Flexbox kürzer wäre.`,
+      `Feste Pixelspalten statt \`minmax\` — auf schmalen Geräten läuft das Raster über.`,
+      `Abstände über Außenabstände lösen, obwohl \`gap\` genau dafür da ist.`,
+    ],
   },
   css_position: {
     intro: `Standardmäßig fließen Elemente von oben nach unten. **Positionierung** nimmt ein Element gezielt aus diesem Fluss heraus.`,
@@ -5822,8 +5935,16 @@ const TOPIC_THEORY = {
       `\`relative\` verschiebt, ohne den Platz freizugeben.`,
       `\`absolute\` bezieht sich auf den nächsten positionierten Vorfahren.`,
       `\`fixed\` bleibt beim Scrollen stehen, \`sticky\` erst ab einem Punkt.`,
+      `Ein positioniertes Element verlässt den Fluss — der Platz, den es vorher belegt hat, verschwindet.`,
+      `\`sticky\` bleibt im Fluss und klebt erst ab einer Schwelle. Ohne Angabe von \`top\` passiert gar nichts.`,
     ],
+    vertiefung: `\`z-index\` wirkt nur innerhalb desselben Stapelkontexts — und ein solcher entsteht nicht nur durch Positionierung, sondern auch durch eine Deckkraft unter 1, durch \`transform\` oder durch einen Filter. Deshalb kann ein Element mit \`z-index: 9999\` trotzdem hinter einem mit \`z-index: 1\` liegen: Die beiden werden gar nicht miteinander verglichen. Wer das weiß, hört auf, die Zahl weiter hochzusetzen, und sucht stattdessen den Vorfahren, der den Kontext aufgemacht hat.`,
     hinweis: `Positionierung ist selten die Lösung für ein Layout. Für Anordnung sind Flexbox und Grid gemacht.`,
+    fehler: [
+      `\`absolute\` ohne \`position: relative\` am Elternelement — das Element landet irgendwo auf der Seite.`,
+      `Layouts vollständig über \`absolute\` bauen; sie brechen bei jedem längeren Text.`,
+      `Immer höhere \`z-index\`-Werte vergeben, statt die Stapelkontexte zu ordnen.`,
+    ],
   },
   css_responsive: {
     intro: `**Responsive Design** heißt: eine Seite, die sich an den verfügbaren Platz anpasst — nicht eine zweite Seite fürs Handy.`,
@@ -5831,8 +5952,16 @@ const TOPIC_THEORY = {
       `Der Grundstil gilt für alle, Media Queries ergänzen nach oben.`,
       `Umbruchpunkte richten sich nach dem Inhalt, nicht nach Gerätemodellen.`,
       `Bilder und Container brauchen eine Höchstbreite, damit nichts überläuft.`,
+      `Haltepunkte richten sich nach dem Inhalt, nicht nach Gerätenamen: Man ändert dort, wo es unschön wird.`,
+      `Ohne das Viewport-Meta-Tag im Kopfbereich wirkt keine einzige Media Query auf dem Telefon.`,
     ],
+    vertiefung: `Mobile first ist mehr als eine Reihenfolge: Die Grundregeln gelten für den kleinen Bildschirm, und Media Queries **ergänzen** für größere. Das führt fast von selbst zu weniger Code, weil die einfache Variante die Grundlage ist. Umgekehrt — vom Desktop aus nach unten — muss jede Regel wieder zurückgenommen werden, und genau dabei entstehen die Widersprüche.`,
     hinweis: `Ein Layout, das erst ab einer bestimmten Breite funktioniert, ist auf dem meistgenutzten Gerät kaputt.`,
+    fehler: [
+      `Das Viewport-Meta-Tag vergessen und sich wundern, warum die Seite auf dem Telefon herausgezoomt aussieht.`,
+      `Nur auf drei bekannte Gerätebreiten prüfen statt am Fenster zu ziehen.`,
+      `Bilder ohne \`max-width: 100%\` — sie sprengen jedes Layout.`,
+    ],
   },
   css_selektor: {
     intro: `Ein **Selektor** beantwortet die Frage: Für welche Elemente gilt diese Regel?`,
@@ -5840,8 +5969,16 @@ const TOPIC_THEORY = {
       `Nach Element, nach Klasse, nach id — von allgemein zu speziell.`,
       `Bei widersprüchlichen Regeln entscheidet die **Spezifität**, erst danach die Reihenfolge.`,
       `Pseudo-Klassen treffen Zustände wie „darübergefahren“ oder „angeklickt“.`,
+      `Spezifität entscheidet bei Gleichstand: ID schlägt Klasse, Klasse schlägt Element.`,
+      `\`!important\` ist kein Werkzeug, sondern eine Notbremse — es macht die nächste Änderung schwerer.`,
     ],
+    vertiefung: `Das *Cascading* im Namen meint genau diesen Vorgang: Mehrere Regeln treffen auf dasselbe Element zu, und der Browser entscheidet nach Herkunft, Spezifität und Reihenfolge. Wer die Spezifität flach hält — vor allem Klassen, kaum IDs, wenig Verschachtelung —, muss diese Entscheidung selten nachvollziehen. Wer sie hochtreibt, kämpft irgendwann gegen den eigenen Code.`,
     hinweis: `Wer Spezifität mit \`!important\` löst, verschiebt das Problem nur nach hinten. Meist ist der Selektor zu speziell geworden.`,
+    fehler: [
+      `Selektoren immer weiter verschachteln, bis nur noch \`!important\` hilft.`,
+      `Nach \`id\` gestalten, obwohl die Regel für mehrere Elemente gedacht ist.`,
+      `Übersehen, dass bei gleicher Spezifität die zuletzt notierte Regel gewinnt.`,
+    ],
   },
   css_text: {
     intro: `**Schrift** entscheidet mehr über Lesbarkeit als jede Farbe. Größe, Zeilenhöhe und Zeilenlänge wirken zusammen.`,
@@ -5849,8 +5986,16 @@ const TOPIC_THEORY = {
       `Relative Einheiten skalieren mit den Einstellungen der lesenden Person.`,
       `Eine Zeilenhöhe um 1.5 macht Fließtext deutlich lesbarer.`,
       `Eine Schriftfamilie wird als Liste angegeben — mit einer Ausweichschrift am Ende.`,
+      `Eine Zeilenhöhe ohne Einheit (\`1.5\`) rechnet sich je Element neu — bei \`24px\` erbt jedes Kind denselben festen Wert.`,
+      `60 bis 75 Zeichen pro Zeile sind angenehm; darüber verliert das Auge den Zeilenanfang.`,
     ],
+    vertiefung: `Schriftgrößen in \`rem\` beziehen sich auf die Grundgröße des Browsers — und genau die stellen Menschen mit eingeschränktem Sehvermögen um. Wer in Pixeln festlegt, hebelt diese Einstellung aus. \`clamp()\` verbindet beides: eine Mindestgröße, eine mit dem Fenster wachsende Größe und eine Obergrenze, alles in einer Zeile und ohne Media Query.`,
     hinweis: `Feste Pixelgrößen ignorieren, dass jemand die Schrift im Browser größer gestellt hat. Genau darauf sind viele angewiesen.`,
+    fehler: [
+      `Schriftgrößen in Pixeln festnageln und damit die Browsereinstellung übergehen.`,
+      `Zu lange Zeilen, weil der Container die volle Fensterbreite einnimmt.`,
+      `Mehrere Schriftfamilien mischen, ohne einen Rückfallwert anzugeben.`,
+    ],
   },
   datei: {
     intro: `Beim Arbeiten mit **Dateien** wird aus flüchtigen Daten etwas Bleibendes. Der Ablauf ist immer derselbe: öffnen, lesen oder schreiben, schließen.`,
@@ -5858,8 +6003,16 @@ const TOPIC_THEORY = {
       `Der Modus entscheidet, ob gelesen, überschrieben oder angehängt wird.`,
       `Große Dateien liest man zeilenweise, nicht auf einmal in den Speicher.`,
       `Sprachen bieten eine Form an, die das Schließen selbst übernimmt — auch wenn zwischendrin ein Fehler auftritt.`,
+      `Öffnen, arbeiten, schließen — und das Schließen darf auch dann nicht ausfallen, wenn dazwischen etwas schiefgeht.`,
+      `Zeilenweise lesen hält den Speicherbedarf klein, ganz gleich wie groß die Datei ist.`,
     ],
+    vertiefung: `Die Zeichenkodierung ist der Grund für die meisten rätselhaften Datei-Fehler. Wird eine Datei als UTF-8 geschrieben und als etwas anderes gelesen, werden aus Umlauten Zeichensalat — ohne Fehlermeldung, denn technisch war alles gültig. Die Kodierung deshalb immer ausdrücklich angeben, statt sich auf die Voreinstellung des Systems zu verlassen.`,
     hinweis: `Ein Dateiname, der aus einer Nutzereingabe stammt, gehört geprüft. Sonst lässt sich damit aus dem vorgesehenen Verzeichnis ausbrechen.`,
+    fehler: [
+      `Die Datei nicht schließen, weil vorher ein Fehler geworfen wurde.`,
+      `Eine große Datei komplett in den Speicher laden, obwohl zeilenweise gereicht hätte.`,
+      `Im Schreibmodus öffnen und damit den vorhandenen Inhalt löschen, wo Anhängen gemeint war.`,
+    ],
   },
   fe_effekt: {
     intro: `Ein **Effekt** ist alles, was über das reine Anzeigen hinausgeht: Daten laden, einen Zeitgeber starten, auf Ereignisse des Fensters hören.`,
@@ -5867,8 +6020,16 @@ const TOPIC_THEORY = {
       `Ein Effekt läuft nach dem Zeichnen, nicht währenddessen.`,
       `Die Abhängigkeiten bestimmen, wann er erneut läuft.`,
       `Was ein Effekt anlegt, muss er beim Aufräumen wieder entfernen.`,
+      `Eine leere Abhängigkeitsliste heißt einmalig, eine gefüllte heißt bei Änderung dieser Werte, gar keine heißt nach jedem Zeichnen.`,
+      `Setzt ein Effekt selbst einen Wert, der in seiner eigenen Abhängigkeitsliste steht, entsteht eine Endlosschleife.`,
     ],
+    vertiefung: `Die Abhängigkeitsliste ist keine Formalität, sondern die Antwort auf die Frage *wann soll das noch einmal passieren*. Eine leere Liste heißt einmalig, eine gefüllte heißt bei jeder Änderung dieser Werte, gar keine Liste heißt nach jedem Zeichnen. Der klassische Fehler — eine Endlosschleife — entsteht, wenn der Effekt selbst einen Wert ändert, der in seiner eigenen Liste steht.`,
     hinweis: `Ein Effekt ohne Aufräumen hinterlässt Zeitgeber und Zuhörer, die weiterlaufen — auch wenn die Komponente längst weg ist.`,
+    fehler: [
+      `Aufräumen vergessen: Der Zeitgeber läuft weiter, obwohl die Komponente längst weg ist.`,
+      `Einen Wert benutzen, der nicht in der Abhängigkeitsliste steht — der Effekt arbeitet dann mit veralteten Daten.`,
+      `Daten laden, ohne den Fall zu behandeln, dass die Komponente vorher verschwindet.`,
+    ],
   },
   fe_event: {
     intro: `**Ereignisse** verbinden das, was jemand tut, mit dem, was passieren soll.`,
@@ -5876,8 +6037,16 @@ const TOPIC_THEORY = {
       `Übergeben wird die Funktion selbst, nicht ihr Ergebnis.`,
       `Das Ereignisobjekt trägt die Einzelheiten — welches Element, welcher Wert.`,
       `Manche Standardaktionen des Browsers muss man ausdrücklich unterbinden.`,
+      `Der Ereignis-Behandler bekommt das Ereignis übergeben — daraus kommen Zielelement, Wert und Tastendruck.`,
+      `Eine Funktion wird übergeben, nicht aufgerufen: Klammern beim Zuweisen führen sie sofort aus.`,
     ],
+    vertiefung: `Ereignisse steigen nach oben: Ein Klick auf einen Knopf ist auch ein Klick auf jeden Container darüber. Das lässt sich nutzen — ein einziger Behandler an der Liste statt einem pro Eintrag — und stört, wenn ein Klick im Inneren versehentlich ein äußeres Menü schließt. \`stopPropagation\` beendet den Aufstieg, \`preventDefault\` verhindert die Standardreaktion des Browsers. Das sind zwei verschiedene Dinge.`,
     hinweis: `Klammern hinter dem Funktionsnamen rufen sie sofort beim Zeichnen auf. Das ist einer der häufigsten Anfängerfehler.`,
+    fehler: [
+      `\`onClick={machWas()}\` statt \`onClick={machWas}\` — die Funktion läuft dann beim Zeichnen.`,
+      `Beim Absenden eines Formulars \`preventDefault\` vergessen; die Seite lädt neu.`,
+      `Für jeden Listeneintrag einen eigenen Behandler registrieren, statt einen an der Liste.`,
+    ],
   },
   fe_formular: {
     intro: `Ein **kontrolliertes Formularfeld** holt seinen Wert aus dem Zustand und meldet jede Änderung dorthin zurück.`,
@@ -5885,8 +6054,16 @@ const TOPIC_THEORY = {
       `Anzeige und Daten können dadurch nicht auseinanderlaufen.`,
       `Prüfungen und Formatierungen greifen an genau einer Stelle.`,
       `Ein Absenden setzt man ab, indem man die Standardaktion des Browsers unterbindet.`,
+      `Ohne \`onChange\` bleibt ein kontrolliertes Feld unveränderlich — der Zustand überschreibt jede Eingabe.`,
+      `Beim Absenden gilt der Zustand als Wahrheit, nicht das, was im Feld steht.`,
     ],
+    vertiefung: `Prüfungen im Browser sind Bequemlichkeit, keine Sicherheit. Wer die Entwicklerwerkzeuge öffnet, schickt jeden beliebigen Wert ab. Die verbindliche Prüfung gehört deshalb auf den Server — die im Formular ist dafür da, dass niemand erst nach dem Absenden erfährt, dass etwas fehlt. Beides zu haben ist richtig; nur eines zu haben, ist entweder unhöflich oder unsicher.`,
     hinweis: `Ohne Zustand kennt nur der Browser den Wert. Spätestens beim Zurücksetzen oder Vorbefüllen wird das zum Problem.`,
+    fehler: [
+      `\`value\` setzen, aber \`onChange\` weglassen — das Feld reagiert dann auf nichts.`,
+      `Sich auf \`required\` als Sicherheitsmerkmal verlassen.`,
+      `Bei jedem Tastendruck prüfen und meckern, statt beim Verlassen des Feldes.`,
+    ],
   },
   fe_liste: {
     intro: `Aus einer **Liste von Daten** wird eine Liste von Elementen. Das ist der häufigste Fall überhaupt in einer Oberfläche.`,
@@ -5894,8 +6071,16 @@ const TOPIC_THEORY = {
       `Die Daten werden auf Elemente abgebildet.`,
       `Jedes Element braucht eine stabile Kennung.`,
       `Die Kennung soll aus den Daten kommen — der Listenindex ändert sich beim Umsortieren.`,
+      `Der Schlüssel muss über die Zeit stabil bleiben — der Listenindex ist es nicht, sobald sortiert oder gelöscht wird.`,
+      `Aus Daten wird Anzeige, nie umgekehrt: Erst die Liste filtern, dann zeichnen.`,
     ],
+    vertiefung: `Der Schlüssel sagt dem Framework, welches Element von vorher welchem von jetzt entspricht. Stimmt die Zuordnung nicht, werden Inhalte zwar richtig angezeigt, aber innerer Zustand wandert: Der Haken in einem Kontrollkästchen springt in die falsche Zeile, ein Eingabefeld behält den Text des Nachbarn. Deshalb eine ID aus den Daten nehmen, nicht die Position.`,
     hinweis: `Ohne stabile Kennung ordnet das Framework beim Aktualisieren den Zustand falsch zu. Eingaben landen dann in der falschen Zeile.`,
+    fehler: [
+      `Den Index als Schlüssel verwenden und sich über springende Eingaben wundern.`,
+      `In der Anzeige filtern und sortieren, statt vorher — das wird schnell unlesbar.`,
+      `Vergessen, was bei einer leeren Liste angezeigt werden soll.`,
+    ],
   },
   fe_props: {
     intro: `Eine **Komponente** ist ein wiederverwendbarer Baustein der Oberfläche. Werte kommen von außen hinein — die Komponente liest sie, ändert sie aber nicht.`,
@@ -5903,8 +6088,16 @@ const TOPIC_THEORY = {
       `Von außen gesetzte Werte gehören dem Elternteil.`,
       `Eine Komponente beschreibt, wie die Anzeige zu einem gegebenen Zustand aussieht.`,
       `Kleine Komponenten mit einer Aufgabe lassen sich leichter wiederverwenden und prüfen.`,
+      `Werte von außen sind für die Komponente unveränderlich — wer ändern will, meldet das nach oben.`,
+      `Eine Komponente mit acht Werten von außen ist meist zwei Komponenten.`,
     ],
+    vertiefung: `Die Richtung ist entscheidend: Daten fließen nach unten, Meldungen nach oben. Eine Komponente, die ihre eigenen Eingangswerte ändert, durchbricht das — und danach ist nicht mehr nachvollziehbar, wer welchen Wert gesetzt hat. Stattdessen bekommt sie eine Funktion mitgegeben und ruft sie auf; die Entscheidung bleibt dort, wo die Daten liegen.`,
     hinweis: `Wenn eine Komponente ihre Eingabewerte ändern will, gehört der Zustand eine Ebene höher.`,
+    fehler: [
+      `Einen übergebenen Wert direkt verändern.`,
+      `Denselben Zustand an zwei Stellen halten — er läuft garantiert auseinander.`,
+      `Alles durch fünf Ebenen durchreichen, statt den Zustand höher zu legen.`,
+    ],
   },
   fe_state: {
     intro: `**Zustand** ist alles, was sich über die Zeit ändert. Er ist die einzige Wahrheit — die Anzeige folgt ihm, nicht umgekehrt.`,
@@ -5912,8 +6105,16 @@ const TOPIC_THEORY = {
       `Eine Änderung läuft immer über die vorgesehene Funktion, nie durch direktes Überschreiben.`,
       `Nur dadurch weiß das Framework, dass neu gezeichnet werden muss.`,
       `Zustand gehört so weit unten wie möglich — und nur so weit oben wie nötig.`,
+      `Zustand wird ersetzt, nicht verändert: eine neue Liste zurückgeben statt in die alte zu schreiben.`,
+      `Was sich aus vorhandenem Zustand berechnen lässt, gehört nicht selbst in den Zustand.`,
     ],
+    vertiefung: `Änderungen werden gesammelt und gemeinsam angewendet. Wer unmittelbar nach dem Setzen den alten Wert ausliest, sieht deshalb den Stand von vorher — das ist kein Fehler, sondern der Grund, warum die Oberfläche nicht bei jedem Tastendruck dreimal neu zeichnet. Hängt der neue Wert vom alten ab, übergibt man deshalb eine Funktion statt eines Werts.`,
     hinweis: `Werte, die sich aus dem Zustand berechnen lassen, gehören nicht noch einmal in den Zustand. Sonst laufen sie auseinander.`,
+    fehler: [
+      `Eine Liste mit \`push\` erweitern — das ändert die alte, und nichts zeichnet neu.`,
+      `Zweimal hintereinander auf Basis des alten Werts setzen; nur die letzte Änderung kommt an.`,
+      `Abgeleitete Werte doppelt speichern und danach synchron halten müssen.`,
+    ],
   },
   fehler: {
     intro: `**Fehlerbehandlung** trennt den normalen Ablauf vom Ausnahmefall. Statt abzustürzen, reagiert das Programm gezielt.`,
@@ -5921,8 +6122,16 @@ const TOPIC_THEORY = {
       `Riskanter Code steht in einem eigenen Block, die Behandlung daneben.`,
       `Je genauer der abgefangene Fehlertyp, desto aussagekräftiger die Reaktion.`,
       `Aufräumen (Datei schließen, Verbindung trennen) gehört in den Zweig, der immer läuft.`,
+      `Nur fangen, was man auch behandeln kann — der Rest gehört nach oben durchgereicht.`,
+      `Eine Fehlermeldung sagt, was schiefging und was jetzt zu tun ist. „Ein Fehler ist aufgetreten“ sagt keins von beidem.`,
     ],
+    vertiefung: `Ein leerer Fangblock ist schlimmer als gar keine Behandlung: Das Programm läuft weiter, obwohl etwas fehlgeschlagen ist, und der eigentliche Fehler taucht drei Schritte später an einer Stelle auf, die damit nichts zu tun hat. Wer nicht weiß, was zu tun ist, lässt den Fehler durch — die aufrufende Stelle weiß oft mehr über den Zusammenhang.`,
     hinweis: `Fehler pauschal zu verschlucken ist schlimmer als ein Absturz: Das Problem bleibt, nur die Ursache ist nicht mehr zu sehen.`,
+    fehler: [
+      `Alles fangen und nichts tun — der Fehler verschwindet, das Problem bleibt.`,
+      `Den ursprünglichen Fehler beim Weiterwerfen verlieren; der Stacktrace zeigt dann ins Leere.`,
+      `Erwartbare Fälle wie „Datei nicht gefunden“ als Ausnahme behandeln, statt sie zu prüfen.`,
+    ],
   },
   funktion: {
     intro: `Eine **Funktion** ist ein benannter Codeblock, den du beliebig oft aufrufen kannst. Sie ist der wichtigste Baustein gegen Wiederholung.`,
@@ -5930,8 +6139,16 @@ const TOPIC_THEORY = {
       `**Parameter** sind Platzhalter in der Definition, **Argumente** die echten Werte beim Aufruf.`,
       `Ein Rückgabewert macht das Ergebnis weiterverwendbar; eine Ausgabe auf dem Bildschirm tut das nicht.`,
       `Eine gute Funktion tut genau eine Sache — das macht sie testbar und wiederverwendbar.`,
+      `Der Name beschreibt, was herauskommt — \`berechneSumme\` statt \`verarbeite\`.`,
+      `Eine Funktion, die man nicht in einem Satz beschreiben kann, macht zu viel.`,
     ],
+    vertiefung: `Eine Funktion, die für dieselbe Eingabe immer dasselbe liefert und sonst nichts anfasst, lässt sich prüfen, wiederverwenden und gefahrlos verschieben. Sobald sie nebenbei etwas ändert — eine globale Variable, eine Datei, den Bildschirm —, gilt das alles nicht mehr. Beides wird gebraucht; der Unterschied sollte nur nicht dem Zufall überlassen bleiben.`,
     hinweis: `Ausgeben und Zurückgeben sind zweierlei. Wer nur ausgibt, kann mit dem Ergebnis nicht weiterrechnen.`,
+    fehler: [
+      `Das \`return\` vergessen — zurück kommt dann nichts, und der Fehler zeigt sich erst beim Aufrufer.`,
+      `Zu viele Parameter; ab vier lohnt sich fast immer ein zusammenfassendes Objekt.`,
+      `Nebenbei etwas ändern, was der Name nicht erwarten lässt.`,
+    ],
   },
   generics: {
     intro: `**Generics** machen Code für viele Typen nutzbar, ohne die Typprüfung aufzugeben. Der Typ wird zum Parameter.`,
@@ -5939,8 +6156,16 @@ const TOPIC_THEORY = {
       `Der Aufrufer legt fest, mit welchem Typ gearbeitet wird.`,
       `Der Rückgabetyp bleibt dadurch bekannt — anders als bei einem „irgendetwas“-Typ.`,
       `Einschränkungen legen fest, was der Typ mindestens können muss.`,
+      `Der Typ wird beim Aufruf festgelegt, nicht beim Schreiben der Funktion.`,
+      `Eine Einschränkung (\`extends\`) sagt, was der Typ mindestens können muss.`,
     ],
+    vertiefung: `Der Gewinn zeigt sich beim Aufruf: \`ersterEintrag([1, 2, 3])\` liefert eine Zahl, \`ersterEintrag(["a"])\` eine Zeichenkette — und der Editor weiß das, ohne dass irgendwo etwas doppelt steht. Die Alternative wäre ein Allerwelts-Typ, der jede Prüfung ausschaltet, oder dieselbe Funktion in fünf Fassungen. Generics sind der Weg dazwischen.`,
     hinweis: `Generics lohnen sich, sobald derselbe Ablauf für mehrere Typen gebraucht wird. Vorher machen sie den Code nur schwerer lesbar.`,
+    fehler: [
+      `Auf \`any\` ausweichen, sobald es kompliziert wird — damit ist die Typprüfung weg.`,
+      `Einen Typparameter einführen, der nur einmal vorkommt; dann bringt er nichts.`,
+      `Einschränkungen vergessen und im Rumpf Eigenschaften nutzen, die es nicht geben muss.`,
+    ],
   },
   html_formular: {
     intro: `Ein **Formular** sammelt Eingaben und schickt sie weg. Es ist die Stelle, an der aus einer Seite eine Anwendung wird.`,
@@ -5948,8 +6173,16 @@ const TOPIC_THEORY = {
       `Jedes Feld braucht eine verbundene Beschriftung.`,
       `Der Typ eines Feldes bestimmt Tastatur, Prüfung und Darstellung.`,
       `Der \`name\` entscheidet, unter welchem Schlüssel der Wert ankommt.`,
+      `Jedes Feld braucht ein \`<label>\` mit \`for\` — sonst ist unklar, wozu es gehört.`,
+      `Ohne \`name\` wird ein Feld beim Absenden nicht mitgeschickt.`,
     ],
+    vertiefung: `Der richtige \`type\` erspart eine Menge Arbeit: \`email\` prüft die Form, \`number\` bringt Pfeiltasten mit, \`date\` einen Kalender, und auf dem Telefon erscheint jeweils die passende Tastatur. Das ist keine Kosmetik — wer auf einem Mobilgerät eine Telefonnummer über die Buchstabentastatur eingeben muss, bricht ab. Ein Textfeld für alles ist der teuerste Standardwert überhaupt.`,
     hinweis: `Die Prüfung im Browser ist Bequemlichkeit, keine Sicherheit. Auf dem Server muss noch einmal geprüft werden.`,
+    fehler: [
+      `Beschriftungen als reinen Text daneben schreiben statt als \`<label>\`.`,
+      `\`name\` vergessen — die Eingabe kommt nie an.`,
+      `Den Knopf ohne \`type\` lassen; in einem Formular sendet er dann unbeabsichtigt ab.`,
+    ],
   },
   html_link: {
     intro: `**Links** sind das, was das Web ausmacht. Ein Link verbindet Dokumente miteinander.`,
@@ -5957,8 +6190,16 @@ const TOPIC_THEORY = {
       `Das Ziel steht im \`href\` — relativ innerhalb der Seite, absolut nach außen.`,
       `Der Linktext soll auch für sich allein verständlich sein.`,
       `Ein Sprungziel innerhalb der Seite wird über die \`id\` angesteuert.`,
+      `Bei \`target="_blank"\` gehört \`rel="noopener"\` dazu — sonst bekommt die neue Seite Zugriff auf die alte.`,
+      `Ein Link führt woandershin, ein Knopf löst etwas aus. Das zu vertauschen bricht Tastaturbedienung und Rechtsklick.`,
     ],
+    vertiefung: `Wer eine Seite mit Hilfsmitteln bedient, lässt sich oft nur die Links vorlesen — ohne den Text drumherum. Zwanzigmal „mehr“ ist dann eine Liste aus zwanzig identischen Einträgen. Beschreibende Linktexte kosten nichts und ersparen genau das. Bei \`target="_blank"\` gehört \`rel="noopener"\` dazu, sonst bekommt die neue Seite Zugriff auf die alte.`,
     hinweis: `„Hier klicken“ sagt nichts. Screenreader lesen Links oft am Stück vor — dann steht dort zehnmal dasselbe.`,
+    fehler: [
+      `\`<div onclick>\` statt \`<a>\` — nicht per Tastatur erreichbar, nicht in neuem Tab zu öffnen.`,
+      `\`target="_blank"\` ohne \`rel="noopener"\`.`,
+      `Interne Verweise absolut schreiben; beim Umzug der Seite bricht dann alles.`,
+    ],
   },
   html_liste: {
     intro: `**Listen** ordnen Aufzählungen. Der Browser und Hilfsmittel sagen dadurch an, wie viele Punkte folgen.`,
@@ -5966,8 +6207,16 @@ const TOPIC_THEORY = {
       `Ungeordnet, wenn die Reihenfolge egal ist.`,
       `Geordnet, wenn Schritt 1 vor Schritt 2 kommt.`,
       `Listen lassen sich verschachteln — jede innere Liste steht in einem Eintrag.`,
+      `Zwischen \`<ul>\` und \`<li>\` gehört nichts anderes.`,
+      `Eine Navigation ist inhaltlich eine Liste von Links — auch wenn sie waagerecht aussieht.`,
     ],
+    vertiefung: `Hilfsmittel sagen die Anzahl der Einträge an, bevor sie den ersten vorlesen: „Liste mit sieben Einträgen“. Diese Information entsteht allein aus der Auszeichnung. Eine Reihe von \`<div>\`-Elementen mit Aufzählungspunkten aus CSS sieht identisch aus und sagt gar nichts. Die Beschreibungsliste \`<dl>\` ist der übersehene dritte Typ — richtig für Begriff-und-Erklärung-Paare.`,
     hinweis: `Eine Navigation ist fast immer eine Liste von Links. Das ist kein Zufall, sondern die passende Struktur.`,
+    fehler: [
+      `Aufzählungen mit \`<br>\` bauen statt mit einer Liste.`,
+      `Nummerierte Reihenfolge mit \`<ul>\` auszeichnen, obwohl \`<ol>\` gemeint ist.`,
+      `Die Punkte per CSS entfernen und deshalb glauben, es sei keine Liste mehr.`,
+    ],
   },
   html_medien: {
     intro: `**Bilder und Medien** brauchen mehr als eine Quelle: Sie brauchen eine Beschreibung und eine Vorstellung davon, was passiert, wenn sie fehlen.`,
@@ -5975,8 +6224,16 @@ const TOPIC_THEORY = {
       `Der Alternativtext beschreibt, was zu sehen ist — nicht, dass es ein Bild ist.`,
       `Breite und Höhe im Markup verhindern, dass die Seite beim Laden springt.`,
       `Rein dekorative Bilder bekommen einen leeren Alternativtext, damit sie übersprungen werden.`,
+      `\`loading="lazy"\` lädt ein Bild erst, wenn es in Sichtweite kommt — beim ersten Bild ganz oben ist genau das falsch.`,
+      `\`<picture>\` liefert schmalen Bildschirmen eine kleinere Datei, statt ein großes Bild herunterzurechnen.`,
     ],
+    vertiefung: `\`loading="lazy"\` lädt Bilder erst, wenn sie in Sichtweite kommen. Bei einer Seite mit dreißig Bildern ist das der Unterschied zwischen sofort benutzbar und sekundenlangem Warten. Für das erste, große Bild oben gilt das Gegenteil: Es soll sofort geladen werden. Und \`<picture>\` erlaubt, für schmale Bildschirme eine kleinere Datei auszuliefern statt ein riesiges Bild herunterzurechnen.`,
     hinweis: `Ein Bild ohne Alternativtext ist für alle unsichtbar, die es nicht sehen können — und das sind mehr, als man denkt.`,
+    fehler: [
+      `\`alt\` weglassen — für Bildschirmleser ist das Bild dann der Dateiname.`,
+      `Ein 4000 Pixel breites Foto ausliefern und per CSS auf 400 verkleinern.`,
+      `Video ohne Untertitel und ohne \`controls\` einbinden.`,
+    ],
   },
   html_meta: {
     intro: `Der **Kopfbereich** enthält, was nicht angezeigt wird, aber alles beeinflusst: Titel, Kodierung, Beschreibung und Vorschaubild.`,
@@ -5984,8 +6241,16 @@ const TOPIC_THEORY = {
       `Der Titel erscheint im Tab und als Überschrift in Suchergebnissen.`,
       `Die Zeichenkodierung gehört ganz nach oben — sonst zerfallen Umlaute.`,
       `Die Viewport-Angabe ist die Voraussetzung dafür, dass eine Seite auf dem Handy funktioniert.`,
+      `\`<title>\` ist die wichtigste Zeile der Seite: Suchergebnis, Tab-Beschriftung und Lesezeichen in einem.`,
+      `\`lang\` am \`<html>\` steuert Silbentrennung und die Aussprache im Bildschirmleser.`,
     ],
+    vertiefung: `Die Beschreibung im Kopfbereich beeinflusst keine Platzierung in Suchmaschinen, aber sehr wohl, ob jemand klickt — sie steht als Text unter dem Treffer. Open-Graph-Angaben bestimmen, wie ein geteilter Link in Messengern und sozialen Netzwerken aussieht. Ohne sie zieht sich die Vorschau irgendein Bild von der Seite, und das ist selten das richtige.`,
     hinweis: `Ohne die Viewport-Angabe zeigt ein Handy die Seite verkleinert wie am Bildschirm — kein CSS der Welt hilft dagegen.`,
+    fehler: [
+      `Auf allen Unterseiten denselben Titel verwenden.`,
+      `\`lang\` vergessen; Umlaute werden dann teils falsch vorgelesen.`,
+      `Das Viewport-Meta-Tag weglassen und sich über die Darstellung auf dem Telefon wundern.`,
+    ],
   },
   html_semantik: {
     intro: `**Semantisches HTML** benennt die Rolle eines Bereichs. Der Unterschied zu einem \`div\` ist nicht sichtbar — aber überall dort spürbar, wo die Seite nicht mit den Augen gelesen wird.`,
@@ -5993,8 +6258,16 @@ const TOPIC_THEORY = {
       `Kopf-, Haupt-, Seiten- und Fußbereich haben eigene Elemente.`,
       `Ein eigenständiger Beitrag ist ein \`article\`, ein thematischer Abschnitt eine \`section\`.`,
       `Hilfsmittel bauen daraus eine Übersicht, über die man direkt springen kann.`,
+      `\`<main>\` gibt es genau einmal pro Seite — dorthin springt die Tastaturbedienung.`,
+      `Überschriftenebenen beschreiben die Gliederung, nicht die Schriftgröße. Keine Ebene überspringen.`,
     ],
+    vertiefung: `Semantische Elemente erzeugen Sprungmarken. Wer eine Seite mit einem Bildschirmleser bedient, kann direkt zur Navigation, zum Hauptinhalt oder zur Fußzeile springen — vorausgesetzt, diese Bereiche sind als solche ausgezeichnet. Bei einer Seite aus lauter \`<div>\`-Elementen bleibt nur, alles der Reihe nach durchzugehen. Der sichtbare Unterschied ist null, der Bedienunterschied enorm.`,
     hinweis: `Ein \`div\` mit passender Klasse sieht gleich aus und sagt nichts. Der Unterschied zeigt sich erst bei denen, die auf die Struktur angewiesen sind.`,
+    fehler: [
+      `Alles in \`<div>\` packen und die Bedeutung allein über Klassennamen ausdrücken.`,
+      `Von \`<h1>\` direkt zu \`<h4>\` springen, weil die Größe gerade passt.`,
+      `Mehrere \`<main>\`-Bereiche auf einer Seite.`,
+    ],
   },
   html_tabelle: {
     intro: `Eine **Tabelle** stellt Daten in Zeilen und Spalten dar. Sie ist für Daten gedacht, nicht für Layout.`,
@@ -6002,8 +6275,16 @@ const TOPIC_THEORY = {
       `Kopfzellen benennen, wofür eine Spalte oder Zeile steht.`,
       `Eine Beschriftung sagt, worum es in der Tabelle überhaupt geht.`,
       `Kopf-, Rumpf- und Fußbereich gliedern größere Tabellen.`,
+      `\`<th>\` mit \`scope\` sagt, ob eine Kopfzelle für eine Spalte oder eine Zeile gilt.`,
+      `\`<caption>\` steht als erstes Kind der Tabelle und benennt, worum es geht.`,
     ],
+    vertiefung: `Beim Vorlesen einer Datenzelle nennt ein Bildschirmleser die zugehörige Kopfzelle mit: „Umsatz: 4200“. Diese Zuordnung entsteht aus \`<th>\` und \`scope\` — ohne sie kommen nackte Zahlen ohne Bedeutung. Auf schmalen Bildschirmen bleibt eine Tabelle sperrig; die übliche Lösung ist, sie in einem Container mit waagerechter Bildlaufleiste zu belassen, statt sie umzubrechen.`,
     hinweis: `Layout mit Tabellen zu bauen war vor zwanzig Jahren üblich und ist heute ein Problem — für Bildschirmleser wie für schmale Bildschirme.`,
+    fehler: [
+      `Tabellen fürs Layout benutzen — die Vorlesereihenfolge wird unbrauchbar.`,
+      `Kopfzeilen als \`<td>\` mit fetter Schrift auszeichnen.`,
+      `\`<caption>\` weglassen; die Tabelle steht dann ohne Erklärung im Raum.`,
+    ],
   },
   html_text: {
     intro: `HTML gibt Text eine **Struktur**. Überschriften und Absätze sagen nicht, wie etwas aussieht, sondern welche Rolle es spielt.`,
@@ -6011,8 +6292,16 @@ const TOPIC_THEORY = {
       `Überschriften bilden eine Gliederung von \`h1\` bis \`h6\` — ohne Stufen zu überspringen.`,
       `Ein Absatz endet, wo der Gedanke endet, nicht wo die Zeile umbricht.`,
       `Hervorhebungen tragen Bedeutung: wichtig, betont, hervorgehoben.`,
+      `Genau eine \`<h1>\` pro Seite — sie benennt, worum es auf dieser Seite überhaupt geht.`,
+      `\`<br>\` gehört dorthin, wo der Umbruch zum Inhalt gehört: Adressen, Gedichte, Liedzeilen.`,
     ],
+    vertiefung: `Bildschirmleser bieten an, nur die Überschriften vorzulesen — daraus entsteht eine Inhaltsübersicht, mit der sich eine lange Seite überfliegen lässt, ohne alles zu hören. Diese Übersicht ist genau die Abfolge der Ebenen im HTML. Eine übersprungene Stufe erzeugt darin eine Lücke, eine nach Optik gewählte Ebene eine falsche Verschachtelung. Zu sehen ist davon nichts, und deshalb fällt es beim Bauen nie auf.`,
     hinweis: `Wer Überschriften nach Schriftgröße aussucht, zerstört die Gliederung. Das Aussehen kommt aus CSS.`,
+    fehler: [
+      `Überschriftenebenen nach der gewünschten Schriftgröße auswählen.`,
+      `Zeilenumbrüche mit \`<br>\` erzwingen, wo Absätze gemeint sind.`,
+      `Text fett auszeichnen, statt eine Überschrift zu verwenden.`,
+    ],
   },
   klasse: {
     intro: `Eine **Klasse** ist der Bauplan für Objekte: Sie beschreibt, welche Daten zusammengehören und was sich damit tun lässt.`,
@@ -6020,8 +6309,16 @@ const TOPIC_THEORY = {
       `Der **Konstruktor** legt fest, womit ein neues Objekt startet.`,
       `Felder halten den Zustand, Methoden das Verhalten.`,
       `Von einer Klasse lassen sich beliebig viele Objekte erzeugen — jedes mit eigenen Daten.`,
+      `Der Konstruktor sorgt dafür, dass ein Objekt von Anfang an vollständig ist.`,
+      `Felder, die niemanden von außen etwas angehen, bleiben innen — sonst hängt bald alles an ihnen.`,
     ],
+    vertiefung: `Eine Klasse ist der Bauplan, ein Objekt das gebaute Ding. Von einem Bauplan lassen sich beliebig viele Objekte anlegen, die dieselben Fähigkeiten haben, aber eigene Werte tragen. Der Nutzen entsteht dort, wo Daten und die dazugehörigen Handgriffe zusammengehören: Ein Konto weiß selbst, ob eine Abbuchung zulässig ist — das muss nicht an zwanzig Stellen im Programm noch einmal geprüft werden.`,
     hinweis: `Felder nach außen abzuschotten ist kein Formalismus: Nur so kann die Klasse ihre eigenen Regeln durchsetzen.`,
+    fehler: [
+      `Alles öffentlich machen und danach nicht mehr ändern können, ohne fremden Code zu brechen.`,
+      `Klassen bauen, die nur Daten halten und nichts können — dafür genügt eine einfache Struktur.`,
+      `Im Konstruktor Arbeit erledigen, die dort nicht hingehört: Dateien lesen, Netzanfragen stellen.`,
+    ],
   },
   modul: {
     intro: `**Module** teilen ein Programm in Dateien mit klaren Aufgaben. Nur was ausdrücklich freigegeben ist, wird von außen sichtbar.`,
@@ -6029,8 +6326,16 @@ const TOPIC_THEORY = {
       `Ein Modul bündelt Zusammengehöriges an einer Stelle.`,
       `Der Import macht fremde Namen im eigenen Code nutzbar.`,
       `Fremde Bibliotheken kommen über einen Paketmanager dazu — mit fester Version, damit es reproduzierbar bleibt.`,
+      `Ein Modul hat eine Aufgabe. Eine Datei namens \`utils\` sammelt erfahrungsgemäß alles, was nirgends passte.`,
+      `Was nicht ausdrücklich freigegeben ist, bleibt innen — und kann später gefahrlos umgebaut werden.`,
     ],
+    vertiefung: `Ringförmige Abhängigkeiten — A braucht B, B braucht A — sind der häufigste Grund für rätselhafte Fehler beim Start: Eines der beiden Module ist noch nicht fertig geladen, wenn das andere darauf zugreift. Der Ausweg ist fast immer, den gemeinsamen Teil in ein drittes Modul zu ziehen. Wer die Abhängigkeiten in eine Richtung hält, bekommt dieses Problem gar nicht erst.`,
     hinweis: `Kreisförmige Importe (A braucht B, B braucht A) sind ein Zeichen dafür, dass der Schnitt zwischen den Modulen nicht stimmt.`,
+    fehler: [
+      `Ringförmige Abhängigkeiten zwischen zwei Dateien.`,
+      `Alles aus einer Sammeldatei ausführen und damit jede Trennung aufheben.`,
+      `Beim Import den Pfad raten, statt ihn vom Projektstamm aus zu schreiben.`,
+    ],
   },
   operator: {
     intro: `**Operatoren** verknüpfen Werte zu einem neuen Wert. Rechnen ist nur der Anfang: Auch Vergleiche und logische Verknüpfungen sind Operatoren.`,
@@ -6038,8 +6343,16 @@ const TOPIC_THEORY = {
       `Arithmetisch: \`+\`, \`-\`, \`*\`, \`/\` und der Rest-Operator \`%\`.`,
       `Vergleiche liefern immer einen Wahrheitswert — \`wahr\` oder \`falsch\`.`,
       `Logisch verknüpft: „und“ ist nur wahr, wenn beide Seiten wahr sind; „oder“ schon, wenn eine es ist.`,
+      `Punkt vor Strich gilt auch hier — im Zweifel Klammern setzen, sie kosten nichts.`,
+      `Ganzzahlige Division schneidet ab, sie rundet nicht. \`7 / 2\` ist in manchen Sprachen \`3\`.`,
     ],
+    vertiefung: `Der Unterschied zwischen loser und strenger Gleichheit ist eine der ergiebigsten Fehlerquellen überhaupt. Die lose Variante wandelt vorher um, und dann ist \`"0"\` gleich \`0\` und \`""\` gleich \`false\` — Regeln, die niemand im Kopf hat. Die strenge Variante vergleicht Wert *und* Typ und verhält sich dadurch vorhersehbar. Wo eine Sprache beides anbietet, ist die strenge die richtige Voreinstellung.`,
     hinweis: `Bei gemischten Rechnungen entscheidet die Reihenfolge (Punkt vor Strich). Klammern machen die Absicht eindeutig.`,
+    fehler: [
+      `Ganzzahlen dividieren und einen Nachkommawert erwarten.`,
+      `Lose statt strenger Gleichheit verwenden und die Umwandlungsregeln nicht kennen.`,
+      `Auf Rechenreihenfolge vertrauen, statt zu klammern.`,
+    ],
   },
   sammlung: {
     intro: `Eine **Sammlung** hält mehrere Werte unter einem Namen. Statt \`name1\`, \`name2\`, \`name3\` gibt es eine Liste, über die sich rechnen und laufen lässt.`,
@@ -6047,8 +6360,16 @@ const TOPIC_THEORY = {
       `Der Zugriff erfolgt über die Position, beginnend bei 0.`,
       `Elemente lassen sich anhängen, entfernen und suchen.`,
       `Die Anzahl der Elemente fragst du ab, statt sie mitzuzählen.`,
+      `Der Index beginnt bei 0 — das letzte Element hat also die Position \`länge - 1\`.`,
+      `Filtern, umformen und zusammenfassen sind drei Handgriffe, die fast jede Schleife ersetzen.`,
     ],
+    vertiefung: `Eine Sammlung während des Durchlaufens zu verändern ist eine klassische Falle: Wird ein Element entfernt, rutschen die folgenden eine Position nach vorne, und der Durchlauf überspringt eines. Je nach Sprache gibt es dafür eine Fehlermeldung oder ein stilles Falschergebnis. Der saubere Weg ist, eine neue Sammlung aufzubauen statt die alte zu bearbeiten — das ist meist sogar kürzer.`,
     hinweis: `Ein Zugriff hinter dem letzten Element ist einer der häufigsten Laufzeitfehler. Die Länge kennt die Sammlung selbst.`,
+    fehler: [
+      `Über das Ende hinaus zugreifen, weil \`länge\` statt \`länge - 1\` als letzter Index angenommen wurde.`,
+      `Während des Durchlaufens Elemente entfernen.`,
+      `Eine Sammlung kopieren wollen und in Wahrheit nur einen zweiten Namen für dieselbe vergeben.`,
+    ],
   },
   schleife: {
     intro: `Eine **Schleife** wiederholt Code, ohne ihn mehrfach zu schreiben. Das ist einer der größten Hebel überhaupt: aus drei Zeilen werden Millionen Durchläufe.`,
@@ -6056,8 +6377,16 @@ const TOPIC_THEORY = {
       `Über eine Sammlung läuft man Element für Element — das ist der häufigste Fall.`,
       `Mit einem Zähler steuert man, wie oft etwas passiert.`,
       `Eine kopfgesteuerte Schleife läuft, solange eine Bedingung wahr bleibt — dafür muss sich in der Schleife etwas ändern.`,
+      `Wer die Elemente selbst braucht, nimmt die Fuß-über-Schleife statt mit Zählern zu hantieren.`,
+      `\`break\` steigt ganz aus, \`continue\` überspringt nur den aktuellen Durchlauf.`,
     ],
+    vertiefung: `Jede Schleife braucht eine Antwort auf die Frage: Wodurch endet sie? Bei einer Zählschleife steht die Antwort im Kopf und ist damit sichtbar. Bei einer kopfgesteuerten Schleife steckt sie irgendwo im Rumpf — und wenn die Bedingung dort nie falsch wird, hängt das Programm. Wer den Zähler innerhalb der Schleife noch einmal verändert, macht sich das Leben unnötig schwer.`,
     hinweis: `Wenn sich die Abbruchbedingung nie ändert, läuft die Schleife endlos. Prüfe immer, was den Ausstieg herbeiführt.`,
+    fehler: [
+      `Die Abbruchbedingung nie erreichen — die Endlosschleife.`,
+      `Um eins danebenliegen: \`<=\` statt \`<\` beim Zählen bis zur Länge.`,
+      `Innerhalb der Schleife die Sammlung ändern, über die gerade gelaufen wird.`,
+    ],
   },
   speicher: {
     intro: `Wer den **Speicher** versteht, versteht die Fehler, die sonst rätselhaft bleiben: Warum ändert sich ein Wert an einer Stelle, die ihn gar nicht anfasst?`,
@@ -6065,8 +6394,16 @@ const TOPIC_THEORY = {
       `Einfache Werte werden kopiert, zusammengesetzte über eine Referenz weitergegeben.`,
       `Zwei Namen können auf dieselben Daten zeigen — eine Änderung ist dann über beide sichtbar.`,
       `Angeforderter Speicher muss wieder frei werden, sonst wächst der Verbrauch immer weiter.`,
+      `Ein Wert wird kopiert, eine Referenz zeigt auf dasselbe Objekt. Daran hängt fast jedes „warum hat sich das mit geändert“.`,
+      `Eine flache Kopie kopiert nur die oberste Ebene — was darunter liegt, bleibt geteilt.`,
     ],
+    vertiefung: `Zwei Namen für dasselbe Objekt sind kein Problem, solange niemand etwas ändert. Sobald doch, ändert es sich für beide — und die Stelle, an der es auffällt, hat mit der Stelle, an der es passiert ist, oft nichts zu tun. Deshalb lohnt es, sich bei jeder Zuweisung kurz zu fragen: Ist das eine Kopie oder ein zweiter Zugang? Bei Zahlen und Zeichenketten meist ersteres, bei Listen und Objekten meist letzteres.`,
     hinweis: `Eine „Kopie“, die keine ist, ist einer der am schwersten zu findenden Fehler. Prüfe im Zweifel, ob wirklich neue Daten entstanden sind.`,
+    fehler: [
+      `Eine Liste zuweisen und glauben, es sei eine Kopie.`,
+      `Flach kopieren, wo es tief sein müsste.`,
+      `Einen veränderbaren Standardwert an einem Parameter — er wird über Aufrufe hinweg geteilt.`,
+    ],
   },
   sql_abfrage: {
     intro: `Eine **Abfrage** beschreibt, *was* du haben willst — nicht, wie die Datenbank es findet. Das ist der große Unterschied zu einer Programmiersprache.`,
@@ -6074,8 +6411,16 @@ const TOPIC_THEORY = {
       `\`SELECT\` nennt die Spalten, \`FROM\` die Tabelle.`,
       `Ohne Sortierung ist die Reihenfolge der Zeilen nicht garantiert.`,
       `Eine Begrenzung der Zeilenzahl gehört zu jeder Abfrage, die man von Hand ausprobiert.`,
+      `\`SELECT *\` holt alles, auch was niemand braucht — Spalten benennen ist schneller und bleibt bei Schemaänderungen richtig.`,
+      `Ohne \`ORDER BY\` gibt es keine zugesicherte Reihenfolge, auch wenn es zufällig passt.`,
     ],
+    vertiefung: `Die Datenbank arbeitet nicht in der Reihenfolge, in der die Abfrage geschrieben steht: Zuerst \`FROM\`, dann \`WHERE\`, dann \`GROUP BY\`, dann \`HAVING\`, erst danach \`SELECT\` und ganz zum Schluss \`ORDER BY\`. Das erklärt zwei Dinge auf einen Schlag — warum ein in \`SELECT\` vergebener Aliasname in \`WHERE\` nicht bekannt ist, und warum er in \`ORDER BY\` sehr wohl funktioniert.`,
     hinweis: `\`SELECT *\` überträgt alle Spalten — auch die großen, die niemand braucht. Benenne, was du wirklich willst.`,
+    fehler: [
+      `\`SELECT *\` in Programmcode; jede neue Spalte ändert dann unbemerkt das Ergebnis.`,
+      `Auf eine Reihenfolge vertrauen, die nirgends angefordert wurde.`,
+      `Werte direkt in die Abfrage schreiben statt sie als Parameter zu übergeben.`,
+    ],
   },
   sql_aendern: {
     intro: `**Daten ändern** verlangt mehr Sorgfalt als Lesen: Eine falsche Abfrage liefert ein falsches Ergebnis, eine falsche Änderung zerstört Daten.`,
@@ -6083,8 +6428,16 @@ const TOPIC_THEORY = {
       `Einfügen, Ändern und Löschen sind eigene Befehle.`,
       `Ohne Einschränkung gilt eine Änderung für *alle* Zeilen.`,
       `Eine Transaktion fasst mehrere Schritte zu einem Ganzen zusammen — alles oder nichts.`,
+      `Vor jedem \`UPDATE\` oder \`DELETE\` dieselbe Bedingung einmal als \`SELECT\` ausführen.`,
+      `Mehrere zusammengehörende Änderungen gehören in eine Transaktion — ganz oder gar nicht.`,
     ],
+    vertiefung: `Ein \`DELETE\` ohne \`WHERE\` löscht die vollständige Tabelle, und zwar sofort und ohne Rückfrage. Es gibt keine Warnung, weil die Anweisung technisch einwandfrei ist. Deshalb die Gewohnheit: erst mit \`SELECT\` sehen, welche Zeilen betroffen wären, dann das Schlüsselwort austauschen. Und in einer Transaktion arbeiten, solange man sich nicht sicher ist — dort lässt sich zurückrollen.`,
     hinweis: `Probiere die Einschränkung erst mit einer Leseabfrage aus. Was dort zurückkommt, wird gleich geändert.`,
+    fehler: [
+      `\`WHERE\` vergessen — betroffen ist dann jede Zeile.`,
+      `Ohne Transaktion mehrere zusammenhängende Änderungen ausführen.`,
+      `Eingaben in die Abfrage einsetzen statt Parameter zu binden.`,
+    ],
   },
   sql_entwurf: {
     intro: `Der **Entwurf** entscheidet, wie schwer alles Weitere wird. Eine gute Struktur macht Abfragen kurz und verhindert widersprüchliche Daten.`,
@@ -6092,8 +6445,16 @@ const TOPIC_THEORY = {
       `Jede Zeile braucht eine eindeutige Kennung.`,
       `Ein Fremdschlüssel hält Beziehungen sauber — es kann keine Bestellung ohne Kunden geben.`,
       `Was mehrfach gespeichert wird, läuft irgendwann auseinander.`,
+      `Jede Tabelle braucht einen Primärschlüssel — auch die, bei der es gerade unnötig scheint.`,
+      `Ein Fremdschlüssel hält Beziehungen gültig und verhindert verwaiste Zeilen.`,
     ],
+    vertiefung: `Normalisierung heißt im Kern: Jede Information steht an genau einer Stelle. Ist ein Kundenname in drei Tabellen kopiert, muss eine Namensänderung an drei Stellen ankommen — und irgendwann kommt sie an zweien an. Der Preis sind zusätzliche Verknüpfungen beim Lesen; der Gewinn ist, dass die Daten nicht auseinanderlaufen können. In der Regel ist dieser Tausch die richtige Wahl.`,
     hinweis: `Ein Index beschleunigt das Lesen und bremst das Schreiben. Er lohnt sich dort, wo oft gesucht wird — nicht überall.`,
+    fehler: [
+      `Denselben Wert in mehreren Tabellen führen und danach synchron halten müssen.`,
+      `Mehrere Werte durch Kommas getrennt in ein Feld schreiben.`,
+      `Datumsangaben als Text speichern — Sortieren und Rechnen fallen damit aus.`,
+    ],
   },
   sql_filter: {
     intro: `**Filtern** entscheidet, welche Zeilen ins Ergebnis kommen. Alles Weitere arbeitet nur noch mit dem, was hier übrig bleibt.`,
@@ -6101,8 +6462,16 @@ const TOPIC_THEORY = {
       `Vergleiche, Bereiche, Listen und Muster stehen zur Verfügung.`,
       `Mehrere Bedingungen werden mit „und“ bzw. „oder“ verknüpft — Klammern machen die Absicht eindeutig.`,
       `Ein leerer Wert ist kein Wert: Dafür gibt es eine eigene Prüfung.`,
+      `\`NULL\` ist kein Wert, sondern die Abwesenheit eines Werts. Verglichen wird mit \`IS NULL\`, nicht mit \`=\`.`,
+      `\`LIKE 'a%'\` kann einen Index nutzen, \`LIKE '%a'\` nicht — die Reihenfolge des Platzhalters entscheidet über die Geschwindigkeit.`,
     ],
+    vertiefung: `Eine Bedingung, die auf einer Spalte rechnet, schaltet den Index dafür ab: \`WHERE YEAR(erstellt) = 2024\` zwingt die Datenbank, jede einzelne Zeile umzurechnen. Dieselbe Auswahl als Bereich geschrieben — \`erstellt >= '2024-01-01' AND erstellt < '2025-01-01'\` — kann den Index nutzen und ist bei großen Tabellen um Größenordnungen schneller. Die Regel dahinter: Die Spalte gehört unangetastet auf die linke Seite.`,
     hinweis: `Ein Vergleich mit einem leeren Wert ergibt weder wahr noch falsch. Die Zeile fällt dann still heraus.`,
+    fehler: [
+      `\`= NULL\` schreiben — das trifft niemals zu.`,
+      `\`AND\` und \`OR\` ohne Klammern mischen; \`AND\` bindet stärker.`,
+      `Auf einer Spalte rechnen, über die gefiltert wird — der Index ist damit außer Kraft.`,
+    ],
   },
   sql_gruppe: {
     intro: `**Gruppieren** fasst viele Zeilen zu einer zusammen: Anzahl, Summe, Durchschnitt, Minimum, Maximum.`,
@@ -6110,8 +6479,16 @@ const TOPIC_THEORY = {
       `Was nicht gruppiert wird, muss zusammengefasst werden.`,
       `Die Bedingung auf einzelne Zeilen steht vor der Gruppierung, die auf Gruppen danach.`,
       `Die Zählung über alle Zeilen und die über eine Spalte sind nicht dasselbe — leere Werte fallen weg.`,
+      `Jede Spalte in \`SELECT\`, die nicht zusammengefasst wird, muss in \`GROUP BY\` stehen.`,
+      `\`WHERE\` filtert Zeilen vor dem Gruppieren, \`HAVING\` filtert Gruppen danach.`,
     ],
+    vertiefung: `\`COUNT(*)\` zählt Zeilen, \`COUNT(spalte)\` zählt nur die Zeilen, in denen diese Spalte gefüllt ist. Der Unterschied fällt erst auf, wenn \`NULL\`-Werte im Spiel sind — und dann steht eine Zahl im Bericht, die niemand erklären kann. Dasselbe gilt für \`AVG\`: Leere Werte gehen nicht als Null in den Durchschnitt ein, sie werden übersprungen.`,
     hinweis: `Wer vor der Gruppierung filtert, arbeitet mit weniger Daten weiter. Das ist meist auch das, was gemeint war.`,
+    fehler: [
+      `Eine Spalte ausgeben, die weder gruppiert noch zusammengefasst ist.`,
+      `\`HAVING\` benutzen, wo \`WHERE\` gemeint war — das ist unnötig langsam.`,
+      `\`COUNT(spalte)\` und \`COUNT(*)\` für dasselbe halten.`,
+    ],
   },
   sql_join: {
     intro: `Ein **Join** setzt Zeilen aus mehreren Tabellen zusammen. Genau dafür sind relationale Datenbanken gebaut.`,
@@ -6119,8 +6496,16 @@ const TOPIC_THEORY = {
       `Die Bedingung sagt, welche Zeilen zusammengehören — meist über einen Schlüssel.`,
       `Der innere Join liefert nur Paare, die es auf beiden Seiten gibt.`,
       `Ein äußerer Join behält auch die Zeilen ohne Partner; die fehlenden Spalten bleiben leer.`,
+      `Verknüpft wird über Schlüssel: Fremdschlüssel hier, Primärschlüssel dort.`,
+      `Sprechende Kurznamen für die Tabellen machen längere Abfragen erst lesbar.`,
     ],
+    vertiefung: `Der Unterschied zwischen innerem und äußerem Join entscheidet über die Frage: Sollen Zeilen ohne Partner verschwinden oder mit leeren Spalten erhalten bleiben? Bei „alle Kundinnen mit ihren Bestellungen“ ist ein innerer Join fast immer falsch — Kundschaft ohne Bestellung fällt dann aus dem Bericht. Bei „alle Bestellungen mit Kundendaten“ ist er richtig, denn eine Bestellung ohne Kunden sollte es nicht geben.`,
     hinweis: `Ein vergessener Verknüpfungsbedingung erzeugt jede Kombination aus beiden Tabellen. Aus zwei mal tausend Zeilen wird eine Million.`,
+    fehler: [
+      `Die Verknüpfungsbedingung vergessen — heraus kommt jede Kombination beider Tabellen.`,
+      `Einen inneren Join nehmen, wo Zeilen ohne Partner erhalten bleiben sollen.`,
+      `Bei einem \`LEFT JOIN\` in \`WHERE\` auf die rechte Tabelle filtern; damit wird er wieder zum inneren.`,
+    ],
   },
   string: {
     intro: `Ein **String** ist eine Folge von Zeichen. Jedes Zeichen hat eine Position, und fast jede Sprache bringt eine Sammlung von Methoden zum Suchen, Zerlegen und Zusammensetzen mit.`,
@@ -6128,8 +6513,16 @@ const TOPIC_THEORY = {
       `Die Position (der **Index**) beginnt bei 0, nicht bei 1.`,
       `Strings sind in den meisten Sprachen **unveränderlich**: Methoden liefern einen neuen String, statt den alten zu ändern.`,
       `Werte in Text einzusetzen geht am saubersten über die eingebaute Formatierung, nicht über endloses Aneinanderhängen.`,
+      `Umlaute und Emoji belegen mehr als ein Zeichen im Speicher — Länge und Position sind nicht immer dasselbe.`,
+      `Zum Zerlegen und Zusammensetzen gibt es fertige Methoden; von Hand über Positionen zu arbeiten lohnt selten.`,
     ],
+    vertiefung: `Weil Strings unveränderlich sind, erzeugt jedes Anhängen einen neuen String. In einer Schleife über zehntausend Einträge entstehen dabei zehntausend Zwischenergebnisse — messbar langsam. Der übliche Ausweg: die Teile in einer Liste sammeln und am Ende einmal zusammenfügen. Bei drei Teilen ist das egal, bei dreitausend nicht mehr.`,
     hinweis: `Achte auf Leerzeichen und Groß-/Kleinschreibung — sie sind der häufigste Grund, warum ein Vergleich unerwartet falsch ist.`,
+    fehler: [
+      `Auf Gleichheit prüfen, ohne vorher Leerzeichen zu entfernen oder die Schreibweise anzugleichen.`,
+      `In einer Schleife immer weiter aneinanderhängen, statt am Ende einmal zusammenzufügen.`,
+      `Annehmen, ein Zeichen sei immer ein Byte.`,
+    ],
   },
   test: {
     intro: `Ein **Test** ist Code, der anderen Code prüft. Sein eigentlicher Wert zeigt sich beim Umbauen: Er sagt sofort, wenn etwas kaputtgeht.`,
@@ -6137,8 +6530,16 @@ const TOPIC_THEORY = {
       `Ein Test beschreibt eine Erwartung und vergleicht sie mit dem Ergebnis.`,
       `Er prüft das *Verhalten*, nicht die innere Umsetzung — sonst bricht er bei jedem Aufräumen.`,
       `Randfälle sind wertvoller als der Normalfall: leer, null, negativ, zu groß.`,
+      `Ein guter Testname beschreibt den Fall, nicht die Methode: „lehnt negative Beträge ab“.`,
+      `Vorbereiten, ausführen, prüfen — drei Abschnitte, in dieser Reihenfolge.`,
     ],
+    vertiefung: `Ein Test, der bei einer Umbenennung im Inneren rot wird, prüft die Umsetzung statt das Verhalten. Solche Tests werden mit der Zeit zur Last: Jede Aufräumarbeit erzeugt Arbeit an Tests, obwohl sich für die Nutzenden nichts geändert hat. Prüfe deshalb, was hineingeht und was herauskommt — nicht, welchen Weg es dazwischen nimmt.`,
     hinweis: `Ein Test, der nie fehlschlägt, prüft nichts. Lass ihn einmal absichtlich rot werden.`,
+    fehler: [
+      `Nur den Normalfall prüfen und die Ränder auslassen: leer, null, negativ, sehr groß.`,
+      `Tests voneinander abhängig machen — sie schlagen dann je nach Reihenfolge fehl.`,
+      `Einen Test schreiben, der von Anfang an grün ist und nie etwas gemerkt hätte.`,
+    ],
   },
   variable: {
     intro: `Eine **Variable** ist ein Name für einen Wert. Statt eine Zahl immer wieder hinzuschreiben, gibst du ihr einen Namen — und kannst sie später ändern, ohne jede Stelle anzufassen.`,
@@ -6146,8 +6547,16 @@ const TOPIC_THEORY = {
       `Ein Name sagt, *wofür* der Wert steht: \`preis\` statt \`p\`.`,
       `Der **Datentyp** entscheidet, was mit dem Wert möglich ist — rechnen, verketten, vergleichen.`,
       `Was sich nicht ändern soll, wird als Konstante angelegt. Das schützt vor versehentlichem Überschreiben.`,
+      `Erst anlegen, wo sie gebraucht wird — nicht alles oben sammeln.`,
+      `Ein enger Gültigkeitsbereich ist ein Vorteil: Weniger Code kann den Wert verändern.`,
     ],
+    vertiefung: `Konstante als Voreinstellung, veränderlich nur wenn nötig — diese Reihenfolge spart mehr Fehler, als sie Tipparbeit kostet. Wer beim Lesen sieht, dass ein Wert konstant ist, muss den Rest der Funktion nicht mehr danach absuchen, ob er sich unterwegs ändert. Bei zusammengesetzten Werten heißt konstant allerdings nur: Der Name zeigt weiter auf dasselbe Objekt. Der Inhalt kann sich trotzdem ändern.`,
     hinweis: `Gute Namen sparen später mehr Zeit als jede Abkürzung beim Tippen.`,
+    fehler: [
+      `Namen wie \`x\`, \`daten\` oder \`temp\`, die nichts über den Inhalt sagen.`,
+      `Eine Variable weiter oben anlegen, als sie gebraucht wird.`,
+      `Denselben Namen für zwei verschiedene Dinge wiederverwenden.`,
+    ],
   },
   vererbung: {
     intro: `**Vererbung** gibt gemeinsames Verhalten an speziellere Typen weiter. Eine Unterklasse bekommt alles der Oberklasse und ergänzt oder ersetzt Teile davon.`,
@@ -6155,8 +6564,1711 @@ const TOPIC_THEORY = {
       `Eine Methode mit gleichem Namen **überschreibt** die geerbte Fassung.`,
       `Eine Schnittstelle beschreibt nur, *was* möglich sein muss — nicht, *wie*.`,
       `Zusammensetzen ist oft die bessere Wahl als Vererben: weniger Kopplung, mehr Freiheit.`,
+      `Eine überschriebene Methode muss halten, was die Oberklasse verspricht — sonst bricht sie Aufrufer, die sie gar nicht kennen.`,
+      `Drei Ebenen Vererbung sind fast immer eine zu viel.`,
     ],
+    vertiefung: `Die Faustregel heißt: Zusammensetzen vor Vererben. Vererbung bindet zwei Typen dauerhaft aneinander — jede Änderung an der Oberklasse wirkt auf alle darunter, auch auf die, die man gerade nicht im Blick hat. Ein Objekt stattdessen als Bestandteil aufzunehmen, hält die Verbindung lose und lässt sich später austauschen. Vererbung lohnt sich dort, wo wirklich eine „ist ein“-Beziehung besteht.`,
     hinweis: `Vererbung nur für Wiederverwendung ist eine häufige Falle. Sie sollte eine echte „ist ein“-Beziehung beschreiben.`,
+    fehler: [
+      `Vererben, nur um Code zu sparen, ohne dass eine „ist ein“-Beziehung besteht.`,
+      `In der Unterklasse den Aufruf an die Oberklasse vergessen; die Vorbereitung fällt dann aus.`,
+      `Tiefe Hierarchien, in denen niemand mehr weiß, wo eine Methode herkommt.`,
+    ],
+  },
+};
+
+/* Ein durchgerechnetes Beispiel je Sprache und Thema.
+
+   Es zeigt bewusst NICHT die Lösung der Übungsaufgabe derselben Lektion,
+   sondern dieselbe Idee an einem anderen Fall — sonst stünde die Antwort
+   über der Frage. `erklaerung` geht den Code durch und nennt, worauf es
+   dabei ankommt. */
+const TOPIC_SNIPPET_LANG = {
+  c: "c",
+  cpp: "cpp",
+  css: "css",
+  go: "go",
+  html: "html",
+  java: "java",
+  javascript: "js",
+  kotlin: "kotlin",
+  php: "php",
+  python: "python",
+  react: "jsx",
+  rust: "rust",
+  sql: "sql",
+  typescript: "ts",
+  vue: "html",
+};
+
+const TOPIC_SNIPPETS = {
+  c: {
+    bedingung: {
+      code: `int punkte = 72;
+
+if (punkte >= 90) {
+    printf("Note 1\\n");
+} else if (punkte >= 75) {
+    printf("Note 2\\n");
+} else if (punkte >= 60) {
+    printf("Note 3\\n");
+} else {
+    printf("nicht bestanden\\n");
+}`,
+      erklaerung: `Die Zweige werden von oben nach unten geprüft, und der erste zutreffende gewinnt — deshalb steht die höchste Schwelle zuerst. Stünde \`>= 60\` oben, käme für 72 Punkte die falsche Note heraus. Der letzte \`else\`-Zweig fängt alles ab, was keine Schwelle erreicht.`,
+    },
+    funktion: {
+      code: `int groesster(int a, int b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}
+
+/* Aufruf: */
+int m = groesster(17, 4);   /* m ist 17 */`,
+      erklaerung: `Vor dem Namen steht der Rückgabetyp, in den Klammern stehen die Parameter mit ihrem Typ. Sobald ein \`return\` erreicht wird, endet die Funktion sofort — der Code danach läuft nicht mehr. Deshalb braucht der zweite Fall kein \`else\`.`,
+    },
+    klasse: {
+      code: `struct Rechteck {
+    int breite;
+    int hoehe;
+};
+
+int flaeche(struct Rechteck r) {
+    return r.breite * r.hoehe;
+}
+
+struct Rechteck r = {4, 3};
+printf("%d\\n", flaeche(r));   /* 12 */`,
+      erklaerung: `C kennt keine Klassen, aber \`struct\` fasst zusammengehörende Felder unter einem Namen zusammen. Die passenden Funktionen stehen daneben und bekommen die Struktur als Parameter. Auf ein Feld greifst du mit dem Punkt zu, über einen Zeiger mit \`->\`.`,
+    },
+    sammlung: {
+      code: `int werte[5] = {3, 8, 1, 9, 4};
+int groesster = werte[0];
+
+for (int i = 1; i < 5; i++) {
+    if (werte[i] > groesster) {
+        groesster = werte[i];
+    }
+}
+printf("%d\\n", groesster);   /* 9 */`,
+      erklaerung: `Der Startwert ist bewusst das erste Element und nicht 0 — sonst käme bei lauter negativen Zahlen ein falsches Ergebnis heraus. Die Schleife beginnt deshalb bei 1. C prüft die Array-Grenzen nicht, \`i < 5\` ist also die einzige Absicherung.`,
+    },
+    schleife: {
+      code: `int summe = 0;
+
+for (int i = 1; i <= 100; i++) {
+    if (i % 3 != 0) {
+        continue;      /* nur Vielfache von 3 zählen */
+    }
+    summe += i;
+}
+printf("%d\\n", summe);   /* 1683 */`,
+      erklaerung: `\`continue\` überspringt den Rest des Durchlaufs und geht zur nächsten Zahl weiter; \`break\` würde die Schleife dagegen ganz verlassen. Der Zähler wird ausschließlich im Schleifenkopf verändert — das hält nachvollziehbar, wann sie endet.`,
+    },
+    speicher: {
+      code: `int *zahlen = malloc(3 * sizeof(int));
+if (zahlen == NULL) {
+    return 1;          /* kein Speicher bekommen */
+}
+
+zahlen[0] = 1;
+zahlen[1] = 2;
+zahlen[2] = 3;
+
+free(zahlen);
+zahlen = NULL;         /* verhindert die Nutzung nach dem Freigeben */`,
+      erklaerung: `Jedem \`malloc\` muss genau ein \`free\` gegenüberstehen, sonst wächst der Speicherbedarf mit jedem Durchlauf. Die Prüfung auf \`NULL\` ist keine Förmlichkeit: Reicht der Speicher nicht, kommt kein Zeiger zurück. Den Zeiger danach auf \`NULL\` zu setzen macht einen versehentlichen Zugriff sofort sichtbar.`,
+    },
+    string: {
+      code: `char name[20] = "Ada";
+char gruss[40];
+
+strcpy(gruss, "Hallo, ");
+strcat(gruss, name);
+strcat(gruss, "!");
+
+printf("%s\\n", gruss);      /* Hallo, Ada! */
+printf("%zu\\n", strlen(gruss));   /* 11 */`,
+      erklaerung: `In C ist ein String ein Array von Zeichen, das mit einem unsichtbaren Nullzeichen endet. \`strlen\` zählt die sichtbaren Zeichen, der Platz im Array muss aber eines mehr fassen. Wer zu klein dimensioniert, überschreibt fremden Speicher — hier ist \`gruss\` bewusst großzügig bemessen.`,
+    },
+    variable: {
+      code: `const double MWST = 0.19;
+double netto = 100.0;
+double brutto = netto * (1 + MWST);
+
+printf("%.2f\\n", brutto);   /* 119.00 */`,
+      erklaerung: `\`const\` sagt, dass sich der Wert nie ändert — der Compiler weist jeden Schreibversuch ab. Der Typ entscheidet, was möglich ist: Mit \`int\` statt \`double\` wäre das Ergebnis abgeschnitten worden. \`%.2f\` gibt genau zwei Nachkommastellen aus.`,
+    },
+  },
+  cpp: {
+    bedingung: {
+      code: `int temperatur = 18;
+std::string kleidung;
+
+if (temperatur < 5) {
+    kleidung = "Wintermantel";
+} else if (temperatur < 15) {
+    kleidung = "Jacke";
+} else {
+    kleidung = "T-Shirt";
+}
+
+std::cout << kleidung << std::endl;   // Jacke`,
+      erklaerung: `Die Schwellen sind aufsteigend geordnet, deshalb genügt jeweils eine einzige Vergleichsbedingung — dass die Temperatur über 5 liegt, ist im zweiten Zweig bereits sicher. Eine Variable vor der Verzweigung anzulegen und in den Zweigen nur zu belegen, hält die Ausgabe an einer Stelle.`,
+    },
+    fehler: {
+      code: `#include <stdexcept>
+
+double teile(double a, double b) {
+    if (b == 0) {
+        throw std::invalid_argument("Division durch null");
+    }
+    return a / b;
+}
+
+try {
+    std::cout << teile(10, 0) << std::endl;
+} catch (const std::invalid_argument& e) {
+    std::cerr << "Fehler: " << e.what() << std::endl;
+}`,
+      erklaerung: `Geworfen wird ein Objekt, gefangen wird nach Typ — deshalb lassen sich verschiedene Fehlerarten getrennt behandeln. Gefangen wird per Referenz (\`&\`), sonst entsteht eine überflüssige Kopie. \`what()\` liefert den Text, der beim Werfen mitgegeben wurde.`,
+    },
+    funktion: {
+      code: `#include <string>
+
+std::string wiederhole(const std::string& text, int mal = 2) {
+    std::string ergebnis;
+    for (int i = 0; i < mal; i++) {
+        ergebnis += text;
+    }
+    return ergebnis;
+}
+
+std::cout << wiederhole("ab") << std::endl;      // abab
+std::cout << wiederhole("x", 3) << std::endl;    // xxx`,
+      erklaerung: `Der zweite Parameter hat einen Standardwert und darf deshalb beim Aufruf fehlen. \`const std::string&\` übergibt eine Referenz statt einer Kopie und stellt gleichzeitig sicher, dass die Funktion das Original nicht verändert — bei größeren Werten ist das der übliche Weg.`,
+    },
+    klasse: {
+      code: `class Zaehler {
+private:
+    int stand = 0;
+
+public:
+    void hoch() { stand++; }
+    int wert() const { return stand; }
+};
+
+Zaehler z;
+z.hoch();
+z.hoch();
+std::cout << z.wert() << std::endl;   // 2`,
+      erklaerung: `\`private\` schützt den Stand davor, von außen auf einen beliebigen Wert gesetzt zu werden — verändert wird er nur über \`hoch()\`. Das \`const\` hinter \`wert()\` sagt zu, dass diese Methode nichts am Objekt ändert; der Compiler prüft die Zusage.`,
+    },
+    sammlung: {
+      code: `#include <vector>
+
+std::vector<int> zahlen = {4, 7, 2, 9};
+zahlen.push_back(5);
+
+int summe = 0;
+for (int z : zahlen) {
+    summe += z;
+}
+std::cout << summe << " aus " << zahlen.size() << " Werten\\n";   // 27 aus 5`,
+      erklaerung: `\`std::vector\` wächst im Gegensatz zum klassischen Array bei Bedarf mit. Die Fuß-über-Schleife holt jeden Wert direkt, ohne Zähler und ohne Gefahr, danebenzugreifen. \`size()\` liefert die aktuelle Anzahl, nicht den reservierten Platz.`,
+    },
+    speicher: {
+      code: `#include <memory>
+
+struct Verbindung {
+    Verbindung()  { std::cout << "geoeffnet\\n"; }
+    ~Verbindung() { std::cout << "geschlossen\\n"; }
+};
+
+{
+    auto v = std::make_unique<Verbindung>();
+    // hier wird gearbeitet
+}   // hier wird automatisch aufgeraeumt`,
+      erklaerung: `\`unique_ptr\` gibt den Speicher frei, sobald der Gültigkeitsbereich verlassen wird — auch dann, wenn dazwischen eine Ausnahme fliegt. Deshalb braucht es weder \`delete\` noch einen Aufräumzweig. Der Destruktor \`~Verbindung\` läuft genau an der schließenden Klammer.`,
+    },
+    string: {
+      code: `std::string satz = "Hallo Welt";
+
+std::cout << satz.length() << std::endl;        // 10
+std::cout << satz.substr(6) << std::endl;       // Welt
+std::cout << satz.find("Welt") << std::endl;    // 6
+
+if (satz.find("xyz") == std::string::npos) {
+    std::cout << "nicht enthalten\\n";
+}`,
+      erklaerung: `\`find\` liefert die Position oder den Sonderwert \`npos\`, wenn nichts gefunden wurde — auf den muss man prüfen, denn \`npos\` ist eine sehr große Zahl und nicht etwa −1 im üblichen Sinn. \`substr\` schneidet ab einer Position heraus.`,
+    },
+    variable: {
+      code: `constexpr double PI = 3.14159;
+auto radius = 2.5;              // double, vom Compiler erkannt
+auto flaeche = PI * radius * radius;
+
+std::cout << flaeche << std::endl;   // 19.6349`,
+      erklaerung: `\`auto\` überlässt dem Compiler die Typermittlung — der Typ steht trotzdem fest, er wird nur nicht ausgeschrieben. \`constexpr\` geht über \`const\` hinaus: Der Wert steht schon beim Übersetzen fest und kostet zur Laufzeit nichts.`,
+    },
+  },
+  css: {
+    css_animation: {
+      code: `.karte {
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 200ms ease-out, opacity 200ms ease-out;
+}
+
+.karte:hover {
+  transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .karte { transition: none; }
+}`,
+      erklaerung: `Animiert werden bewusst \`transform\` und \`opacity\` — beide lösen kein neues Layout aus und laufen dadurch flüssig. Die Media Query am Ende respektiert die Systemeinstellung „Bewegung reduzieren“; für Menschen, die davon Schwindel bekommen, ist das kein Detail.`,
+    },
+    css_box: {
+      code: `*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+.feld {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #4F8EF7;
+}`,
+      erklaerung: `Ohne die erste Regel wäre das Feld 100 % breit **plus** 32 Pixel Innenabstand plus 4 Pixel Rahmen — und würde damit aus seinem Container laufen. Mit \`border-box\` zählen Innenabstand und Rahmen zur angegebenen Breite. Diese drei Zeilen ganz oben ersparen unzählige Einzelkorrekturen.`,
+    },
+    css_farbe: {
+      code: `:root {
+  --blau: hsl(217, 91%, 60%);
+  --blau-dunkel: hsl(217, 91%, 45%);
+  --text: hsl(217, 20%, 15%);
+}
+
+.knopf {
+  background: var(--blau);
+  color: white;
+}
+.knopf:hover { background: var(--blau-dunkel); }`,
+      erklaerung: `In HSL entsteht die dunklere Variante durch Ändern eines einzigen Werts — der Farbton bleibt, nur die Helligkeit sinkt. Als Variablen definiert, ändert eine Anpassung an \`--blau\` die Farbe an jeder Stelle gleichzeitig. Weiß auf diesem Blau erreicht ein Kontrastverhältnis über 4,5:1.`,
+    },
+    css_flex: {
+      code: `.leiste {
+  display: flex;
+  justify-content: space-between;  /* entlang der Hauptachse */
+  align-items: center;             /* quer dazu */
+  gap: 16px;
+  flex-wrap: wrap;
+}`,
+      erklaerung: `\`justify-content\` verteilt entlang der Hauptachse, \`align-items\` richtet quer dazu aus — diese beiden zu verwechseln ist der häufigste Flexbox-Fehler. \`gap\` erzeugt Abstände nur *zwischen* den Elementen, ohne Rest am Rand. \`flex-wrap\` erlaubt den Umbruch, wenn der Platz nicht reicht.`,
+    },
+    css_grid: {
+      code: `.galerie {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}`,
+      erklaerung: `Diese eine Zeile ersetzt sämtliche Media Queries: \`auto-fit\` legt so viele Spalten an, wie hineinpassen, und \`minmax(200px, 1fr)\` sagt, dass jede mindestens 200 Pixel breit ist und den Rest gleichmäßig teilt. Auf dem Telefon ergibt das eine Spalte, auf dem Bildschirm vier — ohne einen einzigen Haltepunkt.`,
+    },
+    css_position: {
+      code: `.karte {
+  position: relative;      /* Bezugspunkt fuer alles darin */
+}
+
+.karte .abzeichen {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}`,
+      erklaerung: `Ein absolut positioniertes Element sucht sich den nächsten Vorfahren mit einer Positionierung — fehlt der, landet es an der Seite statt an der Karte. Deshalb steht \`position: relative\` am Container, obwohl er selbst nicht verschoben wird. Das ist der übliche Aufbau für Abzeichen, Schließknöpfe und Bildunterschriften.`,
+    },
+    css_responsive: {
+      code: `/* zuerst die Regeln fuer schmale Bildschirme */
+.inhalt {
+  padding: 16px;
+  font-size: 1rem;
+}
+
+/* ab hier wird ergaenzt, nicht zurueckgenommen */
+@media (min-width: 48em) {
+  .inhalt {
+    padding: 32px;
+    max-width: 65ch;
+    margin-inline: auto;
+  }
+}`,
+      erklaerung: `Mobile first heißt: Die Grundregeln gelten für den kleinen Bildschirm, die Media Query ergänzt für größere. Das führt zu weniger Code, weil nichts zurückgenommen werden muss. \`65ch\` begrenzt die Zeilenlänge auf etwa 65 Zeichen — die Breite, bei der das Auge den Zeilenanfang noch findet.`,
+    },
+    css_selektor: {
+      code: `.liste li          { color: #333; }        /* alle li in .liste */
+.liste > li        { font-weight: 600; }   /* nur direkte Kinder */
+.liste li:first-child { color: #4F8EF7; }
+.liste li:not(.aus)   { cursor: pointer; }`,
+      erklaerung: `Ein Leerzeichen meint „irgendwo darin“, \`>\` meint „direktes Kind“ — bei verschachtelten Listen ist das ein großer Unterschied. Pseudoklassen wie \`:first-child\` und \`:not()\` wählen nach Zustand oder Ausschluss aus, ohne dass dafür eine eigene Klasse ins HTML muss.`,
+    },
+    css_text: {
+      code: `body {
+  font-family: system-ui, sans-serif;
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  line-height: 1.6;
+}
+
+article { max-width: 70ch; }`,
+      erklaerung: `\`clamp()\` legt Mindestgröße, mitwachsenden Wert und Obergrenze in einer Zeile fest — die Schrift passt sich an, ohne je zu klein oder zu groß zu werden. Die Angabe in \`rem\` respektiert dabei die Schriftgröße, die im Browser eingestellt ist. Eine Zeilenhöhe von 1,6 macht Fließtext deutlich ruhiger als der Standardwert.`,
+    },
+  },
+  go: {
+    async: {
+      code: `var wg sync.WaitGroup
+ergebnisse := make(chan string, 3)
+
+for _, url := range urls {
+    wg.Add(1)
+    go func(u string) {
+        defer wg.Done()
+        ergebnisse <- hole(u)
+    }(url)
+}
+
+wg.Wait()
+close(ergebnisse)`,
+      erklaerung: `Jede Goroutine startet mit \`go\` und läuft nebenläufig; die WaitGroup zählt, wie viele noch offen sind. \`defer wg.Done()\` sorgt dafür, dass heruntergezählt wird, selbst wenn die Funktion vorzeitig endet. Die URL wird als Parameter übergeben — ohne das würden alle Goroutinen dieselbe Schleifenvariable sehen.`,
+    },
+    bedingung: {
+      code: `if wert, ok := werte["preis"]; ok {
+    fmt.Println("gefunden:", wert)
+} else {
+    fmt.Println("kein Preis hinterlegt")
+}`,
+      erklaerung: `Go erlaubt eine kurze Anweisung im Kopf der Bedingung. \`wert\` und \`ok\` gelten nur innerhalb der Verzweigung — danach sind die Namen wieder frei. Das ist die übliche Form, um einen Zugriff auf eine Abbildung und die Prüfung, ob der Schlüssel existiert, in einem Schritt zu erledigen.`,
+    },
+    fehler: {
+      code: `func lies(pfad string) ([]byte, error) {
+    daten, err := os.ReadFile(pfad)
+    if err != nil {
+        return nil, fmt.Errorf("lies %s: %w", pfad, err)
+    }
+    return daten, nil
+}
+
+daten, err := lies("config.json")
+if err != nil {
+    log.Fatal(err)
+}`,
+      erklaerung: `Go behandelt Fehler als gewöhnliche Rückgabewerte statt als Ausnahmen — geprüft wird direkt nach dem Aufruf. Das \`%w\` in \`Errorf\` verpackt den ursprünglichen Fehler, sodass er weiter oben noch auswertbar ist. Die Meldung nennt den Pfad und macht damit klar, welche Datei gemeint war.`,
+    },
+    funktion: {
+      code: `func teilen(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New("division durch null")
+    }
+    return a / b, nil
+}
+
+wert, err := teilen(10, 4)   // 2.5, nil`,
+      erklaerung: `Go-Funktionen geben oft zwei Werte zurück: das Ergebnis und einen Fehler. Haben mehrere Parameter denselben Typ, genügt es, ihn einmal am Ende zu nennen — \`a, b float64\`. Im Erfolgsfall steht \`nil\` an der Fehlerstelle.`,
+    },
+    klasse: {
+      code: `type Konto struct {
+    Inhaber string
+    stand   float64      // klein geschrieben: nur im Paket sichtbar
+}
+
+func (k *Konto) Einzahlen(betrag float64) {
+    k.stand += betrag
+}
+
+func (k Konto) Stand() float64 {
+    return k.stand
+}`,
+      erklaerung: `Go kennt keine Klassen, sondern Strukturen mit Methoden. Der Empfänger vor dem Namen entscheidet: Ein Zeiger (\`*Konto\`) kann das Objekt verändern, eine Kopie (\`Konto\`) nicht. Die Großschreibung steuert die Sichtbarkeit — \`Inhaber\` ist von außen erreichbar, \`stand\` nicht.`,
+    },
+    sammlung: {
+      code: `zahlen := []int{5, 2, 8, 1}
+zahlen = append(zahlen, 7)
+
+summe := 0
+for _, z := range zahlen {
+    summe += z
+}
+fmt.Println(summe, len(zahlen))   // 23 5`,
+      erklaerung: `Ein Slice wächst über \`append\`, das ein neues Slice zurückgibt — die Zuweisung an denselben Namen gehört deshalb dazu. \`range\` liefert Index und Wert; der Unterstrich verwirft den Index, weil er hier nicht gebraucht wird.`,
+    },
+    schleife: {
+      code: `for i := 1; i <= 5; i++ {
+    if i == 3 {
+        continue
+    }
+    fmt.Println(i)      // 1 2 4 5
+}
+
+n := 0
+for n < 3 {              // Go hat kein while
+    n++
+}`,
+      erklaerung: `Go kennt nur ein Schlüsselwort für Schleifen. Mit drei Teilen ist es die Zählschleife, mit nur einer Bedingung entspricht es dem \`while\` anderer Sprachen, ganz ohne Bedingung läuft es endlos. Klammern um die Bedingung gibt es nicht, geschweifte Klammern sind Pflicht.`,
+    },
+    variable: {
+      code: `const MwSt = 0.19
+
+netto := 100.0            // Typ wird erkannt: float64
+var name string           // ohne Wert: leerer String
+brutto := netto * (1 + MwSt)
+
+fmt.Printf("%.2f\\n", brutto)   // 119.00`,
+      erklaerung: `\`:=\` legt an und weist zu, der Typ ergibt sich aus dem Wert. \`var\` ohne Wert erzeugt den Nullwert des Typs — bei Zahlen 0, bei Strings die leere Zeichenkette, bei Zeigern \`nil\`. Nicht verwendete Variablen lässt Go gar nicht erst übersetzen.`,
+    },
+  },
+  html: {
+    html_formular: {
+      code: `<form action="/anmelden" method="post">
+  <label for="mail">E-Mail</label>
+  <input type="email" id="mail" name="mail" required>
+
+  <label for="alter">Alter</label>
+  <input type="number" id="alter" name="alter" min="0" max="120">
+
+  <button type="submit">Anmelden</button>
+</form>`,
+      erklaerung: `Das \`for\` im Label zeigt auf die \`id\` des Feldes — dadurch setzt ein Klick auf die Beschriftung den Fokus, und Bildschirmleser sagen an, wozu das Feld gehört. Ohne \`name\` wird ein Feld beim Absenden nicht mitgeschickt. Der passende \`type\` bringt auf dem Telefon die richtige Tastatur mit.`,
+    },
+    html_link: {
+      code: `<a href="/preise">Preise ansehen</a>
+
+<a href="https://example.org" target="_blank" rel="noopener">
+  Zur Dokumentation (öffnet neuen Tab)
+</a>
+
+<a href="#hauptinhalt" class="sprunglink">Zum Inhalt springen</a>`,
+      erklaerung: `Der Linktext beschreibt das Ziel und funktioniert auch vorgelesen ohne den Text drumherum — „hier klicken“ täte das nicht. Bei \`target="_blank"\` gehört \`rel="noopener"\` dazu, sonst bekommt die neue Seite Zugriff auf die alte. Der Sprunglink ganz oben ist für Tastaturbedienung Gold wert.`,
+    },
+    html_liste: {
+      code: `<nav aria-label="Hauptmenü">
+  <ul>
+    <li><a href="/">Start</a></li>
+    <li><a href="/kurse">Kurse</a></li>
+    <li><a href="/preise">Preise</a></li>
+  </ul>
+</nav>
+
+<ol>
+  <li>Projekt anlegen</li>
+  <li>Dateien hinzufügen</li>
+</ol>`,
+      erklaerung: `Eine Navigation ist inhaltlich eine Liste von Links, auch wenn sie waagerecht aussieht — Hilfsmittel sagen dann „Liste mit drei Einträgen“ an. \`<ul>\` steht für eine ungeordnete Aufzählung, \`<ol>\` für eine, bei der die Reihenfolge zählt. Zwischen Liste und \`<li>\` gehört nichts anderes.`,
+    },
+    html_medien: {
+      code: `<img src="team.jpg"
+     alt="Vier Personen an einem Tisch mit Laptops"
+     width="800" height="450"
+     loading="lazy">
+
+<img src="welle.svg" alt="" role="presentation">`,
+      erklaerung: `\`alt\` beschreibt, was zu sehen ist — bei rein dekorativen Bildern bleibt es leer, damit Bildschirmleser sie überspringen. \`width\` und \`height\` reservieren den Platz, sodass die Seite beim Laden nicht springt. \`loading="lazy"\` lädt erst, wenn das Bild in Sichtweite kommt.`,
+    },
+    html_meta: {
+      code: `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preise — LearnDeveloping</title>
+  <meta name="description" content="Alle Tarife im Überblick.">
+  <meta property="og:title" content="Preise — LearnDeveloping">
+</head>`,
+      erklaerung: `\`charset\` muss ganz oben stehen, sonst rät der Browser bei den ersten Bytes. Ohne das Viewport-Tag wirkt auf dem Telefon keine einzige Media Query. Der Titel ist gleichzeitig Tab-Beschriftung, Lesezeichenname und Überschrift im Suchergebnis — deshalb auf jeder Seite ein eigener.`,
+    },
+    html_semantik: {
+      code: `<body>
+  <header><h1>LearnDeveloping</h1></header>
+  <nav aria-label="Hauptmenü">…</nav>
+
+  <main id="hauptinhalt">
+    <article>
+      <h2>Erste Schritte</h2>
+      <p>…</p>
+    </article>
+  </main>
+
+  <footer>…</footer>
+</body>`,
+      erklaerung: `Diese Elemente erzeugen Sprungmarken: Wer mit einem Bildschirmleser arbeitet, springt direkt zur Navigation oder zum Hauptinhalt, statt alles der Reihe nach durchzugehen. \`<main>\` gibt es genau einmal pro Seite. Optisch ändert sich gegenüber lauter \`<div>\` nichts — bedienbar wird die Seite trotzdem eine völlig andere.`,
+    },
+    html_tabelle: {
+      code: `<table>
+  <caption>Umsatz nach Quartal</caption>
+  <thead>
+    <tr><th scope="col">Quartal</th><th scope="col">Umsatz</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Q1</th><td>4.200 €</td></tr>
+    <tr><th scope="row">Q2</th><td>5.100 €</td></tr>
+  </tbody>
+</table>`,
+      erklaerung: `\`scope\` sagt, ob eine Kopfzelle für eine Spalte oder eine Zeile gilt. Beim Vorlesen wird daraus „Q2, Umsatz: 5.100 €“ statt einer nackten Zahl. Die \`<caption>\` steht als erstes Kind und benennt, worum es überhaupt geht.`,
+    },
+    html_text: {
+      code: `<h1>Tabellen in HTML</h1>
+<p>Eine Tabelle ordnet Daten in <strong>Zeilen und Spalten</strong>.</p>
+
+<h2>Wann keine Tabelle</h2>
+<p>Für das <em>Layout</em> einer Seite ist sie das falsche Werkzeug.</p>`,
+      erklaerung: `Die Überschriftenebenen bilden die Gliederung ab, nicht die Schriftgröße — nach \`<h1>\` kommt \`<h2>\`, keine Ebene wird übersprungen. \`<strong>\` und \`<em>\` tragen Bedeutung und werden beim Vorlesen betont; \`<b>\` und \`<i>\` ändern nur das Aussehen.`,
+    },
+  },
+  java: {
+    bedingung: {
+      code: `int punkte = 72;
+String note;
+
+if (punkte >= 90)      note = "sehr gut";
+else if (punkte >= 75) note = "gut";
+else if (punkte >= 60) note = "befriedigend";
+else                   note = "nicht bestanden";
+
+System.out.println(note);   // befriedigend`,
+      erklaerung: `Die Schwellen stehen absteigend, weil der erste zutreffende Zweig gewinnt — umgekehrt käme für 72 Punkte „befriedigend“ statt der richtigen Stufe zuerst dran. Die Variable wird vor der Verzweigung angelegt und in den Zweigen nur belegt; die Ausgabe steht dadurch an einer einzigen Stelle.`,
+    },
+    fehler: {
+      code: `try {
+    int zahl = Integer.parseInt(eingabe);
+    System.out.println(zahl * 2);
+} catch (NumberFormatException e) {
+    System.err.println("Keine gültige Zahl: " + eingabe);
+} finally {
+    System.out.println("fertig");
+}`,
+      erklaerung: `Gefangen wird die konkrete Ausnahmeart, nicht \`Exception\` — sonst verschwinden nebenbei auch Fehler, die man gar nicht behandeln wollte. Der \`finally\`-Block läuft in jedem Fall, auch nach einem \`return\` im \`try\`. Die Meldung nennt die fehlerhafte Eingabe, damit man sie nicht suchen muss.`,
+    },
+    funktion: {
+      code: `public static int summe(int... zahlen) {
+    int ergebnis = 0;
+    for (int z : zahlen) {
+        ergebnis += z;
+    }
+    return ergebnis;
+}
+
+System.out.println(summe(1, 2, 3));    // 6
+System.out.println(summe());           // 0`,
+      erklaerung: `Die drei Punkte erlauben beliebig viele Argumente — innerhalb der Methode ist \`zahlen\` ein Array. Der Rückgabetyp steht vor dem Namen, und jeder Weg durch die Methode muss einen Wert liefern. Ohne Argumente ist das Array leer und die Summe damit 0.`,
+    },
+    klasse: {
+      code: `public class Konto {
+    private double stand;
+    private final String inhaber;
+
+    public Konto(String inhaber) {
+        this.inhaber = inhaber;
+    }
+
+    public void einzahlen(double betrag) {
+        if (betrag <= 0) throw new IllegalArgumentException("Betrag muss positiv sein");
+        stand += betrag;
+    }
+
+    public double getStand() { return stand; }
+}`,
+      erklaerung: `\`private\` verhindert, dass der Kontostand von außen auf einen beliebigen Wert gesetzt wird — verändert wird er nur über \`einzahlen\`, und dort wird geprüft. \`final\` beim Inhaber heißt: nach dem Konstruktor unveränderlich. \`this\` unterscheidet das Feld vom gleichnamigen Parameter.`,
+    },
+    operator: {
+      code: `int a = 7, b = 2;
+
+System.out.println(a / b);          // 3   — ganzzahlige Division
+System.out.println(a % b);          // 1   — Rest
+System.out.println((double) a / b); // 3.5 — erst umwandeln
+
+String s1 = "abc", s2 = "ab" + "c";
+System.out.println(s1.equals(s2));  // true  — Inhalt vergleichen`,
+      erklaerung: `Zwei Ganzzahlen geteilt ergeben wieder eine Ganzzahl, der Rest fällt weg — deshalb muss vor der Division umgewandelt werden. Bei Objekten vergleicht \`==\` die Identität, nicht den Inhalt; für Strings gehört deshalb immer \`equals\` genommen.`,
+    },
+    sammlung: {
+      code: `List<String> namen = new ArrayList<>(List.of("Ada", "Linus", "Grace"));
+namen.add("Alan");
+
+namen.stream()
+     .filter(n -> n.length() > 3)
+     .forEach(System.out::println);   // Linus, Grace, Alan
+
+System.out.println(namen.size());     // 4`,
+      erklaerung: `\`List.of\` erzeugt eine unveränderliche Liste — deshalb wird sie hier in eine \`ArrayList\` gepackt, bevor etwas hinzukommt. Der Stream filtert und verarbeitet, ohne die Ausgangsliste zu verändern. Der Zugriff über den Index bleibt möglich, ist hier aber unnötig.`,
+    },
+    schleife: {
+      code: `for (int i = 1; i <= 5; i++) {
+    if (i == 3) continue;
+    System.out.println(i);        // 1 2 4 5
+}
+
+for (String name : namen) {       // ohne Zähler
+    System.out.println(name);
+}`,
+      erklaerung: `Die Zählschleife trägt Start, Bedingung und Schrittweite im Kopf — dadurch ist auf einen Blick sichtbar, wann sie endet. Braucht man den Index gar nicht, ist die Fuß-über-Schleife die klarere Wahl: kein Zähler, keine Gefahr, danebenzugreifen.`,
+    },
+    string: {
+      code: `String satz = "  Hallo Welt  ";
+
+System.out.println(satz.trim().length());          // 10
+System.out.println(satz.contains("Welt"));         // true
+System.out.println(satz.trim().toUpperCase());     // HALLO WELT
+System.out.println(String.join(", ", "a", "b"));   // a, b`,
+      erklaerung: `Strings sind in Java unveränderlich — jede dieser Methoden liefert einen neuen String, der ursprüngliche bleibt wie er war. Wer das Ergebnis nicht zuweist, verliert es. \`trim()\` vor dem Vergleich erspart die häufigste Ursache für ein unerwartetes \`false\`.`,
+    },
+    variable: {
+      code: `final double MWST = 0.19;
+double netto = 100.0;
+var brutto = netto * (1 + MWST);   // var: Typ wird erkannt
+
+System.out.printf("%.2f%n", brutto);   // 119,00`,
+      erklaerung: `\`final\` macht den Wert unveränderlich; jeder Schreibversuch scheitert schon beim Übersetzen. \`var\` spart nur die Schreibarbeit — der Typ steht trotzdem fest und ist hier \`double\`. Mit \`int\` statt \`double\` wäre das Ergebnis abgeschnitten worden.`,
+    },
+    vererbung: {
+      code: `abstract class Tier {
+    protected final String name;
+    Tier(String name) { this.name = name; }
+    abstract String laut();
+
+    void vorstellen() {
+        System.out.println(name + " macht " + laut());
+    }
+}
+
+class Hund extends Tier {
+    Hund(String name) { super(name); }
+    @Override String laut() { return "Wuff"; }
+}`,
+      erklaerung: `\`abstract\` heißt: Von dieser Klasse selbst gibt es kein Objekt, sie legt nur fest, was Unterklassen können müssen. \`super(name)\` reicht an den Konstruktor der Oberklasse durch — ohne diesen Aufruf bliebe der Name unbelegt. \`@Override\` lässt den Compiler prüfen, dass wirklich etwas überschrieben wird.`,
+    },
+  },
+  javascript: {
+    abbildung: {
+      code: `const preise = { brot: 3.5, milch: 1.2 };
+
+preise.kaese = 4.8;                  // hinzufuegen
+console.log(preise.brot);            // 3.5
+console.log("butter" in preise);     // false
+console.log(Object.keys(preise));    // ["brot", "milch", "kaese"]
+
+for (const [ware, preis] of Object.entries(preise)) {
+  console.log(\`\${ware}: \${preis} €\`);
+}`,
+      erklaerung: `Der Zugriff auf einen fehlenden Schlüssel liefert \`undefined\` statt eines Fehlers — deshalb ist \`in\` die verlässlichere Prüfung, besonders wenn \`0\` oder \`""\` gültige Werte wären. \`Object.entries\` liefert Paare, die sich direkt in zwei Namen zerlegen lassen.`,
+    },
+    async: {
+      code: `async function ladeAlle(urls) {
+  // alle gleichzeitig starten, einmal auf alle warten
+  const antworten = await Promise.all(urls.map((u) => fetch(u)));
+  return Promise.all(antworten.map((a) => a.json()));
+}
+
+try {
+  const daten = await ladeAlle(["/a.json", "/b.json"]);
+} catch (e) {
+  console.error("Laden fehlgeschlagen:", e.message);
+}`,
+      erklaerung: `\`Promise.all\` startet alle Anfragen gleichzeitig und wartet einmal auf das Ende — nacheinander zu warten würde die Zeiten addieren. Schlägt eine fehl, scheitert das Ganze, deshalb der \`try\`-Block. Ohne \`await\` käme statt der Daten das Versprechen darauf zurück.`,
+    },
+    bedingung: {
+      code: `const rabatt = menge >= 100 ? 0.2
+             : menge >= 10  ? 0.1
+             : 0;
+
+// Kurzschluss: der rechte Teil wird nur bei Bedarf angesehen
+if (nutzer && nutzer.name) {
+  console.log(nutzer.name);
+}
+
+const anzeige = eingabe ?? "kein Wert";   // nur bei null/undefined`,
+      erklaerung: `Die Bedingung bricht ab, sobald das Ergebnis feststeht — bei \`nutzer && nutzer.name\` wird der Zugriff gar nicht erst versucht, wenn \`nutzer\` fehlt. \`??\` greift ausschließlich bei \`null\` und \`undefined\`, während \`||\` auch bei \`0\` und \`""\` einspringt. Das ist ein wichtiger Unterschied.`,
+    },
+    fehler: {
+      code: `class EingabeFehler extends Error {
+  constructor(feld) {
+    super(\`Feld "\${feld}" fehlt\`);
+    this.name = "EingabeFehler";
+    this.feld = feld;
+  }
+}
+
+try {
+  if (!daten.mail) throw new EingabeFehler("mail");
+} catch (e) {
+  if (e instanceof EingabeFehler) markiere(e.feld);
+  else throw e;                     // Unbekanntes weiterreichen
+}`,
+      erklaerung: `Eine eigene Fehlerklasse trägt zusätzliche Angaben mit — hier das betroffene Feld, das sich damit direkt markieren lässt. Entscheidend ist das \`else throw e\`: Was hier nicht behandelt werden kann, muss weiter nach oben, statt stillschweigend zu verschwinden.`,
+    },
+    funktion: {
+      code: `function begruesse(name, gruss = "Hallo") {
+  return \`\${gruss}, \${name}!\`;
+}
+
+const verdopple = (n) => n * 2;      // Kurzform mit Rueckgabe
+
+console.log(begruesse("Ada"));            // Hallo, Ada!
+console.log(begruesse("Ada", "Moin"));    // Moin, Ada!`,
+      erklaerung: `Der Standardwert greift, wenn das Argument fehlt oder \`undefined\` ist. Die Pfeilfunktion ohne geschweifte Klammern gibt ihren Ausdruck direkt zurück — mit Klammern bräuchte sie ein ausdrückliches \`return\`. Beide Formen sind gleichwertig; die kurze lohnt bei einzeiligen Funktionen.`,
+    },
+    klasse: {
+      code: `class Zaehler {
+  #stand = 0;                     // wirklich privat
+
+  hoch(schritt = 1) {
+    this.#stand += schritt;
+    return this;                  // erlaubt Verkettung
+  }
+
+  get wert() { return this.#stand; }
+}
+
+const z = new Zaehler();
+console.log(z.hoch().hoch(5).wert);   // 6`,
+      erklaerung: `Das Doppelkreuz macht ein Feld tatsächlich privat — ein Zugriff von außen ist ein Syntaxfehler, keine bloße Vereinbarung. \`get\` erzeugt eine Eigenschaft, die wie ein Feld gelesen wird, aber berechnet ist. Das \`return this\` erlaubt es, Aufrufe aneinanderzuhängen.`,
+    },
+    modul: {
+      code: `// rechnen.js
+export function addiere(a, b) { return a + b; }
+export const PI = 3.14159;
+export default class Rechner { /* … */ }
+
+// main.js
+import Rechner, { addiere, PI } from "./rechnen.js";
+console.log(addiere(2, 3), PI);`,
+      erklaerung: `Was nicht exportiert wird, bleibt in der Datei und kann später gefahrlos umgebaut werden. Benannte Exporte werden in geschweiften Klammern importiert, der Standard-Export ohne — und darf beim Import beliebig heißen. Die Dateiendung gehört im Browser dazu.`,
+    },
+    operator: {
+      code: `console.log(7 / 2);        // 3.5  — keine Ganzzahldivision
+console.log(7 % 2);        // 1
+console.log(2 ** 10);      // 1024
+
+console.log("5" == 5);     // true   — wandelt vorher um
+console.log("5" === 5);    // false  — Wert UND Typ
+console.log([] == false);  // true   — und genau deshalb: ===`,
+      erklaerung: `Die lose Gleichheit wandelt vorher um, und die Regeln dafür hat niemand im Kopf — \`[] == false\` ist wahr. Die strenge Variante vergleicht Wert und Typ und verhält sich vorhersehbar. Deshalb ist \`===\` die richtige Voreinstellung, und \`==\` die begründungspflichtige Ausnahme.`,
+    },
+    sammlung: {
+      code: `const zahlen = [5, 2, 8, 1];
+
+const gross   = zahlen.filter((z) => z > 3);      // [5, 8]
+const doppelt = zahlen.map((z) => z * 2);         // [10, 4, 16, 2]
+const summe   = zahlen.reduce((a, z) => a + z, 0);// 16
+
+console.log(zahlen);   // unveraendert: [5, 2, 8, 1]`,
+      erklaerung: `Filtern, umformen und zusammenfassen erzeugen jeweils ein neues Array — das ursprüngliche bleibt unberührt. Genau das macht sie verkettbar und macht Fehler durch Nebenwirkungen unmöglich. \`reduce\` braucht einen Startwert, sonst scheitert es an einer leeren Liste.`,
+    },
+    schleife: {
+      code: `for (const [i, name] of namen.entries()) {
+  console.log(\`\${i + 1}. \${name}\`);
+}
+
+let versuche = 0;
+while (versuche < 3 && !erfolgreich()) {
+  versuche++;
+}`,
+      erklaerung: `\`entries()\` liefert Position und Wert zusammen, wenn beides gebraucht wird — sonst genügt \`for…of\` allein. Die kopfgesteuerte Schleife prüft vor jedem Durchlauf; die Bedingung muss im Rumpf erreichbar falsch werden, sonst hängt das Programm.`,
+    },
+    speicher: {
+      code: `const a = { wert: 1 };
+const b = a;              // zweiter Name fuer dasselbe Objekt
+b.wert = 2;
+console.log(a.wert);      // 2 — auch a hat sich geaendert
+
+const c = { ...a };       // flache Kopie
+c.wert = 3;
+console.log(a.wert);      // 2 — c ist eigenstaendig`,
+      erklaerung: `Bei Objekten und Arrays wird die Referenz zugewiesen, nicht der Inhalt — \`a\` und \`b\` zeigen auf dasselbe. Die Streuung erzeugt eine flache Kopie: die oberste Ebene ist eigenständig, verschachtelte Objekte darunter bleiben geteilt. Für tiefe Kopien gibt es \`structuredClone\`.`,
+    },
+    string: {
+      code: `const satz = "  Hallo Welt  ";
+
+console.log(satz.trim().split(" "));        // ["Hallo", "Welt"]
+console.log(satz.includes("Welt"));         // true
+console.log(satz.trim().replace("Welt", "du"));  // Hallo du
+console.log(\`Länge: \${satz.trim().length}\`);     // Länge: 10`,
+      erklaerung: `Alle diese Methoden liefern einen neuen String — der ursprüngliche bleibt unverändert, weil Strings unveränderlich sind. \`trim()\` vor dem Vergleich erspart die häufigste Ursache für unerwartetes \`false\`. Der Backtick-String setzt Werte direkt ein, ohne Aneinanderhängen.`,
+    },
+    test: {
+      code: `test("lehnt negative Beträge ab", () => {
+  expect(() => konto.einzahlen(-5)).toThrow();
+});
+
+test("addiert den Betrag zum Stand", () => {
+  const konto = neuesKonto();      // vorbereiten
+  konto.einzahlen(50);             // ausfuehren
+  expect(konto.stand).toBe(50);    // pruefen
+});`,
+      erklaerung: `Der Testname beschreibt den Fall, nicht die Methode — im Fehlerbericht steht dann sofort, was nicht mehr stimmt. Die drei Abschnitte vorbereiten, ausführen, prüfen halten den Test lesbar. Jeder Test legt sein eigenes Konto an und hängt damit nicht vom vorherigen ab.`,
+    },
+    variable: {
+      code: `const MWST = 0.19;         // wird nie neu zugewiesen
+let summe = 0;             // aendert sich
+for (const preis of preise) summe += preis;
+
+const korb = [];
+korb.push("Brot");         // erlaubt: der Name zeigt weiter aufs selbe Array
+console.log(summe * (1 + MWST));`,
+      erklaerung: `\`const\` als Voreinstellung, \`let\` nur wo nötig — wer beim Lesen sieht, dass ein Wert konstant ist, muss den Rest nicht danach absuchen. Bei Arrays und Objekten heißt \`const\` allerdings nur: Der Name zeigt weiter auf dasselbe. Der Inhalt darf sich ändern.`,
+    },
+  },
+  kotlin: {
+    bedingung: {
+      code: `val note = when {
+    punkte >= 90 -> "sehr gut"
+    punkte >= 75 -> "gut"
+    punkte >= 60 -> "befriedigend"
+    else         -> "nicht bestanden"
+}
+
+val anzeige = if (name.isEmpty()) "unbekannt" else name`,
+      erklaerung: `In Kotlin sind \`if\` und \`when\` Ausdrücke — sie liefern einen Wert und lassen sich direkt zuweisen. Dadurch entfällt die sonst übliche Variable, die vorher angelegt und in jedem Zweig belegt wird. Der \`else\`-Zweig ist bei einer Zuweisung Pflicht.`,
+    },
+    fehler: {
+      code: `val zahl: Int? = eingabe.toIntOrNull()
+
+if (zahl == null) {
+    println("Keine gültige Zahl")
+    return
+}
+println(zahl * 2)      // hier weiss der Compiler: nicht null
+
+val wert = eingabe.toIntOrNull() ?: 0    // Standardwert`,
+      erklaerung: `Kotlin trennt Typen, die \`null\` sein können (\`Int?\`), von denen, die es nicht können — der Compiler erzwingt die Prüfung. Nach der Abfrage oben ist \`zahl\` im weiteren Verlauf sicher belegt. \`?:\` liefert einen Ersatzwert, falls links \`null\` steht.`,
+    },
+    funktion: {
+      code: `fun begruesse(name: String, gruss: String = "Hallo"): String {
+    return "$gruss, $name!"
+}
+
+fun verdopple(n: Int) = n * 2      // Kurzform, Typ wird erkannt
+
+println(begruesse("Ada"))                    // Hallo, Ada!
+println(begruesse(gruss = "Moin", name = "Ada"))`,
+      erklaerung: `Der Rückgabetyp steht hinter dem Doppelpunkt; bei der Kurzform mit \`=\` leitet der Compiler ihn ab. Benannte Argumente erlauben eine beliebige Reihenfolge beim Aufruf und machen längere Signaturen lesbar. Standardwerte ersparen überladene Zweitfassungen.`,
+    },
+    klasse: {
+      code: `class Konto(val inhaber: String) {
+    var stand: Double = 0.0
+        private set                   // lesen ja, schreiben nur von innen
+
+    fun einzahlen(betrag: Double) {
+        require(betrag > 0) { "Betrag muss positiv sein" }
+        stand += betrag
+    }
+}
+
+val k = Konto("Ada")
+k.einzahlen(50.0)
+println(k.stand)      // 50.0`,
+      erklaerung: `Der Konstruktor steht direkt hinter dem Klassennamen — \`val inhaber\` wird dadurch zugleich zum Feld. \`private set\` erlaubt das Lesen von außen, das Schreiben aber nur von innen; ein \`k.stand = 999.0\` übersetzt gar nicht erst. \`require\` wirft mit der angegebenen Meldung, wenn die Bedingung nicht hält.`,
+    },
+    sammlung: {
+      code: `val zahlen = listOf(5, 2, 8, 1)
+
+val gross = zahlen.filter { it > 3 }        // [5, 8]
+val summe = zahlen.sum()                    // 16
+val sortiert = zahlen.sorted()              // [1, 2, 5, 8]
+
+val veraenderbar = mutableListOf("a")
+veraenderbar.add("b")`,
+      erklaerung: `\`listOf\` erzeugt eine unveränderliche Liste — das ist die Voreinstellung, und für Veränderbares gibt es \`mutableListOf\`. In einem Lambda mit einem Parameter heißt dieser \`it\`, wenn kein Name vergeben wird. Alle Filter- und Umformschritte liefern neue Listen.`,
+    },
+    schleife: {
+      code: `for (i in 1..5) print(i)              // 12345
+for (i in 5 downTo 1 step 2) print(i) // 531
+
+for ((index, name) in namen.withIndex()) {
+    println("\${index + 1}. $name")
+}`,
+      erklaerung: `Ein Bereich mit \`..\` schließt beide Enden ein; \`until\` ließe das obere weg. \`downTo\` und \`step\` decken rückwärts und in Sprüngen ab, ohne dass ein Zähler von Hand geführt werden muss. \`withIndex()\` liefert Position und Wert zusammen.`,
+    },
+    string: {
+      code: `val satz = "  Hallo Welt  "
+
+println(satz.trim().length)               // 10
+println(satz.contains("Welt"))            // true
+println(satz.trim().split(" "))           // [Hallo, Welt]
+println("Summe: \${2 + 3}")                // Summe: 5`,
+      erklaerung: `In einer Zeichenkette lässt sich mit \`$\` direkt ein Wert einsetzen, mit \`\${…}\` sogar ein ganzer Ausdruck. Die Methoden liefern neue Zeichenketten; die ursprüngliche bleibt unverändert. \`trim()\` vor einem Vergleich erspart die häufigste Fehlerquelle.`,
+    },
+    variable: {
+      code: `val mwst = 0.19          // unveraenderlich
+var summe = 0.0          // veraenderlich
+
+for (preis in preise) summe += preis
+val brutto = summe * (1 + mwst)
+
+println("%.2f".format(brutto))`,
+      erklaerung: `\`val\` als Voreinstellung, \`var\` nur wo nötig — das ist in Kotlin die übliche Reihenfolge und spart mehr Fehler, als es Tipparbeit kostet. Der Typ wird aus dem Wert abgeleitet, lässt sich aber jederzeit ausschreiben. \`0.0\` statt \`0\` macht daraus einen \`Double\`.`,
+    },
+  },
+  php: {
+    bedingung: {
+      code: `<?php
+$punkte = 72;
+
+$note = match(true) {
+    $punkte >= 90 => "sehr gut",
+    $punkte >= 75 => "gut",
+    $punkte >= 60 => "befriedigend",
+    default       => "nicht bestanden",
+};
+
+echo $note;   // befriedigend`,
+      erklaerung: `\`match\` vergleicht streng und liefert einen Wert — anders als \`switch\`, das lose vergleicht und ein \`break\` braucht. Mit \`match(true)\` lassen sich Bereiche prüfen statt einzelner Werte. Fehlt ein passender Zweig und auch \`default\`, wirft \`match\` einen Fehler, statt still nichts zu tun.`,
+    },
+    datei: {
+      code: `<?php
+$pfad = "notizen.txt";
+
+// zeilenweise lesen — auch bei grossen Dateien sparsam
+$handle = fopen($pfad, "r");
+if ($handle === false) {
+    throw new RuntimeException("Datei nicht lesbar: $pfad");
+}
+while (($zeile = fgets($handle)) !== false) {
+    echo trim($zeile), PHP_EOL;
+}
+fclose($handle);`,
+      erklaerung: `Verglichen wird mit \`!== false\`, nicht mit einer bloßen Wahrheitsprüfung: Eine leere Zeile wäre sonst als Dateiende missverstanden worden. Zeilenweises Lesen hält den Speicherbedarf unabhängig von der Dateigröße. \`fclose\` gehört immer dazu.`,
+    },
+    fehler: {
+      code: `<?php
+function teile(float $a, float $b): float {
+    if ($b === 0.0) {
+        throw new InvalidArgumentException("Division durch null");
+    }
+    return $a / $b;
+}
+
+try {
+    echo teile(10, 0);
+} catch (InvalidArgumentException $e) {
+    echo "Fehler: ", $e->getMessage();
+} finally {
+    echo PHP_EOL, "fertig";
+}`,
+      erklaerung: `Gefangen wird die konkrete Ausnahmeart — \`\\Throwable\` würde auch Fehler abfangen, die man gar nicht behandeln kann. \`finally\` läuft in jedem Fall. Die Typangaben an Parametern und Rückgabe lässt PHP prüfen, statt stillschweigend umzuwandeln.`,
+    },
+    funktion: {
+      code: `<?php
+function begruesse(string $name, string $gruss = "Hallo"): string {
+    return "$gruss, $name!";
+}
+
+$verdopple = fn(int $n): int => $n * 2;
+
+echo begruesse("Ada");                  // Hallo, Ada!
+echo begruesse(gruss: "Moin", name: "Ada");`,
+      erklaerung: `Typangaben vor dem Parameter und hinter dem Doppelpunkt machen aus stillen Umwandlungen sichtbare Fehler. Benannte Argumente erlauben beim Aufruf eine beliebige Reihenfolge. Die Pfeilfunktion \`fn\` gibt ihren Ausdruck direkt zurück.`,
+    },
+    klasse: {
+      code: `<?php
+class Konto {
+    private float $stand = 0.0;
+
+    public function __construct(public readonly string $inhaber) {}
+
+    public function einzahlen(float $betrag): void {
+        if ($betrag <= 0) {
+            throw new InvalidArgumentException("Betrag muss positiv sein");
+        }
+        $this->stand += $betrag;
+    }
+
+    public function stand(): float { return $this->stand; }
+}`,
+      erklaerung: `Ein Parameter im Konstruktor mit Sichtbarkeit wird automatisch zum Feld — das spart die sonst übliche Zuweisung. \`readonly\` erlaubt das Setzen genau einmal. Zugegriffen wird mit \`$this->\`, und \`private\` hält den Stand davor geschützt, von außen gesetzt zu werden.`,
+    },
+    sammlung: {
+      code: `<?php
+$zahlen = [5, 2, 8, 1];
+
+$gross = array_filter($zahlen, fn($z) => $z > 3);   // [0=>5, 2=>8]
+$summe = array_sum($zahlen);                        // 16
+$doppelt = array_map(fn($z) => $z * 2, $zahlen);
+
+$preise = ["brot" => 3.5, "milch" => 1.2];
+foreach ($preise as $ware => $preis) {
+    echo "$ware: $preis €", PHP_EOL;
+}`,
+      erklaerung: `In PHP ist ein Array beides zugleich: Liste und Abbildung. \`array_filter\` behält die ursprünglichen Schlüssel bei — deshalb fehlt oben die 1, und \`array_values\` stellt bei Bedarf eine lückenlose Liste her. \`foreach\` liefert Schlüssel und Wert zusammen.`,
+    },
+    string: {
+      code: `<?php
+$satz = "  Hallo Welt  ";
+
+echo strlen(trim($satz));                  // 10
+echo str_contains($satz, "Welt") ? "ja" : "nein";
+echo implode(", ", explode(" ", trim($satz)));   // Hallo, Welt
+printf("%.2f", 119.0);                     // 119.00`,
+      erklaerung: `In doppelten Anführungszeichen wird \`$name\` direkt eingesetzt, in einfachen nicht — das ist der Unterschied zwischen den beiden Schreibweisen. \`explode\` zerlegt an einem Trennzeichen, \`implode\` fügt wieder zusammen. \`trim\` vor dem Vergleich erspart viel Suchen.`,
+    },
+    variable: {
+      code: `<?php
+const MWST = 0.19;
+$netto = 100.0;
+$brutto = $netto * (1 + MWST);
+
+printf("%.2f", $brutto);   // 119.00`,
+      erklaerung: `Variablen beginnen in PHP immer mit \`$\`, Konstanten nicht — deshalb steht \`MWST\` ohne Zeichen davor. Der Typ ergibt sich aus dem Wert; \`100.0\` erzeugt eine Fließkommazahl, \`100\` eine Ganzzahl. \`printf\` legt die Anzahl der Nachkommastellen fest.`,
+    },
+  },
+  python: {
+    abbildung: {
+      code: `preise = {"brot": 3.50, "milch": 1.20}
+preise["kaese"] = 4.80
+
+print(preise.get("butter", 0))     # 0 statt Absturz
+print("brot" in preise)            # True
+
+for ware, preis in preise.items():
+    print(f"{ware}: {preis:.2f} €")`,
+      erklaerung: `\`preise["butter"]\` würde einen \`KeyError\` werfen — \`get\` mit Standardwert nicht. Deshalb ist \`get\` beim Lesen die sichere Wahl und \`in\` die Prüfung, ob ein Schlüssel überhaupt existiert. \`items()\` liefert Schlüssel und Wert zusammen.`,
+    },
+    async: {
+      code: `import asyncio
+
+async def lade_alle(urls):
+    # alle gleichzeitig starten, einmal auf alle warten
+    aufgaben = [hole(u) for u in urls]
+    return await asyncio.gather(*aufgaben)
+
+async def main():
+    try:
+        daten = await lade_alle(["/a", "/b"])
+    except Exception as e:
+        print("Laden fehlgeschlagen:", e)
+
+asyncio.run(main())`,
+      erklaerung: `\`gather\` startet alle Aufgaben gleichzeitig; nacheinander zu warten würde die Zeiten addieren. Ohne \`await\` bekommt man die Koroutine zurück, nicht ihr Ergebnis — und Python warnt dann, dass sie nie ausgeführt wurde. \`asyncio.run\` ist der Einstiegspunkt.`,
+    },
+    bedingung: {
+      code: `punkte = 72
+
+if punkte >= 90:
+    note = "sehr gut"
+elif punkte >= 75:
+    note = "gut"
+elif punkte >= 60:
+    note = "befriedigend"
+else:
+    note = "nicht bestanden"
+
+print(note)     # befriedigend`,
+      erklaerung: `Die Einrückung bestimmt in Python den Block — vier Leerzeichen sind Konvention, und Tabulatoren zu mischen führt zu Fehlern. Der Doppelpunkt am Zeilenende gehört zu jedem \`if\`, \`elif\` und \`else\`. Geprüft wird von oben nach unten, der erste zutreffende Zweig gewinnt.`,
+    },
+    datei: {
+      code: `from pathlib import Path
+
+pfad = Path("notizen.txt")
+
+with pfad.open("r", encoding="utf-8") as f:
+    for zeile in f:                     # zeilenweise, speicherschonend
+        print(zeile.rstrip())
+
+with pfad.open("a", encoding="utf-8") as f:
+    f.write("neue Zeile\\n")`,
+      erklaerung: `\`with\` schließt die Datei auch dann, wenn dazwischen ein Fehler auftritt — ein ausdrückliches \`close()\` ist damit überflüssig. Die Kodierung gehört immer angegeben, sonst rät Python nach Systemeinstellung und Umlaute werden zu Zeichensalat. Der Modus \`a\` hängt an, \`w\` würde den Inhalt löschen.`,
+    },
+    fehler: {
+      code: `class EingabeFehler(ValueError):
+    def __init__(self, feld):
+        super().__init__(f"Feld '{feld}' fehlt")
+        self.feld = feld
+
+try:
+    if not daten.get("mail"):
+        raise EingabeFehler("mail")
+except EingabeFehler as e:
+    markiere(e.feld)
+except (KeyError, TypeError):
+    print("unerwartete Datenstruktur")
+finally:
+    aufraeumen()`,
+      erklaerung: `Gefangen wird von speziell nach allgemein — der erste passende Zweig greift. Ein nacktes \`except:\` würde auch Tastaturabbrüche schlucken und ist deshalb praktisch immer falsch. \`finally\` läuft in jedem Fall, auch nach einem \`return\`.`,
+    },
+    funktion: {
+      code: `def begruesse(name: str, gruss: str = "Hallo") -> str:
+    """Setzt Gruß und Name zu einem Satz zusammen."""
+    return f"{gruss}, {name}!"
+
+print(begruesse("Ada"))                  # Hallo, Ada!
+print(begruesse("Ada", gruss="Moin"))    # Moin, Ada!`,
+      erklaerung: `Der Standardwert greift, wenn das Argument fehlt. Wichtig: Als Standardwert nie eine Liste oder ein Dictionary nehmen — die werden einmal angelegt und über alle Aufrufe hinweg geteilt. Der Docstring in der ersten Zeile ist die eingebaute Dokumentation und erscheint in \`help()\`.`,
+    },
+    klasse: {
+      code: `class Konto:
+    def __init__(self, inhaber: str):
+        self.inhaber = inhaber
+        self._stand = 0.0        # Unterstrich: nur intern gedacht
+
+    def einzahlen(self, betrag: float) -> None:
+        if betrag <= 0:
+            raise ValueError("Betrag muss positiv sein")
+        self._stand += betrag
+
+    @property
+    def stand(self) -> float:
+        return self._stand`,
+      erklaerung: `\`__init__\` läuft beim Anlegen und sorgt dafür, dass das Objekt von Anfang an vollständig ist. \`self\` ist immer der erste Parameter jeder Methode. Der führende Unterstrich ist eine Vereinbarung, keine Sperre — \`@property\` macht den Stand lesbar wie ein Feld, ohne ihn schreibbar zu machen.`,
+    },
+    modul: {
+      code: `# rechnen.py
+PI = 3.14159
+
+def addiere(a, b):
+    return a + b
+
+def _intern():        # Unterstrich: nicht Teil der Schnittstelle
+    pass
+
+# main.py
+from rechnen import addiere, PI
+print(addiere(2, 3), PI)`,
+      erklaerung: `Ein Import führt die Datei einmal aus und merkt sich das Ergebnis — beim zweiten Import passiert nichts mehr. Namen mit führendem Unterstrich gelten als intern und werden von \`from … import *\` übersprungen. Ringförmige Importe zwischen zwei Dateien sind die häufigste Ursache für rätselhafte Startfehler.`,
+    },
+    operator: {
+      code: `print(7 / 2)      # 3.5   — immer Fliesskomma
+print(7 // 2)     # 3     — ganzzahlig, schneidet ab
+print(7 % 2)      # 1
+print(2 ** 10)    # 1024
+
+print(0.1 + 0.2 == 0.3)                    # False
+print(abs(0.1 + 0.2 - 0.3) < 1e-9)         # True`,
+      erklaerung: `Python trennt normale und ganzzahlige Division sauber: \`/\` liefert immer Fließkomma, \`//\` schneidet ab. Fließkommazahlen lassen sich nicht exakt vergleichen — \`0.1 + 0.2\` ist eben nicht genau \`0.3\`. Verglichen wird deshalb über den Abstand.`,
+    },
+    sammlung: {
+      code: `zahlen = [5, 2, 8, 1]
+
+gross = [z for z in zahlen if z > 3]      # [5, 8]
+doppelt = [z * 2 for z in zahlen]         # [10, 4, 16, 2]
+print(sum(zahlen), max(zahlen), len(zahlen))   # 16 8 4
+
+zahlen.append(7)
+print(sorted(zahlen))                     # neue sortierte Liste`,
+      erklaerung: `Die Listen-Abkürzung filtert und formt in einer Zeile um und ist in Python der übliche Weg — eine Schleife mit \`append\` sagt dasselbe in vier Zeilen. \`sorted\` liefert eine neue Liste, \`zahlen.sort()\` würde die vorhandene ändern. Beim Durchlaufen nichts entfernen: Es wird sonst etwas übersprungen.`,
+    },
+    schleife: {
+      code: `for i, name in enumerate(namen, start=1):
+    print(f"{i}. {name}")
+
+for a, b in zip(namen, alter):
+    print(a, b)
+
+versuche = 0
+while versuche < 3 and not erfolgreich():
+    versuche += 1`,
+      erklaerung: `\`enumerate\` liefert Position und Wert zusammen und erspart einen selbstgeführten Zähler; \`start=1\` beginnt bei eins statt null. \`zip\` läuft über zwei Listen parallel und endet bei der kürzeren. Eine Schleife über \`range(len(...))\` ist in Python fast immer ein Zeichen, dass es einfacher geht.`,
+    },
+    string: {
+      code: `satz = "  Hallo Welt  "
+
+print(len(satz.strip()))                # 10
+print("Welt" in satz)                   # True
+print(satz.strip().split(" "))          # ['Hallo', 'Welt']
+print(", ".join(["a", "b", "c"]))       # a, b, c
+print(f"{3.14159:.2f}")                 # 3.14`,
+      erklaerung: `Strings sind unveränderlich: Jede Methode liefert einen neuen String zurück, der ursprüngliche bleibt. Wer das Ergebnis nicht zuweist, verliert es. \`join\` fügt eine Liste mit einem Trennzeichen zusammen — in einer Schleife aneinanderzuhängen ist bei vielen Teilen deutlich langsamer.`,
+    },
+    test: {
+      code: `import pytest
+
+def test_lehnt_negative_betraege_ab():
+    konto = Konto("Ada")
+    with pytest.raises(ValueError):
+        konto.einzahlen(-5)
+
+def test_addiert_den_betrag():
+    konto = Konto("Ada")      # vorbereiten
+    konto.einzahlen(50)       # ausfuehren
+    assert konto.stand == 50  # pruefen`,
+      erklaerung: `Der Testname beschreibt den Fall, nicht die Methode — im Fehlerbericht steht dann sofort, was nicht mehr stimmt. \`pytest.raises\` prüft, dass ein Fehler geworfen wird; ohne diesen Block würde der Test schlicht scheitern. Jeder Test legt sein eigenes Konto an und hängt nicht am vorherigen.`,
+    },
+    variable: {
+      code: `MWST = 0.19          # Grossbuchstaben: als konstant gedacht
+netto = 100.0
+brutto = netto * (1 + MWST)
+
+name: str = "Ada"     # Typangabe, optional aber hilfreich
+print(f"{brutto:.2f}")   # 119.00`,
+      erklaerung: `Python kennt keine echten Konstanten — Großbuchstaben sind eine Vereinbarung unter Menschen, keine Sperre für den Rechner. Der Typ ergibt sich aus dem Wert; \`100.0\` erzeugt eine Fließkommazahl, \`100\` eine Ganzzahl. Typangaben ändern nichts an der Ausführung, helfen aber Editor und Prüfwerkzeugen.`,
+    },
+    vererbung: {
+      code: `from abc import ABC, abstractmethod
+
+class Tier(ABC):
+    def __init__(self, name):
+        self.name = name
+
+    @abstractmethod
+    def laut(self) -> str: ...
+
+    def vorstellen(self):
+        print(f"{self.name} macht {self.laut()}")
+
+class Hund(Tier):
+    def laut(self) -> str:
+        return "Wuff"`,
+      erklaerung: `\`ABC\` mit \`@abstractmethod\` verhindert, dass von \`Tier\` selbst ein Objekt entsteht — die Klasse legt nur fest, was Unterklassen können müssen. \`vorstellen\` ist bereits fertig und nutzt die noch offene Methode. Wer in der Unterklasse einen eigenen \`__init__\` schreibt, muss \`super().__init__(...)\` aufrufen.`,
+    },
+  },
+  react: {
+    fe_effekt: {
+      code: `useEffect(() => {
+  const id = setInterval(() => setSekunden((s) => s + 1), 1000);
+  return () => clearInterval(id);      // aufraeumen
+}, []);                                 // leer: nur einmal
+
+useEffect(() => {
+  document.title = \`\${anzahl} offen\`;
+}, [anzahl]);                           // bei jeder Aenderung`,
+      erklaerung: `Die zurückgegebene Funktion räumt auf — ohne sie läuft der Zeitgeber weiter, obwohl die Komponente längst weg ist. Die Abhängigkeitsliste beantwortet die Frage *wann noch einmal*: leer heißt einmalig, gefüllt heißt bei Änderung dieser Werte. Steht dort ein Wert, den der Effekt selbst setzt, entsteht eine Endlosschleife.`,
+    },
+    fe_event: {
+      code: `function Zaehler() {
+  const [n, setN] = useState(0);
+
+  const klick = (e) => {
+    e.preventDefault();
+    setN((alt) => alt + 1);
+  };
+
+  return <button onClick={klick}>Geklickt: {n}</button>;
+}`,
+      erklaerung: `Übergeben wird die Funktion selbst, nicht ihr Aufruf — \`onClick={klick()}\` würde sie schon beim Zeichnen ausführen. Der neue Wert wird über eine Funktion berechnet, weil er vom alten abhängt; direkt \`setN(n + 1)\` zu schreiben geht bei mehreren Klicks kurz hintereinander schief.`,
+    },
+    fe_formular: {
+      code: `function Anmeldung() {
+  const [mail, setMail] = useState("");
+
+  const absenden = (e) => {
+    e.preventDefault();          // ohne dies laedt die Seite neu
+    schicke({ mail });
+  };
+
+  return (
+    <form onSubmit={absenden}>
+      <label htmlFor="mail">E-Mail</label>
+      <input id="mail" value={mail} onChange={(e) => setMail(e.target.value)} />
+      <button type="submit">Senden</button>
+    </form>
+  );
+}`,
+      erklaerung: `Ein kontrolliertes Feld holt seinen Wert aus dem Zustand und meldet jede Änderung zurück — fehlt \`onChange\`, lässt sich nichts eintippen. Beim Absenden gilt der Zustand als Wahrheit, nicht der Feldinhalt. In JSX heißt es \`htmlFor\` statt \`for\`.`,
+    },
+    fe_liste: {
+      code: `function Liste({ aufgaben }) {
+  const offen = aufgaben.filter((a) => !a.erledigt);
+
+  if (offen.length === 0) return <p>Alles erledigt.</p>;
+
+  return (
+    <ul>
+      {offen.map((a) => (
+        <li key={a.id}>{a.titel}</li>
+      ))}
+    </ul>
+  );
+}`,
+      erklaerung: `Der Schlüssel kommt aus den Daten, nicht aus der Position — bei einem Index würden nach dem Löschen Inhalte in die falschen Zeilen wandern. Gefiltert wird vor dem Zeichnen, das hält die Ausgabe lesbar. Der leere Fall ist ausdrücklich behandelt, statt eine leere Liste stehen zu lassen.`,
+    },
+    fe_props: {
+      code: `function Karte({ titel, beschreibung, onOeffnen }) {
+  return (
+    <article onClick={onOeffnen}>
+      <h3>{titel}</h3>
+      <p>{beschreibung}</p>
+    </article>
+  );
+}
+
+<Karte titel="Kurs" beschreibung="…" onOeffnen={() => zeige(id)} />`,
+      erklaerung: `Werte kommen von außen herein und werden in der Komponente nicht verändert — wer etwas ändern will, ruft die mitgegebene Funktion auf. Daten fließen nach unten, Meldungen nach oben. Das Zerlegen in der Parameterliste macht auf einen Blick sichtbar, was die Komponente erwartet.`,
+    },
+    fe_state: {
+      code: `const [aufgaben, setAufgaben] = useState([]);
+
+// neue Liste zurueckgeben, nicht die alte veraendern
+const hinzufuegen = (titel) =>
+  setAufgaben((alt) => [...alt, { id: crypto.randomUUID(), titel }]);
+
+// abgeleitet — gehoert NICHT in den Zustand
+const offen = aufgaben.filter((a) => !a.erledigt).length;`,
+      erklaerung: `\`push\` würde die vorhandene Liste ändern, und React würde nichts davon merken — deshalb eine neue Liste mit der Streuung. Die Anzahl der offenen Aufgaben wird bei jedem Zeichnen berechnet statt gespeichert; ein zweiter Zustand dafür würde früher oder später auseinanderlaufen.`,
+    },
+  },
+  rust: {
+    bedingung: {
+      code: `let note = if punkte >= 90 {
+    "sehr gut"
+} else if punkte >= 75 {
+    "gut"
+} else {
+    "ausbaufaehig"
+};
+
+match eingabe.trim() {
+    "ja" | "j"  => println!("bestaetigt"),
+    "nein"      => println!("abgelehnt"),
+    _           => println!("unklar"),
+}`,
+      erklaerung: `\`if\` ist in Rust ein Ausdruck und liefert einen Wert — alle Zweige müssen deshalb denselben Typ haben. \`match\` muss alle Fälle abdecken; der Unterstrich fängt den Rest. Vergisst man ihn, übersetzt der Code gar nicht erst.`,
+    },
+    fehler: {
+      code: `use std::fs;
+
+fn lies(pfad: &str) -> Result<String, std::io::Error> {
+    let inhalt = fs::read_to_string(pfad)?;   // ? reicht Fehler weiter
+    Ok(inhalt)
+}
+
+match lies("config.toml") {
+    Ok(text) => println!("{} Zeichen", text.len()),
+    Err(e)   => eprintln!("Fehler: {e}"),
+}`,
+      erklaerung: `\`Result\` zwingt dazu, den Fehlerfall zu behandeln — ignorieren geht nicht, der Compiler warnt. Das Fragezeichen gibt den Fehler sofort nach oben weiter und spart den ausgeschriebenen \`match\`. \`unwrap()\` täte dasselbe, würde aber bei einem Fehler das Programm abbrechen.`,
+    },
+    funktion: {
+      code: `fn groesster(werte: &[i32]) -> Option<i32> {
+    if werte.is_empty() {
+        return None;
+    }
+    Some(*werte.iter().max().unwrap())
+}
+
+match groesster(&[3, 9, 1]) {
+    Some(n) => println!("groesster: {n}"),
+    None    => println!("leere Liste"),
+}`,
+      erklaerung: `\`Option\` macht die Möglichkeit „es gibt kein Ergebnis“ zum Teil des Typs — es gibt kein \`null\`, das man übersehen könnte. \`&[i32]\` leiht die Werte nur aus, statt sie zu übernehmen. Die letzte Zeile einer Funktion ohne Semikolon ist der Rückgabewert.`,
+    },
+    klasse: {
+      code: `struct Konto {
+    inhaber: String,
+    stand: f64,
+}
+
+impl Konto {
+    fn neu(inhaber: &str) -> Self {
+        Konto { inhaber: inhaber.to_string(), stand: 0.0 }
+    }
+
+    fn einzahlen(&mut self, betrag: f64) {
+        self.stand += betrag;
+    }
+}`,
+      erklaerung: `Rust trennt Daten (\`struct\`) und Verhalten (\`impl\`) — beides gehört zusammen, steht aber getrennt. \`&mut self\` sagt, dass die Methode das Objekt verändert; \`&self\` würde nur lesen. \`Self\` ist die Kurzform für den eigenen Typ.`,
+    },
+    sammlung: {
+      code: `let mut zahlen = vec![5, 2, 8, 1];
+zahlen.push(7);
+
+let gross: Vec<i32> = zahlen.iter().filter(|&&z| z > 3).cloned().collect();
+let summe: i32 = zahlen.iter().sum();
+
+println!("{:?} — Summe {summe}", gross);   // [5, 8, 7] — Summe 23`,
+      erklaerung: `\`vec!\` legt einen wachsenden Vektor an; ohne \`mut\` ließe sich nichts hinzufügen. Die Kette aus \`iter\`, \`filter\` und \`collect\` erzeugt eine neue Sammlung, ohne die alte anzutasten. Der Zugriff über den Index prüft die Grenzen und bricht sauber ab, statt fremden Speicher zu lesen.`,
+    },
+    speicher: {
+      code: `let s1 = String::from("Hallo");
+let s2 = s1;              // s1 ist danach nicht mehr gueltig
+// println!("{s1}");      // wuerde nicht uebersetzen
+
+let s3 = String::from("Welt");
+let laenge = berechne(&s3);   // nur ausgeliehen
+println!("{s3} hat {laenge} Zeichen");   // s3 gilt weiter`,
+      erklaerung: `Jeder Wert hat genau einen Eigentümer. Eine Zuweisung überträgt das Eigentum, danach ist der alte Name gesperrt — das verhindert, dass zwei Stellen denselben Speicher freigeben. Mit \`&\` wird nur ausgeliehen; der Eigentümer bleibt und darf danach weiterverwendet werden.`,
+    },
+    variable: {
+      code: `let mwst = 0.19;           // unveraenderlich
+let mut summe = 0.0;       // veraenderlich
+
+for preis in &preise {
+    summe += preis;
+}
+let brutto = summe * (1.0 + mwst);
+println!("{brutto:.2}");`,
+      erklaerung: `In Rust ist eine Bindung standardmäßig unveränderlich — \`mut\` ist die ausdrückliche Ausnahme, nicht die Regel. Der Typ wird abgeleitet, steht aber fest. \`&preise\` leiht die Liste aus, statt sie zu übernehmen; ohne das Zeichen wäre sie nach der Schleife verbraucht.`,
+    },
+    vererbung: {
+      code: `trait Tier {
+    fn name(&self) -> String;
+
+    fn vorstellen(&self) {          // Standardumsetzung
+        println!("Das ist {}", self.name());
+    }
+}
+
+struct Hund { name: String }
+
+impl Tier for Hund {
+    fn name(&self) -> String { self.name.clone() }
+}`,
+      erklaerung: `Rust kennt keine Vererbung zwischen Strukturen, sondern Traits: Sie beschreiben Fähigkeiten, die ein Typ mitbringt. Eine Standardumsetzung im Trait gilt für alle, die nichts Eigenes angeben. Ein Typ kann beliebig viele Traits erfüllen — die Mehrfachvererbung anderer Sprachen entfällt damit.`,
+    },
+  },
+  sql: {
+    sql_abfrage: {
+      code: `SELECT vorname, nachname, stadt
+FROM kunden
+WHERE stadt = 'Berlin'
+ORDER BY nachname
+LIMIT 20;`,
+      erklaerung: `Spalten zu benennen statt \`SELECT *\` überträgt weniger Daten und bleibt richtig, wenn die Tabelle später eine Spalte bekommt. Ohne \`ORDER BY\` gibt es keine zugesicherte Reihenfolge, auch wenn es zufällig sortiert aussieht. \`LIMIT\` begrenzt das Ergebnis — sinnvoll bei jeder Abfrage, die man zum ersten Mal ausführt.`,
+    },
+    sql_aendern: {
+      code: `-- Erst ansehen, was betroffen waere:
+SELECT id, name FROM kunden WHERE letzter_login < '2020-01-01';
+
+-- Dann erst aendern:
+BEGIN;
+UPDATE kunden
+SET status = 'inaktiv'
+WHERE letzter_login < '2020-01-01';
+COMMIT;`,
+      erklaerung: `Dieselbe Bedingung zuerst als \`SELECT\` auszuführen zeigt, wie viele Zeilen betroffen sind — danach wird nur das Schlüsselwort getauscht. Ein \`UPDATE\` ohne \`WHERE\` ändert jede Zeile, ohne Rückfrage. Innerhalb einer Transaktion lässt sich mit \`ROLLBACK\` zurücknehmen, solange nicht bestätigt wurde.`,
+    },
+    sql_entwurf: {
+      code: `CREATE TABLE kunden (
+  id       INTEGER PRIMARY KEY,
+  name     TEXT    NOT NULL,
+  mail     TEXT    UNIQUE NOT NULL
+);
+
+CREATE TABLE bestellungen (
+  id        INTEGER PRIMARY KEY,
+  kunde_id  INTEGER NOT NULL REFERENCES kunden(id),
+  betrag    NUMERIC(10,2) NOT NULL CHECK (betrag > 0),
+  erstellt  TIMESTAMP NOT NULL DEFAULT now()
+);`,
+      erklaerung: `Der Fremdschlüssel verhindert Bestellungen ohne zugehörigen Kunden — das lässt die Datenbank gar nicht erst zu. \`NOT NULL\`, \`UNIQUE\` und \`CHECK\` verlagern Regeln dorthin, wo sie niemand umgehen kann. Beträge gehören als \`NUMERIC\` gespeichert, nicht als Fließkommazahl: Beim Runden von Geld zählt jeder Cent.`,
+    },
+    sql_filter: {
+      code: `SELECT name, betrag
+FROM bestellungen
+WHERE betrag BETWEEN 50 AND 200
+  AND (status = 'offen' OR status = 'gepruef')
+  AND storniert_am IS NULL
+  AND name LIKE 'A%';`,
+      erklaerung: `\`AND\` bindet stärker als \`OR\` — ohne die Klammern hätte die Abfrage eine völlig andere Bedeutung. Auf \`NULL\` wird mit \`IS NULL\` geprüft, denn \`= NULL\` trifft niemals zu. \`LIKE 'A%'\` kann einen Index nutzen, \`LIKE '%A'\` nicht: Der Platzhalter am Anfang zwingt zum vollständigen Durchsuchen.`,
+    },
+    sql_gruppe: {
+      code: `SELECT stadt,
+       COUNT(*)        AS anzahl,
+       ROUND(AVG(betrag), 2) AS schnitt
+FROM bestellungen
+WHERE erstellt >= '2024-01-01'     -- filtert Zeilen VOR dem Gruppieren
+GROUP BY stadt
+HAVING COUNT(*) >= 5               -- filtert Gruppen DANACH
+ORDER BY anzahl DESC;`,
+      erklaerung: `\`WHERE\` wirkt vor dem Gruppieren, \`HAVING\` danach — das ist der ganze Unterschied, und er entscheidet über die Geschwindigkeit. Jede Spalte in \`SELECT\`, die nicht zusammengefasst wird, muss in \`GROUP BY\` stehen. \`COUNT(*)\` zählt Zeilen, \`COUNT(spalte)\` nur die gefüllten.`,
+    },
+    sql_join: {
+      code: `SELECT k.name,
+       COUNT(b.id) AS bestellungen
+FROM kunden k
+LEFT JOIN bestellungen b ON b.kunde_id = k.id
+GROUP BY k.id, k.name
+ORDER BY bestellungen DESC;`,
+      erklaerung: `Der \`LEFT JOIN\` behält auch die Kundschaft ohne Bestellung — mit einem inneren Join wären genau die aus dem Bericht gefallen, die man oft sucht. \`COUNT(b.id)\` zählt dann korrekt 0, während \`COUNT(*)\` fälschlich 1 ergäbe. Die Kurznamen \`k\` und \`b\` machen längere Abfragen erst lesbar.`,
+    },
+  },
+  typescript: {
+    abbildung: {
+      code: `type Preise = Record<string, number>;
+
+const preise: Preise = { brot: 3.5, milch: 1.2 };
+preise.kaese = 4.8;
+
+const wert: number | undefined = preise["butter"];
+console.log(wert ?? 0);        // 0
+
+for (const [ware, preis] of Object.entries(preise)) {
+  console.log(\`\${ware}: \${preis.toFixed(2)} €\`);
+}`,
+      erklaerung: `\`Record<string, number>\` beschreibt eine Abbildung mit beliebigen Schlüsseln und Zahlen als Werten. Der Zugriff auf einen fehlenden Schlüssel liefert \`undefined\` — deshalb steht der Typ ausdrücklich dabei und \`??\` liefert den Ersatzwert. Mit \`noUncheckedIndexedAccess\` erzwingt der Compiler diese Prüfung.`,
+    },
+    bedingung: {
+      code: `type Antwort = { ok: true; daten: string } | { ok: false; fehler: string };
+
+function zeige(a: Antwort): string {
+  if (a.ok) {
+    return a.daten;      // hier kennt der Compiler nur den Erfolgsfall
+  }
+  return \`Fehler: \${a.fehler}\`;
+}`,
+      erklaerung: `Der Compiler grenzt den Typ innerhalb der Verzweigung ein: Nach \`if (a.ok)\` ist \`a.daten\` bekannt und \`a.fehler\` gäbe einen Fehler. Das nennt sich Narrowing und macht aus einer Abfrage eine Typgarantie. Ein vergessener Fall fällt damit schon beim Schreiben auf.`,
+    },
+    funktion: {
+      code: `function begruesse(name: string, gruss = "Hallo"): string {
+  return \`\${gruss}, \${name}!\`;
+}
+
+const verdopple = (n: number): number => n * 2;
+
+function protokolliere(text: string): void {
+  console.log(text);          // gibt bewusst nichts zurueck
+}`,
+      erklaerung: `Typen an Parametern und Rückgabe machen aus Laufzeitfehlern Schreibfehler. Beim Standardwert leitet TypeScript den Typ selbst ab — \`gruss\` ist hier \`string\`. \`void\` heißt: Diese Funktion liefert nichts, und wer ihr Ergebnis benutzt, bekommt eine Warnung.`,
+    },
+    generics: {
+      code: `function erster<T>(liste: T[]): T | undefined {
+  return liste[0];
+}
+
+const a = erster([1, 2, 3]);        // number | undefined
+const b = erster(["x", "y"]);       // string | undefined
+
+function laenge<T extends { length: number }>(x: T): number {
+  return x.length;
+}`,
+      erklaerung: `Der Typ wird beim Aufruf festgelegt, nicht beim Schreiben — deshalb weiß der Editor bei \`a\`, dass eine Zahl herauskommt. Die Alternative wäre \`any\`, womit jede Prüfung entfiele. Die Einschränkung \`extends\` sagt, was der Typ mindestens mitbringen muss.`,
+    },
+    klasse: {
+      code: `class Konto {
+  #stand = 0;
+
+  constructor(public readonly inhaber: string) {}
+
+  einzahlen(betrag: number): this {
+    if (betrag <= 0) throw new RangeError("Betrag muss positiv sein");
+    this.#stand += betrag;
+    return this;
+  }
+
+  get stand(): number { return this.#stand; }
+}`,
+      erklaerung: `Ein Konstruktorparameter mit Sichtbarkeit wird automatisch zum Feld — das spart die sonst übliche Zuweisung. \`readonly\` erlaubt das Setzen genau einmal. Das Doppelkreuz macht \`#stand\` tatsächlich privat: Ein Zugriff von außen ist ein Syntaxfehler, keine bloße Vereinbarung.`,
+    },
+    modul: {
+      code: `// typen.ts
+export interface Nutzer { id: string; name: string }
+export type Rolle = "student" | "lehrer" | "admin";
+
+// dienst.ts
+import type { Nutzer, Rolle } from "./typen.js";
+
+export function darfBearbeiten(n: Nutzer, r: Rolle): boolean {
+  return r !== "student";
+}`,
+      erklaerung: `\`import type\` macht klar, dass nur Typen geholt werden — beim Übersetzen verschwindet die Zeile vollständig, es entsteht keine Abhängigkeit zur Laufzeit. Typen in eine eigene Datei zu legen verhindert die ringförmigen Importe, die sonst schnell entstehen.`,
+    },
+    sammlung: {
+      code: `const zahlen: number[] = [5, 2, 8, 1];
+
+const gross = zahlen.filter((z) => z > 3);          // number[]
+const namen = zahlen.map((z) => \`Wert \${z}\`);       // string[]
+const summe = zahlen.reduce((a, z) => a + z, 0);    // number
+
+const paar: readonly [string, number] = ["Ada", 36];`,
+      erklaerung: `Der Typ wandert durch die ganze Kette mit: Aus \`number[]\` wird durch \`map\` ein \`string[]\`, ohne dass irgendwo etwas ausgeschrieben werden müsste. Ein Tupel legt Länge und Typ jeder Position fest; \`readonly\` verhindert Änderungen daran.`,
+    },
+    variable: {
+      code: `const MWST = 0.19;              // Typ: 0.19, nicht number
+let summe: number = 0;
+
+const rollen = ["student", "lehrer"] as const;
+type Rolle = typeof rollen[number];   // "student" | "lehrer"`,
+      erklaerung: `Bei \`const\` merkt sich TypeScript den genauen Wert, nicht nur den Typ — daraus lassen sich mit \`as const\` und \`typeof\` präzise Vereinigungstypen ableiten. Der Vorteil: Ein Tippfehler bei einer Rolle fällt schon beim Schreiben auf, nicht erst zur Laufzeit.`,
+    },
+  },
+  vue: {
+    fe_effekt: {
+      code: `<script setup>
+import { ref, watch, onUnmounted } from "vue";
+
+const sekunden = ref(0);
+const id = setInterval(() => sekunden.value++, 1000);
+onUnmounted(() => clearInterval(id));    // aufraeumen
+
+watch(sekunden, (neu) => {
+  document.title = \`\${neu} s\`;
+});
+</script>`,
+      erklaerung: `\`onUnmounted\` räumt auf — ohne das läuft der Zeitgeber weiter, obwohl die Komponente längst weg ist. \`watch\` reagiert auf Änderungen eines bestimmten Werts und bekommt den neuen Stand übergeben. Innerhalb von \`<script setup>\` wird über \`.value\` zugegriffen, in der Vorlage nicht.`,
+    },
+    fe_event: {
+      code: `<script setup>
+import { ref } from "vue";
+const n = ref(0);
+</script>
+
+<template>
+  <button @click="n++">Geklickt: {{ n }}</button>
+  <form @submit.prevent="absenden">
+    <button type="submit">Senden</button>
+  </form>
+</template>`,
+      erklaerung: `\`@click\` ist die Kurzform für \`v-on:click\`. Der Zusatz \`.prevent\` erledigt \`preventDefault()\` — ohne ihn lädt die Seite beim Absenden neu. In der Vorlage genügt \`n\`, das \`.value\` ergänzt Vue selbst.`,
+    },
+    fe_formular: {
+      code: `<script setup>
+import { ref } from "vue";
+const mail = ref("");
+
+function absenden() {
+  schicke({ mail: mail.value });
+}
+</script>
+
+<template>
+  <form @submit.prevent="absenden">
+    <label for="mail">E-Mail</label>
+    <input id="mail" v-model="mail" type="email" required />
+    <button type="submit">Senden</button>
+  </form>
+</template>`,
+      erklaerung: `\`v-model\` verbindet Feld und Wert in beide Richtungen und ersetzt damit das Paar aus \`value\` und Änderungsbehandler. Beim Absenden gilt der Wert im Zustand, nicht der Feldinhalt. \`required\` ist Bequemlichkeit — die verbindliche Prüfung gehört auf den Server.`,
+    },
+    fe_liste: {
+      code: `<script setup>
+import { computed } from "vue";
+const props = defineProps({ aufgaben: Array });
+const offen = computed(() => props.aufgaben.filter((a) => !a.erledigt));
+</script>
+
+<template>
+  <p v-if="offen.length === 0">Alles erledigt.</p>
+  <ul v-else>
+    <li v-for="a in offen" :key="a.id">{{ a.titel }}</li>
+  </ul>
+</template>`,
+      erklaerung: `Der Schlüssel kommt aus den Daten, nicht aus der Position — sonst wandern nach dem Löschen Inhalte in die falschen Zeilen. \`computed\` berechnet die gefilterte Liste neu, sobald sich die Daten ändern, und nur dann. \`v-if\` und \`v-else\` behandeln den leeren Fall ausdrücklich.`,
+    },
+    fe_props: {
+      code: `<script setup>
+defineProps({
+  titel:        { type: String, required: true },
+  beschreibung: { type: String, default: "" },
+});
+const emit = defineEmits(["oeffnen"]);
+</script>
+
+<template>
+  <article @click="emit('oeffnen')">
+    <h3>{{ titel }}</h3>
+    <p>{{ beschreibung }}</p>
+  </article>
+</template>`,
+      erklaerung: `Werte kommen von außen und werden in der Komponente nicht verändert — wer etwas auslösen will, sendet ein Ereignis nach oben. Daten fließen abwärts, Meldungen aufwärts. Die Angaben zu Typ und Pflicht warnen in der Entwicklungsfassung, wenn etwas fehlt.`,
+    },
+    fe_state: {
+      code: `<script setup>
+import { ref, computed } from "vue";
+
+const aufgaben = ref([]);
+const offen = computed(() => aufgaben.value.filter((a) => !a.erledigt).length);
+
+function hinzufuegen(titel) {
+  aufgaben.value = [...aufgaben.value, { id: crypto.randomUUID(), titel }];
+}
+</script>`,
+      erklaerung: `\`ref\` macht einen Wert beobachtbar; im Skript wird über \`.value\` zugegriffen, in der Vorlage nicht. Die Anzahl der offenen Aufgaben ist abgeleitet und gehört deshalb in \`computed\`, nicht in einen zweiten Zustand — der würde früher oder später auseinanderlaufen.`,
+    },
   },
 };
 
@@ -6220,34 +8332,41 @@ function buildFallbackLesson(course, meta) {
      für jede der 2700 Lektionen derselbe Satz — das las sich wie ein
      Platzhalter, weil es einer war. */
   const lehre = TOPIC_THEORY[topic];
-  const theory = lehre
-    ? `# ${title}
+  /* Das Beispiel richtet sich nach Kurs UND Thema. Fehlt für die Kombination
+     eines, bleibt der Abschnitt weg — ein Java-Schnipsel in einer
+     Python-Lektion wäre schlimmer als gar keiner. */
+  const beispiel = TOPIC_SNIPPETS[course.id]?.[topic];
+  const marke = TOPIC_SNIPPET_LANG[course.id] || "";
 
-${lehre.intro}
+  const abschnitte = [];
+  if (lehre) {
+    abschnitte.push(`# ${title}`, lehre.intro);
+    abschnitte.push("## Worauf es ankommt", lehre.punkte.map((p) => `- ${p}`).join("\n"));
+    if (beispiel) {
+      abschnitte.push("## So sieht das aus",
+        "```" + marke + "\n" + beispiel.code + "\n```",
+        beispiel.erklaerung);
+    }
+    abschnitte.push("## Genauer hingesehen", lehre.vertiefung);
+    abschnitte.push(`> [warnung] ${lehre.hinweis}`);
+    if (lehre.fehler?.length) {
+      abschnitte.push("## Typische Fehler", lehre.fehler.map((f) => `- ${f}`).join("\n"));
+    }
+    abschnitte.push("## Und jetzt du",
+      `Probier das Beispiel im Editor aus und verändere es: Was passiert, wenn du einen Wert austauschst oder eine Zeile weglässt? Danach warten rechts die Aufgaben zu *${title}*.`);
+  } else {
+    abschnitte.push(`# ${title}`,
+      `Diese Lektion gehört zum Kurs **${course.name}** und behandelt *${title}*.`,
+      "> [tipp] Aktives Ausprobieren bringt dich am schnellsten voran: Schreib den Code mit, statt ihn nur zu lesen.",
+      "## Lernziele",
+      [`- Die Kernideen hinter *${title}* verstehen`,
+       "- Die Syntax sicher schreiben können",
+       "- Eigene kleine Beispiele bauen"].join("\n"));
+  }
+  const theory = abschnitte.join("\n\n");
 
-## Worauf es ankommt
-
-${lehre.punkte.map((p) => `- ${p}`).join("\n")}
-
-> [warnung] ${lehre.hinweis}
-
-## Für diese Lektion
-
-Diese Grundlagen gelten in ${course.name} genauso. *${title}* baut darauf auf —
-probiere die Beispiele im Editor aus und löse dann die Aufgaben rechts.`
-    : `# ${title}
-
-Diese Lektion gehört zum Kurs **${course.name}** und behandelt *${title}*.
-
-> [tipp] Aktives Ausprobieren bringt dich am schnellsten voran: Schreib den Code mit, statt ihn nur zu lesen.
-
-## Lernziele
-
-- Die Kernideen hinter *${title}* verstehen
-- Die Syntax sicher schreiben können
-- Eigene kleine Beispiele bauen`;
-
-  return { estimatedMinutes: 10, theory, tasks };
+  // Mit Beispiel und Vertiefung ist mehr zu lesen als vorher.
+  return { estimatedMinutes: lehre ? (beispiel ? 15 : 12) : 10, theory, tasks };
 }
 
 function getFullLesson(lessonId) {
