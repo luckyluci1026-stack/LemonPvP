@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * /revive <Spieler> - belebt einen eliminierten Spieler wieder.
- * Kostet den Ausfuehrenden ggf. ein Herz (config revive.cost-heart).
+ * Kostet den Ausführenden ggf. ein Herz (config revive.cost-heart).
  */
 public final class ReviveCommand implements CommandExecutor {
 

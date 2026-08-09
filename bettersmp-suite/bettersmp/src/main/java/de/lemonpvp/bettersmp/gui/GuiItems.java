@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Kleine Helfer zum Bauen huebscher GUI-Items (ohne kursiven Standardtext).
+ * Kleine Helfer zum Bauen hübscher GUI-Items (ohne kursiven Standardtext).
  */
 public final class GuiItems {
 

@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * /settings - oeffnet das BetterSMP-Einstellungs-GUI.
+ * /settings - öffnet das BetterSMP-Einstellungs-GUI.
  */
 public final class SettingsCommand implements CommandExecutor {
 

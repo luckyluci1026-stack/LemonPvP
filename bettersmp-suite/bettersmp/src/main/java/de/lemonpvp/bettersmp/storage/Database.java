@@ -15,10 +15,10 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 /**
- * Datenbank-Schicht fuer Stats, Bans und Mutes.
+ * Datenbank-Schicht für Stats, Bans und Mutes.
  *
  * Nutzt MariaDB, wenn konfiguriert - sonst automatisch eine lokale SQLite-Datei.
- * Alle Zugriffe laufen ueber einen Single-Thread-Executor (eine Verbindung),
+ * Alle Zugriffe laufen über einen Single-Thread-Executor (eine Verbindung),
  * damit der Bukkit-Main-Thread nie durch Datenbank-IO blockiert wird und
  * SQLite-Sperren kein Thema sind.
  */
@@ -48,7 +48,7 @@ public final class Database {
     }
 
     /** Initialisiert die Verbindung und legt die Tabellen an. Fällt bei
-     *  MariaDB-Fehlern auf SQLite zurueck. */
+     *  MariaDB-Fehlern auf SQLite zurück. */
     public void init() {
         boolean mariadb = "mariadb".equalsIgnoreCase(plugin.getConfig().getString("database.type"))
                 || (plugin.getConfig().getString("database.type", "auto").equalsIgnoreCase("auto")
@@ -150,7 +150,7 @@ public final class Database {
         }
     }
 
-    // ---------------- Ausfuehrungs-Helfer ----------------
+    // ---------------- Ausführungs-Helfer ----------------
 
     private CompletableFuture<Void> run(Runnable action) {
         return CompletableFuture.runAsync(action, executor);

@@ -15,7 +15,7 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * Join-/Quit-Nachrichten, Erst-Join-Begruessung mit Titel und MOTD.
+ * Join-/Quit-Nachrichten, Erst-Join-Begrüßung mit Titel und MOTD.
  */
 public final class JoinModule implements Listener {
 

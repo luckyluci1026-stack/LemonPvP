@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 
 /**
  * Chat im LPC-MiniMessage-Stil: LuckPerms-Prefix/Suffix, PlaceholderAPI,
- * klickbare Links, @Erwaehnungen - und auf Wunsch als System-Nachricht
+ * klickbare Links, @Erwähnungen - und auf Wunsch als System-Nachricht
  * gesendet, damit Chat-Reports (Spieler melden) ins Leere laufen.
  */
 public final class ChatModule implements Listener {
@@ -109,7 +109,7 @@ public final class ChatModule implements Listener {
                     continue;
                 }
                 mentioned.add(online);
-                // Standalone-Komponente: Farbe ohne Schliesstag genuegt und ist robust
+                // Standalone-Komponente: Farbe ohne Schließtag genügt und ist robust
                 message = message.replaceText(TextReplacementConfig.builder()
                         .match(mention)
                         .replacement((result, builder) -> Text.mm(color + result.group()))
@@ -132,7 +132,7 @@ public final class ChatModule implements Listener {
                 try {
                     target.playSound(Sound.sound(Key.key(soundKey), Sound.Source.PLAYER, 0.8f, 1.4f));
                 } catch (Exception ignored) {
-                    // Ungueltiger Sound-Key in der Config - Erwaehnung bleibt stumm
+                    // Ungültiger Sound-Key in der Config - Erwähnung bleibt stumm
                 }
             }
         });

@@ -5,7 +5,7 @@
 #  Volle Doku: https://essentialsx.net/wiki/Home.html
 # ============================================================
 
-# Deutsche Nachrichten (BetterSMP legt zusaetzlich eine huebsche
+# Deutsche Nachrichten (BetterSMP legt zusätzlich eine hübsche
 # messages_de.properties in diesem Ordner an)
 locale: de
 per-player-locale: false
@@ -37,8 +37,8 @@ economy-log-enabled: false
 command-costs: {}
 
 # ---------------- Chat / Join ----------------
-# Chat-Formatierung uebernimmt BetterSMP (LPC-MiniMessage-Stil).
-# Join/Quit-Nachrichten uebernimmt ebenfalls BetterSMP:
+# Chat-Formatierung übernimmt BetterSMP (LPC-MiniMessage-Stil).
+# Join/Quit-Nachrichten übernimmt ebenfalls BetterSMP:
 allow-silent-join-quit: false
 custom-join-message: "none"
 custom-quit-message: "none"
@@ -60,7 +60,7 @@ remove-god-on-disconnect: true
 world-change-fly-reset: true
 world-change-speed-reset: true
 
-# Befehle nicht ueberschreiben, die andere Plugins registrieren
+# Befehle nicht überschreiben, die andere Plugins registrieren
 overridden-commands: []
 disabled-commands: []
 

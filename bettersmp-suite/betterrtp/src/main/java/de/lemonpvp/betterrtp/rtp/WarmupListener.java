@@ -31,7 +31,7 @@ public final class WarmupListener implements Listener {
         }
         Location origin = plugin.rtp().warmupOrigin(player.getUniqueId());
         if (origin == null) {
-            return; // Suche laeuft bereits, kein Abbruch mehr
+            return; // Suche läuft bereits, kein Abbruch mehr
         }
         Location to = event.getTo();
         if (origin.getBlockX() != to.getBlockX()

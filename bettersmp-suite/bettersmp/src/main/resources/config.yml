@@ -1,14 +1,14 @@
 # ==========================================================
 #  BetterSMP - Konfiguration
 #  Chat, NoChatReports, AntiCombatLog, Ban/Mute, Stats,
-#  Raenge, Nametags und Scoreboard - alles in einem Plugin.
+#  Ränge, Nametags und Scoreboard - alles in einem Plugin.
 #
 #  Farben: MiniMessage (<gray>, <#FFD75A>, <gradient:...>)
-#  UND Legacy-Codes (&7, &#FFD75A) werden ueberall verstanden.
+#  UND Legacy-Codes (&7, &#FFD75A) werden überall verstanden.
 # ==========================================================
 
-# Dein Server-Name. Wird ueberall als %brand% eingesetzt
-# (MOTD, Scoreboard-Titel, Willkommen ...). Einmal hier aendern - fertig.
+# Dein Server-Name. Wird überall als %brand% eingesetzt
+# (MOTD, Scoreboard-Titel, Willkommen ...). Einmal hier ändern - fertig.
 brand: "SMP"
 
 # ----------------------------------------------------------
@@ -26,7 +26,7 @@ database:
     database: "bettersmp"
     user: "root"
     password: ""
-    # Zusaetzliche JDBC-Parameter
+    # Zusätzliche JDBC-Parameter
     properties: "useUnicode=true&characterEncoding=utf8"
 
 # ----------------------------------------------------------
@@ -36,7 +36,7 @@ database:
 # ----------------------------------------------------------
 chat:
   enabled: true
-  # Chat als System-Nachricht senden -> nicht ueber Chat-Reports meldbar
+  # Chat als System-Nachricht senden -> nicht über Chat-Reports meldbar
   no-chat-reports: true
   formats:
     default: "%prefix%<hover:show_text:'<#FFD75A>Nachricht an %player% senden'><click:suggest_command:'/msg %player% '><white>%player%</white></click></hover> <dark_gray>»</dark_gray> <message>"
@@ -72,23 +72,23 @@ join-quit:
   first-join-title:
     enabled: true
     title: "<gradient:#FFD75A:#FFB02E>Willkommen!</gradient>"
-    subtitle: "<gray>Viel Spass auf %brand%</gray>"
+    subtitle: "<gray>Viel Spaß auf %brand%</gray>"
   motd:
     enabled: true
     delay-ticks: 15
     lines:
       - ""
       - "  <gradient:#FFD75A:#FFB02E><bold>%brand%</bold></gradient>"
-      - "  <gray>Willkommen zurueck, <white>%player%</white>!</gray>"
+      - "  <gray>Willkommen zurück, <white>%player%</white>!</gray>"
       - "  <gray>Shop: <#FFD75A>/shop</#FFD75A>  Stats: <#FFD75A>/stats</#FFD75A></gray>"
       - ""
 
 # ----------------------------------------------------------
-# Nametags (ueber dem Kopf + Tab)
+# Nametags (über dem Kopf + Tab)
 # Liest den LuckPerms-Prefix (auch Gradienten!) und zeigt ihn an;
-# der Spielername bleibt weiss. Funktioniert automatisch fuer JEDE
-# neue LuckPerms-Gruppe - kein Eintrag pro Rang noetig.
-# Auch fuer Bedrock/Geyser-Spieler sauber sichtbar.
+# der Spielername bleibt weiß. Funktioniert automatisch für JEDE
+# neue LuckPerms-Gruppe - kein Eintrag pro Rang nötig.
+# Auch für Bedrock/Geyser-Spieler sauber sichtbar.
 # ----------------------------------------------------------
 nametags:
   enabled: true
@@ -105,7 +105,7 @@ scoreboard:
   update-interval: 20
 
 # ----------------------------------------------------------
-# Ban/Mute-System - Gruende & Screens in bans.yml / mutes.yml
+# Ban/Mute-System - Gründe & Screens in bans.yml / mutes.yml
 # ----------------------------------------------------------
 punishments:
   enabled: true

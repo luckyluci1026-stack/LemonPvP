@@ -17,7 +17,7 @@ public final class Durations {
     private Durations() {
     }
 
-    /** @return Dauer in Millisekunden, oder 0 fuer permanent. */
+    /** @return Dauer in Millisekunden, oder 0 für permanent. */
     public static long parse(String input) {
         if (input == null) {
             return 0;

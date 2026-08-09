@@ -11,7 +11,7 @@ installer:
   timeout-seconds: 30
 
   # Kernkomponenten (offizielle GeyserMC-Downloads)
-  geyser: true      # GeyserMC (Bedrock <-> Java Bruecke)
+  geyser: true      # GeyserMC (Bedrock <-> Java Brücke)
   floodgate: true   # Floodgate (Bedrock-Spieler ohne Java-Account)
 
   # Geyser-Erweiterungen (landen in plugins/Geyser-Spigot/extensions/)
@@ -29,7 +29,7 @@ installer:
 
 # ----------------------------------------------------------
 #  Ressourcen-Optimierung
-#  Patcht NUR wenige, seit Jahren stabile Geyser-Schluessel -
+#  Patcht NUR wenige, seit Jahren stabile Geyser-Schlüssel -
 #  versionssicher, der Rest der Geyser-Config bleibt unangetastet.
 # ----------------------------------------------------------
 optimize:

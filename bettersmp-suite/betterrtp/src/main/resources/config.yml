@@ -1,6 +1,6 @@
 # ==========================================================
 #  BetterRTP - Konfiguration
-#  Vollstaendig asynchrone, sichere Zufalls-Teleportation.
+#  Vollständig asynchrone, sichere Zufalls-Teleportation.
 #  Nachrichten: MiniMessage + Legacy-Farbcodes (&7, &#FFD75A).
 # ==========================================================
 
@@ -9,7 +9,7 @@ settings:
   max-attempts: 60
   # Cooldown in Sekunden (betterrtp.bypass.cooldown umgeht ihn)
   cooldown-seconds: 30
-  # Warmup in Sekunden - Teleport startet verzoegert; Bewegung bricht ab
+  # Warmup in Sekunden - Teleport startet verzögert; Bewegung bricht ab
   warmup-seconds: 3
   # Bricht der Warmup bei Bewegung ab?
   cancel-on-move: true
@@ -27,13 +27,13 @@ economy:
   cost: 100.0
 
 # ---------------- Welt-Profile ----------------
-# Fuer jede Welt eigene Radien/Center. "default" gilt fuer alle
-# Welten ohne eigenen Eintrag. RTP in nicht aufgefuehrten und nicht
+# Für jede Welt eigene Radien/Center. "default" gilt für alle
+# Welten ohne eigenen Eintrag. RTP in nicht aufgeführten und nicht
 # per default erlaubten Welten ist gesperrt.
 worlds:
   default:
     enabled: true
-    # Kreisfoermige Suche um center-x/center-z
+    # Kreisförmige Suche um center-x/center-z
     center-x: 0
     center-z: 0
     min-radius: 500

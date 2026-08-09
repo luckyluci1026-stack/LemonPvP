@@ -25,8 +25,8 @@ public final class PunishmentListener implements Listener {
         return plugin.getConfig().getBoolean("punishments.enabled", true);
     }
 
-    /** Ban-Pruefung noch vor dem Join (auch bedrock-freundlich - der Client
-     *  zeigt den Disconnect-Screen an). Laeuft bereits auf einem Async-Thread. */
+    /** Ban-Prüfung noch vor dem Join (auch bedrock-freundlich - der Client
+     *  zeigt den Disconnect-Screen an). Läuft bereits auf einem Async-Thread. */
     @EventHandler(priority = EventPriority.HIGH)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
         if (!enabled()) {

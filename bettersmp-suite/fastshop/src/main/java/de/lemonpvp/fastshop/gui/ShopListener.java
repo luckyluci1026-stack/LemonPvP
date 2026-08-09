@@ -14,7 +14,7 @@ import org.bukkit.inventory.InventoryHolder;
 import java.util.List;
 
 /**
- * Klick-Verarbeitung fuer Haupt-/Kategorie-Menue und Verkauf beim Schliessen
+ * Klick-Verarbeitung für Haupt-/Kategorie-Menü und Verkauf beim Schließen
  * des Sell-GUI.
  */
 public final class ShopListener implements org.bukkit.event.Listener {
@@ -54,6 +54,14 @@ public final class ShopListener implements org.bukkit.event.Listener {
                 return;
             }
         }
+        // Fußzeile: Schnellverkauf bzw. Schließen
+        int size = event.getInventory().getSize();
+        int foot = size - 9;
+        if (event.getSlot() == foot + 4) {
+            plugin.menus().openSell(player);
+        } else if (event.getSlot() == foot + 8) {
+            player.closeInventory();
+        }
     }
 
     private void handleCategory(InventoryClickEvent event, ShopMenus.CategoryHolder holder) {
@@ -63,17 +71,26 @@ public final class ShopListener implements org.bukkit.event.Listener {
             return;
         }
         int slot = event.getSlot();
-        if (slot == 45) {
-            plugin.menus().openCategory(player, holder.categoryId, holder.page - 1);
-            return;
-        }
-        if (slot == 49) {
-            plugin.menus().openMain(player);
-            return;
-        }
-        if (slot == 53) {
-            plugin.menus().openCategory(player, holder.categoryId, holder.page + 1);
-            return;
+        switch (slot) {
+            case ShopMenus.NAV_PREV -> {
+                plugin.menus().openCategory(player, holder.categoryId, holder.page - 1);
+                return;
+            }
+            case ShopMenus.NAV_NEXT -> {
+                plugin.menus().openCategory(player, holder.categoryId, holder.page + 1);
+                return;
+            }
+            case ShopMenus.NAV_HOME -> {
+                plugin.menus().openMain(player);
+                return;
+            }
+            case ShopMenus.NAV_SELL -> {
+                plugin.menus().openSell(player);
+                return;
+            }
+            default -> {
+                // normaler Item-Slot - unten weiter
+            }
         }
         if (slot >= ShopMenus.ITEMS_PER_PAGE) {
             return;
@@ -90,8 +107,8 @@ public final class ShopListener implements org.bukkit.event.Listener {
         ShopItem item = items.get(index);
         ClickType click = event.getClick();
         if (click == ClickType.LEFT) {
-            // Bedrock-freundlich: einfacher Klick -> Button-Menue (keine
-            // Rechtsklick-/Shift-Kombis noetig)
+            // Bedrock-freundlich: einfacher Klick -> Button-Menü (keine
+            // Rechtsklick-/Shift-Kombis nötig)
             plugin.menus().openAction(player, holder.categoryId, holder.page, index);
         } else if (click == ClickType.SHIFT_LEFT) {
             plugin.service().buy(player, item, 64);
@@ -114,17 +131,23 @@ public final class ShopListener implements org.bukkit.event.Listener {
             return;
         }
         ShopItem item = category.items().get(holder.itemIndex);
+        boolean acted = true;
         switch (event.getSlot()) {
-            case 10 -> plugin.service().buy(player, item, 1);
-            case 11 -> plugin.service().buy(player, item, 16);
-            case 12 -> plugin.service().buy(player, item, 64);
-            case 14 -> plugin.service().sellFromInventory(player, item.material(), 1);
-            case 15 -> plugin.service().sellFromInventory(player, item.material(), 16);
-            case 16 -> plugin.service().sellFromInventory(player, item.material(), -1);
-            case 22 -> plugin.menus().openCategory(player, holder.categoryId, holder.page);
-            default -> {
-                // Rahmen/Anzeige - nichts tun
+            case ShopMenus.ACT_BUY_1 -> plugin.service().buy(player, item, 1);
+            case ShopMenus.ACT_BUY_16 -> plugin.service().buy(player, item, 16);
+            case ShopMenus.ACT_BUY_64 -> plugin.service().buy(player, item, 64);
+            case ShopMenus.ACT_SELL_1 -> plugin.service().sellFromInventory(player, item.material(), 1);
+            case ShopMenus.ACT_SELL_16 -> plugin.service().sellFromInventory(player, item.material(), 16);
+            case ShopMenus.ACT_SELL_ALL -> plugin.service().sellFromInventory(player, item.material(), -1);
+            case ShopMenus.ACT_BACK -> {
+                plugin.menus().openCategory(player, holder.categoryId, holder.page);
+                return;
             }
+            default -> acted = false;
+        }
+        if (acted) {
+            // Guthaben und Mengen im Menü sofort aktualisieren
+            plugin.menus().openAction(player, holder.categoryId, holder.page, holder.itemIndex);
         }
     }
 

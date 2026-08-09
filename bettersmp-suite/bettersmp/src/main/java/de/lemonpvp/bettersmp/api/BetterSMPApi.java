@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * Statische API fuer andere Plugins (z.B. Lifesteal+).
+ * Statische API für andere Plugins (z.B. Lifesteal+).
  */
 public final class BetterSMPApi {
 

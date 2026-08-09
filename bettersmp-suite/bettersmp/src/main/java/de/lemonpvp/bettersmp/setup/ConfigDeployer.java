@@ -12,9 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Legt fertige, huebsche Configs fuer EssentialsX und TAB an - aber nur, wenn
- * dort noch keine eigene Config existiert (nichts wird ueberschrieben).
- * Ausserdem: server.properties-Patch fuer NoChatReports.
+ * Legt fertige, hübsche Configs für EssentialsX und TAB an - aber nur, wenn
+ * dort noch keine eigene Config existiert (nichts wird überschrieben).
+ * Außerdem: server.properties-Patch für NoChatReports.
  */
 public final class ConfigDeployer {
 
@@ -46,7 +46,7 @@ public final class ConfigDeployer {
         }
     }
 
-    /** Legt EssentialsX- und TAB-Configs an; gibt eine Liste der Ziele zurueck. */
+    /** Legt EssentialsX- und TAB-Configs an; gibt eine Liste der Ziele zurück. */
     public java.util.List<String> deployAll(CommandSender feedback) {
         java.util.List<String> done = new java.util.ArrayList<>();
 
@@ -75,7 +75,7 @@ public final class ConfigDeployer {
 
     /**
      * Setzt enforce-secure-profile=false in server.properties (NoChatReports).
-     * Wirkt nach dem naechsten Neustart.
+     * Wirkt nach dem nächsten Neustart.
      */
     public boolean patchServerProperties(CommandSender feedback) {
         Path props = pluginsDir().getParentFile().toPath().resolve("server.properties");
@@ -106,7 +106,7 @@ public final class ConfigDeployer {
         }
     }
 
-    // Reserviert fuer zukuenftige binaere Patches
+    // Reserviert für zukünftige binäre Patches
     @SuppressWarnings("unused")
     private void touch(RandomAccessFile ignored) {
     }

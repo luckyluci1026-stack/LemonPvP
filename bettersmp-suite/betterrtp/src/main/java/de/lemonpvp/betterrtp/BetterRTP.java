@@ -9,7 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * BetterRTP - vollstaendig asynchrones, sicheres Random-Teleport-Plugin.
+ * BetterRTP - vollständig asynchrones, sicheres Random-Teleport-Plugin.
  */
 public final class BetterRTP extends JavaPlugin {
 

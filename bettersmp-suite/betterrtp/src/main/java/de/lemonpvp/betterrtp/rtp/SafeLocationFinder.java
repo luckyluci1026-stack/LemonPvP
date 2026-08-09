@@ -12,14 +12,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Findet vollstaendig asynchron eine sichere Zufalls-Position.
+ * Findet vollständig asynchron eine sichere Zufalls-Position.
  *
  * Ablauf pro Versuch:
  *  1. Zufallspunkt im Ring [min,max] um das Zentrum bestimmen
  *  2. Chunk asynchron laden (Paper: getChunkAtAsync -> IO/Gen off-main)
- *  3. ChunkSnapshot auf dem Main-Thread ziehen (guenstig)
+ *  3. ChunkSnapshot auf dem Main-Thread ziehen (günstig)
  *  4. Snapshot im ForkJoinPool scannen (thread-sicher, keine Bukkit-Welt-Zugriffe)
- *  5. Treffer -> Location; sonst naechster Versuch
+ *  5. Treffer -> Location; sonst nächster Versuch
  *
  * So bleibt der Main-Thread frei von schwerer Block-Iteration (Ziel: 20 TPS).
  */
@@ -53,7 +53,7 @@ public final class SafeLocationFinder {
         }
         ThreadLocalRandom rng = ThreadLocalRandom.current();
         double angle = rng.nextDouble() * Math.PI * 2;
-        // sqrt fuer flaechengleiche Verteilung im Ring
+        // sqrt für flächengleiche Verteilung im Ring
         double t = rng.nextDouble();
         double dist = Math.sqrt(t * (p.maxRadius() * (double) p.maxRadius()
                 - p.minRadius() * (double) p.minRadius()) + p.minRadius() * (double) p.minRadius());
@@ -66,7 +66,7 @@ public final class SafeLocationFinder {
         }
 
         world.getChunkAtAsync(x >> 4, z >> 4, true).thenAccept(chunk -> {
-            // Main-Thread: guenstigen Snapshot ziehen
+            // Main-Thread: günstigen Snapshot ziehen
             ChunkSnapshot snapshot = chunk.getChunkSnapshot(true, true, false);
             final int fx = x;
             final int fz = z;

@@ -1,0 +1,32 @@
+{
+  "format_version": "1",
+  "items": {
+    "minecraft:nether_star": [
+      {
+        "name": "heart",
+        "display_name": "heart",
+        "allow_offhand": true,
+        "icon": "smp_heart",
+        "custom_model_data": 8101
+      }
+    ],
+    "minecraft:totem_of_undying": [
+      {
+        "name": "revive_totem",
+        "display_name": "revive_totem",
+        "allow_offhand": true,
+        "icon": "smp_revive_totem",
+        "custom_model_data": 8102
+      }
+    ],
+    "minecraft:sunflower": [
+      {
+        "name": "coin",
+        "display_name": "coin",
+        "allow_offhand": true,
+        "icon": "smp_coin",
+        "custom_model_data": 8103
+      }
+    ]
+  }
+}

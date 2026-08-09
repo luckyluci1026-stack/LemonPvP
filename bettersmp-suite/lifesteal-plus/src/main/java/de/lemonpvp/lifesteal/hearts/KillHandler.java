@@ -27,8 +27,8 @@ public final class KillHandler {
 
     /**
      * @param victim     der gestorbene Spieler (online)
-     * @param killer     UUID des Toeters (oder null bei Nicht-PvP-Tod)
-     * @param killerName Anzeigename des Toeters
+     * @param killer     UUID des Töters (oder null bei Nicht-PvP-Tod)
+     * @param killerName Anzeigename des Töters
      * @param pvp        true, wenn es ein Spieler-Kill war
      */
     public void handle(Player victim, UUID killer, String killerName, boolean pvp) {

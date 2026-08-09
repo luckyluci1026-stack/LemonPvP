@@ -7,7 +7,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Welt-Profil fuer RTP: Suchbereich, Weltborder-Beachtung, Biom-Blacklist.
+ * Welt-Profil für RTP: Suchbereich, Weltborder-Beachtung, Biom-Blacklist.
  */
 public record Profile(
         boolean enabled,

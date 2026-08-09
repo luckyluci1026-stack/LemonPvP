@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-/** Laedt messages.yml (mit Jar-Fallback) und rendert MiniMessage-Nachrichten. */
+/** Lädt messages.yml (mit Jar-Fallback) und rendert MiniMessage-Nachrichten. */
 public final class Msgs {
 
     private final JavaPlugin plugin;

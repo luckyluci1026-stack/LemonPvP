@@ -10,8 +10,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Verfolgt Spielzeit-Sitzungen und schreibt sie regelmaessig in die DB.
- * Kills/Deaths/Mob-Kills laufen ueber den StatsListener direkt in die DB.
+ * Verfolgt Spielzeit-Sitzungen und schreibt sie regelmäßig in die DB.
+ * Kills/Deaths/Mob-Kills laufen über den StatsListener direkt in die DB.
  */
 public final class StatsManager {
 

@@ -1,14 +1,14 @@
 # ==========================================================
 #  FastShop - Katalog
-#  Einfach Kategorien und Items ergaenzen. Preise in der
-#  EssentialsX-Waehrung. buy: -1 = nicht kaufbar, sell: -1 = nicht verkaufbar.
+#  Einfach Kategorien und Items ergänzen. Preise in der
+#  EssentialsX-Währung. buy: -1 = nicht kaufbar, sell: -1 = nicht verkaufbar.
 #  icon/name/slot pro Kategorie; pro Item optional 'name' & 'lore'.
 # ==========================================================
 categories:
 
   blocks:
     icon: GRASS_BLOCK
-    name: "&a&lBloecke"
+    name: "&a&lBlöcke"
     slot: 10
     items:
       - { material: STONE,        buy: 5,   sell: 1 }

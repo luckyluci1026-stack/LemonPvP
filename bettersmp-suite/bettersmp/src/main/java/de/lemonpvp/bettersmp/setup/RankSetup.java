@@ -7,12 +7,12 @@ import org.bukkit.command.CommandSender;
 import java.util.List;
 
 /**
- * Legt via LuckPerms-Befehlen die Standard-Raenge mit MiniMessage-Gradient-
+ * Legt via LuckPerms-Befehlen die Standard-Ränge mit MiniMessage-Gradient-
  * Prefixen an. Das Nametag-/Chat-System liest diese Prefixe automatisch -
- * neue Raenge in LuckPerms funktionieren also sofort, ohne Code-Aenderung.
+ * neue Ränge in LuckPerms funktionieren also sofort, ohne Code-Änderung.
  *
  * Owner gibt es in 5 Looks (owner1..owner5), Admin/Mod/Sup je einen,
- * default ohne Prefix (Name weiss).
+ * default ohne Prefix (Name weiß).
  */
 public final class RankSetup {
 
@@ -20,17 +20,17 @@ public final class RankSetup {
     }
 
     private static final List<Rank> RANKS = List.of(
-            // default: kein Prefix, Name bleibt weiss
+            // default: kein Prefix, Name bleibt weiß
             new Rank("default", 1, ""),
             new Rank("sup",   300, "<gradient:#00E5FF:#0091EA>Sup</gradient> "),
             new Rank("mod",   500, "<gradient:#00FF7F:#00B34A>Mod</gradient> "),
             new Rank("admin", 800, "<gradient:#FF4D4D:#B30000>Admin</gradient> "),
             // Owner-Looks:
-            new Rank("owner1", 1000, "<gradient:#FFFB00:#00FF00>Owner</gradient> "), // gelb -> gruen
+            new Rank("owner1", 1000, "<gradient:#FFFB00:#00FF00>Owner</gradient> "), // gelb -> grün
             new Rank("owner2", 1000, "<gradient:#00008B:#00BFFF>Owner</gradient> "), // dunkelblau -> hellblau
             new Rank("owner3", 1000, "<gradient:#FFB300:#FF0000>Owner</gradient> "), // orange/gelb -> rot
             new Rank("owner4", 1000, "<gradient:#1E90FF:#8A2BE2>Owner</gradient> "), // blau -> lila
-            new Rank("owner5", 1000, "<gradient:#40E0D0:#7CFC00>Owner</gradient> ")  // tuerkis -> hellgruen
+            new Rank("owner5", 1000, "<gradient:#40E0D0:#7CFC00>Owner</gradient> ")  // türkis -> hellgrün
     );
 
     private final BetterSMP plugin;
@@ -58,7 +58,7 @@ public final class RankSetup {
                         + " meta setprefix " + rank.weight() + " \"" + rank.prefix() + "\"");
             }
         }
-        // Grundrechte fuer default
+        // Grundrechte für default
         for (String perm : List.of("essentials.spawn", "essentials.help", "essentials.msg",
                 "essentials.tpa", "essentials.tpaccept", "essentials.tpdeny",
                 "essentials.sethome", "essentials.home", "essentials.balance",

@@ -13,10 +13,10 @@ import java.util.regex.Pattern;
 
 /**
  * Optimiert die Geyser-Config ressourcenschonend - per Text-Patch, damit
- * Kommentare und alle uebrigen Werte erhalten bleiben. Es werden nur wenige,
- * seit Jahren stabile Top-Level-Schluessel angefasst (versionssicher).
+ * Kommentare und alle übrigen Werte erhalten bleiben. Es werden nur wenige,
+ * seit Jahren stabile Top-Level-Schlüssel angefasst (versionssicher).
  *
- * Die Direktverbindung sorgt dafuer, dass ein Bedrock-Spieler etwa so viele
+ * Die Direktverbindung sorgt dafür, dass ein Bedrock-Spieler etwa so viele
  * Ressourcen braucht wie ein Java-Spieler (keine zweite interne Verbindung).
  */
 public final class GeyserOptimizer {
@@ -31,7 +31,7 @@ public final class GeyserOptimizer {
         return new File(plugin.getDataFolder().getParentFile(), "Geyser-Spigot/config.yml");
     }
 
-    /** @return -1 wenn keine Geyser-Config existiert, sonst Anzahl Aenderungen. */
+    /** @return -1 wenn keine Geyser-Config existiert, sonst Anzahl Änderungen. */
     public int optimize() {
         File config = geyserConfig();
         if (!config.exists()) {
@@ -66,7 +66,7 @@ public final class GeyserOptimizer {
         }
     }
 
-    /** Liest, ob die Direktverbindung aktiv ist (fuer den Status). */
+    /** Liest, ob die Direktverbindung aktiv ist (für den Status). */
     public boolean isDirectConnection() {
         File config = geyserConfig();
         if (!config.exists()) {
@@ -85,7 +85,7 @@ public final class GeyserOptimizer {
         return false;
     }
 
-    /** Ersetzt den Wert eines vorhandenen Top-Level-Schluessels; 1 wenn geaendert. */
+    /** Ersetzt den Wert eines vorhandenen Top-Level-Schlüssels; 1 wenn geändert. */
     private int set(List<String> lines, String key, String value) {
         Pattern pattern = Pattern.compile("^(" + Pattern.quote(key) + ":\\s*)(\\S.*?)(\\s*(#.*)?)$");
         for (int i = 0; i < lines.size(); i++) {
@@ -100,6 +100,6 @@ public final class GeyserOptimizer {
                 return 1;
             }
         }
-        return 0; // Schluessel (noch) nicht vorhanden -> Geyser legt ihn beim Erststart an
+        return 0; // Schlüssel (noch) nicht vorhanden -> Geyser legt ihn beim Erststart an
     }
 }

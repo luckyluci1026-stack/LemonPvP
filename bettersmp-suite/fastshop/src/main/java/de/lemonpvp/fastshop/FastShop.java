@@ -9,6 +9,7 @@ import de.lemonpvp.fastshop.gui.ShopListener;
 import de.lemonpvp.fastshop.gui.ShopMenus;
 import de.lemonpvp.fastshop.shop.ShopConfig;
 import de.lemonpvp.fastshop.shop.ShopService;
+import de.lemonpvp.fastshop.util.Glyphs;
 import de.lemonpvp.fastshop.util.Msgs;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class FastShop extends JavaPlugin {
 
     private Msgs msgs;
+    private Glyphs glyphs;
     private EconomyHook economy;
     private ShopConfig shop;
     private ShopService service;
@@ -29,6 +31,8 @@ public final class FastShop extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         this.msgs = new Msgs(this);
+        this.glyphs = new Glyphs(this);
+        msgs.setGlyphs(glyphs);
         this.economy = new EconomyHook();
         this.shop = new ShopConfig(this);
         this.service = new ShopService(this);
@@ -49,6 +53,10 @@ public final class FastShop extends JavaPlugin {
 
     public Msgs msgs() {
         return msgs;
+    }
+
+    public Glyphs glyphs() {
+        return glyphs;
     }
 
     public EconomyHook economy() {

@@ -7,12 +7,12 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 
 /**
  * Optionaler Vault-Economy-Hook (nutzt z.B. EssentialsX-Economy).
- * Die Vault-Klassen werden nur ueber die innere Bridge angefasst, damit das
- * Plugin auch ganz ohne Vault laedt.
+ * Die Vault-Klassen werden nur über die innere Bridge angefasst, damit das
+ * Plugin auch ganz ohne Vault lädt.
  */
 public final class EconomyHook {
 
-    private final Object economy; // Economy, aber als Object gehalten fuer sicheres Laden
+    private final Object economy; // Economy, aber als Object gehalten für sicheres Laden
 
     public EconomyHook() {
         Object found = null;
@@ -20,7 +20,7 @@ public final class EconomyHook {
             try {
                 found = Bridge.load();
             } catch (Throwable ignored) {
-                // Vault/Economy nicht verfuegbar
+                // Vault/Economy nicht verfügbar
             }
         }
         this.economy = found;

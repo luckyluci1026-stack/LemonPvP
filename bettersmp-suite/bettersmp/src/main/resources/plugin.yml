@@ -3,10 +3,10 @@ version: ${project.version}
 main: de.lemonpvp.bettersmp.BetterSMP
 api-version: '1.21'
 authors: [SMP]
-description: SMP-Kernplugin - Chat, NoChatReports, AntiCombatLog, Ban/Mute-System, Stats, Raenge, Nametags und Scoreboard.
+description: SMP-Kernplugin - Chat, NoChatReports, AntiCombatLog, Ban/Mute-System, Stats, Ränge, Nametags und Scoreboard.
 softdepend: [LuckPerms, PlaceholderAPI, Essentials, Vault]
 
-# Von Paper zur Laufzeit aus Maven Central geladen (fuer die Datenbank).
+# Von Paper zur Laufzeit aus Maven Central geladen (für die Datenbank).
 libraries:
   - org.xerial:sqlite-jdbc:3.46.1.3
   - org.mariadb.jdbc:mariadb-java-client:3.4.1
@@ -18,7 +18,7 @@ commands:
     aliases: [bsmp]
     permission: bettersmp.admin
   settings:
-    description: Oeffnet das BetterSMP-Einstellungs-GUI
+    description: Öffnet das BetterSMP-Einstellungs-GUI
     usage: "/settings"
     aliases: [bsettings, smpsettings]
     permission: bettersmp.settings
@@ -50,7 +50,7 @@ permissions:
     children:
       bettersmp.settings: true
   bettersmp.settings:
-    description: Darf das Einstellungs-GUI oeffnen und aendern
+    description: Darf das Einstellungs-GUI öffnen und ändern
     default: op
   bettersmp.stats:
     description: Darf /stats nutzen

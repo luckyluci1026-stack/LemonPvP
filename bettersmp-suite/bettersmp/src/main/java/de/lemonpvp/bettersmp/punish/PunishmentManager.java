@@ -16,8 +16,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Fuehrt Bans und Mutes aus, rendert den Ban-Screen und haelt aktive Mutes
- * fuer schnelle Chat-Pruefungen im Cache.
+ * Führt Bans und Mutes aus, rendert den Ban-Screen und hält aktive Mutes
+ * für schnelle Chat-Prüfungen im Cache.
  */
 public final class PunishmentManager {
 
@@ -153,7 +153,7 @@ public final class PunishmentManager {
                                 "player", name)));
     }
 
-    /** Laedt einen Mute beim Join in den Cache. */
+    /** Lädt einen Mute beim Join in den Cache. */
     public void loadMute(UUID uuid) {
         plugin.database().getMute(uuid).thenAccept(mute -> {
             if (mute != null) {
@@ -197,7 +197,7 @@ public final class PunishmentManager {
         }
     }
 
-    /** Ban-Screen als Komponente fuer das Login-Event. */
+    /** Ban-Screen als Komponente für das Login-Event. */
     public Component banScreen(Punishment ban) {
         return Text.mm(ban.screen() == null ? "<red>Du bist gebannt.</red>" : ban.screen());
     }

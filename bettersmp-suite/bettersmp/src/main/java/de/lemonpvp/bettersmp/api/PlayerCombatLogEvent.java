@@ -9,10 +9,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * Wird gefeuert, wenn ein Spieler waehrend eines Kampfes ausloggt -
- * BEVOR BetterSMP die Bestrafung (Kill) ausfuehrt.
- * Andere Plugins (z.B. Lifesteal+) koennen hier z.B. Herzverlust
- * und Kill-Gutschrift fuer den Gegner umsetzen.
+ * Wird gefeuert, wenn ein Spieler während eines Kampfes ausloggt -
+ * BEVOR BetterSMP die Bestrafung (Kill) ausführt.
+ * Andere Plugins (z.B. Lifesteal+) können hier z.B. Herzverlust
+ * und Kill-Gutschrift für den Gegner umsetzen.
  */
 public class PlayerCombatLogEvent extends Event {
 
@@ -26,7 +26,7 @@ public class PlayerCombatLogEvent extends Event {
         this.opponent = opponent;
     }
 
-    /** Der Spieler, der im Kampf ausgeloggt hat (noch online waehrend des Events). */
+    /** Der Spieler, der im Kampf ausgeloggt hat (noch online während des Events). */
     public @NotNull Player getPlayer() {
         return player;
     }

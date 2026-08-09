@@ -20,8 +20,8 @@ import java.time.Duration;
 import java.util.Locale;
 
 /**
- * Laedt Geyser + Floodgate von den OFFIZIELLEN GeyserMC-Downloads und optionale
- * Erweiterungen (GeyserConnect, Thunder) von GitHub. Vollstaendig asynchron.
+ * Lädt Geyser + Floodgate von den OFFIZIELLEN GeyserMC-Downloads und optionale
+ * Erweiterungen (GeyserConnect, Thunder) von GitHub. Vollständig asynchron.
  */
 public final class BedrockInstaller {
 

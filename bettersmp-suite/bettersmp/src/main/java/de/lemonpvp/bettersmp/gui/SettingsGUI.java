@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Schoenes /settings-GUI: Admins schalten die BetterSMP-Module per Klick
- * an/aus. Aenderungen werden sofort in config.yml gespeichert und live wirksam.
+ * Schönes /settings-GUI: Admins schalten die BetterSMP-Module per Klick
+ * an/aus. Änderungen werden sofort in config.yml gespeichert und live wirksam.
  */
 public final class SettingsGUI implements InventoryHolder {
 
@@ -34,21 +34,21 @@ public final class SettingsGUI implements InventoryHolder {
             new Toggle(11, "chat.no-chat-reports", Material.SHIELD,
                     "<#FFD75A>NoChatReports", "Chat als System-Nachricht (nicht meldbar)"),
             new Toggle(12, "chat.mentions.enabled", Material.NAME_TAG,
-                    "<#FFD75A>Erwaehnungen (@Name)", "Ping mit Sound bei @Spielername"),
+                    "<#FFD75A>Erwähnungen (@Name)", "Ping mit Sound bei @Spielername"),
             new Toggle(13, "chat.clickable-links", Material.COMPASS,
                     "<#FFD75A>Klickbare Links", "URLs im Chat anklickbar machen"),
             new Toggle(14, "combat.enabled", Material.DIAMOND_SWORD,
                     "<#FFD75A>AntiCombatLog", "Kampf-Tag + Bestrafung bei Combat-Log"),
             new Toggle(19, "combat.block-elytra", Material.ELYTRA,
-                    "<#FFD75A>Elytra im Kampf sperren", "Kein Elytra-Start waehrend des Kampfes"),
+                    "<#FFD75A>Elytra im Kampf sperren", "Kein Elytra-Start während des Kampfes"),
             new Toggle(20, "combat.actionbar", Material.CLOCK,
-                    "<#FFD75A>Kampf-Actionbar", "Countdown-Anzeige waehrend des Kampfes"),
+                    "<#FFD75A>Kampf-Actionbar", "Countdown-Anzeige während des Kampfes"),
             new Toggle(21, "join-quit.enabled", Material.OAK_SIGN,
-                    "<#FFD75A>Join/Quit-Nachrichten", "Schoene Beitritts-/Verlassen-Meldungen"),
+                    "<#FFD75A>Join/Quit-Nachrichten", "Schöne Beitritts-/Verlassen-Meldungen"),
             new Toggle(22, "join-quit.motd.enabled", Material.FILLED_MAP,
-                    "<#FFD75A>MOTD beim Join", "Begruessungstext nach dem Beitreten"),
+                    "<#FFD75A>MOTD beim Join", "Begrüßungstext nach dem Beitreten"),
             new Toggle(23, "join-quit.first-join-title.enabled", Material.NETHER_STAR,
-                    "<#FFD75A>Erst-Join-Titel", "Grosser Willkommens-Titel fuer Neue"),
+                    "<#FFD75A>Erst-Join-Titel", "Großer Willkommens-Titel für Neue"),
             new Toggle(24, "installer.enabled", Material.HOPPER,
                     "<#FFD75A>Auto-Installer", "Begleit-Plugins beim Start nachladen")
     );
@@ -103,17 +103,17 @@ public final class SettingsGUI implements InventoryHolder {
                 "<green><bold>Config neu laden", List.of("<gray>Liest config.yml & messages.yml neu ein"), false));
         inventory.setItem(49, GuiItems.item(Material.ENDER_CHEST,
                 "<#FFD75A><bold>Begleit-Plugins installieren",
-                List.of("<gray>Laedt fehlende Plugins von den",
-                        "<gray>offiziellen Quellen (Neustart noetig)"), false));
+                List.of("<gray>Lädt fehlende Plugins von den",
+                        "<gray>offiziellen Quellen (Neustart nötig)"), false));
         inventory.setItem(50, GuiItems.item(Material.WRITTEN_BOOK,
-                "<#FFD75A><bold>Standard-Raenge anlegen",
-                List.of("<gray>Erstellt LuckPerms-Raenge",
+                "<#FFD75A><bold>Standard-Ränge anlegen",
+                List.of("<gray>Erstellt LuckPerms-Ränge",
                         "<gray>(default, vip, mod, admin, owner)"), false));
         inventory.setItem(53, GuiItems.item(Material.BARRIER,
-                "<red><bold>Schliessen", List.of("<gray>GUI schliessen"), false));
+                "<red><bold>Schließen", List.of("<gray>GUI schließen"), false));
     }
 
-    /** Liefert das Toggle fuer einen Slot oder null. */
+    /** Liefert das Toggle für einen Slot oder null. */
     public Toggle toggleAt(int slot) {
         for (Toggle toggle : TOGGLES) {
             if (toggle.slot() == slot) {
@@ -123,7 +123,7 @@ public final class SettingsGUI implements InventoryHolder {
         return null;
     }
 
-    /** Liefert die Aktion fuer einen Slot oder null. */
+    /** Liefert die Aktion für einen Slot oder null. */
     public Action actionAt(int slot) {
         return switch (slot) {
             case 48 -> Action.RELOAD;

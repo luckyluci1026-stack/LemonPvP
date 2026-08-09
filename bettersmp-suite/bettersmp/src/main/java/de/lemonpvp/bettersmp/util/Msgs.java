@@ -12,7 +12,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Laedt messages.yml (mit Fallback auf die im Jar mitgelieferten Standards)
+ * Lädt messages.yml (mit Fallback auf die im Jar mitgelieferten Standards)
  * und rendert Nachrichten mit %platzhalter%-Ersetzung als MiniMessage.
  */
 public final class Msgs {

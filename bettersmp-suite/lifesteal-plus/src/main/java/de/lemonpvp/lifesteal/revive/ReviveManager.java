@@ -54,7 +54,7 @@ public final class ReviveManager implements Listener {
             return;
         }
 
-        // Zurueck auf den Main-Thread fuer Inventar-/Welt-Zugriffe
+        // Zurück auf den Main-Thread für Inventar-/Welt-Zugriffe
         Bukkit.getScheduler().runTask(plugin, () -> resolve(player, input));
     }
 

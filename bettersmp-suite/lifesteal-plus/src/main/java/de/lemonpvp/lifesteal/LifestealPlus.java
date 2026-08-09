@@ -57,7 +57,7 @@ public final class LifestealPlus extends JavaPlugin {
         getCommand("revive").setExecutor(new ReviveCommand(this));
         getCommand("lifesteal").setExecutor(new LifestealAdminCommand(this));
 
-        // Herzen fuer bereits online befindliche Spieler synchronisieren (Reload)
+        // Herzen für bereits online befindliche Spieler synchronisieren (Reload)
         Bukkit.getOnlinePlayers().forEach(player -> {
             hearts.syncOnJoin(player);
             eliminations.enforceOnJoin(player);
@@ -103,7 +103,7 @@ public final class LifestealPlus extends JavaPlugin {
         Bukkit.getScheduler().runTaskLater(this, () -> combatLogGuard.remove(uuid), 40L);
     }
 
-    /** Gibt true zurueck (und entfernt), wenn dieser Tod schon behandelt wurde. */
+    /** Gibt true zurück (und entfernt), wenn dieser Tod schon behandelt wurde. */
     public boolean consumeCombatLogGuard(UUID uuid) {
         return combatLogGuard.remove(uuid);
     }

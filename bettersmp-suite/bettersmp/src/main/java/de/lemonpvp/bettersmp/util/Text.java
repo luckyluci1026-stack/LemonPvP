@@ -51,7 +51,7 @@ public final class Text {
 
     /**
      * Wandelt Legacy-Farbcodes in MiniMessage-Tags um, damit beide Formate
-     * gemischt verwendet werden koennen (z.B. LuckPerms-Prefixe mit &-Codes).
+     * gemischt verwendet werden können (z.B. LuckPerms-Prefixe mit &-Codes).
      */
     public static String legacyToMini(String s) {
         if (s == null || s.isEmpty()) {

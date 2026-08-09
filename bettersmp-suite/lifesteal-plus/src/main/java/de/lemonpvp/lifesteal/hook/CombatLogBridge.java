@@ -11,8 +11,8 @@ import org.bukkit.event.Listener;
 import java.util.UUID;
 
 /**
- * Bruecke zu BetterSMP: Loggt ein Spieler im Kampf aus, wird das wie ein Tod
- * behandelt - Herzverlust fuer den Logger, Herzgewinn fuer den Gegner.
+ * Brücke zu BetterSMP: Loggt ein Spieler im Kampf aus, wird das wie ein Tod
+ * behandelt - Herzverlust für den Logger, Herzgewinn für den Gegner.
  *
  * Diese Klasse wird NUR geladen/registriert, wenn BetterSMP vorhanden ist
  * (siehe LifestealPlus#onEnable), daher ist der harte Import unproblematisch.
@@ -33,7 +33,7 @@ public final class CombatLogBridge implements Listener {
         Player logger = event.getPlayer();
         UUID opponent = event.getOpponent();
 
-        // Diesen kommenden Tod (BetterSMP setzt Health=0) nicht doppelt zaehlen
+        // Diesen kommenden Tod (BetterSMP setzt Health=0) nicht doppelt zählen
         plugin.addCombatLogGuard(logger.getUniqueId());
 
         String opponentName = opponent == null ? ""

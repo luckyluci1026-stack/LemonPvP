@@ -2,14 +2,14 @@
 prefix: "<gradient:#FF5A7A:#C0392B><bold>Lifesteal</bold></gradient> <dark_gray>»</dark_gray> "
 
 no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
-players-only: "%prefix%<red>Nur fuer Spieler.</red>"
+players-only: "%prefix%<red>Nur für Spieler.</red>"
 reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
 player-not-found: "%prefix%<red>Spieler nicht gefunden.</red>"
 
 hearts-self: "%prefix%<gray>Du hast <red>❤ %hearts%</red> Herzen.</gray>"
 hearts-other: "%prefix%<gray><white>%player%</white> hat <red>❤ %hearts%</red> Herzen.</gray>"
 
-kill-gained: "%prefix%<green>+%amount% ❤</green> <gray>fuer den Kill von <white>%victim%</white>! (jetzt <white>%hearts%</white>)</gray>"
+kill-gained: "%prefix%<green>+%amount% ❤</green> <gray>für den Kill von <white>%victim%</white>! (jetzt <white>%hearts%</white>)</gray>"
 death-lost: "%prefix%<red>-%amount% ❤</red> <gray>durch <white>%killer%</white>. (jetzt <white>%hearts%</white>)</gray>"
 death-lost-generic: "%prefix%<red>-%amount% ❤</red> <gray>(jetzt <white>%hearts%</white>)</gray>"
 max-reached: "%prefix%<gray>Du hast bereits das Maximum an Herzen.</gray>"

@@ -9,7 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 /**
- * Klick-Logik fuer das /settings-GUI.
+ * Klick-Logik für das /settings-GUI.
  */
 public final class SettingsListener implements Listener {
 

@@ -25,11 +25,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Laedt fehlende Begleit-Plugins beim Serverstart von den OFFIZIELLEN Quellen
+ * Lädt fehlende Begleit-Plugins beim Serverstart von den OFFIZIELLEN Quellen
  * (GitHub-Releases, luckperms.net) herunter und legt sie im plugins/-Ordner ab.
  *
- * Laeuft vollstaendig asynchron - der Main-Thread wird nie durch Netzwerk-IO
- * blockiert. Nach der Installation ist ein einmaliger Neustart noetig.
+ * Läuft vollständig asynchron - der Main-Thread wird nie durch Netzwerk-IO
+ * blockiert. Nach der Installation ist ein einmaliger Neustart nötig.
  */
 public final class Installer {
 
@@ -45,7 +45,7 @@ public final class Installer {
                 .build();
     }
 
-    /** Startet die Installation asynchron; Rueckmeldungen gehen an {@code feedback}. */
+    /** Startet die Installation asynchron; Rückmeldungen gehen an {@code feedback}. */
     public void installAsync(CommandSender feedback) {
         // Bereits vorhandene Plugins auf dem Main-Thread erfassen (Thread-Sicherheit)
         Set<String> present = scanPresent();
@@ -140,9 +140,9 @@ public final class Installer {
             String assetName = pattern.replace("{version}", version);
             String url = findAsset(assets, assetName);
             if (url == null) {
-                // Nur Pflicht-Asset (erstes) fuehrt zum Fehler; Zusatz-Module sind optional
+                // Nur Pflicht-Asset (erstes) führt zum Fehler; Zusatz-Module sind optional
                 if (downloaded.isEmpty()) {
-                    throw new IllegalStateException("Asset '" + assetName + "' nicht gefunden. Verfuegbar: "
+                    throw new IllegalStateException("Asset '" + assetName + "' nicht gefunden. Verfügbar: "
                             + availableAssetNames(assets));
                 }
                 continue;

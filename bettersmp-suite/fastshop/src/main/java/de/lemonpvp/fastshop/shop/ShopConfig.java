@@ -13,7 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Laedt shop.yml in Kategorien/Items und bietet Nachschlagewerte fuer Preise.
+ * Lädt shop.yml in Kategorien/Items und bietet Nachschlagewerte für Preise.
  */
 public final class ShopConfig {
 
@@ -203,7 +203,7 @@ public final class ShopConfig {
         }
     }
 
-    /** Fuegt ein Item einer bestehenden Kategorie hinzu und speichert shop.yml. */
+    /** Fügt ein Item einer bestehenden Kategorie hinzu und speichert shop.yml. */
     public boolean addItem(String categoryId, Material material, double buy, double sell) {
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection cats = yaml.getConfigurationSection("categories");

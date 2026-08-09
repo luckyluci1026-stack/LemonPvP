@@ -33,8 +33,8 @@ import org.bukkit.plugin.java.JavaPlugin;
  * BetterSMP - SMP-Kernplugin.
  *
  * Chat, NoChatReports, AntiCombatLog, Ban/Mute-System mit Screen, Stats
- * (MariaDB/SQLite), Raenge mit Gradient-Prefixen, Nametags und Scoreboard -
- * plus Auto-Installer fuer die Begleit-Plugins.
+ * (MariaDB/SQLite), Ränge mit Gradient-Prefixen, Nametags und Scoreboard -
+ * plus Auto-Installer für die Begleit-Plugins.
  */
 public final class BetterSMP extends JavaPlugin {
 

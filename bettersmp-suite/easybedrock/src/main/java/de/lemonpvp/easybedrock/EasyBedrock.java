@@ -30,11 +30,11 @@ public final class EasyBedrock extends JavaPlugin {
         getCommand("easybedrock").setExecutor(new EasyBedrockCommand(this));
 
         // Optimierung zuerst: falls Geyser-Config schon existiert, VOR dem
-        // Geyser-Start patchen (loadbefore in plugin.yml sorgt fuer die Reihenfolge).
+        // Geyser-Start patchen (loadbefore in plugin.yml sorgt für die Reihenfolge).
         if (getConfig().getBoolean("optimize.enabled", true)) {
             int changes = optimizer.optimize();
             if (changes > 0) {
-                getLogger().info("Geyser ressourcenschonend optimiert (" + changes + " Aenderung(en)).");
+                getLogger().info("Geyser ressourcenschonend optimiert (" + changes + " Änderung(en)).");
             }
         }
 

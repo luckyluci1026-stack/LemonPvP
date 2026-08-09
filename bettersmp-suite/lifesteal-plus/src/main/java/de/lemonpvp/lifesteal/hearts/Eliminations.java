@@ -16,7 +16,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * Fuehrt Elimination (Spectator/Bann) und Wiederbelebung aus.
+ * Führt Elimination (Spectator/Bann) und Wiederbelebung aus.
  */
 public final class Eliminations {
 
@@ -71,7 +71,7 @@ public final class Eliminations {
                 () -> player.ban(reason, expiry, "LifestealPlus", true));
     }
 
-    /** Sorgt beim Join dafuer, dass eliminierte Spieler im Spectator bleiben. */
+    /** Sorgt beim Join dafür, dass eliminierte Spieler im Spectator bleiben. */
     public void enforceOnJoin(Player player) {
         if (hearts.isEliminated(player.getUniqueId()) && mode().equals("SPECTATOR")) {
             player.setGameMode(GameMode.SPECTATOR);
@@ -93,7 +93,7 @@ public final class Eliminations {
                 : String.valueOf(Bukkit.getOfflinePlayer(target).getName());
 
         if (mode().equals("BAN") && name != null && !name.equals("null")) {
-            // pardon(String) ist unabhaengig vom BanList-Typparameter -> compilierbar
+            // pardon(String) ist unabhängig vom BanList-Typparameter -> compilierbar
             Bukkit.getBanList(BanList.Type.PROFILE).pardon(name);
         }
         if (online != null) {

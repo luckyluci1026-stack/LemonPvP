@@ -7,9 +7,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 /**
- * Liest Prefix/Suffix/Primaergruppe aus LuckPerms.
- * Die LuckPerms-Klassen werden nur beruehrt, wenn das Plugin geladen ist
- * (innere Bridge-Klasse verhindert fruehes Classloading).
+ * Liest Prefix/Suffix/Primärgruppe aus LuckPerms.
+ * Die LuckPerms-Klassen werden nur berührt, wenn das Plugin geladen ist
+ * (innere Bridge-Klasse verhindert frühes Classloading).
  */
 public final class LuckPermsHook {
 
@@ -35,7 +35,7 @@ public final class LuckPermsHook {
         return available ? Bridge.group(player) : "default";
     }
 
-    /** Gewicht der Primaergruppe (fuer Tab-/Nametag-Sortierung). */
+    /** Gewicht der Primärgruppe (für Tab-/Nametag-Sortierung). */
     public int weight(Player player) {
         return available ? Bridge.weight(player) : 0;
     }

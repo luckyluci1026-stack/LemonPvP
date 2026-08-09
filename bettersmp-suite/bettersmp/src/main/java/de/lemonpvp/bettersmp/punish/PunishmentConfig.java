@@ -11,7 +11,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Laedt bans.yml und mutes.yml (Gruende, Dauern, Screens).
+ * Lädt bans.yml und mutes.yml (Gründe, Dauern, Screens).
  */
 public final class PunishmentConfig {
 

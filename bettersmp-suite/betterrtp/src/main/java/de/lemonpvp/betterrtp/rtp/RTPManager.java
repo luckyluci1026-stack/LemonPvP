@@ -13,7 +13,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Steuert Ablauf, Cooldowns, Warmup und Economy fuer /rtp.
+ * Steuert Ablauf, Cooldowns, Warmup und Economy für /rtp.
  */
 public final class RTPManager {
 
@@ -54,7 +54,7 @@ public final class RTPManager {
         return new Profile(true, 0, 0, 500, 10000, true, java.util.Set.of());
     }
 
-    /** Startet eine RTP-Anfrage mit allen Pruefungen und dem Warmup. */
+    /** Startet eine RTP-Anfrage mit allen Prüfungen und dem Warmup. */
     public void request(Player player, World world) {
         UUID uuid = player.getUniqueId();
         if (isTeleporting(uuid)) {

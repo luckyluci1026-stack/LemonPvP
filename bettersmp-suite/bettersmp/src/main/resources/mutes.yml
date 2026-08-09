@@ -1,6 +1,6 @@
 # ==========================================================
-#  BetterSMP - Mute-Gruende
-#  /gmute <Spieler> <Grund>   ->  Grund = ein Schluessel von unten
+#  BetterSMP - Mute-Gründe
+#  /gmute <Spieler> <Grund>   ->  Grund = ein Schlüssel von unten
 #  /gunmute <Spieler>
 #
 #  Dauer wie bei bans.yml: perm/0 = permanent, sonst z.B. 30m, 6h, 1d
@@ -25,7 +25,7 @@ reasons:
     display: "Beleidigung"
   caps:
     duration: 30m
-    display: "Dauer-Grossschrift"
+    display: "Dauer-Großschrift"
   ads:
     duration: 1d
     display: "Werbung"

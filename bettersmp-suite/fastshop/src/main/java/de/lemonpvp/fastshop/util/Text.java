@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** MiniMessage-Helfer mit zusaetzlicher Legacy-Farbcode-Unterstuetzung. */
+/** MiniMessage-Helfer mit zusätzlicher Legacy-Farbcode-Unterstützung. */
 public final class Text {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();

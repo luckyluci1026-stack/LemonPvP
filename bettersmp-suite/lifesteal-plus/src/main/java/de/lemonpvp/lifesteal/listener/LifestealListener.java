@@ -22,7 +22,7 @@ public final class LifestealListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(PlayerDeathEvent event) {
         Player victim = event.getEntity();
-        // Wenn dieser Tod bereits vom CombatLog behandelt wurde: ueberspringen
+        // Wenn dieser Tod bereits vom CombatLog behandelt wurde: überspringen
         if (plugin.consumeCombatLogGuard(victim.getUniqueId())) {
             return;
         }

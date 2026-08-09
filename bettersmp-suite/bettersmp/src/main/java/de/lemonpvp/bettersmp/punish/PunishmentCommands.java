@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * /gban /gunban /gmute /gunmute - ein Executor fuer alle vier Befehle.
+ * /gban /gunban /gmute /gunmute - ein Executor für alle vier Befehle.
  */
 public final class PunishmentCommands implements TabExecutor {
 
@@ -71,7 +71,7 @@ public final class PunishmentCommands implements TabExecutor {
         return true;
     }
 
-    /** Loest den Spielernamen asynchron auf (kein Blockieren des Main-Threads). */
+    /** Löst den Spielernamen asynchron auf (kein Blockieren des Main-Threads). */
     private void resolveThen(String name, java.util.function.Consumer<OfflinePlayer> action) {
         Player online = Bukkit.getPlayerExact(name);
         if (online != null) {

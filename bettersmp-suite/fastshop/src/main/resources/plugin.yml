@@ -8,7 +8,7 @@ softdepend: [Vault, Essentials, PlaceholderAPI]
 
 commands:
   shop:
-    description: Oeffnet den Shop
+    description: Öffnet den Shop
     usage: "/shop [Kategorie]"
     aliases: [markt, store]
     permission: fastshop.use

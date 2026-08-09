@@ -1,7 +1,7 @@
 # ============================================================
 #  TAB - Konfiguration (von BetterSMP vorbereitet)
-#  Huebsche Tablist mit LuckPerms-Prefixen, Sortierung nach
-#  Raengen, Header/Footer mit Online-Zahl, Ping und TPS.
+#  Hübsche Tablist mit LuckPerms-Prefixen, Sortierung nach
+#  Rängen, Header/Footer mit Online-Zahl, Ping und TPS.
 #  Doku: https://github.com/NEZNAMY/TAB/wiki
 # ============================================================
 
@@ -21,8 +21,8 @@ tablist-name-formatting:
   anti-override: true
 
 scoreboard-teams:
-  # AUS - die Nametags macht BetterSMP (Gradient-Prefix, Name weiss).
-  # So gibt es keine Konflikte und neue LuckPerms-Raenge wirken sofort.
+  # AUS - die Nametags macht BetterSMP (Gradient-Prefix, Name weiß).
+  # So gibt es keine Konflikte und neue LuckPerms-Ränge wirken sofort.
   enabled: false
 
 ping-spoof:

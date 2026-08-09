@@ -13,8 +13,8 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Verwaltet Herzen ueber die echte MAX_HEALTH-Eigenschaft und persistiert
- * sie in data.yml (auch fuer Offline-Spieler und Elimination-Status).
+ * Verwaltet Herzen über die echte MAX_HEALTH-Eigenschaft und persistiert
+ * sie in data.yml (auch für Offline-Spieler und Elimination-Status).
  */
 public final class HeartsManager {
 

@@ -22,7 +22,7 @@ import java.util.UUID;
 
 /**
  * AntiCombatLog: taggt PvP-Teilnehmer, sperrt Befehle im Kampf und
- * bestraft Combat-Logging (Tod + Broadcast + API-Event fuer Lifesteal+).
+ * bestraft Combat-Logging (Tod + Broadcast + API-Event für Lifesteal+).
  */
 public final class CombatListener implements Listener {
 

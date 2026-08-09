@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 /**
- * Erkennt Bedrock-Spieler ohne harte Floodgate-Abhaengigkeit: Floodgate
+ * Erkennt Bedrock-Spieler ohne harte Floodgate-Abhängigkeit: Floodgate
  * vergibt UUIDs, deren obere 64 Bit 0 sind.
  */
 public final class BedrockUtil {

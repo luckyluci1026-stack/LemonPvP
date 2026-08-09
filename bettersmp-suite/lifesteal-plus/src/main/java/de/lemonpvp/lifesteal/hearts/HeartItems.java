@@ -19,7 +19,7 @@ import java.util.Map;
 
 /**
  * Erstellt Herz- und Revive-Items, registriert deren Crafting-Rezepte und
- * erkennt sie wieder (ueber PersistentDataContainer-Tags).
+ * erkennt sie wieder (über PersistentDataContainer-Tags).
  */
 public final class HeartItems {
 
@@ -58,6 +58,7 @@ public final class HeartItems {
         meta.displayName(name("heart-item.name", "&c&l❤ Herz"));
         meta.lore(lore("heart-item.lore"));
         meta.getPersistentDataContainer().set(heartKey, PersistentDataType.BYTE, (byte) 1);
+        applyTexture(meta, "heart-item", "heart", 8101);
         stack.setItemMeta(meta);
         return stack;
     }
@@ -68,8 +69,29 @@ public final class HeartItems {
         meta.displayName(name("revive-item.name", "&a&l✚ Wiederbelebungs-Totem"));
         meta.lore(lore("revive-item.lore"));
         meta.getPersistentDataContainer().set(reviveKey, PersistentDataType.BYTE, (byte) 1);
+        applyTexture(meta, "revive-item", "revive_totem", 8102);
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    /**
+     * Verpasst dem Item die Textur aus dem SMP-Texturepack.
+     *
+     * Java nutzt dafür das item_model (ab 1.21.4), Bedrock/Geyser erkennt das
+     * Item über die CustomModelData - deshalb wird beides gesetzt. Ohne
+     * installiertes Texturepack ändert das nichts am Aussehen.
+     */
+    private void applyTexture(ItemMeta meta, String configPath, String modelName, int modelData) {
+        if (!plugin.getConfig().getBoolean(configPath + ".use-texturepack", true)) {
+            return;
+        }
+        String namespace = plugin.getConfig().getString("texturepack.namespace", "smp");
+        try {
+            meta.setItemModel(new NamespacedKey(namespace, modelName));
+            meta.setCustomModelData(modelData);
+        } catch (Throwable t) {
+            plugin.getLogger().warning("Textur konnte nicht gesetzt werden: " + t.getMessage());
+        }
     }
 
     public boolean isHeart(ItemStack stack) {
@@ -126,7 +148,7 @@ public final class HeartItems {
             }
             Bukkit.addRecipe(recipe);
         } catch (Exception e) {
-            plugin.getLogger().warning("Rezept " + key.getKey() + " ungueltig: " + e.getMessage());
+            plugin.getLogger().warning("Rezept " + key.getKey() + " ungültig: " + e.getMessage());
         }
     }
 }

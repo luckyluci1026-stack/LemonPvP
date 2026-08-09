@@ -8,7 +8,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
- * Richtet das Board eines Spielers beim Join ein und raeumt es beim Quit auf.
+ * Richtet das Board eines Spielers beim Join ein und räumt es beim Quit auf.
  */
 public final class BoardListener implements Listener {
 
@@ -20,7 +20,7 @@ public final class BoardListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        // Kurz verzoegern, damit LuckPerms-Daten sicher geladen sind
+        // Kurz verzögern, damit LuckPerms-Daten sicher geladen sind
         Bukkit.getScheduler().runTaskLater(plugin,
                 () -> {
                     if (event.getPlayer().isOnline()) {

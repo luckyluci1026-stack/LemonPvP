@@ -6,8 +6,8 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 /**
- * Optionaler Vault-Economy-Hook (fuer /stats und das Scoreboard).
- * Die Vault-Klassen werden nur ueber die innere Bridge angefasst.
+ * Optionaler Vault-Economy-Hook (für /stats und das Scoreboard).
+ * Die Vault-Klassen werden nur über die innere Bridge angefasst.
  */
 public final class EconomyHook {
 

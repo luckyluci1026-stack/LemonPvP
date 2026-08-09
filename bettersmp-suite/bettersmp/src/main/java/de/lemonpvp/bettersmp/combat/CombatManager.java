@@ -10,8 +10,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Verwaltet Kampf-Tags: Wer kaempft mit wem und wie lange noch.
- * Ein Tick-Task (1x pro Sekunde) aktualisiert Actionbar und laesst Tags auslaufen.
+ * Verwaltet Kampf-Tags: Wer kämpft mit wem und wie lange noch.
+ * Ein Tick-Task (1x pro Sekunde) aktualisiert Actionbar und lässt Tags auslaufen.
  */
 public final class CombatManager {
 

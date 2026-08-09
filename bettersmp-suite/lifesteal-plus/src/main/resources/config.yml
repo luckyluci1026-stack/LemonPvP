@@ -1,6 +1,6 @@
 # ==========================================================
 #  Lifesteal+ - Konfiguration
-#  Herzen werden ueber die echte Max-Leben-Eigenschaft verwaltet
+#  Herzen werden über die echte Max-Leben-Eigenschaft verwaltet
 #  und persistieren automatisch mit den Vanilla-Spielerdaten.
 #  Nachrichten: MiniMessage + Legacy-Farbcodes.
 # ==========================================================
@@ -23,7 +23,7 @@ hearts:
 
 # ---------------- Elimination ----------------
 elimination:
-  # SPECTATOR = Zuschauermodus bis Wiederbelebung, BAN = temporaerer Bann
+  # SPECTATOR = Zuschauermodus bis Wiederbelebung, BAN = temporärer Bann
   mode: SPECTATOR
   # Nur bei mode BAN: Dauer in Minuten (0 = permanent bis /revive)
   ban-minutes: 0
@@ -32,6 +32,8 @@ elimination:
 
 # ---------------- Herz-Item ----------------
 heart-item:
+  # Eigene Textur aus dem Texturepack verwenden
+  use-texturepack: true
   # Rezept aktivieren (Crafting)
   crafting-enabled: true
   # Material des Herz-Items
@@ -39,7 +41,7 @@ heart-item:
   name: "&c&l❤ Herz"
   lore:
     - "&7Rechtsklick, um ein Herz zu erhalten."
-    - "&7(erhoeht dein Maximum um 1 Herz)"
+    - "&7(erhöht dein Maximum um 1 Herz)"
   # Rezept: 3x3, Zeilen mit je 3 Zeichen. Buchstaben werden unten zugeordnet.
   recipe:
     shape:
@@ -53,6 +55,8 @@ heart-item:
 
 # ---------------- Revive-Item ----------------
 revive-item:
+  # Eigene Textur aus dem Texturepack verwenden
+  use-texturepack: true
   enabled: true
   material: TOTEM_OF_UNDYING
   name: "&a&l✚ Wiederbelebungs-Totem"
@@ -72,7 +76,7 @@ revive-item:
 
 # ---------------- Revive ----------------
 revive:
-  # Kostet /revive dem Ausfuehrenden ein Herz?
+  # Kostet /revive dem Ausführenden ein Herz?
   cost-heart: true
   # Herzen, mit denen ein wiederbelebter Spieler startet
   hearts-on-revive: 3
@@ -90,3 +94,11 @@ combatlog:
   # Reagiere auf BetterSMP-CombatLog: Ausloggen im Kampf = Tod (Herzverlust,
   # Killer bekommt Herzen gutgeschrieben, ggf. Elimination).
   enabled: true
+
+# ----------------------------------------------------------
+#  SMP-Texturepack
+#  Herz und Revive-Totem bekommen damit eigene Texturen.
+#  Ohne installiertes Pack sehen sie aus wie das Basis-Item.
+# ----------------------------------------------------------
+texturepack:
+  namespace: smp

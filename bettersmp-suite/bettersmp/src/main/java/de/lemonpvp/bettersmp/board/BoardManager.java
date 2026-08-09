@@ -25,14 +25,14 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Verwaltet Nametags (Gradient-Prefix aus LuckPerms ueber dem Kopf + Tab,
- * Name weiss) und ein konfigurierbares Sidebar-Scoreboard - pro Spieler,
- * flackerfrei. Funktioniert automatisch fuer JEDE LuckPerms-Gruppe und ist
- * auch fuer Bedrock/Geyser-Spieler sauber sichtbar.
+ * Verwaltet Nametags (Gradient-Prefix aus LuckPerms über dem Kopf + Tab,
+ * Name weiß) und ein konfigurierbares Sidebar-Scoreboard - pro Spieler,
+ * flackerfrei. Funktioniert automatisch für JEDE LuckPerms-Gruppe und ist
+ * auch für Bedrock/Geyser-Spieler sauber sichtbar.
  */
 public final class BoardManager {
 
-    /** Sidebar-Zeilen nutzen unsichtbare, eindeutige Eintraege (Farbcodes). */
+    /** Sidebar-Zeilen nutzen unsichtbare, eindeutige Einträge (Farbcodes). */
     private static final char[] TOKENS = "0123456789abcdef".toCharArray();
 
     private final BetterSMP plugin;
@@ -121,7 +121,7 @@ public final class BoardManager {
         nametagTeams.remove(player.getUniqueId());
         sidebarLineCount.remove(player.getUniqueId());
         statCache.remove(player.getUniqueId());
-        // Team fuer diesen Spieler von allen anderen Boards entfernen
+        // Team für diesen Spieler von allen anderen Boards entfernen
         for (Player viewer : Bukkit.getOnlinePlayers()) {
             Map<UUID, String> teams = nametagTeams.get(viewer.getUniqueId());
             Scoreboard sb = boards.get(viewer.getUniqueId());
@@ -153,7 +153,7 @@ public final class BoardManager {
         for (Player target : Bukkit.getOnlinePlayers()) {
             applyNametag(viewer, target);
         }
-        // abgemeldete Ziele aufraeumen
+        // abgemeldete Ziele aufräumen
         Map<UUID, String> teams = nametagTeams.get(viewer.getUniqueId());
         if (teams != null) {
             teams.entrySet().removeIf(entry -> {
@@ -214,7 +214,7 @@ public final class BoardManager {
         return existing != null ? existing : sb.registerNewTeam(name);
     }
 
-    /** Team-Name kodiert das Gewicht (fuer Tab-Sortierung) + kurze UUID (eindeutig). */
+    /** Team-Name kodiert das Gewicht (für Tab-Sortierung) + kurze UUID (eindeutig). */
     private String teamName(int weight, UUID uuid) {
         int inverse = Math.max(0, Math.min(99999, 99999 - weight));
         String shortId = uuid.toString().replace("-", "").substring(0, 11);
@@ -330,7 +330,7 @@ public final class BoardManager {
         return "";
     }
 
-    // ---------------- Zugriff fuer Listener ----------------
+    // ---------------- Zugriff für Listener ----------------
 
     public List<Player> tracked() {
         List<Player> list = new ArrayList<>();

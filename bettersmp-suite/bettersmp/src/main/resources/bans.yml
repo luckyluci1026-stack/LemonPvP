@@ -1,9 +1,9 @@
 # ==========================================================
-#  BetterSMP - Ban-Gruende & Ban-Screen
-#  /gban <Spieler> <Grund>   ->  Grund = ein Schluessel von unten
+#  BetterSMP - Ban-Gründe & Ban-Screen
+#  /gban <Spieler> <Grund>   ->  Grund = ein Schlüssel von unten
 #  /gunban <Spieler>
 #
-#  Neue Gruende einfach ergaenzen: Schluessel, Dauer, Anzeigename,
+#  Neue Gründe einfach ergänzen: Schlüssel, Dauer, Anzeigename,
 #  optional ein eigener Screen.
 #
 #  Dauer:  perm / 0 = permanent, sonst Zahl + Einheit
@@ -14,12 +14,12 @@
 #    %player% %reason% %duration% %expires% %actor% %brand%
 #
 #  Der Screen ist bewusst schlicht gehalten (Farben + Zeilen) -
-#  so wird er auch fuer Bedrock-/Geyser-Spieler sauber angezeigt.
+#  so wird er auch für Bedrock-/Geyser-Spieler sauber angezeigt.
 # ==========================================================
 
 settings:
   permanent-word: "Permanent"
-  # Standard-Screen fuer alle Gruende ohne eigenen 'screen'
+  # Standard-Screen für alle Gründe ohne eigenen 'screen'
   default-screen:
     - "<gradient:#FF5A5A:#B30000><bold>%brand%</bold></gradient>"
     - ""
@@ -27,10 +27,10 @@ settings:
     - ""
     - "<gray>Grund:</gray> <white>%reason%</white>"
     - "<gray>Dauer:</gray> <white>%duration%</white>"
-    - "<gray>Laeuft ab:</gray> <white>%expires%</white>"
+    - "<gray>Läuft ab:</gray> <white>%expires%</white>"
     - ""
     - "<gray>Gebannt von:</gray> <white>%actor%</white>"
-    - "<dark_gray>Einspruch ueber deinen Server-Discord</dark_gray>"
+    - "<dark_gray>Einspruch über deinen Server-Discord</dark_gray>"
 
 reasons:
   cheating:
