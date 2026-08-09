@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 /* ----------------------------- Icon-System ------------------------------
    Alle Symbole sind selbst gezeichnet und stehen direkt hier im Code.
@@ -8488,11 +8488,2201 @@ function buildFallbackLesson(course, meta) {
   return { estimatedMinutes: lehre ? (beispiel ? 15 : 12) : 10, theory, tasks };
 }
 
+/* ---------------------- Handgeschriebene Theorie ----------------------
+
+   Diese Texte sind von Hand geschrieben, nicht erzeugt. Sie ersetzen
+   in getFullLesson den Erklärteil der Lektion; die Aufgaben bleiben,
+   wie sie sind. Wächst diese Tabelle, wächst der Anteil echter
+   Theorie — theorieFortschritt() zählt ihn.
+
+   Hausform: Überschrift, Fließtext, ein lauffähiges Beispiel in der
+   Sprache des Kurses, wo es hilft eine Tabelle, ein Hinweis- oder
+   Warnkasten und zum Schluss eine Aufgabe zum Selbermachen. */
+const LESSON_THEORY = {
+  c_1_1: `# Aufbau eines C-Programms & Kompilieren
+
+C ist eine **kompilierte** Sprache. Du schreibst Text, ein Übersetzer macht daraus Maschinencode, und erst der läuft. Zwischen „geschrieben" und „läuft" steht also ein Arbeitsschritt, den es bei Python oder JavaScript nicht gibt.
+
+## Das kleinste vollständige Programm
+
+\`\`\`c
+#include <stdio.h>
+
+int main(void) {
+    printf("Hallo Welt\\n");
+    return 0;
+}
+\`\`\`
+
+## Was die vier Zeilen bedeuten
+
+| Zeile | Bedeutung |
+| --- | --- |
+| \`#include <stdio.h>\` | holt die Ein- und Ausgabe dazu — ohne sie kennt der Übersetzer \`printf\` nicht |
+| \`int main(void)\` | hier startet das Programm. Genau diese Funktion sucht das Betriebssystem |
+| \`printf(...)\` | gibt Text aus. \`\\n\` ist der Zeilenumbruch |
+| \`return 0;\` | meldet dem System: alles in Ordnung |
+
+Die erste Zeile ist keine Anweisung, sondern eine **Anweisung an den Übersetzer**. Sie wird vor dem eigentlichen Übersetzen abgearbeitet und fügt den Inhalt der genannten Datei an dieser Stelle ein. Deshalb steht am Ende auch kein Semikolon.
+
+## Übersetzen und starten
+
+\`\`\`c
+// Im Terminal:
+// gcc hallo.c -o hallo
+// ./hallo
+\`\`\`
+
+Mit \`-o hallo\` legst du fest, wie das fertige Programm heißen soll. Lässt du es weg, heißt es \`a.out\` — der Name stammt aus den Siebzigern und ist bis heute die Voreinstellung.
+
+> [warnung] Der Übersetzer meldet Fehler mit Zeilennummer. Die erste Meldung ist fast immer die echte; alles darunter sind Folgefehler. Arbeite deshalb von oben nach unten und übersetze nach jeder Korrektur neu.
+
+## Und jetzt du
+
+Ändere den Text in \`printf\` und übersetze noch einmal. Lass danach absichtlich das Semikolon weg und lies, was der Übersetzer sagt — diese Meldung wirst du noch oft sehen.`,
+  c_1_2: `# Variablen & Datentypen
+
+In C legst du für jede Variable fest, **was** dort hineinkommt. Der Typ entscheidet, wie viele Bytes reserviert werden und wie das Muster darin gelesen wird.
+
+## Die vier, die du zuerst brauchst
+
+\`\`\`c
+int    alter    = 17;        // ganze Zahl
+double preis    = 4.99;      // Kommazahl
+char   note     = 'B';       // ein einzelnes Zeichen
+int    aktiv    = 1;         // C hat kein echtes true/false
+\`\`\`
+
+Beachte die Anführungszeichen: \`'B'\` mit einfachen ist **ein Zeichen**, \`"B"\` mit doppelten ist eine Zeichenkette — und die ist in C etwas ganz anderes.
+
+## Ausgeben mit dem richtigen Platzhalter
+
+\`\`\`c
+printf("Alter: %d\\n", alter);
+printf("Preis: %.2f\\n", preis);
+printf("Note:  %c\\n", note);
+\`\`\`
+
+\`%d\` für ganze Zahlen, \`%f\` für Kommazahlen, \`%c\` für ein Zeichen. Die \`.2\` bei \`%.2f\` bedeutet: zwei Nachkommastellen.
+
+> [warnung] Ein falscher Platzhalter ist kein Übersetzungsfehler. \`printf("%d", preis)\` gibt eine wilde Zahl aus, weil die Bytes einer Kommazahl als ganze Zahl gelesen werden. Der Fehler zeigt sich erst beim Ausführen — und sieht aus wie ein Rechenfehler.
+
+## Was sich nie ändern soll
+
+\`\`\`c
+const double MWST = 0.19;
+\`\`\`
+
+\`const\` sagt dem Übersetzer: Ein Schreibversuch ist ein Fehler. Das kostet nichts und erspart die Suche nach der Stelle, an der ein Wert überschrieben wurde.
+
+## Und jetzt du
+
+Lege eine Variable für deine Körpergröße in Metern an und gib sie mit zwei Nachkommastellen aus. Tausche danach \`%f\` gegen \`%d\` und sieh dir an, was passiert.`,
+  c_1_3: `# Operatoren & Ausdrücke
+
+Ein **Ausdruck** ist alles, was einen Wert ergibt: \`3 + 4\`, \`alter >= 18\`, \`zaehler++\`. Ein Programm besteht zum größten Teil daraus.
+
+## Rechnen
+
+\`\`\`c
+int a = 7, b = 2;
+
+printf("%d\\n", a + b);   // 9
+printf("%d\\n", a / b);   // 3  — nicht 3.5!
+printf("%d\\n", a % b);   // 1  — der Rest
+\`\`\`
+
+Die dritte Zeile ist die wichtigste dieser Lektion. **Zwei ganze Zahlen geteilt ergeben wieder eine ganze Zahl.** Der Rest fällt weg, es wird nicht gerundet.
+
+\`\`\`c
+printf("%.1f\\n", (double) a / b);   // 3.5
+\`\`\`
+
+Mit \`(double)\` sagst du: Behandle \`a\` an dieser Stelle als Kommazahl. Danach rechnet C auch mit Komma weiter.
+
+## Vergleichen
+
+\`\`\`c
+alter >= 18     // wahr oder falsch
+punkte == 100   // GLEICH heißt zwei Gleichheitszeichen
+name != "Ada"   // ungleich
+\`\`\`
+
+C kennt keinen eigenen Wahrheitstyp. Ein Vergleich ergibt \`1\` für wahr und \`0\` für falsch — deshalb kannst du das Ergebnis in einer \`int\`-Variable ablegen.
+
+> [warnung] \`if (x = 5)\` weist zu, statt zu vergleichen, und ist danach immer wahr. Der Übersetzer warnt bei \`-Wall\`, aber nur, wenn du diese Option auch einschaltest: \`gcc -Wall programm.c\`.
+
+## Kurz und knapp
+
+\`\`\`c
+zaehler++;        // um eins hoch, wie zaehler = zaehler + 1
+summe += preis;   // dazuzählen
+\`\`\`
+
+## Und jetzt du
+
+Rechne aus, wie viele volle Stunden und wie viele Minuten in 200 Minuten stecken — mit \`/\` und \`%\` in zwei Zeilen.`,
+  c_1_4: `# Kontrollstrukturen
+
+Ohne Verzweigungen und Schleifen läuft ein Programm stur von oben nach unten. Mit ihnen trifft es Entscheidungen und wiederholt Arbeit.
+
+## Entscheiden
+
+\`\`\`c
+if (punkte >= 90) {
+    printf("sehr gut\\n");
+} else if (punkte >= 60) {
+    printf("bestanden\\n");
+} else {
+    printf("nicht bestanden\\n");
+}
+\`\`\`
+
+Geprüft wird von oben nach unten, der erste zutreffende Zweig gewinnt — deshalb steht die höchste Schwelle zuerst. Stünde \`>= 60\` oben, bekäme auch ein Ergebnis von 95 nur „bestanden".
+
+## Wiederholen
+
+\`\`\`c
+for (int i = 1; i <= 5; i++) {
+    printf("%d ", i);        // 1 2 3 4 5
+}
+
+int rest = 100;
+while (rest > 0) {
+    rest -= 30;
+}
+\`\`\`
+
+Die Zählschleife trägt Start, Bedingung und Schrittweite im Kopf. Damit ist auf einen Blick zu sehen, wann sie endet. Bei \`while\` steht die Antwort irgendwo im Rumpf — und wenn die Bedingung dort nie falsch wird, hängt das Programm.
+
+## Aussteigen und überspringen
+
+\`\`\`c
+for (int i = 0; i < 10; i++) {
+    if (i == 3) continue;    // diesen Durchlauf überspringen
+    if (i == 7) break;       // Schleife ganz verlassen
+    printf("%d ", i);        // 0 1 2 4 5 6
+}
+\`\`\`
+
+> [warnung] Die geschweiften Klammern sind bei einer einzelnen Anweisung erlaubt, aber weglassen zu dürfen heißt nicht, es zu sollen. Wer später eine zweite Zeile ergänzt und die Klammern vergisst, hat einen Fehler, den man beim Lesen kaum sieht.
+
+## Und jetzt du
+
+Gib alle Zahlen von 1 bis 20 aus, die durch 3 teilbar sind. Zwei Wege führen dorthin: mit \`if\` und \`%\` — oder mit einer Schrittweite von 3.`,
+  c_1_5: `# Funktionen
+
+Eine Funktion ist ein benannter Codeblock mit Eingang und Ausgang. Sie ist der wichtigste Weg, ein Programm in Teile zu zerlegen, die man einzeln verstehen kann.
+
+## Aufbau
+
+\`\`\`c
+int verdopple(int zahl) {
+    return zahl * 2;
+}
+\`\`\`
+
+Vor dem Namen steht, **was herauskommt**. In den Klammern steht, **was hineingeht** — jeweils mit Typ. \`return\` liefert das Ergebnis und beendet die Funktion sofort; Code dahinter läuft nicht mehr.
+
+## Die Reihenfolge zählt
+
+\`\`\`c
+#include <stdio.h>
+
+int verdopple(int zahl);      // Ankündigung (Prototyp)
+
+int main(void) {
+    printf("%d\\n", verdopple(21));
+    return 0;
+}
+
+int verdopple(int zahl) {     // Umsetzung
+    return zahl * 2;
+}
+\`\`\`
+
+C liest die Datei von oben nach unten. Wird eine Funktion benutzt, bevor sie dasteht, kennt der Übersetzer sie nicht. Die Ankündigung oben löst das — sie sagt nur, wie die Funktion heißt und aussieht, nicht was sie tut.
+
+## Ohne Rückgabe
+
+\`\`\`c
+void begruesse(char name[]) {
+    printf("Hallo %s!\\n", name);
+}
+\`\`\`
+
+\`void\` heißt: Diese Funktion liefert nichts zurück, sie tut etwas. Steht \`void\` dagegen in den Klammern (\`int main(void)\`), bedeutet es: keine Parameter.
+
+> [tipp] Ein Name sollte sagen, was herauskommt: \`berechneSumme\` statt \`verarbeite\`. Wer eine Funktion nicht in einem Satz beschreiben kann, hat meist zwei Funktionen vor sich.
+
+## Und jetzt du
+
+Schreibe \`int groesser(int a, int b)\`, die den größeren der beiden Werte zurückgibt. Denk daran: Nach einem \`return\` läuft nichts mehr — ein \`else\` brauchst du deshalb nicht.`,
+  go_1_1: `# Go installieren & Hello World
+
+Go ist eine kompilierte Sprache, die sich anfühlt wie eine leichte. Du schreibst Text, \`go run\` macht daraus in unter einer Sekunde ein fertiges Programm und startet es — den Übersetzungsschritt merkst du kaum.
+
+## Das kleinste vollständige Programm
+
+\`\`\`go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hallo Welt")
+}
+\`\`\`
+
+## Was die Zeilen bedeuten
+
+| Zeile | Bedeutung |
+| --- | --- |
+| \`package main\` | dieses Paket wird ein startbares Programm, keine Bibliothek |
+| \`import "fmt"\` | holt die Formatierung und Ausgabe dazu |
+| \`func main()\` | hier beginnt die Ausführung — genau dieser Name, sonst startet nichts |
+| \`fmt.Println(...)\` | gibt eine Zeile aus und hängt den Umbruch selbst an |
+
+Der Großbuchstabe in \`Println\` ist kein Zufall: In Go ist alles, was mit einem Großbuchstaben beginnt, von außen sichtbar. Was klein beginnt, bleibt im eigenen Paket. Die Schreibweise **ist** die Sichtbarkeitsregel — es gibt kein \`public\` oder \`private\`.
+
+## Starten
+
+\`\`\`go
+// Im Terminal:
+// go run hallo.go      — übersetzen und sofort starten
+// go build hallo.go    — nur übersetzen, es entsteht eine Datei
+\`\`\`
+
+\`go run\` ist zum Entwickeln da, \`go build\` liefert die fertige Datei aus. Die enthält alles, was sie braucht — auf dem Zielrechner muss Go nicht installiert sein.
+
+> [warnung] Go verlangt, dass jeder Import auch benutzt wird. Ein \`import "os"\`, das du dann doch nicht brauchst, ist ein **Übersetzungsfehler**, keine Warnung. Das nervt am Anfang und hält später jede Datei sauber.
+
+## Und jetzt du
+
+Ändere den Text und starte neu. Füge dann \`import "os"\` hinzu, ohne \`os\` zu verwenden, und lies die Fehlermeldung — die wirst du in den ersten Wochen oft sehen.`,
+  go_1_2: `# Variablen, Typen & Konstanten
+
+Go kennt Typen fest, tippt sie dir aber meistens von selbst hin. Du musst also selten schreiben, was ohnehin klar ist.
+
+## Die kurze Form
+
+\`\`\`go
+name := "Lena"      // string
+alter := 17         // int
+preis := 4.99       // float64
+aktiv := true       // bool
+\`\`\`
+
+Das \`:=\` heißt: *lege eine neue Variable an und leite den Typ aus dem Wert ab*. Es funktioniert nur **innerhalb** einer Funktion.
+
+## Die lange Form
+
+\`\`\`go
+var name string = "Lena"
+var alter int                // ohne Wert: 0
+var aktiv bool               // ohne Wert: false
+var text string              // ohne Wert: "" (leer)
+\`\`\`
+
+Auffällig ist die Reihenfolge: erst der Name, dann der Typ. Und: Eine Variable ohne Startwert ist in Go nie undefiniert. Sie bekommt den **Nullwert** ihres Typs — \`0\`, \`false\` oder die leere Zeichenkette. Es gibt kein \`undefined\` wie in JavaScript.
+
+| Typ | Nullwert |
+| --- | --- |
+| \`int\`, \`float64\` | \`0\` |
+| \`string\` | \`""\` |
+| \`bool\` | \`false\` |
+| Zeiger, Slice, Map | \`nil\` |
+
+## Konstanten
+
+\`\`\`go
+const MWST = 0.19
+const MAX_VERSUCHE = 3
+\`\`\`
+
+Eine Konstante steht schon beim Übersetzen fest. Sie kann deshalb nicht aus einer Berechnung stammen, die erst zur Laufzeit möglich ist.
+
+> [warnung] Eine Variable, die du anlegst und nie benutzt, ist in Go ein Fehler — genau wie ein ungenutzter Import. Wenn du beim Suchen eines Bugs eine Zeile auskommentierst, meckert Go plötzlich über die Variable darüber. Das ist kein neuer Fehler, nur eine Folge.
+
+## Und jetzt du
+
+Lege drei Variablen mit \`:=\` an und gib sie mit \`fmt.Println\` aus. Deklariere dann eine mit \`var\` ohne Wert und schau nach, was Go hineinlegt.`,
+  go_1_3: `# Kontrollstrukturen
+
+Go hat weniger Schlüsselwörter als die meisten Sprachen — es gibt genau **eine** Schleife, und die heißt \`for\`.
+
+## Verzweigen
+
+\`\`\`go
+if alter >= 18 {
+    fmt.Println("volljährig")
+} else if alter >= 16 {
+    fmt.Println("fast")
+} else {
+    fmt.Println("noch nicht")
+}
+\`\`\`
+
+Keine Klammern um die Bedingung, aber die geschweiften Klammern sind Pflicht — auch bei einer einzigen Zeile. Damit fällt eine ganze Klasse von Fehlern weg.
+
+## Die Zuweisung in der Bedingung
+
+\`\`\`go
+if wert, ok := werte["schluessel"]; ok {
+    fmt.Println("gefunden:", wert)
+}
+\`\`\`
+
+Vor der Bedingung darf eine kurze Anweisung stehen, getrennt durch ein Semikolon. \`wert\` und \`ok\` gelten dann **nur** innerhalb des \`if\`. Diese Form wirst du in Go ständig sehen.
+
+## Die eine Schleife
+
+\`\`\`go
+// wie eine klassische Zählschleife
+for i := 0; i < 5; i++ {
+    fmt.Println(i)
+}
+
+// wie eine while-Schleife
+for guthaben > 0 {
+    guthaben -= 10
+}
+
+// endlos, bis break
+for {
+    if fertig { break }
+}
+\`\`\`
+
+Drei Schreibweisen, ein Schlüsselwort. Ein \`while\` gibt es nicht — die mittlere Form **ist** das while.
+
+## Mehrfachauswahl
+
+\`\`\`go
+switch note {
+case 1, 2:
+    fmt.Println("sehr gut")
+case 3:
+    fmt.Println("geht so")
+default:
+    fmt.Println("üben")
+}
+\`\`\`
+
+> [tipp] In Go endet jeder \`case\` von selbst. Du brauchst kein \`break\` — und du kannst es auch nicht vergessen. Wenn du den Durchfall zum nächsten Fall ausnahmsweise willst, schreibst du \`fallthrough\`.
+
+## Und jetzt du
+
+Schreibe eine Schleife, die von 1 bis 20 zählt und für Vielfache von 3 „drei" ausgibt, sonst die Zahl. Nutze dafür \`switch\` mit einer Bedingung statt eines Werts: \`switch { case i%3 == 0: ... }\`.`,
+  go_1_4: `# Funktionen & Mehrfachrückgabe
+
+In Go darf eine Funktion **mehrere Werte** zurückgeben. Darauf ist die ganze Fehlerbehandlung der Sprache aufgebaut.
+
+## Der Grundaufbau
+
+\`\`\`go
+func addiere(a int, b int) int {
+    return a + b
+}
+
+// gleicher Typ nacheinander — einmal reicht
+func multipliziere(a, b int) int {
+    return a * b
+}
+\`\`\`
+
+Der Rückgabetyp steht hinter der Klammer. Gibt eine Funktion nichts zurück, lässt du ihn weg.
+
+## Zwei Werte auf einmal
+
+\`\`\`go
+func teile(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New("Division durch null")
+    }
+    return a / b, nil
+}
+
+ergebnis, err := teile(10, 0)
+if err != nil {
+    fmt.Println("Fehler:", err)
+    return
+}
+fmt.Println(ergebnis)
+\`\`\`
+
+Das ist das prägende Muster der Sprache: **Ergebnis und Fehler nebeneinander**. Go hat keine Ausnahmen (\`try\`/\`catch\`). Ein Fehler ist ein ganz normaler Rückgabewert, den du behandeln musst — oder mit \`_\` ausdrücklich wegwirfst.
+
+| Zurückgegeben | Bedeutung |
+| --- | --- |
+| \`wert, nil\` | hat geklappt |
+| \`0, err\` | schiefgegangen, \`err\` sagt warum |
+| \`wert, _\` | du ignorierst den Fehler — bewusst |
+
+## Benannte Rückgabewerte
+
+\`\`\`go
+func teilen(a, b int) (ergebnis int, err error) {
+    if b == 0 {
+        err = errors.New("null")
+        return
+    }
+    ergebnis = a / b
+    return
+}
+\`\`\`
+
+Möglich, aber sparsam einsetzen: Ein nacktes \`return\` liest sich in längeren Funktionen schnell rätselhaft.
+
+> [warnung] \`if err != nil\` sieht nach viel Tipparbeit aus, und viele lassen es am Anfang weg. Genau da entstehen die Bugs, die man später am schwersten findet: Das Programm rechnet stumm mit \`0\` weiter, und der eigentliche Fehler ist zehn Funktionen entfernt passiert.
+
+## Und jetzt du
+
+Schreibe \`kaufe(guthaben, preis float64) (float64, error)\`, die den Restbetrag zurückgibt — und einen Fehler, wenn das Guthaben nicht reicht. Rufe sie zweimal auf: einmal erfolgreich, einmal nicht.`,
+  go_1_5: `# Arrays, Slices & Maps
+
+Go trennt sauber zwischen einer Liste mit **fester** Länge und einer, die wachsen kann. Im Alltag nimmst du fast immer die zweite.
+
+## Array: feste Länge
+
+\`\`\`go
+var noten [3]int = [3]int{1, 2, 3}
+\`\`\`
+
+Die Länge gehört zum Typ. \`[3]int\` und \`[4]int\` sind verschiedene Typen — deshalb sind Arrays im Alltag unpraktisch.
+
+## Slice: die Liste, die du wirklich benutzt
+
+\`\`\`go
+namen := []string{"Lena", "Ali", "Mira"}
+namen = append(namen, "Tom")
+
+fmt.Println(len(namen))    // 4
+fmt.Println(namen[0])      // Lena
+fmt.Println(namen[1:3])    // [Ali Mira]
+\`\`\`
+
+Kein Zahlenwert in den eckigen Klammern — das macht den Unterschied. \`append\` gibt ein **neues** Slice zurück; du musst das Ergebnis wieder zuweisen. Das ist die häufigste Stolperstelle.
+
+## Map: Schlüssel und Wert
+
+\`\`\`go
+punkte := map[string]int{
+    "Lena": 120,
+    "Ali":  95,
+}
+
+punkte["Mira"] = 80
+delete(punkte, "Ali")
+
+wert, gefunden := punkte["Tom"]
+if !gefunden {
+    fmt.Println("Tom steht nicht drin")
+}
+\`\`\`
+
+Der zweite Rückgabewert beim Lesen ist wichtig: Eine Map liefert bei einem unbekannten Schlüssel den Nullwert — bei \`map[string]int\` also \`0\`. Ohne \`gefunden\` kannst du „Punktzahl 0" und „gar nicht vorhanden" nicht unterscheiden.
+
+## Durchlaufen
+
+\`\`\`go
+for i, name := range namen {
+    fmt.Println(i, name)
+}
+
+for name, punkt := range punkte {
+    fmt.Println(name, punkt)
+}
+\`\`\`
+
+> [warnung] Die Reihenfolge beim Durchlaufen einer Map ist **absichtlich zufällig** und ändert sich bei jedem Programmstart. Wenn du eine feste Reihenfolge brauchst, sammle die Schlüssel in ein Slice und sortiere sie.
+
+## Und jetzt du
+
+Lege eine Map mit drei Namen und Punktzahlen an, füge einen vierten hinzu, lösche einen und gib danach alle Einträge aus. Frage außerdem einen Namen ab, den es nicht gibt, und behandle den Fall sauber.`,
+  kotlin_1_1: `# Kotlin Setup & Hello World
+
+Kotlin läuft auf derselben Maschine wie Java, ist aber deutlich knapper geschrieben. Vieles, was in Java Pflicht ist — Semikolons, Klassenrümpfe um jede Funktion, ausgeschriebene Typen —, darfst du weglassen.
+
+## Das kleinste vollständige Programm
+
+\`\`\`kotlin
+fun main() {
+    println("Hallo Welt")
+}
+\`\`\`
+
+Das ist alles. Keine Klasse drumherum, kein \`public static void\`, kein Semikolon. Zum Vergleich braucht dasselbe Programm in Java fünf Zeilen und drei Schlüsselwörter, die man am ersten Tag nicht erklären kann.
+
+## Was hier steht
+
+| Teil | Bedeutung |
+| --- | --- |
+| \`fun\` | leitet eine Funktion ein |
+| \`main\` | der Name, den die Laufzeitumgebung sucht |
+| \`println\` | gibt eine Zeile aus, Umbruch inklusive |
+
+## Ausführen
+
+Kotlin-Dateien enden auf \`.kt\`. Im Terminal:
+
+\`\`\`kotlin
+// kotlinc hallo.kt -include-runtime -d hallo.jar
+// java -jar hallo.jar
+\`\`\`
+
+In der Praxis übernimmt das eine Entwicklungsumgebung oder ein Build-Werkzeug wie Gradle — von Hand übersetzt man selten.
+
+## Werte in Text einsetzen
+
+\`\`\`kotlin
+fun main() {
+    val name = "Lena"
+    println("Hallo, $name!")
+    println("Nächstes Jahr: \${2025 + 1}")
+}
+\`\`\`
+
+Das \`$\` setzt einen Wert direkt in den Text ein. Für ganze Ausdrücke nimmst du \`\${...}\`. Das ersetzt das mühsame Zusammenkleben mit \`+\`.
+
+> [tipp] Semikolons sind erlaubt, aber überflüssig. Kotlin erkennt das Zeilenende. Wenn du aus einer anderen Sprache kommst und sie aus Gewohnheit tippst, ist das kein Fehler — nur unüblich.
+
+## Und jetzt du
+
+Gib deinen Namen und dein Alter in einer Zeile aus, beides über Variablen und \`$\` eingesetzt. Rechne im zweiten Satz mit \`\${...}\` aus, wie alt du in zehn Jahren bist.`,
+  kotlin_1_2: `# val, var & Datentypen
+
+Kotlin unterscheidet zwei Arten von Variablen — und die Wahl zwischen ihnen ist eine der wichtigsten Entscheidungen im Alltag.
+
+## Der Unterschied
+
+\`\`\`kotlin
+val name = "Lena"     // fest — kann nicht neu zugewiesen werden
+var punkte = 0        // veränderlich
+
+punkte = 10           // erlaubt
+// name = "Ali"       // Fehler beim Übersetzen
+\`\`\`
+
+\`val\` steht für *value*, \`var\` für *variable*. Die Regel in Kotlin-Projekten lautet: **immer \`val\`, bis du merkst, dass es \`var\` sein muss.** Was sich nicht ändern kann, kann auch nicht versehentlich geändert werden.
+
+## Typen werden abgeleitet
+
+\`\`\`kotlin
+val alter = 17            // Int
+val preis = 4.99          // Double
+val note = 'B'            // Char
+val aktiv = true          // Boolean
+val name = "Lena"         // String
+\`\`\`
+
+Du darfst den Typ hinschreiben, musst aber nicht:
+
+\`\`\`kotlin
+val alter: Int = 17
+\`\`\`
+
+Ausgeschrieben lohnt sich, wenn der Wert allein nicht klar genug ist — etwa bei \`val gebuehr: Double = 5\` (was ohne Angabe ein \`Int\` wäre).
+
+| Typ | Beispiel | Wofür |
+| --- | --- | --- |
+| \`Int\` | \`17\` | ganze Zahlen |
+| \`Double\` | \`4.99\` | Kommazahlen |
+| \`Boolean\` | \`true\` | ja/nein |
+| \`String\` | \`"Text"\` | Zeichenketten |
+| \`Char\` | \`'B'\` | einzelnes Zeichen |
+
+## Umwandeln geht nicht von allein
+
+\`\`\`kotlin
+val a: Int = 7
+val b: Double = a.toDouble()    // ausdrücklich
+// val c: Double = a            // Fehler
+\`\`\`
+
+Anders als in Java rutscht ein \`Int\` nicht stillschweigend in ein \`Double\`. Das wirkt streng, verhindert aber genau die Rundungsfehler, die man sonst erst im Ergebnis bemerkt.
+
+> [warnung] \`val\` schützt die **Zuweisung**, nicht den Inhalt. Bei \`val liste = mutableListOf(1, 2)\` kannst du \`liste.add(3)\` sehr wohl aufrufen — du kannst der Variablen nur keine andere Liste zuweisen.
+
+## Und jetzt du
+
+Lege einen \`val\` für deinen Namen und einen \`var\` für einen Punktestand an. Erhöhe die Punkte zweimal und gib beides aus. Versuche danach, dem \`val\` etwas Neues zuzuweisen, und lies die Fehlermeldung.`,
+  kotlin_1_3: `# Null-Sicherheit verstehen
+
+Der häufigste Absturz in Java-Programmen heißt \`NullPointerException\`: Man greift auf etwas zu, das gar nicht da ist. Kotlin macht diesen Fehler **beim Übersetzen** sichtbar statt beim Ausführen.
+
+## Zwei verschiedene Typen
+
+\`\`\`kotlin
+var name: String = "Lena"
+// name = null            // Fehler — String kann nicht null sein
+
+var spitzname: String? = null    // erlaubt, wegen des Fragezeichens
+\`\`\`
+
+\`String\` und \`String?\` sind zwei verschiedene Typen. Ohne Fragezeichen ist ein Wert garantiert vorhanden — das prüft der Übersetzer, nicht die Hoffnung.
+
+## Sicher zugreifen
+
+\`\`\`kotlin
+val laenge = spitzname?.length      // Int? — null, wenn spitzname null ist
+\`\`\`
+
+Das \`?.\` heißt: *nur ausführen, wenn etwas da ist, sonst null zurückgeben.* Damit kannst du ganze Ketten aufbauen, ohne jeden Schritt zu prüfen.
+
+## Einen Ersatzwert angeben
+
+\`\`\`kotlin
+val anzeige = spitzname ?: "kein Spitzname"
+val laenge  = spitzname?.length ?: 0
+\`\`\`
+
+Das \`?:\` (der Elvis-Operator, wegen der Frisur) liefert die rechte Seite, wenn links \`null\` steht. Es ersetzt lange \`if (x == null) ... else ...\`-Blöcke.
+
+| Schreibweise | Bedeutung |
+| --- | --- |
+| \`x?.y\` | \`y\` nur, wenn \`x\` da ist — sonst \`null\` |
+| \`x ?: ersatz\` | \`x\`, sonst \`ersatz\` |
+| \`x!!.y\` | *ich bin sicher, dass \`x\` da ist* — stürzt sonst ab |
+
+## Prüfen reicht
+
+\`\`\`kotlin
+if (spitzname != null) {
+    println(spitzname.length)   // hier ohne ? — Kotlin weiß es jetzt
+}
+\`\`\`
+
+Nach der Prüfung behandelt Kotlin die Variable im Block als sicher. Das heißt **Smart Cast** und spart die Wiederholung.
+
+> [warnung] \`!!\` wirft die ganze Absicherung wieder weg und stürzt bei \`null\` genauso ab wie Java. Es gibt seltene Fälle, wo es richtig ist — aber wenn du es beim Lernen tippst, ist es fast immer die Ausrede für eine Prüfung, die du nicht schreiben wolltest.
+
+## Und jetzt du
+
+Lege \`var email: String? = null\` an. Gib die Länge über \`?.\` aus, dann mit \`?:\` einen Ersatzwert. Weise danach eine echte Adresse zu und lass dieselben zwei Zeilen noch einmal laufen.`,
+  kotlin_1_4: `# Kontrollfluss & when
+
+In Kotlin sind \`if\` und \`when\` nicht nur Anweisungen, sondern **Ausdrücke**: Sie haben ein Ergebnis, das du direkt zuweisen kannst.
+
+## if mit Ergebnis
+
+\`\`\`kotlin
+val status = if (alter >= 18) "volljährig" else "minderjährig"
+\`\`\`
+
+Ein eigenständiger Dreifach-Operator (\`? :\`) fehlt in Kotlin deshalb — er wird nicht gebraucht. Bei mehreren Zeilen zählt die **letzte** als Ergebnis:
+
+\`\`\`kotlin
+val gebuehr = if (mitglied) {
+    println("Rabatt gewährt")
+    0.0
+} else {
+    9.99
+}
+\`\`\`
+
+## when statt langer Ketten
+
+\`\`\`kotlin
+val text = when (note) {
+    1, 2 -> "sehr gut"
+    3    -> "geht so"
+    4    -> "knapp"
+    else -> "üben"
+}
+\`\`\`
+
+Mehrere Werte pro Zweig durch Komma getrennt. Kein \`break\` nötig — jeder Zweig endet von selbst.
+
+## when mit Bedingungen
+
+\`\`\`kotlin
+val stufe = when {
+    punkte >= 90 -> "Gold"
+    punkte >= 60 -> "Silber"
+    else         -> "Bronze"
+}
+\`\`\`
+
+Ohne Wert in den Klammern wird jede Bedingung von oben nach unten geprüft. Das ersetzt lange \`else if\`-Treppen und liest sich als Tabelle.
+
+## Bereiche und Typen
+
+\`\`\`kotlin
+when (x) {
+    in 1..9      -> println("einstellig")
+    !in 0..100   -> println("außerhalb")
+    is String    -> println("Text mit \${x.length} Zeichen")
+}
+\`\`\`
+
+## Schleifen
+
+\`\`\`kotlin
+for (i in 1..5) println(i)          // 1 bis 5, einschließlich
+for (i in 1 until 5) println(i)     // 1 bis 4
+for (i in 5 downTo 1) println(i)    // rückwärts
+for (i in 0..10 step 2) println(i)  // in Zweierschritten
+
+for (name in namen) println(name)
+\`\`\`
+
+> [tipp] Wird \`when\` als Ausdruck benutzt, ist \`else\` Pflicht — sonst könnte ein Fall ohne Ergebnis bleiben. Genau diese Strenge verhindert die vergessenen Zweige, die man sonst erst im Betrieb bemerkt.
+
+## Und jetzt du
+
+Schreibe ein \`when\`, das aus einer Punktzahl eine Note macht (90+, 75+, 60+, darunter), und weise das Ergebnis einem \`val\` zu. Baue es einmal mit Wert in der Klammer und einmal mit Bedingungen.`,
+  kotlin_1_5: `# Funktionen & Default-Parameter
+
+Funktionen sind in Kotlin knapp geschrieben — und mit Vorgabewerten sparst du dir die Sorte Wiederholung, für die andere Sprachen fünf Varianten derselben Funktion brauchen.
+
+## Der Grundaufbau
+
+\`\`\`kotlin
+fun addiere(a: Int, b: Int): Int {
+    return a + b
+}
+\`\`\`
+
+Erst der Name, dann der Typ — mit Doppelpunkt getrennt. Der Rückgabetyp steht hinter der Parameterliste.
+
+## Die kurze Schreibweise
+
+\`\`\`kotlin
+fun addiere(a: Int, b: Int): Int = a + b
+fun quadrat(x: Int) = x * x            // Typ wird abgeleitet
+\`\`\`
+
+Passt der Körper in einen Ausdruck, ersetzt ein \`=\` die geschweiften Klammern und das \`return\`.
+
+## Ohne Rückgabewert
+
+\`\`\`kotlin
+fun begruesse(name: String) {
+    println("Hallo, $name!")
+}
+\`\`\`
+
+Formal gibt sie \`Unit\` zurück — das darfst du weglassen.
+
+## Vorgabewerte
+
+\`\`\`kotlin
+fun begruesse(name: String, gruss: String = "Hallo") {
+    println("$gruss, $name!")
+}
+
+begruesse("Lena")                  // Hallo, Lena!
+begruesse("Ali", "Moin")           // Moin, Ali!
+\`\`\`
+
+Ein Parameter mit Vorgabewert darf beim Aufruf fehlen. Damit brauchst du keine überladenen Zweitfassungen derselben Funktion.
+
+## Benannte Argumente
+
+\`\`\`kotlin
+fun erstelle(name: String, aktiv: Boolean = true, alter: Int = 0) { }
+
+erstelle("Mira", alter = 17)              // aktiv bleibt true
+erstelle(name = "Tom", aktiv = false)     // Reihenfolge egal
+\`\`\`
+
+Beim Aufruf den Namen mitzuschreiben macht die Stelle lesbar. \`erstelle("Tom", false, 17)\` sagt nichts; \`erstelle("Tom", aktiv = false, alter = 17)\` sagt alles.
+
+| Schreibweise | Wann sinnvoll |
+| --- | --- |
+| \`fun f(x: Int): Int { return x }\` | mehrere Anweisungen |
+| \`fun f(x: Int) = x\` | ein Ausdruck |
+| \`fun f(x: Int = 0)\` | Parameter ist oft gleich |
+| \`f(x = 5)\` | beim Aufruf, wenn \`5\` allein nichts sagt |
+
+> [warnung] Ein \`Boolean\` als Parameter ohne Namen ist im Aufruf unlesbar. Wer \`speichere(datei, true, false)\` liest, muss die Funktion nachschlagen. Mit benannten Argumenten oder einem Vorgabewert löst du das an der Stelle, wo es auffällt.
+
+## Und jetzt du
+
+Schreibe \`rabatt(preis: Double, prozent: Double = 10.0): Double\`, die den Endpreis zurückgibt. Rufe sie zweimal auf: einmal ohne Prozentwert, einmal mit benanntem Argument.`,
+  php_1_1: `# PHP einrichten & erste Ausgabe
+
+PHP läuft auf dem **Server**. Der Browser bekommt nie den PHP-Code zu sehen, sondern nur das Ergebnis — meist fertiges HTML. Das ist der grundlegende Unterschied zu JavaScript im Browser.
+
+## Die Datei und die Klammern
+
+\`\`\`php
+<?php
+echo "Hallo Welt";
+\`\`\`
+
+Alles zwischen \`<?php\` und dem Dateiende ist PHP. Die schließende Klammer \`?>\` lässt man in reinen PHP-Dateien absichtlich weg — ein versehentliches Leerzeichen dahinter würde sonst mit ausgeliefert und kann Weiterleitungen kaputtmachen.
+
+## PHP mitten im HTML
+
+\`\`\`php
+<h1>Willkommen</h1>
+<p>Es ist <?= date("H:i") ?> Uhr.</p>
+\`\`\`
+
+\`<?= ... ?>\` ist die Kurzform für \`<?php echo ... ?>\`. So gemischt wurden früher ganze Seiten gebaut; heute trennt man Logik und Darstellung stärker, aber in Vorlagen ist diese Form weiterhin üblich.
+
+## Ausgeben
+
+\`\`\`php
+<?php
+echo "Hallo";
+echo "A", "B";            // echo nimmt mehrere Werte
+print "Hallo";            // fast dasselbe, gibt 1 zurück
+var_dump($wert);          // Typ und Inhalt — zum Suchen von Fehlern
+\`\`\`
+
+\`echo\` ist der Normalfall. \`var_dump\` ist dein wichtigstes Werkzeug beim Fehlersuchen, weil es nicht nur den Wert zeigt, sondern auch den Typ.
+
+## Ausprobieren
+
+\`\`\`php
+// Im Terminal:
+// php datei.php              — einmal ausführen
+// php -S localhost:8000      — kleiner Server für den Browser
+\`\`\`
+
+Der eingebaute Server reicht zum Lernen vollständig aus. Ein XAMPP oder Apache braucht es dafür nicht.
+
+> [warnung] Jede Anweisung endet mit Semikolon — anders als in Python oder Go. Fehlt es, meldet PHP den Fehler in der **nächsten** Zeile. Wenn eine Zeile fehlerfrei aussieht, schau eine darüber.
+
+## Und jetzt du
+
+Lege eine Datei mit \`<?php echo "..."; ?>\` an und starte sie mit \`php datei.php\`. Baue danach eine HTML-Seite, die mit \`<?= ?>\` die aktuelle Uhrzeit einsetzt, und ruf sie über \`php -S localhost:8000\` im Browser auf.`,
+  php_1_2: `# Variablen & Datentypen
+
+Variablen beginnen in PHP immer mit einem Dollarzeichen. Einen Typ schreibst du nicht dazu — PHP merkt ihn sich selbst.
+
+## Anlegen
+
+\`\`\`php
+<?php
+$name   = "Lena";      // string
+$alter  = 17;          // int
+$preis  = 4.99;        // float
+$aktiv  = true;        // bool
+$leer   = null;        // nichts
+\`\`\`
+
+Der Name ist **groß-/kleinschreibungsempfindlich**: \`$name\` und \`$Name\` sind zwei verschiedene Variablen. Das ist eine beliebte Fehlerquelle.
+
+## Den Typ nachsehen
+
+\`\`\`php
+var_dump($alter);      // int(17)
+echo gettype($preis);  // double
+echo is_string($name) ? "ja" : "nein";
+\`\`\`
+
+| Typ | Beispiel | Prüffunktion |
+| --- | --- | --- |
+| \`string\` | \`"Text"\` | \`is_string()\` |
+| \`int\` | \`17\` | \`is_int()\` |
+| \`float\` | \`4.99\` | \`is_float()\` |
+| \`bool\` | \`true\` | \`is_bool()\` |
+| \`array\` | \`[1, 2]\` | \`is_array()\` |
+| \`null\` | \`null\` | \`is_null()\` |
+
+## PHP wandelt selbstständig um
+
+\`\`\`php
+$summe = "5" + 3;        // 8 — der Text wird zur Zahl
+$text  = "5" . 3;        // "53" — der Punkt verbindet Texte
+\`\`\`
+
+Das ist bequem und gleichzeitig die häufigste Quelle für schwer auffindbare Fehler. Merke dir: **Punkt verbindet Text, Plus rechnet.** In JavaScript macht das Plus beides — in PHP nicht, und das ist hier ein Vorteil.
+
+## Konstanten
+
+\`\`\`php
+define("MWST", 0.19);
+const MAX_VERSUCHE = 3;
+
+echo MWST;              // ohne Dollarzeichen
+\`\`\`
+
+## Existiert die Variable überhaupt?
+
+\`\`\`php
+if (isset($eingabe)) {
+    echo $eingabe;
+}
+$name = $eingabe ?? "Gast";     // Ersatzwert, wenn nicht gesetzt oder null
+\`\`\`
+
+> [warnung] Der Zugriff auf eine nie gesetzte Variable ist in PHP nur eine Warnung, kein Abbruch — das Programm läuft mit einem leeren Wert weiter. Bei Formulardaten aus \`$_POST\` ist \`??\` deshalb Pflicht, nicht Geschmackssache.
+
+## Und jetzt du
+
+Lege je eine Variable pro Typ an und gib alle mit \`var_dump\` aus. Rechne dann \`"10" + 5\` und \`"10" . 5\` und schau dir beide Ergebnisse mit \`var_dump\` an.`,
+  php_1_3: `# Operatoren & Strings
+
+Beim Vergleichen und beim Zusammensetzen von Text hat PHP zwei Eigenheiten, die du früh kennen solltest.
+
+## Rechnen
+
+\`\`\`php
+$summe   = 10 + 3;      // 13
+$rest    = 10 % 3;      // 1
+$potenz  = 2 ** 8;      // 256
+$zaehler += 1;
+\`\`\`
+
+## Vergleichen — zwei oder drei Gleichheitszeichen
+
+\`\`\`php
+var_dump(0 == "0");     // true  — nur der Wert
+var_dump(0 === "0");    // false — Wert UND Typ
+var_dump("abc" == 0);   // false (seit PHP 8)
+\`\`\`
+
+\`==\` wandelt vor dem Vergleich um, \`===\` nicht. **Nimm im Zweifel immer \`===\`.** Die lockere Variante ist die Ursache zahlloser Sicherheitslücken gewesen — etwa bei Passwort-Hashes, die zufällig beide als Zahl gelesen wurden.
+
+| Operator | Bedeutung |
+| --- | --- |
+| \`==\` | gleicher Wert nach Umwandlung |
+| \`===\` | gleicher Wert und gleicher Typ |
+| \`!=\` / \`!==\` | die Verneinungen dazu |
+| \`<=>\` | –1, 0 oder 1 — praktisch zum Sortieren |
+
+## Text zusammensetzen
+
+\`\`\`php
+$name = "Lena";
+$gruss = "Hallo, " . $name . "!";
+$gruss .= " Schön, dass du da bist.";
+\`\`\`
+
+Der Punkt verbindet, \`.=\` hängt an.
+
+## Doppelte und einfache Anführungszeichen
+
+\`\`\`php
+$name = "Lena";
+echo "Hallo, $name";          // Hallo, Lena
+echo 'Hallo, $name';          // Hallo, $name
+echo "Summe: {$a['x']}";      // geschweifte Klammern bei Feldern
+\`\`\`
+
+In **doppelten** Anführungszeichen werden Variablen eingesetzt, in **einfachen** nicht. Einfache sind minimal schneller und in reinen Textkonstanten die ehrlichere Wahl.
+
+## Nützliche Textfunktionen
+
+\`\`\`php
+strlen($text)                 // Länge in Bytes
+mb_strlen($text)              // Länge in Zeichen — bei Umlauten wichtig
+strtoupper($text)
+trim($text)                   // Leerzeichen außen weg
+str_replace("a", "b", $text)
+str_contains($text, "such")   // seit PHP 8
+explode(",", $text)           // in ein Feld zerlegen
+\`\`\`
+
+> [warnung] \`strlen("Müller")\` gibt 7 zurück, nicht 6 — das Umlaut-Zeichen belegt zwei Bytes. Für alles, was Menschen lesen, nimmst du die \`mb_\`-Fassungen.
+
+## Und jetzt du
+
+Vergleiche \`"1"\` und \`1\` einmal mit \`==\` und einmal mit \`===\` und gib beides mit \`var_dump\` aus. Setze danach aus Vorname und Nachname einen Gruß zusammen und gib seine Länge mit \`strlen\` und \`mb_strlen\` aus — nimm einen Namen mit Umlaut.`,
+  php_1_4: `# Kontrollstrukturen
+
+Verzweigungen und Schleifen sehen in PHP aus wie in C oder JavaScript — mit einer zusätzlichen Schreibweise, die es in Vorlagen leserlich hält.
+
+## Verzweigen
+
+\`\`\`php
+if ($alter >= 18) {
+    echo "volljährig";
+} elseif ($alter >= 16) {
+    echo "fast";
+} else {
+    echo "noch nicht";
+}
+\`\`\`
+
+Beachte: \`elseif\` in einem Wort. \`else if\` funktioniert auch, aber nicht in der Doppelpunkt-Schreibweise weiter unten.
+
+## Mehrfachauswahl
+
+\`\`\`php
+switch ($note) {
+    case 1:
+    case 2:
+        echo "sehr gut";
+        break;
+    case 3:
+        echo "geht so";
+        break;
+    default:
+        echo "üben";
+}
+
+// seit PHP 8, als Ausdruck:
+$text = match(true) {
+    $punkte >= 90 => "Gold",
+    $punkte >= 60 => "Silber",
+    default       => "Bronze",
+};
+\`\`\`
+
+\`match\` vergleicht streng (wie \`===\`), braucht kein \`break\` und liefert einen Wert. Wo du die Wahl hast, nimm \`match\`.
+
+## Schleifen
+
+\`\`\`php
+for ($i = 0; $i < 5; $i++) {
+    echo $i;
+}
+
+while ($guthaben > 0) {
+    $guthaben -= 10;
+}
+
+foreach ($namen as $name) {
+    echo $name;
+}
+
+foreach ($punkte as $name => $wert) {
+    echo "$name: $wert";
+}
+\`\`\`
+
+\`foreach\` ist die Schleife, die du in PHP am häufigsten brauchst — für Felder mit und ohne eigene Schlüssel.
+
+## Die Schreibweise für Vorlagen
+
+\`\`\`php
+<?php if ($angemeldet): ?>
+    <p>Hallo, <?= $name ?></p>
+<?php else: ?>
+    <p>Bitte anmelden.</p>
+<?php endif; ?>
+
+<ul>
+<?php foreach ($eintraege as $e): ?>
+    <li><?= $e ?></li>
+<?php endforeach; ?>
+</ul>
+\`\`\`
+
+Doppelpunkt statt öffnender Klammer, \`endif\` / \`endforeach\` statt der schließenden. Zwischen HTML gelesen ist das deutlich klarer, weil man am Wort sieht, welcher Block hier zu Ende geht.
+
+> [warnung] Alles, was aus einem Formular oder einer Datenbank kommt, gehört vor der Ausgabe durch \`htmlspecialchars()\`. Sonst kann jemand \`<script>\` in ein Feld schreiben, und dein Server liefert es an alle Besucher aus. Also \`<?= htmlspecialchars($e) ?>\`, nicht \`<?= $e ?>\`.
+
+## Und jetzt du
+
+Baue eine Liste aus fünf Namen und gib sie mit der Doppelpunkt-Schreibweise als \`<ul>\` aus. Setze \`htmlspecialchars\` ein und schreibe testweise \`<b>Test</b>\` in einen der Namen — die Zeichen sollen sichtbar sein, nicht fett.`,
+  php_1_5: `# Funktionen
+
+Funktionen bündeln Arbeit unter einem Namen. In PHP darfst du Typen angeben — und das solltest du auch tun.
+
+## Der Grundaufbau
+
+\`\`\`php
+function addiere($a, $b) {
+    return $a + $b;
+}
+
+echo addiere(3, 4);      // 7
+\`\`\`
+
+## Mit Typen
+
+\`\`\`php
+function addiere(int $a, int $b): int {
+    return $a + $b;
+}
+\`\`\`
+
+Die Typangaben sind freiwillig, aber sie fangen Fehler früh ab: Wer \`addiere("hallo", 2)\` aufruft, bekommt eine klare Meldung statt eines stillen \`2\`. In neuem PHP-Code sind sie Standard.
+
+## Vorgabewerte
+
+\`\`\`php
+function begruesse(string $name, string $gruss = "Hallo"): string {
+    return "$gruss, $name!";
+}
+
+echo begruesse("Lena");             // Hallo, Lena!
+echo begruesse("Ali", "Moin");      // Moin, Ali!
+echo begruesse(gruss: "Servus", name: "Mira");   // benannt, seit PHP 8
+\`\`\`
+
+Parameter mit Vorgabewert stehen **hinten**. Benannte Argumente machen den Aufruf lesbar, wenn mehrere gleichartige Werte übergeben werden.
+
+## Sichtbarkeit
+
+\`\`\`php
+$zaehler = 0;
+
+function erhoehe() {
+    // echo $zaehler;     // hier nicht sichtbar!
+}
+\`\`\`
+
+Eine Funktion sieht Variablen von außen **nicht** — anders als in JavaScript oder Python. Was sie braucht, bekommt sie als Parameter. Das ist streng, aber es macht Funktionen unabhängig prüfbar.
+
+## Werte übergeben oder verändern
+
+\`\`\`php
+function erhoehe(int $x): int {
+    $x++;
+    return $x;
+}
+
+function erhoeheDirekt(int &$x): void {
+    $x++;              // ändert das Original
+}
+\`\`\`
+
+Das \`&\` übergibt eine **Referenz**. Nutze es sparsam — eine Funktion, die ihre Argumente heimlich verändert, ist schwer zu lesen.
+
+| Schreibweise | Wirkung |
+| --- | --- |
+| \`function f($x)\` | arbeitet mit einer Kopie |
+| \`function f(&$x)\` | verändert das Original |
+| \`: int\` / \`: void\` | legt den Rückgabetyp fest |
+| \`?int\` | \`int\` **oder** \`null\` |
+
+> [tipp] Setze \`declare(strict_types=1);\` als erste Zeile deiner Datei. Ohne sie wandelt PHP \`"5"\` stillschweigend in \`5\` um, obwohl du \`int\` verlangt hast. Mit ihr bekommst du den Fehler dort gemeldet, wo er entsteht.
+
+## Und jetzt du
+
+Schreibe \`rabatt(float $preis, float $prozent = 10.0): float\`, die den Endpreis zurückgibt. Rufe sie einmal ohne und einmal mit Prozentwert auf. Setze dann \`declare(strict_types=1);\` an den Anfang und übergib absichtlich \`"20"\` als Text.`,
+  react_1_1: `# Was ist React? Erste Komponente
+
+React beantwortet eine Frage: Wie hält man die Anzeige mit den Daten im Einklang, ohne von Hand am Dokument herumzuschrauben?
+
+## Der Unterschied zum bisherigen Weg
+
+Ohne React beschreibst du **Schritte**: Element suchen, Text setzen, Klasse ergänzen. Mit React beschreibst du **das Ergebnis** — wie die Oberfläche bei diesen Daten aussehen soll. Ändern sich die Daten, rechnet React den Unterschied aus und fasst nur das an, was sich wirklich ändert.
+
+## Eine Komponente ist eine Funktion
+
+\`\`\`jsx
+function Willkommen() {
+  return <h1>Hallo!</h1>;
+}
+\`\`\`
+
+Mehr ist es nicht: eine Funktion, die zurückgibt, was zu sehen sein soll. Verwendet wird sie wie ein eigenes HTML-Element:
+
+\`\`\`jsx
+<Willkommen />
+\`\`\`
+
+## Die eine Regel, die wirklich zählt
+
+**Komponenten beginnen mit einem Großbuchstaben.** \`<willkommen />\` sucht React als HTML-Element und findet nichts; \`<Willkommen />\` erkennt es als deine Komponente. Das ist kein Stilhinweis, sondern die Art, wie React die beiden unterscheidet.
+
+## Zusammensetzen
+
+\`\`\`jsx
+function Seite() {
+  return (
+    <div>
+      <Willkommen />
+      <p>Schön, dass du da bist.</p>
+    </div>
+  );
+}
+\`\`\`
+
+Eine Komponente darf andere enthalten. So entsteht aus kleinen, einzeln verständlichen Teilen eine ganze Oberfläche — jedes Teil lässt sich für sich ansehen und austauschen.
+
+> [tipp] Eine Komponente gibt **ein** Element zurück. Brauchst du mehrere nebeneinander ohne zusätzliches \`<div>\`, nimm die leere Klammer: \`<>…</>\`.
+
+## Und jetzt du
+
+Schreibe eine Komponente \`Fusszeile\`, die deinen Namen anzeigt, und baue sie in \`Seite\` ein.`,
+  react_1_2: `# JSX verstehen
+
+JSX sieht aus wie HTML im JavaScript. Es ist aber JavaScript — eine Kurzschreibweise, die vor dem Ausführen übersetzt wird.
+
+## Werte einsetzen
+
+\`\`\`jsx
+const name = "Ada";
+const gruss = <h1>Hallo {name}!</h1>;
+\`\`\`
+
+In den geschweiften Klammern steht ein **Ausdruck** — alles, was einen Wert ergibt:
+
+\`\`\`jsx
+<p>{2 + 3}</p>
+<p>{name.toUpperCase()}</p>
+<p>{alter >= 18 ? "volljährig" : "minderjährig"}</p>
+\`\`\`
+
+Eine \`if\`-Anweisung passt dort **nicht** hinein, weil sie keinen Wert ergibt. Deshalb der Fragezeichen-Operator — oder du entscheidest vorher:
+
+\`\`\`jsx
+function Anzeige({ alter }) {
+  if (alter < 0) return <p>Ungültig.</p>;
+  return <p>{alter} Jahre</p>;
+}
+\`\`\`
+
+## Wo JSX von HTML abweicht
+
+| HTML | JSX | warum |
+| --- | --- | --- |
+| \`class\` | \`className\` | \`class\` ist in JavaScript reserviert |
+| \`for\` | \`htmlFor\` | dasselbe |
+| \`onclick\` | \`onClick\` | JSX schreibt Ereignisse in Binnenmajuskel |
+| \`<br>\` | \`<br />\` | jedes Element muss geschlossen werden |
+
+## Stile
+
+\`\`\`jsx
+<div style={{ color: "red", fontSize: 14 }}>Achtung</div>
+\`\`\`
+
+Zwei Klammerpaare: das äußere für „hier kommt JavaScript", das innere für das Objekt. Die Eigenschaften heißen wie in JavaScript — \`fontSize\`, nicht \`font-size\`.
+
+> [warnung] \`{}\` in JSX gibt Zahlen und Zeichenketten aus, aber **kein** Objekt. \`<p>{nutzer}</p>\` mit einem Objekt darin wirft einen Fehler. Gemeint ist meist \`<p>{nutzer.name}</p>\`.
+
+## Und jetzt du
+
+Zeige eine Begrüßung, die bei einer leeren Namensvariable „Hallo Gast!" anzeigt und sonst den Namen.`,
+  react_1_3: `# Props & Komponenten-Komposition
+
+Eine Komponente ohne Eingabe kann nur eine Sache. Mit **Props** wird aus einem Bauteil eine Vorlage.
+
+## Werte hineingeben
+
+\`\`\`jsx
+function Karte({ titel, text }) {
+  return (
+    <article>
+      <h3>{titel}</h3>
+      <p>{text}</p>
+    </article>
+  );
+}
+
+<Karte titel="Erste Schritte" text="Fang hier an." />
+<Karte titel="Vertiefung"     text="Und dann hier." />
+\`\`\`
+
+Zwei Aufrufe, dieselbe Komponente, verschiedene Inhalte. Das Zerlegen in der Parameterliste (\`{ titel, text }\`) macht auf einen Blick sichtbar, was die Komponente erwartet.
+
+## Die Richtung ist festgelegt
+
+**Daten fließen nach unten, Meldungen nach oben.** Eine Komponente verändert ihre eigenen Props nie:
+
+\`\`\`jsx
+function Karte({ titel, onOeffnen }) {
+  return <h3 onClick={onOeffnen}>{titel}</h3>;
+}
+\`\`\`
+
+Sie ruft die mitgegebene Funktion auf. Die Entscheidung, was dann passiert, bleibt dort, wo die Daten liegen. Würde sie stattdessen selbst etwas ändern, wäre später nicht mehr nachvollziehbar, wer welchen Wert gesetzt hat.
+
+## Inhalt durchreichen
+
+\`\`\`jsx
+function Rahmen({ children }) {
+  return <div className="rahmen">{children}</div>;
+}
+
+<Rahmen>
+  <p>Beliebiger Inhalt.</p>
+</Rahmen>
+\`\`\`
+
+\`children\` ist alles, was zwischen den Tags steht. Damit baust du Hüllen, die nicht wissen müssen, was in ihnen steckt.
+
+> [tipp] Eine Komponente mit acht Props ist meistens zwei Komponenten. Wächst die Liste, ist das ein Hinweis, dass zwei Aufgaben in einem Bauteil stecken.
+
+## Und jetzt du
+
+Baue \`Hinweis\`, das eine Farbe als Prop bekommt und seinen \`children\`-Inhalt in dieser Farbe zeigt.`,
+  react_1_4: `# State mit useState
+
+Props kommen von außen und sind unveränderlich. **State** gehört der Komponente selbst und darf sich ändern — er ist alles, was über die Zeit anders wird.
+
+## Anlegen
+
+\`\`\`jsx
+import { useState } from "react";
+
+function Zaehler() {
+  const [stand, setStand] = useState(0);
+
+  return (
+    <button onClick={() => setStand(stand + 1)}>
+      Geklickt: {stand}
+    </button>
+  );
+}
+\`\`\`
+
+\`useState\` gibt zwei Dinge zurück: den aktuellen Wert und eine Funktion, um ihn zu setzen. Der Wert in der Klammer ist der Startwert — er gilt nur beim allerersten Zeichnen.
+
+## Warum nicht einfach \`stand = stand + 1\`?
+
+Weil React davon nichts mitbekommt. Nur die Setz-Funktion sagt: „Etwas hat sich geändert, zeichne neu." Eine direkte Zuweisung ändert eine Variable, die beim nächsten Aufruf ohnehin neu entsteht.
+
+## Wenn der neue Wert vom alten abhängt
+
+\`\`\`jsx
+setStand((alt) => alt + 1);
+\`\`\`
+
+Nimm diese Form, sobald du auf dem bisherigen Wert aufbaust. Änderungen werden gesammelt und gemeinsam angewendet; wer stattdessen \`setStand(stand + 1)\` zweimal hintereinander schreibt, zählt nur um eins hoch — beide Aufrufe rechnen mit demselben alten Wert.
+
+## Listen und Objekte
+
+\`\`\`jsx
+const [namen, setNamen] = useState([]);
+
+setNamen([...namen, "Ada"]);      // richtig: neue Liste
+// namen.push("Ada");             // falsch: ändert die alte, nichts passiert
+\`\`\`
+
+React vergleicht, ob sich der Wert geändert hat. Eine veränderte, aber identische Liste sieht für React gleich aus.
+
+> [tipp] Was sich aus vorhandenem State berechnen lässt, gehört nicht selbst in den State. Die Anzahl offener Aufgaben rechnest du bei jedem Zeichnen aus — ein zweiter State dafür läuft früher oder später auseinander.
+
+## Und jetzt du
+
+Baue ein Eingabefeld, dessen Inhalt im State liegt, und zeige die Anzahl der eingegebenen Zeichen darunter an.`,
+  react_1_5: `# Events behandeln
+
+Ereignisse verbinden das, was jemand tut, mit dem, was passieren soll.
+
+## Die wichtigste Falle zuerst
+
+\`\`\`jsx
+<button onClick={machWas}>Los</button>      // richtig
+<button onClick={machWas()}>Los</button>    // falsch
+\`\`\`
+
+Die zweite Zeile **ruft die Funktion auf**, während die Komponente gezeichnet wird, und übergibt das Ergebnis. Du gibst React eine Funktion, keinen Funktionsaufruf.
+
+Brauchst du Argumente, verpacke sie:
+
+\`\`\`jsx
+<button onClick={() => loesche(id)}>Löschen</button>
+\`\`\`
+
+## Das Ereignis selbst
+
+\`\`\`jsx
+function Formular() {
+  const [text, setText] = useState("");
+
+  const absenden = (e) => {
+    e.preventDefault();
+    schicke(text);
+  };
+
+  return (
+    <form onSubmit={absenden}>
+      <input value={text} onChange={(e) => setText(e.target.value)} />
+      <button type="submit">Senden</button>
+    </form>
+  );
+}
+\`\`\`
+
+\`e.target.value\` ist der aktuelle Feldinhalt. \`e.preventDefault()\` verhindert die Standardreaktion des Browsers — ohne diese Zeile lädt die Seite beim Absenden neu, und dein State ist weg.
+
+## Zwei Dinge, die oft verwechselt werden
+
+- \`preventDefault()\` unterdrückt, was der Browser von sich aus täte (Formular abschicken, Link folgen).
+- \`stopPropagation()\` verhindert, dass das Ereignis nach oben weitergereicht wird.
+
+Ereignisse steigen nämlich auf: Ein Klick auf einen Knopf ist auch ein Klick auf jeden Container darüber. Das ist nützlich — ein Behandler an der Liste statt einem pro Eintrag — und stört, wenn ein Klick im Inneren versehentlich ein äußeres Menü schließt.
+
+> [warnung] Ohne \`onChange\` bleibt ein Feld mit \`value\` unveränderlich: Der State überschreibt jede Eingabe. Beides gehört zusammen.
+
+## Und jetzt du
+
+Baue eine Liste mit einem Löschknopf je Eintrag. Achte darauf, dass der Knopf die richtige ID mitgibt — und nicht beim Zeichnen schon feuert.`,
+  rust_1_1: `# Rust installieren & Cargo
+
+Rust ist eine kompilierte Sprache mit einem ungewöhnlich strengen Übersetzer. Er lässt vieles nicht durch, was anderswo erst im Betrieb abstürzt — dafür laufen fertige Programme sehr zuverlässig.
+
+## Das kleinste vollständige Programm
+
+\`\`\`rust
+fn main() {
+    println!("Hallo Welt");
+}
+\`\`\`
+
+Das Ausrufezeichen hinter \`println\` ist kein Tippfehler. Es kennzeichnet ein **Makro**: etwas, das der Übersetzer vor dem eigentlichen Übersetzen zu echtem Code ausbreitet. \`println!\` prüft dabei schon zur Übersetzungszeit, ob deine Platzhalter zu den Werten passen.
+
+## Cargo — Übersetzer, Paketverwaltung und Startknopf in einem
+
+\`\`\`rust
+// cargo new mein_projekt    — neues Projekt anlegen
+// cargo run                 — übersetzen und starten
+// cargo build --release     — schnelle Fassung für die Auslieferung
+// cargo test                — Tests laufen lassen
+\`\`\`
+
+\`cargo new\` legt diese Struktur an:
+
+| Datei | Inhalt |
+| --- | --- |
+| \`Cargo.toml\` | Name, Version, Abhängigkeiten |
+| \`src/main.rs\` | dein Code, hier steht \`fn main\` |
+| \`Cargo.lock\` | die genauen Versionen — gehört ins Repository |
+
+Im Alltag tippst du fast nur \`cargo run\`. Den Übersetzer \`rustc\` rufst du selten direkt auf.
+
+## Werte ausgeben
+
+\`\`\`rust
+fn main() {
+    let name = "Lena";
+    let alter = 17;
+    println!("{} ist {} Jahre alt", name, alter);
+    println!("{name} ist {alter}");   // kürzer, seit Rust 2021
+}
+\`\`\`
+
+Die geschweiften Klammern sind die Platzhalter. Steht in der Klammer ein Variablenname, wird er direkt eingesetzt.
+
+> [tipp] Die Fehlermeldungen von Rust sind ausführlicher als in fast jeder anderen Sprache — oft mit Vorschlag, welche Zeile du wie ändern sollst. Lies sie ganz. Am Anfang fühlt sich der Übersetzer wie ein Gegner an; nach zwei Wochen merkst du, dass er dir die Fehlersuche abnimmt.
+
+## Und jetzt du
+
+Lege mit \`cargo new\` ein Projekt an, ändere den Text in \`main.rs\` und starte es mit \`cargo run\`. Lass danach das Semikolon weg und lies die Meldung.`,
+  rust_1_2: `# Variablen & Mutability
+
+In Rust ist eine Variable standardmäßig **unveränderlich**. Das ist die umgekehrte Voreinstellung zu fast allen anderen Sprachen — und einer der Gründe, warum Rust-Programme so wenige überraschende Zustände haben.
+
+## Fest ist die Voreinstellung
+
+\`\`\`rust
+let name = "Lena";
+// name = "Ali";        // Fehler: cannot assign twice to immutable variable
+\`\`\`
+
+Wer ändern will, muss es hinschreiben:
+
+\`\`\`rust
+let mut punkte = 0;
+punkte = 10;            // erlaubt
+punkte += 5;
+\`\`\`
+
+Das \`mut\` ist keine Schikane. Es steht sichtbar im Code und beantwortet beim Lesen sofort die Frage: *Kann sich dieser Wert unter mir noch ändern?*
+
+## Neu anlegen statt ändern (Shadowing)
+
+\`\`\`rust
+let eingabe = "42";
+let eingabe: i32 = eingabe.trim().parse().unwrap();
+\`\`\`
+
+Derselbe Name wird noch einmal mit \`let\` deklariert — die alte Variable ist damit verdeckt. Anders als bei \`mut\` darf sich dabei auch der **Typ** ändern. Genau dafür wird es meistens benutzt: Eingabe als Text einlesen, danach als Zahl weiterverwenden, ohne zwei Namen erfinden zu müssen.
+
+| | ändert Wert | ändert Typ | braucht \`mut\` |
+| --- | --- | --- | --- |
+| \`mut\` | ja | nein | ja |
+| Shadowing | ja (neue Variable) | ja | nein |
+
+## Konstanten
+
+\`\`\`rust
+const MAX_VERSUCHE: u32 = 3;
+\`\`\`
+
+Bei \`const\` ist der Typ Pflicht, und der Wert muss schon beim Übersetzen feststehen. Konstanten schreibt man in Großbuchstaben.
+
+> [warnung] Rust warnt bei ungenutzten Variablen. Das ist eine Warnung, kein Fehler — das Programm läuft trotzdem. Willst du eine bewusst ignorieren, stelle einen Unterstrich voran: \`let _rest = ...\`.
+
+## Und jetzt du
+
+Lege eine unveränderliche Variable an und versuche, sie zu ändern — lies die Fehlermeldung. Mach sie dann mit \`mut\` änderbar. Verdecke zum Schluss eine Text-Variable per Shadowing mit einer Zahl.`,
+  rust_1_3: `# Datentypen & Tupel
+
+Rust kennt seine Typen genau — bis hin zu der Frage, wie viele Bits eine Zahl belegt und ob sie negativ sein darf.
+
+## Zahlen
+
+\`\`\`rust
+let a: i32 = -5;      // ganze Zahl mit Vorzeichen, 32 Bit
+let b: u32 = 5;       // ohne Vorzeichen — nie negativ
+let c: i64 = 9_000_000_000;
+let d: f64 = 4.99;    // Kommazahl
+\`\`\`
+
+Das \`i\` steht für *integer* (mit Vorzeichen), das \`u\` für *unsigned*. Die Zahl dahinter ist die Bitbreite. Ohne Angabe nimmt Rust \`i32\` für ganze und \`f64\` für Kommazahlen. Die Unterstriche in \`9_000_000_000\` sind reine Lesehilfe.
+
+| Typ | Bereich |
+| --- | --- |
+| \`u8\` | 0 bis 255 |
+| \`i32\` | ±2,1 Milliarden (Voreinstellung) |
+| \`u64\` | 0 bis ~18 Trillionen |
+| \`f64\` | Kommazahlen (Voreinstellung) |
+
+## Wahrheitswerte und Zeichen
+
+\`\`\`rust
+let aktiv: bool = true;
+let note: char = 'B';       // ein Zeichen, einfache Anführungszeichen
+let text: &str = "Hallo";   // Zeichenkette, doppelte
+\`\`\`
+
+Ein \`char\` in Rust ist ein ganzes Unicode-Zeichen und belegt vier Bytes — \`'ä'\` und \`'🦀'\` passen beide hinein.
+
+## Tupel
+
+\`\`\`rust
+let person: (&str, i32, bool) = ("Lena", 17, true);
+
+println!("{}", person.0);       // Lena
+let (name, alter, _) = person;  // auseinandernehmen
+\`\`\`
+
+Ein Tupel fasst mehrere Werte **verschiedener** Typen zu einem zusammen. Zugriff über die Position mit Punkt und Zahl, oder du zerlegst es in einem Rutsch. Praktisch als Rückgabe, wenn eine Funktion zwei Dinge liefern soll und sich eine eigene Struktur nicht lohnt.
+
+## Arrays
+
+\`\`\`rust
+let noten: [i32; 3] = [1, 2, 3];
+let nullen = [0; 5];            // fünfmal 0
+println!("{}", noten[0]);
+\`\`\`
+
+Die Länge gehört zum Typ und steht fest. Für wachsende Listen nimmst du später \`Vec<T>\`.
+
+> [warnung] Rust prüft Rechenüberläufe. Wird \`u8\` mit dem Wert 255 um eins erhöht, bricht das Programm in der Entwicklungsfassung mit einer klaren Meldung ab, statt still auf 0 zu springen. In der \`--release\`-Fassung wird stattdessen umgebrochen — deshalb testest du mit der Entwicklungsfassung.
+
+## Und jetzt du
+
+Lege ein Tupel aus Name, Alter und Größe an, zerlege es in drei Variablen und gib sie einzeln aus. Erzeuge dann ein \`u8\` mit dem Wert 255, erhöhe es um eins und schau, was passiert.`,
+  rust_1_4: `# Kontrollfluss
+
+Wie in Kotlin sind \`if\` und \`match\` in Rust **Ausdrücke** — sie liefern einen Wert, den du direkt zuweisen kannst.
+
+## Verzweigen
+
+\`\`\`rust
+if alter >= 18 {
+    println!("volljährig");
+} else if alter >= 16 {
+    println!("fast");
+} else {
+    println!("noch nicht");
+}
+\`\`\`
+
+Keine Klammern um die Bedingung, geschweifte Klammern immer. Die Bedingung muss ein echter \`bool\` sein — eine Zahl reicht nicht:
+
+\`\`\`rust
+// if zahl { }        // Fehler: expected bool, found integer
+if zahl != 0 { }      // so ist es gemeint
+\`\`\`
+
+## if als Ausdruck
+
+\`\`\`rust
+let status = if alter >= 18 { "volljährig" } else { "minderjährig" };
+\`\`\`
+
+Beide Zweige müssen denselben Typ liefern. Das letzte Element im Block **ohne Semikolon** ist das Ergebnis — ein Semikolon dort macht daraus nichts (\`()\`), und der Übersetzer beschwert sich.
+
+## Die drei Schleifen
+
+\`\`\`rust
+for i in 1..5     { println!("{i}"); }   // 1 bis 4
+for i in 1..=5    { println!("{i}"); }   // 1 bis 5
+for n in &namen   { println!("{n}"); }
+
+while guthaben > 0 { guthaben -= 10; }
+
+let ergebnis = loop {
+    zaehler += 1;
+    if zaehler == 10 { break zaehler * 2; }
+};
+\`\`\`
+
+\`loop\` ist die Endlosschleife — und die einzige, die mit \`break\` einen **Wert** zurückgeben kann.
+
+## match
+
+\`\`\`rust
+let text = match note {
+    1 | 2      => "sehr gut",
+    3..=4      => "geht so",
+    _          => "üben",
+};
+\`\`\`
+
+\`match\` muss **alle** Möglichkeiten abdecken. Fehlt ein Fall, ist das ein Übersetzungsfehler, kein stiller Durchrutscher. Der Unterstrich fängt den Rest.
+
+| Muster | Trifft auf |
+| --- | --- |
+| \`1 \\| 2\` | 1 oder 2 |
+| \`3..=4\` | 3 bis 4 einschließlich |
+| \`_\` | alles Übrige |
+
+> [tipp] Diese Vollständigkeitsprüfung ist einer der größten Vorteile von Rust. Wenn du später einen Fall zu einem Datentyp hinzufügst, zeigt dir der Übersetzer jede Stelle, die du anpassen musst — statt dass eines Tages ein \`else\` das Falsche tut.
+
+## Und jetzt du
+
+Schreibe ein \`match\`, das aus einer Punktzahl (\`0..=100\`) eine Note macht, und weise das Ergebnis einem \`let\` zu. Lass einen Bereich absichtlich weg und lies, was der Übersetzer sagt.`,
+  rust_1_5: `# Funktionen
+
+Funktionen in Rust brauchen ausgeschriebene Typen — und haben eine Eigenheit, die man kennen muss: Der Rückgabewert steht oft ohne \`return\` da.
+
+## Der Grundaufbau
+
+\`\`\`rust
+fn addiere(a: i32, b: i32) -> i32 {
+    a + b
+}
+\`\`\`
+
+Zwei Dinge fallen auf: Der Rückgabetyp steht hinter einem Pfeil \`->\`, und in der letzten Zeile steht **kein Semikolon**.
+
+## Ausdruck oder Anweisung
+
+Das ist der zentrale Punkt. Rust unterscheidet:
+
+\`\`\`rust
+fn addiere(a: i32, b: i32) -> i32 {
+    a + b        // Ausdruck — das ist der Rückgabewert
+}
+
+fn kaputt(a: i32, b: i32) -> i32 {
+    a + b;       // Anweisung — gibt () zurück, Übersetzungsfehler
+}
+\`\`\`
+
+Ein Semikolon verschluckt den Wert. Wenn du eine Fehlermeldung wie *„expected i32, found ()"* siehst, ist fast immer ein Semikolon zu viel im Spiel.
+
+\`return\` gibt es trotzdem — für den frühen Ausstieg:
+
+\`\`\`rust
+fn teile(a: f64, b: f64) -> f64 {
+    if b == 0.0 {
+        return 0.0;
+    }
+    a / b
+}
+\`\`\`
+
+## Ohne Rückgabewert
+
+\`\`\`rust
+fn begruesse(name: &str) {
+    println!("Hallo, {name}!");
+}
+\`\`\`
+
+Kein Pfeil bedeutet: Sie gibt \`()\` zurück, den leeren Wert.
+
+## Mehrere Werte über ein Tupel
+
+\`\`\`rust
+fn teilen_mit_rest(a: i32, b: i32) -> (i32, i32) {
+    (a / b, a % b)
+}
+
+let (ganz, rest) = teilen_mit_rest(17, 5);   // 3 und 2
+\`\`\`
+
+## Ausleihen statt übergeben
+
+\`\`\`rust
+fn laenge(text: &String) -> usize {
+    text.len()
+}
+
+let name = String::from("Lena");
+println!("{}", laenge(&name));
+println!("{}", name);          // name gehört immer noch hierher
+\`\`\`
+
+Das \`&\` heißt: Die Funktion **leiht** sich den Wert nur aus. Ohne das kaufmännische Und wäre \`name\` danach nicht mehr benutzbar — das ist Rusts Eigentumsmodell, und es kommt in einem späteren Modul ausführlich dran.
+
+> [warnung] Zahlentypen musst du beim Aufruf genau treffen. \`laenge\` gibt \`usize\` zurück; wenn du das Ergebnis mit einem \`i32\` verrechnen willst, brauchst du eine ausdrückliche Umwandlung mit \`as i32\`. Rust wandelt nichts stillschweigend um.
+
+## Und jetzt du
+
+Schreibe \`fn kaufe(guthaben: f64, preis: f64) -> f64\`, die den Restbetrag zurückgibt und bei zu wenig Guthaben früh mit \`return\` aussteigt. Setze danach in die letzte Zeile ein Semikolon und lies die Fehlermeldung.`,
+  typescript_1_1: `# Was ist TypeScript? Setup & tsc
+
+TypeScript ist JavaScript mit Typangaben. Jede gültige JavaScript-Datei ist auch gültiges TypeScript — du fängst also nicht bei null an, sondern ergänzt.
+
+## Wozu das gut ist
+
+\`\`\`ts
+function verdopple(n: number): number {
+  return n * 2;
+}
+
+verdopple("21");   // Fehler — schon beim Schreiben, nicht erst beim Ausführen
+\`\`\`
+
+In JavaScript hätte diese Zeile \`"2121"\` ergeben und wäre irgendwo weiter unten als seltsames Ergebnis aufgefallen. TypeScript meldet sie sofort, im Editor, mit Unterschlängelung.
+
+**Das ist der ganze Gewinn: Fehler wandern vom Ausführen zum Schreiben.**
+
+## Der Übersetzer
+
+Browser verstehen kein TypeScript. Ein Übersetzer macht daraus JavaScript:
+
+\`\`\`ts
+// npm install -D typescript
+// npx tsc --init      erzeugt tsconfig.json
+// npx tsc             übersetzt alles
+\`\`\`
+
+Aus \`app.ts\` wird \`app.js\`. Die Typangaben verschwinden dabei vollständig — sie existieren nur beim Schreiben und Übersetzen, nie zur Laufzeit.
+
+## Die wichtigste Einstellung
+
+In der \`tsconfig.json\` steht:
+
+\`\`\`ts
+// "strict": true
+\`\`\`
+
+Lass das an. Ohne diese Einstellung akzeptiert TypeScript stillschweigend \`null\` und \`undefined\` überall — und genau die sind die häufigste Absturzursache in JavaScript.
+
+> [warnung] \`tsc\` meldet Fehler, erzeugt aber trotzdem eine \`.js\`-Datei. Ein grüner Programmstart heißt also nicht, dass alles typgeprüft ist. Lies die Ausgabe.
+
+## Und jetzt du
+
+Lege eine \`.ts\`-Datei mit der Funktion oben an, rufe sie einmal richtig und einmal mit einer Zeichenkette auf, und lass \`npx tsc\` laufen.`,
+  typescript_1_2: `# Basistypen & Type Annotations
+
+Eine **Typangabe** steht hinter dem Namen, getrennt durch einen Doppelpunkt. Sie sagt dem Übersetzer, was in dieser Variable stehen darf.
+
+## Die Grundtypen
+
+\`\`\`ts
+let name: string = "Ada";
+let alter: number = 36;        // eine Zahl für alles — kein int/float
+let aktiv: boolean = true;
+let nichts: null = null;
+let unbekannt: undefined = undefined;
+\`\`\`
+
+## Meistens brauchst du sie gar nicht
+
+\`\`\`ts
+let name = "Ada";       // TypeScript weiß: string
+name = 42;              // Fehler
+\`\`\`
+
+Der Typ ergibt sich aus dem Wert. Das nennt sich **Inferenz**, und du solltest sie nutzen: Eine Angabe, die nur wiederholt, was ohnehin dasteht, ist Ballast. Nötig wird sie bei Funktionsparametern und dort, wo zuerst kein Wert steht.
+
+## Wenn mehrere Typen erlaubt sind
+
+\`\`\`ts
+let eingabe: string | number;
+eingabe = "17";
+eingabe = 17;           // beides in Ordnung
+\`\`\`
+
+Der senkrechte Strich heißt „oder". Solche **Vereinigungstypen** sind eines der stärksten Werkzeuge der Sprache — sie beschreiben genau die Fälle, die es wirklich gibt.
+
+\`\`\`ts
+function laenge(x: string | number): number {
+  if (typeof x === "string") return x.length;   // hier ist x ein string
+  return String(x).length;                      // hier eine Zahl
+}
+\`\`\`
+
+Innerhalb der Verzweigung weiß TypeScript, welcher Fall vorliegt. Das nennt sich **Narrowing**.
+
+> [warnung] \`any\` schaltet die Prüfung für diesen Wert komplett ab. Es ist der bequeme Ausweg und macht genau den Nutzen zunichte, für den du TypeScript benutzt. Wenn du den Typ wirklich nicht kennst, nimm \`unknown\` — das zwingt dich, vor der Nutzung zu prüfen.
+
+## Und jetzt du
+
+Schreibe eine Funktion, die \`string | number\` entgegennimmt und die Zahl verdoppelt beziehungsweise den Text zweimal aneinanderhängt.`,
+  typescript_1_3: `# Arrays, Tupel & Enums
+
+Drei Wege, mehrere Werte zusammenzufassen — mit drei verschiedenen Versprechen an den Übersetzer.
+
+## Array: beliebig viele, alle gleich
+
+\`\`\`ts
+const zahlen: number[] = [1, 2, 3];
+const namen: string[] = ["Ada", "Linus"];
+
+zahlen.push(4);        // in Ordnung
+zahlen.push("fünf");   // Fehler
+\`\`\`
+
+Die Länge ist offen, der Typ der Einträge festgelegt. Beim Umformen wandert er mit:
+
+\`\`\`ts
+const texte = zahlen.map((z) => \`Wert \${z}\`);   // string[]
+\`\`\`
+
+## Tupel: feste Länge, feste Reihenfolge
+
+\`\`\`ts
+const punkt: [number, number] = [3, 7];
+const eintrag: [string, number] = ["Ada", 36];
+\`\`\`
+
+Hier steht fest: genau zwei Einträge, der erste so, der zweite so. Das ist der richtige Typ für ein Wertepaar — etwa Rückgaben der Form „Wert und Fehler".
+
+\`\`\`ts
+const [wer, wieAlt] = eintrag;   // wer: string, wieAlt: number
+\`\`\`
+
+## Enum: eine feste Auswahl
+
+\`\`\`ts
+enum Status { Offen, InArbeit, Erledigt }
+
+let s: Status = Status.InArbeit;
+\`\`\`
+
+Damit sind genau drei Werte möglich — kein Tippfehler kann sich einschleichen. In der Praxis nimmt man dafür heute oft einen Vereinigungstyp aus Zeichenketten:
+
+\`\`\`ts
+type Status2 = "offen" | "in-arbeit" | "erledigt";
+let t: Status2 = "offen";
+\`\`\`
+
+Der Vorteil: In der Ausgabe steht \`"offen"\` statt \`0\`, und beim Übersetzen entsteht kein zusätzlicher Code.
+
+> [tipp] Mit \`readonly\` verhinderst du Änderungen: \`readonly number[]\` lässt kein \`push\` mehr zu. Das ist bei Werten, die nur gelesen werden sollen, eine billige Absicherung.
+
+## Und jetzt du
+
+Beschreibe eine Einkaufsliste als Array von Tupeln aus Artikelname und Menge.`,
+  typescript_1_4: `# Funktionen typisieren
+
+Bei Funktionen zahlt sich TypeScript am meisten aus: Hier treffen fremder Code und deiner aufeinander.
+
+## Parameter und Rückgabe
+
+\`\`\`ts
+function begruesse(name: string, gruss: string = "Hallo"): string {
+  return \`\${gruss}, \${name}!\`;
+}
+\`\`\`
+
+Der Typ hinter der Parameterliste ist die **Rückgabe**. Du darfst ihn weglassen — TypeScript leitet ihn ab —, aber ihn hinzuschreiben lohnt: Er wird damit zur Zusage, die der Übersetzer prüft, statt zu einer Nebenwirkung dessen, was du gerade programmiert hast.
+
+## Zusätzliche Angaben
+
+\`\`\`ts
+function suche(text: string, ab?: number): number {
+  return text.indexOf("a", ab ?? 0);
+}
+\`\`\`
+
+Das Fragezeichen macht einen Parameter freiwillig. Innerhalb der Funktion ist er dann \`number | undefined\` — du musst also mit dem Fall rechnen, dass er fehlt. Genau das ist der Sinn.
+
+## Nichts zurückgeben
+
+\`\`\`ts
+function protokolliere(text: string): void {
+  console.log(text);
+}
+\`\`\`
+
+\`void\` heißt: Diese Funktion liefert nichts. Wer ihr Ergebnis trotzdem verwendet, bekommt eine Warnung — was fast immer auf ein Missverständnis hindeutet.
+
+## Funktionen als Werte
+
+\`\`\`ts
+type Pruefer = (wert: string) => boolean;
+
+const nichtLeer: Pruefer = (wert) => wert.trim().length > 0;
+\`\`\`
+
+Hier beschreibt ein Typ die **Form** einer Funktion. Das brauchst du, sobald du Funktionen weiterreichst — an \`filter\`, an einen Ereignis-Behandler, an eine eigene Schnittstelle.
+
+> [warnung] Bei einer Pfeilfunktion mit Typangabe brauchen die Parameter keine eigene mehr: \`const f: Pruefer = (wert) => …\` — \`wert\` ist bereits als \`string\` bekannt. Es noch einmal hinzuschreiben ist nicht falsch, aber doppelt.
+
+## Und jetzt du
+
+Schreibe einen Typ \`Rechner\` für eine Funktion, die zwei Zahlen nimmt und eine zurückgibt, und lege damit \`addiere\` und \`multipliziere\` an.`,
+  vue_1_1: `# Vue einbinden & erste App
+
+Vue lässt sich in eine bestehende Seite einhängen, ohne dass du das Projekt umbaust. Genau das ist sein Einstiegsvorteil.
+
+## Die kleinste vollständige App
+
+\`\`\`html
+<div id="app">
+  <h1>{{ gruss }}</h1>
+</div>
+
+<script type="module">
+  import { createApp } from "vue";
+
+  createApp({
+    data() {
+      return { gruss: "Hallo Vue!" };
+    },
+  }).mount("#app");
+</script>
+\`\`\`
+
+Drei Teile: ein Bereich im HTML, ein Objekt mit den Daten, und \`mount\`, das beides verbindet.
+
+## Was dabei passiert
+
+Vue liest den Inhalt von \`#app\` als **Vorlage**. Alles in doppelten geschweiften Klammern wird durch den passenden Wert ersetzt. Ändert sich \`gruss\` später, aktualisiert Vue genau diese Stelle — nicht die ganze Seite.
+
+## Der übliche Aufbau in echten Projekten
+
+\`\`\`html
+<script setup>
+import { ref } from "vue";
+const gruss = ref("Hallo Vue!");
+</script>
+
+<template>
+  <h1>{{ gruss }}</h1>
+</template>
+\`\`\`
+
+Das ist eine **Einzeldatei-Komponente**: Logik, Vorlage und (optional) Stil in einer Datei, aber sauber getrennt. \`<script setup>\` ist die kurze Schreibweise — alles, was dort steht, ist in der Vorlage verfügbar.
+
+> [warnung] \`mount("#app")\` ersetzt den Inhalt des Elements. Was du dort als Platzhalter hineinschreibst, ist nach dem Start weg — es eignet sich also als Ladeanzeige, nicht als Inhalt.
+
+## Und jetzt du
+
+Baue eine kleine App, die deinen Namen und das heutige Datum anzeigt.`,
+  vue_1_2: `# Template-Syntax & Interpolation
+
+Die Vorlage ist gültiges HTML mit ein paar Zusätzen. Das ist Absicht: Jeder Editor kann sie anzeigen, jede Formatierung greift.
+
+## Text einsetzen
+
+\`\`\`html
+<p>{{ name }}</p>
+<p>{{ name.toUpperCase() }}</p>
+<p>{{ anzahl * 2 }}</p>
+<p>{{ alter >= 18 ? "volljährig" : "minderjährig" }}</p>
+\`\`\`
+
+In den Klammern steht ein **Ausdruck** — etwas, das einen Wert ergibt. Eine \`if\`-Anweisung oder eine Zuweisung gehört nicht hinein.
+
+## Attribute füllen
+
+\`\`\`html
+<img :src="bildUrl" :alt="beschreibung">
+<a :href="'/kurs/' + id">Zum Kurs</a>
+\`\`\`
+
+Der Doppelpunkt ist die Kurzform von \`v-bind\`. Ohne ihn wäre \`src="bildUrl"\` der Text „bildUrl", nicht der Wert der Variablen.
+
+## Berechnete Werte
+
+\`\`\`html
+<script setup>
+import { ref, computed } from "vue";
+const preis = ref(100);
+const brutto = computed(() => preis.value * 1.19);
+</script>
+
+<template>
+  <p>{{ brutto.toFixed(2) }} €</p>
+</template>
+\`\`\`
+
+\`computed\` rechnet nur neu, wenn sich etwas Beteiligtes ändert, und merkt sich das Ergebnis. Für alles, was sich aus vorhandenen Daten ergibt, ist das der richtige Platz — nicht ein zweiter Wert, den du selbst nachziehen musst.
+
+> [tipp] Im Skript brauchst du \`.value\`, in der Vorlage nicht. Vue packt das für dich aus. Das ist der häufigste Stolperstein am Anfang — und die Fehlermeldung dazu nennt fast immer „undefined".
+
+## Und jetzt du
+
+Zeige einen Preis mit und ohne Mehrwertsteuer an, den Bruttopreis als \`computed\`.`,
+  vue_1_3: `# Direktiven (v-if, v-for, v-bind)
+
+Direktiven sind Attribute mit \`v-\` davor. Sie bringen Logik in die Vorlage, ohne dass du Code dazwischenschreibst.
+
+## Anzeigen oder nicht
+
+\`\`\`html
+<p v-if="fehler">{{ fehler }}</p>
+<p v-else-if="laedt">Einen Moment …</p>
+<p v-else>Alles bereit.</p>
+\`\`\`
+
+\`v-if\` **entfernt** das Element aus dem Dokument, wenn die Bedingung nicht zutrifft. Es ist also nicht nur unsichtbar, sondern gar nicht da.
+
+\`\`\`html
+<p v-show="offen">Nur ausgeblendet</p>
+\`\`\`
+
+\`v-show\` setzt stattdessen \`display: none\`. Faustregel: Was sich häufig umschaltet, bekommt \`v-show\`; was selten oder nie erscheint, \`v-if\`.
+
+## Listen
+
+\`\`\`html
+<ul>
+  <li v-for="aufgabe in aufgaben" :key="aufgabe.id">
+    {{ aufgabe.titel }}
+  </li>
+</ul>
+\`\`\`
+
+Der \`:key\` ist Pflicht. Er sagt Vue, welches Element von vorher welchem von jetzt entspricht. Nimm eine ID aus den Daten — **nicht** den Index. Bei einem Index wandern nach dem Löschen Eingaben und Haken in die falsche Zeile, während der Text richtig aussieht.
+
+## Beides zusammen
+
+\`\`\`html
+<li v-for="a in aufgaben" :key="a.id">
+  <span v-if="!a.erledigt">{{ a.titel }}</span>
+</li>
+\`\`\`
+
+\`v-if\` und \`v-for\` gehören **nicht** auf dasselbe Element. Filtere lieber vorher mit \`computed\` — das ist schneller und liest sich besser.
+
+> [warnung] \`v-for\` über ein Objekt liefert Werte, Schlüssel und Index in dieser Reihenfolge: \`v-for="(wert, schluessel) in objekt"\`. Wer das vertauscht, bekommt keine Fehlermeldung, sondern eine falsche Anzeige.
+
+## Und jetzt du
+
+Zeige eine Liste von Namen an und blende einen Hinweis ein, wenn die Liste leer ist.`,
+  vue_1_4: `# Events mit v-on
+
+\`v-on\` verbindet ein Ereignis mit Code. Die Kurzform ist das At-Zeichen.
+
+## Grundform
+
+\`\`\`html
+<button @click="zaehler++">Geklickt: {{ zaehler }}</button>
+<button @click="zuruecksetzen">Zurücksetzen</button>
+\`\`\`
+
+Beides ist erlaubt: ein kurzer Ausdruck direkt oder der Name einer Methode. Wird es länger als eine Zeile, gehört es in eine Funktion.
+
+## Zusätze
+
+\`\`\`html
+<form @submit.prevent="absenden">…</form>
+<input @keyup.enter="suchen">
+<div @click.stop="nichtsWeiterreichen">…</div>
+\`\`\`
+
+Diese Anhängsel sparen den immer gleichen Code:
+
+| Zusatz | ersetzt |
+| --- | --- |
+| \`.prevent\` | \`event.preventDefault()\` |
+| \`.stop\` | \`event.stopPropagation()\` |
+| \`.enter\` | die Abfrage, ob die Eingabetaste gedrückt wurde |
+| \`.once\` | löst nur beim ersten Mal aus |
+
+\`@submit.prevent\` ist der wichtigste davon: Ohne ihn lädt die Seite beim Absenden neu, und alles, was im Speicher stand, ist weg.
+
+## Das Ereignis selbst
+
+\`\`\`html
+<input @input="(e) => text = e.target.value">
+\`\`\`
+
+Brauchst du das Ereignisobjekt in einer Methode, kommt es automatisch als erster Parameter. Übergibst du eigene Argumente, holst du es mit \`$event\`:
+
+\`\`\`html
+<button @click="loesche(id, $event)">Löschen</button>
+\`\`\`
+
+> [tipp] Für Formularfelder gibt es \`v-model\` — es verbindet Wert und Änderung in einem Schritt und ersetzt das Paar aus \`:value\` und \`@input\`.
+
+## Und jetzt du
+
+Baue ein Suchfeld, das bei der Eingabetaste sucht, und einen Knopf, der es leert.`,
+  vue_1_5: `# Reaktivität mit ref & reactive
+
+**Reaktiv** heißt: Vue merkt, wenn sich ein Wert ändert, und aktualisiert genau die Stellen, die ihn anzeigen. Damit das funktioniert, muss der Wert in eine Hülle.
+
+## ref — für alles
+
+\`\`\`html
+<script setup>
+import { ref } from "vue";
+
+const zaehler = ref(0);
+const name = ref("Ada");
+const liste = ref([]);
+
+function hoch() {
+  zaehler.value++;        // im Skript mit .value
+}
+</script>
+
+<template>
+  <p>{{ zaehler }}</p>     <!-- in der Vorlage ohne -->
+</template>
+\`\`\`
+
+Das \`.value\` ist der Preis dafür, dass Vue die Änderung bemerken kann. In der Vorlage packt Vue automatisch aus.
+
+## reactive — nur für Objekte
+
+\`\`\`html
+<script setup>
+import { reactive } from "vue";
+
+const nutzer = reactive({ name: "Ada", alter: 36 });
+nutzer.alter++;           // kein .value
+</script>
+\`\`\`
+
+\`reactive\` funktioniert nur mit Objekten und Arrays, dafür ohne \`.value\`. Der Haken: Beim Zerlegen geht die Reaktivität verloren.
+
+\`\`\`html
+const { name } = nutzer;   // ab hier tote Kopie
+\`\`\`
+
+## Was du nehmen solltest
+
+**Nimm \`ref\`.** Es funktioniert mit jedem Typ, lässt sich problemlos weiterreichen und hat nur diesen einen Sonderfall — \`.value\` im Skript. \`reactive\` spart ein Wort und kostet eine Regel, die man leicht übersieht.
+
+> [warnung] Ein \`ref\` komplett zu ersetzen wirkt: \`liste.value = [...liste.value, neu]\`. Auch \`liste.value.push(neu)\` wirkt, weil Vue Arrays beobachtet. Was **nicht** wirkt, ist \`liste = []\` — damit überschreibst du die Hülle selbst, und der Übersetzer beschwert sich sogar, weil \`const\`.
+
+## Und jetzt du
+
+Baue eine Aufgabenliste: ein Eingabefeld, ein Knopf zum Hinzufügen, und darunter die Anzahl der Einträge als \`computed\`.`,
+};
+/* Ende LESSON_THEORY */
+
 function getFullLesson(lessonId) {
   const meta = findLessonMeta(lessonId);
   if (!meta) return null;
   const content = LESSON_CONTENT[lessonId] || buildFallbackLesson(meta.course, meta);
-  return { ...meta.lesson, courseId: meta.course.id, ...content, _course: meta.course, _module: meta.module };
+
+  /* Handgeschriebene Theorie ersetzt den erzeugten Erklärteil — die Aufgaben
+     bleiben. Das ist der Unterschied zu LESSON_CONTENT, das eine ganze
+     Lektion samt Aufgaben mitbringt: So lässt sich der Text Lektion für
+     Lektion nachziehen, ohne jedes Mal auch drei Aufgaben zu schreiben.
+     Die 2692 erzeugten Lektionen von Hand zu beschreiben ist Arbeit für
+     viele Sitzungen; diese Aufhängung macht sie stückweise möglich. */
+  const eigenerText = LESSON_THEORY[lessonId];
+  return {
+    ...meta.lesson,
+    courseId: meta.course.id,
+    ...content,
+    ...(eigenerText ? { theory: eigenerText, handgeschrieben: true } : {}),
+    _course: meta.course,
+    _module: meta.module,
+  };
+}
+
+/** Wie viele Lektionen haben bereits handgeschriebene Theorie? */
+function theorieFortschritt() {
+  let gesamt = 0, geschrieben = 0;
+  for (const kurs of COURSES) {
+    for (const modul of kurs.modules) {
+      for (const lektion of modul.lessons) {
+        gesamt++;
+        if (LESSON_CONTENT[lektion.id] || LESSON_THEORY[lektion.id]) geschrieben++;
+      }
+    }
+  }
+  return { gesamt, geschrieben, offen: gesamt - geschrieben };
 }
 
 /* ------------------------ KI-Bewertungs-System ------------------------- */
@@ -18779,6 +20969,30 @@ function LessonEditor({ ctx }) {
 }
 
 /* ========================= Admin-Dashboard ========================= */
+/** Anteil handgeschriebener Theorie — für die Verwaltung, nicht für Lernende. */
+function TheorieStand() {
+  const { gesamt, geschrieben, offen } = useMemo(() => theorieFortschritt(), []);
+  const anteil = gesamt ? (geschrieben / gesamt) * 100 : 0;
+  return (
+    <div className="p-4 rounded-xl bg-[#0F1629] border border-[#1E2D4A]">
+      <div className="flex items-baseline justify-between gap-3 mb-2">
+        <span className="text-sm font-medium text-[#E8EDF5]">Handgeschriebene Theorie</span>
+        <span className="font-code text-sm text-[#8A9BC0]">
+          {geschrieben} von {gesamt} Lektionen ({anteil.toFixed(1)} %)
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-[#0A0E1A] overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${Math.max(anteil, 0.5)}%`, background: GRADIENT }} />
+      </div>
+      <p className="text-xs text-[#8A9BC0] mt-2">
+        Die übrigen {offen.toLocaleString("de-DE")} Lektionen zeigen erzeugten Erklärtext:
+        Thema, Beispiel in der Sprache des Kurses, Vertiefung und typische Fehler. Der
+        wird Stück für Stück durch eigene Texte ersetzt.
+      </p>
+    </div>
+  );
+}
+
 function AdminDashboard({ ctx }) {
   const { me, users, reports, backend, adminUpdateUser, adminDeleteUser, adminCreateAdmin, adminSetPassword, resolveReport, deleteReport, pushToast } = ctx;
   const [tab, setTab] = useState("users");
@@ -18963,6 +21177,12 @@ function AdminDashboard({ ctx }) {
           color="#7C3AED" />
         <StatCard icon={FileText} label="Offene Meldungen" value={openReports.length} color="#EF4444" />
       </div>
+
+      {/* Wie viel Theorie ist von Hand geschrieben und wie viel erzeugt?
+          Der Unterschied ist im Betrieb sichtbar — erzeugter Text ist
+          brauchbar, handgeschriebener ist besser. Diese Zahl sagt, wie
+          weit der Austausch gediehen ist, statt sie zu verschweigen. */}
+      <TheorieStand />
 
       <div className="flex p-1 bg-[#0A0E1A] rounded-lg max-w-sm">
         <button onClick={() => setTab("users")} className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${tab === "users" ? "text-white" : "text-[#8A9BC0]"}`} style={tab === "users" ? { background: GRADIENT } : undefined}>Nutzer</button>

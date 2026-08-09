@@ -5,16 +5,26 @@
  *
  *   cd server
  *   rm -f data/test.db*
- *   DATABASE_URL=sqlite:./data/test.db SESSION_SECRET=test node src/migrate.js
- *   RATE_LIMIT=false DATABASE_URL=sqlite:./data/test.db SESSION_SECRET=test \
- *     PORT=3111 NODE_ENV=development SMTP_ENABLED=false node src/index.js
+ *   npm run test:migrate
+ *   npm run test:server
  *
  * Dann in einem anderen:  npm test
  *
- * RATE_LIMIT=false ist wichtig. Die Testdateien laufen nebeneinander und
- * teilen sich dieselbe Absenderadresse, also auch dasselbe Kontingent der
- * Anfragenbegrenzung. Mit ihr scheitert die Anmeldung ab einer gewissen Zahl
- * von Testdateien mit 429 — und zwar an der Suite selbst, nicht am Code.
+ * Zwei Dinge setzen diese Skripte, die man leicht vergisst und deren
+ * Fehlen sich als scheinbarer Fehler im Code zeigt:
+ *
+ *  - DATABASE_URL. Ohne sie greift dieser Testprozess auf die
+ *    voreingestellte PostgreSQL-Adresse zu, nicht auf die Datenbank des
+ *    Servers. Der before-Haken unten legt dann seinen Administrator
+ *    woanders an, und jeder Test, der ihn braucht, bekommt eine 401.
+ *  - --test-concurrency=1. Mehrere Testdateien räumen dieselben Tabellen
+ *    leer; nebeneinander gestartet löscht die eine, was die andere gerade
+ *    angelegt hat. Nacheinander ist es auch schnell genug.
+ *
+ * RATE_LIMIT=false ist ebenfalls gesetzt: Alle Testdateien kommen von
+ * derselben Absenderadresse und teilen sich damit das Kontingent der
+ * Anfragenbegrenzung. Mit ihr scheitert die Anmeldung ab einer gewissen
+ * Zahl von Anfragen mit 429 — und zwar an der Suite selbst, nicht am Code.
  */
 import { test, before } from "node:test";
 import assert from "node:assert/strict";

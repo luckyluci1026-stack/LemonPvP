@@ -179,20 +179,32 @@ Tabellen zu Beginn — daher **niemals gegen die Produktionsdatenbank starten**.
 ```bash
 # Terminal 1 — mit SQLite, ohne Installation
 rm -f data/test.db*
-DATABASE_URL=sqlite:./data/test.db SESSION_SECRET=test node src/migrate.js
-RATE_LIMIT=false DATABASE_URL=sqlite:./data/test.db SESSION_SECRET=test \
-  PORT=3111 NODE_ENV=development SMTP_ENABLED=false node src/index.js
+npm run test:migrate
+npm run test:server
 
 # Terminal 2
 npm test
 ```
 
-**`RATE_LIMIT=false` ist nötig.** Die Testdateien laufen nebeneinander und
-teilen sich dieselbe Absenderadresse, also auch dasselbe Kontingent der
-Anfragenbegrenzung. Mit ihr scheitert die Anmeldung ab einer gewissen Zahl
-von Testdateien mit einem 429 — an der Suite selbst, nicht am Code. Im
-Betrieb bleibt die Begrenzung selbstverständlich an; sie ist der Schutz
-gegen das Ausprobieren von Passwörtern.
+Alle drei Skripte setzen dieselbe Umgebung (`sqlite:./data/test.db`,
+`SESSION_SECRET=test`) und lassen sich einzeln überschreiben, etwa
+`DATABASE_URL=postgres://… npm test`.
+
+Drei Einstellungen darin sehen nebensächlich aus, sind es aber nicht:
+
+- **`DATABASE_URL` auch für `npm test`.** Der Testprozess greift nicht nur
+  über HTTP zu, er legt seinen Administrator direkt in der Datenbank an.
+  Ohne die Variable landet der in der voreingestellten PostgreSQL-Adresse
+  statt in der des Servers — jeder Test, der ihn braucht, bekommt dann
+  eine 401 und der Fehler sieht aus, als läge er im Code.
+- **`--test-concurrency=1`.** Mehrere Testdateien leeren dieselben
+  Tabellen. Nebeneinander gestartet löscht die eine, was die andere
+  gerade angelegt hat.
+- **`RATE_LIMIT=false`.** Alle Anfragen kommen von derselben Adresse und
+  teilen sich das Kontingent der Anfragenbegrenzung; ab einer gewissen
+  Zahl scheitert die Anmeldung mit einem 429 — an der Suite, nicht am
+  Code. Im Betrieb bleibt die Begrenzung selbstverständlich an; sie ist
+  der Schutz gegen das Ausprobieren von Passwörtern.
 
 Abgedeckt sind unter anderem: Registrierung, doppelte E-Mail, Passwortlänge,
 E-Mail-Verifizierung, XP-Deckelung, doppelte Lektionen, Projektkontingent,
