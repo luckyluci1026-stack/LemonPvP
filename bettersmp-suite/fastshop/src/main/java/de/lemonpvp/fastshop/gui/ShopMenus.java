@@ -281,9 +281,9 @@ public final class ShopMenus {
             double each = item.sell() * plugin.shop().sellMultiplier();
             inv.setItem(ACT_SELL_1, sellButton(item, 1, each, have));
             inv.setItem(ACT_SELL_16, sellButton(item, 16, each, have));
-            inv.setItem(ACT_SELL_ALL, GuiUtil.item(Material.ORANGE_CONCRETE,
+            inv.setItem(ACT_SELL_ALL, GuiUtil.item(have > 0 ? Material.GOLD_BLOCK : Material.GRAY_DYE,
                     Math.max(1, Math.min(64, have)),
-                    "<gold><bold>Alles verkaufen</bold>",
+                    "<gold><bold>" + g("sell") + " Alles verkaufen</bold>",
                     List.of("<gray>Menge: <white>" + have + "x",
                             "<gray>Erlös: <gold>" + g("coin") + " " + money(each * have),
                             "",
@@ -299,8 +299,8 @@ public final class ShopMenus {
     private ItemStack buyButton(ShopItem item, int amount, double balance) {
         double cost = item.buy() * amount;
         boolean affordable = balance >= cost;
-        return GuiUtil.item(affordable ? Material.LIME_CONCRETE : Material.RED_CONCRETE, amount,
-                (affordable ? "<green>" : "<red>") + "<bold>Kaufen: " + amount + "x</bold>",
+        return GuiUtil.item(affordable ? Material.EMERALD : Material.GRAY_DYE, amount,
+                (affordable ? "<green>" : "<red>") + "<bold>" + g("buy") + " Kaufen: " + amount + "x</bold>",
                 List.of("<gray>Preis: <green>" + g("coin") + " " + money(cost),
                         "",
                         affordable ? "<yellow>Klick zum Kaufen"
@@ -309,8 +309,8 @@ public final class ShopMenus {
 
     private ItemStack sellButton(ShopItem item, int amount, double each, int have) {
         boolean enough = have >= amount;
-        return GuiUtil.item(enough ? Material.ORANGE_CONCRETE : Material.RED_CONCRETE, amount,
-                (enough ? "<gold>" : "<red>") + "<bold>Verkaufen: " + amount + "x</bold>",
+        return GuiUtil.item(enough ? Material.GOLD_INGOT : Material.GRAY_DYE, amount,
+                (enough ? "<gold>" : "<red>") + "<bold>" + g("sell") + " Verkaufen: " + amount + "x</bold>",
                 List.of("<gray>Erlös: <gold>" + g("coin") + " " + money(each * amount),
                         "",
                         enough ? "<yellow>Klick zum Verkaufen"
@@ -330,8 +330,16 @@ public final class ShopMenus {
 
     // ================= Verkaufsfenster =================
 
+    /** Freie Ablagefläche im Verkaufsfenster: Slots 0 bis SELL_AREA-1. */
+    public static final int SELL_AREA = 45;
+    public static final int SELL_TOTAL = 48;
+    public static final int SELL_CONFIRM = 50;
+    public static final int SELL_CANCEL = 53;
+
     public static final class SellHolder implements InventoryHolder {
         private Inventory inventory;
+        /** Wird auf true gesetzt, wenn der Verkauf-Knopf gedrückt wurde. */
+        public boolean sold;
 
         @Override
         public @NotNull Inventory getInventory() {
@@ -341,10 +349,57 @@ public final class ShopMenus {
 
     public void openSell(Player player) {
         SellHolder holder = new SellHolder();
-        Inventory inv = Bukkit.createInventory(holder, 27,
+        Inventory inv = Bukkit.createInventory(holder, 54,
                 Text.mm(plugin.glyphs().apply(plugin.msgs().raw("sell-gui-title"))));
         holder.inventory = inv;
+
+        ItemStack border = GuiUtil.filler(Material.GRAY_STAINED_GLASS_PANE);
+        for (int i = SELL_AREA; i < 54; i++) {
+            inv.setItem(i, border);
+        }
+        refreshSell(inv);
         player.openInventory(inv);
-        plugin.msgs().send(player, "sell-gui-hint");
+    }
+
+    /** Aktualisiert Summe und Knöpfe im Verkaufsfenster. */
+    public void refreshSell(Inventory inv) {
+        double total = 0;
+        int count = 0;
+        for (int i = 0; i < SELL_AREA; i++) {
+            ItemStack stack = inv.getItem(i);
+            if (stack == null || stack.getType().isAir()) {
+                continue;
+            }
+            ShopItem item = plugin.shop().item(stack.getType());
+            if (item != null && item.sellable() && plugin.service().isSellable(stack)) {
+                total += item.sell() * plugin.shop().sellMultiplier() * stack.getAmount();
+                count += stack.getAmount();
+            }
+        }
+
+        inv.setItem(SELL_TOTAL, GuiUtil.item(Material.PAPER, 1,
+                "<gold><bold>" + g("coin") + " Gesamtwert</bold>",
+                List.of("<gray>Verkaufbar: <white>" + count + "x",
+                        "<gray>Erlös: <gold>" + money(total),
+                        "",
+                        "<dark_gray>Nicht verkaufbare Items",
+                        "<dark_gray>bekommst du zurück.")));
+
+        boolean any = count > 0;
+        inv.setItem(SELL_CONFIRM, any
+                ? GuiUtil.glowing(Material.EMERALD, 1,
+                    "<green><bold>" + g("check") + " Verkaufen</bold>",
+                    List.of("<gray>Verkauft alles hier drin",
+                            "<gray>für <gold>" + money(total),
+                            "",
+                            "<yellow>Klick zum Verkaufen"))
+                : GuiUtil.item(Material.GRAY_DYE, 1,
+                    "<dark_gray><bold>Verkaufen</bold>",
+                    List.of("<gray>Leg zuerst Items hinein.")));
+
+        inv.setItem(SELL_CANCEL, GuiUtil.item(Material.BARRIER, 1,
+                "<red><bold>" + g("cross") + " Abbrechen</bold>",
+                List.of("<gray>Schließt das Fenster und",
+                        "<gray>gibt dir alle Items zurück.")));
     }
 }

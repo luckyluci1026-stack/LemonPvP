@@ -447,6 +447,203 @@ ICON_ORDER = [
     "arrow_right", "arrow_left", "gem", "clock", "lock", "bag", "sword", "pickaxe",
 ]
 
+# --- Zweite Icon-Reihe (U+E120 - U+E12F) ---
+ICONS2 = {
+    # Kaufen: Wagen mit Pfeil hinein
+    "buy": """
+................
+.....KKKKKK.....
+....KEEEEEEK....
+...KEEEEEEEEK...
+..KEEEKWWKEEEK..
+..KEEEKWWKEEEK..
+..KEKWWWWWWKEK..
+..KEEKWWWWKEEK..
+..KEEEKWWKEEEK..
+..KEEEEKKEEEEK..
+...KEEEEEEEEK...
+...KEEEEEEEEK...
+....KEEEEEEK....
+.....KKKKKK.....
+................
+................
+""",
+    # Verkaufen: Muenze mit Pfeil heraus
+    "sell": """
+.......KK.......
+......KWWK......
+.....KWWWWK.....
+....KWWWWWWK....
+...KKKKWWKKKK...
+.....KKWWKK.....
+................
+...KKKKKKKKKK...
+..KggggggggggK..
+.KgGGGGGGGGGGgK.
+KgGGyyyyyyyyGGgK
+KgGGGGGGGGGGGGgK
+.KgGGGGGGGGGGgK.
+..KggggggggggK..
+...KKKKKKKKKK...
+................
+""",
+    # Schild
+    "shield": """
+..KKKKKKKKKKKK..
+.KBBBBBBBBBBBBK.
+KBWWBBBBBBBBBBBK
+KBWBBBBBBBBBBBBK
+KBBBBBWWWWBBBBBK
+KBBBBWWWWWWBBBBK
+KBBBBBWWWWBBBBBK
+KBBBBBBWWBBBBBBK
+KBBBBBBWWBBBBBBK
+.KBBBBBBBBBBBBK.
+.KbBBBBBBBBBBbK.
+..KbBBBBBBBBbK..
+...KbBBBBBBbK...
+....KbBBBBbK....
+.....KbbbbK.....
+......KKKK......
+""",
+    # Trank
+    "potion": """
+......KKKK......
+......KWWK......
+......KWWK......
+.....KKWWKK.....
+....KWWWWWWK....
+...KWWWWWWWWK...
+..KWWRRRRRRWWK..
+.KWWRRRRRRRRWWK.
+.KWRRRRRRRRRRWK.
+KWRRRRppRRRRRRWK
+KWRRRRppRRRRRRWK
+KWRRRRRRRRRRRRWK
+.KWRRRRRRRRRRWK.
+.KWWRRRRRRRRWWK.
+..KWWWWWWWWWWK..
+...KKKKKKKKKK...
+""",
+    # Pokal
+    "trophy": """
+.KKKKKKKKKKKKKK.
+.KGGGGGGGGGGGGK.
+KKGyyyyyyyyyyGKK
+KGKGGGGGGGGGGKGK
+KGKGGGGGGGGGGKGK
+KGKGGGGGGGGGGKGK
+KGKKGGGGGGGGKKGK
+.KKKGGGGGGGGKKK.
+...KKGGGGGGKK...
+.....KGGGGK.....
+......KGGK......
+......KGGK......
+....KKGGGGKK....
+...KGGGGGGGGK...
+...KggggggggK...
+...KKKKKKKKKK...
+""",
+    # Geschenk
+    "gift": """
+......KKKK......
+.....KRRRRK.....
+..KKKKRRRRKKKK..
+.KRRRRRRRRRRRRK.
+KRRRRRRWWRRRRRRK
+KRRRRRRWWRRRRRRK
+KKKKKKKWWKKKKKKK
+KGGGGGGWWGGGGGGK
+KGGGGGGWWGGGGGGK
+.KGGGGGWWGGGGGK.
+.KGGGGGWWGGGGGK.
+.KGGGGGWWGGGGGK.
+.KGGGGGWWGGGGGK.
+.KGGGGGWWGGGGGK.
+.KKKKKKKKKKKKKK.
+................
+""",
+    # Ticket / Gutschein
+    "ticket": """
+................
+.KKKKKKKKKKKKKK.
+KGGGGGGGGGGGGGGK
+KGyyyyyyyyyyyyGK
+KGyKKKKKKKKKKyGK
+KGyKGGGGGGGGKyGK
+KKyKGGGGGGGGKyKK
+.KyKGGGGGGGGKyK.
+KKyKGGGGGGGGKyKK
+KGyKKKKKKKKKKyGK
+KGyyyyyyyyyyyyGK
+KGGGGGGGGGGGGGGK
+.KKKKKKKKKKKKKK.
+................
+................
+................
+""",
+    # Totenkopf
+    "skull": """
+...KKKKKKKKKK...
+..KWWWWWWWWWWK..
+.KWWWWWWWWWWWWK.
+KWWWWWWWWWWWWWWK
+KWWKKKWWKKKWWWWK
+KWKKKKKWKKKKKWWK
+KWKKKKKWKKKKKWWK
+KWWKKKWWKKKWWWWK
+KWWWWWWWWWWWWWWK
+KWWWWWKKWWWWWWWK
+.KWWWWWWWWWWWWK.
+..KWKWKWKWKWWK..
+..KWKWKWKWKWWK..
+...KKKKKKKKKK...
+................
+................
+""",
+    # Feuer
+    "fire": """
+.......KK.......
+......KGGK......
+......KGGK......
+.....KGGyGK.....
+.....KGyyGK.....
+....KGGyyGGK....
+....KGyyyyGK....
+...KGGyRRyGGK...
+...KGyRRRRyGK...
+..KGGyRRRRyGGK..
+..KGyRRRRRRyGK..
+..KGyRRRRRRyGK..
+...KGyRRRRyGK...
+...KGGyyyyGGK...
+....KKGGGGKK....
+......KKKK......
+""",
+    # Blatt
+    "leaf": """
+..............K.
+.............KEK
+...........KEEEK
+.........KEEEEEK
+.......KEEEEEEEK
+......KEEEEEEEEK
+.....KEEEeEEEEEK
+....KEEEeeEEEEK.
+...KEEEeeeEEEK..
+..KEEEeeeEEEK...
+..KEEeeeEEEK....
+.KEEeeeEEEK.....
+.KEeeeEEEK......
+KEeeeEEKK.......
+KeeeKKK.........
+KKK.............
+""",
+}
+
+ICONS2_ORDER = ["buy", "sell", "shield", "potion", "trophy",
+                "gift", "ticket", "skull", "fire", "leaf"]
+
 # ---------------------------------------------------------------------------
 #  2) Rang-Abzeichen mit Farbverlauf  (Codepoints U+E110 - U+E118)
 #     Das ist die Bedrock-Loesung: Ein Bild traegt echte Farbverlaeufe,
@@ -604,12 +801,346 @@ KgGyGGyyyyGGyGgK
 """,
 }
 
+CUSTOM_ITEMS.update({
+    # Rubin
+    "ruby": """
+.......KK.......
+......KnMK......
+.....KnMMMK.....
+....KnMMMMMK....
+...KnMMMMMMMK...
+..KnMMMMMMMMMK..
+.KnMMMMMMMMMMMK.
+KnMMMMMMMMMMMMMK
+.KmMMMMMMMMMMmK.
+..KmMMMMMMMMmK..
+...KmMMMMMMmK...
+....KmMMMMmK....
+.....KmMMmK.....
+......KmmK......
+.......KK.......
+................
+""",
+    # Saphir
+    "sapphire": """
+.......KK.......
+......KWBK......
+.....KWBBBK.....
+....KWBBBBBK....
+...KWBBBBBBBK...
+..KWBBBBBBBBBK..
+.KWBBBBBBBBBBBK.
+KWBBBBBBBBBBBBBK
+.KbBBBBBBBBBBbK.
+..KbBBBBBBBBbK..
+...KbBBBBBBbK...
+....KbBBBBbK....
+.....KbBBbK.....
+......KbbK......
+.......KK.......
+................
+""",
+    # Magischer Staub
+    "magic_dust": """
+................
+....K.....K.....
+...KWK...KWK....
+....K..K..K.....
+......KWK.......
+...K...K...K....
+..KWK.....KWK...
+...K..KKK..K....
+.....KBBBK......
+....KBWWWBK.....
+...KBWWWWWBK....
+...KBWWWWWBK....
+....KBWWWBK.....
+.....KBBBK......
+......KKK.......
+................
+""",
+    # Shop-Gutschein
+    "voucher": """
+................
+.KKKKKKKKKKKKKK.
+KWWWWWWWWWWWWWWK
+KWKKKKKKKKKKKKWK
+KWKGGGGGGGGGGKWK
+KWKGyyyyyyyyGKWK
+KWKGyKKKKKKyGKWK
+KWKGyKGGGGKyGKWK
+KWKGyKGGGGKyGKWK
+KWKGyKKKKKKyGKWK
+KWKGyyyyyyyyGKWK
+KWKGGGGGGGGGGKWK
+KWKKKKKKKKKKKKWK
+KWWWWWWWWWWWWWWK
+.KKKKKKKKKKKKKK.
+................
+""",
+    # Schlüssel
+    "key": """
+....KKKK........
+...KGGGGK.......
+..KGGyyGGK......
+..KGyKKyGK......
+..KGyKKyGK......
+..KGGyyGGK......
+...KGGGGK.......
+....KGGK........
+....KGGK........
+....KGGK........
+....KGGKKK......
+....KGGGGK......
+....KGGKKK......
+....KGGKK.......
+....KGGGK.......
+....KKKK........
+""",
+    # Rubin-Schwert
+    "ruby_sword": """
+.............KK.
+............KMK.
+...........KMnK.
+..........KMnK..
+.........KMnK...
+........KMnK....
+.......KMnK.....
+..KKK.KMnK......
+.KGGGKMnK.......
+.KGGGMnK........
+..KGKnK.........
+...KCK..........
+...KCK..........
+..KCCK..........
+..KCK...........
+..KK............
+""",
+    # Rubin-Spitzhacke
+    "ruby_pickaxe": """
+..KKK.....KKK...
+.KMMMKKKKKMMMK..
+KMMMMMMMMMMMMMK.
+.KKKMMMMMMMKKK..
+....KKKCKKK.....
+.......KCK......
+.......KCK......
+......KCK.......
+......KCK.......
+.....KCK........
+.....KCK........
+....KCK.........
+....KCK.........
+...KCK..........
+...KK...........
+................
+""",
+})
+
 # Basis-Material + Geyser-Icon je Custom-Item
 ITEM_BASE = {
-    "heart":        {"vanilla": "minecraft:nether_star",     "cmd": 8101},
+    "heart":        {"vanilla": "minecraft:nether_star",      "cmd": 8101},
     "revive_totem": {"vanilla": "minecraft:totem_of_undying", "cmd": 8102},
     "coin":         {"vanilla": "minecraft:sunflower",        "cmd": 8103},
+    "ruby":         {"vanilla": "minecraft:amethyst_shard",   "cmd": 8104},
+    "sapphire":     {"vanilla": "minecraft:amethyst_shard",   "cmd": 8105},
+    "magic_dust":   {"vanilla": "minecraft:glowstone_dust",   "cmd": 8106},
+    "voucher":      {"vanilla": "minecraft:paper",            "cmd": 8107},
+    "key":          {"vanilla": "minecraft:tripwire_hook",    "cmd": 8108},
+    "ruby_sword":   {"vanilla": "minecraft:iron_sword",       "cmd": 8109},
+    "ruby_pickaxe": {"vanilla": "minecraft:iron_pickaxe",     "cmd": 8110},
 }
+
+# ---------------------------------------------------------------------------
+#  4) Custom-Bloecke
+#     Java setzt sie ueber Note-Block-Zustaende um (die Technik, die auch
+#     grosse Content-Plugins nutzen). Jeder Block bekommt eine eigene
+#     Kombination aus Instrument + Note; das Plugin haelt sie stabil.
+# ---------------------------------------------------------------------------
+
+BLOCK_PALETTE = dict(ITEM_PALETTE)
+BLOCK_PALETTE.update({
+    "1": hexc("6E6E76"),   # Stein hell
+    "2": hexc("5A5A62"),   # Stein mittel
+    "3": hexc("4A4A52"),   # Stein dunkel
+    "4": hexc("E8E6E0"),   # Marmor hell
+    "5": hexc("D2CFC6"),   # Marmor mittel
+    "6": hexc("BAB6AB"),   # Marmor Ader
+    "7": hexc("34343C"),   # Dunkelmarmor hell
+    "8": hexc("26262C"),   # Dunkelmarmor dunkel
+    "9": hexc("1A1A1F"),   # Dunkelmarmor Ader
+    "L": hexc("7CFCFF"),   # Neon hell
+    "l": hexc("2AA8C4"),   # Neon dunkel
+})
+
+CUSTOM_BLOCKS = {
+    "ruby_ore": """
+1112211122111221
+1221112211122111
+2113MM31122111M3
+1113MM11221MM333
+1122111221MM3311
+1211122111333112
+1122111221112211
+2111MM3112211122
+1113MM31121112M3
+1221113311221MM3
+1122111221113311
+1211122111221112
+1122MM3112211221
+2111MM3111221112
+1221133112211122
+1112211122111221
+""",
+    "sapphire_ore": """
+1112211122111221
+1221112211122111
+2113BB31122111B3
+1113BB11221BB333
+1122111221BB3311
+1211122111333112
+1122111221112211
+2111BB3112211122
+1113BB31121112B3
+1221113311221BB3
+1122111221113311
+1211122111221112
+1122BB3112211221
+2111BB3111221112
+1221133112211122
+1112211122111221
+""",
+    "ruby_block": """
+MMMMnMMMMMMnMMMM
+MnMMMMMnMMMMMMnM
+MMMMMMMMMMMMMMMM
+MMMnMMMMMMMMnMMM
+nMMMMMMnMMMMMMMM
+MMMMMMMMMMMnMMMM
+MMMnMMMMMMMMMMnM
+MMMMMMMnMMMMMMMM
+MMMMMnMMMMMnMMMM
+MnMMMMMMMMMMMMMM
+MMMMMMMMnMMMMMnM
+MMMnMMMMMMMMMMMM
+nMMMMMMMMMnMMMMM
+MMMMMnMMMMMMMMnM
+MMMMMMMMMMMMMMMM
+MMnMMMMMnMMMMMMM
+""",
+    "sapphire_block": """
+BBBBWBBBBBBWBBBB
+BWBBBBBWBBBBBBWB
+BBBBBBBBBBBBBBBB
+BBBWBBBBBBBBWBBB
+WBBBBBBWBBBBBBBB
+BBBBBBBBBBBWBBBB
+BBBWBBBBBBBBBBWB
+BBBBBBBWBBBBBBBB
+BBBBBWBBBBBWBBBB
+BWBBBBBBBBBBBBBB
+BBBBBBBBWBBBBBWB
+BBBWBBBBBBBBBBBB
+WBBBBBBBBBWBBBBB
+BBBBBWBBBBBBBBWB
+BBBBBBBBBBBBBBBB
+BBWBBBBBWBBBBBBB
+""",
+    "marble": """
+4444444544444444
+4445444444454444
+4444444444444444
+4444445444444454
+4666444444444444
+4444444566644444
+4444444444444444
+4544444444444445
+4444444444444444
+4444466644444444
+4445444444454444
+4444444444444444
+4444444444666444
+4444544444444454
+4444444444444444
+4444444544444444
+""",
+    "dark_marble": """
+7777777877777777
+7778777777787777
+7777777777777777
+7777778777777787
+7999777777777777
+7777777899977777
+7777777777777777
+7877777777777778
+7777777777777777
+7777799977777777
+7778777777787777
+7777777777777777
+7777777777999777
+7777877777777787
+7777777777777777
+7777777877777777
+""",
+    "neon_lamp": """
+KKKKKKKKKKKKKKKK
+KllllllllllllllK
+KlLLLLLLLLLLLLlK
+KlLLLLLLLLLLLLlK
+KlLLKKKKKKKKLLlK
+KlLLKllllllKLLlK
+KlLLKlLLLLlKLLlK
+KlLLKlLLLLlKLLlK
+KlLLKlLLLLlKLLlK
+KlLLKlLLLLlKLLlK
+KlLLKllllllKLLlK
+KlLLKKKKKKKKLLlK
+KlLLLLLLLLLLLLlK
+KlLLLLLLLLLLLLlK
+KllllllllllllllK
+KKKKKKKKKKKKKKKK
+""",
+    "coin_pile": """
+KKgGGgKKKKgGGgKK
+KgGyyGgKKgGyyGgK
+gGyGGyGggGyGGyGg
+GGyGGyGGGGyGGyGG
+gGyGGyGggGyGGyGg
+KgGyyGgKKgGyyGgK
+KKgGGgKKKKgGGgKK
+KKKKKKKKKKKKKKKK
+KKgGGgKKKKgGGgKK
+KgGyyGgKKgGyyGgK
+gGyGGyGggGyGGyGg
+GGyGGyGGGGyGGyGG
+gGyGGyGggGyGGyGg
+KgGyyGgKKgGyyGgK
+KKgGGgKKKKgGGgKK
+KKKKKKKKKKKKKKKK
+""",
+}
+
+# Note-Block-Zustand je Block. Instrument + Note ergeben die Variante.
+# Das Plugin haelt diese Zustaende stabil (kein Umstimmen durch Rechtsklick,
+# kein Instrumentwechsel durch den Block darunter).
+BLOCK_STATES = {
+    "ruby_ore":       {"instrument": "bit",           "note": 1,  "powered": False},
+    "sapphire_ore":   {"instrument": "bit",           "note": 2,  "powered": False},
+    "ruby_block":     {"instrument": "bit",           "note": 3,  "powered": False},
+    "sapphire_block": {"instrument": "bit",           "note": 4,  "powered": False},
+    "marble":         {"instrument": "bit",           "note": 5,  "powered": False},
+    "dark_marble":    {"instrument": "bit",           "note": 6,  "powered": False},
+    "neon_lamp":      {"instrument": "bit",           "note": 7,  "powered": False},
+    "coin_pile":      {"instrument": "bit",           "note": 8,  "powered": False},
+}
+
+# Alle Note-Block-Instrumente in 1.21 - fuer die vollstaendige Blockstate-Datei
+INSTRUMENTS = [
+    "harp", "basedrum", "snare", "hat", "bass", "flute", "bell", "guitar",
+    "chime", "xylophone", "iron_xylophone", "cow_bell", "didgeridoo", "bit",
+    "banjo", "pling", "zombie", "skeleton", "creeper", "dragon",
+    "wither_skeleton", "piglin", "custom_head",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -638,7 +1169,35 @@ def build_atlas():
         start, end, star = RANKS[name]
         place(16 + i, build_rank_badge(start, end, star, CELL // 16), "rank_" + name)
 
+    # Zweite Icon-Reihe ab U+E120
+    for i, name in enumerate(ICONS2_ORDER):
+        place(32 + i, draw(ICONS2[name], ICON_PALETTE, CELL // 16), name)
+
     return atlas, mapping
+
+
+def build_noteblock_states():
+    """Vollstaendige note_block.json.
+
+    WICHTIG: Diese Datei ersetzt die Blockstates des Notenblocks komplett.
+    Jede nicht aufgefuehrte Kombination wuerde als fehlende Textur erscheinen -
+    deshalb werden ALLE Instrument/Noten/Powered-Kombinationen erzeugt und nur
+    die belegten auf eigene Modelle gelenkt.
+    """
+    lookup = {}
+    for name, st in BLOCK_STATES.items():
+        key = (st["instrument"], st["note"], bool(st["powered"]))
+        lookup[key] = f"{NAMESPACE}:block/{name}"
+
+    variants = {}
+    for instrument in INSTRUMENTS:
+        for note in range(0, 25):
+            for powered in (False, True):
+                key = f"instrument={instrument},note={note},powered={str(powered).lower()}"
+                model = lookup.get((instrument, note, powered),
+                                   "minecraft:block/note_block")
+                variants[key] = {"model": model}
+    return {"variants": variants}
 
 
 # ---------------------------------------------------------------------------
@@ -702,6 +1261,30 @@ def write_java(atlas, mapping):
             "model": {"type": "minecraft:model", "model": f"{NAMESPACE}:item/{name}"}
         }, indent=2), encoding="utf-8")
 
+    # ---- Custom-Bloecke ----
+    (root / f"assets/{NAMESPACE}/textures/block").mkdir(parents=True, exist_ok=True)
+    (root / f"assets/{NAMESPACE}/models/block").mkdir(parents=True, exist_ok=True)
+    (root / "assets/minecraft/blockstates").mkdir(parents=True, exist_ok=True)
+
+    for name, shape in CUSTOM_BLOCKS.items():
+        draw(shape, BLOCK_PALETTE, 1).save(
+            root / f"assets/{NAMESPACE}/textures/block/{name}.png")
+        # Wuerfelmodell mit derselben Textur auf allen Seiten
+        (root / f"assets/{NAMESPACE}/models/block/{name}.json").write_text(json.dumps({
+            "parent": "minecraft:block/cube_all",
+            "textures": {"all": f"{NAMESPACE}:block/{name}"},
+        }, indent=2), encoding="utf-8")
+        # Das Item in der Hand zeigt denselben Wuerfel
+        (root / f"assets/{NAMESPACE}/models/item/{name}.json").write_text(json.dumps({
+            "parent": f"{NAMESPACE}:block/{name}"
+        }, indent=2), encoding="utf-8")
+        (root / f"assets/{NAMESPACE}/items/{name}.json").write_text(json.dumps({
+            "model": {"type": "minecraft:model", "model": f"{NAMESPACE}:block/{name}"}
+        }, indent=2), encoding="utf-8")
+
+    (root / "assets/minecraft/blockstates/note_block.json").write_text(
+        json.dumps(build_noteblock_states(), indent=1), encoding="utf-8")
+
     make_pack_icon().save(root / "pack.png")
     return root
 
@@ -751,6 +1334,20 @@ def write_bedrock(atlas):
         "resource_pack_name": NAMESPACE,
         "texture_name": "atlas.items",
         "texture_data": textures,
+    }, indent=2), encoding="utf-8")
+
+    # Block-Texturen fuer Bedrock (fuer Geysers Custom-Block-Unterstuetzung)
+    (root / "textures/blocks").mkdir(parents=True, exist_ok=True)
+    block_textures = {}
+    for name, shape in CUSTOM_BLOCKS.items():
+        draw(shape, BLOCK_PALETTE, 1).save(root / f"textures/blocks/{name}.png")
+        block_textures[f"{NAMESPACE}_{name}"] = {"textures": f"textures/blocks/{name}"}
+    (root / "textures/terrain_texture.json").write_text(json.dumps({
+        "resource_pack_name": NAMESPACE,
+        "texture_name": "atlas.terrain",
+        "padding": 8,
+        "num_mip_levels": 4,
+        "texture_data": block_textures,
     }, indent=2), encoding="utf-8")
 
     make_pack_icon().save(root / "pack_icon.png")
@@ -817,6 +1414,18 @@ def write_glyph_reference(mapping):
         indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def write_block_reference():
+    """Schreibt die Blockzustaende als YAML - direkt nutzbar in SMPContent."""
+    lines = ["# Von generate.py erzeugt - Zustaende muessen zum Texturepack passen!",
+             "blocks:"]
+    for name, st in BLOCK_STATES.items():
+        lines.append(f"  {name}:")
+        lines.append(f"    instrument: {st['instrument']}")
+        lines.append(f"    note: {st['note']}")
+        lines.append(f"    powered: {str(st['powered']).lower()}")
+    (DIST / "blocks-states.yml").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main():
     DIST.mkdir(parents=True, exist_ok=True)
     atlas, mapping = build_atlas()
@@ -826,6 +1435,8 @@ def main():
     geyser_dir = write_geyser_mapping()
     write_glyph_reference(mapping)
 
+    write_block_reference()
+
     zip_dir(java_dir, DIST / "SMP-Java-Pack.zip")
     zip_dir(bedrock_dir, DIST / "SMP-Bedrock-Pack.mcpack")
 
@@ -834,8 +1445,9 @@ def main():
     print(f"  Bedrock-Pack: {DIST / 'SMP-Bedrock-Pack.mcpack'}")
     print(f"  Geyser-Map:   {geyser_dir / 'smp_items.json'}")
     print(f"  Glyphen:      {DIST / 'glyphen.txt'}")
-    print(f"\n  {len(ICON_ORDER)} Icons, {len(RANK_ORDER)} Rang-Abzeichen, "
-          f"{len(CUSTOM_ITEMS)} Custom-Items")
+    print(f"\n  {len(ICON_ORDER) + len(ICONS2_ORDER)} Icons, "
+          f"{len(RANK_ORDER)} Rang-Abzeichen, {len(CUSTOM_ITEMS)} Custom-Items, "
+          f"{len(CUSTOM_BLOCKS)} Custom-Bloecke")
 
 
 if __name__ == "__main__":

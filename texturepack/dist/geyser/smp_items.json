@@ -27,6 +27,67 @@
         "icon": "smp_coin",
         "custom_model_data": 8103
       }
+    ],
+    "minecraft:amethyst_shard": [
+      {
+        "name": "ruby",
+        "display_name": "ruby",
+        "allow_offhand": true,
+        "icon": "smp_ruby",
+        "custom_model_data": 8104
+      },
+      {
+        "name": "sapphire",
+        "display_name": "sapphire",
+        "allow_offhand": true,
+        "icon": "smp_sapphire",
+        "custom_model_data": 8105
+      }
+    ],
+    "minecraft:glowstone_dust": [
+      {
+        "name": "magic_dust",
+        "display_name": "magic_dust",
+        "allow_offhand": true,
+        "icon": "smp_magic_dust",
+        "custom_model_data": 8106
+      }
+    ],
+    "minecraft:paper": [
+      {
+        "name": "voucher",
+        "display_name": "voucher",
+        "allow_offhand": true,
+        "icon": "smp_voucher",
+        "custom_model_data": 8107
+      }
+    ],
+    "minecraft:tripwire_hook": [
+      {
+        "name": "key",
+        "display_name": "key",
+        "allow_offhand": true,
+        "icon": "smp_key",
+        "custom_model_data": 8108
+      }
+    ],
+    "minecraft:iron_sword": [
+      {
+        "name": "ruby_sword",
+        "display_name": "ruby_sword",
+        "allow_offhand": true,
+        "icon": "smp_ruby_sword",
+        "custom_model_data": 8109
+      }
+    ],
+    "minecraft:iron_pickaxe": [
+      {
+        "name": "ruby_pickaxe",
+        "display_name": "ruby_pickaxe",
+        "allow_offhand": true,
+        "icon": "smp_ruby_pickaxe",
+        "custom_model_data": 8110
+      }
     ]
   }
 }

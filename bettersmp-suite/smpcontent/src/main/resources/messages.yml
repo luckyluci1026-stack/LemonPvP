@@ -1,0 +1,15 @@
+# SMPContent - Nachrichten (MiniMessage + Legacy-Codes)
+prefix: "<gradient:#A78BFA:#6D28D9><bold>Content</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+reloaded: "%prefix%<green>Inhalte neu geladen.</green>"
+player-not-found: "%prefix%<red>Spieler nicht gefunden.</red>"
+
+usage: "%prefix%<gray>/smpcontent <white>give <Spieler> <Id> [Menge]</white> | <white>list</white> | <white>reload</white></gray>"
+give-usage: "%prefix%<gray>Nutzung: <white>/smpcontent give <Spieler> <Id> [Menge]</white></gray>"
+unknown-content: "%prefix%<red>Unbekannt: <white>%id%</white></red><newline><gray>Verfügbar: <white>%list%</white></gray>"
+given: "%prefix%<green><white>%amount%x %id%</white> an <white>%player%</white> gegeben.</green>"
+given-self: "%prefix%<green><white>%amount%x %id%</white> erhalten.</green>"
+list-console: "%prefix%<gray>Verfügbar: <white>%list%</white></gray>"
+
+gui-title: "<gradient:#A78BFA:#6D28D9><bold>Eigene Inhalte</bold></gradient>"

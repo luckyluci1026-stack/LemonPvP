@@ -169,11 +169,12 @@ public final class ShopService {
     }
 
     /** Verkauft die im Sell-GUI abgelegten Items; nicht verkaufbare kommen zurück. */
-    public void sellContents(Player player, org.bukkit.inventory.Inventory inv) {
+    public void sellContents(Player player, org.bukkit.inventory.Inventory inv, int upTo) {
         double total = 0;
         int count = 0;
         ItemStack[] contents = inv.getContents();
-        for (int i = 0; i < contents.length; i++) {
+        int limit = Math.min(upTo, contents.length);
+        for (int i = 0; i < limit; i++) {
             ItemStack stack = contents[i];
             if (stack == null || stack.getType().isAir()) {
                 continue;
@@ -187,14 +188,7 @@ public final class ShopService {
         }
         inv.setContents(contents);
         // Rest (nicht verkauft) zurück ins Spielerinventar bzw. droppen
-        for (ItemStack stack : inv.getContents()) {
-            if (stack != null && !stack.getType().isAir()) {
-                Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
-                leftover.values().forEach(rest ->
-                        player.getWorld().dropItemNaturally(player.getLocation(), rest));
-            }
-        }
-        inv.clear();
+        returnContents(player, inv, limit);
         if (count > 0) {
             plugin.economy().deposit(player, total);
             soundSell(player);
@@ -208,6 +202,25 @@ public final class ShopService {
     /** Wie viele verkaufbare (unveränderte) Exemplare hat der Spieler? */
     public int countSellable(Player player, Material material) {
         return countPlain(player, material);
+    }
+
+    /** Ist dieser Stapel unverändert (nicht benannt/verzaubert/beschädigt)? */
+    public boolean isSellable(ItemStack stack) {
+        return isPlain(stack);
+    }
+
+    /** Gibt alle Items aus einem Fenster zurück ins Spielerinventar. */
+    public void returnContents(Player player, org.bukkit.inventory.Inventory inv, int upTo) {
+        for (int i = 0; i < Math.min(upTo, inv.getSize()); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (stack == null || stack.getType().isAir()) {
+                continue;
+            }
+            inv.setItem(i, null);
+            Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
+            leftover.values().forEach(rest ->
+                    player.getWorld().dropItemNaturally(player.getLocation(), rest));
+        }
     }
 
     /** Kurzer Ton als Rückmeldung - lässt sich in der Config abschalten. */

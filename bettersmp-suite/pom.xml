@@ -18,6 +18,7 @@
         <module>lifesteal-plus</module>
         <module>easybedrock</module>
         <module>fastshop</module>
+        <module>smpcontent</module>
     </modules>
 
     <properties>

@@ -35,7 +35,8 @@ public final class SellCommand implements TabExecutor {
             plugin.msgs().send(player, "no-permission");
             return true;
         }
-        String sub = args.length >= 1 ? args[0].toLowerCase(Locale.ROOT) : "hand";
+        // Ohne Argument öffnet sich das Verkaufsfenster
+        String sub = args.length >= 1 ? args[0].toLowerCase(Locale.ROOT) : "gui";
         switch (sub) {
             case "hand" -> plugin.service().sellHand(player);
             case "all" -> plugin.service().sellAll(player);

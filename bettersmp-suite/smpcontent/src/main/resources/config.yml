@@ -1,0 +1,173 @@
+# ==========================================================
+#  SMPContent - eigene Blöcke und Items
+#
+#  WICHTIG: Die Werte unter "state" müssen exakt zu den
+#  Blockstates im Texturepack passen (texturepack/dist/blocks-states.yml).
+#  Änderst du hier etwas, musst du es auch im Generator ändern.
+#
+#  In Rezepten sind erlaubt:
+#    - Vanilla-Materialien:  STONE, DIAMOND, ...
+#    - eigene Items/Blöcke:  "smp:ruby", "smp:ruby_block", ...
+# ==========================================================
+
+texturepack:
+  # Muss zum Namensraum im Texturepack passen
+  namespace: smp
+
+# Rezepte insgesamt an-/abschalten
+recipes-enabled: true
+
+# ----------------------------------------------------------
+#  Eigene Blöcke
+#  Technik: Note-Block-Zustände. Das Plugin hält den Zustand
+#  stabil (kein Umstimmen per Rechtsklick, kein Instrument-
+#  wechsel durch den Block darunter, kein Notenklang).
+# ----------------------------------------------------------
+blocks:
+  ruby_ore:
+    name: "<red>Rubinerz</red>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=1,powered=false]"
+    recipe:
+      shape: ["SSS", "SRS", "SSS"]
+      keys: {S: STONE, R: "smp:ruby"}
+      amount: 1
+
+  sapphire_ore:
+    name: "<aqua>Saphirerz</aqua>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=2,powered=false]"
+    recipe:
+      shape: ["SSS", "SRS", "SSS"]
+      keys: {S: STONE, R: "smp:sapphire"}
+      amount: 1
+
+  ruby_block:
+    name: "<red><bold>Rubinblock</bold></red>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=3,powered=false]"
+    recipe:
+      shape: ["RRR", "RRR", "RRR"]
+      keys: {R: "smp:ruby"}
+      amount: 1
+
+  sapphire_block:
+    name: "<aqua><bold>Saphirblock</bold></aqua>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=4,powered=false]"
+    recipe:
+      shape: ["RRR", "RRR", "RRR"]
+      keys: {R: "smp:sapphire"}
+      amount: 1
+
+  marble:
+    name: "<white>Marmor</white>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=5,powered=false]"
+    recipe:
+      shape: ["SSS", "SQS", "SSS"]
+      keys: {S: SMOOTH_STONE, Q: QUARTZ}
+      amount: 8
+
+  dark_marble:
+    name: "<dark_gray>Dunkler Marmor</dark_gray>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=6,powered=false]"
+    recipe:
+      shape: ["BBB", "BQB", "BBB"]
+      keys: {B: BLACKSTONE, Q: QUARTZ}
+      amount: 8
+
+  neon_lamp:
+    name: "<aqua><bold>Neonlampe</bold></aqua>"
+    lore: ["<dark_gray>Eigener Block", "<gray>Leuchtet dekorativ"]
+    state: "minecraft:note_block[instrument=bit,note=7,powered=false]"
+    recipe:
+      shape: [" G ", "GSG", " G "]
+      keys: {G: GLOWSTONE_DUST, S: SEA_LANTERN}
+      amount: 1
+
+  coin_pile:
+    name: "<gold><bold>Münzhaufen</bold></gold>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=8,powered=false]"
+    recipe:
+      shape: ["GGG", "GGG", "GGG"]
+      keys: {G: GOLD_INGOT}
+      amount: 1
+
+# ----------------------------------------------------------
+#  Eigene Items
+#  material = das Basis-Item (bestimmt Verhalten & Bedrock-Aussehen)
+#  model-data = muss zum Geyser-Mapping passen
+# ----------------------------------------------------------
+items:
+  ruby:
+    material: AMETHYST_SHARD
+    name: "<red>Rubin</red>"
+    lore: ["<dark_gray>Seltener Edelstein"]
+    model-data: 8104
+    recipe:
+      shape: [" R ", "RDR", " R "]
+      keys: {R: REDSTONE, D: DIAMOND}
+      amount: 1
+
+  sapphire:
+    material: AMETHYST_SHARD
+    name: "<aqua>Saphir</aqua>"
+    lore: ["<dark_gray>Seltener Edelstein"]
+    model-data: 8105
+    recipe:
+      shape: [" L ", "LDL", " L "]
+      keys: {L: LAPIS_LAZULI, D: DIAMOND}
+      amount: 1
+
+  magic_dust:
+    material: GLOWSTONE_DUST
+    name: "<light_purple>Magischer Staub</light_purple>"
+    lore: ["<dark_gray>Glitzert geheimnisvoll"]
+    model-data: 8106
+    recipe:
+      shape: ["   ", "BGR", "   "]
+      keys: {B: BLAZE_POWDER, G: GLOWSTONE_DUST, R: REDSTONE}
+      amount: 3
+
+  voucher:
+    material: PAPER
+    name: "<gold>Shop-Gutschein</gold>"
+    lore: ["<gray>Ein Gutschein für den Shop"]
+    model-data: 8107
+    recipe:
+      shape: ["   ", "PGP", "   "]
+      keys: {P: PAPER, G: GOLD_INGOT}
+      amount: 1
+
+  key:
+    material: TRIPWIRE_HOOK
+    name: "<yellow>Schlüssel</yellow>"
+    lore: ["<gray>Öffnet vielleicht etwas"]
+    model-data: 8108
+    recipe:
+      shape: [" G ", " G ", " I "]
+      keys: {G: GOLD_INGOT, I: IRON_INGOT}
+      amount: 1
+
+  ruby_sword:
+    material: IRON_SWORD
+    name: "<red>Rubinschwert</red>"
+    lore: ["<dark_gray>Aus reinem Rubin geschmiedet"]
+    model-data: 8109
+    recipe:
+      shape: [" R ", " R ", " S "]
+      keys: {R: "smp:ruby", S: STICK}
+      amount: 1
+
+  ruby_pickaxe:
+    material: IRON_PICKAXE
+    name: "<red>Rubinspitzhacke</red>"
+    lore: ["<dark_gray>Aus reinem Rubin geschmiedet"]
+    model-data: 8110
+    recipe:
+      shape: ["RRR", " S ", " S "]
+      keys: {R: "smp:ruby", S: STICK}
+      amount: 1

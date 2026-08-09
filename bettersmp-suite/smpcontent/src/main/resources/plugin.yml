@@ -1,0 +1,21 @@
+name: SMPContent
+version: ${project.version}
+main: de.lemonpvp.smpcontent.SMPContent
+api-version: '1.21'
+authors: [SMP]
+description: Eigene Bloecke und Items passend zum SMP-Texturepack.
+
+commands:
+  smpcontent:
+    description: Verwaltung der eigenen Bloecke und Items
+    usage: "/smpcontent <give|list|reload>"
+    aliases: [content, smpc]
+    permission: smpcontent.admin
+
+permissions:
+  smpcontent.admin:
+    description: Darf /smpcontent nutzen
+    default: op
+  smpcontent.place:
+    description: Darf eigene Bloecke platzieren
+    default: true

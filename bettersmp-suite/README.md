@@ -1,6 +1,6 @@
 # BetterSMP Suite
 
-Fünf eigenständige Paper-Plugins für **Minecraft 1.21.11**, gebaut gegen die
+Sechs eigenständige Paper-Plugins für **Minecraft 1.21.11**, gebaut gegen die
 **offizielle PaperMC-API** (aus den Quellen des `ver/1.21.11`-Branches kompiliert).
 Ein wiederverwendbares Server-Paket für eigene SMP-Server – neutral gehalten,
 den Server-Namen setzt du einmal über `brand` in der `config.yml`.
@@ -12,6 +12,7 @@ den Server-Namen setzt du einmal über `brand` in der `config.yml`.
 | **Lifesteal+** | Lifesteal mit Herzverlust, Elimination/Revive, BetterSMP-CombatLog | `/hearts`, `/withdraw`, `/revive`, `/lifesteal` |
 | **EasyBedrock** | Bedrock-Crossplay (Geyser + Floodgate), Bedrock-Spieler ≈ Java-Spieler an Ressourcen | `/easybedrock` |
 | **FastShop** | DonutSMP-artiges `/shop` + `/sell`, komplett in-game editierbar, EssentialsX-Economy | `/shop`, `/sell`, `/worth`, `/fastshop` |
+| **SMPContent** | **Eigene Blöcke und Items** (8 Blöcke, 7 Items) mit Rezepten, passend zum Texturepack | `/smpcontent` |
 
 Die externen Begleit-Plugins (EssentialsX, LuckPerms, Vault, PlaceholderAPI, TAB
 bzw. Geyser, Floodgate) sind **nicht mitgebündelt**, sondern werden von BetterSMP
@@ -65,7 +66,7 @@ bettersmp-suite/
 ├── betterrtp/         BetterRTP
 ├── lifesteal-plus/    Lifesteal+
 ├── easybedrock/       EasyBedrock
-└── fastshop/          FastShop
+├── fastshop/          FastShop
 ```
 
 Jedes Plugin ist eigenständig nutzbar. Lifesteal+ nutzt die CombatLog-API von

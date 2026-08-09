@@ -23,5 +23,15 @@
   "rank_admin": "\\uE115",
   "rank_mod": "\\uE116",
   "rank_sup": "\\uE117",
-  "rank_member": "\\uE118"
+  "rank_member": "\\uE118",
+  "buy": "\\uE120",
+  "sell": "\\uE121",
+  "shield": "\\uE122",
+  "potion": "\\uE123",
+  "trophy": "\\uE124",
+  "gift": "\\uE125",
+  "ticket": "\\uE126",
+  "skull": "\\uE127",
+  "fire": "\\uE128",
+  "leaf": "\\uE129"
 }

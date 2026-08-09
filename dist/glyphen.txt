@@ -26,3 +26,13 @@ rank_admin       U+E115   
 rank_mod         U+E116   
 rank_sup         U+E117   
 rank_member      U+E118   
+buy              U+E120   
+sell             U+E121   
+shield           U+E122   
+potion           U+E123   
+trophy           U+E124   
+gift             U+E125   
+ticket           U+E126   
+skull            U+E127   
+fire             U+E128   
+leaf             U+E129   
