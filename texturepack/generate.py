@@ -672,8 +672,13 @@ def write_java(atlas, mapping):
     for r in range(GRID):
         row = "".join(chr(0xE100 + r * GRID + c) for c in range(GRID))
         rows.append(row)
+    # WICHTIG: Diese Datei ersetzt die Standardschrift komplett. Vanilla listet
+    # hier ZWEI Referenzen - "include/space" definiert die Breite des
+    # Leerzeichens, "include/default" die eigentlichen Buchstaben. Fehlt die
+    # Space-Referenz, haben Leerzeichen im ganzen Spiel keine Breite mehr!
     (root / "assets/minecraft/font/default.json").write_text(json.dumps({
         "providers": [
+            {"type": "reference", "id": "minecraft:include/space"},
             {"type": "reference", "id": "minecraft:include/default"},
             {
                 "type": "bitmap",
