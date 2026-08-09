@@ -67,6 +67,7 @@ bettersmp-suite/
 ├── lifesteal-plus/    Lifesteal+
 ├── easybedrock/       EasyBedrock
 ├── fastshop/          FastShop
+└── smpcontent/        SMPContent (eigene Blöcke & Items)
 ```
 
 Jedes Plugin ist eigenständig nutzbar. Lifesteal+ nutzt die CombatLog-API von
