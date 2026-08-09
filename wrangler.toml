@@ -1,0 +1,12 @@
+# Cloudflare Pages Konfiguration für LearnDeveloping
+# Deploy:  npx wrangler pages deploy .
+
+name = "learndeveloping"
+compatibility_date = "2026-01-01"
+pages_build_output_dir = "."
+
+# Turnstile-Site-Key (öffentlich, darf im Frontend stehen).
+# Der zugehörige Secret-Key gehört NICHT hierher, sondern in die
+# Server-Umgebung, die die Verifizierung durchführt.
+[vars]
+TURNSTILE_SITE_KEY = ""

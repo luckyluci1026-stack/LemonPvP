@@ -1,0 +1,327 @@
+/**
+ * Zentrale Konfiguration. Alle Werte kommen aus Umgebungsvariablen,
+ * damit keine Geheimnisse im Quellcode landen.
+ */
+import { readFileSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+// Schlanker .env-Loader — spart eine Abhängigkeit. Bereits gesetzte
+// Umgebungsvariablen haben Vorrang (wichtig für systemd und Container).
+(function loadDotEnv() {
+  const envPath = join(dirname(fileURLToPath(import.meta.url)), "..", ".env");
+  if (!existsSync(envPath)) return;
+  for (const line of readFileSync(envPath, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq < 1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    if (process.env[key] !== undefined) continue;
+    let value = trimmed.slice(eq + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  }
+})();
+
+function required(name, fallback) {
+  const v = process.env[name] ?? fallback;
+  if (v === undefined || v === "") {
+    throw new Error(`Umgebungsvariable ${name} fehlt — siehe .env.example`);
+  }
+  return v;
+}
+
+function bool(name, fallback = false) {
+  const v = process.env[name];
+  if (v === undefined) return fallback;
+  return /^(1|true|yes|on)$/i.test(v);
+}
+
+function int(name, fallback) {
+  const v = parseInt(process.env[name] ?? "", 10);
+  return Number.isFinite(v) ? v : fallback;
+}
+
+// Mehrere Keys können komma- oder zeilengetrennt hinterlegt werden.
+function keyList(name) {
+  return (process.env[name] || "")
+    .split(/[,\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+const isProd = process.env.NODE_ENV === "production";
+
+export const config = {
+  isProd,
+  port: int("PORT", 3000),
+  host: process.env.HOST || "0.0.0.0",
+
+  // Öffentliche Adresse — wird für Links in E-Mails gebraucht
+  publicUrl: (process.env.PUBLIC_URL || "http://localhost:3000").replace(/\/+$/, ""),
+
+  // Wird die App hinter Cloudflare/nginx betrieben, liefert der Proxy die echte IP
+  trustProxy: bool("TRUST_PROXY", true),
+
+  security: {
+    /* Die Anfragenbegrenzung schützt vor allem die Anmeldung: Sie macht das
+       Ausprobieren von Passwörtern unbrauchbar langsam. Im Betrieb bleibt sie
+       deshalb an.
+
+       Abschalten ist nur für automatisierte Tests gedacht. Dort laufen die
+       Testdateien nebeneinander und teilen sich dieselbe Absenderadresse —
+       ohne diesen Schalter scheitert die Suite an ihrem eigenen Limit, sobald
+       eine Datei dazukommt. */
+    rateLimit: bool("RATE_LIMIT", true),
+  },
+
+  // Statisches Frontend mit ausliefern (index.html + App.jsx)
+  serveFrontend: bool("SERVE_FRONTEND", true),
+  frontendDir: process.env.FRONTEND_DIR || "..",
+
+  db: {
+    connectionString: required("DATABASE_URL", "postgres://localhost:5432/learndeveloping"),
+    max: int("DB_POOL_MAX", 10),
+  },
+
+  session: {
+    // Zum Signieren der Session-Token. In Produktion zwingend setzen.
+    secret: required("SESSION_SECRET", isProd ? undefined : "dev-only-insecure-secret"),
+    cookieName: "ld_session",
+    ttlDays: int("SESSION_TTL_DAYS", 30),
+  },
+
+  mail: {
+    enabled: bool("SMTP_ENABLED", false),
+    host: process.env.SMTP_HOST || "",
+    port: int("SMTP_PORT", 587),
+    secure: bool("SMTP_SECURE", false),
+    user: process.env.SMTP_USER || "",
+    pass: process.env.SMTP_PASS || "",
+    from: process.env.MAIL_FROM || "LearnDeveloping <noreply@learndeveloping.com>",
+    supportAddress: process.env.SUPPORT_MAIL || "support@learndeveloping.com",
+  },
+
+  turnstile: {
+    // Ohne Secret wird die Prüfung übersprungen (praktisch für lokale Entwicklung)
+    secret: process.env.TURNSTILE_SECRET || "",
+    get enabled() { return !!this.secret; },
+  },
+
+  ai: {
+    // Die Keys bleiben ausschließlich hier auf dem Server.
+    provider: process.env.AI_PROVIDER || "gemini",
+    geminiKeys: keyList("GEMINI_API_KEYS"),
+    anthropicKeys: keyList("ANTHROPIC_API_KEYS"),
+    /* OpenRouter bündelt viele Anbieter hinter einer OpenAI-kompatiblen
+       Schnittstelle. Die Vorgabe ist ein kostenloses Modell mit sehr großem
+       Kontextfenster (262k Token).
+
+       Der Katalog ändert sich laufend — läuft die Prüfung plötzlich immer
+       lokal durch, ist ein 404 wegen einer nicht mehr existierenden ID der
+       erste Verdacht. `npm run ai:test` sagt genau das. Die aktuell gültigen
+       IDs stehen auf openrouter.ai/models. */
+    openrouterKeys: keyList("OPENROUTER_API_KEYS"),
+    openrouterModel: process.env.OPENROUTER_MODEL || "google/gemma-4-31b-it:free",
+
+    /* Groq — dieselbe Schnittstelle wie OpenAI, außergewöhnlich schnell.
+       Achtung beim kostenlosen Kontingent: 30 Anfragen pro Minute klingt
+       viel, aber 12.000 Token pro Minute sind schnell aufgebraucht. Deshalb
+       ist der mitgeschickte Verlauf für dieses Modell kürzer. */
+    groqKeys: keyList("GROQ_API_KEYS"),
+    groqModel: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+
+    /* Cerebras — ebenfalls OpenAI-kompatibel, und außergewöhnlich schnell:
+       gpt-oss-120b liefert dort mehrere tausend Token je Sekunde.
+
+       gpt-oss ist ein Modell, das laut denkt. Sein Gedankengang kommt in
+       einem eigenen Feld zurück und wird nicht mit angezeigt; wie ausführlich
+       es denkt, steuert `reasoning_effort`. Für einen Assistenten im Editor
+       ist „low" richtig — die Antwort kommt schneller, und es geht weniger
+       Kontingent für Überlegungen drauf, die ohnehin niemand liest. */
+    cerebrasKeys: keyList("CEREBRAS_API_KEYS"),
+    cerebrasModel: process.env.CEREBRAS_MODEL || "gpt-oss-120b",
+    cerebrasReasoning: process.env.CEREBRAS_REASONING || "low",
+
+    /* NVIDIA NIM — über hundert Modelle hinter einer OpenAI-kompatiblen
+       Adresse, darunter welche, die es sonst kaum frei gibt.
+
+       Bewusst OHNE Vorgabe für das Modell: Der Katalog ändert sich laufend,
+       und eine erfundene ID liefert nur eine 404, die aussieht wie ein
+       Schlüsselproblem. Die genaue Schreibweise steht auf build.nvidia.com
+       am jeweiligen Modell.
+
+       Zum Kontingent: Neben der Begrenzung pro Minute läuft dort ein
+       Guthaben mit. Wie beides zusammenspielt, ist nicht klar dokumentiert —
+       verlass dich nicht auf Zahlen aus zweiter Hand, sondern nimm NVIDIA
+       als zusätzliches Glied der Kette. Fällt es aus, übernimmt das
+       nächste. */
+    nvidiaKeys: keyList("NVIDIA_API_KEYS"),
+    nvidiaModel: process.env.NVIDIA_MODEL || "",
+    ollamaUrl: (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/+$/, ""),
+    ollamaModel: process.env.OLLAMA_MODEL || "qwen2.5-coder:3b",
+    // Modell im Speicher halten, statt es bei jedem Aufruf neu zu laden
+    ollamaKeepAlive: process.env.OLLAMA_KEEP_ALIVE || "30m",
+    // Kurze Antworten und kleiner Kontext sparen auf schwacher Hardware am meisten
+    ollamaMaxTokens: int("OLLAMA_MAX_TOKENS", 300),
+    ollamaContext: int("OLLAMA_CONTEXT", 2048),
+    ollamaThreads: int("OLLAMA_THREADS", 0),   // 0 = Ollama entscheidet
+    warmUp: bool("AI_WARMUP", true),
+    /* Gemma 4 läuft über dieselbe Google-Schnittstelle wie Gemini und
+       unterstützt dort auch systemInstruction — der Aufruf unten ist deshalb
+       für beide derselbe. Wer lieber ein Gemini-Modell möchte, trägt in
+       GEMINI_MODEL z.B. `gemini-2.0-flash` ein. */
+    geminiModel: process.env.GEMINI_MODEL || "gemma-4-31b-it",
+    anthropicModel: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
+    // Pausen nach Limit-Antworten
+    rateLimitCooldownSec: int("AI_COOLDOWN_RATE_LIMIT", 65),
+    quotaCooldownSec: int("AI_COOLDOWN_QUOTA", 600),
+    requestTimeoutMs: int("AI_TIMEOUT_MS", 60000),
+    // Anfragen pro Nutzer und Minute
+    perUserPerMinute: int("AI_PER_USER_PER_MINUTE", 20),
+
+    /* ------------------ Sitzungsbremse für den Agenten -------------------
+       Der Agent im Editor ist der einzige Teil, der außerhalb Rechenzeit
+       kostet. Eine Minutenbremse allein hilft dagegen nicht: Wer sie
+       einhält, kann trotzdem den ganzen Nachmittag Anfragen stellen und ein
+       Tageskontingent für alle anderen aufbrauchen.
+
+       Deshalb ein gleitendes Fenster. Wer es ausschöpft, bekommt eine
+       Meldung mit der Restzeit — nicht einfach einen Fehler. Alles andere
+       an der Plattform läuft dabei unverändert weiter; die Aufgabenprüfung
+       hängt nicht am Agenten.
+
+       Die Werte sind großzügig für normales Arbeiten und eng für den Fall,
+       dass jemand das Fenster offen lässt und Anfragen laufen lässt. */
+    agent: {
+      windowHours: int("AI_AGENT_WINDOW_HOURS", 4),
+      maxRequests: int("AI_AGENT_MAX_REQUESTS", 20),
+      maxTokens: int("AI_AGENT_MAX_TOKENS", 8000),
+    },
+
+    /* ------------------- Antwortprüfung: Stufen und Bremse ----------------
+       Drei Stufen, damit weder eine Rechnung noch ein Rate-Limit überrascht:
+
+         1. Der eingestellte Hauptanbieter (Vorgabe: Google mit eigenem Key).
+         2. Ist das Tageskontingent eines Nutzers ausgereizt, übernimmt der
+            Ersatzanbieter.
+         3. Darüber hinaus bewertet nur noch die lokale Analyse — die Lektion
+            läuft normal weiter, es gibt lediglich keine Zweitmeinung mehr.
+
+       Die Zahlen sind bewusst niedrig angesetzt. Kostenlose Kontingente sind
+       eng: Gemma über OpenRouter erlaubt etwa 20 Anfragen pro Minute und 200
+       pro Tag — und zwar pro KONTO, nicht pro Nutzer. Deshalb ist die globale
+       Notbremse wichtiger als die persönliche. */
+    /* ---------------------- Rollen: wer macht was -------------------------
+       Verschiedene Aufgaben brauchen verschiedene Modelle. Statt eines
+       globalen Anbieters bekommt jede Rolle ihren eigenen — leer gelassen
+       heißt „nimm den allgemeinen".
+
+         assist    Der Assistent in der IDE. Antwortet auf Fragen zum Code.
+         assistPro Der stärkere Assistent, den man ausdrücklich anfordert.
+         verify    Die Prüfung der Lektionsantworten (siehe verify unten).
+
+       Ein Beispiel für den Betrieb, den du planst:
+         AI_ASSIST_PROVIDER=gemini      AI_ASSIST_MODEL=gemma-4-31b-it
+         AI_PRO_PROVIDER=groq           AI_PRO_MODEL=llama-3.3-70b-versatile
+         AI_VERIFY_PRIMARY=ollama       OLLAMA_MODEL=gemma-4-e4b
+       Damit läuft die IDE über Googles Kontingent, der Profi-Assistent über
+       Groq, und die Lektionsprüfung bleibt auf der eigenen Maschine. */
+    roles: {
+      assist: {
+        provider: process.env.AI_ASSIST_PROVIDER || process.env.AI_PROVIDER || "gemini",
+        model: process.env.AI_ASSIST_MODEL || "",
+      },
+      assistPro: {
+        provider: process.env.AI_PRO_PROVIDER || "groq",
+        model: process.env.AI_PRO_MODEL || "",
+        // Kurzer Verlauf, weil das Token-Kontingent pro Minute eng ist
+        historyLimit: int("AI_PRO_HISTORY", 4),
+        maxTokens: int("AI_PRO_MAX_TOKENS", 700),
+
+        /* ------------------------- Die Kette ---------------------------
+           Kontingente sind bei jedem Anbieter anders geschnitten: Groq
+           erlaubt viele Anfragen pro Minute bei wenig Text, Cerebras
+           umgekehrt viel Text bei weniger Anfragen. Wer nur einen einträgt,
+           steht bei dessen Limit still, obwohl der andere frei wäre.
+
+           Ein Eintrag ist entweder nur der Anbieter (`groq`) oder Anbieter
+           und Modell (`groq:llama-3.1-8b-instant`). Damit lässt sich
+           derselbe Anbieter mit einem kleineren Modell ein zweites Mal
+           anhängen, wenn das große sein Limit erreicht hat.
+
+           Bei langen Anfragen wird die Reihenfolge umgedreht: Dann kommt
+           der mit dem größeren Textkontingent zuerst, statt den schnellen
+           erst ins Limit laufen zu lassen. Die Schwelle steht in
+           `bigTokens`, gemessen in geschätzten Token der Anfrage. */
+        chain: keyList("AI_PRO_CHAIN").length
+          ? keyList("AI_PRO_CHAIN")
+          : ["groq", "cerebras"],
+        bigProvider: process.env.AI_PRO_BIG_PROVIDER || "cerebras",
+        bigTokens: int("AI_PRO_BIG_TOKENS", 1500),
+      },
+
+      /* ------------------------- Der Disponent -------------------------
+         Steht ein Modell auf eigener Hardware bereit, bekommt es die
+         Anfrage zuerst. Es beantwortet sie nicht selbst, sondern entscheidet,
+         wer sie bearbeitet, und schreibt dazu einen kurzen Auftrag:
+
+           lokal    — es macht es selbst. Kurze Fragen, Tippfehler, ein
+                      bis drei Sätze Erklärung. Kostet nichts und verlässt
+                      das eigene Netz nicht.
+           standard — das mittlere Modell beim Anbieter (assist).
+           profi    — das große Modell (assistPro), für ganze Dateien.
+
+         Der Gewinn ist nicht nur Geld: Was der Disponent selbst erledigt,
+         wird gar nicht erst übertragen. Ist er nicht erreichbar, geht die
+         Anfrage wie bisher direkt an den eingestellten Anbieter — es gibt
+         keinen Zustand, in dem der Agent deshalb ausfällt.
+         ---------------------------------------------------------------- */
+      dispatch: {
+        enabled: bool("AI_DISPATCH_ENABLED", true),
+        provider: process.env.AI_DISPATCH_PROVIDER || "ollama",
+        model: process.env.AI_DISPATCH_MODEL || "",
+        // Die Entscheidung ist kurz — mehr Platz braucht sie nicht.
+        maxTokens: int("AI_DISPATCH_MAX_TOKENS", 160),
+        // Was der Disponent selbst beantworten darf, bleibt knapp.
+        localMaxTokens: int("AI_DISPATCH_LOCAL_MAX_TOKENS", 700),
+      },
+    },
+
+    verify: {
+      enabled: bool("AI_VERIFY_ENABLED", true),
+      // Welcher Anbieter zuerst gefragt wird …
+      primaryProvider: process.env.AI_VERIFY_PRIMARY || "gemini",
+      // … und wohin es geht, wenn jemand das Kontingent ausreizt.
+      fallbackProvider: process.env.AI_VERIFY_FALLBACK || "openrouter",
+      // Modell des Hauptanbieters für die Prüfung — leer = dessen Vorgabe
+      primaryModel: process.env.AI_VERIFY_PRIMARY_MODEL || "",
+      fallbackModel: process.env.AI_VERIFY_FALLBACK_MODEL || "",
+      // Prüfungen pro Nutzer und Tag beim Hauptanbieter
+      primaryPerDay: int("AI_VERIFY_PRIMARY_PER_DAY", 60),
+      // Danach nur noch der Ersatzanbieter — bis zu dieser Grenze
+      maxPerDay: int("AI_VERIFY_MAX_PER_DAY", 150),
+      // Notbremse über alle Nutzer hinweg. Bei einem kostenlosen Kontingent
+      // von 200 Anfragen am Tag hier deutlich darunter bleiben.
+      globalPerDay: int("AI_VERIFY_GLOBAL_PER_DAY", 180),
+      timeoutMs: int("AI_VERIFY_TIMEOUT_MS", 12000),
+    },
+  },
+
+  storage: {
+    quotaBytes: int("STORAGE_QUOTA_BYTES", 1 * 1024 * 1024 * 1024),
+    maxProjectBytes: int("MAX_PROJECT_BYTES", 5 * 1024 * 1024),
+  },
+};
+
+export function assertProductionSafety(log) {
+  if (!config.isProd) return;
+  const problems = [];
+  if (config.session.secret === "dev-only-insecure-secret") problems.push("SESSION_SECRET ist nicht gesetzt");
+  if (!config.turnstile.enabled) problems.push("TURNSTILE_SECRET fehlt — Registrierung ist ungeschützt");
+  if (!config.mail.enabled) problems.push("SMTP ist deaktiviert — Verifizierungscodes werden nur geloggt");
+  problems.forEach((p) => log.warn(`Produktionshinweis: ${p}`));
+}

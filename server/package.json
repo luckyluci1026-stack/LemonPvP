@@ -1,0 +1,32 @@
+{
+  "name": "learndeveloping-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend für LearnDeveloping — Konten, Fortschritt, Projekte und KI-Proxy",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/migrate.js && node src/index.js",
+    "migrate": "node src/migrate.js",
+    "seed": "node src/seed.js",
+    "test": "RATE_LIMIT=false DATABASE_URL=${DATABASE_URL:-sqlite:./data/test.db} SESSION_SECRET=${SESSION_SECRET:-test} node --test --test-concurrency=1 test/integration.test.js test/reset.test.js test/password.test.js test/rotation.test.js test/kette.test.js test/nvidia.test.js",
+    "test:migrate": "DATABASE_URL=${DATABASE_URL:-sqlite:./data/test.db} SESSION_SECRET=${SESSION_SECRET:-test} node src/migrate.js",
+    "test:server": "RATE_LIMIT=false DATABASE_URL=${DATABASE_URL:-sqlite:./data/test.db} SESSION_SECRET=${SESSION_SECRET:-test} PORT=${PORT:-3111} NODE_ENV=development SMTP_ENABLED=false node src/index.js",
+    "start:local": "DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen NODE_ENV=development node src/migrate.js && DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen NODE_ENV=development node src/index.js",
+    "seed:local": "DATABASE_URL=sqlite:./data/local.db SESSION_SECRET=lokal-nur-zum-testen node src/seed.js",
+    "ai:test": "node tools/ai-check.js",
+    "ai:models": "node tools/ai-models.js",
+    "migrate:local": "DATABASE_URL=sqlite:./data/local.db node src/migrate.js"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^9.3.1",
+    "@fastify/rate-limit": "^9.1.0",
+    "@fastify/static": "^7.0.4",
+    "fastify": "^4.28.1",
+    "nodemailer": "^6.9.14",
+    "pg": "^8.12.0"
+  }
+}
