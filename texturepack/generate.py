@@ -110,6 +110,143 @@ def hexc(value, alpha=255):
 
 
 # ---------------------------------------------------------------------------
+#  Prozedurale Textur-Helfer
+#  Statt jeden Pixel von Hand zu malen, erzeugen diese Funktionen echte
+#  Struktur: Rauschen fuer Stein, Facetten fuer Kristalle, Lichtkanten fuer
+#  bearbeitete Bloecke. Lichtrichtung ist wie in Minecraft oben links.
+# ---------------------------------------------------------------------------
+
+import random
+
+
+def value_noise(size, seed, cells=4, jitter=0.22):
+    """Weiches Rauschen (bilinear interpoliertes Zufallsgitter + Koernung)."""
+    rng = random.Random(seed)
+    grid = [[rng.random() for _ in range(cells + 1)] for _ in range(cells + 1)]
+    out = [[0.0] * size for _ in range(size)]
+    for y in range(size):
+        for x in range(size):
+            fx = x / size * cells
+            fy = y / size * cells
+            x0, y0 = int(fx), int(fy)
+            tx, ty = fx - x0, fy - y0
+            a = grid[y0][x0] * (1 - tx) + grid[y0][x0 + 1] * tx
+            b = grid[y0 + 1][x0] * (1 - tx) + grid[y0 + 1][x0 + 1] * tx
+            v = a * (1 - ty) + b * ty + (rng.random() - 0.5) * jitter
+            out[y][x] = min(1.0, max(0.0, v))
+    return out
+
+
+def from_noise(size, shades, seed, cells=4, jitter=0.22):
+    """Baut eine Flaeche, indem Rauschwerte auf eine Farbtreppe abgebildet werden."""
+    noise = value_noise(size, seed, cells, jitter)
+    img = Image.new("RGBA", (size, size))
+    px = img.load()
+    n = len(shades)
+    for y in range(size):
+        for x in range(size):
+            px[x, y] = shades[min(n - 1, int(noise[y][x] * n))]
+    return img
+
+
+def bevel(img, light=70, dark=80, width=1):
+    """Lichtkante oben/links, Schattenkante unten/rechts - lässt Blöcke plastisch wirken."""
+    w, h = img.size
+    px = img.load()
+    for i in range(width):
+        for x in range(i, w - i):
+            px[x, i] = blend(px[x, i], (255, 255, 255), light)
+            px[x, h - 1 - i] = blend(px[x, h - 1 - i], (0, 0, 0), dark)
+        for y in range(i, h - i):
+            px[i, y] = blend(px[i, y], (255, 255, 255), light)
+            px[w - 1 - i, y] = blend(px[w - 1 - i, y], (0, 0, 0), dark)
+    return img
+
+
+def blend(pixel, target, amount):
+    """Mischt einen Pixel zu 'amount'/255 Richtung target."""
+    r, g, b, a = pixel
+    t = amount / 255.0
+    return (round(r + (target[0] - r) * t),
+            round(g + (target[1] - g) * t),
+            round(b + (target[2] - b) * t), a)
+
+
+# Ein kleiner Kristall mit Glanzpunkt - wird in Erze gestreut.
+GEM_BLOB = [
+    "..XX..",
+    ".XHHX.",
+    "XHHMMX",
+    "XHMMSX",
+    ".XMSX.",
+    "..XX..",
+]
+
+
+def scatter_gems(img, colors, seed, count=5):
+    """Streut Kristall-Cluster mit Licht und Schatten in eine Steinflaeche."""
+    outline, high, mid, shadow = colors
+    rng = random.Random(seed + 7777)
+    size = img.size[0]
+    px = img.load()
+    spots = []
+    tries = 0
+    while len(spots) < count and tries < 200:
+        tries += 1
+        cx, cy = rng.randrange(size), rng.randrange(size)
+        if all(abs(cx - a) + abs(cy - b) > 5 for a, b in spots):
+            spots.append((cx, cy))
+    palette = {"X": outline, "H": high, "M": mid, "S": shadow}
+    for cx, cy in spots:
+        for dy, row in enumerate(GEM_BLOB):
+            for dx, ch in enumerate(row):
+                if ch == ".":
+                    continue
+                # Modulo -> Cluster laufen sauber ueber die Kante (nahtlos kachelbar)
+                x = (cx + dx) % size
+                y = (cy + dy) % size
+                px[x, y] = palette[ch]
+    return img
+
+
+def crystal_surface(size, shades, seed):
+    """Kristalline Flaeche: Rauschen plus ein paar helle Facettenkanten."""
+    img = from_noise(size, shades, seed, cells=3, jitter=0.18)
+    rng = random.Random(seed + 31)
+    px = img.load()
+    bright = shades[-1]
+    for _ in range(6):
+        x, y = rng.randrange(size), rng.randrange(size)
+        length = rng.randint(2, 5)
+        dx, dy = rng.choice([(1, 1), (1, -1)])
+        for i in range(length):
+            px[(x + dx * i) % size, (y + dy * i) % size] = bright
+    return img
+
+
+def veined(size, base_shades, vein_color, seed, veins=3):
+    """Glatte Flaeche mit geschwungenen Adern - fuer Marmor."""
+    img = from_noise(size, base_shades, seed, cells=3, jitter=0.10)
+    rng = random.Random(seed + 99)
+    px = img.load()
+    for _ in range(veins):
+        x = float(rng.randrange(size))
+        y = float(rng.randrange(size))
+        # Feste Grundrichtung + sanfte Drift -> lange, ruhige Adern statt Zickzack
+        angle = rng.uniform(0.2, 1.35) * rng.choice([1, -1])
+        for _ in range(rng.randint(14, 22)):
+            ix, iy = int(x) % size, int(y) % size
+            px[ix, iy] = vein_color
+            # weicher Saum, damit die Ader nicht wie ein Kratzer wirkt
+            px[(ix + 1) % size, iy] = blend(px[(ix + 1) % size, iy], vein_color[:3], 70)
+            px[ix, (iy + 1) % size] = blend(px[ix, (iy + 1) % size], vein_color[:3], 45)
+            angle += rng.uniform(-0.18, 0.18)
+            x += 1.0
+            y += angle * 0.5
+    return img
+
+
+# ---------------------------------------------------------------------------
 #  1) UI-Icons  (Codepoints U+E100 - U+E10F)
 #     16x16 gemalt, im Atlas auf 32x32 skaliert.
 # ---------------------------------------------------------------------------
@@ -973,151 +1110,94 @@ BLOCK_PALETTE.update({
     "l": hexc("2AA8C4"),   # Neon dunkel
 })
 
-CUSTOM_BLOCKS = {
-    "ruby_ore": """
-1112211122111221
-1221112211122111
-2113MM31122111M3
-1113MM11221MM333
-1122111221MM3311
-1211122111333112
-1122111221112211
-2111MM3112211122
-1113MM31121112M3
-1221113311221MM3
-1122111221113311
-1211122111221112
-1122MM3112211221
-2111MM3111221112
-1221133112211122
-1112211122111221
-""",
-    "sapphire_ore": """
-1112211122111221
-1221112211122111
-2113BB31122111B3
-1113BB11221BB333
-1122111221BB3311
-1211122111333112
-1122111221112211
-2111BB3112211122
-1113BB31121112B3
-1221113311221BB3
-1122111221113311
-1211122111221112
-1122BB3112211221
-2111BB3111221112
-1221133112211122
-1112211122111221
-""",
-    "ruby_block": """
-MMMMnMMMMMMnMMMM
-MnMMMMMnMMMMMMnM
-MMMMMMMMMMMMMMMM
-MMMnMMMMMMMMnMMM
-nMMMMMMnMMMMMMMM
-MMMMMMMMMMMnMMMM
-MMMnMMMMMMMMMMnM
-MMMMMMMnMMMMMMMM
-MMMMMnMMMMMnMMMM
-MnMMMMMMMMMMMMMM
-MMMMMMMMnMMMMMnM
-MMMnMMMMMMMMMMMM
-nMMMMMMMMMnMMMMM
-MMMMMnMMMMMMMMnM
-MMMMMMMMMMMMMMMM
-MMnMMMMMnMMMMMMM
-""",
-    "sapphire_block": """
-BBBBWBBBBBBWBBBB
-BWBBBBBWBBBBBBWB
-BBBBBBBBBBBBBBBB
-BBBWBBBBBBBBWBBB
-WBBBBBBWBBBBBBBB
-BBBBBBBBBBBWBBBB
-BBBWBBBBBBBBBBWB
-BBBBBBBWBBBBBBBB
-BBBBBWBBBBBWBBBB
-BWBBBBBBBBBBBBBB
-BBBBBBBBWBBBBBWB
-BBBWBBBBBBBBBBBB
-WBBBBBBBBBWBBBBB
-BBBBBWBBBBBBBBWB
-BBBBBBBBBBBBBBBB
-BBWBBBBBWBBBBBBB
-""",
-    "marble": """
-4444444544444444
-4445444444454444
-4444444444444444
-4444445444444454
-4666444444444444
-4444444566644444
-4444444444444444
-4544444444444445
-4444444444444444
-4444466644444444
-4445444444454444
-4444444444444444
-4444444444666444
-4444544444444454
-4444444444444444
-4444444544444444
-""",
-    "dark_marble": """
-7777777877777777
-7778777777787777
-7777777777777777
-7777778777777787
-7999777777777777
-7777777899977777
-7777777777777777
-7877777777777778
-7777777777777777
-7777799977777777
-7778777777787777
-7777777777777777
-7777777777999777
-7777877777777787
-7777777777777777
-7777777877777777
-""",
-    "neon_lamp": """
-KKKKKKKKKKKKKKKK
-KllllllllllllllK
-KlLLLLLLLLLLLLlK
-KlLLLLLLLLLLLLlK
-KlLLKKKKKKKKLLlK
-KlLLKllllllKLLlK
-KlLLKlLLLLlKLLlK
-KlLLKlLLLLlKLLlK
-KlLLKlLLLLlKLLlK
-KlLLKlLLLLlKLLlK
-KlLLKllllllKLLlK
-KlLLKKKKKKKKLLlK
-KlLLLLLLLLLLLLlK
-KlLLLLLLLLLLLLlK
-KllllllllllllllK
-KKKKKKKKKKKKKKKK
-""",
-    "coin_pile": """
-KKgGGgKKKKgGGgKK
-KgGyyGgKKgGyyGgK
-gGyGGyGggGyGGyGg
-GGyGGyGGGGyGGyGG
-gGyGGyGggGyGGyGg
-KgGyyGgKKgGyyGgK
-KKgGGgKKKKgGGgKK
-KKKKKKKKKKKKKKKK
-KKgGGgKKKKgGGgKK
-KgGyyGgKKgGyyGgK
-gGyGGyGggGyGGyGg
-GGyGGyGGGGyGGyGG
-gGyGGyGggGyGGyGg
-KgGyyGgKKgGyyGgK
-KKgGGgKKKKgGGgKK
-KKKKKKKKKKKKKKKK
-""",
+# Farbtreppen je Material (dunkel -> hell). Mehr Stufen = mehr Tiefe.
+STONE_SHADES = [hexc("3E3E46"), hexc("4A4A52"), hexc("56565E"), hexc("62626A"), hexc("6E6E76")]
+RUBY_SHADES = [hexc("6E0A1C"), hexc("A31230"), hexc("D62245"), hexc("F5476A"), hexc("FF8098")]
+SAPP_SHADES = [hexc("0B3A6E"), hexc("1160A8"), hexc("1E88D6"), hexc("46B0F5"), hexc("8ED6FF")]
+MARBLE_SHADES = [hexc("C9C5BA"), hexc("D8D4CA"), hexc("E4E1D8"), hexc("EFEDE6"), hexc("F7F6F1")]
+DARKM_SHADES = [hexc("2A2A33"), hexc("33333E"), hexc("3D3D49"), hexc("484855"), hexc("545463")]
+GOLD_SHADES = [hexc("8A5B0F"), hexc("BE8517"), hexc("E0A81C"), hexc("FFD75A"), hexc("FFF0AE")]
+
+# Kristallfarben fuer Erz-Einschluesse: (Rand, Glanz, Mitte, Schatten)
+RUBY_GEM = (hexc("4A0713"), hexc("FF8098"), hexc("E0224A"), hexc("8E0F24"))
+SAPP_GEM = (hexc("06284D"), hexc("8ED6FF"), hexc("1E88D6"), hexc("0E4C86"))
+
+
+def block_ruby_ore():
+    img = from_noise(16, STONE_SHADES, seed=101, cells=4)
+    return scatter_gems(img, RUBY_GEM, seed=101, count=5)
+
+
+def block_sapphire_ore():
+    img = from_noise(16, STONE_SHADES, seed=202, cells=4)
+    return scatter_gems(img, SAPP_GEM, seed=202, count=5)
+
+
+def block_ruby_block():
+    return bevel(crystal_surface(16, RUBY_SHADES, seed=303), light=60, dark=70)
+
+
+def block_sapphire_block():
+    return bevel(crystal_surface(16, SAPP_SHADES, seed=404), light=60, dark=70)
+
+
+def block_marble():
+    return bevel(veined(16, MARBLE_SHADES, hexc("A8A296"), seed=505, veins=3),
+                 light=55, dark=45)
+
+
+def block_dark_marble():
+    return bevel(veined(16, DARKM_SHADES, hexc("13131A"), seed=606, veins=3),
+                 light=50, dark=60)
+
+
+def block_neon_lamp():
+    """Dunkler Rahmen mit leuchtender Mitte."""
+    img = from_noise(16, [hexc("1A1A22"), hexc("22222C"), hexc("2A2A36")], seed=707, cells=2)
+    px = img.load()
+    core = [hexc("1E7F98"), hexc("2AA8C4"), hexc("55D2E8"), hexc("7CFCFF")]
+    for y in range(16):
+        for x in range(16):
+            # Abstand zum Rand bestimmt die Helligkeit -> weiches Leuchten
+            d = min(x, y, 15 - x, 15 - y)
+            if d >= 2:
+                img.load()[x, y] = core[min(len(core) - 1, d - 2)]
+    return bevel(img, light=40, dark=90)
+
+
+def block_coin_pile():
+    """Gestapelte Muenzen mit Licht von oben links."""
+    img = from_noise(16, [hexc("6B4708"), hexc("7A520C")], seed=808, cells=2)
+    px = img.load()
+    coin = [
+        "..XXX..",
+        ".XHHHX.",
+        "XHHMMMX",
+        "XHMMMSX",
+        "XMMMSSX",
+        ".XSSSX.",
+        "..XXX..",
+    ]
+    palette = {"X": hexc("5A3B06"), "H": hexc("FFF0AE"),
+               "M": hexc("FFD75A"), "S": hexc("BE8517")}
+    for cx, cy in [(0, 0), (8, 3), (3, 8), (11, 10), (6, 13)]:
+        for dy, row in enumerate(coin):
+            for dx, ch in enumerate(row):
+                if ch == ".":
+                    continue
+                px[(cx + dx) % 16, (cy + dy) % 16] = palette[ch]
+    return img
+
+
+BLOCK_BUILDERS = {
+    "ruby_ore": block_ruby_ore,
+    "sapphire_ore": block_sapphire_ore,
+    "ruby_block": block_ruby_block,
+    "sapphire_block": block_sapphire_block,
+    "marble": block_marble,
+    "dark_marble": block_dark_marble,
+    "neon_lamp": block_neon_lamp,
+    "coin_pile": block_coin_pile,
 }
 
 # Note-Block-Zustand je Block. Instrument + Note ergeben die Variante.
@@ -1266,9 +1346,8 @@ def write_java(atlas, mapping):
     (root / f"assets/{NAMESPACE}/models/block").mkdir(parents=True, exist_ok=True)
     (root / "assets/minecraft/blockstates").mkdir(parents=True, exist_ok=True)
 
-    for name, shape in CUSTOM_BLOCKS.items():
-        draw(shape, BLOCK_PALETTE, 1).save(
-            root / f"assets/{NAMESPACE}/textures/block/{name}.png")
+    for name, builder in BLOCK_BUILDERS.items():
+        builder().save(root / f"assets/{NAMESPACE}/textures/block/{name}.png")
         # Wuerfelmodell mit derselben Textur auf allen Seiten
         (root / f"assets/{NAMESPACE}/models/block/{name}.json").write_text(json.dumps({
             "parent": "minecraft:block/cube_all",
@@ -1339,8 +1418,8 @@ def write_bedrock(atlas):
     # Block-Texturen fuer Bedrock (fuer Geysers Custom-Block-Unterstuetzung)
     (root / "textures/blocks").mkdir(parents=True, exist_ok=True)
     block_textures = {}
-    for name, shape in CUSTOM_BLOCKS.items():
-        draw(shape, BLOCK_PALETTE, 1).save(root / f"textures/blocks/{name}.png")
+    for name, builder in BLOCK_BUILDERS.items():
+        builder().save(root / f"textures/blocks/{name}.png")
         block_textures[f"{NAMESPACE}_{name}"] = {"textures": f"textures/blocks/{name}"}
     (root / "textures/terrain_texture.json").write_text(json.dumps({
         "resource_pack_name": NAMESPACE,
@@ -1447,7 +1526,7 @@ def main():
     print(f"  Glyphen:      {DIST / 'glyphen.txt'}")
     print(f"\n  {len(ICON_ORDER) + len(ICONS2_ORDER)} Icons, "
           f"{len(RANK_ORDER)} Rang-Abzeichen, {len(CUSTOM_ITEMS)} Custom-Items, "
-          f"{len(CUSTOM_BLOCKS)} Custom-Bloecke")
+          f"{len(BLOCK_BUILDERS)} Custom-Bloecke")
 
 
 if __name__ == "__main__":

@@ -69,6 +69,23 @@ public final class ContentCommand implements TabExecutor {
                 }
             }
             case "give" -> give(sender, args);
+            case "pack" -> {
+                plugin.msgs().send(sender, "pack-building");
+                var result = plugin.pack().build();
+                if (!result.ok()) {
+                    plugin.msgs().send(sender, "pack-failed", "error", result.message());
+                } else {
+                    plugin.msgs().send(sender, "pack-done",
+                            "items", String.valueOf(result.items()),
+                            "blocks", String.valueOf(result.blocks()),
+                            "models", String.valueOf(result.customModels()));
+                    if (result.missing() > 0) {
+                        plugin.msgs().send(sender, "pack-missing",
+                                "count", String.valueOf(result.missing()),
+                                "details", result.message());
+                    }
+                }
+            }
             default -> plugin.msgs().send(sender, "usage");
         }
         return true;
@@ -147,7 +164,7 @@ public final class ContentCommand implements TabExecutor {
                                       @NotNull String alias, @NotNull String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            for (String s : List.of("give", "list", "reload")) {
+            for (String s : List.of("give", "list", "pack", "reload")) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) {
                     out.add(s);
                 }

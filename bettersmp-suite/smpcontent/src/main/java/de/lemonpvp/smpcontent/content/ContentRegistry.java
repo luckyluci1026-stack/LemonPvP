@@ -6,6 +6,13 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Registry;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.EquipmentSlotGroup;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
@@ -100,12 +107,31 @@ public final class ContentRegistry {
                 state = normalized;
                 stateToId.put(state, id);
             }
+            Map<String, Double> attributes = new LinkedHashMap<>();
+            ConfigurationSection attrSec = sec.getConfigurationSection("attributes");
+            if (attrSec != null) {
+                for (String key : attrSec.getKeys(false)) {
+                    attributes.put(key.toLowerCase(java.util.Locale.ROOT), attrSec.getDouble(key));
+                }
+            }
+            Map<String, Integer> enchants = new LinkedHashMap<>();
+            ConfigurationSection enchSec = sec.getConfigurationSection("enchants");
+            if (enchSec != null) {
+                for (String key : enchSec.getKeys(false)) {
+                    enchants.put(key.toLowerCase(java.util.Locale.ROOT), enchSec.getInt(key));
+                }
+            }
             entries.put(id.toLowerCase(java.util.Locale.ROOT), new CustomEntry(
                     id, isBlock, material,
                     sec.getString("name", id),
                     sec.getStringList("lore"),
                     sec.getInt("model-data", 0),
-                    state));
+                    state,
+                    attributes,
+                    sec.getInt("durability", 0),
+                    sec.getBoolean("unbreakable", false),
+                    enchants,
+                    sec.getBoolean("glow", false)));
         }
     }
 
@@ -143,8 +169,53 @@ public final class ContentRegistry {
         } catch (Throwable t) {
             plugin.getLogger().warning("Textur für " + entry.id() + " nicht setzbar: " + t.getMessage());
         }
+        applyStats(meta, entry);
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    /**
+     * Setzt Werte für Waffen und Werkzeuge: Angriffsschaden, Angriffstempo,
+     * Haltbarkeit, Verzauberungen und den Leucht-Effekt.
+     */
+    private void applyStats(ItemMeta meta, CustomEntry entry) {
+        for (Map.Entry<String, Double> attr : entry.attributes().entrySet()) {
+            Attribute attribute = attributeByName(attr.getKey());
+            if (attribute == null) {
+                plugin.getLogger().warning("Unbekanntes Attribut '" + attr.getKey()
+                        + "' bei " + entry.id());
+                continue;
+            }
+            NamespacedKey key = new NamespacedKey(plugin, entry.id() + "_" + attr.getKey());
+            meta.addAttributeModifier(attribute, new AttributeModifier(
+                    key, attr.getValue(), AttributeModifier.Operation.ADD_NUMBER,
+                    EquipmentSlotGroup.MAINHAND));
+        }
+        if (entry.maxDamage() > 0 && meta instanceof Damageable damageable) {
+            damageable.setMaxDamage(entry.maxDamage());
+        }
+        if (entry.unbreakable()) {
+            meta.setUnbreakable(true);
+            meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
+        }
+        for (Map.Entry<String, Integer> ench : entry.enchants().entrySet()) {
+            Enchantment enchantment = Registry.ENCHANTMENT.get(
+                    NamespacedKey.minecraft(ench.getKey()));
+            if (enchantment == null) {
+                plugin.getLogger().warning("Unbekannte Verzauberung '" + ench.getKey()
+                        + "' bei " + entry.id());
+                continue;
+            }
+            meta.addEnchant(enchantment, Math.max(1, ench.getValue()), true);
+        }
+        if (entry.glow() && entry.enchants().isEmpty()) {
+            meta.setEnchantmentGlintOverride(true);
+        }
+    }
+
+    /** Findet ein Attribut über seinen Vanilla-Namen (z.B. "attack_damage"). */
+    private Attribute attributeByName(String name) {
+        return Registry.ATTRIBUTE.get(NamespacedKey.minecraft(name));
     }
 
     /** Liest die Content-Id aus einem Item (oder null). */

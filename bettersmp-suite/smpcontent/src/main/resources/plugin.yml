@@ -8,7 +8,7 @@ description: Eigene Bloecke und Items passend zum SMP-Texturepack.
 commands:
   smpcontent:
     description: Verwaltung der eigenen Bloecke und Items
-    usage: "/smpcontent <give|list|reload>"
+    usage: "/smpcontent <give|list|pack|reload>"
     aliases: [content, smpc]
     permission: smpcontent.admin
 

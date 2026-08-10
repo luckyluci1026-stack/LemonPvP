@@ -13,6 +13,12 @@
 texturepack:
   # Muss zum Namensraum im Texturepack passen
   namespace: smp
+  # Name der erzeugten Zip in output/
+  pack-name: SMPPack
+  # Beschreibung im Resourcepack-Menü
+  description: "Eigene Blöcke und Items"
+  # 64 = 1.21.9-1.21.11
+  pack-format: 64
 
 # Rezepte insgesamt an-/abschalten
 recipes-enabled: true
@@ -155,8 +161,18 @@ items:
   ruby_sword:
     material: IRON_SWORD
     name: "<red>Rubinschwert</red>"
-    lore: ["<dark_gray>Aus reinem Rubin geschmiedet"]
+    lore:
+      - "<dark_gray>Aus reinem Rubin geschmiedet"
+      - "<gray>Schaden: <red>9</red>"
     model-data: 8109
+    # Eigene Werte fuer Waffen/Werkzeuge (Vanilla-Attributnamen)
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.2
+    durability: 1800
+    enchants:
+      sharpness: 3
+    glow: true
     recipe:
       shape: [" R ", " R ", " S "]
       keys: {R: "smp:ruby", S: STICK}
@@ -165,9 +181,40 @@ items:
   ruby_pickaxe:
     material: IRON_PICKAXE
     name: "<red>Rubinspitzhacke</red>"
-    lore: ["<dark_gray>Aus reinem Rubin geschmiedet"]
+    lore:
+      - "<dark_gray>Aus reinem Rubin geschmiedet"
+      - "<gray>Abbaut schneller als Diamant"
     model-data: 8110
+    attributes:
+      attack_damage: 5.0
+      attack_speed: -2.8
+    durability: 2200
+    enchants:
+      efficiency: 4
+      unbreaking: 2
     recipe:
       shape: ["RRR", " S ", " S "]
       keys: {R: "smp:ruby", S: STICK}
       amount: 1
+
+# ==========================================================
+#  Waffen & Werkzeuge - moegliche Zusatzfelder pro Item
+# ==========================================================
+#  attributes:          Vanilla-Attributnamen -> Wert
+#                       attack_damage, attack_speed, max_health,
+#                       movement_speed, armor, armor_toughness,
+#                       knockback_resistance, luck ...
+#                       (attack_speed ist negativ = langsamer)
+#  durability: 2000     eigene Haltbarkeit
+#  unbreakable: true    nutzt sich nie ab
+#  enchants:            Verzauberung -> Stufe (sharpness, efficiency,
+#                       unbreaking, fortune, protection ...)
+#  glow: true           Leucht-Effekt ohne echte Verzauberung
+#
+#  Eigene 3D-Modelle aus Blockbench:
+#    plugins/SMPContent/models/item/<id>.json
+#    plugins/SMPContent/models/block/<id>.json
+#  Texturen:
+#    plugins/SMPContent/textures/item/<id>.png
+#    plugins/SMPContent/textures/block/<id>.png
+#  Danach:  /smpcontent pack

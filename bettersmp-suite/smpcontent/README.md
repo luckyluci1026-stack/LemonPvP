@@ -37,6 +37,55 @@ Shift-Klick = 64 Stück. (Recht `smpcontent.admin`)
 
 **3. `/smpcontent give <Spieler> <Id> [Menge]`** – gezielt vergeben.
 
+## Eigenes Texturepack bauen (Blockbench)
+
+SMPContent baut dir das Resource-Pack selbst – du brauchst kein ItemsAdder.
+
+**Ordner (werden beim ersten Start angelegt):**
+
+```
+plugins/SMPContent/
+├── textures/item/<id>.png      deine Item-Texturen
+├── textures/block/<id>.png     deine Block-Texturen
+├── models/item/<id>.json       optional: Blockbench-Modell (3D)
+├── models/block/<id>.json      optional: Blockbench-Modell (3D)
+└── output/SMPPack.zip          das fertige Pack
+```
+
+**Ablauf:**
+1. Textur (16×16 PNG) in `textures/item/` legen – Dateiname = Id aus der `config.yml`
+2. Optional in **Blockbench**: *Neu → Java Block/Item Model*, bauen, Textur-Pfad auf
+   `smp:item/<id>` setzen, als *Java-Block/Item-Modell* nach `models/item/<id>.json` exportieren
+3. Eintrag in der `config.yml` anlegen
+4. Im Spiel: **`/smpcontent pack`**
+
+Liegt ein Blockbench-Modell vor, benutzt das Pack **dein** Modell statt des
+automatischen Standardmodells – so bekommst du echte 3D-Waffen und -Blöcke.
+Zusätzliche PNGs in den Textur-Ordnern werden mitkopiert, falls dein Modell
+mehrere Texturen nutzt. Anleitungen liegen als `LIESMICH.txt` und
+`BLOCKBENCH.txt` in den Ordnern.
+
+## Waffen & Werkzeuge
+
+Jedes Item kann eigene Werte bekommen:
+
+```yaml
+ruby_sword:
+  material: IRON_SWORD
+  name: "<red>Rubinschwert</red>"
+  attributes:
+    attack_damage: 9.0
+    attack_speed: -2.2
+  durability: 1800
+  enchants:
+    sharpness: 3
+  glow: true
+```
+
+Möglich sind alle Vanilla-Attribute (`attack_damage`, `attack_speed`, `armor`,
+`movement_speed`, `max_health`, `knockback_resistance` …), eigene `durability`,
+`unbreakable`, `enchants` und `glow`.
+
 ## Wie die Blöcke funktionieren
 
 Minecraft erlaubt keine echten neuen Block-IDs über ein Resource-Pack. Die
