@@ -117,6 +117,30 @@ cd paper-api-build && mvn clean install -DskipTests
 Danach `mvn clean install` in `bettersmp-suite` wie oben — Maven nimmt die
 lokal installierten Artefakte.
 
+## Velocity-Plugin bauen (SMPProxy)
+
+Das Proxy-Plugin ist ein **eigenes** Maven-Projekt – es gehört nicht zur
+Paper-Suite und wird getrennt gebaut:
+
+```bash
+cd proxy/smpproxy
+mvn clean package
+```
+
+Ergebnis: `target/SMPProxy-1.0.0.jar` (fertig auch in `dist/`).
+
+Die Velocity-API liegt ebenfalls im PaperMC-Repository, das ist in
+`proxy/smpproxy/pom.xml` eingetragen. Die Version steht als Property:
+
+```xml
+<velocity.version>3.3.0-SNAPSHOT</velocity.version>
+```
+
+Das Plugin läuft auch auf neueren Velocity-Versionen. Wer gegen die aktuelle
+Entwicklungsversion bauen will, trägt dort `3.4.0-SNAPSHOT` ein.
+
+Einbau und komplettes Proxy-Setup: `proxy/README.md`.
+
 ## Texture-Pack bauen
 
 Braucht **Python 3** und **Pillow** (`pip install Pillow`):

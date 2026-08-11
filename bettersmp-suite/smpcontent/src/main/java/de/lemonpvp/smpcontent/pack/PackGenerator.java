@@ -79,14 +79,14 @@ public final class PackGenerator {
             writeIfAbsent(texturesDir().resolve("LIESMICH.txt"), """
                     Hier kommen deine eigenen Texturen rein.
 
-                      item/<id>.png    Textur fuer ein Item aus dem Abschnitt "items"
-                      block/<id>.png   Textur fuer einen Block aus dem Abschnitt "blocks"
+                      item/<id>.png    Textur für ein Item aus dem Abschnitt "items"
+                      block/<id>.png   Textur für einen Block aus dem Abschnitt "blocks"
 
                     Der Dateiname muss exakt der Id aus der config.yml entsprechen,
-                    also z.B. item/ruby.png fuer das Item "ruby".
+                    also z.B. item/ruby.png für das Item "ruby".
 
-                    Empfohlene Groesse: 16x16 Pixel (32x32 oder 64x64 gehen auch).
-                    Zusaetzliche PNGs in diesen Ordnern werden mitkopiert - praktisch,
+                    Empfohlene Größe: 16x16 Pixel (32x32 oder 64x64 gehen auch).
+                    Zusätzliche PNGs in diesen Ordnern werden mitkopiert - praktisch,
                     wenn ein Blockbench-Modell mehrere Texturen benutzt.
 
                     Danach im Spiel:  /smpcontent pack
@@ -98,8 +98,8 @@ public final class PackGenerator {
 
                     Lege deine Blockbench-Exporte hier ab:
 
-                      item/<id>.json     Modell fuer ein Item, eine Waffe, ein Werkzeug
-                      block/<id>.json    Modell fuer einen Block
+                      item/<id>.json     Modell für ein Item, eine Waffe, ein Werkzeug
+                      block/<id>.json    Modell für einen Block
 
                     Der Dateiname muss der Id aus der config.yml entsprechen. Liegt
                     hier ein Modell, benutzt das Pack DEIN Modell statt des
@@ -109,14 +109,14 @@ public final class PackGenerator {
 
                     1. Neu  ->  "Java Block/Item Model"
                     2. Modell bauen und texturieren
-                    3. Textur-Eigenschaften oeffnen und den Namen so setzen, dass
+                    3. Textur-Eigenschaften öffnen und den Namen so setzen, dass
                        der Pfad passt:   %NS%:item/<id>     (bzw. %NS%:block/<id>)
                     4. Datei -> Exportieren -> "Java-Block/Item-Modell",
                        hier in models/item/ bzw. models/block/ speichern
                     5. Die PNG dazu nach ../textures/item/<id>.png legen
                     6. Im Spiel:  /smpcontent pack
 
-                    Tipp: Fuer Waffen und Werkzeuge lohnt sich in Blockbench der
+                    Tipp: Für Waffen und Werkzeuge lohnt sich in Blockbench der
                     Reiter "Display" - damit sitzt das Modell in der Hand richtig.
                     Diese Einstellungen bleiben beim Export erhalten.
                     """.replace("%NS%", namespace()));
@@ -223,7 +223,7 @@ public final class PackGenerator {
     private void writePackMeta(Path work) throws IOException {
         int format = plugin.getConfig().getInt("texturepack.pack-format", 64);
         String description = plugin.getConfig()
-                .getString("texturepack.description", "Eigene Bloecke und Items")
+                .getString("texturepack.description", "Eigene Blöcke und Items")
                 .replace("\"", "'");
         write(work.resolve("pack.mcmeta"), """
                 {

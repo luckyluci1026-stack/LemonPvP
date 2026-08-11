@@ -9,7 +9,7 @@ Erzeugt aus diesem einen Skript BEIDE Resource-Packs:
   build/bedrock/  -> Bedrock-Resourcepack (Ordner)
   dist/SMP-Java-Pack.zip
   dist/SMP-Bedrock-Pack.mcpack
-  dist/geyser/smp_items.json   -> Geyser-Mapping fuer die Custom-Items
+  dist/geyser/smp_items.json   -> Geyser-Mapping für die Custom-Items
 
 Alles wird prozedural gezeichnet - du kannst jede Form unten in den
 SHAPE-Strings direkt bearbeiten und einfach neu generieren:
@@ -17,8 +17,8 @@ SHAPE-Strings direkt bearbeiten und einfach neu generieren:
     python3 generate.py
 
 Zeichen-Format: Jede Form ist ein Raster aus Zeilen. Ein Zeichen = ein Pixel.
-'.' ist transparent, alle anderen Zeichen sind Schluessel aus der jeweiligen
-Palette. So kannst du Pixel fuer Pixel malen, ohne Grafikprogramm.
+'.' ist transparent, alle anderen Zeichen sind Schlüssel aus der jeweiligen
+Palette. So kannst du Pixel für Pixel malen, ohne Grafikprogramm.
 """
 
 import json
@@ -69,7 +69,7 @@ def lerp(a, b, t):
 
 
 def gradient_fill(img, start, end, mode="diagonal"):
-    """Faerbt alle nicht-transparenten Pixel mit einem Farbverlauf ein.
+    """Färbt alle nicht-transparenten Pixel mit einem Farbverlauf ein.
 
     mode: "horizontal", "vertical" oder "diagonal".
     Der Alphakanal (und damit die Form + Kanten) bleibt erhalten.
@@ -98,7 +98,7 @@ def boost(color, factor):
 
 
 def shade(img, mask_shape, palette, scale):
-    """Legt eine zweite Ebene (z.B. Outline/Glanz) ueber ein Bild."""
+    """Legt eine zweite Ebene (z.B. Outline/Glanz) über ein Bild."""
     overlay = draw(mask_shape, palette, scale)
     img.alpha_composite(overlay)
     return img
@@ -112,15 +112,15 @@ def hexc(value, alpha=255):
 # ---------------------------------------------------------------------------
 #  Prozedurale Textur-Helfer
 #  Statt jeden Pixel von Hand zu malen, erzeugen diese Funktionen echte
-#  Struktur: Rauschen fuer Stein, Facetten fuer Kristalle, Lichtkanten fuer
-#  bearbeitete Bloecke. Lichtrichtung ist wie in Minecraft oben links.
+#  Struktur: Rauschen für Stein, Facetten für Kristalle, Lichtkanten für
+#  bearbeitete Blöcke. Lichtrichtung ist wie in Minecraft oben links.
 # ---------------------------------------------------------------------------
 
 import random
 
 
 def value_noise(size, seed, cells=4, jitter=0.22):
-    """Weiches Rauschen (bilinear interpoliertes Zufallsgitter + Koernung)."""
+    """Weiches Rauschen (bilinear interpoliertes Zufallsgitter + Körnung)."""
     rng = random.Random(seed)
     grid = [[rng.random() for _ in range(cells + 1)] for _ in range(cells + 1)]
     out = [[0.0] * size for _ in range(size)]
@@ -138,7 +138,7 @@ def value_noise(size, seed, cells=4, jitter=0.22):
 
 
 def from_noise(size, shades, seed, cells=4, jitter=0.22):
-    """Baut eine Flaeche, indem Rauschwerte auf eine Farbtreppe abgebildet werden."""
+    """Baut eine Fläche, indem Rauschwerte auf eine Farbtreppe abgebildet werden."""
     noise = value_noise(size, seed, cells, jitter)
     img = Image.new("RGBA", (size, size))
     px = img.load()
@@ -184,7 +184,7 @@ GEM_BLOB = [
 
 
 def scatter_gems(img, colors, seed, count=5):
-    """Streut Kristall-Cluster mit Licht und Schatten in eine Steinflaeche."""
+    """Streut Kristall-Cluster mit Licht und Schatten in eine Steinfläche."""
     outline, high, mid, shadow = colors
     rng = random.Random(seed + 7777)
     size = img.size[0]
@@ -202,7 +202,7 @@ def scatter_gems(img, colors, seed, count=5):
             for dx, ch in enumerate(row):
                 if ch == ".":
                     continue
-                # Modulo -> Cluster laufen sauber ueber die Kante (nahtlos kachelbar)
+                # Modulo -> Cluster laufen sauber über die Kante (nahtlos kachelbar)
                 x = (cx + dx) % size
                 y = (cy + dy) % size
                 px[x, y] = palette[ch]
@@ -210,7 +210,7 @@ def scatter_gems(img, colors, seed, count=5):
 
 
 def crystal_surface(size, shades, seed):
-    """Kristalline Flaeche: Rauschen plus ein paar helle Facettenkanten."""
+    """Kristalline Fläche: Rauschen plus ein paar helle Facettenkanten."""
     img = from_noise(size, shades, seed, cells=3, jitter=0.18)
     rng = random.Random(seed + 31)
     px = img.load()
@@ -225,7 +225,7 @@ def crystal_surface(size, shades, seed):
 
 
 def veined(size, base_shades, vein_color, seed, veins=3):
-    """Glatte Flaeche mit geschwungenen Adern - fuer Marmor."""
+    """Glatte Fläche mit geschwungenen Adern - für Marmor."""
     img = from_noise(size, base_shades, seed, cells=3, jitter=0.10)
     rng = random.Random(seed + 99)
     px = img.load()
@@ -262,8 +262,8 @@ ICON_PALETTE = {
     "R": hexc("FF4D5E"),          # Rot hell
     "r": hexc("B3132A"),          # Rot dunkel
     "p": hexc("FF9AA6"),          # Rot Glanz
-    "E": hexc("5CE07A"),          # Gruen hell
-    "e": hexc("1E8F3C"),          # Gruen dunkel
+    "E": hexc("5CE07A"),          # Grün hell
+    "e": hexc("1E8F3C"),          # Grün dunkel
     "B": hexc("5AC8FF"),          # Blau hell
     "b": hexc("1C6FB0"),          # Blau dunkel
     "C": hexc("7A5230"),          # Braun
@@ -273,7 +273,7 @@ ICON_PALETTE = {
 }
 
 ICONS = {
-    # ---- Muenze -------------------------------------------------
+    # ---- Münze -------------------------------------------------
     "coin": """
 .....KKKKKK.....
 ...KKggggggKK...
@@ -605,7 +605,7 @@ ICONS2 = {
 ................
 ................
 """,
-    # Verkaufen: Muenze mit Pfeil heraus
+    # Verkaufen: Münze mit Pfeil heraus
     "sell": """
 .......KK.......
 ......KWWK......
@@ -783,11 +783,11 @@ ICONS2_ORDER = ["buy", "sell", "shield", "potion", "trophy",
 
 # ---------------------------------------------------------------------------
 #  2) Rang-Abzeichen mit Farbverlauf  (Codepoints U+E110 - U+E118)
-#     Das ist die Bedrock-Loesung: Ein Bild traegt echte Farbverlaeufe,
-#     unabhaengig davon, welche Farbcodes der Client unterstuetzt.
+#     Das ist die Bedrock-Lösung: Ein Bild trägt echte Farbverläufe,
+#     unabhängig davon, welche Farbcodes der Client unterstützt.
 # ---------------------------------------------------------------------------
 
-# Schild-Silhouette: 'F' = Flaeche (bekommt den Verlauf), 'K' = Rand,
+# Schild-Silhouette: 'F' = Fläche (bekommt den Verlauf), 'K' = Rand,
 # 'H' = Glanzlicht.
 SHIELD = """
 ..KKKKKKKKKKKK..
@@ -808,7 +808,7 @@ KFFFFFFFFFFFFFFK
 ......KKKK......
 """
 
-# Sterne-Aufsatz fuer Owner-Raenge
+# Sterne-Aufsatz für Owner-Ränge
 STAR_OVERLAY = """
 ................
 ................
@@ -846,9 +846,9 @@ RANK_ORDER = list(RANKS.keys())
 def build_rank_badge(start_hex, end_hex, with_star, scale):
     base = draw(SHIELD, {"F": hexc("FFFFFF"), "K": hexc("1A1A22"),
                          "H": hexc("FFFFFF")}, scale)
-    # Nur die Flaeche einfaerben: Rand separat neu druebermalen.
+    # Nur die Fläche einfärben: Rand separat neu drübermalen.
     # Start wird leicht aufgehellt, Ende leicht abgedunkelt - so ist der
-    # Verlauf auch auf der kleinen Schildflaeche deutlich sichtbar.
+    # Verlauf auch auf der kleinen Schildfläche deutlich sichtbar.
     gradient_fill(base, boost(hexc(start_hex), 1.25), boost(hexc(end_hex), 0.72),
                   mode="diagonal")
     outline = draw(SHIELD.replace("F", ".").replace("H", "."),
@@ -873,7 +873,7 @@ ITEM_PALETTE.update({
     "M": hexc("FF2D55"),   # Herzkristall hell
     "m": hexc("8E0B25"),   # Herzkristall dunkel
     "n": hexc("FF8FA8"),   # Herzkristall Glanz
-    "T": hexc("48E08A"),   # Totem gruen
+    "T": hexc("48E08A"),   # Totem grün
     "t": hexc("1B7A45"),   # Totem dunkel
     "O": hexc("F2C14E"),   # Totem gold
 })
@@ -917,7 +917,7 @@ KOTTOOOOOOOOTTOK
 ...KKOOOOOOKK...
 .....KKKKKK.....
 """,
-    # Shop-Muenze
+    # Shop-Münze
     "coin": """
 .....KKKKKK.....
 ...KKggggggKK...
@@ -1089,10 +1089,10 @@ ITEM_BASE = {
 }
 
 # ---------------------------------------------------------------------------
-#  4) Custom-Bloecke
-#     Java setzt sie ueber Note-Block-Zustaende um (die Technik, die auch
+#  4) Custom-Blöcke
+#     Java setzt sie über Note-Block-Zustände um (die Technik, die auch
 #     grosse Content-Plugins nutzen). Jeder Block bekommt eine eigene
-#     Kombination aus Instrument + Note; das Plugin haelt sie stabil.
+#     Kombination aus Instrument + Note; das Plugin hält sie stabil.
 # ---------------------------------------------------------------------------
 
 BLOCK_PALETTE = dict(ITEM_PALETTE)
@@ -1118,7 +1118,7 @@ MARBLE_SHADES = [hexc("C9C5BA"), hexc("D8D4CA"), hexc("E4E1D8"), hexc("EFEDE6"),
 DARKM_SHADES = [hexc("2A2A33"), hexc("33333E"), hexc("3D3D49"), hexc("484855"), hexc("545463")]
 GOLD_SHADES = [hexc("8A5B0F"), hexc("BE8517"), hexc("E0A81C"), hexc("FFD75A"), hexc("FFF0AE")]
 
-# Kristallfarben fuer Erz-Einschluesse: (Rand, Glanz, Mitte, Schatten)
+# Kristallfarben für Erz-Einschlüsse: (Rand, Glanz, Mitte, Schatten)
 RUBY_GEM = (hexc("4A0713"), hexc("FF8098"), hexc("E0224A"), hexc("8E0F24"))
 SAPP_GEM = (hexc("06284D"), hexc("8ED6FF"), hexc("1E88D6"), hexc("0E4C86"))
 
@@ -1166,7 +1166,7 @@ def block_neon_lamp():
 
 
 def block_coin_pile():
-    """Gestapelte Muenzen mit Licht von oben links."""
+    """Gestapelte Münzen mit Licht von oben links."""
     img = from_noise(16, [hexc("6B4708"), hexc("7A520C")], seed=808, cells=2)
     px = img.load()
     coin = [
@@ -1201,7 +1201,7 @@ BLOCK_BUILDERS = {
 }
 
 # Note-Block-Zustand je Block. Instrument + Note ergeben die Variante.
-# Das Plugin haelt diese Zustaende stabil (kein Umstimmen durch Rechtsklick,
+# Das Plugin hält diese Zustände stabil (kein Umstimmen durch Rechtsklick,
 # kein Instrumentwechsel durch den Block darunter).
 BLOCK_STATES = {
     "ruby_ore":       {"instrument": "bit",           "note": 1,  "powered": False},
@@ -1214,7 +1214,7 @@ BLOCK_STATES = {
     "coin_pile":      {"instrument": "bit",           "note": 8,  "powered": False},
 }
 
-# Alle Note-Block-Instrumente in 1.21 - fuer die vollstaendige Blockstate-Datei
+# Alle Note-Block-Instrumente in 1.21 - für die vollständige Blockstate-Datei
 INSTRUMENTS = [
     "harp", "basedrum", "snare", "hat", "bass", "flute", "bell", "guitar",
     "chime", "xylophone", "iron_xylophone", "cow_bell", "didgeridoo", "bit",
@@ -1233,7 +1233,7 @@ ATLAS_SIZE = CELL * GRID
 
 
 def build_atlas():
-    """Ein Atlas fuer Java UND Bedrock: identische Codepoints, identisches Bild."""
+    """Ein Atlas für Java UND Bedrock: identische Codepoints, identisches Bild."""
     atlas = Image.new("RGBA", (ATLAS_SIZE, ATLAS_SIZE), (0, 0, 0, 0))
     mapping = {}
 
@@ -1257,10 +1257,10 @@ def build_atlas():
 
 
 def build_noteblock_states():
-    """Vollstaendige note_block.json.
+    """Vollständige note_block.json.
 
     WICHTIG: Diese Datei ersetzt die Blockstates des Notenblocks komplett.
-    Jede nicht aufgefuehrte Kombination wuerde als fehlende Textur erscheinen -
+    Jede nicht aufgeführte Kombination würde als fehlende Textur erscheinen -
     deshalb werden ALLE Instrument/Noten/Powered-Kombinationen erzeugt und nur
     die belegten auf eigene Modelle gelenkt.
     """
@@ -1306,7 +1306,7 @@ def write_java(atlas, mapping):
         }
     }, indent=2), encoding="utf-8")
 
-    # Glyphen in die Standardschrift einhaengen -> ueberall nutzbar
+    # Glyphen in die Standardschrift einhängen -> überall nutzbar
     rows = []
     for r in range(GRID):
         row = "".join(chr(0xE100 + r * GRID + c) for c in range(GRID))
@@ -1341,19 +1341,19 @@ def write_java(atlas, mapping):
             "model": {"type": "minecraft:model", "model": f"{NAMESPACE}:item/{name}"}
         }, indent=2), encoding="utf-8")
 
-    # ---- Custom-Bloecke ----
+    # ---- Custom-Blöcke ----
     (root / f"assets/{NAMESPACE}/textures/block").mkdir(parents=True, exist_ok=True)
     (root / f"assets/{NAMESPACE}/models/block").mkdir(parents=True, exist_ok=True)
     (root / "assets/minecraft/blockstates").mkdir(parents=True, exist_ok=True)
 
     for name, builder in BLOCK_BUILDERS.items():
         builder().save(root / f"assets/{NAMESPACE}/textures/block/{name}.png")
-        # Wuerfelmodell mit derselben Textur auf allen Seiten
+        # Würfelmodell mit derselben Textur auf allen Seiten
         (root / f"assets/{NAMESPACE}/models/block/{name}.json").write_text(json.dumps({
             "parent": "minecraft:block/cube_all",
             "textures": {"all": f"{NAMESPACE}:block/{name}"},
         }, indent=2), encoding="utf-8")
-        # Das Item in der Hand zeigt denselben Wuerfel
+        # Das Item in der Hand zeigt denselben Würfel
         (root / f"assets/{NAMESPACE}/models/item/{name}.json").write_text(json.dumps({
             "parent": f"{NAMESPACE}:block/{name}"
         }, indent=2), encoding="utf-8")
@@ -1384,7 +1384,7 @@ def write_bedrock(atlas):
     (root / "font").mkdir(parents=True, exist_ok=True)
     (root / "textures/items").mkdir(parents=True, exist_ok=True)
 
-    # Bedrock laedt Glyphen aus font/glyph_<HIGHBYTE>.png - gleiche Codepoints
+    # Bedrock lädt Glyphen aus font/glyph_<HIGHBYTE>.png - gleiche Codepoints
     # wie im Java-Pack, also exakt dasselbe Bild.
     atlas.save(root / "font/glyph_E1.png")
 
@@ -1415,7 +1415,7 @@ def write_bedrock(atlas):
         "texture_data": textures,
     }, indent=2), encoding="utf-8")
 
-    # Block-Texturen fuer Bedrock (fuer Geysers Custom-Block-Unterstuetzung)
+    # Block-Texturen für Bedrock (für Geysers Custom-Block-Unterstützung)
     (root / "textures/blocks").mkdir(parents=True, exist_ok=True)
     block_textures = {}
     for name, builder in BLOCK_BUILDERS.items():
@@ -1478,10 +1478,10 @@ def zip_dir(folder: Path, target: Path):
 
 
 def write_glyph_reference(mapping):
-    """Schreibt eine Liste aller Glyphen - praktisch fuer die Plugin-Configs."""
+    """Schreibt eine Liste aller Glyphen - praktisch für die Plugin-Configs."""
     lines = [
         "# SMP Pack - Glyphen-Uebersicht",
-        "# Diese Zeichen kannst du direkt in Configs/Nachrichten einfuegen.",
+        "# Diese Zeichen kannst du direkt in Configs/Nachrichten einfügen.",
         "",
     ]
     for name, cp in mapping.items():
@@ -1494,8 +1494,8 @@ def write_glyph_reference(mapping):
 
 
 def write_block_reference():
-    """Schreibt die Blockzustaende als YAML - direkt nutzbar in SMPContent."""
-    lines = ["# Von generate.py erzeugt - Zustaende muessen zum Texturepack passen!",
+    """Schreibt die Blockzustände als YAML - direkt nutzbar in SMPContent."""
+    lines = ["# Von generate.py erzeugt - Zustände müssen zum Texturepack passen!",
              "blocks:"]
     for name, st in BLOCK_STATES.items():
         lines.append(f"  {name}:")
@@ -1526,7 +1526,7 @@ def main():
     print(f"  Glyphen:      {DIST / 'glyphen.txt'}")
     print(f"\n  {len(ICON_ORDER) + len(ICONS2_ORDER)} Icons, "
           f"{len(RANK_ORDER)} Rang-Abzeichen, {len(CUSTOM_ITEMS)} Custom-Items, "
-          f"{len(BLOCK_BUILDERS)} Custom-Bloecke")
+          f"{len(BLOCK_BUILDERS)} Custom-Blöcke")
 
 
 if __name__ == "__main__":

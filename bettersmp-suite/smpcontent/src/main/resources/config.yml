@@ -165,7 +165,7 @@ items:
       - "<dark_gray>Aus reinem Rubin geschmiedet"
       - "<gray>Schaden: <red>9</red>"
     model-data: 8109
-    # Eigene Werte fuer Waffen/Werkzeuge (Vanilla-Attributnamen)
+    # Eigene Werte für Waffen/Werkzeuge (Vanilla-Attributnamen)
     attributes:
       attack_damage: 9.0
       attack_speed: -2.2
@@ -198,7 +198,7 @@ items:
       amount: 1
 
 # ==========================================================
-#  Waffen & Werkzeuge - moegliche Zusatzfelder pro Item
+#  Waffen & Werkzeuge - mögliche Zusatzfelder pro Item
 # ==========================================================
 #  attributes:          Vanilla-Attributnamen -> Wert
 #                       attack_damage, attack_speed, max_health,

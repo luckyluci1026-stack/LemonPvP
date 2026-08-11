@@ -1,0 +1,105 @@
+# ==========================================================
+#  SMPProxy - Velocity-Plugin
+#
+#  Domain -> Server:  smp1.lemon-servers.de landet direkt auf smp1,
+#                     smp2.lemon-servers.de direkt auf smp2.
+#  Fällt ein SMP aus, kommen die Spieler in den Warteraum (NanoLimbo)
+#  und werden automatisch zurückgeholt, sobald der Server wieder läuft.
+#
+#  Die Servernamen hier müssen exakt so heißen wie in der
+#  velocity.toml unter [servers].
+# ==========================================================
+
+# ----------------------------------------------------------
+#  Domain -> Server
+#  Groß-/Kleinschreibung egal, ein Punkt am Ende wird ignoriert.
+#  Ein * am Anfang gilt für alle Subdomains, z.B. "*.lemon-servers.de".
+#  Ein genauer Treffer geht immer vor einem Stern-Eintrag.
+# ----------------------------------------------------------
+domains:
+  "smp1.lemon-servers.de": smp1
+  "smp2.lemon-servers.de": smp2
+  "lemon-servers.de": smp1
+
+# Wohin geht es, wenn die Domain oben nicht vorkommt?
+default-server: smp1
+
+# Der Warteraum (NanoLimbo). Leer lassen = Spieler wird getrennt.
+limbo: limbo
+
+# ----------------------------------------------------------
+#  Server-Überwachung
+#  Daraus ergibt sich alles Weitere: wohin ein Spieler kommt,
+#  ob ein Rauswurf ein Absturz oder ein echter Kick war und
+#  wann jemand aus dem Warteraum zurück darf.
+# ----------------------------------------------------------
+monitor:
+  # Alle wie viel Sekunden wird jeder Server angepingt?
+  interval: 5
+  # Wie lange darf ein Ping dauern, bevor der Server als offline gilt?
+  timeout: 3
+  # Direkt beim Start einmal prüfen, statt erst nach dem Intervall
+  check-on-start: true
+
+# ----------------------------------------------------------
+#  Automatisch zurück aus dem Warteraum
+# ----------------------------------------------------------
+auto-return:
+  enabled: true
+  # So viele erfolgreiche Pings hintereinander, bevor zurückgeschickt wird.
+  # Verhindert, dass Spieler in einen gerade erst startenden Server laufen.
+  confirmations: 3
+  # Sekunden Wartezeit zwischen zwei Rückhol-Versuchen pro Spieler
+  cooldown: 5
+  # Hinweise im Chat anzeigen
+  show-notice: true
+
+# ----------------------------------------------------------
+#  Befehle
+# ----------------------------------------------------------
+commands:
+  # /hub bzw. /lobby schickt in den Warteraum
+  hub-enabled: true
+  hub-aliases: ["hub", "lobby", "limbo"]
+  # /smp1, /smp2 ... als Kurzbefehle für /server <name>
+  server-shortcuts: true
+
+# ----------------------------------------------------------
+#  Nachrichten (MiniMessage - Gradients, Farben, alles erlaubt)
+# ----------------------------------------------------------
+messages:
+  prefix: "<gradient:#FFD75A:#FFB02E><bold>Proxy</bold></gradient> <dark_gray>»</dark_gray> "
+
+  # Beim Verbinden ist der Zielserver aus
+  server-offline: "%prefix%<red><white>%server%</white> ist gerade nicht erreichbar.</red><newline><gray>Du wartest hier, bis er wieder da ist.</gray>"
+  # Der Server ist während des Spielens weggebrochen
+  server-crashed: "%prefix%<red>Verbindung zu <white>%server%</white> verloren.</red><newline><gray>Du wurdest in den Warteraum gebracht.</gray>"
+  # Zurückholen läuft
+  return-soon: "%prefix%<green><white>%server%</white> ist wieder da - du kommst gleich zurück.</green>"
+  return-ok: "%prefix%<green>Willkommen zurück auf <white>%server%</white>.</green>"
+  return-failed: "%prefix%<gold><white>%server%</white> startet noch. Ich versuche es gleich nochmal.</gold>"
+
+  # Es gibt keinen Warteraum -> Spieler wird getrennt (Trennbildschirm)
+  no-limbo: "<gradient:#FF6B6B:#C92A2A><bold>Server nicht erreichbar</bold></gradient><newline><newline><gray>%server% ist gerade offline.</gray><newline><gray>Bitte versuche es in ein paar Minuten nochmal.</gray>"
+  limbo-crashed: "<gradient:#FF6B6B:#C92A2A><bold>Verbindung verloren</bold></gradient><newline><newline><gray>Auch der Warteraum ist nicht erreichbar.</gray><newline><gray>Bitte versuche es gleich nochmal.</gray>"
+
+  # /hub
+  hub-sending: "%prefix%<gray>Bringe dich in den Warteraum ...</gray>"
+  hub-already: "%prefix%<gold>Du bist bereits im Warteraum.</gold>"
+  hub-missing: "%prefix%<red>Es ist kein Warteraum eingerichtet.</red>"
+
+  # /smp1, /smp2 ...
+  switch-sending: "%prefix%<gray>Verbinde dich mit <white>%server%</white> ...</gray>"
+  switch-already: "%prefix%<gold>Du bist bereits auf <white>%server%</white>.</gold>"
+  switch-offline: "%prefix%<red><white>%server%</white> ist gerade offline.</red>"
+  switch-failed: "%prefix%<red>Verbindung zu <white>%server%</white> fehlgeschlagen.</red>"
+
+  # /smpproxy
+  player-only: "%prefix%<red>Das geht nur im Spiel.</red>"
+  no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+  reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
+  help: "%prefix%<gray>/smpproxy <white>status</white> <dark_gray>|</dark_gray> <white>reload</white></gray>"
+  status-header: "%prefix%<gray>Serverstatus:</gray>"
+  status-online: "<dark_gray> ▪ </dark_gray><white>%server%</white> <dark_gray>-</dark_gray> <green>online</green> <dark_gray>(</dark_gray><gray>%spieler% Spieler</gray><dark_gray>)</dark_gray>"
+  status-offline: "<dark_gray> ▪ </dark_gray><white>%server%</white> <dark_gray>-</dark_gray> <red>offline</red>"
+  unknown-server: "%prefix%<red>Server <white>%server%</white> gibt es nicht.</red>"

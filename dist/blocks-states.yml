@@ -1,4 +1,4 @@
-# Von generate.py erzeugt - Zustaende muessen zum Texturepack passen!
+# Von generate.py erzeugt - Zustände müssen zum Texturepack passen!
 blocks:
   ruby_ore:
     instrument: bit

@@ -1,5 +1,5 @@
 # SMP Pack - Glyphen-Uebersicht
-# Diese Zeichen kannst du direkt in Configs/Nachrichten einfuegen.
+# Diese Zeichen kannst du direkt in Configs/Nachrichten einfügen.
 
 coin             U+E100   
 heart            U+E101   

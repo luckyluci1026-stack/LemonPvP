@@ -72,3 +72,11 @@ bettersmp-suite/
 
 Jedes Plugin ist eigenständig nutzbar. Lifesteal+ nutzt die CombatLog-API von
 BetterSMP, funktioniert aber auch ohne (die Integration schaltet sich dann ab).
+
+## Mehrere Server hinter einem Proxy
+
+Wer zwei SMPs betreiben will (`smp1.deine-domain.de` und `smp2.deine-domain.de`,
+beide direkt ohne Lobby, mit Warteraum bei einem Absturz), findet das komplette
+Setup in **`../proxy/README.md`** – inklusive dem Velocity-Plugin **SMPProxy**.
+Die Plugins dieser Suite laufen dort unverändert weiter; nur Geyser gehört dann
+auf den Proxy statt auf die SMP-Server.

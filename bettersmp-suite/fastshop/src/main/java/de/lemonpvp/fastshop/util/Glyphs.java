@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * Im Text werden sie als <code>%g:coin%</code> geschrieben und hier durch das
  * jeweilige Zeichen ersetzt. Ist das Texturepack nicht installiert, kann man
  * <code>glyphs.enabled: false</code> setzen - dann verschwinden die Platzhalter
- * rueckstandslos und alles bleibt lesbar.
+ * rückstandslos und alles bleibt lesbar.
  */
 public final class Glyphs {
 
