@@ -1,0 +1,171 @@
+# =====================================================================
+#  Custom-Items ("Artefakte")
+#
+#  custom-model-data  -> Java-Resourcepack (resourcepack/java)
+#  bedrock-identifier -> Geyser-Mapping    (geyser/custom_mappings)
+#
+#  Beide Packs liegen im Repository unter /resourcepack. Wenn du hier eine
+#  custom-model-data aenderst, musst du sie auch im Geyser-Mapping und im
+#  Java-Pack anpassen - sonst sehen Bedrock-Spieler das Vanilla-Item.
+# =====================================================================
+
+items:
+
+  zitronenklinge:
+    material: DIAMOND_SWORD
+    custom-model-data: 3001
+    bedrock-identifier: "geyser_custom:zitronenklinge"
+    # Nur fuer die Resourcepacks: handheld = Werkzeugoptik, generated = flaches Icon
+    model: handheld
+    display: "&e&lZitronenklinge"
+    lore:
+      - "&7Geschmiedet aus dem Herz des Zitronenhains."
+      - ""
+      - "&8» &fSchleichen + Rechtsklick: &aWirbelsturm"
+    unbreakable: true
+    glow: true
+    hide-flags: true
+    enchantments:
+      sharpness: 3
+      unbreaking: 3
+
+  sturmbogen:
+    material: BOW
+    custom-model-data: 3002
+    bedrock-identifier: "geyser_custom:sturmbogen"
+    # Nur fuer die Resourcepacks: handheld = Werkzeugoptik, generated = flaches Icon
+    model: generated
+    display: "&b&lSturmbogen"
+    lore:
+      - "&7Der Wind traegt jeden Pfeil ans Ziel."
+      - ""
+      - "&8» &fSchleichen + Rechtsklick: &aPfeilhagel"
+    unbreakable: true
+    glow: true
+    hide-flags: true
+    enchantments:
+      power: 2
+      unbreaking: 3
+
+  schattendolch:
+    material: IRON_SWORD
+    custom-model-data: 3003
+    bedrock-identifier: "geyser_custom:schattendolch"
+    # Nur fuer die Resourcepacks: handheld = Werkzeugoptik, generated = flaches Icon
+    model: handheld
+    display: "&5&lSchattendolch"
+    lore:
+      - "&7Man sieht ihn erst, wenn es zu spaet ist."
+      - ""
+      - "&8» &fSchleichen + Rechtsklick: &aSchattenschritt"
+    unbreakable: true
+    glow: true
+    hide-flags: true
+    enchantments:
+      sharpness: 2
+      unbreaking: 3
+
+  feuerstab:
+    material: BLAZE_ROD
+    custom-model-data: 3004
+    bedrock-identifier: "geyser_custom:feuerstab"
+    # Nur fuer die Resourcepacks: handheld = Werkzeugoptik, generated = flaches Icon
+    model: handheld
+    display: "&c&lFeuerstab"
+    lore:
+      - "&7Der Stab brennt seit dem ersten Projekttag."
+      - ""
+      - "&8» &fSchleichen + Rechtsklick: &aFeuerball"
+    unbreakable: true
+    glow: true
+    hide-flags: true
+
+  heilerstab:
+    material: STICK
+    custom-model-data: 3005
+    bedrock-identifier: "geyser_custom:heilerstab"
+    # Nur fuer die Resourcepacks: handheld = Werkzeugoptik, generated = flaches Icon
+    model: handheld
+    display: "&a&lHeilerstab"
+    lore:
+      - "&7Solange er leuchtet, faellt niemand."
+      - ""
+      - "&8» &fSchleichen + Rechtsklick: &aHeilkreis"
+    unbreakable: true
+    glow: true
+    hide-flags: true
+
+  bollwerkschild:
+    material: SHIELD
+    custom-model-data: 3006
+    bedrock-identifier: "geyser_custom:bollwerkschild"
+    # "none" = kein Custom-Modell. Ein Schild hat ein Sondermodell (3D, Block-
+    # Animation); wuerden wir es ersetzen, verlieren alle Schilde auf dem Server
+    # ihr Aussehen und Bedrock-Spieler koennten damit nicht mehr blocken.
+    # Das Bollwerk-Schild bleibt deshalb optisch ein Vanilla-Schild - mit
+    # eigenem Namen, eigener Lore und der Schildwall-Faehigkeit.
+    model: none
+    display: "&7&lBollwerk-Schild"
+    lore:
+      - "&7Haelt, was das Team nicht halten kann."
+      - ""
+      - "&8» &fSchleichen + Rechtsklick: &aSchildwall"
+    unbreakable: true
+    glow: true
+    hide-flags: true
+
+  heldenherz:
+    material: NETHER_STAR
+    custom-model-data: 3007
+    bedrock-identifier: "geyser_custom:heldenherz"
+    # Nur fuer die Resourcepacks: handheld = Werkzeugoptik, generated = flaches Icon
+    model: generated
+    display: "&c&lHeldenherz"
+    lore:
+      - "&7Holt einen gefallenen Helden zurueck."
+      - ""
+      - "&8» &f/wiederbeleben <spieler>"
+    glow: true
+    hide-flags: true
+
+  lebenskristall:
+    material: AMETHYST_SHARD
+    custom-model-data: 3008
+    bedrock-identifier: "geyser_custom:lebenskristall"
+    # Nur fuer die Resourcepacks: handheld = Werkzeugoptik, generated = flaches Icon
+    model: generated
+    display: "&d&lLebenskristall"
+    lore:
+      - "&7Gewaehrt ein zusaetzliches Leben."
+      - ""
+      - "&8» &fRechtsklick zum Verbrauchen"
+    glow: true
+    hide-flags: true
+
+  zitrone:
+    material: GOLD_NUGGET
+    custom-model-data: 3009
+    bedrock-identifier: "geyser_custom:zitrone"
+    # Nur fuer die Resourcepacks: handheld = Werkzeugoptik, generated = flaches Icon
+    model: generated
+    display: "&e&lZitrone"
+    lore:
+      - "&7Die Waehrung von LemonPvP."
+      - ""
+      - "&8» &fRechtsklick: &a+50 Zitronen"
+    hide-flags: true
+
+  rueckkehrstein:
+    material: ECHO_SHARD
+    custom-model-data: 3010
+    bedrock-identifier: "geyser_custom:rueckkehrstein"
+    # Nur fuer die Resourcepacks: handheld = Werkzeugoptik, generated = flaches Icon
+    model: generated
+    display: "&3&lRueckkehrstein"
+    lore:
+      - "&7Bringt dich zurueck zum Spawn."
+      - "&8Nicht im Kampf nutzbar."
+      - ""
+      - "&8» &fRechtsklick: &aTeleport"
+    glow: true
+    hide-flags: true

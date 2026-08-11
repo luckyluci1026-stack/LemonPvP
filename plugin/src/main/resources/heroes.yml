@@ -1,0 +1,204 @@
+# =====================================================================
+#  Die Helden von Helden 3
+#
+#  ability            -> ID einer registrierten Faehigkeit (siehe /helden3 status)
+#  weapon             -> Custom-Item aus items.yml, mit dem die Faehigkeit
+#                        per Rechtsklick ausgeloest wird
+#  passives.effects   -> "EFFEKTNAME:staerke", Namen wie in Minecraft
+#                        (SPEED, STRENGTH, RESISTANCE, REGENERATION,
+#                         HEALTH_BOOST, JUMP_BOOST, HASTE, FIRE_RESISTANCE ...)
+#  kit.slot           -> 0-35 Inventar, 36 Schuhe, 37 Hose, 38 Brust,
+#                        39 Helm, 40 Zweithand
+# =====================================================================
+
+heroes:
+
+  krieger:
+    display: "&c&lKrieger"
+    icon: DIAMOND_SWORD
+    order: 1
+    description:
+      - "&7Der Fels in der Schlachtreihe."
+      - "&7Viel Leben, viel Schaden, wenig Geduld."
+    ability: wirbelsturm
+    weapon: zitronenklinge
+    passives:
+      effects:
+        - "HEALTH_BOOST:1"
+        - "RESISTANCE:0"
+      damage-dealt-multiplier: 1.10
+      damage-taken-multiplier: 1.00
+    kit:
+      - item: zitronenklinge
+        slot: 0
+      - material: COOKED_BEEF
+        amount: 16
+        slot: 8
+      - material: IRON_BOOTS
+        slot: 36
+      - material: IRON_LEGGINGS
+        slot: 37
+      - material: IRON_CHESTPLATE
+        slot: 38
+      - material: IRON_HELMET
+        slot: 39
+
+  bogenschuetze:
+    display: "&b&lBogenschuetze"
+    icon: BOW
+    order: 2
+    description:
+      - "&7Haelt Abstand und trifft trotzdem."
+      - "&7Schwach im Nahkampf, toedlich auf Distanz."
+    ability: pfeilhagel
+    weapon: sturmbogen
+    passives:
+      effects:
+        - "SPEED:0"
+      damage-dealt-multiplier: 1.00
+      damage-taken-multiplier: 1.10
+      # Zusaetzlicher Schaden mit Pfeilen in Prozent.
+      projectile-damage-percent: 25
+    kit:
+      - item: sturmbogen
+        slot: 0
+      - material: ARROW
+        amount: 32
+        slot: 1
+      - material: COOKED_BEEF
+        amount: 16
+        slot: 8
+      - material: LEATHER_BOOTS
+        slot: 36
+      - material: CHAINMAIL_LEGGINGS
+        slot: 37
+      - material: CHAINMAIL_CHESTPLATE
+        slot: 38
+      - material: LEATHER_HELMET
+        slot: 39
+
+  assassine:
+    display: "&5&lAssassine"
+    icon: IRON_SWORD
+    order: 3
+    description:
+      - "&7Schnell rein, schneller raus."
+      - "&7Hoher Schaden, sehr wenig Ruestung."
+    ability: schattenschritt
+    weapon: schattendolch
+    passives:
+      effects:
+        - "SPEED:1"
+        - "JUMP_BOOST:0"
+      damage-dealt-multiplier: 1.25
+      damage-taken-multiplier: 1.20
+    kit:
+      - item: schattendolch
+        slot: 0
+      - material: COOKED_BEEF
+        amount: 16
+        slot: 8
+      - material: LEATHER_BOOTS
+        slot: 36
+      - material: LEATHER_LEGGINGS
+        slot: 37
+      - material: LEATHER_CHESTPLATE
+        slot: 38
+      - material: LEATHER_HELMET
+        slot: 39
+
+  magier:
+    display: "&6&lMagier"
+    icon: BLAZE_ROD
+    order: 4
+    description:
+      - "&7Feuer aus sicherer Entfernung."
+      - "&7Brennt nicht - alles andere schon."
+    ability: feuerball
+    weapon: feuerstab
+    passives:
+      effects:
+        - "FIRE_RESISTANCE:0"
+      damage-dealt-multiplier: 1.00
+      damage-taken-multiplier: 1.15
+    kit:
+      - item: feuerstab
+        slot: 0
+      - material: COOKED_BEEF
+        amount: 16
+        slot: 8
+      - material: GOLDEN_BOOTS
+        slot: 36
+      - material: LEATHER_LEGGINGS
+        slot: 37
+      - material: GOLDEN_CHESTPLATE
+        slot: 38
+      - material: LEATHER_HELMET
+        slot: 39
+
+  heiler:
+    display: "&a&lHeiler"
+    icon: STICK
+    order: 5
+    description:
+      - "&7Haelt das Team am Leben."
+      - "&7Ohne ihn ist jedes Event vorbei."
+    ability: heilkreis
+    weapon: heilerstab
+    passives:
+      effects:
+        - "REGENERATION:0"
+      damage-dealt-multiplier: 0.85
+      damage-taken-multiplier: 1.00
+    kit:
+      - item: heilerstab
+        slot: 0
+      - material: WOODEN_SWORD
+        slot: 1
+      - material: GOLDEN_APPLE
+        amount: 3
+        slot: 7
+      - material: COOKED_BEEF
+        amount: 16
+        slot: 8
+      - material: CHAINMAIL_BOOTS
+        slot: 36
+      - material: CHAINMAIL_LEGGINGS
+        slot: 37
+      - material: CHAINMAIL_CHESTPLATE
+        slot: 38
+      - material: CHAINMAIL_HELMET
+        slot: 39
+
+  waechter:
+    display: "&7&lWaechter"
+    icon: SHIELD
+    order: 6
+    description:
+      - "&7Die Wand vor dem Heiler."
+      - "&7Steckt alles ein, teilt kaum aus."
+    ability: schildwall
+    weapon: bollwerkschild
+    passives:
+      effects:
+        - "HEALTH_BOOST:2"
+        - "RESISTANCE:1"
+        - "SLOWNESS:0"
+      damage-dealt-multiplier: 0.80
+      damage-taken-multiplier: 0.75
+    kit:
+      - item: bollwerkschild
+        slot: 40
+      - material: STONE_AXE
+        slot: 0
+      - material: COOKED_BEEF
+        amount: 16
+        slot: 8
+      - material: DIAMOND_BOOTS
+        slot: 36
+      - material: DIAMOND_LEGGINGS
+        slot: 37
+      - material: DIAMOND_CHESTPLATE
+        slot: 38
+      - material: DIAMOND_HELMET
+        slot: 39

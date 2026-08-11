@@ -1,0 +1,78 @@
+name: Helden3
+version: ${project.version}
+main: de.lemonpvp.helden.HeldenPlugin
+api-version: '1.21'
+authors: [LemonPvP]
+description: Helden 3 - das LemonPvP YouTuber-Projekt. Heldenklassen, Teams, Leben, Events und Custom-Items fuer Java- und Bedrock-Spieler.
+website: https://lemonpvp.de
+softdepend: [floodgate, Geyser-Spigot]
+
+commands:
+  held:
+    description: Heldenauswahl oeffnen oder Held wechseln.
+    usage: /held [name]
+    aliases: [helden, klasse, class]
+  faehigkeit:
+    description: Faehigkeit des eigenen Helden ausloesen.
+    usage: /faehigkeit
+    aliases: [ability, skill, faehigkeiten]
+  team:
+    description: Teaminfo, Teamchat und Teamliste.
+    usage: /team [info|liste|chat <text>]
+    aliases: [fraktion]
+  leben:
+    description: Zeigt die verbleibenden Leben an.
+    usage: /leben [spieler]
+    aliases: [lives, hp]
+  wiederbeleben:
+    description: Belebt einen gefallenen Spieler mit einem Heldenherz wieder.
+    usage: /wiederbeleben <spieler>
+    aliases: [revive, wb]
+  stats:
+    description: Zeigt die Statistiken eines Spielers.
+    usage: /stats [spieler]
+    aliases: [statistik]
+  shop:
+    description: Oeffnet den Zitronen-Shop.
+    usage: /shop
+    aliases: [zitronenshop]
+  helden3:
+    description: Adminbefehle fuer das Helden-3-Projekt.
+    usage: /helden3 <reload|item|leben|coins|team|held|event|spawn|status>
+    aliases: [h3, heldenadmin]
+
+permissions:
+  helden3.play:
+    description: Grundlegende Spielerbefehle.
+    default: true
+    children:
+      helden3.command.held: true
+      helden3.command.ability: true
+      helden3.command.team: true
+      helden3.command.lives: true
+      helden3.command.revive: true
+      helden3.command.stats: true
+      helden3.command.shop: true
+  helden3.command.held:
+    default: true
+  helden3.command.ability:
+    default: true
+  helden3.command.team:
+    default: true
+  helden3.command.lives:
+    default: true
+  helden3.command.revive:
+    default: true
+  helden3.command.stats:
+    default: true
+  helden3.command.shop:
+    default: true
+  helden3.hero.change.anytime:
+    description: Darf den Helden jederzeit wechseln, auch nach der Sperrfrist.
+    default: op
+  helden3.admin:
+    description: Voller Adminzugriff auf das Projekt.
+    default: op
+    children:
+      helden3.play: true
+      helden3.hero.change.anytime: true

@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/gold_nugget"
+    },
+    "entries": [
+      {
+        "threshold": 3009,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/zitrone"
+        }
+      }
+    ]
+  }
+}

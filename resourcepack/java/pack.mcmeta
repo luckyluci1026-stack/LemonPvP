@@ -1,0 +1,10 @@
+{
+  "pack": {
+    "pack_format": 46,
+    "supported_formats": {
+      "min_inclusive": 32,
+      "max_inclusive": 99
+    },
+    "description": "Helden 3 - LemonPvP Projekt-Pack (Java Edition)"
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "format_version": "1",
+  "items": {
+    "minecraft:diamond_sword": [
+      {
+        "name": "zitronenklinge",
+        "display_name": "Zitronenklinge",
+        "icon": "zitronenklinge",
+        "custom_model_data": 3001,
+        "allow_offhand": true,
+        "display_handheld": true,
+        "texture_size": 16
+      }
+    ],
+    "minecraft:bow": [
+      {
+        "name": "sturmbogen",
+        "display_name": "Sturmbogen",
+        "icon": "sturmbogen",
+        "custom_model_data": 3002,
+        "allow_offhand": true,
+        "display_handheld": false,
+        "texture_size": 16
+      }
+    ],
+    "minecraft:iron_sword": [
+      {
+        "name": "schattendolch",
+        "display_name": "Schattendolch",
+        "icon": "schattendolch",
+        "custom_model_data": 3003,
+        "allow_offhand": true,
+        "display_handheld": true,
+        "texture_size": 16
+      }
+    ],
+    "minecraft:blaze_rod": [
+      {
+        "name": "feuerstab",
+        "display_name": "Feuerstab",
+        "icon": "feuerstab",
+        "custom_model_data": 3004,
+        "allow_offhand": true,
+        "display_handheld": true,
+        "texture_size": 16
+      }
+    ],
+    "minecraft:stick": [
+      {
+        "name": "heilerstab",
+        "display_name": "Heilerstab",
+        "icon": "heilerstab",
+        "custom_model_data": 3005,
+        "allow_offhand": true,
+        "display_handheld": true,
+        "texture_size": 16
+      }
+    ],
+    "minecraft:nether_star": [
+      {
+        "name": "heldenherz",
+        "display_name": "Heldenherz",
+        "icon": "heldenherz",
+        "custom_model_data": 3007,
+        "allow_offhand": true,
+        "display_handheld": false,
+        "texture_size": 16
+      }
+    ],
+    "minecraft:amethyst_shard": [
+      {
+        "name": "lebenskristall",
+        "display_name": "Lebenskristall",
+        "icon": "lebenskristall",
+        "custom_model_data": 3008,
+        "allow_offhand": true,
+        "display_handheld": false,
+        "texture_size": 16
+      }
+    ],
+    "minecraft:gold_nugget": [
+      {
+        "name": "zitrone",
+        "display_name": "Zitrone",
+        "icon": "zitrone",
+        "custom_model_data": 3009,
+        "allow_offhand": true,
+        "display_handheld": false,
+        "texture_size": 16
+      }
+    ],
+    "minecraft:echo_shard": [
+      {
+        "name": "rueckkehrstein",
+        "display_name": "Rueckkehrstein",
+        "icon": "rueckkehrstein",
+        "custom_model_data": 3010,
+        "allow_offhand": true,
+        "display_handheld": false,
+        "texture_size": 16
+      }
+    ]
+  }
+}

@@ -1,0 +1,175 @@
+# =====================================================================
+#  Alle Texte des Plugins.
+#  Farbcodes: &a &e &c ... sowie &#RRGGBB (fuer Bedrock automatisch reduziert)
+#  Platzhalter stehen in %prozent%.
+# =====================================================================
+
+general:
+  no-permission: "&cDafuer fehlt dir die Berechtigung."
+  player-only: "&cDiesen Befehl kann nur ein Spieler ausfuehren."
+  unknown-player: "&cDen Spieler &f%player% &cgibt es nicht."
+  unknown-subcommand: "&cUnbekannter Unterbefehl. &7Nutze &f%usage%"
+  invalid-number: "&f%input% &cist keine gueltige Zahl."
+  reloaded: "&aKonfiguration neu geladen. &7(%ms% ms)"
+  cooldown: "&cNoch &f%seconds%s &cWartezeit."
+
+hero:
+  menu-title: "&8» &eHeldenauswahl"
+  selected: "&aDu spielst jetzt als %hero%&a."
+  already-selected: "&cDu spielst bereits %hero%&c."
+  unknown: "&cDen Helden &f%hero% &cgibt es nicht."
+  change-cooldown: "&cDu kannst deinen Helden erst in &f%time% &cwechseln."
+  change-disabled: "&cIn diesem Projekt kannst du den Helden nicht mehr wechseln."
+  select-first: "&cWaehle zuerst einen Helden mit &f/held&c."
+  kit-given: "&7Dein Kit wurde ausgegeben."
+  current: "&7Dein Held: %hero%"
+  broadcast: "&e%player% &7ist jetzt %hero%&7."
+  locked-lore: "&cGesperrt"
+  select-lore: "&aKlicke zum Auswaehlen"
+
+ability:
+  used: "&a%ability% &7eingesetzt!"
+  cooldown: "&c%ability% &cist noch &f%seconds%s &clang auf Abklingzeit."
+  no-hero: "&cDu hast noch keinen Helden gewaehlt."
+  no-ability: "&cDein Held hat keine aktive Faehigkeit."
+  failed: "&cDie Faehigkeit konnte nicht eingesetzt werden."
+  hint: "&7%ability%&7: &f%trigger% &7mit %weapon% &7- oder &f/faehigkeit"
+  trigger-right-click: "Rechtsklick"
+  trigger-sneak: "Schleichen + Rechtsklick"
+  dead: "&cAls Gefallener kannst du keine Faehigkeiten einsetzen."
+
+team:
+  info: "&7Dein Team: %team%"
+  none: "&7Du bist in keinem Team."
+  joined: "&aDu bist jetzt im Team %team%&a."
+  moved: "&e%player% &7wurde in das Team %team% &7verschoben."
+  chat-format: "%tag% &7%player%&8: &f%message%"
+  chat-empty: "&cSchreib auch etwas: &f/team chat <text>"
+  list-header: "&8» &eTeams"
+  list-entry: "&8· %team% &7(&f%size%&7): &f%members%"
+  switch-disabled: "&cTeamwechsel sind in diesem Projekt deaktiviert."
+  full: "&cDas Team %team% &cist voll."
+  unknown: "&cDas Team &f%team% &cgibt es nicht."
+  friendly-fire: "&c%player% &cist in deinem Team."
+
+lives:
+  current: "&7Du hast noch &c%lives% &7Leben."
+  other: "&7%player% &7hat noch &c%lives% &7Leben."
+  lost: "&cDu hast ein Leben verloren. &7Verbleibend: &c%lives%"
+  gained: "&aDu hast ein Leben erhalten. &7Neu: &c%lives%"
+  max-reached: "&cDu hast bereits die maximale Anzahl an Leben (&f%max%&c)."
+  set: "&aLeben von &f%player% &aauf &c%lives% &agesetzt."
+  fallen-broadcast: "&4&l☠ &c%player% &7ist gefallen und aus dem Projekt ausgeschieden!"
+  fallen-self: "&c&lDu bist gefallen. &7Du brauchst ein Heldenherz, um zurueckzukehren."
+  revived: "&a%player% &7wurde von &a%healer% &7wiederbelebt!"
+  revive-no-item: "&cDu brauchst ein &fHeldenherz&c, um jemanden wiederzubeleben."
+  revive-not-fallen: "&f%player% &cist gar nicht gefallen."
+  revive-self: "&cDu kannst dich nicht selbst wiederbeleben."
+  revive-disabled: "&cWiederbelebungen sind deaktiviert."
+  revive-protection: "&7Du bist &f%seconds%s &7lang geschuetzt."
+  disabled: "&cDas Lebenssystem ist deaktiviert."
+
+combat:
+  tagged: "&cDu bist im Kampf! &7(&f%seconds%s&7)"
+  untagged: "&aDu bist nicht mehr im Kampf."
+  combat-log: "&4&l☠ &c%player% &7hat sich im Kampf ausgeloggt."
+  spawn-protection: "&7Spawnschutz aktiv: &f%seconds%s"
+  protected-target: "&c%player% &chat noch Spawnschutz."
+  blocked-in-combat: "&cDas geht nicht, solange du im Kampf bist."
+  killstreak: "&6&l⚔ &e%player% &7hat eine Serie von &6%streak% &7Kills!"
+  streak-ended: "&7%player% &7hat die Serie von &6%streak% &7Kills von &e%victim% &7beendet."
+  death-pvp: "&c%victim% &7wurde von &e%killer% &7besiegt. &8(%hero%&8)"
+  death-generic: "&c%victim% &7ist gestorben."
+
+economy:
+  balance: "&7Dein Kontostand: &e%amount% %currency%"
+  balance-other: "&7%player%&7: &e%amount% %currency%"
+  received: "&a+%amount% %currency% &7(%reason%)"
+  lost: "&c-%amount% %currency% &7(%reason%)"
+  not-enough: "&cDu brauchst &e%amount% %currency%&c."
+  set: "&aKontostand von &f%player% &aauf &e%amount% &agesetzt."
+  reason-kill: "Kill"
+  reason-assist: "Assist"
+  reason-streak: "Killstreak"
+  reason-bounty: "Kopfgeld"
+  reason-shop: "Shop"
+  reason-revive: "Wiederbelebung"
+
+events:
+  warmup: "&8» &e%event% &7startet in &f%seconds% Sekunden&7!"
+  started: "&8» &6&lEVENT: &e%event% &7- %description%"
+  ended: "&8» &7Das Event &e%event% &7ist vorbei."
+  none: "&8-"
+  running: "&6%event% &7(&f%time%&7)"
+  blutmond-name: "Blutmond"
+  blutmond-description: "&cAlle richten &f%bonus%%% &cmehr Schaden an."
+  zitronenregen-name: "Zitronenregen"
+  zitronenregen-description: "&eAm Spawn regnet es Zitronen."
+  kopfgeld-name: "Kopfgeld"
+  kopfgeld-description: "&6Auf &e%target% &6sind &e%reward% Zitronen &6ausgesetzt."
+  kopfgeld-no-target: "&7Kein Kopfgeld moeglich - zu wenige Spieler online."
+  kopfgeld-claimed: "&6&l⚑ &e%killer% &7kassiert das Kopfgeld auf &e%target% &7(&e%reward%&7)!"
+  unknown: "&cDas Event &f%event% &cgibt es nicht. &7Verfuegbar: &f%available%"
+  already-running: "&cEs laeuft bereits ein Event: &f%event%&c. &7Zuerst &f/helden3 event stop&7."
+  start-failed: "&cDas Event &f%event% &ckonnte gerade nicht starten."
+
+stats:
+  header: "&8» &eStatistik von &f%player%"
+  hero: "&8· &7Held: %hero%"
+  team: "&8· &7Team: %team%"
+  lives: "&8· &7Leben: &c%lives%"
+  kills: "&8· &7Kills: &a%kills%"
+  deaths: "&8· &7Tode: &c%deaths%"
+  assists: "&8· &7Assists: &b%assists%"
+  kd: "&8· &7K/D: &f%kd%"
+  streak: "&8· &7Beste Serie: &6%best%"
+  coins: "&8· &7%currency%: &e%coins%"
+
+shop:
+  title: "&8» &eZitronen-Shop"
+  bought: "&aGekauft: %item% &7fuer &e%price% %currency%"
+  inventory-full: "&cDein Inventar ist voll."
+  price-lore: "&7Preis: &e%price% %currency%"
+  disabled: "&cDer Shop ist deaktiviert."
+
+item:
+  lebenskristall-used: "&dDer Lebenskristall zerfaellt zu Staub."
+  zitrone-used: "&eDu hast eine Zitrone eingeloest."
+  rueckkehr: "&3Du kehrst zum Spawn zurueck."
+  unknown: "&cDas Item &f%item% &cgibt es nicht. &7Verfuegbar: &f%available%"
+  given: "&aDu hast &f%amount%x %item% &aerhalten."
+  given-other: "&f%player% &ahat &f%amount%x %item% &aerhalten."
+
+join:
+  welcome:
+    - "&8&m                                        "
+    - " %project%"
+    - " &7Season 3 - willkommen zurueck, &f%player%&7!"
+    - " &7Held waehlen: &f/held  &8| &7Faehigkeit: &f/faehigkeit"
+    - "&8&m                                        "
+  bedrock-hint: "&7Bedrock erkannt: &fLanges Antippen &7entspricht dem Rechtsklick."
+  join-broadcast: "&8[&a+&8] &7%player%"
+  quit-broadcast: "&8[&c-&8] &7%player%"
+
+admin:
+  usage:
+    - "&8» &eHelden3 &7Adminbefehle"
+    - "&8· &f/helden3 reload &7- Konfiguration neu laden"
+    - "&8· &f/helden3 status &7- Registrierte Inhalte anzeigen"
+    - "&8· &f/helden3 item <id> [spieler] [anzahl] &7- Artefakt geben"
+    - "&8· &f/helden3 held <spieler> <held> &7- Held setzen"
+    - "&8· &f/helden3 team <spieler> <team> &7- Team setzen"
+    - "&8· &f/helden3 leben <spieler> <anzahl> &7- Leben setzen"
+    - "&8· &f/helden3 coins <spieler> <anzahl> &7- Kontostand setzen"
+    - "&8· &f/helden3 event <id|stop> &7- Event starten oder beenden"
+    - "&8· &f/helden3 spawn &7- Projektspawn auf deine Position setzen"
+  spawn-set: "&aSpawn gesetzt: &f%world% %x% %y% %z%"
+  status:
+    - "&8» &eHelden3 &7Status"
+    - "&8· &7Helden: &f%heroes%"
+    - "&8· &7Faehigkeiten: &f%abilities%"
+    - "&8· &7Artefakte: &f%items%"
+    - "&8· &7Teams: &f%teams%"
+    - "&8· &7Events: &f%events%"
+    - "&8· &7Profile geladen: &f%profiles%"
+    - "&8· &7Floodgate: &f%floodgate%"

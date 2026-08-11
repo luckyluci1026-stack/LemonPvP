@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Helden 3 - LemonPvP",
+    "description": "Artefakte des Helden-3-Projekts fuer Bedrock-Spieler (via Geyser).",
+    "uuid": "6c1e2f40-9b3a-4d7e-8f21-5a0d3c7b1e94",
+    "version": [
+      3,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      20,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "b83a17c5-4e62-4a19-9d0f-2c6b8e4f7a13",
+      "version": [
+        3,
+        0,
+        0
+      ]
+    }
+  ]
+}
