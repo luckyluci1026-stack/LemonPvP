@@ -15,26 +15,3 @@ settings:
   # Sounds bei Kauf/Verkauf/Fehler
   sounds: true
 
-# ----------------------------------------------------------
-#  Icons aus dem SMP-Texturepack
-#  Im Text als %g:coin%, %g:cart% usw. verwendbar.
-#  Ohne installiertes Texturepack einfach enabled: false setzen.
-# ----------------------------------------------------------
-glyphs:
-  enabled: true
-  coin: "\uE100"
-  heart: "\uE101"
-  star: "\uE102"
-  crown: "\uE103"
-  cart: "\uE104"
-  check: "\uE105"
-  cross: "\uE106"
-  warning: "\uE107"
-  arrow_right: "\uE108"
-  arrow_left: "\uE109"
-  gem: "\uE10A"
-  clock: "\uE10B"
-  lock: "\uE10C"
-  bag: "\uE10D"
-  sword: "\uE10E"
-  pickaxe: "\uE10F"

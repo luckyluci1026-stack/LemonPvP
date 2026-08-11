@@ -1,0 +1,103 @@
+# ==========================================================
+#  Eigene Animationen
+#
+#  Hier baust du deine eigenen Teilchen-Formen. Jede Animation
+#  bekommt einen Namen, den du dann in der Fähigkeit benutzt:
+#
+#    - type: animation
+#      shape: meine_spirale      <- Name von hier
+#      particle: DUST
+#      color: "#FF0000"
+#      ticks: 20
+#
+#  Wie es funktioniert:
+#  Pro Tick werden "points" Teilchen gesetzt. Wo jedes einzelne
+#  landet, sagen die drei Formeln x, y und z.
+#
+#  Verfügbare Werte in den Formeln:
+#    t        Tick, zählt von 0 bis ticks-1
+#    p        Fortschritt, 0.0 am Anfang bis 1.0 am Ende
+#    i        Nummer des Teilchens in diesem Tick (0 bis points-1)
+#    n        points
+#    a        Winkel für dieses Teilchen = 2*pi*i/n  (praktisch für Kreise)
+#    ticks    Gesamtdauer
+#    radius   der Wert "radius" aus der Fähigkeit
+#    length   der Wert "length" aus der Fähigkeit
+#
+#  Rechnen: + - * / % ^ und Klammern
+#  Funktionen: sin cos tan asin acos atan atan2 sqrt abs floor
+#              ceil round sign exp log random min max pow
+#  Konstanten: pi, e, tau
+#
+#  relative-to:  player  = Füße des Spielers (Standard)
+#                eyes    = Augenhöhe
+#                look    = Augenhöhe, und z zeigt nach VORNE,
+#                          x nach rechts, y nach oben
+#  follow: true  = die Animation läuft mit, wenn der Spieler geht
+# ==========================================================
+
+animations:
+
+  # Kreis, der sich dreht und dabei größer wird
+  meine_spirale:
+    points: 16
+    x: "cos(a + t * 0.3) * (radius * p)"
+    y: "p * 2"
+    z: "sin(a + t * 0.3) * (radius * p)"
+    relative-to: player
+
+  # Herz vor dem Spieler - zeigt, was mit Formeln geht
+  herz:
+    points: 40
+    x: "sin(a) ^ 3 * 0.35"
+    y: "(0.325 * cos(a) - 0.125 * cos(2 * a) - 0.05 * cos(3 * a) - 0.025 * cos(4 * a)) * 1.2 + 1.4"
+    z: "1.5"
+    relative-to: look
+
+  # Zwei Ringe, die aneinander vorbeilaufen
+  doppelring:
+    points: 24
+    x: "cos(a + t * 0.25) * radius"
+    y: "sin(t * 0.4 + i) * 0.4 + 1"
+    z: "sin(a + t * 0.25) * radius"
+    follow: true
+
+  # Explosion nach außen, wird langsamer
+  druckwelle:
+    points: 30
+    x: "cos(a) * sqrt(p) * radius"
+    y: "0.2"
+    z: "sin(a) * sqrt(p) * radius"
+
+  # Tornado: dreht schnell und wird nach oben breiter
+  tornado:
+    points: 20
+    x: "cos(a * 3 + t * 0.6) * (0.3 + p * radius)"
+    y: "p * 3"
+    z: "sin(a * 3 + t * 0.6) * (0.3 + p * radius)"
+    follow: true
+
+  # Strahl nach vorne, der zusätzlich rotiert
+  bohrer:
+    points: 12
+    x: "cos(a + t * 0.8) * 0.4"
+    y: "sin(a + t * 0.8) * 0.4"
+    z: "p * length"
+    relative-to: look
+
+  # Flügel links und rechts hinter dem Spieler
+  fluegel:
+    points: 28
+    x: "sign(i - n / 2) * (0.3 + abs(sin(a * 2)) * 1.3)"
+    y: "1.6 + cos(a * 2) * 0.8"
+    z: "-0.4"
+    relative-to: look
+    follow: true
+
+  # Regen, der auf den Spieler fällt
+  funkenregen:
+    points: 10
+    x: "(random(2) - 1) * radius"
+    y: "3 - p * 3"
+    z: "(random(2) - 1) * radius"
+    follow: true

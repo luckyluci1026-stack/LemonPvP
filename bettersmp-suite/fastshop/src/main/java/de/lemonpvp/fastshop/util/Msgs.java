@@ -12,6 +12,10 @@ import java.nio.charset.StandardCharsets;
 /** Lädt messages.yml (mit Jar-Fallback) und rendert MiniMessage-Nachrichten. */
 public final class Msgs {
 
+    /** Reste der frueheren Texturepack-Icons - werden ersatzlos entfernt. */
+    private static final java.util.regex.Pattern ICON_TOKEN =
+            java.util.regex.Pattern.compile("%g:[a-z_]+% ?");
+
     private final JavaPlugin plugin;
     private YamlConfiguration messages;
     private YamlConfiguration defaults;
@@ -38,22 +42,14 @@ public final class Msgs {
         return value == null ? path : value;
     }
 
-    /** Icons aus dem Texturepack - wird von FastShop gesetzt. */
-    private Glyphs glyphs;
-
-    public void setGlyphs(Glyphs glyphs) {
-        this.glyphs = glyphs;
-    }
-
     public Component format(String path, String... replacements) {
         String text = raw(path);
         for (int i = 0; i + 1 < replacements.length; i += 2) {
             text = text.replace("%" + replacements[i] + "%", replacements[i + 1]);
         }
         text = text.replace("%prefix%", raw("prefix"));
-        if (glyphs != null) {
-            text = glyphs.apply(text);
-        }
+        // Alte %g:...%-Platzhalter aus früheren Versionen still entfernen
+        text = ICON_TOKEN.matcher(text).replaceAll("");
         return Text.mm(text);
     }
 

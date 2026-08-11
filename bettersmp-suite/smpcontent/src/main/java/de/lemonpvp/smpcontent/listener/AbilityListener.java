@@ -1,0 +1,91 @@
+package de.lemonpvp.smpcontent.listener;
+
+import de.lemonpvp.smpcontent.SMPContent;
+import de.lemonpvp.smpcontent.content.CustomEntry;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+
+/**
+ * Löst die Spezialfähigkeiten aus: Rechtsklick, Linksklick, Treffer und Kill.
+ * Der Auslöser "held" (dauerhaft, solange man das Item hält) läuft als
+ * eigener Zeitgeber im Hauptplugin.
+ */
+public final class AbilityListener implements Listener {
+
+    private final SMPContent plugin;
+
+    public AbilityListener(SMPContent plugin) {
+        this.plugin = plugin;
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        String trigger = switch (event.getAction()) {
+            case RIGHT_CLICK_AIR, RIGHT_CLICK_BLOCK -> "right-click";
+            case LEFT_CLICK_AIR, LEFT_CLICK_BLOCK -> "left-click";
+            default -> null;
+        };
+        if (trigger == null) {
+            return;
+        }
+        CustomEntry entry = entryOf(event.getItem());
+        if (entry == null) {
+            return;
+        }
+        // Eigene Blöcke sollen sich weiterhin normal setzen lassen
+        if (entry.block()) {
+            return;
+        }
+        if (plugin.abilities().run(event.getPlayer(), entry, trigger, null)
+                && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onHit(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player player)
+                || !(event.getEntity() instanceof LivingEntity victim)) {
+            return;
+        }
+        CustomEntry entry = entryOf(player.getInventory().getItemInMainHand());
+        if (entry != null && !entry.block()) {
+            plugin.abilities().run(player, entry, "hit", victim);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onKill(EntityDeathEvent event) {
+        Player killer = event.getEntity().getKiller();
+        if (killer == null) {
+            return;
+        }
+        CustomEntry entry = entryOf(killer.getInventory().getItemInMainHand());
+        if (entry != null && !entry.block()) {
+            plugin.abilities().run(killer, entry, "kill", event.getEntity());
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        plugin.abilities().forget(event.getPlayer().getUniqueId());
+    }
+
+    private CustomEntry entryOf(ItemStack item) {
+        String id = plugin.registry().idOf(item);
+        return id == null ? null : plugin.registry().get(id);
+    }
+}

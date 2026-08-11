@@ -47,10 +47,6 @@ public final class ShopMenus {
         this.plugin = plugin;
     }
 
-    private String g(String name) {
-        return plugin.glyphs().get(name);
-    }
-
     private String money(double amount) {
         return plugin.economy().format(amount);
     }
@@ -77,7 +73,7 @@ public final class ShopMenus {
         int size = rows * 9;
         MainHolder holder = new MainHolder();
         Inventory inv = Bukkit.createInventory(holder, size,
-                Text.mm(g("cart") + " " + plugin.getConfig()
+                Text.mm(plugin.getConfig()
                         .getString("settings.menu-title", "<gold>Shop")));
         holder.inventory = inv;
 
@@ -89,7 +85,7 @@ public final class ShopMenus {
 
         // Kopfzeile
         inv.setItem(4, GuiUtil.glowing(Material.NETHER_STAR, 1,
-                "<gradient:#FFD75A:#FFB02E><bold>" + g("cart") + " Shop</bold></gradient>",
+                "<gradient:#FFD75A:#FFB02E><bold>Shop</bold></gradient>",
                 List.of(
                         "<gray>Kaufe und verkaufe Items",
                         "<gray>mit deinem Guthaben.",
@@ -100,27 +96,27 @@ public final class ShopMenus {
         int foot = size - 9;
         inv.setItem(foot, balanceItem(player));
         inv.setItem(foot + 4, GuiUtil.item(Material.HOPPER, 1,
-                "<gold><bold>" + g("bag") + " Schnellverkauf</bold>",
+                "<gold><bold>Schnellverkauf</bold>",
                 List.of("<gray>Öffnet ein Fenster, in das du",
                         "<gray>Items zum Verkaufen legen kannst.",
                         "",
                         "<yellow>Klick zum Öffnen")));
         inv.setItem(foot + 8, GuiUtil.item(Material.BARRIER, 1,
-                "<red><bold>" + g("cross") + " Schließen</bold>", List.of()));
+                "<red><bold>Schließen</bold>", List.of()));
 
         // Kategorien zuletzt - so gewinnt immer die Einstellung aus shop.yml
         for (Category category : plugin.shop().categories().values()) {
             int slot = Math.max(0, Math.min(size - 1, category.slot()));
             inv.setItem(slot, GuiUtil.item(category.icon(), 1, category.name(),
                     List.of("<gray>" + category.items().size() + " Artikel",
-                            "", "<yellow>" + g("arrow_right") + " Klick zum Öffnen")));
+                            "", "<yellow>Klick zum Öffnen")));
         }
         player.openInventory(inv);
     }
 
     private ItemStack balanceItem(Player player) {
         return GuiUtil.head(player,
-                "<green><bold>" + g("coin") + " Dein Guthaben</bold>",
+                "<green><bold>Dein Guthaben</bold>",
                 List.of("<white>" + money(plugin.economy().balance(player)),
                         "",
                         "<gray>Spieler: <white>" + player.getName()));
@@ -173,19 +169,19 @@ public final class ShopMenus {
 
         if (page > 0) {
             inv.setItem(NAV_PREV, GuiUtil.item(Material.ARROW, 1,
-                    "<yellow>" + g("arrow_left") + " Zurück",
+                    "<yellow>Zurück",
                     List.of("<gray>Seite " + page)));
         }
         if (page < totalPages - 1) {
             inv.setItem(NAV_NEXT, GuiUtil.item(Material.ARROW, 1,
-                    "<yellow>Weiter " + g("arrow_right"),
+                    "<yellow>Weiter ",
                     List.of("<gray>Seite " + (page + 2))));
         }
         inv.setItem(NAV_BALANCE, balanceItem(player));
         inv.setItem(NAV_HOME, GuiUtil.item(Material.NETHER_STAR, 1,
-                "<gold>" + g("cart") + " Zum Hauptmenü", List.of()));
+                "<gold>Zum Hauptmenü", List.of()));
         inv.setItem(NAV_SELL, GuiUtil.item(Material.HOPPER, 1,
-                "<gold>" + g("bag") + " Schnellverkauf",
+                "<gold>Schnellverkauf",
                 List.of("<gray>Items ablegen und verkaufen")));
 
         player.openInventory(inv);
@@ -197,13 +193,13 @@ public final class ShopMenus {
         List<String> lore = new ArrayList<>(item.lore());
         lore.add("<dark_gray><st>               </st>");
         if (item.buyable()) {
-            lore.add("<gray>Kaufen  <dark_gray>» <green>" + g("coin") + " "
+            lore.add("<gray>Kaufen  <dark_gray>» <green>"
                     + money(item.buy()) + " <dark_gray>/ Stück");
         } else {
             lore.add("<dark_gray>Nicht kaufbar");
         }
         if (item.sellable()) {
-            lore.add("<gray>Verkauf <dark_gray>» <gold>" + g("coin") + " "
+            lore.add("<gray>Verkauf <dark_gray>» <gold>"
                     + money(item.sell() * plugin.shop().sellMultiplier())
                     + " <dark_gray>/ Stück");
             int have = plugin.service().countSellable(player, item.material());
@@ -214,7 +210,7 @@ public final class ShopMenus {
             lore.add("<dark_gray>Nicht verkaufbar");
         }
         lore.add("<dark_gray><st>               </st>");
-        lore.add("<yellow>" + g("arrow_right") + " Klick <gray>öffnet Kaufen/Verkaufen");
+        lore.add("<yellow>Klick <gray>öffnet Kaufen/Verkaufen");
         return GuiUtil.item(item.material(), 1, name, lore);
     }
 
@@ -260,10 +256,10 @@ public final class ShopMenus {
 
         List<String> info = new ArrayList<>();
         if (item.buyable()) {
-            info.add("<gray>Kaufen  <dark_gray>» <green>" + g("coin") + " " + money(item.buy()));
+            info.add("<gray>Kaufen  <dark_gray>» <green>" + money(item.buy()));
         }
         if (item.sellable()) {
-            info.add("<gray>Verkauf <dark_gray>» <gold>" + g("coin") + " "
+            info.add("<gray>Verkauf <dark_gray>» <gold>"
                     + money(item.sell() * plugin.shop().sellMultiplier()));
         }
         info.add("");
@@ -283,15 +279,15 @@ public final class ShopMenus {
             inv.setItem(ACT_SELL_16, sellButton(item, 16, each, have));
             inv.setItem(ACT_SELL_ALL, GuiUtil.item(have > 0 ? Material.GOLD_BLOCK : Material.GRAY_DYE,
                     Math.max(1, Math.min(64, have)),
-                    "<gold><bold>" + g("sell") + " Alles verkaufen</bold>",
+                    "<gold><bold>Alles verkaufen</bold>",
                     List.of("<gray>Menge: <white>" + have + "x",
-                            "<gray>Erlös: <gold>" + g("coin") + " " + money(each * have),
+                            "<gray>Erlös: <gold>" + money(each * have),
                             "",
                             have > 0 ? "<yellow>Klick zum Verkaufen"
-                                     : "<red>" + g("cross") + " Du hast keine")));
+                                     : "<red>Du hast keine")));
         }
         inv.setItem(ACT_BACK, GuiUtil.item(Material.ARROW, 1,
-                "<yellow>" + g("arrow_left") + " Zurück",
+                "<yellow>Zurück",
                 List.of("<gray>Zurück zur Kategorie")));
         player.openInventory(inv);
     }
@@ -300,21 +296,21 @@ public final class ShopMenus {
         double cost = item.buy() * amount;
         boolean affordable = balance >= cost;
         return GuiUtil.item(affordable ? Material.EMERALD : Material.GRAY_DYE, amount,
-                (affordable ? "<green>" : "<red>") + "<bold>" + g("buy") + " Kaufen: " + amount + "x</bold>",
-                List.of("<gray>Preis: <green>" + g("coin") + " " + money(cost),
+                (affordable ? "<green>" : "<red>") + "<bold>Kaufen: " + amount + "x</bold>",
+                List.of("<gray>Preis: <green>" + money(cost),
                         "",
                         affordable ? "<yellow>Klick zum Kaufen"
-                                   : "<red>" + g("cross") + " Nicht genug Guthaben"));
+                                   : "<red>Nicht genug Guthaben"));
     }
 
     private ItemStack sellButton(ShopItem item, int amount, double each, int have) {
         boolean enough = have >= amount;
         return GuiUtil.item(enough ? Material.GOLD_INGOT : Material.GRAY_DYE, amount,
-                (enough ? "<gold>" : "<red>") + "<bold>" + g("sell") + " Verkaufen: " + amount + "x</bold>",
-                List.of("<gray>Erlös: <gold>" + g("coin") + " " + money(each * amount),
+                (enough ? "<gold>" : "<red>") + "<bold>Verkaufen: " + amount + "x</bold>",
+                List.of("<gray>Erlös: <gold>" + money(each * amount),
                         "",
                         enough ? "<yellow>Klick zum Verkaufen"
-                               : "<red>" + g("cross") + " Du hast nur " + have + "x"));
+                               : "<red>Du hast nur " + have + "x"));
     }
 
     public static String prettyName(Material material) {
@@ -350,7 +346,7 @@ public final class ShopMenus {
     public void openSell(Player player) {
         SellHolder holder = new SellHolder();
         Inventory inv = Bukkit.createInventory(holder, 54,
-                Text.mm(plugin.glyphs().apply(plugin.msgs().raw("sell-gui-title"))));
+                Text.mm(plugin.msgs().raw("sell-gui-title")));
         holder.inventory = inv;
 
         ItemStack border = GuiUtil.filler(Material.GRAY_STAINED_GLASS_PANE);
@@ -378,7 +374,7 @@ public final class ShopMenus {
         }
 
         inv.setItem(SELL_TOTAL, GuiUtil.item(Material.PAPER, 1,
-                "<gold><bold>" + g("coin") + " Gesamtwert</bold>",
+                "<gold><bold>Gesamtwert</bold>",
                 List.of("<gray>Verkaufbar: <white>" + count + "x",
                         "<gray>Erlös: <gold>" + money(total),
                         "",
@@ -388,7 +384,7 @@ public final class ShopMenus {
         boolean any = count > 0;
         inv.setItem(SELL_CONFIRM, any
                 ? GuiUtil.glowing(Material.EMERALD, 1,
-                    "<green><bold>" + g("check") + " Verkaufen</bold>",
+                    "<green><bold>Verkaufen</bold>",
                     List.of("<gray>Verkauft alles hier drin",
                             "<gray>für <gold>" + money(total),
                             "",
@@ -398,7 +394,7 @@ public final class ShopMenus {
                     List.of("<gray>Leg zuerst Items hinein.")));
 
         inv.setItem(SELL_CANCEL, GuiUtil.item(Material.BARRIER, 1,
-                "<red><bold>" + g("cross") + " Abbrechen</bold>",
+                "<red><bold>Abbrechen</bold>",
                 List.of("<gray>Schließt das Fenster und",
                         "<gray>gibt dir alle Items zurück.")));
     }

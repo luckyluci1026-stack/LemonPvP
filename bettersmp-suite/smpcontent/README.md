@@ -1,16 +1,24 @@
 # SMPContent
 
-Eigene **Blöcke** und **Items** passend zum SMP-Texturepack (Paper 1.21.11).
+Eigene **Blöcke**, **Items** und **Spezialfähigkeiten** (Paper 1.21.11).
 
 ## Inhalt
 
-**8 Blöcke:** Rubinerz, Saphirerz, Rubinblock, Saphirblock, Marmor,
-Dunkler Marmor, Neonlampe, Münzhaufen
+| Datei | Inhalt |
+|---|---|
+| `config.yml` | 8 Blöcke, 7 Items (Rubin, Saphir, Rubinschwert …) |
+| `content/laserschwerter.yml` | 10 Laserschwerter, Handy, Haltbarer Stock – **mit Fähigkeiten** |
+| `content/platzhalter-bloecke.yml` | **100 Platzhalter-Blöcke**, noch ohne Textur |
+| `content/platzhalter-items.yml` | **150 Platzhalter-Items**, noch ohne Textur |
+| `animationen.yml` | eigene Teilchen-Animationen (Formeln) |
+| `FAEHIGKEITEN.txt` | alle Auslöser und Aktionen erklärt |
 
-**7 Items:** Rubin, Saphir, Magischer Staub, Shop-Gutschein, Schlüssel,
-Rubinschwert, Rubinspitzhacke
+Alle `*.yml` aus `content/` werden mitgeladen – so bleibt die `config.yml`
+übersichtlich und du kannst deine Sachen nach Thema trennen.
 
-(Dazu kommen Herz, Revive-Totem und Münze aus Lifesteal+ / dem Pack.)
+**Platzhalter** funktionieren sofort (geben, setzen, abbauen, Rezepte) und sehen
+aus wie ihr Basis-Item, bis du eine Textur dazulegst. Kein lila-schwarzer
+Fehlwürfel, keine Fehlermeldung.
 
 ## Wie komme ich an die Sachen?
 
@@ -87,6 +95,61 @@ Am Ende der `config.yml` steht eine kopierfertige Vorlage mit allen Feldern.
 Danach: `/smpcontent reload`, Textur nach
 `plugins/SMPContent/textures/item/<id>.png`, `/smpcontent pack`.
 `model-data` muss eindeutig sein – nimm die nächste freie Zahl.
+
+## Spezialfähigkeiten mit Animationen
+
+Jedes Item kann Fähigkeiten bekommen – Auslöser, Abklingzeit, Aktionen:
+
+```yaml
+laserschwert_rot:
+  material: IRON_SWORD
+  abilities:
+    - trigger: right-click        # right-click, left-click, hit, kill, held
+      name: "Laserstrahl"
+      cooldown: 6
+      actions:
+        - type: animation
+          shape: beam
+          particle: DUST
+          color: "#FF3030"
+          length: 14
+          ticks: 8
+        - type: damage-beam       # trifft alles auf der Blicklinie
+          amount: 6.0
+          range: 14
+        - type: ignite
+          seconds: 3
+          target: victim
+```
+
+**Aktionen:** `animation`, `sound`, `potion`, `damage`, `damage-beam`, `heal`,
+`launch`, `push`, `pull`, `lightning`, `ignite`, `explosion`, `message`.
+Alles mit allen Werten steht in `FAEHIGKEITEN.txt`.
+
+`explosion` zerstört standardmäßig **keine** Blöcke.
+
+### Eigene Animationen
+
+Sieben Formen sind eingebaut (`beam`, `ring`, `spiral`, `sphere`, `slash`,
+`orbit`, `trail`). Eigene baust du in der `animationen.yml` mit Formeln:
+
+```yaml
+animations:
+  meine_spirale:
+    points: 16                            # Teilchen pro Tick
+    x: "cos(a + t * 0.3) * (radius * p)"
+    y: "p * 2"
+    z: "sin(a + t * 0.3) * (radius * p)"
+    relative-to: player                   # player | eyes | look
+    follow: true                          # läuft mit, wenn du gehst
+```
+
+Verfügbar sind `t` (Tick), `p` (Fortschritt 0–1), `i` (Nummer des Teilchens),
+`n`, `a` (Winkel), `ticks`, `radius`, `length` – dazu `sin cos tan sqrt abs min
+max round floor pow random …` und `pi`, `e`, `tau`.
+
+Der Name wird dann als `shape:` benutzt. Mitgeliefert als Beispiele: Spirale,
+Herz, Doppelring, Druckwelle, Tornado, Bohrer, Flügel, Funkenregen.
 
 ## Waffen & Werkzeuge
 

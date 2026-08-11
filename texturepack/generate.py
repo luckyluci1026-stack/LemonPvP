@@ -1289,45 +1289,22 @@ def write_java(atlas, mapping):
     root = BUILD / "java"
     if root.exists():
         shutil.rmtree(root)
-    (root / f"assets/{NAMESPACE}/textures/font").mkdir(parents=True, exist_ok=True)
     (root / f"assets/{NAMESPACE}/textures/item").mkdir(parents=True, exist_ok=True)
     (root / f"assets/{NAMESPACE}/models/item").mkdir(parents=True, exist_ok=True)
     (root / f"assets/{NAMESPACE}/items").mkdir(parents=True, exist_ok=True)
-    (root / "assets/minecraft/font").mkdir(parents=True, exist_ok=True)
-
-    atlas.save(root / f"assets/{NAMESPACE}/textures/font/icons.png")
 
     # pack.mcmeta
     (root / "pack.mcmeta").write_text(json.dumps({
         "pack": {
             "pack_format": JAVA_PACK_FORMAT,
             "supported_formats": JAVA_FORMAT_RANGE,
-            "description": "§6SMP Pack §8- §7Icons, Rang-Abzeichen & Custom-Items",
+            "description": "§6SMP Pack §8- §7Custom-Items & Blöcke",
         }
     }, indent=2), encoding="utf-8")
 
-    # Glyphen in die Standardschrift einhängen -> überall nutzbar
-    rows = []
-    for r in range(GRID):
-        row = "".join(chr(0xE100 + r * GRID + c) for c in range(GRID))
-        rows.append(row)
-    # WICHTIG: Diese Datei ersetzt die Standardschrift komplett. Vanilla listet
-    # hier ZWEI Referenzen - "include/space" definiert die Breite des
-    # Leerzeichens, "include/default" die eigentlichen Buchstaben. Fehlt die
-    # Space-Referenz, haben Leerzeichen im ganzen Spiel keine Breite mehr!
-    (root / "assets/minecraft/font/default.json").write_text(json.dumps({
-        "providers": [
-            {"type": "reference", "id": "minecraft:include/space"},
-            {"type": "reference", "id": "minecraft:include/default"},
-            {
-                "type": "bitmap",
-                "file": f"{NAMESPACE}:font/icons.png",
-                "ascent": 8,
-                "height": 10,
-                "chars": rows,
-            },
-        ]
-    }, indent=2, ensure_ascii=False), encoding="utf-8")
+    # Bewusst KEINE eigene Schrift: die Icon-Glyphen sind raus. Damit bleibt
+    # auch assets/minecraft/font/default.json unangetastet - diese Datei ersetzt
+    # die Standardschrift komplett und ist eine beliebte Fehlerquelle.
 
     # Custom-Items: Textur + Modell + Item-Definition (1.21.4+ item_model)
     for name, shape in CUSTOM_ITEMS.items():

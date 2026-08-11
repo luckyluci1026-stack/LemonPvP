@@ -1,15 +1,15 @@
 # FastShop - Nachrichten (MiniMessage + Legacy-Codes)
-prefix: "<gradient:#F1C40F:#E67E22><bold>%g:cart% Shop</bold></gradient> <dark_gray>»</dark_gray> "
+prefix: "<gradient:#F1C40F:#E67E22><bold>Shop</bold></gradient> <dark_gray>»</dark_gray> "
 
 no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
 players-only: "%prefix%<red>Nur für Spieler.</red>"
 reloaded: "%prefix%<green>Shop neu geladen.</green>"
 no-economy: "%prefix%<red>Kein Economy-System gefunden (Vault + EssentialsX nötig).</red>"
 
-bought: "%prefix%<green>%g:check% Gekauft: <white>%amount%x %item%</white> für <green>%g:coin% %price%</green>.</green>"
-sold: "%prefix%<gold>%g:coin% Verkauft: <white>%amount%x %item%</white> für <gold>%price%</gold>.</gold>"
-sold-multi: "%prefix%<gold>%g:bag% Verkauft: <white>%count%</white> Item(s) für <gold>%g:coin% %price%</gold>.</gold>"
-not-enough-money: "%prefix%<red>%g:cross% Du brauchst <white>%price%</white>, hast aber nur <white>%balance%</white>.</red>"
+bought: "%prefix%<green>Gekauft: <white>%amount%x %item%</white> für <green>%price%</green>.</green>"
+sold: "%prefix%<gold>Verkauft: <white>%amount%x %item%</white> für <gold>%price%</gold>.</gold>"
+sold-multi: "%prefix%<gold>Verkauft: <white>%count%</white> Item(s) für <gold>%price%</gold>.</gold>"
+not-enough-money: "%prefix%<red>Du brauchst <white>%price%</white>, hast aber nur <white>%balance%</white>.</red>"
 not-enough-items: "%prefix%<red>Du hast nicht so viele <white>%item%</white>.</red>"
 inventory-full: "%prefix%<red>Dein Inventar ist voll.</red>"
 not-buyable: "%prefix%<red>Dieses Item kann man nicht kaufen.</red>"
@@ -17,10 +17,10 @@ not-sellable: "%prefix%<red>Dieses Item kann man nicht verkaufen.</red>"
 nothing-in-hand: "%prefix%<red>Du hältst nichts in der Hand.</red>"
 nothing-sold: "%prefix%<gray>Nichts Verkaufbares gefunden.</gray>"
 
-worth: "%prefix%<gray><white>%item%</white> <dark_gray>│</dark_gray> Verkauf <gold>%g:coin% %sell%</gold> <dark_gray>│</dark_gray> Kauf <green>%g:coin% %buy%</green></gray>"
+worth: "%prefix%<gray><white>%item%</white> <dark_gray>│</dark_gray> Verkauf <gold>%sell%</gold> <dark_gray>│</dark_gray> Kauf <green>%buy%</green></gray>"
 worth-none: "%prefix%<gray>Dieses Item hat keinen Wert im Shop.</gray>"
 
-sell-gui-title: "<gradient:#F1C40F:#E67E22>%g:bag% Zum Verkaufen ablegen</gradient>"
+sell-gui-title: "<gradient:#F1C40F:#E67E22>Zum Verkaufen ablegen</gradient>"
 sell-gui-hint: "%prefix%<gray>Lege Items hinein und schließe das Fenster zum Verkaufen.</gray>"
 
 additem-usage: "%prefix%<gray>/fastshop additem <Kategorie> <Kaufpreis> <Verkaufspreis> <gray>(Item in der Hand)</gray></gray>"

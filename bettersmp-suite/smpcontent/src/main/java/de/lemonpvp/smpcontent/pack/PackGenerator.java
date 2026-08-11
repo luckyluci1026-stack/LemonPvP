@@ -11,8 +11,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -136,6 +138,8 @@ public final class PackGenerator {
         int blocks = 0;
         int customModels = 0;
         List<String> missing = new ArrayList<>();
+        // Nur Einträge mit Textur oder eigenem Modell bekommen ein Aussehen
+        Set<String> textured = new HashSet<>();
 
         try {
             deleteRecursively(work);
@@ -164,9 +168,16 @@ public final class PackGenerator {
                 if (hasOwnModel) {
                     customModels++;
                 }
+
+                // Platzhalter ohne Textur bekommen KEIN eigenes Modell, sondern
+                // zeigen ihr Basis-Item. Sonst wäre überall der lila-schwarze
+                // Fehlwürfel zu sehen.
                 if (!hasTexture && !hasOwnModel) {
-                    missing.add(kind + "/" + entry.id() + ".png");
+                    missing.add(entry.id());
+                    writeFallback(nsRoot, entry, ns);
+                    continue;
                 }
+                textured.add(entry.id().toLowerCase(Locale.ROOT));
 
                 if (entry.block()) {
                     if (!hasOwnModel) {
@@ -202,7 +213,7 @@ public final class PackGenerator {
 
             // Zusätzliche Texturen mitnehmen (Blockbench-Modelle nutzen oft mehrere)
             copyExtraTextures(nsRoot);
-            writeBlockStates(assets.resolve("minecraft/blockstates/note_block.json"), ns);
+            writeBlockStates(assets.resolve("minecraft/blockstates/note_block.json"), ns, textured);
 
             Files.createDirectories(outputDir());
             Path zip = outputDir().resolve(packName + ".zip");
@@ -211,7 +222,9 @@ public final class PackGenerator {
 
             String message = missing.isEmpty()
                     ? "Pack gebaut: " + zip.getFileName()
-                    : "Es fehlen: " + String.join(", ", missing);
+                    : missing.size() + " noch ohne Textur (z.B. "
+                    + String.join(", ", missing.subList(0, Math.min(5, missing.size())))
+                    + ") - die sehen aus wie ihr Basis-Item.";
             return new Result(true, items, blocks, customModels, missing.size(), message);
 
         } catch (Exception e) {
@@ -221,7 +234,9 @@ public final class PackGenerator {
     }
 
     private void writePackMeta(Path work) throws IOException {
-        int format = plugin.getConfig().getInt("texturepack.pack-format", 64);
+        int format = plugin.getConfig().getInt("texturepack.pack-format", 75);
+        int min = plugin.getConfig().getInt("texturepack.min-format", format);
+        int max = plugin.getConfig().getInt("texturepack.max-format", format);
         String description = plugin.getConfig()
                 .getString("texturepack.description", "Eigene Blöcke und Items")
                 .replace("\"", "'");
@@ -229,10 +244,26 @@ public final class PackGenerator {
                 {
                   "pack": {
                     "pack_format": %d,
-                    "supported_formats": [46, 99],
+                    "min_format": %d,
+                    "max_format": %d,
                     "description": "%s"
                   }
-                }""".formatted(format, description));
+                }""".formatted(format, min, max, description));
+    }
+
+
+    /**
+     * Für Einträge ohne Textur: das Aussehen des Basis-Items übernehmen.
+     * So funktioniert ein Platzhalter sofort und sieht trotzdem normal aus.
+     */
+    private void writeFallback(Path nsRoot, CustomEntry entry, String ns) throws IOException {
+        String vanilla = entry.block()
+                ? "minecraft:block/note_block"
+                : "minecraft:item/" + entry.material().getKey().getKey();
+        write(nsRoot.resolve("items/" + entry.id() + ".json"), """
+                {
+                  "model": { "type": "minecraft:model", "model": "%s" }
+                }""".formatted(vanilla));
     }
 
     /**
@@ -240,7 +271,7 @@ public final class PackGenerator {
      * Vanilla-Notenblock - sonst erschiene jeder normale Notenblock als
      * fehlende Textur.
      */
-    private void writeBlockStates(Path target, String ns) throws IOException {
+    private void writeBlockStates(Path target, String ns, Set<String> textured) throws IOException {
         List<String> lines = new ArrayList<>();
         for (String instrument : INSTRUMENTS) {
             for (int note = 0; note <= 24; note++) {
@@ -248,17 +279,21 @@ public final class PackGenerator {
                     String state = "instrument=" + instrument + ",note=" + note
                             + ",powered=" + powered;
                     lines.add("    \"" + state + "\": { \"model\": \""
-                            + modelForState(state, ns) + "\" }");
+                            + modelForState(state, ns, textured) + "\" }");
                 }
             }
         }
         write(target, "{\n  \"variants\": {\n" + String.join(",\n", lines) + "\n  }\n}\n");
     }
 
-    /** Sucht den eigenen Block, dessen Zustand exakt zu dieser Variante passt. */
-    private String modelForState(String state, String ns) {
+    /**
+     * Sucht den eigenen Block, dessen Zustand exakt zu dieser Variante passt.
+     * Blöcke ohne Textur bleiben beim Vanilla-Notenblock.
+     */
+    private String modelForState(String state, String ns, Set<String> textured) {
         for (CustomEntry entry : plugin.registry().entries().values()) {
-            if (!entry.block() || entry.state() == null) {
+            if (!entry.block() || entry.state() == null
+                    || !textured.contains(entry.id().toLowerCase(Locale.ROOT))) {
                 continue;
             }
             String own = entry.state().toLowerCase(Locale.ROOT);
@@ -306,6 +341,8 @@ public final class PackGenerator {
         Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
         return true;
     }
+
+
 
     private void write(Path path, String content) throws IOException {
         Files.createDirectories(path.getParent());

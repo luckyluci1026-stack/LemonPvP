@@ -1,6 +1,7 @@
 package de.lemonpvp.smpcontent.content;
 
 import de.lemonpvp.smpcontent.SMPContent;
+import de.lemonpvp.smpcontent.util.ConfigProblem;
 import de.lemonpvp.smpcontent.util.Text;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -22,10 +23,14 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Lädt alle eigenen Blöcke und Items aus der config.yml, baut die passenden
@@ -39,7 +44,10 @@ public final class ContentRegistry {
     private final Map<String, CustomEntry> entries = new LinkedHashMap<>();
     /** Normalisierter Blockzustand -> Block-Id. */
     private final Map<String, String> stateToId = new LinkedHashMap<>();
+    /** Id -> Rezept-Abschnitt (auch aus den Zusatzdateien). */
+    private final Map<String, ConfigurationSection> recipeSections = new LinkedHashMap<>();
     private final List<NamespacedKey> registeredRecipes = new ArrayList<>();
+    private final List<ConfigProblem.Report> problems = new ArrayList<>();
 
     public ContentRegistry(SMPContent plugin) {
         this.plugin = plugin;
@@ -65,25 +73,101 @@ public final class ContentRegistry {
         clearRecipes();
         entries.clear();
         stateToId.clear();
+        recipeSections.clear();
+        problems.clear();
+        plugin.abilities().clear();
 
-        loadSection("blocks", true);
-        loadSection("items", false);
+        // 1. Die Hauptdatei
+        loadFrom(plugin.getConfig(), "config.yml");
+
+        // 2. Alle Zusatzdateien aus content/ - so bleiben eigene Sachen
+        //    übersichtlich getrennt und die config.yml kurz.
+        for (Path file : contentFiles()) {
+            ConfigProblem.Result result = ConfigProblem.load(file.toFile());
+            if (!result.ok()) {
+                ConfigProblem.log(plugin.getLogger(), result.problem());
+                problems.add(result.problem());
+                continue;
+            }
+            loadFrom(result.config(), file.getFileName().toString());
+        }
+
+        loadAnimations();
 
         if (plugin.getConfig().getBoolean("recipes-enabled", true)) {
             registerRecipes();
         }
         plugin.getLogger().info("Geladen: " + entries.size() + " eigene Inhalte ("
-                + stateToId.size() + " Blöcke).");
+                + stateToId.size() + " Blöcke, " + plugin.abilities().count()
+                + " Fähigkeiten, " + plugin.abilities().animationCount() + " eigene Animationen).");
     }
 
-    private void loadSection(String path, boolean isBlock) {
-        ConfigurationSection root = plugin.getConfig().getConfigurationSection(path);
+    /** Alle *.yml aus plugins/SMPContent/content/, nach Namen sortiert. */
+    private List<Path> contentFiles() {
+        Path dir = plugin.contentDir();
+        if (!Files.isDirectory(dir)) {
+            return List.of();
+        }
+        try (Stream<Path> files = Files.list(dir)) {
+            return files.filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString()
+                            .toLowerCase(java.util.Locale.ROOT).endsWith(".yml"))
+                    .sorted()
+                    .toList();
+        } catch (IOException ex) {
+            plugin.getLogger().warning("content/ nicht lesbar: " + ex.getMessage());
+            return List.of();
+        }
+    }
+
+    /** Liest die eigenen Animationen aus der animationen.yml. */
+    private void loadAnimations() {
+        Path file = plugin.getDataFolder().toPath().resolve("animationen.yml");
+        if (!Files.exists(file)) {
+            return;
+        }
+        ConfigProblem.Result result = ConfigProblem.load(file.toFile());
+        if (!result.ok()) {
+            ConfigProblem.log(plugin.getLogger(), result.problem());
+            problems.add(result.problem());
+            return;
+        }
+        ConfigurationSection root = result.config().getConfigurationSection("animations");
+        if (root == null) {
+            return;
+        }
+        for (String name : root.getKeys(false)) {
+            Map<String, Object> values = root.getConfigurationSection(name) == null
+                    ? Map.of()
+                    : root.getConfigurationSection(name).getValues(false);
+            plugin.abilities().registerAnimation(name, values);
+        }
+    }
+
+    /** Fehler aus content/ und animationen.yml (leer = alles in Ordnung). */
+    public List<ConfigProblem.Report> problems() {
+        return problems;
+    }
+
+    private void loadFrom(ConfigurationSection config, String source) {
+        loadSection(config, "blocks", true, source);
+        loadSection(config, "items", false, source);
+    }
+
+    private void loadSection(ConfigurationSection config, String path, boolean isBlock,
+                             String source) {
+        ConfigurationSection root = config.getConfigurationSection(path);
         if (root == null) {
             return;
         }
         for (String id : root.getKeys(false)) {
             ConfigurationSection sec = root.getConfigurationSection(id);
             if (sec == null) {
+                continue;
+            }
+            if (entries.containsKey(id.toLowerCase(java.util.Locale.ROOT))) {
+                plugin.getLogger().warning("'" + id + "' aus " + source
+                        + " gibt es schon - übersprungen.");
                 continue;
             }
             Material material = isBlock
@@ -105,6 +189,12 @@ public final class ContentRegistry {
                     continue;
                 }
                 state = normalized;
+                String taken = stateToId.get(state);
+                if (taken != null) {
+                    plugin.getLogger().warning("Block " + id + " aus " + source
+                            + " benutzt denselben 'state' wie " + taken + " - übersprungen.");
+                    continue;
+                }
                 stateToId.put(state, id);
             }
             Map<String, Double> attributes = new LinkedHashMap<>();
@@ -132,6 +222,12 @@ public final class ContentRegistry {
                     sec.getBoolean("unbreakable", false),
                     enchants,
                     sec.getBoolean("glow", false)));
+
+            ConfigurationSection recipe = sec.getConfigurationSection("recipe");
+            if (recipe != null) {
+                recipeSections.put(id.toLowerCase(java.util.Locale.ROOT), recipe);
+            }
+            plugin.abilities().register(id, sec.getList("abilities"));
         }
     }
 
@@ -247,8 +343,8 @@ public final class ContentRegistry {
 
     private void registerRecipes() {
         for (CustomEntry entry : entries.values()) {
-            ConfigurationSection sec = plugin.getConfig().getConfigurationSection(
-                    (entry.block() ? "blocks." : "items.") + entry.id() + ".recipe");
+            ConfigurationSection sec = recipeSections.get(
+                    entry.id().toLowerCase(java.util.Locale.ROOT));
             if (sec == null) {
                 continue;
             }

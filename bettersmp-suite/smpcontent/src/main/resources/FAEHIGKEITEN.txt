@@ -1,0 +1,138 @@
+Spezialfähigkeiten für eigene Items
+===================================
+
+Jedes Item kann Fähigkeiten bekommen. Sie stehen direkt beim Item
+in der config.yml oder in einer Datei in content/.
+
+    laserschwert_rot:
+      material: IRON_SWORD
+      abilities:
+        - trigger: right-click
+          name: "Laserstrahl"
+          cooldown: 6
+          actions:
+            - type: animation
+              shape: beam
+              particle: DUST
+              color: "#FF3030"
+              length: 14
+              ticks: 8
+            - type: damage-beam
+              amount: 6.0
+              range: 14
+
+Einrückung: "abilities:" mit 4 Leerzeichen (wie material), die
+Fähigkeiten mit "- " darunter, "actions:" wieder eine Ebene tiefer.
+
+
+AUSLÖSER (trigger)
+------------------
+  right-click     Rechtsklick mit dem Item in der Hand
+  left-click      Linksklick
+  hit             wenn du mit dem Item jemanden triffst
+  kill            wenn du mit dem Item jemanden tötest
+  held            alle 1 Sekunde, solange du es in der Hand hältst
+
+Pro Fähigkeit:
+  name          wird bei der Abklingzeit angezeigt (optional)
+  cooldown      Abklingzeit in Sekunden (0 = keine)
+  permission    nur mit diesem Recht nutzbar (optional)
+
+
+AKTIONEN (actions)
+------------------
+
+animation      Teilchen-Animation
+   shape       beam | ring | spiral | sphere | slash | orbit | trail
+               oder der Name einer eigenen Animation aus animationen.yml
+   particle    DUST, FLAME, END_ROD, SOUL_FIRE_FLAME, CRIT, CLOUD,
+               ELECTRIC_SPARK, HEART, PORTAL, SMOKE, SNOWFLAKE ...
+   color       "#RRGGBB" (nur bei DUST)
+   size        Größe der Teilchen (nur bei DUST), Standard 1.0
+   radius      wie weit, bei ring/sphere/orbit/spiral
+   length      wie lang, bei beam
+   ticks       Dauer in Ticks (20 = 1 Sekunde)
+   density     wie viele Teilchen, Standard 2
+
+sound          Ton abspielen
+   sound       z.B. entity.blaze.shoot, block.note_block.pling,
+               entity.ender_dragon.growl, item.trident.thunder
+   volume      Standard 1.0
+   pitch       0.5 = tief, 2.0 = hoch
+
+potion         Effekt geben
+   effect      speed, strength, regeneration, invisibility,
+               fire_resistance, jump_boost, slowness, blindness ...
+   duration    Sekunden
+   amplifier   Stufe (1 = normal)
+   target      self (Standard) oder victim
+
+damage         Schaden
+   amount      Schadenspunkte (2.0 = 1 Herz)
+   target      victim
+
+damage-beam    trifft ALLES auf deiner Blicklinie
+   amount      Schaden je Ziel
+   range       Reichweite in Blöcken
+
+heal           dich heilen
+   amount      Lebenspunkte
+
+launch         dich wegschleudern (Sprung, Dash)
+   forward     nach vorne, z.B. 1.5
+   up          nach oben, z.B. 0.4
+
+push / pull    alles in der Nähe wegstoßen bzw. heranziehen
+   radius      Umkreis
+   power       Stärke
+
+lightning      Blitz einschlagen lassen
+   range       Reichweite, wenn kein Ziel getroffen wurde
+   damage      true (Standard) oder false für reine Optik
+
+ignite         Ziel anzünden
+   seconds     wie lange
+   target      victim
+
+explosion      Explosion
+   power        Stärke
+   fire         true = setzt Feuer, Standard false
+   break-blocks true = zerstört Blöcke, Standard FALSE
+
+message        Text anzeigen
+   text        MiniMessage, Platzhalter %x% %y% %z% %world% %player%
+   actionbar   true = über der Hotbar statt im Chat
+
+
+EIGENE ANIMATIONEN
+------------------
+In animationen.yml baust du eigene Formen mit Formeln. Dort steht
+alles erklärt, mit fertigen Beispielen (Spirale, Herz, Tornado,
+Flügel, Druckwelle ...). Den Namen von dort einfach als "shape"
+benutzen.
+
+
+BEISPIEL: Sprung-Stiefel
+------------------------
+    springer:
+      material: LEATHER_BOOTS
+      name: "<aqua>Sprungstiefel</aqua>"
+      model-data: 8400
+      abilities:
+        - trigger: right-click
+          name: "Sprung"
+          cooldown: 3
+          actions:
+            - type: launch
+              forward: 0.6
+              up: 1.1
+            - type: animation
+              shape: druckwelle
+              particle: CLOUD
+              radius: 2.0
+              ticks: 8
+            - type: sound
+              sound: entity.firework_rocket.launch
+
+
+Nach jeder Änderung:  /smpcontent reload

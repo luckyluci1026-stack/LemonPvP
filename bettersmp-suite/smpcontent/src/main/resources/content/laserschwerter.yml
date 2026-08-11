@@ -1,0 +1,560 @@
+# ==========================================================
+#  Laserschwerter, Handy und Stock
+#
+#  Diese Datei wird beim ersten Start angelegt. Du kannst sie
+#  frei ändern - /smpcontent reload liest sie neu ein.
+#
+#  EINRÜCKUNG: Item-Name = 2 Leerzeichen, Eigenschaften = 4.
+# ==========================================================
+
+items:
+
+  laserschwert:
+    material: IRON_SWORD
+    name: "<red>Laserschwert</red>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8111
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#FF3B30"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#FF3B30"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  laserschwert_rot:
+    material: IRON_SWORD
+    name: "<red>Rotes Laserschwert</red>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8112
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#FF3B30"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#FF3B30"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  laserschwert_blau:
+    material: IRON_SWORD
+    name: "<blue>Blaues Laserschwert</blue>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8113
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#3B82F6"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#3B82F6"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  laserschwert_gruen:
+    material: IRON_SWORD
+    name: "<green>Grünes Laserschwert</green>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8114
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#22C55E"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#22C55E"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  laserschwert_tuerkis:
+    material: IRON_SWORD
+    name: "<aqua>Türkises Laserschwert</aqua>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8115
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#22D3EE"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#22D3EE"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  laserschwert_lila:
+    material: IRON_SWORD
+    name: "<light_purple>Lila Laserschwert</light_purple>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8116
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#A855F7"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#A855F7"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  laserschwert_orange:
+    material: IRON_SWORD
+    name: "<gold>Oranges Laserschwert</gold>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8117
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#F97316"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#F97316"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  laserschwert_weiss:
+    material: IRON_SWORD
+    name: "<white>Weißes Laserschwert</white>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8118
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#FFFFFF"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#FFFFFF"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  laserschwert_grau:
+    material: IRON_SWORD
+    name: "<gray>Graues Laserschwert</gray>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8119
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#9CA3AF"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#9CA3AF"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  laserschwert_schwarz:
+    material: IRON_SWORD
+    name: "<dark_gray>Schwarzes Laserschwert</dark_gray>"
+    lore:
+      - "<dark_gray>Summt leise"
+      - "<gray>Rechtsklick: <white>Laserstrahl</white>"
+    model-data: 8120
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.0
+    durability: 2400
+    unbreakable: true
+    glow: true
+    abilities:
+      # Rechtsklick: Strahl nach vorne, trifft alles auf der Linie
+      - trigger: right-click
+        name: "Laserstrahl"
+        cooldown: 6
+        actions:
+          - type: animation
+            shape: beam
+            particle: DUST
+            color: "#3F3F46"
+            size: 1.1
+            length: 14
+            ticks: 8
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.6
+          - type: damage-beam
+            amount: 6.0
+            range: 14
+          - type: ignite
+            seconds: 3
+            target: victim
+
+      # Beim Treffen: kurzer Funkenschlag
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#3F3F46"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  handy:
+    material: PAPER
+    name: "<white>Handy</white>"
+    lore:
+      - "<dark_gray>Empfang: 1 Balken"
+      - "<gray>Rechtsklick: <white>Standort funken</white>"
+    model-data: 8121
+    abilities:
+      - trigger: right-click
+        name: "Standort funken"
+        cooldown: 10
+        actions:
+          - type: sound
+            sound: block.note_block.pling
+            pitch: 2.0
+          - type: animation
+            shape: ring
+            particle: END_ROD
+            radius: 3.0
+            ticks: 20
+          - type: message
+            text: "<gray>Standort: <white>%x% %y% %z%</white> <dark_gray>(%world%)</dark_gray>"
+            actionbar: true
+
+  haltbarer_stick:
+    material: STICK
+    name: "<gold>Haltbarer Stock</gold>"
+    lore:
+      - "<dark_gray>Geht einfach nicht kaputt"
+      - "<gray>Rechtsklick: <white>Schubs</white>"
+    model-data: 8122
+    unbreakable: true
+    attributes:
+      attack_damage: 4.0
+    abilities:
+      - trigger: right-click
+        name: "Schubs"
+        cooldown: 4
+        actions:
+          - type: push
+            radius: 4.0
+            power: 1.2
+          - type: animation
+            shape: ring
+            particle: CLOUD
+            radius: 4.0
+            ticks: 10
+          - type: sound
+            sound: entity.player.attack_knockback

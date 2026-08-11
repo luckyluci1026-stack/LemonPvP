@@ -64,6 +64,9 @@ public final class ContentCommand implements TabExecutor {
                 ConfigProblem.Report problem = plugin.configProblem() != null
                         ? plugin.configProblem()
                         : plugin.msgs().problem();
+                if (problem == null && !plugin.registry().problems().isEmpty()) {
+                    problem = plugin.registry().problems().get(0);
+                }
                 if (problem == null) {
                     plugin.msgs().send(sender, "reloaded");
                 } else {
