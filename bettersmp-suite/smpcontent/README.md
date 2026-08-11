@@ -65,6 +65,29 @@ Zusätzliche PNGs in den Textur-Ordnern werden mitkopiert, falls dein Modell
 mehrere Texturen nutzt. Anleitungen liegen als `LIESMICH.txt` und
 `BLOCKBENCH.txt` in den Ordnern.
 
+## Eigenes Item anlegen
+
+In der `config.yml` unter `items:`. **Die Einrückung ist das Wichtigste:** der
+Name mit genau **2 Leerzeichen**, seine Eigenschaften mit **4**. Keine Tabs.
+
+```yaml
+items:
+  laserschwert_tuerkis:      # 2 Leerzeichen
+    material: IRON_SWORD     # 4 Leerzeichen
+    name: "<aqua>Laserschwert</aqua>"
+    model-data: 8111
+```
+
+Ein Leerzeichen zu viel und YAML kann die ganze Datei nicht mehr lesen. Dann
+sagt dir `/smpcontent reload` die Zeile, den Grund und zeigt die Stelle an –
+die zuletzt funktionierenden Inhalte bleiben so lange aktiv.
+
+Am Ende der `config.yml` steht eine kopierfertige Vorlage mit allen Feldern.
+
+Danach: `/smpcontent reload`, Textur nach
+`plugins/SMPContent/textures/item/<id>.png`, `/smpcontent pack`.
+`model-data` muss eindeutig sein – nimm die nächste freie Zahl.
+
 ## Waffen & Werkzeuge
 
 Jedes Item kann eigene Werte bekommen:

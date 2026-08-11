@@ -3,6 +3,7 @@ prefix: "<gradient:#A78BFA:#6D28D9><bold>Content</bold></gradient> <dark_gray>»
 
 no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
 reloaded: "%prefix%<green>Inhalte neu geladen.</green>"
+config-error: "%prefix%<red><white>%file%</white> hat einen Fehler in <white>Zeile %line%</white>.</red><newline><gold>%hint%</gold><newline><gray>Die alten Einstellungen bleiben aktiv.</gray>"
 player-not-found: "%prefix%<red>Spieler nicht gefunden.</red>"
 
 usage: "%prefix%<gray>/smpcontent <white>give <Spieler> <Id> [Menge]</white> | <white>list</white> | <white>pack</white> | <white>reload</white></gray>"

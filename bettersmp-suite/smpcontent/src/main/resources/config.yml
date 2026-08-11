@@ -106,6 +106,16 @@ blocks:
 #  Eigene Items
 #  material = das Basis-Item (bestimmt Verhalten & Bedrock-Aussehen)
 #  model-data = muss zum Geyser-Mapping passen
+#
+#  EINRÜCKUNG: Der Name des Items steht mit GENAU 2 Leerzeichen,
+#  seine Eigenschaften mit 4. Keine Tabs. So sieht es richtig aus:
+#
+#  items:
+#  ..mein_item:            <- 2 Leerzeichen
+#  ....material: STICK     <- 4 Leerzeichen
+#
+#  Ein Leerzeichen zu viel und die ganze Datei lässt sich nicht mehr
+#  lesen. /smpcontent reload sagt dir dann Zeile und Grund.
 # ----------------------------------------------------------
 items:
   ruby:
@@ -196,6 +206,41 @@ items:
       shape: ["RRR", " S ", " S "]
       keys: {R: "smp:ruby", S: STICK}
       amount: 1
+
+# ==========================================================
+#  Vorlage: eigenes Item anlegen
+#
+#  Alles ab hier ist auskommentiert. Zum Benutzen die # am
+#  Zeilenanfang entfernen - die Leerzeichen dahinter bleiben,
+#  wie sie sind. Der Block gehört unter "items:" weiter oben.
+# ==========================================================
+#
+#  laserschwert_tuerkis:
+#    material: IRON_SWORD
+#    name: "<aqua>Laserschwert</aqua>"
+#    lore:
+#      - "<dark_gray>Summt leise"
+#    model-data: 8111
+#    attributes:
+#      attack_damage: 10.0
+#      attack_speed: -2.0
+#    durability: 2000
+#    enchants:
+#      sharpness: 2
+#    glow: true
+#    recipe:
+#      shape: [" D ", " D ", " S "]
+#      keys: {D: DIAMOND, S: STICK}
+#      amount: 1
+#
+#  Danach:
+#    1. /smpcontent reload
+#    2. Textur nach plugins/SMPContent/textures/item/laserschwert_tuerkis.png
+#    3. /smpcontent pack   und das neue Pack hochladen
+#
+#  model-data muss eindeutig sein - nimm die nächste freie Zahl.
+#  Umlaute im Namen (dem Teil vor dem Doppelpunkt) lieber vermeiden,
+#  im "name:"-Text sind sie kein Problem.
 
 # ==========================================================
 #  Waffen & Werkzeuge - mögliche Zusatzfelder pro Item

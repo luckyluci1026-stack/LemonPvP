@@ -2,6 +2,8 @@ package de.lemonpvp.smpcontent.command;
 
 import de.lemonpvp.smpcontent.SMPContent;
 import de.lemonpvp.smpcontent.content.CustomEntry;
+import de.lemonpvp.smpcontent.util.ConfigProblem;
+import de.lemonpvp.smpcontent.util.Text;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
@@ -58,7 +60,22 @@ public final class ContentCommand implements TabExecutor {
                 plugin.reloadConfig();
                 plugin.msgs().reload();
                 plugin.registry().load();
-                plugin.msgs().send(sender, "reloaded");
+
+                ConfigProblem.Report problem = plugin.configProblem() != null
+                        ? plugin.configProblem()
+                        : plugin.msgs().problem();
+                if (problem == null) {
+                    plugin.msgs().send(sender, "reloaded");
+                } else {
+                    plugin.msgs().send(sender, "config-error",
+                            "file", problem.file(),
+                            "line", String.valueOf(problem.line()),
+                            "hint", ConfigProblem.safeForChat(problem.hint()));
+                    for (String line : problem.context()) {
+                        sender.sendMessage(Text.mm("<dark_gray>"
+                                + ConfigProblem.safeForChat(line) + "</dark_gray>"));
+                    }
+                }
             }
             case "list" -> {
                 if (sender instanceof Player player) {

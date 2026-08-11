@@ -15,6 +15,7 @@ public final class Msgs {
     private final JavaPlugin plugin;
     private YamlConfiguration messages;
     private YamlConfiguration defaults;
+    private ConfigProblem.Report problem;
 
     public Msgs(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -26,11 +27,29 @@ public final class Msgs {
         if (!file.exists()) {
             plugin.saveResource("messages.yml", false);
         }
-        this.messages = YamlConfiguration.loadConfiguration(file);
         var res = plugin.getResource("messages.yml");
         this.defaults = res == null
                 ? new YamlConfiguration()
                 : YamlConfiguration.loadConfiguration(new InputStreamReader(res, StandardCharsets.UTF_8));
+
+        // Bei einem Tippfehler bleiben die bisherigen Texte stehen, statt dass
+        // plötzlich überall nur noch die Schlüsselnamen im Chat auftauchen.
+        ConfigProblem.Result result = ConfigProblem.load(file);
+        if (result.ok()) {
+            this.messages = result.config();
+            this.problem = null;
+            return;
+        }
+        this.problem = result.problem();
+        ConfigProblem.log(plugin.getLogger(), problem);
+        if (this.messages == null) {
+            this.messages = new YamlConfiguration();
+        }
+    }
+
+    /** Null, solange die messages.yml in Ordnung ist. */
+    public ConfigProblem.Report problem() {
+        return problem;
     }
 
     public String raw(String path) {
