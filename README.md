@@ -135,7 +135,7 @@ Admin (`helden3.admin`):
 | Datei | Inhalt |
 | --- | --- |
 | `config.yml` | Leben, Kampf, Wirtschaft, Scoreboard, Events, Bedrock-Optionen |
-| `heroes.yml` | Heldenklassen: Kit, Passivwerte, Faehigkeit, Waffe |
+| `heroes.yml` | Heldenklassen: Passivwerte, Faehigkeit, Waffe |
 | `items.yml` | Artefakte: Material, CustomModelData, Bedrock-Identifier, Lore |
 | `teams.yml` | Fraktionen, Farben, Teamspawns |
 | `shop.yml` | Angebote und Preise im `/shop` |

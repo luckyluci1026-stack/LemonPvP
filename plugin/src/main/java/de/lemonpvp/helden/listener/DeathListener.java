@@ -12,7 +12,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 
 import java.util.UUID;
 
-/** Tod und Respawn: Statistik, Belohnungen, Leben und Kit. */
+/** Tod und Respawn: Statistik, Belohnungen, Leben und Passivwerte. */
 public final class DeathListener implements Listener {
 
     private final HeldenPlugin plugin;
@@ -83,7 +83,7 @@ public final class DeathListener implements Listener {
             event.setRespawnLocation(spawn);
         }
 
-        // Nach dem Respawn-Tick, sonst laufen Kit und Effekte ins Leere.
+        // Nach dem Respawn-Tick, sonst laufen die Effekte ins Leere.
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (!player.isOnline()) {
                 return;
@@ -93,13 +93,7 @@ public final class DeathListener implements Listener {
                 plugin.lives().applyFallenState(player);
                 return;
             }
-            Hero hero = plugin.heroes().of(profile);
-            if (hero != null) {
-                if (plugin.settings().giveKitOnRespawn()) {
-                    plugin.heroes().giveKit(player, hero);
-                }
-                plugin.heroes().applyPassives(player, hero);
-            }
+            plugin.heroes().applyPassives(player, plugin.heroes().of(profile));
             plugin.combat().protect(player, plugin.settings().respawnProtectionSeconds());
             plugin.messages().send(player, "combat.spawn-protection",
                     "%seconds%", plugin.settings().respawnProtectionSeconds());

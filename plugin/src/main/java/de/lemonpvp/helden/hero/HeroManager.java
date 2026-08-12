@@ -8,8 +8,6 @@ import de.lemonpvp.helden.util.TimeUtil;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
@@ -21,11 +19,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** Laedt die Heldenklassen und wendet Kit sowie Passivwerte an. */
+/** Laedt die Heldenklassen und wendet ihre Passivwerte an. */
 public final class HeroManager {
-
-    /** Letzter Slot, den {@link PlayerInventory#setItem(int, ItemStack)} akzeptiert (40 = Zweithand). */
-    private static final int MAX_INVENTORY_SLOT = 40;
 
     private final HeldenPlugin plugin;
     private final ConfigFile file;
@@ -86,8 +81,7 @@ public final class HeroManager {
                 passives,
                 section.getDouble("passives.damage-dealt-multiplier", 1.0),
                 section.getDouble("passives.damage-taken-multiplier", 1.0),
-                section.getDouble("passives.projectile-damage-percent", 0.0),
-                readKit(id, section));
+                section.getDouble("passives.projectile-damage-percent", 0.0));
     }
 
     private Hero.Passive readPassive(String heroId, String raw) {
@@ -109,46 +103,6 @@ public final class HeroManager {
             }
         }
         return new Hero.Passive(type, amplifier);
-    }
-
-    private List<KitEntry> readKit(String heroId, ConfigurationSection section) {
-        List<KitEntry> kit = new ArrayList<>();
-        for (Map<?, ?> entry : section.getMapList("kit")) {
-            Object itemId = entry.get("item");
-            Object materialName = entry.get("material");
-            int amount = toInt(entry.get("amount"), 1);
-            int slot = toInt(entry.get("slot"), -1);
-
-            if (itemId != null) {
-                kit.add(new KitEntry(String.valueOf(itemId), null, amount, slot));
-                continue;
-            }
-            if (materialName == null) {
-                plugin.getLogger().warning("Held '" + heroId + "': Kit-Eintrag ohne 'item' oder 'material'.");
-                continue;
-            }
-            Material material = Compat.material(String.valueOf(materialName));
-            if (material == null) {
-                plugin.getLogger().warning("Held '" + heroId + "': unbekanntes Material '" + materialName + "'.");
-                continue;
-            }
-            kit.add(new KitEntry(null, material, amount, slot));
-        }
-        return kit;
-    }
-
-    private int toInt(Object value, int fallback) {
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        if (value == null) {
-            return fallback;
-        }
-        try {
-            return Integer.parseInt(String.valueOf(value).trim());
-        } catch (NumberFormatException exception) {
-            return fallback;
-        }
     }
 
     public Hero get(String id) {
@@ -237,53 +191,23 @@ public final class HeroManager {
         return true;
     }
 
-    /** Setzt den Helden, gibt das Kit aus und aktualisiert alle Ableitungen. */
+    /**
+     * Setzt den Helden und aktualisiert alle Ableitungen.
+     *
+     * <p>Ausruestung gibt es dabei bewusst keine - Helden starten mit leerem
+     * Inventar und besorgen sich ihre Waffe selbst (Shop, Beute oder
+     * {@code /helden3 item}).</p>
+     */
     public void apply(Player player, Hero hero) {
         HeldenProfile profile = plugin.profiles().getOrCreate(player);
-        boolean changed = !hero.id().equalsIgnoreCase(profile.heroId());
 
         profile.heroId(hero.id());
         profile.heroSelectedAt(System.currentTimeMillis());
 
-        if (changed && plugin.settings().clearInventoryOnChange()) {
-            player.getInventory().clear();
-            player.getInventory().setArmorContents(null);
-        }
-
-        giveKit(player, hero);
         clearPassives(player);
         applyPassives(player, hero);
         plugin.abilities().clear(player);
         plugin.hud().update(player);
-    }
-
-    public void giveKit(Player player, Hero hero) {
-        if (hero == null) {
-            return;
-        }
-        PlayerInventory inventory = player.getInventory();
-        for (KitEntry entry : hero.kit()) {
-            ItemStack stack = toStack(entry);
-            if (stack == null) {
-                continue;
-            }
-            if (entry.slot() >= 0 && entry.slot() <= MAX_INVENTORY_SLOT) {
-                inventory.setItem(entry.slot(), stack);
-            } else {
-                inventory.addItem(stack);
-            }
-        }
-    }
-
-    private ItemStack toStack(KitEntry entry) {
-        if (entry.isCustomItem()) {
-            ItemStack stack = plugin.items().stack(entry.itemId(), entry.amount());
-            if (stack == null) {
-                plugin.getLogger().warning("Kit verweist auf das unbekannte Artefakt '" + entry.itemId() + "'.");
-            }
-            return stack;
-        }
-        return entry.material() == null ? null : new ItemStack(entry.material(), Math.max(1, entry.amount()));
     }
 
     /** Frischt die passiven Effekte des aktuellen Helden auf. */

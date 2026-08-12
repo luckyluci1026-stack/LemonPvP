@@ -22,6 +22,13 @@ bzw. erlittenen Schaden.
 Passive Effekte werden alle `hero.passive-refresh-seconds` Sekunden erneuert
 (Standard 5 s, Wirkdauer 8 s — damit nichts flackert).
 
+**Startausruestung gibt es nicht.** Ein Held bringt nur seine Passivwerte und
+seine Faehigkeit mit — das Inventar bleibt bei Auswahl, Respawn und
+Wiederbelebung unangetastet. Die in der Tabelle genannte Waffe ist der
+Gegenstand, mit dem sich die Faehigkeit ausloesen laesst; besorgen muss man sie
+sich selbst (Beute, Shop oder `/helden3 item <id>`). Ohne Waffe bleibt
+`/faehigkeit` — das funktioniert immer.
+
 ### Faehigkeiten im Detail
 
 | Faehigkeit | Wirkung |

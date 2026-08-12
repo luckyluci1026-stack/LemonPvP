@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Prueft, ob Konfiguration, Resourcepacks und Plugin-Code zusammenpassen.
 
-Findet die Fehler, die der Compiler nicht sieht: ein Kit, das auf ein
-geloeschtes Artefakt zeigt, ein Held ohne Faehigkeit, ein Shop-Eintrag ohne
-Item, eine Textur, die im Pack fehlt.
+Findet die Fehler, die der Compiler nicht sieht: ein Held, dessen Waffe es
+nicht mehr gibt, eine unbekannte Faehigkeit, ein Shop-Eintrag ohne Item, eine
+Textur, die im Pack fehlt.
 
 Aufruf:  python3 tools/validate.py
 Braucht: PyYAML
@@ -91,14 +91,6 @@ def check_heroes(heroes, items, abilities):
         weapon = entry.get("weapon", "")
         if weapon and weapon not in items:
             fail("heroes.yml: '%s' verweist auf das unbekannte Artefakt '%s'" % (hero_id, weapon))
-
-        kit_items = [e.get("item") for e in entry.get("kit", []) if e.get("item")]
-        for kit_item in kit_items:
-            if kit_item not in items:
-                fail("heroes.yml: Kit von '%s' verweist auf das unbekannte Artefakt '%s'"
-                     % (hero_id, kit_item))
-        if weapon and weapon not in kit_items:
-            notes.append("Held '%s' hat seine Waffe '%s' nicht im Kit" % (hero_id, weapon))
 
         for raw in entry.get("passives", {}).get("effects", []) or []:
             if ":" not in str(raw):

@@ -21,7 +21,6 @@ hero:
   change-cooldown: "&cDu kannst deinen Helden erst in &f%time% &cwechseln."
   change-disabled: "&cIn diesem Projekt kannst du den Helden nicht mehr wechseln."
   select-first: "&cWaehle zuerst einen Helden mit &f/held&c."
-  kit-given: "&7Dein Kit wurde ausgegeben."
   current: "&7Dein Held: %hero%"
   broadcast: "&e%player% &7ist jetzt %hero%&7."
   locked-lore: "&cGesperrt"

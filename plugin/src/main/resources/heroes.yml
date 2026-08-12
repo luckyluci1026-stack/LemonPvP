@@ -3,12 +3,13 @@
 #
 #  ability            -> ID einer registrierten Faehigkeit (siehe /helden3 status)
 #  weapon             -> Custom-Item aus items.yml, mit dem die Faehigkeit
-#                        per Rechtsklick ausgeloest wird
+#                        ausgeloest wird (Schleichen + Rechtsklick).
+#                        Das Item wird NICHT automatisch ausgegeben - Helden
+#                        starten ohne Ausruestung. Verteilt wird ueber
+#                        /helden3 item, den Shop oder eigene Beute.
 #  passives.effects   -> "EFFEKTNAME:staerke", Namen wie in Minecraft
 #                        (SPEED, STRENGTH, RESISTANCE, REGENERATION,
 #                         HEALTH_BOOST, JUMP_BOOST, HASTE, FIRE_RESISTANCE ...)
-#  kit.slot           -> 0-35 Inventar, 36 Schuhe, 37 Hose, 38 Brust,
-#                        39 Helm, 40 Zweithand
 # =====================================================================
 
 heroes:
@@ -28,20 +29,6 @@ heroes:
         - "RESISTANCE:0"
       damage-dealt-multiplier: 1.10
       damage-taken-multiplier: 1.00
-    kit:
-      - item: zitronenklinge
-        slot: 0
-      - material: COOKED_BEEF
-        amount: 16
-        slot: 8
-      - material: IRON_BOOTS
-        slot: 36
-      - material: IRON_LEGGINGS
-        slot: 37
-      - material: IRON_CHESTPLATE
-        slot: 38
-      - material: IRON_HELMET
-        slot: 39
 
   bogenschuetze:
     display: "&b&lBogenschuetze"
@@ -59,23 +46,6 @@ heroes:
       damage-taken-multiplier: 1.10
       # Zusaetzlicher Schaden mit Pfeilen in Prozent.
       projectile-damage-percent: 25
-    kit:
-      - item: sturmbogen
-        slot: 0
-      - material: ARROW
-        amount: 32
-        slot: 1
-      - material: COOKED_BEEF
-        amount: 16
-        slot: 8
-      - material: LEATHER_BOOTS
-        slot: 36
-      - material: CHAINMAIL_LEGGINGS
-        slot: 37
-      - material: CHAINMAIL_CHESTPLATE
-        slot: 38
-      - material: LEATHER_HELMET
-        slot: 39
 
   assassine:
     display: "&5&lAssassine"
@@ -92,20 +62,6 @@ heroes:
         - "JUMP_BOOST:0"
       damage-dealt-multiplier: 1.25
       damage-taken-multiplier: 1.20
-    kit:
-      - item: schattendolch
-        slot: 0
-      - material: COOKED_BEEF
-        amount: 16
-        slot: 8
-      - material: LEATHER_BOOTS
-        slot: 36
-      - material: LEATHER_LEGGINGS
-        slot: 37
-      - material: LEATHER_CHESTPLATE
-        slot: 38
-      - material: LEATHER_HELMET
-        slot: 39
 
   magier:
     display: "&6&lMagier"
@@ -121,20 +77,6 @@ heroes:
         - "FIRE_RESISTANCE:0"
       damage-dealt-multiplier: 1.00
       damage-taken-multiplier: 1.15
-    kit:
-      - item: feuerstab
-        slot: 0
-      - material: COOKED_BEEF
-        amount: 16
-        slot: 8
-      - material: GOLDEN_BOOTS
-        slot: 36
-      - material: LEATHER_LEGGINGS
-        slot: 37
-      - material: GOLDEN_CHESTPLATE
-        slot: 38
-      - material: LEATHER_HELMET
-        slot: 39
 
   heiler:
     display: "&a&lHeiler"
@@ -150,25 +92,6 @@ heroes:
         - "REGENERATION:0"
       damage-dealt-multiplier: 0.85
       damage-taken-multiplier: 1.00
-    kit:
-      - item: heilerstab
-        slot: 0
-      - material: WOODEN_SWORD
-        slot: 1
-      - material: GOLDEN_APPLE
-        amount: 3
-        slot: 7
-      - material: COOKED_BEEF
-        amount: 16
-        slot: 8
-      - material: CHAINMAIL_BOOTS
-        slot: 36
-      - material: CHAINMAIL_LEGGINGS
-        slot: 37
-      - material: CHAINMAIL_CHESTPLATE
-        slot: 38
-      - material: CHAINMAIL_HELMET
-        slot: 39
 
   waechter:
     display: "&7&lWaechter"
@@ -186,19 +109,3 @@ heroes:
         - "SLOWNESS:0"
       damage-dealt-multiplier: 0.80
       damage-taken-multiplier: 0.75
-    kit:
-      - item: bollwerkschild
-        slot: 40
-      - material: STONE_AXE
-        slot: 0
-      - material: COOKED_BEEF
-        amount: 16
-        slot: 8
-      - material: DIAMOND_BOOTS
-        slot: 36
-      - material: DIAMOND_LEGGINGS
-        slot: 37
-      - material: DIAMOND_CHESTPLATE
-        slot: 38
-      - material: DIAMOND_HELMET
-        slot: 39

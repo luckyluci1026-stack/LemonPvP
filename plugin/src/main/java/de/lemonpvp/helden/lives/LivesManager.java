@@ -148,7 +148,6 @@ public final class LivesManager {
             target.teleport(spawn);
         }
         plugin.combat().protect(target, plugin.settings().reviveProtectionSeconds());
-        plugin.heroes().giveKit(target, plugin.heroes().of(target));
         plugin.hud().update(target);
 
         plugin.messages().broadcastRaw("lives.revived",

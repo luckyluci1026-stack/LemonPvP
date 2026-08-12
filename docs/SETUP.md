@@ -162,4 +162,4 @@ Reflection an — fehlt es, ist einfach nie jemand "Bedrock".
 | Kein Scoreboard | `hud.enabled: true`, danach `/helden3 reload` |
 | Faehigkeit reagiert nicht | Schleichen + Rechtsklick mit der Heldenwaffe — oder `/faehigkeit` nutzen |
 | `Held 'x' verweist auf die unbekannte Faehigkeit 'y'` | `ability:` in `heroes.yml` gegen `/helden3 status` pruefen |
-| Kit bleibt leer | `item:` in `heroes.yml` zeigt auf eine ID, die es in `items.yml` nicht gibt |
+| Held hat keine Waffe | So gewollt — Helden starten ohne Ausruestung, Waffen kommen aus `/helden3 item`, dem Shop oder aus Beute |

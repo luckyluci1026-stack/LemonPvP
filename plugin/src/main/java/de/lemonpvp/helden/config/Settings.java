@@ -41,8 +41,6 @@ public final class Settings {
     private AbilityTrigger abilityTrigger = AbilityTrigger.SNEAK_RIGHT_CLICK;
     private boolean selectHeroOnFirstJoin = true;
     private int heroChangeCooldownSeconds = 3600;
-    private boolean giveKitOnRespawn = true;
-    private boolean clearInventoryOnChange = true;
     private int passiveRefreshSeconds = 5;
 
     private boolean livesEnabled = true;
@@ -101,8 +99,6 @@ public final class Settings {
         abilityTrigger = parseAbilityTrigger(config.getString("hero.ability-trigger", "SNEAK_RIGHT_CLICK"));
         selectHeroOnFirstJoin = config.getBoolean("hero.select-on-first-join", true);
         heroChangeCooldownSeconds = config.getInt("hero.change-cooldown-seconds", 3600);
-        giveKitOnRespawn = config.getBoolean("hero.give-kit-on-respawn", true);
-        clearInventoryOnChange = config.getBoolean("hero.clear-inventory-on-change", true);
         passiveRefreshSeconds = Math.max(1, config.getInt("hero.passive-refresh-seconds", 5));
 
         livesEnabled = config.getBoolean("lives.enabled", true);
@@ -257,14 +253,6 @@ public final class Settings {
 
     public int heroChangeCooldownSeconds() {
         return heroChangeCooldownSeconds;
-    }
-
-    public boolean giveKitOnRespawn() {
-        return giveKitOnRespawn;
-    }
-
-    public boolean clearInventoryOnChange() {
-        return clearInventoryOnChange;
     }
 
     public int passiveRefreshSeconds() {

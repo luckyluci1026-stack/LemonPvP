@@ -29,7 +29,6 @@ public final class Hero {
     private final double damageDealtMultiplier;
     private final double damageTakenMultiplier;
     private final double projectileDamagePercent;
-    private final List<KitEntry> kit;
 
     public Hero(String id,
                 String display,
@@ -41,8 +40,7 @@ public final class Hero {
                 List<Passive> passives,
                 double damageDealtMultiplier,
                 double damageTakenMultiplier,
-                double projectileDamagePercent,
-                List<KitEntry> kit) {
+                double projectileDamagePercent) {
         this.id = id;
         this.display = display;
         this.icon = icon;
@@ -54,7 +52,6 @@ public final class Hero {
         this.damageDealtMultiplier = damageDealtMultiplier;
         this.damageTakenMultiplier = damageTakenMultiplier;
         this.projectileDamagePercent = projectileDamagePercent;
-        this.kit = List.copyOf(kit);
     }
 
     public String id() {
@@ -107,9 +104,5 @@ public final class Hero {
 
     public double projectileDamagePercent() {
         return projectileDamagePercent;
-    }
-
-    public List<KitEntry> kit() {
-        return kit;
     }
 }

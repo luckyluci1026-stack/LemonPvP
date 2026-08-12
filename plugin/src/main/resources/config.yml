@@ -38,10 +38,6 @@ hero:
   # Wie viele Sekunden nach dem Waehlen darf gewechselt werden?
   # -1 = immer erlaubt, 0 = nie wechseln.
   change-cooldown-seconds: 3600
-  # Kit beim Heldenwechsel und beim Respawn erneut ausgeben.
-  give-kit-on-respawn: true
-  # Inventar beim Heldenwechsel leeren.
-  clear-inventory-on-change: true
   # Passive Effekte alle X Sekunden erneuern.
   passive-refresh-seconds: 5
 
