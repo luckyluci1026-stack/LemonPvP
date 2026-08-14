@@ -2,6 +2,7 @@ package de.lemonpvp.smpcontent;
 
 import de.lemonpvp.smpcontent.ability.Abilities;
 import de.lemonpvp.smpcontent.command.ContentCommand;
+import de.lemonpvp.smpcontent.content.BlockStore;
 import de.lemonpvp.smpcontent.content.ContentRegistry;
 import de.lemonpvp.smpcontent.content.CustomEntry;
 import de.lemonpvp.smpcontent.gui.ContentGui;
@@ -36,7 +37,7 @@ public final class SMPContent extends JavaPlugin {
 
     /** Zusatzdateien mit eigenen Inhalten, die beim ersten Start angelegt werden. */
     private static final String[] CONTENT_FILES = {
-            "laserschwerter.yml", "platzhalter-bloecke.yml", "platzhalter-items.yml",
+            "platzhalter-bloecke.yml", "platzhalter-items.yml",
     };
 
     private Msgs msgs;
@@ -44,6 +45,7 @@ public final class SMPContent extends JavaPlugin {
     private PackGenerator pack;
     private Abilities abilities;
     private ContentGui gui;
+    private BlockStore blocks;
 
     private YamlConfiguration config;
     private ConfigProblem.Report configProblem;
@@ -55,6 +57,7 @@ public final class SMPContent extends JavaPlugin {
         saveExtras();
         this.msgs = new Msgs(this);
         this.abilities = new Abilities(this);
+        this.blocks = new BlockStore(this);
         this.registry = new ContentRegistry(this);
         this.pack = new PackGenerator(this);
         this.gui = new ContentGui(this);
@@ -65,6 +68,11 @@ public final class SMPContent extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new AbilityListener(this), this);
         getCommand("smpcontent").setExecutor(new ContentCommand(this));
         startHeldTask();
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            for (org.bukkit.Chunk chunk : world.getLoadedChunks()) {
+                blocks.load(chunk);
+            }
+        }
 
         getLogger().info("SMPContent aktiviert.");
     }
@@ -133,6 +141,11 @@ public final class SMPContent extends JavaPlugin {
 
     public ContentGui gui() {
         return gui;
+    }
+
+    /** Wo welcher eigene Block steht - unabhängig vom Notenblock-Zustand. */
+    public BlockStore blocks() {
+        return blocks;
     }
 
     // ------------------------------------------------------------------

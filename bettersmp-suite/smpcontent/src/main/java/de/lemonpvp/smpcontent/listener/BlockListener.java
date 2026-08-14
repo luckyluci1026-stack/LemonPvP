@@ -3,6 +3,7 @@ package de.lemonpvp.smpcontent.listener;
 import de.lemonpvp.smpcontent.SMPContent;
 import de.lemonpvp.smpcontent.content.CustomEntry;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -13,20 +14,33 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.NotePlayEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Hält eigene Blöcke stabil und sorgt für die richtigen Drops.
  *
- * Eigene Blöcke sind Notenblöcke mit einem festen Zustand. Damit dieser
- * Zustand erhalten bleibt, werden für GENAU diese Blöcke drei Vanilla-
- * Verhalten unterdrückt: Instrumentwechsel durch den Block darunter,
- * Umstimmen per Rechtsklick und der Notenklang. Normale Notenblöcke
- * bleiben davon unberührt.
+ * Eigene Blöcke sind Notenblöcke mit einem festen Zustand. Der Zustand ist
+ * aber nur das AUSSEHEN - wer der Block ist, steht im Chunk-Speicher
+ * ({@link de.lemonpvp.smpcontent.content.BlockStore}). Dadurch geht ein Block
+ * nicht mehr verloren, wenn irgendetwas seinen Zustand verändert: das Plugin
+ * erkennt ihn weiterhin und stellt das Aussehen wieder her.
+ *
+ * Zusätzlich werden für genau diese Blöcke drei Vanilla-Verhalten
+ * unterdrückt: Instrumentwechsel durch den Block darunter, Umstimmen per
+ * Rechtsklick und der Notenklang. Normale Notenblöcke bleiben unberührt.
  */
 public final class BlockListener implements Listener {
 
@@ -37,16 +51,41 @@ public final class BlockListener implements Listener {
     }
 
     /**
-     * BlockPhysicsEvent & Co. feuern sehr oft. Erst dieser billige Test,
-     * dann erst getBlockData() - das legt sonst bei jedem Blockupdate der
-     * ganzen Welt ein BlockData-Objekt und einen String an.
+     * Welcher eigene Block steht hier?
+     *
+     * Erst der Chunk-Speicher (schnell und zustandsunabhängig), danach als
+     * Rückfalltür der Zustandsvergleich - so werden Blöcke aus älteren
+     * Versionen weiterhin erkannt und dabei gleich nachgetragen.
      */
     private CustomEntry customAt(Block block) {
         if (block.getType() != Material.NOTE_BLOCK) {
             return null;
         }
-        return plugin.registry().blockAt(block.getBlockData());
+        String id = plugin.blocks().idAt(block);
+        if (id != null) {
+            return plugin.registry().get(id);
+        }
+        CustomEntry byState = plugin.registry().blockAt(block.getBlockData());
+        if (byState != null) {
+            plugin.blocks().set(block, byState.id());
+        }
+        return byState;
     }
+
+    /** Stellt das Aussehen wieder her, falls es abgewichen ist. */
+    private void repair(Block block, CustomEntry entry) {
+        BlockData want = plugin.registry().blockDataFor(entry);
+        if (want == null || block.getType() != Material.NOTE_BLOCK) {
+            return;
+        }
+        if (!block.getBlockData().getAsString().equals(want.getAsString())) {
+            block.setBlockData(want.clone(), false);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  Setzen und Abbauen
+    // ------------------------------------------------------------------
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
@@ -75,9 +114,11 @@ public final class BlockListener implements Listener {
         // steht: Plugins wie WorldGuard brechen den Bau erst bei HIGHEST
         // oder MONITOR ab - ohne diesen Test bliebe ein Geisterblock stehen.
         Bukkit.getScheduler().runTask(plugin, () -> {
-            if (block.getType() == Material.NOTE_BLOCK) {
-                block.setBlockData(data.clone(), false);
+            if (block.getType() != Material.NOTE_BLOCK) {
+                return;
             }
+            block.setBlockData(data.clone(), false);
+            plugin.blocks().set(block, entry.id());
         });
     }
 
@@ -87,6 +128,7 @@ public final class BlockListener implements Listener {
         if (entry == null) {
             return;
         }
+        plugin.blocks().remove(event.getBlock());
         event.setDropItems(false);
         if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
             event.getBlock().getWorld().dropItemNaturally(
@@ -94,6 +136,10 @@ public final class BlockListener implements Listener {
                     plugin.registry().create(entry, 1));
         }
     }
+
+    // ------------------------------------------------------------------
+    //  Zustand stabil halten
+    // ------------------------------------------------------------------
 
     /** Verhindert, dass der Block darunter das Instrument (und damit die Textur) ändert. */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -109,13 +155,20 @@ public final class BlockListener implements Listener {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) {
             return;
         }
-        if (event.getPlayer().isSneaking() || customAt(event.getClickedBlock()) == null) {
+        Block block = event.getClickedBlock();
+        CustomEntry entry = customAt(block);
+        if (entry == null) {
             return;
         }
-        // Nur die Block-Interaktion (das Umstimmen) sperren. Wer das ganze
-        // Event abbricht, kann vor einem eigenen Block auch nichts mehr
-        // essen, keinen Eimer benutzen und keinen Bogen spannen.
-        event.setUseInteractedBlock(Event.Result.DENY);
+        if (!event.getPlayer().isSneaking()) {
+            // Nur die Block-Interaktion (das Umstimmen) sperren. Wer das ganze
+            // Event abbricht, kann vor einem eigenen Block auch nichts mehr
+            // essen, keinen Eimer benutzen und keinen Bogen spannen.
+            event.setUseInteractedBlock(Event.Result.DENY);
+        }
+        // Doppelt genäht: sollte doch etwas durchrutschen, sitzt der Zustand
+        // einen Tick später wieder richtig.
+        Bukkit.getScheduler().runTask(plugin, () -> repair(block, entry));
     }
 
     /** Eigene Blöcke sollen keinen Notenklang abspielen. */
@@ -124,5 +177,94 @@ public final class BlockListener implements Listener {
         if (customAt(event.getBlock()) != null) {
             event.setCancelled(true);
         }
+    }
+
+    /**
+     * Kolben würden den Block verschieben, ohne dass der Eintrag mitwandert -
+     * danach stünde ein eigener Block ohne Kennung in der Welt.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        if (anyCustom(event.getBlocks())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        if (anyCustom(event.getBlocks())) {
+            event.setCancelled(true);
+        }
+    }
+
+    private boolean anyCustom(List<Block> blocks) {
+        for (Block block : blocks) {
+            if (customAt(block) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ------------------------------------------------------------------
+    //  Explosionen: Eintrag entfernen und richtig droppen
+    // ------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEntityExplode(EntityExplodeEvent event) {
+        handleExplosion(event.blockList());
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockExplode(BlockExplodeEvent event) {
+        handleExplosion(event.blockList());
+    }
+
+    private void handleExplosion(List<Block> blocks) {
+        for (Block block : blocks) {
+            CustomEntry entry = customAt(block);
+            if (entry == null) {
+                continue;
+            }
+            plugin.blocks().remove(block);
+            block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5),
+                    plugin.registry().create(entry, 1));
+            block.setType(Material.AIR, false);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  Chunks
+    // ------------------------------------------------------------------
+
+    @EventHandler
+    public void onChunkLoad(ChunkLoadEvent event) {
+        Chunk chunk = event.getChunk();
+        Map<Integer, String> table = plugin.blocks().load(chunk);
+        if (table.isEmpty()) {
+            return;
+        }
+        // Einen Tick später: falls in der Zwischenzeit etwas am Zustand
+        // gedreht hat (WorldEdit, /setblock, ein anderes Plugin), sieht der
+        // Block danach wieder richtig aus.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!chunk.isLoaded()) {
+                return;
+            }
+            for (Map.Entry<Integer, String> stored : table.entrySet()) {
+                CustomEntry entry = plugin.registry().get(stored.getValue());
+                if (entry == null) {
+                    continue;
+                }
+                int packed = stored.getKey();
+                Block block = chunk.getBlock(packed & 15, (packed >> 8) - 2048, (packed >> 4) & 15);
+                repair(block, entry);
+            }
+        });
+    }
+
+    @EventHandler
+    public void onChunkUnload(ChunkUnloadEvent event) {
+        plugin.blocks().unload(event.getChunk());
     }
 }

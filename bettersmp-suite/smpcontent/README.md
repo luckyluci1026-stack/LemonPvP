@@ -6,11 +6,10 @@ Eigene **Blöcke**, **Items** und **Spezialfähigkeiten** (Paper 1.21.11).
 
 | Datei | Inhalt |
 |---|---|
-| `config.yml` | 8 Blöcke, 7 Items (Rubin, Saphir, Rubinschwert …) |
-| `content/laserschwerter.yml` | 10 Laserschwerter, Handy, Haltbarer Stock – **mit Fähigkeiten** |
+| `config.yml` | 24 Blöcke, 62 Items – Erze, Marmor, Möbel, Laserschwerter, Tränke, Werkzeuge, Früchte |
 | `content/platzhalter-bloecke.yml` | **100 Platzhalter-Blöcke**, noch ohne Textur |
 | `content/platzhalter-items.yml` | **150 Platzhalter-Items**, noch ohne Textur |
-| `animationen.yml` | eigene Teilchen-Animationen (Formeln) |
+| `animationen.yml` | 13 Teilchen-Animationen (Formeln), eigene bauen |
 | `FAEHIGKEITEN.txt` | alle Auslöser und Aktionen erklärt |
 
 Alle `*.yml` aus `content/` werden mitgeladen – so bleibt die `config.yml`
@@ -186,6 +185,13 @@ gängige Lösung (die auch große Content-Plugins nutzen) sind **Note-Block-
 Zustände**: Jeder eigene Block ist ein Notenblock mit einer festen
 Instrument/Noten-Kombination, und das Texturepack lenkt genau diese
 Kombination auf ein eigenes Modell.
+
+**Der Zustand ist aber nur das Aussehen.** Wer der Block ist, steht zusätzlich
+im Chunk gespeichert. Verändert also doch einmal etwas den Zustand (WorldEdit,
+`/setblock`, ein anderes Plugin), erkennt das Plugin den Block weiterhin, gibt
+beim Abbauen das richtige Item und stellt das Aussehen beim nächsten Laden des
+Chunks von selbst wieder her. Kolben können eigene Blöcke nicht verschieben,
+und Explosionen droppen das richtige Item.
 
 Damit der Zustand hält, unterdrückt das Plugin für **genau diese Blöcke** drei
 Vanilla-Verhalten: Instrumentwechsel durch den Block darunter, Umstimmen per
