@@ -8,6 +8,16 @@
 #  In Rezepten sind erlaubt:
 #    - Vanilla-Materialien:  STONE, DIAMOND, ...
 #    - eigene Items/Blöcke:  "smp:ruby", "smp:ruby_block", ...
+#
+#  Blöcke können beim Abbauen etwas anderes fallen lassen als sich
+#  selbst - praktisch für Erze:
+#    drops:
+#      - item: "smp:ruby"     Material oder "smp:id"
+#        amount: 1-2          feste Zahl oder Bereich
+#        chance: 1.0          0.0 bis 1.0
+#        fortune: true        Glücksbringer erhöht die Menge
+#    experience: 3            Erfahrung beim Abbauen
+#  Behutsamkeit gibt immer den Block selbst.
 # ==========================================================
 
 texturepack:
@@ -35,8 +45,14 @@ recipes-enabled: true
 blocks:
   ruby_ore:
     name: "<red>Rubinerz</red>"
-    lore: ["<dark_gray>Eigener Block"]
+    lore: ["<dark_gray>Eigener Block", "<gray>Gibt 1-2 Rubine"]
     state: "minecraft:note_block[instrument=bit,note=1,powered=false]"
+    # Was beim Abbauen faellt. Ohne diesen Abschnitt faellt der Block selbst.
+    # Behutsamkeit gibt immer den Block, Gluecksbringer erhoeht die Menge.
+    drops:
+      - item: "smp:ruby"
+        amount: 1-2
+    experience: 3
     recipe:
       shape: ["SSS", "SRS", "SSS"]
       keys: {S: STONE, R: "smp:ruby"}
@@ -44,8 +60,12 @@ blocks:
 
   sapphire_ore:
     name: "<aqua>Saphirerz</aqua>"
-    lore: ["<dark_gray>Eigener Block"]
+    lore: ["<dark_gray>Eigener Block", "<gray>Gibt 1-2 Saphire"]
     state: "minecraft:note_block[instrument=bit,note=2,powered=false]"
+    drops:
+      - item: "smp:sapphire"
+        amount: 1-2
+    experience: 3
     recipe:
       shape: ["SSS", "SRS", "SSS"]
       keys: {S: STONE, R: "smp:sapphire"}

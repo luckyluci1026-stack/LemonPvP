@@ -20,6 +20,8 @@ import java.util.Map;
  * @param unbreakable Item nutzt sich nicht ab
  * @param enchants    Verzauberung -> Stufe
  * @param glow        Leucht-Effekt ohne echte Verzauberung
+ * @param drops       was beim Abbauen fällt (leer = der Block selbst)
+ * @param experience  Erfahrungspunkte beim Abbauen
  */
 public record CustomEntry(
         String id,
@@ -33,6 +35,20 @@ public record CustomEntry(
         int maxDamage,
         boolean unbreakable,
         Map<String, Integer> enchants,
-        boolean glow
+        boolean glow,
+        List<Drop> drops,
+        int experience
 ) {
+
+    /**
+     * Ein möglicher Drop eines Blocks.
+     *
+     * @param item    Vanilla-Material oder "smp:id"
+     * @param min     kleinste Menge
+     * @param max     größte Menge
+     * @param chance  0.0 bis 1.0
+     * @param fortune ob Glück die Menge erhöht
+     */
+    public record Drop(String item, int min, int max, double chance, boolean fortune) {
+    }
 }

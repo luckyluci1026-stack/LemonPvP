@@ -224,7 +224,9 @@ public final class ContentRegistry {
                     sec.getInt("durability", 0),
                     sec.getBoolean("unbreakable", false),
                     enchants,
-                    sec.getBoolean("glow", false)));
+                    sec.getBoolean("glow", false),
+                    readDrops(sec, id),
+                    sec.getInt("experience", 0)));
 
             ConfigurationSection recipe = sec.getConfigurationSection("recipe");
             if (recipe != null) {
@@ -232,6 +234,111 @@ public final class ContentRegistry {
             }
             plugin.abilities().register(id, sec.getList("abilities"));
         }
+    }
+
+    /**
+     * Liest den Abschnitt "drops" eines Blocks.
+     *
+     * <pre>
+     * drops:
+     *   - item: "smp:ruby"
+     *     amount: 1-3        # oder einfach 2
+     *     chance: 1.0
+     * </pre>
+     *
+     * Ohne "drops" fällt weiterhin der Block selbst.
+     */
+    private List<CustomEntry.Drop> readDrops(ConfigurationSection sec, String id) {
+        List<?> raw = sec.getList("drops");
+        if (raw == null || raw.isEmpty()) {
+            return List.of();
+        }
+        List<CustomEntry.Drop> out = new ArrayList<>();
+        for (Object element : raw) {
+            if (!(element instanceof Map<?, ?> map)) {
+                continue;
+            }
+            Object item = map.get("item");
+            if (item == null) {
+                plugin.getLogger().warning("Drop bei " + id + " hat kein 'item' - übersprungen.");
+                continue;
+            }
+            int min = 1;
+            int max = 1;
+            Object amount = map.get("amount");
+            if (amount instanceof Number number) {
+                min = max = number.intValue();
+            } else if (amount != null) {
+                String text = String.valueOf(amount).trim();
+                int dash = text.indexOf('-', 1);
+                try {
+                    if (dash > 0) {
+                        min = Integer.parseInt(text.substring(0, dash).trim());
+                        max = Integer.parseInt(text.substring(dash + 1).trim());
+                    } else {
+                        min = max = Integer.parseInt(text);
+                    }
+                } catch (NumberFormatException ex) {
+                    plugin.getLogger().warning("Drop-Menge '" + text + "' bei " + id
+                            + " ist keine Zahl - nehme 1.");
+                }
+            }
+            min = Math.max(0, min);
+            max = Math.max(min, max);
+            double chance = 1.0;
+            Object rawChance = map.get("chance");
+            if (rawChance instanceof Number number) {
+                chance = number.doubleValue();
+            }
+            boolean fortune = !(map.get("fortune") instanceof Boolean flag) || flag;
+            out.add(new CustomEntry.Drop(String.valueOf(item), min, max,
+                    Math.max(0, Math.min(1, chance)), fortune));
+        }
+        return out;
+    }
+
+    /**
+     * Baut die tatsächlichen Drops eines Blocks - mit Zufall, Glück und
+     * Behutsamkeit. Behutsamkeit gibt immer den Block selbst.
+     */
+    public List<ItemStack> rollDrops(CustomEntry entry, int fortuneLevel, boolean silkTouch) {
+        if (silkTouch || entry.drops().isEmpty()) {
+            return List.of(create(entry, 1));
+        }
+        List<ItemStack> out = new ArrayList<>();
+        for (CustomEntry.Drop drop : entry.drops()) {
+            if (drop.chance() < 1.0 && Math.random() > drop.chance()) {
+                continue;
+            }
+            int amount = drop.min() >= drop.max()
+                    ? drop.min()
+                    : drop.min() + (int) (Math.random() * (drop.max() - drop.min() + 1));
+            if (drop.fortune() && fortuneLevel > 0) {
+                // Wie bei Vanilla-Erzen: 0 bis Stufe zusätzliche Züge
+                amount *= 1 + (int) (Math.random() * (fortuneLevel + 1));
+            }
+            if (amount <= 0) {
+                continue;
+            }
+            ItemStack stack = stackFor(drop.item(), amount);
+            if (stack != null) {
+                out.add(stack);
+            } else {
+                plugin.getLogger().warning("Drop '" + drop.item() + "' bei " + entry.id()
+                        + " ist weder ein Material noch ein eigenes Item.");
+            }
+        }
+        return out;
+    }
+
+    /** "smp:ruby" oder "DIAMOND" zu einem echten ItemStack. */
+    private ItemStack stackFor(String value, int amount) {
+        if (value.toLowerCase(java.util.Locale.ROOT).startsWith("smp:")) {
+            CustomEntry other = get(value.substring(4));
+            return other == null ? null : create(other, amount);
+        }
+        Material material = Material.matchMaterial(value);
+        return material == null ? null : new ItemStack(material, Math.max(1, Math.min(64, amount)));
     }
 
     /** Bringt einen Blockzustand in die Schreibweise, die auch Bukkit liefert. */

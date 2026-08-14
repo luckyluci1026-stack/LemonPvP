@@ -193,6 +193,25 @@ beim Abbauen das richtige Item und stellt das Aussehen beim nächsten Laden des
 Chunks von selbst wieder her. Kolben können eigene Blöcke nicht verschieben,
 und Explosionen droppen das richtige Item.
 
+### Drops einstellen
+
+Ein Block lässt beim Abbauen standardmäßig sich selbst fallen. Für Erze ist das
+falsch – die sollen Rohstoffe geben:
+
+```yaml
+ruby_ore:
+  state: "minecraft:note_block[instrument=bit,note=1,powered=false]"
+  drops:
+    - item: "smp:ruby"      # Material oder "smp:id"
+      amount: 1-2           # feste Zahl oder Bereich
+      chance: 1.0           # 0.0 bis 1.0
+      fortune: true         # Glücksbringer erhöht die Menge
+  experience: 3             # Erfahrung beim Abbauen
+```
+
+**Behutsamkeit** gibt immer den Block selbst und keine Erfahrung – wie bei
+Vanilla-Erzen. Mehrere Einträge unter `drops:` fallen alle zusammen.
+
 Damit der Zustand hält, unterdrückt das Plugin für **genau diese Blöcke** drei
 Vanilla-Verhalten: Instrumentwechsel durch den Block darunter, Umstimmen per
 Rechtsklick und den Notenklang. **Normale Notenblöcke bleiben unberührt** –

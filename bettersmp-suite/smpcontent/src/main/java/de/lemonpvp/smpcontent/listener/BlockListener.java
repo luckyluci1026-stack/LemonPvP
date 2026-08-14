@@ -5,9 +5,13 @@ import de.lemonpvp.smpcontent.content.CustomEntry;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -130,11 +134,29 @@ public final class BlockListener implements Listener {
         }
         plugin.blocks().remove(event.getBlock());
         event.setDropItems(false);
-        if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
-            event.getBlock().getWorld().dropItemNaturally(
-                    event.getBlock().getLocation().add(0.5, 0.5, 0.5),
-                    plugin.registry().create(entry, 1));
+        if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
+            return;
         }
+
+        ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
+        int fortune = levelOf(tool, "fortune");
+        boolean silk = levelOf(tool, "silk_touch") > 0;
+
+        Location at = event.getBlock().getLocation().add(0.5, 0.5, 0.5);
+        for (ItemStack drop : plugin.registry().rollDrops(entry, fortune, silk)) {
+            event.getBlock().getWorld().dropItemNaturally(at, drop);
+        }
+        if (entry.experience() > 0 && !silk) {
+            event.setExpToDrop(event.getExpToDrop() + entry.experience());
+        }
+    }
+
+    private int levelOf(ItemStack tool, String enchantment) {
+        if (tool == null || tool.getType().isAir()) {
+            return 0;
+        }
+        Enchantment type = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(enchantment));
+        return type == null ? 0 : tool.getEnchantmentLevel(type);
     }
 
     // ------------------------------------------------------------------
@@ -227,8 +249,10 @@ public final class BlockListener implements Listener {
                 continue;
             }
             plugin.blocks().remove(block);
-            block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5),
-                    plugin.registry().create(entry, 1));
+            Location at = block.getLocation().add(0.5, 0.5, 0.5);
+            for (ItemStack drop : plugin.registry().rollDrops(entry, 0, false)) {
+                block.getWorld().dropItemNaturally(at, drop);
+            }
             block.setType(Material.AIR, false);
         }
     }
