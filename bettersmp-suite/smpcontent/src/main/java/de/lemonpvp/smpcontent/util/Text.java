@@ -38,6 +38,19 @@ public final class Text {
         return MM.deserialize(legacyToMini(input), resolvers);
     }
 
+    /** Nur der sichtbare Text, ohne Farben und Tags - praktisch zum Suchen. */
+    public static String plain(String input) {
+        if (input == null || input.isEmpty()) {
+            return "";
+        }
+        try {
+            return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                    .plainText().serialize(mm(input));
+        } catch (Exception ex) {
+            return input;
+        }
+    }
+
     public static String legacyToMini(String s) {
         if (s == null || s.isEmpty()) {
             return "";

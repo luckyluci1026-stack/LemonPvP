@@ -46,6 +46,8 @@ public final class ContentRegistry {
     private final Map<String, String> stateToId = new LinkedHashMap<>();
     /** Id -> Rezept-Abschnitt (auch aus den Zusatzdateien). */
     private final Map<String, ConfigurationSection> recipeSections = new LinkedHashMap<>();
+    /** Id -> fertiger Blockzustand, damit er nicht ständig neu geparst wird. */
+    private final Map<String, BlockData> blockData = new LinkedHashMap<>();
     private final List<NamespacedKey> registeredRecipes = new ArrayList<>();
     private final List<ConfigProblem.Report> problems = new ArrayList<>();
 
@@ -74,6 +76,7 @@ public final class ContentRegistry {
         entries.clear();
         stateToId.clear();
         recipeSections.clear();
+        blockData.clear();
         problems.clear();
         plugin.abilities().clear();
 
@@ -314,6 +317,12 @@ public final class ContentRegistry {
         return Registry.ATTRIBUTE.get(NamespacedKey.minecraft(name));
     }
 
+    /** Gibt einem Spieler ein Item - was nicht passt, fällt vor seine Füße. */
+    public void give(org.bukkit.entity.Player player, CustomEntry entry, int amount) {
+        player.getInventory().addItem(create(entry, amount)).values()
+                .forEach(rest -> player.getWorld().dropItem(player.getLocation(), rest));
+    }
+
     /** Liest die Content-Id aus einem Item (oder null). */
     public String idOf(ItemStack stack) {
         if (stack == null || !stack.hasItemMeta()) {
@@ -330,6 +339,25 @@ public final class ContentRegistry {
         }
         String id = stateToId.get(data.getAsString());
         return id == null ? null : get(id);
+    }
+
+    /**
+     * Der fertige Blockzustand eines eigenen Blocks.
+     * Wird einmal beim Laden gebaut - Bukkit.createBlockData() ist teuer und
+     * lief vorher bei jedem einzelnen Setzen eines Blocks neu.
+     */
+    public BlockData blockDataFor(CustomEntry entry) {
+        if (entry == null || entry.state() == null) {
+            return null;
+        }
+        return blockData.computeIfAbsent(entry.id().toLowerCase(java.util.Locale.ROOT), id -> {
+            try {
+                return Bukkit.createBlockData(entry.state());
+            } catch (IllegalArgumentException ex) {
+                plugin.getLogger().warning("Blockzustand von " + entry.id() + " ist ungültig.");
+                return null;
+            }
+        });
     }
 
     // ---------------- Rezepte ----------------

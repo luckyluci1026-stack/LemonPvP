@@ -4,18 +4,11 @@ import de.lemonpvp.smpcontent.SMPContent;
 import de.lemonpvp.smpcontent.content.CustomEntry;
 import de.lemonpvp.smpcontent.util.ConfigProblem;
 import de.lemonpvp.smpcontent.util.Text;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,17 +19,6 @@ import java.util.Locale;
  * /smpcontent give|list|reload
  */
 public final class ContentCommand implements TabExecutor {
-
-    /** Übersichts-GUI: zeigt alle Inhalte, Klick gibt das Item. */
-    public static final class ContentHolder implements InventoryHolder {
-        private Inventory inventory;
-        public final List<String> ids = new ArrayList<>();
-
-        @Override
-        public @NotNull Inventory getInventory() {
-            return inventory;
-        }
-    }
 
     private final SMPContent plugin;
 
@@ -80,9 +62,12 @@ public final class ContentCommand implements TabExecutor {
                     }
                 }
             }
-            case "list" -> {
+            case "list", "search", "suche" -> {
+                String search = args.length > 1
+                        ? String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length))
+                        : "";
                 if (sender instanceof Player player) {
-                    openList(player);
+                    plugin.gui().open(player, search);
                 } else {
                     plugin.msgs().send(sender, "list-console",
                             "list", String.join(", ", plugin.registry().entries().keySet()));
@@ -130,53 +115,20 @@ public final class ContentCommand implements TabExecutor {
         int amount = 1;
         if (args.length >= 4) {
             try {
-                amount = Math.max(1, Math.min(64, Integer.parseInt(args[3])));
+                amount = Math.max(1, Math.min(2304, Integer.parseInt(args[3])));
             } catch (NumberFormatException ignored) {
                 amount = 1;
             }
         }
-        target.getInventory().addItem(plugin.registry().create(entry, amount));
+        // Mehr als ein Stapel wird auf mehrere aufgeteilt, Reste fallen zu Boden
+        int left = amount;
+        while (left > 0) {
+            int batch = Math.min(64, left);
+            left -= batch;
+            plugin.registry().give(target, entry, batch);
+        }
         plugin.msgs().send(sender, "given", "amount", String.valueOf(amount),
                 "id", entry.id(), "player", target.getName());
-    }
-
-    /** Baut das Übersichts-GUI mit allen eigenen Inhalten. */
-    public void openList(Player player) {
-        var all = new ArrayList<>(plugin.registry().entries().values());
-        int rows = Math.max(1, Math.min(6, (all.size() + 8) / 9));
-        ContentHolder holder = new ContentHolder();
-        Inventory inv = Bukkit.createInventory(holder, rows * 9,
-                de.lemonpvp.smpcontent.util.Text.mm(plugin.msgs().raw("gui-title")));
-        holder.inventory = inv;
-
-        for (int i = 0; i < all.size() && i < rows * 9; i++) {
-            CustomEntry entry = all.get(i);
-            ItemStack icon = plugin.registry().create(entry, 1);
-            ItemMeta meta = icon.getItemMeta();
-            List<Component> lore = meta.lore() == null
-                    ? new ArrayList<>() : new ArrayList<>(meta.lore());
-            lore.add(Component.empty());
-            lore.add(de.lemonpvp.smpcontent.util.Text
-                    .mm("<dark_gray>Id: <gray>" + entry.id())
-                    .decoration(TextDecoration.ITALIC, false));
-            lore.add(de.lemonpvp.smpcontent.util.Text
-                    .mm("<yellow>Klick <gray>gibt dir dieses " + (entry.block() ? "Block" : "Item"))
-                    .decoration(TextDecoration.ITALIC, false));
-            meta.lore(lore);
-            icon.setItemMeta(meta);
-            inv.setItem(i, icon);
-            holder.ids.add(entry.id());
-        }
-        // freie Plätze auffüllen
-        for (int i = all.size(); i < rows * 9; i++) {
-            ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-            ItemMeta meta = pane.getItemMeta();
-            meta.displayName(Component.text(" "));
-            pane.setItemMeta(meta);
-            inv.setItem(i, pane);
-            holder.ids.add(null);
-        }
-        player.openInventory(inv);
     }
 
     @Override
@@ -196,11 +148,28 @@ public final class ContentCommand implements TabExecutor {
                 }
             }
         } else if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
+            // Bei mehreren hundert Ids nicht alles schicken: erst was mit dem
+            // Getippten anfängt, dann was es enthält - und höchstens 60 Stück.
+            String typed = args[2].toLowerCase(Locale.ROOT);
+            List<String> contains = new ArrayList<>();
             for (String id : plugin.registry().entries().keySet()) {
-                if (id.startsWith(args[2].toLowerCase(Locale.ROOT))) {
+                if (id.startsWith(typed)) {
                     out.add(id);
+                } else if (!typed.isEmpty() && id.contains(typed)) {
+                    contains.add(id);
+                }
+                if (out.size() >= 60) {
+                    break;
                 }
             }
+            for (String id : contains) {
+                if (out.size() >= 60) {
+                    break;
+                }
+                out.add(id);
+            }
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("give")) {
+            out.addAll(List.of("1", "16", "64"));
         }
         return out;
     }

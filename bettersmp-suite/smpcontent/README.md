@@ -43,6 +43,13 @@ Fehlwürfel, keine Fehlermeldung.
 **2. `/smpcontent list`** – GUI mit allen Inhalten. Klick = 1 Stück,
 Shift-Klick = 64 Stück. (Recht `smpcontent.admin`)
 
+Das GUI hat **Seiten** (45 pro Seite), unten links/rechts blättern. Dazu:
+
+- **Filter** (Trichter): Alles → Nur Blöcke → Nur Items
+- **Suche**: `/smpcontent list laser` zeigt nur passende Einträge. Gesucht wird
+  in der Id **und** im Anzeigenamen. Das Fernrohr im GUI hebt die Suche auf.
+- Passt etwas nicht mehr ins Inventar, fällt es vor die Füße statt zu verschwinden.
+
 **3. `/smpcontent give <Spieler> <Id> [Menge]`** – gezielt vergeben.
 
 ## Eigenes Texturepack bauen (Blockbench)
@@ -184,6 +191,10 @@ Damit der Zustand hält, unterdrückt das Plugin für **genau diese Blöcke** dr
 Vanilla-Verhalten: Instrumentwechsel durch den Block darunter, Umstimmen per
 Rechtsklick und den Notenklang. **Normale Notenblöcke bleiben unberührt** –
 sie funktionieren wie immer.
+
+Beim Rechtsklick wird nur noch die *Block*-Interaktion gesperrt, nicht mehr das
+ganze Event – vor einem eigenen Block kann man also weiter essen, einen Eimer
+benutzen oder einen Bogen spannen.
 
 > Die Zustände in der `config.yml` müssen exakt zu
 > `texturepack/dist/blocks-states.yml` passen. Änderst du einen, ändere beide.

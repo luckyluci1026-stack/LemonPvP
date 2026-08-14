@@ -1,15 +1,16 @@
 package de.lemonpvp.smpcontent.listener;
 
 import de.lemonpvp.smpcontent.SMPContent;
-import de.lemonpvp.smpcontent.command.ContentCommand;
 import de.lemonpvp.smpcontent.content.CustomEntry;
+import de.lemonpvp.smpcontent.gui.ContentGui;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.ItemStack;
 
 /**
- * Klick im Übersichts-GUI gibt das jeweilige Item.
+ * Klicks im Übersichts-GUI: Item holen, blättern, filtern, Suche aufheben.
  */
 public final class GuiListener implements Listener {
 
@@ -21,7 +22,7 @@ public final class GuiListener implements Listener {
 
     @EventHandler
     public void onClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof ContentCommand.ContentHolder holder)) {
+        if (!(event.getInventory().getHolder() instanceof ContentGui.Holder holder)) {
             return;
         }
         event.setCancelled(true);
@@ -30,6 +31,33 @@ public final class GuiListener implements Listener {
             return;
         }
         int slot = event.getSlot();
+
+        // Untere Leiste
+        if (ContentGui.isPrev(slot)) {
+            holder.page--;
+            plugin.gui().render(holder);
+            return;
+        }
+        if (ContentGui.isNext(slot)) {
+            holder.page++;
+            plugin.gui().render(holder);
+            return;
+        }
+        if (ContentGui.isFilter(slot)) {
+            holder.filter = holder.filter.next();
+            holder.page = 0;
+            plugin.gui().render(holder);
+            return;
+        }
+        if (ContentGui.isSearch(slot)) {
+            if (!holder.search.isEmpty()) {
+                holder.search = "";
+                holder.page = 0;
+                plugin.gui().render(holder);
+            }
+            return;
+        }
+
         if (slot < 0 || slot >= holder.ids.size()) {
             return;
         }
@@ -42,7 +70,10 @@ public final class GuiListener implements Listener {
             return;
         }
         int amount = event.isShiftClick() ? 64 : 1;
-        player.getInventory().addItem(plugin.registry().create(entry, amount));
+        ItemStack stack = plugin.registry().create(entry, amount);
+        // Was nicht mehr ins Inventar passt, landet vor den Füßen
+        player.getInventory().addItem(stack).values()
+                .forEach(rest -> player.getWorld().dropItem(player.getLocation(), rest));
         plugin.msgs().send(player, "given-self",
                 "amount", String.valueOf(amount), "id", entry.id());
     }

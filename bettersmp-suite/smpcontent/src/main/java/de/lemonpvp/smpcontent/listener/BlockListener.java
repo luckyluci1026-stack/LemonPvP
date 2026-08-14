@@ -4,7 +4,10 @@ import de.lemonpvp.smpcontent.SMPContent;
 import de.lemonpvp.smpcontent.content.CustomEntry;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -33,6 +36,18 @@ public final class BlockListener implements Listener {
         this.plugin = plugin;
     }
 
+    /**
+     * BlockPhysicsEvent & Co. feuern sehr oft. Erst dieser billige Test,
+     * dann erst getBlockData() - das legt sonst bei jedem Blockupdate der
+     * ganzen Welt ein BlockData-Objekt und einen String an.
+     */
+    private CustomEntry customAt(Block block) {
+        if (block.getType() != Material.NOTE_BLOCK) {
+            return null;
+        }
+        return plugin.registry().blockAt(block.getBlockData());
+    }
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         ItemStack item = event.getItemInHand();
@@ -49,15 +64,26 @@ public final class BlockListener implements Listener {
             plugin.msgs().send(event.getPlayer(), "no-permission");
             return;
         }
+        BlockData data = plugin.registry().blockDataFor(entry);
+        if (data == null) {
+            return;
+        }
         Block block = event.getBlockPlaced();
-        // Ohne Physik setzen, damit das Instrument nicht sofort neu berechnet wird
-        Bukkit.getScheduler().runTask(plugin, () ->
-                block.setBlockData(Bukkit.createBlockData(entry.state()), false));
+
+        // Einen Tick später setzen, damit das Instrument nicht sofort neu
+        // berechnet wird. Vorher aber prüfen, ob der Block überhaupt noch
+        // steht: Plugins wie WorldGuard brechen den Bau erst bei HIGHEST
+        // oder MONITOR ab - ohne diesen Test bliebe ein Geisterblock stehen.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (block.getType() == Material.NOTE_BLOCK) {
+                block.setBlockData(data.clone(), false);
+            }
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
-        CustomEntry entry = plugin.registry().blockAt(event.getBlock().getBlockData());
+        CustomEntry entry = customAt(event.getBlock());
         if (entry == null) {
             return;
         }
@@ -72,7 +98,7 @@ public final class BlockListener implements Listener {
     /** Verhindert, dass der Block darunter das Instrument (und damit die Textur) ändert. */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPhysics(BlockPhysicsEvent event) {
-        if (plugin.registry().blockAt(event.getBlock().getBlockData()) != null) {
+        if (customAt(event.getBlock()) != null) {
             event.setCancelled(true);
         }
     }
@@ -83,16 +109,19 @@ public final class BlockListener implements Listener {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) {
             return;
         }
-        if (plugin.registry().blockAt(event.getClickedBlock().getBlockData()) != null
-                && !event.getPlayer().isSneaking()) {
-            event.setCancelled(true);
+        if (event.getPlayer().isSneaking() || customAt(event.getClickedBlock()) == null) {
+            return;
         }
+        // Nur die Block-Interaktion (das Umstimmen) sperren. Wer das ganze
+        // Event abbricht, kann vor einem eigenen Block auch nichts mehr
+        // essen, keinen Eimer benutzen und keinen Bogen spannen.
+        event.setUseInteractedBlock(Event.Result.DENY);
     }
 
     /** Eigene Blöcke sollen keinen Notenklang abspielen. */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onNotePlay(NotePlayEvent event) {
-        if (plugin.registry().blockAt(event.getBlock().getBlockData()) != null) {
+        if (customAt(event.getBlock()) != null) {
             event.setCancelled(true);
         }
     }

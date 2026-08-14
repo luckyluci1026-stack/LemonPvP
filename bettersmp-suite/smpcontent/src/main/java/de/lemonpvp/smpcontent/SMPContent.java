@@ -4,6 +4,7 @@ import de.lemonpvp.smpcontent.ability.Abilities;
 import de.lemonpvp.smpcontent.command.ContentCommand;
 import de.lemonpvp.smpcontent.content.ContentRegistry;
 import de.lemonpvp.smpcontent.content.CustomEntry;
+import de.lemonpvp.smpcontent.gui.ContentGui;
 import de.lemonpvp.smpcontent.listener.AbilityListener;
 import de.lemonpvp.smpcontent.listener.BlockListener;
 import de.lemonpvp.smpcontent.listener.GuiListener;
@@ -42,6 +43,7 @@ public final class SMPContent extends JavaPlugin {
     private ContentRegistry registry;
     private PackGenerator pack;
     private Abilities abilities;
+    private ContentGui gui;
 
     private YamlConfiguration config;
     private ConfigProblem.Report configProblem;
@@ -55,6 +57,7 @@ public final class SMPContent extends JavaPlugin {
         this.abilities = new Abilities(this);
         this.registry = new ContentRegistry(this);
         this.pack = new PackGenerator(this);
+        this.gui = new ContentGui(this);
         pack.ensureFolders();
 
         Bukkit.getPluginManager().registerEvents(new BlockListener(this), this);
@@ -126,6 +129,10 @@ public final class SMPContent extends JavaPlugin {
 
     public Abilities abilities() {
         return abilities;
+    }
+
+    public ContentGui gui() {
+        return gui;
     }
 
     // ------------------------------------------------------------------
