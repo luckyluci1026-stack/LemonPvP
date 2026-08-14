@@ -4,6 +4,7 @@ import de.lemonpvp.smpcontent.SMPContent;
 import de.lemonpvp.smpcontent.content.CustomEntry;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -28,9 +29,22 @@ public final class AbilityListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    /**
+     * WICHTIG: hier ohne ignoreCancelled.
+     *
+     * Bukkit setzt bei einem Klick in die LUFT von sich aus
+     * useInteractedBlock = DENY (es gibt ja keinen Block), und
+     * isCancelled() liefert genau dann true. Das Event gilt also schon vor
+     * jedem Plugin als abgebrochen - mit ignoreCancelled = true kämen nur
+     * Klicks auf Blöcke an. Ob die Benutzung wirklich verboten wurde,
+     * steht stattdessen in useItemInHand().
+     */
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onInteract(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        if (event.useItemInHand() == Event.Result.DENY) {
             return;
         }
         String trigger = switch (event.getAction()) {
@@ -51,7 +65,8 @@ public final class AbilityListener implements Listener {
         }
         if (plugin.abilities().run(event.getPlayer(), entry, trigger, null)
                 && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            event.setCancelled(true);
+            // Nur die Kiste/Tür nicht öffnen - das Item selbst bleibt nutzbar
+            event.setUseInteractedBlock(Event.Result.DENY);
         }
     }
 
