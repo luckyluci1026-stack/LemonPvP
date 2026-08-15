@@ -22,6 +22,7 @@ import java.util.Map;
  * @param glow        Leucht-Effekt ohne echte Verzauberung
  * @param drops       was beim Abbauen fällt (leer = der Block selbst)
  * @param experience  Erfahrungspunkte beim Abbauen
+ * @param extras      seltener gebrauchte Einstellungen
  */
 public record CustomEntry(
         String id,
@@ -37,8 +38,28 @@ public record CustomEntry(
         Map<String, Integer> enchants,
         boolean glow,
         List<Drop> drops,
-        int experience
+        int experience,
+        Extras extras
 ) {
+
+    /**
+     * Zusatzeinstellungen, die nicht jeder braucht.
+     *
+     * @param slot         Wo Attribute wirken ("head", "chest", "legs", "feet",
+     *                     "mainhand", "offhand", "armor", "any").
+     *                     Leer = passend zum Material geraten.
+     * @param rarity       common, uncommon, rare, epic (färbt den Namen)
+     * @param maxStack     eigene Stapelgröße (0 = unverändert)
+     * @param requiresTool nötiges Werkzeug zum Abbauen ("pickaxe", "axe",
+     *                     "shovel", "hoe"), sonst gibt es keine Drops
+     * @param placeSound   Ton beim Setzen (leer = Standard)
+     * @param breakSound   Ton beim Abbauen (leer = Standard)
+     */
+    public record Extras(String slot, String rarity, int maxStack,
+                         String requiresTool, String placeSound, String breakSound) {
+
+        public static final Extras NONE = new Extras("", "", 0, "", "", "");
+    }
 
     /**
      * Ein möglicher Drop eines Blocks.

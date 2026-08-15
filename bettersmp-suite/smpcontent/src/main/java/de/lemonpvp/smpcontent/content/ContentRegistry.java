@@ -48,6 +48,8 @@ public final class ContentRegistry {
     private final Map<String, ConfigurationSection> recipeSections = new LinkedHashMap<>();
     /** Id -> fertiger Blockzustand, damit er nicht ständig neu geparst wird. */
     private final Map<String, BlockData> blockData = new LinkedHashMap<>();
+    /** Id -> fertiges Item als Vorlage, wird nur noch kopiert. */
+    private final Map<String, ItemStack> prototypes = new LinkedHashMap<>();
     private final List<NamespacedKey> registeredRecipes = new ArrayList<>();
     private final List<ConfigProblem.Report> problems = new ArrayList<>();
 
@@ -77,6 +79,7 @@ public final class ContentRegistry {
         stateToId.clear();
         recipeSections.clear();
         blockData.clear();
+        prototypes.clear();
         problems.clear();
         plugin.abilities().clear();
 
@@ -226,7 +229,14 @@ public final class ContentRegistry {
                     enchants,
                     sec.getBoolean("glow", false),
                     readDrops(sec, id),
-                    sec.getInt("experience", 0)));
+                    sec.getInt("experience", 0),
+                    new CustomEntry.Extras(
+                            sec.getString("slot", ""),
+                            sec.getString("rarity", ""),
+                            sec.getInt("max-stack", 0),
+                            sec.getString("requires-tool", ""),
+                            sec.getString("place-sound", ""),
+                            sec.getString("break-sound", ""))));
 
             ConfigurationSection recipe = sec.getConfigurationSection("recipe");
             if (recipe != null) {
@@ -352,8 +362,23 @@ public final class ContentRegistry {
 
     // ---------------- Items bauen ----------------
 
+    /**
+     * Ein fertiges Item.
+     *
+     * Die Vorlage wird einmal gebaut und danach nur noch kopiert - MiniMessage
+     * und die Attribut-Berechnung liefen vorher bei jedem Aufruf neu, und das
+     * GUI baut pro Seite 45 Stück.
+     */
     public ItemStack create(CustomEntry entry, int amount) {
-        ItemStack stack = new ItemStack(entry.material(), Math.max(1, Math.min(64, amount)));
+        ItemStack prototype = prototypes.computeIfAbsent(
+                entry.id().toLowerCase(java.util.Locale.ROOT), id -> build(entry));
+        ItemStack stack = prototype.clone();
+        stack.setAmount(Math.max(1, Math.min(stack.getMaxStackSize(), amount)));
+        return stack;
+    }
+
+    private ItemStack build(CustomEntry entry) {
+        ItemStack stack = new ItemStack(entry.material(), 1);
         ItemMeta meta = stack.getItemMeta();
         meta.displayName(Text.mm(entry.name()).decoration(TextDecoration.ITALIC, false));
         if (!entry.lore().isEmpty()) {
@@ -385,6 +410,7 @@ public final class ContentRegistry {
      * Haltbarkeit, Verzauberungen und den Leucht-Effekt.
      */
     private void applyStats(ItemMeta meta, CustomEntry entry) {
+        EquipmentSlotGroup slot = slotFor(entry);
         for (Map.Entry<String, Double> attr : entry.attributes().entrySet()) {
             Attribute attribute = attributeByName(attr.getKey());
             if (attribute == null) {
@@ -394,9 +420,9 @@ public final class ContentRegistry {
             }
             NamespacedKey key = new NamespacedKey(plugin, entry.id() + "_" + attr.getKey());
             meta.addAttributeModifier(attribute, new AttributeModifier(
-                    key, attr.getValue(), AttributeModifier.Operation.ADD_NUMBER,
-                    EquipmentSlotGroup.MAINHAND));
+                    key, attr.getValue(), AttributeModifier.Operation.ADD_NUMBER, slot));
         }
+        applyExtras(meta, entry);
         if (entry.maxDamage() > 0 && meta instanceof Damageable damageable) {
             damageable.setMaxDamage(entry.maxDamage());
         }
@@ -416,6 +442,66 @@ public final class ContentRegistry {
         }
         if (entry.glow() && entry.enchants().isEmpty()) {
             meta.setEnchantmentGlintOverride(true);
+        }
+    }
+
+    /**
+     * Wo die Attribute wirken sollen.
+     *
+     * Vorher stand hier immer MAINHAND - dadurch hat "armor: 3" auf einem Helm
+     * nur gezählt, solange man ihn in der Hand hielt. Jetzt wird der Platz am
+     * Material erkannt; "slot:" in der Config schlägt das.
+     */
+    private EquipmentSlotGroup slotFor(CustomEntry entry) {
+        String wanted = entry.extras().slot().toLowerCase(java.util.Locale.ROOT).trim();
+        if (!wanted.isEmpty()) {
+            EquipmentSlotGroup group = switch (wanted) {
+                case "head", "kopf", "helm" -> EquipmentSlotGroup.HEAD;
+                case "chest", "brust" -> EquipmentSlotGroup.CHEST;
+                case "legs", "beine", "hose" -> EquipmentSlotGroup.LEGS;
+                case "feet", "fuesse", "schuhe" -> EquipmentSlotGroup.FEET;
+                case "armor", "ruestung" -> EquipmentSlotGroup.ARMOR;
+                case "offhand", "nebenhand" -> EquipmentSlotGroup.OFFHAND;
+                case "hand" -> EquipmentSlotGroup.HAND;
+                case "any", "alles", "immer" -> EquipmentSlotGroup.ANY;
+                case "mainhand", "haupthand" -> EquipmentSlotGroup.MAINHAND;
+                default -> null;
+            };
+            if (group != null) {
+                return group;
+            }
+            plugin.getLogger().warning("Unbekannter 'slot' bei " + entry.id() + ": " + wanted);
+        }
+        String material = entry.material().name();
+        if (material.endsWith("_HELMET") || material.equals("CARVED_PUMPKIN")) {
+            return EquipmentSlotGroup.HEAD;
+        }
+        if (material.endsWith("_CHESTPLATE") || material.equals("ELYTRA")) {
+            return EquipmentSlotGroup.CHEST;
+        }
+        if (material.endsWith("_LEGGINGS")) {
+            return EquipmentSlotGroup.LEGS;
+        }
+        if (material.endsWith("_BOOTS")) {
+            return EquipmentSlotGroup.FEET;
+        }
+        return EquipmentSlotGroup.MAINHAND;
+    }
+
+    /** Seltenheit, Stapelgröße und andere Kleinigkeiten. */
+    private void applyExtras(ItemMeta meta, CustomEntry entry) {
+        String rarity = entry.extras().rarity().toUpperCase(java.util.Locale.ROOT).trim();
+        if (!rarity.isEmpty()) {
+            try {
+                meta.setRarity(org.bukkit.inventory.ItemRarity.valueOf(rarity));
+            } catch (IllegalArgumentException ex) {
+                plugin.getLogger().warning("Unbekannte 'rarity' bei " + entry.id() + ": "
+                        + rarity + " (erlaubt: COMMON, UNCOMMON, RARE, EPIC)");
+            }
+        }
+        int maxStack = entry.extras().maxStack();
+        if (maxStack > 0) {
+            meta.setMaxStackSize(Math.max(1, Math.min(99, maxStack)));
         }
     }
 

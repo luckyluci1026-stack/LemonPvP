@@ -37,7 +37,7 @@ public final class SMPContent extends JavaPlugin {
 
     /** Zusatzdateien mit eigenen Inhalten, die beim ersten Start angelegt werden. */
     private static final String[] CONTENT_FILES = {
-            "platzhalter-bloecke.yml", "platzhalter-items.yml",
+            "moebel.yml", "platzhalter-bloecke.yml", "platzhalter-items.yml",
     };
 
     private Msgs msgs;

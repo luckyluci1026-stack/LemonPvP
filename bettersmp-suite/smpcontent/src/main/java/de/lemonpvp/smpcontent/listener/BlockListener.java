@@ -31,6 +31,7 @@ import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -123,6 +124,7 @@ public final class BlockListener implements Listener {
             }
             block.setBlockData(data.clone(), false);
             plugin.blocks().set(block, entry.id());
+            playSound(block, entry.extras().placeSound());
         });
     }
 
@@ -139,15 +141,38 @@ public final class BlockListener implements Listener {
         }
 
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
+        Location at = event.getBlock().getLocation().add(0.5, 0.5, 0.5);
+        playSound(event.getBlock(), entry.extras().breakSound());
+
+        // Wie bei Vanilla-Erz: ohne passendes Werkzeug gibt es nichts
+        if (!hasRequiredTool(tool, entry.extras().requiresTool())) {
+            return;
+        }
+
         int fortune = levelOf(tool, "fortune");
         boolean silk = levelOf(tool, "silk_touch") > 0;
-
-        Location at = event.getBlock().getLocation().add(0.5, 0.5, 0.5);
         for (ItemStack drop : plugin.registry().rollDrops(entry, fortune, silk)) {
             event.getBlock().getWorld().dropItemNaturally(at, drop);
         }
         if (entry.experience() > 0 && !silk) {
             event.setExpToDrop(event.getExpToDrop() + entry.experience());
+        }
+    }
+
+    /** "pickaxe", "axe", "shovel", "hoe" - leer heißt: jedes Werkzeug reicht. */
+    private boolean hasRequiredTool(ItemStack tool, String required) {
+        if (required == null || required.isBlank()) {
+            return true;
+        }
+        if (tool == null || tool.getType().isAir()) {
+            return false;
+        }
+        return tool.getType().name().endsWith("_" + required.toUpperCase(Locale.ROOT).trim());
+    }
+
+    private void playSound(Block block, String sound) {
+        if (sound != null && !sound.isBlank()) {
+            block.getWorld().playSound(block.getLocation().add(0.5, 0.5, 0.5), sound, 1.0f, 1.0f);
         }
     }
 

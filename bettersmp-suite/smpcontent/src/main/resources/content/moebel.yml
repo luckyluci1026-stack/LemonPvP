@@ -1,0 +1,566 @@
+# ==========================================================
+#  50 Möbel
+#
+#  Alles eigene Blöcke (Notenblock-Zustände). Ohne Textur im
+#  Pack sehen sie aus wie ein Notenblock - Modell dazulegen und
+#  /smpcontent pack, dann sitzen sie.
+#
+#  Texturen erwartet unter:
+#    plugins/SMPContent/textures/block/<id>.png
+#  Eigene 3D-Modelle (Blockbench) unter:
+#    plugins/SMPContent/models/block/<id>.json
+#
+#  Möbel brauchen kein Werkzeug und geben sich selbst zurück.
+# ==========================================================
+
+blocks:
+
+  eiche_bank:
+    name: "<gray>Eichen-Bank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=1,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["P  ", "PPP", "S S"]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  eiche_sessel:
+    name: "<gray>Eichen-Sessel"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=2,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PP ", "PPP", "S S"]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  eiche_nachttisch:
+    name: "<gray>Eichen-Nachttisch"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=3,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "PPP"]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  eiche_kommode:
+    name: "<gray>Eichen-Kommode"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=4,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "PSP", "PPP"]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  eiche_schrank:
+    name: "<gray>Eichen-Schrank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=5,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "P P"]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  eiche_truhe:
+    name: "<gray>Eichen-Zierkiste"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=6,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "S S", "PPP"]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  eiche_zaunbank:
+    name: "<gray>Eichen-Gartenbank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=7,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["   ", "PPP", "S S"]
+      keys: {P: OAK_SLAB, S: STICK}
+      amount: 2
+
+  eiche_podest:
+    name: "<gray>Eichen-Podest"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=8,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "SSS", "   "]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 4
+
+  fichte_bank:
+    name: "<dark_gray>Fichten-Bank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=9,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["P  ", "PPP", "S S"]
+      keys: {P: SPRUCE_PLANKS, S: STICK}
+      amount: 1
+
+  fichte_sessel:
+    name: "<dark_gray>Fichten-Sessel"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=10,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PP ", "PPP", "S S"]
+      keys: {P: SPRUCE_PLANKS, S: STICK}
+      amount: 1
+
+  fichte_nachttisch:
+    name: "<dark_gray>Fichten-Nachttisch"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=11,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "PPP"]
+      keys: {P: SPRUCE_PLANKS, S: STICK}
+      amount: 1
+
+  fichte_kommode:
+    name: "<dark_gray>Fichten-Kommode"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=12,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "PSP", "PPP"]
+      keys: {P: SPRUCE_PLANKS, S: STICK}
+      amount: 1
+
+  fichte_schrank:
+    name: "<dark_gray>Fichten-Schrank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=13,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "P P"]
+      keys: {P: SPRUCE_PLANKS, S: STICK}
+      amount: 1
+
+  fichte_truhe:
+    name: "<dark_gray>Fichten-Zierkiste"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=14,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "S S", "PPP"]
+      keys: {P: SPRUCE_PLANKS, S: STICK}
+      amount: 1
+
+  fichte_zaunbank:
+    name: "<dark_gray>Fichten-Gartenbank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=15,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["   ", "PPP", "S S"]
+      keys: {P: SPRUCE_SLAB, S: STICK}
+      amount: 2
+
+  fichte_podest:
+    name: "<dark_gray>Fichten-Podest"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=16,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "SSS", "   "]
+      keys: {P: SPRUCE_PLANKS, S: STICK}
+      amount: 4
+
+  birke_bank:
+    name: "<yellow>Birken-Bank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=17,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["P  ", "PPP", "S S"]
+      keys: {P: BIRCH_PLANKS, S: STICK}
+      amount: 1
+
+  birke_sessel:
+    name: "<yellow>Birken-Sessel"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=18,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PP ", "PPP", "S S"]
+      keys: {P: BIRCH_PLANKS, S: STICK}
+      amount: 1
+
+  birke_nachttisch:
+    name: "<yellow>Birken-Nachttisch"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=19,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "PPP"]
+      keys: {P: BIRCH_PLANKS, S: STICK}
+      amount: 1
+
+  birke_kommode:
+    name: "<yellow>Birken-Kommode"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=20,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "PSP", "PPP"]
+      keys: {P: BIRCH_PLANKS, S: STICK}
+      amount: 1
+
+  birke_schrank:
+    name: "<yellow>Birken-Schrank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=21,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "P P"]
+      keys: {P: BIRCH_PLANKS, S: STICK}
+      amount: 1
+
+  birke_truhe:
+    name: "<yellow>Birken-Zierkiste"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=22,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "S S", "PPP"]
+      keys: {P: BIRCH_PLANKS, S: STICK}
+      amount: 1
+
+  birke_zaunbank:
+    name: "<yellow>Birken-Gartenbank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=23,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["   ", "PPP", "S S"]
+      keys: {P: BIRCH_SLAB, S: STICK}
+      amount: 2
+
+  birke_podest:
+    name: "<yellow>Birken-Podest"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=harp,note=24,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "SSS", "   "]
+      keys: {P: BIRCH_PLANKS, S: STICK}
+      amount: 4
+
+  akazie_bank:
+    name: "<gold>Akazien-Bank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=0,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["P  ", "PPP", "S S"]
+      keys: {P: ACACIA_PLANKS, S: STICK}
+      amount: 1
+
+  akazie_sessel:
+    name: "<gold>Akazien-Sessel"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=1,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PP ", "PPP", "S S"]
+      keys: {P: ACACIA_PLANKS, S: STICK}
+      amount: 1
+
+  akazie_nachttisch:
+    name: "<gold>Akazien-Nachttisch"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=2,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "PPP"]
+      keys: {P: ACACIA_PLANKS, S: STICK}
+      amount: 1
+
+  akazie_kommode:
+    name: "<gold>Akazien-Kommode"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=3,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "PSP", "PPP"]
+      keys: {P: ACACIA_PLANKS, S: STICK}
+      amount: 1
+
+  akazie_schrank:
+    name: "<gold>Akazien-Schrank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=4,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "P P"]
+      keys: {P: ACACIA_PLANKS, S: STICK}
+      amount: 1
+
+  akazie_truhe:
+    name: "<gold>Akazien-Zierkiste"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=5,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "S S", "PPP"]
+      keys: {P: ACACIA_PLANKS, S: STICK}
+      amount: 1
+
+  akazie_zaunbank:
+    name: "<gold>Akazien-Gartenbank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=6,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["   ", "PPP", "S S"]
+      keys: {P: ACACIA_SLAB, S: STICK}
+      amount: 2
+
+  akazie_podest:
+    name: "<gold>Akazien-Podest"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=7,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "SSS", "   "]
+      keys: {P: ACACIA_PLANKS, S: STICK}
+      amount: 4
+
+  dunkeleiche_bank:
+    name: "<dark_gray>Schwarzeichen-Bank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=8,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["P  ", "PPP", "S S"]
+      keys: {P: DARK_OAK_PLANKS, S: STICK}
+      amount: 1
+
+  dunkeleiche_sessel:
+    name: "<dark_gray>Schwarzeichen-Sessel"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=9,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PP ", "PPP", "S S"]
+      keys: {P: DARK_OAK_PLANKS, S: STICK}
+      amount: 1
+
+  dunkeleiche_nachttisch:
+    name: "<dark_gray>Schwarzeichen-Nachttisch"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=10,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "PPP"]
+      keys: {P: DARK_OAK_PLANKS, S: STICK}
+      amount: 1
+
+  dunkeleiche_kommode:
+    name: "<dark_gray>Schwarzeichen-Kommode"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=11,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "PSP", "PPP"]
+      keys: {P: DARK_OAK_PLANKS, S: STICK}
+      amount: 1
+
+  dunkeleiche_schrank:
+    name: "<dark_gray>Schwarzeichen-Schrank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=12,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "P P", "P P"]
+      keys: {P: DARK_OAK_PLANKS, S: STICK}
+      amount: 1
+
+  dunkeleiche_truhe:
+    name: "<dark_gray>Schwarzeichen-Zierkiste"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=13,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "S S", "PPP"]
+      keys: {P: DARK_OAK_PLANKS, S: STICK}
+      amount: 1
+
+  dunkeleiche_zaunbank:
+    name: "<dark_gray>Schwarzeichen-Gartenbank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=14,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["   ", "PPP", "S S"]
+      keys: {P: DARK_OAK_SLAB, S: STICK}
+      amount: 2
+
+  dunkeleiche_podest:
+    name: "<dark_gray>Schwarzeichen-Podest"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=15,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["PPP", "SSS", "   "]
+      keys: {P: DARK_OAK_PLANKS, S: STICK}
+      amount: 4
+
+  steinbank:
+    name: "<gray>Steinbank"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=16,powered=false]"
+    place-sound: block.stone.place
+    break-sound: block.stone.break
+    recipe:
+      shape: ["   ", "SSS", "S S"]
+      keys: {S: STONE}
+      amount: 2
+
+  stein_tisch:
+    name: "<gray>Steintisch"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=17,powered=false]"
+    place-sound: block.stone.place
+    break-sound: block.stone.break
+    recipe:
+      shape: ["SSS", " S ", "SSS"]
+      keys: {S: STONE_BRICKS}
+      amount: 1
+
+  lampe_klein:
+    name: "<yellow>Kleine Lampe"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=18,powered=false]"
+    place-sound: block.lantern.place
+    break-sound: block.lantern.break
+    recipe:
+      shape: [" G ", "GTG", " S "]
+      keys: {G: GLOWSTONE_DUST, T: TORCH, S: STICK}
+      amount: 1
+
+  lampe_gross:
+    name: "<yellow>Stehlampe"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=19,powered=false]"
+    place-sound: block.lantern.place
+    break-sound: block.lantern.break
+    recipe:
+      shape: [" G ", "GTG", " S "]
+      keys: {G: GLOWSTONE, T: TORCH, S: IRON_INGOT}
+      amount: 1
+
+  buecherstapel:
+    name: "<gold>Bücherstapel"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=20,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["   ", "BBB", "BBB"]
+      keys: {B: BOOK}
+      amount: 1
+
+  teppichrolle:
+    name: "<red>Teppichrolle"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=21,powered=false]"
+    place-sound: block.wool.place
+    break-sound: block.wool.break
+    recipe:
+      shape: ["   ", "WWW", "WWW"]
+      keys: {W: WHITE_WOOL}
+      amount: 2
+
+  blumenkasten:
+    name: "<green>Blumenkasten"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=22,powered=false]"
+    place-sound: block.wood.place
+    break-sound: block.wood.break
+    recipe:
+      shape: ["P P", "PDP", "PPP"]
+      keys: {P: OAK_PLANKS, D: DIRT}
+      amount: 1
+
+  fass_deko:
+    name: "<gold>Deko-Fass"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=23,powered=false]"
+    place-sound: block.barrel.open
+    break-sound: block.barrel.open
+    recipe:
+      shape: ["PPP", "P P", "PPP"]
+      keys: {P: SPRUCE_PLANKS}
+      amount: 1
+
+  amboss_deko:
+    name: "<dark_gray>Deko-Amboss"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=bass,note=24,powered=false]"
+    place-sound: block.anvil.place
+    break-sound: block.anvil.break
+    recipe:
+      shape: ["III", " I ", "III"]
+      keys: {I: IRON_INGOT}
+      amount: 1
+
+  kristallsaeule:
+    name: "<light_purple>Kristallsäule"
+    lore: ["<dark_gray>Möbel"]
+    state: "minecraft:note_block[instrument=snare,note=0,powered=false]"
+    place-sound: block.amethyst_block.place
+    break-sound: block.amethyst_block.break
+    recipe:
+      shape: [" A ", " A ", " A "]
+      keys: {A: AMETHYST_BLOCK}
+      amount: 1
