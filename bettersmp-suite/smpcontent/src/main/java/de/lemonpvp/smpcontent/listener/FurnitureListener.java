@@ -16,7 +16,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDismountEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 /**
  * Alles, was an einem Möbelstück direkt passiert: draufhauen (abbauen),
@@ -72,10 +73,16 @@ public final class FurnitureListener implements Listener {
         }
     }
 
-    /** Rechtsklick: hinsetzen, wenn es ein Sitzmöbel ist. */
+    /**
+     * Rechtsklick: hinsetzen, wenn es ein Sitzmöbel ist.
+     *
+     * Hier steht bewusst die Oberklasse: PlayerInteractAtEntityEvent teilt
+     * sich mit ihr die Handler-Liste, so werden beide Varianten erwischt.
+     */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onUse(PlayerInteractAtEntityEvent event) {
-        if (!(event.getRightClicked() instanceof Interaction hitbox)) {
+    public void onUse(PlayerInteractEntityEvent event) {
+        if (!(event.getRightClicked() instanceof Interaction hitbox)
+                || event.getHand() != EquipmentSlot.HAND) {
             return;
         }
         Block block = plugin.furniture().blockOf(hitbox);

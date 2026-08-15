@@ -232,6 +232,10 @@ public final class PackGenerator {
                 }
             }
 
+            // Ein leeres Modell für Möbel, die auf Java das Anzeige-Objekt
+            // zeigen und den Block darunter verstecken
+            write(nsRoot.resolve("models/block/leer.json"), "{ \"textures\": {} }");
+
             // Zusätzliche Texturen mitnehmen (Blockbench-Modelle nutzen oft mehrere)
             copyExtraTextures(nsRoot);
             writeBlockStates(assets.resolve("minecraft/blockstates/note_block.json"), ns, textured);
@@ -328,7 +332,13 @@ public final class PackGenerator {
                 continue;
             }
             if (own.substring(open + 1, close).equals(state)) {
-                return ns + ":block/" + entry.id();
+                // Möbel mit Zustand: der Block selbst bleibt auf Java
+                // unsichtbar, zu sehen ist das gedrehte Anzeige-Objekt.
+                // Bedrock kennt keine Anzeige-Objekte und zeigt dafür den
+                // echten Block - so sieht jede Seite das Richtige.
+                return entry.isFurniture()
+                        ? ns + ":block/leer"
+                        : ns + ":block/" + entry.id();
             }
         }
         return "minecraft:block/note_block";

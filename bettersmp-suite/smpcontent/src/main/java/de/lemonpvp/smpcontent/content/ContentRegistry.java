@@ -185,9 +185,12 @@ public final class ContentRegistry {
             }
             String state = sec.getString("state");
             CustomEntry.Furniture furniture = readFurniture(sec);
-            // Möbel sind Anzeige-Objekte und brauchen keinen Notenblock-Zustand.
-            // Genau deshalb sind sie nicht auf 575 Stück begrenzt.
-            if (isBlock && furniture == null) {
+            // Möbel brauchen keinen Notenblock-Zustand - genau deshalb sind sie
+            // nicht auf 575 Stück begrenzt. Wer einen angibt, bekommt ihn als
+            // Platzhalter und damit auf Bedrock den echten Block zu sehen.
+            if (isBlock && state == null && furniture != null) {
+                state = null;
+            } else if (isBlock) {
                 if (state == null) {
                     plugin.getLogger().warning("Block " + id + " hat keinen 'state' - übersprungen.");
                     continue;

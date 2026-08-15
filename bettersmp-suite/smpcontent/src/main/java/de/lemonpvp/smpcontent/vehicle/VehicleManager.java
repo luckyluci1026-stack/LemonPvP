@@ -53,6 +53,8 @@ public final class VehicleManager {
     private final SMPContent plugin;
     private final NamespacedKey typeKey;
     private final NamespacedKey partKey;
+    /** Zu welchem Fahrzeug ein Teil gehört - sonst greift man beim Nachbarn zu. */
+    private final NamespacedKey ownerKey;
     private final Map<String, VehicleType> types = new LinkedHashMap<>();
     private final Map<UUID, Ride> active = new LinkedHashMap<>();
     private ConfigProblem.Report problem;
@@ -61,6 +63,7 @@ public final class VehicleManager {
         this.plugin = plugin;
         this.typeKey = new NamespacedKey(plugin, "vehicle");
         this.partKey = new NamespacedKey(plugin, "vehicle_part");
+        this.ownerKey = new NamespacedKey(plugin, "vehicle_owner");
     }
 
     /** Ein Fahrzeug, das gerade in der Welt steht. */
@@ -71,6 +74,7 @@ public final class VehicleManager {
         float yaw;
         double speed;
         int fuelLeft;
+        int soundTick;
 
         Ride(VehicleType type, ArmorStand base, ItemDisplay body, float yaw, int fuelLeft) {
             this.type = type;
@@ -159,6 +163,7 @@ public final class VehicleManager {
             stand.getPersistentDataContainer().set(partKey, PersistentDataType.STRING, "base");
         });
 
+        String owner = base.getUniqueId().toString();
         ItemDisplay body = world.spawn(at, ItemDisplay.class, display -> {
             display.setItemStack(modelItem(type));
             display.setRotation(yaw, 0f);
@@ -175,6 +180,7 @@ public final class VehicleManager {
             }
             display.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, type.id());
             display.getPersistentDataContainer().set(partKey, PersistentDataType.STRING, "body");
+            display.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, owner);
         });
 
         world.spawn(at, Interaction.class, hitbox -> {
@@ -186,6 +192,8 @@ public final class VehicleManager {
                     .set(typeKey, PersistentDataType.STRING, type.id());
             hitbox.getPersistentDataContainer()
                     .set(partKey, PersistentDataType.STRING, "seat");
+            hitbox.getPersistentDataContainer()
+                    .set(ownerKey, PersistentDataType.STRING, owner);
         });
 
         active.put(base.getUniqueId(), new Ride(type, base, body, yaw, type.range()));
@@ -219,18 +227,23 @@ public final class VehicleManager {
         return base.addPassenger(player);
     }
 
-    /** Der Rüstungsständer, der zu einem angeklickten Teil gehört. */
+    /**
+     * Der Rüstungsständer, der zu einem angeklickten Teil gehört.
+     *
+     * Über die gespeicherte Kennung, nicht über die Nähe: sonst steigt man
+     * bei zwei dicht nebeneinander geparkten Autos ins falsche ein.
+     */
     private ArmorStand baseNear(Entity part) {
         if (part instanceof ArmorStand stand) {
             return stand;
         }
-        for (Entity nearby : part.getWorld().getNearbyEntities(part.getLocation(), 2, 2, 2)) {
-            if (nearby instanceof ArmorStand stand && "base".equals(stand
-                    .getPersistentDataContainer().get(partKey, PersistentDataType.STRING))) {
-                return stand;
-            }
+        String owner = part.getPersistentDataContainer()
+                .get(ownerKey, PersistentDataType.STRING);
+        if (owner == null) {
+            return null;
         }
-        return null;
+        Entity found = Bukkit.getEntity(UUID.fromString(owner));
+        return found instanceof ArmorStand stand ? stand : null;
     }
 
     /**
@@ -244,9 +257,10 @@ public final class VehicleManager {
             return null;
         }
         ItemDisplay body = null;
-        for (Entity nearby : base.getWorld().getNearbyEntities(base.getLocation(), 2, 2, 2)) {
-            if (nearby instanceof ItemDisplay display && "body".equals(display
-                    .getPersistentDataContainer().get(partKey, PersistentDataType.STRING))) {
+        String owner = base.getUniqueId().toString();
+        for (Entity nearby : base.getWorld().getNearbyEntities(base.getLocation(), 3, 3, 3)) {
+            if (nearby instanceof ItemDisplay display && owner.equals(display
+                    .getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING))) {
                 body = display;
                 break;
             }
@@ -293,9 +307,10 @@ public final class VehicleManager {
         if (ride != null && ride.body != null) {
             ride.body.remove();
         }
-        for (Entity nearby : base.getWorld().getNearbyEntities(base.getLocation(), 2, 2, 2)) {
-            if (nearby.getPersistentDataContainer().has(typeKey, PersistentDataType.STRING)
-                    && !(nearby instanceof Player)) {
+        String owner = base.getUniqueId().toString();
+        for (Entity nearby : base.getWorld().getNearbyEntities(base.getLocation(), 3, 3, 3)) {
+            if (owner.equals(nearby.getPersistentDataContainer()
+                    .get(ownerKey, PersistentDataType.STRING))) {
                 nearby.remove();
             }
         }
@@ -359,7 +374,9 @@ public final class VehicleManager {
             at.setPitch(0);
             ride.body.teleport(at);
         }
-        if (driver != null && ride.speed != 0 && !ride.type.sound().isBlank()) {
+        // Alle halbe Sekunde reicht - zwanzigmal wäre Lärm und Last
+        if (driver != null && ride.speed != 0 && !ride.type.sound().isBlank()
+                && ++ride.soundTick % 10 == 0) {
             ride.base.getWorld().playSound(ride.base.getLocation(),
                     ride.type.sound(), 0.4f, 1.0f);
         }

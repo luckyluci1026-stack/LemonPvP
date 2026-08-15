@@ -2,6 +2,7 @@ package de.lemonpvp.smpcontent.furniture;
 
 import de.lemonpvp.smpcontent.SMPContent;
 import de.lemonpvp.smpcontent.content.CustomEntry;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -18,7 +19,9 @@ import org.bukkit.util.Transformation;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Möbel als Anzeige-Objekte statt als Notenblöcke.
@@ -65,9 +68,27 @@ public final class FurnitureManager {
         spawn(block, entry, yaw);
     }
 
-    /** Der unsichtbare Platzhalter: Barriere zum Draufstehen, sonst Licht. */
+    /**
+     * Der Platzhalter unter dem Möbel.
+     *
+     * Steht in der config.yml ein {@code state:}, wird der genommen - dann
+     * sehen Bedrock-Spieler den Block genau so, wie er gemeint ist, denn
+     * Geyser bildet Notenblock-Zustände auf echte Bedrock-Blöcke ab. Auf Java
+     * ist dieser Zustand im Pack unsichtbar, dort zeigt das Anzeige-Objekt das
+     * gedrehte Modell.
+     *
+     * Ohne {@code state:} ist es eine Barriere (bzw. Licht) - dafür gibt es
+     * davon unbegrenzt viele.
+     */
     private void host(Block block, CustomEntry entry) {
         CustomEntry.Furniture furniture = entry.furniture();
+        if (entry.state() != null) {
+            var data = plugin.registry().blockDataFor(entry);
+            if (data != null) {
+                block.setBlockData(data.clone(), false);
+                return;
+            }
+        }
         if (furniture.solid()) {
             block.setType(Material.BARRIER, false);
             return;
@@ -111,17 +132,37 @@ public final class FurnitureManager {
     }
 
     /**
+     * Alle Stellen im Chunk, an denen schon ein Modell steht.
+     *
+     * Einmal über die Entities des Chunks statt einmal pro Möbelstück - bei
+     * hundert Möbeln in einem Chunk ist das der Unterschied zwischen einem
+     * kurzen Blick und hundert Umkreissuchen.
+     */
+    public Set<String> present(Chunk chunk) {
+        Set<String> tags = new HashSet<>();
+        for (Entity entity : chunk.getEntities()) {
+            if (!(entity instanceof ItemDisplay)) {
+                continue;
+            }
+            String tag = entity.getPersistentDataContainer()
+                    .get(posKey, PersistentDataType.STRING);
+            if (tag != null) {
+                tags.add(tag);
+            }
+        }
+        return tags;
+    }
+
+    /**
      * Nach dem Laden eines Chunks: fehlt das Modell (jemand hat /kill benutzt
      * oder die Entities sind sonstwie weg), wird es neu gesetzt.
      */
-    public void ensure(Block block, CustomEntry entry, float yaw) {
-        if (block.getType() != Material.BARRIER && block.getType() != Material.LIGHT) {
+    public void ensure(Block block, CustomEntry entry, float yaw, Set<String> present) {
+        if (!isHost(block, entry)) {
             host(block, entry);
         }
-        for (Entity entity : around(block)) {
-            if (entity instanceof ItemDisplay && belongsTo(entity, block)) {
-                return;
-            }
+        if (present.contains(tagOf(block))) {
+            return;
         }
         removeEntities(block);
         spawn(block, entry, yaw);
@@ -134,9 +175,18 @@ public final class FurnitureManager {
     /** Entfernt Platzhalter und Anzeige. Die Drops macht der BlockListener. */
     public void clear(Block block) {
         removeEntities(block);
-        if (block.getType() == Material.BARRIER || block.getType() == Material.LIGHT) {
+        if (block.getType() == Material.BARRIER || block.getType() == Material.LIGHT
+                || block.getType() == Material.NOTE_BLOCK) {
             block.setType(Material.AIR, false);
         }
+    }
+
+    /** Steht dort noch der richtige Platzhalter? */
+    public static boolean isHost(Block block, CustomEntry entry) {
+        if (entry.state() != null) {
+            return block.getType() == Material.NOTE_BLOCK;
+        }
+        return block.getType() == Material.BARRIER || block.getType() == Material.LIGHT;
     }
 
     public void removeEntities(Block block) {

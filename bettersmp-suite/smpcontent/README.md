@@ -264,10 +264,22 @@ blocks:
 - Geht ein Modell doch einmal verloren (`/kill @e`), steht es beim nächsten
   Laden des Chunks von selbst wieder da – die Id liegt ja im Chunk.
 
-> **Bedrock:** Anzeige-Objekte kann Geyser nur annähernd zeigen. Wer seine
-> Möbel auf Bedrock ganz genau haben will, lässt `furniture:` weg und nimmt
-> einen `state:` – dann sind sie wieder Notenblöcke, dafür ohne Drehung und
-> ohne Sitzen. Erze und Marmor sind bewusst Notenblöcke geblieben.
+### Bedrock und unbegrenzt – beides geht
+
+Der `state:` daneben entscheidet, worauf das Möbel steht:
+
+| | Platzhalter | Anzahl | Bedrock |
+|---|---|---|---|
+| **mit `state:`** | Notenblock, im Pack unsichtbar | 575 zusammen | sieht den echten Block |
+| **ohne `state:`** | Barriere bzw. Licht | **unbegrenzt** | sieht nur das Objekt |
+
+Beide drehen sich und beide kann man besitzen – der Unterschied ist nur, was
+darunter liegt. Die 50 mitgelieferten Möbel haben einen `state:`, damit sie
+auf Bedrock richtig aussehen. Brauchst du mehr als 575 eigene Blöcke, lass
+den `state:` bei den neuen einfach weg.
+
+Auf Java ist dieser Zustand im Pack ein leeres Modell – du siehst also nur
+das gedrehte Anzeige-Objekt, nicht den Notenblock darunter.
 
 ## Fahrzeuge: Autos, Jets und Züge
 

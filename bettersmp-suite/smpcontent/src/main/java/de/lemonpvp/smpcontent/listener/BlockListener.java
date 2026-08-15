@@ -84,10 +84,10 @@ public final class BlockListener implements Listener {
         return byState;
     }
 
-    /** Möbel stehen auf einem Platzhalter, alles andere auf einem Notenblock. */
+    /** Möbel stehen auf ihrem Platzhalter, alles andere auf einem Notenblock. */
     private boolean fits(Block block, CustomEntry entry) {
         if (entry.isFurniture()) {
-            return block.getType() == Material.BARRIER || block.getType() == Material.LIGHT;
+            return de.lemonpvp.smpcontent.furniture.FurnitureManager.isHost(block, entry);
         }
         return block.getType() == Material.NOTE_BLOCK;
     }
@@ -333,6 +333,9 @@ public final class BlockListener implements Listener {
             if (!chunk.isLoaded()) {
                 return;
             }
+            // Einmal nachsehen, welche Modelle schon da sind - nicht einmal
+            // pro Möbelstück
+            java.util.Set<String> present = plugin.furniture().present(chunk);
             for (Map.Entry<Integer, String> stored : table.entrySet()) {
                 CustomEntry entry = plugin.registry().get(
                         de.lemonpvp.smpcontent.content.BlockStore.plainId(stored.getValue()));
@@ -343,7 +346,8 @@ public final class BlockListener implements Listener {
                 Block block = chunk.getBlock(packed & 15, (packed >> 8) - 2048, (packed >> 4) & 15);
                 if (entry.isFurniture()) {
                     plugin.furniture().ensure(block, entry,
-                            de.lemonpvp.smpcontent.content.BlockStore.yawOf(stored.getValue()));
+                            de.lemonpvp.smpcontent.content.BlockStore.yawOf(stored.getValue()),
+                            present);
                 } else {
                     repair(block, entry);
                 }
