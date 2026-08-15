@@ -1,0 +1,84 @@
+package de.lemonpvp.smpcontent.listener;
+
+import de.lemonpvp.smpcontent.SMPContent;
+import de.lemonpvp.smpcontent.vehicle.VehicleType;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+
+/**
+ * Fahrzeuge hinstellen, einsteigen und wieder einsammeln.
+ *
+ * Rechtsklick auf den Boden mit dem Fahrzeug-Item stellt es hin,
+ * Rechtsklick auf das Fahrzeug steigt ein, Schleichen + Rechtsklick mit
+ * leerer Hand nimmt es wieder mit.
+ */
+public final class VehicleListener implements Listener {
+
+    private final SMPContent plugin;
+
+    public VehicleListener(SMPContent plugin) {
+        this.plugin = plugin;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPlace(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK
+                || event.getHand() != EquipmentSlot.HAND
+                || event.getClickedBlock() == null) {
+            return;
+        }
+        ItemStack item = event.getItem();
+        String id = plugin.registry().idOf(item);
+        VehicleType type = plugin.vehicles().byItem(id);
+        if (type == null) {
+            return;
+        }
+        event.setCancelled(true);
+        if (!event.getPlayer().hasPermission("smpcontent.place")) {
+            plugin.msgs().send(event.getPlayer(), "no-permission");
+            return;
+        }
+        Block block = event.getClickedBlock();
+        Location where = block.getRelative(event.getBlockFace())
+                .getLocation().add(0.5, 0, 0.5);
+        plugin.vehicles().spawn(type, where, event.getPlayer().getLocation().getYaw());
+        if (event.getPlayer().getGameMode() != GameMode.CREATIVE && item != null) {
+            item.setAmount(item.getAmount() - 1);
+        }
+        plugin.msgs().send(event.getPlayer(), "vehicle-placed", "name", type.id());
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEnter(PlayerInteractEntityEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        boolean emptyHand = event.getPlayer().getInventory()
+                .getItemInMainHand().getType().isAir();
+        if (event.getPlayer().isSneaking() && emptyHand) {
+            if (plugin.vehicles().pickUp(event.getPlayer(), event.getRightClicked())) {
+                event.setCancelled(true);
+            }
+            return;
+        }
+        if (plugin.vehicles().enter(event.getPlayer(), event.getRightClicked())) {
+            event.setCancelled(true);
+        }
+    }
+
+    /** Nach einem Neustart stehen die Fahrzeuge noch da - wieder aufnehmen. */
+    @EventHandler
+    public void onChunkLoad(ChunkLoadEvent event) {
+        plugin.vehicles().adoptChunk(event.getChunk());
+    }
+}

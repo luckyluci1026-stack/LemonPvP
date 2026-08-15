@@ -1904,3 +1904,128 @@ items:
             ticks: 25
           - type: sound
             sound: entity.generic.drink
+
+  # ------------------------------------------------------------------
+  #  Waffen mit Schuss
+  #
+  #  "projectile" macht aus einem Item eine Schusswaffe. Munition ist
+  #  freiwillig - ohne "ammo" schießt es einfach immer.
+  # ------------------------------------------------------------------
+
+  kugel:
+    material: IRON_NUGGET
+    name: "<gray>Kugel"
+    lore: ["<dark_gray>Munition"]
+    model-data: 8500
+    recipe:
+      shape: [" I ", " G ", "   "]
+      keys: {I: IRON_NUGGET, G: GUNPOWDER}
+      amount: 8
+
+  pistole:
+    material: IRON_HORSE_ARMOR
+    name: "<white>Pistole"
+    lore:
+      - "<dark_gray>Rechtsklick: schießen"
+      - "<gray>Braucht Kugeln"
+    model-data: 8501
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Schuss"
+        cooldown: 0.4
+        actions:
+          - type: projectile
+            entity: ARROW
+            speed: 3.6
+            damage: 5.0
+            spread: 0.6
+            gravity: false
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.firework_rocket.blast
+            pitch: 1.6
+          - type: animation
+            shape: beam
+            particle: SMOKE
+            length: 3
+            ticks: 3
+
+  schrotflinte:
+    material: IRON_HORSE_ARMOR
+    name: "<gold>Schrotflinte"
+    lore:
+      - "<dark_gray>Rechtsklick: acht Schrotkugeln"
+      - "<gray>Auf kurze Entfernung"
+    model-data: 8502
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Schrot"
+        cooldown: 1.5
+        actions:
+          - type: projectile
+            entity: ARROW
+            amount: 8
+            speed: 2.4
+            damage: 2.5
+            spread: 9.0
+            gravity: true
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.generic.explode
+            volume: 0.6
+            pitch: 1.8
+          - type: push
+            strength: -0.35
+
+  raketenwerfer:
+    material: DIAMOND_HORSE_ARMOR
+    name: "<red>Raketenwerfer"
+    lore: ["<dark_gray>Rechtsklick: Rakete"]
+    model-data: 8503
+    max-stack: 1
+    glow: true
+    abilities:
+      - trigger: right-click
+        name: "Rakete"
+        cooldown: 6
+        actions:
+          - type: projectile
+            entity: FIREBALL
+            speed: 1.8
+            gravity: false
+          - type: sound
+            sound: entity.blaze.shoot
+
+  # ------------------------------------------------------------------
+  #  Fahrzeuge - die Werte stehen in der fahrzeuge.yml
+  # ------------------------------------------------------------------
+
+  auto_sport:
+    material: MINECART
+    name: "<red>Sportwagen"
+    lore: ["<dark_gray>Rechtsklick auf den Boden zum Hinstellen"]
+    model-data: 8510
+    max-stack: 1
+
+  auto_gelaende:
+    material: MINECART
+    name: "<dark_green>Geländewagen"
+    lore: ["<dark_gray>Vier Plätze"]
+    model-data: 8511
+    max-stack: 1
+
+  jet_renn:
+    material: MINECART
+    name: "<aqua>Rennjet"
+    lore: ["<dark_gray>Leertaste steigen, Schleichen sinken"]
+    model-data: 8512
+    max-stack: 1
+
+  zug_lok:
+    material: MINECART
+    name: "<gray>Dampflok"
+    lore: ["<dark_gray>Fährt auf Schienen"]
+    model-data: 8513
+    max-stack: 1

@@ -1,9 +1,12 @@
 # ==========================================================
 #  50 Möbel
 #
-#  Alles eigene Blöcke (Notenblock-Zustände). Ohne Textur im
-#  Pack sehen sie aus wie ein Notenblock - Modell dazulegen und
-#  /smpcontent pack, dann sitzen sie.
+#  Möbel sind Anzeige-Objekte, keine Notenblöcke. Darum
+#    - gibt es davon beliebig viele (Notenblock-Zustände sind
+#      irgendwann alle, das hier nie),
+#    - drehen sie sich beim Setzen nach deiner Blickrichtung,
+#    - kann man sich auf Sitzmöbel draufsetzen (Rechtsklick
+#      mit leerer Hand, Schleichen zum Aufstehen).
 #
 #  Texturen erwartet unter:
 #    plugins/SMPContent/textures/block/<id>.png
@@ -11,6 +14,7 @@
 #    plugins/SMPContent/models/block/<id>.json
 #
 #  Möbel brauchen kein Werkzeug und geben sich selbst zurück.
+#  Abgebaut wird mit einem Schlag auf das Möbelstück selbst.
 # ==========================================================
 
 blocks:
@@ -18,7 +22,11 @@ blocks:
   eiche_bank:
     name: "<gray>Eichen-Bank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=1,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -29,7 +37,11 @@ blocks:
   eiche_sessel:
     name: "<gray>Eichen-Sessel"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=2,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.55
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -40,7 +52,10 @@ blocks:
   eiche_nachttisch:
     name: "<gray>Eichen-Nachttisch"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=3,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      height: 0.9
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -51,7 +66,9 @@ blocks:
   eiche_kommode:
     name: "<gray>Eichen-Kommode"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=4,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -62,7 +79,9 @@ blocks:
   eiche_schrank:
     name: "<gray>Eichen-Schrank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=5,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -73,7 +92,9 @@ blocks:
   eiche_truhe:
     name: "<gray>Eichen-Zierkiste"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=6,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -84,7 +105,11 @@ blocks:
   eiche_zaunbank:
     name: "<gray>Eichen-Gartenbank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=7,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -95,7 +120,9 @@ blocks:
   eiche_podest:
     name: "<gray>Eichen-Podest"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=8,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -106,7 +133,11 @@ blocks:
   fichte_bank:
     name: "<dark_gray>Fichten-Bank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=9,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -117,7 +148,11 @@ blocks:
   fichte_sessel:
     name: "<dark_gray>Fichten-Sessel"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=10,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.55
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -128,7 +163,10 @@ blocks:
   fichte_nachttisch:
     name: "<dark_gray>Fichten-Nachttisch"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=11,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      height: 0.9
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -139,7 +177,9 @@ blocks:
   fichte_kommode:
     name: "<dark_gray>Fichten-Kommode"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=12,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -150,7 +190,9 @@ blocks:
   fichte_schrank:
     name: "<dark_gray>Fichten-Schrank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=13,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -161,7 +203,9 @@ blocks:
   fichte_truhe:
     name: "<dark_gray>Fichten-Zierkiste"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=14,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -172,7 +216,11 @@ blocks:
   fichte_zaunbank:
     name: "<dark_gray>Fichten-Gartenbank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=15,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -183,7 +231,9 @@ blocks:
   fichte_podest:
     name: "<dark_gray>Fichten-Podest"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=16,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -194,7 +244,11 @@ blocks:
   birke_bank:
     name: "<yellow>Birken-Bank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=17,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -205,7 +259,11 @@ blocks:
   birke_sessel:
     name: "<yellow>Birken-Sessel"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=18,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.55
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -216,7 +274,10 @@ blocks:
   birke_nachttisch:
     name: "<yellow>Birken-Nachttisch"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=19,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      height: 0.9
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -227,7 +288,9 @@ blocks:
   birke_kommode:
     name: "<yellow>Birken-Kommode"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=20,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -238,7 +301,9 @@ blocks:
   birke_schrank:
     name: "<yellow>Birken-Schrank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=21,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -249,7 +314,9 @@ blocks:
   birke_truhe:
     name: "<yellow>Birken-Zierkiste"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=22,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -260,7 +327,11 @@ blocks:
   birke_zaunbank:
     name: "<yellow>Birken-Gartenbank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=23,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -271,7 +342,9 @@ blocks:
   birke_podest:
     name: "<yellow>Birken-Podest"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=harp,note=24,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -282,7 +355,11 @@ blocks:
   akazie_bank:
     name: "<gold>Akazien-Bank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=0,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -293,7 +370,11 @@ blocks:
   akazie_sessel:
     name: "<gold>Akazien-Sessel"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=1,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.55
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -304,7 +385,10 @@ blocks:
   akazie_nachttisch:
     name: "<gold>Akazien-Nachttisch"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=2,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      height: 0.9
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -315,7 +399,9 @@ blocks:
   akazie_kommode:
     name: "<gold>Akazien-Kommode"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=3,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -326,7 +412,9 @@ blocks:
   akazie_schrank:
     name: "<gold>Akazien-Schrank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=4,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -337,7 +425,9 @@ blocks:
   akazie_truhe:
     name: "<gold>Akazien-Zierkiste"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=5,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -348,7 +438,11 @@ blocks:
   akazie_zaunbank:
     name: "<gold>Akazien-Gartenbank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=6,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -359,7 +453,9 @@ blocks:
   akazie_podest:
     name: "<gold>Akazien-Podest"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=7,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -370,7 +466,11 @@ blocks:
   dunkeleiche_bank:
     name: "<dark_gray>Schwarzeichen-Bank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=8,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -381,7 +481,11 @@ blocks:
   dunkeleiche_sessel:
     name: "<dark_gray>Schwarzeichen-Sessel"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=9,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.55
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -392,7 +496,10 @@ blocks:
   dunkeleiche_nachttisch:
     name: "<dark_gray>Schwarzeichen-Nachttisch"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=10,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      height: 0.9
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -403,7 +510,9 @@ blocks:
   dunkeleiche_kommode:
     name: "<dark_gray>Schwarzeichen-Kommode"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=11,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -414,7 +523,9 @@ blocks:
   dunkeleiche_schrank:
     name: "<dark_gray>Schwarzeichen-Schrank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=12,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -425,7 +536,9 @@ blocks:
   dunkeleiche_truhe:
     name: "<dark_gray>Schwarzeichen-Zierkiste"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=13,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -436,7 +549,11 @@ blocks:
   dunkeleiche_zaunbank:
     name: "<dark_gray>Schwarzeichen-Gartenbank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=14,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -447,7 +564,9 @@ blocks:
   dunkeleiche_podest:
     name: "<dark_gray>Schwarzeichen-Podest"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=15,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -458,7 +577,11 @@ blocks:
   steinbank:
     name: "<gray>Steinbank"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=16,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      seat: true           # man kann sich draufsetzen
+      seat-height: 0.45
     place-sound: block.stone.place
     break-sound: block.stone.break
     recipe:
@@ -469,7 +592,10 @@ blocks:
   stein_tisch:
     name: "<gray>Steintisch"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=17,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
+      height: 0.9
     place-sound: block.stone.place
     break-sound: block.stone.break
     recipe:
@@ -480,7 +606,9 @@ blocks:
   lampe_klein:
     name: "<yellow>Kleine Lampe"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=18,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: false
     place-sound: block.lantern.place
     break-sound: block.lantern.break
     recipe:
@@ -491,7 +619,9 @@ blocks:
   lampe_gross:
     name: "<yellow>Stehlampe"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=19,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: false
     place-sound: block.lantern.place
     break-sound: block.lantern.break
     recipe:
@@ -502,7 +632,9 @@ blocks:
   buecherstapel:
     name: "<gold>Bücherstapel"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=20,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -513,7 +645,9 @@ blocks:
   teppichrolle:
     name: "<red>Teppichrolle"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=21,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.wool.place
     break-sound: block.wool.break
     recipe:
@@ -524,7 +658,9 @@ blocks:
   blumenkasten:
     name: "<green>Blumenkasten"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=22,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: false
     place-sound: block.wood.place
     break-sound: block.wood.break
     recipe:
@@ -535,7 +671,9 @@ blocks:
   fass_deko:
     name: "<gold>Deko-Fass"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=23,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.barrel.open
     break-sound: block.barrel.open
     recipe:
@@ -546,7 +684,9 @@ blocks:
   amboss_deko:
     name: "<dark_gray>Deko-Amboss"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=bass,note=24,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.anvil.place
     break-sound: block.anvil.break
     recipe:
@@ -557,7 +697,9 @@ blocks:
   kristallsaeule:
     name: "<light_purple>Kristallsäule"
     lore: ["<dark_gray>Möbel"]
-    state: "minecraft:note_block[instrument=snare,note=0,powered=false]"
+    furniture:
+      rotate: 8            # dreht sich nach der Blickrichtung
+      solid: true
     place-sound: block.amethyst_block.place
     break-sound: block.amethyst_block.break
     recipe:

@@ -218,6 +218,93 @@ Möglich sind alle Vanilla-Attribute (`attack_damage`, `attack_speed`, `armor`,
 `movement_speed`, `max_health`, `knockback_resistance` …), eigene `durability`,
 `unbreakable`, `enchants` und `glow`.
 
+## Möbel: unbegrenzt viele, drehbar, zum Draufsetzen
+
+Note-Block-Zustände sind irgendwann alle (575 Stück). Möbel gehen darum einen
+anderen Weg: Sie sind **Anzeige-Objekte** auf einem unsichtbaren
+Platzhalterblock. Davon gibt es **beliebig viele** – die Zahl deiner eigenen
+Blöcke ist nach oben offen.
+
+```yaml
+blocks:
+  eiche_sessel:
+    name: "<gray>Eichen-Sessel"
+    furniture:              # ab hier ist es ein Möbelstück - kein state nötig
+      rotate: 8             # 0 = nie drehen, 4 = Himmelsrichtungen, 8, 16
+      solid: true           # man kann draufstehen
+      seat: true            # man kann sich draufsetzen
+      seat-height: 0.55
+      scale: 1.0            # Größe des Modells
+      light: 0              # leuchtet (nur wenn solid: false)
+```
+
+- **Drehen**: Beim Setzen zeigt das Möbel dahin, wo du hinschaust – auf
+  `rotate:` Schritte gerundet. Ein Notenblock kann das nicht, ein
+  Anzeige-Objekt schon.
+- **Sitzen**: Rechtsklick mit leerer Hand setzt dich hin, Schleichen steht
+  wieder auf. Auf jedem Möbel sitzt nur einer.
+- **Abbauen**: einmal draufhauen. Der Platzhalter darunter ist eine Barriere
+  und damit vor Missgeschicken sicher; abgebaut wird über das Möbel selbst.
+  Schutz-Plugins reden dabei ganz normal mit.
+- Geht ein Modell doch einmal verloren (`/kill @e`), steht es beim nächsten
+  Laden des Chunks von selbst wieder da – die Id liegt ja im Chunk.
+
+> **Bedrock:** Anzeige-Objekte kann Geyser nur annähernd zeigen. Wer seine
+> Möbel auf Bedrock ganz genau haben will, lässt `furniture:` weg und nimmt
+> einen `state:` – dann sind sie wieder Notenblöcke, dafür ohne Drehung und
+> ohne Sitzen. Erze und Marmor sind bewusst Notenblöcke geblieben.
+
+## Fahrzeuge: Autos, Jets und Züge
+
+In der `fahrzeuge.yml`. Gefahren wird mit den **normalen Bewegungstasten** –
+Paper verrät sie dem Plugin, es braucht also keine Mod.
+
+```yaml
+vehicles:
+  sportwagen:
+    art: auto          # auto | jet | zug
+    item: auto_sport   # Id aus der config.yml, mit der man es hinstellt
+    speed: 0.85
+    power: 0.05        # wie schnell es beschleunigt
+    turn: 5.0          # Grad pro Tick beim Lenken
+    seats: 2
+    fuel: "smp:kohle"  # leer = kein Sprit nötig
+```
+
+| | Steuerung |
+|---|---|
+| **Auto** | W Gas, S Bremse und rückwärts, A/D lenken. Fällt, und schafft eine Stufe. |
+| **Jet** | W Schub, Leertaste steigen, Schleichen sinken. Ohne Schub sinkt er. |
+| **Zug** | Fährt nur auf Schienen und folgt ihnen – auch um Kurven und bergauf. |
+
+Rechtsklick auf den Boden stellt es hin, Rechtsklick darauf steigt ein,
+Schleichen steigt aus, Schleichen + Rechtsklick mit leerer Hand packt es
+wieder ein. Nach einem Neustart stehen die Fahrzeuge noch da und fahren weiter.
+
+## Schusswaffen
+
+Die Aktion `projectile` macht aus jedem Item eine Waffe:
+
+```yaml
+pistole:
+  material: IRON_HORSE_ARMOR
+  abilities:
+    - trigger: right-click
+      cooldown: 0.4
+      actions:
+        - type: projectile
+          entity: ARROW      # ARROW, SNOWBALL, FIREBALL, WIND_CHARGE, EGG ...
+          speed: 3.6
+          damage: 5.0
+          spread: 0.6        # Streuung in Grad
+          amount: 1          # 8 macht daraus eine Schrotflinte
+          gravity: false     # fliegt geradeaus
+          ammo: "smp:kugel"  # Munition, die verbraucht wird
+```
+
+Mitgeliefert sind **Pistole**, **Schrotflinte** (acht Kugeln plus Rückstoß)
+und **Raketenwerfer**. Ist keine Munition da, klickt es nur.
+
 ## Wie die Blöcke funktionieren
 
 Minecraft erlaubt keine echten neuen Block-IDs über ein Resource-Pack. Die

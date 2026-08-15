@@ -184,7 +184,10 @@ public final class ContentRegistry {
                 continue;
             }
             String state = sec.getString("state");
-            if (isBlock) {
+            CustomEntry.Furniture furniture = readFurniture(sec);
+            // Möbel sind Anzeige-Objekte und brauchen keinen Notenblock-Zustand.
+            // Genau deshalb sind sie nicht auf 575 Stück begrenzt.
+            if (isBlock && furniture == null) {
                 if (state == null) {
                     plugin.getLogger().warning("Block " + id + " hat keinen 'state' - übersprungen.");
                     continue;
@@ -236,7 +239,8 @@ public final class ContentRegistry {
                             sec.getInt("max-stack", 0),
                             sec.getString("requires-tool", ""),
                             sec.getString("place-sound", ""),
-                            sec.getString("break-sound", ""))));
+                            sec.getString("break-sound", "")),
+                    furniture));
 
             ConfigurationSection recipe = sec.getConfigurationSection("recipe");
             if (recipe != null) {
@@ -258,6 +262,41 @@ public final class ContentRegistry {
      *
      * Ohne "drops" fällt weiterhin der Block selbst.
      */
+    /**
+     * Möbel-Einstellungen eines Eintrags.
+     *
+     * <pre>
+     * sofa:
+     *   material: NOTE_BLOCK
+     *   furniture:            # ab hier ist es ein Möbelstück
+     *     solid: true         # man kann draufstehen
+     *     rotate: 8           # dreht sich beim Setzen zur Blickrichtung
+     *     seat: true          # man kann sich draufsetzen
+     *     seat-height: 0.5
+     * </pre>
+     *
+     * Möbel brauchen keinen {@code state:} - sie sind keine Notenblöcke und
+     * damit nicht auf 575 Stück begrenzt.
+     */
+    private CustomEntry.Furniture readFurniture(ConfigurationSection sec) {
+        ConfigurationSection furniture = sec.getConfigurationSection("furniture");
+        if (furniture == null) {
+            furniture = sec.getConfigurationSection("moebel");
+        }
+        if (furniture == null) {
+            return null;
+        }
+        return new CustomEntry.Furniture(
+                furniture.getBoolean("solid", true),
+                furniture.getInt("rotate", 4),
+                furniture.getBoolean("seat", false),
+                furniture.getDouble("seat-height", 0.4),
+                furniture.getDouble("scale", 1.0),
+                furniture.getDouble("height", 1.0),
+                furniture.getDouble("width", 1.0),
+                furniture.getInt("light", 0));
+    }
+
     private List<CustomEntry.Drop> readDrops(ConfigurationSection sec, String id) {
         List<?> raw = sec.getList("drops");
         if (raw == null || raw.isEmpty()) {

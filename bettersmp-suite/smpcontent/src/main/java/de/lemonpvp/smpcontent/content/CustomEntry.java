@@ -23,6 +23,7 @@ import java.util.Map;
  * @param drops       was beim Abbauen fällt (leer = der Block selbst)
  * @param experience  Erfahrungspunkte beim Abbauen
  * @param extras      seltener gebrauchte Einstellungen
+ * @param furniture   Möbel-Einstellungen, sonst null
  */
 public record CustomEntry(
         String id,
@@ -39,8 +40,14 @@ public record CustomEntry(
         boolean glow,
         List<Drop> drops,
         int experience,
-        Extras extras
+        Extras extras,
+        Furniture furniture
 ) {
+
+    /** Ein Möbelstück wird als Anzeige-Objekt gesetzt, nicht als Notenblock. */
+    public boolean isFurniture() {
+        return furniture != null;
+    }
 
     /**
      * Zusatzeinstellungen, die nicht jeder braucht.
@@ -59,6 +66,28 @@ public record CustomEntry(
                          String requiresTool, String placeSound, String breakSound) {
 
         public static final Extras NONE = new Extras("", "", 0, "", "", "");
+    }
+
+    /**
+     * Möbel: kein Notenblock, sondern ein Anzeige-Objekt auf einem
+     * unsichtbaren Platzhalterblock.
+     *
+     * Damit gibt es <b>keine Obergrenze</b> mehr - Note-Block-Zustände sind
+     * irgendwann alle, Anzeige-Objekte nie. Außerdem kann sich ein Möbelstück
+     * so nach Blickrichtung drehen, was ein Notenblock nicht kann.
+     *
+     * @param solid   true = man kann darauf stehen und stößt dagegen
+     * @param rotate  Drehschritte beim Setzen (0 = nie drehen, 4 = Himmels-
+     *                richtungen, 8 = auch diagonal, 16 = ganz fein)
+     * @param seat    true = man kann sich draufsetzen
+     * @param seatY   Sitzhöhe über der Blockunterkante
+     * @param scale   Größe des Modells (1.0 = normal)
+     * @param height  Höhe des Klickbereichs
+     * @param width   Breite des Klickbereichs
+     * @param light   Lichtstärke 0-15, die das Möbel abgibt
+     */
+    public record Furniture(boolean solid, int rotate, boolean seat, double seatY,
+                            double scale, double height, double width, int light) {
     }
 
     /**

@@ -11,6 +11,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Player;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -62,19 +63,33 @@ public final class BlockListener implements Listener {
      * Rückfalltür der Zustandsvergleich - so werden Blöcke aus älteren
      * Versionen weiterhin erkannt und dabei gleich nachgetragen.
      */
-    private CustomEntry customAt(Block block) {
-        if (block.getType() != Material.NOTE_BLOCK) {
-            return null;
-        }
+    CustomEntry customAt(Block block) {
         String id = plugin.blocks().idAt(block);
         if (id != null) {
-            return plugin.registry().get(id);
+            CustomEntry stored = plugin.registry().get(id);
+            // Nur wenn dort auch wirklich noch der passende Block steht -
+            // sonst wäre ein alter Eintrag an einer längst leeren Stelle
+            // plötzlich wieder ein eigener Block.
+            if (stored != null && fits(block, stored)) {
+                return stored;
+            }
+        }
+        if (block.getType() != Material.NOTE_BLOCK) {
+            return null;
         }
         CustomEntry byState = plugin.registry().blockAt(block.getBlockData());
         if (byState != null) {
             plugin.blocks().set(block, byState.id());
         }
         return byState;
+    }
+
+    /** Möbel stehen auf einem Platzhalter, alles andere auf einem Notenblock. */
+    private boolean fits(Block block, CustomEntry entry) {
+        if (entry.isFurniture()) {
+            return block.getType() == Material.BARRIER || block.getType() == Material.LIGHT;
+        }
+        return block.getType() == Material.NOTE_BLOCK;
     }
 
     /** Stellt das Aussehen wieder her, falls es abgewichen ist. */
@@ -108,11 +123,26 @@ public final class BlockListener implements Listener {
             plugin.msgs().send(event.getPlayer(), "no-permission");
             return;
         }
+        Block block = event.getBlockPlaced();
+
+        // Möbel: kein Notenblock, sondern ein Anzeige-Objekt. Damit gibt es
+        // keine Obergrenze mehr und es dreht sich nach der Blickrichtung.
+        if (entry.isFurniture()) {
+            Player player = event.getPlayer();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (block.getType() != Material.NOTE_BLOCK) {
+                    return;
+                }
+                plugin.furniture().place(player, entry, block);
+                playSound(block, entry.extras().placeSound());
+            });
+            return;
+        }
+
         BlockData data = plugin.registry().blockDataFor(entry);
         if (data == null) {
             return;
         }
-        Block block = event.getBlockPlaced();
 
         // Einen Tick später setzen, damit das Instrument nicht sofort neu
         // berechnet wird. Vorher aber prüfen, ob der Block überhaupt noch
@@ -136,6 +166,9 @@ public final class BlockListener implements Listener {
         }
         plugin.blocks().remove(event.getBlock());
         event.setDropItems(false);
+        if (entry.isFurniture()) {
+            plugin.furniture().clear(event.getBlock());
+        }
         if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
             return;
         }
@@ -301,13 +334,19 @@ public final class BlockListener implements Listener {
                 return;
             }
             for (Map.Entry<Integer, String> stored : table.entrySet()) {
-                CustomEntry entry = plugin.registry().get(stored.getValue());
+                CustomEntry entry = plugin.registry().get(
+                        de.lemonpvp.smpcontent.content.BlockStore.plainId(stored.getValue()));
                 if (entry == null) {
                     continue;
                 }
                 int packed = stored.getKey();
                 Block block = chunk.getBlock(packed & 15, (packed >> 8) - 2048, (packed >> 4) & 15);
-                repair(block, entry);
+                if (entry.isFurniture()) {
+                    plugin.furniture().ensure(block, entry,
+                            de.lemonpvp.smpcontent.content.BlockStore.yawOf(stored.getValue()));
+                } else {
+                    repair(block, entry);
+                }
             }
         });
     }

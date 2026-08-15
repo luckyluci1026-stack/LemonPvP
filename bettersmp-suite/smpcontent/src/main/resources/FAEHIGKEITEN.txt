@@ -111,6 +111,29 @@ message        Text anzeigen
    text        MiniMessage, Platzhalter %x% %y% %z% %world% %player%
    actionbar   true = über der Hotbar statt im Chat
 
+projectile     Schießen - damit wird das Item zur Waffe
+   entity      ARROW (Standard), SNOWBALL, EGG, FIREBALL, SMALL_FIREBALL,
+               WIND_CHARGE, TRIDENT, ENDER_PEARL, SHULKER_BULLET, LLAMA_SPIT
+   speed       wie schnell, Standard 2.5
+   damage      Schaden, wirkt bei Pfeilen und Dreizacken
+   spread      Streuung in Grad, 0 = zielgenau
+   amount      wie viele auf einmal - 8 macht eine Schrotflinte daraus
+   gravity     false = fliegt geradeaus, Standard true
+   fire        true = brennt
+   pierce      wie viele Gegner ein Pfeil durchschlägt
+   ammo        Munition, die verbraucht wird ("smp:kugel" oder ein Material).
+               Ist keine da, passiert nichts. Im Kreativmodus egal.
+
+   Beispiel Schrotflinte:
+     - type: projectile
+       entity: ARROW
+       amount: 8
+       spread: 9.0
+       damage: 2.5
+       ammo: "smp:kugel"
+     - type: push          # Rückstoß
+       strength: -0.35
+
 
 EIGENE ANIMATIONEN
 ------------------

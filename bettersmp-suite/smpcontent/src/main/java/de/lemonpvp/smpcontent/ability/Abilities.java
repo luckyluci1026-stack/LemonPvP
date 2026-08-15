@@ -159,6 +159,7 @@ public final class Abilities {
             case "ignite" -> ignite(player, target, action);
             case "explosion" -> explosion(player, target, action);
             case "message" -> message(player, action);
+            case "projectile", "shoot", "schuss" -> projectile(player, action);
             default -> plugin.getLogger().warning("Unbekannte Aktion: " + type);
         }
     }
@@ -184,6 +185,105 @@ public final class Abilities {
         } else {
             animator.play(player, shape, particle, data, radius, length, ticks, density);
         }
+    }
+
+    /**
+     * Schießt etwas ab - damit werden aus eigenen Items Pistolen, Gewehre,
+     * Schrotflinten oder Raketenwerfer.
+     *
+     * <pre>
+     * - type: projectile
+     *   entity: ARROW      ARROW, SNOWBALL, FIREBALL, WIND_CHARGE, EGG, TRIDENT ...
+     *   speed: 3.0         wie schnell
+     *   damage: 7.0        Schaden (nur bei Pfeilen)
+     *   spread: 1.5        Streuung in Grad
+     *   amount: 8          mehrere auf einmal - eine Schrotflinte
+     *   gravity: true      false = fliegt geradeaus
+     *   fire: false        brennende Pfeile
+     *   pierce: 0          wie viele Gegner ein Pfeil durchschlägt
+     *   ammo: "smp:kugel"  Munition, die dabei verbraucht wird
+     * </pre>
+     */
+    private void projectile(Player player, Map<String, Object> action) {
+        String name = Ability.string(action, "entity", "ARROW")
+                .toUpperCase(Locale.ROOT).trim();
+        Class<? extends org.bukkit.entity.Entity> kind = switch (name) {
+            case "SNOWBALL", "SCHNEEBALL" -> org.bukkit.entity.Snowball.class;
+            case "EGG", "EI" -> org.bukkit.entity.Egg.class;
+            case "FIREBALL", "FEUERBALL" -> org.bukkit.entity.Fireball.class;
+            case "SMALL_FIREBALL" -> org.bukkit.entity.SmallFireball.class;
+            case "WIND_CHARGE", "WINDSTOSS" -> org.bukkit.entity.WindCharge.class;
+            case "TRIDENT", "DREIZACK" -> org.bukkit.entity.Trident.class;
+            case "ENDER_PEARL", "ENDERPERLE" -> org.bukkit.entity.EnderPearl.class;
+            case "SHULKER_BULLET" -> org.bukkit.entity.ShulkerBullet.class;
+            case "LLAMA_SPIT" -> org.bukkit.entity.LlamaSpit.class;
+            default -> org.bukkit.entity.Arrow.class;
+        };
+
+        // Munition: ist keine da, klickt es nur
+        String ammo = Ability.string(action, "ammo", "");
+        if (!ammo.isBlank() && player.getGameMode() != org.bukkit.GameMode.CREATIVE
+                && !takeAmmo(player, ammo)) {
+            return;
+        }
+
+        int amount = Math.max(1, (int) Ability.number(action, "amount", 1));
+        double speed = Ability.number(action, "speed", 2.5);
+        double spread = Ability.number(action, "spread", 0.0);
+        double damage = Ability.number(action, "damage", 0.0);
+        boolean gravity = Ability.flag(action, "gravity", true);
+        boolean fire = Ability.flag(action, "fire", false);
+        int pierce = (int) Ability.number(action, "pierce", 0);
+
+        for (int i = 0; i < amount; i++) {
+            Vector direction = player.getEyeLocation().getDirection();
+            if (spread > 0) {
+                double radians = Math.toRadians(spread);
+                direction.add(new Vector(
+                        (Math.random() - 0.5) * radians,
+                        (Math.random() - 0.5) * radians,
+                        (Math.random() - 0.5) * radians));
+            }
+            org.bukkit.entity.Entity shot = player.getWorld().spawn(
+                    player.getEyeLocation().add(direction.clone().multiply(0.6)), kind);
+            shot.setVelocity(direction.normalize().multiply(speed));
+            if (shot instanceof org.bukkit.entity.Projectile projectile) {
+                projectile.setShooter(player);
+            }
+            if (!gravity) {
+                shot.setGravity(false);
+            }
+            if (fire) {
+                shot.setFireTicks(200);
+            }
+            if (shot instanceof org.bukkit.entity.AbstractArrow arrow) {
+                if (damage > 0) {
+                    arrow.setDamage(damage);
+                }
+                arrow.setPierceLevel(Math.max(0, Math.min(127, pierce)));
+                arrow.setPickupStatus(
+                        org.bukkit.entity.AbstractArrow.PickupStatus.DISALLOWED);
+            }
+        }
+    }
+
+    /** Nimmt ein Stück Munition aus dem Inventar. */
+    private boolean takeAmmo(Player player, String ammo) {
+        var entry = plugin.registry().get(ammo.startsWith("smp:") ? ammo.substring(4) : ammo);
+        for (int slot = 0; slot < player.getInventory().getSize(); slot++) {
+            org.bukkit.inventory.ItemStack stack = player.getInventory().getItem(slot);
+            if (stack == null || stack.getType().isAir()) {
+                continue;
+            }
+            boolean match = entry != null
+                    ? entry.id().equals(plugin.registry().idOf(stack))
+                    : stack.getType().name().equalsIgnoreCase(ammo);
+            if (match) {
+                stack.setAmount(stack.getAmount() - 1);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void sound(Player player, Map<String, Object> action) {

@@ -3,11 +3,15 @@ package de.lemonpvp.smpcontent;
 import de.lemonpvp.smpcontent.ability.Abilities;
 import de.lemonpvp.smpcontent.command.ContentCommand;
 import de.lemonpvp.smpcontent.content.BlockStore;
+import de.lemonpvp.smpcontent.furniture.FurnitureManager;
+import de.lemonpvp.smpcontent.vehicle.VehicleManager;
 import de.lemonpvp.smpcontent.content.ContentRegistry;
 import de.lemonpvp.smpcontent.content.CustomEntry;
 import de.lemonpvp.smpcontent.gui.ContentGui;
 import de.lemonpvp.smpcontent.listener.AbilityListener;
 import de.lemonpvp.smpcontent.listener.BlockListener;
+import de.lemonpvp.smpcontent.listener.FurnitureListener;
+import de.lemonpvp.smpcontent.listener.VehicleListener;
 import de.lemonpvp.smpcontent.listener.GuiListener;
 import de.lemonpvp.smpcontent.pack.PackGenerator;
 import de.lemonpvp.smpcontent.util.ConfigProblem;
@@ -46,6 +50,8 @@ public final class SMPContent extends JavaPlugin {
     private Abilities abilities;
     private ContentGui gui;
     private BlockStore blocks;
+    private FurnitureManager furniture;
+    private VehicleManager vehicles;
 
     private YamlConfiguration config;
     private ConfigProblem.Report configProblem;
@@ -61,16 +67,23 @@ public final class SMPContent extends JavaPlugin {
         this.registry = new ContentRegistry(this);
         this.pack = new PackGenerator(this);
         this.gui = new ContentGui(this);
+        this.furniture = new FurnitureManager(this);
+        this.vehicles = new VehicleManager(this);
         pack.ensureFolders();
+        vehicles.load();
 
         Bukkit.getPluginManager().registerEvents(new BlockListener(this), this);
         Bukkit.getPluginManager().registerEvents(new GuiListener(this), this);
         Bukkit.getPluginManager().registerEvents(new AbilityListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new FurnitureListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new VehicleListener(this), this);
         getCommand("smpcontent").setExecutor(new ContentCommand(this));
         startHeldTask();
+        vehicles.start();
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             for (org.bukkit.Chunk chunk : world.getLoadedChunks()) {
                 blocks.load(chunk);
+                vehicles.adoptChunk(chunk);
             }
         }
 
@@ -146,6 +159,16 @@ public final class SMPContent extends JavaPlugin {
     /** Wo welcher eigene Block steht - unabhängig vom Notenblock-Zustand. */
     public BlockStore blocks() {
         return blocks;
+    }
+
+    /** Möbel als Anzeige-Objekte: unbegrenzt viele, drehbar, zum Draufsetzen. */
+    public FurnitureManager furniture() {
+        return furniture;
+    }
+
+    /** Autos, Jets und Züge. */
+    public VehicleManager vehicles() {
+        return vehicles;
     }
 
     // ------------------------------------------------------------------
