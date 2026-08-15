@@ -12,7 +12,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -219,6 +221,7 @@ public final class PackGenerator {
             Path zip = outputDir().resolve(packName + ".zip");
             zipDirectory(work, zip);
             deleteRecursively(work);
+            writeGeyserMapping();
 
             String message = missing.isEmpty()
                     ? "Pack gebaut: " + zip.getFileName()
@@ -231,6 +234,40 @@ public final class PackGenerator {
             plugin.getLogger().warning("Pack-Bau fehlgeschlagen: " + e);
             return new Result(false, 0, 0, 0, 0, String.valueOf(e.getMessage()));
         }
+    }
+
+    /**
+     * Schreibt die Geyser-Zuordnung mit, damit Bedrock-Spieler die eigenen
+     * Items sehen. Kommt nach output/geyser/ und gehört in
+     * Geyser/custom_mappings/.
+     *
+     * Für die 3D-Modelle braucht es zusätzlich das Bedrock-Pack aus
+     * texturepack/java2bedrock.py - das steht in BEDROCK.md.
+     */
+    private void writeGeyserMapping() throws IOException {
+        Map<String, List<String>> byMaterial = new LinkedHashMap<>();
+        for (Map.Entry<String, Integer> item : plugin.registry().modelDataByItem().entrySet()) {
+            CustomEntry entry = plugin.registry().get(item.getKey());
+            if (entry == null) {
+                continue;
+            }
+            String material = "minecraft:" + entry.material().getKey().getKey();
+            byMaterial.computeIfAbsent(material, key -> new ArrayList<>()).add("""
+                        {
+                          "name": "%s",
+                          "custom_model_data": %d,
+                          "icon": "%s",
+                          "allow_offhand": true,
+                          "display_handheld": true
+                        }""".formatted(entry.id(), item.getValue(), entry.id()));
+        }
+        List<String> blocks = new ArrayList<>();
+        byMaterial.forEach((material, items) -> blocks.add(
+                "    \"" + material + "\": [\n" + String.join(",\n", items) + "\n    ]"));
+
+        write(outputDir().resolve("geyser/smp_items.json"),
+                "{\n  \"format_version\": \"2\",\n  \"items\": {\n"
+                        + String.join(",\n", blocks) + "\n  }\n}\n");
     }
 
     private void writePackMeta(Path work) throws IOException {

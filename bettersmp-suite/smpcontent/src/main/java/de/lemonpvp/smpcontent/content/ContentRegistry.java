@@ -391,12 +391,17 @@ public final class ContentRegistry {
         meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, entry.id());
 
         // Java: item_model aus dem Texturepack. Bedrock: CustomModelData (Geyser).
+        //
+        // Geyser erkennt eigene Items ausschliesslich an der CustomModelData -
+        // item_model allein sieht ein Bedrock-Spieler nicht. Darum wird sie
+        // immer gesetzt; fehlt sie in der Config, wird eine aus der Id
+        // abgeleitet, damit das Item auf Bedrock trotzdem ankommt.
         String namespace = plugin.getConfig().getString("texturepack.namespace", "smp");
         try {
             meta.setItemModel(new NamespacedKey(namespace, entry.id()));
-            if (entry.modelData() > 0) {
-                meta.setCustomModelData(entry.modelData());
-            }
+            meta.setCustomModelData(entry.modelData() > 0
+                    ? entry.modelData()
+                    : fallbackModelData(entry.id()));
         } catch (Throwable t) {
             plugin.getLogger().warning("Textur für " + entry.id() + " nicht setzbar: " + t.getMessage());
         }
@@ -508,6 +513,32 @@ public final class ContentRegistry {
     /** Findet ein Attribut über seinen Vanilla-Namen (z.B. "attack_damage"). */
     private Attribute attributeByName(String name) {
         return Registry.ATTRIBUTE.get(NamespacedKey.minecraft(name));
+    }
+
+    /**
+     * Eine feste Ersatz-CustomModelData für Items ohne eigene Nummer.
+     *
+     * Bleibt über Neustarts gleich (hängt nur an der Id) und liegt weit über
+     * den von Hand vergebenen Nummern, damit sie nicht kollidiert.
+     */
+    private int fallbackModelData(String id) {
+        return 900000 + Math.floorMod(id.toLowerCase(java.util.Locale.ROOT).hashCode(), 90000);
+    }
+
+    /**
+     * Alle Items mit ihrer CustomModelData - für den Bedrock-Export.
+     * Enthält auch die abgeleiteten Nummern, damit die Geyser-Zuordnung
+     * wirklich jedes Item erwischt.
+     */
+    public Map<String, Integer> modelDataByItem() {
+        Map<String, Integer> out = new LinkedHashMap<>();
+        for (CustomEntry entry : entries.values()) {
+            if (!entry.block()) {
+                out.put(entry.id(), entry.modelData() > 0
+                        ? entry.modelData() : fallbackModelData(entry.id()));
+            }
+        }
+        return out;
     }
 
     /** Gibt einem Spieler ein Item - was nicht passt, fällt vor seine Füße. */

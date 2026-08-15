@@ -11,7 +11,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -63,10 +65,40 @@ public final class AbilityListener implements Listener {
         if (entry.block()) {
             return;
         }
-        if (plugin.abilities().run(event.getPlayer(), entry, trigger, null)
-                && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+
+        // Geduckt zuerst: so kann ein Item zwei verschiedene Sachen können.
+        // Gibt es dafür nichts, gilt der normale Auslöser.
+        boolean fired = false;
+        if (event.getPlayer().isSneaking()) {
+            fired = plugin.abilities().run(event.getPlayer(), entry, "sneak-" + trigger, null);
+        }
+        if (!fired) {
+            fired = plugin.abilities().run(event.getPlayer(), entry, trigger, null);
+        }
+        if (fired && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             // Nur die Kiste/Tür nicht öffnen - das Item selbst bleibt nutzbar
             event.setUseInteractedBlock(Event.Result.DENY);
+        }
+    }
+
+    /** Q drücken - praktisch für einen Wurf oder eine Fernwirkung. */
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onDrop(PlayerDropItemEvent event) {
+        CustomEntry entry = entryOf(event.getItemDrop().getItemStack());
+        if (entry != null && !entry.block()
+                && plugin.abilities().run(event.getPlayer(), entry, "drop", null)) {
+            // Das Item bleibt in der Hand, wenn eine Fähigkeit ausgelöst hat
+            event.setCancelled(true);
+        }
+    }
+
+    /** F drücken (Hände tauschen). */
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onSwap(PlayerSwapHandItemsEvent event) {
+        CustomEntry entry = entryOf(event.getOffHandItem());
+        if (entry != null && !entry.block()
+                && plugin.abilities().run(event.getPlayer(), entry, "swap", null)) {
+            event.setCancelled(true);
         }
     }
 

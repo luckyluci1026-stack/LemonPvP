@@ -27,11 +27,19 @@ Fähigkeiten mit "- " darunter, "actions:" wieder eine Ebene tiefer.
 
 AUSLÖSER (trigger)
 ------------------
-  right-click     Rechtsklick mit dem Item in der Hand
-  left-click      Linksklick
-  hit             wenn du mit dem Item jemanden triffst
-  kill            wenn du mit dem Item jemanden tötest
-  held            alle 1 Sekunde, solange du es in der Hand hältst
+  right-click        Rechtsklick mit dem Item in der Hand
+  left-click         Linksklick
+  sneak-right-click  Schleichen (Shift) + Rechtsklick
+  sneak-left-click   Schleichen (Shift) + Linksklick
+  hit                wenn du mit dem Item jemanden triffst
+  kill               wenn du mit dem Item jemanden tötest
+  drop               Q drücken (das Item bleibt dann in der Hand)
+  swap               F drücken, Item in der Nebenhand
+  held               alle 1 Sekunde, solange du es in der Hand hältst
+
+Ein Item kann beides haben: sneak-right-click wird zuerst geprüft,
+gibt es dafür nichts, greift right-click. So bekommt ein Schwert zwei
+verschiedene Fähigkeiten auf denselben Knopf.
 
 Pro Fähigkeit:
   name          wird bei der Abklingzeit angezeigt (optional)
