@@ -81,13 +81,28 @@ mehrere Texturen nutzt. Anleitungen liegen als `LIESMICH.txt` und
 
 ## Bedrock-Spieler
 
-`/smpcontent pack` baut **beides** in einem Rutsch:
+Zwei Wege, beide bauen dasselbe:
+
+**`/smpcontent bedrock`** – nimmt das Pack, das in deiner `server.properties`
+unter `resource-pack=` steht, und macht daraus das Bedrock-Pack. Damit ist es
+egal, ob du deine Sachen mit diesem Plugin gebaut hast oder das Pack von Hand
+zusammenstellst: Was deine Java-Spieler sehen, bekommen die Bedrock-Spieler.
+Ist dort eine URL eingetragen, wird sie heruntergeladen – das läuft auf einem
+Nebenthread, der Server ruckelt dabei nicht.
+
+Gesucht wird der Reihe nach: dein Argument (`/smpcontent bedrock <URL|Datei>`),
+`resource-pack` aus der `server.properties`, eine ZIP in
+`plugins/SMPContent/pack/`, zuletzt das selbst gebaute `output/SMPPack.zip`.
+
+**`/smpcontent pack`** – baut das Java-Pack aus deinen Ordnern und hängt das
+Bedrock-Pack gleich mit dran.
 
 ```
 plugins/SMPContent/output/
 ├── SMPPack.zip                        Java-Pack
 ├── bedrock/SMP-Bedrock-Pack.mcpack    Bedrock-Pack  →  Geyser/packs/
-└── geyser/smp_items.json              Zuordnung     →  Geyser/custom_mappings/
+├── geyser/smp_items.json              Items         →  Geyser/custom_mappings/
+└── geyser/smp_blocks.json             Blöcke        →  Geyser/custom_mappings/
 ```
 
 Dazu in der `Geyser/config.yml`: `add-non-bedrock-items: true`, Geyser neu
@@ -98,9 +113,11 @@ spiegelt die X-Achse und legt den Nullpunkt in die Mitte, die UV-Koordinaten
 werden auf die echte Texturgröße skaliert und die `display`-Werte werden zu
 Bedrock-Animationen, damit das Item in der Hand richtig sitzt.
 
-**Eigene Blöcke gehen nicht.** Note-Block-Zustände lassen sich nicht als
-Geyser-Custom-Item abbilden. Möbel, Erze und Marmor sehen auf Bedrock aus wie
-normale Notenblöcke – funktionieren aber ganz normal (setzen, abbauen, Drops).
+**Eigene Blöcke gehen auch.** Jeder Note-Block-Zustand wird auf einen echten
+Bedrock-Block abgebildet – Erze, Marmor und Möbel sehen dort aus wie auf Java.
+Ein voller Würfel bleibt ein normaler Block (schöneres Licht, weniger Last),
+Möbel bekommen ihre eigene Geometrie. Blöcke **ohne Textur** werden
+übersprungen und bleiben auf Bedrock Notenblöcke.
 
 ## Eigenes Item anlegen
 

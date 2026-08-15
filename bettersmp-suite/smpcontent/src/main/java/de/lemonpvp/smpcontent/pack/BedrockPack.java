@@ -32,8 +32,13 @@ import java.util.UUID;
  * rechnet {@link #geometry} um, dazu die UV-Koordinaten auf die echte
  * Texturgröße und die Drehungen mit passendem Vorzeichen.
  *
- * Eigene BLÖCKE gehen nicht: Note-Block-Zustände lassen sich nicht als
- * Geyser-Custom-Item abbilden. Bedrock zeigt dort einen normalen Notenblock.
+ * Eigene Blöcke gehen auch: Geyser kann einen Java-Blockzustand auf einen
+ * echten Bedrock-Block abbilden, darum wird jeder Note-Block-Zustand aus der
+ * config.yml zu einem eigenen Bedrock-Block - kein Notenblock mehr.
+ *
+ * Zwei Wege führen hierher:
+ *   {@link #build}              aus deinen Ordnern textures/ und models/
+ *   {@link #buildFromJavaPack}  aus einem fertigen Java-Pack (server.properties)
  */
 public final class BedrockPack {
 
@@ -49,8 +54,8 @@ public final class BedrockPack {
         this.plugin = plugin;
     }
 
-    /** Wie viele Items dabei herauskamen. */
-    public record Result(int solid, int flat, boolean ok, String message) {
+    /** Wie viele Items und Blöcke dabei herauskamen. */
+    public record Result(int solid, int flat, int blocks, boolean ok, String message) {
     }
 
     public Result build(Path outputDir, Path texturesDir, Path modelsDir) {
@@ -92,30 +97,186 @@ public final class BedrockPack {
                         key -> new JsonArray()).add(mapping(entry, has3d));
             }
 
-            JsonObject itemTexture = new JsonObject();
-            itemTexture.addProperty("resource_pack_name", namespace());
-            itemTexture.addProperty("texture_name", "atlas.items");
-            itemTexture.add("texture_data", textureData);
-            write(work.resolve("textures/item_texture.json"), itemTexture);
-            write(work.resolve("manifest.json"), manifest());
+            // Eigene Bloecke: anderes Zuordnungsformat als Items
+            JsonObject terrain = new JsonObject();
+            JsonObject blockMappings = blocks(work, texturesDir, modelsDir, terrain);
 
-            Files.createDirectories(outputDir.resolve("bedrock"));
-            Path mcpack = outputDir.resolve("bedrock/SMP-Bedrock-Pack.mcpack");
-            PackGenerator.zip(work, mcpack);
-            deleteRecursively(work);
-
-            JsonObject items = new JsonObject();
-            mappings.forEach(items::add);
-            JsonObject root = new JsonObject();
-            root.addProperty("format_version", "2");
-            root.add("items", items);
-            write(outputDir.resolve("geyser/smp_items.json"), root);
-
-            return new Result(solid, flat, true, mcpack.getFileName().toString());
+            return finish(work, outputDir, textureData, mappings, blockMappings, terrain,
+                    solid, flat);
         } catch (Exception ex) {
             plugin.getLogger().warning("Bedrock-Pack fehlgeschlagen: " + ex);
-            return new Result(solid, flat, false, String.valueOf(ex.getMessage()));
+            return new Result(solid, flat, 0, false, String.valueOf(ex.getMessage()));
         }
+    }
+
+    /**
+     * Derselbe Bau, aber aus einem fertigen Java-Pack - also genau aus dem
+     * Pack, das in der server.properties steht. Damit brauchst du kein
+     * /smpcontent pack: Was deine Java-Spieler sehen, sehen die Bedrock-Spieler.
+     *
+     * Gelesen wird alles, was im Pack hinter einem custom_model_data steckt,
+     * und jede eigene Variante der note_block.json.
+     */
+    public Result buildFromJavaPack(Path zip, Path outputDir) {
+        Path work = plugin.getDataFolder().toPath().resolve("build-bedrock");
+        Path extracted = plugin.getDataFolder().toPath().resolve("build-javapack");
+        int solid = 0;
+        int flat = 0;
+        try {
+            deleteRecursively(work);
+            Files.createDirectories(work.resolve("textures/items"));
+            JavaPack pack = JavaPack.open(zip, extracted);
+
+            JsonObject textureData = new JsonObject();
+            Map<String, JsonArray> mappings = new LinkedHashMap<>();
+
+            for (JavaPack.Item item : pack.items()) {
+                Files.copy(item.texture(), work.resolve("textures/items/" + item.id() + ".png"),
+                        StandardCopyOption.REPLACE_EXISTING);
+                JsonObject tex = new JsonObject();
+                tex.addProperty("textures", "textures/items/" + item.id());
+                textureData.add(item.id(), tex);
+
+                boolean has3d = item.model().has("elements")
+                        && !item.model().getAsJsonArray("elements").isEmpty();
+                if (has3d) {
+                    writeThreeD(work, item.id(), item.model(), item.texture());
+                    solid++;
+                } else {
+                    flat++;
+                }
+                mappings.computeIfAbsent("minecraft:" + item.material(),
+                        key -> new JsonArray()).add(mapping(item.id(), item.modelData(), has3d));
+            }
+
+            JsonObject terrain = new JsonObject();
+            JsonObject blockMappings = new JsonObject();
+            for (JavaPack.Block block : pack.blocks()) {
+                blockMappings.add(block.state(), blockDefinition(work, block.id(),
+                        block.model(), block.texture(), terrain));
+            }
+
+            for (String note : pack.notes()) {
+                plugin.getLogger().info("Bedrock: " + note);
+            }
+            Result result = finish(work, outputDir, textureData, mappings, blockMappings,
+                    terrain, solid, flat);
+            deleteRecursively(extracted);
+            return result;
+        } catch (Exception ex) {
+            plugin.getLogger().warning("Bedrock-Pack fehlgeschlagen: " + ex);
+            return new Result(solid, flat, 0, false, String.valueOf(ex.getMessage()));
+        }
+    }
+
+    /** Packt zusammen und schreibt die beiden Geyser-Dateien. */
+    private Result finish(Path work, Path outputDir, JsonObject textureData,
+                          Map<String, JsonArray> mappings, JsonObject blockMappings,
+                          JsonObject terrain, int solid, int flat) throws IOException {
+        JsonObject itemTexture = new JsonObject();
+        itemTexture.addProperty("resource_pack_name", namespace());
+        itemTexture.addProperty("texture_name", "atlas.items");
+        itemTexture.add("texture_data", textureData);
+        write(work.resolve("textures/item_texture.json"), itemTexture);
+
+        if (!terrain.isEmpty()) {
+            JsonObject root = new JsonObject();
+            root.addProperty("resource_pack_name", namespace());
+            root.addProperty("texture_name", "atlas.terrain");
+            root.add("texture_data", terrain);
+            write(work.resolve("textures/terrain_texture.json"), root);
+        }
+        write(work.resolve("manifest.json"), manifest());
+
+        Files.createDirectories(outputDir.resolve("bedrock"));
+        Path mcpack = outputDir.resolve("bedrock/SMP-Bedrock-Pack.mcpack");
+        PackGenerator.zip(work, mcpack);
+        deleteRecursively(work);
+
+        JsonObject items = new JsonObject();
+        mappings.forEach(items::add);
+        JsonObject root = new JsonObject();
+        root.addProperty("format_version", "2");
+        root.add("items", items);
+        write(outputDir.resolve("geyser/smp_items.json"), root);
+
+        if (!blockMappings.isEmpty()) {
+            JsonObject blockRoot = new JsonObject();
+            blockRoot.addProperty("format_version", 1);
+            blockRoot.add("blocks", blockMappings);
+            write(outputDir.resolve("geyser/smp_blocks.json"), blockRoot);
+        }
+        return new Result(solid, flat, blockMappings.size(), true,
+                mcpack.getFileName().toString());
+    }
+
+    /**
+     * Eigene Blöcke für Bedrock.
+     *
+     * Geyser bildet sie über den Java-Blockzustand ab: Der Schlüssel ist
+     * genau der String aus der config.yml, also
+     * "minecraft:note_block[instrument=bit,note=1,powered=false]".
+     * Bedrock bekommt daraus einen echten eigenen Block - kein Notenblock mehr.
+     *
+     * Liegt ein Blockbench-Modell vor, wird auch dafür Geometrie erzeugt
+     * (Möbel), sonst ist es ein einfacher Würfel mit der Textur auf allen
+     * Seiten. Blöcke ohne Textur werden übersprungen und bleiben Notenblöcke.
+     */
+    private JsonObject blocks(Path work, Path texturesDir, Path modelsDir, JsonObject terrain)
+            throws IOException {
+        JsonObject mappings = new JsonObject();
+        for (CustomEntry entry : plugin.registry().entries().values()) {
+            if (!entry.block() || entry.state() == null || entry.state().isBlank()) {
+                continue;
+            }
+            Path texture = texturesDir.resolve("block").resolve(entry.id() + ".png");
+            if (!Files.exists(texture)) {
+                continue;
+            }
+            JsonObject model = readModel(modelsDir.resolve("block")
+                    .resolve(entry.id() + ".json"));
+            mappings.add(entry.state(),
+                    blockDefinition(work, entry.id(), model, texture, terrain));
+        }
+        return mappings;
+    }
+
+    /** Ein einzelner Bedrock-Block: Textur, Material und - wenn nötig - Geometrie. */
+    private JsonObject blockDefinition(Path work, String id, JsonObject model, Path texture,
+                                       JsonObject terrain) throws IOException {
+        Files.createDirectories(work.resolve("textures/blocks"));
+        Files.copy(texture, work.resolve("textures/blocks/" + id + ".png"),
+                StandardCopyOption.REPLACE_EXISTING);
+        JsonObject tex = new JsonObject();
+        tex.addProperty("textures", "textures/blocks/" + id);
+        terrain.add(id, tex);
+
+        // Ein voller Würfel braucht keine eigene Geometrie: den kann Bedrock
+        // selbst, das sieht besser aus (Licht) und kostet weniger Leistung.
+        boolean shaped = model != null && model.has("elements")
+                && !model.getAsJsonArray("elements").isEmpty()
+                && !fullCube(model);
+
+        JsonObject material = new JsonObject();
+        material.addProperty("texture", id);
+        // Möbel haben oft Aussparungen, ein voller Würfel nicht
+        material.addProperty("render_method", shaped ? "alpha_test" : "opaque");
+        JsonObject instances = new JsonObject();
+        instances.add("*", material);
+
+        JsonObject block = new JsonObject();
+        block.addProperty("name", id);
+        block.addProperty("included_in_creative_inventory", true);
+        block.add("material_instances", instances);
+
+        if (shaped) {
+            String identifier = namespace() + "_block_" + id;
+            int[] size = textureSize(model, texture);
+            write(work.resolve("models/blocks/" + identifier + ".geo.json"),
+                    geometry(model, identifier, size[0], size[1]));
+            block.addProperty("geometry", "geometry." + identifier);
+        }
+        return block;
     }
 
     // ------------------------------------------------------------------
@@ -292,11 +453,15 @@ public final class BedrockPack {
     }
 
     private JsonObject mapping(CustomEntry entry, boolean has3d) {
+        return mapping(entry.id(), plugin.registry().modelDataByItem()
+                .getOrDefault(entry.id(), entry.modelData()), has3d);
+    }
+
+    private JsonObject mapping(String id, int modelData, boolean has3d) {
         JsonObject item = new JsonObject();
-        item.addProperty("name", entry.id());
-        item.addProperty("custom_model_data",
-                plugin.registry().modelDataByItem().getOrDefault(entry.id(), entry.modelData()));
-        item.addProperty("icon", entry.id());
+        item.addProperty("name", id);
+        item.addProperty("custom_model_data", modelData);
+        item.addProperty("icon", id);
         item.addProperty("allow_offhand", true);
         item.addProperty("display_handheld", has3d);
         return item;
@@ -339,6 +504,22 @@ public final class BedrockPack {
                     + ex.getMessage());
             return null;
         }
+    }
+
+    /** Ein einziger Quader von 0,0,0 bis 16,16,16 - also ein ganz normaler Block. */
+    private static boolean fullCube(JsonObject model) {
+        JsonArray elements = model.getAsJsonArray("elements");
+        if (elements == null || elements.size() != 1) {
+            return false;
+        }
+        JsonObject element = elements.get(0).getAsJsonObject();
+        if (!element.has("from") || !element.has("to")) {
+            return false;
+        }
+        double[] from = triple(element.getAsJsonArray("from"));
+        double[] to = triple(element.getAsJsonArray("to"));
+        return from[0] == 0 && from[1] == 0 && from[2] == 0
+                && to[0] == 16 && to[1] == 16 && to[2] == 16;
     }
 
     /** texture_size aus dem Modell, sonst die echte Größe der PNG. */

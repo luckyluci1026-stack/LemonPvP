@@ -36,16 +36,21 @@ Geyser neu starten. Bedrock-Spieler laden das Pack beim Verbinden.
 - **Flache Items** (ohne `elements`) bekommen nur die Textur – Bedrock zeichnet
   sie wie gewohnt.
 
-## Was NICHT geht
+## Eigene Blöcke
 
-**Eigene Blöcke.** Die Möbel, Erze und Marmorblöcke sind Note-Block-Zustände.
-Geyser bildet so etwas nicht als Custom-Item ab – dafür bräuchte es Geysers
-Custom-Blocks, die eine ganz andere Definition verlangen. Bedrock-Spieler sehen
-diese Blöcke deshalb als normale Notenblöcke. Alles funktioniert (setzen,
-abbauen, Drops), nur die Textur fehlt.
+Gehen inzwischen auch – über **SMPContent**, nicht über dieses Skript. Das
+Plugin schreibt zusätzlich eine `smp_blocks.json`, die jeden
+Note-Block-Zustand auf einen echten Bedrock-Block abbildet:
 
-Die Items dagegen – Laserschwerter, Tränke, Werkzeuge, Früchte – sehen auf
-Bedrock genauso aus wie auf Java.
+```
+/smpcontent bedrock          baut alles aus dem Pack der server.properties
+```
+
+Volle Würfel (Erze, Marmor) bleiben normale Blöcke, Möbel bekommen ihre eigene
+Geometrie. Blöcke ohne Textur werden übersprungen und sehen auf Bedrock
+weiterhin wie Notenblöcke aus – sie funktionieren aber ganz normal.
+
+Dieses Python-Skript hier kann nur Items. Für Blöcke nimm das Plugin.
 
 ## Ungetestet
 

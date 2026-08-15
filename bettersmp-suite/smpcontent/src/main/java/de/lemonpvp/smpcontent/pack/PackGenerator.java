@@ -61,6 +61,18 @@ public final class PackGenerator {
         return bedrock;
     }
 
+    /**
+     * Baut nur das Bedrock-Pack, und zwar aus einem fertigen Java-Pack -
+     * dem aus der server.properties. Läuft auf einem Nebenthread, weil dabei
+     * heruntergeladen und entpackt wird.
+     */
+    public BedrockPack.Result buildBedrockFrom(Path javaPack) {
+        BedrockPack.Result result = new BedrockPack(plugin)
+                .buildFromJavaPack(javaPack, outputDir());
+        bedrock = result;
+        return result;
+    }
+
     private String namespace() {
         return plugin.getConfig().getString("texturepack.namespace", "smp");
     }

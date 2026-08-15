@@ -8,7 +8,7 @@ description: Eigene Blöcke und Items passend zum SMP-Texturepack.
 commands:
   smpcontent:
     description: Verwaltung der eigenen Blöcke und Items
-    usage: "/smpcontent <give|list|pack|reload>"
+    usage: "/smpcontent <give|list|pack|bedrock|reload>"
     aliases: [content, smpc]
     permission: smpcontent.admin
 

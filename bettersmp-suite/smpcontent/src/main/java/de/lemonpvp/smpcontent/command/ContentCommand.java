@@ -2,6 +2,8 @@ package de.lemonpvp.smpcontent.command;
 
 import de.lemonpvp.smpcontent.SMPContent;
 import de.lemonpvp.smpcontent.content.CustomEntry;
+import de.lemonpvp.smpcontent.pack.BedrockPack;
+import de.lemonpvp.smpcontent.pack.PackSource;
 import de.lemonpvp.smpcontent.util.ConfigProblem;
 import de.lemonpvp.smpcontent.util.Text;
 import org.bukkit.Bukkit;
@@ -93,15 +95,67 @@ public final class ContentCommand implements TabExecutor {
                     if (bedrock != null && bedrock.ok()) {
                         plugin.msgs().send(sender, "pack-bedrock",
                                 "solid", String.valueOf(bedrock.solid()),
-                                "flat", String.valueOf(bedrock.flat()));
+                                "flat", String.valueOf(bedrock.flat()),
+                                "blocks", String.valueOf(bedrock.blocks()));
                     } else if (bedrock != null) {
                         plugin.msgs().send(sender, "pack-failed", "error", bedrock.message());
                     }
                 }
             }
+            case "bedrock" -> bedrock(sender, args);
             default -> plugin.msgs().send(sender, "usage");
         }
         return true;
+    }
+
+    /**
+     * /smpcontent bedrock [URL|Datei]
+     *
+     * Baut das Bedrock-Pack aus dem Java-Pack, das in der server.properties
+     * steht - ohne vorher /smpcontent pack zu brauchen. Das Herunterladen und
+     * Entpacken läuft auf einem Nebenthread, sonst würde der Server stocken.
+     */
+    private void bedrock(CommandSender sender, String[] args) {
+        String given = args.length > 1
+                ? String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length))
+                : "";
+        plugin.msgs().send(sender, "bedrock-building");
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            PackSource.Found found = null;
+            String error = null;
+            BedrockPack.Result result = null;
+            try {
+                found = PackSource.locate(plugin, given);
+                result = plugin.pack().buildBedrockFrom(found.zip());
+            } catch (Exception ex) {
+                error = String.valueOf(ex.getMessage());
+            } finally {
+                if (found != null && found.temporary()) {
+                    try {
+                        java.nio.file.Files.deleteIfExists(found.zip());
+                    } catch (java.io.IOException ignored) {
+                        // Die Datei bleibt eben liegen, das ist kein Beinbruch
+                    }
+                }
+            }
+            final PackSource.Found source = found;
+            final BedrockPack.Result done = result;
+            final String failure = error;
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (failure != null) {
+                    plugin.msgs().send(sender, "bedrock-missing", "error", failure);
+                } else if (done == null || !done.ok()) {
+                    plugin.msgs().send(sender, "pack-failed",
+                            "error", done == null ? "unbekannt" : done.message());
+                } else {
+                    plugin.msgs().send(sender, "bedrock-done",
+                            "origin", source == null ? "?" : source.origin(),
+                            "solid", String.valueOf(done.solid()),
+                            "flat", String.valueOf(done.flat()),
+                            "blocks", String.valueOf(done.blocks()));
+                }
+            });
+        });
     }
 
     private void give(CommandSender sender, String[] args) {
@@ -144,7 +198,7 @@ public final class ContentCommand implements TabExecutor {
                                       @NotNull String alias, @NotNull String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            for (String s : List.of("give", "list", "pack", "reload")) {
+            for (String s : List.of("give", "list", "pack", "bedrock", "reload")) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) {
                     out.add(s);
                 }
