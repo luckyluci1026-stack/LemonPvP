@@ -654,8 +654,12 @@ public final class ContentRegistry {
                         create(entry, sec.getInt("amount", 1)));
                 recipe.shape(shape.toArray(new String[0]));
 
+                // Nur Zeichen, die in der Form auch vorkommen. Ein Buchstabe
+                // zu viel unter "keys" - etwa weil du die Form gekürzt hast -
+                // ließ sonst das ganze Rezept verschwinden.
+                String flat = String.join("", shape);
                 for (String k : keys.getKeys(false)) {
-                    if (k.length() != 1) {
+                    if (k.length() != 1 || flat.indexOf(k.charAt(0)) < 0) {
                         continue;
                     }
                     char c = k.charAt(0);

@@ -69,7 +69,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "PPP"]
-      keys: {P: OAK_PLANKS, S: STICK}
+      keys: {P: OAK_PLANKS}
       amount: 1
 
   eiche_kommode:
@@ -97,7 +97,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "P P"]
-      keys: {P: OAK_PLANKS, S: STICK}
+      keys: {P: OAK_PLANKS}
       amount: 1
 
   eiche_truhe:
@@ -188,7 +188,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "PPP"]
-      keys: {P: SPRUCE_PLANKS, S: STICK}
+      keys: {P: SPRUCE_PLANKS}
       amount: 1
 
   fichte_kommode:
@@ -216,7 +216,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "P P"]
-      keys: {P: SPRUCE_PLANKS, S: STICK}
+      keys: {P: SPRUCE_PLANKS}
       amount: 1
 
   fichte_truhe:
@@ -307,7 +307,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "PPP"]
-      keys: {P: BIRCH_PLANKS, S: STICK}
+      keys: {P: BIRCH_PLANKS}
       amount: 1
 
   birke_kommode:
@@ -335,7 +335,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "P P"]
-      keys: {P: BIRCH_PLANKS, S: STICK}
+      keys: {P: BIRCH_PLANKS}
       amount: 1
 
   birke_truhe:
@@ -426,7 +426,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "PPP"]
-      keys: {P: ACACIA_PLANKS, S: STICK}
+      keys: {P: ACACIA_PLANKS}
       amount: 1
 
   akazie_kommode:
@@ -454,7 +454,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "P P"]
-      keys: {P: ACACIA_PLANKS, S: STICK}
+      keys: {P: ACACIA_PLANKS}
       amount: 1
 
   akazie_truhe:
@@ -545,7 +545,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "PPP"]
-      keys: {P: DARK_OAK_PLANKS, S: STICK}
+      keys: {P: DARK_OAK_PLANKS}
       amount: 1
 
   dunkeleiche_kommode:
@@ -573,7 +573,7 @@ blocks:
     break-sound: block.wood.break
     recipe:
       shape: ["PPP", "P P", "P P"]
-      keys: {P: DARK_OAK_PLANKS, S: STICK}
+      keys: {P: DARK_OAK_PLANKS}
       amount: 1
 
   dunkeleiche_truhe:
