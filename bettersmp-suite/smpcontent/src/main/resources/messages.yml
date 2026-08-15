@@ -10,6 +10,7 @@ usage: "%prefix%<gray>/smpcontent <white>give <Spieler> <Id> [Menge]</white> | <
 pack-building: "%prefix%<gray>Baue das Resourcepack ...</gray>"
 pack-done: "%prefix%<green>Pack gebaut: <white>%items%</white> Items, <white>%blocks%</white> Blöcke, <white>%models%</white> eigene Blockbench-Modelle.</green><newline><gray>Liegt in <white>plugins/SMPContent/output/</white></gray>"
 pack-missing: "%prefix%<gold>%count% Textur(en) fehlen noch:</gold><newline><gray>%details%</gray>"
+pack-bedrock: "%prefix%<aqua>Bedrock-Pack gebaut: <white>%solid%</white> mit 3D-Modell, <white>%flat%</white> flach.</aqua><newline><gray>Pack nach <white>Geyser/packs/</white>, Zuordnung nach <white>Geyser/custom_mappings/</white></gray>"
 pack-failed: "%prefix%<red>Pack-Bau fehlgeschlagen: <white>%error%</white></red>"
 give-usage: "%prefix%<gray>Nutzung: <white>/smpcontent give <Spieler> <Id> [Menge]</white></gray>"
 unknown-content: "%prefix%<red>Unbekannt: <white>%id%</white></red><newline><gray>Verfügbar: <white>%list%</white></gray>"

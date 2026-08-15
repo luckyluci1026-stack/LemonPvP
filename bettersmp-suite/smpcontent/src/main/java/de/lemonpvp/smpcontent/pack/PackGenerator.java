@@ -54,6 +54,13 @@ public final class PackGenerator {
                          int missing, String message) {
     }
 
+    /** Ergebnis des Bedrock-Teils, damit der Befehl es mitmelden kann. */
+    private BedrockPack.Result bedrock;
+
+    public BedrockPack.Result bedrockResult() {
+        return bedrock;
+    }
+
     private String namespace() {
         return plugin.getConfig().getString("texturepack.namespace", "smp");
     }
@@ -144,7 +151,7 @@ public final class PackGenerator {
         Set<String> textured = new HashSet<>();
 
         try {
-            deleteRecursively(work);
+            deleteTree(work);
             Path assets = work.resolve("assets");
             Path nsRoot = assets.resolve(ns);
             Files.createDirectories(nsRoot.resolve("textures/item"));
@@ -219,9 +226,11 @@ public final class PackGenerator {
 
             Files.createDirectories(outputDir());
             Path zip = outputDir().resolve(packName + ".zip");
-            zipDirectory(work, zip);
-            deleteRecursively(work);
-            writeGeyserMapping();
+            zip(work, zip);
+            deleteTree(work);
+            // Bedrock gleich mit: dasselbe Material, andere Verpackung.
+            // Schreibt output/bedrock/*.mcpack und output/geyser/smp_items.json
+            bedrock = new BedrockPack(plugin).build(outputDir(), texturesDir(), modelsDir());
 
             String message = missing.isEmpty()
                     ? "Pack gebaut: " + zip.getFileName()
@@ -236,39 +245,6 @@ public final class PackGenerator {
         }
     }
 
-    /**
-     * Schreibt die Geyser-Zuordnung mit, damit Bedrock-Spieler die eigenen
-     * Items sehen. Kommt nach output/geyser/ und gehört in
-     * Geyser/custom_mappings/.
-     *
-     * Für die 3D-Modelle braucht es zusätzlich das Bedrock-Pack aus
-     * texturepack/java2bedrock.py - das steht in BEDROCK.md.
-     */
-    private void writeGeyserMapping() throws IOException {
-        Map<String, List<String>> byMaterial = new LinkedHashMap<>();
-        for (Map.Entry<String, Integer> item : plugin.registry().modelDataByItem().entrySet()) {
-            CustomEntry entry = plugin.registry().get(item.getKey());
-            if (entry == null) {
-                continue;
-            }
-            String material = "minecraft:" + entry.material().getKey().getKey();
-            byMaterial.computeIfAbsent(material, key -> new ArrayList<>()).add("""
-                        {
-                          "name": "%s",
-                          "custom_model_data": %d,
-                          "icon": "%s",
-                          "allow_offhand": true,
-                          "display_handheld": true
-                        }""".formatted(entry.id(), item.getValue(), entry.id()));
-        }
-        List<String> blocks = new ArrayList<>();
-        byMaterial.forEach((material, items) -> blocks.add(
-                "    \"" + material + "\": [\n" + String.join(",\n", items) + "\n    ]"));
-
-        write(outputDir().resolve("geyser/smp_items.json"),
-                "{\n  \"format_version\": \"2\",\n  \"items\": {\n"
-                        + String.join(",\n", blocks) + "\n  }\n}\n");
-    }
 
     private void writePackMeta(Path work) throws IOException {
         int format = plugin.getConfig().getInt("texturepack.pack-format", 75);
@@ -392,7 +368,7 @@ public final class PackGenerator {
         }
     }
 
-    private void zipDirectory(Path folder, Path target) throws IOException {
+    static void zip(Path folder, Path target) throws IOException {
         Files.deleteIfExists(target);
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(target));
              Stream<Path> walk = Files.walk(folder)) {
@@ -407,7 +383,7 @@ public final class PackGenerator {
         }
     }
 
-    private void deleteRecursively(Path path) throws IOException {
+    static void deleteTree(Path path) throws IOException {
         if (!Files.exists(path)) {
             return;
         }

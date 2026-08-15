@@ -89,6 +89,14 @@ public final class ContentCommand implements TabExecutor {
                                 "count", String.valueOf(result.missing()),
                                 "details", result.message());
                     }
+                    var bedrock = plugin.pack().bedrockResult();
+                    if (bedrock != null && bedrock.ok()) {
+                        plugin.msgs().send(sender, "pack-bedrock",
+                                "solid", String.valueOf(bedrock.solid()),
+                                "flat", String.valueOf(bedrock.flat()));
+                    } else if (bedrock != null) {
+                        plugin.msgs().send(sender, "pack-failed", "error", bedrock.message());
+                    }
                 }
             }
             default -> plugin.msgs().send(sender, "usage");

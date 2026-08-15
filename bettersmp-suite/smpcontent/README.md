@@ -79,6 +79,29 @@ Zusätzliche PNGs in den Textur-Ordnern werden mitkopiert, falls dein Modell
 mehrere Texturen nutzt. Anleitungen liegen als `LIESMICH.txt` und
 `BLOCKBENCH.txt` in den Ordnern.
 
+## Bedrock-Spieler
+
+`/smpcontent pack` baut **beides** in einem Rutsch:
+
+```
+plugins/SMPContent/output/
+├── SMPPack.zip                        Java-Pack
+├── bedrock/SMP-Bedrock-Pack.mcpack    Bedrock-Pack  →  Geyser/packs/
+└── geyser/smp_items.json              Zuordnung     →  Geyser/custom_mappings/
+```
+
+Dazu in der `Geyser/config.yml`: `add-non-bedrock-items: true`, Geyser neu
+starten. Bedrock-Spieler laden das Pack beim Verbinden.
+
+Blockbench-Modelle werden dabei in Bedrock-Geometrie umgerechnet – Bedrock
+spiegelt die X-Achse und legt den Nullpunkt in die Mitte, die UV-Koordinaten
+werden auf die echte Texturgröße skaliert und die `display`-Werte werden zu
+Bedrock-Animationen, damit das Item in der Hand richtig sitzt.
+
+**Eigene Blöcke gehen nicht.** Note-Block-Zustände lassen sich nicht als
+Geyser-Custom-Item abbilden. Möbel, Erze und Marmor sehen auf Bedrock aus wie
+normale Notenblöcke – funktionieren aber ganz normal (setzen, abbauen, Drops).
+
 ## Eigenes Item anlegen
 
 In der `config.yml` unter `items:`. **Die Einrückung ist das Wichtigste:** der
