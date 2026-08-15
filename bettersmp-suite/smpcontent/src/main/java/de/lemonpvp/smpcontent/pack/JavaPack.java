@@ -38,7 +38,13 @@ import java.util.zip.ZipInputStream;
  */
 public final class JavaPack {
 
-    /** Ein Item aus dem Pack: Basis-Material, CustomModelData, Modell, Textur. */
+    /**
+     * Ein Item aus dem Pack.
+     *
+     * @param material Grundmaterial, oder <b>null</b> bei Items, die über
+     *                 "item_model" laufen - dort steht es nicht im Pack und
+     *                 wird aus der config.yml nachgeschlagen.
+     */
     public record Item(String id, String material, int modelData,
                        JsonObject model, Path texture) {
     }
@@ -103,6 +109,42 @@ public final class JavaPack {
             collectRangeDispatch(definition, found);
             found.forEach((data, ref) -> add(out, used, seen, material, data, ref));
         });
+
+        // Der moderne Weg ab 1.21.4: das Item zeigt über die Komponente
+        // "item_model" auf assets/<namespace>/items/<id>.json. Da steht dann
+        // kein custom_model_data mehr drin - welches Grundmaterial dahinter
+        // steckt, weiß nur das Plugin. Darum bleibt material hier null und
+        // wird später aus der config.yml nachgeschlagen.
+        Path assets = root.resolve("assets");
+        if (Files.isDirectory(assets)) {
+            try (var namespaces = Files.list(assets)) {
+                for (Path namespace : namespaces.filter(Files::isDirectory).sorted().toList()) {
+                    if (namespace.getFileName().toString().equals("minecraft")) {
+                        continue;
+                    }
+                    forEachJson(namespace.resolve("items"), path -> {
+                        String name = stripJson(path.getFileName().toString());
+                        JsonObject definition = readJson(path);
+                        if (definition == null || !seen.add("model#" + name)) {
+                            return;
+                        }
+                        String ref = firstModelRef(definition, 0);
+                        if (ref == null) {
+                            return;
+                        }
+                        JsonObject model = model(ref);
+                        Path texture = model == null ? null : texture(model);
+                        if (texture == null) {
+                            notes.add("Textur fehlt: " + ref);
+                            return;
+                        }
+                        out.add(new Item(name(ref), null, 0, model, texture));
+                    });
+                }
+            } catch (IOException ignored) {
+                // Kein assets/ lesbar - dann gibt es hier eben nichts
+            }
+        }
 
         // Altes Format: overrides in assets/minecraft/models/item/<material>.json
         forEachJson(root.resolve("assets/minecraft/models/item"), path -> {

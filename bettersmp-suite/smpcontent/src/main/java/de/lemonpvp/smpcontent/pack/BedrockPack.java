@@ -131,6 +131,22 @@ public final class BedrockPack {
             Map<String, JsonArray> mappings = new LinkedHashMap<>();
 
             for (JavaPack.Item item : pack.items()) {
+                // Items über "item_model" verraten ihr Grundmaterial nicht -
+                // das steht in der config.yml, zusammen mit der
+                // CustomModelData, an der Geyser sie erkennt.
+                String material = item.material();
+                int modelData = item.modelData();
+                if (material == null) {
+                    CustomEntry entry = plugin.registry().get(item.id());
+                    if (entry == null) {
+                        plugin.getLogger().info("Bedrock: " + item.id()
+                                + " steht nicht in der config.yml - übersprungen");
+                        continue;
+                    }
+                    material = entry.material().getKey().getKey();
+                    modelData = plugin.registry().modelDataByItem()
+                            .getOrDefault(entry.id(), entry.modelData());
+                }
                 Files.copy(item.texture(), work.resolve("textures/items/" + item.id() + ".png"),
                         StandardCopyOption.REPLACE_EXISTING);
                 JsonObject tex = new JsonObject();
@@ -145,8 +161,8 @@ public final class BedrockPack {
                 } else {
                     flat++;
                 }
-                mappings.computeIfAbsent("minecraft:" + item.material(),
-                        key -> new JsonArray()).add(mapping(item.id(), item.modelData(), has3d));
+                mappings.computeIfAbsent("minecraft:" + material,
+                        key -> new JsonArray()).add(mapping(item.id(), modelData, has3d));
             }
 
             JsonObject terrain = new JsonObject();

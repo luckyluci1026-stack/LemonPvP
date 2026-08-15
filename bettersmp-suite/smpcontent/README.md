@@ -94,6 +94,21 @@ Gesucht wird der Reihe nach: dein Argument (`/smpcontent bedrock <URL|Datei>`),
 `resource-pack` aus der `server.properties`, eine ZIP in
 `plugins/SMPContent/pack/`, zuletzt das selbst gebaute `output/SMPPack.zip`.
 
+Gelesen werden **alle drei** Bauweisen, die es für Packs gibt:
+
+| im Pack | seit |
+|---|---|
+| `assets/smp/items/<id>.json` (`item_model`) | 1.21.4 – so baut dieses Plugin |
+| `assets/minecraft/items/<material>.json` (`custom_model_data`) | 1.21.4 |
+| `overrides` in `assets/minecraft/models/item/<material>.json` | das alte Format |
+
+Bei `item_model` steht das Grundmaterial nicht im Pack – das holt sich das
+Plugin aus deiner `config.yml`, zusammen mit der CustomModelData, an der
+Geyser das Item erkennt. Elternmodelle werden mitgelesen.
+
+Dein eigenes Pack (`SMPJavaPack1.21.11verbessert.zip`) ergibt damit
+**37 Items mit 3D-Modell, 46 flache und 24 eigene Blöcke**.
+
 **`/smpcontent pack`** – baut das Java-Pack aus deinen Ordnern und hängt das
 Bedrock-Pack gleich mit dran.
 
