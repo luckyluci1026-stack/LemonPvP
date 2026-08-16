@@ -184,6 +184,20 @@ spiegelt die X-Achse und legt den Nullpunkt in die Mitte, die UV-Koordinaten
 werden auf die echte Texturgröße skaliert und die `display`-Werte werden zu
 Bedrock-Animationen, damit das Item in der Hand richtig sitzt.
 
+### Was Bedrock-Spieler von einem eigenen Block sehen
+
+Die Feldnamen sind **gegen Geysers eigenen Leser geprüft**
+(`BlockMappingsReader_v1` aus der Geyser-Jar), nicht geraten:
+
+| Feld | wofür |
+|---|---|
+| `display_name` | der Name aus deiner `config.yml` statt der nackten Id |
+| `destructible_by_mining` | Abbauzeit – **ohne das ist der Block unzerstörbar** |
+| `material_instances` | Textur und Zeichenart (voller Würfel `opaque`, Möbel `alpha_test`) |
+| `geometry` | die umgerechnete Blockbench-Form |
+| `selection_box` / `collision_box` | folgen der echten Form – man steht vor dem Sofa, nicht darin |
+| `light_emission` | leuchtende Möbel |
+
 **Eigene Blöcke gehen auch.** Jeder Note-Block-Zustand wird auf einen echten
 Bedrock-Block abgebildet – Erze, Marmor und Möbel sehen dort aus wie auf Java.
 Ein voller Würfel bleibt ein normaler Block (schöneres Licht, weniger Last),

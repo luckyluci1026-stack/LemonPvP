@@ -261,7 +261,14 @@ public final class BedrockPack {
         return mappings;
     }
 
-    /** Ein einzelner Bedrock-Block: Textur, Material und - wenn nötig - Geometrie. */
+    /**
+     * Ein einzelner Bedrock-Block: Textur, Material und - wenn nötig - Geometrie.
+     *
+     * Die Feldnamen sind gegen Geysers eigenen Leser geprüft
+     * (BlockMappingsReader_v1): name, display_name, material_instances,
+     * geometry, included_in_creative_inventory, destructible_by_mining,
+     * light_emission, selection_box und collision_box nimmt er alle an.
+     */
     private JsonObject blockDefinition(Path work, String id, JsonObject model, Path texture,
                                        JsonObject terrain) throws IOException {
         Files.createDirectories(work.resolve("textures/blocks"));
@@ -289,14 +296,62 @@ public final class BedrockPack {
         block.addProperty("included_in_creative_inventory", true);
         block.add("material_instances", instances);
 
+        CustomEntry entry = plugin.registry().get(id);
+        if (entry != null) {
+            // Im Kreativmenü stand bisher die nackte Id - jetzt der Name aus
+            // der config.yml, ohne die MiniMessage-Klammern.
+            String name = de.lemonpvp.smpcontent.util.Text.plain(entry.name());
+            if (name != null && !name.isBlank()) {
+                block.addProperty("display_name", name);
+            }
+            // Abbauzeit: ohne diese Angabe ist ein eigener Block auf Bedrock
+            // unzerstoerbar und der Spieler haut ewig darauf ein.
+            block.addProperty("destructible_by_mining", entry.isFurniture() ? 0.6 : 1.5);
+            if (entry.isFurniture() && entry.furniture().light() > 0) {
+                block.addProperty("light_emission",
+                        Math.max(0, Math.min(15, entry.furniture().light())));
+            }
+        }
+
         if (shaped) {
             String identifier = namespace() + "_block_" + id;
             int[] size = textureSize(model, texture);
             write(work.resolve("models/blocks/" + identifier + ".geo.json"),
                     geometry(model, identifier, size[0], size[1]));
             block.addProperty("geometry", "geometry." + identifier);
+            // Ein Stuhl ist kein voller Wuerfel: Auswahl und Kollision
+            // sollen der Form folgen, sonst steht man im Sofa statt davor.
+            block.add("selection_box", kasten(model));
+            block.add("collision_box", kasten(model));
         }
         return block;
+    }
+
+    /**
+     * Der umschliessende Kasten eines Modells, in Bedrock-Koordinaten.
+     *
+     * Bedrock zaehlt vom Mittelpunkt aus und braucht Ursprung plus Groesse -
+     * dieselbe Umrechnung wie bei der Geometrie, nur gröber.
+     */
+    private JsonObject kasten(JsonObject model) {
+        double[] min = {16, 16, 16};
+        double[] max = {0, 0, 0};
+        for (var element : model.getAsJsonArray("elements")) {
+            double[] von = triple(element.getAsJsonObject().getAsJsonArray("from"));
+            double[] bis = triple(element.getAsJsonObject().getAsJsonArray("to"));
+            for (int i = 0; i < 3; i++) {
+                min[i] = Math.min(min[i], Math.min(von[i], bis[i]));
+                max[i] = Math.max(max[i], Math.max(von[i], bis[i]));
+            }
+        }
+        JsonObject kasten = new JsonObject();
+        kasten.addProperty("origin_x", -max[0] + 8);
+        kasten.addProperty("origin_y", min[1]);
+        kasten.addProperty("origin_z", min[2] - 8);
+        kasten.addProperty("size_x", Math.max(0.1, max[0] - min[0]));
+        kasten.addProperty("size_y", Math.max(0.1, max[1] - min[1]));
+        kasten.addProperty("size_z", Math.max(0.1, max[2] - min[2]));
+        return kasten;
     }
 
     // ------------------------------------------------------------------
