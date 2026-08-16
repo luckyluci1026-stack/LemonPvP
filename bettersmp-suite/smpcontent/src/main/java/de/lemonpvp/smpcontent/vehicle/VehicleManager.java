@@ -57,6 +57,8 @@ public final class VehicleManager {
     private final NamespacedKey partKey;
     /** Zu welchem Fahrzeug ein Teil gehört - sonst greift man beim Nachbarn zu. */
     private final NamespacedKey ownerKey;
+    /** Wer das Fahrzeug hingestellt hat - nur der packt es wieder ein. */
+    private final NamespacedKey besitzerKey;
     private final Map<String, VehicleType> types = new LinkedHashMap<>();
     private final Map<UUID, Ride> active = new LinkedHashMap<>();
     private ConfigProblem.Report problem;
@@ -66,6 +68,7 @@ public final class VehicleManager {
         this.typeKey = new NamespacedKey(plugin, "vehicle");
         this.partKey = new NamespacedKey(plugin, "vehicle_part");
         this.ownerKey = new NamespacedKey(plugin, "vehicle_owner");
+        this.besitzerKey = new NamespacedKey(plugin, "vehicle_placed_by");
     }
 
     /** Ein Fahrzeug, das gerade in der Welt steht. */
@@ -180,6 +183,10 @@ public final class VehicleManager {
     // ------------------------------------------------------------------
 
     public void spawn(VehicleType type, Location where, float yaw) {
+        spawn(type, where, yaw, null);
+    }
+
+    public void spawn(VehicleType type, Location where, float yaw, Player besitzer) {
         World world = where.getWorld();
         Location at = where.clone();
         at.setYaw(yaw);
@@ -196,6 +203,10 @@ public final class VehicleManager {
             stand.setCustomNameVisible(false);
             stand.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, type.id());
             stand.getPersistentDataContainer().set(partKey, PersistentDataType.STRING, "base");
+            if (besitzer != null) {
+                stand.getPersistentDataContainer().set(besitzerKey,
+                        PersistentDataType.STRING, besitzer.getUniqueId().toString());
+            }
         });
 
         String owner = base.getUniqueId().toString();
@@ -354,6 +365,15 @@ public final class VehicleManager {
         ArmorStand base = baseNear(clicked);
         if (base == null || !base.getPassengers().isEmpty()) {
             return false;
+        }
+        // Nur wer es hingestellt hat, nimmt es wieder mit. Sonst waere jedes
+        // geparkte Auto Freiwild - ein Schleichklick, und es ist weg.
+        String besitzer = base.getPersistentDataContainer()
+                .get(besitzerKey, PersistentDataType.STRING);
+        if (besitzer != null && !besitzer.equals(player.getUniqueId().toString())
+                && !player.hasPermission("smpcontent.admin")) {
+            plugin.msgs().send(player, "vehicle-not-yours");
+            return true;
         }
         Ride ride = active.get(base.getUniqueId());
         if (ride == null) {

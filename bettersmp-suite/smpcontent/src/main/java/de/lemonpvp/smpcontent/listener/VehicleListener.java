@@ -51,7 +51,8 @@ public final class VehicleListener implements Listener {
         Block block = event.getClickedBlock();
         Location where = block.getRelative(event.getBlockFace())
                 .getLocation().add(0.5, 0, 0.5);
-        plugin.vehicles().spawn(type, where, event.getPlayer().getLocation().getYaw());
+        plugin.vehicles().spawn(type, where,
+                event.getPlayer().getLocation().getYaw(), event.getPlayer());
         if (event.getPlayer().getGameMode() != GameMode.CREATIVE && item != null) {
             item.setAmount(item.getAmount() - 1);
         }

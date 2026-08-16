@@ -77,6 +77,10 @@ public final class ContentCommand implements TabExecutor {
             }
             case "give" -> give(sender, args);
             case "pack" -> {
+                if (plugin.pack().busy()) {
+                    plugin.msgs().send(sender, "pack-busy");
+                    return true;
+                }
                 plugin.msgs().send(sender, "pack-building");
                 var result = plugin.pack().build();
                 if (!result.ok()) {
@@ -119,6 +123,10 @@ public final class ContentCommand implements TabExecutor {
         String given = args.length > 1
                 ? String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length))
                 : "";
+        if (plugin.pack().busy()) {
+            plugin.msgs().send(sender, "pack-busy");
+            return;
+        }
         plugin.msgs().send(sender, "bedrock-building");
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             PackSource.Found found = null;

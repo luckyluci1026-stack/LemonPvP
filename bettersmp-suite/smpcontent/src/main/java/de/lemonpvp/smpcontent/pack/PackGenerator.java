@@ -57,6 +57,22 @@ public final class PackGenerator {
     /** Ergebnis des Bedrock-Teils, damit der Befehl es mitmelden kann. */
     private BedrockPack.Result bedrock;
 
+    /**
+     * Es baut immer nur einer.
+     *
+     * /smpcontent pack läuft im Servertakt, /smpcontent bedrock auf einem
+     * Nebenthread - und beide arbeiten im selben Ordner build-bedrock.
+     * Gleichzeitig gestartet würden sie sich gegenseitig die Dateien unter
+     * den Füßen wegräumen.
+     */
+    private final java.util.concurrent.atomic.AtomicBoolean baut =
+            new java.util.concurrent.atomic.AtomicBoolean();
+
+    /** Läuft gerade ein Pack-Bau? */
+    public boolean busy() {
+        return baut.get();
+    }
+
     public BedrockPack.Result bedrockResult() {
         return bedrock;
     }
@@ -67,10 +83,17 @@ public final class PackGenerator {
      * heruntergeladen und entpackt wird.
      */
     public BedrockPack.Result buildBedrockFrom(Path javaPack) {
-        BedrockPack.Result result = new BedrockPack(plugin)
-                .buildFromJavaPack(javaPack, outputDir());
-        bedrock = result;
-        return result;
+        if (!baut.compareAndSet(false, true)) {
+            return new BedrockPack.Result(0, 0, 0, false, "läuft schon");
+        }
+        try {
+            BedrockPack.Result result = new BedrockPack(plugin)
+                    .buildFromJavaPack(javaPack, outputDir());
+            bedrock = result;
+            return result;
+        } finally {
+            baut.set(false);
+        }
     }
 
     private String namespace() {
@@ -151,6 +174,17 @@ public final class PackGenerator {
     // ---------------- Pack bauen ----------------
 
     public Result build() {
+        if (!baut.compareAndSet(false, true)) {
+            return new Result(false, 0, 0, 0, 0, "läuft schon");
+        }
+        try {
+            return bauen();
+        } finally {
+            baut.set(false);
+        }
+    }
+
+    private Result bauen() {
         String ns = namespace();
         String packName = plugin.getConfig().getString("texturepack.pack-name", "SMPPack");
         Path work = plugin.getDataFolder().toPath().resolve("build");

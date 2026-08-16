@@ -25,5 +25,7 @@ vehicle-placed: "%prefix%<green>%name% steht bereit.</green> <gray>Rechtsklick z
 vehicle-empty: "%prefix%<gold>Der Tank ist leer.</gold>"
 vehicle-eject: "%prefix%<aqua>Schleudersitz!</aqua> <gray>Der Schirm geht gleich auf.</gray>"
 vehicle-crash: "%prefix%<red>Aufprall!</red>"
+vehicle-not-yours: "%prefix%<gold>Das Fahrzeug gehört jemand anderem.</gold>"
+pack-busy: "%prefix%<gold>Es wird gerade schon ein Pack gebaut - einen Moment.</gold>"
 
 gui-title: "<gradient:#A78BFA:#6D28D9><bold>Eigene Inhalte</bold></gradient>"
