@@ -371,7 +371,9 @@ public final class VehicleManager {
         if (ride.body != null && ride.body.isValid()) {
             Location at = ride.base.getLocation();
             at.setYaw(ride.yaw);
-            at.setPitch(0);
+            // Fliegendes nickt mit, Fahrendes bleibt waagerecht
+            at.setPitch(ride.type.kind() == VehicleType.Kind.JET && driver != null
+                    ? Math.max(-70, Math.min(70, driver.getLocation().getPitch())) : 0);
             ride.body.teleport(at);
         }
         // Alle halbe Sekunde reicht - zwanzigmal wäre Lärm und Last
@@ -449,23 +451,44 @@ public final class VehicleManager {
         return new Vector(forward.getX(), y, forward.getZ());
     }
 
-    /** Jet: fliegt in Blickrichtung, Leertaste hoch, Schleichen runter. */
+    /**
+     * Fliegen.
+     *
+     * Gesteuert wird mit dem Kopf: Wohin du schaust, da geht die Nase hin -
+     * nach oben ziehen steigt, nach unten drücken geht in den Sturzflug. Wie
+     * stark, hängt vom Schub ab; im Stand nickt gar nichts. Leertaste und
+     * Schleichen heben und senken zusätzlich gerade, das braucht man zum
+     * Landen und beim Schweben.
+     *
+     * Ohne Schub sackt ein Flugzeug langsam durch. Ein Hubschrauber
+     * ({@code hover: true}) bleibt stattdessen in der Luft stehen - das ist
+     * der ganze Unterschied zwischen den beiden.
+     */
     private Vector fly(Ride ride, Player driver) {
         Vector forward = direction(ride.yaw).multiply(ride.speed);
         double y = 0;
         if (driver != null) {
             Input input = driver.getCurrentInput();
+
+            // Nase folgt dem Blick. In Minecraft ist oben ein negativer
+            // Nickwinkel, darum das Minus.
+            double pitch = Math.max(-70, Math.min(70, driver.getLocation().getPitch()));
+            y = -Math.sin(Math.toRadians(pitch)) * ride.speed;
+            // Was nach oben geht, fehlt vorne - sonst klettert man mit
+            // voller Reisegeschwindigkeit senkrecht
+            double rest = Math.max(0.2, Math.cos(Math.toRadians(pitch)));
+            forward.multiply(rest);
+
             if (input.isJump()) {
-                y = ride.type.speed() * 0.6;
+                y += ride.type.speed() * 0.5;
             } else if (input.isSneak()) {
-                y = -ride.type.speed() * 0.6;
+                y -= ride.type.speed() * 0.5;
             }
-            // Ohne Schub sinkt der Jet langsam
-            if (ride.speed == 0 && y == 0) {
-                y = -0.08;
+            if (ride.speed == 0 && !input.isJump() && !input.isSneak()) {
+                y = ride.type.hover() ? 0 : -0.08;
             }
         } else {
-            y = -0.15;
+            y = ride.type.hover() ? 0 : -0.15;
         }
         return new Vector(forward.getX(), y, forward.getZ());
     }

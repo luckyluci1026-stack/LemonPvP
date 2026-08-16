@@ -162,11 +162,23 @@ vehicles:
     fuel: ""
     range: 600
 
+  # ------------------------------------------------------------------
+  #  Flugzeuge und Jets
+  #
+  #  Gesteuert wird mit dem Kopf: Wohin du schaust, da geht die Nase hin.
+  #  Nach oben ziehen steigt, nach unten druecken ist Sturzflug - wie
+  #  stark, haengt vom Schub ab. Leertaste und Schleichen heben und
+  #  senken zusaetzlich gerade, das brauchst du zum Landen.
+  #
+  #    hover: false   sackt ohne Schub langsam durch  (Flugzeug)
+  #    hover: true    bleibt ohne Schub stehen        (Hubschrauber)
+  # ------------------------------------------------------------------
+
   rennjet:
     art: jet
     item: jet_renn
     model: jet_renn
-    speed: 1.4
+    speed: 1.40            # der Allrounder am Himmel
     power: 0.06
     turn: 3.0
     seats: 1
@@ -176,6 +188,113 @@ vehicles:
     sound: entity.phantom.flap
     fuel: ""
     range: 900
+
+  kampfjet:
+    art: jet
+    item: jet_kampf
+    model: jet_kampf
+    speed: 2.20            # schnellstes Stueck im Stall
+    power: 0.14
+    turn: 4.5
+    seats: 1
+    scale: 1.3
+    width: 2.6
+    height: 1.3
+    sound: entity.blaze.ambient
+    fuel: ""
+    range: 500
+
+  passagierjet:
+    art: jet
+    item: jet_passagier
+    model: jet_passagier
+    speed: 1.60            # gross und traege, nimmt sechs mit
+    power: 0.04
+    turn: 1.2
+    seats: 6
+    scale: 2.0
+    width: 4.5
+    height: 2.5
+    sound: entity.phantom.flap
+    fuel: ""
+    range: 2000
+
+  propellermaschine:
+    art: jet
+    item: flugzeug_propeller
+    model: flugzeug_propeller
+    speed: 0.90            # langsam und gutmuetig, gut zum Ueben
+    power: 0.05
+    turn: 3.5
+    seats: 2
+    scale: 1.2
+    width: 2.6
+    height: 1.6
+    sound: block.piston.contract
+    fuel: ""
+    range: 1200
+
+  doppeldecker:
+    art: jet
+    item: flugzeug_doppeldecker
+    model: flugzeug_doppeldecker
+    speed: 0.75            # wendig, aber kein Renner
+    power: 0.06
+    turn: 5.5
+    seats: 2
+    scale: 1.15
+    width: 2.4
+    height: 1.8
+    sound: block.piston.contract
+    fuel: ""
+    range: 1000
+
+  frachtflugzeug:
+    art: jet
+    item: flugzeug_fracht
+    model: flugzeug_fracht
+    speed: 1.10            # schwer, acht Plaetze, dreht wie ein Schiff
+    power: 0.03
+    turn: 1.0
+    seats: 8
+    scale: 2.2
+    width: 5.0
+    height: 3.0
+    sound: entity.phantom.flap
+    fuel: ""
+    range: 2500
+
+  hubschrauber:
+    art: jet
+    item: heli_leicht
+    model: heli_leicht
+    speed: 0.70            # bleibt in der Luft stehen
+    power: 0.05
+    turn: 6.0
+    seats: 4
+    scale: 1.3
+    width: 3.0
+    height: 2.2
+    sound: block.piston.extend
+    hover: true
+    fuel: ""
+    range: 1500
+
+  rettungshubschrauber:
+    art: jet
+    item: heli_rettung
+    model: heli_rettung
+    speed: 0.85
+    power: 0.06
+    turn: 5.0
+    seats: 6
+    scale: 1.4
+    width: 3.2
+    height: 2.4
+    sound: block.piston.extend
+    hover: true
+    fuel: ""
+    range: 1800
 
   dampflok:
     art: zug

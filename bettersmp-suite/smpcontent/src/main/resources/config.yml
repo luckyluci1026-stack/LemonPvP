@@ -2072,6 +2072,71 @@ items:
     model-data: 8511
     max-stack: 1
 
+  jet_kampf:
+    material: MINECART
+    name: "<gray>Kampfjet"
+    lore:
+      - "<dark_gray>Das schnellste Stück am Himmel"
+      - "<gray>Einsitzer"
+    model-data: 8530
+    max-stack: 1
+    glow: true
+
+  jet_passagier:
+    material: MINECART
+    name: "<white>Passagierjet"
+    lore:
+      - "<dark_gray>Sechs Plätze, dreht behäbig"
+      - "<gray>Für lange Strecken"
+    model-data: 8531
+    max-stack: 1
+
+  flugzeug_propeller:
+    material: MINECART
+    name: "<yellow>Propellermaschine"
+    lore:
+      - "<dark_gray>Langsam und gutmütig"
+      - "<gray>Gut zum Üben"
+    model-data: 8532
+    max-stack: 1
+
+  flugzeug_doppeldecker:
+    material: MINECART
+    name: "<gold>Doppeldecker"
+    lore:
+      - "<dark_gray>Wendig, aber kein Renner"
+      - "<gray>Zwei Plätze"
+    model-data: 8533
+    max-stack: 1
+
+  flugzeug_fracht:
+    material: MINECART
+    name: "<dark_green>Frachtflugzeug"
+    lore:
+      - "<dark_gray>Acht Plätze, dreht wie ein Schiff"
+      - "<gray>Für die ganze Klasse"
+    model-data: 8534
+    max-stack: 1
+
+  heli_leicht:
+    material: MINECART
+    name: "<dark_aqua>Hubschrauber"
+    lore:
+      - "<dark_gray>Bleibt in der Luft stehen"
+      - "<gray>Vier Plätze"
+    model-data: 8535
+    max-stack: 1
+
+  heli_rettung:
+    material: MINECART
+    name: "<red>Rettungshubschrauber"
+    lore:
+      - "<dark_gray>Bleibt in der Luft stehen"
+      - "<gray>Sechs Plätze"
+    model-data: 8536
+    max-stack: 1
+    glow: true
+
   jet_renn:
     material: MINECART
     name: "<aqua>Rennjet"

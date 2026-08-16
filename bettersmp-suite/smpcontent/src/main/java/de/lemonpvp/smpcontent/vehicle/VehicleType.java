@@ -21,11 +21,13 @@ import java.util.Locale;
  * @param sound   Fahrgeräusch (leer = keins)
  * @param fuel    Item, das als Sprit verbraucht wird (leer = kein Sprit nötig)
  * @param range   wie viele Blöcke ein Spritstück reicht
+ * @param hover   nur beim Fliegen: bleibt ohne Schub in der Luft stehen
+ *                (Hubschrauber), statt langsam durchzusacken (Flugzeug)
  */
 public record VehicleType(String id, Kind kind, String item, String model,
                           double speed, double power, double turn, int seats,
                           double scale, double height, double width,
-                          String sound, String fuel, int range) {
+                          String sound, String fuel, int range, boolean hover) {
 
     /** Was für ein Fahrzeug es ist - danach richtet sich das Fahrverhalten. */
     public enum Kind {
@@ -60,6 +62,7 @@ public record VehicleType(String id, Kind kind, String item, String model,
                 section.getDouble("width", 1.8),
                 section.getString("sound", ""),
                 section.getString("fuel", ""),
-                Math.max(1, section.getInt("range", 400)));
+                Math.max(1, section.getInt("range", 400)),
+                section.getBoolean("hover", false));
     }
 }

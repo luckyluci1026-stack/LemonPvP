@@ -301,7 +301,7 @@ vehicles:
 | | Steuerung |
 |---|---|
 | **Auto** | W Gas, S Bremse und rückwärts, A/D lenken. Fällt, und schafft eine Stufe. |
-| **Jet** | W Schub, Leertaste steigen, Schleichen sinken. Ohne Schub sinkt er. |
+| **Jet** | W Schub, **Blickrichtung steuert die Nase**, Leertaste/Schleichen heben und senken gerade. |
 | **Zug** | Fährt nur auf Schienen und folgt ihnen – auch um Kurven und bergauf. |
 
 ### Die mitgelieferten Sportwagen
@@ -322,7 +322,30 @@ Charakter machen drei Werte: `speed` (Höchstgeschwindigkeit), `power`
 
 Viel `speed` **und** viel `turn` zusammen fühlt sich nervös an – deshalb lenkt
 das Hypercar bewusst träger als der Roadster. Dazu gibt es weiterhin den
-Geländewagen, den Rennjet und die Dampflok.
+Geländewagen und die Dampflok.
+
+### Flugzeuge, Jets und Hubschrauber
+
+Geflogen wird **mit dem Kopf**: Wohin du schaust, da geht die Nase hin. Nach
+oben ziehen steigt, nach unten drücken ist Sturzflug – wie stark, hängt vom
+Schub ab. Was nach oben geht, fehlt vorne, du wirst im Steigflug also
+langsamer. Leertaste und Schleichen heben und senken zusätzlich gerade, das
+brauchst du zum Landen. Die Karosserie nickt sichtbar mit.
+
+| Flieger | Tempo | Antritt | Lenkung | Plätze | |
+|---|---|---|---|---|---|
+| **Doppeldecker** | 0.75 | 0.06 | 5.5 | 2 | wendig, aber kein Renner |
+| **Propellermaschine** | 0.90 | 0.05 | 3.5 | 2 | langsam und gutmütig, gut zum Üben |
+| **Frachtflugzeug** | 1.10 | 0.03 | 1.0 | 8 | schwer, dreht wie ein Schiff |
+| **Rennjet** | 1.40 | 0.06 | 3.0 | 1 | der Allrounder am Himmel |
+| **Passagierjet** | 1.60 | 0.04 | 1.2 | 6 | groß und träge, für lange Strecken |
+| **Kampfjet** | 2.20 | 0.14 | 4.5 | 1 | das schnellste Stück am Himmel |
+| **Hubschrauber** | 0.70 | 0.05 | 6.0 | 4 | `hover` – bleibt stehen |
+| **Rettungshubschrauber** | 0.85 | 0.06 | 5.0 | 6 | `hover` – bleibt stehen |
+
+Der einzige echte Unterschied zwischen Flugzeug und Hubschrauber ist
+`hover:` – ein Flugzeug sackt ohne Schub langsam durch, ein Hubschrauber
+bleibt in der Luft stehen. Alles andere sind nur Zahlen.
 
 Rechtsklick auf den Boden stellt es hin, Rechtsklick darauf steigt ein,
 Schleichen steigt aus, Schleichen + Rechtsklick mit leerer Hand packt es
