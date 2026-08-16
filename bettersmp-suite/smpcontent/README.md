@@ -63,8 +63,12 @@ Beine und Lehne, Sessel Armlehnen und ein Polster, Kommoden Schubladen mit
 Griffen, Tische eine Platte auf vier Beinen.
 
 Die Fahrzeuge auch: Autos haben Wanne, Kabine und **vier Räder**, Flugzeuge
-Rumpf, Tragflächen, Leitwerk und Triebwerke, Hubschrauber einen Rotor über
-der Kanzel und Kufen darunter, die Lok Kessel, Schornstein und Fahrwerk.
+Rumpf, Tragflächen, Leitwerk und Triebwerke, Hubschrauber Kanzel, Heckausleger
+und Kufen, die Lok Kessel, Schornstein und Fahrwerk. Alle liegen **längs zur
+Fahrtrichtung** – quer gebaut würde ein Auto seitwärts fahren.
+
+Der **Rotor dreht sich wirklich**: `rotor: 1.3` hängt ein eigenes Blatt über
+das Fahrzeug, das im Stand langsam und unter Schub schnell kreist.
 Jedes davon kommt mit **einer einzigen 16×16-Textur** aus – die UV-Ausschnitte
 zeigen auf die passende Stelle der Seitenansicht, Räder und Streben auf den
 dunklen Streifen.

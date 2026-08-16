@@ -478,8 +478,10 @@ def koerper(name):
     dach = [5, 3, 11, 6]      # Fenster und Aufbau
 
     if name.startswith("auto_"):
+        # Lang in Z - das ist die Fahrtrichtung. Quer gebaut wuerde das Auto
+        # seitwaerts fahren.
         return [
-            quader_uv((1, 3, 3), (15, 8, 13), hell),      # Wanne
+            quader_uv((3, 3, 1), (13, 8, 15), hell),      # Wanne
             quader_uv((4, 8, 4), (12, 11, 12), dach),     # Kabine
             quader_uv((2, 0, 2), (5, 3, 5), dunkel),      # vier Räder
             quader_uv((11, 0, 2), (14, 3, 5), dunkel),
@@ -487,20 +489,20 @@ def koerper(name):
             quader_uv((11, 0, 11), (14, 3, 14), dunkel),
         ]
     if name.startswith("heli_"):
+        # Der Rotor ist ein eigenes Teil - nur so kann er sich drehen
         return [
-            quader_uv((4, 3, 2), (12, 10, 12), hell),     # Kanzel
-            quader_uv((6, 5, 12), (10, 8, 16), hell),     # Heckausleger
-            quader_uv((0, 12, 7), (16, 13, 9), dunkel),   # Rotor quer
-            quader_uv((7, 12, 1), (9, 13, 15), dunkel),   # Rotor laengs
+            quader_uv((4, 3, 1), (12, 10, 11), hell),     # Kanzel
+            quader_uv((6, 5, 11), (10, 8, 16), hell),     # Heckausleger
             quader_uv((7, 10, 7), (9, 12, 9), dunkel),    # Rotorkopf
-            quader_uv((5, 0, 3), (6, 3, 11), dunkel),     # Kufen
-            quader_uv((10, 0, 3), (11, 3, 11), dunkel),
+            quader_uv((7, 8, 14), (9, 12, 16), dunkel),   # Heckrotor
+            quader_uv((5, 0, 2), (6, 3, 10), dunkel),     # Kufen
+            quader_uv((10, 0, 2), (11, 3, 10), dunkel),
         ]
     if name == "zug_lok":
         return [
-            quader_uv((2, 3, 1), (14, 11, 15), hell),     # Kessel
-            quader_uv((5, 11, 2), (8, 15, 5), dunkel),    # Schornstein
-            quader_uv((2, 0, 1), (14, 3, 15), dunkel),    # Fahrwerk
+            quader_uv((3, 3, 0), (13, 11, 16), hell),     # Kessel, laengs
+            quader_uv((6, 11, 1), (10, 15, 5), dunkel),   # Schornstein vorn
+            quader_uv((3, 0, 0), (13, 3, 16), dunkel),    # Fahrwerk
         ]
     # Flugzeuge und Jets: Rumpf, Fluegel, Leitwerk
     lang = 15 if "passagier" in name or "fracht" in name else 13
@@ -644,6 +646,37 @@ KUGEL = """
 """
 
 
+ROTOR = """
+................
+.......DD.......
+.......DD.......
+.......DD.......
+.......DD.......
+.......DD.......
+.......DD.......
+DDDDDDDKKDDDDDDD
+DDDDDDDKKDDDDDDD
+.......DD.......
+.......DD.......
+.......DD.......
+.......DD.......
+.......DD.......
+.......DD.......
+................
+"""
+
+
+def rotorblatt():
+    """Das drehende Blatt - ein flaches Kreuz, damit es von oben gut aussieht."""
+    palette = {"K": hexc("#3A3E46"), "D": hexc("#2A2E36")}
+    save(aus_form(ROTOR, palette), TEX / "item", "rotorblatt")
+    modell(MOD / "item", "rotorblatt", [
+        quader_uv((0, 7.5, 7), (16, 8.5, 9), [0, 7, 16, 9]),
+        quader_uv((7, 7.5, 0), (9, 8.5, 16), [7, 0, 9, 16]),
+    ], "smp:item/rotorblatt")
+    return 1
+
+
 def sonstige_items():
     stuecke = {
         "fallschirm": (SCHIRM, "#E8E8EC", "#9C9CA4", "#C22B2B"),
@@ -664,7 +697,7 @@ if __name__ == "__main__":
     a = moebel()
     b = sonder_moebel()
     c = fahrzeug_items()
-    d = sonstige_items()
+    d = sonstige_items() + rotorblatt()
     print(f"{a + b} Möbel, {c} Fahrzeuge, {d} weitere Items")
     print(f"Texturen: {len(list((TEX / 'block').glob('*.png')))} Block, "
           f"{len(list((TEX / 'item').glob('*.png')))} Item")

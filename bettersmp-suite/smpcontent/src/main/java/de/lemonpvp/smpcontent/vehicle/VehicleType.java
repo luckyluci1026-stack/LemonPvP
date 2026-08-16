@@ -26,12 +26,14 @@ import java.util.Locale;
  * @param eject   Schleudersitz und Fallschirm
  * @param crash   was passiert, wenn man gegen etwas fährt
  * @param hud     Tacho über der Hotbar während der Fahrt
+ * @param rotor   Höhe eines drehenden Rotorblatts über dem Fahrzeug
+ *                (0 = keins). Hubschrauber und Propellermaschinen.
  */
 public record VehicleType(String id, Kind kind, String item, String model,
                           double speed, double power, double turn, int seats,
                           double scale, double height, double width,
                           String sound, String fuel, int range, boolean hover,
-                          Eject eject, Crash crash, boolean hud) {
+                          Eject eject, Crash crash, boolean hud, double rotor) {
 
     /**
      * Der Aufprall.
@@ -157,6 +159,7 @@ public record VehicleType(String id, Kind kind, String item, String model,
                 section.getBoolean("hover", false),
                 Eject.read(section.getConfigurationSection("eject")),
                 Crash.read(section.getConfigurationSection("crash")),
-                section.getBoolean("hud", true));
+                section.getBoolean("hud", true),
+                Math.max(0, section.getDouble("rotor", 0)));
     }
 }

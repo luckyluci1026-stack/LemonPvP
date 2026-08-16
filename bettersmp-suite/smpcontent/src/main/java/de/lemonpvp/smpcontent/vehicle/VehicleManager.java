@@ -72,6 +72,8 @@ public final class VehicleManager {
         final VehicleType type;
         final ArmorStand base;
         final ItemDisplay body;
+        ItemDisplay rotor;
+        float rotorWinkel;
         float yaw;
         double speed;
         int fuelLeft;
@@ -210,6 +212,30 @@ public final class VehicleManager {
             display.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, owner);
         });
 
+        // Ein drehendes Rotorblatt, wenn eines eingestellt ist
+        ItemDisplay rotor = null;
+        if (type.rotor() > 0) {
+            Location oben = at.clone().add(0, type.rotor(), 0);
+            rotor = world.spawn(oben, ItemDisplay.class, display -> {
+                CustomEntry blatt = plugin.registry().get("rotorblatt");
+                display.setItemStack(blatt != null
+                        ? plugin.registry().create(blatt, 1)
+                        : new ItemStack(Material.IRON_TRAPDOOR));
+                display.setPersistent(true);
+                display.setInvulnerable(true);
+                display.setTeleportDuration(1);
+                float gross = (float) (type.scale() * 1.6);
+                Transformation t = display.getTransformation();
+                display.setTransformation(new Transformation(t.getTranslation(),
+                        t.getLeftRotation(), new Vector3f(gross, gross, gross),
+                        t.getRightRotation()));
+                display.getPersistentDataContainer()
+                        .set(partKey, PersistentDataType.STRING, "rotor");
+                display.getPersistentDataContainer()
+                        .set(ownerKey, PersistentDataType.STRING, owner);
+            });
+        }
+
         world.spawn(at, Interaction.class, hitbox -> {
             hitbox.setInteractionWidth((float) type.width());
             hitbox.setInteractionHeight((float) type.height());
@@ -223,7 +249,9 @@ public final class VehicleManager {
                     .set(ownerKey, PersistentDataType.STRING, owner);
         });
 
-        active.put(base.getUniqueId(), new Ride(type, base, body, yaw, type.range()));
+        Ride ride = new Ride(type, base, body, yaw, type.range());
+        ride.rotor = rotor;
+        active.put(base.getUniqueId(), ride);
     }
 
     private ItemStack modelItem(VehicleType type) {
@@ -284,15 +312,22 @@ public final class VehicleManager {
             return null;
         }
         ItemDisplay body = null;
+        ItemDisplay rotorTeil = null;
         String owner = base.getUniqueId().toString();
         for (Entity nearby : base.getWorld().getNearbyEntities(base.getLocation(), 3, 3, 3)) {
-            if (nearby instanceof ItemDisplay display && owner.equals(display
+            if (!(nearby instanceof ItemDisplay display) || !owner.equals(display
                     .getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING))) {
+                continue;
+            }
+            if ("rotor".equals(display.getPersistentDataContainer()
+                    .get(partKey, PersistentDataType.STRING))) {
+                rotorTeil = display;
+            } else {
                 body = display;
-                break;
             }
         }
         Ride ride = new Ride(type, base, body, base.getLocation().getYaw(), type.range());
+        ride.rotor = rotorTeil;
         active.put(base.getUniqueId(), ride);
         return ride;
     }
@@ -333,6 +368,9 @@ public final class VehicleManager {
         Ride ride = active.remove(base.getUniqueId());
         if (ride != null && ride.body != null) {
             ride.body.remove();
+        }
+        if (ride != null && ride.rotor != null) {
+            ride.rotor.remove();
         }
         String owner = base.getUniqueId().toString();
         for (Entity nearby : base.getWorld().getNearbyEntities(base.getLocation(), 3, 3, 3)) {
@@ -415,6 +453,16 @@ public final class VehicleManager {
                     ? Math.max(-70, Math.min(70, driver.getLocation().getPitch())) : 0);
             ride.body.teleport(at);
         }
+        if (ride.rotor != null && ride.rotor.isValid()) {
+            // Im Stand dreht er langsam, unter Schub schnell
+            ride.rotorWinkel = (ride.rotorWinkel
+                    + (float) (12 + Math.abs(ride.speed) * 40)) % 360f;
+            Location oben = ride.base.getLocation().add(0, ride.type.rotor(), 0);
+            oben.setYaw(ride.rotorWinkel);
+            oben.setPitch(0);
+            ride.rotor.teleport(oben);
+        }
+
         if (driver != null && ride.type.hud() && ride.soundTick % 4 == 0) {
             hud(ride, driver);
         }

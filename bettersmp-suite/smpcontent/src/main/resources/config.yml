@@ -2131,6 +2131,13 @@ items:
     model-data: 8534
     max-stack: 1
 
+  rotorblatt:
+    material: MINECART
+    name: "<dark_gray>Rotorblatt"
+    lore: ["<dark_gray>Teil eines Hubschraubers"]
+    model-data: 8541
+    max-stack: 1
+
   heli_leicht:
     material: MINECART
     name: "<dark_aqua>Hubschrauber"
