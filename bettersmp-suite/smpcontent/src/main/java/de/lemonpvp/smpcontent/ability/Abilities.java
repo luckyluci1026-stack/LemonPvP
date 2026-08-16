@@ -244,8 +244,12 @@ public final class Abilities {
                         (Math.random() - 0.5) * radians,
                         (Math.random() - 0.5) * radians));
             }
+            // Aus einem Fahrzeug heraus weiter vorn ansetzen: sonst steckt
+            // das Geschoss sofort in der eigenen Karosserie fest, und der
+            // Schuss geht scheinbar ins Leere.
+            double abstand = player.getVehicle() != null ? 2.2 : 0.6;
             org.bukkit.entity.Entity shot = player.getWorld().spawn(
-                    player.getEyeLocation().add(direction.clone().multiply(0.6)), kind);
+                    player.getEyeLocation().add(direction.clone().multiply(abstand)), kind);
             shot.setVelocity(direction.normalize().multiply(speed));
             if (shot instanceof org.bukkit.entity.Projectile projectile) {
                 projectile.setShooter(player);
@@ -335,10 +339,9 @@ public final class Abilities {
                 break;
             }
             for (Entity entity : point.getWorld().getNearbyEntities(point, 0.8, 0.8, 0.8)) {
-                if (entity != player && entity instanceof LivingEntity living
-                        && !hit.contains(entity)) {
+                if (istZiel(entity, player) && !hit.contains(entity)) {
                     hit.add(entity);
-                    living.damage(amount, player);
+                    ((LivingEntity) entity).damage(amount, player);
                 }
             }
         }
@@ -355,7 +358,39 @@ public final class Abilities {
         Vector direction = player.getEyeLocation().getDirection().normalize();
         Vector push = direction.multiply(Ability.number(action, "forward", 1.5));
         push.setY(push.getY() + Ability.number(action, "up", 0.4));
-        player.setVelocity(push);
+        bewegen(player).setVelocity(push);
+    }
+
+    /**
+     * Ist das überhaupt ein Ziel?
+     *
+     * Unsichtbare Rüstungsständer sind keine Gegner, sondern Technik: der
+     * Sitz eines Stuhls, das Gerüst eines Fahrzeugs. Ein Druckstoß würde
+     * sonst sämtliche Möbel und Autos der Umgebung wegschleudern - mitsamt
+     * den Leuten, die darauf sitzen.
+     */
+    private static boolean istZiel(Entity entity, Player player) {
+        if (entity == player || !(entity instanceof LivingEntity)) {
+            return false;
+        }
+        if (entity instanceof org.bukkit.entity.ArmorStand stand && !stand.isVisible()) {
+            return false;
+        }
+        // Das eigene Fahrzeug und die Mitfahrer bleiben auch verschont
+        return entity != player.getVehicle();
+    }
+
+    /**
+     * Wer geschoben werden soll.
+     *
+     * Sitzt der Spieler in einem Fahrzeug, gehört der Schwung dorthin - ein
+     * Mitfahrer kann sich selbst nicht bewegen, der Server setzt ihn einfach
+     * wieder auf seinen Platz. Sprungstiefel im Auto täten sonst schlicht
+     * nichts, ohne dass man je erführe warum.
+     */
+    private static Entity bewegen(Player player) {
+        Entity fahrzeug = player.getVehicle();
+        return fahrzeug != null ? fahrzeug : player;
     }
 
     /** Stößt alles in der Nähe weg (Richtung 1) oder zieht es heran (-1). */
@@ -364,7 +399,7 @@ public final class Abilities {
         double power = Ability.number(action, "power", 1.0);
         Location center = player.getLocation();
         for (Entity entity : player.getWorld().getNearbyEntities(center, radius, radius, radius)) {
-            if (entity == player || !(entity instanceof LivingEntity)) {
+            if (!istZiel(entity, player)) {
                 continue;
             }
             Vector away = entity.getLocation().toVector().subtract(center.toVector());
