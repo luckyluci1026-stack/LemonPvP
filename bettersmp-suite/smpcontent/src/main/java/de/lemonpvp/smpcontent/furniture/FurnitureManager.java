@@ -231,7 +231,8 @@ public final class FurnitureManager {
             armor.setInvulnerable(true);
             armor.setSilent(true);
             armor.setPersistent(false);
-            armor.setCanTick(false);
+            // Bewusst kein setCanTick(false): ein Reittier, das nicht tickt,
+            // setzt seinen Reiter nicht zuverlässig um.
             mark(armor, tag, entry.id());
         });
         if (!stand.addPassenger(player)) {

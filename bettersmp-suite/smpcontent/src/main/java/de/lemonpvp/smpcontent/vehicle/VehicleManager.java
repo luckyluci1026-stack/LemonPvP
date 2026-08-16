@@ -79,6 +79,8 @@ public final class VehicleManager {
         double speed;
         int fuelLeft;
         int soundTick;
+        /** Zählt jeden Tick - unabhängig davon, ob ein Ton eingestellt ist. */
+        int takt;
         /** Woher es kam - daran erkennt man den Aufprall. */
         Location lastPos;
         /** Schleicht der Fahrer gerade? Für den Doppel-Schleicher. */
@@ -471,7 +473,8 @@ public final class VehicleManager {
             ride.rotor.teleport(oben);
         }
 
-        if (driver != null && ride.type.hud() && ride.soundTick % 4 == 0) {
+        ride.takt++;
+        if (driver != null && ride.type.hud() && ride.takt % 4 == 0) {
             hud(ride, driver);
         }
 

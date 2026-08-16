@@ -117,8 +117,9 @@ public final class ParachuteManager {
                 it.remove();
                 continue;
             }
-            // Angekommen: Schirm weg, und der Sturz zählt nicht
-            if (player.isOnGround() || player.isInWater() || player.isGliding()) {
+            // Angekommen - oder eingestiegen: Schirm weg, und der Sturz zählt nicht
+            if (player.isOnGround() || player.isInWater() || player.isGliding()
+                    || player.getVehicle() != null) {
                 player.setFallDistance(0);
                 chute.canopy().remove();
                 it.remove();
