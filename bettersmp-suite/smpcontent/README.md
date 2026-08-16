@@ -304,6 +304,26 @@ vehicles:
 | **Jet** | W Schub, Leertaste steigen, Schleichen sinken. Ohne Schub sinkt er. |
 | **Zug** | Fährt nur auf Schienen und folgt ihnen – auch um Kurven und bergauf. |
 
+### Die mitgelieferten Sportwagen
+
+Alle fahren nach denselben Regeln, sie fühlen sich nur anders an. Den
+Charakter machen drei Werte: `speed` (Höchstgeschwindigkeit), `power`
+(Antritt) und `turn` (wie eng es lenkt).
+
+| Wagen | Tempo | Antritt | Lenkung | Plätze | wofür |
+|---|---|---|---|---|---|
+| **Roadster** | 0.80 | 0.07 | 7.5 | 2 | leicht und wendig, dreht fast auf der Stelle |
+| **Sportwagen** | 0.85 | 0.05 | 5.0 | 2 | der Allrounder |
+| **Muscle Car** | 1.00 | 0.09 | 3.0 | 2 | brutal geradeaus, träge in der Kurve |
+| **Streifenwagen** | 1.05 | 0.08 | 5.5 | 4 | holt auch schnelle Leute ein |
+| **Rennwagen** | 1.25 | 0.12 | 6.5 | 1 | Einsitzer für die Rennstrecke |
+| **Hypercar** | 1.60 | 0.10 | 4.0 | 2 | Spitze, will lange Geraden |
+| **Oldtimer** | 0.45 | 0.03 | 4.5 | 4 | gemütlich, für Spazierfahrten |
+
+Viel `speed` **und** viel `turn` zusammen fühlt sich nervös an – deshalb lenkt
+das Hypercar bewusst träger als der Roadster. Dazu gibt es weiterhin den
+Geländewagen, den Rennjet und die Dampflok.
+
 Rechtsklick auf den Boden stellt es hin, Rechtsklick darauf steigt ein,
 Schleichen steigt aus, Schleichen + Rechtsklick mit leerer Hand packt es
 wieder ein. Nach einem Neustart stehen die Fahrzeuge noch da und fahren weiter.

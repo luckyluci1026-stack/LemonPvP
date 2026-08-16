@@ -2009,6 +2009,62 @@ items:
     model-data: 8510
     max-stack: 1
 
+  auto_roadster:
+    material: MINECART
+    name: "<gold>Roadster"
+    lore:
+      - "<dark_gray>Offen, leicht, wendig"
+      - "<gray>Dreht fast auf der Stelle"
+    model-data: 8520
+    max-stack: 1
+
+  auto_muscle:
+    material: MINECART
+    name: "<dark_red>Muscle Car"
+    lore:
+      - "<dark_gray>Viel Hubraum, wenig Lenkung"
+      - "<gray>Geradeaus kaum zu halten"
+    model-data: 8521
+    max-stack: 1
+
+  auto_renn:
+    material: MINECART
+    name: "<yellow>Rennwagen"
+    lore:
+      - "<dark_gray>Einsitzer, giftiger Antritt"
+      - "<gray>Für die Rennstrecke"
+    model-data: 8522
+    max-stack: 1
+    glow: true
+
+  auto_hyper:
+    material: MINECART
+    name: "<light_purple>Hypercar"
+    lore:
+      - "<dark_gray>Höchstgeschwindigkeit"
+      - "<gray>Will lange Geraden"
+    model-data: 8523
+    max-stack: 1
+    glow: true
+
+  auto_oldtimer:
+    material: MINECART
+    name: "<dark_aqua>Oldtimer"
+    lore:
+      - "<dark_gray>Vier Plätze, viel Zeit"
+      - "<gray>Für Spazierfahrten"
+    model-data: 8524
+    max-stack: 1
+
+  auto_polizei:
+    material: MINECART
+    name: "<blue>Streifenwagen"
+    lore:
+      - "<dark_gray>Holt auch schnelle Leute ein"
+      - "<gray>Vier Plätze"
+    model-data: 8525
+    max-stack: 1
+
   auto_gelaende:
     material: MINECART
     name: "<dark_green>Geländewagen"
