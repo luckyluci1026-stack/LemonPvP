@@ -400,8 +400,12 @@ public final class VehicleManager {
         if (active.isEmpty()) {
             return;
         }
+        // Über eine Kopie laufen: Ein Aufprall zerlegt das Fahrzeug und nimmt
+        // es dabei aus dieser Liste. Über das Original gelaufen, wirft das
+        // beim nächsten Schritt eine ConcurrentModificationException - und
+        // alle übrigen Fahrzeuge stehen für diesen Tick still.
         List<UUID> gone = new ArrayList<>();
-        for (Map.Entry<UUID, Ride> entry : active.entrySet()) {
+        for (Map.Entry<UUID, Ride> entry : new ArrayList<>(active.entrySet())) {
             Ride ride = entry.getValue();
             if (!ride.base.isValid()) {
                 gone.add(entry.getKey());

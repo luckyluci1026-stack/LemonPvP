@@ -41,7 +41,17 @@ public final class ContentRegistry {
     private final SMPContent plugin;
     private final NamespacedKey idKey;
 
-    private final Map<String, CustomEntry> entries = new LinkedHashMap<>();
+    /**
+     * Beim Neuladen wird diese Tabelle <b>ausgetauscht</b>, nicht geleert.
+     *
+     * Grund: /smpcontent bedrock liest die Einträge auf einem Nebenthread.
+     * Würde ein gleichzeitiges /smpcontent reload dieselbe Tabelle leeren,
+     * bräche der Pack-Bau mitten im Lauf ab. So arbeitet er ruhig auf dem
+     * alten Stand zu Ende, und der neue steht danach bereit.
+     */
+    private volatile Map<String, CustomEntry> entries = new LinkedHashMap<>();
+    /** Nur während {@link #load()} in Gebrauch - die Tabelle im Aufbau. */
+    private Map<String, CustomEntry> imAufbau;
     /** Normalisierter Blockzustand -> Block-Id. */
     private final Map<String, String> stateToId = new LinkedHashMap<>();
     /** Id -> Rezept-Abschnitt (auch aus den Zusatzdateien). */
@@ -75,7 +85,7 @@ public final class ContentRegistry {
 
     public void load() {
         clearRecipes();
-        entries.clear();
+        imAufbau = new LinkedHashMap<>();
         stateToId.clear();
         recipeSections.clear();
         blockData.clear();
@@ -99,6 +109,11 @@ public final class ContentRegistry {
         }
 
         loadAnimations();
+
+        // Erst jetzt sichtbar machen: Wer nebenher liest, arbeitet bis hierhin
+        // ruhig auf dem alten Stand statt auf einer halbvollen Tabelle.
+        entries = imAufbau;
+        imAufbau = null;
 
         if (plugin.getConfig().getBoolean("recipes-enabled", true)) {
             registerRecipes();
@@ -171,7 +186,7 @@ public final class ContentRegistry {
             if (sec == null) {
                 continue;
             }
-            if (entries.containsKey(id.toLowerCase(java.util.Locale.ROOT))) {
+            if (imAufbau.containsKey(id.toLowerCase(java.util.Locale.ROOT))) {
                 plugin.getLogger().warning("'" + id + "' aus " + source
                         + " gibt es schon - übersprungen.");
                 continue;
@@ -223,7 +238,7 @@ public final class ContentRegistry {
                     enchants.put(key.toLowerCase(java.util.Locale.ROOT), enchSec.getInt(key));
                 }
             }
-            entries.put(id.toLowerCase(java.util.Locale.ROOT), new CustomEntry(
+            imAufbau.put(id.toLowerCase(java.util.Locale.ROOT), new CustomEntry(
                     id, isBlock, material,
                     sec.getString("name", id),
                     sec.getStringList("lore"),
