@@ -25,12 +25,13 @@ import java.util.Locale;
  *                (Hubschrauber), statt langsam durchzusacken (Flugzeug)
  * @param eject   Schleudersitz und Fallschirm
  * @param crash   was passiert, wenn man gegen etwas fährt
+ * @param hud     Tacho über der Hotbar während der Fahrt
  */
 public record VehicleType(String id, Kind kind, String item, String model,
                           double speed, double power, double turn, int seats,
                           double scale, double height, double width,
                           String sound, String fuel, int range, boolean hover,
-                          Eject eject, Crash crash) {
+                          Eject eject, Crash crash, boolean hud) {
 
     /**
      * Der Aufprall.
@@ -46,13 +47,17 @@ public record VehicleType(String id, Kind kind, String item, String model,
      * @param breakBlocks ob die Explosion Blöcke zerstört
      * @param destroy     ob das Fahrzeug dabei kaputtgeht
      * @param sound       Ton beim Aufprall
+     * @param ram         Schaden für den, den man umfährt (0 = niemand)
+     * @param hardLanding ab welcher Sinkgeschwindigkeit ein Flieger beim
+     *                    Aufsetzen zu Bruch geht (0 = nie)
      */
     public record Crash(boolean enabled, double minSpeed, double damage,
                         double explosion, boolean breakBlocks, boolean destroy,
-                        String sound) {
+                        String sound, double ram, double hardLanding) {
 
         public static final Crash NONE =
-                new Crash(false, 0.5, 6.0, 0, false, true, "entity.generic.explode");
+                new Crash(false, 0.5, 6.0, 0, false, true,
+                        "entity.generic.explode", 0, 0);
 
         static Crash read(ConfigurationSection section) {
             if (section == null) {
@@ -65,7 +70,9 @@ public record VehicleType(String id, Kind kind, String item, String model,
                     Math.max(0, section.getDouble("explosion", 0)),
                     section.getBoolean("break-blocks", false),
                     section.getBoolean("destroy", true),
-                    section.getString("sound", "entity.generic.explode"));
+                    section.getString("sound", "entity.generic.explode"),
+                    Math.max(0, section.getDouble("ram", 0)),
+                    Math.max(0, section.getDouble("hard-landing", 0)));
         }
     }
 
@@ -149,6 +156,7 @@ public record VehicleType(String id, Kind kind, String item, String model,
                 Math.max(1, section.getInt("range", 400)),
                 section.getBoolean("hover", false),
                 Eject.read(section.getConfigurationSection("eject")),
-                Crash.read(section.getConfigurationSection("crash")));
+                Crash.read(section.getConfigurationSection("crash")),
+                section.getBoolean("hud", true));
     }
 }

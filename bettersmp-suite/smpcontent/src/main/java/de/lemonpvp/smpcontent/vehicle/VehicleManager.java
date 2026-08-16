@@ -17,6 +17,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Interaction;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -80,6 +81,9 @@ public final class VehicleManager {
         /** Schleicht der Fahrer gerade? Für den Doppel-Schleicher. */
         boolean sneaking;
         long lastSneak;
+        boolean wasOnGround;
+        /** Wie schnell es zuletzt gefallen ist - für die harte Landung. */
+        double sinkRate;
 
         Ride(VehicleType type, ArmorStand base, ItemDisplay body, float yaw, int fuelLeft) {
             this.type = type;
@@ -388,6 +392,13 @@ public final class VehicleManager {
             case TRAIN -> rails(ride);
             case CAR -> roll(ride);
         };
+        ride.sinkRate = ride.lastPos == null ? 0
+                : Math.max(0, ride.lastPos.getY() - ride.base.getLocation().getY());
+        checkLanding(ride);
+        if (!ride.base.isValid()) {
+            return;
+        }
+        ram(ride);
         checkCrash(ride, velocity);
         if (!ride.base.isValid()) {
             return;   // beim Aufprall zerlegt
@@ -404,12 +415,42 @@ public final class VehicleManager {
                     ? Math.max(-70, Math.min(70, driver.getLocation().getPitch())) : 0);
             ride.body.teleport(at);
         }
+        if (driver != null && ride.type.hud() && ride.soundTick % 4 == 0) {
+            hud(ride, driver);
+        }
+
         // Alle halbe Sekunde reicht - zwanzigmal wäre Lärm und Last
         if (driver != null && ride.speed != 0 && !ride.type.sound().isBlank()
                 && ++ride.soundTick % 10 == 0) {
             ride.base.getWorld().playSound(ride.base.getLocation(),
                     ride.type.sound(), 0.4f, 1.0f);
         }
+    }
+
+    /**
+     * Der Tacho über der Hotbar.
+     *
+     * Gezeigt wird nicht der eingestellte Wert, sondern was das Fahrzeug
+     * wirklich zurückgelegt hat - damit sieht man beim Einstellen sofort,
+     * ob eine Zahl das tut, was sie verspricht.
+     */
+    private void hud(Ride ride, Player driver) {
+        double proSekunde = ride.lastPos == null ? 0
+                : ride.base.getLocation().toVector()
+                        .distance(ride.lastPos.toVector()) * 20.0;
+        StringBuilder text = new StringBuilder("<gray>");
+        text.append(String.format(java.util.Locale.ROOT,
+                "<white>%.0f</white> Blöcke/s", proSekunde));
+        if (ride.type.kind() == VehicleType.Kind.JET) {
+            text.append(" <dark_gray>|</dark_gray> <white>")
+                    .append((int) ride.base.getLocation().getY()).append("</white> hoch");
+        }
+        if (!ride.type.fuel().isBlank()) {
+            int prozent = (int) (100.0 * ride.fuelLeft / Math.max(1, ride.type.range()));
+            text.append(" <dark_gray>|</dark_gray> Sprit <white>")
+                    .append(Math.max(0, prozent)).append("%</white>");
+        }
+        driver.sendActionBar(de.lemonpvp.smpcontent.util.Text.mm(text.toString()));
     }
 
     /** Gas, Bremse und Lenkung aus den Bewegungstasten. */
@@ -489,7 +530,9 @@ public final class VehicleManager {
         if (!crash.enabled() || ride.lastPos == null) {
             return;
         }
-        double gewollt = Math.hypot(wanted.getX(), wanted.getZ());
+        // Senkrecht zaehlt mit: wer im Sturzflug in den Boden geht, kommt
+        // waagerecht kaum vom Fleck - das waere sonst gar kein Aufprall.
+        double gewollt = wanted.length();
         if (gewollt < crash.minSpeed()) {
             return;
         }
@@ -497,13 +540,46 @@ public final class VehicleManager {
         if (!now.getWorld().equals(ride.lastPos.getWorld())) {
             return;
         }
-        double echt = Math.hypot(now.getX() - ride.lastPos.getX(),
-                now.getZ() - ride.lastPos.getZ());
+        double echt = now.toVector().distance(ride.lastPos.toVector());
         // Kaum vom Fleck gekommen, obwohl es wollte: da war eine Wand
         if (echt > gewollt * 0.35) {
             return;
         }
         bang(ride, crash);
+    }
+
+    /**
+     * Harte Landung: mit viel Sinkgeschwindigkeit aufsetzen geht schief.
+     * Sanft aufsetzen ist eine Landung, hart aufsetzen ein Aufprall.
+     */
+    private void checkLanding(Ride ride) {
+        VehicleType.Crash crash = ride.type.crash();
+        boolean unten = ride.base.isOnGround();
+        if (crash.enabled() && crash.hardLanding() > 0 && unten && !ride.wasOnGround
+                && ride.sinkRate > crash.hardLanding()) {
+            bang(ride, crash);
+            return;
+        }
+        ride.wasOnGround = unten;
+    }
+
+    /** Wer im Weg steht, wird umgefahren - wenn das eingestellt ist. */
+    private void ram(Ride ride) {
+        VehicleType.Crash crash = ride.type.crash();
+        if (crash.ram() <= 0 || Math.abs(ride.speed) < crash.minSpeed()) {
+            return;
+        }
+        Vector schub = direction(ride.yaw).multiply(Math.abs(ride.speed) * 0.8);
+        for (Entity nearby : ride.base.getNearbyEntities(1.2, 1.2, 1.2)) {
+            if (!(nearby instanceof LivingEntity opfer)
+                    || ride.base.getPassengers().contains(nearby)) {
+                continue;
+            }
+            // Anteilig zum Tempo - langsames Anrollen tut nicht weh
+            double anteil = Math.min(1.0, Math.abs(ride.speed) / Math.max(0.1, ride.type.speed()));
+            opfer.damage(crash.ram() * anteil);
+            opfer.setVelocity(new Vector(schub.getX(), 0.35, schub.getZ()));
+        }
     }
 
     private void bang(Ride ride, VehicleType.Crash crash) {

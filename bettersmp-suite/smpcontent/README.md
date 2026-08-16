@@ -389,10 +389,29 @@ viel weniger weit gekommen ist, als es wollte:
       sound: entity.generic.explode
 ```
 
+Dazu zwei Werte, die man leicht vergisst:
+
+```yaml
+      ram: 6.0             # Schaden für den, den du umfährst (0 = niemand)
+      hard-landing: 0.9    # Sinkgeschwindigkeit, ab der ein Flieger zu Bruch geht
+```
+
+Gezählt wird **auch senkrecht**: Wer im Sturzflug in den Boden geht, kommt
+waagerecht kaum vom Fleck – das wäre sonst gar kein Aufprall. Und wer zu hart
+aufsetzt, landet nicht, sondern verunglückt; sanft aufsetzen ist eine
+Landung.
+
 Die mitgelieferten Werte sind abgestuft: Der Oldtimer bekommt eine Delle
 (4 Schaden, keine Explosion, bleibt heil), der Kampfjet wird zum Feuerball
 (14 Schaden, Explosion 4). Blöcke zerstört standardmäßig **nichts** – auf
 einem Schulserver will niemand Krater in der Landschaft.
+
+### Tacho
+
+`hud: true` (Standard) zeigt über der Hotbar Tempo, bei Fliegern die Höhe und
+bei Fahrzeugen mit Sprit den Füllstand. Angezeigt wird die **wirklich
+gefahrene Strecke** in Blöcken pro Sekunde – nicht der eingestellte Wert. So
+siehst du beim Einstellen sofort, ob eine Zahl hält, was sie verspricht.
 
 Rechtsklick auf den Boden stellt es hin, Rechtsklick darauf steigt ein,
 Schleichen steigt aus, Schleichen + Rechtsklick mit leerer Hand packt es

@@ -47,6 +47,14 @@
 #    explosion    Staerke (0 = keine)
 #    break-blocks ob die Explosion Bloecke zerstoert
 #    destroy      ob das Fahrzeug dabei kaputtgeht
+#    ram          Schaden fuer den, den du umfaehrst (0 = niemand)
+#    hard-landing ab welcher Sinkgeschwindigkeit ein Flieger beim
+#                 Aufsetzen zu Bruch geht (0 = nie)
+#
+#  hud: true  zeigt Tempo, Hoehe und Sprit ueber der Hotbar. Angezeigt
+#             wird die WIRKLICH gefahrene Strecke, nicht der
+#             eingestellte Wert - so siehst du beim Einstellen sofort,
+#             ob eine Zahl haelt, was sie verspricht.
 #
 # ==========================================================
 
@@ -86,6 +94,7 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 6.0
 
   roadster:
     art: auto
@@ -109,6 +118,7 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 6.0
 
   muscle_car:
     art: auto
@@ -132,6 +142,7 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 6.0
 
   rennwagen:
     art: auto
@@ -155,6 +166,7 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 6.0
 
   hypercar:
     art: auto
@@ -178,6 +190,7 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 6.0
 
   oldtimer:
     art: auto
@@ -201,6 +214,7 @@ vehicles:
       break-blocks: false
       destroy: false
       sound: entity.generic.explode
+      ram: 6.0
 
   streifenwagen:
     art: auto
@@ -224,6 +238,7 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 6.0
 
   gelaendewagen:
     art: auto
@@ -247,6 +262,7 @@ vehicles:
       break-blocks: false
       destroy: false
       sound: entity.generic.explode
+      ram: 6.0
 
   # ------------------------------------------------------------------
   #  Flugzeuge und Jets
@@ -292,6 +308,8 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
 
   kampfjet:
     art: jet
@@ -325,6 +343,8 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
 
   passagierjet:
     art: jet
@@ -358,6 +378,8 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
 
   propellermaschine:
     art: jet
@@ -391,6 +413,8 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
 
   doppeldecker:
     art: jet
@@ -424,6 +448,8 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
 
   frachtflugzeug:
     art: jet
@@ -457,6 +483,8 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
 
   hubschrauber:
     art: jet
@@ -491,6 +519,8 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
 
   rettungshubschrauber:
     art: jet
@@ -525,6 +555,8 @@ vehicles:
       break-blocks: false
       destroy: true
       sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
 
   dampflok:
     art: zug
@@ -548,3 +580,4 @@ vehicles:
       break-blocks: false
       destroy: false
       sound: entity.generic.explode
+      ram: 6.0
