@@ -53,10 +53,15 @@ Das GUI hat **Seiten** (45 pro Seite), unten links/rechts blättern. Dazu:
 
 ## Texturen sind schon dabei
 
-Beim ersten Start legt das Plugin **133 fertige Texturen und 3D-Modelle** in
-deinen Datenordner: alle 50 Möbel, alle 17 Fahrzeuge, Fallschirm, Pistole,
-Schrotflinte, Raketenwerfer und Munition. Direkt nach `/smpcontent pack` sieht
-also alles nach etwas aus – kein Notenblock, kein Fehlwürfel.
+Beim ersten Start legt das Plugin **175 fertige Texturen und 3D-Modelle** in
+deinen Datenordner: **alle 74 Blöcke** (50 Möbel, Erze, Marmor, Neonlampe,
+Münzhaufen und deine Stühle, Tische, Regale, Werkbänke), alle 17 Fahrzeuge,
+Fallschirm, Rotorblatt, Pistole, Schrotflinte, Raketenwerfer und Munition.
+Direkt nach `/smpcontent pack` sieht also alles nach etwas aus – kein
+Notenblock, kein Fehlwürfel.
+
+Geprüft: Ein Pack-Bau aus diesen Dateien ergibt **74 Blöcke, 23 Items,
+78 eigene Modelle** und ein 217-KB-Pack mit 680 Dateien.
 
 Die Möbel bekommen dabei **echte Formen** statt eines Würfels: Bänke haben
 Beine und Lehne, Sessel Armlehnen und ein Polster, Kommoden Schubladen mit

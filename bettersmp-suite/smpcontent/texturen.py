@@ -298,6 +298,127 @@ def sonder_moebel():
     return len(stuecke)
 
 
+# --------------------------------------------- Möbel aus der config.yml
+
+EIGENE_HOELZER = {
+    "": ("#B08B4F", "#7C5F32", "#D6B87E"),          # chair, table, ...
+    "cherry_": ("#D98A9E", "#A85F72", "#F0B4C2"),   # Kirsche
+    "tropic_": ("#C9A961", "#96793C", "#E4CB92"),   # Tropenholz
+}
+
+EIGENE_ARTEN = {
+    "chair": ("sessel", "sessel"),
+    "stool": ("bank", "podest"),
+    "table": ("tisch", "tisch"),
+    "shelf": ("schrank", "regal"),
+    "workbench": ("kommode", "tisch"),
+}
+
+MOEBEL_FORM_REGAL = [((1, 0, 3), (15, 16, 13)), ((2, 5, 4), (14, 6, 13)),
+                     ((2, 10, 4), (14, 11, 13))]
+
+
+def eigene_moebel():
+    """chair, table, shelf, stool, workbench - je dreimal, aus der config.yml."""
+    MOEBEL_FORM["regal"] = MOEBEL_FORM_REGAL
+    anzahl = 0
+    for praefix, farben in EIGENE_HOELZER.items():
+        HOLZ[praefix or "eigen"] = farben
+        STOFF[praefix or "eigen"] = "#6B5A7C"
+        for art, (muster, form) in EIGENE_ARTEN.items():
+            name = f"{praefix}{art}"
+            save(moebel_textur(praefix or "eigen", muster), TEX / "block", name)
+            if form in MOEBEL_FORM:
+                modell(MOD / "block", name,
+                       [quader(v, b) for v, b in MOEBEL_FORM[form]],
+                       f"smp:block/{name}")
+            anzahl += 1
+    # easel: eine Staffelei
+    save(moebel_textur("eigen", "podest"), TEX / "block", "easel")
+    modell(MOD / "block", "easel", [
+        quader((7, 0, 2), (9, 16, 4)), quader((2, 0, 10), (4, 14, 12)),
+        quader((12, 0, 10), (14, 14, 12)), quader((2, 8, 3), (14, 15, 11)),
+    ], "smp:block/easel")
+    return anzahl + 1
+
+
+# ------------------------------------------------------- Erze und Steine
+
+ERZ = {
+    # id: (Grundstein, Ader, Glanz)
+    "ruby_ore": ("#7E7E7E", "#C0223A", "#FF6B7E"),
+    "sapphire_ore": ("#7E7E7E", "#2246C0", "#6B8CFF"),
+    "ruby_block": ("#C0223A", "#8A1428", "#FF6B7E"),
+    "sapphire_block": ("#2246C0", "#16308A", "#6B8CFF"),
+    "marble": ("#E4E2DC", "#C2BFB6", "#FFFFFF"),
+    "dark_marble": ("#3A3A42", "#26262C", "#5E5E6B"),
+    "neon_lamp": ("#2A2A32", "#16161C", "#7BE8FF"),
+    "coin_pile": ("#8A6A2A", "#5E4718", "#F0D060"),
+}
+
+
+def erz_textur(base_hex, ader_hex, glanz_hex, seed, block=False):
+    """Ein Stein mit Adern - oder ein voller Block, wenn block=True."""
+    base, ader, glanz = hexc(base_hex), hexc(ader_hex), hexc(glanz_hex)
+    im = img()
+    rnd = random.Random(seed)
+    for x in range(S):
+        for y in range(S):
+            t = rnd.random()
+            im.putpixel((x, y), mix(base, ader, 0.05 + t * 0.20))
+    if block:
+        # Voller Block: eingelassene Facetten
+        for _ in range(9):
+            x, y = rnd.randrange(1, 14), rnd.randrange(1, 14)
+            box(im, x, y, x + 1, y + 1, mix(base, glanz, 0.45))
+            im.putpixel((x, y), glanz)
+    else:
+        # Erz: ein paar Nester mit Glanzpunkt
+        for _ in range(5):
+            x, y = rnd.randrange(2, 13), rnd.randrange(2, 13)
+            box(im, x, y, x + 1, y + 1, ader)
+            im.putpixel((x, y), glanz)
+            if rnd.random() < 0.6:
+                im.putpixel((x + 1, y + 1), mix(ader, glanz, 0.4))
+    bevel(im, 0.22, 0.28)
+    return im
+
+
+def marmor_textur(base_hex, ader_hex, glanz_hex, seed):
+    base, ader, glanz = hexc(base_hex), hexc(ader_hex), hexc(glanz_hex)
+    im = img()
+    rnd = random.Random(seed)
+    for x in range(S):
+        for y in range(S):
+            t = (math.sin(x * 0.5 + y * 0.2) + 1) / 2
+            im.putpixel((x, y), mix(base, glanz, t * 0.18))
+    # Zwei geschwungene Adern
+    for start in (3, 10):
+        y = start
+        for x in range(S):
+            y = max(0, min(S - 1, y + rnd.choice((-1, 0, 0, 1))))
+            im.putpixel((x, y), mix(base, ader, 0.75))
+            if 0 <= y + 1 < S:
+                im.putpixel((x, y + 1), mix(base, ader, 0.35))
+    bevel(im, 0.20, 0.24)
+    return im
+
+
+def erze():
+    for name, (b, a, g) in ERZ.items():
+        seed = sum(ord(c) for c in name)
+        if "marble" in name:
+            im = marmor_textur(b, a, g, seed)
+        elif name == "neon_lamp":
+            im = erz_textur(b, a, g, seed, block=True)
+            box(im, 3, 3, 12, 12, hexc(g))
+            box(im, 5, 5, 10, 10, mix(hexc(g), hexc("#FFFFFF"), 0.5))
+        else:
+            im = erz_textur(b, a, g, seed, block="block" in name or "pile" in name)
+        save(im, TEX / "block", name)
+    return len(ERZ)
+
+
 # ---------------------------------------------------------------- Items
 
 FAHRZEUG_FARBEN = {
@@ -695,7 +816,7 @@ def sonstige_items():
 
 if __name__ == "__main__":
     a = moebel()
-    b = sonder_moebel()
+    b = sonder_moebel() + erze() + eigene_moebel()
     c = fahrzeug_items()
     d = sonstige_items() + rotorblatt()
     print(f"{a + b} Möbel, {c} Fahrzeuge, {d} weitere Items")

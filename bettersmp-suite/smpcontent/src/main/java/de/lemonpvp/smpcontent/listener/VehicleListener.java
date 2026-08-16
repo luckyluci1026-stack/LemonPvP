@@ -76,18 +76,45 @@ public final class VehicleListener implements Listener {
         }
     }
 
+    /** Wer gerade geht oder gestorben ist, darf immer aussteigen. */
+    private final java.util.Set<java.util.UUID> gehen = new java.util.HashSet<>();
+
     /**
      * Im Flug steigt man nicht einfach aus.
      *
      * Sonst wäre der erste Schleicher schon der Absprung und der
      * Doppel-Schleicher käme nie zustande. Am Boden geht Aussteigen normal.
+     *
+     * Beim Verlassen des Servers und beim Tod wird nicht gebremst - sonst
+     * bliebe ein Spieler an einem Fahrzeug hängen, das es für ihn gar nicht
+     * mehr gibt.
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDismount(org.bukkit.event.entity.EntityDismountEvent event) {
-        if (event.getEntity() instanceof org.bukkit.entity.Player
-                && plugin.vehicles().airborne(event.getDismounted())) {
+        if (!(event.getEntity() instanceof org.bukkit.entity.Player player)) {
+            return;
+        }
+        if (gehen.contains(player.getUniqueId()) || player.isDead()
+                || !player.isValid()) {
+            return;
+        }
+        if (plugin.vehicles().airborne(event.getDismounted())) {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        gehen.add(event.getPlayer().getUniqueId());
+        // Ein Schirm gehört niemandem mehr, wenn der Spieler weg ist
+        plugin.parachutes().close(event.getPlayer());
+        org.bukkit.Bukkit.getScheduler().runTask(plugin,
+                () -> gehen.remove(event.getPlayer().getUniqueId()));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
+        plugin.parachutes().close(event.getEntity());
     }
 
     /** Rechtsklick mit dem Fallschirm im Fall: Schirm auf. */
