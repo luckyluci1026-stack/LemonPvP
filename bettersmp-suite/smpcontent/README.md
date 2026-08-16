@@ -62,6 +62,13 @@ Die Möbel bekommen dabei **echte Formen** statt eines Würfels: Bänke haben
 Beine und Lehne, Sessel Armlehnen und ein Polster, Kommoden Schubladen mit
 Griffen, Tische eine Platte auf vier Beinen.
 
+Die Fahrzeuge auch: Autos haben Wanne, Kabine und **vier Räder**, Flugzeuge
+Rumpf, Tragflächen, Leitwerk und Triebwerke, Hubschrauber einen Rotor über
+der Kanzel und Kufen darunter, die Lok Kessel, Schornstein und Fahrwerk.
+Jedes davon kommt mit **einer einzigen 16×16-Textur** aus – die UV-Ausschnitte
+zeigen auf die passende Stelle der Seitenansicht, Räder und Streben auf den
+dunklen Streifen.
+
 **Deine eigenen Dateien werden nie überschrieben.** Legst du eine schönere
 Textur unter demselben Namen ab, bleibt sie auch nach einem Update deine.
 Erzeugt wurden sie mit `texturen.py` im Plugin-Ordner – dort kannst du jede

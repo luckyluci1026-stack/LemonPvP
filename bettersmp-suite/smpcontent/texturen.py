@@ -111,6 +111,17 @@ def modell(ordner, name, elemente, textur, groesse=(16, 16), display=None):
     ziel.write_text(json.dumps(daten, indent=2), encoding="utf-8")
 
 
+def quader_uv(von, bis, uv):
+    """Quader, bei dem alle Seiten denselben Ausschnitt der Textur zeigen.
+
+    Bei einem Auto ist das genau richtig: die Seitenansicht gehört an die
+    Seiten, das Dach nimmt den oberen Streifen, die Räder den dunklen.
+    """
+    faces = {seite: {"uv": list(uv), "texture": "#0"}
+             for seite in ("north", "south", "east", "west", "up", "down")}
+    return {"from": list(von), "to": list(bis), "faces": faces}
+
+
 def quader(von, bis, seiten=("north", "south", "east", "west", "up", "down")):
     faces = {}
     for seite in seiten:
@@ -454,6 +465,55 @@ def aus_form(form, palette):
     return im
 
 
+def koerper(name):
+    """
+    Der Körper eines Fahrzeugs, aus wenigen Quadern.
+
+    Die UV-Ausschnitte zeigen auf die passende Stelle der Seitenansicht:
+    der Aufbau nimmt den hellen Streifen, die Räder den dunklen darunter.
+    Dadurch braucht jedes Fahrzeug nur eine einzige 16x16-Textur.
+    """
+    hell = [3, 4, 13, 8]      # Karosserie
+    dunkel = [3, 9, 6, 11]    # Räder, Fahrwerk, Streben
+    dach = [5, 3, 11, 6]      # Fenster und Aufbau
+
+    if name.startswith("auto_"):
+        return [
+            quader_uv((1, 3, 3), (15, 8, 13), hell),      # Wanne
+            quader_uv((4, 8, 4), (12, 11, 12), dach),     # Kabine
+            quader_uv((2, 0, 2), (5, 3, 5), dunkel),      # vier Räder
+            quader_uv((11, 0, 2), (14, 3, 5), dunkel),
+            quader_uv((2, 0, 11), (5, 3, 14), dunkel),
+            quader_uv((11, 0, 11), (14, 3, 14), dunkel),
+        ]
+    if name.startswith("heli_"):
+        return [
+            quader_uv((4, 3, 2), (12, 10, 12), hell),     # Kanzel
+            quader_uv((6, 5, 12), (10, 8, 16), hell),     # Heckausleger
+            quader_uv((0, 12, 7), (16, 13, 9), dunkel),   # Rotor quer
+            quader_uv((7, 12, 1), (9, 13, 15), dunkel),   # Rotor laengs
+            quader_uv((7, 10, 7), (9, 12, 9), dunkel),    # Rotorkopf
+            quader_uv((5, 0, 3), (6, 3, 11), dunkel),     # Kufen
+            quader_uv((10, 0, 3), (11, 3, 11), dunkel),
+        ]
+    if name == "zug_lok":
+        return [
+            quader_uv((2, 3, 1), (14, 11, 15), hell),     # Kessel
+            quader_uv((5, 11, 2), (8, 15, 5), dunkel),    # Schornstein
+            quader_uv((2, 0, 1), (14, 3, 15), dunkel),    # Fahrwerk
+        ]
+    # Flugzeuge und Jets: Rumpf, Fluegel, Leitwerk
+    lang = 15 if "passagier" in name or "fracht" in name else 13
+    return [
+        quader_uv((6, 4, 1), (10, 9, lang), hell),        # Rumpf
+        quader_uv((0, 5, 5), (16, 6, 10), hell),          # Tragflaechen
+        quader_uv((5, 5, lang - 3), (11, 6, lang), hell), # Hoehenruder
+        quader_uv((7, 9, lang - 3), (9, 13, lang), dunkel),  # Seitenruder
+        quader_uv((3, 3, 6), (5, 5, 9), dunkel),          # Triebwerke
+        quader_uv((11, 3, 6), (13, 5, 9), dunkel),
+    ]
+
+
 def fahrzeug_items():
     for name, (hell, dunkel, akzent) in FAHRZEUG_FARBEN.items():
         if name.startswith("auto_"):
@@ -480,12 +540,11 @@ def fahrzeug_items():
                     im.putpixel((x, y), mix(p, (0, 0, 0, 255), 0.12))
         save(im, TEX / "item", name)
 
-        # Ein flaches, aber echtes 3D-Modell: die Silhouette als Platte
-        modell(MOD / "item", name,
-               [quader((1, 0, 7.5), (15, 10, 8.5))], f"smp:item/{name}",
+        modell(MOD / "item", name, koerper(name), f"smp:item/{name}",
                display={"thirdperson_righthand": {
-                   "rotation": [0, 90, 0], "translation": [0, 2, 0],
-                   "scale": [0.6, 0.6, 0.6]}})
+                   "rotation": [0, 90, 0], "translation": [0, 1, 0],
+                   "scale": [0.45, 0.45, 0.45]},
+                   "gui": {"rotation": [30, 225, 0], "scale": [0.5, 0.5, 0.5]}})
     return len(FAHRZEUG_FARBEN)
 
 
