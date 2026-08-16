@@ -4,13 +4,21 @@ Eigene **Blöcke**, **Items** und **Spezialfähigkeiten** (Paper 1.21.11).
 
 ## Inhalt
 
+**412 eigene Inhalte**, alle mit Textur außer den Platzhaltern:
+
 | Datei | Inhalt |
 |---|---|
-| `config.yml` | 24 Blöcke, 62 Items – Erze, Marmor, Möbel, Laserschwerter, Tränke, Werkzeuge, Früchte |
-| `content/platzhalter-bloecke.yml` | **100 Platzhalter-Blöcke**, noch ohne Textur |
-| `content/platzhalter-items.yml` | **150 Platzhalter-Items**, noch ohne Textur |
+| `config.yml` | 24 Blöcke, 88 Items – Erze, Marmor, Laserschwerter, Tränke, Werkzeuge, Früchte, **Waffen**, **Fahrzeuge**, Fallschirm |
+| `content/moebel.yml` | **50 Möbel** – drehbar, zum Draufsetzen, mit echten 3D-Formen |
+| `content/platzhalter-bloecke.yml` | **100 Platzhalter-Blöcke**, absichtlich ohne Textur |
+| `content/platzhalter-items.yml` | **150 Platzhalter-Items**, absichtlich ohne Textur |
+| `fahrzeuge.yml` | **20 Fahrzeuge** – 8 Autos, 8 Flieger, 3 Boote, 1 Lok |
 | `animationen.yml` | 13 Teilchen-Animationen (Formeln), eigene bauen |
 | `FAEHIGKEITEN.txt` | alle Auslöser und Aktionen erklärt |
+
+Was das Plugin außerdem kann: **Schleudersitz** mit Fallschirm, **Abstürze**
+mit Explosion, **Tacho** über der Hotbar, **Hupe**, drehender **Rotor**, und
+ein Bedrock-Pack, das es sich aus deinem Java-Pack selbst baut.
 
 Alle `*.yml` aus `content/` werden mitgeladen – so bleibt die `config.yml`
 übersichtlich und du kannst deine Sachen nach Thema trennen.
