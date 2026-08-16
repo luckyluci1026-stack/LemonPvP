@@ -38,7 +38,8 @@ public final class ContentGui {
 
     /** Was gerade angezeigt wird. */
     public enum Filter {
-        ALL("Alles"), BLOCKS("Nur Blöcke"), ITEMS("Nur Items");
+        ALL("Alles"), BLOCKS("Nur Blöcke"), ITEMS("Nur Items"),
+        FURNITURE("Nur Möbel"), VEHICLES("Nur Fahrzeuge");
 
         private final String label;
 
@@ -143,12 +144,31 @@ public final class ContentGui {
     }
 
     private List<CustomEntry> matching(Holder holder) {
-        return matching(plugin.registry().entries().values(), holder.filter, holder.search);
+        return matching(plugin.registry().entries().values(), holder.filter, holder.search,
+                fahrzeugIds());
+    }
+
+    /** Die Ids der Items, mit denen man ein Fahrzeug hinstellt. */
+    private java.util.Set<String> fahrzeugIds() {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        plugin.vehicles().types().values()
+                .forEach(type -> ids.add(type.item().toLowerCase(Locale.ROOT)));
+        return ids;
     }
 
     /** Die Einträge, die zu Filter und Suche passen. */
     public static List<CustomEntry> matching(Collection<CustomEntry> all, Filter filter,
                                              String search) {
+        return matching(all, filter, search, java.util.Set.of());
+    }
+
+    /**
+     * @param fahrzeuge Ids der Fahrzeug-Items - nur die kennt das GUI selbst
+     *                  nicht, sie stehen in der fahrzeuge.yml
+     */
+    public static List<CustomEntry> matching(Collection<CustomEntry> all, Filter filter,
+                                             String search,
+                                             java.util.Set<String> fahrzeuge) {
         String needle = search == null ? "" : search.toLowerCase(Locale.ROOT).trim();
         List<CustomEntry> out = new ArrayList<>();
         for (CustomEntry entry : all) {
@@ -156,6 +176,13 @@ public final class ContentGui {
                 continue;
             }
             if (filter == Filter.ITEMS && entry.block()) {
+                continue;
+            }
+            if (filter == Filter.FURNITURE && !entry.isFurniture()) {
+                continue;
+            }
+            if (filter == Filter.VEHICLES
+                    && !fahrzeuge.contains(entry.id().toLowerCase(Locale.ROOT))) {
                 continue;
             }
             if (!needle.isEmpty() && !matches(entry, needle)) {

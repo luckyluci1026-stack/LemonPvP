@@ -44,7 +44,9 @@ Shift-Klick = 64 Stück. (Recht `smpcontent.admin`)
 
 Das GUI hat **Seiten** (45 pro Seite), unten links/rechts blättern. Dazu:
 
-- **Filter** (Trichter): Alles → Nur Blöcke → Nur Items
+- **Filter** (Trichter): Alles → Nur Blöcke → Nur Items → **Nur Möbel** →
+  **Nur Fahrzeuge**. So findest du die 20 Fahrzeuge und die 74 Möbel, ohne
+  ihre Ids zu kennen.
 - **Suche**: `/smpcontent list laser` zeigt nur passende Einträge. Gesucht wird
   in der Id **und** im Anzeigenamen. Das Fernrohr im GUI hebt die Suche auf.
 - Passt etwas nicht mehr ins Inventar, fällt es vor die Füße statt zu verschwinden.
