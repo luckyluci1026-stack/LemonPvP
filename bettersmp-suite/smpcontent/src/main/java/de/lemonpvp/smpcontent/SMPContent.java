@@ -30,6 +30,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * SMPContent - eigene Blöcke und Items passend zum SMP-Texturepack.
@@ -129,6 +131,47 @@ public final class SMPContent extends JavaPlugin {
         }
         copyIfAbsent("animationen.yml", getDataFolder().toPath().resolve("animationen.yml"));
         copyIfAbsent("FAEHIGKEITEN.txt", getDataFolder().toPath().resolve("FAEHIGKEITEN.txt"));
+        saveAssets();
+    }
+
+    /**
+     * Legt die mitgelieferten Texturen und 3D-Modelle in den Datenordner -
+     * einmalig, und nur was noch nicht da ist. Deine eigenen Dateien werden
+     * also nie überschrieben: Wer eine Textur schöner haben will, legt seine
+     * eigene daneben und behält sie auch nach einem Update.
+     */
+    private void saveAssets() {
+        int kopiert = 0;
+        for (String art : new String[]{"textures/block", "textures/item",
+                                       "models/block", "models/item"}) {
+            for (String datei : listResources("assets/" + art)) {
+                Path ziel = getDataFolder().toPath().resolve(art).resolve(datei);
+                if (!Files.exists(ziel)) {
+                    copyIfAbsent("assets/" + art + "/" + datei, ziel);
+                    kopiert++;
+                }
+            }
+        }
+        if (kopiert > 0) {
+            getLogger().info(kopiert + " mitgelieferte Texturen und Modelle angelegt.");
+        }
+    }
+
+    /** Was liegt im Jar unter diesem Ordner? */
+    private List<String> listResources(String ordner) {
+        List<String> namen = new ArrayList<>();
+        try (var jar = new java.util.jar.JarFile(getFile())) {
+            var eintraege = jar.entries();
+            while (eintraege.hasMoreElements()) {
+                String name = eintraege.nextElement().getName();
+                if (name.startsWith(ordner + "/") && !name.endsWith("/")) {
+                    namen.add(name.substring(ordner.length() + 1));
+                }
+            }
+        } catch (IOException ex) {
+            getLogger().warning("Mitgelieferte Dateien nicht lesbar: " + ex.getMessage());
+        }
+        return namen;
     }
 
     private void copyIfAbsent(String resource, Path target) {

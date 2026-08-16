@@ -51,6 +51,22 @@ Das GUI hat **Seiten** (45 pro Seite), unten links/rechts blättern. Dazu:
 
 **3. `/smpcontent give <Spieler> <Id> [Menge]`** – gezielt vergeben.
 
+## Texturen sind schon dabei
+
+Beim ersten Start legt das Plugin **133 fertige Texturen und 3D-Modelle** in
+deinen Datenordner: alle 50 Möbel, alle 17 Fahrzeuge, Fallschirm, Pistole,
+Schrotflinte, Raketenwerfer und Munition. Direkt nach `/smpcontent pack` sieht
+also alles nach etwas aus – kein Notenblock, kein Fehlwürfel.
+
+Die Möbel bekommen dabei **echte Formen** statt eines Würfels: Bänke haben
+Beine und Lehne, Sessel Armlehnen und ein Polster, Kommoden Schubladen mit
+Griffen, Tische eine Platte auf vier Beinen.
+
+**Deine eigenen Dateien werden nie überschrieben.** Legst du eine schönere
+Textur unter demselben Namen ab, bleibt sie auch nach einem Update deine.
+Erzeugt wurden sie mit `texturen.py` im Plugin-Ordner – dort kannst du jede
+Form Pixel für Pixel ändern und neu erzeugen lassen.
+
 ## Eigenes Texturepack bauen (Blockbench)
 
 SMPContent baut dir das Resource-Pack selbst – du brauchst kein ItemsAdder.
