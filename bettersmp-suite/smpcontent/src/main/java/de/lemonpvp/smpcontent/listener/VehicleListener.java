@@ -76,6 +76,39 @@ public final class VehicleListener implements Listener {
         }
     }
 
+    /**
+     * Im Flug steigt man nicht einfach aus.
+     *
+     * Sonst wäre der erste Schleicher schon der Absprung und der
+     * Doppel-Schleicher käme nie zustande. Am Boden geht Aussteigen normal.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onDismount(org.bukkit.event.entity.EntityDismountEvent event) {
+        if (event.getEntity() instanceof org.bukkit.entity.Player
+                && plugin.vehicles().airborne(event.getDismounted())) {
+            event.setCancelled(true);
+        }
+    }
+
+    /** Rechtsklick mit dem Fallschirm im Fall: Schirm auf. */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onParachute(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND
+                || !event.getAction().isRightClick()) {
+            return;
+        }
+        String id = plugin.registry().idOf(event.getItem());
+        if (id == null || !id.equalsIgnoreCase(plugin.vehicles().parachuteItem())) {
+            return;
+        }
+        var player = event.getPlayer();
+        if (player.isOnGround() || plugin.parachutes().isOpen(player)) {
+            return;
+        }
+        event.setCancelled(true);
+        plugin.parachutes().deploy(player, plugin.vehicles().parachuteSettings());
+    }
+
     /** Nach einem Neustart stehen die Fahrzeuge noch da - wieder aufnehmen. */
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {

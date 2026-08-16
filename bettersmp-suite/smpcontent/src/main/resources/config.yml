@@ -2072,6 +2072,19 @@ items:
     model-data: 8511
     max-stack: 1
 
+  fallschirm:
+    material: WHITE_BANNER
+    name: "<white>Fallschirm"
+    lore:
+      - "<dark_gray>Rechtsklick im Fall: Schirm auf"
+      - "<gray>Im Flugzeug: zweimal schleichen"
+    model-data: 8540
+    max-stack: 1
+    recipe:
+      shape: ["WWW", "S S", " S "]
+      keys: {W: WHITE_WOOL, S: STRING}
+      amount: 1
+
   jet_kampf:
     material: MINECART
     name: "<gray>Kampfjet"

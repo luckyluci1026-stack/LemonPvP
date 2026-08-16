@@ -75,6 +75,11 @@ public final class VehicleManager {
         double speed;
         int fuelLeft;
         int soundTick;
+        /** Woher es kam - daran erkennt man den Aufprall. */
+        Location lastPos;
+        /** Schleicht der Fahrer gerade? Für den Doppel-Schleicher. */
+        boolean sneaking;
+        long lastSneak;
 
         Ride(VehicleType type, ArmorStand base, ItemDisplay body, float yaw, int fuelLeft) {
             this.type = type;
@@ -121,6 +126,24 @@ public final class VehicleManager {
 
     public Map<String, VehicleType> types() {
         return types;
+    }
+
+    /**
+     * Welches Item ist der Fallschirm zum Selbstöffnen? Genommen wird der
+     * erste, der bei irgendeinem Fahrzeug eingetragen ist - so steht die Id
+     * nur an einer Stelle.
+     */
+    public String parachuteItem() {
+        return parachuteSettings().parachute();
+    }
+
+    public VehicleType.Eject parachuteSettings() {
+        for (VehicleType type : types.values()) {
+            if (!type.eject().parachute().isBlank()) {
+                return type.eject();
+            }
+        }
+        return VehicleType.Eject.NONE;
     }
 
     public ConfigProblem.Report problem() {
@@ -365,6 +388,11 @@ public final class VehicleManager {
             case TRAIN -> rails(ride);
             case CAR -> roll(ride);
         };
+        checkCrash(ride, velocity);
+        if (!ride.base.isValid()) {
+            return;   // beim Aufprall zerlegt
+        }
+        ride.lastPos = ride.base.getLocation();
         ride.base.setVelocity(velocity);
         ride.base.setRotation(ride.yaw, 0f);
 
@@ -398,6 +426,20 @@ public final class VehicleManager {
                 ride.speed = 0;
             }
         }
+        // Zweimal schnell schleichen: raus hier. Erkannt wird die Taste,
+        // nicht das Ereignis - beim Reiten schickt der Client kein
+        // Schleich-Ereignis, die Taste steht aber in der Eingabe.
+        if (input.isSneak() && !ride.sneaking) {
+            long now = System.currentTimeMillis();
+            if (now - ride.lastSneak < (long) (ride.type.eject().window() * 1000)) {
+                ride.lastSneak = 0;
+                eject(ride, driver);
+                return;
+            }
+            ride.lastSneak = now;
+        }
+        ride.sneaking = input.isSneak();
+
         // Lenken geht nur, solange man rollt - wie im echten Leben
         if (ride.speed != 0 && ride.type.kind() != VehicleType.Kind.TRAIN) {
             double factor = ride.speed < 0 ? -1 : 1;
@@ -411,6 +453,90 @@ public final class VehicleManager {
         if (ride.speed != 0) {
             burn(ride, driver);
         }
+    }
+
+    /**
+     * Schleudersitz: schießt den Fahrer nach oben aus dem Fahrzeug und
+     * öffnet den Fallschirm.
+     */
+    private void eject(Ride ride, Player driver) {
+        VehicleType.Eject settings = ride.type.eject();
+        if (!settings.enabled()) {
+            return;
+        }
+        ride.base.removePassenger(driver);
+        Vector forward = direction(ride.yaw).multiply(settings.forward() * Math.abs(ride.speed));
+        driver.setVelocity(new Vector(forward.getX(), settings.power(), forward.getZ()));
+        driver.setFallDistance(0);
+        if (!settings.sound().isBlank()) {
+            driver.getWorld().playSound(driver.getLocation(), settings.sound(), 1.0f, 1.2f);
+        }
+        driver.getWorld().spawnParticle(org.bukkit.Particle.LARGE_SMOKE,
+                driver.getLocation(), 20, 0.3, 0.3, 0.3, 0.05);
+        plugin.parachutes().deploy(driver, settings);
+        plugin.msgs().send(driver, "vehicle-eject");
+    }
+
+    /**
+     * Aufprall.
+     *
+     * Verglichen wird, wie weit das Fahrzeug wollte und wie weit es
+     * tatsächlich gekommen ist. Bleibt viel davon liegen, steht da etwas im
+     * Weg - dann kracht es.
+     */
+    private void checkCrash(Ride ride, Vector wanted) {
+        VehicleType.Crash crash = ride.type.crash();
+        if (!crash.enabled() || ride.lastPos == null) {
+            return;
+        }
+        double gewollt = Math.hypot(wanted.getX(), wanted.getZ());
+        if (gewollt < crash.minSpeed()) {
+            return;
+        }
+        Location now = ride.base.getLocation();
+        if (!now.getWorld().equals(ride.lastPos.getWorld())) {
+            return;
+        }
+        double echt = Math.hypot(now.getX() - ride.lastPos.getX(),
+                now.getZ() - ride.lastPos.getZ());
+        // Kaum vom Fleck gekommen, obwohl es wollte: da war eine Wand
+        if (echt > gewollt * 0.35) {
+            return;
+        }
+        bang(ride, crash);
+    }
+
+    private void bang(Ride ride, VehicleType.Crash crash) {
+        Location at = ride.base.getLocation();
+        if (!crash.sound().isBlank()) {
+            at.getWorld().playSound(at, crash.sound(), 1.0f, 1.0f);
+        }
+        at.getWorld().spawnParticle(org.bukkit.Particle.LARGE_SMOKE, at, 40, 0.6, 0.6, 0.6, 0.1);
+        for (Entity passenger : new ArrayList<>(ride.base.getPassengers())) {
+            if (passenger instanceof Player player) {
+                ride.base.removePassenger(player);
+                if (crash.damage() > 0) {
+                    player.damage(crash.damage());
+                }
+                plugin.msgs().send(player, "vehicle-crash");
+            }
+        }
+        if (crash.explosion() > 0) {
+            at.getWorld().createExplosion(at, (float) crash.explosion(),
+                    false, crash.breakBlocks());
+        }
+        if (crash.destroy()) {
+            remove(ride.base);
+        } else {
+            ride.speed = 0;
+        }
+    }
+
+    /** Fliegt dieses Fahrzeug gerade? Dann steigt man nicht einfach aus. */
+    public boolean airborne(Entity vehicle) {
+        Ride ride = active.get(vehicle.getUniqueId());
+        return ride != null && ride.type.kind() == VehicleType.Kind.JET
+                && !ride.base.isOnGround();
     }
 
     /** Sprit verbrauchen, wenn einer eingestellt ist. */

@@ -23,5 +23,7 @@ list-console: "%prefix%<gray>Verfügbar: <white>%list%</white></gray>"
 
 vehicle-placed: "%prefix%<green>%name% steht bereit.</green> <gray>Rechtsklick zum Einsteigen, Schleichen zum Aussteigen.</gray>"
 vehicle-empty: "%prefix%<gold>Der Tank ist leer.</gold>"
+vehicle-eject: "%prefix%<aqua>Schleudersitz!</aqua> <gray>Der Schirm geht gleich auf.</gray>"
+vehicle-crash: "%prefix%<red>Aufprall!</red>"
 
 gui-title: "<gradient:#A78BFA:#6D28D9><bold>Eigene Inhalte</bold></gradient>"

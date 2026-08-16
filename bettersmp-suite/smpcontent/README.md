@@ -347,6 +347,53 @@ Der einzige echte Unterschied zwischen Flugzeug und Hubschrauber ist
 `hover:` – ein Flugzeug sackt ohne Schub langsam durch, ein Hubschrauber
 bleibt in der Luft stehen. Alles andere sind nur Zahlen.
 
+### Schleudersitz und Fallschirm
+
+**Zweimal schnell schleichen**, und es schießt dich aus dem Flugzeug – kurz
+darauf geht der Schirm auf. Am Schirm sinkst du gemütlich und lenkst mit den
+normalen Bewegungstasten; schräg gegen den Wind kommt man erstaunlich weit.
+
+Damit der erste Schleicher nicht schon der Absprung ist, kann man **im Flug
+nicht einfach aussteigen** – am Boden geht es normal.
+
+```yaml
+    eject:
+      enabled: true
+      window: 1.0          # so schnell müssen die zwei Schleicher kommen
+      power: 1.5           # wie hoch es dich schleudert
+      forward: 0.3         # wieviel davon nach vorne geht
+      sound: entity.firework_rocket.launch
+      parachute: fallschirm  # deine eigene Item-Id, leer = kein Schirm
+      open-after: 8        # Ticks, bis der Schirm aufgeht
+      fall-speed: 0.18     # wie schnell man sinkt
+      drift: 0.09          # wie gut man lenken kann
+```
+
+Den **Fallschirm** gibt es auch als Item zum Craften (3× Wolle, 3× Faden).
+Rechtsklick damit im freien Fall öffnet ihn ebenfalls – man braucht also kein
+Flugzeug dafür.
+
+### Abstürze
+
+Gegen eine Wand fahren tut weh. Erkannt wird das daran, dass das Fahrzeug
+viel weniger weit gekommen ist, als es wollte:
+
+```yaml
+    crash:
+      enabled: true
+      min-speed: 0.45      # ab welchem Tempo es kracht
+      damage: 7.0          # Schaden für alle Insassen
+      explosion: 1.0       # Stärke, 0 = keine
+      break-blocks: false  # Landschaft bleibt heil
+      destroy: true        # Fahrzeug ist danach hin
+      sound: entity.generic.explode
+```
+
+Die mitgelieferten Werte sind abgestuft: Der Oldtimer bekommt eine Delle
+(4 Schaden, keine Explosion, bleibt heil), der Kampfjet wird zum Feuerball
+(14 Schaden, Explosion 4). Blöcke zerstört standardmäßig **nichts** – auf
+einem Schulserver will niemand Krater in der Landschaft.
+
 Rechtsklick auf den Boden stellt es hin, Rechtsklick darauf steigt ein,
 Schleichen steigt aus, Schleichen + Rechtsklick mit leerer Hand packt es
 wieder ein. Nach einem Neustart stehen die Fahrzeuge noch da und fahren weiter.

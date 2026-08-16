@@ -4,6 +4,7 @@ import de.lemonpvp.smpcontent.ability.Abilities;
 import de.lemonpvp.smpcontent.command.ContentCommand;
 import de.lemonpvp.smpcontent.content.BlockStore;
 import de.lemonpvp.smpcontent.furniture.FurnitureManager;
+import de.lemonpvp.smpcontent.vehicle.ParachuteManager;
 import de.lemonpvp.smpcontent.vehicle.VehicleManager;
 import de.lemonpvp.smpcontent.content.ContentRegistry;
 import de.lemonpvp.smpcontent.content.CustomEntry;
@@ -52,6 +53,7 @@ public final class SMPContent extends JavaPlugin {
     private BlockStore blocks;
     private FurnitureManager furniture;
     private VehicleManager vehicles;
+    private ParachuteManager parachutes;
 
     private YamlConfiguration config;
     private ConfigProblem.Report configProblem;
@@ -69,6 +71,7 @@ public final class SMPContent extends JavaPlugin {
         this.gui = new ContentGui(this);
         this.furniture = new FurnitureManager(this);
         this.vehicles = new VehicleManager(this);
+        this.parachutes = new ParachuteManager(this);
         pack.ensureFolders();
         vehicles.load();
 
@@ -80,6 +83,7 @@ public final class SMPContent extends JavaPlugin {
         getCommand("smpcontent").setExecutor(new ContentCommand(this));
         startHeldTask();
         vehicles.start();
+        Bukkit.getScheduler().runTaskTimer(this, parachutes::tick, 1L, 1L);
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             for (org.bukkit.Chunk chunk : world.getLoadedChunks()) {
                 blocks.load(chunk);
@@ -169,6 +173,11 @@ public final class SMPContent extends JavaPlugin {
     /** Autos, Jets und Züge. */
     public VehicleManager vehicles() {
         return vehicles;
+    }
+
+    /** Fallschirme - aus dem Schleudersitz oder von Hand. */
+    public ParachuteManager parachutes() {
+        return parachutes;
     }
 
     // ------------------------------------------------------------------
