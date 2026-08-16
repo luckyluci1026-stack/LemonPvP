@@ -77,6 +77,8 @@ public final class VehicleManager {
         final ArmorStand base;
         final ItemDisplay body;
         ItemDisplay rotor;
+        /** Das Klickfeld zum Einsteigen - muss mitfahren, sonst bleibt es stehen. */
+        Interaction hitbox;
         float rotorWinkel;
         float yaw;
         double speed;
@@ -253,7 +255,7 @@ public final class VehicleManager {
             });
         }
 
-        world.spawn(at, Interaction.class, hitbox -> {
+        Interaction feld = world.spawn(at, Interaction.class, hitbox -> {
             hitbox.setInteractionWidth((float) type.width());
             hitbox.setInteractionHeight((float) type.height());
             hitbox.setResponsive(true);
@@ -268,6 +270,7 @@ public final class VehicleManager {
 
         Ride ride = new Ride(type, base, body, yaw, type.range());
         ride.rotor = rotor;
+        ride.hitbox = feld;
         active.put(base.getUniqueId(), ride);
     }
 
@@ -330,10 +333,18 @@ public final class VehicleManager {
         }
         ItemDisplay body = null;
         ItemDisplay rotorTeil = null;
+        Interaction feldTeil = null;
         String owner = base.getUniqueId().toString();
         for (Entity nearby : base.getWorld().getNearbyEntities(base.getLocation(), 3, 3, 3)) {
-            if (!(nearby instanceof ItemDisplay display) || !owner.equals(display
-                    .getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING))) {
+            if (!owner.equals(nearby.getPersistentDataContainer()
+                    .get(ownerKey, PersistentDataType.STRING))) {
+                continue;
+            }
+            if (nearby instanceof Interaction feld) {
+                feldTeil = feld;
+                continue;
+            }
+            if (!(nearby instanceof ItemDisplay display)) {
                 continue;
             }
             if ("rotor".equals(display.getPersistentDataContainer()
@@ -345,6 +356,7 @@ public final class VehicleManager {
         }
         Ride ride = new Ride(type, base, body, base.getLocation().getYaw(), type.range());
         ride.rotor = rotorTeil;
+        ride.hitbox = feldTeil;
         active.put(base.getUniqueId(), ride);
         return ride;
     }
@@ -487,6 +499,13 @@ public final class VehicleManager {
                     ? Math.max(-70, Math.min(70, driver.getLocation().getPitch())) : 0);
             ride.body.teleport(at);
         }
+        // Das Klickfeld faehrt mit. Bliebe es stehen, kaeme man nach der
+        // ersten Fahrt nicht mehr in sein eigenes Auto - und an jedem Ort,
+        // an dem je ein Fahrzeug stand, schwebte ein unsichtbarer Klickkasten.
+        if (ride.hitbox != null && ride.hitbox.isValid()) {
+            ride.hitbox.teleport(ride.base.getLocation());
+        }
+
         if (ride.rotor != null && ride.rotor.isValid()) {
             // Im Stand dreht er langsam, unter Schub schnell
             ride.rotorWinkel = (ride.rotorWinkel

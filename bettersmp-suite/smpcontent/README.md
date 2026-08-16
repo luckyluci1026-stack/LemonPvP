@@ -395,10 +395,20 @@ Charakter machen drei Werte: `speed` (Höchstgeschwindigkeit), `power`
 | **Streifenwagen** | 1.05 | 0.08 | 5.5 | 4 | holt auch schnelle Leute ein |
 | **Rennwagen** | 1.25 | 0.12 | 6.5 | 1 | Einsitzer für die Rennstrecke |
 | **Hypercar** | 1.60 | 0.10 | 4.0 | 2 | Spitze, will lange Geraden |
+| **Stier GT** | 1.75 | 0.15 | 5.5 | 2 | Mittelmotor-Schreihals, giftiger Antritt |
+| **Veloce Hyper** | 2.30 | 0.11 | 2.6 | 2 | das schnellste Auto, schwerfällig in der Kurve |
 | **Oldtimer** | 0.45 | 0.03 | 4.5 | 4 | gemütlich, für Spazierfahrten |
 
 Viel `speed` **und** viel `turn` zusammen fühlt sich nervös an – deshalb lenkt
-das Hypercar bewusst träger als der Roadster. Dazu gibt es weiterhin den
+das Hypercar bewusst träger als der Roadster, und der Veloce mit `turn: 2.6`
+am trägsten von allen: Bei 2.30 Tempo wäre alles andere unfahrbar.
+
+> **Zu den Namen:** Der *Stier GT* und der *Veloce Hyper* sind einem
+> italienischen Zwölfzylinder und einem französischen Vierturbo
+> nachempfunden – Fahrverhalten, Form und Farbe. Sie heißen hier nur nicht so,
+> weil in einem öffentlichen Repo keine fremden Markennamen liegen sollten.
+> Auf deinem Server ist das eine Zeile in der `config.yml`:
+> `name: "<yellow>Lamborghini"` – und fertig. Dazu gibt es weiterhin den
 Geländewagen und die Dampflok.
 
 ### Flugzeuge, Jets und Hubschrauber

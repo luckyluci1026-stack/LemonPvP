@@ -2047,6 +2047,26 @@ items:
     max-stack: 1
     glow: true
 
+  auto_stier:
+    material: MINECART
+    name: "<yellow>Stier GT"
+    lore:
+      - "<dark_gray>Mittelmotor, Zwölfzylinder"
+      - "<gray>Giftiger Antritt, sehr direkt"
+    model-data: 8560
+    max-stack: 1
+    glow: true
+
+  auto_veloce:
+    material: MINECART
+    name: "<blue>Veloce Hyper"
+    lore:
+      - "<dark_gray>Das schnellste Auto im Stall"
+      - "<gray>Will lange Geraden"
+    model-data: 8561
+    max-stack: 1
+    glow: true
+
   auto_oldtimer:
     material: MINECART
     name: "<dark_aqua>Oldtimer"

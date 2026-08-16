@@ -202,6 +202,61 @@ vehicles:
       sound: entity.generic.explode
       ram: 6.0
 
+  # Der Schreihals: Mittelmotor, giftiger Antritt, sehr direkt.
+  # (Heisst absichtlich nicht wie die echte Marke - siehe README.
+  #  Umbenennen ist eine Zeile in der config.yml.)
+  stier:
+    art: auto
+    item: auto_stier
+    model: auto_stier
+    speed: 1.75            # brutal schnell und sehr direkt
+    power: 0.15
+    turn: 5.5
+    seats: 2
+    scale: 1.0
+    width: 2.0
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 260
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 12.0
+      explosion: 2.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 8.0
+
+  # Der Geradeauslaeufer: hoechste Endgeschwindigkeit im ganzen Stall,
+  # dafuer schwerfaellig in der Kurve. Will lange Strecken.
+  veloce:
+    art: auto
+    item: auto_veloce
+    model: auto_veloce
+    speed: 2.30            # das schnellste Fahrzeug ueberhaupt
+    power: 0.11
+    turn: 2.6
+    seats: 2
+    scale: 1.05
+    width: 2.1
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.pling
+    fuel: ""
+    range: 220
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 14.0
+      explosion: 3.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 9.0
+
   oldtimer:
     art: auto
     item: auto_oldtimer

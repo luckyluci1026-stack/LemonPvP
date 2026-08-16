@@ -482,6 +482,8 @@ FAHRZEUG_FARBEN = {
     "heli_leicht": ("#2F8B9C", "#1C5A66", "#2A2E36"),
     "heli_rettung": ("#C22B2B", "#7A1616", "#E4E8EC"),
     "zug_lok": ("#4A4A52", "#26262C", "#8B3A3A"),
+    "auto_stier": ("#C8E020", "#8A9C10", "#2A2A30"),
+    "auto_veloce": ("#2A3F9C", "#16265E", "#D8DCE4"),
     "boot_ruder": ("#A87A3A", "#6B4A1C", "#D8B070"),
     "boot_motor": ("#3A9CB8", "#1F5E70", "#E4E8EC"),
     "boot_yacht": ("#E8E8EC", "#A8AEB6", "#2A4FA0"),
@@ -506,6 +508,46 @@ AUTO = """
 ................
 ................
 """
+
+SUPER = """
+................
+................
+................
+................
+.........KKKK...
+.......KKFFFKK..
+....KKKKKKKKKKK.
+..KKKKKKKKKKKKKK
+..DKKKKKKKKKKKKD
+..DDKKKKKKKKKKDD
+...DD.DDDD..DD..
+....D.D..D..D...
+................
+................
+................
+................
+"""
+
+
+HYPER = """
+................
+................
+................
+.......KKKK.....
+.....KKFFFFKK...
+...KKKKKKKKKKK..
+..KKKKKKKKKKKKK.
+..KKKKKKKKKKKKKK
+..DKKKKKKKKKKKKD
+..DDDKKKKKKKKDDD
+...DD.DDDD..DD..
+....D.D..D..D...
+................
+................
+................
+................
+"""
+
 
 JET = """
 ................
@@ -644,6 +686,17 @@ def koerper(name):
     dunkel = [3, 9, 6, 11]    # Räder, Fahrwerk, Streben
     dach = [5, 3, 11, 6]      # Fenster und Aufbau
 
+    if name in ("auto_stier", "auto_veloce"):
+        # Flach und breit: ein Supersportwagen liegt auf der Strasse
+        return [
+            quader_uv((2, 2, 0), (14, 6, 16), hell),      # Wanne, breit
+            quader_uv((4, 6, 5), (12, 9, 12), dach),      # flache Kanzel
+            quader_uv((1, 4, 12), (15, 5, 15), dunkel),   # Heckfluegel
+            quader_uv((2, 0, 2), (5, 2, 5), dunkel),      # vier flache Raeder
+            quader_uv((11, 0, 2), (14, 2, 5), dunkel),
+            quader_uv((2, 0, 11), (5, 2, 14), dunkel),
+            quader_uv((11, 0, 11), (14, 2, 14), dunkel),
+        ]
     if name.startswith("auto_"):
         # Lang in Z - das ist die Fahrtrichtung. Quer gebaut wuerde das Auto
         # seitwaerts fahren.
@@ -692,7 +745,11 @@ def koerper(name):
 
 def fahrzeug_items():
     for name, (hell, dunkel, akzent) in FAHRZEUG_FARBEN.items():
-        if name.startswith("auto_"):
+        if name == "auto_stier":
+            form = SUPER
+        elif name == "auto_veloce":
+            form = HYPER
+        elif name.startswith("auto_"):
             form = AUTO
         elif name.startswith("heli_"):
             form = HELI
