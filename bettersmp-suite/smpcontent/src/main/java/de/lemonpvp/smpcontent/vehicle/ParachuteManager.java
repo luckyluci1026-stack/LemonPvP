@@ -165,8 +165,14 @@ public final class ParachuteManager {
         }
     }
 
+    /** Beim Herunterfahren: alle Schirme einholen. */
     public void clear() {
-        open.values().forEach(chute -> chute.canopy().remove());
+        for (Chute chute : open.values()) {
+            // Erst absteigen lassen, dann entfernen - sonst bleibt beim
+            // Spieler ein Reiter hängen, den niemand mehr wegnimmt.
+            chute.canopy().leaveVehicle();
+            chute.canopy().remove();
+        }
         open.clear();
     }
 }

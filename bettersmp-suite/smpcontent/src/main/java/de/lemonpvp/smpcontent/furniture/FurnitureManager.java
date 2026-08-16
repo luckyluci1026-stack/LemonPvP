@@ -189,11 +189,23 @@ public final class FurnitureManager {
         return block.getType() == Material.BARRIER || block.getType() == Material.LIGHT;
     }
 
+    /**
+     * Alles entfernen, was zu diesem Möbel gehört.
+     *
+     * Der Sitz gehört ausdrücklich dazu: Baut jemand den Stuhl ab, auf dem
+     * du gerade sitzt, bliebst du sonst auf einem unsichtbaren Marker in der
+     * Luft hängen - und niemand liesse dich wieder aufstehen.
+     */
     public void removeEntities(Block block) {
         for (Entity entity : around(block)) {
-            if (belongsTo(entity, block)
-                    && (entity instanceof ItemDisplay || entity instanceof Interaction)) {
+            if (!belongsTo(entity, block)) {
+                continue;
+            }
+            if (entity instanceof ItemDisplay || entity instanceof Interaction) {
                 entity.remove();
+            } else if (entity instanceof ArmorStand sitz) {
+                sitz.eject();
+                sitz.remove();
             }
         }
     }
@@ -240,6 +252,27 @@ public final class FurnitureManager {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Beim Herunterfahren alle Sitze auflösen.
+     *
+     * Ein Sitz ist ein unsichtbarer Marker, auf dem jemand reitet. Bleibt er
+     * beim Deaktivieren stehen, klebt der Spieler darauf fest - es gibt dann
+     * niemanden mehr, der ihn wieder aufstehen lässt.
+     */
+    public int clearSeats() {
+        int weg = 0;
+        for (org.bukkit.World world : org.bukkit.Bukkit.getWorlds()) {
+            for (ArmorStand stand : world.getEntitiesByClass(ArmorStand.class)) {
+                if (stand.getPersistentDataContainer().has(posKey, PersistentDataType.STRING)) {
+                    stand.eject();
+                    stand.remove();
+                    weg++;
+                }
+            }
+        }
+        return weg;
     }
 
     /** Der Sitz wird nicht mehr gebraucht, sobald niemand mehr draufsitzt. */

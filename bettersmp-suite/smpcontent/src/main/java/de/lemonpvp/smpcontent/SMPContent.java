@@ -97,6 +97,27 @@ public final class SMPContent extends JavaPlugin {
     }
 
     /**
+     * Aufräumen beim Herunterfahren.
+     *
+     * Fallschirme und Sitze sind unsichtbare Objekte, an denen ein Spieler
+     * gerade hängt. Ohne diesen Schritt bliebe er nach einem Neuladen des
+     * Plugins darauf kleben - es gäbe dann niemanden mehr, der ihn löst.
+     * Fahrzeuge bleiben absichtlich stehen, die sollen den Neustart
+     * überdauern.
+     */
+    @Override
+    public void onDisable() {
+        if (parachutes != null) {
+            parachutes.clear();
+        }
+        int sitze = furniture != null ? furniture.clearSeats() : 0;
+        if (sitze > 0) {
+            getLogger().info(sitze + " Sitz(e) aufgelöst.");
+        }
+        getLogger().info("SMPContent deaktiviert.");
+    }
+
+    /**
      * Der Auslöser "held" wirkt, solange man das Item in der Hand hat.
      * Der Zeitgeber läuft nur, wenn es überhaupt so eine Fähigkeit gibt.
      */
