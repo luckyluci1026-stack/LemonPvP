@@ -84,6 +84,8 @@ public final class VehicleManager {
         boolean sneaking;
         long lastSneak;
         boolean wasOnGround;
+        /** Nach einem Aufprall kurz Ruhe - sonst kracht es zwanzigmal je Sekunde. */
+        int crashRuhe;
         /** Wie schnell es zuletzt gefallen ist - für die harte Landung. */
         double sinkRate;
 
@@ -430,6 +432,9 @@ public final class VehicleManager {
             case TRAIN -> rails(ride);
             case CAR -> roll(ride);
         };
+        if (ride.crashRuhe > 0) {
+            ride.crashRuhe--;
+        }
         ride.sinkRate = ride.lastPos == null ? 0
                 : Math.max(0, ride.lastPos.getY() - ride.base.getLocation().getY());
         checkLanding(ride);
@@ -623,6 +628,10 @@ public final class VehicleManager {
                     || ride.base.getPassengers().contains(nearby)) {
                 continue;
             }
+            // Vanilla-Schonfrist beachten, sonst schleudert es jeden Tick neu
+            if (opfer.getNoDamageTicks() > 0) {
+                continue;
+            }
             // Anteilig zum Tempo - langsames Anrollen tut nicht weh
             double anteil = Math.min(1.0, Math.abs(ride.speed) / Math.max(0.1, ride.type.speed()));
             opfer.damage(crash.ram() * anteil);
@@ -631,6 +640,13 @@ public final class VehicleManager {
     }
 
     private void bang(Ride ride, VehicleType.Crash crash) {
+        // Wer an einer Wand steht und Gas gibt, kracht sonst jeden Tick neu:
+        // zwanzig Explosionen und zwanzig Meldungen pro Sekunde.
+        if (ride.crashRuhe > 0) {
+            ride.speed = 0;
+            return;
+        }
+        ride.crashRuhe = 40;
         Location at = ride.base.getLocation();
         if (!crash.sound().isBlank()) {
             at.getWorld().playSound(at, crash.sound(), 1.0f, 1.0f);

@@ -53,15 +53,24 @@ Das GUI hat **Seiten** (45 pro Seite), unten links/rechts blättern. Dazu:
 
 ## Texturen sind schon dabei
 
-Beim ersten Start legt das Plugin **175 fertige Texturen und 3D-Modelle** in
-deinen Datenordner: **alle 74 Blöcke** (50 Möbel, Erze, Marmor, Neonlampe,
-Münzhaufen und deine Stühle, Tische, Regale, Werkbänke), alle 17 Fahrzeuge,
-Fallschirm, Rotorblatt, Pistole, Schrotflinte, Raketenwerfer und Munition.
-Direkt nach `/smpcontent pack` sieht also alles nach etwas aus – kein
-Notenblock, kein Fehlwürfel.
+Beim ersten Start legt das Plugin **237 fertige Texturen und 3D-Modelle** in
+deinen Datenordner – **alles außer den Platzhaltern hat eine Textur**:
 
-Geprüft: Ein Pack-Bau aus diesen Dateien ergibt **74 Blöcke, 23 Items,
-78 eigene Modelle** und ein 217-KB-Pack mit 680 Dateien.
+| | |
+|---|---|
+| 74 Blöcke | 50 Möbel, Erze, Marmor, Neonlampe, Münzhaufen, deine Stühle und Tische |
+| 85 Items | 17 Fahrzeuge, Schwerter, Tränke, Werkzeuge, Früchte, Schlüssel, Münzen … |
+| 78 Modelle | echte Formen statt Würfel |
+
+Die Item-Formen kommen aus dem **Namen**, nicht aus dem Material: Bei dir
+tragen 14 Items dieselbe Pferderüstung, die wären sonst alle gleich. Ein
+`schluessel` wird ein Schlüssel, ein `blood_potion` eine Flasche, ein
+`kirsche` eine Frucht – und die Farbe kommt aus dem Farb-Tag im Anzeigenamen,
+`<red>Rubinschwert` ist also rot.
+
+Geprüft mit einem echten Pack-Bau: **409 Einträge → 74 Blöcke, 85 Items,
+78 eigene Modelle**, ein 258-KB-Pack mit 804 Dateien. Ohne Textur bleiben nur
+die 250 Platzhalter, und das ist Absicht.
 
 Die Möbel bekommen dabei **echte Formen** statt eines Würfels: Bänke haben
 Beine und Lehne, Sessel Armlehnen und ein Polster, Kommoden Schubladen mit
