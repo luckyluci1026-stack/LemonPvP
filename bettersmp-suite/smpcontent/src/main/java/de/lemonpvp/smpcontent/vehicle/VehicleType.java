@@ -28,12 +28,14 @@ import java.util.Locale;
  * @param hud     Tacho über der Hotbar während der Fahrt
  * @param rotor   Höhe eines drehenden Rotorblatts über dem Fahrzeug
  *                (0 = keins). Hubschrauber und Propellermaschinen.
+ * @param horn    Ton beim Drücken der Leertaste (leer = keine Hupe)
  */
 public record VehicleType(String id, Kind kind, String item, String model,
                           double speed, double power, double turn, int seats,
                           double scale, double height, double width,
                           String sound, String fuel, int range, boolean hover,
-                          Eject eject, Crash crash, boolean hud, double rotor) {
+                          Eject eject, Crash crash, boolean hud, double rotor,
+                          String horn) {
 
     /**
      * Der Aufprall.
@@ -129,12 +131,15 @@ public record VehicleType(String id, Kind kind, String item, String model,
         /** Fliegt frei; Blickrichtung steuert, Springen hoch, Schleichen runter. */
         JET,
         /** Folgt Schienen und fährt nur dort. */
-        TRAIN;
+        TRAIN,
+        /** Schwimmt auf dem Wasser und kommt an Land nicht weit. */
+        BOAT;
 
         static Kind of(String raw) {
             return switch (raw == null ? "" : raw.toLowerCase(Locale.ROOT).trim()) {
                 case "jet", "flugzeug", "plane", "flieger" -> JET;
                 case "zug", "train", "lok", "bahn" -> TRAIN;
+                case "boot", "schiff", "boat", "ship", "yacht" -> BOAT;
                 default -> CAR;
             };
         }
@@ -160,6 +165,7 @@ public record VehicleType(String id, Kind kind, String item, String model,
                 Eject.read(section.getConfigurationSection("eject")),
                 Crash.read(section.getConfigurationSection("crash")),
                 section.getBoolean("hud", true),
-                Math.max(0, section.getDouble("rotor", 0)));
+                Math.max(0, section.getDouble("rotor", 0)),
+                section.getString("horn", ""));
     }
 }

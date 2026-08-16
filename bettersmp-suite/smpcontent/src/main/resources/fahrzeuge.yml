@@ -17,7 +17,7 @@
 #  Karosserie gezeigt wird - meistens dasselbe Item.
 #
 #  Werte:
-#    art     auto | jet | zug
+#    art     auto | jet | zug | boot
 #    speed   Höchstgeschwindigkeit in Blöcken pro Tick
 #            (0.55 ist ungefähr Sprinttempo mal zwei)
 #    power   wie schnell es beschleunigt
@@ -50,6 +50,8 @@
 #    ram          Schaden fuer den, den du umfaehrst (0 = niemand)
 #    hard-landing ab welcher Sinkgeschwindigkeit ein Flieger beim
 #                 Aufsetzen zu Bruch geht (0 = nie)
+#
+#  horn: <Ton>  hupt auf der Leertaste (nicht bei Fliegern)
 #
 #  rotor: 1.3 haengt ein drehendes Rotorblatt darueber
 #             (Hubschrauber). 0 = keins.
@@ -87,6 +89,7 @@ vehicles:
     width: 1.8
     height: 1.3
     sound: entity.minecart.riding
+    horn: block.note_block.bit
     fuel: ""
     range: 600
     crash:
@@ -111,6 +114,7 @@ vehicles:
     width: 1.7
     height: 1.1
     sound: entity.minecart.riding
+    horn: block.note_block.bit
     fuel: ""
     range: 500
     crash:
@@ -135,6 +139,7 @@ vehicles:
     width: 2.0
     height: 1.4
     sound: entity.ravager.step
+    horn: entity.ravager.roar
     fuel: ""
     range: 450
     crash:
@@ -159,6 +164,7 @@ vehicles:
     width: 1.9
     height: 1.0
     sound: entity.minecart.riding
+    horn: block.note_block.bit
     fuel: ""
     range: 350
     crash:
@@ -183,6 +189,7 @@ vehicles:
     width: 2.0
     height: 1.2
     sound: entity.minecart.riding
+    horn: block.note_block.pling
     fuel: ""
     range: 300
     crash:
@@ -207,6 +214,7 @@ vehicles:
     width: 1.9
     height: 1.6
     sound: entity.minecart.riding
+    horn: entity.villager.yes
     fuel: ""
     range: 900
     crash:
@@ -231,6 +239,7 @@ vehicles:
     width: 1.9
     height: 1.4
     sound: block.note_block.pling
+    horn: block.note_block.pling
     fuel: ""
     range: 700
     crash:
@@ -255,6 +264,7 @@ vehicles:
     width: 2.0
     height: 1.6
     sound: entity.minecart.riding
+    horn: block.note_block.bit
     fuel: ""
     range: 600
     crash:
@@ -575,6 +585,7 @@ vehicles:
     width: 1.6
     height: 2.0
     sound: entity.minecart.riding
+    horn: entity.ghast.warn
     fuel: ""
     range: 1200
     crash:
@@ -586,3 +597,82 @@ vehicles:
       destroy: false
       sound: entity.generic.explode
       ram: 6.0
+
+  # ------------------------------------------------------------------
+  #  Boote - schwimmen oben auf, an Land kommen sie kaum vorwaerts
+  # ------------------------------------------------------------------
+
+  ruderboot:
+    art: boot
+    item: boot_ruder
+    model: boot_ruder
+    speed: 0.35
+    power: 0.03
+    turn: 5.0
+    seats: 2
+    scale: 1.1
+    width: 2.0
+    height: 1.0
+    sound: entity.boat.paddle_water
+    horn: entity.villager.yes
+    fuel: ""
+    range: 900
+    crash:
+      enabled: true
+      min-speed: 0.3
+      damage: 3.0
+      explosion: 0.0
+      break-blocks: false
+      destroy: false
+      sound: entity.boat.paddle_land
+      ram: 2.0
+
+  motorboot:
+    art: boot
+    item: boot_motor
+    model: boot_motor
+    speed: 0.95
+    power: 0.07
+    turn: 4.5
+    seats: 4
+    scale: 1.2
+    width: 2.4
+    height: 1.2
+    sound: entity.boat.paddle_water
+    horn: block.note_block.bit
+    fuel: ""
+    range: 700
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 7.0
+      explosion: 1.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  yacht:
+    art: boot
+    item: boot_yacht
+    model: boot_yacht
+    speed: 0.70
+    power: 0.04
+    turn: 2.5
+    seats: 8
+    scale: 1.8
+    width: 4.0
+    height: 2.0
+    sound: entity.boat.paddle_water
+    horn: entity.ghast.warn
+    fuel: ""
+    range: 2000
+    crash:
+      enabled: true
+      min-speed: 0.4
+      damage: 6.0
+      explosion: 0.0
+      break-blocks: false
+      destroy: false
+      sound: entity.generic.explode
+      ram: 5.0

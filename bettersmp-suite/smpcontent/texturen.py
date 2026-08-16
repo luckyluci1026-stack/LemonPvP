@@ -92,6 +92,49 @@ def bevel(im, hell=0.30, dunkel=0.35):
             im.putpixel((S - 1, y), mix(p, schwarz, dunkel * 0.7))
 
 
+def kontur(im, staerke=0.55):
+    """
+    Legt eine dunkle Linie um die Silhouette.
+
+    Das ist der Unterschied zwischen "bunter Fleck" und "Item": Vanilla
+    zeichnet seine Sachen genauso, dadurch heben sie sich vom Hintergrund
+    ab und wirken plastisch. Gefärbt wird mit der eigenen Farbe, nicht mit
+    Schwarz - sonst sieht alles rußig aus.
+    """
+    rand = []
+    for x in range(S):
+        for y in range(S):
+            if im.getpixel((x, y))[3]:
+                continue
+            nachbarn = [im.getpixel((x + dx, y + dy))
+                        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                        if 0 <= x + dx < S and 0 <= y + dy < S]
+            voll = [n for n in nachbarn if n[3]]
+            if voll:
+                mittel = tuple(sum(n[i] for n in voll) // len(voll) for i in range(3))
+                rand.append(((x, y), mix(mittel + (255,), (0, 0, 0, 255), staerke)))
+    for stelle, farbe in rand:
+        im.putpixel(stelle, farbe)
+    return im
+
+
+def licht(im, staerke=0.22):
+    """Licht von oben links, Schatten unten rechts - auf der Silhouette."""
+    for x in range(S):
+        for y in range(S):
+            p = im.getpixel((x, y))
+            if not p[3]:
+                continue
+            oben = im.getpixel((x, y - 1))[3] if y > 0 else 0
+            links = im.getpixel((x - 1, y))[3] if x > 0 else 0
+            unten = im.getpixel((x, y + 1))[3] if y < S - 1 else 0
+            if not oben or not links:
+                im.putpixel((x, y), mix(p, (255, 255, 255, 255), staerke))
+            elif not unten:
+                im.putpixel((x, y), mix(p, (0, 0, 0, 255), staerke * 0.9))
+    return im
+
+
 def save(im, ordner, name):
     ziel = ordner / f"{name}.png"
     ziel.parent.mkdir(parents=True, exist_ok=True)
@@ -439,6 +482,9 @@ FAHRZEUG_FARBEN = {
     "heli_leicht": ("#2F8B9C", "#1C5A66", "#2A2E36"),
     "heli_rettung": ("#C22B2B", "#7A1616", "#E4E8EC"),
     "zug_lok": ("#4A4A52", "#26262C", "#8B3A3A"),
+    "boot_ruder": ("#A87A3A", "#6B4A1C", "#D8B070"),
+    "boot_motor": ("#3A9CB8", "#1F5E70", "#E4E8EC"),
+    "boot_yacht": ("#E8E8EC", "#A8AEB6", "#2A4FA0"),
 }
 
 # Seitenansichten: . durchsichtig, K Karosserie, D dunkel, F Fenster/Akzent
@@ -619,6 +665,13 @@ def koerper(name):
             quader_uv((5, 0, 2), (6, 3, 10), dunkel),     # Kufen
             quader_uv((10, 0, 2), (11, 3, 10), dunkel),
         ]
+    if name.startswith("boot_"):
+        return [
+            quader_uv((3, 2, 0), (13, 6, 16), hell),      # Rumpf
+            quader_uv((4, 6, 1), (12, 7, 15), dach),      # Deck
+            quader_uv((5, 7, 4), (11, 11, 10), dach),     # Aufbau
+            quader_uv((7, 11, 6), (9, 14, 8), dunkel),    # Mast
+        ]
     if name == "zug_lok":
         return [
             quader_uv((3, 3, 0), (13, 11, 16), hell),     # Kessel, laengs
@@ -651,16 +704,13 @@ def fahrzeug_items():
             form = DOPPEL
         elif "fracht" in name:
             form = FRACHT
+        elif name.startswith("boot_"):
+            form = BOOT
         else:
             form = PROP
         palette = {"K": hexc(hell), "D": hexc(dunkel), "F": hexc(akzent)}
-        im = aus_form(form, palette)
-        # Etwas Tiefe: untere Hälfte abdunkeln
-        for x in range(S):
-            for y in range(S // 2, S):
-                p = im.getpixel((x, y))
-                if p[3]:
-                    im.putpixel((x, y), mix(p, (0, 0, 0, 255), 0.12))
+        im = licht(aus_form(form, palette))
+        kontur(im)
         save(im, TEX / "item", name)
 
         modell(MOD / "item", name, koerper(name), f"smp:item/{name}",
@@ -669,6 +719,26 @@ def fahrzeug_items():
                    "scale": [0.45, 0.45, 0.45]},
                    "gui": {"rotation": [30, 225, 0], "scale": [0.5, 0.5, 0.5]}})
     return len(FAHRZEUG_FARBEN)
+
+
+BOOT = """
+................
+................
+................
+................
+......DD........
+.....DDDD.......
+....DDDDDD......
+.KKKKKKKKKKKKK..
+.KFFFFFFFFFFFK..
+.KKKKKKKKKKKKK..
+..KKKKKKKKKKK...
+...KKKKKKKKK....
+....DDDDDDD.....
+................
+................
+................
+"""
 
 
 SCHIRM = """
@@ -790,7 +860,7 @@ DDDDDDDKKDDDDDDD
 def rotorblatt():
     """Das drehende Blatt - ein flaches Kreuz, damit es von oben gut aussieht."""
     palette = {"K": hexc("#3A3E46"), "D": hexc("#2A2E36")}
-    save(aus_form(ROTOR, palette), TEX / "item", "rotorblatt")
+    save(kontur(licht(aus_form(ROTOR, palette))), TEX / "item", "rotorblatt")
     modell(MOD / "item", "rotorblatt", [
         quader_uv((0, 7.5, 7), (16, 8.5, 9), [0, 7, 16, 9]),
         quader_uv((7, 7.5, 0), (9, 8.5, 16), [7, 0, 9, 16]),
@@ -808,7 +878,8 @@ def sonstige_items():
     }
     for name, (form, hell, dunkel, akzent) in stuecke.items():
         palette = {"K": hexc(hell), "D": hexc(dunkel), "F": hexc(akzent)}
-        save(aus_form(form, palette), TEX / "item", name)
+        im = licht(aus_form(form, palette))
+        save(kontur(im), TEX / "item", name)
     return len(stuecke)
 
 
@@ -1255,20 +1326,18 @@ def restliche_items(config_pfad):
         if id_ in da:
             continue
         material = str(e.get("material", "PAPER")).upper()
-        form = FORMEN[art_von(material, id_)]
+        art = art_von(material, id_)
+        form = FORMEN[art]
         haupt = hexc(farbe_aus_namen(e.get("name", ""), id_))
         palette = {
             "K": haupt,
             "D": mix(haupt, (0, 0, 0, 255), 0.45),
             "F": mix(haupt, (255, 255, 255, 255), 0.35),
         }
-        im = aus_form(form, palette)
-        # Etwas Tiefe von oben nach unten
-        for x in range(S):
-            for y in range(S):
-                p = im.getpixel((x, y))
-                if p[3]:
-                    im.putpixel((x, y), mix(p, (0, 0, 0, 255), y / S * 0.18))
+        im = licht(aus_form(form, palette))
+        # Streupulver bleibt ohne Kontur, sonst verklebt es zu einem Fleck
+        if art != "DUST":
+            kontur(im)
         save(im, TEX / "item", id_)
         anzahl += 1
     return anzahl

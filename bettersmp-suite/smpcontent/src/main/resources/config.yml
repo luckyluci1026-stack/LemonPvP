@@ -2131,6 +2131,27 @@ items:
     model-data: 8534
     max-stack: 1
 
+  boot_ruder:
+    material: MINECART
+    name: "<gold>Ruderboot"
+    lore: ["<dark_gray>Zwei Plätze, gemütlich"]
+    model-data: 8550
+    max-stack: 1
+
+  boot_motor:
+    material: MINECART
+    name: "<aqua>Motorboot"
+    lore: ["<dark_gray>Vier Plätze, schnell"]
+    model-data: 8551
+    max-stack: 1
+
+  boot_yacht:
+    material: MINECART
+    name: "<white>Yacht"
+    lore: ["<dark_gray>Acht Plätze, dreht wie ein Schiff"]
+    model-data: 8552
+    max-stack: 1
+
   rotorblatt:
     material: MINECART
     name: "<dark_gray>Rotorblatt"

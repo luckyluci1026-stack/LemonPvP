@@ -12,6 +12,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Rail;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
@@ -82,6 +83,7 @@ public final class VehicleManager {
         Location lastPos;
         /** Schleicht der Fahrer gerade? Für den Doppel-Schleicher. */
         boolean sneaking;
+        boolean hupte;
         long lastSneak;
         boolean wasOnGround;
         /** Nach einem Aufprall kurz Ruhe - sonst kracht es zwanzigmal je Sekunde. */
@@ -430,6 +432,7 @@ public final class VehicleManager {
         Vector velocity = switch (ride.type.kind()) {
             case JET -> fly(ride, driver);
             case TRAIN -> rails(ride);
+            case BOAT -> swim(ride);
             case CAR -> roll(ride);
         };
         if (ride.crashRuhe > 0) {
@@ -533,6 +536,15 @@ public final class VehicleManager {
             ride.lastSneak = now;
         }
         ride.sneaking = input.isSneak();
+
+        // Leertaste hupt - aber nur beim Drücken, nicht im Dauerton
+        if (!ride.type.horn().isBlank() && ride.type.kind() != VehicleType.Kind.JET) {
+            if (input.isJump() && !ride.hupte) {
+                ride.base.getWorld().playSound(ride.base.getLocation(),
+                        ride.type.horn(), 1.4f, 1.0f);
+            }
+            ride.hupte = input.isJump();
+        }
 
         // Lenken geht nur, solange man rollt - wie im echten Leben
         if (ride.speed != 0 && ride.type.kind() != VehicleType.Kind.TRAIN) {
@@ -730,6 +742,29 @@ public final class VehicleManager {
      * ({@code hover: true}) bleibt stattdessen in der Luft stehen - das ist
      * der ganze Unterschied zwischen den beiden.
      */
+    /**
+     * Boot: schwimmt oben auf.
+     *
+     * Im Wasser wird es sanft zur Oberfläche gedrückt, an Land kommt es kaum
+     * vorwärts - ein Boot gehört nun einmal ins Wasser.
+     */
+    private Vector swim(Ride ride) {
+        Block unten = ride.base.getLocation().getBlock();
+        boolean imWasser = unten.getType() == Material.WATER
+                || unten.getRelative(0, -1, 0).getType() == Material.WATER;
+        Vector forward = direction(ride.yaw)
+                .multiply(imWasser ? ride.speed : ride.speed * 0.15);
+        double y;
+        if (unten.getType() == Material.WATER) {
+            y = 0.08;               // taucht auf
+        } else if (imWasser) {
+            y = 0.0;                // liegt genau richtig
+        } else {
+            y = ride.base.isOnGround() ? 0 : -0.15;
+        }
+        return new Vector(forward.getX(), y, forward.getZ());
+    }
+
     private Vector fly(Ride ride, Player driver) {
         Vector forward = direction(ride.yaw).multiply(ride.speed);
         double y = 0;

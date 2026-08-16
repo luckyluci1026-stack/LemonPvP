@@ -68,8 +68,13 @@ tragen 14 Items dieselbe Pferderüstung, die wären sonst alle gleich. Ein
 `kirsche` eine Frucht – und die Farbe kommt aus dem Farb-Tag im Anzeigenamen,
 `<red>Rubinschwert` ist also rot.
 
-Geprüft mit einem echten Pack-Bau: **409 Einträge → 74 Blöcke, 85 Items,
-78 eigene Modelle**, ein 258-KB-Pack mit 804 Dateien. Ohne Textur bleiben nur
+Alle Items bekommen eine **dunkle Kontur und Licht von oben links** – genau
+das macht aus einem bunten Fleck ein Item, und genauso zeichnet Vanilla seine
+Sachen. Die Kontur nimmt dabei die eigene Farbe des Items auf, nicht Schwarz,
+sonst sieht alles rußig aus.
+
+Geprüft mit einem echten Pack-Bau: **412 Einträge → 74 Blöcke, 88 Items,
+81 eigene Modelle**, ein 266-KB-Pack mit 813 Dateien. Ohne Textur bleiben nur
 die 250 Platzhalter, und das ist Absicht.
 
 Die Möbel bekommen dabei **echte Formen** statt eines Würfels: Bänke haben
@@ -342,6 +347,7 @@ vehicles:
 | | Steuerung |
 |---|---|
 | **Auto** | W Gas, S Bremse und rückwärts, A/D lenken. Fällt, und schafft eine Stufe. |
+| **Boot** | Wie ein Auto, schwimmt aber oben auf. An Land kommt es kaum vorwärts. |
 | **Jet** | W Schub, **Blickrichtung steuert die Nase**, Leertaste/Schleichen heben und senken gerade. |
 | **Zug** | Fährt nur auf Schienen und folgt ihnen – auch um Kurven und bergauf. |
 
@@ -457,6 +463,13 @@ siehst du beim Einstellen sofort, ob eine Zahl hält, was sie verspricht.
 Rechtsklick auf den Boden stellt es hin, Rechtsklick darauf steigt ein,
 Schleichen steigt aus, Schleichen + Rechtsklick mit leerer Hand packt es
 wieder ein. Nach einem Neustart stehen die Fahrzeuge noch da und fahren weiter.
+
+**Die Leertaste hupt** – `horn: block.note_block.bit` beim Sportwagen,
+`entity.ghast.warn` beim Schiffshorn der Yacht, `entity.ravager.roar` beim
+Muscle Car. Bei Fliegern nicht, dort ist die Leertaste zum Steigen da.
+
+**Drei Boote** sind dabei: Ruderboot (2 Plätze, gemütlich), Motorboot
+(4 Plätze, schnell) und Yacht (8 Plätze, dreht wie ein Schiff).
 
 ## Schusswaffen
 
