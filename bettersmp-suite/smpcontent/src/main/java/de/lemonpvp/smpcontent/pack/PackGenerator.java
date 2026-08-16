@@ -232,9 +232,18 @@ public final class PackGenerator {
                 }
             }
 
-            // Ein leeres Modell für Möbel, die auf Java das Anzeige-Objekt
-            // zeigen und den Block darunter verstecken
-            write(nsRoot.resolve("models/block/leer.json"), "{ \"textures\": {} }");
+            // Für jedes Möbel ein unsichtbares Modell: keine Quader, aber die
+            // Textur ist genannt. Auf Java sieht man dadurch nur das
+            // Anzeige-Objekt - und wer dieses Pack später wieder einliest
+            // (etwa /smpcontent bedrock), findet die Textur trotzdem.
+            for (CustomEntry entry : plugin.registry().entries().values()) {
+                if (entry.isFurniture() && entry.state() != null
+                        && textured.contains(entry.id().toLowerCase(Locale.ROOT))) {
+                    write(nsRoot.resolve("models/block/" + entry.id() + "_unsichtbar.json"),
+                            "{ \"textures\": { \"all\": \"%s:block/%s\" } }"
+                                    .formatted(ns, entry.id()));
+                }
+            }
 
             // Zusätzliche Texturen mitnehmen (Blockbench-Modelle nutzen oft mehrere)
             copyExtraTextures(nsRoot);
@@ -337,7 +346,7 @@ public final class PackGenerator {
                 // Bedrock kennt keine Anzeige-Objekte und zeigt dafür den
                 // echten Block - so sieht jede Seite das Richtige.
                 return entry.isFurniture()
-                        ? ns + ":block/leer"
+                        ? ns + ":block/" + entry.id() + "_unsichtbar"
                         : ns + ":block/" + entry.id();
             }
         }

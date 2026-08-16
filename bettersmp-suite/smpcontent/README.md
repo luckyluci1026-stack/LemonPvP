@@ -324,8 +324,14 @@ darunter liegt. Die 50 mitgelieferten Möbel haben einen `state:`, damit sie
 auf Bedrock richtig aussehen. Brauchst du mehr als 575 eigene Blöcke, lass
 den `state:` bei den neuen einfach weg.
 
-Auf Java ist dieser Zustand im Pack ein leeres Modell – du siehst also nur
-das gedrehte Anzeige-Objekt, nicht den Notenblock darunter.
+Auf Java ist dieser Zustand im Pack ein Modell **ohne Quader, aber mit
+genannter Textur** – du siehst also nur das gedrehte Anzeige-Objekt, nicht
+den Notenblock darunter. Die Textur steht trotzdem drin, damit
+`/smpcontent bedrock` sie beim Wiedereinlesen des Packs findet: Sonst gingen
+genau die Möbel verloren, für die der ganze Aufwand gemacht wurde.
+
+Nachgemessen auf einem laufenden Paper 1.21.11: Pack bauen → wieder einlesen
+ergibt **74 von 74 Blöcken**.
 
 ## Fahrzeuge: Autos, Jets und Züge
 

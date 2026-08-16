@@ -172,9 +172,13 @@ public final class BedrockPack {
                         block.model(), block.texture(), terrain));
             }
 
+            // Gleiche Meldung hundertmal hilft niemandem - einmal mit Anzahl
+            Map<String, Integer> gezaehlt = new LinkedHashMap<>();
             for (String note : pack.notes()) {
-                plugin.getLogger().info("Bedrock: " + note);
+                gezaehlt.merge(note, 1, Integer::sum);
             }
+            gezaehlt.forEach((note, anzahl) -> plugin.getLogger().info(
+                    "Bedrock: " + note + (anzahl > 1 ? " (" + anzahl + "x)" : "")));
             Result result = finish(work, outputDir, textureData, mappings, blockMappings,
                     terrain, solid, flat);
             deleteRecursively(extracted);
