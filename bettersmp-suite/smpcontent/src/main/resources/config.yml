@@ -1999,6 +1999,195 @@ items:
             sound: entity.blaze.shoot
 
   # ------------------------------------------------------------------
+  #  Zweite Reihe Waffen
+  #
+  #  Jede fuehlt sich anders an - das machen drei Zahlen:
+  #  cooldown (wie schnell), damage (wie hart), spread (wie genau).
+  # ------------------------------------------------------------------
+
+  scharfschuetze:
+    material: IRON_HORSE_ARMOR
+    name: "<dark_green>Scharfschützengewehr"
+    lore:
+      - "<dark_gray>Rechtsklick: ein Schuss, der sitzt"
+      - "<gray>Langsam, weit, sehr hart"
+    model-data: 8580
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Schuss"
+        cooldown: 2.0
+        actions:
+          - type: projectile
+            entity: ARROW
+            speed: 5.0
+            damage: 16.0
+            spread: 0.0
+            gravity: false
+            pierce: 2
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.generic.explode
+            pitch: 0.7
+
+  maschinenpistole:
+    material: IRON_HORSE_ARMOR
+    name: "<gray>Maschinenpistole"
+    lore:
+      - "<dark_gray>Rechtsklick: Dauerfeuer"
+      - "<gray>Schnell, aber streut"
+    model-data: 8581
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Salve"
+        cooldown: 0.15
+        actions:
+          - type: projectile
+            entity: ARROW
+            speed: 3.2
+            damage: 3.0
+            spread: 3.0
+            gravity: false
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.firework_rocket.blast
+            pitch: 1.9
+
+  minigun:
+    material: IRON_HORSE_ARMOR
+    name: "<dark_gray>Minigun"
+    lore:
+      - "<dark_gray>Rechtsklick: sechs Läufe"
+      - "<gray>Frisst Munition wie nichts"
+    model-data: 8582
+    max-stack: 1
+    glow: true
+    abilities:
+      - trigger: right-click
+        name: "Feuer"
+        cooldown: 0.1
+        actions:
+          - type: projectile
+            entity: ARROW
+            amount: 2
+            speed: 3.0
+            damage: 2.5
+            spread: 6.0
+            gravity: false
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.firework_rocket.blast
+            pitch: 2.0
+
+  flammenwerfer:
+    material: IRON_HORSE_ARMOR
+    name: "<gold>Flammenwerfer"
+    lore:
+      - "<dark_gray>Rechtsklick: Feuerstrahl"
+      - "<gray>Kurze Reichweite, brennt nach"
+    model-data: 8583
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Flamme"
+        cooldown: 0.2
+        actions:
+          - type: projectile
+            entity: SMALL_FIREBALL
+            amount: 3
+            speed: 0.9
+            spread: 12.0
+            gravity: true
+          - type: animation
+            shape: drachenatem
+            particle: FLAME
+            radius: 1.5
+            length: 6
+            ticks: 6
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.4
+
+  railgun:
+    material: DIAMOND_HORSE_ARMOR
+    name: "<aqua>Railgun"
+    lore:
+      - "<dark_gray>Rechtsklick: Strahl durch alles"
+      - "<gray>Braucht Energiezellen"
+    model-data: 8584
+    max-stack: 1
+    glow: true
+    abilities:
+      - trigger: right-click
+        name: "Entladung"
+        cooldown: 3.0
+        actions:
+          - type: damage-beam
+            range: 30
+            amount: 13.0
+          - type: animation
+            shape: blitzbogen
+            particle: END_ROD
+            length: 30
+            ticks: 10
+          - type: sound
+            sound: block.beacon.deactivate
+            pitch: 1.8
+
+  granate:
+    material: IRON_HORSE_ARMOR
+    name: "<dark_green>Handgranate"
+    lore:
+      - "<dark_gray>Rechtsklick: werfen"
+      - "<gray>Fliegt im Bogen und kracht"
+    model-data: 8585
+    max-stack: 16
+    abilities:
+      - trigger: right-click
+        name: "Wurf"
+        cooldown: 1.2
+        actions:
+          - type: projectile
+            entity: FIREBALL
+            speed: 1.1
+            gravity: true
+          - type: sound
+            sound: entity.arrow.shoot
+            pitch: 0.8
+
+  jagdbogen:
+    material: IRON_HORSE_ARMOR
+    name: "<gold>Jagdbogen"
+    lore:
+      - "<dark_gray>Rechtsklick: Pfeil"
+      - "<gray>Leise - und du kannst ihn aufheben"
+    model-data: 8586
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Pfeil"
+        cooldown: 0.8
+        actions:
+          - type: projectile
+            entity: ARROW
+            speed: 2.6
+            damage: 3.0
+            spread: 0.4
+            gravity: true
+            bullet: false      # echter Pfeil: sichtbar und aufsammelbar
+          - type: sound
+            sound: entity.arrow.shoot
+
+  energiezelle:
+    material: IRON_HORSE_ARMOR
+    name: "<aqua>Energiezelle"
+    lore:
+      - "<dark_gray>Munition für schwere Sachen"
+    model-data: 8587
+    max-stack: 64
+
+  # ------------------------------------------------------------------
   #  Fahrzeuge - die Werte stehen in der fahrzeuge.yml
   # ------------------------------------------------------------------
 

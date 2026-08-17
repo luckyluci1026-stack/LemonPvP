@@ -4,11 +4,11 @@ Eigene **Blöcke**, **Items** und **Spezialfähigkeiten** (Paper 1.21.11).
 
 ## Inhalt
 
-**429 eigene Inhalte** und **5 Bosse**, alle mit Textur außer den Platzhaltern:
+**437 eigene Inhalte** und **5 Bosse**, alle mit Textur außer den Platzhaltern:
 
 | Datei | Inhalt |
 |---|---|
-| `config.yml` | 24 Blöcke, 105 Items – Erze, Marmor, Laserschwerter, Tränke, Werkzeuge, Früchte, **Waffen**, **Fahrzeuge**, Fallschirm |
+| `config.yml` | 24 Blöcke, 113 Items – Erze, Marmor, Laserschwerter, Tränke, Werkzeuge, Früchte, **Waffen**, **Fahrzeuge**, Fallschirm |
 | `content/moebel.yml` | **50 Möbel** – drehbar, zum Draufsetzen, mit echten 3D-Formen |
 | `content/platzhalter-bloecke.yml` | **100 Platzhalter-Blöcke**, absichtlich ohne Textur |
 | `content/platzhalter-items.yml` | **150 Platzhalter-Items**, absichtlich ohne Textur |
@@ -639,8 +639,21 @@ pistole:
           # bullet: false    # -> stattdessen ein klassischer Pfeil
 ```
 
-Mitgeliefert sind **Pistole**, **Schrotflinte** (acht Kugeln plus Rückstoß)
-und **Raketenwerfer**. Ist keine Munition da, klickt es nur.
+| Waffe | Feuerrate | Schaden | wofür |
+|---|---|---|---|
+| **Pistole** | 0,4 s | 5 | der Allrounder |
+| **Schrotflinte** | 1,5 s | 8 × 2,5 | auf kurze Entfernung |
+| **Maschinenpistole** | 0,15 s | 3 | schnell, streut |
+| **Minigun** | 0,1 s | 2 × 2,5 | frisst Munition wie nichts |
+| **Scharfschützengewehr** | 2,0 s | 16 | ein Schuss, der sitzt, durchschlägt zwei |
+| **Flammenwerfer** | 0,2 s | Feuer | kurze Reichweite, brennt nach |
+| **Railgun** | 3,0 s | 13 | Strahl über 30 Blöcke, trifft alles auf der Linie |
+| **Handgranate** | 1,2 s | Explosion | fliegt im Bogen |
+| **Jagdbogen** | 0,8 s | – | echter Pfeil, leise, aufsammelbar |
+| **Raketenwerfer** | 6,0 s | Explosion | wenn gar nichts mehr hilft |
+
+Ist keine Munition da, klickt es nur. Kugeln macht man aus Eisen, für die
+Railgun gibt es **Energiezellen**.
 
 ### Warum eine Kugel keine Pfeil ist
 

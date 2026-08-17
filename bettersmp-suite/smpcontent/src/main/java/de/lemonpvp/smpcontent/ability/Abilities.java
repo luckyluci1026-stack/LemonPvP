@@ -418,7 +418,12 @@ public final class Abilities {
             for (Entity entity : point.getWorld().getNearbyEntities(point, 0.8, 0.8, 0.8)) {
                 if (istZiel(entity, player) && !hit.contains(entity)) {
                     hit.add(entity);
-                    ((LivingEntity) entity).damage(amount, player);
+                    // Wie bei einer Kugel: erst die Unverwundbarkeit lösen,
+                    // sonst schluckt sie den zweiten Strahl kurz danach.
+                    LivingEntity ziel = (LivingEntity) entity;
+                    ziel.setNoDamageTicks(0);
+                    ziel.setLastDamage(0);
+                    ziel.damage(amount, player);
                 }
             }
         }
