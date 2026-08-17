@@ -258,7 +258,7 @@ MOEBEL_FORM = {
              ((1, 0, 3), (3, 5, 5)), ((13, 0, 3), (15, 5, 5)),
              ((1, 0, 11), (3, 5, 13)), ((13, 0, 11), (15, 5, 13))],
     "zaunbank": [((1, 6, 4), (15, 8, 12)), ((2, 8, 11), (3, 14, 12)),
-                 ((13, 8, 11), (14, 14, 12)), ((2, 12, 11), (14, 14, 12)),
+                 ((13, 8, 11), (14, 14, 12)), ((3, 12, 11), (13, 14, 12)),
                  ((1, 0, 4), (3, 6, 6)), ((13, 0, 4), (15, 6, 6)),
                  ((1, 0, 10), (3, 6, 12)), ((13, 0, 10), (15, 6, 12))],
     "sessel": [((3, 5, 3), (13, 7, 13)), ((3, 7, 11), (13, 14, 13)),
@@ -357,8 +357,13 @@ EIGENE_ARTEN = {
     "workbench": ("kommode", "tisch"),
 }
 
-MOEBEL_FORM_REGAL = [((1, 0, 3), (15, 16, 13)), ((2, 5, 4), (14, 6, 13)),
-                     ((2, 10, 4), (14, 11, 13))]
+MOEBEL_FORM_REGAL = [((1, 0, 11), (15, 16, 13)),   # Rueckwand
+                     ((1, 0, 3), (3, 16, 11)),     # linke Seite
+                     ((13, 0, 3), (15, 16, 11)),   # rechte Seite
+                     ((3, 0, 3), (13, 1, 11)),     # Boden
+                     ((3, 15, 3), (13, 16, 11)),   # Deckel
+                     ((3, 5, 3), (13, 6, 11)),     # Brett unten
+                     ((3, 10, 3), (13, 11, 11))]   # Brett oben
 
 
 def eigene_moebel():
@@ -380,7 +385,7 @@ def eigene_moebel():
     save(moebel_textur("eigen", "podest"), TEX / "block", "easel")
     modell(MOD / "block", "easel", [
         quader((7, 0, 2), (9, 16, 4)), quader((2, 0, 10), (4, 14, 12)),
-        quader((12, 0, 10), (14, 14, 12)), quader((2, 8, 3), (14, 15, 11)),
+        quader((12, 0, 10), (14, 14, 12)), quader((2, 8, 3), (14, 15, 10)),
     ], "smp:block/easel")
     return anzahl + 1
 
@@ -484,64 +489,127 @@ FAHRZEUG_FARBEN = {
     "zug_lok": ("#4A4A52", "#26262C", "#8B3A3A"),
     "auto_stier": ("#C8E020", "#8A9C10", "#2A2A30"),
     "auto_veloce": ("#2A3F9C", "#16265E", "#D8DCE4"),
+    # Keil-Familie: Mittelmotor, scharfe Kante, grosser Heckfluegel
+    "auto_aventador": ("#E8C41A", "#A08610", "#2A2A30"),
+    "auto_huracan": ("#3FA83A", "#1F6B1C", "#2A2A30"),
+    "auto_revuelto": ("#D83A20", "#8F2010", "#2A2A30"),
+    "auto_countach": ("#E8E8EC", "#A8AEB6", "#2A2A30"),
+    "auto_diablo": ("#7A3AC8", "#4A1E80", "#2A2A30"),
+    # Rundheck-Familie: Heckmotor, kurzer Radstand, Entenbuerzel
+    "auto_carrera": ("#C8CCD4", "#8A8F98", "#2A3A50"),
+    "auto_turbo_s": ("#1E3A78", "#12234A", "#D8DCE4"),
+    "auto_gt3": ("#E87A18", "#9C4E0C", "#E4E8EC"),
+    "auto_taycan": ("#20B8C8", "#127785", "#E4E8EC"),
+    "auto_neunelf": ("#EDEDF0", "#A8AEB6", "#E85A18"),
+    # Breitbau-Familie: sehr lang, sehr breit, Hufeisengrill
+    "auto_chiron": ("#1F5FC8", "#123A80", "#0E1420"),
+    "auto_veyron": ("#3A3A44", "#1C1C22", "#B02020"),
+    "auto_divo": ("#5AC8E0", "#2F7F94", "#1A1E26"),
+    "auto_bolide": ("#26262E", "#131318", "#E8D020"),
+    "auto_tourbillon": ("#D0D8E4", "#8A94A4", "#2A4FA0"),
     "boot_ruder": ("#A87A3A", "#6B4A1C", "#D8B070"),
     "boot_motor": ("#3A9CB8", "#1F5E70", "#E4E8EC"),
     "boot_yacht": ("#E8E8EC", "#A8AEB6", "#2A4FA0"),
 }
 
+# Die drei Supersportwagen-Familien. Jede hat eine eigene Silhouette und
+# einen eigenen Aufbau - sonst waeren fuenfzehn Autos nur fuenfzehn Farben.
+KEIL_FAMILIE = frozenset((
+    "auto_stier", "auto_aventador", "auto_huracan",
+    "auto_revuelto", "auto_countach", "auto_diablo",
+))
+RUNDHECK_FAMILIE = frozenset((
+    "auto_carrera", "auto_turbo_s", "auto_gt3",
+    "auto_taycan", "auto_neunelf",
+))
+BREITBAU_FAMILIE = frozenset((
+    "auto_veloce", "auto_chiron", "auto_veyron",
+    "auto_divo", "auto_bolide", "auto_tourbillon",
+))
+
 # Seitenansichten: . durchsichtig, K Karosserie, D dunkel, F Fenster/Akzent
+#
+# Alle Autos stehen auf denselben drei Zeilen Rad (9 bis 11) und haben die
+# Nase rechts. Ein Rad ist 3x3 mit einer helleren Felge in der Mitte - das
+# liest sich auch bei 16 Pixeln noch als Rad und nicht als Tropfen.
 AUTO = """
 ................
 ................
 ................
 .....KKKKKK.....
 ....KKFFFFKK....
-...KKKKKKKKKK...
-..KKKKKKKKKKKK..
-..DKKKKKKKKKKD..
-..DDKKKKKKKKDD..
-...DD.DDDD.DD...
-....D.D..D.D....
-................
-................
-................
-................
-................
-"""
-
-SUPER = """
-................
-................
-................
-................
-.........KKKK...
-.......KKFFFKK..
-....KKKKKKKKKKK.
-..KKKKKKKKKKKKKK
-..DKKKKKKKKKKKKD
-..DDKKKKKKKKKKDD
-...DD.DDDD..DD..
-....D.D..D..D...
-................
-................
-................
-................
-"""
-
-
-HYPER = """
-................
-................
-................
-.......KKKK.....
-.....KKFFFFKK...
 ...KKKKKKKKKKK..
 ..KKKKKKKKKKKKK.
 ..KKKKKKKKKKKKKK
-..DKKKKKKKKKKKKD
-..DDDKKKKKKKKDDD
-...DD.DDDD..DD..
-....D.D..D..D...
+..KKKKKKKKKKKKKK
+..DDDKKKKKKDDDK.
+..DFD......DFD..
+..DDD......DDD..
+................
+................
+................
+................
+"""
+
+
+# Der Keil: spitze Nase rechts, gekapptes Heck links, grosser Fluegel.
+KEIL = """
+................
+................
+................
+................
+.DDDDD..........
+.KKKKKKKK.......
+..KKKFFFKKK.....
+..KKKKKKKKKKKK..
+..KKKKKKKKKKKKKK
+..DDDKKKKKKDDDK.
+..DFD......DFD..
+..DDD......DDD..
+................
+................
+................
+................
+"""
+
+
+# Rundheck: Heckmotor, runder Bug, das Dach faellt nach hinten weg und
+# endet in einem kleinen Buerzel.
+CARRERA = """
+................
+................
+................
+.......KKKKK....
+.....KKFFFFFKK..
+.DDKKKKKKKKKKKK.
+.KKKKKKKKKKKKKKK
+.KKKKKKKKKKKKKKK
+.KKKKKKKKKKKKKK.
+..DDDKKKKKKDDDK.
+..DFD......DFD..
+..DDD......DDD..
+................
+................
+................
+................
+"""
+
+
+# Breitbau: sehr lang und flach, untere Haelfte in der zweiten Farbe -
+# das ist die Zweifarb-Linie, an der man den Wagen von weitem erkennt.
+ROYALE = """
+................
+................
+................
+................
+......KKKKKK....
+....KKFFFFFKKK..
+..KKKKKKKKKKKKK.
+.KKKKKKKKKKKKKKK
+.FFFFFFFFFFFFFFF
+..DDDFFFFFFDDDF.
+..DFD......DFD..
+..DDD......DDD..
 ................
 ................
 ................
@@ -682,20 +750,52 @@ def koerper(name):
     der Aufbau nimmt den hellen Streifen, die Räder den dunklen darunter.
     Dadurch braucht jedes Fahrzeug nur eine einzige 16x16-Textur.
     """
-    hell = [3, 4, 13, 8]      # Karosserie
-    dunkel = [3, 9, 6, 11]    # Räder, Fahrwerk, Streben
-    dach = [5, 3, 11, 6]      # Fenster und Aufbau
+    hell = [2, 5, 14, 9]      # Karosserie - die Flanke zwischen Dach und Rad
+    dunkel = [2, 9, 5, 12]    # Räder, Fahrwerk, Streben - das hintere Rad
+    dach = [4, 3, 12, 6]      # Fenster und Aufbau - Dach und Scheiben
 
-    if name in ("auto_stier", "auto_veloce"):
-        # Flach und breit: ein Supersportwagen liegt auf der Strasse
+    # Die drei Familien. Die Quader stossen aneinander, statt sich zu
+    # ueberlappen: zwei deckungsgleiche Flaechen im selben Punkt flackern
+    # im Spiel gegeneinander. Nase ist z=0, das Heck z=16.
+    if name in KEIL_FAMILIE:
+        # Der Keil: Wanne, dann eine Schulter, die nach hinten hoeher wird,
+        # Kanzel weit hinten und ein Fluegel auf zwei Stuetzen.
         return [
-            quader_uv((2, 2, 0), (14, 6, 16), hell),      # Wanne, breit
-            quader_uv((4, 6, 5), (12, 9, 12), dach),      # flache Kanzel
-            quader_uv((1, 4, 12), (15, 5, 15), dunkel),   # Heckfluegel
+            quader_uv((2, 2, 0), (14, 5, 16), hell),      # flache Wanne
+            quader_uv((3, 5, 5), (13, 7, 16), hell),      # Schulter nach hinten
+            quader_uv((4, 7, 7), (12, 10, 13), dach),     # Kanzel
+            quader_uv((6, 7, 13), (10, 9, 15), dunkel),   # Fluegelstuetze
+            quader_uv((1, 9, 13), (15, 10, 16), dunkel),  # Heckfluegel
             quader_uv((2, 0, 2), (5, 2, 5), dunkel),      # vier flache Raeder
             quader_uv((11, 0, 2), (14, 2, 5), dunkel),
             quader_uv((2, 0, 11), (5, 2, 14), dunkel),
             quader_uv((11, 0, 11), (14, 2, 14), dunkel),
+        ]
+    if name in RUNDHECK_FAMILIE:
+        # Rundheck: kurzer Radstand, ausgestellte Kotfluegel, das Dach
+        # faellt nach hinten weg und endet in einem kleinen Buerzel.
+        return [
+            quader_uv((3, 3, 1), (13, 6, 15), hell),      # Wanne, schmaler
+            quader_uv((2, 6, 2), (14, 8, 14), hell),      # ausgestellte Kotfluegel
+            quader_uv((4, 8, 5), (12, 11, 12), dach),     # Fastback-Dach
+            quader_uv((4, 8, 12), (12, 9, 14), dunkel),   # Entenbuerzel
+            quader_uv((2, 0, 2), (5, 3, 5), dunkel),      # vier Raeder
+            quader_uv((11, 0, 2), (14, 3, 5), dunkel),
+            quader_uv((2, 0, 10), (5, 3, 13), dunkel),
+            quader_uv((11, 0, 10), (14, 3, 13), dunkel),
+        ]
+    if name in BREITBAU_FAMILIE:
+        # Breitbau: nutzt den Block ganz aus, flach wie ein Brett, mit
+        # ausfahrbarem Heckspoiler statt Fluegel.
+        return [
+            quader_uv((1, 2, 0), (15, 6, 16), hell),      # sehr breite Wanne
+            quader_uv((4, 6, 4), (12, 9, 12), dach),      # flache Kanzel
+            quader_uv((7, 6, 12), (9, 8, 16), dunkel),    # Mittelfinne hinten
+            quader_uv((2, 8, 13), (14, 9, 15), dunkel),   # Heckspoiler
+            quader_uv((1, 0, 2), (4, 2, 6), dunkel),      # vier breite Raeder
+            quader_uv((12, 0, 2), (15, 2, 6), dunkel),
+            quader_uv((1, 0, 10), (4, 2, 14), dunkel),
+            quader_uv((12, 0, 10), (15, 2, 14), dunkel),
         ]
     if name.startswith("auto_"):
         # Lang in Z - das ist die Fahrtrichtung. Quer gebaut wuerde das Auto
@@ -736,7 +836,7 @@ def koerper(name):
     return [
         quader_uv((6, 4, 1), (10, 9, lang), hell),        # Rumpf
         quader_uv((0, 5, 5), (16, 6, 10), hell),          # Tragflaechen
-        quader_uv((5, 5, lang - 3), (11, 6, lang), hell), # Hoehenruder
+        quader_uv((5, 5, lang - 3), (11, 6, lang + 1), hell),  # Hoehenruder
         quader_uv((7, 9, lang - 3), (9, 13, lang), dunkel),  # Seitenruder
         quader_uv((3, 3, 6), (5, 5, 9), dunkel),          # Triebwerke
         quader_uv((11, 3, 6), (13, 5, 9), dunkel),
@@ -745,10 +845,12 @@ def koerper(name):
 
 def fahrzeug_items():
     for name, (hell, dunkel, akzent) in FAHRZEUG_FARBEN.items():
-        if name == "auto_stier":
-            form = SUPER
-        elif name == "auto_veloce":
-            form = HYPER
+        if name in KEIL_FAMILIE:
+            form = KEIL
+        elif name in RUNDHECK_FAMILIE:
+            form = CARRERA
+        elif name in BREITBAU_FAMILIE:
+            form = ROYALE
         elif name.startswith("auto_"):
             form = AUTO
         elif name.startswith("heli_"):
@@ -920,7 +1022,8 @@ def rotorblatt():
     save(kontur(licht(aus_form(ROTOR, palette))), TEX / "item", "rotorblatt")
     modell(MOD / "item", "rotorblatt", [
         quader_uv((0, 7.5, 7), (16, 8.5, 9), [0, 7, 16, 9]),
-        quader_uv((7, 7.5, 0), (9, 8.5, 16), [7, 0, 9, 16]),
+        quader_uv((7, 7.5, 0), (9, 8.5, 7), [7, 0, 9, 7]),
+        quader_uv((7, 7.5, 9), (9, 8.5, 16), [7, 9, 9, 16]),
     ], "smp:item/rotorblatt")
     return 1
 
@@ -1402,6 +1505,49 @@ def restliche_items(config_pfad):
 
 # ---------------------------------------------------------------- Lauf
 
+def pruefe_modelle():
+    """
+    Sucht Stellen, an denen zwei Quader eines Modells im Spiel flackern.
+
+    Das passiert genau dann, wenn sie sich überschneiden **und** in
+    derselben Ebene eine Fläche haben: Minecraft weiß dann nicht, welche
+    vorne liegt, und zeigt bei jeder Kopfbewegung eine andere. Ein Flügel,
+    der quer durch einen Rumpf geht, ist dagegen völlig in Ordnung - da
+    liegt keine Fläche auf einer anderen.
+
+    Aneinanderstoßen ist erlaubt, deshalb `<` und nicht `<=`.
+    """
+    def flackert(a, b):
+        ueber = [(max(a["from"][i], b["from"][i]), min(a["to"][i], b["to"][i]))
+                 for i in range(3)]
+        if not all(lo < hi for lo, hi in ueber):
+            return None
+        for k in range(3):
+            for seite in ("from", "to"):
+                if a[seite][k] == b[seite][k] and all(
+                        ueber[i][0] < ueber[i][1] for i in range(3) if i != k):
+                    return f"{'xyz'[k]} = {a[seite][k]}"
+        return None
+
+    beanstandet = []
+    dateien = sorted(MOD.rglob("*.json"))
+    for datei in dateien:
+        teile = json.loads(datei.read_text(encoding="utf-8")).get("elements", [])
+        for i, eins in enumerate(teile):
+            if any(v < -16 or v > 32 for v in eins["from"] + eins["to"]):
+                beanstandet.append(f"{datei.name}: Quader {i} liegt ausserhalb")
+            for j in range(i + 1, len(teile)):
+                wo = flackert(eins, teile[j])
+                if wo:
+                    beanstandet.append(f"{datei.name}: Quader {i} und {j} "
+                                       f"flackern bei {wo}")
+    for zeile in beanstandet:
+        print("  ! " + zeile)
+    print(f"{len(dateien)} Modelle geprüft, "
+          f"{len(beanstandet) or 'keine'} Beanstandungen")
+    return not beanstandet
+
+
 if __name__ == "__main__":
     a = moebel()
     b = sonder_moebel() + erze() + eigene_moebel()
@@ -1414,3 +1560,4 @@ if __name__ == "__main__":
           f"{len(list((TEX / 'item').glob('*.png')))} Item")
     print(f"Modelle:  {len(list((MOD / 'block').glob('*.json')))} Block, "
           f"{len(list((MOD / 'item').glob('*.json')))} Item")
+    raise SystemExit(0 if pruefe_modelle() else 1)

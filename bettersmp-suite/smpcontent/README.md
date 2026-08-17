@@ -4,15 +4,15 @@ Eigene **Blöcke**, **Items** und **Spezialfähigkeiten** (Paper 1.21.11).
 
 ## Inhalt
 
-**412 eigene Inhalte**, alle mit Textur außer den Platzhaltern:
+**429 eigene Inhalte**, alle mit Textur außer den Platzhaltern:
 
 | Datei | Inhalt |
 |---|---|
-| `config.yml` | 24 Blöcke, 88 Items – Erze, Marmor, Laserschwerter, Tränke, Werkzeuge, Früchte, **Waffen**, **Fahrzeuge**, Fallschirm |
+| `config.yml` | 24 Blöcke, 105 Items – Erze, Marmor, Laserschwerter, Tränke, Werkzeuge, Früchte, **Waffen**, **Fahrzeuge**, Fallschirm |
 | `content/moebel.yml` | **50 Möbel** – drehbar, zum Draufsetzen, mit echten 3D-Formen |
 | `content/platzhalter-bloecke.yml` | **100 Platzhalter-Blöcke**, absichtlich ohne Textur |
 | `content/platzhalter-items.yml` | **150 Platzhalter-Items**, absichtlich ohne Textur |
-| `fahrzeuge.yml` | **20 Fahrzeuge** – 8 Autos, 8 Flieger, 3 Boote, 1 Lok |
+| `fahrzeuge.yml` | **37 Fahrzeuge** – 25 Autos (darunter **15 Supersportwagen** in drei Familien), 8 Flieger, 3 Boote, 1 Lok |
 | `animationen.yml` | 13 Teilchen-Animationen (Formeln), eigene bauen |
 | `FAEHIGKEITEN.txt` | alle Auslöser und Aktionen erklärt |
 
@@ -53,7 +53,7 @@ Shift-Klick = 64 Stück. (Recht `smpcontent.admin`)
 Das GUI hat **Seiten** (45 pro Seite), unten links/rechts blättern. Dazu:
 
 - **Filter** (Trichter): Alles → Nur Blöcke → Nur Items → **Nur Möbel** →
-  **Nur Fahrzeuge**. So findest du die 20 Fahrzeuge und die 74 Möbel, ohne
+  **Nur Fahrzeuge**. So findest du die 37 Fahrzeuge und die 74 Möbel, ohne
   ihre Ids zu kennen.
 - **Suche**: `/smpcontent list laser` zeigt nur passende Einträge. Gesucht wird
   in der Id **und** im Anzeigenamen. Das Fernrohr im GUI hebt die Suche auf.
@@ -63,14 +63,30 @@ Das GUI hat **Seiten** (45 pro Seite), unten links/rechts blättern. Dazu:
 
 ## Texturen sind schon dabei
 
-Beim ersten Start legt das Plugin **237 fertige Texturen und 3D-Modelle** in
+**Updates kommen jetzt auch an.** Früher legte das Plugin die mitgelieferten
+Bilder nur an, wenn die Datei noch fehlte. Eine verbesserte Textur aus einer
+neuen Jar landete damit nie auf dem Server - man baute sein Pack neu und
+bekam trotzdem die alten Bilder. Jetzt merkt sich das Plugin in
+`.mitgeliefert.sha`, was es zuletzt selbst hingelegt hat:
+
+| Datei | passiert |
+|---|---|
+| fehlt | wird angelegt |
+| unverändert seit dem letzten Mal | wird auf den neuen Stand gebracht |
+| von dir geändert | bleibt genau so, wie sie ist |
+
+Im Log steht dann, wie viele Dateien nachgezogen wurden und wie viele deine
+eigenen sind. Danach einmal `/smpcontent pack`, und das Pack ist aktuell.
+
+
+Beim ersten Start legt das Plugin **277 fertige Texturen und 3D-Modelle** in
 deinen Datenordner – **alles außer den Platzhaltern hat eine Textur**:
 
 | | |
 |---|---|
 | 74 Blöcke | 50 Möbel, Erze, Marmor, Neonlampe, Münzhaufen, deine Stühle und Tische |
-| 85 Items | 17 Fahrzeuge, Schwerter, Tränke, Werkzeuge, Früchte, Schlüssel, Münzen … |
-| 78 Modelle | echte Formen statt Würfel |
+| 105 Items | 37 Fahrzeuge, Schwerter, Tränke, Werkzeuge, Früchte, Schlüssel, Münzen … |
+| 98 Modelle | echte Formen statt Würfel |
 
 Die Item-Formen kommen aus dem **Namen**, nicht aus dem Material: Bei dir
 tragen 14 Items dieselbe Pferderüstung, die wären sonst alle gleich. Ein
@@ -362,6 +378,18 @@ ergibt **74 von 74 Blöcken**.
 In der `fahrzeuge.yml`. Gefahren wird mit den **normalen Bewegungstasten** –
 Paper verrät sie dem Plugin, es braucht also keine Mod.
 
+> **Wie sich ein Fahrzeug bewegt.** Es wird gesetzt, nicht geschubst. Das
+> klingt nach einer Kleinigkeit, ist aber der Unterschied zwischen fahren und
+> nicht fahren: Ein Rüstungsständer – und das ist ein Fahrzeug technisch –
+> hat keine Stufenhöhe. Über `setVelocity()` bewegt, bleibt er an jeder
+> Blockkante hängen, an jeder Stufe, an jedem Zaun. Deshalb rechnet das
+> Plugin die Strecke selbst aus: in Vierteln vorwärts, damit man bei
+> `speed: 2.6` nicht durch dünne Wände springt, vor einem Hindernis erst eine
+> Stufe hoch, und mit eigener Schwerkraft. Steckt ein Fahrzeug doch einmal
+> fest, hebt es sich bis zu vier Blöcke heraus, statt für immer eingemauert
+> zu bleiben. Gemessen fährt jedes Fahrzeug jetzt genau sein `speed` –
+> `0.85` sind 17 Blöcke/s, `2.45` sind 49.
+
 ```yaml
 vehicles:
   sportwagen:
@@ -399,17 +427,65 @@ Charakter machen drei Werte: `speed` (Höchstgeschwindigkeit), `power`
 | **Veloce Hyper** | 2.30 | 0.11 | 2.6 | 2 | das schnellste Auto, schwerfällig in der Kurve |
 | **Oldtimer** | 0.45 | 0.03 | 4.5 | 4 | gemütlich, für Spazierfahrten |
 
-Viel `speed` **und** viel `turn` zusammen fühlt sich nervös an – deshalb lenkt
-das Hypercar bewusst träger als der Roadster, und der Veloce mit `turn: 2.6`
-am trägsten von allen: Bei 2.30 Tempo wäre alles andere unfahrbar.
+Dazu der Geländewagen und die Dampflok.
 
-> **Zu den Namen:** Der *Stier GT* und der *Veloce Hyper* sind einem
-> italienischen Zwölfzylinder und einem französischen Vierturbo
-> nachempfunden – Fahrverhalten, Form und Farbe. Sie heißen hier nur nicht so,
-> weil in einem öffentlichen Repo keine fremden Markennamen liegen sollten.
-> Auf deinem Server ist das eine Zeile in der `config.yml`:
-> `name: "<yellow>Lamborghini"` – und fertig. Dazu gibt es weiterhin den
-Geländewagen und die Dampflok.
+Viel `speed` **und** viel `turn` zusammen fühlt sich nervös an – deshalb lenkt
+das Hypercar bewusst träger als der Roadster.
+
+### Die 15 Supersportwagen
+
+Fünfzehn Autos, die sich nur in der Farbe unterscheiden, wären fünfzehn Mal
+dasselbe Auto. Deshalb gibt es **drei Familien** – jede mit eigener
+Silhouette, eigener Karosserie und eigenem Fahrverhalten:
+
+| Familie | Form | fährt sich |
+|---|---|---|
+| **Keil** | spitze Nase, gekapptes Heck, Spoilerkante | giftiger Antritt, sehr direkte Lenkung |
+| **Rundheck** | Dachbogen fällt nach hinten weg, Entenbürzel | die besten Kurvenwerte im Spiel, oben herum nicht der schnellste |
+| **Breitbau** | sehr lang und flach, Zweifarb-Linie | Endgeschwindigkeit ohne Ende, lenkt wie ein Schiff |
+
+**Keil**
+
+| Wagen | Tempo | Antritt | Lenkung | Plätze | wofür |
+|---|---|---|---|---|---|
+| **Countach** | 1.40 | 0.12 | 4.6 | 2 | der Älteste: langsamer, dafür genügsam |
+| **Huracán** | 1.65 | 0.18 | 6.0 | 2 | kurzer Radstand, der wendigste Keil |
+| **Diablo** | 1.72 | 0.15 | 5.6 | 2 | breit und ungezogen, bricht gern aus |
+| **Stier GT** | 1.75 | 0.15 | 5.5 | 2 | der Hausmeister der Familie |
+| **Aventador** | 1.80 | 0.16 | 5.2 | 2 | Zwölfzylinder, der Klassiker |
+| **Revuelto** | 1.95 | 0.17 | 5.0 | 2 | Hybrid, stärkster Antritt der Familie |
+
+**Rundheck**
+
+| Wagen | Tempo | Antritt | Lenkung | Plätze | wofür |
+|---|---|---|---|---|---|
+| **911 Carrera** | 1.35 | 0.14 | 6.5 | 2 | fährt sich wie auf Schienen |
+| **Taycan** | 1.45 | 0.22 | 6.0 | 4 | elektrisch: leise, volles Drehmoment ab Tick 1 |
+| **911 GT3 RS** | 1.55 | 0.16 | 7.2 | 1 | `turn: 7.2` – die beste Lenkung im ganzen Plugin |
+| **911 Turbo S** | 1.60 | 0.19 | 6.2 | 2 | Allrad, härtester Antritt der Familie |
+| **917** | 1.70 | 0.15 | 5.8 | 1 | Rennwagen von 1970, Einsitzer, nichts für Anfänger |
+
+**Breitbau**
+
+| Wagen | Tempo | Antritt | Lenkung | Plätze | wofür |
+|---|---|---|---|---|---|
+| **Divo** | 2.15 | 0.12 | 3.4 | 2 | der handlichste Breitbau |
+| **Veyron** | 2.20 | 0.11 | 2.8 | 2 | schwer, schnell, gutmütig |
+| **Veloce Hyper** | 2.30 | 0.11 | 2.6 | 2 | das Hausmodell |
+| **Bolide** | 2.35 | 0.15 | 4.0 | 1 | leicht: beschleunigt und lenkt besser, hält aber weniger aus |
+| **Chiron** | 2.45 | 0.10 | 2.4 | 2 | sechzehn Zylinder, braucht eine sehr lange Gerade |
+| **Tourbillon** | 2.60 | 0.13 | 2.6 | 2 | **das schnellste Fahrzeug überhaupt** |
+
+Warum die schnellen so träge lenken: Bei `speed: 2.60` wäre alles über
+`turn: 3` unfahrbar – ein Tick Lenkeinschlag wirft dich sonst quer. Wer lieber
+Kurven fährt als Rekorde, nimmt den GT3 oder den Huracán. Alle drei Werte
+stehen in der `fahrzeuge.yml` und sind deine.
+
+> **Zu den Namen:** Die Wagen tragen die Namen, nach denen sie gebaut sind –
+> das sind Marken anderer Leute, hier nur als Anzeigename im Spiel. Sie stehen
+> in deiner `config.yml` und du kannst sie in einer Zeile ändern:
+> `name: "<yellow>Mein Wagen"`. Die Ids (`auto_aventador` …) und alle
+> Texturen sind selbst gemacht, keine Originaldateien.
 
 ### Flugzeuge, Jets und Hubschrauber
 
@@ -463,7 +539,14 @@ Flugzeug dafür.
 ### Abstürze
 
 Gegen eine Wand fahren tut weh. Erkannt wird das daran, dass das Fahrzeug
-viel weniger weit gekommen ist, als es wollte:
+**waagerecht** viel weniger weit gekommen ist, als es wollte. Nur waagerecht:
+Vorher zählte die Senkrechte mit, und das hat Flieger reihenweise gesprengt –
+wer im Stand die Leertaste drückte, wollte einen halben Block nach oben, kam
+wegen des Bodens nicht vom Fleck, und das galt als Volltreffer. Man stieg
+ein, drückte Leertaste, und der Jet explodierte unter einem. Für den
+Sturzflug in den Boden gibt es weiter `hard-landing`, das die
+Sinkgeschwindigkeit misst. Die erste Sekunde nach dem Hinstellen ist
+außerdem Schonzeit.
 
 ```yaml
     crash:
@@ -529,11 +612,20 @@ pistole:
           spread: 0.6        # Streuung in Grad
           amount: 1          # 8 macht daraus eine Schrotflinte
           gravity: false     # fliegt geradeaus
+          bullet: true       # Kugel statt Pfeil, siehe unten
           ammo: "smp:kugel"  # Munition, die verbraucht wird
 ```
 
 Mitgeliefert sind **Pistole**, **Schrotflinte** (acht Kugeln plus Rückstoß)
 und **Raketenwerfer**. Ist keine Munition da, klickt es nur.
+
+**`bullet: true`** macht aus dem Geschoss eine Kugel: unsichtbar unterwegs,
+mit einer feinen Leuchtspur, und beim Aufschlag verschwindet sie mit einem
+Rauchpunkt. Ohne das bleibt ein Pfeil eine Minute lang im Boden stecken –
+wer mit der Pistole auf den Boden hält, steht sonst nach zehn Sekunden vor
+einem Igel aus Pfeilen. Im Kreativmodus fällt das am meisten auf, weil dort
+keine Munition verbraucht wird und man endlos schießen kann. Pistole und
+Schrotflinte haben es an; wer wirklich sichtbare Pfeile will, lässt es weg.
 
 ## Wie die Blöcke funktionieren
 

@@ -95,6 +95,10 @@ public final class VehicleManager {
         boolean wasOnGround;
         /** Nach einem Aufprall kurz Ruhe - sonst kracht es zwanzigmal je Sekunde. */
         int crashRuhe;
+        /** Wie schnell es gerade fällt. Die Schwerkraft machen wir selbst. */
+        double fallen;
+        /** Steht das Fahrzeug auf festem Grund? Ersetzt isOnGround(). */
+        boolean amBoden;
         /** Wie schnell es zuletzt gefallen ist - für die harte Landung. */
         double sinkRate;
 
@@ -198,7 +202,10 @@ public final class VehicleManager {
             stand.setInvisible(true);
             stand.setBasePlate(false);
             stand.setArms(false);
-            stand.setGravity(type.kind() != VehicleType.Kind.JET);
+            // Keine eigene Schwerkraft: das Fahrzeug wird gesetzt, nicht
+            // geschubst (siehe verschieben()). Sonst zieht die Physik des
+            // Rüstungsständers dagegen und es bleibt hängen.
+            stand.setGravity(false);
             stand.setInvulnerable(true);
             stand.setSilent(true);
             stand.setPersistent(true);
@@ -354,6 +361,9 @@ public final class VehicleManager {
                 body = display;
             }
         }
+        // Fahrzeuge aus einer älteren Fassung hatten noch Schwerkraft und
+        // blieben damit überall hängen. Beim Einsammeln gleich abstellen.
+        base.setGravity(false);
         Ride ride = new Ride(type, base, body, base.getLocation().getYaw(), type.range());
         ride.rotor = rotorTeil;
         ride.hitbox = feldTeil;
@@ -488,7 +498,7 @@ public final class VehicleManager {
             return;   // beim Aufprall zerlegt
         }
         ride.lastPos = ride.base.getLocation();
-        ride.base.setVelocity(velocity);
+        verschieben(ride, velocity);
         ride.base.setRotation(ride.yaw, 0f);
 
         if (ride.body != null && ride.body.isValid()) {
@@ -641,9 +651,24 @@ public final class VehicleManager {
         if (!crash.enabled() || ride.lastPos == null) {
             return;
         }
-        // Senkrecht zaehlt mit: wer im Sturzflug in den Boden geht, kommt
-        // waagerecht kaum vom Fleck - das waere sonst gar kein Aufprall.
-        double gewollt = wanted.length();
+        // Die erste Sekunde ist Schonzeit. Ein gerade hingestelltes Fahrzeug
+        // rückt sich noch zurecht - das darf nicht schon ein Unfall sein.
+        if (ride.takt < 20) {
+            return;
+        }
+        // Ein Aufprall ist etwas Waagerechtes: man fährt gegen eine Wand.
+        //
+        // Vorher zählte die Senkrechte mit, und das hat Flieger reihenweise
+        // gesprengt: Wer im Stand die Leertaste drückt, will einen halben
+        // Block nach oben. Steht darüber eine Decke - oder auch nur der
+        // Boden im Weg, weil der Flieger noch aufsetzt -, kommt er nicht
+        // vom Fleck, und genau das wurde als Volltreffer gewertet. Man stieg
+        // ein, drückte Leertaste, und der Jet explodierte unter einem.
+        //
+        // Für den Sturzflug in den Boden gibt es die eigene Prüfung
+        // "hard-landing" in checkLanding() - die passt dort besser hin,
+        // weil sie die Sinkgeschwindigkeit misst statt eines Restwegs.
+        double gewollt = Math.hypot(wanted.getX(), wanted.getZ());
         if (gewollt < crash.minSpeed()) {
             return;
         }
@@ -651,7 +676,8 @@ public final class VehicleManager {
         if (!now.getWorld().equals(ride.lastPos.getWorld())) {
             return;
         }
-        double echt = now.toVector().distance(ride.lastPos.toVector());
+        double echt = Math.hypot(now.getX() - ride.lastPos.getX(),
+                                 now.getZ() - ride.lastPos.getZ());
         // Kaum vom Fleck gekommen, obwohl es wollte: da war eine Wand
         if (echt > gewollt * 0.35) {
             return;
@@ -665,7 +691,7 @@ public final class VehicleManager {
      */
     private void checkLanding(Ride ride) {
         VehicleType.Crash crash = ride.type.crash();
-        boolean unten = ride.base.isOnGround();
+        boolean unten = ride.amBoden;
         if (crash.enabled() && crash.hardLanding() > 0 && unten && !ride.wasOnGround
                 && ride.sinkRate > crash.hardLanding()) {
             bang(ride, crash);
@@ -734,7 +760,7 @@ public final class VehicleManager {
     public boolean airborne(Entity vehicle) {
         Ride ride = active.get(vehicle.getUniqueId());
         return ride != null && ride.type.kind() == VehicleType.Kind.JET
-                && !ride.base.isOnGround();
+                && !ride.amBoden;
     }
 
     /** Sprit verbrauchen, wenn einer eingestellt ist. */
@@ -762,17 +788,15 @@ public final class VehicleManager {
         return material == null ? fallback : material;
     }
 
-    /** Auto: Vortrieb waagerecht, Schwerkraft senkrecht, eine Stufe schafft es. */
+    /**
+     * Auto: nur der Vortrieb.
+     *
+     * Um Schwerkraft, Stufen und Wände kümmert sich {@link #verschieben} -
+     * für alle Fahrzeugarten an einer Stelle, statt viermal einzeln.
+     */
     private Vector roll(Ride ride) {
         Vector forward = direction(ride.yaw).multiply(ride.speed);
-        double y = ride.base.getVelocity().getY();
-        if (ride.base.isOnGround()) {
-            y = 0;
-            if (ride.speed != 0 && blocked(ride) && free(ride)) {
-                y = 0.42;   // eine Stufe hoch
-            }
-        }
-        return new Vector(forward.getX(), y, forward.getZ());
+        return new Vector(forward.getX(), 0, forward.getZ());
     }
 
     /**
@@ -806,7 +830,7 @@ public final class VehicleManager {
         } else if (imWasser) {
             y = 0.0;                // liegt genau richtig
         } else {
-            y = ride.base.isOnGround() ? 0 : -0.15;
+            y = ride.amBoden ? 0 : -0.15;
         }
         return new Vector(forward.getX(), y, forward.getZ());
     }
@@ -900,17 +924,133 @@ public final class VehicleManager {
     }
 
     /** Steht direkt vor dem Fahrzeug etwas Festes? */
-    private boolean blocked(Ride ride) {
-        Location front = ride.base.getLocation()
-                .add(direction(ride.yaw).multiply(ride.speed < 0 ? -0.8 : 0.8));
-        return front.getBlock().getType().isSolid();
+    // ------------------------------------------------------------------
+    //  Bewegung
+    // ------------------------------------------------------------------
+
+    /**
+     * Ein Fahrzeug wird gesetzt, nicht geschubst.
+     *
+     * Vorher lief das über {@code setVelocity()} auf dem Rüstungsständer.
+     * Das sah in der Rechnung richtig aus, im Spiel aber nicht: Ein
+     * Rüstungsständer hat keine Stufenhöhe. Er bleibt an jeder Kante hängen,
+     * an jedem halben Block, an jedem Zaun - und weil er dabei manchmal
+     * einen Fingerbreit über dem Boden schwebt, griff auch die alte
+     * Kletterhilfe nicht, die {@code isOnGround()} verlangte. Ergebnis: man
+     * saß in einem Auto, das sich nicht vom Fleck rührte.
+     *
+     * Jetzt rechnet das Plugin die Strecke selbst aus und setzt das
+     * Fahrzeug dorthin:
+     *
+     *   - in Vierteln vorwärts, damit man bei hohem Tempo nicht durch
+     *     dünne Wände springt,
+     *   - vor einem Hindernis erst eine Stufe hoch versuchen (Autos, Boote
+     *     und Züge, nicht Flieger),
+     *   - senkrecht genauso, mit eigener Schwerkraft.
+     *
+     * Zurück kommt, wie weit es wirklich gekommen ist - daran erkennt
+     * {@link #checkCrash} den Aufprall.
+     */
+    private void verschieben(Ride ride, Vector gewollt) {
+        Location nach = ride.base.getLocation();
+        boolean flieger = ride.type.kind() == VehicleType.Kind.JET;
+
+        // Steckt es schon fest? Dann hilft kein Freiheits-Test mehr - jeder
+        // Schritt wäre verboten und das Fahrzeug für immer festgemauert.
+        // Das passiert schnell: ein Flieger unter einer niedrigen Decke
+        // hingestellt, ein Auto in eine Grube gefallen. Also erst versuchen,
+        // es nach oben herauszuheben, und sonst diesen einen Tick ohne
+        // Prüfung fahren lassen, damit man wieder herauskommt.
+        boolean steckt = !frei(nach, ride);
+        if (steckt) {
+            for (int hoehe = 1; hoehe <= 4; hoehe++) {
+                Location oben = nach.clone().add(0, hoehe, 0);
+                if (frei(oben, ride)) {
+                    nach = oben;
+                    steckt = false;
+                    break;
+                }
+            }
+        }
+
+        Vector flach = new Vector(gewollt.getX(), 0, gewollt.getZ());
+        double strecke = flach.length();
+        if (strecke > 1.0e-4) {
+            int schritte = (int) Math.ceil(strecke / 0.25);
+            Vector teil = flach.multiply(1.0 / schritte);
+            for (int i = 0; i < schritte; i++) {
+                Location versuch = nach.clone().add(teil);
+                if (steckt || frei(versuch, ride)) {
+                    nach = versuch;
+                    continue;
+                }
+                // Eine Stufe hoch - genau das, was ein Rüstungsständer
+                // von sich aus nicht kann.
+                Location stufe = versuch.clone().add(0, 1.0, 0);
+                if (!flieger && ride.amBoden && frei(stufe, ride)) {
+                    nach = stufe;
+                    continue;
+                }
+                break;   // da steht wirklich etwas
+            }
+        }
+
+        double hoch = gewollt.getY();
+        if (!flieger) {
+            // Schwerkraft von Hand. Ein Flieger hält seine Höhe selbst.
+            ride.fallen = Math.min(1.6, ride.fallen + 0.08);
+            hoch = Math.min(hoch, -ride.fallen);
+        }
+        ride.amBoden = false;
+        if (Math.abs(hoch) > 1.0e-4) {
+            int schritte = (int) Math.ceil(Math.abs(hoch) / 0.25);
+            double teil = hoch / schritte;
+            for (int i = 0; i < schritte; i++) {
+                Location versuch = nach.clone().add(0, teil, 0);
+                if (!frei(versuch, ride)) {
+                    if (teil < 0) {
+                        ride.amBoden = true;
+                        ride.fallen = 0;
+                    }
+                    break;
+                }
+                nach = versuch;
+            }
+        }
+        // Ein Flieger im Sturzflug soll trotzdem merken, dass er aufsetzt.
+        if (flieger && !frei(nach.clone().add(0, -0.1, 0), ride)) {
+            ride.amBoden = true;
+        }
+
+        nach.setYaw(ride.yaw);
+        nach.setPitch(0);
+        ride.base.teleport(nach);
+        // Die Eigenbewegung des Ständers wieder auf null: sonst schiebt
+        // ihn ein Rest aus einer Explosion oder einem Schlag weiter.
+        ride.base.setVelocity(new Vector());
     }
 
-    /** Und ist darüber Platz, um hochzufahren? */
-    private boolean free(Ride ride) {
-        Location front = ride.base.getLocation()
-                .add(direction(ride.yaw).multiply(ride.speed < 0 ? -0.8 : 0.8));
-        return !front.getBlock().getRelative(0, 1, 0).getType().isSolid();
+    /**
+     * Ist an dieser Stelle Platz für das Fahrzeug?
+     *
+     * Geprüft werden die vier Ecken der eingestellten Breite auf zwei
+     * Höhen. Blöcke ohne feste Form - Gras, Fackeln, Schnee, Wasser -
+     * halten nicht auf; alles andere schon.
+     */
+    private boolean frei(Location wo, Ride ride) {
+        double r = Math.max(0.25, ride.type.width() / 2.0 - 0.2);
+        double h = Math.max(0.8, ride.type.height());
+        for (double dx : new double[]{-r, r}) {
+            for (double dz : new double[]{-r, r}) {
+                for (double dy : new double[]{0.05, h - 0.05}) {
+                    Block block = wo.clone().add(dx, dy, dz).getBlock();
+                    if (block.getType().isSolid()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     private static Vector direction(float yaw) {

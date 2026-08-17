@@ -1941,6 +1941,7 @@ items:
             damage: 5.0
             spread: 0.6
             gravity: false
+            bullet: true        # verschwindet beim Aufschlag, statt stecken zu bleiben
             ammo: "smp:kugel"
           - type: sound
             sound: entity.firework_rocket.blast
@@ -1971,6 +1972,7 @@ items:
             damage: 2.5
             spread: 9.0
             gravity: true
+            bullet: true
             ammo: "smp:kugel"
           - type: sound
             sound: entity.generic.explode
@@ -2064,6 +2066,162 @@ items:
       - "<dark_gray>Das schnellste Auto im Stall"
       - "<gray>Will lange Geraden"
     model-data: 8561
+    max-stack: 1
+    glow: true
+
+  # ---- Keil-Familie: Mittelmotor, scharfe Kante, giftiger Antritt ----
+
+  auto_aventador:
+    material: MINECART
+    name: "<yellow>Lamborghini Aventador"
+    lore:
+      - "<dark_gray>Zwölfzylinder, Mittelmotor"
+      - "<gray>Der Klassiker der Familie"
+    model-data: 8562
+    max-stack: 1
+    glow: true
+
+  auto_huracan:
+    material: MINECART
+    name: "<green>Lamborghini Huracán"
+    lore:
+      - "<dark_gray>Zehnzylinder, kurzer Radstand"
+      - "<gray>Der wendigste Keil"
+    model-data: 8563
+    max-stack: 1
+    glow: true
+
+  auto_revuelto:
+    material: MINECART
+    name: "<red>Lamborghini Revuelto"
+    lore:
+      - "<dark_gray>Hybrid: V12 plus drei E-Motoren"
+      - "<gray>Antritt wie ein Tritt"
+    model-data: 8564
+    max-stack: 1
+    glow: true
+
+  auto_countach:
+    material: MINECART
+    name: "<white>Lamborghini Countach"
+    lore:
+      - "<dark_gray>Der Keil, der alle Keile erfand"
+      - "<gray>Langsamer, aber dafür schön"
+    model-data: 8565
+    max-stack: 1
+    glow: true
+
+  auto_diablo:
+    material: MINECART
+    name: "<dark_purple>Lamborghini Diablo"
+    lore:
+      - "<dark_gray>Breit, laut, ungezogen"
+      - "<gray>Bricht gern hinten aus"
+    model-data: 8566
+    max-stack: 1
+    glow: true
+
+  # ---- Rundheck-Familie: Heckmotor, kurz, kurvenfest ----
+
+  auto_carrera:
+    material: MINECART
+    name: "<gray>Porsche 911 Carrera"
+    lore:
+      - "<dark_gray>Sechszylinder ganz hinten"
+      - "<gray>Fährt sich wie auf Schienen"
+    model-data: 8567
+    max-stack: 1
+    glow: true
+
+  auto_turbo_s:
+    material: MINECART
+    name: "<blue>Porsche 911 Turbo S"
+    lore:
+      - "<dark_gray>Allrad, zwei Turbolader"
+      - "<gray>Beschleunigt am härtesten"
+    model-data: 8568
+    max-stack: 1
+    glow: true
+
+  auto_gt3:
+    material: MINECART
+    name: "<gold>Porsche 911 GT3 RS"
+    lore:
+      - "<dark_gray>Sauger, Rennstrecke, Heckflügel"
+      - "<gray>Die beste Lenkung im Spiel"
+    model-data: 8569
+    max-stack: 1
+    glow: true
+
+  auto_taycan:
+    material: MINECART
+    name: "<aqua>Porsche Taycan"
+    lore:
+      - "<dark_gray>Elektrisch - und darum leise"
+      - "<gray>Volles Drehmoment ab dem ersten Tick"
+    model-data: 8570
+    max-stack: 1
+    glow: true
+
+  auto_neunelf:
+    material: MINECART
+    name: "<white>Porsche 917"
+    lore:
+      - "<dark_gray>Le-Mans-Sieger von 1970"
+      - "<gray>Schnell, aber nichts für Anfänger"
+    model-data: 8571
+    max-stack: 1
+    glow: true
+
+  # ---- Breitbau-Familie: sehr lang, sehr breit, Endgeschwindigkeit ----
+
+  auto_chiron:
+    material: MINECART
+    name: "<blue>Bugatti Chiron"
+    lore:
+      - "<dark_gray>Sechzehn Zylinder, vier Turbos"
+      - "<gray>Braucht eine sehr lange Gerade"
+    model-data: 8572
+    max-stack: 1
+    glow: true
+
+  auto_veyron:
+    material: MINECART
+    name: "<dark_red>Bugatti Veyron"
+    lore:
+      - "<dark_gray>Der erste mit tausend PS"
+      - "<gray>Schwer, schnell, gutmütig"
+    model-data: 8573
+    max-stack: 1
+    glow: true
+
+  auto_divo:
+    material: MINECART
+    name: "<aqua>Bugatti Divo"
+    lore:
+      - "<dark_gray>Weniger Endspeed, mehr Kurve"
+      - "<gray>Der handlichste der Breitbauten"
+    model-data: 8574
+    max-stack: 1
+    glow: true
+
+  auto_bolide:
+    material: MINECART
+    name: "<yellow>Bugatti Bolide"
+    lore:
+      - "<dark_gray>Rennwagen ohne Strassenzulassung"
+      - "<gray>Leicht - beschleunigt und lenkt besser"
+    model-data: 8575
+    max-stack: 1
+    glow: true
+
+  auto_tourbillon:
+    material: MINECART
+    name: "<white>Bugatti Tourbillon"
+    lore:
+      - "<dark_gray>Hybrid, das schnellste Auto überhaupt"
+      - "<gray>Lenkt dafür wie ein Schiff"
+    model-data: 8576
     max-stack: 1
     glow: true
 

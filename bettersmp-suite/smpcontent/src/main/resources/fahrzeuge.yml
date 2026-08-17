@@ -257,6 +257,417 @@ vehicles:
       sound: entity.generic.explode
       ram: 9.0
 
+  # ==========================================================
+  #  Die drei Supersportwagen-Familien
+  #
+  #  Jede fährt sich anders - das ist der ganze Witz daran,
+  #  fünfzehn Stück zu haben:
+  #
+  #    Keil       Mittelmotor. Giftiger Antritt, sehr direkte
+  #               Lenkung, bricht bei zu viel Gas hinten aus.
+  #    Rundheck   Heckmotor, kurzer Radstand. Die besten
+  #               Kurvenwerte im ganzen Spiel, dafür oben herum
+  #               nicht der schnellste.
+  #    Breitbau   Sehr lang und schwer. Höchstgeschwindigkeit
+  #               ohne Ende, lenkt aber wie ein Schiff. Will
+  #               lange Geraden, keine Ortsdurchfahrt.
+  #
+  #  Alle Werte hier kannst du ändern - speed, power und turn
+  #  sind genau die drei Zahlen, die den Charakter machen.
+  # ==========================================================
+
+  # ---- Keil ----
+
+  aventador:
+    art: auto
+    item: auto_aventador
+    model: auto_aventador
+    speed: 1.80
+    power: 0.16
+    turn: 5.2
+    seats: 2
+    scale: 1.0
+    width: 2.0
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 250
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 12.0
+      explosion: 2.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 8.0
+
+  # Kürzer als der Aventador, darum handlicher.
+  huracan:
+    art: auto
+    item: auto_huracan
+    model: auto_huracan
+    speed: 1.65
+    power: 0.18
+    turn: 6.0
+    seats: 2
+    scale: 0.95
+    width: 1.9
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 260
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 11.0
+      explosion: 2.2
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 7.0
+
+  # Hybrid: der stärkste Antritt der Keil-Familie.
+  revuelto:
+    art: auto
+    item: auto_revuelto
+    model: auto_revuelto
+    speed: 1.95
+    power: 0.17
+    turn: 5.0
+    seats: 2
+    scale: 1.0
+    width: 2.0
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 300
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 13.0
+      explosion: 2.6
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 8.0
+
+  # Der Älteste: langsamer, aber genügsam und leicht zu fahren.
+  countach:
+    art: auto
+    item: auto_countach
+    model: auto_countach
+    speed: 1.40
+    power: 0.12
+    turn: 4.6
+    seats: 2
+    scale: 1.0
+    width: 2.0
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.didgeridoo
+    fuel: ""
+    range: 320
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 10.0
+      explosion: 2.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  # Breit und ungezogen - viel Kraft, wenig Geduld.
+  diablo:
+    art: auto
+    item: auto_diablo
+    model: auto_diablo
+    speed: 1.72
+    power: 0.15
+    turn: 5.6
+    seats: 2
+    scale: 1.05
+    width: 2.1
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 240
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 12.0
+      explosion: 2.4
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 8.0
+
+  # ---- Rundheck ----
+
+  carrera:
+    art: auto
+    item: auto_carrera
+    model: auto_carrera
+    speed: 1.35
+    power: 0.14
+    turn: 6.5
+    seats: 2
+    scale: 0.95
+    width: 1.8
+    height: 1.1
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 340
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 9.0
+      explosion: 1.8
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  # Allrad und zwei Turbos: der beste Antritt der Familie.
+  turbo_s:
+    art: auto
+    item: auto_turbo_s
+    model: auto_turbo_s
+    speed: 1.60
+    power: 0.19
+    turn: 6.2
+    seats: 2
+    scale: 0.95
+    width: 1.8
+    height: 1.1
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 300
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 10.0
+      explosion: 2.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 7.0
+
+  # Rennstrecke: die beste Lenkung im ganzen Spiel.
+  gt3:
+    art: auto
+    item: auto_gt3
+    model: auto_gt3
+    speed: 1.55
+    power: 0.16
+    turn: 7.2
+    seats: 1
+    scale: 0.95
+    width: 1.8
+    height: 1.1
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 280
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 10.0
+      explosion: 2.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 7.0
+
+  # Elektrisch: kein Motorgeräusch, dafür sofort volle Kraft.
+  taycan:
+    art: auto
+    item: auto_taycan
+    model: auto_taycan
+    speed: 1.45
+    power: 0.22
+    turn: 6.0
+    seats: 4
+    scale: 1.0
+    width: 1.9
+    height: 1.1
+    sound: block.beacon.ambient
+    horn: block.note_block.chime
+    fuel: ""
+    range: 400
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 9.0
+      explosion: 1.6
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  # Der Rennwagen von 1970: schnell, leicht, ohne Netz.
+  neunelf:
+    art: auto
+    item: auto_neunelf
+    model: auto_neunelf
+    speed: 1.70
+    power: 0.15
+    turn: 5.8
+    seats: 1
+    scale: 0.95
+    width: 1.8
+    height: 0.9
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 260
+    crash:
+      enabled: true
+      min-speed: 0.4
+      damage: 14.0
+      explosion: 2.2
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 7.0
+
+  # ---- Breitbau ----
+
+  chiron:
+    art: auto
+    item: auto_chiron
+    model: auto_chiron
+    speed: 2.45
+    power: 0.10
+    turn: 2.4
+    seats: 2
+    scale: 1.1
+    width: 2.2
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.pling
+    fuel: ""
+    range: 200
+    crash:
+      enabled: true
+      min-speed: 0.55
+      damage: 15.0
+      explosion: 3.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 9.0
+
+  veyron:
+    art: auto
+    item: auto_veyron
+    model: auto_veyron
+    speed: 2.20
+    power: 0.11
+    turn: 2.8
+    seats: 2
+    scale: 1.1
+    width: 2.2
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.pling
+    fuel: ""
+    range: 220
+    crash:
+      enabled: true
+      min-speed: 0.55
+      damage: 14.0
+      explosion: 2.8
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 9.0
+
+  # Weniger Endgeschwindigkeit, dafür der handlichste Breitbau.
+  divo:
+    art: auto
+    item: auto_divo
+    model: auto_divo
+    speed: 2.15
+    power: 0.12
+    turn: 3.4
+    seats: 2
+    scale: 1.1
+    width: 2.2
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.pling
+    fuel: ""
+    range: 230
+    crash:
+      enabled: true
+      min-speed: 0.55
+      damage: 14.0
+      explosion: 2.8
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 9.0
+
+  # Rennwagen ohne Strassenzulassung: leicht, laut, kurz angebunden.
+  bolide:
+    art: auto
+    item: auto_bolide
+    model: auto_bolide
+    speed: 2.35
+    power: 0.15
+    turn: 4.0
+    seats: 1
+    scale: 1.05
+    width: 2.1
+    height: 0.9
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 180
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 16.0
+      explosion: 3.2
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 10.0
+
+  # Das schnellste Fahrzeug im ganzen Plugin - und das trägste.
+  tourbillon:
+    art: auto
+    item: auto_tourbillon
+    model: auto_tourbillon
+    speed: 2.60
+    power: 0.13
+    turn: 2.6
+    seats: 2
+    scale: 1.1
+    width: 2.2
+    height: 1.0
+    sound: block.beacon.ambient
+    horn: block.note_block.chime
+    fuel: ""
+    range: 260
+    crash:
+      enabled: true
+      min-speed: 0.6
+      damage: 16.0
+      explosion: 3.2
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 10.0
+
   oldtimer:
     art: auto
     item: auto_oldtimer

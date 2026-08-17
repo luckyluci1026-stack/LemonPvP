@@ -234,6 +234,11 @@ public final class Abilities {
         boolean gravity = Ability.flag(action, "gravity", true);
         boolean fire = Ability.flag(action, "fire", false);
         int pierce = (int) Ability.number(action, "pierce", 0);
+        // Eine Kugel bleibt nicht im Boden stecken. Pfeile tun das von Haus
+        // aus, und dann steht vor einem eine Wand aus Pfeilen - genau das
+        // sieht man beim Schiessen auf den Boden. "bullet: true" raeumt das
+        // Geschoss beim Aufschlag weg und macht es unterwegs unsichtbar.
+        boolean bullet = Ability.flag(action, "bullet", false);
 
         for (int i = 0; i < amount; i++) {
             Vector direction = player.getEyeLocation().getDirection();
@@ -268,7 +273,40 @@ public final class Abilities {
                 arrow.setPickupStatus(
                         org.bukkit.entity.AbstractArrow.PickupStatus.DISALLOWED);
             }
+            if (bullet) {
+                shot.getPersistentDataContainer().set(KUGEL,
+                        org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
+                shot.setInvisible(true);
+                spurLegen(shot);
+            }
         }
+    }
+
+    /** Merkzettel: das ist eine Kugel von uns und keine gewöhnliche Munition. */
+    public static final org.bukkit.NamespacedKey KUGEL =
+            new org.bukkit.NamespacedKey("smpcontent", "kugel");
+
+    /**
+     * Die Leuchtspur.
+     *
+     * Die Kugel selbst ist unsichtbar - ohne Spur sähe man gar nichts und
+     * wüsste nie, wohin man geschossen hat. Zwei kleine Teilchen pro Tick
+     * reichen für einen sauberen Strich und kosten nichts.
+     */
+    private void spurLegen(org.bukkit.entity.Entity shot) {
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                if (!shot.isValid() || ++ticks > 100) {
+                    cancel();
+                    return;
+                }
+                shot.getWorld().spawnParticle(org.bukkit.Particle.CRIT,
+                        shot.getLocation(), 1, 0, 0, 0, 0);
+            }
+        }.runTaskTimer(plugin, 0L, 1L);
     }
 
     /** Nimmt ein Stück Munition aus dem Inventar. */

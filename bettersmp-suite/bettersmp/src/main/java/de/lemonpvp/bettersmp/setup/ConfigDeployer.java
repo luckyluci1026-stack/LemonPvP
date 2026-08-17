@@ -24,8 +24,21 @@ public final class ConfigDeployer {
         this.plugin = plugin;
     }
 
+    /**
+     * plugins/ - immer als absoluter Pfad.
+     *
+     * getDataFolder() liefert bei Paper einen relativen Pfad
+     * ("plugins/BetterSMP"). Auf dem Elternteil davon ist getParentFile()
+     * dann {@code null}, und das war der Absturz beim ersten Start.
+     */
     private File pluginsDir() {
-        return plugin.getDataFolder().getParentFile();
+        return plugin.getDataFolder().getAbsoluteFile().getParentFile();
+    }
+
+    /** Der Ordner, in dem der Server läuft - dort liegt die server.properties. */
+    private File serverDir() {
+        File oben = pluginsDir().getParentFile();
+        return oben != null ? oben : new File(".").getAbsoluteFile();
     }
 
     /** Kopiert eine Jar-Ressource in eine Zieldatei, falls diese noch nicht existiert. */
@@ -78,7 +91,7 @@ public final class ConfigDeployer {
      * Wirkt nach dem nächsten Neustart.
      */
     public boolean patchServerProperties(CommandSender feedback) {
-        Path props = pluginsDir().getParentFile().toPath().resolve("server.properties");
+        Path props = serverDir().toPath().resolve("server.properties");
         if (!Files.exists(props)) {
             return false;
         }

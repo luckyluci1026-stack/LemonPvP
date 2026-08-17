@@ -156,25 +156,112 @@ public final class SMPContent extends JavaPlugin {
     }
 
     /**
-     * Legt die mitgelieferten Texturen und 3D-Modelle in den Datenordner -
-     * einmalig, und nur was noch nicht da ist. Deine eigenen Dateien werden
-     * also nie überschrieben: Wer eine Textur schöner haben will, legt seine
-     * eigene daneben und behält sie auch nach einem Update.
+     * Legt die mitgelieferten Texturen und 3D-Modelle in den Datenordner.
+     *
+     * Der Knackpunkt ist das Update. Früher wurde nur angelegt, was noch
+     * nicht da war - eine verbesserte Textur aus einer neuen Jar kam damit
+     * nie beim Server an, weil die alte Datei ja schon dort lag. Wer nichts
+     * davon wusste, hat sein Pack neu gebaut und trotzdem die alten Bilder
+     * bekommen.
+     *
+     * Jetzt merkt sich das Plugin in {@code .mitgeliefert.sha}, welchen
+     * Inhalt es zuletzt selbst hingelegt hat:
+     *
+     *   Datei fehlt                  -> anlegen
+     *   Datei = zuletzt Mitgeliefertes -> unangetastet, wird ersetzt
+     *   Datei ist anders             -> von Hand geändert, bleibt liegen
+     *
+     * Damit werden Verbesserungen sauber nachgezogen und eigene Dateien
+     * trotzdem nie überschrieben.
      */
     private void saveAssets() {
-        int kopiert = 0;
+        Path merker = getDataFolder().toPath().resolve(".mitgeliefert.sha");
+        java.util.Properties bekannt = new java.util.Properties();
+        if (Files.exists(merker)) {
+            try (var in = Files.newInputStream(merker)) {
+                bekannt.load(in);
+            } catch (IOException ex) {
+                getLogger().warning(".mitgeliefert.sha nicht lesbar: " + ex.getMessage());
+            }
+        }
+
+        int neu = 0, erneuert = 0, eigene = 0;
+        java.util.Properties jetzt = new java.util.Properties();
         for (String art : new String[]{"textures/block", "textures/item",
                                        "models/block", "models/item"}) {
             for (String datei : listResources("assets/" + art)) {
+                String quelle = "assets/" + art + "/" + datei;
+                byte[] inhalt = readResource(quelle);
+                if (inhalt == null) {
+                    continue;
+                }
+                String schluessel = art + "/" + datei;
+                String pruefsumme = sha256(inhalt);
+                jetzt.setProperty(schluessel, pruefsumme);
+
                 Path ziel = getDataFolder().toPath().resolve(art).resolve(datei);
-                if (!Files.exists(ziel)) {
-                    copyIfAbsent("assets/" + art + "/" + datei, ziel);
-                    kopiert++;
+                try {
+                    if (!Files.exists(ziel)) {
+                        Files.createDirectories(ziel.getParent());
+                        Files.write(ziel, inhalt);
+                        neu++;
+                    } else if (pruefsumme.equals(sha256(Files.readAllBytes(ziel)))) {
+                        continue;   // schon genau das, nichts zu tun
+                    } else if (bekannt.getProperty(schluessel, "")
+                            .equals(sha256(Files.readAllBytes(ziel)))) {
+                        Files.write(ziel, inhalt);   // unsere alte Fassung
+                        erneuert++;
+                    } else {
+                        eigene++;   // von Hand geändert - Finger weg
+                    }
+                } catch (IOException ex) {
+                    getLogger().warning(schluessel + " nicht schreibbar: " + ex.getMessage());
                 }
             }
         }
-        if (kopiert > 0) {
-            getLogger().info(kopiert + " mitgelieferte Texturen und Modelle angelegt.");
+        try {
+            Files.createDirectories(merker.getParent());
+            try (var out = Files.newOutputStream(merker)) {
+                jetzt.store(out, "Pruefsummen der mitgelieferten Dateien - nicht anfassen");
+            }
+        } catch (IOException ex) {
+            getLogger().warning(".mitgeliefert.sha nicht schreibbar: " + ex.getMessage());
+        }
+
+        if (neu > 0) {
+            getLogger().info(neu + " mitgelieferte Texturen und Modelle angelegt.");
+        }
+        if (erneuert > 0) {
+            getLogger().info(erneuert + " mitgelieferte Texturen und Modelle auf den "
+                    + "neuen Stand gebracht. Baue dein Pack neu: /smpcontent pack");
+        }
+        if (eigene > 0) {
+            getLogger().info(eigene + " Dateien hast du selbst geändert - die bleiben, "
+                    + "wie sie sind.");
+        }
+    }
+
+    /** Eine Datei aus der Jar als Bytes. */
+    private byte[] readResource(String resource) {
+        try (InputStream in = getResource(resource)) {
+            return in == null ? null : in.readAllBytes();
+        } catch (IOException ex) {
+            getLogger().warning(resource + " nicht lesbar: " + ex.getMessage());
+            return null;
+        }
+    }
+
+    private static String sha256(byte[] daten) {
+        try {
+            byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(daten);
+            StringBuilder text = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                text.append(Character.forDigit((b >> 4) & 0xF, 16))
+                    .append(Character.forDigit(b & 0xF, 16));
+            }
+            return text.toString();
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 fehlt", ex);
         }
     }
 

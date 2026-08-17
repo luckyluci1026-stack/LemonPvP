@@ -32,6 +32,27 @@ public final class AbilityListener implements Listener {
     }
 
     /**
+     * Eine Kugel verschwindet, wenn sie irgendwo ankommt.
+     *
+     * Ein Pfeil bleibt sonst eine Minute lang im Boden stecken. Wer mit der
+     * Pistole auf den Boden hält, steht danach vor einem Igel aus Pfeilen -
+     * im Kreativmodus fällt das am meisten auf, weil man dort endlos
+     * schießen kann. An der Einschlagstelle bleibt ein kleiner Rauchpunkt.
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onProjectileHit(org.bukkit.event.entity.ProjectileHitEvent event) {
+        org.bukkit.entity.Projectile shot = event.getEntity();
+        if (!shot.getPersistentDataContainer().has(
+                de.lemonpvp.smpcontent.ability.Abilities.KUGEL,
+                org.bukkit.persistence.PersistentDataType.BYTE)) {
+            return;
+        }
+        shot.getWorld().spawnParticle(org.bukkit.Particle.SMOKE,
+                shot.getLocation(), 4, 0.05, 0.05, 0.05, 0.01);
+        shot.remove();
+    }
+
+    /**
      * WICHTIG: hier ohne ignoreCancelled.
      *
      * Bukkit setzt bei einem Klick in die LUFT von sich aus
