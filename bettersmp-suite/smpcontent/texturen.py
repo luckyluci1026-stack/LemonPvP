@@ -746,101 +746,287 @@ def koerper(name):
     """
     Der Körper eines Fahrzeugs, aus wenigen Quadern.
 
-    Die UV-Ausschnitte zeigen auf die passende Stelle der Seitenansicht:
-    der Aufbau nimmt den hellen Streifen, die Räder den dunklen darunter.
-    Dadurch braucht jedes Fahrzeug nur eine einzige 16x16-Textur.
+    Jede Seite nimmt ihren eigenen Ausschnitt aus dem Atlas: die Flanken
+    das Seitenprofil, oben das Dach, vorn und hinten die Frontansicht, die
+    Räder ihre Radkachel. Vorher zeigten alle sechs Seiten dasselbe
+    Seitenprofil - das ist der Unterschied zwischen einem Auto und einem
+    bunt bemalten Klotz.
     """
-    hell = [2, 5, 14, 9]      # Karosserie - die Flanke zwischen Dach und Rad
-    dunkel = [2, 9, 5, 12]    # Räder, Fahrwerk, Streben - das hintere Rad
-    dach = [4, 3, 12, 6]      # Fenster und Aufbau - Dach und Scheiben
-
-    # Die drei Familien. Die Quader stossen aneinander, statt sich zu
-    # ueberlappen: zwei deckungsgleiche Flaechen im selben Punkt flackern
-    # im Spiel gegeneinander. Nase ist z=0, das Heck z=16.
     if name in KEIL_FAMILIE:
-        # Der Keil: Wanne, dann eine Schulter, die nach hinten hoeher wird,
-        # Kanzel weit hinten und ein Fluegel auf zwei Stuetzen.
+        # Der Keil: Nase am Boden, Kanzel weit hinten, Fluegel ueber dem Heck
         return [
-            quader_uv((2, 2, 0), (14, 5, 16), hell),      # flache Wanne
-            quader_uv((3, 5, 5), (13, 7, 16), hell),      # Schulter nach hinten
-            quader_uv((4, 7, 7), (12, 10, 13), dach),     # Kanzel
-            quader_uv((6, 7, 13), (10, 9, 15), dunkel),   # Fluegelstuetze
-            quader_uv((1, 9, 13), (15, 10, 16), dunkel),  # Heckfluegel
-            quader_uv((2, 0, 2), (5, 2, 5), dunkel),      # vier flache Raeder
-            quader_uv((11, 0, 2), (14, 2, 5), dunkel),
-            quader_uv((2, 0, 11), (5, 2, 14), dunkel),
-            quader_uv((11, 0, 11), (14, 2, 14), dunkel),
+            quader_atlas((2, 2, 0), (14, 5, 16)),          # flache Wanne
+            quader_atlas((3, 5, 5), (13, 7, 16)),          # Schulter nach hinten
+            quader_atlas((4, 7, 7), (12, 10, 13)),         # Kanzel
+            quader_rad((6, 7, 13), (10, 9, 15)),           # Fluegelstuetze
+            quader_rad((1, 9, 13), (15, 10, 16)),          # Heckfluegel
+            quader_rad((2, 0, 2), (5, 2, 5)),              # vier flache Raeder
+            quader_rad((11, 0, 2), (14, 2, 5)),
+            quader_rad((2, 0, 11), (5, 2, 14)),
+            quader_rad((11, 0, 11), (14, 2, 14)),
         ]
     if name in RUNDHECK_FAMILIE:
-        # Rundheck: kurzer Radstand, ausgestellte Kotfluegel, das Dach
-        # faellt nach hinten weg und endet in einem kleinen Buerzel.
         return [
-            quader_uv((3, 3, 1), (13, 6, 15), hell),      # Wanne, schmaler
-            quader_uv((2, 6, 2), (14, 8, 14), hell),      # ausgestellte Kotfluegel
-            quader_uv((4, 8, 5), (12, 11, 12), dach),     # Fastback-Dach
-            quader_uv((4, 8, 12), (12, 9, 14), dunkel),   # Entenbuerzel
-            quader_uv((2, 0, 2), (5, 3, 5), dunkel),      # vier Raeder
-            quader_uv((11, 0, 2), (14, 3, 5), dunkel),
-            quader_uv((2, 0, 10), (5, 3, 13), dunkel),
-            quader_uv((11, 0, 10), (14, 3, 13), dunkel),
+            quader_atlas((3, 3, 1), (13, 6, 15)),          # Wanne
+            quader_atlas((2, 6, 2), (14, 8, 14)),          # ausgestellte Kotfluegel
+            quader_atlas((4, 8, 5), (12, 11, 12)),         # Fastback-Dach
+            quader_rad((4, 8, 12), (12, 9, 14)),           # Entenbuerzel
+            quader_rad((2, 0, 2), (5, 3, 5)),
+            quader_rad((11, 0, 2), (14, 3, 5)),
+            quader_rad((2, 0, 10), (5, 3, 13)),
+            quader_rad((11, 0, 10), (14, 3, 13)),
         ]
     if name in BREITBAU_FAMILIE:
-        # Breitbau: nutzt den Block ganz aus, flach wie ein Brett, mit
-        # ausfahrbarem Heckspoiler statt Fluegel.
         return [
-            quader_uv((1, 2, 0), (15, 6, 16), hell),      # sehr breite Wanne
-            quader_uv((4, 6, 4), (12, 9, 12), dach),      # flache Kanzel
-            quader_uv((7, 6, 12), (9, 8, 16), dunkel),    # Mittelfinne hinten
-            quader_uv((2, 8, 13), (14, 9, 15), dunkel),   # Heckspoiler
-            quader_uv((1, 0, 2), (4, 2, 6), dunkel),      # vier breite Raeder
-            quader_uv((12, 0, 2), (15, 2, 6), dunkel),
-            quader_uv((1, 0, 10), (4, 2, 14), dunkel),
-            quader_uv((12, 0, 10), (15, 2, 14), dunkel),
+            quader_atlas((1, 2, 0), (15, 6, 16)),          # sehr breite Wanne
+            quader_atlas((4, 6, 4), (12, 9, 12)),          # flache Kanzel
+            quader_rad((7, 6, 12), (9, 8, 16)),            # Mittelfinne
+            quader_rad((2, 8, 13), (14, 9, 15)),           # Heckspoiler
+            quader_rad((1, 0, 2), (4, 2, 6)),              # vier breite Raeder
+            quader_rad((12, 0, 2), (15, 2, 6)),
+            quader_rad((1, 0, 10), (4, 2, 14)),
+            quader_rad((12, 0, 10), (15, 2, 14)),
         ]
     if name.startswith("auto_"):
-        # Lang in Z - das ist die Fahrtrichtung. Quer gebaut wuerde das Auto
-        # seitwaerts fahren.
+        # Lang in Z - das ist die Fahrtrichtung.
         return [
-            quader_uv((3, 3, 1), (13, 8, 15), hell),      # Wanne
-            quader_uv((4, 8, 4), (12, 11, 12), dach),     # Kabine
-            quader_uv((2, 0, 2), (5, 3, 5), dunkel),      # vier Räder
-            quader_uv((11, 0, 2), (14, 3, 5), dunkel),
-            quader_uv((2, 0, 11), (5, 3, 14), dunkel),
-            quader_uv((11, 0, 11), (14, 3, 14), dunkel),
+            quader_atlas((3, 3, 1), (13, 8, 15)),          # Wanne
+            quader_atlas((4, 8, 4), (12, 11, 12)),         # Kabine
+            quader_rad((2, 0, 2), (5, 3, 5)),              # vier Räder
+            quader_rad((11, 0, 2), (14, 3, 5)),
+            quader_rad((2, 0, 11), (5, 3, 14)),
+            quader_rad((11, 0, 11), (14, 3, 14)),
         ]
     if name.startswith("heli_"):
         # Der Rotor ist ein eigenes Teil - nur so kann er sich drehen
         return [
-            quader_uv((4, 3, 1), (12, 10, 11), hell),     # Kanzel
-            quader_uv((6, 5, 11), (10, 8, 16), hell),     # Heckausleger
-            quader_uv((7, 10, 7), (9, 12, 9), dunkel),    # Rotorkopf
-            quader_uv((7, 8, 14), (9, 12, 16), dunkel),   # Heckrotor
-            quader_uv((5, 0, 2), (6, 3, 10), dunkel),     # Kufen
-            quader_uv((10, 0, 2), (11, 3, 10), dunkel),
+            quader_atlas((4, 3, 1), (12, 10, 11)),         # Kanzel
+            quader_atlas((6, 5, 11), (10, 8, 16)),         # Heckausleger
+            quader_rad((7, 10, 7), (9, 12, 9)),            # Rotorkopf
+            quader_rad((7, 8, 14), (9, 12, 16)),           # Heckrotor
+            quader_rad((5, 0, 2), (6, 3, 10)),             # Kufen
+            quader_rad((10, 0, 2), (11, 3, 10)),
         ]
     if name.startswith("boot_"):
         return [
-            quader_uv((3, 2, 0), (13, 6, 16), hell),      # Rumpf
-            quader_uv((4, 6, 1), (12, 7, 15), dach),      # Deck
-            quader_uv((5, 7, 4), (11, 11, 10), dach),     # Aufbau
-            quader_uv((7, 11, 6), (9, 14, 8), dunkel),    # Mast
+            quader_atlas((3, 2, 0), (13, 6, 16)),          # Rumpf
+            quader_atlas((4, 6, 1), (12, 7, 15)),          # Deck
+            quader_atlas((5, 7, 4), (11, 11, 10)),         # Aufbau
+            quader_rad((7, 11, 6), (9, 14, 8)),            # Mast
         ]
     if name == "zug_lok":
         return [
-            quader_uv((3, 3, 0), (13, 11, 16), hell),     # Kessel, laengs
-            quader_uv((6, 11, 1), (10, 15, 5), dunkel),   # Schornstein vorn
-            quader_uv((3, 0, 0), (13, 3, 16), dunkel),    # Fahrwerk
+            quader_atlas((3, 3, 0), (13, 11, 16)),         # Kessel, laengs
+            quader_rad((6, 11, 1), (10, 15, 5)),           # Schornstein vorn
+            quader_rad((3, 0, 0), (13, 3, 16)),            # Fahrwerk
         ]
     # Flugzeuge und Jets: Rumpf, Fluegel, Leitwerk
     lang = 15 if "passagier" in name or "fracht" in name else 13
     return [
-        quader_uv((6, 4, 1), (10, 9, lang), hell),        # Rumpf
-        quader_uv((0, 5, 5), (16, 6, 10), hell),          # Tragflaechen
-        quader_uv((5, 5, lang - 3), (11, 6, lang + 1), hell),  # Hoehenruder
-        quader_uv((7, 9, lang - 3), (9, 13, lang), dunkel),  # Seitenruder
-        quader_uv((3, 3, 6), (5, 5, 9), dunkel),          # Triebwerke
-        quader_uv((11, 3, 6), (13, 5, 9), dunkel),
+        quader_atlas((6, 4, 1), (10, 9, lang)),            # Rumpf
+        quader_atlas((0, 5, 5), (16, 6, 10)),              # Tragflaechen
+        quader_atlas((5, 5, lang - 3), (11, 6, lang + 1)), # Hoehenruder
+        quader_rad((7, 9, lang - 3), (9, 13, lang)),       # Seitenruder
+        quader_rad((3, 3, 6), (5, 5, 9)),                  # Triebwerke
+        quader_rad((11, 3, 6), (13, 5, 9)),
     ]
+
+
+# ---------------------------------------------------- Fahrzeug-Atlas
+
+def atlas_art(name):
+    """Grobe Klasse eines Fahrzeugs - davon haengen Dach und Front ab."""
+    if name.startswith("auto_"):
+        return "auto"
+    if name.startswith("boot_"):
+        return "boot"
+    if name == "zug_lok":
+        return "zug"
+    if name.startswith("heli_"):
+        return "heli"
+    return "flug"
+
+
+# Scheiben sind bei jedem Fahrzeug dieselbe Sache: dunkles Glas mit einem
+# Glanz oben. Vorher nahmen sie die Akzentfarbe des Wagens - beim schwarzen
+# Bolide waren die Fenster damit schwarz auf schwarz und komplett weg.
+GLAS = (46, 58, 76, 255)
+GLANZ = (132, 158, 186, 255)
+
+
+def kachel_dach(art, hell, dunkel, akzent):
+    """
+    Die Draufsicht.
+    
+    Das ist die Flaeche, die man beim Fahren am meisten sieht - und bisher
+    zeigte sie dieselbe Seitenansicht wie die Flanke. Ein Auto von oben hat
+    aber eine Motorhaube, zwei Scheiben und ein Dach dazwischen, kein
+    Profil mit Raedern.
+    """
+    im = img()
+    if art == "auto":
+        box(im, 3, 0, 12, 15, hell)                        # Karosserie laengs
+        box(im, 4, 1, 11, 3, mix(hell, dunkel, 0.25))      # Motorhaube vorn
+        box(im, 4, 4, 11, 6, GLAS)                         # Windschutzscheibe
+        line_h(im, 4, 5, 10, GLANZ)                        # Glanz obendrauf
+        box(im, 4, 7, 11, 10, mix(hell, dunkel, 0.12))     # Dach
+        box(im, 4, 11, 11, 13, GLAS)                       # Heckscheibe
+        line_h(im, 11, 5, 10, mix(GLANZ, GLAS, 0.4))
+        line_h(im, 14, 4, 11, mix(hell, dunkel, 0.3))      # Heckdeckel
+        for y in range(0, 16):                             # Sicken links/rechts
+            im.putpixel((3, y), mix(hell, dunkel, 0.45))
+            im.putpixel((12, y), mix(hell, dunkel, 0.45))
+    elif art in ("flug", "heli"):
+        box(im, 6, 0, 9, 15, hell)                         # Rumpf
+        box(im, 0, 5, 15, 9, mix(hell, dunkel, 0.18))      # Tragflaechen
+        box(im, 6, 1, 9, 3, GLAS)                          # Kanzel
+        im.putpixel((7, 1), GLANZ); im.putpixel((8, 1), GLANZ)
+        box(im, 4, 12, 11, 14, mix(hell, dunkel, 0.3))     # Leitwerk
+    elif art == "boot":
+        box(im, 3, 1, 12, 15, hell)                        # Deck
+        box(im, 5, 4, 10, 9, mix(hell, (255, 255, 255, 255), 0.25))
+        box(im, 6, 5, 9, 7, GLAS)                          # Kajuetenfenster
+        for x in range(4, 12):                             # Planken
+            if x % 2 == 0:
+                for y in range(10, 15):
+                    im.putpixel((x, y), mix(hell, dunkel, 0.2))
+        box(im, 6, 0, 9, 1, mix(hell, dunkel, 0.4))        # Bugspitze
+    else:  # zug
+        box(im, 3, 0, 12, 15, hell)
+        box(im, 5, 1, 10, 4, dunkel)                       # Schornstein
+        box(im, 4, 6, 11, 14, mix(hell, dunkel, 0.15))     # Kessel
+        for y in range(7, 14, 2):
+            line_h(im, y, 4, 11, mix(hell, dunkel, 0.35))  # Kesselringe
+    return im
+
+
+def kachel_front(art, hell, dunkel, akzent):
+    """Die Frontansicht: Scheinwerfer und Grill statt Einheitsfarbe."""
+    im = img()
+    licht_farbe = (255, 248, 210, 255)
+    if art == "auto":
+        box(im, 2, 4, 13, 13, hell)                        # Bug
+        box(im, 3, 2, 12, 4, mix(hell, dunkel, 0.2))       # Haubenkante
+        box(im, 3, 6, 5, 8, licht_farbe)                   # Scheinwerfer
+        box(im, 10, 6, 12, 8, licht_farbe)
+        box(im, 6, 9, 9, 11, dunkel)                       # Kuehlergrill
+        line_h(im, 13, 2, 13, dunkel)                      # Stossstange
+        box(im, 2, 14, 4, 15, dunkel)                      # Raeder angeschnitten
+        box(im, 11, 14, 13, 15, dunkel)
+    elif art in ("flug", "heli"):
+        box(im, 5, 4, 10, 11, hell)                        # Rumpf von vorn
+        box(im, 6, 5, 9, 7, GLAS)                          # Kanzel
+        im.putpixel((7, 5), GLANZ)
+        box(im, 0, 7, 4, 9, mix(hell, dunkel, 0.2))        # Fluegel links
+        box(im, 11, 7, 15, 9, mix(hell, dunkel, 0.2))      # Fluegel rechts
+        box(im, 2, 10, 4, 12, dunkel)                      # Triebwerke
+        box(im, 11, 10, 13, 12, dunkel)
+    elif art == "boot":
+        box(im, 4, 5, 11, 13, hell)                        # Bug
+        box(im, 6, 3, 9, 5, GLAS)
+        line_h(im, 13, 4, 11, dunkel)
+    else:  # zug
+        box(im, 3, 3, 12, 13, hell)
+        box(im, 6, 5, 9, 8, licht_farbe)                   # Stirnlampe
+        box(im, 4, 10, 11, 13, dunkel)                     # Pflug
+    return im
+
+
+def kachel_rad(hell, dunkel, akzent):
+    """
+    Rad und Fahrwerk.
+
+    Bewusst ruhig: Ein Radquader ist nur drei Blockeinheiten gross, und auf
+    dieser winzigen Flaeche liegt die ganze Kachel. Ein Muster mit Felge,
+    Nabe und Ring darauf sah aus wie eine Zielscheibe - erkennbar war ein
+    Kaestchen mit Loch, kein Rad. Jetzt ueberwiegt der Gummi, und die Felge
+    ist nur ein heller Kern.
+    """
+    reifen = mix(dunkel, (0, 0, 0, 255), 0.45)
+    im = img()
+    box(im, 0, 0, 15, 15, reifen)
+    box(im, 5, 5, 10, 10, mix(dunkel, hell, 0.35))         # Felge
+    box(im, 6, 6, 9, 9, mix(dunkel, hell, 0.55))
+    # Ein Lichtstreifen oben links, damit es rund wirkt
+    line_h(im, 0, 1, 14, mix(reifen, hell, 0.18))
+    for y in range(1, 15):
+        im.putpixel((0, y), mix(reifen, hell, 0.12))
+    return im
+
+
+def fahrzeug_atlas(name, form, hell, dunkel, akzent):
+    """
+    Vier Ansichten in einer 32x32-Textur.
+    
+        links oben   Flanke    -> die Seiten des Fahrzeugs (east/west)
+        rechts oben  Dach      -> oben (up)
+        links unten  Front     -> vorn und hinten (north/south)
+        rechts unten Rad       -> die Radquader, rundherum
+    
+    Vorher lag nur die Flanke vor und alle sechs Seiten jedes Quaders
+    zeigten sie. Dach und Front sahen damit aus wie ein verschmiertes
+    Seitenprofil - genau das, was beim Fahren stoert.
+    """
+    art = atlas_art(name)
+    hellc, dunkelc, akzentc = hexc(hell), hexc(dunkel), hexc(akzent)
+    palette = {"K": hellc, "D": dunkelc, "F": akzentc}
+
+    flanke = kontur(licht(aus_form(form, palette)))
+    dach = licht(kachel_dach(art, hellc, dunkelc, akzentc), 0.14)
+    front = kontur(licht(kachel_front(art, hellc, dunkelc, akzentc)))
+    rad = kachel_rad(hellc, dunkelc, akzentc)
+
+    gross = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    gross.alpha_composite(flanke, (0, 0))
+    gross.alpha_composite(dach, (16, 0))
+    gross.alpha_composite(front, (0, 16))
+    gross.alpha_composite(rad, (16, 16))
+    return gross, flanke
+
+
+# UV-Bereiche im Atlas. Bei texture_size 32 deckt 0..8 die linke Haelfte ab.
+UV_FLANKE = (0, 0, 8, 8)
+UV_DACH = (8, 0, 16, 8)
+UV_FRONT = (0, 8, 8, 16)
+UV_RAD = (8, 8, 16, 16)
+
+
+def quader_atlas(von, bis, oben=None):
+    """
+    Ein Karosseriequader, bei dem jede Seite den richtigen Ausschnitt nimmt.
+
+    Die Flanke wird dabei auf den Teil beschnitten, den dieser Quader
+    wirklich einnimmt - sonst klebte auf einem kleinen Fluegel das ganze
+    Fahrzeugprofil.
+    """
+    x0, y0, z0 = von
+    x1, y1, z1 = bis
+    # Aus Blockkoordinaten (0..16) den Ausschnitt der 16x16-Kachel machen,
+    # in UV-Einheiten der 32er-Textur (also halbiert).
+    def teil(basis, u0, v0, u1, v1):
+        bu, bv = basis[0], basis[1]
+        return [bu + u0 / 2, bv + v0 / 2, bu + u1 / 2, bv + v1 / 2]
+
+    seite = teil(UV_FLANKE, z0, 16 - y1, z1, 16 - y0)
+    front = teil(UV_FRONT, x0, 16 - y1, x1, 16 - y0)
+    deckel = teil(UV_DACH if oben is None else oben, x0, z0, x1, z1)
+    boden = teil(UV_RAD, x0, z0, x1, z1)
+
+    return {"from": list(von), "to": list(bis), "faces": {
+        "north": {"uv": front, "texture": "#0"},
+        "south": {"uv": front, "texture": "#0"},
+        "east": {"uv": seite, "texture": "#0"},
+        "west": {"uv": seite, "texture": "#0"},
+        "up": {"uv": deckel, "texture": "#0"},
+        "down": {"uv": boden, "texture": "#0"},
+    }}
+
+
+def quader_rad(von, bis):
+    """Ein Rad - rundherum die Radkachel."""
+    faces = {seite: {"uv": list(UV_RAD), "texture": "#0"}
+             for seite in ("north", "south", "east", "west", "up", "down")}
+    return {"from": list(von), "to": list(bis), "faces": faces}
 
 
 def fahrzeug_items():
@@ -867,12 +1053,11 @@ def fahrzeug_items():
             form = BOOT
         else:
             form = PROP
-        palette = {"K": hexc(hell), "D": hexc(dunkel), "F": hexc(akzent)}
-        im = licht(aus_form(form, palette))
-        kontur(im)
-        save(im, TEX / "item", name)
+        gross, _ = fahrzeug_atlas(name, form, hell, dunkel, akzent)
+        save(gross, TEX / "item", name)
 
         modell(MOD / "item", name, koerper(name), f"smp:item/{name}",
+               groesse=(32, 32),
                display={"thirdperson_righthand": {
                    "rotation": [0, 90, 0], "translation": [0, 1, 0],
                    "scale": [0.45, 0.45, 0.45]},

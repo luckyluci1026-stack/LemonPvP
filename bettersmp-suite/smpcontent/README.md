@@ -455,6 +455,35 @@ Dazu der Geländewagen und die Dampflok.
 Viel `speed` **und** viel `turn` zusammen fühlt sich nervös an – deshalb lenkt
 das Hypercar bewusst träger als der Roadster.
 
+### Wie ein Fahrzeug texturiert ist
+
+Ein Fahrzeug hat **eine 32×32-Textur mit vier Ansichten** darin:
+
+| | |
+|---|---|
+| links oben | **Flanke** – das Seitenprofil, liegt auf den Seiten (east/west) |
+| rechts oben | **Dach** – Draufsicht mit Motorhaube, Scheiben und Heckdeckel (up) |
+| links unten | **Front** – Scheinwerfer und Kühlergrill (north/south) |
+| rechts unten | **Rad** – Reifen mit Felge, rundherum auf den Radquadern |
+
+Das klingt nach einer Kleinigkeit, ist aber der Unterschied zwischen einem
+Auto und einem bunt bemalten Klotz. Vorher lag nur die Flanke vor, und
+**alle sechs Seiten jedes Quaders zeigten sie** – das Dach war ein
+verschmiertes Seitenprofil, die Front auch. Beim Fahren sieht man aber vor
+allem das Dach.
+
+Zwei Dinge sind dabei bewusst unabhängig von der Lackfarbe:
+
+**Scheiben** sind immer dasselbe dunkle Glas mit einem Glanz obendrauf.
+Vorher nahmen sie die Akzentfarbe des Wagens – beim schwarzen Bolide waren
+die Fenster damit schwarz auf schwarz und schlicht nicht da.
+
+**Räder** sind bewusst ruhig gehalten. Ein Radquader ist drei
+Blockeinheiten groß, und darauf liegt die ganze Kachel. Ein Muster mit
+Felge, Nabe und Ring sah aus wie eine Zielscheibe – erkennbar war ein
+Kästchen mit Loch. Jetzt überwiegt der Gummi, die Felge ist nur ein heller
+Kern.
+
 ### Die 15 Supersportwagen
 
 Fünfzehn Autos, die sich nur in der Farbe unterscheiden, wären fünfzehn Mal
