@@ -90,6 +90,15 @@ public final class Abilities {
         return animations.size();
     }
 
+    /** Eine Form aus der animationen.yml - für alles, was kein Item ist. */
+    public CustomAnimation animation(String name) {
+        return name == null ? null : animations.get(name.toLowerCase(Locale.ROOT));
+    }
+
+    public Animator animator() {
+        return animator;
+    }
+
     /** Gibt es überhaupt eine Fähigkeit mit diesem Auslöser? */
     public boolean hasTrigger(String trigger) {
         return byItem.values().stream()

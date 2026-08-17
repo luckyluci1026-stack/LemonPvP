@@ -33,8 +33,23 @@ public final class Animator {
      */
     public void playCustom(Player player, CustomAnimation animation, Particle particle,
                            Object data, double radius, double length, int ticks) {
+        playCustom(player::getLocation, player.getEyeHeight(),
+                animation, particle, data, radius, length, ticks);
+    }
+
+    /**
+     * Dieselbe Animation, aber an einem beliebigen Ort statt an einem Spieler.
+     *
+     * Das braucht alles, was kein Spieler ist und trotzdem etwas zeigen soll -
+     * ein Boss zum Beispiel. Der "ort" wird bei {@code follow: true} jeden
+     * Tick neu gefragt, sonst nur einmal am Anfang; die Blickrichtung für
+     * {@code relative-to: look} steckt im Yaw/Pitch dieser Position.
+     */
+    public void playCustom(java.util.function.Supplier<Location> ort, double augenhoehe,
+                           CustomAnimation animation, Particle particle,
+                           Object data, double radius, double length, int ticks) {
         int duration = Math.max(1, Math.min(200, ticks));
-        Location start = player.getLocation().clone();
+        Location start = ort.get().clone();
         Map<String, Double> vars = new HashMap<>();
         vars.put("ticks", (double) duration);
         vars.put("n", (double) animation.points());
@@ -42,14 +57,13 @@ public final class Animator {
         vars.put("length", length);
 
         repeat(duration, tick -> {
-            Location origin = animation.follow() ? player.getLocation().clone() : start.clone();
+            Location jetzt = animation.follow() ? ort.get().clone() : start.clone();
+            Location origin = jetzt.clone();
             if (animation.frame() != CustomAnimation.Frame.PLAYER) {
-                origin.add(0, player.getEyeHeight(), 0);
+                origin.add(0, augenhoehe, 0);
             }
             // Achsen für "relative-to: look": vorne, rechts, oben
-            Vector forward = animation.follow()
-                    ? player.getEyeLocation().getDirection().normalize()
-                    : start.getDirection().normalize();
+            Vector forward = (animation.follow() ? jetzt : start).getDirection().normalize();
             Vector right = new Vector(-forward.getZ(), 0, forward.getX());
             if (right.lengthSquared() < 1.0E-6) {
                 right = new Vector(1, 0, 0);

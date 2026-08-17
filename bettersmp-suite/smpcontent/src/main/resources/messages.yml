@@ -6,7 +6,7 @@ reloaded: "%prefix%<green>Inhalte neu geladen.</green>"
 config-error: "%prefix%<red><white>%file%</white> hat einen Fehler in <white>Zeile %line%</white>.</red><newline><gold>%hint%</gold><newline><gray>Die alten Einstellungen bleiben aktiv.</gray>"
 player-not-found: "%prefix%<red>Spieler nicht gefunden.</red>"
 
-usage: "%prefix%<gray>/smpcontent <white>give <Spieler> <Id> [Menge]</white> | <white>list</white> | <white>pack</white> | <white>bedrock</white> | <white>reload</white></gray>"
+usage: "%prefix%<gray>/smpcontent <white>give <Spieler> <Id> [Menge]</white> | <white>list</white> | <white>pack</white> | <white>bedrock</white> | <white>boss <Id></white> | <white>reload</white></gray>"
 pack-building: "%prefix%<gray>Baue das Resourcepack ...</gray>"
 pack-done: "%prefix%<green>Pack gebaut: <white>%items%</white> Items, <white>%blocks%</white> Blöcke, <white>%models%</white> eigene Blockbench-Modelle.</green><newline><gray>Liegt in <white>plugins/SMPContent/output/</white></gray>"
 pack-missing: "%prefix%<gold>%count% Textur(en) fehlen noch:</gold><newline><gray>%details%</gray>"
@@ -29,3 +29,10 @@ vehicle-not-yours: "%prefix%<gold>Das Fahrzeug gehört jemand anderem.</gold>"
 pack-busy: "%prefix%<gold>Es wird gerade schon ein Pack gebaut - einen Moment.</gold>"
 
 gui-title: "<gradient:#A78BFA:#6D28D9><bold>Eigene Inhalte</bold></gradient>"
+
+# ---- Bosse ----
+boss-usage: "%prefix%<gray>Nutzung: <white>/smpcontent boss <Id> [x y z]</white><newline>Da sind: <white>%list%</white></gray>"
+boss-unknown: "%prefix%<red>Den Boss <white>%id%</white> gibt es nicht.</red><newline><gray>Da sind: <white>%list%</white></gray>"
+boss-none: "%prefix%<red>In der bosse.yml steht kein Boss.</red>"
+boss-failed: "%prefix%<red>Boss <white>%id%</white> liess sich nicht hinstellen - siehe Konsole.</red>"
+boss-spawned: "%prefix%<gold>Boss <white>%id%</white> steht bei <white>%x% %y% %z%</white>.</gold>"

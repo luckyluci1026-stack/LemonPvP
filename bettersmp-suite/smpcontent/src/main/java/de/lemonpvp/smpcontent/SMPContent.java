@@ -6,6 +6,7 @@ import de.lemonpvp.smpcontent.content.BlockStore;
 import de.lemonpvp.smpcontent.furniture.FurnitureManager;
 import de.lemonpvp.smpcontent.vehicle.ParachuteManager;
 import de.lemonpvp.smpcontent.vehicle.VehicleManager;
+import de.lemonpvp.smpcontent.boss.BossManager;
 import de.lemonpvp.smpcontent.content.ContentRegistry;
 import de.lemonpvp.smpcontent.content.CustomEntry;
 import de.lemonpvp.smpcontent.gui.ContentGui;
@@ -13,6 +14,7 @@ import de.lemonpvp.smpcontent.listener.AbilityListener;
 import de.lemonpvp.smpcontent.listener.BlockListener;
 import de.lemonpvp.smpcontent.listener.FurnitureListener;
 import de.lemonpvp.smpcontent.listener.VehicleListener;
+import de.lemonpvp.smpcontent.listener.BossListener;
 import de.lemonpvp.smpcontent.listener.GuiListener;
 import de.lemonpvp.smpcontent.pack.PackGenerator;
 import de.lemonpvp.smpcontent.util.ConfigProblem;
@@ -56,6 +58,7 @@ public final class SMPContent extends JavaPlugin {
     private FurnitureManager furniture;
     private VehicleManager vehicles;
     private ParachuteManager parachutes;
+    private BossManager bosses;
 
     private YamlConfiguration config;
     private ConfigProblem.Report configProblem;
@@ -74,17 +77,21 @@ public final class SMPContent extends JavaPlugin {
         this.furniture = new FurnitureManager(this);
         this.vehicles = new VehicleManager(this);
         this.parachutes = new ParachuteManager(this);
+        this.bosses = new BossManager(this);
         pack.ensureFolders();
         vehicles.load();
+        bosses.load();
 
         Bukkit.getPluginManager().registerEvents(new BlockListener(this), this);
         Bukkit.getPluginManager().registerEvents(new GuiListener(this), this);
         Bukkit.getPluginManager().registerEvents(new AbilityListener(this), this);
         Bukkit.getPluginManager().registerEvents(new FurnitureListener(this), this);
         Bukkit.getPluginManager().registerEvents(new VehicleListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new BossListener(this), this);
         getCommand("smpcontent").setExecutor(new ContentCommand(this));
         startHeldTask();
         vehicles.start();
+        bosses.start();
         Bukkit.getScheduler().runTaskTimer(this, parachutes::tick, 1L, 1L);
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             for (org.bukkit.Chunk chunk : world.getLoadedChunks()) {
@@ -109,6 +116,9 @@ public final class SMPContent extends JavaPlugin {
     public void onDisable() {
         if (parachutes != null) {
             parachutes.clear();
+        }
+        if (bosses != null) {
+            bosses.clear();
         }
         int sitze = furniture != null ? furniture.clearSeats() : 0;
         if (sitze > 0) {
@@ -324,6 +334,10 @@ public final class SMPContent extends JavaPlugin {
     /** Autos, Jets und Züge. */
     public VehicleManager vehicles() {
         return vehicles;
+    }
+
+    public BossManager bosses() {
+        return bosses;
     }
 
     /** Fallschirme - aus dem Schleudersitz oder von Hand. */

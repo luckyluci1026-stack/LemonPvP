@@ -44,6 +44,8 @@ public final class ContentCommand implements TabExecutor {
                 plugin.reloadConfig();
                 plugin.msgs().reload();
                 plugin.registry().load();
+                plugin.vehicles().load();
+                plugin.bosses().load();
 
                 ConfigProblem.Report problem = plugin.configProblem() != null
                         ? plugin.configProblem()
@@ -107,9 +109,66 @@ public final class ContentCommand implements TabExecutor {
                 }
             }
             case "bedrock" -> bedrock(sender, args);
+            case "boss" -> boss(sender, args);
             default -> plugin.msgs().send(sender, "usage");
         }
         return true;
+    }
+
+    /**
+     * /smpcontent boss &lt;id&gt; [x y z] - stellt einen Boss hin.
+     *
+     * Ohne Koordinaten kommt er dorthin, wohin du schaust; von der Konsole
+     * aus müssen die drei Zahlen dabeistehen.
+     */
+    private void boss(CommandSender sender, String[] args) {
+        if (plugin.bosses().types().isEmpty()) {
+            plugin.msgs().send(sender, "boss-none");
+            return;
+        }
+        if (args.length < 2) {
+            plugin.msgs().send(sender, "boss-usage",
+                    "list", String.join(", ", plugin.bosses().types().keySet()));
+            return;
+        }
+        String id = args[1].toLowerCase(java.util.Locale.ROOT);
+        if (!plugin.bosses().types().containsKey(id)) {
+            plugin.msgs().send(sender, "boss-unknown", "id", id,
+                    "list", String.join(", ", plugin.bosses().types().keySet()));
+            return;
+        }
+
+        org.bukkit.Location wo;
+        if (args.length >= 5) {
+            try {
+                org.bukkit.World welt = sender instanceof Player p
+                        ? p.getWorld() : org.bukkit.Bukkit.getWorlds().get(0);
+                wo = new org.bukkit.Location(welt, Double.parseDouble(args[2]),
+                        Double.parseDouble(args[3]), Double.parseDouble(args[4]));
+            } catch (NumberFormatException ex) {
+                plugin.msgs().send(sender, "boss-usage",
+                        "list", String.join(", ", plugin.bosses().types().keySet()));
+                return;
+            }
+        } else if (sender instanceof Player player) {
+            var ziel = player.getTargetBlockExact(60);
+            wo = ziel != null ? ziel.getLocation().add(0.5, 1, 0.5)
+                    : player.getLocation();
+        } else {
+            plugin.msgs().send(sender, "boss-usage",
+                    "list", String.join(", ", plugin.bosses().types().keySet()));
+            return;
+        }
+
+        var mob = plugin.bosses().spawn(id, wo);
+        if (mob == null) {
+            plugin.msgs().send(sender, "boss-failed", "id", id);
+            return;
+        }
+        plugin.msgs().send(sender, "boss-spawned", "id", id,
+                "x", String.valueOf(wo.getBlockX()),
+                "y", String.valueOf(wo.getBlockY()),
+                "z", String.valueOf(wo.getBlockZ()));
     }
 
     /**
@@ -206,9 +265,15 @@ public final class ContentCommand implements TabExecutor {
                                       @NotNull String alias, @NotNull String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            for (String s : List.of("give", "list", "pack", "bedrock", "reload")) {
+            for (String s : List.of("give", "list", "pack", "bedrock", "boss", "reload")) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) {
                     out.add(s);
+                }
+            }
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("boss")) {
+            for (String id : plugin.bosses().types().keySet()) {
+                if (id.startsWith(args[1].toLowerCase(Locale.ROOT))) {
+                    out.add(id);
                 }
             }
         } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {

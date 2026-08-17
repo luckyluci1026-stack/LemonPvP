@@ -4,7 +4,7 @@ Eigene **Blöcke**, **Items** und **Spezialfähigkeiten** (Paper 1.21.11).
 
 ## Inhalt
 
-**429 eigene Inhalte**, alle mit Textur außer den Platzhaltern:
+**429 eigene Inhalte** und **5 Bosse**, alle mit Textur außer den Platzhaltern:
 
 | Datei | Inhalt |
 |---|---|
@@ -14,6 +14,7 @@ Eigene **Blöcke**, **Items** und **Spezialfähigkeiten** (Paper 1.21.11).
 | `content/platzhalter-items.yml` | **150 Platzhalter-Items**, absichtlich ohne Textur |
 | `fahrzeuge.yml` | **37 Fahrzeuge** – 25 Autos (darunter **15 Supersportwagen** in drei Familien), 8 Flieger, 3 Boote, 1 Lok |
 | `animationen.yml` | **23 Teilchen-Animationen** (reine Formeln), eigene bauen |
+| `bosse.yml` | **5 Bosse** mit Lebensleiste, Phasen und eigenen Angriffen |
 | `FAEHIGKEITEN.txt` | alle Auslöser und Aktionen erklärt |
 
 Was das Plugin außerdem kann: **Schleudersitz** mit Fallschirm, **Abstürze**
@@ -672,6 +673,77 @@ Hälfte an, mit vollkommen unvorhersagbarem Wert.
 Wer wirklich einen klassischen Pfeil will – sichtbar, liegenbleibend,
 aufsammelbar –, schreibt `bullet: false` in die Aktion.
 
+## Bosse
+
+`/smpcontent boss <Id>` stellt einen hin – dorthin, wohin du schaust. Aus der
+Konsole mit Koordinaten: `/smpcontent boss leerenwandler 100 64 -30`.
+
+Ein Boss ist ein normales Mob mit aufgebohrten Werten, einer **Lebensleiste**
+oben am Bildschirm und – das ist der eigentliche Punkt – **Angriffen, die
+sich mit sinkendem Leben ändern**. Im Plugin steht kein einziger Boss fest,
+alles liegt in der `bosse.yml`.
+
+| Boss | Grundmob | Leben | Phasen | wofür |
+|---|---|---|---|---|
+| **Grabfürst** | Zombie | 300 | 3 | der Einstieg, ruft Untote |
+| **Frostmonarch** | Stray | 260 | 2 | bleibt auf Abstand, friert dich fest |
+| **Aschekönig** | Blaze | 220 | 2 | Feuerkugeln im Dauerlauf, heilt sich |
+| **Steinkoloss** | Eisengolem | 500 | 2 | langsam, zäh, schlägt sehr hart |
+| **Leerenwandler** | Witherskelett | 600 | 4 | der schwerste, kommt zu zweit besser |
+
+### Phasen
+
+`ab:` ist der Lebensanteil in Prozent, ab dem eine Phase gilt. Bei den
+Schwellen 100 / 70 / 40 / 15 heißt das: von 100 bis 70 die erste, von 70 bis
+40 die zweite und so weiter. Beim Übergang gibt es Ansage, Ton und eine
+Animation.
+
+Ein Boss, der sich heilt, rutscht dabei ausdrücklich **zurück** in die vorige
+Phase – der Leerenwandler tut genau das in seinem letzten Abschnitt. Damit
+das an der Schwelle nicht flackert, gibt es drei Sekunden Sperre zwischen
+zwei Auftritten.
+
+### Angriffe
+
+Jeder Angriff hat eine eigene Abklingzeit und feuert von selbst, sobald
+jemand nah genug ist:
+
+| `typ:` | was passiert |
+|---|---|
+| `welle` | Ring um den Boss, wirft alle weg |
+| `strahl` | Linie auf das Ziel zu, trifft alles darauf |
+| `sprung` | springt zum Ziel |
+| `zug` | zieht alle heran – kein Weglaufen |
+| `meteor` | Einschläge um das Ziel herum, **mit Vorwarnung am Boden** |
+| `diener` | ruft Helfer (gedeckelt auf zwölf, sonst geht der Server in die Knie) |
+| `trank` | Effekt auf alle in Reichweite |
+| `heilen` | heilt sich selbst |
+| `geschoss` | Feuerkugeln |
+
+Das Aussehen kommt aus der `animationen.yml`: `animation: einschlag` nimmt
+genau die Form, die dort steht. Wer sie dort ändert, ändert damit auch, wie
+der Boss zuschlägt – ohne eine Zeile Java.
+
+Boss-Schaden umgeht wie eine Kugel die Unverwundbarkeitssperre. Zwei Angriffe
+kurz hintereinander treffen deshalb auch zweimal, statt dass der zweite
+verschluckt wird.
+
+### Beute
+
+Was fällt, steht unter `beute:` – Ids aus deiner `config.yml` oder normale
+Materialien, jeweils mit Menge und Chance. Die Ausrüstung des Bosses fällt
+**nie** zufällig herunter; es gibt genau das, was du einträgst. Seine Diener
+verschwinden mit ihm.
+
+Eine eigene Testreihe prüft die ganze Datei, bevor sie im Spiel auffällt:
+Gibt es das Grundmob wirklich und ist es etwas Lebendiges? Kennt das Plugin
+jeden Angriffstyp? Steht jede genannte Animation in der `animationen.yml`,
+jedes Teilchen in Minecraft, jede Beute-Id in der `config.yml`? Und liefert
+die Phasenauswahl bei jedem Lebensstand von 100 % bis 0 % genau eine Phase?
+Der Prüflauf hat beim ersten Durchgang gleich einen echten Fehler gefunden –
+die Phasensuche nahm die erste passende Schwelle statt der tiefsten, damit
+wäre ein Boss nie über seine erste Phase hinausgekommen.
+
 ## Wie die Blöcke funktionieren
 
 Minecraft erlaubt keine echten neuen Block-IDs über ein Resource-Pack. Die
@@ -726,5 +798,14 @@ Amethystsplitter …). Das Pack liefert nur das Aussehen.
 
 ## Befehle & Rechte
 
-- `/smpcontent give|list|reload` – Recht `smpcontent.admin` (Standard: OP)
-- `smpcontent.place` – darf eigene Blöcke setzen (Standard: alle)
+| Befehl | was er tut |
+|---|---|
+| `/smpcontent list [Suche]` | GUI mit allen Inhalten, Klick = 1, Shift-Klick = 64 |
+| `/smpcontent give <Spieler> <Id> [Menge]` | gezielt vergeben |
+| `/smpcontent boss <Id> [x y z]` | einen Boss hinstellen |
+| `/smpcontent pack` | Java-Pack bauen, danach gleich das Bedrock-Pack |
+| `/smpcontent bedrock [URL\|Datei]` | nur das Bedrock-Pack, aus deinem eigenen Java-Pack |
+| `/smpcontent reload` | config.yml, fahrzeuge.yml, bosse.yml und Texte neu einlesen |
+
+Rechte: alles davon braucht `smpcontent.admin` (Standard: OP).
+`smpcontent.place` darf eigene Blöcke setzen (Standard: alle).
