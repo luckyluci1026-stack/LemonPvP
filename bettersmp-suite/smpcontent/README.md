@@ -13,7 +13,7 @@ Eigene **Blöcke**, **Items** und **Spezialfähigkeiten** (Paper 1.21.11).
 | `content/platzhalter-bloecke.yml` | **100 Platzhalter-Blöcke**, absichtlich ohne Textur |
 | `content/platzhalter-items.yml` | **150 Platzhalter-Items**, absichtlich ohne Textur |
 | `fahrzeuge.yml` | **37 Fahrzeuge** – 25 Autos (darunter **15 Supersportwagen** in drei Familien), 8 Flieger, 3 Boote, 1 Lok |
-| `animationen.yml` | 13 Teilchen-Animationen (Formeln), eigene bauen |
+| `animationen.yml` | **23 Teilchen-Animationen** (reine Formeln), eigene bauen |
 | `FAEHIGKEITEN.txt` | alle Auslöser und Aktionen erklärt |
 
 Was das Plugin außerdem kann: **Schleudersitz** mit Fallschirm, **Abstürze**
@@ -295,8 +295,30 @@ Verfügbar sind `t` (Tick), `p` (Fortschritt 0–1), `i` (Nummer des Teilchens),
 `n`, `a` (Winkel), `ticks`, `radius`, `length` – dazu `sin cos tan sqrt abs min
 max round floor pow random …` und `pi`, `e`, `tau`.
 
-Der Name wird dann als `shape:` benutzt. Mitgeliefert als Beispiele: Spirale,
-Herz, Doppelring, Druckwelle, Tornado, Bohrer, Flügel, Funkenregen.
+Der Name wird dann als `shape:` benutzt. **23 sind mitgeliefert** – keine
+davon steckt im Plugin fest, jede ist genau diese drei Formeln und lässt sich
+Zeile für Zeile ändern:
+
+| | |
+|---|---|
+| **Kampf** | `laserschwert`, `lichtklinge`, `kreuzschlag`, `klingenwirbel`, `plasmapuls`, `blitzbogen`, `drachenatem` |
+| **Zauber** | `runenkreis` (zwei gegenläufige Ringe unter dir), `portal`, `aura`, `bluete`, `doppelhelix` |
+| **Wucht** | `meteor` (kommt von schräg oben), `einschlag`, `druckwelle`, `tornado`, `bohrer` |
+| **Umgebung** | `sternenfall`, `funkenregen`, `fluegel`, `herz`, `doppelring`, `meine_spirale` |
+
+Ein eigener Prüflauf rechnet alle 23 einmal komplett durch – jeden Tick, jeden
+Punkt – und schlägt an, wenn eine Formel `NaN` liefert oder ein Teilchen
+hundert Blöcke weit wegfliegt. Eine kaputte Klammer fällt damit auf, bevor sie
+im Spiel auffällt.
+
+### Fahrzeuge ziehen eine Spur
+
+Schnelles Fahren sah aus wie langsames Fahren: Die Karosserie steht still im
+Bild, nichts verrät das Tempo. Jetzt hängt an jedem Fahrzeug, was dazugehört –
+Auspuff und aufgewirbelter Staub am Auto (in der Farbe des Bodens, über den du
+fährst), Kondensstreifen an den Flügelspitzen und Nachbrenner beim Flieger,
+Gischt am Boot, Dampf aus dem Schornstein der Lok. Gezeichnet wird nur bei
+Bewegung und höchstens jeden zweiten Tick.
 
 ## Waffen & Werkzeuge
 
@@ -612,20 +634,43 @@ pistole:
           spread: 0.6        # Streuung in Grad
           amount: 1          # 8 macht daraus eine Schrotflinte
           gravity: false     # fliegt geradeaus
-          bullet: true       # Kugel statt Pfeil, siehe unten
           ammo: "smp:kugel"  # Munition, die verbraucht wird
+          # bullet: false    # -> stattdessen ein klassischer Pfeil
 ```
 
 Mitgeliefert sind **Pistole**, **Schrotflinte** (acht Kugeln plus Rückstoß)
 und **Raketenwerfer**. Ist keine Munition da, klickt es nur.
 
-**`bullet: true`** macht aus dem Geschoss eine Kugel: unsichtbar unterwegs,
-mit einer feinen Leuchtspur, und beim Aufschlag verschwindet sie mit einem
-Rauchpunkt. Ohne das bleibt ein Pfeil eine Minute lang im Boden stecken –
-wer mit der Pistole auf den Boden hält, steht sonst nach zehn Sekunden vor
-einem Igel aus Pfeilen. Im Kreativmodus fällt das am meisten auf, weil dort
-keine Munition verbraucht wird und man endlos schießen kann. Pistole und
-Schrotflinte haben es an; wer wirklich sichtbare Pfeile will, lässt es weg.
+### Warum eine Kugel keine Pfeil ist
+
+Ein Geschoss aus einer Fähigkeit ist standardmäßig eine **Kugel**: unsichtbar
+unterwegs, mit feiner Leuchtspur, Mündungsfeuer vorn an der Waffe, und beim
+Aufschlag verschwindet sie. Trifft sie etwas Lebendiges, gibt es ein
+Trefferzeichen aus Funken und einen kurzen Ton für den Schützen. Das ist der
+Standard, weil ein Pfeil zwei Dinge tut, die bei einer Waffe niemand will:
+
+**Er bleibt liegen.** Eine Minute lang. Wer mit der Pistole auf den Boden
+hält, steht danach vor einem Igel aus Pfeilen – im Kreativmodus am
+deutlichsten, weil dort keine Munition verbraucht wird.
+
+**Er macht bei schnellem Feuer keinen Schaden.** Das ist der wichtigere
+Punkt. Nach einem Treffer ist ein Ziel **zehn Ticks unverwundbar**. Die
+Pistole darf alle acht Ticks schießen, die Schrotflinte schickt acht Kugeln
+auf einmal – über den normalen Pfeilweg kommt also jeder zweite Schuss gar
+nicht an und von acht Schrotkugeln genau eine. Die Waffe fühlt sich an, als
+mache sie überhaupt keinen Schaden. Eine Kugel hebt die Sperre auf und trägt
+ihren Schaden selbst ein, deshalb zählt jeder Treffer.
+
+Damit ist `damage` auch **genau das, was ankommt**. Vanilla rechnet
+Pfeilschaden mal Fluggeschwindigkeit; aus `damage: 5.0` wurden bei
+`speed: 3.6` achtzehn Punkte. Jetzt sind fünf auch fünf.
+
+Gemessen auf dem Server: vier Pistolenschüsse im Abstand von 0,45 s auf einen
+Zombie mit 100 Leben → 80,3 übrig, also 4×4,9. Vorher kam davon knapp die
+Hälfte an, mit vollkommen unvorhersagbarem Wert.
+
+Wer wirklich einen klassischen Pfeil will – sichtbar, liegenbleibend,
+aufsammelbar –, schreibt `bullet: false` in die Aktion.
 
 ## Wie die Blöcke funktionieren
 

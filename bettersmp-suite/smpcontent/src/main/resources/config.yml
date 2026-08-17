@@ -650,7 +650,7 @@ items:
             forward: 0.6
             up: 1.1
           - type: animation
-            shape: druckwelle
+            shape: doppelhelix
             particle: CLOUD
             radius: 2.0
             ticks: 8
@@ -1170,7 +1170,7 @@ items:
       - trigger: held
         actions:
           - type: animation
-            shape: orbit
+            shape: sternenfall
             particle: SOUL_FIRE_FLAME
             radius: 0.8
             density: 0.4
@@ -1197,7 +1197,7 @@ items:
             forward: 2.2
             up: 0.5
           - type: animation
-            shape: ring
+            shape: portal
             particle: PORTAL
             radius: 2.0
             ticks: 12
@@ -1388,7 +1388,7 @@ items:
         cooldown: 20
         actions:
           - type: animation
-            shape: sphere
+            shape: einschlag
             particle: SMOKE
             radius: 4.0
             density: 6
@@ -1428,7 +1428,7 @@ items:
             duration: 8
             amplifier: 2
           - type: animation
-            shape: ring
+            shape: runenkreis
             particle: ELECTRIC_SPARK
             radius: 1.6
             ticks: 25
@@ -1941,7 +1941,6 @@ items:
             damage: 5.0
             spread: 0.6
             gravity: false
-            bullet: true        # verschwindet beim Aufschlag, statt stecken zu bleiben
             ammo: "smp:kugel"
           - type: sound
             sound: entity.firework_rocket.blast
@@ -1972,7 +1971,6 @@ items:
             damage: 2.5
             spread: 9.0
             gravity: true
-            bullet: true
             ammo: "smp:kugel"
           - type: sound
             sound: entity.generic.explode

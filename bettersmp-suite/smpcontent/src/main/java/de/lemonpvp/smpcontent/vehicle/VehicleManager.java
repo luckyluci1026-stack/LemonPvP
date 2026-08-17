@@ -526,6 +526,7 @@ public final class VehicleManager {
             ride.rotor.teleport(oben);
         }
 
+        spur(ride);
         ride.takt++;
         if (driver != null && ride.type.hud() && ride.takt % 4 == 0) {
             hud(ride, driver);
@@ -924,6 +925,70 @@ public final class VehicleManager {
     }
 
     /** Steht direkt vor dem Fahrzeug etwas Festes? */
+    /**
+     * Was ein Fahrzeug hinter sich herzieht.
+     *
+     * Ohne das sieht schnelles Fahren aus wie langsames Fahren: Die
+     * Karosserie steht still im Bild, es fehlt jeder Hinweis darauf, wie
+     * schnell man wirklich ist. Ein Auspuff, der bei Vollgas raucht, und
+     * Staub an den Rädern machen aus einer verschobenen Kiste eine Fahrt.
+     *
+     * Gezeichnet wird nur, wenn wirklich etwas passiert, und höchstens
+     * jeden zweiten Tick - Teilchen sind billig, aber nicht umsonst.
+     */
+    private void spur(Ride ride) {
+        double tempo = Math.abs(ride.speed);
+        if (tempo < 0.05 || ride.takt % 2 != 0) {
+            return;
+        }
+        Location mitte = ride.base.getLocation();
+        World welt = mitte.getWorld();
+        Vector hinten = direction(ride.yaw).multiply(-1.2);
+        double anteil = Math.min(1.0, tempo / Math.max(0.1, ride.type.speed()));
+
+        switch (ride.type.kind()) {
+            case CAR -> {
+                // Auspuff hinten, Staub an den Rädern
+                welt.spawnParticle(org.bukkit.Particle.SMOKE,
+                        mitte.clone().add(hinten).add(0, 0.3, 0),
+                        1 + (int) (anteil * 2), 0.12, 0.06, 0.12, 0.01);
+                if (ride.amBoden && anteil > 0.5) {
+                    Block unten = mitte.clone().add(0, -0.4, 0).getBlock();
+                    if (unten.getType().isSolid()) {
+                        welt.spawnParticle(org.bukkit.Particle.BLOCK,
+                                mitte.clone().add(hinten).add(0, 0.1, 0),
+                                3, 0.4, 0.05, 0.4, 0.02, unten.getBlockData());
+                    }
+                }
+            }
+            case JET -> {
+                // Kondensstreifen an beiden Flügelspitzen
+                Vector quer = direction(ride.yaw + 90).multiply(ride.type.width() / 2.0);
+                for (int seite = -1; seite <= 1; seite += 2) {
+                    welt.spawnParticle(org.bukkit.Particle.CLOUD,
+                            mitte.clone().add(quer.clone().multiply(seite)).add(0, 0.4, 0),
+                            1, 0.02, 0.02, 0.02, 0.0);
+                }
+                if (anteil > 0.7) {
+                    welt.spawnParticle(org.bukkit.Particle.FLAME,
+                            mitte.clone().add(hinten).add(0, 0.35, 0),
+                            2, 0.05, 0.05, 0.05, 0.01);
+                }
+            }
+            case BOAT -> welt.spawnParticle(org.bukkit.Particle.SPLASH,
+                    mitte.clone().add(hinten).add(0, 0.2, 0),
+                    2 + (int) (anteil * 3), 0.3, 0.1, 0.3, 0.05);
+            case TRAIN -> {
+                if (ride.takt % 8 == 0) {
+                    welt.spawnParticle(org.bukkit.Particle.CLOUD,
+                            mitte.clone().add(direction(ride.yaw).multiply(0.9)).add(0, 1.6, 0),
+                            4, 0.1, 0.1, 0.1, 0.03);
+                }
+            }
+            default -> { }
+        }
+    }
+
     // ------------------------------------------------------------------
     //  Bewegung
     // ------------------------------------------------------------------

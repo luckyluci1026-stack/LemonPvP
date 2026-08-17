@@ -39,7 +39,28 @@ public final class AbilityListener implements Listener {
      * im Kreativmodus fällt das am meisten auf, weil man dort endlos
      * schießen kann. An der Einschlagstelle bleibt ein kleiner Rauchpunkt.
      */
-    @EventHandler(priority = EventPriority.MONITOR)
+    /**
+     * Eine Kugel trifft.
+     *
+     * Hier passiert mehr, als es aussieht - und das aus zwei Gründen:
+     *
+     * 1. **Unverwundbarkeit.** Nach einem Treffer ist ein Ziel zehn Ticks
+     *    lang unverwundbar. Die Pistole darf aber alle acht Ticks schießen,
+     *    und die Schrotflinte schickt acht Kugeln gleichzeitig los. Über den
+     *    normalen Pfeilweg käme also jeder zweite Schuss gar nicht an und von
+     *    acht Schrotkugeln genau eine - die Waffe fühlte sich an, als mache
+     *    sie keinen Schaden. Deshalb setzt die Kugel die Sperre zurück und
+     *    trägt ihren Schaden selbst ein.
+     *
+     * 2. **Verlässlicher Wert.** Vanilla rechnet Pfeilschaden mal
+     *    Fluggeschwindigkeit: aus {@code damage: 5.0} wurden bei Tempo 3.6
+     *    achtzehn Punkte. Was in der Datei steht, soll aber genau das sein,
+     *    was ankommt.
+     *
+     * Dazu ein Trefferzeichen für den Schützen - ohne Rückmeldung weiß man
+     * bei einer unsichtbaren Kugel nie, ob man getroffen hat.
+     */
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onProjectileHit(org.bukkit.event.entity.ProjectileHitEvent event) {
         org.bukkit.entity.Projectile shot = event.getEntity();
         if (!shot.getPersistentDataContainer().has(
@@ -47,9 +68,44 @@ public final class AbilityListener implements Listener {
                 org.bukkit.persistence.PersistentDataType.BYTE)) {
             return;
         }
-        shot.getWorld().spawnParticle(org.bukkit.Particle.SMOKE,
-                shot.getLocation(), 4, 0.05, 0.05, 0.05, 0.01);
+        if (event.getHitEntity() instanceof LivingEntity ziel) {
+            treffer(shot, ziel);
+            // Vanilla soll den Pfeiltreffer nicht noch einmal abrechnen.
+            // Beim Treffer auf einen Block hat das Abbrechen keine Wirkung -
+            // dort räumt gleich das remove() auf.
+            event.setCancelled(true);
+        } else {
+            shot.getWorld().spawnParticle(org.bukkit.Particle.SMOKE,
+                    shot.getLocation(), 4, 0.05, 0.05, 0.05, 0.01);
+        }
         shot.remove();
+    }
+
+    private void treffer(org.bukkit.entity.Projectile shot, LivingEntity ziel) {
+        Double schaden = shot.getPersistentDataContainer().get(
+                de.lemonpvp.smpcontent.ability.Abilities.KUGEL_SCHADEN,
+                org.bukkit.persistence.PersistentDataType.DOUBLE);
+        if (schaden == null || schaden <= 0) {
+            return;
+        }
+        // Die Sperre aufheben, sonst schluckt sie den Schaden. Beides ist
+        // nötig: noDamageTicks lässt den Treffer überhaupt durch,
+        // lastDamage sorgt dafür, dass nicht nur die Differenz zählt.
+        ziel.setNoDamageTicks(0);
+        ziel.setLastDamage(0);
+        org.bukkit.entity.Entity schuetze = shot.getShooter() instanceof org.bukkit.entity.Entity e
+                ? e : null;
+        if (schuetze != null) {
+            ziel.damage(schaden, schuetze);
+        } else {
+            ziel.damage(schaden);
+        }
+        ziel.getWorld().spawnParticle(org.bukkit.Particle.CRIT,
+                ziel.getLocation().add(0, ziel.getHeight() * 0.6, 0),
+                8, 0.2, 0.2, 0.2, 0.15);
+        if (shot.getShooter() instanceof Player p) {
+            p.playSound(p, org.bukkit.Sound.ENTITY_ARROW_HIT_PLAYER, 0.6f, 1.6f);
+        }
     }
 
     /**

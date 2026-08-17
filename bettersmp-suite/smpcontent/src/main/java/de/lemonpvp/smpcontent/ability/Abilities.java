@@ -234,11 +234,17 @@ public final class Abilities {
         boolean gravity = Ability.flag(action, "gravity", true);
         boolean fire = Ability.flag(action, "fire", false);
         int pierce = (int) Ability.number(action, "pierce", 0);
-        // Eine Kugel bleibt nicht im Boden stecken. Pfeile tun das von Haus
-        // aus, und dann steht vor einem eine Wand aus Pfeilen - genau das
-        // sieht man beim Schiessen auf den Boden. "bullet: true" raeumt das
-        // Geschoss beim Aufschlag weg und macht es unterwegs unsichtbar.
-        boolean bullet = Ability.flag(action, "bullet", false);
+        // Ein Geschoss aus einer Fähigkeit ist standardmäßig eine Kugel:
+        // unsichtbar unterwegs, mit Leuchtspur, beim Aufschlag weg, und der
+        // Schaden ist genau der eingestellte.
+        //
+        // Der Standard ist mit Absicht "an". Ein Pfeil bleibt sonst eine
+        // Minute im Boden stecken, und Vanilla rechnet seinen Schaden mal
+        // Fluggeschwindigkeit - beides überrascht jeden, der sich eine
+        // Pistole baut. Wer wirklich einen klassischen Pfeil will, der
+        // liegen bleibt und aufgesammelt werden kann, schreibt
+        // "bullet: false" dazu.
+        boolean bullet = Ability.flag(action, "bullet", true);
 
         for (int i = 0; i < amount; i++) {
             Vector direction = player.getEyeLocation().getDirection();
@@ -276,15 +282,39 @@ public final class Abilities {
             if (bullet) {
                 shot.getPersistentDataContainer().set(KUGEL,
                         org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
+                shot.getPersistentDataContainer().set(KUGEL_SCHADEN,
+                        org.bukkit.persistence.PersistentDataType.DOUBLE,
+                        damage > 0 ? damage : 3.0);
+                // Vanilla soll nichts abziehen: den Schaden trägt der
+                // Trefferhandler selbst ein, sonst käme er doppelt an.
+                if (shot instanceof org.bukkit.entity.AbstractArrow arrow) {
+                    arrow.setDamage(0);
+                }
                 shot.setInvisible(true);
                 spurLegen(shot);
             }
+        }
+        if (bullet) {
+            muendungsfeuer(player);
         }
     }
 
     /** Merkzettel: das ist eine Kugel von uns und keine gewöhnliche Munition. */
     public static final org.bukkit.NamespacedKey KUGEL =
             new org.bukkit.NamespacedKey("smpcontent", "kugel");
+    /** Wieviel diese Kugel machen soll - genau so viel, nicht mal dem Tempo. */
+    public static final org.bukkit.NamespacedKey KUGEL_SCHADEN =
+            new org.bukkit.NamespacedKey("smpcontent", "kugel_schaden");
+
+    /** Mündungsfeuer: ein kurzer Blitz vor der Waffe, damit der Schuss sitzt. */
+    private void muendungsfeuer(Player player) {
+        Location vorn = player.getEyeLocation()
+                .add(player.getEyeLocation().getDirection().multiply(0.8));
+        player.getWorld().spawnParticle(org.bukkit.Particle.FLAME,
+                vorn, 6, 0.05, 0.05, 0.05, 0.02);
+        player.getWorld().spawnParticle(org.bukkit.Particle.SMOKE,
+                vorn, 4, 0.08, 0.08, 0.08, 0.01);
+    }
 
     /**
      * Die Leuchtspur.
