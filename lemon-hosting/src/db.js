@@ -56,6 +56,7 @@ function schema() {
       paket         TEXT NOT NULL,
       software      TEXT NOT NULL DEFAULT 'Paper',
       status        TEXT NOT NULL DEFAULT 'aktiv',
+      port          INTEGER NOT NULL DEFAULT 0,
       pterodactyl   TEXT NOT NULL DEFAULT '',
       angelegt      TEXT NOT NULL,
       geloescht_am  TEXT,
@@ -118,6 +119,22 @@ function nachruesten() {
   if (!spalten.includes('pterodactyl')) {
     db.exec("ALTER TABLE server ADD COLUMN pterodactyl TEXT NOT NULL DEFAULT ''");
   }
+  if (!spalten.includes('port')) {
+    db.exec('ALTER TABLE server ADD COLUMN port INTEGER NOT NULL DEFAULT 0');
+    // Vorhandene Server bekommen der Reihe nach einen Port, sonst
+    // wollten nach dem Update alle auf dieselbe 25565.
+    for (const s of db.prepare('SELECT id FROM server ORDER BY id').all()) {
+      db.prepare('UPDATE server SET port = ? WHERE id = ?').run(naechsterPort(), s.id);
+    }
+  }
+}
+
+/** Der erste Port ab 25565, den noch kein Server hat. */
+export function naechsterPort(ab = 25565) {
+  const belegt = new Set(db.prepare('SELECT port FROM server').all().map((s) => s.port));
+  let port = ab;
+  while (belegt.has(port)) port++;
+  return port;
 }
 
 export const jetzt = () => new Date().toISOString();
@@ -226,11 +243,12 @@ export const abmelden = (token) =>
 // ---------------------------------------------------------------- Server
 
 export function serverAnlegen({ kundeId, name, subdomain = '', paket, software = 'Paper',
-                                pterodactyl = '', notiz = '', zusatz = {} }) {
+                                pterodactyl = '', port = 0, notiz = '', zusatz = {} }) {
   const info = db.prepare(`INSERT INTO server
-      (kunde_id, name, subdomain, paket, software, status, pterodactyl, angelegt, notiz)
-      VALUES (?, ?, ?, ?, ?, 'aktiv', ?, ?, ?)`)
-    .run(kundeId, name, subdomain, paket, software, pterodactyl, jetzt(), notiz);
+      (kunde_id, name, subdomain, paket, software, status, port, pterodactyl, angelegt, notiz)
+      VALUES (?, ?, ?, ?, ?, 'aktiv', ?, ?, ?, ?)`)
+    .run(kundeId, name, subdomain, paket, software,
+         port || naechsterPort(), pterodactyl, jetzt(), notiz);
   const id = Number(info.lastInsertRowid);
   zusatzSetzen(id, zusatz);
   return id;
@@ -273,7 +291,8 @@ export function alleServer(mitGeloeschten = false) {
 }
 
 export function serverAendern(id, felder) {
-  const erlaubt = ['name', 'subdomain', 'paket', 'software', 'status', 'pterodactyl', 'notiz'];
+  const erlaubt = ['name', 'subdomain', 'paket', 'software', 'status', 'port',
+                   'pterodactyl', 'notiz'];
   const setzen = gesetzte(erlaubt, felder);
   if (!setzen.length) return;
   db.prepare(`UPDATE server SET ${setzen.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`)

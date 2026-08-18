@@ -10,6 +10,7 @@ import { seite, statusPunkt } from './layout.js';
 import { PAKETE, ZUSATZ, rechne, euro, ARCHIV_TAGE } from '../preise.js';
 import { bestellungenVonKunde } from '../db.js';
 import { status as prozessStatus } from '../panel.js';
+import { adresse } from './panel.js';
 
 const TEXTE = { laeuft: 'läuft', startet: 'startet …', stoppt: 'stoppt …',
                 gestoppt: 'gestoppt' };
@@ -57,11 +58,11 @@ export function meineServer(nutzer, server) {
       <div class="zwischen">
         <div>
           <h2>${esc(s.name)}</h2>
-          ${s.subdomain
-            ? `<div class="mono klein leise">${esc(s.subdomain)}.lemon-servers.de</div>`
-            : '<div class="klein leise">keine Subdomain</div>'}
+          <div class="mono klein leise">${esc(adresse(s))}</div>
         </div>
         <div class="reihe">
+          ${!s.pterodactyl && lauf.spieler?.length
+            ? `<span class="klein leise">${lauf.spieler.length} online</span>` : ''}
           ${punkt}
           ${s.status !== 'aktiv' ? statusPunkt(s.status) : ''}
         </div>
@@ -117,9 +118,8 @@ export function serverDetail(nutzer, s) {
           <tr><td class="leise">Paket</td>
             <td>${paket ? paket.zeichen + ' ' + esc(paket.name) : esc(s.paket)}</td></tr>
           <tr><td class="leise">Software</td><td>${esc(s.software)}</td></tr>
-          <tr><td class="leise">Subdomain</td>
-            <td class="mono">${s.subdomain
-              ? esc(s.subdomain) + '.lemon-servers.de' : '–'}</td></tr>
+          <tr><td class="leise">Adresse</td>
+            <td class="mono">${esc(adresse(s))}</td></tr>
           <tr><td class="leise">CPU</td><td>${ergebnis.ausstattung?.cores} Cores</td></tr>
           <tr><td class="leise">Arbeitsspeicher</td><td>${ergebnis.ausstattung?.ram} GB</td></tr>
           <tr><td class="leise">Speicherplatz</td><td>${ergebnis.ausstattung?.ssd} GB</td></tr>

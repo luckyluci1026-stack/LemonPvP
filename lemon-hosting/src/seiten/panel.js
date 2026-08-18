@@ -57,15 +57,27 @@ const knoepfe = (s, zustand, zeichen) => {
   </form>`;
 };
 
+/**
+ * Woran verbindet man sich?
+ *
+ * Die Subdomain wenn es eine gibt, sonst der Rechnername. Den Port immer
+ * dazu, ausser er ist der Standard - ":25565" tippt sowieso niemand, und
+ * bei allen anderen ist er das Entscheidende.
+ */
+export function adresse(s) {
+  const wirt = s.subdomain
+    ? `${s.subdomain}.lemon-servers.de`
+    : (process.env.SERVER_HOST || 'dein-rechner');
+  return Number(s.port) === 25565 || !s.port ? wirt : `${wirt}:${s.port}`;
+}
+
 /** Kopfzeile mit Name, Subdomain und Statuspunkt - auf beiden Panelarten gleich. */
 const kopf = (s, rechts) => `
   <a class="klein leise" href="/meine-server">← Meine Server</a>
   <div class="zwischen abstand">
     <div>
       <h1>${esc(s.name)}</h1>
-      ${s.subdomain
-        ? `<div class="mono klein leise">${esc(s.subdomain)}.lemon-servers.de</div>`
-        : `<div class="klein leise">${esc(s.software)}</div>`}
+      <div class="mono klein leise">${esc(adresse(s))}</div>
     </div>
     ${rechts}
   </div>`;
@@ -153,6 +165,23 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '') {
         <strong id="laufzeit">${laufzeit(zustand.laufzeit)}</strong>
         <div class="klein leise" id="pid">${
           zustand.pid ? 'Prozess ' + zustand.pid : 'nicht gestartet'}</div></div>
+    </div>
+
+    <div class="karte abstand">
+      <div class="zwischen">
+        <div>
+          <div class="klein leise">Zum Verbinden in Minecraft</div>
+          <strong class="mono" style="font-size:1.05rem">${esc(adresse(s))}</strong>
+        </div>
+        <div style="text-align:right">
+          <div class="klein leise">Online</div>
+          <strong id="spielerzahl">${zustand.spieler?.length || 0}</strong>
+        </div>
+      </div>
+      <div class="klein abstand" id="spieler">${
+        zustand.spieler?.length
+          ? zustand.spieler.map((n) => `<span class="spieler">${esc(n)}</span>`).join('')
+          : '<span class="leise">Gerade ist niemand drauf.</span>'}</div>
     </div>
 
     <div class="karte abstand">

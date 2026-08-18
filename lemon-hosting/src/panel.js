@@ -56,7 +56,35 @@ function neuerLauf() {
     zuhoerer: new Set(),
     gestartet: null,
     status: 'gestoppt',
+    spieler: new Set(),
   };
+}
+
+/**
+ * Wer ist online?
+ *
+ * Steht so in der Konsole - Minecraft meldet jeden Beitritt und jeden
+ * Abgang. Die Alternative waere das Query- oder RCON-Protokoll: ein
+ * zweiter Port, eine zweite Einstellung in server.properties und ein
+ * Stueck Netzwerkcode. Fuer eine Namensliste ist das Mitlesen ehrlicher.
+ *
+ * Der Name kommt vor "joined the game" und ist nie laenger als 16
+ * Zeichen - damit faellt auch ein Spieler heraus, der sich selbst
+ * "xy joined the game" in den Chat schreibt: Chatzeilen stehen in
+ * spitzen Klammern.
+ */
+const BEITRITT = /]: ([A-Za-z0-9_]{2,16}) joined the game/g;
+const ABGANG = /]: ([A-Za-z0-9_]{2,16}) left the game/g;
+
+/**
+ * Ein Datenstueck von stdout kann mehrere Zeilen enthalten - beim Start
+ * kommen schon mal fuenf auf einmal. Deshalb matchAll und nicht match:
+ * sonst betraete von zwei gleichzeitig verbundenen Spielern nur einer
+ * die Liste, und der andere waere fuer das Panel nie da gewesen.
+ */
+function merkeSpieler(l, text) {
+  for (const treffer of text.matchAll(BEITRITT)) l.spieler.add(treffer[1]);
+  for (const treffer of text.matchAll(ABGANG)) l.spieler.delete(treffer[1]);
 }
 
 function lauf(serverId) {
@@ -83,12 +111,15 @@ function schreibe(serverId, text, art = 'aus') {
 
 export function status(serverId) {
   const l = laufend.get(serverId);
-  if (!l || !l.prozess) return { status: 'gestoppt', seit: null, pid: null, laufzeit: 0 };
+  if (!l || !l.prozess) {
+    return { status: 'gestoppt', seit: null, pid: null, laufzeit: 0, spieler: [] };
+  }
   return {
     status: l.status,
     seit: l.gestartet,
     pid: l.prozess.pid,
     laufzeit: l.gestartet ? Math.floor((Date.now() - l.gestartet) / 1000) : 0,
+    spieler: [...l.spieler].sort((a, b) => a.localeCompare(b)),
   };
 }
 
@@ -158,6 +189,10 @@ export function starte(server) {
   }
 
   const mb = speicherMB(server);
+  // Der Port kommt als Startargument, nicht aus server.properties. So
+  // stimmt er auch dann, wenn ein Kunde die Datei bearbeitet hat - und
+  // zwei Server auf derselben Kiste kommen sich nicht ins Gehege.
+  const port = Number(server.port) || 25565;
   const argumente = [
     `-Xms${Math.min(mb, 512)}M`, `-Xmx${mb}M`,
     // Die Aki-Flags: die uebliche Empfehlung fuer Minecraft-Server
@@ -165,7 +200,7 @@ export function starte(server) {
     '-XX:MaxGCPauseMillis=200', '-XX:+UnlockExperimentalVMOptions',
     '-XX:+DisableExplicitGC', '-XX:+AlwaysPreTouch',
     '-Dfile.encoding=UTF-8',
-    '-jar', 'server.jar', 'nogui',
+    '-jar', 'server.jar', 'nogui', '--port', String(port),
   ];
 
   let prozess;
@@ -179,11 +214,13 @@ export function starte(server) {
   l.status = 'startet';
   l.gestartet = Date.now();
   l.zeilen = [];
-  schreibe(id, `[Panel] Starte mit ${mb} MB Arbeitsspeicher …`, 'panel');
+  l.spieler.clear();
+  schreibe(id, `[Panel] Starte auf Port ${port} mit ${mb} MB Arbeitsspeicher …`, 'panel');
 
   prozess.stdout.on('data', (stueck) => {
     const text = stueck.toString();
     schreibe(id, text);
+    merkeSpieler(l, text);
     // Paper meldet "Done (12.3s)! For help, type help"
     if (l.status === 'startet' && /Done \(/.test(text)) {
       l.status = 'laeuft';
@@ -197,6 +234,7 @@ export function starte(server) {
       + fehler.message, 'fehler');
     l.prozess = null;
     l.status = 'gestoppt';
+    l.spieler.clear();
   });
 
   prozess.on('exit', (code, signal) => {
@@ -204,6 +242,7 @@ export function starte(server) {
     l.prozess = null;
     l.status = 'gestoppt';
     l.gestartet = null;
+    l.spieler.clear();
   });
 
   return null;

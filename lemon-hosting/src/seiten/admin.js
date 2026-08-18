@@ -148,6 +148,10 @@ export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '') {
             <select name="paket" required>${Object.values(PAKETE).map((p) =>
               `<option value="${p.id}"${s?.paket === p.id ? ' selected' : ''}>${
                 esc(p.name)} — ${euro(p.preis)}</option>`).join('')}</select></div>
+          <div class="feld"><label>Port</label>
+            <input name="port" type="number" min="1024" max="65535"
+                   value="${s?.port || ''}" class="mono"
+                   placeholder="wird beim Anlegen vergeben"></div>
           <div class="feld"><label>Status</label>
             <select name="status">${['aktiv', 'archiviert'].map((x) =>
               `<option value="${x}"${s?.status === x ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></div>

@@ -194,3 +194,12 @@ td .name a { text-decoration: none; }
 td .name a:hover { text-decoration: underline; }
 
 .schlimm { color: var(--schlecht); }
+
+/* Spielernamen als kleine Plaketten - so sieht man auf einen Blick,
+   wie viele es sind, ohne zu zaehlen. */
+.spieler {
+  display: inline-block; margin: .15rem .3rem .15rem 0;
+  padding: .18rem .55rem; border-radius: 999px;
+  background: var(--flaeche2); border: 1px solid var(--rand);
+  font-size: .84rem; font-weight: 500;
+}

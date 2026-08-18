@@ -113,6 +113,16 @@ a = await sende('/admin/server/neu', {
 const fremdId = Number((a.ort || '').match(/server\/(\d+)/)?.[1]);
 ok('Zweiter Server angelegt', Number.isInteger(fremdId), '#' + fremdId);
 
+// Ports: jeder Server muss einen eigenen bekommen, sonst startet der
+// zweite nie.
+a = await hole(`/admin/server/${serverId}`);
+const portA = Number((a.text.match(/name="port"[^>]*value="(\d+)"/) || [])[1]);
+a = await hole(`/admin/server/${fremdId}`);
+const portB = Number((a.text.match(/name="port"[^>]*value="(\d+)"/) || [])[1]);
+ok('Erster Server bekam 25565', portA === 25565, String(portA));
+ok('Zweiter Server bekam einen anderen Port', portB && portB !== portA,
+   `${portA} / ${portB}`);
+
 // ------------------------------------------------------------- Dokumente
 a = await hole(`/admin/server/${serverId}/bestellbogen`);
 ok('Bestellbogen druckbar', a.status === 200 && a.text.includes('Bestellbogen'));
@@ -141,6 +151,11 @@ ok('Panel meldet die fehlende server.jar', a.text.includes('fehlt noch die Serve
 ok('Panel zeigt den gebuchten Speicher', a.text.includes('4.50 GB'),
    'Wood 2,5 GB + 2 × 1 GB Zusatz-RAM');
 ok('Konsolenskript eingebunden', a.text.includes('/konsole.js'));
+ok('Panel nennt die Verbindungsadresse',
+   a.text.includes('klasse8b.lemon-servers.de'),
+   'Port 25565 wird weggelassen');
+ok('Panel hat eine Spielerliste',
+   a.text.includes('id="spieler"') && a.text.includes('id="spielerzahl"'));
 
 a = await sende(`/panel/${serverId}/aktion`, { was: 'start' });
 ok('Start ohne server.jar erklärt sich',

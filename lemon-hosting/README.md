@@ -22,9 +22,10 @@ das Portal einen Admin-Zugang an und zeigt das Passwort einmal im Terminal —
 notier es dir, danach steht es nirgends mehr.
 
 ```
-PORT=8080 node start.js               # anderer Port
-DB=/pfad/portal.db node start.js      # andere Datenbankdatei
-SERVER_DIR=/pfad/server node start.js # wo die Minecraft-Server liegen
+PORT=8080 node start.js                 # anderer Port fürs Portal
+DB=/pfad/portal.db node start.js        # andere Datenbankdatei
+SERVER_DIR=/pfad/server node start.js   # wo die Minecraft-Server liegen
+SERVER_HOST=mc.schule.de node start.js  # Adresse, die Kunden angezeigt wird
 ```
 
 ## Lokal ausprobieren
@@ -157,7 +158,7 @@ $env:ADMINPW = (Select-String -Path portal.log -Pattern 'Passwort\s+(\S+)').Matc
 node test/durchklicken.mjs
 ```
 
-**74 Prüfungen**, davon allein 15 dafür, dass niemand an fremde Server kommt
+**78 Prüfungen**, davon allein 15 dafür, dass niemand an fremde Server kommt
 und dass man aus dem Dateimanager nicht ausbrechen kann.
 
 ## Was drin ist
@@ -187,6 +188,29 @@ server/1/plugins/    Plugins
 Beim Start wird `java` als Kindprozess gestartet, `stdout` läuft in einen
 Ringpuffer und von dort per **Server-Sent Events** in jedes offene
 Browserfenster. Befehle gehen den umgekehrten Weg in `stdin`.
+
+### Jeder Server hat seinen eigenen Port
+
+Der erste bekommt 25565, der nächste 25566, und so weiter — vergeben beim
+Anlegen, änderbar in der Verwaltung. Ohne das würde der zweite Server beim
+Start kommentarlos an „Address already in use" scheitern, und niemand wüsste
+warum.
+
+Der Port geht als Startargument an Java (`--port`), nicht über
+`server.properties`. So stimmt er auch dann noch, wenn jemand die Datei im
+Editor angefasst hat. Im Panel steht oben, was man in Minecraft eintippt:
+`klasse8b.lemon-servers.de:25566`. Ohne Subdomain nimmt das Portal
+`SERVER_HOST`.
+
+### Wer online ist, steht in der Konsole
+
+Minecraft meldet jeden Beitritt und jeden Abgang, also liest das Panel einfach
+mit und führt daraus eine Namensliste — live, ohne Neuladen. Die Alternative
+wäre Query oder RCON: ein zweiter Port, eine weitere Einstellung und ein Stück
+Netzwerkcode. Für eine Namensliste ist Mitlesen ehrlicher.
+
+Chatzeilen zählen nicht mit: Wer `Tom joined the game` in den Chat schreibt,
+steht in der Konsole in spitzen Klammern und fällt durchs Raster.
 
 Pterodactyl trennt Panel und Daemon („Wings"), damit ein Panel viele
 Maschinen steuern kann. Hier läuft alles auf einem Rechner, und das Portal
@@ -317,18 +341,20 @@ Person.
 `test/durchklicken.mjs` geht das Portal einmal komplett durch — Anfrage
 abschicken, annehmen, Server anlegen, Dokumente drucken, ins Panel, Dateien
 anlegen, bearbeiten, hochladen, löschen, Konsole anzapfen, ausbrechen wollen,
-an fremde Server wollen, Pterodactyl-Übergabe. **74 Prüfungen.**
+an fremde Server wollen, Pterodactyl-Übergabe, Portvergabe. **78 Prüfungen.**
 
-Der Lebenslauf eines Serverprozesses — starten, `Done (…)` erkennen, Befehl
-durchreichen, neu starten, sauber stoppen — wurde zusätzlich am laufenden
-Portal geprüft: mit einem echten Paper 1.21.11 (119 Konsolenzeilen live, `say`
-durchgereicht, neuer Prozess nach Neustart) und mit einem kleinen Java-Programm
-als Serverersatz, das dieselben Ausgaben macht.
+Der Lebenslauf eines Serverprozesses — starten, `Done (…)` erkennen, Port
+durchreichen, Befehl schicken, Spieler zählen, neu starten, sauber stoppen —
+wurde zusätzlich am laufenden Portal geprüft: mit einem echten Paper 1.21.11
+(119 Konsolenzeilen live, `say` durchgereicht, neuer Prozess nach Neustart)
+und mit einem kleinen Java-Programm als Serverersatz, das dieselben Ausgaben
+macht.
 
 ## Was noch fehlt
 
 - **Backups** auf Knopfdruck (Welt als Zip herunterladen).
-- **Subdomains** werden erfasst, aber nicht automatisch im DNS eingetragen.
+- **Subdomains** werden erfasst, aber nicht automatisch im DNS eingetragen —
+  auch der SRV-Eintrag, der den Port versteckt, muss von Hand gesetzt werden.
 - **Zeitpläne** — z. B. jede Nacht neu starten.
 - Ein **Speicher-Limit**, das wirklich greift. Die Anzeige stimmt, aber wer
   über sein Kontingent hinausschreibt, wird bisher nur angezeigt, nicht

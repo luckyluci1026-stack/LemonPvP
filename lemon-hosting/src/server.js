@@ -56,6 +56,18 @@ const wer = (n) => n ? `${n.benutzername}` : 'unbekannt';
  * `javascript:...` stehen, und ein Admin haette sich selbst eine Falle
  * gestellt. Nur http und https, sonst nichts.
  */
+/**
+ * Einen Port aus dem Formular annehmen - oder 0 fuer "such dir einen".
+ *
+ * Unter 1024 duerfte der Prozess ohnehin nicht binden, ueber 65535 gibt
+ * es nicht. Alles andere waere ein Server, der beim Start kommentarlos
+ * scheitert.
+ */
+function portOk(roh) {
+  const n = Math.floor(Number(roh) || 0);
+  return n >= 1024 && n <= 65535 ? n : 0;
+}
+
 function adresseOk(roh) {
   const text = String(roh || '').trim();
   if (!text) return '';
@@ -421,7 +433,8 @@ export function baue() {
       kundeId: Number(d.kundeId), name: d.name,
       subdomain: String(d.subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, ''),
       paket: d.paket, software: d.software, notiz: d.notiz,
-      pterodactyl: adresseOk(d.pterodactyl), zusatz: zusatzAus(d),
+      pterodactyl: adresseOk(d.pterodactyl), port: portOk(d.port),
+      zusatz: zusatzAus(d),
     });
     db.protokolliere(wer(c.nutzer), 'Server angelegt', `${d.name} (#${id})`);
     weiter(c.antwort, `/admin/server/${id}`);
@@ -443,6 +456,7 @@ export function baue() {
       paket: PAKETE[d.paket] ? d.paket : undefined,
       software: d.software, status: d.status, notiz: d.notiz,
       pterodactyl: adresseOk(d.pterodactyl),
+      port: portOk(d.port) || undefined,
     });
     db.zusatzSetzen(id, zusatzAus(d));
     db.protokolliere(wer(c.nutzer), 'Server geändert', `${d.name} (#${id})`);

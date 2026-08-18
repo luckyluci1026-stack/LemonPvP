@@ -93,6 +93,28 @@ function zeigeStatus(z) {
   };
   anzeige('laufzeit', laufzeit(z.laufzeit));
   anzeige('pid', z.pid ? 'Prozess ' + z.pid : 'nicht gestartet');
+  anzeige('spielerzahl', (z.spieler || []).length);
+
+  // Namen als einzelne Elemente, nicht als HTML-Text: Ein Spielername
+  // kommt vom Minecraft-Server, und der bekommt ihn vom Spieler.
+  const liste = document.getElementById('spieler');
+  if (liste) {
+    liste.textContent = '';
+    if (!(z.spieler || []).length) {
+      const leer = document.createElement('span');
+      leer.className = 'leise';
+      leer.textContent = z.status === 'gestoppt'
+        ? 'Der Server läuft nicht.' : 'Gerade ist niemand drauf.';
+      liste.appendChild(leer);
+    } else {
+      for (const name of z.spieler) {
+        const el = document.createElement('span');
+        el.className = 'spieler';
+        el.textContent = name;
+        liste.appendChild(el);
+      }
+    }
+  }
 
   // Knöpfe mitziehen, damit man nicht neu laden muss, nur um wieder
   // starten zu dürfen.
