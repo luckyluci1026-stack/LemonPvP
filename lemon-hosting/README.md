@@ -19,6 +19,88 @@ PORT=8080 node start.js          # anderer Port
 DB=/pfad/portal.db node start.js # andere Datenbankdatei
 ```
 
+## Lokal ausprobieren
+
+**Voraussetzung:** Node 22.5 oder neuer. Prüfen mit `node --version`. Ist es
+zu alt, sagt dir das Portal das beim Start — es holt sich SQLite aus Node
+selbst, deshalb die Mindestversion.
+
+```bash
+git clone https://github.com/luckyluci1026-stack/LemonPvP.git
+cd LemonPvP/lemon-hosting
+git checkout claude/bettersmp-minecraft-plugin-rzjgz5
+node start.js
+```
+
+Im Terminal steht dann die Adresse und — nur beim allerersten Start — der
+Admin-Zugang:
+
+```
+  🍋 Lemon Hosting Kundenportal
+     läuft auf  http://localhost:3000
+     Datenbank  daten/portal.db
+
+  ┌─────────────────────────────────────────────┐
+  │  Erster Start – so kommst du rein:          │
+  │  Benutzer   admin                           │
+  │  Passwort   jtUYNeQVYA4u                    │
+  └─────────────────────────────────────────────┘
+```
+
+Browser auf **http://localhost:3000**. Beenden mit **Strg+C**.
+
+### Ein Rundgang, der alles zeigt
+
+1. **Pakete** ansehen — die Preise kommen aus `src/preise.js`.
+2. **Server bestellen** → Paket *Wood*, dann *Subdomain* und *FLFAC*
+   ankreuzen. Rechts läuft der Preis mit: 3,99 + 0,25 + 0,30 = **4,54 €**.
+   Jetzt oben auf *Coal* umstellen — beide Posten springen auf **0,00 €
+   (im Paket)**, die Summe bleibt bei 5,99 €. Genau der Sonderfall, den man
+   von Hand falsch rechnet.
+3. Formular unten ausfüllen, Regeln ankreuzen, **abschicken**.
+4. **Anmelden** als `admin` mit dem Passwort von oben.
+5. In der **Verwaltung** steht die Anfrage → *Ansehen* → *Annehmen*.
+   Benutzername und Startpasswort für den Kunden vergeben (mindestens 8
+   Zeichen). Daraus entstehen Kunde und Server auf einmal.
+6. Auf der Serverseite rechts **Zahlung eintragen** — der Betrag ist schon
+   vorgeschlagen. Danach steht oben *bezahlt bis* mit einem Balken.
+   Trag die Zahlung noch einmal ein: der neue Zeitraum schließt an den
+   alten an, statt bei heute anzufangen.
+7. **Bestellbogen** öffnen — alles ausgefüllt, das richtige Paket
+   angekreuzt. *Drucken* zeigt die Seite ohne Menü und Knöpfe.
+8. Oben rechts **abmelden**, als der eben angelegte Kunde anmelden: jetzt
+   siehst du dieselben Daten aus Kundensicht, ohne Verwaltung.
+
+### Nochmal von vorn anfangen
+
+Die Datenbank ist eine einzige Datei. Weg damit, und der nächste Start legt
+alles neu an — inklusive neuem Admin-Passwort:
+
+```bash
+rm -rf daten
+node start.js
+```
+
+### Anderer Port
+
+Ist 3000 schon belegt, sagt das Portal es dir und schlägt einen anderen vor:
+
+```bash
+PORT=8080 node start.js
+```
+
+### Automatisch durchklicken lassen
+
+```bash
+rm -f /tmp/portal-test.db*
+PORT=3111 DB=/tmp/portal-test.db node start.js > /tmp/portal.log 2>&1 &
+sleep 2
+ADMINPW=$(grep -oP 'Passwort\s+\K\S+' /tmp/portal.log) node test/durchklicken.mjs
+```
+
+33 Prüfungen: Anfrage abschicken, annehmen, Server anlegen, zweimal zahlen,
+Dokumente drucken, als Kunde anmelden, an fremde Daten wollen.
+
 ## Was drin ist
 
 **Für alle** – Pakete und Preise, ein Konfigurator mit Live-Preis, die

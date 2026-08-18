@@ -365,6 +365,32 @@ export function starte(port = 3000, datenbank = 'daten/portal.db') {
     }
   });
 
+  // Ein belegter Port ist der haeufigste Stolperstein beim ersten
+  // Ausprobieren - meistens laeuft das Portal schon in einem anderen
+  // Fenster. Ein Stacktrace hilft da niemandem weiter.
+  server.on('error', (fehler) => {
+    if (fehler.code === 'EADDRINUSE') {
+      console.error(`
+  Port ${port} ist schon belegt.
+
+  Läuft das Portal vielleicht noch in einem anderen Fenster? Dann dort mit
+  Strg+C beenden. Oder nimm einfach einen anderen Port:
+
+      PORT=${port + 1} node start.js
+`);
+    } else if (fehler.code === 'EACCES') {
+      console.error(`
+  Port ${port} darf nicht benutzt werden - Ports unter 1024 sind dem
+  System vorbehalten. Nimm einen ab 1024:
+
+      PORT=3000 node start.js
+`);
+    } else {
+      console.error('  Der Server konnte nicht starten:', fehler.message);
+    }
+    process.exit(1);
+  });
+
   server.listen(port, () => {
     console.log(`\n  🍋 Lemon Hosting Kundenportal`);
     console.log(`     läuft auf  http://localhost:${port}`);
