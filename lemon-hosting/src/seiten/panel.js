@@ -21,6 +21,7 @@ import { seite, csrfFeld } from './layout.js';
 import { PAKETE, rechne } from '../preise.js';
 import { speicherMB, jarDa, eulaAngenommen } from '../panel.js';
 import { lesbareGroesse } from '../dateien.js';
+import { WIE_VIELE } from '../sicherung.js';
 
 const TEXTE = { laeuft: 'läuft', startet: 'startet …', stoppt: 'stoppt …',
                 gestoppt: 'gestoppt' };
@@ -119,7 +120,8 @@ export function fremdesPanel(nutzer, s, ziel) {
     <a class="knopf stil2 abstand" href="/meine-server/${s.id}">Was ist gebucht?</a>` });
 }
 
-export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '') {
+export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
+                      gut = false, sicherungen = []) {
   const paket = PAKETE[s.paket];
   const aus = rechne(s.paket, s.zusatz).ausstattung;
   const bereit = jarDa(s.id);
@@ -130,7 +132,8 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '') {
 
   return seite({ titel: s.name, nutzer, hier: '/meine-server', inhalt: `
     ${kopf(s, statusAnzeige(zustand))}
-    ${meldung ? `<div class="hinweis warn abstand">${esc(meldung)}</div>` : ''}
+    ${meldung ? `<div class="hinweis ${gut ? 'info' : 'warn'} abstand">${
+      esc(meldung)}</div>` : ''}
     ${s.status !== 'aktiv' ? `<div class="hinweis schlecht abstand">
       Dieser Server ist <strong>${esc(s.status)}</strong> und lässt sich nicht
       starten. Sprich das Team an.</div>` : ''}
@@ -208,6 +211,46 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '') {
         also <span class="mono">op DeinName</span>, nicht <span class="mono">/op</span>.
       </p>
     </div>
+    <div class="karte abstand">
+      <div class="zwischen">
+        <h2>Backups</h2>
+        <form method="post" action="/panel/${s.id}/sicherung">
+          ${csrfFeld(zeichen)}
+          <button class="knopf klein">💾 Backup jetzt anlegen</button>
+        </form>
+      </div>
+      <p class="klein leise" style="margin-top:.5rem">
+        Packt den ganzen Serverordner in eine ZIP-Datei. Die letzten
+        ${WIE_VIELE} werden aufgehoben, ältere fallen von selbst weg.
+        Fürs Zurückspielen muss der Server gestoppt sein.</p>
+
+      ${sicherungen.length ? `<table class="abstand">
+        <tr><th>Wann</th><th class="zahl">Größe</th><th></th></tr>
+        ${sicherungen.map((b) => `<tr>
+          <td>${esc(b.wann)}</td>
+          <td class="zahl klein">${esc(b.lesbar)}</td>
+          <td class="zahl"><div class="reihe" style="justify-content:flex-end">
+            <a class="knopf stil2 klein"
+               href="/panel/${s.id}/sicherung/laden?f=${encodeURIComponent(b.name)}"
+               >Herunterladen</a>
+            <form method="post" action="/panel/${s.id}/sicherung/zurueck"
+                  onsubmit="return confirm('Backup vom ${esc(b.wann)} zurückspielen? Neuere Dateien mit gleichem Namen werden überschrieben.')">
+              ${csrfFeld(zeichen)}
+              <input type="hidden" name="f" value="${esc(b.name)}">
+              <button class="knopf stil2 klein" ${
+                zustand.status === 'gestoppt' ? '' : 'disabled'}>Zurückspielen</button>
+            </form>
+            <form method="post" action="/panel/${s.id}/sicherung/loeschen"
+                  onsubmit="return confirm('Dieses Backup löschen?')">
+              ${csrfFeld(zeichen)}
+              <input type="hidden" name="f" value="${esc(b.name)}">
+              <button class="knopf gefahr klein">Löschen</button>
+            </form>
+          </div></td>
+        </tr>`).join('')}
+      </table>` : '<p class="leise klein abstand">Noch kein Backup vorhanden.</p>'}
+    </div>
+
     <script>window.SERVER_ID = ${s.id};</script>
     <script src="/konsole.js"></script>` });
 }

@@ -14,8 +14,9 @@
  *      man mit einem geratenen Link in einer fremden Konsole.
  */
 import { createServer } from 'node:http';
+import { createReadStream, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, basename } from 'node:path';
 
 import * as db from './db.js';
 import { PAKETE, ZUSATZ, rechne } from './preise.js';
@@ -23,6 +24,7 @@ import { Router, cookies, formular, sende, weiter, setzeCookie, loescheCookie,
          statisch, csrfWert, csrfNeu, csrfStimmt, esc } from './web.js';
 import * as prozess from './panel.js';
 import * as dat from './dateien.js';
+import * as sich from './sicherung.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
 import * as adm from './seiten/admin.js';
@@ -211,8 +213,10 @@ export function baue() {
     if (s.pterodactyl) {
       return sende(c.antwort, pnl.fremdesPanel(c.nutzer, s, s.pterodactyl));
     }
+    const gut = c.url.searchParams.get('ok') || '';
     sende(c.antwort, pnl.panel(c.nutzer, s, prozess.status(s.id), c.csrf,
-      dat.belegung(s.id), c.url.searchParams.get('m') || ''));
+      dat.belegung(s.id), gut || c.url.searchParams.get('m') || '', Boolean(gut),
+      sich.liste(s.id)));
   }));
 
   r.post('/panel/:id/aktion', eigenerServer((c, s) => {
@@ -360,6 +364,57 @@ export function baue() {
     db.protokolliere(wer(c.nutzer), 'Datei hochgeladen',
       `#${s.id} · ${c.url.searchParams.get('name')}`);
     jsonRaus(c, 200, { ok: true });
+  }));
+
+
+  // ------------------------------------------------------------ Backups
+  const zumPanelGut = (c, s, meldung) => weiter(c.antwort,
+    `/panel/${s.id}?ok=` + encodeURIComponent(meldung));
+
+  r.post('/panel/:id/sicherung', eigenerServer((c, s) => {
+    const ergebnis = sich.anlegen(s.id);
+    if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
+    db.protokolliere(wer(c.nutzer), 'Backup angelegt',
+      `#${s.id} · ${ergebnis.name} · ${ergebnis.groesse}`);
+    zumPanelGut(c, s, `Backup angelegt: ${ergebnis.dateien} Dateien, `
+      + `${ergebnis.groesse}.` + (ergebnis.warnung ? ' ' + ergebnis.warnung : ''));
+  }));
+
+  /**
+   * Ein Backup herunterladen.
+   *
+   * Der Dateiname kommt aus der URL, muss aber dem Zeitstempelmuster
+   * entsprechen - alles andere findet `pfadVon` gar nicht erst. Damit
+   * fuehrt kein Umweg ueber diesen Namen an eine andere Datei.
+   */
+  r.get('/panel/:id/sicherung/laden', eigenerServer((c, s) => {
+    const datei = sich.pfadVon(s.id, c.url.searchParams.get('f'));
+    if (!datei) {
+      return sende(c.antwort, fehlerSeite(c.nutzer, 'Dieses Backup gibt es nicht.'), 404);
+    }
+    const name = `${s.subdomain || 'server' + s.id}-${basename(datei)}`;
+    c.antwort.writeHead(200, {
+      'Content-Type': 'application/zip',
+      'Content-Length': statSync(datei).size,
+      'Content-Disposition': `attachment; filename="${name}"`,
+    });
+    createReadStream(datei).pipe(c.antwort);
+  }));
+
+  r.post('/panel/:id/sicherung/loeschen', eigenerServer((c, s) => {
+    const fehler = sich.loeschen(s.id, c.daten.f);
+    if (fehler) return zumPanel(c, s, fehler);
+    db.protokolliere(wer(c.nutzer), 'Backup gelöscht', `#${s.id} · ${c.daten.f}`);
+    zumPanelGut(c, s, 'Backup gelöscht.');
+  }));
+
+  r.post('/panel/:id/sicherung/zurueck', eigenerServer((c, s) => {
+    const ergebnis = sich.zurueckspielen(s.id, c.daten.f);
+    if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
+    db.protokolliere(wer(c.nutzer), 'Backup zurückgespielt',
+      `#${s.id} · ${c.daten.f} · ${ergebnis.entpackt} Dateien`);
+    if (ergebnis.warnung) return zumPanel(c, s, ergebnis.warnung);
+    zumPanelGut(c, s, `${ergebnis.entpackt} Dateien zurückgespielt.`);
   }));
 
   // ------------------------------------------------------------ Verwaltung

@@ -219,6 +219,46 @@ a = await sende(`/panel/${serverId}/aktion`, { was: 'eula' });
 a = await hole(`/panel/${serverId}/dateien`);
 ok('EULA-Knopf legt eula.txt an', a.text.includes('eula.txt'));
 
+// ------------------------------------------------------------- Backups
+a = await hole(`/panel/${serverId}`);
+ok('Panel hat einen Backup-Bereich',
+   a.text.includes('Backups') && a.text.includes('Noch kein Backup'));
+
+a = await sende(`/panel/${serverId}/sicherung`, {});
+ok('Backup angelegt', a.status === 302 && (a.ort || '').includes('ok='),
+   decodeURIComponent(a.ort || '').slice(0, 70));
+
+a = await hole(`/panel/${serverId}`);
+const sicherung = (a.text.match(/f=(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(?:-\d+)?\.zip)/) || [])[1];
+ok('Backup steht in der Liste', Boolean(sicherung), sicherung);
+
+const zip = await fetch(`${BASIS}/panel/${serverId}/sicherung/laden?f=${sicherung}`,
+  { headers: { cookie: kekse() } });
+const rohZip = Buffer.from(await zip.arrayBuffer());
+ok('Backup lässt sich herunterladen', zip.status === 200
+   && zip.headers.get('content-type') === 'application/zip');
+ok('Und es ist wirklich ein ZIP', rohZip.subarray(0, 2).toString() === 'PK',
+   `${rohZip.length} Bytes`);
+ok('Der Download hat einen sprechenden Namen',
+   (zip.headers.get('content-disposition') || '').includes('klasse8b-'),
+   zip.headers.get('content-disposition'));
+
+// Ein erfundener Name darf nirgendwo hinführen.
+a = await hole(`/panel/${serverId}/sicherung/laden?f=../../../etc/passwd`);
+ok('Erfundener Backup-Name führt ins Leere', a.status === 404);
+a = await hole(`/panel/${serverId}/sicherung/laden?f=server.properties`);
+ok('Auch keine normale Datei über den Backup-Weg', a.status === 404);
+
+// Zurückspielen: Datei kaputt machen, Backup einspielen, prüfen.
+await sende(`/panel/${serverId}/speichern`,
+  { p: 'server.properties', inhalt: 'kaputt\n' });
+a = await sende(`/panel/${serverId}/sicherung/zurueck`, { f: sicherung });
+ok('Backup zurückgespielt', a.status === 302 && (a.ort || '').includes('ok='),
+   decodeURIComponent(a.ort || '').slice(0, 60));
+a = await hole(`/panel/${serverId}/bearbeiten?p=server.properties`);
+ok('Der alte Inhalt ist wieder da',
+   a.text.includes('max-players=40') && !a.text.includes('kaputt'));
+
 // ------------------------------------------------------- Ausbruchsversuche
 for (const boese of ['../../etc/passwd', '..', `../${fremdId}/geheim`,
                      'welt/../../../hoppla']) {

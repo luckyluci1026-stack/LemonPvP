@@ -158,7 +158,7 @@ $env:ADMINPW = (Select-String -Path portal.log -Pattern 'Passwort\s+(\S+)').Matc
 node test/durchklicken.mjs
 ```
 
-**78 Prüfungen**, davon allein 15 dafür, dass niemand an fremde Server kommt
+**86 Prüfungen**, davon allein 17 dafür, dass niemand an fremde Server kommt
 und dass man aus dem Dateimanager nicht ausbrechen kann.
 
 ## Was drin ist
@@ -167,8 +167,9 @@ und dass man aus dem Dateimanager nicht ausbrechen kann.
 Nutzungsregeln.
 
 **Für Kunden** – das **Panel**: Start, Stopp, Neustart, Live-Konsole mit
-Befehlseingabe, Dateiverwaltung mit Editor und Upload, Speicheranzeige. Dazu
-eine Übersicht, was gebucht ist und was es kostet.
+Befehlseingabe, Dateiverwaltung mit Editor und Upload, Backups auf Knopfdruck,
+Spielerliste, Speicheranzeige. Dazu eine Übersicht, was gebucht ist und was
+es kostet.
 
 **Für das Team** – eine Übersicht mit dem Laufstatus jedes Servers, Kunden-
 und Serververwaltung, ein Protokoll über alles, was passiert ist, und die
@@ -201,6 +202,31 @@ Der Port geht als Startargument an Java (`--port`), nicht über
 Editor angefasst hat. Im Panel steht oben, was man in Minecraft eintippt:
 `klasse8b.lemon-servers.de:25566`. Ohne Subdomain nimmt das Portal
 `SERVER_HOST`.
+
+### Backups sind ein Knopf, keine Bitte
+
+„Unsere Welt ist kaputt, kannst du die von gestern wiederholen" ist bei
+Schulservern die häufigste Frage überhaupt. Deshalb steht im Panel ein Knopf:
+packt den Serverordner in eine ZIP-Datei, hebt die letzten fünf auf und wirft
+ältere weg. Herunterladen, zurückspielen und löschen geht daneben.
+
+Die Backups liegen **neben** dem Serverordner (`sicherungen/7/`), nicht darin —
+sonst packte jedes Backup alle vorherigen mit ein und die Datei verdoppelte
+sich jedes Mal.
+
+Den ZIP-Packer schreibt `src/zip.js` selbst, mit dem `zlib` aus Node. Eine
+npm-Abhängigkeit, die in zwei Jahren ein Sicherheitsupdate braucht, wäre für
+ein Schulprojekt ein schlechter Tausch. ZIP und nicht tar.gz, weil Windows ZIP
+von sich aus öffnet.
+
+Beim **Zurückspielen** gehen alle Dateinamen aus dem Archiv durch denselben
+Einsperr-Test wie der Dateimanager. Ein präpariertes ZIP mit `../../etc/passwd`
+darin („Zip Slip") schreibt nichts außerhalb des Serverordners — die Einträge
+werden gezählt und übersprungen. Zurückspielen geht außerdem nur bei
+gestopptem Server.
+
+Grenzen, die das Portal deutlich sagt statt still zu scheitern: 65535 Dateien
+und 4 GB pro Archiv (kein Zip64).
 
 ### Wer online ist, steht in der Konsole
 
@@ -305,6 +331,8 @@ src/preise.js         die Preisliste — hier änderst du Preise
 src/db.js             SQLite: Kunden, Server, Bestellungen, Protokoll
 src/panel.js          Minecraft-Prozesse: starten, stoppen, Konsole
 src/dateien.js        Dateiverwaltung samt Einsperr-Test
+src/sicherung.js      Backups anlegen, herunterladen, zurückspielen
+src/zip.js            ZIP packen und entpacken, ohne npm-Paket
 src/web.js            HTTP-Kleinkram: Cookies, Formulare, CSRF, Router
 src/server.js         alle Routen an einer Stelle
 src/seiten/           die HTML-Seiten
@@ -313,6 +341,7 @@ oeffentlich/          CSS und das bisschen Browser-JavaScript
   dateien.js          Upload mit Fortschritt
 daten/portal.db       die Datenbank (nicht im Git)
 server/<id>/          die Minecraft-Server (nicht im Git)
+sicherungen/<id>/     die Backups (nicht im Git)
 ```
 
 ## Sicherheit
@@ -331,7 +360,9 @@ Person.
 1. **HTTPS** (Caddy oder nginx als Reverse Proxy) — ohne das gehen Passwörter
    im Klartext über das Netz. Bei nginx `proxy_buffering off;` für
    `/panel/*/konsole`, sonst kommt die Konsole nur ruckweise an.
-2. Ein **Backup** von `daten/portal.db` und `server/`.
+2. Ein **Backup** von `daten/portal.db`, `server/` und `sicherungen/` — die
+   Backups im Panel liegen auf derselben Platte und helfen nicht, wenn die
+   ausfällt.
 3. Ein **eigener Benutzer** für das Portal. Wer im Panel eine Datei
    bearbeiten darf, arbeitet mit den Rechten des Portalprozesses — das sollte
    nicht `root` sein.
@@ -341,7 +372,8 @@ Person.
 `test/durchklicken.mjs` geht das Portal einmal komplett durch — Anfrage
 abschicken, annehmen, Server anlegen, Dokumente drucken, ins Panel, Dateien
 anlegen, bearbeiten, hochladen, löschen, Konsole anzapfen, ausbrechen wollen,
-an fremde Server wollen, Pterodactyl-Übergabe, Portvergabe. **78 Prüfungen.**
+an fremde Server wollen, Pterodactyl-Übergabe, Portvergabe, Backup anlegen,
+herunterladen und zurückspielen. **86 Prüfungen.**
 
 Der Lebenslauf eines Serverprozesses — starten, `Done (…)` erkennen, Port
 durchreichen, Befehl schicken, Spieler zählen, neu starten, sauber stoppen —
@@ -352,10 +384,15 @@ macht.
 
 ## Was noch fehlt
 
-- **Backups** auf Knopfdruck (Welt als Zip herunterladen).
 - **Subdomains** werden erfasst, aber nicht automatisch im DNS eingetragen —
   auch der SRV-Eintrag, der den Port versteckt, muss von Hand gesetzt werden.
-- **Zeitpläne** — z. B. jede Nacht neu starten.
+- **Zeitpläne** — z. B. jede Nacht neu starten oder automatisch sichern.
 - Ein **Speicher-Limit**, das wirklich greift. Die Anzeige stimmt, aber wer
   über sein Kontingent hinausschreibt, wird bisher nur angezeigt, nicht
   gebremst.
+
+Der ZIP-Packer wurde gegen fremde Entpacker geprüft: Ein Archiv aus
+`src/zip.js` besteht Pythons `zipfile.testzip()` und `unzip -t`, und der
+Inhalt kommt byteweise identisch wieder heraus — auch bei Umlauten im
+Dateinamen. Umgekehrt wird ein mit Python gebautes Angriffs-Archiv beim
+Zurückspielen korrekt abgewehrt.
