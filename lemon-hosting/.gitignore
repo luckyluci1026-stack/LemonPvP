@@ -1,0 +1,5 @@
+# Die Datenbank gehoert niemandem ausser dem Server, auf dem sie laeuft.
+daten/
+*.db
+*.db-shm
+*.db-wal
