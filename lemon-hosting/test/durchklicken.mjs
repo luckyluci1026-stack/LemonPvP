@@ -219,6 +219,36 @@ a = await sende(`/panel/${serverId}/aktion`, { was: 'eula' });
 a = await hole(`/panel/${serverId}/dateien`);
 ok('EULA-Knopf legt eula.txt an', a.text.includes('eula.txt'));
 
+// ------------------------------------------------------------- Plugins
+a = await hole(`/panel/${serverId}`);
+const imKatalog = [...a.text.matchAll(/name="datei" value="([^"]+)"/g)].map((m) => m[1]);
+ok('Katalog zeigt Plugins an', imKatalog.length > 0, imKatalog.length + ' Stück');
+ok('Mit Beschreibung', a.text.includes('Ränge mit Farbverlauf'));
+
+const einPlugin = imKatalog.find((n) => n.startsWith('BetterSMP')) || imKatalog[0];
+a = await sende(`/panel/${serverId}/plugin/installieren`, { datei: einPlugin });
+ok('Plugin installiert', a.status === 302 && (a.ort || '').includes('ok='),
+   decodeURIComponent(a.ort || '').slice(0, 60));
+
+a = await hole(`/panel/${serverId}/dateien?p=plugins`);
+ok('Die Jar liegt wirklich in plugins/', a.text.includes(einPlugin), einPlugin);
+a = await hole(`/panel/${serverId}`);
+ok('Panel zeigt es als installiert', a.text.includes('>drin<'));
+
+// Ein Name, der nicht im Katalog steht, darf nichts bewirken.
+a = await sende(`/panel/${serverId}/plugin/installieren`,
+  { datei: '../../../etc/passwd' });
+ok('Erfundenes Plugin wird abgelehnt',
+   decodeURIComponent(a.ort || '').includes('nicht im Katalog'), a.ort);
+a = await sende(`/panel/${serverId}/plugin/entfernen`, { datei: 'Gibtsnicht-1.0.jar' });
+ok('Entfernen von Unbekanntem wird abgelehnt',
+   decodeURIComponent(a.ort || '').includes('nicht im Katalog'));
+
+a = await sende(`/panel/${serverId}/plugin/entfernen`, { datei: einPlugin });
+ok('Plugin wieder entfernt', a.status === 302 && (a.ort || '').includes('ok='));
+a = await hole(`/panel/${serverId}/dateien?p=plugins`);
+ok('Und die Jar ist weg', !a.text.includes(einPlugin));
+
 // ------------------------------------------------------------- Zeitplan
 a = await hole(`/panel/${serverId}`);
 ok('Panel hat einen Zeitplan-Bereich',

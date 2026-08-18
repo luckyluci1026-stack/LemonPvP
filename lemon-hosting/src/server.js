@@ -26,6 +26,7 @@ import * as prozess from './panel.js';
 import * as dat from './dateien.js';
 import * as sich from './sicherung.js';
 import * as plan from './zeitplan.js';
+import * as kat from './katalog.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
 import * as adm from './seiten/admin.js';
@@ -215,9 +216,13 @@ export function baue() {
       return sende(c.antwort, pnl.fremdesPanel(c.nutzer, s, s.pterodactyl));
     }
     const gut = c.url.searchParams.get('ok') || '';
+    // Katalog und installierte Plugins zusammenfuehren, damit die Seite
+    // je Zeile weiss, ob "Installieren" oder "Entfernen" drangehoert.
+    const da = kat.installiert(s.id);
+    const plugins = kat.verfuegbar().map((p) => ({ ...p, da: da.has(p.stamm) }));
     sende(c.antwort, pnl.panel(c.nutzer, s, prozess.status(s.id), c.csrf,
       dat.belegung(s.id), gut || c.url.searchParams.get('m') || '', Boolean(gut),
-      sich.liste(s.id)));
+      sich.liste(s.id), plugins));
   }));
 
   r.post('/panel/:id/aktion', eigenerServer((c, s) => {
@@ -371,6 +376,21 @@ export function baue() {
   // -------------------------------------------------- Zeitplan und Backups
   const zumPanelGut = (c, s, meldung) => weiter(c.antwort,
     `/panel/${s.id}?ok=` + encodeURIComponent(meldung));
+
+  r.post('/panel/:id/plugin/installieren', eigenerServer((c, s) => {
+    const ergebnis = kat.installiere(s.id, c.daten.datei);
+    if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
+    db.protokolliere(wer(c.nutzer), 'Plugin installiert',
+      `#${s.id} · ${c.daten.datei}` + (ergebnis.ersetzt ? ` (ersetzt ${ergebnis.ersetzt})` : ''));
+    zumPanelGut(c, s, `${ergebnis.name} installiert – beim nächsten Neustart ist es da.`);
+  }));
+
+  r.post('/panel/:id/plugin/entfernen', eigenerServer((c, s) => {
+    const ergebnis = kat.entferne(s.id, c.daten.datei);
+    if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
+    db.protokolliere(wer(c.nutzer), 'Plugin entfernt', `#${s.id} · ${c.daten.datei}`);
+    zumPanelGut(c, s, `${ergebnis.name} entfernt – beim nächsten Neustart ist es weg.`);
+  }));
 
   r.post('/panel/:id/zeitplan', eigenerServer((c, s) => {
     const neustart = plan.zeitOk(c.daten.neustart_um);
@@ -695,7 +715,9 @@ export function starte(port = 3000, datenbank = 'daten/portal.db') {
     console.log(`\n  🍋 Lemon Hosting Kundenportal`);
     console.log(`     läuft auf  http://localhost:${port}`);
     console.log(`     Datenbank  ${datenbank}`);
-    console.log(`     Server in  ${prozess.wurzel()}\n`);
+    console.log(`     Server in  ${prozess.wurzel()}`);
+    console.log(`     Plugins    ${kat.katalogOrdner()}`
+      + ` (${kat.verfuegbar().length} im Katalog)\n`);
   });
 
   /**

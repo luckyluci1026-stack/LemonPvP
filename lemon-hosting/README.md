@@ -26,6 +26,7 @@ PORT=8080 node start.js                 # anderer Port fürs Portal
 DB=/pfad/portal.db node start.js        # andere Datenbankdatei
 SERVER_DIR=/pfad/server node start.js   # wo die Minecraft-Server liegen
 SERVER_HOST=mc.schule.de node start.js  # Adresse, die Kunden angezeigt wird
+KATALOG_DIR=/pfad/zu/jars node start.js # woher die Plugins kommen
 ```
 
 ## Lokal ausprobieren
@@ -117,7 +118,8 @@ Falls etwas schiefgeht:
 7. Oben rechts **abmelden**, als der eben angelegte Kunde anmelden.
 8. **Panel öffnen** → *Dateien* → eine **server.jar** hochladen
    ([papermc.io](https://papermc.io/downloads), ziehen und fallen lassen).
-9. Zurück ins Panel → **EULA akzeptieren** → **▶ Starten**. Die Konsole
+9. Im Panel unter **Plugins** ein paar auswählen — `BetterSMP` und
+   `SMPContent` zum Beispiel. Dann **EULA akzeptieren** → **▶ Starten**. Die Konsole
    füllt sich live, der Punkt oben rechts springt von *gestoppt* über
    *startet …* auf *läuft*.
 10. Unten `say Hallo` eintippen → steht sofort in der Konsole. **↑** holt
@@ -158,7 +160,7 @@ $env:ADMINPW = (Select-String -Path portal.log -Pattern 'Passwort\s+(\S+)').Matc
 node test/durchklicken.mjs
 ```
 
-**91 Prüfungen**, davon allein 17 dafür, dass niemand an fremde Server kommt
+**100 Prüfungen**, davon allein 19 dafür, dass niemand an fremde Server kommt
 und dass man aus dem Dateimanager nicht ausbrechen kann.
 
 ## Was drin ist
@@ -167,8 +169,9 @@ und dass man aus dem Dateimanager nicht ausbrechen kann.
 Nutzungsregeln.
 
 **Für Kunden** – das **Panel**: Start, Stopp, Neustart, Live-Konsole mit
-Befehlseingabe, Dateiverwaltung mit Editor und Upload, Backups auf Knopfdruck,
-Zeitplan für Neustart und Sicherung, Spielerliste, Speicheranzeige. Dazu eine Übersicht, was gebucht ist und was
+Befehlseingabe, Dateiverwaltung mit Editor und Upload, Plugins aus dem Katalog
+installieren, Backups auf Knopfdruck, Zeitplan für Neustart und Sicherung,
+Spielerliste, Speicheranzeige. Dazu eine Übersicht, was gebucht ist und was
 es kostet.
 
 **Für das Team** – eine Übersicht mit dem Laufstatus jedes Servers, Kunden-
@@ -227,6 +230,32 @@ gestopptem Server.
 
 Grenzen, die das Portal deutlich sagt statt still zu scheitern: 65535 Dateien
 und 4 GB pro Archiv (kein Zip64).
+
+### Plugins per Klick statt per Upload
+
+Im Panel steht eine Liste: **BetterSMP**, **BetterRTP**, **Lifesteal+**,
+**EasyBedrock**, **FastShop**, **SMPContent**, **SMPProxy** — jeweils mit
+kurzer Beschreibung und einem Knopf. Installieren kopiert die Jar nach
+`plugins/`, Entfernen wirft sie raus. Beides wirkt beim nächsten Neustart,
+und genau das steht auch dran.
+
+Woher die Jars kommen, sucht das Portal selbst: erst `KATALOG_DIR`, sonst der
+eigene `katalog/`-Ordner, sonst das `dist/` dieses Repos — dort liegen die
+fertigen Plugins ohnehin. Welcher Ordner es geworden ist, steht beim Start im
+Terminal, damit niemand raten muss.
+
+```
+     Plugins    /home/du/LemonPvP/dist (7 im Katalog)
+```
+
+Eine ältere Version desselben Plugins wird beim Installieren entfernt — sonst
+lädt Bukkit beide und beschwert sich über doppelte Befehle. Der Name aus dem
+Formular wird nie zu einem Pfad zusammengebaut, sondern gegen die Katalogliste
+geprüft; was dort nicht steht, passiert nicht.
+
+Beschreibungen stehen in `katalog/katalog.json`, Schlüssel ist der Dateiname
+ohne Version (`BetterSMP-1.0.0.jar` → `BetterSMP`). Eine Jar ohne Eintrag
+erscheint trotzdem, dann eben nur mit ihrem Dateinamen.
 
 ### Zeitplan: eine Uhrzeit, kein Cron-Ausdruck
 
@@ -353,6 +382,8 @@ src/panel.js          Minecraft-Prozesse: starten, stoppen, Konsole
 src/dateien.js        Dateiverwaltung samt Einsperr-Test
 src/sicherung.js      Backups anlegen, herunterladen, zurückspielen
 src/zeitplan.js       die Uhr für Neustart und automatische Sicherung
+src/katalog.js        Plugins aus einem Ordner anbieten und installieren
+katalog/              Plugin-Jars und ihre Beschreibungen
 src/zip.js            ZIP packen und entpacken, ohne npm-Paket
 src/web.js            HTTP-Kleinkram: Cookies, Formulare, CSRF, Router
 src/server.js         alle Routen an einer Stelle
@@ -394,7 +425,8 @@ Person.
 abschicken, annehmen, Server anlegen, Dokumente drucken, ins Panel, Dateien
 anlegen, bearbeiten, hochladen, löschen, Konsole anzapfen, ausbrechen wollen,
 an fremde Server wollen, Pterodactyl-Übergabe, Portvergabe, Backup anlegen,
-herunterladen und zurückspielen, Zeitplan setzen. **91 Prüfungen.**
+herunterladen und zurückspielen, Zeitplan setzen, Plugins installieren und
+entfernen. **100 Prüfungen.**
 
 `test/zeitplan.mjs` prüft die Uhr, ohne bis vier Uhr morgens zu warten:
 `pruefe()` nimmt die Zeit als Argument. **18 Prüfungen** — dass um 02:59 nichts

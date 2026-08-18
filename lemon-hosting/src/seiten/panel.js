@@ -122,7 +122,7 @@ export function fremdesPanel(nutzer, s, ziel) {
 }
 
 export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
-                      gut = false, sicherungen = []) {
+                      gut = false, sicherungen = [], plugins = []) {
   const paket = PAKETE[s.paket];
   const aus = rechne(s.paket, s.zusatz).ausstattung;
   const bereit = jarDa(s.id);
@@ -212,6 +212,37 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
         also <span class="mono">op DeinName</span>, nicht <span class="mono">/op</span>.
       </p>
     </div>
+    <div class="karte abstand">
+      <div class="zwischen">
+        <h2>Plugins</h2>
+        <span class="klein leise">${plugins.filter((p) => p.da).length} von ${
+          plugins.length} installiert</span>
+      </div>
+      ${plugins.length ? `<table class="abstand">
+        ${plugins.map((p) => `<tr>
+          <td><strong>${esc(p.name)}</strong>
+            ${p.beschreibung ? `<div class="klein leise">${esc(p.beschreibung)}</div>` : ''}
+            <div class="klein leiser mono">${esc(p.datei)} · ${esc(p.groesse)}</div></td>
+          <td class="zahl" style="white-space:nowrap">
+            ${p.da ? `<form method="post" action="/panel/${s.id}/plugin/entfernen">
+                ${csrfFeld(zeichen)}
+                <input type="hidden" name="datei" value="${esc(p.datei)}">
+                <span class="marke-punkt aktiv" style="margin-right:.4rem">drin</span>
+                <button class="knopf gefahr klein">Entfernen</button></form>`
+              : `<form method="post" action="/panel/${s.id}/plugin/installieren">
+                ${csrfFeld(zeichen)}
+                <input type="hidden" name="datei" value="${esc(p.datei)}">
+                <button class="knopf klein">Installieren</button></form>`}
+          </td></tr>`).join('')}
+      </table>
+      <p class="klein leise abstand">Nach dem Installieren oder Entfernen einmal
+        <strong>Neustart</strong> drücken — Plugins werden nur beim Start
+        geladen.</p>`
+      : `<p class="leise klein abstand">Im Katalog liegen keine Plugins.
+         Leg <span class="mono">.jar</span>-Dateien in den Katalogordner oder
+         setz <span class="mono">KATALOG_DIR</span>.</p>`}
+    </div>
+
     <div class="karte abstand">
       <div class="zwischen">
         <h2>Zeitplan</h2>
