@@ -148,6 +148,9 @@ export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '') {
             <select name="paket" required>${Object.values(PAKETE).map((p) =>
               `<option value="${p.id}"${s?.paket === p.id ? ' selected' : ''}>${
                 esc(p.name)} — ${euro(p.preis)}</option>`).join('')}</select></div>
+          <div class="feld"><label>Docker-Image</label>
+            <input name="docker_bild" class="mono" value="${esc(s?.docker_bild || '')}"
+                   placeholder="leer = eclipse-temurin:21-jre"></div>
           <div class="feld"><label>Port</label>
             <input name="port" type="number" min="1024" max="65535"
                    value="${s?.port || ''}" class="mono"

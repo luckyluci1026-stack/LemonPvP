@@ -3,7 +3,12 @@
 Kunden melden sich an und **verwalten ihren Minecraft-Server selbst**: starten,
 stoppen, neu starten, live in die Konsole schauen, Befehle tippen, Dateien
 hochladen und bearbeiten. Wie Pterodactyl, nur viel kleiner — und ohne
-Datenbankserver, Daemon oder Docker.
+Datenbankserver und ohne Daemon.
+
+Jeder Server läuft **in seinem eigenen Docker-Container**, wenn Docker da ist:
+Arbeitsspeicher und CPU sind dann hart begrenzt, der Server sieht nur seinen
+eigenen Ordner und läuft nicht als root. Ohne Docker läuft alles genauso, nur
+direkt als Java-Prozess — das Panel sagt dazu, woran man ist.
 
 Wer schon ein echtes Pterodactyl betreibt, lässt es stehen: Trägt ein Admin
 beim Server eine Pterodactyl-Adresse ein, verlinkt das Portal nur dorthin und
@@ -27,6 +32,9 @@ DB=/pfad/portal.db node start.js        # andere Datenbankdatei
 SERVER_DIR=/pfad/server node start.js   # wo die Minecraft-Server liegen
 SERVER_HOST=mc.schule.de node start.js  # Adresse, die Kunden angezeigt wird
 KATALOG_DIR=/pfad/zu/jars node start.js # woher die Plugins kommen
+DOCKER=aus node start.js                # Container-Betrieb abschalten
+DOCKER_IMAGE=eclipse-temurin:17-jre \
+  node start.js                         # anderes Image (ältere Minecraft-Versionen)
 ```
 
 ## Lokal ausprobieren
@@ -160,7 +168,7 @@ $env:ADMINPW = (Select-String -Path portal.log -Pattern 'Passwort\s+(\S+)').Matc
 node test/durchklicken.mjs
 ```
 
-**100 Prüfungen**, davon allein 19 dafür, dass niemand an fremde Server kommt
+**102 Prüfungen**, davon allein 19 dafür, dass niemand an fremde Server kommt
 und dass man aus dem Dateimanager nicht ausbrechen kann.
 
 ## Was drin ist
@@ -177,6 +185,69 @@ es kostet.
 **Für das Team** – eine Übersicht mit dem Laufstatus jedes Servers, Kunden-
 und Serververwaltung, ein Protokoll über alles, was passiert ist, und die
 beiden Papierdokumente zum Ausdrucken. Admins kommen in jedes Panel.
+
+## Container: wo die Grenzen echt werden
+
+Ohne Container ist „4,25 GB RAM" eine Zahl auf der Rechnung und sonst nichts.
+Ein Server mit einem Speicherleck zieht die ganze Maschine runter, und alle
+anderen Klassen sitzen im Lag. Mit Docker gilt:
+
+| Was | Wie | Wirkung |
+|---|---|---|
+| Arbeitsspeicher | `--memory` + `--memory-swap` gleich | Wer die Grenze reißt, wird abgeschossen — und nur er |
+| CPU | `--cpus` aus dem Paket | Coal bekommt 1,25 Kerne, egal wie viele die Maschine hat |
+| Prozesse | `--pids-limit 512` | Eine Fork-Bombe trifft nur den eigenen Container |
+| Dateien | `-v <ordner>:/data` | Der Server sieht seinen Ordner, nicht die Platte |
+| Rechte | `--user`, `no-new-privileges` | Kein root im Container |
+| Netz | `-p <port>:<port>` | Nur der eigene Port ist von außen offen |
+
+Nachgemessen statt behauptet: In einem 64-MB-Container beendet der Kernel eine
+JVM mit 512 MB Heap mit **Exit 137**; in einem 1-GB-Container läuft dieselbe
+JVM durch. Und die JVM sieht das Container-Limit, nicht die Maschine — bei
+1 GB Container rechnet sie mit 256 MB Heap, obwohl der Rechner viel mehr hat.
+
+### Warum der Heap kleiner ist als der Container
+
+`-Xmx` bekommt **85 %** der Containergrenze, nicht 100 %. Eine JVM braucht
+neben dem Heap noch Metaspace, Threadstacks und Direktpuffer. Wer beides
+gleichsetzt, bekommt einen Server, den der Kernel ohne Vorwarnung abschießt —
+„exit code 137" und kein Wort in der Konsole, warum. Das ist der häufigste
+Fehler in selbstgebauten Panels.
+
+### Nicht als root
+
+Läuft das Portal selbst als `root`, wäre `--user 0:0` genau der Fehler, den
+Container verhindern sollen. Dann nimmt das Panel stattdessen `1000:1000`
+(oder `DOCKER_USER`) und schreibt den Serverordner einmal auf diese Kennung
+um — sonst dürfte der Server seine eigene Welt nicht speichern.
+
+Läuft das Portal als normaler Benutzer, bekommt der Container dessen Kennung.
+Dann gehören die Dateien hinterher niemand Fremdem und der Dateimanager kann
+sie weiter bearbeiten.
+
+### Vorbereiten
+
+```bash
+docker pull eclipse-temurin:21-jre
+```
+
+Beim Start steht im Terminal, woran man ist:
+
+```
+     Docker     29.3.1 · Image eclipse-temurin:21-jre liegt bereit
+```
+
+Fehlt das Image oder Docker, sagt das Portal das genauso deutlich und läuft
+ohne Container weiter. Für ältere Minecraft-Versionen, die Java 17 brauchen,
+trägst du bei dem Server in der Verwaltung ein anderes Image ein.
+
+### Der Unterschied zu Pterodactyl
+
+Pterodactyl spricht mit der Docker-API und trennt Panel und Daemon („Wings"),
+damit ein Panel viele Maschinen steuern kann. Hier ruft das Portal schlicht
+`docker run` auf und redet über stdin und stdout mit dem Server — genau wie
+vorher mit `java`. Am Panel ändert sich dadurch fast nichts, nur der Befehl
+davor. Das reicht, solange alle Server auf derselben Kiste liegen.
 
 ## Das Panel
 
@@ -287,11 +358,6 @@ Netzwerkcode. Für eine Namensliste ist Mitlesen ehrlicher.
 Chatzeilen zählen nicht mit: Wer `Tom joined the game` in den Chat schreibt,
 steht in der Konsole in spitzen Klammern und fällt durchs Raster.
 
-Pterodactyl trennt Panel und Daemon („Wings"), damit ein Panel viele
-Maschinen steuern kann. Hier läuft alles auf einem Rechner, und das Portal
-startet die Server direkt. Das ist deutlich weniger Technik — und genau
-richtig, solange alle Server auf derselben Kiste liegen.
-
 ## Neben Pterodactyl betreiben
 
 Beides gleichzeitig geht, pro Server entschieden. In der Verwaltung steht bei
@@ -383,6 +449,7 @@ src/dateien.js        Dateiverwaltung samt Einsperr-Test
 src/sicherung.js      Backups anlegen, herunterladen, zurückspielen
 src/zeitplan.js       die Uhr für Neustart und automatische Sicherung
 src/katalog.js        Plugins aus einem Ordner anbieten und installieren
+src/docker.js         Container: Grenzen setzen, aufräumen, abschießen
 katalog/              Plugin-Jars und ihre Beschreibungen
 src/zip.js            ZIP packen und entpacken, ohne npm-Paket
 src/web.js            HTTP-Kleinkram: Cookies, Formulare, CSRF, Router
@@ -418,6 +485,8 @@ Person.
 3. Ein **eigener Benutzer** für das Portal. Wer im Panel eine Datei
    bearbeiten darf, arbeitet mit den Rechten des Portalprozesses — das sollte
    nicht `root` sein.
+4. **Docker**, wenn mehrere Klassen auf derselben Maschine liegen. Ohne
+   Container kann ein einzelner Server alle anderen lahmlegen.
 
 ## Test
 
@@ -426,7 +495,8 @@ abschicken, annehmen, Server anlegen, Dokumente drucken, ins Panel, Dateien
 anlegen, bearbeiten, hochladen, löschen, Konsole anzapfen, ausbrechen wollen,
 an fremde Server wollen, Pterodactyl-Übergabe, Portvergabe, Backup anlegen,
 herunterladen und zurückspielen, Zeitplan setzen, Plugins installieren und
-entfernen. **100 Prüfungen.**
+entfernen. **102 Prüfungen** — und sie laufen in beiden Betriebsarten durch,
+mit Container und ohne.
 
 `test/zeitplan.mjs` prüft die Uhr, ohne bis vier Uhr morgens zu warten:
 `pruefe()` nimmt die Zeit als Argument. **18 Prüfungen** — dass um 02:59 nichts
@@ -436,6 +506,17 @@ tatsächlich mit neuer Prozessnummer zurückkommt.
 
 ```bash
 node test/zeitplan.mjs
+```
+
+`test/docker.mjs` prüft die Container-Betriebsart. Der erste Teil braucht kein
+Docker: Die Argumente für `docker run` baut eine eigene Funktion, und genau
+dort steckt das, was leicht falsch wäre — eine vergessene Speichergrenze fällt
+sonst erst auf, wenn eine Klasse die andere ausbremst. Der zweite Teil startet
+wirklich Container und misst nach, ob die Grenzen greifen; ohne Docker wird er
+übersprungen. **19 Prüfungen.**
+
+```bash
+node test/docker.mjs
 ```
 
 Der Lebenslauf eines Serverprozesses — starten, `Done (…)` erkennen, Port

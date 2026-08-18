@@ -19,7 +19,8 @@
 import { esc } from '../web.js';
 import { seite, csrfFeld } from './layout.js';
 import { PAKETE, rechne } from '../preise.js';
-import { speicherMB, jarDa, eulaAngenommen } from '../panel.js';
+import { speicherMB, jarDa, eulaAngenommen, bildVon } from '../panel.js';
+import { vorhanden as dockerDa, bildDa } from '../docker.js';
 import { lesbareGroesse } from '../dateien.js';
 import { WIE_VIELE } from '../sicherung.js';
 import { naechster } from '../zeitplan.js';
@@ -124,6 +125,11 @@ export function fremdesPanel(nutzer, s, ziel) {
 export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
                       gut = false, sicherungen = [], plugins = []) {
   const paket = PAKETE[s.paket];
+  // Laeuft der Server gerade, zaehlt was tatsaechlich laeuft; sonst was
+  // beim naechsten Start passieren wuerde.
+  const container = zustand.motor
+    ? zustand.motor === 'docker'
+    : (dockerDa().geht && bildDa(bildVon(s)));
   const aus = rechne(s.paket, s.zusatz).ausstattung;
   const bereit = jarDa(s.id);
   const eula = eulaAngenommen(s.id);
@@ -159,7 +165,8 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
         <div class="klein leise">${aus.cores} CPU-Cores</div></div>
       <div class="karte"><div class="klein leise">Arbeitsspeicher</div>
         <strong>${(speicherMB(s) / 1024).toFixed(2)} GB</strong>
-        <div class="klein leise">wird beim Start gesetzt</div></div>
+        <div class="klein leise">${container
+          ? 'harte Grenze im Container' : 'nur eine JVM-Einstellung'}</div></div>
       <div class="karte"><div class="klein leise">Speicherplatz</div>
         <strong>${lesbareGroesse(belegt)}</strong>
         <div class="klein leise">von ${aus.ssd} GB</div>
@@ -212,6 +219,20 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
         also <span class="mono">op DeinName</span>, nicht <span class="mono">/op</span>.
       </p>
     </div>
+    <div class="hinweis ${container ? 'info' : 'warn'} abstand">
+      ${container
+        ? `<strong>Läuft im Container.</strong> ${
+            (speicherMB(s) / 1024).toFixed(2)} GB Arbeitsspeicher und
+           ${aus.cores} CPU-Kerne sind hart begrenzt — dieser Server kann die
+           anderen nicht ausbremsen. Image:
+           <span class="mono">${esc(bildVon(s))}</span>`
+        : `<strong>Läuft ohne Container.</strong> Der Arbeitsspeicher ist nur
+           eine Einstellung der JVM, keine Grenze — ein Server mit
+           Speicherleck zieht die ganze Maschine mit runter. Mit Docker und
+           dem Image <span class="mono">${esc(bildVon(s))}</span> wäre die
+           Grenze echt.`}
+    </div>
+
     <div class="karte abstand">
       <div class="zwischen">
         <h2>Plugins</h2>

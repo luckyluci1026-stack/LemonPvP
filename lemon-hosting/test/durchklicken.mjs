@@ -151,6 +151,15 @@ ok('Panel meldet die fehlende server.jar', a.text.includes('fehlt noch die Serve
 ok('Panel zeigt den gebuchten Speicher', a.text.includes('4.50 GB'),
    'Wood 2,5 GB + 2 × 1 GB Zusatz-RAM');
 ok('Konsolenskript eingebunden', a.text.includes('/konsole.js'));
+// Das Panel muss sagen, woran man ist - eine harte Grenze im Container
+// oder nur eine JVM-Einstellung. Beides ist in Ordnung, Schweigen nicht.
+const imContainer = a.text.includes('Läuft im Container');
+ok('Panel benennt die Betriebsart',
+   imContainer || a.text.includes('Läuft ohne Container'),
+   imContainer ? 'im Container' : 'ohne Container');
+ok('Und sagt dazu, was das für den Speicher heißt',
+   a.text.includes(imContainer ? 'harte Grenze im Container'
+                               : 'nur eine JVM-Einstellung'));
 ok('Panel nennt die Verbindungsadresse',
    a.text.includes('klasse8b.lemon-servers.de'),
    'Port 25565 wird weggelassen');

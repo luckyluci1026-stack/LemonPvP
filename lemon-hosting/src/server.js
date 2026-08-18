@@ -27,6 +27,7 @@ import * as dat from './dateien.js';
 import * as sich from './sicherung.js';
 import * as plan from './zeitplan.js';
 import * as kat from './katalog.js';
+import * as docker from './docker.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
 import * as adm from './seiten/admin.js';
@@ -70,6 +71,19 @@ const wer = (n) => n ? `${n.benutzername}` : 'unbekannt';
 function portOk(roh) {
   const n = Math.floor(Number(roh) || 0);
   return n >= 1024 && n <= 65535 ? n : 0;
+}
+
+/**
+ * Ein Image-Name, der auch einer sein kann.
+ *
+ * Der Wert wird an `docker run` weitergereicht. Ein Leerzeichen darin
+ * waere schon eine zweite Angabe, ein fuehrender Bindestrich ein
+ * zusaetzliches Argument - beides gehoert hier nicht hin.
+ */
+function bildOk(roh) {
+  const text = String(roh || '').trim();
+  if (!text) return '';
+  return /^[a-z0-9][a-z0-9._\/-]*(:[a-zA-Z0-9._-]+)?$/.test(text) ? text : '';
 }
 
 function adresseOk(roh) {
@@ -542,6 +556,7 @@ export function baue() {
       software: d.software, status: d.status, notiz: d.notiz,
       pterodactyl: adresseOk(d.pterodactyl),
       port: portOk(d.port) || undefined,
+      docker_bild: bildOk(d.docker_bild),
     });
     db.zusatzSetzen(id, zusatzAus(d));
     db.protokolliere(wer(c.nutzer), 'Server geändert', `${d.name} (#${id})`);
@@ -717,7 +732,18 @@ export function starte(port = 3000, datenbank = 'daten/portal.db') {
     console.log(`     Datenbank  ${datenbank}`);
     console.log(`     Server in  ${prozess.wurzel()}`);
     console.log(`     Plugins    ${kat.katalogOrdner()}`
-      + ` (${kat.verfuegbar().length} im Katalog)\n`);
+      + ` (${kat.verfuegbar().length} im Katalog)`);
+    const d = docker.vorhanden();
+    console.log(d.geht
+      ? `     Docker     ${d.version}` + (docker.bildDa()
+          ? ` · Image ${docker.STANDARD_BILD} liegt bereit`
+          : `\n                ⚠ Image ${docker.STANDARD_BILD} fehlt – hol es mit`
+            + `\n                  docker pull ${docker.STANDARD_BILD}`
+            + `\n                Bis dahin laufen die Server ohne Container.`)
+      : `     Docker     nicht verfügbar (${d.grund})`
+        + `\n                Server laufen direkt als Java-Prozess – die`
+        + `\n                Speichergrenze ist dann nur eine JVM-Einstellung.`);
+    console.log('');
   });
 
   /**

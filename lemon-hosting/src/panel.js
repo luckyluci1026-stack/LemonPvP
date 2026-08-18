@@ -26,6 +26,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { rechne } from './preise.js';
+import * as docker from './docker.js';
 
 /** serverId -> laufender Prozess samt Konsole */
 const laufend = new Map();
@@ -57,6 +58,7 @@ function neuerLauf() {
     gestartet: null,
     status: 'gestoppt',
     spieler: new Set(),
+    motor: null,
   };
 }
 
@@ -112,7 +114,8 @@ function schreibe(serverId, text, art = 'aus') {
 export function status(serverId) {
   const l = laufend.get(serverId);
   if (!l || !l.prozess) {
-    return { status: 'gestoppt', seit: null, pid: null, laufzeit: 0, spieler: [] };
+    return { status: 'gestoppt', seit: null, pid: null, laufzeit: 0,
+             spieler: [], motor: null };
   }
   return {
     status: l.status,
@@ -120,6 +123,7 @@ export function status(serverId) {
     pid: l.prozess.pid,
     laufzeit: l.gestartet ? Math.floor((Date.now() - l.gestartet) / 1000) : 0,
     spieler: [...l.spieler].sort((a, b) => a.localeCompare(b)),
+    motor: l.motor,
   };
 }
 
@@ -150,6 +154,9 @@ export function speicherMB(server) {
   const gb = rechne(server.paket, server.zusatz || {}).ausstattung?.ram || 1;
   return Math.max(512, Math.round(gb * 1024));
 }
+
+/** Welches Image dieser Server benutzt. */
+export const bildVon = (server) => server.docker_bild || docker.STANDARD_BILD;
 
 export function jarDa(serverId) {
   return existsSync(join(ordnerVon(serverId), 'server.jar'));
@@ -189,25 +196,59 @@ export function starte(server) {
   }
 
   const mb = speicherMB(server);
+  const aus = rechne(server.paket, server.zusatz || {}).ausstattung;
   // Der Port kommt als Startargument, nicht aus server.properties. So
   // stimmt er auch dann, wenn ein Kunde die Datei bearbeitet hat - und
   // zwei Server auf derselben Kiste kommen sich nicht ins Gehege.
   const port = Number(server.port) || 25565;
-  const argumente = [
-    `-Xms${Math.min(mb, 512)}M`, `-Xmx${mb}M`,
+
+  const flaggen = (heap) => [
+    `-Xms${Math.min(heap, 512)}M`, `-Xmx${heap}M`,
     // Die Aki-Flags: die uebliche Empfehlung fuer Minecraft-Server
     '-XX:+UseG1GC', '-XX:+ParallelRefProcEnabled',
     '-XX:MaxGCPauseMillis=200', '-XX:+UnlockExperimentalVMOptions',
     '-XX:+DisableExplicitGC', '-XX:+AlwaysPreTouch',
     '-Dfile.encoding=UTF-8',
-    '-jar', 'server.jar', 'nogui', '--port', String(port),
   ];
+
+  /**
+   * Container oder direkt?
+   *
+   * Im Container sind die Grenzen echt - ein Server mit Speicherleck
+   * trifft nur sich selbst. Ohne Docker laeuft es wie bisher, und das
+   * Panel sagt es auch so; still das eine fuer das andere ausgeben waere
+   * das Schlimmste.
+   */
+  const mitDocker = docker.vorhanden().geht && docker.bildDa(bildVon(server));
+  let befehlsZeile;
+  let argumente;
+  let motor;
+
+  if (mitDocker) {
+    docker.raeumeAuf(id);
+    const kennung = docker.eigeneKennung();
+    const umgestellt = docker.richteRechteEin(ordner, kennung);
+    if (umgestellt) schreibe(id, '[Panel] ' + umgestellt, 'panel');
+    befehlsZeile = 'docker';
+    argumente = docker.laufArgumente({
+      serverId: id, ordner, speicherMB: mb, cores: aus?.cores || 1, port,
+      bild: bildVon(server), jvmFlags: flaggen(docker.heapMB(mb)),
+      nutzer: kennung,
+    });
+    motor = 'docker';
+  } else {
+    befehlsZeile = 'java';
+    argumente = [...flaggen(mb), '-jar', 'server.jar', 'nogui',
+                 '--port', String(port)];
+    motor = 'java';
+  }
 
   let prozess;
   try {
-    prozess = spawn('java', argumente, { cwd: ordner, stdio: ['pipe', 'pipe', 'pipe'] });
+    prozess = spawn(befehlsZeile, argumente,
+      { cwd: ordner, stdio: ['pipe', 'pipe', 'pipe'] });
   } catch (fehler) {
-    return 'Java ließ sich nicht starten: ' + fehler.message;
+    return `${befehlsZeile} ließ sich nicht starten: ` + fehler.message;
   }
 
   l.prozess = prozess;
@@ -215,7 +256,12 @@ export function starte(server) {
   l.gestartet = Date.now();
   l.zeilen = [];
   l.spieler.clear();
-  schreibe(id, `[Panel] Starte auf Port ${port} mit ${mb} MB Arbeitsspeicher …`, 'panel');
+  l.motor = motor;
+  schreibe(id, motor === 'docker'
+    ? `[Panel] Starte im Container: ${mb} MB fest, ${aus?.cores || 1} CPU-Kerne, `
+      + `Port ${port}. Die Grenzen setzt Docker, nicht die JVM.`
+    : `[Panel] Starte auf Port ${port} mit ${mb} MB Arbeitsspeicher. `
+      + '(Ohne Docker – die Speichergrenze ist nur eine JVM-Einstellung.)', 'panel');
 
   prozess.stdout.on('data', (stueck) => {
     const text = stueck.toString();
@@ -277,11 +323,14 @@ export function stoppe(serverId, fristSekunden = 30) {
   schreibe(serverId, '[Panel] Stoppe … die Welt wird gespeichert.', 'panel');
   befehl(serverId, 'stop');
   const prozess = l.prozess;
+  const imContainer = l.motor === 'docker';
   setTimeout(() => {
-    if (l.prozess === prozess) {
-      schreibe(serverId, '[Panel] Reagiert nicht – wird jetzt beendet.', 'panel');
-      try { prozess.kill('SIGKILL'); } catch { /* schon weg */ }
-    }
+    if (l.prozess !== prozess) return;
+    schreibe(serverId, '[Panel] Reagiert nicht – wird jetzt beendet.', 'panel');
+    // Beim Container hilft SIGKILL auf den docker-Aufruf nicht: Das
+    // beendet nur den Client, der Server liefe im Container weiter.
+    if (imContainer) docker.killeContainer(serverId);
+    try { prozess.kill('SIGKILL'); } catch { /* schon weg */ }
   }, fristSekunden * 1000).unref();
   return null;
 }
