@@ -171,9 +171,22 @@ export const kunde = (id) => db.prepare('SELECT * FROM kunden WHERE id = ?').get
 export const kunden = () =>
   db.prepare('SELECT * FROM kunden ORDER BY nachname, vorname, benutzername').all();
 
+/**
+ * Nur die Felder anfassen, die wirklich mitgeschickt wurden.
+ *
+ * `f in felder` reicht dafuer nicht: Die Routen reichen ihre Werte als
+ * `notiz: d.notiz` durch, und fehlt das Feld im Formular, steht dort
+ * `undefined` - der Schluessel existiert trotzdem. SQLite kann damit
+ * nichts anfangen und wirft, statt die Spalte einfach zu lassen. Im
+ * Browser faellt das nie auf, weil ein Textfeld immer wenigstens einen
+ * leeren String schickt; bei einer unvollstaendigen Anfrage sehr wohl.
+ */
+const gesetzte = (erlaubt, felder) =>
+  erlaubt.filter((f) => felder[f] !== undefined && felder[f] !== null);
+
 export function kundeAendern(id, felder) {
   const erlaubt = ['vorname', 'nachname', 'klasse', 'mcname', 'kontakt', 'rolle'];
-  const setzen = erlaubt.filter((f) => f in felder);
+  const setzen = gesetzte(erlaubt, felder);
   if (!setzen.length) return;
   db.prepare(`UPDATE kunden SET ${setzen.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`)
     .run(...setzen.map((f) => felder[f]), id);
@@ -261,7 +274,7 @@ export function alleServer(mitGeloeschten = false) {
 
 export function serverAendern(id, felder) {
   const erlaubt = ['name', 'subdomain', 'paket', 'software', 'status', 'pterodactyl', 'notiz'];
-  const setzen = erlaubt.filter((f) => f in felder);
+  const setzen = gesetzte(erlaubt, felder);
   if (!setzen.length) return;
   db.prepare(`UPDATE server SET ${setzen.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`)
     .run(...setzen.map((f) => felder[f]), id);
