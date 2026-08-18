@@ -25,6 +25,22 @@ DB=/pfad/portal.db node start.js # andere Datenbankdatei
 zu alt, sagt dir das Portal das beim Start — es holt sich SQLite aus Node
 selbst, deshalb die Mindestversion.
 
+Kommt `node` wurde nicht als Name eines Cmdlet … erkannt, ist Node noch gar
+nicht installiert:
+
+| System | Befehl |
+|---|---|
+| **Windows** | `winget install OpenJS.NodeJS.LTS` |
+| **macOS** | `brew install node` |
+| **Debian/Ubuntu** | `curl -fsSL https://deb.nodesource.com/setup_22.x \| sudo -E bash - && sudo apt install -y nodejs` |
+
+Sonst geht auch der Installer von [nodejs.org](https://nodejs.org) — nimm die
+**LTS**-Variante.
+
+**Danach das Terminal einmal schließen und neu öffnen.** Sonst kennt es den
+Befehl `node` immer noch nicht; der Suchpfad wird erst beim Start eines neuen
+Fensters gelesen. Das ist der häufigste Folgestolperer nach der Installation.
+
 **Wichtig:** Das Portal liegt auf dem Branch
 `claude/bettersmp-minecraft-plugin-rzjgz5`, nicht auf `main`. Nach dem Klonen
 landest du auf `main`, und dort gibt es den Ordner `lemon-hosting/` noch gar
@@ -65,6 +81,7 @@ Falls etwas schiefgeht:
 | `Der Pfad … lemon-hosting kann nicht gefunden werden` | Du bist noch auf `main`. `cd LemonPvP`, dann `git checkout claude/bettersmp-minecraft-plugin-rzjgz5` |
 | `Cannot find module … start.js` | Du bist im falschen Ordner. `cd LemonPvP/lemon-hosting` |
 | `not a git repository` | Du bist außerhalb des geklonten Ordners. `cd LemonPvP` |
+| `"node" wurde nicht als Name eines Cmdlet … erkannt` | Node ist nicht installiert oder das Terminal kennt es noch nicht — siehe oben |
 | `Port 3000 ist schon belegt` | Läuft noch in einem anderen Fenster — dort Strg+C, oder `PORT=3001 node start.js` |
 
 ### Ein Rundgang, der alles zeigt
