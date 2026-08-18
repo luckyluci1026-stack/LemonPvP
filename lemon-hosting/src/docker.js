@@ -39,11 +39,14 @@ let gemerkt = null;
  * Einmal geprueft und gemerkt - `docker info` dauert spuerbar, und die
  * Antwort aendert sich im Betrieb praktisch nie. DOCKER=aus schaltet die
  * Betriebsart ab, ohne dass man Docker deinstallieren muss.
+ *
+ * `grund` ist so formuliert, dass es hinter dem Wort "Docker" steht:
+ * "Docker ist nicht installiert". Sonst stuende dort zweimal Docker.
  */
 export function vorhanden() {
   if (gemerkt !== null) return gemerkt;
   if (/^(aus|nein|0|off|false)$/i.test(process.env.DOCKER || '')) {
-    gemerkt = { geht: false, grund: 'per DOCKER=aus abgeschaltet' };
+    gemerkt = { geht: false, grund: 'ist per DOCKER=aus abgeschaltet' };
     return gemerkt;
   }
   try {
@@ -52,13 +55,38 @@ export function vorhanden() {
     if (lauf.status === 0) {
       gemerkt = { geht: true, version: (lauf.stdout || '').trim() };
     } else {
-      const text = (lauf.stderr || '').split('\n')[0] || 'unbekannter Fehler';
-      gemerkt = { geht: false, grund: text.slice(0, 120) };
+      gemerkt = { geht: false, grund: grundAus(lauf) };
     }
   } catch (fehler) {
     gemerkt = { geht: false, grund: fehler.message };
   }
   return gemerkt;
+}
+
+/**
+ * Warum ging es nicht - in einem Satz, mit dem man etwas anfangen kann.
+ *
+ * spawnSync wirft nicht, wenn das Programm fehlt, sondern legt den
+ * Fehler in `.error` und laesst stderr leer. Genau das hat hier anfangs
+ * "unbekannter Fehler" ergeben - die nutzloseste aller Meldungen, und
+ * ausgerechnet in dem Fall, der am haeufigsten vorkommt: Docker ist gar
+ * nicht installiert.
+ */
+function grundAus(lauf) {
+  if (lauf.error?.code === 'ENOENT') {
+    return 'ist nicht installiert';
+  }
+  if (lauf.error?.code === 'ETIMEDOUT') {
+    return 'antwortet nicht – läuft der Dienst?';
+  }
+  const stderr = (lauf.stderr || '').split('\n')
+    .map((z) => z.trim()).filter(Boolean)[0] || '';
+  // Docker Desktop meldet sich so, wenn es installiert ist, aber nicht laeuft.
+  if (/cannot find the file|pipe.*dockerDesktop|daemon is not running|connect: /i.test(stderr)) {
+    return 'ist installiert, läuft aber nicht – starte Docker Desktop';
+  }
+  if (stderr) return stderr.slice(0, 120);
+  return lauf.error?.message?.slice(0, 120) || 'meldet sich nicht';
 }
 
 /** Fuer Tests: die gemerkte Antwort wieder vergessen. */

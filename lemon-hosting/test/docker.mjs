@@ -68,7 +68,9 @@ ok('Bei kleinen Servern bleibt ein Mindestwert',
 process.env.DOCKER = 'aus';
 docker.vergiss();
 ok('DOCKER=aus schaltet die Betriebsart ab', docker.vorhanden().geht === false,
-   docker.vorhanden().grund);
+   'Docker ' + docker.vorhanden().grund);
+ok('Und der Grund lässt sich hinter „Docker" lesen',
+   !/^Docker/i.test(docker.vorhanden().grund), docker.vorhanden().grund);
 delete process.env.DOCKER;
 docker.vergiss();
 

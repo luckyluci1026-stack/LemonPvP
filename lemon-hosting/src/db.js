@@ -61,6 +61,7 @@ function schema() {
       neustart_um   TEXT NOT NULL DEFAULT '',
       sicherung_um  TEXT NOT NULL DEFAULT '',
       docker_bild   TEXT NOT NULL DEFAULT '',
+      knoten_id     INTEGER NOT NULL DEFAULT 0,
       angelegt      TEXT NOT NULL,
       geloescht_am  TEXT,
       notiz         TEXT NOT NULL DEFAULT ''
@@ -106,7 +107,17 @@ function schema() {
       details       TEXT NOT NULL DEFAULT ''
     );
 
+    CREATE TABLE IF NOT EXISTS knoten (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      name          TEXT NOT NULL,
+      adresse       TEXT NOT NULL,
+      geheim        TEXT NOT NULL,
+      notiz         TEXT NOT NULL DEFAULT '',
+      angelegt      TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_server_kunde ON server(kunde_id);
+    CREATE INDEX IF NOT EXISTS idx_server_knoten ON server(knoten_id);
   `);
   nachruesten();
 }
@@ -127,6 +138,9 @@ function nachruesten() {
       db.exec(`ALTER TABLE server ADD COLUMN ${spalte} TEXT NOT NULL DEFAULT ''`);
     }
   }
+  if (!spalten.includes('knoten_id')) {
+    db.exec('ALTER TABLE server ADD COLUMN knoten_id INTEGER NOT NULL DEFAULT 0');
+  }
   if (!spalten.includes('port')) {
     db.exec('ALTER TABLE server ADD COLUMN port INTEGER NOT NULL DEFAULT 0');
     // Vorhandene Server bekommen der Reihe nach einen Port, sonst
@@ -137,12 +151,50 @@ function nachruesten() {
   }
 }
 
-/** Der erste Port ab 25565, den noch kein Server hat. */
-export function naechsterPort(ab = 25565) {
-  const belegt = new Set(db.prepare('SELECT port FROM server').all().map((s) => s.port));
+/**
+ * Der erste Port ab 25565, den auf diesem Knoten noch kein Server hat.
+ *
+ * Je Knoten gezaehlt: Zwei Server auf verschiedenen Maschinen duerfen
+ * denselben Port haben, sie kommen sich ja nicht in die Quere.
+ */
+export function naechsterPort(knotenId = 0, ab = 25565) {
+  const belegt = new Set(db.prepare('SELECT port FROM server WHERE knoten_id = ?')
+    .all(knotenId).map((s) => s.port));
   let port = ab;
   while (belegt.has(port)) port++;
   return port;
+}
+
+// ---------------------------------------------------------------- Knoten
+
+export function knotenAnlegen({ name, adresse, geheim, notiz = '' }) {
+  const info = db.prepare(`INSERT INTO knoten (name, adresse, geheim, notiz, angelegt)
+      VALUES (?, ?, ?, ?, ?)`).run(name, adresse, geheim, notiz, jetzt());
+  return Number(info.lastInsertRowid);
+}
+
+export const knoten = (id) => db.prepare('SELECT * FROM knoten WHERE id = ?').get(id);
+export const alleKnoten = () => db.prepare('SELECT * FROM knoten ORDER BY name').all();
+
+export function knotenAendern(id, felder) {
+  const erlaubt = ['name', 'adresse', 'geheim', 'notiz'];
+  const setzen = gesetzte(erlaubt, felder);
+  if (!setzen.length) return;
+  db.prepare(`UPDATE knoten SET ${setzen.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`)
+    .run(...setzen.map((f) => felder[f]), id);
+}
+
+/**
+ * Einen Knoten loeschen - aber nur, wenn kein Server mehr darauf liegt.
+ *
+ * Sonst zeigten Server auf eine Maschine, die es im Portal nicht mehr
+ * gibt, und niemand kaeme mehr an sie heran.
+ */
+export function knotenLoeschen(id) {
+  const drauf = db.prepare('SELECT COUNT(*) AS n FROM server WHERE knoten_id = ?').get(id);
+  if (drauf.n > 0) return `Auf diesem Knoten liegen noch ${drauf.n} Server.`;
+  db.prepare('DELETE FROM knoten WHERE id = ?').run(id);
+  return null;
 }
 
 export const jetzt = () => new Date().toISOString();
@@ -251,12 +303,14 @@ export const abmelden = (token) =>
 // ---------------------------------------------------------------- Server
 
 export function serverAnlegen({ kundeId, name, subdomain = '', paket, software = 'Paper',
-                                pterodactyl = '', port = 0, notiz = '', zusatz = {} }) {
+                                pterodactyl = '', port = 0, knotenId = 0,
+                                notiz = '', zusatz = {} }) {
   const info = db.prepare(`INSERT INTO server
-      (kunde_id, name, subdomain, paket, software, status, port, pterodactyl, angelegt, notiz)
-      VALUES (?, ?, ?, ?, ?, 'aktiv', ?, ?, ?, ?)`)
+      (kunde_id, name, subdomain, paket, software, status, port, pterodactyl,
+       knoten_id, angelegt, notiz)
+      VALUES (?, ?, ?, ?, ?, 'aktiv', ?, ?, ?, ?, ?)`)
     .run(kundeId, name, subdomain, paket, software,
-         port || naechsterPort(), pterodactyl, jetzt(), notiz);
+         port || naechsterPort(knotenId), pterodactyl, knotenId, jetzt(), notiz);
   const id = Number(info.lastInsertRowid);
   zusatzSetzen(id, zusatz);
   return id;
@@ -301,7 +355,7 @@ export function alleServer(mitGeloeschten = false) {
 export function serverAendern(id, felder) {
   const erlaubt = ['name', 'subdomain', 'paket', 'software', 'status', 'port',
                    'pterodactyl', 'neustart_um', 'sicherung_um', 'docker_bild',
-                   'notiz'];
+                   'knoten_id', 'notiz'];
   const setzen = gesetzte(erlaubt, felder);
   if (!setzen.length) return;
   db.prepare(`UPDATE server SET ${setzen.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`)

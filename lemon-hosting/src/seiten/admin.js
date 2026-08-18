@@ -9,20 +9,21 @@ import { esc } from '../web.js';
 import { seite, statusPunkt, csrfFeld } from './layout.js';
 import { PAKETE, ZUSATZ, SOFTWARE, rechne, euro } from '../preise.js';
 import { protokollListe } from '../db.js';
-import { status as prozessStatus } from '../panel.js';
+import { zustand as prozessStatus, knotenName } from '../wo.js';
 
 const LAUFTEXT = { laeuft: 'läuft', startet: 'startet …', stoppt: 'stoppt …',
-                   gestoppt: 'gestoppt' };
+                   gestoppt: 'gestoppt', unbekannt: 'nicht erreichbar' };
 const LAUFFARBE = { laeuft: 'aktiv', startet: 'archiviert', stoppt: 'archiviert',
-                    gestoppt: 'geloescht' };
+                    gestoppt: 'geloescht', unbekannt: 'archiviert' };
 
 /** Wo laeuft der Server - bei uns oder in Pterodactyl? */
 const laufMarke = (s) => {
   if (s.pterodactyl) return '<span class="marke-punkt aktiv">Pterodactyl</span>';
-  const z = prozessStatus(s.id);
+  const z = prozessStatus(s);
   return `<span class="marke-punkt ${LAUFFARBE[z.status] || 'geloescht'}">${
-    esc(LAUFTEXT[z.status] || z.status)}</span>${z.pid
-    ? `<div class="klein leise mono">PID ${z.pid}</div>` : ''}`;
+    esc(LAUFTEXT[z.status] || z.status)}</span>${
+    Number(s.knoten_id) > 0 ? `<div class="klein leise">${esc(knotenName(s))}</div>`
+      : z.pid ? `<div class="klein leise mono">PID ${z.pid}</div>` : ''}`;
 };
 
 export function uebersicht(nutzer, zeichen, server, kunden, offene) {
@@ -32,7 +33,8 @@ export function uebersicht(nutzer, zeichen, server, kunden, offene) {
     .reduce((summe, s) => summe + rechne(s.paket, s.zusatz).proMonat, 0);
 
   const anzahlLaufend = lebend.filter(
-    (s) => s.pterodactyl || prozessStatus(s.id).status !== 'gestoppt').length;
+    (s) => s.pterodactyl || prozessStatus(s).status === 'laeuft'
+        || prozessStatus(s).status === 'startet').length;
 
   const zeile = (s) => {
     const kunde = kunden.find((k) => k.id === s.kunde_id);
@@ -91,6 +93,7 @@ export function uebersicht(nutzer, zeichen, server, kunden, offene) {
         <div class="reihe">
           <a class="knopf klein" href="/admin/server/neu">Server anlegen</a>
           <a class="knopf klein stil2" href="/admin/kunden">Kunden</a>
+          <a class="knopf klein stil2" href="/admin/knoten">Knoten</a>
           <a class="knopf klein stil2" href="/admin/protokoll">Protokoll</a>
         </div></div>
       <table class="abstand">
@@ -106,7 +109,8 @@ export function uebersicht(nutzer, zeichen, server, kunden, offene) {
       die Server, nicht das Geld.</p>` });
 }
 
-export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '') {
+export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '',
+                                 knoten = []) {
   const neu = !s;
   const zusatz = s?.zusatz || {};
   const ergebnis = s ? rechne(s.paket, zusatz) : null;
@@ -148,6 +152,16 @@ export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '') {
             <select name="paket" required>${Object.values(PAKETE).map((p) =>
               `<option value="${p.id}"${s?.paket === p.id ? ' selected' : ''}>${
                 esc(p.name)} — ${euro(p.preis)}</option>`).join('')}</select></div>
+          <div class="feld"><label>Läuft auf</label>
+            <select name="knotenId">
+              <option value="0">dieser Rechner</option>
+              ${knoten.map((k) => `<option value="${k.id}"${
+                Number(s?.knoten_id) === k.id ? ' selected' : ''}>${
+                esc(k.name)}</option>`).join('')}
+            </select>
+            ${s && Number(s.knoten_id) !== 0 ? '' : `<p class="klein leise"
+              style="margin-top:.3rem">Weitere Maschinen trägst du unter
+              <a href="/admin/knoten">Knoten</a> ein.</p>`}</div>
           <div class="feld"><label>Docker-Image</label>
             <input name="docker_bild" class="mono" value="${esc(s?.docker_bild || '')}"
                    placeholder="leer = eclipse-temurin:21-jre"></div>
@@ -190,6 +204,7 @@ export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '') {
         ${neu ? '' : `
         <div class="karte">
           <div class="zwischen"><h2>Panel</h2>${laufMarke(s)}</div>
+          <div class="klein leise">läuft auf: ${esc(knotenName(s))}</div>
           <p class="klein leise abstand">Konsole, Start und Stopp, Dateien —
             dieselbe Ansicht, die auch der Kunde sieht.</p>
           <div class="reihe abstand">
@@ -414,6 +429,104 @@ export function anfrageSeite(nutzer, zeichen, b, kunden) {
         </form>` : ''}
       </div>
     </div>` });
+}
+
+/**
+ * Die Knotenverwaltung.
+ *
+ * Ein Knoten ist eine weitere Maschine, auf der `daemon.js` laeuft. Das
+ * Zeichen steht beim ersten Start des Daemons einmal im Terminal - hier
+ * wird es eingetragen und danach nie wieder angezeigt.
+ */
+export function knotenSeite(nutzer, zeichen, knoten, server, ok = '', meldung = '') {
+  const zeile = (k) => {
+    const drauf = server.filter((s) => Number(s.knoten_id) === k.id);
+    const l = k.lauf || {};
+    return `<tr>
+      <td><strong>${esc(k.name)}</strong>
+        <div class="klein leise mono">${esc(k.adresse)}</div>
+        ${k.notiz ? `<div class="klein leise">${esc(k.notiz)}</div>` : ''}</td>
+      <td>${l.geht
+        ? `<span class="marke-punkt aktiv">erreichbar</span>
+           <div class="klein leise">Node ${esc(l.node || '?')}${
+             l.docker ? ' · Docker ' + esc(l.docker) : ' · ohne Docker'}</div>
+           <div class="klein leise">${l.plugins ?? 0} Plugins im Katalog</div>`
+        : `<span class="marke-punkt geloescht">nicht erreichbar</span>
+           <div class="klein leise">${esc(l.grund || '')}</div>`}</td>
+      <td class="zahl">${drauf.length}</td>
+      <td class="zahl"><form method="post" action="/admin/knoten/${k.id}/loeschen"
+            onsubmit="return confirm('Knoten ${esc(k.name)} entfernen?')">
+        ${csrfFeld(zeichen)}
+        <button class="knopf gefahr klein"${drauf.length ? ' disabled' : ''}
+          >Entfernen</button></form></td>
+    </tr>`;
+  };
+
+  const bearbeiten = (k) => `
+    <form method="post" action="/admin/knoten/${k.id}" class="karte">
+      ${csrfFeld(zeichen)}
+      <h3>${esc(k.name)}</h3>
+      <div class="feld-reihe abstand">
+        <div class="feld"><label>Name</label>
+          <input name="name" value="${esc(k.name)}"></div>
+        <div class="feld"><label>Adresse</label>
+          <input name="adresse" class="mono" value="${esc(k.adresse)}"></div>
+      </div>
+      <div class="feld"><label>Neues Zeichen (leer lassen = unverändert)</label>
+        <input name="geheim" class="mono" placeholder="········"></div>
+      <div class="feld"><label>Notiz</label>
+        <input name="notiz" value="${esc(k.notiz || '')}"></div>
+      <button class="knopf klein">Speichern</button>
+    </form>`;
+
+  return seite({ titel: 'Knoten', nutzer, hier: '/admin', inhalt: `
+    <a class="klein leise" href="/admin">← Verwaltung</a>
+    <h1 class="abstand">Knoten</h1>
+    <p class="leise">Jede weitere Maschine, auf der Minecraft-Server laufen
+      sollen, ist ein Knoten. Dort läuft <span class="mono">node daemon.js</span>,
+      das Portal steuert sie über HTTP. Ohne Knoten läuft alles auf diesem
+      Rechner — das ist der Normalfall und völlig in Ordnung.</p>
+    ${ok ? `<div class="hinweis info abstand">${esc(ok)}</div>` : ''}
+    ${meldung ? `<div class="hinweis warn abstand">${esc(meldung)}</div>` : ''}
+
+    <div class="karte abstand"><table>
+      <tr><th>Knoten</th><th>Zustand</th><th class="zahl">Server</th><th></th></tr>
+      ${knoten.map(zeile).join('')
+        || '<tr><td colspan="4" class="leise">Noch kein Knoten eingetragen.</td></tr>'}
+    </table></div>
+
+    <div class="gitter g2 abstand" style="align-items:start">
+      <form method="post" action="/admin/knoten" class="karte">
+        ${csrfFeld(zeichen)}
+        <h2>Knoten hinzufügen</h2>
+        <div class="feld abstand"><label>Name</label>
+          <input name="name" placeholder="Serverraum 2" required></div>
+        <div class="feld"><label>Adresse</label>
+          <input name="adresse" class="mono" placeholder="http://10.0.0.7:8390" required></div>
+        <div class="feld"><label>Zeichen des Daemons</label>
+          <input name="geheim" class="mono" required minlength="16"></div>
+        <div class="feld"><label>Notiz</label><input name="notiz"></div>
+        <button class="knopf">Eintragen</button>
+      </form>
+
+      <div class="karte">
+        <h2>So richtest du einen ein</h2>
+        <p class="klein leise abstand">Auf der anderen Maschine, im selben Ordner
+          wie das Portal:</p>
+        <pre class="konsole" style="height:auto;font-size:.78rem">node daemon.js</pre>
+        <p class="klein leise abstand">Beim ersten Start steht dort Adresse und
+          Zeichen. Beides hier eintragen — danach steht das Zeichen nur noch in
+          <span class="mono">daten/daemon.json</span> auf der anderen Maschine.</p>
+        <div class="hinweis warn" style="margin-top:1rem">
+          Der Daemon hat keine Benutzerverwaltung, nur dieses eine Zeichen. Er
+          gehört ins interne Netz oder hinter einen Reverse-Proxy mit HTTPS —
+          sonst geht das Zeichen im Klartext über die Leitung.
+        </div>
+      </div>
+    </div>
+
+    ${knoten.length ? `<h2 class="abstand">Bearbeiten</h2>
+      <div class="gitter g2">${knoten.map(bearbeiten).join('')}</div>` : ''}` });
 }
 
 export function protokollSeite(nutzer) {

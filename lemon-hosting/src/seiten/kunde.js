@@ -9,13 +9,13 @@ import { esc } from '../web.js';
 import { seite, statusPunkt } from './layout.js';
 import { PAKETE, ZUSATZ, rechne, euro, ARCHIV_TAGE } from '../preise.js';
 import { bestellungenVonKunde } from '../db.js';
-import { status as prozessStatus } from '../panel.js';
+import { zustand as prozessStatus } from '../wo.js';
 import { adresse } from './panel.js';
 
 const TEXTE = { laeuft: 'läuft', startet: 'startet …', stoppt: 'stoppt …',
-                gestoppt: 'gestoppt' };
+                gestoppt: 'gestoppt', unbekannt: 'nicht erreichbar' };
 const FARBEN = { laeuft: 'aktiv', startet: 'archiviert', stoppt: 'archiviert',
-                 gestoppt: 'geloescht' };
+                 gestoppt: 'geloescht', unbekannt: 'archiviert' };
 
 export function meineServer(nutzer, server) {
   if (!server.length) {
@@ -32,7 +32,7 @@ export function meineServer(nutzer, server) {
   const karten = server.map((s) => {
     const paket = PAKETE[s.paket];
     const ergebnis = rechne(s.paket, s.zusatz);
-    const lauf = prozessStatus(s.id);
+    const lauf = prozessStatus(s);
     const zusatzListe = Object.entries(s.zusatz)
       .map(([id, menge]) => ZUSATZ[id] ? `${menge > 1 ? menge + '× ' : ''}${ZUSATZ[id].name}` : id);
 
