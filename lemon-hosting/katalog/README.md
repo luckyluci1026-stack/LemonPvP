@@ -16,3 +16,6 @@ Beim Start steht im Terminal, welcher Ordner es geworden ist.
 `katalog.json` gibt den Plugins Namen und Beschreibung. Der Schlüssel ist der
 Dateiname ohne Version: `BetterSMP-1.0.0.jar` → `BetterSMP`. Ohne Eintrag
 erscheint das Plugin trotzdem, dann eben nur mit seinem Dateinamen.
+
+Auf einem **Knoten** liest der Daemon seinen eigenen Katalog — die Jars müssen
+also auf der Maschine liegen, auf der die Server laufen, nicht beim Portal.

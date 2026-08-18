@@ -5,6 +5,10 @@ stoppen, neu starten, live in die Konsole schauen, Befehle tippen, Dateien
 hochladen und bearbeiten. Wie Pterodactyl, nur viel kleiner — und ohne
 Datenbankserver und ohne Daemon.
 
+Server können auf **mehreren Maschinen** liegen: Auf jeder weiteren läuft
+`daemon.js`, das Portal steuert sie über HTTP. Wer nur einen Rechner hat,
+merkt davon nichts — das ist der Normalfall und bleibt es.
+
 Jeder Server läuft **in seinem eigenen Docker-Container**, wenn Docker da ist:
 Arbeitsspeicher und CPU sind dann hart begrenzt, der Server sieht nur seinen
 eigenen Ordner und läuft nicht als root. Ohne Docker läuft alles genauso, nur
@@ -243,11 +247,67 @@ trägst du bei dem Server in der Verwaltung ein anderes Image ein.
 
 ### Der Unterschied zu Pterodactyl
 
-Pterodactyl spricht mit der Docker-API und trennt Panel und Daemon („Wings"),
-damit ein Panel viele Maschinen steuern kann. Hier ruft das Portal schlicht
+Pterodactyl spricht mit der Docker-API. Hier ruft das Portal schlicht
 `docker run` auf und redet über stdin und stdout mit dem Server — genau wie
 vorher mit `java`. Am Panel ändert sich dadurch fast nichts, nur der Befehl
-davor. Das reicht, solange alle Server auf derselben Kiste liegen.
+davor.
+
+## Mehrere Maschinen: Knoten
+
+Reicht eine Kiste nicht mehr, kommt eine zweite dazu. Auf ihr läuft der
+**Daemon** — das Gegenstück zu Pterodactyls „Wings":
+
+```bash
+# auf der anderen Maschine, im selben Ordner wie das Portal
+node daemon.js
+```
+
+Beim ersten Start steht dort Adresse und Zeichen. Beides trägst du im Portal
+unter **Verwaltung → Knoten** ein. Danach kannst du beim Anlegen eines Servers
+auswählen, auf welcher Maschine er liegen soll.
+
+Ab da ist für den Kunden nichts anders: Konsole, Dateien, Backups und Plugins
+sehen genauso aus, laufen aber über die Leitung. Der Browser redet weiterhin
+**nur mit dem Portal** — der Daemon muss von außen gar nicht erreichbar sein.
+
+### Drei Entscheidungen, die das tragen
+
+**Der Daemon führt keine Datenbank.** Er weiß nur, was Ordner und Prozesse
+sind; wieviel Speicher jemand gebucht hat, schickt das Portal bei jedem Aufruf
+mit. Damit stehen Pakete und Preise weiter an genau einer Stelle — in
+`src/preise.js`, so wie vorher.
+
+**Der Daemon benutzt dieselben Module.** `panel.js`, `dateien.js` und
+`sicherung.js` laufen dort unverändert; der Daemon ist nur eine HTTP-Hülle
+darum. Deshalb kann ein Knoten alles, was das Portal lokal auch kann, ohne
+dass es zweimal geschrieben wäre.
+
+**`wo.js` ist die Weiche.** Eine Funktion je Aktion, drinnen wird entschieden:
+`knoten_id = 0` heißt „hier". Der Rest des Portals muss kaum wissen, ob ein
+Server nebenan oder woanders steht.
+
+### Wenn ein Knoten ausfällt
+
+Der Zustand kommt aus einem Zwischenspeicher, den ein Ticker alle vier
+Sekunden auffrischt — die Seiten rendern ihn mitten im HTML, daraus ein
+`await` zu machen hätte jede Seite angefasst. Ist die Antwort älter als
+20 Sekunden, steht **„nicht erreichbar"** da. Das ist ehrlicher als
+„gestoppt": Wir wissen es dann schlicht nicht.
+
+Ein Start oder ein Befehl an eine tote Maschine scheitert mit Ansage, nicht
+mit einer Fehlerseite. Und nach einem Fehlschlag wird ein paar Sekunden lang
+sofort abgesagt, statt jedes Mal die volle Frist abzuwarten — sonst hinge eine
+Panel-Seite mit drei Abfragen bei einer ausgefallenen Maschine spürbar lange.
+
+### Sicherheit
+
+Der Daemon hat **keine Benutzerverwaltung**, nur ein Zeichen, das beim ersten
+Start erzeugt und in `daten/daemon.json` abgelegt wird. Jede Anfrage muss es
+im Kopf `X-Lemon-Zeichen` mitbringen; verglichen wird zeichenweise ohne
+Abbruch.
+
+Er gehört deshalb **ins interne Netz oder hinter einen Reverse-Proxy mit
+HTTPS** — sonst geht das Zeichen im Klartext über die Leitung.
 
 ## Das Panel
 
@@ -450,6 +510,9 @@ src/sicherung.js      Backups anlegen, herunterladen, zurückspielen
 src/zeitplan.js       die Uhr für Neustart und automatische Sicherung
 src/katalog.js        Plugins aus einem Ordner anbieten und installieren
 src/docker.js         Container: Grenzen setzen, aufräumen, abschießen
+src/wo.js             die Weiche: hier oder auf einer anderen Maschine?
+src/fern.js           mit einem Daemon reden
+daemon.js             läuft auf jeder weiteren Maschine
 katalog/              Plugin-Jars und ihre Beschreibungen
 src/zip.js            ZIP packen und entpacken, ohne npm-Paket
 src/web.js            HTTP-Kleinkram: Cookies, Formulare, CSRF, Router
@@ -517,6 +580,16 @@ wirklich Container und misst nach, ob die Grenzen greifen; ohne Docker wird er
 
 ```bash
 node test/docker.mjs
+```
+
+`test/knoten.mjs` startet einen echten Daemon auf Port 8391 mit eigenem
+Serverordner, trägt ihn als Knoten ein und fährt alles über die Leitung:
+Datei anlegen, Upload, Plugin installieren, starten, Konsole mitlesen,
+Backup, stoppen. Zum Schluss wird der Daemon abgeschossen — dann muss das
+Panel „nicht erreichbar" sagen statt abzustürzen. **35 Prüfungen.**
+
+```bash
+ADMINPW=... ERSATZ_JAR=/pfad/server.jar node test/knoten.mjs
 ```
 
 Der Lebenslauf eines Serverprozesses — starten, `Done (…)` erkennen, Port
