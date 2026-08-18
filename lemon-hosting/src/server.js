@@ -25,6 +25,7 @@ import { Router, cookies, formular, sende, weiter, setzeCookie, loescheCookie,
 import * as prozess from './panel.js';
 import * as dat from './dateien.js';
 import * as sich from './sicherung.js';
+import * as plan from './zeitplan.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
 import * as adm from './seiten/admin.js';
@@ -367,12 +368,21 @@ export function baue() {
   }));
 
 
-  // ------------------------------------------------------------ Backups
+  // -------------------------------------------------- Zeitplan und Backups
   const zumPanelGut = (c, s, meldung) => weiter(c.antwort,
     `/panel/${s.id}?ok=` + encodeURIComponent(meldung));
 
-  r.post('/panel/:id/sicherung', eigenerServer((c, s) => {
-    const ergebnis = sich.anlegen(s.id);
+  r.post('/panel/:id/zeitplan', eigenerServer((c, s) => {
+    const neustart = plan.zeitOk(c.daten.neustart_um);
+    const sicherung = plan.zeitOk(c.daten.sicherung_um);
+    db.serverAendern(s.id, { neustart_um: neustart, sicherung_um: sicherung });
+    db.protokolliere(wer(c.nutzer), 'Zeitplan geändert',
+      `#${s.id} · Neustart ${neustart || '–'} · Backup ${sicherung || '–'}`);
+    zumPanelGut(c, s, 'Zeitplan gespeichert.');
+  }));
+
+  r.post('/panel/:id/sicherung', eigenerServer(async (c, s) => {
+    const ergebnis = await sich.anlegen(s.id);
     if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
     db.protokolliere(wer(c.nutzer), 'Backup angelegt',
       `#${s.id} · ${ergebnis.name} · ${ergebnis.groesse}`);
@@ -712,6 +722,9 @@ export function starte(port = 3000, datenbank = 'daten/portal.db') {
   };
   process.on('SIGINT', () => runterfahren('SIGINT'));
   process.on('SIGTERM', () => runterfahren('SIGTERM'));
+
+  // Die Uhr fuer Neustarts und automatische Backups.
+  plan.starteUhr();
 
   return server;
 }

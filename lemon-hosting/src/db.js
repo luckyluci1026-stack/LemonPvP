@@ -58,6 +58,8 @@ function schema() {
       status        TEXT NOT NULL DEFAULT 'aktiv',
       port          INTEGER NOT NULL DEFAULT 0,
       pterodactyl   TEXT NOT NULL DEFAULT '',
+      neustart_um   TEXT NOT NULL DEFAULT '',
+      sicherung_um  TEXT NOT NULL DEFAULT '',
       angelegt      TEXT NOT NULL,
       geloescht_am  TEXT,
       notiz         TEXT NOT NULL DEFAULT ''
@@ -118,6 +120,11 @@ function nachruesten() {
   const spalten = db.prepare('PRAGMA table_info(server)').all().map((s) => s.name);
   if (!spalten.includes('pterodactyl')) {
     db.exec("ALTER TABLE server ADD COLUMN pterodactyl TEXT NOT NULL DEFAULT ''");
+  }
+  for (const spalte of ['neustart_um', 'sicherung_um']) {
+    if (!spalten.includes(spalte)) {
+      db.exec(`ALTER TABLE server ADD COLUMN ${spalte} TEXT NOT NULL DEFAULT ''`);
+    }
   }
   if (!spalten.includes('port')) {
     db.exec('ALTER TABLE server ADD COLUMN port INTEGER NOT NULL DEFAULT 0');
@@ -292,7 +299,7 @@ export function alleServer(mitGeloeschten = false) {
 
 export function serverAendern(id, felder) {
   const erlaubt = ['name', 'subdomain', 'paket', 'software', 'status', 'port',
-                   'pterodactyl', 'notiz'];
+                   'pterodactyl', 'neustart_um', 'sicherung_um', 'notiz'];
   const setzen = gesetzte(erlaubt, felder);
   if (!setzen.length) return;
   db.prepare(`UPDATE server SET ${setzen.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`)

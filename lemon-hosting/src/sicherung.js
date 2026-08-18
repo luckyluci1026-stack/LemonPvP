@@ -17,7 +17,7 @@
 
 import { mkdirSync, readdirSync, statSync, rmSync, existsSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';
-import { wurzel as serverWurzel, ordnerVon, laeuft } from './panel.js';
+import { wurzel as serverWurzel, ordnerVon, laeuft, befehl } from './panel.js';
 import { packe, entpacke, sammle } from './zip.js';
 import { innerhalb, belegungVergessen, lesbareGroesse } from './dateien.js';
 
@@ -82,14 +82,35 @@ export function liste(serverId) {
 }
 
 /**
+ * Vor dem Packen die Welt auf die Platte zwingen.
+ *
+ * Minecraft haelt geaenderte Chunks im Arbeitsspeicher und schreibt sie
+ * nur alle paar Minuten weg. Ein Backup mitten im Betrieb erwischt sonst
+ * einen Stand von vorhin - oder, schlimmer, einen halb geschriebenen
+ * Chunk. "save-all" erledigt das in einem Rutsch; danach kurz warten,
+ * denn der Befehl kommt sofort zurueck, das Schreiben dauert.
+ *
+ * Absichtlich kein "save-off" davor: Wenn das Portal zwischendurch
+ * abstuerzte, bliebe das Speichern dauerhaft aus, und niemand wuesste
+ * warum. Ein paar Chunks Unschaerfe sind der bessere Preis.
+ */
+async function welteSpeichern(serverId) {
+  if (!laeuft(serverId)) return false;
+  befehl(serverId, 'save-all');
+  await new Promise((fertig) => setTimeout(fertig, 3000));
+  return true;
+}
+
+/**
  * Ein Backup anlegen.
  *
- * Laeuft der Server, wird vorher gewarnt: Minecraft schreibt seine Welt
- * nur alle paar Minuten weg, ein Backup mitten im Betrieb kann also einen
- * halben Chunk erwischen. Verboten ist es trotzdem nicht - ein leicht
- * schiefes Backup ist besser als keines.
+ * Laeuft der Server, wird vorher gespeichert und danach in der Meldung
+ * gesagt, dass er lief - ganz sauber ist nur ein Backup bei gestopptem
+ * Server. Verboten ist es trotzdem nicht: ein leicht schiefes Backup ist
+ * besser als keines.
  */
-export function anlegen(serverId) {
+export async function anlegen(serverId) {
+  const lief = await welteSpeichern(serverId);
   const quelle = ordnerVon(serverId);
   const dateien = sammle(quelle);
   if (!dateien.length) return { fehler: 'Im Serverordner liegt noch nichts.' };
@@ -107,8 +128,9 @@ export function anlegen(serverId) {
     name: basename(ziel),
     dateien: dateien.length,
     groesse: lesbareGroesse(s.size),
-    warnung: laeuft(serverId)
-      ? 'Der Server lief dabei – für ein sauberes Backup vorher stoppen.' : '',
+    warnung: lief
+      ? 'Der Server lief dabei – die Welt wurde vorher gespeichert, ganz '
+        + 'sauber ist ein Backup aber nur bei gestopptem Server.' : '',
   };
 }
 

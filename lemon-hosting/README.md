@@ -158,7 +158,7 @@ $env:ADMINPW = (Select-String -Path portal.log -Pattern 'Passwort\s+(\S+)').Matc
 node test/durchklicken.mjs
 ```
 
-**86 Prüfungen**, davon allein 17 dafür, dass niemand an fremde Server kommt
+**91 Prüfungen**, davon allein 17 dafür, dass niemand an fremde Server kommt
 und dass man aus dem Dateimanager nicht ausbrechen kann.
 
 ## Was drin ist
@@ -168,7 +168,7 @@ Nutzungsregeln.
 
 **Für Kunden** – das **Panel**: Start, Stopp, Neustart, Live-Konsole mit
 Befehlseingabe, Dateiverwaltung mit Editor und Upload, Backups auf Knopfdruck,
-Spielerliste, Speicheranzeige. Dazu eine Übersicht, was gebucht ist und was
+Zeitplan für Neustart und Sicherung, Spielerliste, Speicheranzeige. Dazu eine Übersicht, was gebucht ist und was
 es kostet.
 
 **Für das Team** – eine Übersicht mit dem Laufstatus jedes Servers, Kunden-
@@ -227,6 +227,26 @@ gestopptem Server.
 
 Grenzen, die das Portal deutlich sagt statt still zu scheitern: 65535 Dateien
 und 4 GB pro Archiv (kein Zip64).
+
+### Zeitplan: eine Uhrzeit, kein Cron-Ausdruck
+
+Zwei Felder im Panel: *Jede Nacht neu starten um* und *Jeden Tag sichern um*.
+Leer lassen heißt aus. Kein `0 4 * * *` — „04:00" versteht jeder, der
+Fünf-Felder-Ausdruck nicht.
+
+Zwei Entscheidungen, die dahinterstehen:
+
+- Ein **gestoppter Server wird nicht heimlich hochgefahren**. Wer ihn abends
+  ausgemacht hat, will ihn morgens nicht laufen sehen — der Neustart wird
+  übersprungen und das im Protokoll vermerkt.
+- Vor jedem Backup geht **`save-all`** an den laufenden Server, dann drei
+  Sekunden Pause. Minecraft hält geänderte Chunks im Arbeitsspeicher; ohne das
+  sichert man einen Stand von vorhin. Absichtlich kein `save-off` davor: Stürzt
+  das Portal dazwischen ab, bliebe das Speichern dauerhaft aus, und niemand
+  wüsste warum.
+
+Die Uhr läuft im Portal mit und schaut jede halbe Minute nach — sie arbeitet
+also nur, solange das Portal läuft.
 
 ### Wer online ist, steht in der Konsole
 
@@ -332,6 +352,7 @@ src/db.js             SQLite: Kunden, Server, Bestellungen, Protokoll
 src/panel.js          Minecraft-Prozesse: starten, stoppen, Konsole
 src/dateien.js        Dateiverwaltung samt Einsperr-Test
 src/sicherung.js      Backups anlegen, herunterladen, zurückspielen
+src/zeitplan.js       die Uhr für Neustart und automatische Sicherung
 src/zip.js            ZIP packen und entpacken, ohne npm-Paket
 src/web.js            HTTP-Kleinkram: Cookies, Formulare, CSRF, Router
 src/server.js         alle Routen an einer Stelle
@@ -373,7 +394,17 @@ Person.
 abschicken, annehmen, Server anlegen, Dokumente drucken, ins Panel, Dateien
 anlegen, bearbeiten, hochladen, löschen, Konsole anzapfen, ausbrechen wollen,
 an fremde Server wollen, Pterodactyl-Übergabe, Portvergabe, Backup anlegen,
-herunterladen und zurückspielen. **86 Prüfungen.**
+herunterladen und zurückspielen, Zeitplan setzen. **91 Prüfungen.**
+
+`test/zeitplan.mjs` prüft die Uhr, ohne bis vier Uhr morgens zu warten:
+`pruefe()` nimmt die Zeit als Argument. **18 Prüfungen** — dass um 02:59 nichts
+passiert, um 03:00 genau einmal gesichert wird, ein Pterodactyl-Server in Ruhe
+gelassen wird, ein gestoppter Server nicht anspringt und ein laufender
+tatsächlich mit neuer Prozessnummer zurückkommt.
+
+```bash
+node test/zeitplan.mjs
+```
 
 Der Lebenslauf eines Serverprozesses — starten, `Done (…)` erkennen, Port
 durchreichen, Befehl schicken, Spieler zählen, neu starten, sauber stoppen —
@@ -384,9 +415,9 @@ macht.
 
 ## Was noch fehlt
 
+- **Backups außer Haus** — sie liegen auf derselben Platte wie die Server.
 - **Subdomains** werden erfasst, aber nicht automatisch im DNS eingetragen —
   auch der SRV-Eintrag, der den Port versteckt, muss von Hand gesetzt werden.
-- **Zeitpläne** — z. B. jede Nacht neu starten oder automatisch sichern.
 - Ein **Speicher-Limit**, das wirklich greift. Die Anzeige stimmt, aber wer
   über sein Kontingent hinausschreibt, wird bisher nur angezeigt, nicht
   gebremst.

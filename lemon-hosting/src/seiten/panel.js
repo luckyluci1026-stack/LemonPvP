@@ -22,6 +22,7 @@ import { PAKETE, rechne } from '../preise.js';
 import { speicherMB, jarDa, eulaAngenommen } from '../panel.js';
 import { lesbareGroesse } from '../dateien.js';
 import { WIE_VIELE } from '../sicherung.js';
+import { naechster } from '../zeitplan.js';
 
 const TEXTE = { laeuft: 'läuft', startet: 'startet …', stoppt: 'stoppt …',
                 gestoppt: 'gestoppt' };
@@ -211,6 +212,34 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
         also <span class="mono">op DeinName</span>, nicht <span class="mono">/op</span>.
       </p>
     </div>
+    <div class="karte abstand">
+      <div class="zwischen">
+        <h2>Zeitplan</h2>
+        <span class="klein leise">läuft, solange das Portal läuft</span>
+      </div>
+      <form method="post" action="/panel/${s.id}/zeitplan" class="abstand">
+        ${csrfFeld(zeichen)}
+        <div class="feld-reihe">
+          <div class="feld"><label>Jede Nacht neu starten um</label>
+            <input name="neustart_um" type="time" value="${esc(s.neustart_um || '')}">
+            <div class="klein leise" style="margin-top:.3rem">${
+              s.neustart_um ? 'nächster: ' + esc(naechster(s.neustart_um))
+                            : 'leer lassen = kein automatischer Neustart'}</div></div>
+          <div class="feld"><label>Jeden Tag sichern um</label>
+            <input name="sicherung_um" type="time" value="${esc(s.sicherung_um || '')}">
+            <div class="klein leise" style="margin-top:.3rem">${
+              s.sicherung_um ? 'nächstes: ' + esc(naechster(s.sicherung_um))
+                             : 'leer lassen = kein automatisches Backup'}</div></div>
+        </div>
+        <button class="knopf klein">Zeitplan speichern</button>
+        <p class="klein leise" style="margin-top:.6rem">
+          Ein Neustart wird übersprungen, wenn der Server ohnehin aus ist —
+          er wird nicht heimlich hochgefahren. Vor einem automatischen Backup
+          schickt das Panel <span class="mono">save-all</span>, damit die Welt
+          wirklich auf der Platte steht.</p>
+      </form>
+    </div>
+
     <div class="karte abstand">
       <div class="zwischen">
         <h2>Backups</h2>

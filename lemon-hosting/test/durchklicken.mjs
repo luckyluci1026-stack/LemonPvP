@@ -219,6 +219,27 @@ a = await sende(`/panel/${serverId}/aktion`, { was: 'eula' });
 a = await hole(`/panel/${serverId}/dateien`);
 ok('EULA-Knopf legt eula.txt an', a.text.includes('eula.txt'));
 
+// ------------------------------------------------------------- Zeitplan
+a = await hole(`/panel/${serverId}`);
+ok('Panel hat einen Zeitplan-Bereich',
+   a.text.includes('Jede Nacht neu starten um') && a.text.includes('Jeden Tag sichern um'));
+
+a = await sende(`/panel/${serverId}/zeitplan`,
+  { neustart_um: '04:00', sicherung_um: '3:30' });
+ok('Zeitplan gespeichert', a.status === 302 && (a.ort || '').includes('ok='));
+a = await hole(`/panel/${serverId}`);
+ok('Uhrzeiten stehen im Formular',
+   a.text.includes('value="04:00"') && a.text.includes('value="03:30"'),
+   '3:30 wurde zu 03:30 ergänzt');
+ok('Panel nennt den nächsten Termin', /nächster: (heute|morgen) 04:00/.test(a.text));
+
+a = await sende(`/panel/${serverId}/zeitplan`,
+  { neustart_um: '25:99', sicherung_um: 'irgendwann' });
+a = await hole(`/panel/${serverId}`);
+ok('Unsinnige Uhrzeiten werden verworfen',
+   a.text.includes('kein automatischer Neustart')
+   && a.text.includes('kein automatisches Backup'));
+
 // ------------------------------------------------------------- Backups
 a = await hole(`/panel/${serverId}`);
 ok('Panel hat einen Backup-Bereich',
