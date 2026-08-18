@@ -25,12 +25,21 @@ DB=/pfad/portal.db node start.js # andere Datenbankdatei
 zu alt, sagt dir das Portal das beim Start — es holt sich SQLite aus Node
 selbst, deshalb die Mindestversion.
 
+**Wichtig:** Das Portal liegt auf dem Branch
+`claude/bettersmp-minecraft-plugin-rzjgz5`, nicht auf `main`. Nach dem Klonen
+landest du auf `main`, und dort gibt es den Ordner `lemon-hosting/` noch gar
+nicht. Also **erst den Branch wechseln, dann in den Ordner**:
+
 ```bash
 git clone https://github.com/luckyluci1026-stack/LemonPvP.git
-cd LemonPvP/lemon-hosting
+cd LemonPvP
 git checkout claude/bettersmp-minecraft-plugin-rzjgz5
+cd lemon-hosting
 node start.js
 ```
+
+Läuft genauso unter Windows in PowerShell — `git` und `node` können dort mit
+`/` im Pfad umgehen.
 
 Im Terminal steht dann die Adresse und — nur beim allerersten Start — der
 Admin-Zugang:
@@ -48,6 +57,15 @@ Admin-Zugang:
 ```
 
 Browser auf **http://localhost:3000**. Beenden mit **Strg+C**.
+
+Falls etwas schiefgeht:
+
+| Meldung | was zu tun ist |
+|---|---|
+| `Der Pfad … lemon-hosting kann nicht gefunden werden` | Du bist noch auf `main`. `cd LemonPvP`, dann `git checkout claude/bettersmp-minecraft-plugin-rzjgz5` |
+| `Cannot find module … start.js` | Du bist im falschen Ordner. `cd LemonPvP/lemon-hosting` |
+| `not a git repository` | Du bist außerhalb des geklonten Ordners. `cd LemonPvP` |
+| `Port 3000 ist schon belegt` | Läuft noch in einem anderen Fenster — dort Strg+C, oder `PORT=3001 node start.js` |
 
 ### Ein Rundgang, der alles zeigt
 
@@ -77,7 +95,8 @@ Die Datenbank ist eine einzige Datei. Weg damit, und der nächste Start legt
 alles neu an — inklusive neuem Admin-Passwort:
 
 ```bash
-rm -rf daten
+rm -rf daten          # Linux und macOS
+Remove-Item -Recurse daten    # Windows PowerShell
 node start.js
 ```
 
@@ -86,16 +105,30 @@ node start.js
 Ist 3000 schon belegt, sagt das Portal es dir und schlägt einen anderen vor:
 
 ```bash
-PORT=8080 node start.js
+PORT=8080 node start.js              # Linux und macOS
+$env:PORT=8080; node start.js        # Windows PowerShell
 ```
 
 ### Automatisch durchklicken lassen
+
+Linux und macOS:
 
 ```bash
 rm -f /tmp/portal-test.db*
 PORT=3111 DB=/tmp/portal-test.db node start.js > /tmp/portal.log 2>&1 &
 sleep 2
 ADMINPW=$(grep -oP 'Passwort\s+\K\S+' /tmp/portal.log) node test/durchklicken.mjs
+```
+
+Windows PowerShell:
+
+```powershell
+Remove-Item -ErrorAction Ignore test-portal.db*
+$env:PORT=3111; $env:DB="test-portal.db"
+Start-Process node -ArgumentList "start.js" -RedirectStandardOutput portal.log -NoNewWindow
+Start-Sleep 2
+$env:ADMINPW = (Select-String -Path portal.log -Pattern 'Passwort\s+(\S+)').Matches[0].Groups[1].Value
+node test/durchklicken.mjs
 ```
 
 33 Prüfungen: Anfrage abschicken, annehmen, Server anlegen, zweimal zahlen,
