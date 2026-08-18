@@ -6,10 +6,10 @@
  *
  * Zwei Dinge sind hier bewusst so gebaut:
  *
- * 1. Jede Zahlung landet zusaetzlich im Protokoll, mit Zeitpunkt und
- *    Person. Bei Bargeld in der Schule ist Nachvollziehbarkeit das
- *    Wichtigste ueberhaupt - wer wann was kassiert hat, muss man spaeter
- *    noch nachlesen koennen, auch wenn jemand einen Betrag korrigiert.
+ * 1. Das Portal fuehrt keine Buchhaltung. Bezahlt wird in der Schule,
+ *    von Hand, gegen Bestellbogen - deshalb gibt es hier keine Betraege
+ *    und keine Zahlungstabelle. Was das Portal kann, ist Server
+ *    verwalten und laufen lassen; was Geld kostet, steht auf Papier.
  *
  * 2. Server werden nie wirklich aus der Tabelle geloescht, sondern
  *    bekommen den Status "geloescht". Sonst waere die Loeschbestaetigung
@@ -56,7 +56,7 @@ function schema() {
       paket         TEXT NOT NULL,
       software      TEXT NOT NULL DEFAULT 'Paper',
       status        TEXT NOT NULL DEFAULT 'aktiv',
-      bezahlt_bis   TEXT,
+      pterodactyl   TEXT NOT NULL DEFAULT '',
       angelegt      TEXT NOT NULL,
       geloescht_am  TEXT,
       notiz         TEXT NOT NULL DEFAULT ''
@@ -67,18 +67,6 @@ function schema() {
       zusatz        TEXT NOT NULL,
       menge         INTEGER NOT NULL DEFAULT 1,
       PRIMARY KEY (server_id, zusatz)
-    );
-
-    CREATE TABLE IF NOT EXISTS zahlungen (
-      id            INTEGER PRIMARY KEY AUTOINCREMENT,
-      server_id     INTEGER NOT NULL REFERENCES server(id),
-      betrag        REAL NOT NULL,
-      von           TEXT NOT NULL,
-      bis           TEXT NOT NULL,
-      art           TEXT NOT NULL DEFAULT 'Bar',
-      kassiert_von  TEXT NOT NULL DEFAULT '',
-      erfasst_am    TEXT NOT NULL,
-      notiz         TEXT NOT NULL DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS bestellungen (
@@ -115,26 +103,25 @@ function schema() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_server_kunde ON server(kunde_id);
-    CREATE INDEX IF NOT EXISTS idx_zahlung_server ON zahlungen(server_id);
   `);
+  nachruesten();
+}
+
+/**
+ * Spalten nachziehen, die es in aelteren Datenbanken noch nicht gab.
+ *
+ * CREATE TABLE IF NOT EXISTS aendert eine vorhandene Tabelle nicht - wer
+ * das Portal schon benutzt hat, braeuchte sonst eine neue Datenbank.
+ */
+function nachruesten() {
+  const spalten = db.prepare('PRAGMA table_info(server)').all().map((s) => s.name);
+  if (!spalten.includes('pterodactyl')) {
+    db.exec("ALTER TABLE server ADD COLUMN pterodactyl TEXT NOT NULL DEFAULT ''");
+  }
 }
 
 export const jetzt = () => new Date().toISOString();
 export const heute = () => new Date().toISOString().slice(0, 10);
-
-/** Tage zwischen heute und einem ISO-Datum. Negativ = liegt zurueck. */
-export function tageBis(datum) {
-  if (!datum) return null;
-  const ziel = new Date(datum + 'T00:00:00Z').getTime();
-  const jetztTag = new Date(heute() + 'T00:00:00Z').getTime();
-  return Math.round((ziel - jetztTag) / 86400000);
-}
-
-export function plusTage(datum, tage) {
-  const d = new Date((datum || heute()) + 'T00:00:00Z');
-  d.setUTCDate(d.getUTCDate() + tage);
-  return d.toISOString().slice(0, 10);
-}
 
 // ---------------------------------------------------------------- Passwoerter
 
@@ -226,11 +213,11 @@ export const abmelden = (token) =>
 // ---------------------------------------------------------------- Server
 
 export function serverAnlegen({ kundeId, name, subdomain = '', paket, software = 'Paper',
-                                bezahltBis = null, notiz = '', zusatz = {} }) {
+                                pterodactyl = '', notiz = '', zusatz = {} }) {
   const info = db.prepare(`INSERT INTO server
-      (kunde_id, name, subdomain, paket, software, status, bezahlt_bis, angelegt, notiz)
+      (kunde_id, name, subdomain, paket, software, status, pterodactyl, angelegt, notiz)
       VALUES (?, ?, ?, ?, ?, 'aktiv', ?, ?, ?)`)
-    .run(kundeId, name, subdomain, paket, software, bezahltBis, jetzt(), notiz);
+    .run(kundeId, name, subdomain, paket, software, pterodactyl, jetzt(), notiz);
   const id = Number(info.lastInsertRowid);
   zusatzSetzen(id, zusatz);
   return id;
@@ -273,7 +260,7 @@ export function alleServer(mitGeloeschten = false) {
 }
 
 export function serverAendern(id, felder) {
-  const erlaubt = ['name', 'subdomain', 'paket', 'software', 'status', 'bezahlt_bis', 'notiz'];
+  const erlaubt = ['name', 'subdomain', 'paket', 'software', 'status', 'pterodactyl', 'notiz'];
   const setzen = erlaubt.filter((f) => f in felder);
   if (!setzen.length) return;
   db.prepare(`UPDATE server SET ${setzen.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`)
@@ -291,40 +278,6 @@ export function serverLoeschen(id) {
   db.prepare("UPDATE server SET status = 'geloescht', geloescht_am = ? WHERE id = ?")
     .run(heute(), id);
 }
-
-// ---------------------------------------------------------------- Zahlungen
-
-/**
- * Eine Zahlung eintragen.
- *
- * Der Zeitraum haengt an "bezahlt_bis": Wer verlaengert, faengt dort an,
- * wo der letzte Zeitraum aufhoert - nicht heute. Sonst verschenkt man bei
- * jeder verspaeteten Zahlung ein paar Tage.
- */
-export function zahlungEintragen({ serverId, betrag, tage = 30, art = 'Bar',
-                                   kassiertVon = '', notiz = '' }) {
-  const s = server(serverId);
-  if (!s) return null;
-  const start = s.bezahlt_bis && tageBis(s.bezahlt_bis) > 0 ? s.bezahlt_bis : heute();
-  const bis = plusTage(start, tage);
-  db.prepare(`INSERT INTO zahlungen
-      (server_id, betrag, von, bis, art, kassiert_von, erfasst_am, notiz)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
-    .run(serverId, betrag, start, bis, art, kassiertVon, jetzt(), notiz);
-  db.prepare("UPDATE server SET bezahlt_bis = ?, status = CASE WHEN status = 'archiviert' "
-           + "THEN 'aktiv' ELSE status END WHERE id = ?").run(bis, serverId);
-  return { von: start, bis };
-}
-
-export const zahlungenVon = (serverId) =>
-  db.prepare('SELECT * FROM zahlungen WHERE server_id = ? ORDER BY id DESC').all(serverId);
-
-export const alleZahlungen = (grenze = 200) =>
-  db.prepare(`SELECT z.*, s.name AS servername, k.benutzername
-              FROM zahlungen z
-              JOIN server s ON s.id = z.server_id
-              JOIN kunden k ON k.id = s.kunde_id
-              ORDER BY z.id DESC LIMIT ?`).all(grenze);
 
 // ---------------------------------------------------------------- Bestellungen
 

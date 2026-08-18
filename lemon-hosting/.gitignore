@@ -3,3 +3,8 @@ daten/
 *.db
 *.db-shm
 *.db-wal
+
+# Die Minecraft-Server selbst: Jars, Welten, Plugins. Nichts davon
+# gehoert in ein Repository - Welten werden gross und Jars sind nicht
+# unser Code.
+server/

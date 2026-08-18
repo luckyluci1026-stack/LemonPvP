@@ -1,0 +1,298 @@
+/**
+ * Das Panel - die Seite, wegen der es das Portal ueberhaupt gibt.
+ *
+ * Ein Kunde kommt hier rein und kann seinen Server starten, stoppen, in
+ * die Konsole schauen, Befehle tippen und an die Dateien. Alles andere
+ * im Portal ist Verwaltung drumherum.
+ *
+ * Zwei Betriebsarten:
+ *
+ *   - Der Normalfall: das Portal startet den Server selbst.
+ *   - Hat der Server eine Pterodactyl-Adresse hinterlegt, laeuft er dort.
+ *     Dann zeigt das Panel keine Knoepfe, sondern verlinkt hinueber -
+ *     zwei Stellen, die denselben Server starten duerfen, waeren ein
+ *     Rezept fuer kaputte Welten.
+ *
+ * Die Konsole wird nicht hier gefuellt, sondern live von konsole.js -
+ * deshalb steht das <pre> fast leer da und bekommt nur eine id.
+ */
+import { esc } from '../web.js';
+import { seite, csrfFeld } from './layout.js';
+import { PAKETE, rechne } from '../preise.js';
+import { speicherMB, jarDa, eulaAngenommen } from '../panel.js';
+import { lesbareGroesse } from '../dateien.js';
+
+const TEXTE = { laeuft: 'läuft', startet: 'startet …', stoppt: 'stoppt …',
+                gestoppt: 'gestoppt' };
+const FARBEN = { laeuft: 'aktiv', startet: 'archiviert', stoppt: 'archiviert',
+                 gestoppt: 'geloescht' };
+
+function statusAnzeige(zustand) {
+  return `<span id="statusmarke" class="marke-punkt ${FARBEN[zustand.status] || 'geloescht'}"
+    >${esc(TEXTE[zustand.status] || zustand.status)}</span>`;
+}
+
+function laufzeit(sekunden) {
+  if (!sekunden) return '–';
+  const h = Math.floor(sekunden / 3600), m = Math.floor((sekunden % 3600) / 60);
+  return h ? `${h} h ${m} min` : `${m} min ${sekunden % 60} s`;
+}
+
+/**
+ * Die drei Knoepfe.
+ *
+ * `data-was` steht dran, damit konsole.js sie beim Statuswechsel scharf
+ * bzw. stumpf schalten kann, ohne die Seite neu zu laden.
+ */
+const knoepfe = (s, zustand, zeichen) => {
+  const aus = zustand.status === 'gestoppt';
+  return `<form method="post" action="/panel/${s.id}/aktion" class="reihe">
+    ${csrfFeld(zeichen)}
+    <button name="was" value="start" data-was="start" class="knopf klein"
+      ${aus ? '' : 'disabled'}>▶ Starten</button>
+    <button name="was" value="stopp" data-was="stopp" class="knopf stil2 klein"
+      ${aus ? 'disabled' : ''}>■ Stoppen</button>
+    <button name="was" value="neustart" data-was="neustart" class="knopf stil2 klein"
+      ${aus ? 'disabled' : ''}>↻ Neustart</button>
+  </form>`;
+};
+
+/** Kopfzeile mit Name, Subdomain und Statuspunkt - auf beiden Panelarten gleich. */
+const kopf = (s, rechts) => `
+  <a class="klein leise" href="/meine-server">← Meine Server</a>
+  <div class="zwischen abstand">
+    <div>
+      <h1>${esc(s.name)}</h1>
+      ${s.subdomain
+        ? `<div class="mono klein leise">${esc(s.subdomain)}.lemon-servers.de</div>`
+        : `<div class="klein leise">${esc(s.software)}</div>`}
+    </div>
+    ${rechts}
+  </div>`;
+
+/**
+ * Server liegt in Pterodactyl - hier gibt es nichts zu bedienen.
+ *
+ * Absichtlich keine Konsole und keine Dateien: Was Pterodactyl verwaltet,
+ * verwaltet Pterodactyl. Das Portal ist hier nur die Eingangstuer.
+ */
+export function fremdesPanel(nutzer, s, ziel) {
+  const aus = rechne(s.paket, s.zusatz).ausstattung;
+
+  return seite({ titel: s.name, nutzer, hier: '/meine-server', inhalt: `
+    ${kopf(s, '<span class="marke-punkt aktiv">Pterodactyl</span>')}
+
+    <div class="karte abstand">
+      <h2>Dieser Server läuft in Pterodactyl</h2>
+      <p class="leise abstand">Start, Stopp, Konsole und Dateien machst du
+        dort. Das Portal verwaltet ihn nicht selbst — zwei Stellen, die
+        denselben Server starten dürfen, wären ein Rezept für kaputte
+        Welten.</p>
+      <a class="knopf abstand" href="${esc(ziel)}" target="_blank" rel="noopener">
+        In Pterodactyl öffnen ↗</a>
+    </div>
+
+    <div class="gitter g4 abstand">
+      <div class="karte"><div class="klein leise">Paket</div>
+        <strong>${PAKETE[s.paket]
+          ? PAKETE[s.paket].zeichen + ' ' + esc(PAKETE[s.paket].name) : esc(s.paket)}</strong></div>
+      <div class="karte"><div class="klein leise">CPU</div>
+        <strong>${aus.cores} Cores</strong></div>
+      <div class="karte"><div class="klein leise">Arbeitsspeicher</div>
+        <strong>${aus.ram} GB</strong></div>
+      <div class="karte"><div class="klein leise">Speicherplatz</div>
+        <strong>${aus.ssd} GB</strong></div>
+    </div>
+
+    <a class="knopf stil2 abstand" href="/meine-server/${s.id}">Was ist gebucht?</a>` });
+}
+
+export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '') {
+  const paket = PAKETE[s.paket];
+  const aus = rechne(s.paket, s.zusatz).ausstattung;
+  const bereit = jarDa(s.id);
+  const eula = eulaAngenommen(s.id);
+  const platz = aus.ssd * 1073741824;
+  const anteil = platz ? Math.min(100, (belegt / platz) * 100) : 0;
+  const eingabeAus = zustand.status !== 'laeuft' && zustand.status !== 'startet';
+
+  return seite({ titel: s.name, nutzer, hier: '/meine-server', inhalt: `
+    ${kopf(s, statusAnzeige(zustand))}
+    ${meldung ? `<div class="hinweis warn abstand">${esc(meldung)}</div>` : ''}
+    ${s.status !== 'aktiv' ? `<div class="hinweis schlecht abstand">
+      Dieser Server ist <strong>${esc(s.status)}</strong> und lässt sich nicht
+      starten. Sprich das Team an.</div>` : ''}
+
+    ${!bereit ? `<div class="hinweis warn abstand">
+      <strong>Es fehlt noch die Serversoftware.</strong> Lade unter
+      <a href="/panel/${s.id}/dateien">Dateien</a> eine
+      <span class="mono">server.jar</span> hoch — zum Beispiel Paper von
+      papermc.io. Ohne die Datei kann nichts starten.</div>` : ''}
+    ${bereit && !eula ? `<div class="hinweis warn abstand">
+      <form method="post" action="/panel/${s.id}/aktion" class="reihe">
+        ${csrfFeld(zeichen)}
+        <span style="flex:1">Vor dem ersten Start muss die
+          <a href="https://aka.ms/MinecraftEULA" target="_blank" rel="noopener"
+            >Minecraft-EULA</a> angenommen werden — das schreibt Mojang so vor.</span>
+        <button name="was" value="eula" class="knopf klein">Ich akzeptiere die EULA</button>
+      </form></div>` : ''}
+
+    <div class="gitter g4 abstand">
+      <div class="karte"><div class="klein leise">Paket</div>
+        <strong>${paket ? paket.zeichen + ' ' + esc(paket.name) : esc(s.paket)}</strong>
+        <div class="klein leise">${aus.cores} CPU-Cores</div></div>
+      <div class="karte"><div class="klein leise">Arbeitsspeicher</div>
+        <strong>${(speicherMB(s) / 1024).toFixed(2)} GB</strong>
+        <div class="klein leise">wird beim Start gesetzt</div></div>
+      <div class="karte"><div class="klein leise">Speicherplatz</div>
+        <strong>${lesbareGroesse(belegt)}</strong>
+        <div class="klein leise">von ${aus.ssd} GB</div>
+        <div class="balken ${anteil > 90 ? 'aus' : anteil > 75 ? 'knapp' : ''}"
+          ><i style="width:${anteil.toFixed(1)}%"></i></div></div>
+      <div class="karte"><div class="klein leise">Läuft seit</div>
+        <strong id="laufzeit">${laufzeit(zustand.laufzeit)}</strong>
+        <div class="klein leise" id="pid">${
+          zustand.pid ? 'Prozess ' + zustand.pid : 'nicht gestartet'}</div></div>
+    </div>
+
+    <div class="karte abstand">
+      <div class="zwischen">
+        <h2>Konsole</h2>
+        <div class="reihe">
+          ${knoepfe(s, zustand, zeichen)}
+          <a class="knopf stil2 klein" href="/panel/${s.id}/dateien">📁 Dateien</a>
+        </div>
+      </div>
+
+      <pre id="konsole" class="konsole abstand">Verbinde …</pre>
+
+      <form id="befehlform" class="reihe" style="margin-top:.7rem"
+            action="/panel/${s.id}/befehl" method="post">
+        ${csrfFeld(zeichen)}
+        <input name="befehl" id="befehl" class="mono" autocomplete="off"
+               placeholder="Befehl eingeben, z. B. say Hallo   ·   ↑ holt den letzten"
+               style="flex:1" ${eingabeAus ? 'disabled' : ''}>
+        <button class="knopf klein" ${eingabeAus ? 'disabled' : ''}>Senden</button>
+      </form>
+      <p class="klein leise" style="margin-top:.6rem">
+        Befehle gehen direkt in die Serverkonsole — ohne führenden Schrägstrich,
+        also <span class="mono">op DeinName</span>, nicht <span class="mono">/op</span>.
+      </p>
+    </div>
+    <script>window.SERVER_ID = ${s.id};</script>
+    <script src="/konsole.js"></script>` });
+}
+
+// ------------------------------------------------------------------ Dateien
+
+function brotkrumen(s, teile) {
+  const stuecke = [`<a href="/panel/${s.id}/dateien">${esc(s.name)}</a>`];
+  teile.forEach((t, i) => {
+    stuecke.push(`<a href="/panel/${s.id}/dateien?p=${
+      encodeURIComponent(teile.slice(0, i + 1).join('/'))}">${esc(t)}</a>`);
+  });
+  return stuecke.join('<span class="leiser">/</span>');
+}
+
+export function dateien(nutzer, s, pfad, eintraege, zeichen, meldung = '', gut = false) {
+  const teile = pfad ? pfad.split('/').filter(Boolean) : [];
+
+  const hoch = teile.length
+    ? `<tr><td colspan="4"><a href="/panel/${s.id}/dateien?p=${
+        encodeURIComponent(teile.slice(0, -1).join('/'))}">↰ eine Ebene höher</a></td></tr>`
+    : '';
+
+  const zeile = (e) => {
+    const voll = pfad ? pfad + '/' + e.name : e.name;
+    const link = e.ordner
+      ? `/panel/${s.id}/dateien?p=${encodeURIComponent(voll)}`
+      : e.bearbeitbar ? `/panel/${s.id}/bearbeiten?p=${encodeURIComponent(voll)}` : null;
+    return `<tr>
+      <td><div class="name">${e.ordner ? '📁' : '📄'}
+        ${link ? `<a href="${link}">${esc(e.name)}</a>` : esc(e.name)}</div></td>
+      <td class="zahl klein">${e.ordner ? '–' : lesbareGroesse(e.groesse)}</td>
+      <td class="klein leise">${esc(e.geaendert)}</td>
+      <td class="zahl"><form method="post" action="/panel/${s.id}/loeschen"
+            onsubmit="return confirm('${esc(e.name)} wirklich löschen?')">
+        ${csrfFeld(zeichen)}
+        <input type="hidden" name="p" value="${esc(voll)}">
+        <button class="knopf gefahr klein">Löschen</button></form></td>
+    </tr>`;
+  };
+
+  return seite({ titel: 'Dateien · ' + s.name, nutzer, hier: '/meine-server', inhalt: `
+    <a class="klein leise" href="/panel/${s.id}">← Panel</a>
+    <h1 class="abstand">Dateien</h1>
+    <div class="pfadleiste klein abstand">${brotkrumen(s, teile)}</div>
+    ${meldung ? `<div class="hinweis ${gut ? 'info' : 'warn'} abstand">${
+      esc(meldung)}</div>` : ''}
+
+    <div class="karte abstand"><table>
+      <tr><th>Name</th><th class="zahl">Größe</th><th>Geändert</th><th></th></tr>
+      ${hoch}
+      ${eintraege.map(zeile).join('')
+        || '<tr><td colspan="4" class="leise">Der Ordner ist leer.</td></tr>'}
+    </table></div>
+
+    <div class="karte abstand" id="ablage" data-server="${s.id}"
+         data-pfad="${esc(pfad)}" data-csrf="${esc(zeichen)}">
+      <div class="ablage">
+        <strong>Dateien hierher ziehen</strong>
+        <div class="klein leise" style="margin:.3rem 0 .8rem">
+          oder auswählen — auch mehrere auf einmal. Die
+          <span class="mono">server.jar</span> gehört in den obersten Ordner,
+          Plugins nach <span class="mono">plugins/</span>.</div>
+        <label class="knopf stil2 klein" style="display:inline-flex;margin:0">
+          Datei auswählen<input type="file" id="dateiwahl" multiple></label>
+      </div>
+      <div hidden style="margin-top:.9rem">
+        <div class="balken" id="fortschritt"><i style="width:0"></i></div>
+        <div class="klein leise" id="fortschrittText" style="margin-top:.4rem"></div>
+      </div>
+    </div>
+
+    <div class="gitter g2 abstand">
+      <form method="post" action="/panel/${s.id}/neu" class="karte">
+        ${csrfFeld(zeichen)}
+        <input type="hidden" name="p" value="${esc(pfad)}">
+        <h2>Textdatei anlegen</h2>
+        <div class="feld abstand"><label>Dateiname</label>
+          <input name="name" class="mono" placeholder="server.properties" required></div>
+        <div class="feld"><label>Inhalt</label>
+          <textarea name="inhalt" rows="5" class="mono"></textarea></div>
+        <button class="knopf">Anlegen</button>
+      </form>
+      <form method="post" action="/panel/${s.id}/ordner" class="karte">
+        ${csrfFeld(zeichen)}
+        <input type="hidden" name="p" value="${esc(pfad)}">
+        <h2>Ordner anlegen</h2>
+        <div class="feld abstand"><label>Name</label>
+          <input name="name" class="mono" placeholder="plugins" required></div>
+        <button class="knopf stil2">Anlegen</button>
+      </form>
+    </div>
+    <script src="/dateien.js"></script>` });
+}
+
+export function bearbeiten(nutzer, s, pfad, inhalt, zeichen, meldung = '', gut = false) {
+  const zurueck = `/panel/${s.id}/dateien?p=${
+    encodeURIComponent(pfad.split('/').slice(0, -1).join('/'))}`;
+
+  return seite({ titel: pfad, nutzer, hier: '/meine-server', inhalt: `
+    <a class="klein leise" href="${zurueck}">← Dateien</a>
+    <h1 class="abstand mono" style="font-size:1.25rem">${esc(pfad)}</h1>
+    ${meldung ? `<div class="hinweis ${gut ? 'info' : 'warn'} abstand">${
+      esc(meldung)}</div>` : ''}
+    <form method="post" action="/panel/${s.id}/speichern" class="karte abstand">
+      ${csrfFeld(zeichen)}
+      <input type="hidden" name="p" value="${esc(pfad)}">
+      <textarea name="inhalt" rows="24" class="mono" spellcheck="false"
+        style="line-height:1.55">${esc(inhalt)}</textarea>
+      <div class="reihe abstand">
+        <button class="knopf">Speichern</button>
+        <a class="knopf stil2" href="${zurueck}">Abbrechen</a>
+        <span class="klein leise">Änderungen an Konfigurationsdateien wirken
+          erst nach einem Neustart des Servers.</span>
+      </div>
+    </form>` });
+}

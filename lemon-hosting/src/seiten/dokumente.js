@@ -4,15 +4,17 @@
  * Bestellbogen und Loeschbestaetigung gibt es bei Lemon Hosting auf
  * Papier, mit Unterschrift. Das bleibt auch so; unterschrieben wird von
  * Hand. Was das Portal aendert: Alles, was es schon weiss - Name, Klasse,
- * Paket, Zusatzleistungen, Preise, bezahlter Zeitraum - steht beim
- * Ausdrucken bereits drin. Abgeschrieben wird nichts mehr, und die
- * Preisspalte stimmt, weil sie aus derselben Preisliste kommt wie das
- * Portal.
+ * Paket, Zusatzleistungen, Preise - steht beim Ausdrucken bereits drin.
+ * Abgeschrieben wird nichts mehr, und die Preisspalte stimmt, weil sie
+ * aus derselben Preisliste kommt wie das Portal.
+ *
+ * Die Felder rund ums Geld bleiben absichtlich leer. Kassiert wird in
+ * der Schule, per Hand, und genau dafuer ist der Bogen da - das Portal
+ * soll gar nicht erst so tun, als fuehre es Buch.
  */
 import { esc } from '../web.js';
 import { seite } from './layout.js';
 import { PAKETE, ZUSATZ, SOFTWARE, rechne, euro, ARCHIV_TAGE } from '../preise.js';
-import { zahlungenVon } from '../db.js';
 
 const linie = (inhalt = '') =>
   `<div class="linie">${inhalt ? esc(inhalt) : ''}</div>`;
@@ -26,8 +28,6 @@ const druckKnopf = `<div class="nicht-drucken" style="text-align:center;margin:1
 export function bestellbogen(nutzer, s, kunde) {
   const ergebnis = rechne(s.paket, s.zusatz);
   const paket = PAKETE[s.paket];
-  const zahlungen = zahlungenVon(s.id);
-  const letzte = zahlungen[0];
 
   const zusatzZeilen = ergebnis.posten
     .filter((p) => p.art === 'zusatz')
@@ -81,11 +81,10 @@ export function bestellbogen(nutzer, s, kunde) {
       <h2>6. Zahlung</h2>
       <table>
         <tr><td style="width:38%;color:#555">Zahlungsart</td>
-          <td>${linie(letzte?.art || 'Barzahlung / Prepaid')}</td></tr>
-        <tr><td style="color:#555">Bezahlt</td>
-          <td>${linie(letzte ? euro(letzte.betrag) : '')}</td></tr>
-        <tr><td style="color:#555">Bezahlt für den Zeitraum</td>
-          <td>${linie(letzte ? `${letzte.von}  bis  ${letzte.bis}` : '')}</td></tr>
+          <td>${linie('Barzahlung / Prepaid')}</td></tr>
+        <tr><td style="color:#555">Betrag erhalten</td><td>${linie()}</td></tr>
+        <tr><td style="color:#555">Bezahlt für den Zeitraum</td><td>${linie()}</td></tr>
+        <tr><td style="color:#555">Kassiert von</td><td>${linie()}</td></tr>
       </table>
 
       <h2>7. Preisübersicht</h2>
@@ -156,8 +155,6 @@ export function bestellbogen(nutzer, s, kunde) {
 }
 
 export function loeschbestaetigung(nutzer, s, kunde) {
-  const zahlungen = zahlungenVon(s.id);
-  const letzte = zahlungen[0];
   const geloescht = s.status === 'geloescht';
 
   return seite({ titel: 'Löschbestätigung', nutzer, inhalt: `
@@ -217,7 +214,7 @@ export function loeschbestaetigung(nutzer, s, kunde) {
       <h2>Zahlungsstatus</h2>
       <table>
         <tr><td style="width:38%;color:#555">Letzter bezahlter Zeitraum</td>
-          <td>${linie(letzte ? `${letzte.von}  bis  ${letzte.bis}` : '—')}</td></tr>
+          <td>${linie()}</td></tr>
       </table>
       ${kaestchen(false, 'Keine offene Zahlung')}
       ${kaestchen(false, 'Offene Zahlung – Betrag: ______________ €')}

@@ -1,26 +1,32 @@
 /**
  * Der Webserver: alle Routen an einer Stelle.
  *
- * Zwei Regeln, die hier ueberall gelten:
+ * Drei Regeln, die hier ueberall gelten:
  *
  *   1. Jede POST-Route prueft das CSRF-Zeichen. Ohne das koennte eine
- *      fremde Seite im Namen eines angemeldeten Admins Zahlungen
- *      eintragen oder Server loeschen.
+ *      fremde Seite im Namen eines Angemeldeten dessen Server stoppen
+ *      oder Dateien loeschen.
  *   2. Preise werden nie aus dem Formular uebernommen, sondern immer neu
  *      aus preise.js gerechnet. Was der Browser schickt, ist Wunsch, kein
  *      Befehl.
+ *   3. Jede Panel-Route geht durch `meinServer()`. Wer /panel/2 aufruft,
+ *      ohne dass ihm Server 2 gehoert, kommt nicht rein - sonst saesse
+ *      man mit einem geratenen Link in einer fremden Konsole.
  */
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import * as db from './db.js';
-import { PAKETE, ZUSATZ, rechne, euro } from './preise.js';
+import { PAKETE, ZUSATZ, rechne } from './preise.js';
 import { Router, cookies, formular, sende, weiter, setzeCookie, loescheCookie,
          statisch, csrfWert, csrfNeu, csrfStimmt, esc } from './web.js';
+import * as prozess from './panel.js';
+import * as dat from './dateien.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
 import * as adm from './seiten/admin.js';
+import * as pnl from './seiten/panel.js';
 import * as dok from './seiten/dokumente.js';
 
 const HIER = dirname(fileURLToPath(import.meta.url));
@@ -42,6 +48,24 @@ function zusatzAus(daten) {
 }
 
 const wer = (n) => n ? `${n.benutzername}` : 'unbekannt';
+
+/**
+ * Eine Pterodactyl-Adresse annehmen - oder verwerfen.
+ *
+ * Der Wert landet spaeter in einem href. Ohne diese Pruefung koennte dort
+ * `javascript:...` stehen, und ein Admin haette sich selbst eine Falle
+ * gestellt. Nur http und https, sonst nichts.
+ */
+function adresseOk(roh) {
+  const text = String(roh || '').trim();
+  if (!text) return '';
+  try {
+    const u = new URL(text);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+  } catch {
+    return '';
+  }
+}
 
 export function baue() {
   const r = new Router();
@@ -117,12 +141,214 @@ export function baue() {
     if (!c.nutzer) return weiter(c.antwort, '/anmelden');
     const s = db.server(Number(c.werte.id));
     // Ein Kunde sieht nur seine eigenen Server - sonst reicht das Raten
-    // einer Nummer, um in fremde Zahlungen zu schauen.
+    // einer Nummer, um in fremde Unterlagen zu schauen.
     if (!s || (s.kunde_id !== c.nutzer.id && c.nutzer.rolle !== 'admin')) {
       return sende(c.antwort, fehlerSeite(c.nutzer, 'Diesen Server gibt es nicht.'), 404);
     }
     sende(c.antwort, ks.serverDetail(c.nutzer, s));
   });
+
+  // ------------------------------------------------------------ Panel
+  /**
+   * Der Tuersteher fuers Panel.
+   *
+   * Jede einzelne Panel-Route geht hier durch. Ohne diese Pruefung
+   * koennte jeder Angemeldete /panel/2 aufrufen und saesse in einer
+   * fremden Serverkonsole - mit Dateizugriff obendrauf. Das ist die
+   * Stelle, an der ein Fehler richtig weh taete, deshalb steht sie an
+   * genau einem Ort und nicht in jedem Handler nachgebaut.
+   */
+  const meinServer = (fn) => (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    const s = db.server(Number(c.werte.id));
+    if (!s || (s.kunde_id !== c.nutzer.id && c.nutzer.rolle !== 'admin')) {
+      return sende(c.antwort, fehlerSeite(c.nutzer, 'Diesen Server gibt es nicht.'), 404);
+    }
+    return fn(c, s);
+  };
+
+  /**
+   * Wie oben, aber nur fuer Server, die das Portal selbst betreibt.
+   *
+   * Bei einem Server in Pterodactyl gibt es hier nichts zu starten und
+   * keine Dateien zu bearbeiten - das macht Pterodactyl. Zwei Stellen,
+   * die denselben Server anfassen duerfen, waeren ein Rezept fuer
+   * kaputte Welten.
+   */
+  const eigenerServer = (fn) => meinServer((c, s) => {
+    if (s.pterodactyl) {
+      return sende(c.antwort, fehlerSeite(c.nutzer,
+        'Dieser Server läuft in Pterodactyl und wird dort verwaltet.'), 409);
+    }
+    return fn(c, s);
+  });
+
+  const zumPanel = (c, s, meldung) => weiter(c.antwort,
+    `/panel/${s.id}` + (meldung ? '?m=' + encodeURIComponent(meldung) : ''));
+
+  const zuDateien = (c, s, pfad, meldung = '', gut = false) => weiter(c.antwort,
+    `/panel/${s.id}/dateien?p=${encodeURIComponent(pfad)}`
+    + (meldung ? `&${gut ? 'ok' : 'm'}=` + encodeURIComponent(meldung) : ''));
+
+  const jsonRaus = (c, status, daten) => {
+    c.antwort.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+    c.antwort.end(JSON.stringify(daten));
+  };
+
+  r.get('/panel/:id', meinServer((c, s) => {
+    if (s.pterodactyl) {
+      return sende(c.antwort, pnl.fremdesPanel(c.nutzer, s, s.pterodactyl));
+    }
+    sende(c.antwort, pnl.panel(c.nutzer, s, prozess.status(s.id), c.csrf,
+      dat.belegung(s.id), c.url.searchParams.get('m') || ''));
+  }));
+
+  r.post('/panel/:id/aktion', eigenerServer((c, s) => {
+    const was = c.daten.was;
+
+    if (was === 'eula') {
+      prozess.eulaAnnehmen(s.id);
+      db.protokolliere(wer(c.nutzer), 'EULA angenommen', `${s.name} (#${s.id})`);
+      return zumPanel(c, s);
+    }
+
+    // Ein archivierter oder geloeschter Server startet nicht. Stoppen
+    // darf man ihn trotzdem - sonst liefe ein gerade archivierter Server
+    // ewig weiter.
+    if (was === 'start' && s.status !== 'aktiv') {
+      return zumPanel(c, s, `Dieser Server ist ${s.status} und lässt sich nicht starten.`);
+    }
+
+    const machen = {
+      start: () => prozess.starte(s),
+      stopp: () => prozess.stoppe(s.id),
+      neustart: () => prozess.neustart(s),
+    }[was];
+    if (!machen) return zumPanel(c, s, 'Unbekannte Aktion.');
+
+    const fehler = machen();
+    db.protokolliere(wer(c.nutzer), 'Panel: ' + was,
+      `${s.name} (#${s.id})` + (fehler ? ' – ' + fehler : ''));
+    zumPanel(c, s, fehler);
+  }));
+
+  r.post('/panel/:id/befehl', eigenerServer((c, s) => {
+    const text = String(c.daten.befehl || '');
+    const fehler = prozess.befehl(s.id, text);
+    if (!fehler) db.protokolliere(wer(c.nutzer), 'Konsolenbefehl', `#${s.id} · ${text}`);
+    jsonRaus(c, fehler ? 409 : 200, { ok: !fehler, fehler });
+  }));
+
+  /**
+   * Die Konsole als Server-Sent Events.
+   *
+   * Bleibt offen, solange das Browserfenster offen ist, und schiebt jede
+   * neue Zeile durch. Websockets waeren die andere Moeglichkeit - dafuer
+   * braeuchte es aber eine Bibliothek und einen zweiten Protokollpfad,
+   * und geschickt wird ohnehin nur in eine Richtung.
+   */
+  r.get('/panel/:id/konsole', eigenerServer((c, s) => {
+    const a = c.antwort;
+    a.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      // Ohne das puffert ein davorstehendes nginx die Antwort, und es
+      // kaeme kein einziges Ereignis an, bis der Server fertig ist.
+      'X-Accel-Buffering': 'no',
+    });
+
+    const schick = (art, daten) => {
+      try { a.write(`event: ${art}\ndata: ${JSON.stringify(daten)}\n\n`); }
+      catch { /* Fenster ist weg */ }
+    };
+
+    schick('verlauf', prozess.konsole(s.id));
+    schick('status', prozess.status(s.id));
+    const abmelden = prozess.hoereZu(s.id, (zeile) => schick('zeile', zeile));
+
+    // Der Takt haelt die Leitung wach und bringt nebenbei Knoepfe und
+    // Laufzeit auf Stand, ohne dass jemand neu laden muss.
+    const takt = setInterval(() => schick('status', prozess.status(s.id)), 4000);
+    const schluss = () => { clearInterval(takt); abmelden(); };
+    c.anfrage.on('close', schluss);
+    c.anfrage.on('error', schluss);
+  }));
+
+  // ------------------------------------------------------------ Dateien
+  r.get('/panel/:id/dateien', eigenerServer((c, s) => {
+    const pfad = dat.saeubere(c.url.searchParams.get('p'));
+    const eintraege = dat.liste(s.id, pfad);
+    if (!eintraege) {
+      return sende(c.antwort, fehlerSeite(c.nutzer, 'Diesen Ordner gibt es nicht.'), 404);
+    }
+    const ok = c.url.searchParams.get('ok') || '';
+    sende(c.antwort, pnl.dateien(c.nutzer, s, pfad, eintraege, c.csrf,
+      ok || c.url.searchParams.get('m') || '', Boolean(ok)));
+  }));
+
+  r.get('/panel/:id/bearbeiten', eigenerServer((c, s) => {
+    const pfad = dat.saeubere(c.url.searchParams.get('p'));
+    const inhalt = dat.lies(s.id, pfad);
+    if (inhalt === null) {
+      return sende(c.antwort, fehlerSeite(c.nutzer, 'Diese Datei lässt sich hier nicht '
+        + 'öffnen – sie ist zu groß oder kein Text.'), 404);
+    }
+    sende(c.antwort, pnl.bearbeiten(c.nutzer, s, pfad, inhalt, c.csrf));
+  }));
+
+  r.post('/panel/:id/speichern', eigenerServer((c, s) => {
+    const pfad = dat.saeubere(c.daten.p);
+    const fehler = dat.schreib(s.id, pfad, c.daten.inhalt ?? '');
+    if (fehler) {
+      return sende(c.antwort, pnl.bearbeiten(c.nutzer, s, pfad,
+        String(c.daten.inhalt ?? ''), c.csrf, fehler));
+    }
+    db.protokolliere(wer(c.nutzer), 'Datei gespeichert', `#${s.id} · ${pfad}`);
+    zuDateien(c, s, pfad.split('/').slice(0, -1).join('/'), `${pfad} gespeichert.`, true);
+  }));
+
+  r.post('/panel/:id/loeschen', eigenerServer((c, s) => {
+    const pfad = dat.saeubere(c.daten.p);
+    const fehler = dat.loesche(s.id, pfad);
+    if (!fehler) db.protokolliere(wer(c.nutzer), 'Datei gelöscht', `#${s.id} · ${pfad}`);
+    zuDateien(c, s, pfad.split('/').slice(0, -1).join('/'),
+      fehler || `${pfad} gelöscht.`, !fehler);
+  }));
+
+  r.post('/panel/:id/neu', eigenerServer((c, s) => {
+    const pfad = dat.saeubere(c.daten.p);
+    const name = dat.nameOk(c.daten.name);
+    if (!name) return zuDateien(c, s, pfad, 'Der Dateiname geht so nicht.');
+    const ziel = pfad ? pfad + '/' + name : name;
+    const fehler = dat.schreib(s.id, ziel, c.daten.inhalt ?? '');
+    if (!fehler) db.protokolliere(wer(c.nutzer), 'Datei angelegt', `#${s.id} · ${ziel}`);
+    zuDateien(c, s, pfad, fehler || `${name} angelegt.`, !fehler);
+  }));
+
+  r.post('/panel/:id/ordner', eigenerServer((c, s) => {
+    const pfad = dat.saeubere(c.daten.p);
+    const name = dat.nameOk(c.daten.name);
+    if (!name) return zuDateien(c, s, pfad, 'Der Ordnername geht so nicht.');
+    const fehler = dat.neuerOrdner(s.id, pfad ? pfad + '/' + name : name);
+    zuDateien(c, s, pfad, fehler || `Ordner ${name} angelegt.`, !fehler);
+  }));
+
+  /**
+   * Datei hochladen - roher Body, kein Formular.
+   *
+   * Deshalb `postRoh`: der Handler bekommt die Anfrage ungelesen und
+   * leitet sie direkt auf die Platte weiter. Sonst muesste eine
+   * 55-MB-Jar erst komplett in den Arbeitsspeicher.
+   */
+  r.postRoh('/panel/:id/hochladen', eigenerServer(async (c, s) => {
+    const fehler = await dat.nimmDatei(s.id, c.url.searchParams.get('p'),
+      c.url.searchParams.get('name'), c.anfrage);
+    if (fehler) return jsonRaus(c, 400, { ok: false, fehler });
+    db.protokolliere(wer(c.nutzer), 'Datei hochgeladen',
+      `#${s.id} · ${c.url.searchParams.get('name')}`);
+    jsonRaus(c, 200, { ok: true });
+  }));
 
   // ------------------------------------------------------------ Verwaltung
   const nurAdmin = (fn) => (c) => {
@@ -194,7 +420,8 @@ export function baue() {
     const id = db.serverAnlegen({
       kundeId: Number(d.kundeId), name: d.name,
       subdomain: String(d.subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, ''),
-      paket: d.paket, software: d.software, notiz: d.notiz, zusatz: zusatzAus(d),
+      paket: d.paket, software: d.software, notiz: d.notiz,
+      pterodactyl: adresseOk(d.pterodactyl), zusatz: zusatzAus(d),
     });
     db.protokolliere(wer(c.nutzer), 'Server angelegt', `${d.name} (#${id})`);
     weiter(c.antwort, `/admin/server/${id}`);
@@ -215,26 +442,11 @@ export function baue() {
       subdomain: String(d.subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, ''),
       paket: PAKETE[d.paket] ? d.paket : undefined,
       software: d.software, status: d.status, notiz: d.notiz,
+      pterodactyl: adresseOk(d.pterodactyl),
     });
     db.zusatzSetzen(id, zusatzAus(d));
     db.protokolliere(wer(c.nutzer), 'Server geändert', `${d.name} (#${id})`);
     weiter(c.antwort, `/admin/server/${id}?ok=Gespeichert.`);
-  }));
-
-  r.post('/admin/server/:id/zahlung', nurAdmin(async (c) => {
-    const d = c.daten;
-    const id = Number(c.werte.id);
-    const betrag = Math.max(0, Number(d.betrag) || 0);
-    const tage = Math.max(1, Math.min(365, Math.floor(Number(d.tage) || 30)));
-    const zeitraum = db.zahlungEintragen({
-      serverId: id, betrag, tage, art: d.art,
-      kassiertVon: d.kassiertVon || c.nutzer.benutzername, notiz: d.notiz,
-    });
-    if (!zeitraum) return weiter(c.antwort, '/admin');
-    db.protokolliere(wer(c.nutzer), 'Zahlung eingetragen',
-      `Server #${id} · ${euro(betrag)} · ${zeitraum.von} → ${zeitraum.bis}`);
-    weiter(c.antwort, `/admin/server/${id}?ok=` + encodeURIComponent(
-      `${euro(betrag)} eingetragen, bezahlt bis ${zeitraum.bis}.`));
   }));
 
   r.post('/admin/server/:id/loeschen', nurAdmin((c) => {
@@ -278,7 +490,7 @@ export function baue() {
     db.protokolliere(wer(c.nutzer), 'Anfrage angenommen',
       `#${b.id} → Server #${serverId}`);
     weiter(c.antwort, `/admin/server/${serverId}?ok=` + encodeURIComponent(
-      'Server aus der Anfrage angelegt. Jetzt Bestellbogen drucken und Zahlung eintragen.'));
+      'Server aus der Anfrage angelegt. Jetzt den Bestellbogen ausdrucken.'));
   }));
 
   r.post('/admin/anfrage/:id/ablehnen', nurAdmin((c) => {
@@ -287,7 +499,6 @@ export function baue() {
     weiter(c.antwort, '/admin');
   }));
 
-  r.get('/admin/zahlungen', nurAdmin((c) => sende(c.antwort, adm.zahlungenSeite(c.nutzer))));
   r.get('/admin/protokoll', nurAdmin((c) => sende(c.antwort, adm.protokollSeite(c.nutzer))));
 
   // ------------------------------------------------------------ Dokumente
@@ -343,18 +554,28 @@ export function starte(port = 3000, datenbank = 'daten/portal.db') {
         return sende(antwort, fehlerSeite(nutzer, 'Diese Seite gibt es nicht.'), 404);
       }
 
-      // Jede Aenderung braucht das Zeichen der eigenen Sitzung.
+      // Jede Aenderung braucht das Zeichen aus dem eigenen Cookie.
       let gelesen = {};
       if (anfrage.method === 'POST') {
-        const daten = await formular(anfrage);
-        if (!csrfStimmt(csrf, daten.csrf)) {
-          return sende(antwort, fehlerSeite(nutzer,
-            'Das Formular ist abgelaufen. Lade die Seite neu und versuch es noch einmal.'), 400);
+        if (treffer.roh) {
+          // Beim Datei-Upload ist der Body die Datei - das Zeichen steht
+          // deshalb in der URL statt im Formular.
+          if (!csrfStimmt(csrf, url.searchParams.get('csrf'))) {
+            antwort.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            return antwort.end(JSON.stringify({ ok: false,
+              fehler: 'Die Seite ist abgelaufen. Lade sie neu.' }));
+          }
+        } else {
+          const daten = await formular(anfrage);
+          if (!csrfStimmt(csrf, daten.csrf)) {
+            return sende(antwort, fehlerSeite(nutzer,
+              'Das Formular ist abgelaufen. Lade die Seite neu und versuch es noch einmal.'), 400);
+          }
+          // Der Body ist verbraucht - die Handler bekommen ihn fertig gelesen
+          // ueber c.daten. Ein zweites formular() wuerde nur einen leeren
+          // Stream vorfinden und stillschweigend leere Felder liefern.
+          gelesen = daten;
         }
-        // Der Body ist verbraucht - die Handler bekommen ihn fertig gelesen
-        // ueber c.daten. Ein zweites formular() wuerde nur einen leeren
-        // Stream vorfinden und stillschweigend leere Felder liefern.
-        gelesen = daten;
       }
 
       await treffer.handler({ anfrage, antwort, url, werte: treffer.werte,
@@ -394,7 +615,34 @@ export function starte(port = 3000, datenbank = 'daten/portal.db') {
   server.listen(port, () => {
     console.log(`\n  🍋 Lemon Hosting Kundenportal`);
     console.log(`     läuft auf  http://localhost:${port}`);
-    console.log(`     Datenbank  ${datenbank}\n`);
+    console.log(`     Datenbank  ${datenbank}`);
+    console.log(`     Server in  ${prozess.wurzel()}\n`);
   });
+
+  /**
+   * Strg+C beendet nicht nur das Portal.
+   *
+   * An ihm haengen echte Minecraft-Server als Kindprozesse. Wuerde das
+   * Portal einfach weggehen, riesse es sie mit - mitten im Schreiben,
+   * mit allem was seit dem letzten Autosave passiert ist. Also erst
+   * "stop" an alle, warten, dann selbst gehen.
+   */
+  let gehtGerade = false;
+  const runterfahren = async (signal) => {
+    if (gehtGerade) {
+      console.log(`  Noch einmal ${signal} – dann eben sofort.`);
+      return process.exit(1);
+    }
+    gehtGerade = true;
+    server.close();
+    console.log('\n  Fahre die Minecraft-Server herunter … (nochmal Strg+C bricht ab)');
+    const haengen = await prozess.alleStoppen();
+    if (haengen) console.log(`  ${haengen} Server musste hart beendet werden.`);
+    console.log('  Fertig. Tschüss.');
+    process.exit(0);
+  };
+  process.on('SIGINT', () => runterfahren('SIGINT'));
+  process.on('SIGTERM', () => runterfahren('SIGTERM'));
+
   return server;
 }

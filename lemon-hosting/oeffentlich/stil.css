@@ -153,3 +153,44 @@ td.zahl, th.zahl { text-align: right; font-variant-numeric: tabular-nums; }
   main { padding: 0; max-width: none; }
   .druck { margin: 0; padding: 0; border-radius: 0; max-width: none; }
 }
+
+/* ---------------------------------------------------------- Konsole */
+/* Dunkler als der Rest der Seite: Die Konsole ist ein Terminal, kein
+   Textfeld. Feste Zeilenhöhe, damit Minecraft-Logs sauber untereinander
+   stehen. */
+.konsole {
+  background: #08080a; border: 1px solid var(--rand); border-radius: 11px;
+  padding: .9rem 1rem; height: 26rem; overflow-y: auto; overflow-x: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: .8rem; line-height: 1.55; white-space: pre;
+  color: #c8c8d0; scrollbar-width: thin;
+}
+.konsole .z { white-space: pre-wrap; word-break: break-word; }
+.konsole .panel   { color: var(--g2); }
+.konsole .eingabe { color: #6ea8fe; font-weight: 600; }
+.konsole .fehler,
+.konsole .schlimm { color: #ff9a94; }
+.konsole .warnung { color: #f0d08a; }
+
+.konsole::-webkit-scrollbar { width: 9px; height: 9px; }
+.konsole::-webkit-scrollbar-thumb { background: #2a2a32; border-radius: 99px; }
+
+/* ---------------------------------------------------------- Dateien */
+.ablage {
+  border: 2px dashed var(--rand); border-radius: var(--radius);
+  padding: 1.6rem; text-align: center; color: var(--leise);
+  transition: border-color .12s, background .12s;
+}
+.ablage.drueber { border-color: var(--g2); background: rgba(125,255,58,.05); }
+.ablage input[type=file] { display: none; }
+
+.pfadleiste { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+.pfadleiste a { text-decoration: none; color: var(--leise); }
+.pfadleiste a:hover { color: var(--text); }
+.pfadleiste a:last-child { color: var(--text); font-weight: 600; }
+
+td .name { display: flex; align-items: center; gap: .5rem; }
+td .name a { text-decoration: none; }
+td .name a:hover { text-decoration: underline; }
+
+.schlimm { color: var(--schlecht); }

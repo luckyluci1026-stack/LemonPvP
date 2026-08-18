@@ -138,14 +138,23 @@ export function csrfStimmt(ausCookie, ausFormular) {
 export class Router {
   constructor() { this.regeln = []; }
 
-  auf(methode, muster, handler) {
+  auf(methode, muster, handler, roh = false) {
     const teile = muster.split('/').filter(Boolean);
-    this.regeln.push({ methode, teile, handler });
+    this.regeln.push({ methode, teile, handler, roh });
     return this;
   }
 
   get(muster, handler) { return this.auf('GET', muster, handler); }
   post(muster, handler) { return this.auf('POST', muster, handler); }
+
+  /**
+   * POST, bei dem der Handler den Body selbst liest.
+   *
+   * Genau eine Route braucht das: der Datei-Upload. Dort ist der Body die
+   * Datei selbst und darf nicht vorher als Formular verfruehstueckt
+   * werden. Das CSRF-Zeichen steht bei solchen Routen in der URL.
+   */
+  postRoh(muster, handler) { return this.auf('POST', muster, handler, true); }
 
   finde(methode, pfad) {
     const teile = pfad.split('/').filter(Boolean);
@@ -158,7 +167,7 @@ export class Router {
         if (m.startsWith(':')) werte[m.slice(1)] = decodeURIComponent(teile[i]);
         else if (m !== teile[i]) { passt = false; break; }
       }
-      if (passt) return { handler: regel.handler, werte };
+      if (passt) return { handler: regel.handler, werte, roh: regel.roh };
     }
     return null;
   }

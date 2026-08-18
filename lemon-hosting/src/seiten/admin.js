@@ -1,14 +1,29 @@
 /**
  * Die Verwaltung.
  *
- * Der wichtigste Bildschirm ist die Uebersicht: Wer laeuft demnaechst ab,
- * wer ist schon ueberfaellig, was steht in der Archivfrist. Bei Prepaid
- * mit Bargeld ist genau das die Arbeit, alles andere ist Beiwerk.
+ * Der wichtigste Bildschirm ist die Uebersicht: was laeuft gerade, was
+ * ist neu angefragt, wer hat ueberhaupt einen Server. Bezahlt wird in
+ * der Schule von Hand - das Portal fuehrt darueber bewusst kein Konto.
  */
 import { esc } from '../web.js';
-import { seite, statusPunkt, restBalken, csrfFeld } from './layout.js';
-import { PAKETE, ZUSATZ, SOFTWARE, rechne, euro, ARCHIV_TAGE } from '../preise.js';
-import { tageBis, alleZahlungen, protokollListe } from '../db.js';
+import { seite, statusPunkt, csrfFeld } from './layout.js';
+import { PAKETE, ZUSATZ, SOFTWARE, rechne, euro } from '../preise.js';
+import { protokollListe } from '../db.js';
+import { status as prozessStatus } from '../panel.js';
+
+const LAUFTEXT = { laeuft: 'läuft', startet: 'startet …', stoppt: 'stoppt …',
+                   gestoppt: 'gestoppt' };
+const LAUFFARBE = { laeuft: 'aktiv', startet: 'archiviert', stoppt: 'archiviert',
+                    gestoppt: 'geloescht' };
+
+/** Wo laeuft der Server - bei uns oder in Pterodactyl? */
+const laufMarke = (s) => {
+  if (s.pterodactyl) return '<span class="marke-punkt aktiv">Pterodactyl</span>';
+  const z = prozessStatus(s.id);
+  return `<span class="marke-punkt ${LAUFFARBE[z.status] || 'geloescht'}">${
+    esc(LAUFTEXT[z.status] || z.status)}</span>${z.pid
+    ? `<div class="klein leise mono">PID ${z.pid}</div>` : ''}`;
+};
 
 export function uebersicht(nutzer, zeichen, server, kunden, offene) {
   const lebend = server.filter((s) => s.status !== 'geloescht');
@@ -16,27 +31,24 @@ export function uebersicht(nutzer, zeichen, server, kunden, offene) {
     .filter((s) => s.status === 'aktiv')
     .reduce((summe, s) => summe + rechne(s.paket, s.zusatz).proMonat, 0);
 
-  // Nach Dringlichkeit: ueberfaellig zuerst, dann was bald ablaeuft
-  const mitTagen = lebend.map((s) => ({ ...s, tage: tageBis(s.bezahlt_bis) }));
-  const dringend = mitTagen
-    .filter((s) => s.tage === null || s.tage <= 7)
-    .sort((a, b) => (a.tage ?? -999) - (b.tage ?? -999));
+  const anzahlLaufend = lebend.filter(
+    (s) => s.pterodactyl || prozessStatus(s.id).status !== 'gestoppt').length;
 
   const zeile = (s) => {
     const kunde = kunden.find((k) => k.id === s.kunde_id);
-    const frist = s.status === 'archiviert' && s.tage !== null
-      ? ARCHIV_TAGE + s.tage : null;
+    const aus = rechne(s.paket, s.zusatz).ausstattung;
     return `<tr>
       <td><a href="/admin/server/${s.id}"><strong>${esc(s.name)}</strong></a>
         <div class="klein leise">${kunde ? esc(kunde.vorname + ' ' + kunde.nachname).trim()
           || esc(kunde.benutzername) : '?'}${kunde?.klasse ? ' · ' + esc(kunde.klasse) : ''}</div></td>
-      <td>${PAKETE[s.paket]?.zeichen || ''} ${esc(PAKETE[s.paket]?.name || s.paket)}</td>
+      <td>${PAKETE[s.paket]?.zeichen || ''} ${esc(PAKETE[s.paket]?.name || s.paket)}
+        <div class="klein leise">${aus.ram} GB · ${aus.cores} Cores</div></td>
       <td>${statusPunkt(s.status)}</td>
-      <td style="min-width:150px">${restBalken(s.tage)}
-        ${frist !== null ? `<div class="klein" style="color:#f0d08a">
-          Löschung in ${Math.max(0, frist)} Tag${frist === 1 ? '' : 'en'}</div>` : ''}</td>
+      <td>${laufMarke(s)}</td>
       <td class="zahl">${euro(rechne(s.paket, s.zusatz).proMonat)}</td>
-      <td><a class="knopf klein stil2" href="/admin/server/${s.id}">Öffnen</a></td>
+      <td class="zahl reihe" style="justify-content:flex-end">
+        <a class="knopf klein" href="/panel/${s.id}">Panel</a>
+        <a class="knopf klein stil2" href="/admin/server/${s.id}">Bearbeiten</a></td>
     </tr>`;
   };
 
@@ -46,14 +58,14 @@ export function uebersicht(nutzer, zeichen, server, kunden, offene) {
       <div class="karte"><div class="klein leise">Server aktiv</div>
         <div class="preis zitrone" style="font-size:1.8rem">${
           lebend.filter((s) => s.status === 'aktiv').length}</div></div>
-      <div class="karte"><div class="klein leise">Archiviert</div>
-        <div class="preis" style="font-size:1.8rem;color:var(--warn)">${
-          lebend.filter((s) => s.status === 'archiviert').length}</div></div>
+      <div class="karte"><div class="klein leise">Läuft gerade</div>
+        <div class="preis" style="font-size:1.8rem;color:var(--gut)">${anzahlLaufend}</div>
+        <div class="klein leise">von ${lebend.length}</div></div>
       <div class="karte"><div class="klein leise">Kunden</div>
         <div class="preis" style="font-size:1.8rem">${kunden.length}</div></div>
       <div class="karte"><div class="klein leise">Laufende Einnahmen</div>
         <div class="preis zitrone" style="font-size:1.8rem">${euro(monatlich)}</div>
-        <div class="klein leise">pro Monat</div></div>
+        <div class="klein leise">pro Monat, wenn alle zahlen</div></div>
     </div>
 
     ${offene.length ? `<div class="karte abstand">
@@ -74,37 +86,30 @@ export function uebersicht(nutzer, zeichen, server, kunden, offene) {
         </tr>`).join('')}
       </table></div>` : ''}
 
-    ${dringend.length ? `<div class="karte abstand">
-      <h2>Braucht Aufmerksamkeit</h2>
-      <p class="klein leise">Abgelaufen, überfällig oder in den nächsten sieben Tagen fällig.</p>
-      <table class="abstand">
-        <tr><th>Server</th><th>Paket</th><th>Status</th><th>Bezahlt</th>
-            <th class="zahl">Monat</th><th></th></tr>
-        ${dringend.map(zeile).join('')}
-      </table></div>` : `<div class="hinweis info abstand">
-        Alles bezahlt — kein Server läuft in den nächsten sieben Tagen ab.</div>`}
-
     <div class="karte abstand">
       <div class="zwischen"><h2>Alle Server</h2>
         <div class="reihe">
           <a class="knopf klein" href="/admin/server/neu">Server anlegen</a>
           <a class="knopf klein stil2" href="/admin/kunden">Kunden</a>
-          <a class="knopf klein stil2" href="/admin/zahlungen">Zahlungen</a>
           <a class="knopf klein stil2" href="/admin/protokoll">Protokoll</a>
         </div></div>
       <table class="abstand">
-        <tr><th>Server</th><th>Paket</th><th>Status</th><th>Bezahlt</th>
+        <tr><th>Server</th><th>Paket</th><th>Status</th><th>Läuft</th>
             <th class="zahl">Monat</th><th></th></tr>
-        ${mitTagen.map(zeile).join('') || '<tr><td colspan="6" class="leise">Noch keine Server.</td></tr>'}
+        ${lebend.map(zeile).join('')
+          || '<tr><td colspan="6" class="leise">Noch keine Server.</td></tr>'}
       </table>
-    </div>` });
+    </div>
+
+    <p class="klein leise abstand">Bezahlt wird in der Schule, bar und gegen
+      Bestellbogen. Das Portal führt darüber keine Buchhaltung — es verwaltet
+      die Server, nicht das Geld.</p>` });
 }
 
 export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '') {
   const neu = !s;
   const zusatz = s?.zusatz || {};
   const ergebnis = s ? rechne(s.paket, zusatz) : null;
-  const tage = s ? tageBis(s.bezahlt_bis) : null;
 
   const gruppen = {};
   for (const z of Object.values(ZUSATZ)) (gruppen[z.gruppe] ??= []).push(z);
@@ -147,6 +152,12 @@ export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '') {
             <select name="status">${['aktiv', 'archiviert'].map((x) =>
               `<option value="${x}"${s?.status === x ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
         </div>
+        <div class="feld"><label>Pterodactyl-Adresse (optional)</label>
+          <input name="pterodactyl" class="mono" value="${esc(s?.pterodactyl || '')}"
+                 placeholder="https://panel.example.de/server/a1b2c3d4">
+          <p class="klein leise" style="margin-top:.3rem">Steht hier etwas, läuft
+            der Server in Pterodactyl. Das Portal verlinkt dann nur dorthin und
+            startet ihn nicht selbst.</p></div>
         <div class="feld"><label>Notiz (intern)</label>
           <textarea name="notiz" rows="2">${esc(s?.notiz || '')}</textarea></div>
 
@@ -171,32 +182,14 @@ export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '') {
       <div>
         ${neu ? '' : `
         <div class="karte">
-          <h2>Zahlung eintragen</h2>
-          <div class="klein leise">Bezahlt bis <strong>${esc(s.bezahlt_bis || '–')}</strong></div>
-          ${restBalken(tage)}
-          <form method="post" action="/admin/server/${s.id}/zahlung" class="abstand">
-            ${csrfFeld(zeichen)}
-            <div class="feld-reihe">
-              <div class="feld"><label>Betrag</label>
-                <input name="betrag" type="number" step="0.01" min="0"
-                       value="${ergebnis.proMonat.toFixed(2)}" required></div>
-              <div class="feld"><label>Für wie viele Tage</label>
-                <input name="tage" type="number" min="1" max="365" value="30" required></div>
-            </div>
-            <div class="feld-reihe">
-              <div class="feld"><label>Art</label>
-                <select name="art"><option>Bar</option><option>Überweisung</option>
-                  <option>Sonstige</option></select></div>
-              <div class="feld"><label>Kassiert von</label>
-                <input name="kassiertVon" value="${esc(nutzer.benutzername)}"></div>
-            </div>
-            <div class="feld"><label>Notiz</label><input name="notiz"></div>
-            <button class="knopf" style="width:100%;justify-content:center">
-              Zahlung eintragen</button>
-          </form>
-          <p class="klein leise abstand">Eine Verlängerung setzt am Ende des bereits
-            bezahlten Zeitraums an, nicht bei heute — so gehen bei verspäteter
-            Zahlung keine Tage verloren.</p>
+          <div class="zwischen"><h2>Panel</h2>${laufMarke(s)}</div>
+          <p class="klein leise abstand">Konsole, Start und Stopp, Dateien —
+            dieselbe Ansicht, die auch der Kunde sieht.</p>
+          <div class="reihe abstand">
+            <a class="knopf" href="/panel/${s.id}">Panel öffnen</a>
+            ${s.pterodactyl ? '' :
+              `<a class="knopf stil2" href="/panel/${s.id}/dateien">Dateien</a>`}
+          </div>
         </div>
 
         <div class="karte" style="margin-top:1rem">
@@ -330,7 +323,9 @@ export function kundeSeite(nutzer, zeichen, k, server, meldung = '') {
             ${server.map((s) => `<tr>
               <td><a href="/admin/server/${s.id}">${esc(s.name)}</a></td>
               <td>${statusPunkt(s.status)}</td>
-              <td class="zahl klein">${esc(s.bezahlt_bis || '–')}</td></tr>`).join('')}
+              <td>${laufMarke(s)}</td>
+              <td class="zahl"><a class="knopf klein stil2"
+                href="/panel/${s.id}">Panel</a></td></tr>`).join('')}
           </table>` : '<p class="leise klein abstand">Noch keine Server.</p>'}
         </div>
         <form method="post" action="/admin/kunde/${k.id}/passwort" class="karte"
@@ -414,38 +409,14 @@ export function anfrageSeite(nutzer, zeichen, b, kunden) {
     </div>` });
 }
 
-export function zahlungenSeite(nutzer) {
-  const liste = alleZahlungen(200);
-  const summe = liste.reduce((s, z) => s + z.betrag, 0);
-  return seite({ titel: 'Zahlungen', nutzer, hier: '/admin', inhalt: `
-    <a class="klein leise" href="/admin">← Verwaltung</a>
-    <h1 class="abstand">Zahlungen</h1>
-    <div class="karte abstand">
-      <div class="zwischen"><h2>Die letzten ${liste.length}</h2>
-        <div><span class="klein leise">Summe </span>
-          <strong class="zitrone">${euro(summe)}</strong></div></div>
-      <table class="abstand">
-        <tr><th>Erfasst</th><th>Server</th><th>Zeitraum</th><th>Art</th>
-            <th>Kassiert von</th><th class="zahl">Betrag</th></tr>
-        ${liste.map((z) => `<tr>
-          <td class="klein mono">${esc(z.erfasst_am.slice(0, 16).replace('T', ' '))}</td>
-          <td>${esc(z.servername)}<div class="klein leise">${esc(z.benutzername)}</div></td>
-          <td class="mono klein">${esc(z.von)} → ${esc(z.bis)}</td>
-          <td class="klein">${esc(z.art)}</td>
-          <td class="klein">${esc(z.kassiert_von || '–')}</td>
-          <td class="zahl">${euro(z.betrag)}</td></tr>`).join('')
-          || '<tr><td colspan="6" class="leise">Noch keine Zahlungen.</td></tr>'}
-      </table>
-    </div>` });
-}
-
 export function protokollSeite(nutzer) {
   const liste = protokollListe(200);
   return seite({ titel: 'Protokoll', nutzer, hier: '/admin', inhalt: `
     <a class="klein leise" href="/admin">← Verwaltung</a>
     <h1 class="abstand">Protokoll</h1>
-    <p class="leise">Jede Änderung an Servern, Zahlungen und Kunden landet hier —
-      damit später nachvollziehbar ist, wer wann was gemacht hat.</p>
+    <p class="leise">Jede Änderung an Servern und Kunden landet hier, dazu jeder
+      Start, Stopp und Konsolenbefehl — damit später nachvollziehbar ist,
+      wer wann was gemacht hat.</p>
     <div class="karte abstand"><table>
       <tr><th>Wann</th><th>Wer</th><th>Was</th><th>Details</th></tr>
       ${liste.map((p) => `<tr>

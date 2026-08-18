@@ -50,19 +50,5 @@ export function statusPunkt(status) {
   return `<span class="marke-punkt ${esc(status)}">${esc(text[status] || status)}</span>`;
 }
 
-/** Ein Balken, der zeigt, wie viel vom bezahlten Zeitraum noch da ist. */
-export function restBalken(tage) {
-  if (tage === null || tage === undefined) {
-    return '<div class="klein leise">noch keine Zahlung erfasst</div>';
-  }
-  const anteil = Math.max(0, Math.min(100, Math.round((tage / 30) * 100)));
-  const klasse = tage <= 0 ? 'aus' : tage <= 7 ? 'knapp' : '';
-  const text = tage > 0 ? `noch ${tage} Tag${tage === 1 ? '' : 'e'}`
-             : tage === 0 ? 'läuft heute ab'
-             : `seit ${-tage} Tag${tage === -1 ? '' : 'en'} überfällig`;
-  return `<div class="klein ${tage <= 7 ? 'leise' : 'leise'}">${text}</div>
-          <div class="balken ${klasse}"><i style="width:${anteil}%"></i></div>`;
-}
-
 export const csrfFeld = (zeichen) =>
   `<input type="hidden" name="csrf" value="${esc(zeichen)}">`;
