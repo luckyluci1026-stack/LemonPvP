@@ -52,6 +52,7 @@ const dat = await import('./src/dateien.js');
 const sich = await import('./src/sicherung.js');
 const kat = await import('./src/katalog.js');
 const docker = await import('./src/docker.js');
+const arten = await import('./src/arten.js');
 
 const port = Number(process.env.PORT) || 8390;
 
@@ -264,6 +265,18 @@ const daemon = createServer(async (anfrage, antwort) => {
       return json(antwort, ergebnis, ergebnis.fehler ? 400 : 200);
     }
 
+    // --------------------------------------------------------- Serverart
+    if (was === 'versionen') {
+      const d = await arten.versionen(url.searchParams.get('art'));
+      return json(antwort, d, d.fehler ? 502 : 200);
+    }
+
+    if (was === 'installiere') {
+      const d = await koerper(anfrage);
+      const ergebnis = await arten.installiere(id, d.art, d.version);
+      return json(antwort, ergebnis, ergebnis.fehler ? 400 : 200);
+    }
+
     // ------------------------------------------------------------- Plugins
     if (was === 'plugins') {
       const da = kat.installiert(id);
@@ -293,6 +306,8 @@ daemon.on('error', (fehler) => {
     : '  Der Daemon konnte nicht starten: ' + fehler.message);
   process.exit(1);
 });
+
+prozess.starteMessung();
 
 daemon.listen(port, () => {
   const d = docker.vorhanden();

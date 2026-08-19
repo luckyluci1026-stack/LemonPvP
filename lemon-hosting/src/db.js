@@ -62,6 +62,8 @@ function schema() {
       sicherung_um  TEXT NOT NULL DEFAULT '',
       docker_bild   TEXT NOT NULL DEFAULT '',
       knoten_id     INTEGER NOT NULL DEFAULT 0,
+      art           TEXT NOT NULL DEFAULT '',
+      mc_version    TEXT NOT NULL DEFAULT '',
       angelegt      TEXT NOT NULL,
       geloescht_am  TEXT,
       notiz         TEXT NOT NULL DEFAULT ''
@@ -133,7 +135,8 @@ function nachruesten() {
   if (!spalten.includes('pterodactyl')) {
     db.exec("ALTER TABLE server ADD COLUMN pterodactyl TEXT NOT NULL DEFAULT ''");
   }
-  for (const spalte of ['neustart_um', 'sicherung_um', 'docker_bild']) {
+  for (const spalte of ['neustart_um', 'sicherung_um', 'docker_bild',
+                        'art', 'mc_version']) {
     if (!spalten.includes(spalte)) {
       db.exec(`ALTER TABLE server ADD COLUMN ${spalte} TEXT NOT NULL DEFAULT ''`);
     }
@@ -355,7 +358,7 @@ export function alleServer(mitGeloeschten = false) {
 export function serverAendern(id, felder) {
   const erlaubt = ['name', 'subdomain', 'paket', 'software', 'status', 'port',
                    'pterodactyl', 'neustart_um', 'sicherung_um', 'docker_bild',
-                   'knoten_id', 'notiz'];
+                   'knoten_id', 'art', 'mc_version', 'notiz'];
   const setzen = gesetzte(erlaubt, felder);
   if (!setzen.length) return;
   db.prepare(`UPDATE server SET ${setzen.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`)

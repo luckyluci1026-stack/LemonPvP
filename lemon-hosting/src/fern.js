@@ -283,6 +283,22 @@ export async function plugin(knoten, server, datei, art) {
   });
 }
 
+// ---------------------------------------------------------------- Serverart
+
+export async function versionen(knoten, artId) {
+  return jsonRuf(knoten, `/versionen/0?art=${encodeURIComponent(artId)}`,
+    { frist: 25000 });
+}
+
+export async function installiereArt(knoten, server, artId, version) {
+  return jsonRuf(knoten, `/installiere/${server.id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ art: artId, version }),
+    frist: 600000,
+  });
+}
+
 // ------------------------------------------------------------------ Prueben
 
 /** Antwortet der Knoten - und stimmt das Zeichen? */

@@ -19,6 +19,7 @@ import * as prozess from './panel.js';
 import * as dat from './dateien.js';
 import * as sich from './sicherung.js';
 import * as kat from './katalog.js';
+import * as arten from './arten.js';
 import * as fern from './fern.js';
 
 export const istFern = (server) => Number(server.knoten_id) > 0;
@@ -151,6 +152,21 @@ export async function plugin(server, datei, art) {
   if (knoten) return fern.plugin(knoten, server, datei, art);
   return art === 'raus' ? kat.entferne(server.id, datei)
                         : kat.installiere(server.id, datei);
+}
+
+// ------------------------------------------------------------------ Serverart
+
+export async function versionen(server, artId) {
+  const knoten = knotenVon(server);
+  if (istFern(server) && !knoten) return { fehler: FEHLT };
+  return knoten ? fern.versionen(knoten, artId) : arten.versionen(artId);
+}
+
+export async function installiereArt(server, artId, version) {
+  const knoten = knotenVon(server);
+  if (istFern(server) && !knoten) return { fehler: FEHLT };
+  return knoten ? fern.installiereArt(knoten, server, artId, version)
+                : arten.installiere(server.id, artId, version);
 }
 
 /** Wie der Knoten heisst - fuer die Anzeige. */

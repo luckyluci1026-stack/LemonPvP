@@ -23,6 +23,7 @@ import { speicherMB, jarDa, eulaAngenommen, bildVon } from '../panel.js';
 import { vorhanden as dockerDa, bildDa } from '../docker.js';
 import { lesbareGroesse } from '../dateien.js';
 import { WIE_VIELE } from '../sicherung.js';
+import { artenListe } from '../arten.js';
 import { naechster } from '../zeitplan.js';
 
 const TEXTE = { laeuft: 'läuft', startet: 'startet …', stoppt: 'stoppt …',
@@ -124,7 +125,7 @@ export function fremdesPanel(nutzer, s, ziel) {
 
 export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
                       gut = false, sicherungen = [], plugins = [],
-                      knotenName = 'dieser Rechner') {
+                      knotenName = 'dieser Rechner', versionen = null) {
   const paket = PAKETE[s.paket];
   // Laeuft der Server gerade, zaehlt was tatsaechlich laeuft; sonst was
   // beim naechsten Start passieren wuerde.
@@ -150,10 +151,11 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
       starten. Sprich das Team an.</div>` : ''}
 
     ${!bereit ? `<div class="hinweis warn abstand">
-      <strong>Es fehlt noch die Serversoftware.</strong> Lade unter
-      <a href="/panel/${s.id}/dateien">Dateien</a> eine
-      <span class="mono">server.jar</span> hoch — zum Beispiel Paper von
-      papermc.io. Ohne die Datei kann nichts starten.</div>` : ''}
+      <strong>Es fehlt noch die Serversoftware.</strong> Wähl unten unter
+      <a href="#software">Serversoftware</a> eine Art und Version aus — das
+      Panel lädt sie selbst. Oder lade unter
+      <a href="/panel/${s.id}/dateien">Dateien</a> eine eigene
+      <span class="mono">server.jar</span> hoch.</div>` : ''}
     ${bereit && !eula ? `<div class="hinweis warn abstand">
       <form method="post" action="/panel/${s.id}/aktion" class="reihe">
         ${csrfFeld(zeichen)}
@@ -180,6 +182,20 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
         <strong id="laufzeit">${laufzeit(zustand.laufzeit)}</strong>
         <div class="klein leise" id="pid">${
           zustand.pid ? 'Prozess ' + zustand.pid : 'nicht gestartet'}</div></div>
+    </div>
+
+    <div class="gitter g3 abstand" id="verbrauch">
+      <div class="karte"><div class="klein leise">CPU-Auslastung</div>
+        <strong id="cpu">–</strong>
+        <div class="klein leise">von ${aus.cores} Cores</div>
+        <div class="balken"><i id="cpuBalken" style="width:0"></i></div></div>
+      <div class="karte"><div class="klein leise">Arbeitsspeicher in Benutzung</div>
+        <strong id="ram">–</strong>
+        <div class="klein leise">von ${(speicherMB(s) / 1024).toFixed(2)} GB</div>
+        <div class="balken"><i id="ramBalken" style="width:0"></i></div></div>
+      <div class="karte"><div class="klein leise">Netzwerk</div>
+        <strong id="netz">–</strong>
+        <div class="klein leise" id="netzHinweis">seit dem Start</div></div>
     </div>
 
     <div class="karte abstand">
@@ -245,6 +261,52 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
            dem Image <span class="mono">${esc(bildVon(s))}</span> wäre die
            Grenze echt.`}
     </div>`}
+
+    <div class="karte abstand" id="software">
+      <div class="zwischen">
+        <h2>Serversoftware</h2>
+        ${s.art ? `<span class="klein leise">${
+          esc(artenListe().find((a) => a.id === s.art)?.name || s.art)}${
+          s.mc_version ? ' ' + esc(s.mc_version) : ''} installiert</span>` : ''}
+      </div>
+      <p class="klein leise" style="margin-top:.5rem">
+        Art und Version auswählen, das Panel holt die
+        <span class="mono">server.jar</span> beim Hersteller. Die alte wird erst
+        ersetzt, wenn die neue vollständig da ist.
+        ${bereit ? ' Nach dem Wechsel einmal <strong>Neustart</strong> drücken.' : ''}</p>
+
+      <form method="post" action="/panel/${s.id}/software" class="abstand">
+        ${csrfFeld(zeichen)}
+        <div class="feld-reihe">
+          <div class="feld"><label>Art</label>
+            <select name="art" onchange="this.form.submit()">
+              <option value="">— auswählen —</option>
+              ${artenListe().map((a) => `<option value="${a.id}"${
+                s.art === a.id ? ' selected' : ''}>${esc(a.name)}${
+                a.empfohlen ? ' (empfohlen)' : ''}</option>`).join('')}
+            </select>
+            ${s.art ? `<p class="klein leise" style="margin-top:.3rem">${
+              esc(artenListe().find((a) => a.id === s.art)?.beschreibung || '')}</p>` : ''}
+          </div>
+          <div class="feld"><label>Version</label>
+            ${versionen?.liste?.length ? `<select name="version">
+              ${versionen.liste.slice(0, 60).map((v) => `<option${
+                s.mc_version === v ? ' selected' : ''}>${esc(v)}</option>`).join('')}
+            </select>` : `<input name="version" placeholder="1.21.11"
+              value="${esc(s.mc_version || '')}">`}
+            ${versionen?.fehler ? `<p class="klein leise" style="margin-top:.3rem">${
+              esc(versionen.fehler)} Du kannst die Version von Hand eintippen.</p>`
+              : versionen?.veraltet ? '<p class="klein leise" style="margin-top:.3rem">'
+                + 'Ältere Liste – der Hersteller war gerade nicht erreichbar.</p>' : ''}
+          </div>
+        </div>
+        <button name="was" value="installieren" class="knopf"
+          ${s.art ? '' : 'disabled'}>${bereit ? 'Neu installieren' : 'Installieren'}</button>
+        ${bereit ? `<span class="klein leise" style="margin-left:.6rem">
+          Ersetzt nur die <span class="mono">server.jar</span> – Welt, Plugins
+          und Einstellungen bleiben.</span>` : ''}
+      </form>
+    </div>
 
     <div class="karte abstand">
       <div class="zwischen">
@@ -345,7 +407,9 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
       </table>` : '<p class="leise klein abstand">Noch kein Backup vorhanden.</p>'}
     </div>
 
-    <script>window.SERVER_ID = ${s.id};</script>
+    <script>window.SERVER_ID = ${s.id};
+      window.SERVER_CORES = ${aus.cores};
+      window.SERVER_RAM_MB = ${speicherMB(s)};</script>
     <script src="/konsole.js"></script>` });
 }
 

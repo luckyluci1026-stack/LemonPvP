@@ -29,6 +29,7 @@ import * as plan from './zeitplan.js';
 import * as kat from './katalog.js';
 import * as docker from './docker.js';
 import * as wo from './wo.js';
+import * as arten from './arten.js';
 import * as fern from './fern.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
@@ -299,12 +300,13 @@ export function baue() {
     // Die drei Abfragen gehen bei einem entfernten Server ueber die
     // Leitung - also nebeneinander statt hintereinander, sonst wartet
     // die Seite dreimal.
-    const [plugins, sicherungen, belegt] = await Promise.all([
+    const [plugins, sicherungen, belegt, versionen] = await Promise.all([
       wo.plugins(s), wo.sicherungen(s), wo.belegung(s),
+      s.art ? wo.versionen(s, s.art) : Promise.resolve(null),
     ]);
     sende(c.antwort, pnl.panel(c.nutzer, s, wo.zustand(s), c.csrf,
       belegt, gut || c.url.searchParams.get('m') || '', Boolean(gut),
-      sicherungen, plugins, wo.knotenName(s)));
+      sicherungen, plugins, wo.knotenName(s), versionen));
   }));
 
   r.post('/panel/:id/aktion', eigenerServer(async (c, s) => {
@@ -485,6 +487,36 @@ export function baue() {
   // -------------------------------------------------- Zeitplan und Backups
   const zumPanelGut = (c, s, meldung) => weiter(c.antwort,
     `/panel/${s.id}?ok=` + encodeURIComponent(meldung));
+
+  /**
+   * Serverart auswaehlen oder installieren.
+   *
+   * Das Formular schickt sich beim Wechsel der Art selbst ab - dann steht
+   * nur die neue Art drin und es wird gespeichert, damit die
+   * Versionsliste dazu geladen werden kann. Erst der Knopf installiert
+   * wirklich.
+   */
+  r.post('/panel/:id/software', eigenerServer(async (c, s) => {
+    const art = arten.artOk(c.daten.art);
+    if (!art) {
+      db.serverAendern(s.id, { art: '' });
+      return zumPanel(c, s);
+    }
+    if (art !== s.art) db.serverAendern(s.id, { art });
+    if (c.daten.was !== 'installieren') return zumPanel(c, s);
+
+    const version = arten.versionOk(c.daten.version);
+    if (!version) return zumPanel(c, s, 'Bitte eine Version auswählen.');
+
+    const ergebnis = await wo.installiereArt(s, art, version);
+    if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
+    db.serverAendern(s.id, { art, mc_version: version });
+    db.protokolliere(wer(c.nutzer), 'Serversoftware installiert',
+      `#${s.id} · ${ergebnis.art} ${ergebnis.version}`);
+    zumPanelGut(c, s, `${ergebnis.art} ${ergebnis.version} installiert`
+      + ` (${Math.round(ergebnis.groesse / 1024 / 1024)} MB).`
+      + (prozess.laeuft(s.id) ? ' Wirkt beim nächsten Neustart.' : ''));
+  }));
 
   r.post('/panel/:id/plugin/installieren', eigenerServer(async (c, s) => {
     const ergebnis = await wo.plugin(s, c.daten.datei, 'rein');
@@ -925,6 +957,8 @@ export function starte(port = 3000, datenbank = 'daten/portal.db') {
   plan.starteUhr();
   // Und der Ticker, der die anderen Maschinen nach ihrem Zustand fragt.
   fern.starteTicker();
+  // Der Messtakt fuer CPU und Arbeitsspeicher der eigenen Server.
+  prozess.starteMessung();
 
   return server;
 }

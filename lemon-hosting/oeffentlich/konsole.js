@@ -10,7 +10,8 @@
  *
  *   verlauf  alle gepufferten Zeilen auf einmal (beim Verbinden)
  *   zeile    eine neue Zeile
- *   status   laeuft / startet / stoppt / gestoppt, alle paar Sekunden
+ *   status   laeuft / startet / stoppt / gestoppt, dazu Spieler und
+ *            Verbrauch - alle paar Sekunden
  *
  * Weil "verlauf" bei jedem Verbinden kommt, sortiert sich ein
  * Verbindungsabbruch von selbst: EventSource baut neu auf, wir werfen den
@@ -82,6 +83,64 @@ function laufzeit(sekunden) {
   return h ? `${h} h ${m} min` : `${m} min ${sekunden % 60} s`;
 }
 
+/** 1536 -> "1,5 GB", 820 -> "820 MB" */
+function ramText(mb) {
+  return mb >= 1024 ? (mb / 1024).toFixed(2).replace('.', ',') + ' GB' : mb + ' MB';
+}
+
+function bytes(n) {
+  if (n >= 1024 ** 3) return (n / 1024 ** 3).toFixed(1).replace('.', ',') + ' GB';
+  if (n >= 1024 ** 2) return (n / 1024 ** 2).toFixed(1).replace('.', ',') + ' MB';
+  if (n >= 1024) return Math.round(n / 1024) + ' KB';
+  return n + ' B';
+}
+
+/**
+ * CPU und Arbeitsspeicher, so wie Pterodactyl sie oben zeigt.
+ *
+ * Ohne Messwerte bleiben Striche stehen statt Nullen - "0 %" waere eine
+ * Behauptung, "–" ist die Wahrheit.
+ */
+function zeigeVerbrauch(v, kerne, ramGrenzeMB) {
+  const setz = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+  const balken = (id, anteil) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.width = Math.max(0, Math.min(100, anteil)).toFixed(1) + '%';
+    el.parentElement.className = 'balken'
+      + (anteil > 90 ? ' aus' : anteil > 75 ? ' knapp' : '');
+  };
+
+  if (!v) {
+    setz('cpu', '–'); setz('ram', '–'); setz('netz', '–');
+    balken('cpuBalken', 0); balken('ramBalken', 0);
+    return;
+  }
+
+  // docker stats zaehlt 100 % je Kern - bei 1,25 Kernen sind also 125 %
+  // das Maximum. Auf die gebuchten Kerne umgerechnet ist die Zahl das,
+  // was man erwartet.
+  const cpuAnteil = kerne > 0 ? (v.cpu / (kerne * 100)) * 100 : v.cpu;
+  setz('cpu', v.cpu.toFixed(1).replace('.', ',') + ' %');
+  balken('cpuBalken', cpuAnteil);
+
+  setz('ram', ramText(v.ramMB));
+  balken('ramBalken', ramGrenzeMB > 0 ? (v.ramMB / ramGrenzeMB) * 100 : 0);
+
+  if (v.netEin || v.netAus) {
+    setz('netz', `↓ ${bytes(v.netEin)}  ↑ ${bytes(v.netAus)}`);
+  } else {
+    setz('netz', v.quelle === 'proc' ? 'nicht gemessen' : '↓ 0 B  ↑ 0 B');
+    const hinweis = document.getElementById('netzHinweis');
+    if (hinweis && v.quelle === 'proc') {
+      hinweis.textContent = 'nur im Container messbar';
+    }
+  }
+}
+
 function zeigeStatus(z) {
   if (marke) {
     marke.textContent = TEXTE[z.status] || z.status;
@@ -94,6 +153,7 @@ function zeigeStatus(z) {
   anzeige('laufzeit', laufzeit(z.laufzeit));
   anzeige('pid', z.pid ? 'Prozess ' + z.pid : 'nicht gestartet');
   anzeige('spielerzahl', (z.spieler || []).length);
+  zeigeVerbrauch(z.verbrauch, window.SERVER_CORES, window.SERVER_RAM_MB);
 
   // Namen als einzelne Elemente, nicht als HTML-Text: Ein Spielername
   // kommt vom Minecraft-Server, und der bekommt ihn vom Spieler.

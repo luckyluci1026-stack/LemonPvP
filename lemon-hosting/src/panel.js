@@ -27,6 +27,7 @@ import { mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { rechne } from './preise.js';
 import * as docker from './docker.js';
+import * as messung from './messung.js';
 
 /** serverId -> laufender Prozess samt Konsole */
 const laufend = new Map();
@@ -124,8 +125,21 @@ export function status(serverId) {
     laufzeit: l.gestartet ? Math.floor((Date.now() - l.gestartet) / 1000) : 0,
     spieler: [...l.spieler].sort((a, b) => a.localeCompare(b)),
     motor: l.motor,
+    verbrauch: messung.messung(serverId),
   };
 }
+
+/** Was gerade laeuft - fuer den Messtakt. */
+export function laufende() {
+  const raus = [];
+  for (const [id, l] of laufend) {
+    if (l.prozess) raus.push({ id, pid: l.prozess.pid, motor: l.motor });
+  }
+  return raus;
+}
+
+/** Den Messtakt anwerfen. Wird vom Portal und vom Daemon gerufen. */
+export const starteMessung = () => messung.starteTicker(laufende);
 
 export const laeuft = (serverId) => Boolean(laufend.get(serverId)?.prozess);
 
