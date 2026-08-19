@@ -1124,6 +1124,12 @@ export function baue() {
     const zielName = ziel ? db.knoten(ziel)?.name : 'diesen Rechner';
     db.protokolliere(wer(c.nutzer), 'Server umgezogen',
       `${s.name} (#${id}) → ${zielName}`, id);
+    if (e.leer) {
+      return weiter(c.antwort, `/admin/server/${id}?ok=` + encodeURIComponent(
+        `Umgezogen auf ${zielName}. Im Serverordner lag noch nichts – es ist `
+        + 'also nur der Eintrag umgezogen, kopiert wurde nichts.'
+        + (e.portGeaendert ? ` Der Port war drüben belegt, neuer Port: ${e.port}.` : '')));
+    }
     weiter(c.antwort, `/admin/server/${id}?ok=` + encodeURIComponent(
       `Umgezogen auf ${zielName}: ${e.entpackt} Dateien`
       + (e.uebersprungen ? `, ${e.uebersprungen} übersprungen` : '')

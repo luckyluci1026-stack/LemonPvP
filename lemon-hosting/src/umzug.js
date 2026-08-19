@@ -38,6 +38,7 @@ import * as dat from './dateien.js';
 import * as fern from './fern.js';
 import * as wo from './wo.js';
 import { packe, entpacke, sammle } from './zip.js';
+import { LEER } from './sicherung.js';
 
 /**
  * Was Node sagt, in etwas uebersetzen, das weiterhilft.
@@ -69,7 +70,12 @@ async function packeEin(server, arbeitsordner) {
   if (!wo.istFern(server)) {
     const quelle = prozess.ordnerVon(server.id);
     const dateien = sammle(quelle);
-    if (!dateien.length) return { fehler: 'Im Serverordner liegt nichts.' };
+    // Ein leerer Ordner ist kein Fehler, sondern der Normalfall bei
+    // einem Server, den noch niemand gestartet hat. Dann zieht eben nur
+    // der Eintrag um - sonst waere ausgerechnet der Fall, in dem man
+    // sich beim Anlegen vertan hat, der einzige, den die Karte nicht
+    // kann.
+    if (!dateien.length) return { leer: true };
     const fehler = packe(quelle, dateien, ziel);
     return fehler ? { fehler } : { pfad: ziel, dateien: dateien.length };
   }
@@ -78,6 +84,7 @@ async function packeEin(server, arbeitsordner) {
   if (!knoten) return { fehler: 'Der Knoten dieses Servers ist nicht eingetragen.' };
 
   const gepackt = await fern.sicherungAnlegen(knoten, server);
+  if (gepackt.fehler === LEER) return { leer: true };
   if (gepackt.fehler) return { fehler: 'Auf der alten Maschine: ' + gepackt.fehler };
 
   try {
@@ -157,9 +164,11 @@ export async function umziehen(server, zielKnotenId) {
   try {
     const paket = await packeEin(server, arbeit);
     if (paket.fehler) return paket;
-    const groesse = statSync(paket.pfad).size;
 
-    const ausgepackt = await packeAus(server.id, nach, paket.pfad);
+    const groesse = paket.leer ? 0 : statSync(paket.pfad).size;
+    const ausgepackt = paket.leer
+      ? { entpackt: 0 }
+      : await packeAus(server.id, nach, paket.pfad);
     if (ausgepackt.fehler) return ausgepackt;
 
     // Erst jetzt die Datenbank: Bis hierher zeigt der Server noch auf die
@@ -187,6 +196,7 @@ export async function umziehen(server, zielKnotenId) {
     return {
       entpackt: ausgepackt.entpackt ?? paket.dateien,
       uebersprungen: ausgepackt.uebersprungen || 0,
+      leer: Boolean(paket.leer),
       port,
       portGeaendert: port !== server.port,
       streit,

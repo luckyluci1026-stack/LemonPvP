@@ -94,6 +94,17 @@ a = await s('/admin/server/neu',
 const id = Number((a.ort || '').match(/server\/(\d+)/)?.[1]);
 ok('Server hier angelegt', Number.isInteger(id), '#' + id);
 
+// Ein frisch angelegter Server hat noch keine einzige Datei. Genau der
+// Fall, in dem man sich beim Anlegen in der Maschine vertan hat - der
+// darf nicht der einzige sein, den die Karte nicht kann.
+a = await s(`/admin/server/${id}/umzug`, { zielKnotenId: knotenNr });
+ok('Ein leerer Server zieht auch um', meldung(a).includes('lag noch nichts'),
+   meldung(a));
+a = await h(`/admin/server/${id}`);
+ok('Und liegt danach wirklich drüben', a.text.includes('läuft auf: Umzugsknoten'));
+a = await s(`/admin/server/${id}/umzug`, { zielKnotenId: '0' });
+ok('Zurück geht er genauso', meldung(a).includes('lag noch nichts'), meldung(a));
+
 const hierOrdner = join(HIER, String(id));
 mkdirSync(join(hierOrdner, 'welt', 'region'), { recursive: true });
 writeFileSync(join(hierOrdner, 'server.properties'), 'motd=Vor dem Umzug\n');

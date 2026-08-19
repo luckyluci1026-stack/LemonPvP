@@ -761,7 +761,7 @@ Person.
 
 ## Test
 
-Zehn Reihen, zusammen **402 Prüfungen**. Alle auf einmal:
+Zehn Reihen, zusammen **405 Prüfungen**. Alle auf einmal:
 
 ```bash
 ERSATZ_JAR=/pfad/zu/server.jar test/alles.sh

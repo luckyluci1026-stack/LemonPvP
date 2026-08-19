@@ -24,6 +24,18 @@ import { innerhalb, belegungVergessen, lesbareGroesse } from './dateien.js';
 /** Wie viele Backups je Server aufgehoben werden. */
 export const WIE_VIELE = 5;
 
+/**
+ * Die Meldung fuer einen leeren Serverordner - als Konstante, weil der
+ * Umzug sie wiedererkennen muss.
+ *
+ * Ein leerer Ordner ist naemlich kein Fehler: Bei einem gerade
+ * angelegten Server ist da schlicht noch nichts, und dann gibt es auch
+ * nichts umzuziehen. Nur unterscheiden koennen muss man das von "die
+ * Maschine ist ausgefallen" - und dafuer taugt kein zusammengesetzter
+ * Text, den jemand spaeter umformuliert.
+ */
+export const LEER = 'Im Serverordner liegt noch nichts.';
+
 export function backupOrdner(serverId) {
   const pfad = join(resolve(serverWurzel(), '..'), 'sicherungen', String(serverId));
   mkdirSync(pfad, { recursive: true });
@@ -113,7 +125,7 @@ export async function anlegen(serverId) {
   const lief = await welteSpeichern(serverId);
   const quelle = ordnerVon(serverId);
   const dateien = sammle(quelle);
-  if (!dateien.length) return { fehler: 'Im Serverordner liegt noch nichts.' };
+  if (!dateien.length) return { fehler: LEER };
 
   const ziel = join(backupOrdner(serverId), neuerName(serverId));
   const fehler = packe(quelle, dateien, ziel);

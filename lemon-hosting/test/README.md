@@ -1,6 +1,6 @@
 # Test
 
-Zehn Reihen, zusammen 402 Prüfungen. Alle auf einmal:
+Zehn Reihen, zusammen 405 Prüfungen. Alle auf einmal:
 
 ```
 ERSATZ_JAR=/pfad/zu/server.jar test/alles.sh
