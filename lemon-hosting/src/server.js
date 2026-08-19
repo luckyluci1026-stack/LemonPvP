@@ -33,6 +33,7 @@ import * as arten from './arten.js';
 import * as sb from './start.js';
 import * as api from './api.js';
 import * as fern from './fern.js';
+import * as umzug from './umzug.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
 import * as adm from './seiten/admin.js';
@@ -905,6 +906,39 @@ export function baue() {
     db.zusatzSetzen(id, zusatzAus(d));
     db.protokolliere(wer(c.nutzer), 'Server geändert', `${d.name} (#${id})`);
     weiter(c.antwort, `/admin/server/${id}?ok=Gespeichert.`);
+  }));
+
+  /**
+   * Einen Server auf eine andere Maschine umziehen.
+   *
+   * Die Arbeit steckt in umzug.js; hier wird nur geprueft, protokolliert
+   * und danach in Worten gesagt, was passiert ist - vor allem, wo die
+   * alten Dateien liegengeblieben sind.
+   */
+  r.post('/admin/server/:id/umzug', nurAdmin(async (c) => {
+    const id = Number(c.werte.id);
+    const s = db.server(id);
+    if (!s) return sende(c.antwort, fehlerSeite(c.nutzer, 'Server nicht gefunden.'), 404);
+
+    const ziel = knotenOk(c.daten.zielKnotenId);
+    const e = await umzug.umziehen(s, ziel);
+    if (e.fehler) {
+      return weiter(c.antwort, `/admin/server/${id}?ok=` + encodeURIComponent(e.fehler));
+    }
+
+    const zielName = ziel ? db.knoten(ziel)?.name : 'diesen Rechner';
+    db.protokolliere(wer(c.nutzer), 'Server umgezogen',
+      `${s.name} (#${id}) → ${zielName}`, id);
+    weiter(c.antwort, `/admin/server/${id}?ok=` + encodeURIComponent(
+      `Umgezogen auf ${zielName}: ${e.entpackt} Dateien`
+      + (e.uebersprungen ? `, ${e.uebersprungen} übersprungen` : '')
+      + (e.portGeaendert ? `. Der Port war drüben belegt, neuer Port: ${e.port}` : '')
+      + (e.streit?.length ? `. Achtung: ${e.streit.join(', ')} ist auf `
+          + `${zielName} schon vergeben – die weiteren Ports musst du von Hand `
+          + 'ändern, sonst startet der Container nicht' : '')
+      + (e.sicherung ? `. Die Sicherheitskopie ${e.sicherung} liegt noch auf der alten Maschine` : '')
+      + `. Die alten Dateien bleiben liegen (${umzug.alteStelle(s)}) – `
+      + 'lösch sie erst, wenn drüben alles läuft.'));
   }));
 
   r.post('/admin/server/:id/loeschen', nurAdmin((c) => {

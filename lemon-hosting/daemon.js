@@ -42,10 +42,12 @@ process.emitWarning = (warnung, ...rest) => {
 };
 
 const { createServer } = await import('node:http');
-const { createReadStream, statSync, mkdirSync, existsSync,
-        readFileSync, writeFileSync } = await import('node:fs');
+const { createReadStream, createWriteStream, statSync, mkdirSync, mkdtempSync,
+        rmSync, existsSync, readFileSync, writeFileSync } = await import('node:fs');
+const { pipeline } = await import('node:stream/promises');
 const { randomBytes, timingSafeEqual } = await import('node:crypto');
 const { join, basename } = await import('node:path');
+const { tmpdir } = await import('node:os');
 
 const prozess = await import('./src/panel.js');
 const dat = await import('./src/dateien.js');
@@ -53,6 +55,7 @@ const sich = await import('./src/sicherung.js');
 const kat = await import('./src/katalog.js');
 const docker = await import('./src/docker.js');
 const arten = await import('./src/arten.js');
+const { entpacke } = await import('./src/zip.js');
 
 const port = Number(process.env.PORT) || 8390;
 
@@ -263,6 +266,37 @@ const daemon = createServer(async (anfrage, antwort) => {
       const d = await koerper(anfrage);
       const ergebnis = sich.zurueckspielen(id, d.f);
       return json(antwort, ergebnis, ergebnis.fehler ? 400 : 200);
+    }
+
+    // --------------------------------------------------------------- Umzug
+    /**
+     * Ein Paket vom Portal entgegennehmen und auspacken.
+     *
+     * Es kommt als roher Body, nicht als JSON: Eine Welt von ein paar
+     * hundert Megabyte will man nicht als Text durch den Arbeitsspeicher
+     * schieben. Erst auf die Platte, dann auspacken.
+     *
+     * Ausgepackt wird durch denselben Einsperr-Test wie beim
+     * Zurueckspielen eines Backups - der Entpacker entscheidet nie
+     * selbst, wohin etwas darf.
+     */
+    if (was === 'umzug' && anfrage.method === 'POST') {
+      // Laeuft hier schon einer mit dieser Nummer, ist etwas
+      // durcheinander - dann lieber gar nichts anfassen.
+      if (prozess.laeuft(id)) {
+        return json(antwort, { fehler: 'Hier läuft schon ein Server mit dieser Nummer.' }, 409);
+      }
+      const arbeit = mkdtempSync(join(tmpdir(), 'lemon-umzug-'));
+      const paket = join(arbeit, 'paket.zip');
+      try {
+        await pipeline(anfrage, createWriteStream(paket));
+        const ergebnis = entpacke(paket, (eintrag) => dat.innerhalb(id, eintrag));
+        if (typeof ergebnis === 'string') return json(antwort, { fehler: ergebnis }, 400);
+        dat.belegungVergessen(id);
+        return json(antwort, ergebnis);
+      } finally {
+        rmSync(arbeit, { recursive: true, force: true });
+      }
     }
 
     // --------------------------------------------------------- Serverart

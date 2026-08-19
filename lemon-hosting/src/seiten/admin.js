@@ -112,6 +112,55 @@ export function uebersicht(nutzer, zeichen, server, kunden, offene) {
       die Server, nicht das Geld.</p>` });
 }
 
+/**
+ * Der Umzug einer Maschine auf eine andere.
+ *
+ * Bewusst als eigene Karte und nicht als Feld im Formular oben: Dort
+ * steht schon ein Auswahlfeld "Laeuft auf", das nur den Eintrag in der
+ * Datenbank aendert - es verschiebt keine einzige Datei. Beides in einem
+ * Formular waere die sicherste Art, aus Versehen das Falsche zu tun.
+ */
+function umzugKarte(s, zeichen, knoten) {
+  if (s.pterodactyl) {
+    return `<p class="klein leise">Dieser Server läuft in Pterodactyl –
+      umgezogen wird er dort.</p>`;
+  }
+  if (!knoten.length) {
+    return `<p class="klein leise">Es gibt nur diesen Rechner. Weitere Maschinen
+      trägst du unter <a href="/admin/knoten">Knoten</a> ein; danach lassen sich
+      Server zwischen ihnen verschieben.</p>`;
+  }
+
+  const z = prozessStatus(s);
+  const ziele = [{ id: 0, name: 'diesen Rechner' },
+                 ...knoten.map((k) => ({ id: k.id, name: k.name }))]
+    .filter((k) => k.id !== (Number(s.knoten_id) || 0));
+
+  return `
+    <p class="klein leise">Einpacken, übertragen, drüben auspacken – und erst
+      danach im Portal umstellen. Geht unterwegs etwas schief, bleibt der Server
+      da, wo er ist.</p>
+    ${z.status !== 'gestoppt' ? `
+      <div class="hinweis abstand">${z.status === 'unbekannt'
+        ? `${esc(knotenName(s))} meldet sich gerade nicht – solange weiß niemand,
+           ob der Server dort noch läuft.`
+        : 'Der Server läuft. Stopp ihn im Panel, bevor er umzieht – Dateien unter '
+          + 'einem laufenden Minecraft wegzukopieren endet in einer kaputten Welt.'}
+      </div>` : `
+      <form method="post" action="/admin/server/${s.id}/umzug" class="abstand"
+            onsubmit="this.querySelector('button').disabled=true;
+                      this.querySelector('button').textContent='Zieht um …'">
+        ${csrfFeld(zeichen)}
+        <div class="feld"><label>Neue Maschine</label>
+          <select name="zielKnotenId">
+            ${ziele.map((k) => `<option value="${k.id}">${esc(k.name)}</option>`).join('')}
+          </select></div>
+        <button class="knopf klein abstand">Jetzt umziehen</button>
+      </form>
+      <p class="klein leise">Die alten Dateien bleiben liegen. Löschen kannst du
+        sie selbst, wenn du gesehen hast, dass drüben alles läuft.</p>`}`;
+}
+
 export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '',
                                  knoten = []) {
   const neu = !s;
@@ -252,6 +301,11 @@ export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '',
             ${s.pterodactyl ? '' :
               `<a class="knopf stil2" href="/panel/${s.id}/dateien">Dateien</a>`}
           </div>
+        </div>
+
+        <div class="karte" style="margin-top:1rem">
+          <h2>Umziehen</h2>
+          ${umzugKarte(s, zeichen, knoten)}
         </div>
 
         <div class="karte" style="margin-top:1rem">
