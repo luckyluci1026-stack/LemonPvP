@@ -30,6 +30,7 @@ import * as kat from './katalog.js';
 import * as docker from './docker.js';
 import * as wo from './wo.js';
 import * as arten from './arten.js';
+import * as sb from './start.js';
 import * as fern from './fern.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
@@ -167,6 +168,34 @@ function portOk(roh) {
  * waere schon eine zweite Angabe, ein fuehrender Bindestrich ein
  * zusaetzliches Argument - beides gehoert hier nicht hin.
  */
+/**
+ * Die Startangaben aus dem Formular pruefen.
+ *
+ * Gibt entweder die Felder zurueck oder einen Text, der dem Admin sagt,
+ * was daran nicht geht. Ein stilles Verwerfen waere hier das
+ * Unangenehmste: Man aendert eine Flagge, es steht "Gespeichert." da,
+ * und beim naechsten Start laeuft trotzdem alles wie vorher.
+ */
+function startAus(d) {
+  const jar = String(d.jar_datei || '').trim();
+  if (jar && !sb.jarOk(jar)) {
+    return { fehler: `„${jar}" geht als Startdatei nicht – nur ein Dateiname `
+                   + 'im Serverordner, ohne Pfad.' };
+  }
+  const flaggen = sb.flaggenOk(d.start_flaggen);
+  if (flaggen.fehler) return { fehler: flaggen.fehler };
+  const befehl = sb.befehlOk(d.startbefehl);
+  if (befehl.fehler) return { fehler: befehl.fehler };
+  return {
+    jar_datei: jar,
+    // Leeres Feld heisst "keine Flaggen", nicht "Vorgaben" - dafuer gibt
+    // es NULL. Sonst koennte man die Flaggen nie ganz abschalten.
+    start_flaggen: d.start_flaggen === undefined ? undefined
+      : (String(d.start_flaggen).trim() === '' ? null : flaggen.flaggen),
+    startbefehl: befehl.befehl,
+  };
+}
+
 function bildOk(roh) {
   const text = String(roh || '').trim();
   if (!text) return '';
@@ -710,6 +739,10 @@ export function baue() {
       pterodactyl: adresseOk(d.pterodactyl), port: portOk(d.port),
       knotenId: knotenOk(d.knotenId), zusatz: zusatzAus(d),
     });
+    // Startangaben stehen erst nach dem Anlegen fest - der Datensatz
+    // muss dafuer schon existieren.
+    const start = startAus(d);
+    if (!start.fehler) db.serverAendern(id, start);
     db.protokolliere(wer(c.nutzer), 'Server angelegt', `${d.name} (#${id})`);
     weiter(c.antwort, `/admin/server/${id}`);
   }));
@@ -724,7 +757,12 @@ export function baue() {
   r.post('/admin/server/:id', nurAdmin(async (c) => {
     const d = c.daten;
     const id = Number(c.werte.id);
+    const start = startAus(d);
+    if (start.fehler) {
+      return weiter(c.antwort, `/admin/server/${id}?ok=` + encodeURIComponent(start.fehler));
+    }
     db.serverAendern(id, {
+      ...start,
       name: d.name,
       subdomain: String(d.subdomain || '').toLowerCase().replace(/[^a-z0-9-]/g, ''),
       paket: PAKETE[d.paket] ? d.paket : undefined,

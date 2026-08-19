@@ -181,10 +181,10 @@ und dass man aus dem Dateimanager nicht ausbrechen kann.
 Nutzungsregeln.
 
 **Für Kunden** – das **Panel**: Start, Stopp, Neustart, Live-Konsole mit
-Befehlseingabe, Dateiverwaltung mit Editor und Upload, Plugins aus dem Katalog
-installieren, Backups auf Knopfdruck, Zeitplan für Neustart und Sicherung,
-Spielerliste, Speicheranzeige. Dazu eine Übersicht, was gebucht ist und was
-es kostet.
+Befehlseingabe, **CPU- und Speicherverbrauch live**, Serversoftware per Klick
+installieren, Dateiverwaltung mit Editor und Upload, Plugins aus dem Katalog,
+Backups auf Knopfdruck, Zeitplan für Neustart und Sicherung, Spielerliste.
+Und den Server mit anderen **teilen**, ohne das Passwort weiterzugeben.
 
 **Für das Team** – eine Übersicht mit dem Laufstatus jedes Servers, Kunden-
 und Serververwaltung, ein Protokoll über alles, was passiert ist, und die
@@ -308,6 +308,67 @@ Abbruch.
 
 Er gehört deshalb **ins interne Netz oder hinter einen Reverse-Proxy mit
 HTTPS** — sonst geht das Zeichen im Klartext über die Leitung.
+
+## Serversoftware: auswählen statt hochladen
+
+Im Panel steht **Art** und **Version**, das Panel holt die `server.jar` beim
+Hersteller:
+
+| Art | woher |
+|---|---|
+| **Paper** | api.papermc.io – der Standard für Plugin-Server |
+| **Purpur** | api.purpurmc.org – Paper mit mehr Stellschrauben |
+| **Velocity** | api.papermc.io – der Proxy davor, kein Spielserver |
+| **Vanilla** | Mojang – ohne Plugins, dafür das Original |
+
+Beim Herunterladen gehen drei Dinge schief, und alle drei sind abgefangen:
+Eine **Fehlerseite statt der Jar** (unter 100 KB → die alte Datei bleibt heil),
+ein **Fehler des Herstellers**, und ein **Abbruch mittendrin** (erst `.teil`,
+dann umbenennen). Die Versionslisten kommen von den Herstellern, nicht aus dem
+Code — eine eingetragene Liste wäre nach zwei Monaten veraltet.
+
+Wer eine eigene Jar hat, lädt sie weiterhin unter *Dateien* hoch.
+
+## Startup: eigene Flaggen und Parameter
+
+Im Adminbereich steht bei jedem Server ein **Startup**-Abschnitt — Startdatei,
+Java-Flaggen, Startbefehl. Darunter die **Vorschau**, wie der Server wirklich
+gestartet wird. Leer lassen heißt: die eingebauten Vorgaben, es ändert sich
+also nichts, solange niemand etwas ändert.
+
+```
+java {{SPEICHER}} {{FLAGGEN}} -jar {{JAR}} nogui --port {{PORT}}
+```
+
+`{{SPEICHER}}` und `{{FLAGGEN}}` werden zu **mehreren** Argumenten,
+`{{JAR}}`, `{{PORT}}` und `{{RAM}}` zu genau **einem**. Der Unterschied ist
+nicht kosmetisch: Eine Jar namens `mein server.jar` wäre sonst beim Zerlegen
+wieder zweierlei geworden, und niemand hätte das Leerzeichen verdächtigt.
+
+### Es gibt keine Shell
+
+Der Befehl wird selbst zerlegt und direkt gestartet — nie über `sh -c`. Ein
+`; rm -rf /` im Flaggenfeld wird damit zu einem Argument namens `;`, nicht zu
+einer zweiten Anweisung. Trotzdem lehnt das Panel solche Eingaben ab: Eine
+klare Absage ist ehrlicher als stilles Durchreichen. Ebenso ein `-jar` in den
+Flaggen (das startete eine andere Datei) und Pfade in der Startdatei (die
+zeigten auf einen fremden Server).
+
+## Wer darf mit? Unterbenutzer
+
+In einer Klasse verwaltet selten nur einer den Server. Statt das Passwort
+weiterzugeben, trägt der Besitzer einen Zugang ein und kreuzt an, was der darf:
+Konsole, Steuern, Dateien, Backups, Plugins.
+
+Die Rechte sind absichtlich grob — wer die Konsole hat, kann ohnehin `op`
+tippen, und fein abgestufte Rechte gäben nur ein Gefühl von Sicherheit, das
+nicht trägt. Was wirklich zählt, ist getrennt: **Freigaben und Kosten bleiben
+allein beim Besitzer.**
+
+Geprüft wird an genau einer Stelle. Wer nicht eingetragen ist, bekommt 404
+statt 403 — er soll nicht einmal erfahren, dass es den Server gibt. Wer ein
+Recht nicht hat, bekommt 403, auch beim direkten Aufruf der Adresse: Die
+Oberfläche blendet die Bereiche zwar aus, aber darauf verlässt sich nichts.
 
 ## Das Panel
 
@@ -510,6 +571,9 @@ src/sicherung.js      Backups anlegen, herunterladen, zurückspielen
 src/zeitplan.js       die Uhr für Neustart und automatische Sicherung
 src/katalog.js        Plugins aus einem Ordner anbieten und installieren
 src/docker.js         Container: Grenzen setzen, aufräumen, abschießen
+src/messung.js        CPU, Arbeitsspeicher und Netz messen
+src/arten.js          Serversoftware bei den Herstellern holen
+src/start.js          Startbefehl: Vorlage, Platzhalter, Zerlegung
 src/wo.js             die Weiche: hier oder auf einer anderen Maschine?
 src/fern.js           mit einem Daemon reden
 daemon.js             läuft auf jeder weiteren Maschine
@@ -591,6 +655,26 @@ Panel „nicht erreichbar" sagen statt abzustürzen. **35 Prüfungen.**
 ```bash
 ADMINPW=... ERSATZ_JAR=/pfad/server.jar node test/knoten.mjs
 ```
+
+Dazu drei kleinere, die ohne laufendes Portal auskommen:
+
+```bash
+node test/start.mjs     # Startbefehl: 33 Prüfungen
+node test/arten.mjs     # Serversoftware: 20 Prüfungen
+node test/zeitplan.mjs  # Zeitplan: 18 Prüfungen
+```
+
+Und einer, der ein laufendes Portal braucht:
+
+```bash
+ADMINPW=... node test/teilen.mjs   # Unterbenutzer: 38 Prüfungen
+```
+
+`test/start.mjs` weist nach, dass `; rm -rf / && curl x | sh` im Flaggenfeld
+zu Argumenten wird und nicht zu Befehlen — das ist die Prüfung, auf die es
+dort ankommt. `test/arten.mjs` ruft keine Hersteller-API an (ein Test, der von
+papermc.io abhängt, schlägt irgendwann fehl, ohne dass jemand etwas kaputt
+gemacht hat), sondern hängt eine eigene Art an eine lokale Quelle.
 
 Der Lebenslauf eines Serverprozesses — starten, `Done (…)` erkennen, Port
 durchreichen, Befehl schicken, Spieler zählen, neu starten, sauber stoppen —

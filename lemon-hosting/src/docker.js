@@ -156,7 +156,8 @@ export const heapMB = (mb) => Math.max(512, Math.floor(mb * 0.85));
  * Container starten muss.
  */
 export function laufArgumente({ serverId, ordner, speicherMB, cores, port,
-                                bild = STANDARD_BILD, jvmFlags = [], nutzer = null }) {
+                                bild = STANDARD_BILD, argumente: javaArgumente = [],
+                                nutzer = null }) {
   const argumente = [
     'run', '--rm', '-i',
     '--name', behaelterName(serverId),
@@ -181,8 +182,9 @@ export function laufArgumente({ serverId, ordner, speicherMB, cores, port,
   // kann sie weiter bearbeiten.
   if (nutzer) argumente.push('--user', nutzer);
 
-  argumente.push(bild, 'java', ...jvmFlags,
-    '-jar', 'server.jar', 'nogui', '--port', String(port));
+  // Der Startbefehl kommt fertig zerlegt herein - siehe start.js. Damit
+  // laeuft er nie durch eine Shell, weder hier noch im Container.
+  argumente.push(bild, 'java', ...javaArgumente);
   return argumente;
 }
 

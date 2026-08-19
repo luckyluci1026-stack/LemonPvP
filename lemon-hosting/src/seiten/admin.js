@@ -10,6 +10,9 @@ import { seite, statusPunkt, csrfFeld } from './layout.js';
 import { PAKETE, ZUSATZ, SOFTWARE, rechne, euro } from '../preise.js';
 import { protokollListe } from '../db.js';
 import { zustand as prozessStatus, knotenName } from '../wo.js';
+import { STANDARD_BEFEHL, STANDARD_FLAGGEN, STANDARD_JAR,
+         vorschau } from '../start.js';
+import { speicherMB } from '../panel.js';
 
 const LAUFTEXT = { laeuft: 'läuft', startet: 'startet …', stoppt: 'stoppt …',
                    gestoppt: 'gestoppt', unbekannt: 'nicht erreichbar' };
@@ -181,6 +184,43 @@ export function serverBearbeiten(nutzer, zeichen, s, kunden, meldung = '',
             startet ihn nicht selbst.</p></div>
         <div class="feld"><label>Notiz (intern)</label>
           <textarea name="notiz" rows="2">${esc(s?.notiz || '')}</textarea></div>
+
+        <h2 class="abstand">Startup</h2>
+        <p class="klein leise">Womit der Server gestartet wird. Leer lassen heißt:
+          die eingebauten Vorgaben. Der Befehl läuft <strong>nicht</strong> durch
+          eine Shell — <span class="mono">;</span> und <span class="mono">|</span>
+          sind hier also keine Befehle, sondern Fehler.</p>
+
+        <div class="feld abstand"><label>Startdatei (JAR)</label>
+          <input name="jar_datei" class="mono" value="${esc(s?.jar_datei || '')}"
+                 placeholder="${STANDARD_JAR}">
+          <p class="klein leise" style="margin-top:.3rem">Nur ein Dateiname im
+            Serverordner – keine Pfade.</p></div>
+
+        <div class="feld"><label>Java-Flaggen</label>
+          <textarea name="start_flaggen" rows="3" class="mono"
+            placeholder="${esc(STANDARD_FLAGGEN)}">${
+            s?.start_flaggen === null || s?.start_flaggen === undefined
+              ? '' : esc(s.start_flaggen)}</textarea>
+          <p class="klein leise" style="margin-top:.3rem">Ersetzt
+            <span class="mono">{{FLAGGEN}}</span>. Leer = die Vorgaben oben.
+            <span class="mono">-Xmx</span> gehört nicht hierher — das kommt
+            aus dem Paket.</p></div>
+
+        <div class="feld"><label>Startbefehl</label>
+          <input name="startbefehl" class="mono" value="${esc(s?.startbefehl || '')}"
+                 placeholder="${esc(STANDARD_BEFEHL)}">
+          <p class="klein leise" style="margin-top:.3rem">Platzhalter:
+            <span class="mono">{{SPEICHER}}</span>
+            <span class="mono">{{FLAGGEN}}</span>
+            <span class="mono">{{JAR}}</span>
+            <span class="mono">{{PORT}}</span>
+            <span class="mono">{{RAM}}</span></p></div>
+
+        ${s ? `<div class="feld"><label>Wird so gestartet</label>
+          <pre class="konsole" style="height:auto;font-size:.75rem;white-space:pre-wrap"
+            >${esc(vorschau(s, { speicherMB: speicherMB(s), port: s.port || 25565 }))}</pre>
+          </div>` : ''}
 
         <h2 class="abstand">Zusatzleistungen</h2>
         ${Object.entries(gruppen).map(([gruppe, liste]) => `

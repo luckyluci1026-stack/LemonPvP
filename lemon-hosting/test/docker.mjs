@@ -28,7 +28,10 @@ const args = docker.laufArgumente({
   cores: 1.25,
   port: 25566,
   bild: 'eclipse-temurin:21-jre',
-  jvmFlags: ['-Xmx2828M', '-XX:+UseG1GC'],
+  // Der Startbefehl kommt fertig zerlegt aus start.js - docker.js setzt
+  // ihn nur noch hinter das Image.
+  argumente: ['-Xmx2828M', '-XX:+UseG1GC', '-jar', 'server.jar',
+              'nogui', '--port', '25566'],
   nutzer: '1000:1000',
 });
 const paar = (name) => args[args.indexOf(name) + 1];
@@ -53,9 +56,13 @@ ok('Der Startbefehl steht hinter dem Image',
      'eclipse-temurin:21-jre java -Xmx2828M -XX:+UseG1GC '
      + '-jar server.jar nogui --port 25566'),
    args.slice(-9).join(' '));
+ok('Und wird nicht noch einmal zerlegt oder ergänzt',
+   args.filter((a) => a === '-jar').length === 1,
+   'genau ein -jar in der Zeile');
 
 const ohneKennung = docker.laufArgumente({
-  serverId: 1, ordner: '/x', speicherMB: 1024, cores: 1, port: 25565, nutzer: null });
+  serverId: 1, ordner: '/x', speicherMB: 1024, cores: 1, port: 25565,
+  argumente: ['-jar', 'server.jar'], nutzer: null });
 ok('Ohne Kennung (Windows) fehlt --user ganz', !ohneKennung.includes('--user'));
 
 // ------------------------------------------------------------------ Heap

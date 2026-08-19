@@ -28,6 +28,7 @@ import { join, resolve } from 'node:path';
 import { rechne } from './preise.js';
 import * as docker from './docker.js';
 import * as messung from './messung.js';
+import * as startbefehl from './start.js';
 
 /** serverId -> laufender Prozess samt Konsole */
 const laufend = new Map();
@@ -172,8 +173,8 @@ export function speicherMB(server) {
 /** Welches Image dieser Server benutzt. */
 export const bildVon = (server) => server.docker_bild || docker.STANDARD_BILD;
 
-export function jarDa(serverId) {
-  return existsSync(join(ordnerVon(serverId), 'server.jar'));
+export function jarDa(serverId, jar = 'server.jar') {
+  return existsSync(join(ordnerVon(serverId), jar));
 }
 
 export function eulaAngenommen(serverId) {
@@ -200,9 +201,12 @@ export function starte(server) {
   if (l.prozess) return 'Der Server läuft schon.';
 
   const ordner = ordnerVon(id);
-  if (!jarDa(id)) {
-    return 'Es liegt keine server.jar im Serverordner. '
-         + 'Lade sie unter "Dateien" hoch.';
+  const jar = startbefehl.jarOk(server.jar_datei) || startbefehl.STANDARD_JAR;
+  if (!jarDa(id, jar)) {
+    return jar === startbefehl.STANDARD_JAR
+      ? 'Es liegt keine server.jar im Serverordner. Wähl unten eine '
+        + 'Serversoftware aus oder lade sie unter "Dateien" hoch.'
+      : `Die eingestellte Datei "${jar}" liegt nicht im Serverordner.`;
   }
   if (!eulaAngenommen(id)) {
     return 'Die Minecraft-EULA ist noch nicht angenommen. '
@@ -216,14 +220,10 @@ export function starte(server) {
   // zwei Server auf derselben Kiste kommen sich nicht ins Gehege.
   const port = Number(server.port) || 25565;
 
-  const flaggen = (heap) => [
-    `-Xms${Math.min(heap, 512)}M`, `-Xmx${heap}M`,
-    // Die Aki-Flags: die uebliche Empfehlung fuer Minecraft-Server
-    '-XX:+UseG1GC', '-XX:+ParallelRefProcEnabled',
-    '-XX:MaxGCPauseMillis=200', '-XX:+UnlockExperimentalVMOptions',
-    '-XX:+DisableExplicitGC', '-XX:+AlwaysPreTouch',
-    '-Dfile.encoding=UTF-8',
-  ];
+  // Die Argumente kommen aus der Startvorlage des Servers. Wer nichts
+  // eingestellt hat, bekommt genau das, was frueher fest im Code stand.
+  const argumenteFuer = (heap) =>
+    startbefehl.baueArgumente(server, { speicherMB: mb, port, heapMB: heap });
 
   /**
    * Container oder direkt?
@@ -246,14 +246,13 @@ export function starte(server) {
     befehlsZeile = 'docker';
     argumente = docker.laufArgumente({
       serverId: id, ordner, speicherMB: mb, cores: aus?.cores || 1, port,
-      bild: bildVon(server), jvmFlags: flaggen(docker.heapMB(mb)),
+      bild: bildVon(server), argumente: argumenteFuer(docker.heapMB(mb)),
       nutzer: kennung,
     });
     motor = 'docker';
   } else {
     befehlsZeile = 'java';
-    argumente = [...flaggen(mb), '-jar', 'server.jar', 'nogui',
-                 '--port', String(port)];
+    argumente = argumenteFuer(mb);
     motor = 'java';
   }
 

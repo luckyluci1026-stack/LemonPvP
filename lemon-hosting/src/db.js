@@ -64,6 +64,9 @@ function schema() {
       knoten_id     INTEGER NOT NULL DEFAULT 0,
       art           TEXT NOT NULL DEFAULT '',
       mc_version    TEXT NOT NULL DEFAULT '',
+      startbefehl   TEXT NOT NULL DEFAULT '',
+      start_flaggen TEXT,
+      jar_datei     TEXT NOT NULL DEFAULT '',
       angelegt      TEXT NOT NULL,
       geloescht_am  TEXT,
       notiz         TEXT NOT NULL DEFAULT ''
@@ -144,10 +147,16 @@ function nachruesten() {
     db.exec("ALTER TABLE server ADD COLUMN pterodactyl TEXT NOT NULL DEFAULT ''");
   }
   for (const spalte of ['neustart_um', 'sicherung_um', 'docker_bild',
-                        'art', 'mc_version']) {
+                        'art', 'mc_version', 'startbefehl', 'jar_datei']) {
     if (!spalten.includes(spalte)) {
       db.exec(`ALTER TABLE server ADD COLUMN ${spalte} TEXT NOT NULL DEFAULT ''`);
     }
+  }
+  // start_flaggen darf ausdruecklich NULL sein: leer heisst "keine
+  // Flaggen", NULL heisst "die Standardflaggen". Ohne den Unterschied
+  // koennte man die Flaggen nie ganz abschalten.
+  if (!spalten.includes('start_flaggen')) {
+    db.exec('ALTER TABLE server ADD COLUMN start_flaggen TEXT');
   }
   if (!spalten.includes('knoten_id')) {
     db.exec('ALTER TABLE server ADD COLUMN knoten_id INTEGER NOT NULL DEFAULT 0');
@@ -268,9 +277,14 @@ export const kunden = () =>
  * nichts anfangen und wirft, statt die Spalte einfach zu lassen. Im
  * Browser faellt das nie auf, weil ein Textfeld immer wenigstens einen
  * leeren String schickt; bei einer unvollstaendigen Anfrage sehr wohl.
+ *
+ * `null` wird dagegen ausdruecklich durchgelassen: Bei den Startflaggen
+ * ist es der Unterschied zwischen "keine Flaggen" (leerer String) und
+ * "die Vorgaben" (NULL). Es mit auszufiltern hiess, dass sich die
+ * Vorgaben nie wieder herstellen liessen.
  */
 const gesetzte = (erlaubt, felder) =>
-  erlaubt.filter((f) => felder[f] !== undefined && felder[f] !== null);
+  erlaubt.filter((f) => felder[f] !== undefined);
 
 export function kundeAendern(id, felder) {
   const erlaubt = ['vorname', 'nachname', 'klasse', 'mcname', 'kontakt', 'rolle'];
@@ -366,7 +380,8 @@ export function alleServer(mitGeloeschten = false) {
 export function serverAendern(id, felder) {
   const erlaubt = ['name', 'subdomain', 'paket', 'software', 'status', 'port',
                    'pterodactyl', 'neustart_um', 'sicherung_um', 'docker_bild',
-                   'knoten_id', 'art', 'mc_version', 'notiz'];
+                   'knoten_id', 'art', 'mc_version', 'startbefehl',
+                   'start_flaggen', 'jar_datei', 'notiz'];
   const setzen = gesetzte(erlaubt, felder);
   if (!setzen.length) return;
   db.prepare(`UPDATE server SET ${setzen.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`)
