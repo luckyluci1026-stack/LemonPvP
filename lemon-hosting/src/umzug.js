@@ -40,6 +40,22 @@ import * as wo from './wo.js';
 import { packe, entpacke, sammle } from './zip.js';
 
 /**
+ * Was Node sagt, in etwas uebersetzen, das weiterhilft.
+ *
+ * Bei einer ausgefallenen Maschine wirft `fetch` einen TypeError mit dem
+ * Text "fetch failed" - das ist fuer den Admin keine Auskunft. Der
+ * eigentliche Grund steht eine Ebene tiefer in `cause`, meist als
+ * ECONNREFUSED oder ETIMEDOUT. Der kommt mit in die Klammer: Er sagt den
+ * Unterschied zwischen "Daemon ist aus" und "Netz ist dicht".
+ */
+function netzGrund(fehler) {
+  if (fehler.name === 'TimeoutError' || fehler.name === 'AbortError') {
+    return 'die Frist ist abgelaufen';
+  }
+  return fehler.cause?.code || fehler.cause?.message || fehler.message;
+}
+
+/**
  * Den Server einpacken - und sagen, wo das Paket liegt.
  *
  * Liegt er hier, wird direkt gepackt. Liegt er woanders, laesst das
@@ -73,7 +89,8 @@ async function packeEin(server, arbeitsordner) {
     await pipeline(Readable.fromWeb(antwort.body), createWriteStream(ziel));
     return { pfad: ziel, dateien: gepackt.dateien, sicherung: gepackt.name };
   } catch (fehler) {
-    return { fehler: 'Beim Holen des Pakets: ' + fehler.message };
+    return { fehler: `Das Paket ließ sich nicht von ${knoten.name} holen `
+                   + `(${netzGrund(fehler)}). Der Server bleibt, wo er ist.` };
   }
 }
 
@@ -102,7 +119,9 @@ async function packeAus(serverId, zielKnotenId, zipPfad) {
     }
     return daten;
   } catch (fehler) {
-    return { fehler: 'Beim Übertragen: ' + fehler.message };
+    return { fehler: `${knoten.name} war beim Übertragen nicht erreichbar `
+                   + `(${netzGrund(fehler)}). Der Server bleibt, wo er ist – `
+                   + 'seine Dateien liegen unverändert auf der alten Maschine.' };
   }
 }
 

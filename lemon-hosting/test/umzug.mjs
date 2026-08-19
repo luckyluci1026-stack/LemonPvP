@@ -197,7 +197,8 @@ await warte(1000);
 
 a = await s(`/admin/server/${id}/umzug`, { zielKnotenId: knotenNr });
 ok('Bei einer toten Maschine scheitert der Umzug mit Ansage',
-   meldung(a).length > 0 && !meldung(a).startsWith('Umgezogen'), meldung(a));
+   meldung(a).includes('Umzugsknoten') && meldung(a).includes('bleibt, wo er ist'),
+   meldung(a));
 a = await h(`/admin/server/${id}`);
 ok('Und die Datenbank bleibt unangetastet',
    a.text.includes('läuft auf: dieser Rechner'),
