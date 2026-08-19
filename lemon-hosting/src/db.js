@@ -109,7 +109,25 @@ function schema() {
       wann          TEXT NOT NULL,
       wer           TEXT NOT NULL,
       was           TEXT NOT NULL,
-      details       TEXT NOT NULL DEFAULT ''
+      details       TEXT NOT NULL DEFAULT '',
+      server_id     INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS zugang (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      kunde_id      INTEGER NOT NULL REFERENCES kunden(id),
+      name          TEXT NOT NULL DEFAULT '',
+      hash          TEXT NOT NULL,
+      angelegt      TEXT NOT NULL,
+      zuletzt       TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS server_port (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      server_id     INTEGER NOT NULL REFERENCES server(id),
+      port          INTEGER NOT NULL,
+      protokoll     TEXT NOT NULL DEFAULT 'beide',
+      notiz         TEXT NOT NULL DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS unterbenutzer (
@@ -158,6 +176,11 @@ function nachruesten() {
   if (!spalten.includes('start_flaggen')) {
     db.exec('ALTER TABLE server ADD COLUMN start_flaggen TEXT');
   }
+  const protokollSpalten = db.prepare('PRAGMA table_info(protokoll)').all()
+    .map((s) => s.name);
+  if (!protokollSpalten.includes('server_id')) {
+    db.exec('ALTER TABLE protokoll ADD COLUMN server_id INTEGER');
+  }
   if (!spalten.includes('knoten_id')) {
     db.exec('ALTER TABLE server ADD COLUMN knoten_id INTEGER NOT NULL DEFAULT 0');
   }
@@ -178,8 +201,7 @@ function nachruesten() {
  * denselben Port haben, sie kommen sich ja nicht in die Quere.
  */
 export function naechsterPort(knotenId = 0, ab = 25565) {
-  const belegt = new Set(db.prepare('SELECT port FROM server WHERE knoten_id = ?')
-    .all(knotenId).map((s) => s.port));
+  const belegt = belegtePorts(knotenId);
   let port = ab;
   while (belegt.has(port)) port++;
   return port;
@@ -240,13 +262,39 @@ export function passtPasswort(passwort, hash, salz) {
 
 // ---------------------------------------------------------------- Protokoll
 
-export function protokolliere(wer, was, details = '') {
-  db.prepare('INSERT INTO protokoll (wann, wer, was, details) VALUES (?, ?, ?, ?)')
-    .run(jetzt(), wer, was, details);
+/**
+ * Etwas ins Protokoll schreiben.
+ *
+ * `serverId` ist neu und optional: Damit landet derselbe Eintrag sowohl
+ * in der Gesamtliste des Teams als auch in der Aktivitaet des einzelnen
+ * Servers. Wer wissen will, warum sein Server gestern nachts neu
+ * gestartet ist, soll das an seinem Server nachlesen koennen und nicht
+ * in einer Liste ueber alle Klassen.
+ */
+export function protokolliere(wer, was, details = '', serverId = null) {
+  db.prepare(`INSERT INTO protokoll (wann, wer, was, details, server_id)
+              VALUES (?, ?, ?, ?, ?)`)
+    .run(jetzt(), wer, was, details, serverId);
 }
 
 export function protokollListe(grenze = 100) {
   return db.prepare('SELECT * FROM protokoll ORDER BY id DESC LIMIT ?').all(grenze);
+}
+
+/**
+ * Was an diesem Server passiert ist.
+ *
+ * Alte Eintraege haben noch keine server_id - fuer die wird zusaetzlich
+ * im Detailtext nach "#<id>" gesucht. So sind auch die Sachen von
+ * vorgestern noch zu sehen, statt dass die Liste bei der Umstellung
+ * anfaengt.
+ */
+export function protokollVonServer(serverId, grenze = 60) {
+  return db.prepare(`SELECT * FROM protokoll
+                     WHERE server_id = ?
+                        OR (server_id IS NULL AND details LIKE ?)
+                     ORDER BY id DESC LIMIT ?`)
+    .all(serverId, `%#${serverId} %`, grenze);
 }
 
 // ---------------------------------------------------------------- Kunden
@@ -362,7 +410,7 @@ export function zusatzVon(serverId) {
 
 export const server = (id) => {
   const s = db.prepare('SELECT * FROM server WHERE id = ?').get(id);
-  return s ? { ...s, zusatz: zusatzVon(s.id) } : null;
+  return s ? { ...s, zusatz: zusatzVon(s.id), ports: portsVon(s.id) } : null;
 };
 
 export function serverVonKunde(kundeId) {
@@ -401,7 +449,67 @@ export function serverLoeschen(id) {
   // Freigaben mitnehmen: Ein geloeschter Server soll bei niemandem mehr
   // in der Liste stehen.
   db.prepare('DELETE FROM unterbenutzer WHERE server_id = ?').run(id);
+  db.prepare('DELETE FROM server_port WHERE server_id = ?').run(id);
 }
+
+// ---------------------------------------------------------------- Zugaenge
+
+export function zugangAnlegen(kundeId, name, hash) {
+  const info = db.prepare(`INSERT INTO zugang (kunde_id, name, hash, angelegt)
+      VALUES (?, ?, ?, ?)`).run(kundeId, name, hash, jetzt());
+  return Number(info.lastInsertRowid);
+}
+
+export const alleZugaenge = () => db.prepare('SELECT * FROM zugang').all();
+
+export const zugaengeVon = (kundeId) =>
+  db.prepare('SELECT id, name, angelegt, zuletzt FROM zugang WHERE kunde_id = ? ORDER BY id')
+    .all(kundeId);
+
+export const zugangWeg = (kundeId, id) =>
+  db.prepare('DELETE FROM zugang WHERE kunde_id = ? AND id = ?').run(kundeId, id);
+
+export const zugangBenutzt = (id) =>
+  db.prepare('UPDATE zugang SET zuletzt = ? WHERE id = ?').run(jetzt(), id);
+
+// ------------------------------------------------------------ Weitere Ports
+
+/**
+ * Ein Minecraft-Server braucht oft mehr als einen Port.
+ *
+ * Geyser laesst Bedrock-Spieler ueber UDP 19132 herein, Dynmap zeigt
+ * eine Karte auf einem Webport, Voice-Chat-Plugins wollen ihren eigenen.
+ * In Pterodactyl heisst das "Allocations" - ohne so etwas kaeme man an
+ * diese Dienste von aussen gar nicht heran, weil der Container nur den
+ * einen Port durchreicht.
+ */
+export const portsVon = (serverId) =>
+  db.prepare('SELECT * FROM server_port WHERE server_id = ? ORDER BY port')
+    .all(serverId);
+
+/** Alle Ports, die auf einem Knoten schon vergeben sind - Haupt und Extra. */
+export function belegtePorts(knotenId = 0) {
+  const haupt = db.prepare('SELECT port FROM server WHERE knoten_id = ?')
+    .all(knotenId).map((s) => s.port);
+  const extra = db.prepare(`SELECT p.port FROM server_port p
+                            JOIN server s ON s.id = p.server_id
+                            WHERE s.knoten_id = ?`).all(knotenId).map((p) => p.port);
+  return new Set([...haupt, ...extra]);
+}
+
+export function portDazu(serverId, port, protokoll = 'beide', notiz = '') {
+  const s = server(serverId);
+  if (!s) return 'Diesen Server gibt es nicht.';
+  if (belegtePorts(s.knoten_id).has(port)) {
+    return `Port ${port} ist auf dieser Maschine schon vergeben.`;
+  }
+  db.prepare(`INSERT INTO server_port (server_id, port, protokoll, notiz)
+              VALUES (?, ?, ?, ?)`).run(serverId, port, protokoll, notiz);
+  return null;
+}
+
+export const portWeg = (serverId, id) =>
+  db.prepare('DELETE FROM server_port WHERE server_id = ? AND id = ?').run(serverId, id);
 
 // ------------------------------------------------------------ Unterbenutzer
 

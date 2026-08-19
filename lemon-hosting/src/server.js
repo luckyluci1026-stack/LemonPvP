@@ -31,6 +31,7 @@ import * as docker from './docker.js';
 import * as wo from './wo.js';
 import * as arten from './arten.js';
 import * as sb from './start.js';
+import * as api from './api.js';
 import * as fern from './fern.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
@@ -216,6 +217,11 @@ function adresseOk(roh) {
 export function baue() {
   const r = new Router();
 
+  const jsonRaus = (c, status, daten) => {
+    c.antwort.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+    c.antwort.end(JSON.stringify(daten));
+  };
+
   // ------------------------------------------------------------ oeffentlich
   r.get('/', (c) => sende(c.antwort, oeff.start(c.nutzer)));
   r.get('/regeln', (c) => sende(c.antwort, oeff.regeln(c.nutzer)));
@@ -297,6 +303,107 @@ export function baue() {
     sende(c.antwort, ks.serverDetail(c.nutzer, s));
   });
 
+
+  // ------------------------------------------------------------ API
+  /**
+   * Der Zugang fuer Skripte.
+   *
+   * Kein CSRF und kein Cookie: Ein Skript hat keinen Browser, aus dem
+   * heraus jemand es hereinlegen koennte. Stattdessen der Schluessel im
+   * Kopf `Authorization: Bearer lemon_…`.
+   *
+   * Was der Schluessel darf, entscheidet derselbe Code wie im Panel -
+   * er ist ein anderer Weg herein, keine Abkuerzung an den Rechten
+   * vorbei.
+   */
+  const mitSchluessel = (fn) => async (c) => {
+    const kopf = String(c.anfrage.headers.authorization || '');
+    const zugang = api.pruefe(kopf.replace(/^Bearer\s+/i, ''));
+    if (!zugang) {
+      return jsonRaus(c, 401, { fehler: 'Kein gültiger Schlüssel. Erwartet wird '
+        + 'der Kopf "Authorization: Bearer lemon_…".' });
+    }
+    const nutzer = db.kunde(zugang.kunde_id);
+    if (!nutzer) return jsonRaus(c, 401, { fehler: 'Der Zugang gehört niemandem mehr.' });
+    return fn(c, nutzer);
+  };
+
+  /** Welche Server dieser Schluessel sehen darf - eigene und geteilte. */
+  const serverFuer = (nutzer) => [
+    ...db.serverVonKunde(nutzer.id),
+    ...db.serverAlsUnterbenutzer(nutzer.id),
+  ].filter((s) => s.status !== 'geloescht');
+
+  r.get('/api/server', mitSchluessel((c, nutzer) => {
+    jsonRaus(c, 200, {
+      server: serverFuer(nutzer).map((s) =>
+        api.serverAls(s, wo.zustand(s), wo.knotenName(s))),
+    });
+  }));
+
+  r.get('/api/server/:id', mitSchluessel((c, nutzer) => {
+    const s = serverFuer(nutzer).find((x) => x.id === Number(c.werte.id));
+    if (!s) return jsonRaus(c, 404, { fehler: 'Diesen Server gibt es für dich nicht.' });
+    jsonRaus(c, 200, api.serverAls(s, wo.zustand(s), wo.knotenName(s)));
+  }));
+
+  r.post('/api/server/:id/:was', mitSchluessel(async (c, nutzer) => {
+    const s = serverFuer(nutzer).find((x) => x.id === Number(c.werte.id));
+    if (!s) return jsonRaus(c, 404, { fehler: 'Diesen Server gibt es für dich nicht.' });
+
+    // Dieselbe Rechtepruefung wie im Panel - ein Schluessel kann nie
+    // mehr als der Kunde, dem er gehoert.
+    const eigen = s.kunde_id === nutzer.id || nutzer.rolle === 'admin';
+    const rechte = eigen ? null : (db.rechteAn(s.id, nutzer.id) || []);
+    const braucht = c.werte.was === 'befehl' ? 'konsole' : 'steuern';
+    if (rechte && !rechte.includes(braucht)) {
+      return jsonRaus(c, 403, { fehler: `Dafür fehlt dir das Recht „${braucht}".` });
+    }
+    if (s.pterodactyl) {
+      return jsonRaus(c, 409, { fehler: 'Dieser Server läuft in Pterodactyl.' });
+    }
+
+    if (c.werte.was === 'befehl') {
+      const fehler = await wo.befehl(s, String(c.daten.befehl || ''));
+      return jsonRaus(c, fehler ? 409 : 200, { ok: !fehler, fehler: fehler || null });
+    }
+    if (!['start', 'stopp', 'neustart'].includes(c.werte.was)) {
+      return jsonRaus(c, 404, { fehler: 'Unbekannte Aktion.' });
+    }
+    if (c.werte.was === 'start' && s.status !== 'aktiv') {
+      return jsonRaus(c, 409, { fehler: `Der Server ist ${s.status}.` });
+    }
+    const fehler = await wo.aktion(s, c.werte.was);
+    db.protokolliere(nutzer.benutzername + ' (API)', 'Panel: ' + c.werte.was,
+      `${s.name} (#${s.id})` + (fehler ? ' – ' + fehler : ''), s.id);
+    jsonRaus(c, fehler ? 409 : 200, { ok: !fehler, fehler: fehler || null });
+  }));
+
+  // -------------------------------------------------- Zugaenge verwalten
+  r.get('/zugaenge', (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    sende(c.antwort, ks.zugaenge(c.nutzer, c.csrf, db.zugaengeVon(c.nutzer.id),
+      c.url.searchParams.get('neu') || '', c.url.searchParams.get('ok') || ''));
+  });
+
+  r.post('/zugaenge', (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    const name = String(c.daten.name || '').trim().slice(0, 60) || 'ohne Namen';
+    const schluessel = api.neuerSchluessel();
+    db.zugangAnlegen(c.nutzer.id, name, api.hashe(schluessel));
+    db.protokolliere(wer(c.nutzer), 'API-Zugang angelegt', name);
+    // Der Schluessel geht einmal ueber die Adresszeile zurueck und steht
+    // danach nirgends mehr - auch nicht in der Datenbank.
+    weiter(c.antwort, '/zugaenge?neu=' + encodeURIComponent(schluessel));
+  });
+
+  r.post('/zugaenge/weg', (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    db.zugangWeg(c.nutzer.id, Number(c.daten.id) || 0);
+    db.protokolliere(wer(c.nutzer), 'API-Zugang gelöscht', `#${c.daten.id}`);
+    weiter(c.antwort, '/zugaenge?ok=Zugang gelöscht.');
+  });
+
   // ------------------------------------------------------------ Panel
   /**
    * Der Tuersteher fuers Panel.
@@ -360,10 +467,6 @@ export function baue() {
     `/panel/${s.id}/dateien?p=${encodeURIComponent(pfad)}`
     + (meldung ? `&${gut ? 'ok' : 'm'}=` + encodeURIComponent(meldung) : ''));
 
-  const jsonRaus = (c, status, daten) => {
-    c.antwort.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
-    c.antwort.end(JSON.stringify(daten));
-  };
 
   r.get('/panel/:id', meinServer(null)(async (c, s) => {
     if (s.pterodactyl) {
@@ -381,7 +484,8 @@ export function baue() {
       belegt, gut || c.url.searchParams.get('m') || '', Boolean(gut),
       sicherungen, plugins, wo.knotenName(s), versionen,
       { besitzer: c.besitzer, rechte: c.rechte || null,
-        freigaben: c.besitzer ? db.unterbenutzer(s.id) : [], moeglich: RECHTE }));
+        freigaben: c.besitzer ? db.unterbenutzer(s.id) : [], moeglich: RECHTE },
+      db.protokollVonServer(s.id, 25)));
   }));
 
   r.post('/panel/:id/aktion', eigenerServer('steuern')(async (c, s) => {
@@ -404,7 +508,7 @@ export function baue() {
   r.post('/panel/:id/befehl', eigenerServer('konsole')(async (c, s) => {
     const text = String(c.daten.befehl || '');
     const fehler = await wo.befehl(s, text);
-    if (!fehler) db.protokolliere(wer(c.nutzer), 'Konsolenbefehl', `#${s.id} · ${text}`);
+    if (!fehler) db.protokolliere(wer(c.nutzer), 'Konsolenbefehl', `#${s.id} · ${text}`, s.id);
     jsonRaus(c, fehler ? 409 : 200, { ok: !fehler, fehler });
   }));
 
@@ -508,14 +612,14 @@ export function baue() {
       return sende(c.antwort, pnl.bearbeiten(c.nutzer, s, pfad,
         String(c.daten.inhalt ?? ''), c.csrf, fehler));
     }
-    db.protokolliere(wer(c.nutzer), 'Datei gespeichert', `#${s.id} · ${pfad}`);
+    db.protokolliere(wer(c.nutzer), 'Datei gespeichert', `#${s.id} · ${pfad}`, s.id);
     zuDateien(c, s, pfad.split('/').slice(0, -1).join('/'), `${pfad} gespeichert.`, true);
   }));
 
   r.post('/panel/:id/loeschen', eigenerServer('dateien')(async (c, s) => {
     const pfad = dat.saeubere(c.daten.p);
     const fehler = await wo.loesche(s, pfad);
-    if (!fehler) db.protokolliere(wer(c.nutzer), 'Datei gelöscht', `#${s.id} · ${pfad}`);
+    if (!fehler) db.protokolliere(wer(c.nutzer), 'Datei gelöscht', `#${s.id} · ${pfad}`, s.id);
     zuDateien(c, s, pfad.split('/').slice(0, -1).join('/'),
       fehler || `${pfad} gelöscht.`, !fehler);
   }));
@@ -526,7 +630,7 @@ export function baue() {
     if (!name) return zuDateien(c, s, pfad, 'Der Dateiname geht so nicht.');
     const ziel = pfad ? pfad + '/' + name : name;
     const fehler = await wo.schreib(s, ziel, c.daten.inhalt ?? '');
-    if (!fehler) db.protokolliere(wer(c.nutzer), 'Datei angelegt', `#${s.id} · ${ziel}`);
+    if (!fehler) db.protokolliere(wer(c.nutzer), 'Datei angelegt', `#${s.id} · ${ziel}`, s.id);
     zuDateien(c, s, pfad, fehler || `${name} angelegt.`, !fehler);
   }));
 
@@ -554,7 +658,7 @@ export function baue() {
           c.url.searchParams.get('name'), c.anfrage);
     if (fehler) return jsonRaus(c, 400, { ok: false, fehler });
     db.protokolliere(wer(c.nutzer), 'Datei hochgeladen',
-      `#${s.id} · ${c.url.searchParams.get('name')}`);
+      `#${s.id} · ${c.url.searchParams.get('name')}`, s.id);
     jsonRaus(c, 200, { ok: true });
   }));
 
@@ -587,7 +691,7 @@ export function baue() {
     if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
     db.serverAendern(s.id, { art, mc_version: version });
     db.protokolliere(wer(c.nutzer), 'Serversoftware installiert',
-      `#${s.id} · ${ergebnis.art} ${ergebnis.version}`);
+      `#${s.id} · ${ergebnis.art} ${ergebnis.version}`, s.id);
     zumPanelGut(c, s, `${ergebnis.art} ${ergebnis.version} installiert`
       + ` (${Math.round(ergebnis.groesse / 1024 / 1024)} MB).`
       + (prozess.laeuft(s.id) ? ' Wirkt beim nächsten Neustart.' : ''));
@@ -604,8 +708,34 @@ export function baue() {
   r.post('/panel/:id/plugin/entfernen', eigenerServer('plugins')(async (c, s) => {
     const ergebnis = await wo.plugin(s, c.daten.datei, 'raus');
     if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
-    db.protokolliere(wer(c.nutzer), 'Plugin entfernt', `#${s.id} · ${c.daten.datei}`);
+    db.protokolliere(wer(c.nutzer), 'Plugin entfernt', `#${s.id} · ${c.daten.datei}`, s.id);
     zumPanelGut(c, s, `${ergebnis.name} entfernt – beim nächsten Neustart ist es weg.`);
+  }));
+
+  /**
+   * Weitere Ports.
+   *
+   * Gehoert dem Besitzer, nicht dem Unterbenutzer: Ein Port ist eine
+   * Tuer nach aussen, und wer sie aufmacht, sollte auch fuer den Server
+   * geradestehen.
+   */
+  r.post('/panel/:id/port', nurBesitzer((c, s) => {
+    const port = portOk(c.daten.port);
+    if (!port) {
+      return zumPanel(c, s, 'Ein Port zwischen 1024 und 65535, bitte.');
+    }
+    const protokoll = ['tcp', 'udp', 'beide'].includes(c.daten.protokoll)
+      ? c.daten.protokoll : 'beide';
+    const fehler = db.portDazu(s.id, port, protokoll, String(c.daten.notiz || '').slice(0, 60));
+    if (fehler) return zumPanel(c, s, fehler);
+    db.protokolliere(wer(c.nutzer), 'Port geöffnet', `#${s.id} · ${port}/${protokoll}`, s.id);
+    zumPanelGut(c, s, `Port ${port} ist beim nächsten Start offen.`);
+  }));
+
+  r.post('/panel/:id/port-weg', nurBesitzer((c, s) => {
+    db.portWeg(s.id, Number(c.daten.portId) || 0);
+    db.protokolliere(wer(c.nutzer), 'Port geschlossen', `#${s.id}`, s.id);
+    zumPanelGut(c, s, 'Port entfernt – wirkt beim nächsten Start.');
   }));
 
   r.post('/panel/:id/zeitplan', eigenerServer('steuern')((c, s) => {
@@ -613,7 +743,7 @@ export function baue() {
     const sicherung = plan.zeitOk(c.daten.sicherung_um);
     db.serverAendern(s.id, { neustart_um: neustart, sicherung_um: sicherung });
     db.protokolliere(wer(c.nutzer), 'Zeitplan geändert',
-      `#${s.id} · Neustart ${neustart || '–'} · Backup ${sicherung || '–'}`);
+      `#${s.id} · Neustart ${neustart || '–'} · Backup ${sicherung || '–'}`, s.id);
     zumPanelGut(c, s, 'Zeitplan gespeichert.');
   }));
 
@@ -621,7 +751,7 @@ export function baue() {
     const ergebnis = await wo.sicherungAnlegen(s);
     if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
     db.protokolliere(wer(c.nutzer), 'Backup angelegt',
-      `#${s.id} · ${ergebnis.name} · ${ergebnis.groesse}`);
+      `#${s.id} · ${ergebnis.name} · ${ergebnis.groesse}`, s.id);
     zumPanelGut(c, s, `Backup angelegt: ${ergebnis.dateien} Dateien, `
       + `${ergebnis.groesse}.` + (ergebnis.warnung ? ' ' + ergebnis.warnung : ''));
   }));
@@ -651,7 +781,7 @@ export function baue() {
   r.post('/panel/:id/sicherung/loeschen', eigenerServer('backups')(async (c, s) => {
     const fehler = await wo.sicherungLoeschen(s, c.daten.f);
     if (fehler) return zumPanel(c, s, fehler);
-    db.protokolliere(wer(c.nutzer), 'Backup gelöscht', `#${s.id} · ${c.daten.f}`);
+    db.protokolliere(wer(c.nutzer), 'Backup gelöscht', `#${s.id} · ${c.daten.f}`, s.id);
     zumPanelGut(c, s, 'Backup gelöscht.');
   }));
 
@@ -659,7 +789,7 @@ export function baue() {
     const ergebnis = await wo.sicherungZurueck(s, c.daten.f);
     if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
     db.protokolliere(wer(c.nutzer), 'Backup zurückgespielt',
-      `#${s.id} · ${c.daten.f} · ${ergebnis.entpackt} Dateien`);
+      `#${s.id} · ${c.daten.f} · ${ergebnis.entpackt} Dateien`, s.id);
     if (ergebnis.warnung) return zumPanel(c, s, ergebnis.warnung);
     zumPanelGut(c, s, `${ergebnis.entpackt} Dateien zurückgespielt.`);
   }));
@@ -846,7 +976,7 @@ export function baue() {
     }
     db.unterbenutzerSetzen(s.id, k.id, rechte);
     db.protokolliere(wer(c.nutzer), 'Server freigegeben',
-      `#${s.id} · für ${k.benutzername} · ${rechte.join(', ')}`);
+      `#${s.id} · für ${k.benutzername} · ${rechte.join(', ')}`, s.id);
     zumPanelGut(c, s, `${k.benutzername} darf jetzt mit.`);
   }));
 
@@ -855,7 +985,7 @@ export function baue() {
     const k = db.kunde(kundeId);
     db.unterbenutzerWeg(s.id, kundeId);
     db.protokolliere(wer(c.nutzer), 'Freigabe entzogen',
-      `#${s.id} · ${k?.benutzername || kundeId}`);
+      `#${s.id} · ${k?.benutzername || kundeId}`, s.id);
     zumPanelGut(c, s, `${k?.benutzername || 'Der Zugang'} kommt nicht mehr rein.`);
   }));
 
@@ -963,8 +1093,18 @@ export function starte(port = 3000, datenbank = 'daten/portal.db') {
       }
 
       // Jede Aenderung braucht das Zeichen aus dem eigenen Cookie.
+      //
+      // Ausser bei der API: Die weist sich mit einem Schluessel im Kopf
+      // aus, nicht mit einem Cookie. CSRF schuetzt davor, dass eine
+      // fremde Seite den Browser eines Angemeldeten benutzt - ein
+      // Skript hat aber keinen Browser, und ein Schluessel wird nicht
+      // automatisch mitgeschickt. Die Pruefung ginge hier also ins
+      // Leere und machte die API nur unbenutzbar.
+      const istApi = url.pathname.startsWith('/api/');
       let gelesen = {};
-      if (anfrage.method === 'POST') {
+      if (anfrage.method === 'POST' && istApi) {
+        gelesen = await formular(anfrage).catch(() => ({}));
+      } else if (anfrage.method === 'POST') {
         if (treffer.roh) {
           // Beim Datei-Upload ist der Body die Datei - das Zeichen steht
           // deshalb in der URL statt im Formular.

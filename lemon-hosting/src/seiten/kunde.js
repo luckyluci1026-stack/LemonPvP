@@ -6,7 +6,7 @@
  * Nachschauen da, nicht zum Arbeiten.
  */
 import { esc } from '../web.js';
-import { seite, statusPunkt } from './layout.js';
+import { seite, statusPunkt, csrfFeld } from './layout.js';
 import { PAKETE, ZUSATZ, rechne, euro, ARCHIV_TAGE } from '../preise.js';
 import { bestellungenVonKunde } from '../db.js';
 import { zustand as prozessStatus } from '../wo.js';
@@ -152,6 +152,75 @@ export function serverDetail(nutzer, s) {
         <p class="klein leise abstand">Bezahlt wird in der Schule, bar und im
           Voraus — gegen den Bestellbogen. Das Portal führt darüber
           absichtlich keine Buchhaltung.</p>
+      </div>
+    </div>` });
+}
+
+/**
+ * API-Zugaenge fuer Skripte.
+ *
+ * Der Schluessel steht genau einmal da - direkt nach dem Anlegen. Danach
+ * liegt in der Datenbank nur sein Hash. Das ist unbequemer, als ihn
+ * nachschlagen zu koennen, und genau richtig: Ein Schluessel, den das
+ * Portal noch kennt, ist einer, den jemand aus dem Portal holen kann.
+ */
+export function zugaenge(nutzer, zeichen, liste, frisch = '', ok = '') {
+  return seite({ titel: 'API-Zugänge', nutzer, hier: '/meine-server', inhalt: `
+    <a class="klein leise" href="/meine-server">← Meine Server</a>
+    <h1 class="abstand">API-Zugänge</h1>
+    <p class="leise">Für Skripte statt für den Browser: einen Discord-Bot, der
+      den Serverstatus meldet, oder eine Zeile, die vor der Doppelstunde alle
+      Server hochfährt. Ein Zugang kann genau das, was du auch kannst.</p>
+
+    ${ok ? `<div class="hinweis info abstand">${esc(ok)}</div>` : ''}
+    ${frisch ? `<div class="hinweis warn abstand">
+      <strong>Das ist dein Schlüssel — jetzt kopieren.</strong>
+      <pre class="konsole" style="height:auto;margin-top:.6rem">${esc(frisch)}</pre>
+      Er wird nie wieder angezeigt. Verloren heißt: einen neuen anlegen.
+    </div>` : ''}
+
+    <div class="karte abstand"><table>
+      <tr><th>Name</th><th>Angelegt</th><th>Zuletzt benutzt</th><th></th></tr>
+      ${liste.map((z) => `<tr>
+        <td><strong>${esc(z.name)}</strong></td>
+        <td class="klein leise mono">${esc(z.angelegt.slice(0, 10))}</td>
+        <td class="klein leise mono">${z.zuletzt
+          ? esc(z.zuletzt.slice(0, 16).replace('T', ' ')) : 'noch nie'}</td>
+        <td class="zahl"><form method="post" action="/zugaenge/weg"
+              onsubmit="return confirm('Zugang „${esc(z.name)}" löschen? Skripte, die ihn benutzen, kommen dann nicht mehr rein.')">
+          ${csrfFeld(zeichen)}
+          <input type="hidden" name="id" value="${z.id}">
+          <button class="knopf gefahr klein">Löschen</button></form></td>
+      </tr>`).join('') || '<tr><td colspan="4" class="leise">Noch kein Zugang.</td></tr>'}
+    </table></div>
+
+    <div class="gitter g2 abstand" style="align-items:start">
+      <form method="post" action="/zugaenge" class="karte">
+        ${csrfFeld(zeichen)}
+        <h2>Zugang anlegen</h2>
+        <div class="feld abstand"><label>Wofür ist der?</label>
+          <input name="name" placeholder="Discord-Bot der 8b" required></div>
+        <button class="knopf">Anlegen</button>
+        <p class="klein leise abstand">Der Schlüssel erscheint danach einmal.</p>
+      </form>
+
+      <div class="karte">
+        <h2>So benutzt du ihn</h2>
+        <pre class="konsole" style="height:auto;font-size:.75rem;white-space:pre-wrap"
+>curl -H "Authorization: Bearer lemon_…" \\
+     http://localhost:3000/api/server
+
+curl -X POST \\
+     -H "Authorization: Bearer lemon_…" \\
+     http://localhost:3000/api/server/1/start</pre>
+        <table class="abstand klein">
+          <tr><td class="mono">GET /api/server</td><td>alle, die du sehen darfst</td></tr>
+          <tr><td class="mono">GET /api/server/:id</td><td>einer, mit Verbrauch</td></tr>
+          <tr><td class="mono">POST …/start</td><td>starten</td></tr>
+          <tr><td class="mono">POST …/stopp</td><td>stoppen</td></tr>
+          <tr><td class="mono">POST …/neustart</td><td>neu starten</td></tr>
+          <tr><td class="mono">POST …/befehl</td><td>Feld <span class="mono">befehl</span></td></tr>
+        </table>
       </div>
     </div>` });
 }

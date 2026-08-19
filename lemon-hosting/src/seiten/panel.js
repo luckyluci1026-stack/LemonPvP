@@ -126,7 +126,8 @@ export function fremdesPanel(nutzer, s, ziel) {
 export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
                       gut = false, sicherungen = [], plugins = [],
                       knotenName = 'dieser Rechner', versionen = null,
-                      teilen = { besitzer: true, rechte: null, freigaben: [], moeglich: {} }) {
+                      teilen = { besitzer: true, rechte: null, freigaben: [], moeglich: {} },
+                      aktivitaet = []) {
   const paket = PAKETE[s.paket];
   // Laeuft der Server gerade, zaehlt was tatsaechlich laeuft; sonst was
   // beim naechsten Start passieren wuerde.
@@ -421,6 +422,53 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
 
     ${teilen.besitzer ? `<div class="karte abstand">
       <div class="zwischen">
+        <h2>Netzwerk</h2>
+        <span class="klein leise">${(s.ports || []).length + 1} Port${
+          (s.ports || []).length ? 'e' : ''} offen</span>
+      </div>
+      <table class="abstand">
+        <tr><td><strong class="mono">${s.port || 25565}</strong>
+            <div class="klein leise">Minecraft – der Hauptport</div></td>
+          <td class="klein">TCP</td><td></td></tr>
+        ${(s.ports || []).map((p) => `<tr>
+          <td><strong class="mono">${p.port}</strong>
+            ${p.notiz ? `<div class="klein leise">${esc(p.notiz)}</div>` : ''}</td>
+          <td class="klein">${p.protokoll === 'beide' ? 'TCP + UDP'
+            : p.protokoll.toUpperCase()}</td>
+          <td class="zahl"><form method="post" action="/panel/${s.id}/port-weg">
+            ${csrfFeld(zeichen)}
+            <input type="hidden" name="portId" value="${p.id}">
+            <button class="knopf gefahr klein">Schließen</button></form></td>
+        </tr>`).join('')}
+      </table>
+      <p class="klein leise abstand">Ein Minecraft-Server braucht manchmal mehr
+        als einen Port: <strong>Geyser</strong> lässt Bedrock-Spieler über
+        <span class="mono">UDP 19132</span> herein, <strong>Dynmap</strong>
+        zeigt eine Karte auf einem Webport, Voice-Chat-Plugins wollen ihren
+        eigenen. Ohne Eintrag hier kommt von außen niemand daran.</p>
+      <form method="post" action="/panel/${s.id}/port" class="abstand">
+        ${csrfFeld(zeichen)}
+        <div class="feld-reihe">
+          <div class="feld"><label>Port</label>
+            <input name="port" type="number" min="1024" max="65535"
+                   class="mono" placeholder="19132" required></div>
+          <div class="feld"><label>Protokoll</label>
+            <select name="protokoll">
+              <option value="beide">TCP + UDP</option>
+              <option value="udp">nur UDP (Geyser)</option>
+              <option value="tcp">nur TCP (Dynmap)</option>
+            </select></div>
+          <div class="feld"><label>Wofür?</label>
+            <input name="notiz" placeholder="Bedrock über Geyser"></div>
+        </div>
+        <button class="knopf klein">Port öffnen</button>
+        <span class="klein leise" style="margin-left:.6rem">Wirkt beim nächsten
+          Start.</span>
+      </form>
+    </div>
+
+    <div class="karte abstand">
+      <div class="zwischen">
         <h2>Wer darf mit?</h2>
         <span class="klein leise">${teilen.freigaben.length} freigeschaltet</span>
       </div>
@@ -458,6 +506,26 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
         <button class="knopf">Freischalten</button>
       </form>
     </div>` : ''}
+
+    <div class="karte abstand">
+      <div class="zwischen">
+        <h2>Aktivität</h2>
+        <span class="klein leise">die letzten ${aktivitaet.length}</span>
+      </div>
+      <p class="klein leise" style="margin-top:.5rem">
+        Wer hat wann was an diesem Server gemacht — auch, was der Zeitplan von
+        allein erledigt hat.</p>
+      ${aktivitaet.length ? `<table class="abstand">
+        ${aktivitaet.map((e) => `<tr>
+          <td class="klein mono leise" style="white-space:nowrap">${
+            esc(e.wann.slice(0, 16).replace('T', ' '))}</td>
+          <td class="klein"><strong>${esc(e.wer)}</strong></td>
+          <td class="klein">${esc(e.was)}
+            ${e.details ? `<div class="leise">${esc(
+              e.details.replace(new RegExp('^#' + s.id + ' · '), ''))}</div>` : ''}</td>
+        </tr>`).join('')}
+      </table>` : '<p class="leise klein abstand">Hier ist noch nichts passiert.</p>'}
+    </div>
 
     <script>window.SERVER_ID = ${s.id};
       window.SERVER_CORES = ${aus.cores};

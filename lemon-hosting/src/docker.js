@@ -157,7 +157,7 @@ export const heapMB = (mb) => Math.max(512, Math.floor(mb * 0.85));
  */
 export function laufArgumente({ serverId, ordner, speicherMB, cores, port,
                                 bild = STANDARD_BILD, argumente: javaArgumente = [],
-                                nutzer = null }) {
+                                nutzer = null, weitere = [] }) {
   const argumente = [
     'run', '--rm', '-i',
     '--name', behaelterName(serverId),
@@ -175,6 +175,22 @@ export function laufArgumente({ serverId, ordner, speicherMB, cores, port,
     '--security-opt', 'no-new-privileges',
     '-p', `${port}:${port}`,
   ];
+
+  /**
+   * Weitere Ports durchreichen.
+   *
+   * Geyser will UDP 19132, Dynmap einen Webport, Voice-Chat noch einen.
+   * Ohne das kaeme man an diese Dienste von aussen nicht heran - der
+   * Container reicht nur durch, was ausdruecklich dasteht.
+   */
+  for (const p of weitere) {
+    if (p.protokoll === 'udp' || p.protokoll === 'beide') {
+      argumente.push('-p', `${p.port}:${p.port}/udp`);
+    }
+    if (p.protokoll === 'tcp' || p.protokoll === 'beide') {
+      argumente.push('-p', `${p.port}:${p.port}/tcp`);
+    }
+  }
 
   if (cores > 0) argumente.push('--cpus', String(cores));
   // Dieselbe Kennung wie das Portal: Dann gehoeren die Dateien im

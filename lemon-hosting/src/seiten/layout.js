@@ -8,6 +8,7 @@ export function seite({ titel, nutzer, hier = '', inhalt, breit = false, kopfExt
   nav.push(['/regeln', 'Regeln']);
   if (nutzer) {
     nav.push(['/meine-server', 'Meine Server']);
+    nav.push(['/zugaenge', 'API']);
     if (nutzer.rolle === 'admin') nav.push(['/admin', 'Verwaltung']);
   }
 

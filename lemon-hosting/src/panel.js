@@ -247,7 +247,7 @@ export function starte(server) {
     argumente = docker.laufArgumente({
       serverId: id, ordner, speicherMB: mb, cores: aus?.cores || 1, port,
       bild: bildVon(server), argumente: argumenteFuer(docker.heapMB(mb)),
-      nutzer: kennung,
+      nutzer: kennung, weitere: server.ports || [],
     });
     motor = 'docker';
   } else {
@@ -270,9 +270,11 @@ export function starte(server) {
   l.zeilen = [];
   l.spieler.clear();
   l.motor = motor;
+  const extraPorts = (server.ports || []).map((p) => p.port);
   schreibe(id, motor === 'docker'
     ? `[Panel] Starte im Container: ${mb} MB fest, ${aus?.cores || 1} CPU-Kerne, `
-      + `Port ${port}. Die Grenzen setzt Docker, nicht die JVM.`
+      + `Port ${port}${extraPorts.length ? ' (+ ' + extraPorts.join(', ') + ')' : ''}. `
+      + 'Die Grenzen setzt Docker, nicht die JVM.'
     : `[Panel] Starte auf Port ${port} mit ${mb} MB Arbeitsspeicher. `
       + '(Ohne Docker – die Speichergrenze ist nur eine JVM-Einstellung.)', 'panel');
 

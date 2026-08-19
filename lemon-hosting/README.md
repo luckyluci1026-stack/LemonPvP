@@ -354,6 +354,66 @@ klare Absage ist ehrlicher als stilles Durchreichen. Ebenso ein `-jar` in den
 Flaggen (das startete eine andere Datei) und Pfade in der Startdatei (die
 zeigten auf einen fremden Server).
 
+## Netzwerk: mehr als ein Port
+
+Ein Minecraft-Server braucht oft mehrere Ports. **Geyser** lässt
+Bedrock-Spieler über `UDP 19132` herein, **Dynmap** zeigt eine Karte auf einem
+Webport, Voice-Chat-Plugins wollen ihren eigenen. Im Container kommt von außen
+nur durch, was ausdrücklich dasteht — deshalb trägt man sie im Panel unter
+*Netzwerk* ein, mit Protokoll (TCP, UDP oder beides).
+
+Ports werden **je Maschine** gezählt: Zwei Server auf verschiedenen Knoten
+dürfen denselben Port haben, auf derselben Kiste nicht. Ports unter 1024 lehnt
+das Panel ab — die darf ein gewöhnlicher Prozess ohnehin nicht öffnen.
+
+Das ist Besitzersache, nicht Unterbenutzersache: Ein Port ist eine Tür nach
+außen, und wer sie aufmacht, sollte auch für den Server geradestehen.
+
+## Aktivität
+
+Jeder Server hat seine eigene Liste: wer wann was gemacht hat — auch, was der
+Zeitplan von allein erledigt hat. Wer wissen will, warum sein Server heute
+Nacht neu gestartet ist, liest das an seinem Server nach und nicht in einer
+Liste über alle Klassen.
+
+Ältere Einträge, die noch keine Servernummer tragen, werden über den
+Detailtext mitgefunden — die Liste fängt also nicht bei der Umstellung an.
+
+## API für Skripte
+
+Ein Discord-Bot, der den Serverstatus meldet. Eine Zeile, die vor der
+Doppelstunde alle Klassenserver hochfährt. Dafür gibt es unter **API** Zugänge:
+
+```bash
+curl -H "Authorization: Bearer lemon_…" http://localhost:3000/api/server
+curl -X POST -H "Authorization: Bearer lemon_…" \
+     http://localhost:3000/api/server/1/start
+```
+
+| Aufruf | was er tut |
+|---|---|
+| `GET /api/server` | alle, die dieser Zugang sehen darf |
+| `GET /api/server/:id` | einer, mit Verbrauch und Spielerliste |
+| `POST /api/server/:id/start` | starten |
+| `POST /api/server/:id/stopp` | stoppen |
+| `POST /api/server/:id/neustart` | neu starten |
+| `POST /api/server/:id/befehl` | Feld `befehl` |
+
+**Ein Schlüssel kann nie mehr als der Kunde, dem er gehört.** Er ist ein
+anderer Weg herein, keine Abkürzung an den Rechten vorbei — dieselbe Prüfung
+wie im Panel. Nimmt der Besitzer einem Unterbenutzer das Recht *steuern*, kann
+dessen Schlüssel den Server im selben Moment nicht mehr starten.
+
+Der Schlüssel steht **genau einmal** da, direkt nach dem Anlegen. Danach liegt
+in der Datenbank nur sein Hash. Das ist unbequemer, als ihn nachschlagen zu
+können, und genau richtig: Ein Schlüssel, den das Portal noch kennt, ist einer,
+den jemand aus dem Portal holen kann.
+
+Die API läuft **ohne CSRF-Prüfung**, und das ist kein Versehen: CSRF schützt
+davor, dass eine fremde Seite den Browser eines Angemeldeten benutzt. Ein
+Skript hat keinen Browser, und ein Schlüssel im Kopf wird nicht automatisch
+mitgeschickt. Die Prüfung ginge ins Leere und machte die API nur unbenutzbar.
+
 ## Wer darf mit? Unterbenutzer
 
 In einer Klasse verwaltet selten nur einer den Server. Statt das Passwort
@@ -574,6 +634,7 @@ src/docker.js         Container: Grenzen setzen, aufräumen, abschießen
 src/messung.js        CPU, Arbeitsspeicher und Netz messen
 src/arten.js          Serversoftware bei den Herstellern holen
 src/start.js          Startbefehl: Vorlage, Platzhalter, Zerlegung
+src/api.js            Schlüssel für Skripte
 src/wo.js             die Weiche: hier oder auf einer anderen Maschine?
 src/fern.js           mit einem Daemon reden
 daemon.js             läuft auf jeder weiteren Maschine
@@ -668,7 +729,10 @@ Und einer, der ein laufendes Portal braucht:
 
 ```bash
 ADMINPW=... node test/teilen.mjs   # Unterbenutzer: 38 Prüfungen
+ADMINPW=... node test/api.mjs      # API, Ports, Aktivität: 34 Prüfungen
 ```
+
+Zusammen **302 Prüfungen**.
 
 `test/start.mjs` weist nach, dass `; rm -rf / && curl x | sh` im Flaggenfeld
 zu Argumenten wird und nicht zu Befehlen — das ist die Prüfung, auf die es
@@ -682,6 +746,22 @@ wurde zusätzlich am laufenden Portal geprüft: mit einem echten Paper 1.21.11
 (119 Konsolenzeilen live, `say` durchgereicht, neuer Prozess nach Neustart)
 und mit einem kleinen Java-Programm als Serverersatz, das dieselben Ausgaben
 macht.
+
+## Was Pterodactyl hat und das hier nicht
+
+**MySQL-Datenbanken pro Server.** Pterodactyl legt auf Knopfdruck eine
+Datenbank samt Benutzer an. Dafür bräuchte es einen MySQL-Server und einen
+Treiber — und das Portal kommt bewusst ohne ein einziges npm-Paket aus. Ein
+selbst geschriebener MySQL-Client wäre machbar, aber ich könnte ihn hier nicht
+gegen einen echten Server prüfen, und ungeprüfte Protokoll-Implementierungen
+sind genau die Sorte Code, die später kaputtgeht. Für die Plugins in diesem
+Repo reicht ohnehin SQLite.
+
+**Zwei-Faktor-Anmeldung.** Sinnvoll, sobald das Portal öffentlich erreichbar
+ist. Noch nicht gebaut.
+
+**Server zwischen Knoten umziehen.** Geht bisher nur von Hand: stoppen, Ordner
+kopieren, Knoten umstellen.
 
 ## Was noch fehlt
 
