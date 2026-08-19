@@ -185,10 +185,12 @@ Befehlseingabe, **CPU- und Speicherverbrauch live**, Serversoftware per Klick
 installieren, Dateiverwaltung mit Editor und Upload, Plugins aus dem Katalog,
 Backups auf Knopfdruck, Zeitplan für Neustart und Sicherung, Spielerliste.
 Und den Server mit anderen **teilen**, ohne das Passwort weiterzugeben.
+Dazu **Zwei-Faktor-Anmeldung** mit einer Authenticator-App.
 
 **Für das Team** – eine Übersicht mit dem Laufstatus jedes Servers, Kunden-
 und Serververwaltung, ein Protokoll über alles, was passiert ist, und die
-beiden Papierdokumente zum Ausdrucken. Admins kommen in jedes Panel.
+beiden Papierdokumente zum Ausdrucken. Admins kommen in jedes Panel und
+können einen Server **auf eine andere Maschine umziehen**.
 
 ## Container: wo die Grenzen echt werden
 
@@ -308,6 +310,46 @@ Abbruch.
 
 Er gehört deshalb **ins interne Netz oder hinter einen Reverse-Proxy mit
 HTTPS** — sonst geht das Zeichen im Klartext über die Leitung.
+
+### Umziehen
+
+Ein Server muss nicht bleiben, wo er angelegt wurde. In der Verwaltung steht
+unter jedem Server eine Karte **Umziehen**: Maschine auswählen, Knopf drücken.
+
+Der Ablauf ist immer derselbe, egal in welche Richtung:
+
+1. Der Server muss **aus** sein. Dateien unter einem laufenden Minecraft
+   wegzukopieren endet zuverlässig in einer kaputten Welt. Bei einem fernen
+   Server wird dafür nicht dem Zwischenspeicher geglaubt, sondern direkt
+   nachgefragt — der ist bis zu vier Sekunden alt, und „lief eben noch nicht"
+   ist hier die falsche Auskunft.
+2. Alles einpacken. Liegt der Server auf einem Knoten, geschieht das über ein
+   **Backup, das dort liegenbleibt** — das ist die Sicherheitskopie, falls
+   unterwegs etwas schiefgeht.
+3. Auf der Zielmaschine auspacken, durch denselben Einsperr-Test wie beim
+   Zurückspielen eines Backups.
+4. **Erst danach** Knoten und Port in der Datenbank ändern.
+
+Die Reihenfolge ist der Punkt. Die Datenbank wird zuletzt angefasst: Bricht
+der Umzug vorher ab — tote Maschine, volle Platte, gekapptes Netz —, zeigt der
+Server weiter auf die alte Maschine, wo alles noch unverändert liegt. Ein
+Eintrag, der ins Leere zeigt, wäre der schlimmere Ausgang, weil dann niemand
+mehr sieht, wo die Dateien eigentlich sind.
+
+Zwei Dinge macht das Portal bewusst **nicht** von selbst:
+
+**Die alten Dateien löschen.** Das ist die eine Sache, die sich nicht
+zurückholen lässt. Nach dem Umzug steht in der Meldung, wo sie liegen; weg
+macht sie der Admin, wenn er gesehen hat, dass drüben alles läuft.
+
+**Die weiteren Ports umnummerieren.** Den Hauptport darf das Portal ändern —
+er geht als `--port` an den Server und als `-p` an Docker, beides kommt aus
+der Datenbank; ist er drüben belegt, wird der nächste freie genommen und das
+in der Meldung gesagt. Bei den weiteren Ports geht das nicht: Auf welchem Port
+Geyser oder Dynmap horcht, steht in deren eigener Konfigurationsdatei im
+Serverordner. Eine stille Umnummerierung hieße, dass das Panel 19133
+durchreicht und das Plugin weiter auf 19132 wartet — und niemand fände,
+warum plötzlich keiner mehr hereinkommt. Also nur melden.
 
 ## Serversoftware: auswählen statt hochladen
 
@@ -635,8 +677,10 @@ src/messung.js        CPU, Arbeitsspeicher und Netz messen
 src/arten.js          Serversoftware bei den Herstellern holen
 src/start.js          Startbefehl: Vorlage, Platzhalter, Zerlegung
 src/api.js            Schlüssel für Skripte
+src/zweifach.js       TOTP: der zweite Faktor beim Anmelden
 src/wo.js             die Weiche: hier oder auf einer anderen Maschine?
 src/fern.js           mit einem Daemon reden
+src/umzug.js          einen Server auf eine andere Maschine bringen
 daemon.js             läuft auf jeder weiteren Maschine
 katalog/              Plugin-Jars und ihre Beschreibungen
 src/zip.js            ZIP packen und entpacken, ohne npm-Paket
@@ -646,10 +690,49 @@ src/seiten/           die HTML-Seiten
 oeffentlich/          CSS und das bisschen Browser-JavaScript
   konsole.js          Live-Konsole (EventSource)
   dateien.js          Upload mit Fortschritt
+test/alles.sh         alle zehn Testreihen nacheinander
 daten/portal.db       die Datenbank (nicht im Git)
 server/<id>/          die Minecraft-Server (nicht im Git)
 sicherungen/<id>/     die Backups (nicht im Git)
 ```
+
+## Zwei-Faktor-Anmeldung
+
+Ein Passwort, das in der Schule einmal über die Schulter mitgelesen wurde, ist
+weg — und wer sich am Portal anmeldet, kann die Server ganzer Klassen löschen.
+Unter **Sicherheit** schaltet jeder Kunde für sich einen zweiten Faktor ein.
+
+Das Verfahren ist **TOTP nach RFC 6238**, dasselbe, das Google Authenticator,
+Aegis, 2FAS und der Rest sprechen: ein gemeinsames Geheimnis, die Uhrzeit in
+Dreißig-Sekunden-Schritten, HMAC-SHA1 darüber, sechs Ziffern herausschneiden.
+Alles davon steckt in Node schon drin — es kommt kein Paket dazu.
+
+Dass die Apps dieselben Zahlen sehen werden, ist nicht behauptet, sondern
+nachgerechnet: `test/zweifach.mjs` prüft die **sechs Testwerte aus dem RFC
+selbst**, bis `T=20000000000` — also auch jenseits von 2³², wo ein Zähler in
+32 Bit überliefe.
+
+**Einrichten hat drei Schritte, und der mittlere ist der Grund dafür:** Erst
+liegt ein Geheimnis da, das noch nicht gilt, dann muss ein Code daraus
+stimmen, und erst danach wird umgeschaltet. Wer die App falsch einträgt, merkt
+es also, solange er noch angemeldet ist — und nicht beim nächsten Anmelden,
+wenn es zu spät ist. Das Passwort wird dabei mitgefragt, damit niemand an
+einem offen stehenden Browser den Besitzer aussperrt.
+
+| Fall | Was passiert |
+|---|---|
+| Handy geht eine halbe Minute falsch | Ein Schritt Spielraum in jede Richtung — der Code geht trotzdem. Zwei Schritte nicht mehr, sonst gölte ein abgefangener Code zu lange. |
+| Jemand liest den Code über die Schulter ab | Derselbe Zeitschritt wird kein zweites Mal angenommen. In diesen dreißig Sekunden sitzt derjenige noch daneben. |
+| Handy weg | **Acht Ersatzcodes**, beim Einschalten einmal angezeigt. Jeder gilt genau einmal; das Portal zählt mit, wie viele noch offen sind. |
+| Handy *und* Ersatzcodes weg | Der Admin schaltet den zweiten Faktor in der Kundenverwaltung ab. Einschalten kann er ihn für niemanden — dafür bräuchte er das Geheimnis in dessen App. |
+
+Zwischen Passwort und Code gibt es eine **halbe Anmeldung**: eine Sitzung, die
+den Namen trägt, aber keine Rechte. Sie läuft nach zehn Minuten ab, und jede
+Seite, die nach dem angemeldeten Nutzer fragt, übersieht sie.
+
+Was der zweite Faktor **nicht** schützt: die API-Schlüssel. Die sind selbst
+schon ein Geheimnis und werden von Skripten benutzt, die kein Handy haben —
+sie kommen weiter ohne Code herein. Steht auch so auf der Seite.
 
 ## Sicherheit
 
@@ -677,6 +760,17 @@ Person.
    Container kann ein einzelner Server alle anderen lahmlegen.
 
 ## Test
+
+Zehn Reihen, zusammen **402 Prüfungen**. Alle auf einmal:
+
+```bash
+ERSATZ_JAR=/pfad/zu/server.jar test/alles.sh
+```
+
+Jede Reihe, die ein Portal braucht, bekommt ein eigenes, frisches — ein Test,
+der auf den Datenbankresten des vorherigen aufsetzt, geht irgendwann grundlos
+kaputt, und man sucht dann am falschen Ende. Einzelheiten in
+[`test/README.md`](test/README.md).
 
 `test/durchklicken.mjs` geht das Portal einmal komplett durch — Anfrage
 abschicken, annehmen, Server anlegen, Dokumente drucken, ins Panel, Dateien
@@ -757,11 +851,12 @@ gegen einen echten Server prüfen, und ungeprüfte Protokoll-Implementierungen
 sind genau die Sorte Code, die später kaputtgeht. Für die Plugins in diesem
 Repo reicht ohnehin SQLite.
 
-**Zwei-Faktor-Anmeldung.** Sinnvoll, sobald das Portal öffentlich erreichbar
-ist. Noch nicht gebaut.
-
-**Server zwischen Knoten umziehen.** Geht bisher nur von Hand: stoppen, Ordner
-kopieren, Knoten umstellen.
+**Grafische QR-Codes** beim Einrichten der Zwei-Faktor-Anmeldung. Das
+Geheimnis steht in Vierergruppen zum Abtippen da, dazu der
+`otpauth://`-Link — jede App nimmt beides. Einen QR-Code zu erzeugen wäre
+nicht schwer; ich hätte hier nur kein Werkzeug gehabt, um nachzusehen, ob der
+erzeugte auch wirklich lesbar ist, und ein QR-Code, den die App nicht annimmt,
+ist schlimmer als keiner: Man sucht dann am falschen Ende.
 
 ## Was noch fehlt
 
