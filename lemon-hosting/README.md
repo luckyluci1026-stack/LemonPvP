@@ -330,6 +330,12 @@ Der Ablauf ist immer derselbe, egal in welche Richtung:
    Zurückspielen eines Backups.
 4. **Erst danach** Knoten und Port in der Datenbank ändern.
 
+Ein Server, den noch niemand gestartet hat, hat keine einzige Datei. Das ist
+kein Fehler, sondern der Normalfall — dann zieht eben nur der Eintrag um, und
+die Meldung sagt das auch so. Sonst wäre ausgerechnet der Fall, in dem man
+sich beim Anlegen in der Maschine vertan hat, der einzige, den diese Karte
+nicht kann.
+
 Die Reihenfolge ist der Punkt. Die Datenbank wird zuletzt angefasst: Bricht
 der Umzug vorher ab — tote Maschine, volle Platte, gekapptes Netz —, zeigt der
 Server weiter auf die alte Maschine, wo alles noch unverändert liegt. Ein
