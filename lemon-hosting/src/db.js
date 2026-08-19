@@ -109,6 +109,14 @@ function schema() {
       details       TEXT NOT NULL DEFAULT ''
     );
 
+    CREATE TABLE IF NOT EXISTS unterbenutzer (
+      server_id     INTEGER NOT NULL REFERENCES server(id),
+      kunde_id      INTEGER NOT NULL REFERENCES kunden(id),
+      rechte        TEXT NOT NULL DEFAULT '',
+      angelegt      TEXT NOT NULL,
+      PRIMARY KEY (server_id, kunde_id)
+    );
+
     CREATE TABLE IF NOT EXISTS knoten (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       name          TEXT NOT NULL,
@@ -375,6 +383,57 @@ export function serverAendern(id, felder) {
 export function serverLoeschen(id) {
   db.prepare("UPDATE server SET status = 'geloescht', geloescht_am = ? WHERE id = ?")
     .run(heute(), id);
+  // Freigaben mitnehmen: Ein geloeschter Server soll bei niemandem mehr
+  // in der Liste stehen.
+  db.prepare('DELETE FROM unterbenutzer WHERE server_id = ?').run(id);
+}
+
+// ------------------------------------------------------------ Unterbenutzer
+
+/**
+ * Wer darf ausser dem Besitzer an diesen Server?
+ *
+ * In einer Klasse verwaltet selten nur einer den Server. Ohne
+ * Unterbenutzer muesste man das Passwort weitergeben - und dann kann der
+ * andere auch die Rechnung sehen und den Server loeschen lassen.
+ *
+ * Die Rechte stehen als Liste in einem Textfeld. Eine eigene Tabelle
+ * dafuer waere sauberer normalisiert und hier trotzdem Unfug: Es sind
+ * eine Handvoll fester Worte, die immer zusammen gelesen werden.
+ */
+export function unterbenutzerSetzen(serverId, kundeId, rechte) {
+  const text = [...new Set(rechte)].join(',');
+  db.prepare(`INSERT INTO unterbenutzer (server_id, kunde_id, rechte, angelegt)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(server_id, kunde_id) DO UPDATE SET rechte = excluded.rechte`)
+    .run(serverId, kundeId, text, jetzt());
+}
+
+export const unterbenutzerWeg = (serverId, kundeId) =>
+  db.prepare('DELETE FROM unterbenutzer WHERE server_id = ? AND kunde_id = ?')
+    .run(serverId, kundeId);
+
+export function unterbenutzer(serverId) {
+  return db.prepare(`SELECT u.*, k.benutzername, k.vorname, k.nachname, k.klasse
+                     FROM unterbenutzer u JOIN kunden k ON k.id = u.kunde_id
+                     WHERE u.server_id = ? ORDER BY k.benutzername`)
+    .all(serverId).map((u) => ({ ...u, rechte: u.rechte ? u.rechte.split(',') : [] }));
+}
+
+/** Die Rechte eines Kunden an einem Server - oder null, wenn er keine hat. */
+export function rechteAn(serverId, kundeId) {
+  const u = db.prepare('SELECT rechte FROM unterbenutzer WHERE server_id = ? AND kunde_id = ?')
+    .get(serverId, kundeId);
+  return u ? (u.rechte ? u.rechte.split(',') : []) : null;
+}
+
+/** Alle Server, an denen jemand als Unterbenutzer beteiligt ist. */
+export function serverAlsUnterbenutzer(kundeId) {
+  return db.prepare(`SELECT s.* FROM server s
+                     JOIN unterbenutzer u ON u.server_id = s.id
+                     WHERE u.kunde_id = ? AND s.status <> 'geloescht'
+                     ORDER BY s.name`)
+    .all(kundeId).map((s) => ({ ...s, zusatz: zusatzVon(s.id), geteilt: true }));
 }
 
 // ---------------------------------------------------------------- Bestellungen

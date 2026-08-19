@@ -125,7 +125,8 @@ export function fremdesPanel(nutzer, s, ziel) {
 
 export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
                       gut = false, sicherungen = [], plugins = [],
-                      knotenName = 'dieser Rechner', versionen = null) {
+                      knotenName = 'dieser Rechner', versionen = null,
+                      teilen = { besitzer: true, rechte: null, freigaben: [], moeglich: {} }) {
   const paket = PAKETE[s.paket];
   // Laeuft der Server gerade, zaehlt was tatsaechlich laeuft; sonst was
   // beim naechsten Start passieren wuerde.
@@ -141,6 +142,9 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
   const platz = aus.ssd * 1073741824;
   const anteil = platz ? Math.min(100, (belegt / platz) * 100) : 0;
   const eingabeAus = zustand.status !== 'laeuft' && zustand.status !== 'startet';
+  // Ein Unterbenutzer sieht nur, was er auch bedienen darf. Knoepfe
+  // anzuzeigen, die dann 403 liefern, waere die unhoeflichste Variante.
+  const darf = (recht) => teilen.besitzer || (teilen.rechte || []).includes(recht);
 
   return seite({ titel: s.name, nutzer, hier: '/meine-server', inhalt: `
     ${kopf(s, statusAnzeige(zustand))}
@@ -219,14 +223,15 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
       <div class="zwischen">
         <h2>Konsole</h2>
         <div class="reihe">
-          ${knoepfe(s, zustand, zeichen)}
-          <a class="knopf stil2 klein" href="/panel/${s.id}/dateien">📁 Dateien</a>
+          ${darf('steuern') ? knoepfe(s, zustand, zeichen) : ''}
+          ${darf('dateien') ? `<a class="knopf stil2 klein"
+            href="/panel/${s.id}/dateien">📁 Dateien</a>` : ''}
         </div>
       </div>
 
       <pre id="konsole" class="konsole abstand">Verbinde …</pre>
 
-      <form id="befehlform" class="reihe" style="margin-top:.7rem"
+      ${darf('konsole') ? `<form id="befehlform" class="reihe" style="margin-top:.7rem"
             action="/panel/${s.id}/befehl" method="post">
         ${csrfFeld(zeichen)}
         <input name="befehl" id="befehl" class="mono" autocomplete="off"
@@ -237,7 +242,8 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
       <p class="klein leise" style="margin-top:.6rem">
         Befehle gehen direkt in die Serverkonsole — ohne führenden Schrägstrich,
         also <span class="mono">op DeinName</span>, nicht <span class="mono">/op</span>.
-      </p>
+      </p>` : '<p class="klein leise" style="margin-top:.6rem">Du darfst mitlesen, '
+        + 'aber keine Befehle schicken.</p>'}
     </div>
     ${fern ? `<div class="hinweis info abstand">
       <strong>Läuft auf ${esc(knotenName)}.</strong> Das Portal steuert diesen
@@ -262,7 +268,13 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
            Grenze echt.`}
     </div>`}
 
-    <div class="karte abstand" id="software">
+    ${!teilen.besitzer ? `<div class="hinweis info abstand">
+      <strong>Dieser Server gehört jemand anderem.</strong> Du wurdest
+      freigeschaltet für: ${(teilen.rechte || []).map((r) =>
+        esc(teilen.moeglich[r] || r)).join(' · ') || 'nichts'}.
+    </div>` : ''}
+
+    ${darf('plugins') ? `<div class="karte abstand" id="software">
       <div class="zwischen">
         <h2>Serversoftware</h2>
         ${s.art ? `<span class="klein leise">${
@@ -306,9 +318,9 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
           Ersetzt nur die <span class="mono">server.jar</span> – Welt, Plugins
           und Einstellungen bleiben.</span>` : ''}
       </form>
-    </div>
+    </div>` : ''}
 
-    <div class="karte abstand">
+    ${darf('plugins') ? `<div class="karte abstand">
       <div class="zwischen">
         <h2>Plugins</h2>
         <span class="klein leise">${plugins.filter((p) => p.da).length} von ${
@@ -337,9 +349,9 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
       : `<p class="leise klein abstand">Im Katalog liegen keine Plugins.
          Leg <span class="mono">.jar</span>-Dateien in den Katalogordner oder
          setz <span class="mono">KATALOG_DIR</span>.</p>`}
-    </div>
+    </div>` : ''}
 
-    <div class="karte abstand">
+    ${darf('steuern') ? `<div class="karte abstand">
       <div class="zwischen">
         <h2>Zeitplan</h2>
         <span class="klein leise">läuft, solange das Portal läuft</span>
@@ -365,9 +377,9 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
           schickt das Panel <span class="mono">save-all</span>, damit die Welt
           wirklich auf der Platte steht.</p>
       </form>
-    </div>
+    </div>` : ''}
 
-    <div class="karte abstand">
+    ${darf('backups') ? `<div class="karte abstand">
       <div class="zwischen">
         <h2>Backups</h2>
         <form method="post" action="/panel/${s.id}/sicherung">
@@ -405,7 +417,47 @@ export function panel(nutzer, s, zustand, zeichen, belegt, meldung = '',
           </div></td>
         </tr>`).join('')}
       </table>` : '<p class="leise klein abstand">Noch kein Backup vorhanden.</p>'}
-    </div>
+    </div>` : ''}
+
+    ${teilen.besitzer ? `<div class="karte abstand">
+      <div class="zwischen">
+        <h2>Wer darf mit?</h2>
+        <span class="klein leise">${teilen.freigaben.length} freigeschaltet</span>
+      </div>
+      <p class="klein leise" style="margin-top:.5rem">
+        Statt dein Passwort weiterzugeben: Trag den Zugang von jemandem ein und
+        kreuz an, was er darf. Was der Server kostet, sieht weiterhin nur du.</p>
+
+      ${teilen.freigaben.length ? `<table class="abstand">
+        ${teilen.freigaben.map((u) => `<tr>
+          <td><strong>${esc(u.benutzername)}</strong>
+            <div class="klein leise">${esc((u.vorname + ' ' + u.nachname).trim())}${
+              u.klasse ? ' · ' + esc(u.klasse) : ''}</div></td>
+          <td class="klein">${u.rechte.map((r) =>
+            esc(teilen.moeglich[r] || r)).join('<br>')}</td>
+          <td class="zahl"><form method="post" action="/panel/${s.id}/freigabe-weg"
+                onsubmit="return confirm('${esc(u.benutzername)} den Zugang entziehen?')">
+            ${csrfFeld(zeichen)}
+            <input type="hidden" name="kundeId" value="${u.kunde_id}">
+            <button class="knopf gefahr klein">Entziehen</button></form></td>
+        </tr>`).join('')}
+      </table>` : ''}
+
+      <form method="post" action="/panel/${s.id}/freigeben" class="abstand">
+        ${csrfFeld(zeichen)}
+        <div class="feld"><label>Benutzername</label>
+          <input name="benutzername" class="mono" placeholder="tom.klein" required></div>
+        <div class="feld">
+          <label>Darf …</label>
+          ${Object.entries(teilen.moeglich).map(([id, text]) => `
+            <label style="display:flex;align-items:center;cursor:pointer;font-weight:400">
+              <input type="checkbox" name="r_${id}" value="1"${
+                id === 'konsole' ? ' checked' : ''}>
+              <span>${esc(text)}</span></label>`).join('')}
+        </div>
+        <button class="knopf">Freischalten</button>
+      </form>
+    </div>` : ''}
 
     <script>window.SERVER_ID = ${s.id};
       window.SERVER_CORES = ${aus.cores};

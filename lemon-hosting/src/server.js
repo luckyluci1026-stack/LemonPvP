@@ -58,6 +58,26 @@ function zusatzAus(daten) {
 const wer = (n) => n ? `${n.benutzername}` : 'unbekannt';
 
 /**
+ * Was ein Unterbenutzer duerfen kann.
+ *
+ * Absichtlich grob: Wer die Konsole hat, kann ohnehin `op` tippen. Fein
+ * abgestufte Rechte gaeben nur ein Gefuehl von Sicherheit, das nicht
+ * traegt. Was wirklich zaehlt: Der Besitzer bleibt allein zustaendig fuer
+ * Freigaben und sieht als Einziger, was der Server kostet.
+ */
+const RECHTE = {
+  konsole: 'Konsole lesen und Befehle schicken',
+  steuern: 'Starten, stoppen, neu starten',
+  dateien: 'Dateien ansehen und bearbeiten',
+  backups: 'Backups anlegen und zurückspielen',
+  plugins: 'Plugins und Serversoftware ändern',
+};
+export const RECHTE_LISTE = RECHTE;
+
+const rechteAus = (daten) =>
+  Object.keys(RECHTE).filter((r) => daten['r_' + r]);
+
+/**
  * Eine hochgeladene Datei direkt zum Daemon weiterreichen.
  *
  * Der Datenstrom laeuft durch, ohne dass die Datei beim Portal
@@ -231,14 +251,17 @@ export function baue() {
   // ------------------------------------------------------------ Kunde
   r.get('/meine-server', (c) => {
     if (!c.nutzer) return weiter(c.antwort, '/anmelden');
-    sende(c.antwort, ks.meineServer(c.nutzer, db.serverVonKunde(c.nutzer.id)));
+    sende(c.antwort, ks.meineServer(c.nutzer, [
+      ...db.serverVonKunde(c.nutzer.id),
+      ...db.serverAlsUnterbenutzer(c.nutzer.id),
+    ]));
   });
 
   r.get('/meine-server/:id', (c) => {
     if (!c.nutzer) return weiter(c.antwort, '/anmelden');
     const s = db.server(Number(c.werte.id));
-    // Ein Kunde sieht nur seine eigenen Server - sonst reicht das Raten
-    // einer Nummer, um in fremde Unterlagen zu schauen.
+    // Was der Server kostet, geht nur den Besitzer an - ein
+    // Unterbenutzer darf das Panel bedienen, nicht die Rechnung sehen.
     if (!s || (s.kunde_id !== c.nutzer.id && c.nutzer.rolle !== 'admin')) {
       return sende(c.antwort, fehlerSeite(c.nutzer, 'Diesen Server gibt es nicht.'), 404);
     }
@@ -255,14 +278,35 @@ export function baue() {
    * Stelle, an der ein Fehler richtig weh taete, deshalb steht sie an
    * genau einem Ort und nicht in jedem Handler nachgebaut.
    */
-  const meinServer = (fn) => (c) => {
+  const meinServer = (recht) => (fn) => (c) => {
     if (!c.nutzer) return weiter(c.antwort, '/anmelden');
     const s = db.server(Number(c.werte.id));
-    if (!s || (s.kunde_id !== c.nutzer.id && c.nutzer.rolle !== 'admin')) {
-      return sende(c.antwort, fehlerSeite(c.nutzer, 'Diesen Server gibt es nicht.'), 404);
+    if (!s) return sende(c.antwort, fehlerSeite(c.nutzer, 'Diesen Server gibt es nicht.'), 404);
+
+    const besitzer = s.kunde_id === c.nutzer.id || c.nutzer.rolle === 'admin';
+    if (!besitzer) {
+      // Ein Unterbenutzer darf herein, aber nur so weit, wie der Besitzer
+      // ihn gelassen hat. Wer gar nicht eingetragen ist, bekommt 404 und
+      // nicht 403 - er soll nicht einmal erfahren, dass es den Server gibt.
+      const rechte = db.rechteAn(s.id, c.nutzer.id);
+      if (!rechte) {
+        return sende(c.antwort, fehlerSeite(c.nutzer, 'Diesen Server gibt es nicht.'), 404);
+      }
+      if (recht && !rechte.includes(recht)) {
+        return sende(c.antwort, fehlerSeite(c.nutzer,
+          'Dafür hat dich der Besitzer dieses Servers nicht freigeschaltet.'), 403);
+      }
+      c.rechte = rechte;
     }
+    c.besitzer = besitzer;
     return fn(c, s);
   };
+
+  /** Nur der Besitzer (oder ein Admin) - fuer Freigaben. */
+  const nurBesitzer = (fn) => meinServer(null)((c, s) =>
+    c.besitzer ? fn(c, s)
+      : sende(c.antwort, fehlerSeite(c.nutzer,
+          'Nur der Besitzer dieses Servers kann das.'), 403));
 
   /**
    * Wie oben, aber nur fuer Server, die das Portal selbst betreibt.
@@ -272,7 +316,7 @@ export function baue() {
    * die denselben Server anfassen duerfen, waeren ein Rezept fuer
    * kaputte Welten.
    */
-  const eigenerServer = (fn) => meinServer((c, s) => {
+  const eigenerServer = (recht) => (fn) => meinServer(recht)((c, s) => {
     if (s.pterodactyl) {
       return sende(c.antwort, fehlerSeite(c.nutzer,
         'Dieser Server läuft in Pterodactyl und wird dort verwaltet.'), 409);
@@ -292,7 +336,7 @@ export function baue() {
     c.antwort.end(JSON.stringify(daten));
   };
 
-  r.get('/panel/:id', meinServer(async (c, s) => {
+  r.get('/panel/:id', meinServer(null)(async (c, s) => {
     if (s.pterodactyl) {
       return sende(c.antwort, pnl.fremdesPanel(c.nutzer, s, s.pterodactyl));
     }
@@ -306,10 +350,12 @@ export function baue() {
     ]);
     sende(c.antwort, pnl.panel(c.nutzer, s, wo.zustand(s), c.csrf,
       belegt, gut || c.url.searchParams.get('m') || '', Boolean(gut),
-      sicherungen, plugins, wo.knotenName(s), versionen));
+      sicherungen, plugins, wo.knotenName(s), versionen,
+      { besitzer: c.besitzer, rechte: c.rechte || null,
+        freigaben: c.besitzer ? db.unterbenutzer(s.id) : [], moeglich: RECHTE }));
   }));
 
-  r.post('/panel/:id/aktion', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/aktion', eigenerServer('steuern')(async (c, s) => {
     const was = c.daten.was;
 
     // Ein archivierter oder geloeschter Server startet nicht. Stoppen
@@ -326,7 +372,7 @@ export function baue() {
     zumPanel(c, s, fehler);
   }));
 
-  r.post('/panel/:id/befehl', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/befehl', eigenerServer('konsole')(async (c, s) => {
     const text = String(c.daten.befehl || '');
     const fehler = await wo.befehl(s, text);
     if (!fehler) db.protokolliere(wer(c.nutzer), 'Konsolenbefehl', `#${s.id} · ${text}`);
@@ -341,7 +387,7 @@ export function baue() {
    * braeuchte es aber eine Bibliothek und einen zweiten Protokollpfad,
    * und geschickt wird ohnehin nur in eine Richtung.
    */
-  r.get('/panel/:id/konsole', eigenerServer(async (c, s) => {
+  r.get('/panel/:id/konsole', eigenerServer('konsole')(async (c, s) => {
     const a = c.antwort;
 
     // Liegt der Server woanders, reicht das Portal den Strom des Daemons
@@ -405,7 +451,7 @@ export function baue() {
   }));
 
   // ------------------------------------------------------------ Dateien
-  r.get('/panel/:id/dateien', eigenerServer(async (c, s) => {
+  r.get('/panel/:id/dateien', eigenerServer('dateien')(async (c, s) => {
     const pfad = dat.saeubere(c.url.searchParams.get('p'));
     const eintraege = await wo.liste(s, pfad);
     if (!eintraege) {
@@ -416,7 +462,7 @@ export function baue() {
       ok || c.url.searchParams.get('m') || '', Boolean(ok)));
   }));
 
-  r.get('/panel/:id/bearbeiten', eigenerServer(async (c, s) => {
+  r.get('/panel/:id/bearbeiten', eigenerServer('dateien')(async (c, s) => {
     const pfad = dat.saeubere(c.url.searchParams.get('p'));
     const inhalt = await wo.lies(s, pfad);
     if (inhalt === null) {
@@ -426,7 +472,7 @@ export function baue() {
     sende(c.antwort, pnl.bearbeiten(c.nutzer, s, pfad, inhalt, c.csrf));
   }));
 
-  r.post('/panel/:id/speichern', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/speichern', eigenerServer('dateien')(async (c, s) => {
     const pfad = dat.saeubere(c.daten.p);
     const fehler = await wo.schreib(s, pfad, c.daten.inhalt ?? '');
     if (fehler) {
@@ -437,7 +483,7 @@ export function baue() {
     zuDateien(c, s, pfad.split('/').slice(0, -1).join('/'), `${pfad} gespeichert.`, true);
   }));
 
-  r.post('/panel/:id/loeschen', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/loeschen', eigenerServer('dateien')(async (c, s) => {
     const pfad = dat.saeubere(c.daten.p);
     const fehler = await wo.loesche(s, pfad);
     if (!fehler) db.protokolliere(wer(c.nutzer), 'Datei gelöscht', `#${s.id} · ${pfad}`);
@@ -445,7 +491,7 @@ export function baue() {
       fehler || `${pfad} gelöscht.`, !fehler);
   }));
 
-  r.post('/panel/:id/neu', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/neu', eigenerServer('dateien')(async (c, s) => {
     const pfad = dat.saeubere(c.daten.p);
     const name = dat.nameOk(c.daten.name);
     if (!name) return zuDateien(c, s, pfad, 'Der Dateiname geht so nicht.');
@@ -455,7 +501,7 @@ export function baue() {
     zuDateien(c, s, pfad, fehler || `${name} angelegt.`, !fehler);
   }));
 
-  r.post('/panel/:id/ordner', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/ordner', eigenerServer('dateien')(async (c, s) => {
     const pfad = dat.saeubere(c.daten.p);
     const name = dat.nameOk(c.daten.name);
     if (!name) return zuDateien(c, s, pfad, 'Der Ordnername geht so nicht.');
@@ -470,7 +516,7 @@ export function baue() {
    * leitet sie direkt auf die Platte weiter. Sonst muesste eine
    * 55-MB-Jar erst komplett in den Arbeitsspeicher.
    */
-  r.postRoh('/panel/:id/hochladen', eigenerServer(async (c, s) => {
+  r.postRoh('/panel/:id/hochladen', eigenerServer('dateien')(async (c, s) => {
     // Bei einem entfernten Server geht der Datenstrom direkt weiter zum
     // Daemon - die Datei liegt also nie zwischendurch beim Portal.
     const fehler = wo.istFern(s)
@@ -496,7 +542,7 @@ export function baue() {
    * Versionsliste dazu geladen werden kann. Erst der Knopf installiert
    * wirklich.
    */
-  r.post('/panel/:id/software', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/software', eigenerServer('plugins')(async (c, s) => {
     const art = arten.artOk(c.daten.art);
     if (!art) {
       db.serverAendern(s.id, { art: '' });
@@ -518,7 +564,7 @@ export function baue() {
       + (prozess.laeuft(s.id) ? ' Wirkt beim nächsten Neustart.' : ''));
   }));
 
-  r.post('/panel/:id/plugin/installieren', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/plugin/installieren', eigenerServer('plugins')(async (c, s) => {
     const ergebnis = await wo.plugin(s, c.daten.datei, 'rein');
     if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
     db.protokolliere(wer(c.nutzer), 'Plugin installiert',
@@ -526,14 +572,14 @@ export function baue() {
     zumPanelGut(c, s, `${ergebnis.name} installiert – beim nächsten Neustart ist es da.`);
   }));
 
-  r.post('/panel/:id/plugin/entfernen', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/plugin/entfernen', eigenerServer('plugins')(async (c, s) => {
     const ergebnis = await wo.plugin(s, c.daten.datei, 'raus');
     if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
     db.protokolliere(wer(c.nutzer), 'Plugin entfernt', `#${s.id} · ${c.daten.datei}`);
     zumPanelGut(c, s, `${ergebnis.name} entfernt – beim nächsten Neustart ist es weg.`);
   }));
 
-  r.post('/panel/:id/zeitplan', eigenerServer((c, s) => {
+  r.post('/panel/:id/zeitplan', eigenerServer('steuern')((c, s) => {
     const neustart = plan.zeitOk(c.daten.neustart_um);
     const sicherung = plan.zeitOk(c.daten.sicherung_um);
     db.serverAendern(s.id, { neustart_um: neustart, sicherung_um: sicherung });
@@ -542,7 +588,7 @@ export function baue() {
     zumPanelGut(c, s, 'Zeitplan gespeichert.');
   }));
 
-  r.post('/panel/:id/sicherung', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/sicherung', eigenerServer('backups')(async (c, s) => {
     const ergebnis = await wo.sicherungAnlegen(s);
     if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
     db.protokolliere(wer(c.nutzer), 'Backup angelegt',
@@ -558,7 +604,7 @@ export function baue() {
    * entsprechen - alles andere findet `pfadVon` gar nicht erst. Damit
    * fuehrt kein Umweg ueber diesen Namen an eine andere Datei.
    */
-  r.get('/panel/:id/sicherung/laden', eigenerServer(async (c, s) => {
+  r.get('/panel/:id/sicherung/laden', eigenerServer('backups')(async (c, s) => {
     if (wo.istFern(s)) return sicherungWeiter(c, s);
     const datei = sich.pfadVon(s.id, c.url.searchParams.get('f'));
     if (!datei) {
@@ -573,14 +619,14 @@ export function baue() {
     createReadStream(datei).pipe(c.antwort);
   }));
 
-  r.post('/panel/:id/sicherung/loeschen', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/sicherung/loeschen', eigenerServer('backups')(async (c, s) => {
     const fehler = await wo.sicherungLoeschen(s, c.daten.f);
     if (fehler) return zumPanel(c, s, fehler);
     db.protokolliere(wer(c.nutzer), 'Backup gelöscht', `#${s.id} · ${c.daten.f}`);
     zumPanelGut(c, s, 'Backup gelöscht.');
   }));
 
-  r.post('/panel/:id/sicherung/zurueck', eigenerServer(async (c, s) => {
+  r.post('/panel/:id/sicherung/zurueck', eigenerServer('backups')(async (c, s) => {
     const ergebnis = await wo.sicherungZurueck(s, c.daten.f);
     if (ergebnis.fehler) return zumPanel(c, s, ergebnis.fehler);
     db.protokolliere(wer(c.nutzer), 'Backup zurückgespielt',
@@ -745,6 +791,35 @@ export function baue() {
 
   r.get('/admin/protokoll', nurAdmin((c) => sende(c.antwort, adm.protokollSeite(c.nutzer))));
 
+
+
+  // ------------------------------------------------------- Unterbenutzer
+  r.post('/panel/:id/freigeben', nurBesitzer(async (c, s) => {
+    const name = String(c.daten.benutzername || '').toLowerCase().trim();
+    const k = db.kundePerName(name);
+    if (!k) return zumPanel(c, s, `Einen Zugang „${name}" gibt es nicht.`);
+    if (k.id === s.kunde_id) {
+      return zumPanel(c, s, 'Dem Besitzer musst du nichts freigeben.');
+    }
+    const rechte = rechteAus(c.daten);
+    if (!rechte.length) {
+      return zumPanel(c, s, 'Kreuz wenigstens ein Recht an – sonst bringt die '
+        + 'Freigabe nichts.');
+    }
+    db.unterbenutzerSetzen(s.id, k.id, rechte);
+    db.protokolliere(wer(c.nutzer), 'Server freigegeben',
+      `#${s.id} · für ${k.benutzername} · ${rechte.join(', ')}`);
+    zumPanelGut(c, s, `${k.benutzername} darf jetzt mit.`);
+  }));
+
+  r.post('/panel/:id/freigabe-weg', nurBesitzer((c, s) => {
+    const kundeId = Number(c.daten.kundeId) || 0;
+    const k = db.kunde(kundeId);
+    db.unterbenutzerWeg(s.id, kundeId);
+    db.protokolliere(wer(c.nutzer), 'Freigabe entzogen',
+      `#${s.id} · ${k?.benutzername || kundeId}`);
+    zumPanelGut(c, s, `${k?.benutzername || 'Der Zugang'} kommt nicht mehr rein.`);
+  }));
 
   // ------------------------------------------------------------ Knoten
   r.get('/admin/knoten', nurAdmin(async (c) => {

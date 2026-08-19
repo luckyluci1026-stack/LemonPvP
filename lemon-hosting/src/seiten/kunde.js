@@ -63,6 +63,7 @@ export function meineServer(nutzer, server) {
         <div class="reihe">
           ${!s.pterodactyl && lauf.spieler?.length
             ? `<span class="klein leise">${lauf.spieler.length} online</span>` : ''}
+          ${s.geteilt ? '<span class="marke-punkt offen">geteilt</span>' : ''}
           ${punkt}
           ${s.status !== 'aktiv' ? statusPunkt(s.status) : ''}
         </div>
@@ -78,6 +79,8 @@ export function meineServer(nutzer, server) {
         <div><div class="klein leise">Speicher</div>
           <strong>${ergebnis.ausstattung?.ssd ?? '–'} GB</strong></div>
       </div>
+      ${s.geteilt ? `<div class="klein leise abstand">Dieser Server gehört
+        jemand anderem – du wurdest dafür freigeschaltet.</div>` : ''}
       ${zusatzListe.length ? `<div class="abstand">
         <div class="klein leise">Zusatzleistungen</div>
         <div class="klein">${zusatzListe.map(esc).join(' · ')}</div></div>` : ''}
@@ -85,7 +88,8 @@ export function meineServer(nutzer, server) {
         <a class="knopf" href="/panel/${s.id}">Panel öffnen</a>
         ${s.pterodactyl ? '' :
           `<a class="knopf stil2" href="/panel/${s.id}/dateien">Dateien</a>`}
-        <a class="knopf stil2 klein" href="/meine-server/${s.id}">Was ist gebucht?</a>
+        ${s.geteilt ? '' :
+          `<a class="knopf stil2 klein" href="/meine-server/${s.id}">Was ist gebucht?</a>`}
       </div>
     </article>`;
   }).join('');
