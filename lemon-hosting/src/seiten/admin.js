@@ -454,6 +454,26 @@ export function kundeSeite(nutzer, zeichen, k, server, meldung = '') {
             und meldet den Kunden überall ab.</p>
           <button class="knopf stil2">Passwort setzen</button>
         </form>
+
+        <div class="karte" style="margin-top:1rem">
+          <div class="zwischen"><h2>Zwei-Faktor</h2>
+            <span class="marke-punkt ${k.totp_geheim && k.totp_seit
+              ? 'aktiv' : 'geloescht'}">${k.totp_geheim && k.totp_seit
+              ? 'an' : 'aus'}</span></div>
+          ${k.totp_geheim && k.totp_seit ? `
+            <p class="klein leise">Seit ${esc(k.totp_seit.slice(0, 10))}.
+              Handy weg und Ersatzcodes auch? Dann bleibt nur der Weg hier —
+              danach reicht wieder das Passwort allein, und der Kunde richtet
+              den zweiten Faktor selbst neu ein.</p>
+            <form method="post" action="/admin/kunde/${k.id}/zweifach-aus" class="abstand"
+                  onsubmit="return confirm('Zwei-Faktor bei ${esc(k.benutzername)} wirklich abschalten? Vergewissere dich vorher, dass wirklich der Kunde vor dir steht.')">
+              ${csrfFeld(zeichen)}
+              <button class="knopf gefahr klein">Abschalten</button>
+            </form>
+          ` : `<p class="klein leise">Der Kunde hat keinen zweiten Faktor
+            eingerichtet. Einschalten kann das nur er selbst — unter
+            „Sicherheit", mit seiner eigenen App.</p>`}
+        </div>
       </div>
     </div>` });
 }

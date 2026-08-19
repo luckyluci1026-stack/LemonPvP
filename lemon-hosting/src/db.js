@@ -45,6 +45,9 @@ function schema() {
       rolle         TEXT NOT NULL DEFAULT 'kunde',
       passwort      TEXT NOT NULL,
       salz          TEXT NOT NULL,
+      totp_geheim   TEXT,
+      totp_seit     TEXT,
+      totp_schritt  INTEGER NOT NULL DEFAULT 0,
       angelegt      TEXT NOT NULL
     );
 
@@ -101,7 +104,15 @@ function schema() {
     CREATE TABLE IF NOT EXISTS sitzungen (
       token         TEXT PRIMARY KEY,
       kunde_id      INTEGER NOT NULL REFERENCES kunden(id),
-      laeuft_ab     TEXT NOT NULL
+      laeuft_ab     TEXT NOT NULL,
+      halb          INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS ersatzcode (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      kunde_id      INTEGER NOT NULL REFERENCES kunden(id),
+      hash          TEXT NOT NULL,
+      benutzt_am    TEXT
     );
 
     CREATE TABLE IF NOT EXISTS protokoll (
@@ -176,6 +187,21 @@ function nachruesten() {
   if (!spalten.includes('start_flaggen')) {
     db.exec('ALTER TABLE server ADD COLUMN start_flaggen TEXT');
   }
+  const kundenSpalten = db.prepare('PRAGMA table_info(kunden)').all().map((s) => s.name);
+  if (!kundenSpalten.includes('totp_geheim')) {
+    // NULL heisst "kein zweiter Faktor". Ein leerer Text waere hier
+    // zweideutig - man saehe nicht, ob jemand ihn nie eingerichtet oder
+    // gerade abgeschaltet hat.
+    db.exec('ALTER TABLE kunden ADD COLUMN totp_geheim TEXT');
+    db.exec('ALTER TABLE kunden ADD COLUMN totp_seit TEXT');
+    db.exec('ALTER TABLE kunden ADD COLUMN totp_schritt INTEGER NOT NULL DEFAULT 0');
+  }
+  const sitzungsSpalten = db.prepare('PRAGMA table_info(sitzungen)').all()
+    .map((s) => s.name);
+  if (!sitzungsSpalten.includes('halb')) {
+    db.exec('ALTER TABLE sitzungen ADD COLUMN halb INTEGER NOT NULL DEFAULT 0');
+  }
+
   const protokollSpalten = db.prepare('PRAGMA table_info(protokoll)').all()
     .map((s) => s.name);
   if (!protokollSpalten.includes('server_id')) {
@@ -359,7 +385,28 @@ export function anmelden(kundeId, tage = 14) {
   return token;
 }
 
-export function sitzung(token) {
+/**
+ * Eine halbe Anmeldung: Das Passwort stimmt, der zweite Faktor fehlt.
+ *
+ * Sie steht in derselben Tabelle, ist aber durch `halb = 1` fuer alles
+ * gesperrt, was Rechte braucht - jede Frage nach dem angemeldeten Nutzer
+ * geht durch `sitzung()`, und die uebersieht halbe. So gibt es keinen
+ * zweiten Ort, an dem Anmeldungen liegen, und keinen Zustand im
+ * Arbeitsspeicher, der bei einem Neustart mitten in der Anmeldung
+ * verschwindet.
+ *
+ * Zehn Minuten: lang genug, um das Handy zu suchen, kurz genug, dass ein
+ * halb angemeldeter Rechner nicht den ganzen Tag so dasteht.
+ */
+export function halbAnmelden(kundeId, minuten = 10) {
+  const token = randomBytes(32).toString('hex');
+  const ab = new Date(Date.now() + minuten * 60_000);
+  db.prepare(`INSERT INTO sitzungen (token, kunde_id, laeuft_ab, halb)
+              VALUES (?, ?, ?, 1)`).run(token, kundeId, ab.toISOString());
+  return token;
+}
+
+function sitzungsZeile(token) {
   if (!token) return null;
   const s = db.prepare('SELECT * FROM sitzungen WHERE token = ?').get(token);
   if (!s) return null;
@@ -367,11 +414,107 @@ export function sitzung(token) {
     db.prepare('DELETE FROM sitzungen WHERE token = ?').run(token);
     return null;
   }
-  return kunde(s.kunde_id);
+  return s;
+}
+
+export function sitzung(token) {
+  const s = sitzungsZeile(token);
+  return s && !s.halb ? kunde(s.kunde_id) : null;
+}
+
+/** Wer mitten in der Anmeldung steckt - Passwort ja, Code noch nicht. */
+export function halbeSitzung(token) {
+  const s = sitzungsZeile(token);
+  return s && s.halb ? kunde(s.kunde_id) : null;
+}
+
+/** Der Code stimmte: aus der halben Anmeldung eine richtige machen. */
+export function sitzungGanz(token, tage = 14) {
+  const ab = new Date();
+  ab.setDate(ab.getDate() + tage);
+  db.prepare('UPDATE sitzungen SET halb = 0, laeuft_ab = ? WHERE token = ?')
+    .run(ab.toISOString(), token);
 }
 
 export const abmelden = (token) =>
   db.prepare('DELETE FROM sitzungen WHERE token = ?').run(token);
+
+// ------------------------------------------------------- Zweiter Faktor
+
+/**
+ * Ob der zweite Faktor wirklich scharf ist.
+ *
+ * Zwei Spalten, drei Zustaende: kein Geheimnis heisst "nie eingerichtet",
+ * Geheimnis ohne Datum heisst "gerade dabei, aber noch nicht bestaetigt",
+ * beides heisst "an". Der mittlere Zustand ist der wichtige - solange er
+ * gilt, darf die Anmeldung noch nicht danach fragen, sonst sperrt sich
+ * jemand aus, der die App nur halb eingerichtet hat.
+ */
+export const zweifachAktiv = (k) => Boolean(k?.totp_geheim && k?.totp_seit);
+
+/** Ein Geheimnis ablegen, das noch bestaetigt werden muss. */
+export const totpVorbereiten = (kundeId, geheim) =>
+  db.prepare(`UPDATE kunden SET totp_geheim = ?, totp_seit = NULL, totp_schritt = 0
+              WHERE id = ?`).run(geheim, kundeId);
+
+/**
+ * Den zweiten Faktor scharf schalten.
+ *
+ * Alle anderen Sitzungen fliegen raus - nur die, in der man gerade
+ * sitzt, bleibt. Wer den zweiten Faktor einrichtet, tut das, weil ihm
+ * sein Konto wichtig ist; dann sollen die Browser, in denen er
+ * irgendwann einmal angemeldet blieb, neu durch die Anmeldung. Sich
+ * dabei selbst hinauszuwerfen waere nur verwirrend.
+ */
+export function zweifachAn(kundeId, hashes, ausserToken = '') {
+  db.prepare('UPDATE kunden SET totp_seit = ?, totp_schritt = 0 WHERE id = ?')
+    .run(jetzt(), kundeId);
+  ersatzcodesSetzen(kundeId, hashes);
+  db.prepare('DELETE FROM sitzungen WHERE kunde_id = ? AND token != ?')
+    .run(kundeId, ausserToken);
+}
+
+export function zweifachAus(kundeId) {
+  db.prepare(`UPDATE kunden SET totp_geheim = NULL, totp_seit = NULL,
+              totp_schritt = 0 WHERE id = ?`).run(kundeId);
+  db.prepare('DELETE FROM ersatzcode WHERE kunde_id = ?').run(kundeId);
+}
+
+/**
+ * Den zuletzt benutzten Zeitschritt merken.
+ *
+ * Damit derselbe Code kein zweites Mal geht. Wer ihn ueber die Schulter
+ * abliest, hat sonst dreissig Sekunden, in denen er ihn selbst
+ * eintippen kann - und in diesen dreissig Sekunden sitzt er noch daneben.
+ */
+export const totpSchritt = (kundeId, schritt) =>
+  db.prepare('UPDATE kunden SET totp_schritt = ? WHERE id = ?').run(schritt, kundeId);
+
+export function ersatzcodesSetzen(kundeId, hashes) {
+  db.prepare('DELETE FROM ersatzcode WHERE kunde_id = ?').run(kundeId);
+  const rein = db.prepare('INSERT INTO ersatzcode (kunde_id, hash) VALUES (?, ?)');
+  for (const h of hashes) rein.run(kundeId, h);
+}
+
+/** Wie viele Ersatzcodes noch offen sind. */
+export const ersatzcodesOffen = (kundeId) =>
+  db.prepare('SELECT COUNT(*) AS n FROM ersatzcode WHERE kunde_id = ? AND benutzt_am IS NULL')
+    .get(kundeId).n;
+
+/**
+ * Einen Ersatzcode einloesen - genau einmal.
+ *
+ * Er wird nicht geloescht, sondern als benutzt markiert. So sieht man
+ * spaeter noch, dass einer verbraucht wurde, ohne dass er wieder ginge.
+ */
+export function ersatzcodeEinloesen(kundeId, hash) {
+  const z = db.prepare(`SELECT id FROM ersatzcode
+                        WHERE kunde_id = ? AND hash = ? AND benutzt_am IS NULL`)
+    .get(kundeId, hash);
+  if (!z) return false;
+  db.prepare('UPDATE ersatzcode SET benutzt_am = ? WHERE id = ?').run(jetzt(), z.id);
+  return true;
+}
 
 // ---------------------------------------------------------------- Server
 

@@ -224,3 +224,122 @@ curl -X POST \\
       </div>
     </div>` });
 }
+
+/**
+ * Die Sicherheitsseite: Passwort und zweiter Faktor.
+ *
+ * Der Ablauf ist dreiteilig, und das steht hier auch so untereinander:
+ * einschalten (Geheimnis zeigen, Code abfragen), Ersatzcodes einmal
+ * anzeigen, ausschalten. Alles auf einer Seite - es sind drei Schritte,
+ * keine drei Bildschirme.
+ */
+export function sicherheit(nutzer, zeichen, {
+  an, geheim = '', link = '', offen = 0, ersatzcodes = null,
+  meldung = '', ok = '',
+} = {}) {
+  return seite({ titel: 'Sicherheit', nutzer, hier: '/meine-server', inhalt: `
+    <a class="klein leise" href="/meine-server">← Meine Server</a>
+    <h1 class="abstand">Sicherheit</h1>
+
+    ${meldung ? `<div class="hinweis schlecht abstand">${esc(meldung)}</div>` : ''}
+    ${ok ? `<div class="hinweis info abstand">${esc(ok)}</div>` : ''}
+
+    ${ersatzcodes ? `<div class="hinweis warn abstand">
+      <strong>Deine Ersatzcodes — jetzt aufschreiben.</strong>
+      <p class="klein" style="margin:.4rem 0">Wenn dein Handy weg ist, sind das
+        die einzigen Codes, mit denen du noch hereinkommst. Jeder gilt genau
+        einmal. Sie werden nie wieder angezeigt.</p>
+      <pre class="konsole" style="height:auto;margin-top:.6rem;line-height:1.7"
+        >${ersatzcodes.map(esc).join('\n')}</pre>
+    </div>` : ''}
+
+    <div class="gitter g2" style="align-items:start">
+      <div class="karte">
+        <div class="zwischen"><h2>Zwei-Faktor-Anmeldung</h2>
+          <span class="marke-punkt ${an ? 'aktiv' : 'geloescht'}">${
+            an ? 'an' : 'aus'}</span></div>
+        <p class="klein leise abstand">Beim Anmelden fragt das Portal zusätzlich
+          nach einem sechsstelligen Code aus einer Authenticator-App. Wer dein
+          Passwort mitliest, kommt damit trotzdem nicht herein.</p>
+
+        ${an ? `
+          <p class="klein leise">Eingerichtet seit ${esc(nutzer.totp_seit?.slice(0, 10) || '—')}.
+            Noch ${offen} Ersatzcode${offen === 1 ? '' : 's'} offen.</p>
+          <form method="post" action="/sicherheit/ersatz" class="abstand">
+            ${csrfFeld(zeichen)}
+            <div class="feld"><label>Passwort</label>
+              <input type="password" name="passwort" required></div>
+            <button class="knopf stil2 klein">Neue Ersatzcodes</button>
+            <p class="klein leise" style="margin-top:.4rem">Die alten gelten
+              danach nicht mehr.</p>
+          </form>
+          <form method="post" action="/sicherheit/aus" class="abstand"
+                onsubmit="return confirm('Zwei-Faktor-Anmeldung wirklich abschalten?')">
+            ${csrfFeld(zeichen)}
+            <div class="feld"><label>Passwort</label>
+              <input type="password" name="passwort" required></div>
+            <div class="feld"><label>Code aus der App</label>
+              <input name="code" class="mono" placeholder="123456" required></div>
+            <button class="knopf gefahr klein">Abschalten</button>
+          </form>
+        ` : geheim ? `
+          <div class="feld abstand"><label>1. Das in die App eintragen</label>
+            <pre class="konsole" style="height:auto;font-size:1.1rem;letter-spacing:.1em"
+              >${esc(geheim)}</pre>
+            <p class="klein leise" style="margin-top:.4rem">In der App:
+              „Konto hinzufügen" → „Schlüssel eingeben". Als Kontoname passt
+              <span class="mono">${esc(nutzer.benutzername)}</span>, als Typ
+              „zeitbasiert".</p>
+            <p class="klein leise">Auf dem Handy geht auch:
+              <a href="${esc(link)}" class="mono" style="word-break:break-all"
+                 rel="noreferrer">${esc(link.slice(0, 48))}…</a></p></div>
+
+          <form method="post" action="/sicherheit/an">
+            ${csrfFeld(zeichen)}
+            <div class="feld"><label>2. Den Code eintippen, den die App zeigt</label>
+              <input name="code" class="mono" placeholder="123456" required autofocus
+                     inputmode="numeric" style="font-size:1.2rem;letter-spacing:.15em"></div>
+            <div class="feld"><label>3. Dein Passwort</label>
+              <input type="password" name="passwort" required></div>
+            <button class="knopf">Einschalten</button>
+            <p class="klein leise abstand">Erst wenn der Code stimmt, wird
+              umgeschaltet — sonst könntest du dich aussperren. Das Passwort
+              fragen wir, damit niemand an einem offen stehenden Browser
+              <em>dich</em> aussperren kann.</p>
+          </form>
+        ` : `
+          <form method="post" action="/sicherheit/vorbereiten" class="abstand">
+            ${csrfFeld(zeichen)}
+            <button class="knopf">Einrichten</button>
+          </form>`}
+      </div>
+
+      <div class="karte">
+        <h2>Passwort ändern</h2>
+        <form method="post" action="/sicherheit/passwort" class="abstand">
+          ${csrfFeld(zeichen)}
+          <div class="feld"><label>Bisheriges Passwort</label>
+            <input type="password" name="alt" required></div>
+          <div class="feld"><label>Neues Passwort</label>
+            <input type="password" name="neu" minlength="8" required></div>
+          <div class="feld"><label>Noch einmal</label>
+            <input type="password" name="neu2" minlength="8" required></div>
+          <button class="knopf stil2">Passwort ändern</button>
+          <p class="klein leise abstand">Danach bist du überall abgemeldet —
+            auch auf dem Rechner, an dem du gerade sitzt.</p>
+        </form>
+
+        <h2 class="abstand">Was der zweite Faktor nicht schützt</h2>
+        <p class="klein leise">Deine <a href="/zugaenge">API-Schlüssel</a>. Die
+          sind selbst schon ein Geheimnis und werden von Skripten benutzt, die
+          kein Handy haben — sie kommen also weiter ohne Code herein. Wenn du
+          einen verloren hast, hilft nur, ihn dort zu löschen.</p>
+
+        <h2 class="abstand">Welche App?</h2>
+        <p class="klein leise">Jede, die „TOTP" kann: Aegis oder 2FAS (frei),
+          Google Authenticator, Microsoft Authenticator, oder der Passwort-
+          manager, den du ohnehin benutzt. Alle sprechen dasselbe Verfahren —
+          das Portal weiß nicht, welche du hast.</p>
+      </div>
+    </div>` });
+}

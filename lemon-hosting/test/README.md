@@ -1,6 +1,6 @@
 # Test
 
-Neun Reihen, zusammen 337 Prüfungen. Alle auf einmal:
+Zehn Reihen, zusammen 402 Prüfungen. Alle auf einmal:
 
 ```
 ERSATZ_JAR=/pfad/zu/server.jar test/alles.sh
@@ -27,6 +27,7 @@ irgendwann grundlos kaputt, und man sucht dann am falschen Ende.
 | `durchklicken.mjs` | Das Portal einmal komplett wie ein Benutzer. Der wichtigste Block steht unten: ob ein Kunde an fremde Server kommt und ob man aus dem Dateimanager ausbrechen kann. |
 | `teilen.mjs` | Unterbenutzer. Wer nur die Konsole darf, darf auch nur die Konsole — über jeden Weg, nicht nur über den Knopf, der ihm fehlt. |
 | `api.mjs` | API-Zugänge, weitere Ports, Aktivität. Ein Schlüssel kann nie mehr als der Kunde, dem er gehört. |
+| `zweifach.mjs` | Die Zwei-Faktor-Anmeldung. Der erste Teil rechnet die sechs Testwerte aus RFC 6238 nach — das ist der Nachweis, dass die Authenticator-Apps dieselben Zahlen sehen wie das Portal. Der zweite geht die Anmeldung durch, samt Ersatzcodes und dem Fall, dass jemand denselben Code zweimal benutzt. |
 | `knoten.mjs` | Ein Server auf einer zweiten Maschine — echter Daemon auf Port 8391, alles über die Leitung. Am Ende wird der Daemon abgeschossen, damit man sieht, was das Panel dann sagt. |
 | `umzug.mjs` | Umzug zwischen Maschinen, in beide Richtungen. Der Punkt: Scheitert die Übertragung, darf in der Datenbank nichts umgestellt sein — sonst zeigt das Panel ins Leere, obwohl alle Dateien noch da sind. |
 
@@ -38,7 +39,7 @@ Die vier oberen brauchen nichts weiter:
 node test/start.mjs
 ```
 
-Die fünf unteren brauchen ein Portal auf Port 3111 und dessen
+Die sechs unteren brauchen ein Portal auf Port 3111 und dessen
 Startpasswort:
 
 ```

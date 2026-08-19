@@ -64,7 +64,7 @@ lauf zeitplan node test/zeitplan.mjs
 lauf arten    node test/arten.mjs
 
 # --- mit Portal ----------------------------------------------------------
-for reihe in durchklicken teilen api knoten umzug; do
+for reihe in durchklicken teilen api zweifach knoten umzug; do
   wo="$ARBEIT/$reihe"
   starte_portal "$wo"
   if [ -z "${PW:-}" ]; then

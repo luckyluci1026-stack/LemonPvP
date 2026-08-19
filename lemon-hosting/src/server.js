@@ -34,6 +34,7 @@ import * as sb from './start.js';
 import * as api from './api.js';
 import * as fern from './fern.js';
 import * as umzug from './umzug.js';
+import * as zwei from './zweifach.js';
 import * as oeff from './seiten/oeffentlich.js';
 import * as ks from './seiten/kunde.js';
 import * as adm from './seiten/admin.js';
@@ -262,9 +263,17 @@ export function baue() {
   });
 
   // ------------------------------------------------------------ Anmeldung
-  r.get('/anmelden', (c) =>
-    c.nutzer ? weiter(c.antwort, '/meine-server')
-             : sende(c.antwort, oeff.anmelden(c.csrf)));
+  r.get('/anmelden', (c) => {
+    if (c.nutzer) return weiter(c.antwort, '/meine-server');
+    // Wer schon halb drin ist, soll nicht wieder beim Passwort landen -
+    // sonst tippt er es ein zweites Mal und wundert sich, warum er
+    // danach schon wieder nach dem Code gefragt wird.
+    if (db.halbeSitzung(c.token)) return weiter(c.antwort, '/anmelden/code');
+    sende(c.antwort, oeff.anmelden(c.csrf));
+  });
+
+  /** Wohin es nach dem Anmelden geht. */
+  const startseite = (k) => k.rolle === 'admin' ? '/admin' : '/meine-server';
 
   r.post('/anmelden', async (c) => {
     const d = c.daten;
@@ -273,15 +282,179 @@ export function baue() {
       return sende(c.antwort, oeff.anmelden(c.csrf,
         'Benutzername oder Passwort stimmt nicht.', d.benutzername));
     }
+
+    // Mit zweitem Faktor gibt es hier noch keine richtige Sitzung,
+    // sondern nur eine halbe: Sie traegt den Namen, aber keine Rechte.
+    if (db.zweifachAktiv(k)) {
+      const halb = db.halbAnmelden(k.id);
+      return sende(c.antwort, oeff.zweiterFaktor(c.csrf), 200,
+        { 'Set-Cookie': setzeCookie('sitzung', halb) });
+    }
+
     const token = db.anmelden(k.id);
     db.protokolliere(k.benutzername, 'Angemeldet');
-    weiter(c.antwort, k.rolle === 'admin' ? '/admin' : '/meine-server',
-      { 'Set-Cookie': setzeCookie('sitzung', token) });
+    weiter(c.antwort, startseite(k), { 'Set-Cookie': setzeCookie('sitzung', token) });
+  });
+
+  r.get('/anmelden/code', (c) => {
+    const k = db.halbeSitzung(c.token);
+    if (!k) return weiter(c.antwort, '/anmelden');
+    sende(c.antwort, oeff.zweiterFaktor(c.csrf, '',
+      c.url.searchParams.get('ersatz') === '1'));
+  });
+
+  r.post('/anmelden/code', async (c) => {
+    const k = db.halbeSitzung(c.token);
+    if (!k) {
+      return sende(c.antwort, oeff.anmelden(c.csrf,
+        'Das hat zu lange gedauert – bitte noch einmal anmelden.'));
+    }
+    const ersatz = Boolean(c.daten.ersatz);
+    const getippt = String(c.daten.code || '').trim();
+
+    if (ersatz) {
+      if (!db.ersatzcodeEinloesen(k.id, zwei.ersatzHash(getippt))) {
+        db.protokolliere(k.benutzername, 'Ersatzcode falsch');
+        return sende(c.antwort, oeff.zweiterFaktor(c.csrf,
+          'Dieser Ersatzcode stimmt nicht oder ist schon verbraucht.', true));
+      }
+      db.sitzungGanz(c.token);
+      const rest = db.ersatzcodesOffen(k.id);
+      db.protokolliere(k.benutzername, 'Mit Ersatzcode angemeldet',
+        `noch ${rest} übrig`);
+      return weiter(c.antwort, startseite(k));
+    }
+
+    const schritt = zwei.pruefe(k.totp_geheim, getippt);
+    if (schritt === null) {
+      db.protokolliere(k.benutzername, 'Code falsch');
+      return sende(c.antwort, oeff.zweiterFaktor(c.csrf,
+        'Der Code stimmt nicht. Geht die Uhr des Handys richtig?'));
+    }
+    // Derselbe Code kein zweites Mal: Wer ihn ueber die Schulter
+    // abliest, sitzt in diesen dreissig Sekunden noch daneben.
+    if (schritt <= k.totp_schritt) {
+      return sende(c.antwort, oeff.zweiterFaktor(c.csrf,
+        'Diesen Code hast du gerade schon benutzt. Warte auf den nächsten.'));
+    }
+    db.totpSchritt(k.id, schritt);
+    db.sitzungGanz(c.token);
+    db.protokolliere(k.benutzername, 'Angemeldet', 'mit zweitem Faktor');
+    weiter(c.antwort, startseite(k));
   });
 
   r.get('/abmelden', (c) => {
     if (c.token) db.abmelden(c.token);
     weiter(c.antwort, '/', { 'Set-Cookie': loescheCookie('sitzung') });
+  });
+
+  // ------------------------------------------------------------ Sicherheit
+  /**
+   * Passwort und zweiter Faktor.
+   *
+   * Der Einrichtungsweg hat drei Schritte, und der mittlere ist der
+   * Grund dafuer: Erst wird ein Geheimnis abgelegt, das noch nicht gilt,
+   * dann muss ein Code daraus stimmen, und erst danach wird
+   * umgeschaltet. Wer die App falsch eintraegt, merkt es also, solange
+   * er noch angemeldet ist - und nicht beim naechsten Anmelden, wenn es
+   * zu spaet ist.
+   */
+  const sicherheitsSeite = (c, extra = {}) => {
+    const k = db.kunde(c.nutzer.id);
+    const vorbereitet = Boolean(k.totp_geheim) && !k.totp_seit;
+    sende(c.antwort, ks.sicherheit(k, c.csrf, {
+      an: db.zweifachAktiv(k),
+      geheim: vorbereitet ? k.totp_geheim : '',
+      link: vorbereitet ? zwei.link(k.benutzername, k.totp_geheim) : '',
+      offen: db.ersatzcodesOffen(k.id),
+      ...extra,
+    }));
+  };
+
+  r.get('/sicherheit', (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    sicherheitsSeite(c, { ok: c.url.searchParams.get('ok') || '' });
+  });
+
+  r.post('/sicherheit/vorbereiten', async (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    if (db.zweifachAktiv(c.nutzer)) return weiter(c.antwort, '/sicherheit');
+    db.totpVorbereiten(c.nutzer.id, zwei.neuesGeheimnis());
+    weiter(c.antwort, '/sicherheit');
+  });
+
+  r.post('/sicherheit/an', async (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    const k = db.kunde(c.nutzer.id);
+    if (!k.totp_geheim) return weiter(c.antwort, '/sicherheit');
+    if (db.zweifachAktiv(k)) return weiter(c.antwort, '/sicherheit');
+
+    // Auch zum EINschalten das Passwort. Wer an einem offen stehenden
+    // Browser sitzt, koennte sonst seine eigene App eintragen und den
+    // Besitzer aussperren - und das laesst sich, anders als alles
+    // andere, was er dort anrichten koennte, nur noch ueber den Admin
+    // rueckgaengig machen.
+    if (!db.passtPasswort(String(c.daten.passwort || ''), k.passwort, k.salz)) {
+      return sicherheitsSeite(c, { meldung: 'Das Passwort stimmt nicht.' });
+    }
+    if (zwei.pruefe(k.totp_geheim, c.daten.code) === null) {
+      return sicherheitsSeite(c, { meldung: 'Der Code stimmt nicht. '
+        + 'Steht in der App wirklich dieser Schlüssel – und geht die Uhr richtig?' });
+    }
+    const codes = zwei.neueErsatzcodes();
+    db.zweifachAn(k.id, codes.map(zwei.ersatzHash), c.token);
+    db.protokolliere(k.benutzername, 'Zwei-Faktor eingeschaltet');
+    sicherheitsSeite(c, { ersatzcodes: codes,
+      ok: 'Ab jetzt fragt das Portal beim Anmelden nach dem Code.' });
+  });
+
+  r.post('/sicherheit/aus', async (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    const k = db.kunde(c.nutzer.id);
+    if (!db.passtPasswort(String(c.daten.passwort || ''), k.passwort, k.salz)) {
+      return sicherheitsSeite(c, { meldung: 'Das Passwort stimmt nicht.' });
+    }
+    if (zwei.pruefe(k.totp_geheim, c.daten.code) === null) {
+      return sicherheitsSeite(c, { meldung: 'Der Code stimmt nicht.' });
+    }
+    db.zweifachAus(k.id);
+    db.protokolliere(k.benutzername, 'Zwei-Faktor abgeschaltet');
+    weiter(c.antwort, '/sicherheit?ok=' + encodeURIComponent(
+      'Abgeschaltet. Beim Anmelden reicht jetzt wieder das Passwort.'));
+  });
+
+  r.post('/sicherheit/ersatz', async (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    const k = db.kunde(c.nutzer.id);
+    if (!db.zweifachAktiv(k)) return weiter(c.antwort, '/sicherheit');
+    if (!db.passtPasswort(String(c.daten.passwort || ''), k.passwort, k.salz)) {
+      return sicherheitsSeite(c, { meldung: 'Das Passwort stimmt nicht.' });
+    }
+    const codes = zwei.neueErsatzcodes();
+    db.ersatzcodesSetzen(k.id, codes.map(zwei.ersatzHash));
+    db.protokolliere(k.benutzername, 'Ersatzcodes erneuert');
+    sicherheitsSeite(c, { ersatzcodes: codes,
+      ok: 'Neue Ersatzcodes. Die alten gelten nicht mehr.' });
+  });
+
+  r.post('/sicherheit/passwort', async (c) => {
+    if (!c.nutzer) return weiter(c.antwort, '/anmelden');
+    const k = db.kunde(c.nutzer.id);
+    const neu = String(c.daten.neu || '');
+    if (!db.passtPasswort(String(c.daten.alt || ''), k.passwort, k.salz)) {
+      return sicherheitsSeite(c, { meldung: 'Das bisherige Passwort stimmt nicht.' });
+    }
+    if (neu.length < 8) {
+      return sicherheitsSeite(c, { meldung: 'Das neue Passwort ist zu kurz – '
+        + 'mindestens acht Zeichen.' });
+    }
+    if (neu !== String(c.daten.neu2 || '')) {
+      return sicherheitsSeite(c, { meldung: 'Die beiden neuen Passwörter '
+        + 'sind nicht gleich.' });
+    }
+    db.passwortSetzen(k.id, neu);
+    db.protokolliere(k.benutzername, 'Passwort geändert');
+    weiter(c.antwort, '/anmelden', { 'Set-Cookie': loescheCookie('sitzung') });
   });
 
   // ------------------------------------------------------------ Kunde
@@ -840,6 +1013,28 @@ export function baue() {
     db.kundeAendern(id, d);
     db.protokolliere(wer(c.nutzer), 'Kundendaten geändert', `#${id}`);
     weiter(c.antwort, `/admin/kunde/${id}?ok=Gespeichert.`);
+  }));
+
+  /**
+   * Den zweiten Faktor eines Kunden abschalten.
+   *
+   * Der Notausgang, wenn Handy und Ersatzcodes beide weg sind. Ohne ihn
+   * braeuchte es einen Griff in die Datenbank - und wer den einmal
+   * gelernt hat, greift auch beim naechsten Mal dorthin.
+   *
+   * Einschalten kann ihn niemand fuer einen anderen: Dafuer braeuchte
+   * man das Geheimnis in dessen App, und das gibt es hier nicht.
+   */
+  r.post('/admin/kunde/:id/zweifach-aus', nurAdmin(async (c) => {
+    const id = Number(c.werte.id);
+    const k = db.kunde(id);
+    if (!k) return sende(c.antwort, fehlerSeite(c.nutzer, 'Kunde nicht gefunden.'), 404);
+    db.zweifachAus(id);
+    db.protokolliere(wer(c.nutzer), 'Zwei-Faktor abgeschaltet',
+      `${k.benutzername} (#${id})`);
+    weiter(c.antwort, `/admin/kunde/${id}?ok=` + encodeURIComponent(
+      `Zwei-Faktor bei ${k.benutzername} abgeschaltet. Sag ihm, dass er ihn `
+      + 'neu einrichten soll.'));
   }));
 
   r.post('/admin/kunde/:id/passwort', nurAdmin(async (c) => {

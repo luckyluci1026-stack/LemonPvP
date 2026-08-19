@@ -258,6 +258,41 @@ export function regeln(nutzer) {
     </div>` });
 }
 
+/**
+ * Der zweite Schritt der Anmeldung.
+ *
+ * Bewusst eine eigene Seite und kein drittes Feld auf der ersten: Wer
+ * seinen Code eintippt, hat die App gerade offen, und der Code laeuft
+ * nach dreissig Sekunden ab. Zusammen mit Benutzername und Passwort auf
+ * einer Seite waere er oft schon abgelaufen, bevor das Formular
+ * abgeschickt ist.
+ */
+export function zweiterFaktor(zeichen, meldung = '', ersatz = false) {
+  return seite({ titel: 'Bestätigen', nutzer: null, inhalt: `
+    <div class="eng" style="margin:3rem auto">
+      <h1>Noch ein Schritt</h1>
+      <p class="leise">${ersatz
+        ? 'Tipp einen deiner Ersatzcodes ein. Jeder gilt genau einmal.'
+        : 'Dein Passwort stimmt. Jetzt der Code aus deiner Authenticator-App.'}</p>
+      ${meldung ? `<div class="hinweis schlecht abstand">${esc(meldung)}</div>` : ''}
+      <form method="post" action="/anmelden/code" class="karte abstand">
+        ${csrfFeld(zeichen)}
+        ${ersatz ? '<input type="hidden" name="ersatz" value="1">' : ''}
+        <div class="feld"><label>${ersatz ? 'Ersatzcode' : 'Sechsstelliger Code'}</label>
+          <input name="code" class="mono" autofocus required autocomplete="one-time-code"
+                 inputmode="${ersatz ? 'text' : 'numeric'}"
+                 placeholder="${ersatz ? 'ABCDE-FGHIJ' : '123456'}"
+                 style="font-size:1.4rem;letter-spacing:.15em"></div>
+        <button class="knopf" style="width:100%;justify-content:center">Weiter</button>
+      </form>
+      <p class="klein leise abstand">
+        ${ersatz
+          ? '<a href="/anmelden/code">Doch die App benutzen</a>'
+          : 'Handy weg? <a href="/anmelden/code?ersatz=1">Mit einem Ersatzcode anmelden</a>.'}
+        · <a href="/abmelden">Abbrechen</a></p>
+    </div>` });
+}
+
 export function anmelden(zeichen, meldung = '', name = '') {
   return seite({ titel: 'Anmelden', nutzer: null, inhalt: `
     <div class="eng" style="margin:3rem auto">
