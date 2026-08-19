@@ -3,14 +3,24 @@
 Zehn Reihen, zusammen 405 Prüfungen. Alle auf einmal:
 
 ```
-ERSATZ_JAR=/pfad/zu/server.jar test/alles.sh
+test/alles.sh
 ```
 
-`ERSATZ_JAR` ist eine Jar, die sich wie ein Minecraft-Server verhält:
-Sie gibt eine `Done (…)`-Zeile aus und hört auf `stop`. Ohne sie laufen
-alle Reihen trotzdem durch, nur die Teile, die wirklich einen Server
-starten, werden übersprungen. Eine echte Paper-Jar geht auch — sie
-braucht nur länger.
+Ein paar Prüfungen starten wirklich einen Server — sonst prüft man nur,
+ob Knöpfe da sind, nicht ob dahinter etwas passiert. Dafür übersetzt das
+Skript einmal `ersatzserver/Server.java`: ein Programm, das sich wie ein
+Minecraft-Server verhält (`Done (…)` ausgibt, auf `stop` hört, Spieler
+kommen und gehen lässt), aber in einer Sekunde oben ist statt in einer
+halben Minute.
+
+Dafür braucht es das **JDK** (`javac`), nicht nur die Java-Laufzeit.
+Fehlt es, laufen alle Reihen trotzdem — nur die Teile, die wirklich
+starten, werden übersprungen, und das Skript sagt auch welche
+(405 Prüfungen mit JDK, 389 ohne).
+
+Mit `ERSATZ_JAR=/pfad/paper.jar test/alles.sh` nimmt es stattdessen die
+angegebene Jar. Dann läuft wirklich Minecraft — dauert länger, prüft
+aber dasselbe.
 
 Jede Reihe, die ein Portal braucht, bekommt ein eigenes, frisches. Ein
 Test, der auf den Datenbankresten des vorherigen aufsetzt, geht

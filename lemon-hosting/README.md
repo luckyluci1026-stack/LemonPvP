@@ -697,6 +697,7 @@ oeffentlich/          CSS und das bisschen Browser-JavaScript
   konsole.js          Live-Konsole (EventSource)
   dateien.js          Upload mit Fortschritt
 test/alles.sh         alle zehn Testreihen nacheinander
+test/ersatzserver/    ein Minecraft-Server, der keiner ist (für die Tests)
 daten/portal.db       die Datenbank (nicht im Git)
 server/<id>/          die Minecraft-Server (nicht im Git)
 sicherungen/<id>/     die Backups (nicht im Git)
@@ -770,12 +771,18 @@ Person.
 Zehn Reihen, zusammen **405 Prüfungen**. Alle auf einmal:
 
 ```bash
-ERSATZ_JAR=/pfad/zu/server.jar test/alles.sh
+test/alles.sh
 ```
 
 Jede Reihe, die ein Portal braucht, bekommt ein eigenes, frisches — ein Test,
 der auf den Datenbankresten des vorherigen aufsetzt, geht irgendwann grundlos
-kaputt, und man sucht dann am falschen Ende. Einzelheiten in
+kaputt, und man sucht dann am falschen Ende.
+
+Ein paar Prüfungen starten wirklich einen Server. Dafür übersetzt das Skript
+einmal `test/ersatzserver/Server.java` — ein Programm, das sich wie ein
+Minecraft-Server verhält, aber in einer Sekunde oben ist. Dafür braucht es das
+**JDK** (`javac`), nicht nur die Laufzeit; fehlt es, laufen alle Reihen
+trotzdem und das Skript sagt, was es ausgelassen hat. Einzelheiten in
 [`test/README.md`](test/README.md).
 
 `test/durchklicken.mjs` geht das Portal einmal komplett durch — Anfrage

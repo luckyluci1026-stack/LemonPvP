@@ -139,9 +139,10 @@ ok('Dateiliste kommt vom Knoten', a.text.includes('server.properties'));
 a = await h(`/panel/${id}/bearbeiten?p=server.properties`);
 ok('Editor liest über die Leitung', a.text.includes('motd=Ferner Server'));
 
-// Upload durchreichen
+// Upload durchreichen. Ohne Ersatzserver nehmen wir irgendeine Datei -
+// geprueft wird hier, dass der Strom ankommt, nicht was drinsteht.
 const zeichenCsrf = encodeURIComponent(glas.get('csrf'));
-const jar = readFileSync(process.env.ERSATZ_JAR);
+const jar = readFileSync(process.env.ERSATZ_JAR || 'daemon.js');
 a = await h(`/panel/${id}/hochladen?p=&name=server.jar&csrf=${zeichenCsrf}`,
   { method: 'POST', body: jar, headers: { 'content-type': 'application/octet-stream' } });
 ok('Upload wird durchgereicht', a.status === 200, `${jar.length} Bytes`);
@@ -160,29 +161,33 @@ if (katalog.length) {
 }
 
 // ------------------------------------------------------------ Starten
-await s(`/panel/${id}/aktion`, { was: 'eula' });
-a = await s(`/panel/${id}/aktion`, { was: 'start' });
-ok('Start über die Leitung angenommen',
-   a.status === 302 && !decodeURIComponent(a.ort || '').includes('?m='),
-   decodeURIComponent(a.ort || ''));
+if (process.env.ERSATZ_JAR) {
+  await s(`/panel/${id}/aktion`, { was: 'eula' });
+  a = await s(`/panel/${id}/aktion`, { was: 'start' });
+  ok('Start über die Leitung angenommen',
+     a.status === 302 && !decodeURIComponent(a.ort || '').includes('?m='),
+     decodeURIComponent(a.ort || ''));
 
-// Der Zustand kommt aus dem Zwischenspeicher - der Ticker braucht einen Moment.
-ok('Portal merkt, dass der ferne Server läuft', await bis(async () => {
-  const seite = await h(`/panel/${id}`);
-  return seite.text.includes('>läuft<');
-}, 40));
+  // Der Zustand kommt aus dem Zwischenspeicher - der Ticker braucht einen Moment.
+  ok('Portal merkt, dass der ferne Server läuft', await bis(async () => {
+    const seite = await h(`/panel/${id}`);
+    return seite.text.includes('>läuft<');
+  }, 40));
 
-// Konsole: das Portal reicht den Strom des Daemons durch
-const strom = await fetch(`${BASIS}/panel/${id}/konsole`, { headers: { cookie: kekse() } });
-const leser = strom.body.getReader();
-const anfang = new TextDecoder().decode((await leser.read()).value);
-ok('Konsole wird durchgereicht',
-   anfang.includes('event: verlauf') && anfang.includes('Starting minecraft server'),
-   'Startzeilen des fernen Servers');
-await leser.cancel().catch(() => {});
+  // Konsole: das Portal reicht den Strom des Daemons durch
+  const strom = await fetch(`${BASIS}/panel/${id}/konsole`, { headers: { cookie: kekse() } });
+  const leser = strom.body.getReader();
+  const anfang = new TextDecoder().decode((await leser.read()).value);
+  ok('Konsole wird durchgereicht',
+     anfang.includes('event: verlauf') && anfang.includes('Starting minecraft server'),
+     'Startzeilen des fernen Servers');
+  await leser.cancel().catch(() => {});
 
-a = await s(`/panel/${id}/befehl`, { befehl: 'say hallo aus der ferne' });
-ok('Befehl geht über die Leitung', a.status === 200 && JSON.parse(a.text).ok);
+  a = await s(`/panel/${id}/befehl`, { befehl: 'say hallo aus der ferne' });
+  ok('Befehl geht über die Leitung', a.status === 200 && JSON.parse(a.text).ok);
+} else {
+  console.log('    (ohne Ersatzserver: Starten, Konsole und Befehl übersprungen)');
+}
 
 // ------------------------------------------------------------- Backup
 a = await s(`/panel/${id}/sicherung`);
@@ -201,11 +206,13 @@ ok('Backup wird durchgereicht', zip.status === 200
    && rohZip.subarray(0, 2).toString() === 'PK', `${rohZip.length} Bytes`);
 
 // ------------------------------------------------------------- Stoppen
-await s(`/panel/${id}/aktion`, { was: 'stopp' });
-ok('Ferner Server gestoppt', await bis(async () => {
-  const seite = await h(`/panel/${id}`);
-  return seite.text.includes('>gestoppt<');
-}, 40));
+if (process.env.ERSATZ_JAR) {
+  await s(`/panel/${id}/aktion`, { was: 'stopp' });
+  ok('Ferner Server gestoppt', await bis(async () => {
+    const seite = await h(`/panel/${id}`);
+    return seite.text.includes('>gestoppt<');
+  }, 40));
+}
 
 // ------------------------------------------------- Knoten fällt aus
 daemon.kill('SIGKILL');

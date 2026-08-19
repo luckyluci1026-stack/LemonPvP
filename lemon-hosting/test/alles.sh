@@ -6,11 +6,16 @@
 # frisches: Ein Test, der auf Datenbankresten des vorherigen aufsetzt,
 # geht irgendwann grundlos kaputt - und man sucht dann am falschen Ende.
 #
-#   ERSATZ_JAR=/pfad/server.jar test/alles.sh
+#   test/alles.sh
 #
-# ERSATZ_JAR ist eine Jar, die sich wie ein Minecraft-Server verhaelt
-# (eine "Done"-Zeile ausgibt und auf `stop` hoert). Ohne sie werden die
-# Teile uebersprungen, die wirklich etwas starten.
+# Ein paar Pruefungen starten wirklich einen Server. Dafuer wird
+# test/ersatzserver/Server.java einmal uebersetzt - ein Programm, das
+# sich wie ein Minecraft-Server verhaelt, aber in einer Sekunde oben ist.
+# Dazu braucht es das JDK (`javac`); fehlt es, laufen alle Reihen
+# trotzdem, nur diese Teile werden uebersprungen.
+#
+# Mit ERSATZ_JAR=/pfad/paper.jar nimmt das Skript stattdessen die
+# angegebene Jar - dann laeuft wirklich Minecraft, dauert aber laenger.
 #
 # Beendet wird ueber die gemerkte Prozessnummer, nicht ueber `pkill -f`.
 # Ein Muster, das auf die Kommandozeile passt, passt naemlich auch auf
@@ -28,6 +33,31 @@ aufraeumen() {
 trap aufraeumen EXIT
 
 FEHLGESCHLAGEN=()
+
+# ------------------------------------------------------------- Ersatzserver
+#
+# Ohne ihn pruefen die Reihen nur, ob Knoepfe da sind - nicht, ob
+# dahinter etwas passiert. Deshalb wird er hier gebaut, statt ihn vom
+# Benutzer zu verlangen.
+if [ -z "${ERSATZ_JAR:-}" ]; then
+  if command -v javac > /dev/null && command -v jar > /dev/null; then
+    bau="$ARBEIT/ersatzserver"
+    mkdir -p "$bau"
+    if javac -d "$bau" test/ersatzserver/Server.java 2> "$ARBEIT/javac.log" \
+       && jar --create --file "$ARBEIT/server.jar" --main-class Server -C "$bau" . ; then
+      ERSATZ_JAR="$ARBEIT/server.jar"
+      echo "Ersatzserver gebaut: $ERSATZ_JAR"
+    else
+      echo "Ersatzserver liess sich nicht bauen:"
+      sed 's/^/  /' "$ARBEIT/javac.log"
+      echo "  Die Reihen laufen trotzdem - ohne die Teile, die starten."
+    fi
+  else
+    echo "Kein javac gefunden (JDK, nicht nur JRE)."
+    echo "  Die Reihen laufen trotzdem - ohne die Teile, die wirklich starten."
+  fi
+fi
+export ERSATZ_JAR="${ERSATZ_JAR:-}"
 
 # Ein Portal hochfahren; setzt PORTAL und PW.
 starte_portal() {
