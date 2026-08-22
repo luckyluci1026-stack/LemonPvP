@@ -1,25 +1,25 @@
 package de.lemonpvp.helden.command;
 
 import de.lemonpvp.helden.HeldenPlugin;
-import de.lemonpvp.helden.hero.Hero;
 import de.lemonpvp.helden.player.HeldenProfile;
-import de.lemonpvp.helden.team.HeldenTeam;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 
 /** {@code /helden3 ...} - alle Adminwerkzeuge des Projekts. */
 public final class AdminCommand extends BaseCommand {
 
-    private static final List<String> SUBCOMMANDS =
-            List.of("reload", "status", "item", "held", "team", "leben", "coins", "event", "spawn");
+    private static final List<String> SUBCOMMANDS = List.of(
+            "reload", "status", "herzen", "link", "raus", "zurueck", "dummy", "item", "reset", "spawn");
+
+    /** Schuetzt {@code /helden3 reset} vor dem versehentlichen Ausfuehren. */
+    private static final String RESET_CONFIRMATION = "bestaetigen";
 
     public AdminCommand(HeldenPlugin plugin) {
         super(plugin, "helden3.admin", false);
@@ -35,12 +35,13 @@ public final class AdminCommand extends BaseCommand {
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "reload" -> reload(sender);
             case "status" -> status(sender);
+            case "herzen", "hearts" -> hearts(sender, args);
+            case "link" -> link(sender, args);
+            case "raus", "out" -> eliminate(sender, args);
+            case "zurueck", "restore" -> restore(sender, args);
+            case "dummy" -> dummy(sender, args);
             case "item" -> giveItem(sender, args);
-            case "held" -> setHero(sender, args);
-            case "team" -> setTeam(sender, args);
-            case "leben" -> setLives(sender, args);
-            case "coins" -> setCoins(sender, args);
-            case "event" -> handleEvent(sender, args);
+            case "reset" -> reset(sender, args);
             case "spawn" -> setSpawn(sender);
             default -> plugin.messages().send(sender, "general.unknown-subcommand", "%usage%", "/helden3");
         }
@@ -54,13 +55,109 @@ public final class AdminCommand extends BaseCommand {
 
     private void status(CommandSender sender) {
         plugin.messages().sendList(sender, "admin.status",
-                "%heroes%", plugin.heroes().size(),
-                "%abilities%", plugin.abilities().size(),
+                "%start%", plugin.settings().startHearts(),
+                "%link%", plugin.settings().linkHeartEnabled() ? "ja" : "nein",
+                "%pvponly%", plugin.settings().pvpOnly() ? "ja" : "nein",
+                "%participants%", plugin.game().participants(),
+                "%alive%", plugin.game().alive().size(),
+                "%dummies%", plugin.dummies().size(),
                 "%items%", plugin.items().size(),
-                "%teams%", plugin.teams().size(),
-                "%events%", plugin.events().size(),
                 "%profiles%", plugin.profiles().size(),
                 "%floodgate%", plugin.bedrock().isFloodgateHooked() ? "ja" : "nein");
+    }
+
+    private void hearts(CommandSender sender, String[] args) {
+        if (args.length < 4) {
+            plugin.messages().sendText(sender, "&7/helden3 herzen <spieler> <set|add|remove> <anzahl>");
+            return;
+        }
+        HeldenProfile profile = plugin.profiles().findByName(args[1]);
+        if (profile == null) {
+            plugin.messages().send(sender, "general.unknown-player", "%player%", args[1]);
+            return;
+        }
+        Integer amount = parseInt(sender, args[3]);
+        if (amount == null) {
+            return;
+        }
+
+        int target = switch (args[2].toLowerCase(Locale.ROOT)) {
+            case "add" -> profile.hearts() + amount;
+            case "remove" -> profile.hearts() - amount;
+            default -> amount;
+        };
+        plugin.hearts().setHearts(profile, target);
+        plugin.messages().send(sender, "hearts.set",
+                "%player%", profile.name(),
+                "%hearts%", profile.hearts());
+    }
+
+    private void link(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            plugin.messages().sendText(sender, "&7/helden3 link <spieler> <partner|clear>");
+            return;
+        }
+        HeldenProfile profile = plugin.profiles().findByName(args[1]);
+        if (profile == null) {
+            plugin.messages().send(sender, "general.unknown-player", "%player%", args[1]);
+            return;
+        }
+
+        if (args[2].equalsIgnoreCase("clear")) {
+            plugin.links().clear(profile);
+            plugin.messages().send(sender, "link.cleared", "%player%", profile.name());
+            return;
+        }
+
+        HeldenProfile partner = plugin.profiles().findByName(args[2]);
+        if (partner == null) {
+            plugin.messages().send(sender, "general.unknown-player", "%player%", args[2]);
+            return;
+        }
+        profile.linkPartner(partner.uuid());
+        plugin.messages().send(sender, "admin.link-set",
+                "%player%", profile.name(),
+                "%partner%", partner.name());
+        plugin.hud().updateAll();
+    }
+
+    private void eliminate(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            plugin.messages().sendText(sender, "&7/helden3 raus <spieler>");
+            return;
+        }
+        HeldenProfile profile = plugin.profiles().findByName(args[1]);
+        if (profile == null) {
+            plugin.messages().send(sender, "general.unknown-player", "%player%", args[1]);
+            return;
+        }
+        if (profile.eliminated()) {
+            plugin.messages().send(sender, "game.already-eliminated", "%player%", profile.name());
+            return;
+        }
+        plugin.game().eliminate(profile, null, new HashSet<>());
+    }
+
+    private void restore(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            plugin.messages().sendText(sender, "&7/helden3 zurueck <spieler>");
+            return;
+        }
+        HeldenProfile profile = plugin.profiles().findByName(args[1]);
+        if (profile == null) {
+            plugin.messages().send(sender, "general.unknown-player", "%player%", args[1]);
+            return;
+        }
+        plugin.game().restore(profile);
+    }
+
+    private void dummy(CommandSender sender, String[] args) {
+        if (args.length < 2 || !args[1].equalsIgnoreCase("clear")) {
+            plugin.messages().sendText(sender, "&7/helden3 dummy clear");
+            return;
+        }
+        int removed = plugin.dummies().removeAll() + plugin.dummies().removeOrphans();
+        plugin.messages().send(sender, "admin.dummies-cleared", "%amount%", removed);
     }
 
     private void giveItem(CommandSender sender, String[] args) {
@@ -114,125 +211,15 @@ public final class AdminCommand extends BaseCommand {
         }
     }
 
-    private void setHero(CommandSender sender, String[] args) {
-        if (args.length < 3) {
-            plugin.messages().sendText(sender, "&7/helden3 held <spieler> <held>");
+    private void reset(CommandSender sender, String[] args) {
+        if (args.length < 2 || !args[1].equalsIgnoreCase(RESET_CONFIRMATION)) {
+            plugin.messages().send(sender, "admin.reset-confirm");
             return;
         }
-        Player target = Bukkit.getPlayerExact(args[1]);
-        if (target == null) {
-            plugin.messages().send(sender, "general.unknown-player", "%player%", args[1]);
-            return;
-        }
-        Hero hero = plugin.heroes().get(args[2]);
-        if (hero == null) {
-            plugin.messages().send(sender, "hero.unknown", "%hero%", args[2]);
-            return;
-        }
-
-        plugin.heroes().apply(target, hero);
-        plugin.messages().send(target, "hero.selected", "%hero%", hero.display());
-        plugin.messages().send(sender, "hero.current", "%hero%", hero.display());
-    }
-
-    private void setTeam(CommandSender sender, String[] args) {
-        if (args.length < 3) {
-            plugin.messages().sendText(sender, "&7/helden3 team <spieler> <team>");
-            return;
-        }
-        HeldenProfile profile = plugin.profiles().findByName(args[1]);
-        if (profile == null) {
-            plugin.messages().send(sender, "general.unknown-player", "%player%", args[1]);
-            return;
-        }
-        HeldenTeam team = plugin.teams().get(args[2]);
-        if (team == null) {
-            plugin.messages().send(sender, "team.unknown", "%team%", args[2]);
-            return;
-        }
-
-        plugin.teams().assign(profile, team);
-        plugin.messages().send(sender, "team.moved", "%player%", profile.name(), "%team%", team.display());
-
-        Player online = Bukkit.getPlayer(profile.uuid());
-        if (online != null) {
-            plugin.messages().send(online, "team.joined", "%team%", team.display());
-            plugin.hud().update(online);
-        }
-    }
-
-    private void setLives(CommandSender sender, String[] args) {
-        if (args.length < 3) {
-            plugin.messages().sendText(sender, "&7/helden3 leben <spieler> <anzahl>");
-            return;
-        }
-        HeldenProfile profile = plugin.profiles().findByName(args[1]);
-        if (profile == null) {
-            plugin.messages().send(sender, "general.unknown-player", "%player%", args[1]);
-            return;
-        }
-        Integer lives = parseInt(sender, args[2]);
-        if (lives == null) {
-            return;
-        }
-
-        profile.lives(lives);
-        profile.fallen(lives <= 0);
-        plugin.messages().send(sender, "lives.set", "%player%", profile.name(), "%lives%", profile.lives());
-
-        Player online = Bukkit.getPlayer(profile.uuid());
-        if (online != null) {
-            if (profile.fallen()) {
-                plugin.lives().applyFallenState(online);
-            } else if (online.getGameMode() == GameMode.SPECTATOR) {
-                online.setGameMode(GameMode.SURVIVAL);
-            }
-            plugin.hud().update(online);
-        }
-    }
-
-    private void setCoins(CommandSender sender, String[] args) {
-        if (args.length < 3) {
-            plugin.messages().sendText(sender, "&7/helden3 coins <spieler> <anzahl>");
-            return;
-        }
-        HeldenProfile profile = plugin.profiles().findByName(args[1]);
-        if (profile == null) {
-            plugin.messages().send(sender, "general.unknown-player", "%player%", args[1]);
-            return;
-        }
-        Integer amount = parseInt(sender, args[2]);
-        if (amount == null) {
-            return;
-        }
-
-        plugin.economy().set(profile, amount);
-        plugin.messages().send(sender, "economy.set", "%player%", profile.name(), "%amount%", profile.coins());
-    }
-
-    private void handleEvent(CommandSender sender, String[] args) {
-        if (args.length < 2) {
-            plugin.messages().sendText(sender, "&7/helden3 event <id|stop>");
-            return;
-        }
-        if (args[1].equalsIgnoreCase("stop")) {
-            plugin.events().stopEvent();
-            return;
-        }
-        if (plugin.events().get(args[1]) == null) {
-            plugin.messages().send(sender, "events.unknown",
-                    "%event%", args[1],
-                    "%available%", String.join(", ", plugin.events().ids()));
-            return;
-        }
-        if (plugin.events().isRunning()) {
-            plugin.messages().send(sender, "events.already-running",
-                    "%event%", plugin.events().active().displayName());
-            return;
-        }
-        if (!plugin.events().startEvent(args[1])) {
-            plugin.messages().send(sender, "events.start-failed", "%event%", args[1]);
-        }
+        plugin.hearts().resetAll();
+        plugin.messages().send(sender, "game.reset",
+                "%players%", plugin.profiles().size(),
+                "%hearts%", plugin.settings().totalStartHearts());
     }
 
     private void setSpawn(CommandSender sender) {
@@ -258,19 +245,20 @@ public final class AdminCommand extends BaseCommand {
         if (args.length == 2) {
             return switch (sub) {
                 case "item" -> filter(plugin.items().ids(), args[1]);
-                case "event" -> {
-                    List<String> options = new ArrayList<>(plugin.events().ids());
-                    options.add("stop");
-                    yield filter(options, args[1]);
-                }
-                case "held", "team", "leben", "coins" -> onlinePlayerNames(args[1]);
+                case "dummy" -> filter(List.of("clear"), args[1]);
+                case "reset" -> filter(List.of(RESET_CONFIRMATION), args[1]);
+                case "herzen", "hearts", "link", "raus", "out", "zurueck", "restore" -> onlinePlayerNames(args[1]);
                 default -> List.of();
             };
         }
         if (args.length == 3) {
             return switch (sub) {
-                case "held" -> filter(plugin.heroes().ids(), args[2]);
-                case "team" -> filter(plugin.teams().ids(), args[2]);
+                case "herzen", "hearts" -> filter(List.of("set", "add", "remove"), args[2]);
+                case "link" -> {
+                    List<String> options = new java.util.ArrayList<>(onlinePlayerNames(""));
+                    options.add("clear");
+                    yield filter(options, args[2]);
+                }
                 case "item" -> onlinePlayerNames(args[2]);
                 default -> List.of();
             };

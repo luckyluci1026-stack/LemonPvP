@@ -8,20 +8,17 @@ public final class HeldenProfile {
     private final UUID uuid;
     private String name;
 
-    private String heroId;
-    private String teamId;
-    private long heroSelectedAt;
+    /** Verbleibende Herzen inklusive Link-Herz. 0 = ausgeschieden. */
+    private int hearts;
+    private boolean eliminated;
+    private long eliminatedAt;
 
-    private int lives;
-    private boolean fallen;
+    /** Spieler, an dem das eigene Link-Herz haengt. */
+    private UUID linkPartner;
 
     private int kills;
-    private int deaths;
-    private int assists;
-    private int killStreak;
-    private int bestKillStreak;
-
-    private int coins;
+    private int pvpDeaths;
+    private int naturalDeaths;
     private long lastSeen;
 
     public HeldenProfile(UUID uuid, String name) {
@@ -34,59 +31,47 @@ public final class HeldenProfile {
     }
 
     public String name() {
-        return name == null ? uuid.toString().substring(0, 8) : name;
+        return name == null || name.isEmpty() ? uuid.toString().substring(0, 8) : name;
     }
 
     public void name(String name) {
         this.name = name;
     }
 
-    public String heroId() {
-        return heroId;
+    public int hearts() {
+        return hearts;
     }
 
-    public void heroId(String heroId) {
-        this.heroId = heroId;
+    public void hearts(int hearts) {
+        this.hearts = Math.max(0, hearts);
     }
 
-    public boolean hasHero() {
-        return heroId != null && !heroId.isEmpty();
+    public boolean eliminated() {
+        return eliminated;
     }
 
-    public String teamId() {
-        return teamId;
+    public void eliminated(boolean eliminated) {
+        this.eliminated = eliminated;
     }
 
-    public void teamId(String teamId) {
-        this.teamId = teamId;
+    public long eliminatedAt() {
+        return eliminatedAt;
     }
 
-    public boolean hasTeam() {
-        return teamId != null && !teamId.isEmpty();
+    public void eliminatedAt(long eliminatedAt) {
+        this.eliminatedAt = eliminatedAt;
     }
 
-    public long heroSelectedAt() {
-        return heroSelectedAt;
+    public UUID linkPartner() {
+        return linkPartner;
     }
 
-    public void heroSelectedAt(long heroSelectedAt) {
-        this.heroSelectedAt = heroSelectedAt;
+    public void linkPartner(UUID linkPartner) {
+        this.linkPartner = linkPartner;
     }
 
-    public int lives() {
-        return lives;
-    }
-
-    public void lives(int lives) {
-        this.lives = Math.max(0, lives);
-    }
-
-    public boolean fallen() {
-        return fallen;
-    }
-
-    public void fallen(boolean fallen) {
-        this.fallen = fallen;
+    public boolean hasLinkPartner() {
+        return linkPartner != null;
     }
 
     public int kills() {
@@ -99,59 +84,30 @@ public final class HeldenProfile {
 
     public void addKill() {
         kills++;
-        killStreak++;
-        if (killStreak > bestKillStreak) {
-            bestKillStreak = killStreak;
-        }
     }
 
-    public int deaths() {
-        return deaths;
+    public int pvpDeaths() {
+        return pvpDeaths;
     }
 
-    public void deaths(int deaths) {
-        this.deaths = deaths;
+    public void pvpDeaths(int pvpDeaths) {
+        this.pvpDeaths = pvpDeaths;
     }
 
-    public void addDeath() {
-        deaths++;
-        killStreak = 0;
+    public void addPvpDeath() {
+        pvpDeaths++;
     }
 
-    public int assists() {
-        return assists;
+    public int naturalDeaths() {
+        return naturalDeaths;
     }
 
-    public void addAssist() {
-        assists++;
+    public void naturalDeaths(int naturalDeaths) {
+        this.naturalDeaths = naturalDeaths;
     }
 
-    public void assists(int assists) {
-        this.assists = assists;
-    }
-
-    public int killStreak() {
-        return killStreak;
-    }
-
-    public void killStreak(int killStreak) {
-        this.killStreak = killStreak;
-    }
-
-    public int bestKillStreak() {
-        return bestKillStreak;
-    }
-
-    public void bestKillStreak(int bestKillStreak) {
-        this.bestKillStreak = bestKillStreak;
-    }
-
-    public int coins() {
-        return coins;
-    }
-
-    public void coins(int coins) {
-        this.coins = Math.max(0, coins);
+    public void addNaturalDeath() {
+        naturalDeaths++;
     }
 
     public long lastSeen() {
@@ -160,13 +116,5 @@ public final class HeldenProfile {
 
     public void lastSeen(long lastSeen) {
         this.lastSeen = lastSeen;
-    }
-
-    /** Kill/Death-Verhaeltnis, auf zwei Nachkommastellen gerundet. */
-    public String kd() {
-        if (deaths == 0) {
-            return String.format(java.util.Locale.ROOT, "%.2f", (double) kills);
-        }
-        return String.format(java.util.Locale.ROOT, "%.2f", (double) kills / (double) deaths);
     }
 }

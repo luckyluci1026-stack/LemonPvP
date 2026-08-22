@@ -22,9 +22,8 @@ mvn clean package
 ```
 
 Ergebnis: `plugin/target/Helden3-3.0.0.jar` → nach `plugins/` kopieren und den
-Server einmal starten. Dabei entsteht `plugins/Helden3/` mit
-`config.yml`, `heroes.yml`, `items.yml`, `teams.yml`, `shop.yml`,
-`messages.yml` und dem Ordner `data/`.
+Server einmal starten. Dabei entsteht `plugins/Helden3/` mit `config.yml`,
+`items.yml`, `messages.yml` und dem Ordner `data/`.
 
 > Der Build laedt die Paper-API von `repo.papermc.io`. Auf einem Rechner ohne
 > Internetzugang schlaegt er fehl — das ist kein Fehler im Projekt.
@@ -33,11 +32,20 @@ Danach im Spiel:
 
 ```
 /helden3 spawn      Projektspawn auf die eigene Position setzen
-/helden3 status     pruefen, ob Helden, Artefakte und Teams geladen wurden
+/helden3 status     Regelwerk und Zaehlerstand pruefen
 ```
 
-Teamspawns setzt du in `teams.yml` (Weltname plus Koordinaten). Bleibt ein
-Teamspawn leer, respawnen alle am Projektspawn.
+### Season starten
+
+Alle Teilnehmer einmal joinen lassen, dann:
+
+```
+/helden3 reset bestaetigen
+```
+
+Das setzt alle Herzen auf den Startwert, hebt Eliminierungen auf und loest alle
+Link-Herzen. Die Bestaetigung ist Absicht — sonst loescht ein Vertipper die
+laufende Season.
 
 ---
 
@@ -80,11 +88,11 @@ der [Geyser-Dokumentation](https://geysermc.org/wiki/geyser/custom-items/).
 Beides wird gebraucht:
 
 - die **.mcpack** liefert die Texturen an den Bedrock-Client,
-- das **Mapping** sagt Geyser, dass `diamond_sword` mit `CustomModelData 3001`
-  auf Bedrock die Zitronenklinge ist.
+- das **Mapping** sagt Geyser, dass `red_dye` mit `CustomModelData 3001` auf
+  Bedrock das Herz-Item ist.
 
-Fehlt das Mapping, sehen Bedrock-Spieler ein normales Diamantschwert — spielbar,
-aber ohne die Projektoptik.
+Fehlt das Mapping, sehen Bedrock-Spieler roten Farbstoff — spielbar, aber ohne
+die Projektoptik. Am Regelwerk aendert das nichts.
 
 ---
 
@@ -112,15 +120,16 @@ Das Pack bringt beide Modellformate mit und laeuft dadurch von 1.14 bis heute:
 
 ## 4. Eigene Artefakte hinzufuegen
 
-1. Pixelbild in `tools/generate_textures.py` unter `ART` ergaenzen und in
-   `ITEMS` mit einer Farbpalette eintragen.
+1. Pixelbild in `tools/generate_textures.py` ergaenzen und in `ITEMS` mit einer
+   Farbpalette eintragen.
 2. Eintrag in `plugin/src/main/resources/items.yml` anlegen — mit **neuer**
    `custom-model-data` und `model: handheld` oder `model: generated`.
-3. Erzeugen und packen:
+3. Erzeugen, bauen, pruefen:
 
 ```bash
 python3 tools/generate_textures.py
 python3 tools/build_packs.py      # pip install pyyaml
+python3 tools/validate.py
 ./tools/package_packs.sh
 ```
 
@@ -130,16 +139,14 @@ Bedrock-Sprachdateien und das Geyser-Mapping. Doppelte oder fehlende
 
 ### `model: none`
 
-Manche Vanilla-Items haben ein Sondermodell, das man nicht ersetzen darf. Das
-Schild ist so ein Fall: es ist 3D, hat eine Blockanimation, und wuerden wir es
-ueberschreiben, saehen **alle** Schilde auf dem Server kaputt aus — auf Bedrock
-liesse sich damit ausserdem nicht mehr blocken. Deshalb steht beim
-Bollwerk-Schild `model: none`: es behaelt die Vanilla-Optik und bekommt nur
-Namen, Lore und die Schildwall-Faehigkeit.
+Manche Vanilla-Items haben ein Sondermodell, das man nicht ersetzen darf — ein
+Schild etwa ist 3D und hat eine Blockanimation. Wuerden wir es ueberschreiben,
+saehen **alle** Schilde auf dem Server kaputt aus, und auf Bedrock liesse sich
+damit nicht mehr blocken. Fuer solche Basisitems setzt du `model: none`: das
+Artefakt behaelt die Vanilla-Optik und bekommt nur Namen und Lore.
 
 Der Bogen ist der andere Sonderfall — dort baut `build_packs.py` die
-Vanilla-Spannanimation nach, damit normale Boegen sie behalten. Der Sturmbogen
-selbst zeigt immer seine eigene Textur.
+Vanilla-Spannanimation nach, damit normale Boegen sie behalten.
 
 ---
 
@@ -155,11 +162,13 @@ Reflection an — fehlt es, ist einfach nie jemand "Bedrock".
 
 | Symptom | Ursache |
 | --- | --- |
+| Herzen aendern sich nicht | `hearts.pvp-only` steht auf `true` — Sturz, Lava und Mobs kosten absichtlich nichts. Nur Spielerkills zaehlen |
+| Herzleiste zeigt weiter 10 Herzen | Ein anderes Plugin setzt die Maximalgesundheit ebenfalls. `/helden3 status` zeigt die gespeicherten Herzen |
+| Kein Link-Partner zugelost | Es war kein anderer Spieler mit Herzen verfuegbar — die Meldung dazu steht im Chat des Betroffenen |
+| Dummy bleibt stehen | `dummy.lifetime-seconds` abwarten oder `/helden3 dummy clear` |
+| Dummy droppt nichts | Er ist abgelaufen statt getoetet worden — dann behaelt der Spieler alles |
 | Java-Spieler sehen Vanilla-Items | Pack nicht geladen, oder `resource-pack-sha1` passt nicht zur Datei |
 | Bedrock-Spieler sehen Vanilla-Items | Mapping fehlt in `custom_mappings/`, oder Geyser wurde nicht neu gestartet |
 | Bedrock-Spieler sehen kaputte Farbcodes | `bedrock.strip-hex-colors: true` setzen |
 | `/helden3 status` zeigt `Floodgate: nein` | Floodgate fehlt oder ist aelter als die API — Fallback greift trotzdem |
 | Kein Scoreboard | `hud.enabled: true`, danach `/helden3 reload` |
-| Faehigkeit reagiert nicht | Schleichen + Rechtsklick mit der Heldenwaffe — oder `/faehigkeit` nutzen |
-| `Held 'x' verweist auf die unbekannte Faehigkeit 'y'` | `ability:` in `heroes.yml` gegen `/helden3 status` pruefen |
-| Held hat keine Waffe | So gewollt — Helden starten ohne Ausruestung, Waffen kommen aus `/helden3 item`, dem Shop oder aus Beute |

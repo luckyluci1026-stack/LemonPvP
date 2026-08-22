@@ -7,7 +7,6 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -55,17 +54,13 @@ public final class YamlStorage implements Storage {
             }
 
             HeldenProfile profile = new HeldenProfile(uuid, section.getString("name", ""));
-            profile.heroId(emptyToNull(section.getString("hero", "")));
-            profile.teamId(emptyToNull(section.getString("team", "")));
-            profile.heroSelectedAt(section.getLong("hero-selected-at", 0L));
-            profile.lives(section.getInt("lives", 0));
-            profile.fallen(section.getBoolean("fallen", false));
+            profile.hearts(section.getInt("hearts", 0));
+            profile.eliminated(section.getBoolean("eliminated", false));
+            profile.eliminatedAt(section.getLong("eliminated-at", 0L));
+            profile.linkPartner(parseUuid(section.getString("link-partner", "")));
             profile.kills(section.getInt("kills", 0));
-            profile.deaths(section.getInt("deaths", 0));
-            profile.assists(section.getInt("assists", 0));
-            profile.killStreak(section.getInt("kill-streak", 0));
-            profile.bestKillStreak(section.getInt("best-kill-streak", 0));
-            profile.coins(section.getInt("coins", 0));
+            profile.pvpDeaths(section.getInt("pvp-deaths", 0));
+            profile.naturalDeaths(section.getInt("natural-deaths", 0));
             profile.lastSeen(section.getLong("last-seen", 0L));
             profiles.put(uuid, profile);
         }
@@ -73,22 +68,19 @@ public final class YamlStorage implements Storage {
     }
 
     @Override
-    public void saveAll(Collection<HeldenProfile> profiles) {
+    public void saveAll(java.util.Collection<HeldenProfile> profiles) {
         YamlConfiguration configuration = new YamlConfiguration();
         for (HeldenProfile profile : profiles) {
             String path = "players." + profile.uuid();
             configuration.set(path + ".name", profile.name());
-            configuration.set(path + ".hero", profile.heroId() == null ? "" : profile.heroId());
-            configuration.set(path + ".team", profile.teamId() == null ? "" : profile.teamId());
-            configuration.set(path + ".hero-selected-at", profile.heroSelectedAt());
-            configuration.set(path + ".lives", profile.lives());
-            configuration.set(path + ".fallen", profile.fallen());
+            configuration.set(path + ".hearts", profile.hearts());
+            configuration.set(path + ".eliminated", profile.eliminated());
+            configuration.set(path + ".eliminated-at", profile.eliminatedAt());
+            configuration.set(path + ".link-partner",
+                    profile.linkPartner() == null ? "" : profile.linkPartner().toString());
             configuration.set(path + ".kills", profile.kills());
-            configuration.set(path + ".deaths", profile.deaths());
-            configuration.set(path + ".assists", profile.assists());
-            configuration.set(path + ".kill-streak", profile.killStreak());
-            configuration.set(path + ".best-kill-streak", profile.bestKillStreak());
-            configuration.set(path + ".coins", profile.coins());
+            configuration.set(path + ".pvp-deaths", profile.pvpDeaths());
+            configuration.set(path + ".natural-deaths", profile.naturalDeaths());
             configuration.set(path + ".last-seen", profile.lastSeen());
         }
 
@@ -99,7 +91,14 @@ public final class YamlStorage implements Storage {
         }
     }
 
-    private String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
+    private UUID parseUuid(String raw) {
+        if (raw == null || raw.isEmpty()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 }

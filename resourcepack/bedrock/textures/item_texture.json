@@ -2,32 +2,8 @@
   "resource_pack_name": "helden3",
   "texture_name": "atlas.items",
   "texture_data": {
-    "zitronenklinge": {
-      "textures": "textures/items/zitronenklinge"
-    },
-    "sturmbogen": {
-      "textures": "textures/items/sturmbogen"
-    },
-    "schattendolch": {
-      "textures": "textures/items/schattendolch"
-    },
-    "feuerstab": {
-      "textures": "textures/items/feuerstab"
-    },
-    "heilerstab": {
-      "textures": "textures/items/heilerstab"
-    },
-    "heldenherz": {
-      "textures": "textures/items/heldenherz"
-    },
-    "lebenskristall": {
-      "textures": "textures/items/lebenskristall"
-    },
-    "zitrone": {
-      "textures": "textures/items/zitrone"
-    },
-    "rueckkehrstein": {
-      "textures": "textures/items/rueckkehrstein"
+    "herz": {
+      "textures": "textures/items/herz"
     }
   }
 }

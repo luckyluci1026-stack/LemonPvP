@@ -1,9 +1,8 @@
 package de.lemonpvp.helden.command;
 
 import de.lemonpvp.helden.HeldenPlugin;
-import de.lemonpvp.helden.hero.Hero;
 import de.lemonpvp.helden.player.HeldenProfile;
-import de.lemonpvp.helden.team.HeldenTeam;
+import de.lemonpvp.helden.util.Text;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -34,21 +33,18 @@ public final class StatsCommand extends BaseCommand {
             }
         }
 
-        Hero hero = plugin.heroes().of(profile);
-        HeldenTeam team = plugin.teams().of(profile);
+        HeldenProfile partner = plugin.links().partnerOf(profile);
+        String link = partner == null
+                ? plugin.messages().raw("link.none")
+                : Text.replace(plugin.messages().raw("link.partner"), "%partner%", partner.name());
 
         plugin.messages().sendRaw(sender, "stats.header", "%player%", profile.name());
-        plugin.messages().sendRaw(sender, "stats.hero", "%hero%", hero == null ? "&7-" : hero.display());
-        plugin.messages().sendRaw(sender, "stats.team", "%team%", team == null ? "&7-" : team.display());
-        plugin.messages().sendRaw(sender, "stats.lives", "%lives%", profile.lives());
+        plugin.messages().sendRaw(sender, "stats.hearts", "%hearts%", profile.hearts());
+        plugin.messages().sendRaw(sender, "stats.link", "%link%", link);
         plugin.messages().sendRaw(sender, "stats.kills", "%kills%", profile.kills());
-        plugin.messages().sendRaw(sender, "stats.deaths", "%deaths%", profile.deaths());
-        plugin.messages().sendRaw(sender, "stats.assists", "%assists%", profile.assists());
-        plugin.messages().sendRaw(sender, "stats.kd", "%kd%", profile.kd());
-        plugin.messages().sendRaw(sender, "stats.streak", "%best%", profile.bestKillStreak());
-        plugin.messages().sendRaw(sender, "stats.coins",
-                "%currency%", plugin.economy().currencyName(),
-                "%coins%", profile.coins());
+        plugin.messages().sendRaw(sender, "stats.deaths", "%deaths%", profile.pvpDeaths());
+        plugin.messages().sendRaw(sender, "stats.natural", "%natural%", profile.naturalDeaths());
+        plugin.messages().sendRaw(sender, "stats.status", "%status%", plugin.game().statusOf(profile));
     }
 
     @Override

@@ -1,8 +1,8 @@
 package de.lemonpvp.helden.listener;
 
 import de.lemonpvp.helden.HeldenPlugin;
-import de.lemonpvp.helden.hero.Hero;
 import de.lemonpvp.helden.player.HeldenProfile;
+import de.lemonpvp.helden.util.Compat;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,7 +12,13 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 
 import java.util.UUID;
 
-/** Tod und Respawn: Statistik, Belohnungen, Leben und Passivwerte. */
+/**
+ * Tod und Respawn.
+ *
+ * <p>Hier steckt die Kernregel des Projekts: ein Herz kostet nur der Tod durch
+ * einen anderen Spieler. Sturz, Lava, Mobs, Hunger und Ertrinken sind
+ * schmerzhaft, aber folgenlos.</p>
+ */
 public final class DeathListener implements Listener {
 
     private final HeldenPlugin plugin;
@@ -24,47 +30,38 @@ public final class DeathListener implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         Player victim = event.getEntity();
-        HeldenProfile victimProfile = plugin.profiles().getOrCreate(victim);
+        HeldenProfile profile = plugin.profiles().getOrCreate(victim);
         Player killer = resolveKiller(victim);
 
-        int endedStreak = victimProfile.killStreak();
-        victimProfile.addDeath();
-        plugin.economy().withdrawSilently(victimProfile, plugin.settings().lossPerDeath());
-
         event.setDeathMessage(null);
-        announceDeath(victim, killer);
 
         if (killer != null && !killer.equals(victim)) {
-            plugin.combat().rewardKill(killer, victim);
-            if (endedStreak >= plugin.settings().announceKillstreakFrom()) {
-                plugin.messages().broadcastRaw("combat.streak-ended",
-                        "%player%", killer.getName(),
-                        "%victim%", victim.getName(),
-                        "%streak%", endedStreak);
-            }
-        }
-        plugin.combat().rewardAssists(victim, killer == null ? null : killer.getUniqueId());
+            profile.addPvpDeath();
+            plugin.profiles().getOrCreate(killer).addKill();
 
-        plugin.lives().handleDeath(victim);
-        plugin.combat().clearContributors(victim);
+            plugin.messages().broadcastRaw("combat.death-pvp",
+                    "%victim%", victim.getName(),
+                    "%killer%", killer.getName());
+            Compat.sound(killer, "entity.player.levelup", 0.8f, 1.6f);
+
+            plugin.hearts().loseHeart(victim, killer);
+        } else if (plugin.settings().pvpOnly()) {
+            // Der Tod war "natuerlich" - im Projekt kostet das kein Herz.
+            profile.addNaturalDeath();
+            plugin.messages().broadcastRaw("combat.death-natural", "%victim%", victim.getName());
+            plugin.messages().send(victim, "hearts.safe-death");
+        } else {
+            profile.addPvpDeath();
+            plugin.messages().broadcastRaw("combat.death-natural", "%victim%", victim.getName());
+            plugin.hearts().loseHeart(victim, null);
+        }
+
+        plugin.combat().clearLastAttacker(victim);
         plugin.combat().clearTag(victim);
-        plugin.abilities().clear(victim);
         plugin.hud().updateAll();
     }
 
-    private void announceDeath(Player victim, Player killer) {
-        if (killer != null && !killer.equals(victim)) {
-            Hero killerHero = plugin.heroes().of(killer);
-            plugin.messages().broadcastRaw("combat.death-pvp",
-                    "%victim%", victim.getName(),
-                    "%killer%", killer.getName(),
-                    "%hero%", killerHero == null ? "-" : killerHero.display());
-        } else {
-            plugin.messages().broadcastRaw("combat.death-generic", "%victim%", victim.getName());
-        }
-    }
-
-    /** Killer laut Server, sonst der letzte Angreifer aus dem Combat-Log. */
+    /** Killer laut Server, sonst der letzte Angreifer innerhalb der Gutschriftzeit. */
     private Player resolveKiller(Player victim) {
         Player killer = victim.getKiller();
         if (killer != null) {
@@ -78,25 +75,24 @@ public final class DeathListener implements Listener {
     public void onRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
 
-        Location spawn = plugin.spawnFor(player);
+        Location spawn = plugin.settings().spawnOrDefault();
         if (spawn != null) {
             event.setRespawnLocation(spawn);
         }
 
-        // Nach dem Respawn-Tick, sonst laufen die Effekte ins Leere.
+        // Erst nach dem Respawn-Tick, sonst greift das Setzen der Herzen nicht.
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (!player.isOnline()) {
                 return;
             }
-            HeldenProfile profile = plugin.profiles().getOrCreate(player);
-            if (profile.fallen()) {
-                plugin.lives().applyFallenState(player);
-                return;
+            plugin.game().enforceState(player);
+            if (!plugin.game().isEliminated(plugin.profiles().getOrCreate(player))) {
+                plugin.combat().protect(player, plugin.settings().respawnProtectionSeconds());
+                if (plugin.settings().respawnProtectionSeconds() > 0) {
+                    plugin.messages().send(player, "combat.spawn-protection",
+                            "%seconds%", plugin.settings().respawnProtectionSeconds());
+                }
             }
-            plugin.heroes().applyPassives(player, plugin.heroes().of(profile));
-            plugin.combat().protect(player, plugin.settings().respawnProtectionSeconds());
-            plugin.messages().send(player, "combat.spawn-protection",
-                    "%seconds%", plugin.settings().respawnProtectionSeconds());
             plugin.hud().update(player);
         }, 1L);
     }

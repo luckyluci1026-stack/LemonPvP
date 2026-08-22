@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Prueft, ob Konfiguration, Resourcepacks und Plugin-Code zusammenpassen.
 
-Findet die Fehler, die der Compiler nicht sieht: ein Held, dessen Waffe es
-nicht mehr gibt, eine unbekannte Faehigkeit, ein Shop-Eintrag ohne Item, eine
-Textur, die im Pack fehlt.
+Findet die Fehler, die der Compiler nicht sieht: ein Artefakt ohne Textur, eine
+custom-model-data doppelt vergeben, ein Verweis in der config.yml auf ein Item,
+das es nicht mehr gibt, oder ein Geyser-Mapping, das nicht neu gebaut wurde.
 
 Aufruf:  python3 tools/validate.py
 Braucht: PyYAML
@@ -12,7 +12,6 @@ Exit-Code 1, wenn etwas nicht stimmt - taugt also fuer die CI.
 
 import json
 import os
-import re
 import sys
 
 try:
@@ -22,11 +21,15 @@ except ImportError:  # pragma: no cover
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESOURCES = os.path.join(REPO, "plugin", "src", "main", "resources")
-ABILITY_DIR = os.path.join(REPO, "plugin", "src", "main", "java", "de", "lemonpvp",
-                           "helden", "hero", "ability", "impl")
 JAVA_TEXTURES = os.path.join(REPO, "resourcepack", "java", "assets", "lemonpvp", "textures", "item")
 BEDROCK_TEXTURES = os.path.join(REPO, "resourcepack", "bedrock", "textures", "items")
 GEYSER_MAPPING = os.path.join(REPO, "geyser", "custom_mappings", "helden3.json")
+
+# Platzhalter, die das Plugin im Scoreboard fuellt.
+HUD_PLACEHOLDERS = {
+    "%player%", "%hearts%", "%link%", "%kills%", "%deaths%", "%natural%",
+    "%status%", "%alive%", "%participants%", "%online%",
+}
 
 problems = []
 notes = []
@@ -41,25 +44,12 @@ def load_yaml(name):
         return yaml.safe_load(handle) or {}
 
 
-def registered_abilities():
-    """Liest die Faehigkeits-IDs direkt aus den Java-Klassen."""
-    found = set()
-    pattern = re.compile(r'super\(plugin,\s*"([^"]+)"')
-    for filename in os.listdir(ABILITY_DIR):
-        if not filename.endswith(".java"):
-            continue
-        with open(os.path.join(ABILITY_DIR, filename), encoding="utf-8") as handle:
-            match = pattern.search(handle.read())
-            if match:
-                found.add(match.group(1))
-    return found
-
-
 def check_items(items):
     seen_cmd = {}
     for item_id, entry in items.items():
         if not entry.get("material"):
             fail("items.yml: '%s' hat kein material" % item_id)
+
         cmd = entry.get("custom-model-data")
         if not cmd:
             fail("items.yml: '%s' hat keine custom-model-data" % item_id)
@@ -79,62 +69,39 @@ def check_items(items):
                          % (label, item_id))
 
 
-def check_heroes(heroes, items, abilities):
-    for hero_id, entry in heroes.items():
-        ability = entry.get("ability", "")
-        if not ability:
-            notes.append("Held '%s' hat keine aktive Faehigkeit" % hero_id)
-        elif ability not in abilities:
-            fail("heroes.yml: '%s' verweist auf die unbekannte Faehigkeit '%s' (bekannt: %s)"
-                 % (hero_id, ability, ", ".join(sorted(abilities))))
+def check_hearts(config):
+    hearts = config.get("hearts") or {}
+    start = hearts.get("start", 3)
+    maximum = hearts.get("max", 6)
+    total = start + (1 if hearts.get("link-heart", True) else 0)
 
-        weapon = entry.get("weapon", "")
-        if weapon and weapon not in items:
-            fail("heroes.yml: '%s' verweist auf das unbekannte Artefakt '%s'" % (hero_id, weapon))
+    if start < 1:
+        fail("config.yml: hearts.start muss mindestens 1 sein")
+    if maximum < total:
+        fail("config.yml: hearts.max (%s) liegt unter den Startherzen (%s)" % (maximum, total))
+    if not hearts.get("pvp-only", True):
+        notes.append("hearts.pvp-only ist aus - dann kosten auch Sturz und Lava ein Herz "
+                     "(im Original nicht so)")
 
-        for raw in entry.get("passives", {}).get("effects", []) or []:
-            if ":" not in str(raw):
-                notes.append("Held '%s': Effekt '%s' ohne Staerkeangabe (wird 0)" % (hero_id, raw))
-
-
-def check_shop(shop, items):
-    for entry_id, entry in (shop.get("entries") or {}).items():
-        item_id = entry.get("item")
-        if item_id and item_id not in items:
-            fail("shop.yml: '%s' verweist auf das unbekannte Artefakt '%s'" % (entry_id, item_id))
-        if not item_id and not entry.get("material"):
-            fail("shop.yml: '%s' hat weder 'item' noch 'material'" % entry_id)
-        if entry.get("price") is None:
-            notes.append("Shop-Eintrag '%s' hat keinen Preis (wird 0)" % entry_id)
-
-    rows = shop.get("rows", 3)
-    slots = {}
-    for entry_id, entry in (shop.get("entries") or {}).items():
-        slot = entry.get("slot")
-        if slot is None:
-            continue
-        if slot >= rows * 9:
-            fail("shop.yml: '%s' liegt auf Slot %s, das Menue hat aber nur %s Plaetze"
-                 % (entry_id, slot, rows * 9))
-        if slot in slots:
-            fail("shop.yml: Slot %s doppelt belegt (%s und %s)" % (slot, slots[slot], entry_id))
-        slots[slot] = entry_id
+    game = config.get("game") or {}
+    if game.get("on-elimination", "SPECTATOR") not in ("SPECTATOR", "KICK", "NOTHING"):
+        fail("config.yml: game.on-elimination muss SPECTATOR, KICK oder NOTHING sein")
 
 
-def check_config(config, items):
-    for key, path in (("revive", "special-items.revive"),
-                      ("life-crystal", "special-items.life-crystal"),
-                      ("currency-token", "special-items.currency-token"),
-                      ("return-stone", "special-items.return-stone")):
-        value = (config.get("special-items") or {}).get(key)
-        if value and value not in items:
-            fail("config.yml: %s zeigt auf das unbekannte Artefakt '%s'" % (path, value))
+def check_special_items(config, items):
+    heart_item = (config.get("special-items") or {}).get("heart")
+    if heart_item and heart_item not in items:
+        fail("config.yml: special-items.heart zeigt auf das unbekannte Artefakt '%s'" % heart_item)
+    if not heart_item:
+        notes.append("special-items.heart ist leer - Herz-Items sind damit abgeschaltet")
 
-    rotation = (config.get("events") or {}).get("rotation") or []
-    known_events = {"blutmond", "zitronenregen", "kopfgeld"}
-    for event in rotation:
-        if event not in known_events:
-            fail("config.yml: events.rotation enthaelt das unbekannte Event '%s'" % event)
+
+def check_hud(config):
+    for line in (config.get("hud") or {}).get("lines", []) or []:
+        for token in line.split("%")[1::2]:
+            placeholder = "%" + token + "%"
+            if placeholder not in HUD_PLACEHOLDERS:
+                fail("config.yml: hud.lines nutzt den unbekannten Platzhalter %s" % placeholder)
 
 
 def check_geyser(items):
@@ -145,7 +112,8 @@ def check_geyser(items):
         mapping = json.load(handle)
 
     mapped = {entry["name"] for entries in mapping.get("items", {}).values() for entry in entries}
-    expected = {item_id for item_id, entry in items.items() if entry.get("model", "generated") != "none"}
+    expected = {item_id for item_id, entry in items.items()
+                if entry.get("model", "generated") != "none"}
     for missing in sorted(expected - mapped):
         fail("Geyser-Mapping: '%s' fehlt (tools/build_packs.py laufen lassen)" % missing)
     for extra in sorted(mapped - expected):
@@ -153,32 +121,40 @@ def check_geyser(items):
 
 
 def check_messages(messages):
-    """Jeder in messages.yml benutzte Platzhalter sollte auch gefuellt werden."""
-    if not messages:
-        fail("messages.yml ist leer")
+    """Ein paar Schluessel muss es geben, sonst stehen im Chat Fehlermeldungen."""
+    required = [
+        "hearts.own", "hearts.lost", "hearts.safe-death",
+        "link.assigned-owner", "link.assigned-partner", "link.chain-loss", "link.none",
+        "dummy.spawned", "dummy.killed", "dummy.rescued",
+        "game.eliminated-broadcast", "game.winner", "game.status-alive",
+        "combat.death-pvp", "combat.death-natural",
+    ]
+    for path in required:
+        node = messages
+        for part in path.split("."):
+            node = node.get(part) if isinstance(node, dict) else None
+            if node is None:
+                fail("messages.yml: Schluessel '%s' fehlt" % path)
+                break
 
 
 def main():
     items = load_yaml("items.yml").get("items") or {}
-    heroes = load_yaml("heroes.yml").get("heroes") or {}
-    shop = load_yaml("shop.yml")
     config = load_yaml("config.yml")
-    teams = load_yaml("teams.yml").get("teams") or {}
     messages = load_yaml("messages.yml")
-    abilities = registered_abilities()
 
     check_items(items)
-    check_heroes(heroes, items, abilities)
-    check_shop(shop, items)
-    check_config(config, items)
+    check_hearts(config)
+    check_special_items(config, items)
+    check_hud(config)
     check_geyser(items)
     check_messages(messages)
 
-    if not teams:
-        fail("teams.yml enthaelt keine Teams")
-
-    print("Artefakte: %d | Helden: %d | Faehigkeiten: %d | Teams: %d"
-          % (len(items), len(heroes), len(abilities), len(teams)))
+    hearts = config.get("hearts") or {}
+    print("Artefakte: %d | Startherzen: %d%s"
+          % (len(items),
+             hearts.get("start", 3) + (1 if hearts.get("link-heart", True) else 0),
+             " (inkl. Link-Herz)" if hearts.get("link-heart", True) else ""))
 
     for note in notes:
         print("  Hinweis: %s" % note)

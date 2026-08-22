@@ -1,13 +1,12 @@
-# Helden 3 — das LemonPvP YouTuber-Projekt
+# Helden 3 — LemonPvP
 
-Ein Minecraft-Projekt im Stil einer YouTuber-Season: Heldenklassen mit eigenen
-Faehigkeiten, Fraktionen, ein Lebenssystem mit Wiederbelebung, Server-Events und
-eigene Artefakte mit eigener Optik.
+Ein Minecraft-Projekt nach dem Regelwerk von **Minecraft Helden**: jeder startet
+mit drei Herzen plus einem geteilten Link-Herz. Herzen verlierst du
+ausschliesslich an andere Spieler — Sturz, Lava, Mobs und Hunger kosten nichts.
+Bei null Herzen bist du raus. Der Letzte im Rennen gewinnt.
 
 **Java- und Bedrock-Spieler spielen zusammen.** Der Server laeuft als
 Paper-Server, Bedrock-Spieler kommen ueber [Geyser](https://geysermc.org) dazu.
-Das Repository enthaelt deshalb beides: das Plugin *und* zwei aufeinander
-abgestimmte Texturepacks (Java + Bedrock) samt Geyser-Mapping.
 
 ```
 LemonPvP/
@@ -16,10 +15,26 @@ LemonPvP/
 │   ├── java/      Resourcepack fuer Java-Spieler (CustomModelData)
 │   └── bedrock/   Resourcepack fuer Bedrock-Spieler (.mcpack)
 ├── geyser/        Geyser-Mapping, das beide Seiten verbindet
-├── tools/         Texturen erzeugen, Packs bauen, Packs zippen
-├── docs/          Einrichtung und Spielinhalte
+├── tools/         Texturen erzeugen, Packs bauen, Konfiguration pruefen
+├── docs/          Einrichtung und Regelwerk
 └── index.html     Die Projektwebseite
 ```
+
+---
+
+## Die Regeln
+
+| | |
+| --- | --- |
+| **Start** | 3 eigene Herzen + 1 Link-Herz = 4 Herzen (8 Lebenspunkte) |
+| **Herzverlust** | nur durch andere Spieler. Sturz, Lava, Mobs, Hunger: folgenlos |
+| **Link-Herz** | wer auf dem letzten Herz steht, teilt es mit einem zufaellig zugelosten Mitspieler. Faellt er, verliert der Partner ebenfalls ein Herz |
+| **Combat-Log** | wer im Kampf ausloggt, hinterlaesst einen **Dummy** mit seiner Ausruestung. Wird der getoetet, sind Herz und Loot weg — ueberlebt er, ist nichts passiert |
+| **Ausscheiden** | bei 0 Herzen Zuschauermodus (einstellbar) |
+| **Sieg** | der letzte Spieler mit Herzen |
+
+Herzen sind gleichzeitig Leben **und** Maximalgesundheit: wer noch zwei Herzen
+hat, laeuft mit vier Lebenspunkten herum. Jeder Kampf zaehlt.
 
 ---
 
@@ -37,8 +52,6 @@ python3 tools/build_packs.py          # braucht PyYAML
 ./tools/package_packs.sh
 ```
 
-Danach:
-
 | Datei | Ziel |
 | --- | --- |
 | `plugin/target/Helden3-3.0.0.jar` | `plugins/` des Paper-Servers |
@@ -46,58 +59,8 @@ Danach:
 | `dist/Helden3-Bedrock.mcpack` | `plugins/Geyser-Spigot/packs/` |
 | `geyser/custom_mappings/helden3.json` | `plugins/Geyser-Spigot/custom_mappings/` |
 
-Die ausfuehrliche Anleitung inklusive Geyser- und Floodgate-Einstellungen steht
-in **[docs/SETUP.md](docs/SETUP.md)**.
-
----
-
-## Was drin ist
-
-### Sechs Helden
-
-| Held | Rolle | Faehigkeit | Waffe |
-| --- | --- | --- | --- |
-| Krieger | Frontlinie, viel Leben | Wirbelsturm (20 s) | Zitronenklinge |
-| Bogenschuetze | Distanz | Pfeilhagel (25 s) | Sturmbogen |
-| Assassine | Burst, wenig Ruestung | Schattenschritt (18 s) | Schattendolch |
-| Magier | Feuer auf Distanz | Feuerball (12 s) | Feuerstab |
-| Heiler | Support | Heilkreis (30 s) | Heilerstab |
-| Waechter | Tank | Schildwall (30 s) | Bollwerk-Schild |
-
-Faehigkeit ausloesen: **Schleichen + Rechtsklick mit der Heldenwaffe** oder
-`/faehigkeit`. Das Schleichen sorgt dafuer, dass Bogen und Schild ganz normal
-benutzbar bleiben — umstellbar ueber `hero.ability-trigger`. Auf Bedrock ist der
-Rechtsklick das lange Antippen bzw. die Nutzen-Taste, die Steuerung ist also
-auf beiden Editionen dieselbe.
-
-### Projektmechaniken
-
-- **Leben** — jeder startet mit 3. Jeder Tod kostet eins, bei 0 ist man
-  *gefallen* und wird Zuschauer.
-- **Wiederbelebung** — ein Mitspieler bringt dich mit einem **Heldenherz**
-  (`/wiederbeleben <spieler>`) zurueck.
-- **Fraktionen** — Zitronen, Limetten, Blutorangen. Kein Friendly Fire,
-  Teamchat ueber `/team chat`, Namensschilder in Teamfarbe.
-- **Combat-Log** — wer im Kampf ausloggt, verliert ein Leben und laesst sein
-  Inventar zurueck.
-- **Events** — Blutmond (mehr Schaden), Zitronenregen (Loot am Spawn),
-  Kopfgeld (Belohnung auf einen Spieler). Laufen automatisch in Rotation.
-- **Zitronen** — die Waehrung. Gibt es fuer Kills, Assists und Kopfgelder,
-  ausgeben im `/shop`.
-- **Scoreboard** — Held, Team, Leben, Kills, Serie, Zitronen und das laufende
-  Event, flackerfrei auch auf Bedrock.
-
-Alle Zahlen, Namen und Texte stehen in den YAML-Dateien und lassen sich ohne
-Neustart mit `/helden3 reload` nachziehen.
-
-### Zehn Artefakte
-
-Zitronenklinge, Sturmbogen, Schattendolch, Feuerstab, Heilerstab,
-Bollwerk-Schild, Heldenherz, Lebenskristall, Zitrone, Rueckkehrstein.
-
-Jedes hat eine eigene 16×16-Textur, die in **beiden** Packs steckt — Java ueber
-`CustomModelData`, Bedrock ueber das Geyser-Mapping. Details und die Liste der
-Spielinhalte: **[docs/HELDEN.md](docs/HELDEN.md)**.
+Ausfuehrlich in **[docs/SETUP.md](docs/SETUP.md)**, das komplette Regelwerk in
+**[docs/HELDEN.md](docs/HELDEN.md)**.
 
 ---
 
@@ -105,27 +68,24 @@ Spielinhalte: **[docs/HELDEN.md](docs/HELDEN.md)**.
 
 | Befehl | Wirkung |
 | --- | --- |
-| `/held [name]` | Heldenauswahl oeffnen oder direkt wechseln |
-| `/faehigkeit` | Faehigkeit ausloesen (Alternative zum Rechtsklick) |
-| `/team [info\|liste\|chat <text>]` | Teaminfo, Mitgliederliste, Teamchat |
-| `/leben [spieler]` | Verbleibende Leben |
-| `/wiederbeleben <spieler>` | Gefallenen mit einem Heldenherz zurueckholen |
-| `/stats [spieler]` | Statistik |
-| `/shop` | Zitronen-Shop |
-| `/helden3 …` | Adminwerkzeuge (siehe unten) |
+| `/herzen [spieler]` | Verbleibende Herzen (und ob gerade ein eigener Dummy steht) |
+| `/teilnehmer` | Uebersicht: wer hat wie viele Herzen, wer haengt an wem, wer ist raus |
+| `/stats [spieler]` | Herzen, Link-Partner, Kills, Tode |
+| `/helden3 …` | Adminwerkzeuge |
 
 Admin (`helden3.admin`):
 
 ```
-/helden3 reload                        Konfiguration neu laden
-/helden3 status                        Registrierte Inhalte anzeigen
-/helden3 item <id> [spieler] [anzahl]  Artefakt geben
-/helden3 held <spieler> <held>         Held setzen
-/helden3 team <spieler> <team>         Team setzen
-/helden3 leben <spieler> <anzahl>      Leben setzen
-/helden3 coins <spieler> <anzahl>      Kontostand setzen
-/helden3 event <id|stop>               Event starten oder beenden
-/helden3 spawn                         Projektspawn auf deine Position setzen
+/helden3 reload                              Konfiguration neu laden
+/helden3 status                              Regelwerk und Zaehlerstand
+/helden3 herzen <spieler> <set|add|remove> <n>
+/helden3 link <spieler> <partner|clear>      Link-Herz von Hand setzen
+/helden3 raus <spieler>                      Spieler ausscheiden lassen
+/helden3 zurueck <spieler>                   Spieler zurueckholen
+/helden3 dummy clear                         Alle Dummies entfernen
+/helden3 item <id> [spieler] [anzahl]        Artefakt geben
+/helden3 reset bestaetigen                   Alle Herzen zuruecksetzen (neue Season)
+/helden3 spawn                               Projektspawn setzen
 ```
 
 ---
@@ -134,16 +94,14 @@ Admin (`helden3.admin`):
 
 | Datei | Inhalt |
 | --- | --- |
-| `config.yml` | Leben, Kampf, Wirtschaft, Scoreboard, Events, Bedrock-Optionen |
-| `heroes.yml` | Heldenklassen: Passivwerte, Faehigkeit, Waffe |
+| `config.yml` | Herzen, Link-Herz, Dummy, Elimination, Kampf, Scoreboard, Bedrock |
 | `items.yml` | Artefakte: Material, CustomModelData, Bedrock-Identifier, Lore |
-| `teams.yml` | Fraktionen, Farben, Teamspawns |
-| `shop.yml` | Angebote und Preise im `/shop` |
 | `messages.yml` | Saemtliche Texte |
 
 `items.yml` ist zugleich die Quelle fuer beide Resourcepacks: `tools/build_packs.py`
-liest sie und schreibt Java-Modelle, Bedrock-Texturenliste und Geyser-Mapping.
-Deshalb koennen Plugin und Packs nicht auseinanderlaufen.
+liest sie und schreibt Java-Modelle, Bedrock-Texturenliste und Geyser-Mapping —
+Plugin und Packs koennen also nicht auseinanderlaufen. `tools/validate.py` prueft
+das Ganze gegen und taugt fuer die CI.
 
 ---
 
@@ -157,3 +115,6 @@ Deshalb koennen Plugin und Packs nicht auseinanderlaufen.
 
 Das Plugin bindet Geyser/Floodgate **nicht** als Dependency ein — die Erkennung
 laeuft ueber Reflection, damit der Server auch ohne die Plugins sauber startet.
+Auch die Maximalgesundheit wird versionsunabhaengig gesetzt: das zustaendige
+Attribut hiess je nach Minecraft-Version anders, deshalb sucht
+`heart/HealthCompat` es zur Laufzeit.

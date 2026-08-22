@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/red_dye"
+    },
+    "entries": [
+      {
+        "threshold": 3001,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/herz"
+        }
+      }
+    ]
+  }
+}

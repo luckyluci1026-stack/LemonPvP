@@ -1,145 +1,97 @@
 # =====================================================================
-#  Helden 3 - LemonPvP YouTuber-Projekt
-#  Hauptkonfiguration
+#  Helden 3 - LemonPvP
+#  Regelwerk nach dem Minecraft-Helden-Projekt
 # =====================================================================
 
 general:
-  # Prefix vor allen Plugin-Nachrichten (siehe messages.yml fuer den Rest).
-  prefix: "&8[&e&lHelden&a&l3&8] &r"
-  # Sprache der Item-/Held-Namen: rein kosmetisch, alles kommt aus den YMLs.
-  project-name: "&e&lHELDEN &a&l3"
+  prefix: "&8[&c&l♥&8] &r"
+  project-name: "&c&lHELDEN &f&l3"
   # Speicherintervall der Spielerdaten in Sekunden.
   autosave-seconds: 300
+
+hearts:
+  # Eigene Herzen pro Spieler.
+  start: 3
+  # Zusaetzliches, geteiltes Link-Herz. Damit startet jeder mit 4 Herzen
+  # (= 8 Lebenspunkte); das letzte ist das Link-Herz.
+  link-heart: true
+  # Obergrenze, falls Herzen wieder vergeben werden (Herz-Item, Admin).
+  max: 6
+
+  # DIE Kernregel des Projekts: Herzen gehen NUR durch andere Spieler
+  # verloren. Sturz, Lava, Mobs, Hunger und Ertrinken kosten kein Herz.
+  pvp-only: true
+  # So lange nach einem Treffer zaehlt ein Tod noch als PvP-Kill des
+  # Angreifers - auch wenn das Opfer danach in die Lava faellt.
+  pvp-credit-seconds: 15
+
+link:
+  # Wird der zugeloste Partner oeffentlich bekanntgegeben?
+  announce: true
+  # Neu auslosen, wenn der Partner ausscheidet.
+  reassign-on-partner-out: true
+  # Darf ein Spieler Partner mehrerer Link-Herzen sein?
+  allow-multiple: false
+
+dummy:
+  # Wer sich im Kampf ausloggt, verliert nicht sofort ein Herz - stattdessen
+  # bleibt ein Dummy mit seiner Ausruestung stehen. Wird der getoetet, sind
+  # Herz und Loot weg.
+  enabled: true
+  # Sekunden, die der Dummy stehen bleibt.
+  lifetime-seconds: 180
+  # Nur Spieler duerfen dem Dummy schaden (sonst raeumen ihn Mobs ab).
+  players-only: true
+  # Name ueber dem Dummy.
+  name-format: "&c%player% &7(Dummy)"
+
+game:
+  # Was passiert bei 0 Herzen?  SPECTATOR | KICK | NOTHING
+  on-elimination: SPECTATOR
+  # Ab so vielen Teilnehmern wird ein Sieger verkuendet.
+  min-participants: 2
+  announce-winner: true
+  # Eliminierte Spieler beim Join direkt in den Zuschauermodus setzen.
+  enforce-on-join: true
+
+combat:
+  # Sekunden, die ein Spieler nach einem Treffer im Kampf ist.
+  tag-seconds: 15
+  # Praktische Zugabe, im Original nicht bestaetigt: kurzer Schutz nach dem
+  # Respawn, damit niemand am Spawn festgehalten wird. 0 = aus.
+  respawn-protection-seconds: 5
+
+hud:
+  enabled: true
+  title: "&c&lHELDEN &f&l3"
+  update-ticks: 20
+  lines:
+    - "&7&m----------------"
+    - "&fHerzen: &c%hearts%"
+    - "&fLink: %link%"
+    - ""
+    - "&fKills: &a%kills%"
+    - "&fPvP-Tode: &c%deaths%"
+    - ""
+    - "&fUebrig: &e%alive%&7/&f%participants%"
+    - "&fStatus: %status%"
+    - "&7&m----------------"
+    - "&alemonpvp.de"
+
+special-items:
+  # Artefakt-ID aus items.yml, das ein Herz gibt. Leer lassen zum Abschalten.
+  # Nicht aus dem Original bestaetigt - praktisch fuer Comebacks und Admins.
+  heart: herz
+  heart-value: 1
 
 bedrock:
   # Bedrock-Spieler ueber Floodgate erkennen (Reflection, keine Dependency).
   detect-floodgate: true
-  # Fallback: Spielernamen mit diesem Prefix gelten als Bedrock-Spieler.
   # Muss mit "username-prefix" aus der Floodgate-Config uebereinstimmen.
   username-prefix: "."
-  # Bedrock-Clients rendern Hex-Farben nicht. Ist das an, werden &#RRGGBB
-  # Codes fuer Bedrock-Spieler auf die naechste Legacy-Farbe reduziert.
+  # Bedrock rendert keine Hex-Farben -> auf Legacy-Farben reduzieren.
   strip-hex-colors: true
-  # Bedrock-Inventare zeigen nur begrenzt Zeilen sauber an -> GUIs kleiner halten.
-  compact-menus: true
-  # Beim Join einen Hinweis senden, wie die Faehigkeit ausgeloest wird.
   send-controls-hint: true
-
-hero:
-  # Wie wird die Faehigkeit ausgeloest?
-  #   SNEAK_RIGHT_CLICK - Schleichen + Rechtsklick mit der Heldenwaffe.
-  #                       Empfohlen: Bogen und Schild behalten so ihre normale
-  #                       Funktion, der Bogenschuetze kann also weiter schiessen.
-  #   RIGHT_CLICK       - Einfacher Rechtsklick mit der Heldenwaffe.
-  # /faehigkeit funktioniert in beiden Faellen zusaetzlich.
-  ability-trigger: SNEAK_RIGHT_CLICK
-  # Held beim ersten Join automatisch abfragen (GUI oeffnet sich).
-  select-on-first-join: true
-  # Wie viele Sekunden nach dem Waehlen darf gewechselt werden?
-  # -1 = immer erlaubt, 0 = nie wechseln.
-  change-cooldown-seconds: 3600
-  # Passive Effekte alle X Sekunden erneuern.
-  passive-refresh-seconds: 5
-
-lives:
-  enabled: true
-  # Startleben pro Spieler.
-  start: 3
-  # Maximale Leben (Lebenskristalle koennen nicht darueber hinaus heilen).
-  max: 6
-  # Was passiert bei 0 Leben?  SPECTATOR | KICK | NOTHING
-  on-zero: SPECTATOR
-  # Spieler mit 0 Leben duerfen sich per Heldenherz wiederbeleben lassen.
-  revive-enabled: true
-  # Wiederbelebung kostet zusaetzlich Zitronen (0 = kostenlos).
-  revive-cost: 250
-  # Nach einer Wiederbelebung erhaltene Leben.
-  revive-lives: 1
-  # Sekunden Schutz nach der Wiederbelebung.
-  revive-protection-seconds: 15
-
-combat:
-  # Friendly Fire innerhalb eines Teams.
-  team-friendly-fire: false
-  # Sekunden, die ein Spieler nach einem Treffer im Kampf ist (Combat-Log).
-  tag-seconds: 15
-  # Beim Verlassen im Kampf: Spieler stirbt (klassische Projekt-Regel).
-  kill-on-combat-log: true
-  # Sekunden Spawnschutz nach dem Respawn.
-  respawn-protection-seconds: 10
-  # Killstreak-Ankuendigung ab dieser Anzahl.
-  announce-killstreak-from: 3
-
-economy:
-  # Name der Waehrung (LemonPvP -> Zitronen).
-  name: "Zitronen"
-  symbol: "&e⬤"
-  start-balance: 100
-  reward-per-kill: 50
-  # Bonus pro Kill in der aktuellen Killstreak (kill * bonus).
-  killstreak-bonus: 10
-  reward-per-assist: 15
-  # Verlust pro Tod (0 = keiner).
-  loss-per-death: 0
-
-hud:
-  enabled: true
-  title: "&e&lHELDEN &a&l3"
-  update-ticks: 20
-  lines:
-    - "&7&m----------------"
-    - "&fHeld: &e%hero%"
-    - "&fTeam: %team%"
-    - "&fLeben: &c%lives%"
-    - ""
-    - "&fKills: &a%kills%"
-    - "&fTode: &c%deaths%"
-    - "&fStreak: &6%streak%"
-    - ""
-    - "&f%currency%: &e%coins%"
-    - "&fEvent: %event%"
-    - "&7&m----------------"
-    - "&alemonpvp.de"
-  # Nametags/Tablist nach Team einfaerben.
-  color-nametags: true
-
-events:
-  enabled: true
-  # Minuten zwischen zwei automatischen Events.
-  interval-minutes: 45
-  # Vorwarnung in Sekunden.
-  warmup-seconds: 30
-  # Welche Events duerfen automatisch starten?
-  rotation:
-    - blutmond
-    - zitronenregen
-    - kopfgeld
-  blutmond:
-    duration-seconds: 600
-    # Zusaetzlicher PvP-Schaden in Prozent.
-    damage-bonus-percent: 20
-    # Nachts erzwingen.
-    set-night: true
-  zitronenregen:
-    duration-seconds: 180
-    # Sekunden zwischen zwei Drops.
-    drop-interval-seconds: 10
-    # Radius um den Spawn, in dem gedroppt wird.
-    radius: 12
-    zitronen-per-drop: 3
-  kopfgeld:
-    duration-seconds: 900
-    # Zitronen fuer den Kill des Zielspielers.
-    reward: 1000
-
-special-items:
-  # Welche Artefakt-IDs (items.yml) welche Funktion haben.
-  revive: heldenherz
-  life-crystal: lebenskristall
-  currency-token: zitrone
-  return-stone: rueckkehrstein
-  # Wert einer eingeloesten Zitrone.
-  currency-token-value: 50
 
 world:
   # Spawnpunkt. Wird mit /helden3 spawn gesetzt, sonst World-Spawn.
