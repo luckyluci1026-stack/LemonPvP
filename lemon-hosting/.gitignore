@@ -8,3 +8,13 @@ daten/
 # gehoert in ein Repository - Welten werden gross und Jars sind nicht
 # unser Code.
 server/
+
+# Die Backups. Sie liegen neben dem Serverordner und sind ZIPs ganzer
+# Welten - schnell dreistellige Megabyte. Ohne diese Zeile landen sie
+# beim naechsten `git add -A` im Repository, und dann bekommt man sie
+# aus der Geschichte auch nicht mehr heraus.
+sicherungen/
+
+# Der Ersatzserver, den test/alles.sh baut.
+test/ersatzserver/*.class
+test/ersatzserver/*.jar
