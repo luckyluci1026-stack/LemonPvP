@@ -1,0 +1,33 @@
+name: SMPLobby
+version: ${project.version}
+main: de.lemonpvp.smplobby.SMPLobby
+api-version: '1.21'
+authors: [SMP]
+description: "Lobby-Plugin für den Hub: Schutz, Spawn, Server-Auswahl, Spieler ausblenden, Doppelsprung."
+
+commands:
+  spawn:
+    description: Bringt dich zum Lobby-Spawn
+    usage: "/spawn"
+    aliases: [hub]
+    permission: smplobby.spawn
+  setspawn:
+    description: Setzt den Lobby-Spawn auf deine Position
+    usage: "/setspawn"
+    permission: smplobby.admin
+  smplobby:
+    description: Verwaltung von SMPLobby
+    usage: "/smplobby <reload|setspawn|items>"
+    aliases: [lobby]
+    permission: smplobby.admin
+
+permissions:
+  smplobby.spawn:
+    description: Darf /spawn benutzen
+    default: true
+  smplobby.admin:
+    description: Verwaltung, Spawn setzen, neu laden
+    default: op
+  smplobby.bauen:
+    description: Umgeht den Lobby-Schutz - darf bauen, abbauen und Schaden nehmen
+    default: op

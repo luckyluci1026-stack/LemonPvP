@@ -19,6 +19,7 @@
         <module>easybedrock</module>
         <module>fastshop</module>
         <module>smpcontent</module>
+        <module>smplobby</module>
     </modules>
 
     <properties>

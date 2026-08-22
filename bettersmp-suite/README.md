@@ -13,6 +13,7 @@ den Server-Namen setzt du einmal über `brand` in der `config.yml`.
 | **EasyBedrock** | Bedrock-Crossplay (Geyser + Floodgate), Bedrock-Spieler ≈ Java-Spieler an Ressourcen | `/easybedrock` |
 | **FastShop** | DonutSMP-artiges `/shop` + `/sell`, komplett in-game editierbar, EssentialsX-Economy | `/shop`, `/sell`, `/worth`, `/fastshop` |
 | **SMPContent** | **Eigene Blöcke und Items** (8 Blöcke, 7 Items) mit Rezepten, passend zum Texturepack | `/smpcontent` |
+| **SMPLobby** | **Lobby/Hub eines Netzwerks**: Schutz, Spawn, Server-Wähler, Spieler ausblenden, Anzeigetafel, Doppelsprung | `/spawn`, `/smplobby` |
 
 Die externen Begleit-Plugins (EssentialsX, LuckPerms, Vault, PlaceholderAPI, TAB
 bzw. Geyser, Floodgate) sind **nicht mitgebündelt**, sondern werden von BetterSMP
@@ -67,7 +68,8 @@ bettersmp-suite/
 ├── lifesteal-plus/    Lifesteal+
 ├── easybedrock/       EasyBedrock
 ├── fastshop/          FastShop
-└── smpcontent/        SMPContent (eigene Blöcke & Items)
+├── smpcontent/        SMPContent (eigene Blöcke & Items)
+└── smplobby/          SMPLobby (Lobby-Server des Netzwerks)
 ```
 
 Jedes Plugin ist eigenständig nutzbar. Lifesteal+ nutzt die CombatLog-API von
