@@ -92,6 +92,7 @@ lauf start    node test/start.mjs
 lauf docker   node test/docker.mjs
 lauf zeitplan node test/zeitplan.mjs
 lauf arten    node test/arten.mjs
+lauf umstieg  node test/umstieg.mjs
 
 # --- mit Portal ----------------------------------------------------------
 for reihe in durchklicken teilen api zweifach knoten umzug; do

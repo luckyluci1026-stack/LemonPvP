@@ -698,6 +698,7 @@ oeffentlich/          CSS und das bisschen Browser-JavaScript
   dateien.js          Upload mit Fortschritt
 test/alles.sh         alle zehn Testreihen nacheinander
 test/ersatzserver/    ein Minecraft-Server, der keiner ist (für die Tests)
+test/umstieg.mjs      alte Datenbanken mit dem heutigen Code öffnen
 daten/portal.db       die Datenbank (nicht im Git)
 server/<id>/          die Minecraft-Server (nicht im Git)
 sicherungen/<id>/     die Backups (nicht im Git)
@@ -768,7 +769,7 @@ Person.
 
 ## Test
 
-Zehn Reihen, zusammen **405 Prüfungen**. Alle auf einmal:
+Elf Reihen, zusammen **457 Prüfungen**. Alle auf einmal:
 
 ```bash
 test/alles.sh

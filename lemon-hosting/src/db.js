@@ -158,10 +158,28 @@ function schema() {
       angelegt      TEXT NOT NULL
     );
 
+  `);
+
+  nachruesten();
+
+  /**
+   * Die Indizes zuletzt - nach dem Nachruesten.
+   *
+   * Standen sie oben im selben Block, ging es auf einer frischen
+   * Datenbank gut (CREATE TABLE legt die Spalte ja gleich mit an) und
+   * auf einer vorhandenen kaputt: CREATE TABLE IF NOT EXISTS ruehrt eine
+   * bestehende Tabelle nicht an, also fehlte `knoten_id` noch, wenn der
+   * Index darauf angelegt werden sollte - und das Portal startete mit
+   * "no such column: knoten_id" gar nicht mehr.
+   *
+   * Aufgefallen ist das erst bei jemandem, der das Portal schon benutzt
+   * hatte. Genau deshalb prueft test/umstieg.mjs jetzt jede alte
+   * Fassung, statt nur den frischen Fall.
+   */
+  db.exec(`
     CREATE INDEX IF NOT EXISTS idx_server_kunde ON server(kunde_id);
     CREATE INDEX IF NOT EXISTS idx_server_knoten ON server(knoten_id);
   `);
-  nachruesten();
 }
 
 /**

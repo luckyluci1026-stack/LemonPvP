@@ -1,6 +1,6 @@
 # Test
 
-Zehn Reihen, zusammen 405 Prüfungen. Alle auf einmal:
+Elf Reihen, zusammen 457 Prüfungen. Alle auf einmal:
 
 ```
 test/alles.sh
@@ -34,6 +34,7 @@ irgendwann grundlos kaputt, und man sucht dann am falschen Ende.
 | `docker.mjs` | Die Argumente für `docker run` — Speichergrenze, CPU-Anteil, keine neuen Rechte. Startet am Ende wirklich einen Container, wenn Docker da ist. |
 | `zeitplan.mjs` | Nächtlicher Neustart und Backup. Die Uhrzeit wird übergeben statt abgelesen, damit sich der Test nicht auf die Wanduhr verlässt. |
 | `arten.mjs` | Serversoftware installieren. Ruft nicht papermc.io an, sondern einen kleinen Server nebenan — geprüft wird, was schiefgehen kann: eine Fehlerseite als `server.jar`, eine halbe Datei, eine zerstörte heile alte. |
+| `umstieg.mjs` | Eine **alte** Datenbank mit dem heutigen Code öffnen — jede Fassung, die es je gab, mit Daten gefüllt. Gibt es, weil genau das einmal schiefging: Ein Index stand vor dem Nachrüsten der Spalte, auf die er zeigt. Frische Datenbanken merken so etwas nie. |
 | `durchklicken.mjs` | Das Portal einmal komplett wie ein Benutzer. Der wichtigste Block steht unten: ob ein Kunde an fremde Server kommt und ob man aus dem Dateimanager ausbrechen kann. |
 | `teilen.mjs` | Unterbenutzer. Wer nur die Konsole darf, darf auch nur die Konsole — über jeden Weg, nicht nur über den Knopf, der ihm fehlt. |
 | `api.mjs` | API-Zugänge, weitere Ports, Aktivität. Ein Schlüssel kann nie mehr als der Kunde, dem er gehört. |
@@ -43,7 +44,7 @@ irgendwann grundlos kaputt, und man sucht dann am falschen Ende.
 
 ## Einzeln
 
-Die vier oberen brauchen nichts weiter:
+Die fünf oberen brauchen nichts weiter:
 
 ```
 node test/start.mjs
