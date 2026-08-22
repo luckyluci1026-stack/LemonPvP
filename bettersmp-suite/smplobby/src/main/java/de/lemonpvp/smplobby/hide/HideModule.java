@@ -2,6 +2,7 @@ package de.lemonpvp.smplobby.hide;
 
 import de.lemonpvp.smplobby.SMPLobby;
 import de.lemonpvp.smplobby.items.LobbyItems;
+import de.lemonpvp.smplobby.util.Werte;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -9,6 +10,7 @@ import org.bukkit.entity.Player;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -85,12 +87,12 @@ public final class HideModule {
         }
         // Aussehen und Text kommen aus derselben Liste wie beim Anlegen,
         // damit hier nicht ein zweites Mal steht, wie das Item heisst.
-        for (var roh : plugin.getConfig().getMapList("gegenstaende.liste")) {
-            if (!LobbyItems.AKTION_VERSTECKEN.equals(String.valueOf(roh.get("aktion")))) {
+        for (Map<?, ?> roh : plugin.getConfig().getMapList("gegenstaende.liste")) {
+            if (!LobbyItems.AKTION_VERSTECKEN.equals(Werte.text(roh, "aktion", ""))) {
                 continue;
             }
             Material normal = Material.matchMaterial(
-                    String.valueOf(roh.get("material")).toUpperCase(Locale.ROOT));
+                    Werte.text(roh, "material", "").toUpperCase(Locale.ROOT));
             Material aus = Material.matchMaterial(plugin.getConfig()
                     .getString("verstecken.material-versteckt", "GRAY_DYE")
                     .toUpperCase(Locale.ROOT));
@@ -98,7 +100,7 @@ public final class HideModule {
                                         : (normal == null ? Material.PLAYER_HEAD : normal);
             String name = versteckt
                     ? "<gray><bold>Spieler ausgeblendet</bold></gray>"
-                    : String.valueOf(roh.getOrDefault("name", "Spieler anzeigen"));
+                    : Werte.text(roh, "name", "Spieler anzeigen");
             items.tausche(spieler, LobbyItems.AKTION_VERSTECKEN, zeigen, name,
                     List.of(versteckt
                             ? "<gray>Rechtsklick zeigt sie wieder</gray>"

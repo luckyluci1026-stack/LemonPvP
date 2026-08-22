@@ -2,6 +2,7 @@ package de.lemonpvp.smplobby.items;
 
 import de.lemonpvp.smplobby.SMPLobby;
 import de.lemonpvp.smplobby.util.Text;
+import de.lemonpvp.smplobby.util.Werte;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
@@ -58,27 +59,22 @@ public final class LobbyItems {
         }
         spieler.getInventory().clear();
         for (Map<?, ?> roh : plugin.getConfig().getMapList("gegenstaende.liste")) {
-            int slot = zahl(roh.get("slot"), -1);
+            int slot = Werte.zahl(roh, "slot", -1);
             if (slot < 0 || slot > 8) {
                 plugin.getLogger().warning("Gegenstand mit ungültigem Slot "
                         + roh.get("slot") + " übersprungen (erlaubt sind 0 bis 8).");
                 continue;
             }
-            Material material = material(String.valueOf(roh.get("material")));
+            Material material = material(Werte.text(roh, "material", ""));
             if (material == null) {
                 plugin.getLogger().warning("Material \"" + roh.get("material")
                         + "\" gibt es nicht - Gegenstand übersprungen.");
                 continue;
             }
-            String name = roh.get("name") == null ? "" : String.valueOf(roh.get("name"));
-            List<String> zeilen = new ArrayList<>();
-            if (roh.get("beschreibung") instanceof List<?> liste) {
-                for (Object zeile : liste) {
-                    zeilen.add(String.valueOf(zeile));
-                }
-            }
-            String aktion = roh.get("aktion") == null ? "keine" : String.valueOf(roh.get("aktion"));
-            spieler.getInventory().setItem(slot, baue(material, name, zeilen, aktion));
+            spieler.getInventory().setItem(slot, baue(material,
+                    Werte.text(roh, "name", ""),
+                    Werte.zeilen(roh, "beschreibung"),
+                    Werte.text(roh, "aktion", "keine")));
         }
         spieler.getInventory().setHeldItemSlot(0);
     }
@@ -136,16 +132,5 @@ public final class LobbyItems {
             return null;
         }
         return Material.matchMaterial(name.toUpperCase(Locale.ROOT));
-    }
-
-    private static int zahl(Object wert, int ersatz) {
-        if (wert instanceof Number nummer) {
-            return nummer.intValue();
-        }
-        try {
-            return Integer.parseInt(String.valueOf(wert));
-        } catch (NumberFormatException fehler) {
-            return ersatz;
-        }
     }
 }

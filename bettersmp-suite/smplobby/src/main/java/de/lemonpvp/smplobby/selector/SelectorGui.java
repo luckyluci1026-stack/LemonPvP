@@ -2,6 +2,7 @@ package de.lemonpvp.smplobby.selector;
 
 import de.lemonpvp.smplobby.SMPLobby;
 import de.lemonpvp.smplobby.util.Text;
+import de.lemonpvp.smplobby.util.Werte;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
@@ -53,9 +54,9 @@ public final class SelectorGui {
     public List<String> serverNamen() {
         List<String> raus = new ArrayList<>();
         for (Map<?, ?> roh : plugin.getConfig().getMapList("waehler.eintraege")) {
-            Object server = roh.get("server");
-            if (server != null) {
-                raus.add(String.valueOf(server));
+            String server = Werte.text(roh, "server", "");
+            if (!server.isEmpty()) {
+                raus.add(server);
             }
         }
         return raus;
@@ -68,35 +69,37 @@ public final class SelectorGui {
                 Text.mm(plugin.getConfig().getString("waehler.titel", "Server wählen")));
 
         for (Map<?, ?> roh : plugin.getConfig().getMapList("waehler.eintraege")) {
-            int platz = zahl(roh.get("platz"), -1);
+            int platz = Werte.zahl(roh, "platz", -1);
             if (platz < 0 || platz >= plaetze) {
                 plugin.getLogger().warning("Wähler-Eintrag auf Platz " + roh.get("platz")
                         + " passt nicht in " + plaetze + " Plätze - übersprungen.");
                 continue;
             }
             Material material = Material.matchMaterial(
-                    String.valueOf(roh.get("material")).toUpperCase(Locale.ROOT));
+                    Werte.text(roh, "material", "").toUpperCase(Locale.ROOT));
             if (material == null) {
                 plugin.getLogger().warning("Material \"" + roh.get("material")
                         + "\" gibt es nicht - Wähler-Eintrag übersprungen.");
                 continue;
             }
-            String server = String.valueOf(roh.get("server"));
+            String server = Werte.text(roh, "server", "");
+            if (server.isEmpty()) {
+                plugin.getLogger().warning("Wähler-Eintrag ohne \"server\" übersprungen.");
+                continue;
+            }
             int online = plugin.proxy().zahl(server);
 
             ItemStack stapel = new ItemStack(material);
             ItemMeta meta = stapel.getItemMeta();
             if (meta != null) {
-                meta.displayName(zeile(String.valueOf(roh.getOrDefault("name", server))));
+                meta.displayName(zeile(Werte.text(roh, "name", server)));
                 List<Component> lore = new ArrayList<>();
-                if (roh.get("beschreibung") instanceof List<?> liste) {
-                    for (Object text : liste) {
-                        // Solange der Proxy noch nichts gemeldet hat, steht
-                        // dort ein Strich. Eine erfundene 0 waere schlimmer -
-                        // dann glaubt man, der Server sei leer.
-                        lore.add(zeile(String.valueOf(text)
-                                .replace("%spieler%", online < 0 ? "–" : String.valueOf(online))));
-                    }
+                for (String text : Werte.zeilen(roh, "beschreibung")) {
+                    // Solange der Proxy noch nichts gemeldet hat, steht dort
+                    // ein Strich. Eine erfundene 0 waere schlimmer - dann
+                    // glaubt man, der Server sei leer.
+                    lore.add(zeile(text.replace("%spieler%",
+                            online < 0 ? "–" : String.valueOf(online))));
                 }
                 meta.lore(lore);
                 stapel.setItemMeta(meta);
@@ -119,16 +122,5 @@ public final class SelectorGui {
 
     private Component zeile(String text) {
         return Text.mm(text).decoration(TextDecoration.ITALIC, false);
-    }
-
-    private static int zahl(Object wert, int ersatz) {
-        if (wert instanceof Number nummer) {
-            return nummer.intValue();
-        }
-        try {
-            return Integer.parseInt(String.valueOf(wert));
-        } catch (NumberFormatException fehler) {
-            return ersatz;
-        }
     }
 }
