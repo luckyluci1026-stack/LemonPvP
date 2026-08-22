@@ -58,18 +58,55 @@ def line_h(im, y, x0, x1, color):
 
 
 def grain(im, base, dark, seed):
-    """Holzmaserung: senkrechte Adern mit ruhigem Rauschen."""
+    """
+    Holzmaserung: durchgehende Adern statt Rauschen.
+
+    Vorher bekam jeder Pixel einzeln eine Zufallszahl aufgeschlagen. Aus
+    zwei Bloecken Entfernung sieht das aus wie Schmutz auf dem Holz und
+    nicht wie Holz - Maserung laeuft naemlich in Linien, und genau die
+    fehlten. Auf einer 16er-Flaeche faellt das besonders auf, weil ein
+    einzelner dunkler Pixel dort ein Sechzehntel der Breite ist.
+
+    Jetzt wird der Grundton je SPALTE gewuerfelt und wandert langsam,
+    darueber laufen ein paar Adern durch, die sich verschieben duerfen
+    aber nicht springen. Das Rauschen bleibt - sehr schwach, damit die
+    Flaeche lebt und trotzdem ruhig bleibt.
+    """
     rnd = random.Random(seed)
+
+    # Grundton je Spalte. Der Zufall laeuft ueber die Breite weiter,
+    # statt fuer jeden Pixel neu zu wuerfeln - dadurch entstehen breite,
+    # weiche Baender statt Koernung.
+    ton = rnd.random()
     for x in range(S):
-        ader = rnd.random() < 0.28
+        ton = max(0.0, min(1.0, ton + rnd.uniform(-0.22, 0.22)))
+        farbe = mix(base, dark, 0.12 + ton * 0.18)
         for y in range(S):
-            t = (math.sin(x * 1.7 + y * 0.35 + seed) + 1) / 2
-            farbe = mix(base, dark, 0.18 + t * 0.22)
-            if ader:
-                farbe = mix(farbe, dark, 0.35)
-            if rnd.random() < 0.06:
-                farbe = mix(farbe, dark, 0.3)
             im.putpixel((x, y), farbe)
+
+    # Zwei bis vier Adern, die durchlaufen.
+    for _ in range(rnd.randint(2, 4)):
+        x = rnd.randrange(S)
+        tiefe = rnd.uniform(0.20, 0.38)
+        for y in range(S):
+            if rnd.random() < 0.20:
+                x = max(0, min(S - 1, x + rnd.choice((-1, 1))))
+            im.putpixel((x, y), mix(im.getpixel((x, y)), dark, tiefe))
+
+    # Manchmal ein Astloch: dunkler Kern, angedeuteter Ring.
+    if rnd.random() < 0.45:
+        ax, ay = rnd.randrange(2, S - 2), rnd.randrange(2, S - 2)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                kern = dx == 0 and dy == 0
+                stelle = (ax + dx, ay + dy)
+                im.putpixel(stelle, mix(im.getpixel(stelle), dark, 0.5 if kern else 0.22))
+
+    # Feines Rauschen zum Schluss - nur ein Hauch.
+    for x in range(S):
+        for y in range(S):
+            if rnd.random() < 0.10:
+                im.putpixel((x, y), mix(im.getpixel((x, y)), dark, 0.07))
 
 
 def bevel(im, hell=0.30, dunkel=0.35):
@@ -118,20 +155,62 @@ def kontur(im, staerke=0.55):
     return im
 
 
-def licht(im, staerke=0.22):
-    """Licht von oben links, Schatten unten rechts - auf der Silhouette."""
+def _tiefe(im, dx, dy, hoechstens):
+    """
+    Wie weit ein Pixel vom Rand entfernt ist, in eine Richtung gemessen.
+
+    0 heisst "sitzt direkt am Rand", der Hoechstwert heisst "tief drin".
+    Gebraucht wird das fuer die Schattierung: Nur so weiss man, ob ein
+    Pixel die beleuchtete Kante ist oder mitten in der Flaeche liegt.
+    """
+    raus = {}
     for x in range(S):
         for y in range(S):
-            p = im.getpixel((x, y))
-            if not p[3]:
+            if not im.getpixel((x, y))[3]:
                 continue
-            oben = im.getpixel((x, y - 1))[3] if y > 0 else 0
-            links = im.getpixel((x - 1, y))[3] if x > 0 else 0
-            unten = im.getpixel((x, y + 1))[3] if y < S - 1 else 0
-            if not oben or not links:
-                im.putpixel((x, y), mix(p, (255, 255, 255, 255), staerke))
-            elif not unten:
-                im.putpixel((x, y), mix(p, (0, 0, 0, 255), staerke * 0.9))
+            d = 0
+            cx, cy = x, y
+            while d < hoechstens:
+                cx += dx
+                cy += dy
+                if not (0 <= cx < S and 0 <= cy < S) or not im.getpixel((cx, cy))[3]:
+                    break
+                d += 1
+            raus[(x, y)] = d
+    return raus
+
+
+def licht(im, staerke=0.22, tiefe=4):
+    """
+    Licht von oben links, Schatten unten rechts - ueber die ganze Flaeche.
+
+    Vorher wurde nur die aeusserste Pixelreihe angefasst: eine helle Linie
+    um einen ansonsten flachen Fleck. Das ist der Grund, warum die Autos
+    wie Aufkleber aussahen und nicht wie Blech - die Silhouette stimmte,
+    aber dahinter passierte nichts.
+
+    Jetzt zaehlt fuer jeden Pixel, wie weit er von der beleuchteten Kante
+    weg ist. Direkt an der Kante am hellsten, nach innen ausklingend,
+    neutral in der Mitte, und zur abgewandten Seite hin wieder dunkler.
+    Genau das malt Vanilla von Hand; mehr ist es nicht.
+
+    `tiefe` sagt, ueber wie viele Pixel das ausklingt. Bei einem 16er-Item
+    sind vier gut - bei mehr wird die Mitte nie neutral und alles sieht
+    aus, als staende es im Nebel.
+    """
+    weiss = (255, 255, 255, 255)
+    schwarz = (0, 0, 0, 255)
+    hell = _tiefe(im, -1, -1, tiefe)     # Abstand zur beleuchteten Kante
+    dunkel = _tiefe(im, 1, 1, tiefe)     # Abstand zur abgewandten Kante
+
+    for (x, y), o in hell.items():
+        p = im.getpixel((x, y))
+        u = dunkel[(x, y)]
+        if o < u:
+            # Naeher am Licht: aufhellen, mit dem Abstand ausklingend.
+            im.putpixel((x, y), mix(p, weiss, staerke * (1 - o / tiefe)))
+        elif u < o:
+            im.putpixel((x, y), mix(p, schwarz, staerke * 0.9 * (1 - u / tiefe)))
     return im
 
 
