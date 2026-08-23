@@ -24,8 +24,17 @@ domains:
 # Wohin geht es, wenn die Domain oben nicht vorkommt?
 default-server: smp1
 
-# Der Warteraum (NanoLimbo). Leer lassen = Spieler wird getrennt.
+# Der Warteraum (NanoLimbo) - nur fuer Abstuerze, niemand geht da freiwillig
+# hin. Leer lassen = wer keinen Server mehr hat, wird getrennt.
 limbo: limbo
+
+# Wohin /hub und /lobby wirklich bringen: der SMPLobby-Server (siehe
+# bettersmp-suite/smplobby) mit Spawn, Serverauswahl und allem drumherum.
+# Muss in der velocity.toml unter [servers] genauso heissen.
+#
+# Leer lassen faellt auf den Warteraum von oben zurueck - das alte
+# Verhalten, falls (noch) kein eigener Lobby-Server steht.
+hub-server: lobby
 
 # ----------------------------------------------------------
 #  Server-Überwachung
@@ -58,9 +67,11 @@ auto-return:
 #  Befehle
 # ----------------------------------------------------------
 commands:
-  # /hub bzw. /lobby schickt in den Warteraum
+  # /hub bzw. /lobby schickt zur Lobby (hub-server oben). "limbo" ist
+  # absichtlich kein Alias mehr: den Warteraum betritt niemand freiwillig,
+  # man landet nur automatisch dort, wenn ein Server abstuerzt.
   hub-enabled: true
-  hub-aliases: ["hub", "lobby", "limbo"]
+  hub-aliases: ["hub", "lobby"]
   # /smp1, /smp2 ... als Kurzbefehle für /server <name>
   server-shortcuts: true
 
@@ -101,9 +112,9 @@ messages:
   limbo-crashed: "<gradient:#FF6B6B:#C92A2A><bold>Verbindung verloren</bold></gradient><newline><newline><gray>Auch der Warteraum ist nicht erreichbar.</gray><newline><gray>Bitte versuche es gleich nochmal.</gray>"
 
   # /hub
-  hub-sending: "%prefix%<gray>Bringe dich in den Warteraum ...</gray>"
-  hub-already: "%prefix%<gold>Du bist bereits im Warteraum.</gold>"
-  hub-missing: "%prefix%<red>Es ist kein Warteraum eingerichtet.</red>"
+  hub-sending: "%prefix%<gray>Bringe dich zur Lobby ...</gray>"
+  hub-already: "%prefix%<gold>Du bist bereits in der Lobby.</gold>"
+  hub-missing: "%prefix%<red>Es ist keine Lobby eingerichtet.</red>"
 
   # /smp1, /smp2 ...
   switch-sending: "%prefix%<gray>Verbinde dich mit <white>%server%</white> ...</gray>"

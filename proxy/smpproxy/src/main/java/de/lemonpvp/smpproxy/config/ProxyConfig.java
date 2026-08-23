@@ -145,6 +145,24 @@ public final class ProxyConfig {
         return string("limbo", "");
     }
 
+    /**
+     * Wohin /hub und /lobby wirklich bringen.
+     *
+     * Frueher gab es nur den Warteraum, also zeigten /hub und /lobby
+     * dorthin - besser als nichts, aber ein Warteraum ist kein Ort zum
+     * Verweilen. Jetzt gibt es SMPLobby: einen richtigen Hub-Server mit
+     * Spawn, Serverauswahl und allem drumherum. hub-server zeigt dorthin.
+     *
+     * Bleibt hub-server leer (z.B. in einer aelteren config.yml, die die
+     * Zeile noch nicht kennt), faellt es auf den Warteraum zurueck -
+     * genau das alte Verhalten, ohne dass jemand seine Konfiguration
+     * nachziehen muesste.
+     */
+    public String hubServer() {
+        String eigener = string("hub-server", "");
+        return eigener.isEmpty() ? limbo() : eigener;
+    }
+
     // ------------------------------------------------------------------
     //  Überwachung
     // ------------------------------------------------------------------

@@ -1,8 +1,10 @@
 # ==========================================================
 #  Velocity - Proxy-Konfiguration
 #
-#  smp1.lemon-servers.de  ->  landet direkt auf smp1
-#  smp2.lemon-servers.de  ->  landet direkt auf smp2
+#  smp1.lemon-servers.de   ->  landet direkt auf smp1
+#  smp2.lemon-servers.de   ->  landet direkt auf smp2
+#  lobby.lemon-servers.de  ->  landet auf der Lobby (SMPLobby-Plugin)
+#  /hub bzw. /lobby        ->  bringt von überall zur Lobby
 #  Stürzt ein SMP ab, landen die Spieler automatisch im Limbo.
 #
 #  Das Routing macht das Plugin SMPProxy (plugins/SMPProxy-1.0.0.jar),
@@ -41,12 +43,15 @@ enable-player-address-logging = true
 #  bleibt 127.0.0.1 und nur die Ports ändern sich.
 # ----------------------------------------------------------
 [servers]
+lobby = "127.0.0.1:25569"
 smp1 = "127.0.0.1:25566"
 smp2 = "127.0.0.1:25567"
 limbo = "127.0.0.1:25568"
 
 # Reihenfolge für Spieler OHNE passende Domain (z.B. lemon-servers.de direkt)
 # und gleichzeitig die Ausweich-Reihenfolge, wenn ein Server wegbricht.
+# Absichtlich ohne "lobby" - das ist ein Ort, den man bewusst besucht
+# (/hub, /lobby), keiner, auf dem man ungefragt landet.
 try = ["smp1", "limbo"]
 
 # ----------------------------------------------------------
@@ -60,6 +65,7 @@ try = ["smp1", "limbo"]
 #  Dieselben Domains gehören auch in plugins/smpproxy/config.yml.
 # ----------------------------------------------------------
 [forced-hosts]
+"lobby.lemon-servers.de" = ["lobby", "limbo"]
 "smp1.lemon-servers.de" = ["smp1", "limbo"]
 "smp2.lemon-servers.de" = ["smp2", "limbo"]
 "lemon-servers.de" = ["smp1", "limbo"]

@@ -3,18 +3,23 @@
 So sieht das Ergebnis aus:
 
 ```
-smp1.lemon-servers.de ─┐
-smp2.lemon-servers.de ─┤                ┌─ smp1  (Paper, Port 25566)
-lemon-servers.de      ─┴─► Velocity ───┼─ smp2  (Paper, Port 25567)
-                          (Port 25565)  └─ limbo (NanoLimbo, Port 25568)
+smp1.lemon-servers.de  ─┐
+smp2.lemon-servers.de  ─┤                ┌─ smp1  (Paper, Port 25566)
+lobby.lemon-servers.de ─┤                ├─ smp2  (Paper, Port 25567)
+lemon-servers.de       ─┴─► Velocity ───┼─ lobby (Paper + SMPLobby, Port 25569)
+   /hub, /lobby ──────────► (Port 25565)└─ limbo (NanoLimbo, Port 25568)
 ```
 
 - Wer **smp1.lemon-servers.de** eingibt, landet **direkt** auf smp1 – ohne Lobby,
-  ohne `/server`-Befehl.
-- Wer **smp2.lemon-servers.de** eingibt, landet direkt auf smp2.
+  ohne `/server`-Befehl. Genauso smp2.
+- **`/hub`** bzw. **`/lobby`** bringt von überall zur Lobby (dem Server mit
+  dem Plugin `SMPLobby` – siehe `bettersmp-suite/smplobby/README.md`).
+  Genauso wer direkt **lobby.lemon-servers.de** eingibt.
 - Stürzt ein SMP ab, fliegt niemand raus: der Spieler landet im **Warteraum**
   (NanoLimbo) und wird **automatisch zurückgeholt**, sobald sein Server wieder
-  läuft. Wer über smp2 kam, kommt auch wieder auf smp2 – nicht auf smp1.
+  läuft. Wer über smp2 kam, kommt auch wieder auf smp2 – nicht auf smp1. Der
+  Warteraum ist bewusst kein Ort zum Verweilen wie die Lobby – man landet nur
+  dort, man geht nicht freiwillig hin.
 
 Das erledigt das mitgelieferte Velocity-Plugin **SMPProxy** (`smpproxy/`).
 
@@ -25,6 +30,7 @@ Das erledigt das mitgelieferte Velocity-Plugin **SMPProxy** (`smpproxy/`).
 ```
 /opt/mc/
 ├── proxy/      Velocity
+├── lobby/      Paper 1.21.11 + SMPLobby-1.0.0.jar
 ├── smp1/       Paper 1.21.11
 ├── smp2/       Paper 1.21.11
 └── limbo/      NanoLimbo
@@ -45,23 +51,25 @@ Das erledigt das mitgelieferte Velocity-Plugin **SMPProxy** (`smpproxy/`).
 domains:
   "smp1.lemon-servers.de": smp1
   "smp2.lemon-servers.de": smp2
+  "lobby.lemon-servers.de": lobby
   "lemon-servers.de": smp1
 default-server: smp1
 limbo: limbo
+hub-server: lobby
 ```
 
-Die Namen rechts (`smp1`, `smp2`, `limbo`) müssen genau so in der
+Die Namen rechts (`smp1`, `smp2`, `lobby`, `limbo`) müssen genau so in der
 `velocity.toml` unter `[servers]` stehen.
 
 ## 3. Die Paper-Server umstellen
 
-Auf **jedem** SMP-Server:
+Auf **jedem** Paper-Server dahinter - das sind smp1, smp2 **und die Lobby**:
 
 **`server.properties`**
 
 ```properties
 online-mode=false
-server-port=25566        # smp2: 25567
+server-port=25566        # smp2: 25567, lobby: 25569
 ```
 
 > `online-mode=false` ist hier **kein** Sicherheitsloch: Velocity prüft die
@@ -81,7 +89,11 @@ proxies:
     online-mode: true
 ```
 
-Danach den SMP-Server neu starten.
+Danach den Server neu starten.
+
+Auf die Lobby kommt zusätzlich `bettersmp-suite/smplobby/target/SMPLobby-1.0.0.jar`
+nach `plugins/` - siehe `bettersmp-suite/smplobby/README.md` für die
+Einrichtung dort (Spawn setzen, Server-Wähler eintragen).
 
 ## 4. NanoLimbo als Warteraum
 
@@ -202,6 +214,7 @@ genug, um den Kanal `betterrtp:run` zu kennen (siehe dessen README).
 | smp1 im Spiel abschießen (`stop`) | Warteraum statt Trennbildschirm |
 | Auf smp1 jemanden mit `/gban` bannen | Ban-Screen wird angezeigt (**kein** Warteraum) |
 | `/smpproxy status` | Liste aller Server mit online/offline |
+| `/hub` oder `/lobby` (von smp1 aus) | Verbindet zur Lobby, nicht zum Warteraum |
 
 Der letzte Punkt ist der wichtigste Unterschied zu einer reinen `try`-Liste in
 der `velocity.toml`: SMPProxy pingt den Server beim Rauswurf noch einmal an.

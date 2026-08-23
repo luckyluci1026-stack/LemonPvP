@@ -4,7 +4,7 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import de.lemonpvp.smpproxy.SMPProxy;
 
-/** /hub, /lobby - bringt den Spieler in den Warteraum. */
+/** /hub, /lobby - bringt den Spieler zum Hub-Server (SMPLobby, siehe hub-server in config.yml). */
 public final class HubCommand implements SimpleCommand {
 
     private final SMPProxy plugin;
@@ -19,20 +19,20 @@ public final class HubCommand implements SimpleCommand {
             invocation.source().sendMessage(plugin.message("player-only"));
             return;
         }
-        String limbo = plugin.config().limbo();
-        if (limbo.isEmpty()) {
+        String ziel = plugin.config().hubServer();
+        if (ziel.isEmpty()) {
             player.sendMessage(plugin.message("hub-missing"));
             return;
         }
         boolean alreadyThere = player.getCurrentServer()
                 .map(connection -> connection.getServer().getServerInfo().getName())
-                .filter(limbo::equals)
+                .filter(ziel::equals)
                 .isPresent();
         if (alreadyThere) {
             player.sendMessage(plugin.message("hub-already"));
             return;
         }
         player.sendMessage(plugin.message("hub-sending"));
-        plugin.connect(player, limbo, false);
+        plugin.connect(player, ziel, false);
     }
 }
