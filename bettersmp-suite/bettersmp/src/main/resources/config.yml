@@ -91,6 +91,10 @@ join-quit:
 # ----------------------------------------------------------
 freeze:
   blocked-commands: [tpa, tpahere, tpaccept, home, homes, warp, warps, back, rtp, wild, spawn]
+  # Erinnerung per Actionbar, 1x pro Sekunde, solange jemand eingefroren ist -
+  # sonst ist "warum passiert nichts" die einzige Rueckmeldung beim Versuch,
+  # sich zu bewegen oder zu bauen.
+  actionbar: true
 
 # ----------------------------------------------------------
 # Meldungen (/report)

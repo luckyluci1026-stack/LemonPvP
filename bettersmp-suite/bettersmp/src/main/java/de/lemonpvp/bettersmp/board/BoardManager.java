@@ -313,7 +313,8 @@ public final class BoardManager {
                 .replace("%deaths%", String.valueOf(s.deaths()))
                 .replace("%kd%", String.valueOf(s.kd()))
                 .replace("%mobkills%", String.valueOf(s.mobKills()))
-                .replace("%playtime%", s.playtime() <= 0 ? "0m" : Durations.humanize(s.playtime() * 1000L));
+                .replace("%playtime%", s.playtime() <= 0 ? "0m" : Durations.humanize(s.playtime() * 1000L))
+                .replace("%streak%", String.valueOf(plugin.killstreaks().serie(viewer.getUniqueId())));
 
         return plugin.papi().apply(viewer, line);
     }

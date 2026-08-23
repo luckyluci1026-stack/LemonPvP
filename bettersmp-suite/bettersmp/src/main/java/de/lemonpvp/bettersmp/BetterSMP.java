@@ -68,6 +68,7 @@ public final class BetterSMP extends JavaPlugin {
     private ReportManager reports;
     private DailyRewardManager dailyReward;
     private SpawnManager spawn;
+    private KillstreakListener killstreaks;
 
     @Override
     public void onEnable() {
@@ -88,16 +89,20 @@ public final class BetterSMP extends JavaPlugin {
         this.punishments = new PunishmentManager(this, punishConfig);
         this.stats = new StatsManager(this);
         this.board = new BoardManager(this);
-        this.freeze = new FreezeManager();
+        this.freeze = new FreezeManager(this);
         this.reports = new ReportManager(this);
         this.dailyReward = new DailyRewardManager(this);
         dailyReward.load();
         this.spawn = new SpawnManager(this);
+        // Vor board.start(): das baut fuer bereits online Spieler (z.B. bei
+        // /reload) sofort das Scoreboard auf, das killstreaks() schon liest.
+        this.killstreaks = new KillstreakListener(this);
 
         BetterSMPApi.init(combat);
         combat.start();
         stats.start();
         board.start();
+        freeze.start();
 
         // Listener
         var pm = Bukkit.getPluginManager();
@@ -110,7 +115,7 @@ public final class BetterSMP extends JavaPlugin {
         pm.registerEvents(new BoardListener(this), this);
         pm.registerEvents(new DeathRedirectListener(this), this);
         pm.registerEvents(new FreezeListener(this), this);
-        pm.registerEvents(new KillstreakListener(this), this);
+        pm.registerEvents(killstreaks, this);
 
         // Fuer die Tod-Umleitung - unabhaengig vom Schalter registriert,
         // damit ein spaeteres Einschalten per /bettersmp reload sofort
@@ -141,6 +146,7 @@ public final class BetterSMP extends JavaPlugin {
         if (combat != null) combat.stop();
         if (stats != null) stats.stop();
         if (board != null) board.stop();
+        if (freeze != null) freeze.stop();
         if (database != null) database.shutdown();
     }
 
@@ -232,6 +238,10 @@ public final class BetterSMP extends JavaPlugin {
 
     public DailyRewardManager dailyReward() {
         return dailyReward;
+    }
+
+    public KillstreakListener killstreaks() {
+        return killstreaks;
     }
 
     public SpawnManager spawn() {

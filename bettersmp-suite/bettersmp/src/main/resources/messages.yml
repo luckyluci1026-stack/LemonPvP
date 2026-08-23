@@ -72,6 +72,7 @@ freeze:
   still-frozen: "%prefix%<gold>Du bist immer noch eingefroren.</gold>"
   left-while-frozen: "%prefix%<gray>⚠ <white>%spieler%</white> hat eingefroren die Verbindung getrennt.</gray>"
   command-blocked: "%prefix%<red>Das geht nicht, solange du eingefroren bist.</red>"
+  actionbar: "<aqua>❄ Du bist eingefroren ❄</aqua>"
 
 # ---------------- Meldungen ----------------
 report:

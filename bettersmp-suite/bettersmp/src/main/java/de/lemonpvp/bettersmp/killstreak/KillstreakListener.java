@@ -32,6 +32,11 @@ public final class KillstreakListener implements Listener {
         return plugin.getConfig().getBoolean("killstreak.enabled", true);
     }
 
+    /** Laufende Serie eines Spielers - fuer Scoreboard/Anzeige, 0 wenn keine laeuft. */
+    public int serie(UUID spieler) {
+        return serien.getOrDefault(spieler, 0);
+    }
+
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         if (!enabled()) {

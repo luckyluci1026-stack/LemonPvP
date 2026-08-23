@@ -30,11 +30,14 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
 - **/settings-GUI** zum Live-Umschalten der Module.
 - **/freeze <Spieler>**: friert jemanden ein (Position gesperrt, Bauen/Abbauen/
   Schaden/Wegwerfen gesperrt, Reden bleibt möglich) - für die Minute vor
-  einem `/gban`, in der man erst reden will.
+  einem `/gban`, in der man erst reden will. Erinnert per Actionbar 1x/Sekunde
+  daran (`freeze.actionbar` in config.yml), damit "warum bewege ich mich
+  nicht" nicht die einzige Rückmeldung ist.
 - **/report <Spieler> <Grund>**: für alle, mit Cooldown. Landet live bei
   jedem mit `bettersmp.report.receive` und in `reports.log`.
 - **Serien-Ansagen im PvP**: Meilensteine (3, 5, 10 ...) und "Serie beendet"
-  - reine Stimmung, keine Belohnung, nichts überlebt einen Neustart.
+  - reine Stimmung, keine Belohnung, nichts überlebt einen Neustart. Die
+  laufende Serie steht auch auf dem Scoreboard (`%streak%`).
 - **/daily**: eine Kleinigkeit fürs Wiederkommen, mit Bonus für aufeinander-
   folgende Tage (Kalendertag-genau, kein 24-Stunden-Timer zum Austricksen).
 - **/spawn, /setspawn**: eigener Serverspawn, unabhängig von Essentials.
