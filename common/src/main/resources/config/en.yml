@@ -138,16 +138,38 @@ Explosion:
     threshold: 0.001
     setbackvl: 3
 
-# FLFAC custom check. Detects auto clickers via clicks-per-second and click
-# consistency (arm swings while breaking blocks are ignored).
+# FLFAC custom check. Detects auto clickers from how fast and how regularly a
+# player ATTACKS. It counts an arm swing only when an entity attack arrives in
+# the same client tick, so mining and harmless air-clicking never enter the
+# measurement and there is no "is he mining?" state a client can latch to
+# switch the check off.
+#
+# The window is counted in client ticks (a vanilla client sends 20 movement
+# packets a second), not in wall-clock seconds. A lag spike delivers a backlog
+# of attacks and movement packets together, so the ratio between them - and
+# therefore the measured rate - is unaffected. Laggy players do not get flagged.
+#
 # This is an experimental check - set 'experimental-checks: true' to enable it.
+# Run it on alerts only and tune these values against your own players before
+# putting it on a kick or a ban in punishments.yml.
 Autoclicker:
-    # Clicks per second above this are considered impossible.
-    max-cps: 16
-    # Minimum standard deviation (ms) between clicks. Below this is robotic.
-    constant-deviation-ms: 1.2
-    # Clicks needed in the 1s window before the consistency test runs.
-    min-samples: 8
+    # Attacks per second above this are considered impossible. Butterfly and
+    # drag clickers legitimately pass 16, so keep this generous.
+    max-attack-cps: 20
+    # Minimum standard deviation (ms) between attacks. Below this is robotic.
+    # A human hand wobbles by several ms even when trying to be steady.
+    constant-deviation-ms: 3.0
+    # Attacks needed in a window before the consistency test runs at all.
+    min-samples: 12
+    # Length of one measurement window in client ticks (40 = 2 seconds).
+    window-ticks: 40
+    # How many windows in a row must look bad before it flags. This is what
+    # stops one unlucky window from walking a player up the punishment ladder.
+    sustained-windows: 2
+    # Consistency is only judged on a connection that is delivering packets
+    # evenly. If the player's own movement packets jitter by more than this
+    # many ms, the window is discarded instead of trusted.
+    max-net-jitter-ms: 12.0
     decay: 0.05
 
 TimerA:
@@ -248,4 +270,4 @@ update-permission-ticks: -1
 #   config-version: bumped on every breaking shape change. Old configs
 #                   auto-migrate up via the bundled updater on next start.
 config-flavor: V2
-config-version: 11
+config-version: 12
