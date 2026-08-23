@@ -52,9 +52,19 @@ public final class GrimConfigSpecs {
      * <p>v10 → v11: adds {@code update-permission-ticks} to the bundled
      * config. No explicit migration is needed; the updater's default rewrite
      * adds the key, and auto-lift preserves an existing user value if present.
+     *
+     * <p>v11 → v12: adds FLFAC's {@code Autoclicker:} block. No explicit
+     * migration — the default rewrite brings the keys in and auto-lift keeps
+     * any the operator already set. The bump itself is the point: without it
+     * the updater short-circuits on {@code oldVersion >= latestVersion} and a
+     * server that already has a v11 config.yml never receives the new section,
+     * leaving the check running on hardcoded defaults with nothing to tune.
+     * Note that the old {@code max-cps} key is deliberately not carried over
+     * to {@code max-attack-cps}: the check now measures attacks rather than
+     * raw swings, so an operator's old number would mean something different.
      */
     public static @NotNull ConfigUpdater.Spec mainConfig() {
-        return ConfigUpdater.Spec.builder("/config/", 11, ConfigUpdater.ConfigFlavor.V2)
+        return ConfigUpdater.Spec.builder("/config/", 12, ConfigUpdater.ConfigFlavor.V2)
                 .migration(10, ctx -> {
                     String typeRaw = ctx.input().getString("history.database.type");
                     String type = typeRaw == null ? null : typeRaw.trim().toUpperCase(Locale.ROOT);

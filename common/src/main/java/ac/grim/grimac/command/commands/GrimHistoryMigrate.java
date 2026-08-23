@@ -45,10 +45,10 @@ public class GrimHistoryMigrate implements BuildableCommand {
     @Override
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
         commandManager.command(
-                commandManager.commandBuilder("grim", "grimac")
+                commandManager.commandBuilder("flfac", "grim", "grimac")
                         .literal("history")
                         .literal("migrate")
-                        .permission("grim.history.migrate")
+                        .permission("flfac.history.migrate")
                         .flag(commandManager.flagBuilder("delete")
                                 .withDescription(org.incendo.cloud.description.Description.of(
                                         "Drop the legacy v0 tables after migration completes")))

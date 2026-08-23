@@ -138,6 +138,43 @@ Explosion:
     threshold: 0.001
     setbackvl: 3
 
+# FLFAC-Eigencheck. Erkennt AutoClicker daran, wie schnell und wie gleichmäßig
+# ein Spieler ANGREIFT. Ein Armschwung wird nur gezählt, wenn im selben
+# Client-Tick auch ein Entity-Angriff ankommt. Dadurch fließen Blockabbau und
+# harmloses Luftklicken gar nicht erst ein, und es gibt keinen "baut er gerade
+# ab?"-Zustand, den ein Client einrasten lassen könnte, um den Check
+# abzuschalten.
+#
+# Das Messfenster zählt Client-Ticks (ein Vanilla-Client sendet 20 Bewegungs-
+# pakete pro Sekunde), keine Echtzeit-Sekunden. Ein Lagspike liefert
+# aufgestaute Angriffe und Bewegungspakete gemeinsam nach, das Verhältnis - und
+# damit die gemessene Rate - bleibt gleich. Laggende Spieler werden nicht
+# geflaggt.
+#
+# Experimenteller Check - mit 'experimental-checks: true' aktivieren.
+# Erst nur mit Alerts laufen lassen und die Werte an den eigenen Spielern
+# einstellen, bevor in punishments.yml ein Kick oder Ban daran hängt.
+Autoclicker:
+    # Angriffe pro Sekunde über diesem Wert gelten als unmöglich. Butterfly-
+    # und Drag-Clicker kommen legitim über 16, also großzügig lassen.
+    max-attack-cps: 20
+    # Minimale Standardabweichung (ms) zwischen Angriffen. Darunter =
+    # roboterhaft. Eine menschliche Hand schwankt auch bewusst gleichmäßig
+    # noch um mehrere ms.
+    constant-deviation-ms: 3.0
+    # Angriffe pro Fenster, bevor der Konsistenz-Test überhaupt greift.
+    min-samples: 12
+    # Länge eines Messfensters in Client-Ticks (40 = 2 Sekunden).
+    window-ticks: 40
+    # Wie viele Fenster in Folge auffällig sein müssen, bevor geflaggt wird.
+    # Das verhindert, dass ein einzelnes Pechfenster die Strafleiter hochzieht.
+    sustained-windows: 2
+    # Konsistenz wird nur auf einer Verbindung bewertet, die Pakete gleichmäßig
+    # ausliefert. Schwanken die eigenen Bewegungspakete des Spielers um mehr
+    # als diese ms, wird das Fenster verworfen statt ausgewertet.
+    max-net-jitter-ms: 12.0
+    decay: 0.05
+
 TimerA:
     setbackvl: 10
     # Millisekunden, die der Spieler akkumulieren kann, um sie später zu nutzen, wenn er zurückfällt.
@@ -239,4 +276,4 @@ max-ping-firework-boost: 1000
 update-permission-ticks: -1
 
 config-flavor: V2
-config-version: 11
+config-version: 12

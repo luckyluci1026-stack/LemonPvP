@@ -159,6 +159,15 @@ Punishments:
       - "60:0 kick %player% &cFLFAC &8» &fKampf-Anomalie (%check_name%)"   # KICK
       - "120:0 ban %player% FLFAC > Kampf-Anomalie (%check_name%)"         # BAN
 
+  # FLFACs eigener AutoClicker-Check. Er ist als experimentell markiert und
+  # läuft erst, wenn in der config.yml 'experimental-checks: true' gesetzt ist.
+  #
+  # BEWUSST NUR ALERTS. Hinter jeder anderen Gruppe hier steht ein Check, für
+  # den es jahrelange Praxisdaten gibt - hinter diesem nicht. Erst die Alerts
+  # auf dem eigenen Server beobachten, prüfen ob die genannten Spieler wirklich
+  # cheaten, dann Autoclicker.max-attack-cps in der config.yml über den
+  # schnellsten legitimen Klicker setzen - und erst danach die Leiter unten
+  # einkommentieren. Ungetestet aktiviert bannt sie Butterfly-Clicker.
   Autoclicker:
     remove-violations-after: 300
     checks:
@@ -166,6 +175,6 @@ Punishments:
     commands:
       - "20:40 [alert]"
       - "1:1 [log]"
-      # --- FLFAC Strafen-Leiter ---
-      - "60:0 kick %player% &cFLFAC &8» &fAutoClicker (%check_name%)"      # KICK
-      - "120:0 ban %player% FLFAC > AutoClicker (%check_name%)"            # BAN
+      # --- FLFAC Strafen-Leiter (erst nach dem Einstellen aktivieren) ---
+      #- "60:0 kick %player% &cFLFAC &8» &fAutoClicker (%check_name%)"     # KICK
+      #- "120:0 ban %player% FLFAC > AutoClicker (%check_name%)"           # BAN

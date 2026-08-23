@@ -163,7 +163,15 @@ Punishments:
       - "60:0 kick %player% &cFLFAC &8» &fCombat anomaly (%check_name%)"   # KICK
       - "120:0 ban %player% FLFAC > Combat anomaly (%check_name%)"         # BAN
 
-  # As of 2.2.10, there are no AutoClicker checks and this is a placeholder.
+  # FLFAC's own AutoClicker check. It is marked experimental, so it does not run
+  # at all until you set 'experimental-checks: true' in config.yml.
+  #
+  # DELIBERATELY ALERTS ONLY. Every other group here punishes a check that
+  # upstream has years of field data on; this one is new code with none. Watch
+  # the alerts on your own server first, confirm the players it names are
+  # actually cheating, tune Autoclicker.max-attack-cps in config.yml to sit
+  # above your fastest legitimate clicker, and only then uncomment the ladder
+  # below. Enabling it untested will ban butterfly clickers.
   Autoclicker:
     remove-violations-after: 300
     checks:
@@ -171,6 +179,6 @@ Punishments:
     commands:
       - "20:40 [alert]"
       - "1:1 [log]"
-      # --- FLFAC punishment ladder ---
-      - "60:0 kick %player% &cFLFAC &8» &fAutoClicker (%check_name%)"      # KICK
-      - "120:0 ban %player% FLFAC > AutoClicker (%check_name%)"            # BAN
+      # --- FLFAC punishment ladder (enable only after tuning - see above) ---
+      #- "60:0 kick %player% &cFLFAC &8» &fAutoClicker (%check_name%)"     # KICK
+      #- "120:0 ban %player% FLFAC > AutoClicker (%check_name%)"           # BAN

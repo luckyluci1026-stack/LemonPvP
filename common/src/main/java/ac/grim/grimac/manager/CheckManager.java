@@ -6,6 +6,7 @@ import ac.grim.grimac.checks.Check;
 import ac.grim.grimac.checks.impl.aim.AimDuplicateLook;
 import ac.grim.grimac.checks.impl.aim.AimModulo360;
 import ac.grim.grimac.checks.impl.aim.processor.AimProcessor;
+import ac.grim.grimac.checks.impl.autoclicker.AutoClickerA;
 import ac.grim.grimac.checks.impl.badpackets.*;
 import ac.grim.grimac.checks.impl.breaking.*;
 import ac.grim.grimac.checks.impl.chat.ChatA;
@@ -124,6 +125,7 @@ public class CheckManager {
         packetChecks = new ImmutableClassToInstanceMap.Builder<PacketCheck>()
                 .put(PacketOrderProcessor.class, player.packetOrderProcessor)
                 .put(Reach.class, new Reach(player))
+                .put(AutoClickerA.class, new AutoClickerA(player))
                 .put(PacketEntityReplication.class, packetEntityReplication)
                 .put(PacketChangeGameState.class, new PacketChangeGameState(player))
                 .put(CompensatedInventory.class, player.inventory)
@@ -493,9 +495,9 @@ public class CheckManager {
         inited = true;
 
         final String[] permissions = {
-                "grim.exempt.",
-                "grim.nosetback.",
-                "grim.nomodifypacket.",
+                "flfac.exempt.",
+                "flfac.nosetback.",
+                "flfac.nomodifypacket.",
         };
 
         for (final AbstractCheck check : allChecks.values()) {

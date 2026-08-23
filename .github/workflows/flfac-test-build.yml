@@ -1,0 +1,58 @@
+name: FLFAC Test Build
+
+# Lightweight build to verify the experimental branches actually compile.
+# GitHub runners have full internet + JDK 25 (temurin), which the sandboxed
+# dev environment does not, so this is where the untested branches get tested.
+
+on:
+  push:
+    branches:
+      - flfac-checks
+      - flfac-rename
+      - flfac-all
+      - 'claude/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # Artifact names may not contain a slash, and branch names like
+      # claude/some-feature do. Flatten the ref to keep the name readable.
+      - name: Compute artifact slug
+        id: slug
+        run: echo "value=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Build (compile + tests + jars)
+        run: ./gradlew build --stacktrace --no-daemon
+
+      - name: List built jars
+        if: always()
+        run: ls -laR bukkit/build/libs fabric/build/libs 2>/dev/null || true
+
+      - name: Upload plugin jar (Bukkit/Paper/Spigot)
+        uses: actions/upload-artifact@v4
+        with:
+          name: flfac-bukkit-${{ steps.slug.outputs.value }}
+          # Only the shaded plugin jar (with dependencies), not the thin jar.
+          path: bukkit/build/libs/flfac-bukkit-*.jar
+          if-no-files-found: error
+
+      - name: Upload mod jar (Fabric)
+        uses: actions/upload-artifact@v4
+        with:
+          name: flfac-fabric-${{ steps.slug.outputs.value }}
+          path: fabric/build/libs/flfac-fabric-*.jar
+          if-no-files-found: warn

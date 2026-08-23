@@ -72,9 +72,9 @@ public class GrimLog implements BuildableCommand {
 
     @Override
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
-        Command<Sender> command = commandManager.commandBuilder("grim", "grimac")
+        Command<Sender> command = commandManager.commandBuilder("flfac", "grim", "grimac")
                 .literal("log", "logs")
-                .permission("grim.log")
+                .permission("flfac.log")
                 .required("flagId", IntegerParser.integerParser())
                 .handler(this::handleLog)
                 .manager(commandManager)
