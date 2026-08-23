@@ -85,7 +85,7 @@ public final class ShopMenus {
 
         // Kopfzeile
         inv.setItem(4, GuiUtil.glowing(Material.NETHER_STAR, 1,
-                "<gradient:#FFD75A:#FFB02E><bold>Shop</bold></gradient>",
+                "<gradient:#6C5CE7:#00D4FF><bold>Shop</bold></gradient>",
                 List.of(
                         "<gray>Kaufe und verkaufe Items",
                         "<gray>mit deinem Guthaben.",

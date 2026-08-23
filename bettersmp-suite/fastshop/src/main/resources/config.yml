@@ -5,7 +5,7 @@ settings:
   # Globaler Multiplikator auf alle Verkaufspreise (z.B. 0.9 = 10% weniger)
   sell-multiplier: 1.0
   # Titel des Hauptmenüs (MiniMessage)
-  menu-title: "<gradient:#FFD75A:#FFB02E><bold>Shop</bold></gradient>"
+  menu-title: "<gradient:#6C5CE7:#00D4FF><bold>Shop</bold></gradient>"
   # Zeilen des Hauptmenüs (1-6). 5 lässt Platz für Kopf- und Fußzeile.
   menu-rows: 5
   # Rahmenfarbe des Hauptmenüs (Material eines Glasfensters o.ä.)

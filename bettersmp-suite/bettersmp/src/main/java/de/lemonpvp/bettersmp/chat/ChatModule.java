@@ -99,7 +99,7 @@ public final class ChatModule implements Listener {
         }
 
         if (plugin.getConfig().getBoolean("chat.mentions.enabled", true)) {
-            String color = plugin.getConfig().getString("chat.mentions.color", "<#FFD75A>");
+            String color = plugin.getConfig().getString("chat.mentions.color", "<#00D4FF>");
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.getUniqueId().equals(player.getUniqueId())) {
                     continue;

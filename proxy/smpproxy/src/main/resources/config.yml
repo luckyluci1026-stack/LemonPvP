@@ -65,10 +65,27 @@ commands:
   server-shortcuts: true
 
 # ----------------------------------------------------------
+#  /rtp von überall im Netzwerk
+#
+#  Steht der Spieler schon auf einem Server aus passthrough-servers
+#  (BetterRTP ist dort installiert), geht /rtp unverändert dorthin durch
+#  - nichts ändert sich für Spieler, die schon auf dem SMP sind.
+#
+#  Steht er woanders (z.B. in der Lobby), wird er erst auf
+#  redirect-server geschickt, und sobald er dort angekommen ist, startet
+#  automatisch RTP. Dafür muss BetterRTP auf redirect-server installiert
+#  sein und denselben Kanal abhören (siehe dessen eigene config.yml).
+# ----------------------------------------------------------
+rtp:
+  enabled: true
+  passthrough-servers: ["smp1"]
+  redirect-server: "smp1"
+
+# ----------------------------------------------------------
 #  Nachrichten (MiniMessage - Gradients, Farben, alles erlaubt)
 # ----------------------------------------------------------
 messages:
-  prefix: "<gradient:#FFD75A:#FFB02E><bold>Proxy</bold></gradient> <dark_gray>»</dark_gray> "
+  prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient> <dark_gray>»</dark_gray> "
 
   # Beim Verbinden ist der Zielserver aus
   server-offline: "%prefix%<red><white>%server%</white> ist gerade nicht erreichbar.</red><newline><gray>Du wartest hier, bis er wieder da ist.</gray>"
@@ -103,3 +120,33 @@ messages:
   status-online: "<dark_gray> ▪ </dark_gray><white>%server%</white> <dark_gray>-</dark_gray> <green>online</green> <dark_gray>(</dark_gray><gray>%spieler% Spieler</gray><dark_gray>)</dark_gray>"
   status-offline: "<dark_gray> ▪ </dark_gray><white>%server%</white> <dark_gray>-</dark_gray> <red>offline</red>"
   unknown-server: "%prefix%<red>Server <white>%server%</white> gibt es nicht.</red>"
+
+  # /netban, /netunban, /netbans, /netbaninfo
+  #
+  # Netzwerkbann: kickt vom Proxy selbst, nicht von einem Server -
+  # betroffen ist damit das GANZE Netzwerk inklusive Lobby. Fuer einen
+  # Rauswurf nur von einem einzelnen SMP gibt es weiterhin BetterSMPs
+  # eigenes /gban dort.
+  ban-permanent-word: "für immer"
+  netban-usage: "%prefix%<gray>/netban <white><Spieler></white> [Dauer] [Grund]</gray><newline><gray>Dauer: <white>30m 12h 7d 2w</white> oder <white>perm</white> - weglassen heißt permanent.</gray>"
+  netban-default-reason: "Kein Grund angegeben"
+  netban-unknown: "%prefix%<red><white>%spieler%</white> ist unbekannt.</red><newline><gray>Der Name muss sich schon einmal mit diesem Netzwerk verbunden haben - oder gib gleich die UUID an.</gray>"
+  netban-ok: "%prefix%<green><white>%spieler%</white> ist jetzt gebannt (<white>%dauer%</white>).</green>"
+  netunban-usage: "%prefix%<gray>/netunban <Spieler></gray>"
+  netunban-ok: "%prefix%<green><white>%spieler%</white> ist entbannt.</green>"
+  netunban-not-banned: "%prefix%<gold><white>%spieler%</white> war gar nicht gebannt.</gold>"
+  netbans-empty: "%prefix%<gray>Niemand ist gerade gebannt.</gray>"
+  netbans-header: "%prefix%<gray><white>%anzahl%</white> Bann(s):</gray>"
+  netbans-entry: "<dark_gray> ▪ </dark_gray><white>%spieler%</white> <dark_gray>bis</dark_gray> <gray>%dauer%</gray> <dark_gray>-</dark_gray> <gray>%grund%</gray>"
+  netbaninfo-usage: "%prefix%<gray>/netbaninfo <Spieler></gray>"
+  netbaninfo-not-banned: "%prefix%<gray><white>%spieler%</white> ist nicht gebannt.</gray>"
+  netbaninfo-header: "%prefix%<white>%spieler%</white><newline><gray>Grund: <white>%grund%</white></gray><newline><gray>Von: <white>%von%</white></gray><newline><gray>Bis: <white>%dauer%</white></gray>"
+
+  # /rtp
+  rtp-sending: "%prefix%<gray>Bringe dich rüber, dann geht's direkt mit RTP weiter ...</gray>"
+  rtp-not-configured: "%prefix%<red>/rtp ist nicht eingerichtet.</red><newline><gray>In config.yml unter <white>rtp.redirect-server</white> einen Server eintragen.</gray>"
+
+  # Der Trennbildschirm beim Bann selbst - kein %prefix%, das HIER ist
+  # der ganze Bildschirm.
+  ban-screen-perm: "<gradient:#FF6B6B:#C92A2A><bold>Du bist gebannt</bold></gradient><newline><newline><gray>Grund:</gray> <white>%reason%</white><newline><gray>Von:</gray> <white>%by%</white><newline><gray>Dauer:</gray> <white>für immer</white>"
+  ban-screen-temp: "<gradient:#FF6B6B:#C92A2A><bold>Du bist gebannt</bold></gradient><newline><newline><gray>Grund:</gray> <white>%reason%</white><newline><gray>Von:</gray> <white>%by%</white><newline><gray>Läuft ab:</gray> <white>%expires%</white><newline><gray>Noch:</gray> <white>%remaining%</white>"

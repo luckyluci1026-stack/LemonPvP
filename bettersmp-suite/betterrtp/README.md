@@ -17,6 +17,16 @@ Vollständig asynchrones, sicheres Random-Teleport-Plugin (Paper 1.21.11).
 - `/rtp [Welt]` (Aliase `/wild`, `/randomtp`) – Permission `betterrtp.use` (Standard: alle)
 - `/betterrtp reload|version` – `betterrtp.admin`
 
+## /rtp auch von anderen Servern aus
+
+Läuft SMPProxy (Velocity) davor und ist dort `rtp.redirect-server` auf diesen
+Server gesetzt, kann `/rtp` auch von einem Server ohne eigenes BetterRTP
+kommen (typisch: die Lobby). BetterRTP hört dafür auf dem Plugin-Kanal
+`betterrtp:run` und löst beim Empfang ganz normal `/rtp` aus - Cooldown,
+Warmup und Rechte greifen genauso wie sonst. Ohne SMPProxy passiert auf
+diesem Kanal einfach nie etwas; nichts davon ist Voraussetzung fürs normale
+`/rtp`.
+
 ## Bypass-Permissions
 `betterrtp.bypass.cooldown`, `betterrtp.bypass.warmup`, `betterrtp.bypass.cost`,
 `betterrtp.world` (RTP in beliebiger Welt).

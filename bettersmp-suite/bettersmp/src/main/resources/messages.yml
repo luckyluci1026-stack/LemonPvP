@@ -1,5 +1,5 @@
 # BetterSMP - Nachrichten (MiniMessage + Legacy-Codes möglich)
-prefix: "<gradient:#FFD75A:#FFB02E><bold>%brand%</bold></gradient> <dark_gray>»</dark_gray> "
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>%brand%</bold></gradient> <dark_gray>»</dark_gray> "
 
 no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
 reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
@@ -11,18 +11,18 @@ combat:
   expired: "%prefix%<green>Du bist nicht mehr im Kampf.</green>"
   actionbar: "<red>⚔ Im Kampf: <white>%seconds%s</white> ⚔</red>"
   command-blocked: "%prefix%<red>Dieser Befehl ist im Kampf gesperrt! (<white>%seconds%s</white>)</red>"
-  logged-broadcast: "<dark_gray>[<red>⚔</red>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>hat im Kampf ausgeloggt und wurde bestraft!</gray>"
+  logged-broadcast: "<dark_gray>[<red>⚔</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>hat im Kampf ausgeloggt und wurde bestraft!</gray>"
   opponent-logged: "%prefix%<green>Dein Gegner <white>%player%</white> hat ausgeloggt - du bist wieder frei.</green>"
 
 mentions:
-  notify-actionbar: "<#FFD75A>%player% hat dich im Chat erwähnt!</#FFD75A>"
+  notify-actionbar: "<#00D4FF>%player% hat dich im Chat erwähnt!</#00D4FF>"
 
 # ---------------- Ban / Mute ----------------
 ban:
   usage: "%prefix%<gray>Nutzung: <white>/gban <Spieler> <Grund></white></gray>"
   unknown-reason: "%prefix%<red>Unbekannter Grund <white>%reason%</white>. Verfügbar: <gray>%list%</gray></red>"
   success: "%prefix%<green><white>%player%</white> wurde gebannt <gray>(%reason%, %duration%)</gray>.</green>"
-  broadcast: "<dark_gray>[<red>⛔</red>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>wurde von <white>%actor%</white> gebannt <dark_gray>(%reason%)</dark_gray></gray>"
+  broadcast: "<dark_gray>[<red>⛔</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>wurde von <white>%actor%</white> gebannt <dark_gray>(%reason%)</dark_gray></gray>"
   already-banned: "%prefix%<red><white>%player%</white> ist bereits gebannt.</red>"
   exempt: "%prefix%<red><white>%player%</white> kann nicht gebannt werden.</red>"
   unban-usage: "%prefix%<gray>Nutzung: <white>/gunban <Spieler></white></gray>"
@@ -33,7 +33,7 @@ mute:
   usage: "%prefix%<gray>Nutzung: <white>/gmute <Spieler> <Grund></white></gray>"
   unknown-reason: "%prefix%<red>Unbekannter Grund <white>%reason%</white>. Verfügbar: <gray>%list%</gray></red>"
   success: "%prefix%<green><white>%player%</white> wurde gemutet <gray>(%reason%, %duration%)</gray>.</green>"
-  broadcast: "<dark_gray>[<gold>🔇</gold>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>wurde von <white>%actor%</white> gemutet <dark_gray>(%reason%)</dark_gray></gray>"
+  broadcast: "<dark_gray>[<gold>🔇</gold>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>wurde von <white>%actor%</white> gemutet <dark_gray>(%reason%)</dark_gray></gray>"
   already-muted: "%prefix%<red><white>%player%</white> ist bereits gemutet.</red>"
   exempt: "%prefix%<red><white>%player%</white> kann nicht gemutet werden.</red>"
   unmute-usage: "%prefix%<gray>Nutzung: <white>/gunmute <Spieler></white></gray>"
@@ -48,14 +48,18 @@ duration:
 
 # ---------------- Stats ----------------
 stats:
-  header: "<dark_gray>▏</dark_gray> <gradient:#FFD75A:#FFB02E><bold>Statistiken</bold></gradient> <dark_gray>von <white>%player%</white>"
+  header: "<dark_gray>▏</dark_gray> <gradient:#6C5CE7:#00D4FF><bold>Statistiken</bold></gradient> <dark_gray>von <white>%player%</white>"
   line-rank: "<dark_gray> • </dark_gray><gray>Rang: %rank%"
   line-money: "<dark_gray> • </dark_gray><gray>Geld: <#7CFC00>%money%</#7CFC00>"
-  line-kills: "<dark_gray> • </dark_gray><gray>Kills: <white>%kills%</white>  Tode: <white>%deaths%</white>  K/D: <#FFD75A>%kd%</#FFD75A>"
+  line-kills: "<dark_gray> • </dark_gray><gray>Kills: <white>%kills%</white>  Tode: <white>%deaths%</white>  K/D: <#00D4FF>%kd%</#00D4FF>"
   line-mobkills: "<dark_gray> • </dark_gray><gray>Mob-Kills: <white>%mobkills%</white>"
   line-playtime: "<dark_gray> • </dark_gray><gray>Spielzeit: <white>%playtime%</white>"
   line-joins: "<dark_gray> • </dark_gray><gray>Beitritte: <white>%joins%</white>  Zuletzt: <white>%lastseen%</white>"
   loading: "%prefix%<gray>Lade Statistiken ...</gray>"
+
+# ---------------- Tod -> Lobby ----------------
+death-redirect:
+  notice: "%prefix%<gray>Du kommst gleich zurück in die Lobby ...</gray>"
 
 # ---------------- Installer / Ranks / Status ----------------
 installer:
@@ -65,7 +69,7 @@ installer:
   downloaded: "%prefix%<green>%plugin% installiert: <white>%file%</white></green>"
   failed: "%prefix%<red>Download von %plugin% fehlgeschlagen: <white>%error%</white></red>"
   nothing-to-do: "%prefix%<green>Alle Begleit-Plugins sind bereits installiert.</green>"
-  restart-needed: "%prefix%<#FFD75A>Installation abgeschlossen! Bitte starte den Server EINMAL neu.</#FFD75A>"
+  restart-needed: "%prefix%<#00D4FF>Installation abgeschlossen! Bitte starte den Server EINMAL neu.</#00D4FF>"
   configs-deployed: "%prefix%<green>Fertige Configs für <white>%target%</white> angelegt.</green>"
   properties-patched: "%prefix%<green>server.properties: enforce-secure-profile=false gesetzt (aktiv nach Neustart).</green>"
 

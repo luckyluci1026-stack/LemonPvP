@@ -30,27 +30,27 @@ public final class SettingsGUI implements InventoryHolder {
 
     public static final List<Toggle> TOGGLES = List.of(
             new Toggle(10, "chat.enabled", Material.WRITABLE_BOOK,
-                    "<#FFD75A>Chat-Formatierung", "LPC-MiniMessage-Chat mit Prefixen"),
+                    "<#00D4FF>Chat-Formatierung", "LPC-MiniMessage-Chat mit Prefixen"),
             new Toggle(11, "chat.no-chat-reports", Material.SHIELD,
-                    "<#FFD75A>NoChatReports", "Chat als System-Nachricht (nicht meldbar)"),
+                    "<#00D4FF>NoChatReports", "Chat als System-Nachricht (nicht meldbar)"),
             new Toggle(12, "chat.mentions.enabled", Material.NAME_TAG,
-                    "<#FFD75A>Erwähnungen (@Name)", "Ping mit Sound bei @Spielername"),
+                    "<#00D4FF>Erwähnungen (@Name)", "Ping mit Sound bei @Spielername"),
             new Toggle(13, "chat.clickable-links", Material.COMPASS,
-                    "<#FFD75A>Klickbare Links", "URLs im Chat anklickbar machen"),
+                    "<#00D4FF>Klickbare Links", "URLs im Chat anklickbar machen"),
             new Toggle(14, "combat.enabled", Material.DIAMOND_SWORD,
-                    "<#FFD75A>AntiCombatLog", "Kampf-Tag + Bestrafung bei Combat-Log"),
+                    "<#00D4FF>AntiCombatLog", "Kampf-Tag + Bestrafung bei Combat-Log"),
             new Toggle(19, "combat.block-elytra", Material.ELYTRA,
-                    "<#FFD75A>Elytra im Kampf sperren", "Kein Elytra-Start während des Kampfes"),
+                    "<#00D4FF>Elytra im Kampf sperren", "Kein Elytra-Start während des Kampfes"),
             new Toggle(20, "combat.actionbar", Material.CLOCK,
-                    "<#FFD75A>Kampf-Actionbar", "Countdown-Anzeige während des Kampfes"),
+                    "<#00D4FF>Kampf-Actionbar", "Countdown-Anzeige während des Kampfes"),
             new Toggle(21, "join-quit.enabled", Material.OAK_SIGN,
-                    "<#FFD75A>Join/Quit-Nachrichten", "Schöne Beitritts-/Verlassen-Meldungen"),
+                    "<#00D4FF>Join/Quit-Nachrichten", "Schöne Beitritts-/Verlassen-Meldungen"),
             new Toggle(22, "join-quit.motd.enabled", Material.FILLED_MAP,
-                    "<#FFD75A>MOTD beim Join", "Begrüßungstext nach dem Beitreten"),
+                    "<#00D4FF>MOTD beim Join", "Begrüßungstext nach dem Beitreten"),
             new Toggle(23, "join-quit.first-join-title.enabled", Material.NETHER_STAR,
-                    "<#FFD75A>Erst-Join-Titel", "Großer Willkommens-Titel für Neue"),
+                    "<#00D4FF>Erst-Join-Titel", "Großer Willkommens-Titel für Neue"),
             new Toggle(24, "installer.enabled", Material.HOPPER,
-                    "<#FFD75A>Auto-Installer", "Begleit-Plugins beim Start nachladen")
+                    "<#00D4FF>Auto-Installer", "Begleit-Plugins beim Start nachladen")
     );
 
     private final BetterSMP plugin;
@@ -59,7 +59,7 @@ public final class SettingsGUI implements InventoryHolder {
     public SettingsGUI(BetterSMP plugin) {
         this.plugin = plugin;
         this.inventory = Bukkit.createInventory(this, 54,
-                Text.mm("<gradient:#FFD75A:#FFB02E><bold>BetterSMP</bold></gradient> <dark_gray>» <gray>Einstellungen"));
+                Text.mm("<gradient:#6C5CE7:#00D4FF><bold>BetterSMP</bold></gradient> <dark_gray>» <gray>Einstellungen"));
         render();
     }
 
@@ -93,7 +93,7 @@ public final class SettingsGUI implements InventoryHolder {
             }
         }
         inventory.setItem(4, GuiItems.item(Material.NETHER_STAR,
-                "<gradient:#FFD75A:#FFB02E><bold>BetterSMP</bold></gradient>",
+                "<gradient:#6C5CE7:#00D4FF><bold>BetterSMP</bold></gradient>",
                 List.of("<gray>Version <white>" + plugin.getPluginMeta().getVersion(),
                         "<gray>Spieler im Kampf: <white>" + inCombat,
                         "",
@@ -102,11 +102,11 @@ public final class SettingsGUI implements InventoryHolder {
         inventory.setItem(48, GuiItems.item(Material.LIME_CONCRETE,
                 "<green><bold>Config neu laden", List.of("<gray>Liest config.yml & messages.yml neu ein"), false));
         inventory.setItem(49, GuiItems.item(Material.ENDER_CHEST,
-                "<#FFD75A><bold>Begleit-Plugins installieren",
+                "<#00D4FF><bold>Begleit-Plugins installieren",
                 List.of("<gray>Lädt fehlende Plugins von den",
                         "<gray>offiziellen Quellen (Neustart nötig)"), false));
         inventory.setItem(50, GuiItems.item(Material.WRITTEN_BOOK,
-                "<#FFD75A><bold>Standard-Ränge anlegen",
+                "<#00D4FF><bold>Standard-Ränge anlegen",
                 List.of("<gray>Erstellt LuckPerms-Ränge",
                         "<gray>(default, vip, mod, admin, owner)"), false));
         inventory.setItem(53, GuiItems.item(Material.BARRIER,

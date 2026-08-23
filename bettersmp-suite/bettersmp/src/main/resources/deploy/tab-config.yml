@@ -8,13 +8,13 @@
 header-footer:
   enabled: true
   header:
-    - "<#FFD75A>&l☀ SMP ☀"
+    - "<#00D4FF>&l☀ SMP ☀"
     - "&7Willkommen, &f%player%&7!"
     - "&r"
   footer:
     - "&r"
-    - "&7Online: <#FFD75A>%online%&7 ┃ Ping: <#FFD75A>%ping%ms&7 ┃ TPS: <#FFD75A>%tps%"
-    - "&7Shop: <#FFD75A>/shop&7 ┃ RTP: <#FFD75A>/rtp"
+    - "&7Online: <#00D4FF>%online%&7 ┃ Ping: <#00D4FF>%ping%ms&7 ┃ TPS: <#00D4FF>%tps%"
+    - "&7Shop: <#00D4FF>/shop&7 ┃ RTP: <#00D4FF>/rtp"
 
 tablist-name-formatting:
   enabled: true

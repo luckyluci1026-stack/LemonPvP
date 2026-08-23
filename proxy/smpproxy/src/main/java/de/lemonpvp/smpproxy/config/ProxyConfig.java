@@ -194,6 +194,24 @@ public final class ProxyConfig {
     }
 
     // ------------------------------------------------------------------
+    //  /rtp ueberall
+    // ------------------------------------------------------------------
+
+    public boolean rtpEnabled() {
+        return bool("rtp.enabled", true);
+    }
+
+    /** Server, auf denen /rtp schon von sich aus existiert (BetterRTP ist dort drauf). */
+    public List<String> rtpPassthroughServers() {
+        return strings("rtp.passthrough-servers", List.of());
+    }
+
+    /** Wohin /rtp von ueberall sonst zuerst schickt, bevor RTP ausgeloest wird. */
+    public String rtpRedirectServer() {
+        return string("rtp.redirect-server", "");
+    }
+
+    // ------------------------------------------------------------------
     //  Nachrichten
     // ------------------------------------------------------------------
 
@@ -203,6 +221,11 @@ public final class ProxyConfig {
 
     public String message(String key) {
         return string("messages." + key, "");
+    }
+
+    /** Reines Wort, kein Nachrichten-Baustein - wird in andere Texte eingesetzt. */
+    public String banPermanentWord() {
+        return string("messages.ban-permanent-word", "für immer");
     }
 
     // ------------------------------------------------------------------

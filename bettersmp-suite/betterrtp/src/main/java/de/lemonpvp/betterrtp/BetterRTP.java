@@ -2,6 +2,7 @@ package de.lemonpvp.betterrtp;
 
 import de.lemonpvp.betterrtp.command.AdminCommand;
 import de.lemonpvp.betterrtp.command.RTPCommand;
+import de.lemonpvp.betterrtp.network.RtpChannelListener;
 import de.lemonpvp.betterrtp.rtp.RTPManager;
 import de.lemonpvp.betterrtp.rtp.WarmupListener;
 import de.lemonpvp.betterrtp.util.Msgs;
@@ -25,6 +26,12 @@ public final class BetterRTP extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new WarmupListener(this), this);
         getCommand("rtp").setExecutor(new RTPCommand(this));
         getCommand("betterrtp").setExecutor(new AdminCommand(this));
+
+        // Nimmt "/rtp" vom Netzwerk-Proxy entgegen - fuer Spieler, die von
+        // der Lobby (oder einem anderen Server ohne eigenes /rtp) hierher
+        // geschickt wurden. Ohne SMPProxy passiert hier einfach nie etwas.
+        Bukkit.getMessenger().registerIncomingPluginChannel(this,
+                RtpChannelListener.KANAL, new RtpChannelListener(this));
 
         getLogger().info("BetterRTP aktiviert.");
     }

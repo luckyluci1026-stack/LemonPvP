@@ -16,7 +16,7 @@ config-version = "2.7"
 # Der Port, auf den deine Domain zeigt
 bind = "0.0.0.0:25565"
 
-motd = "<gradient:#FFD75A:#FFB02E><bold>Lemon Servers</bold></gradient>\n<gray>smp1 · smp2</gray>"
+motd = "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient>\n<gray>smp1 · smp2</gray>"
 show-max-players = 100
 
 # Der Proxy prüft die Mojang-Accounts. Die Backend-Server stehen dann

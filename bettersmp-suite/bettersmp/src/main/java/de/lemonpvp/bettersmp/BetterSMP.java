@@ -17,6 +17,7 @@ import de.lemonpvp.bettersmp.punish.PunishmentCommands;
 import de.lemonpvp.bettersmp.punish.PunishmentConfig;
 import de.lemonpvp.bettersmp.punish.PunishmentListener;
 import de.lemonpvp.bettersmp.punish.PunishmentManager;
+import de.lemonpvp.bettersmp.respawn.DeathRedirectListener;
 import de.lemonpvp.bettersmp.setup.ConfigDeployer;
 import de.lemonpvp.bettersmp.setup.Installer;
 import de.lemonpvp.bettersmp.setup.RankSetup;
@@ -87,6 +88,12 @@ public final class BetterSMP extends JavaPlugin {
         pm.registerEvents(new PunishmentListener(this), this);
         pm.registerEvents(new StatsListener(this), this);
         pm.registerEvents(new BoardListener(this), this);
+        pm.registerEvents(new DeathRedirectListener(this), this);
+
+        // Fuer die Tod-Umleitung - unabhaengig vom Schalter registriert,
+        // damit ein spaeteres Einschalten per /bettersmp reload sofort
+        // funktioniert und nicht erst nach einem vollen Serverneustart.
+        Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         // Befehle
         getCommand("bettersmp").setExecutor(new BetterSMPCommand(this));

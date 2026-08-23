@@ -13,19 +13,19 @@
 #  Farben: MiniMessage & Legacy (&7, &#FFD75A).
 # ==========================================================
 
-title: "<gradient:#FFD75A:#FFB02E><bold>%brand%</bold></gradient>"
+title: "<gradient:#6C5CE7:#00D4FF><bold>%brand%</bold></gradient>"
 
 lines:
   - "<dark_gray><st>                    </st>"
-  - "<white>Spieler <dark_gray>» <#FFD75A>%player%"
+  - "<white>Spieler <dark_gray>» <#00D4FF>%player%"
   - "<white>Rang <dark_gray>» %rank%"
   - ""
   - "<white>Geld <dark_gray>» <#7CFC00>%money%"
   - "<white>Kills <dark_gray>» <#FF6B6B>%kills%"
   - "<white>Tode <dark_gray>» <#FF6B6B>%deaths%"
-  - "<white>K/D <dark_gray>» <#FFD75A>%kd%"
+  - "<white>K/D <dark_gray>» <#00D4FF>%kd%"
   - ""
-  - "<white>Online <dark_gray>» <#FFD75A>%online%<gray>/%max%"
-  - "<white>Ping <dark_gray>» <#FFD75A>%ping%ms"
-  - "<white>TPS <dark_gray>» <#FFD75A>%tps%"
+  - "<white>Online <dark_gray>» <#00D4FF>%online%<gray>/%max%"
+  - "<white>Ping <dark_gray>» <#00D4FF>%ping%ms"
+  - "<white>TPS <dark_gray>» <#00D4FF>%tps%"
   - "<dark_gray><st>                    </st>"

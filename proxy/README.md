@@ -141,6 +141,56 @@ Floodgate von Hand. Die restlichen Plugins der Suite laufen unverändert weiter.
 
 ---
 
+## Netzwerkbann: /netban
+
+Wer hier gebannt wird, kommt gar nicht mehr rein - nicht nur von einem SMP
+geflogen, sondern vom Proxy selbst abgewiesen, bevor er auch nur die Lobby zu
+sehen bekommt. Und weil bei jedem neuen Verbindungsversuch dieselbe Prüfung
+läuft, ist "kann nicht mehr reconnecten" keine Zusatzfunktion, sondern einfach
+die Folge davon.
+
+| Befehl | Wirkung |
+|---|---|
+| `/netban <Spieler> [Dauer] [Grund]` | Bannt vom ganzen Netzwerk. Dauer wie `30m 12h 7d 2w`, `perm` oder weglassen = für immer. Ist die Person gerade online, fliegt sie sofort raus. |
+| `/netunban <Spieler>` | Hebt den Bann auf. |
+| `/netbans` | Listet alle aktiven Banns. |
+| `/netbaninfo <Spieler>` | Grund, wer gebannt hat, bis wann. |
+
+Gebannt werden kann per Namen (auch offline - vorausgesetzt, die Person hat
+sich diesem Netzwerk schon einmal verbunden, siehe `spieler.yml` unten) oder
+per UUID. Das Recht dafür ist `smpproxy.ban` (Standard: kein Vergabe -
+über eine Rechteverwaltung wie LuckPerms zuteilen).
+
+**Das ist bewusst nicht `/ban`.** BetterSMP bringt auf dem SMP selbst schon
+ein `/gban` mit (bei geteilter MariaDB sogar zwischen mehreren SMPs geteilt).
+Ein am Proxy registrierter `/ban`-Befehl würde das schlucken, egal auf
+welchem Server gerade getippt wird. `/netban` ist der stärkere, eigene Hebel
+für "raus aus dem ganzen Netzwerk" - `/gban` bleibt die Werkzeugkiste des
+SMPs für alles andere.
+
+Zwei Dateien legt der Proxy dafür selbst an:
+
+```
+plugins/smpproxy/bans.yml     - wer gebannt ist, von wem, bis wann
+plugins/smpproxy/spieler.yml  - jeder Name, der sich je verbunden hat -> UUID
+```
+
+## /rtp auch aus der Lobby
+
+Steht in `config.yml` unter `rtp.redirect-server` ein Server, funktioniert
+`/rtp` von überall im Netzwerk - auch aus der Lobby, wo es sonst keine Welt
+zum Teleportieren gibt. Der Ablauf: Der Spieler wird zuerst auf den
+eingetragenen SMP geschickt, und sobald die Verbindung steht, läuft dort
+automatisch das echte `/rtp` von BetterRTP - mit Cooldown, Warmup und allem,
+was BetterRTP sonst auch macht.
+
+Wer schon auf einem Server mit eigenem `/rtp` steht (Liste unter
+`rtp.passthrough-servers`), merkt von alldem nichts: Der Befehl geht
+unverändert durch, wie bisher.
+
+Voraussetzung: BetterRTP muss auf dem Zielserver installiert sein und aktuell
+genug, um den Kanal `betterrtp:run` zu kennen (siehe dessen README).
+
 ## Testen
 
 | Test | Erwartung |
@@ -165,5 +215,6 @@ Warteraum.
 proxy/
 ├── velocity.toml     fertige Velocity-Konfiguration
 ├── smpproxy/         das Velocity-Plugin (Quellcode + Build)
+│   └── .../ban/      Netzwerkbann: Speicher, Dauer-Parser
 └── README.md         diese Anleitung
 ```

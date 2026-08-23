@@ -5,10 +5,10 @@
 #  Die alten &-Codes gehen auch, beides darf gemischt werden.
 # ==========================================================
 
-prefix: "<gradient:#FFD75A:#FFB02E><bold>Lobby</bold></gradient> <dark_gray>»</dark_gray> "
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient> <dark_gray>»</dark_gray> "
 
 # --- Ankommen -------------------------------------------------
-ankunft-titel: "<gradient:#FFD75A:#FFB02E><bold>LEMON</bold></gradient>"
+ankunft-titel: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient>"
 ankunft-untertitel: "<gray>Schön, dass du da bist</gray>"
 ankunft-chat: "%prefix%<gray>Willkommen in der Lobby, <white>%spieler%</white>.</gray>"
 ankunft-melden: "<dark_gray>[<green>+</green>]</dark_gray> <gray>%spieler%</gray>"
@@ -30,7 +30,7 @@ verstecken-aus: "%prefix%<gray>Die anderen sind wieder <white>sichtbar</white>.<
 
 # --- Regeln (das Buch in der Schnellleiste) -------------------
 regeln:
-  - "<gradient:#FFD75A:#FFB02E><bold>Regeln</bold></gradient>"
+  - "<gradient:#6C5CE7:#00D4FF><bold>Regeln</bold></gradient>"
   - "<gray> 1. Sei freundlich.</gray>"
   - "<gray> 2. Kein Griefing, kein Klauen.</gray>"
   - "<gray> 3. Keine Cheats, keine Mods, die dir Vorteile geben.</gray>"

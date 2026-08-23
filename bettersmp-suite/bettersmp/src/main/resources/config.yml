@@ -3,13 +3,13 @@
 #  Chat, NoChatReports, AntiCombatLog, Ban/Mute, Stats,
 #  Ränge, Nametags und Scoreboard - alles in einem Plugin.
 #
-#  Farben: MiniMessage (<gray>, <#FFD75A>, <gradient:...>)
+#  Farben: MiniMessage (<gray>, <#00D4FF>, <gradient:...>)
 #  UND Legacy-Codes (&7, &#FFD75A) werden überall verstanden.
 # ==========================================================
 
 # Dein Server-Name. Wird überall als %brand% eingesetzt
 # (MOTD, Scoreboard-Titel, Willkommen ...). Einmal hier ändern - fertig.
-brand: "SMP"
+brand: "BuckSMP"
 
 # ----------------------------------------------------------
 # Datenbank
@@ -39,10 +39,10 @@ chat:
   # Chat als System-Nachricht senden -> nicht über Chat-Reports meldbar
   no-chat-reports: true
   formats:
-    default: "%prefix%<hover:show_text:'<#FFD75A>Nachricht an %player% senden'><click:suggest_command:'/msg %player% '><white>%player%</white></click></hover> <dark_gray>»</dark_gray> <message>"
+    default: "%prefix%<hover:show_text:'<#00D4FF>Nachricht an %player% senden'><click:suggest_command:'/msg %player% '><white>%player%</white></click></hover> <dark_gray>»</dark_gray> <message>"
   mentions:
     enabled: true
-    color: "<#FFD75A>"
+    color: "<#00D4FF>"
     sound: "minecraft:block.note_block.pling"
   clickable-links: true
 
@@ -66,22 +66,43 @@ combat:
 # ----------------------------------------------------------
 join-quit:
   enabled: true
-  join: "<dark_gray>[<green>+</green>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>ist dem Server beigetreten.</gray>"
-  quit: "<dark_gray>[<red>-</red>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>hat den Server verlassen.</gray>"
-  first-join: "<dark_gray>[<#FFD75A>★</#FFD75A>]</dark_gray> <#FFD75A>%player%</#FFD75A> <gray>ist zum <white>ersten Mal</white> hier! Willkommen!</gray>"
+  join: "<dark_gray>[<green>+</green>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist dem Server beigetreten.</gray>"
+  quit: "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>hat den Server verlassen.</gray>"
+  first-join: "<dark_gray>[<#00D4FF>★</#00D4FF>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist zum <white>ersten Mal</white> hier! Willkommen!</gray>"
   first-join-title:
     enabled: true
-    title: "<gradient:#FFD75A:#FFB02E>Willkommen!</gradient>"
+    title: "<gradient:#6C5CE7:#00D4FF>Willkommen!</gradient>"
     subtitle: "<gray>Viel Spaß auf %brand%</gray>"
   motd:
     enabled: true
     delay-ticks: 15
     lines:
       - ""
-      - "  <gradient:#FFD75A:#FFB02E><bold>%brand%</bold></gradient>"
+      - "  <gradient:#6C5CE7:#00D4FF><bold>%brand%</bold></gradient>"
       - "  <gray>Willkommen zurück, <white>%player%</white>!</gray>"
-      - "  <gray>Shop: <#FFD75A>/shop</#FFD75A>  Stats: <#FFD75A>/stats</#FFD75A></gray>"
+      - "  <gray>Shop: <#00D4FF>/shop</#00D4FF>  Stats: <#00D4FF>/stats</#00D4FF></gray>"
       - ""
+
+# ----------------------------------------------------------
+# Nach dem Tod in die Lobby
+#
+# AUS heißt: ganz normal am Bett/Weltspawn respawnen, wie bisher - so
+# war es vor dieser Einstellung, und andere Server-Netzwerke, die das
+# nicht wollen, muessen nichts aendern.
+#
+# AN heißt: Nach dem Respawnen geht es kurz darauf automatisch auf den
+# unten eingetragenen Lobby-Server. Braucht einen Proxy (SMPProxy) mit
+# genau diesem Servernamen und den Kanal "BungeeCord" (steht bei
+# Velocity standardmaessig an). Wer testen will, ohne selbst zu sterben:
+# bettersmp.deathredirect.bypass ueberspringt das.
+# ----------------------------------------------------------
+death-redirect:
+  enabled: false
+  server: "lobby"
+  # Wartezeit nach dem Respawn, bevor es losgeht (in Ticks, 20 = 1 Sekunde).
+  # Nicht 0: Der Server braucht selbst einen Moment, um den Spieler nach
+  # dem Tod fertig einzurichten (Inventar, Erfahrungspunkte, Welt).
+  delay-ticks: 40
 
 # ----------------------------------------------------------
 # Nametags (über dem Kopf + Tab)

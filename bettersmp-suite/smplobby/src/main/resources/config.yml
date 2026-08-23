@@ -66,7 +66,7 @@ gegenstaende:
   liste:
     - slot: 0
       material: COMPASS
-      name: "<gradient:#FFD75A:#FFB02E><bold>Server wählen</bold></gradient>"
+      name: "<gradient:#6C5CE7:#00D4FF><bold>Server wählen</bold></gradient>"
       beschreibung:
         - "<gray>Rechtsklick öffnet die Auswahl</gray>"
       aktion: waehler
@@ -91,7 +91,7 @@ gegenstaende:
 #  Die Spielerzahlen holt das Plugin selbst beim Proxy.
 # ----------------------------------------------------------
 waehler:
-  titel: "<dark_gray>» <gradient:#FFD75A:#FFB02E>Server wählen</gradient>"
+  titel: "<dark_gray>» <gradient:#6C5CE7:#00D4FF>Server wählen</gradient>"
   # 3 Reihen = 27 Plätze. Erlaubt sind 9, 18, 27, 36, 45, 54.
   plaetze: 27
 
@@ -150,7 +150,7 @@ doppelsprung:
 # ----------------------------------------------------------
 tafel:
   aktiv: true
-  titel: "<gradient:#FFD75A:#FFB02E><bold>LEMON</bold></gradient>"
+  titel: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient>"
   # Wie oft die Zahlen aktualisiert werden (in Ticks, 20 = eine Sekunde)
   takt: 20
   zeilen:

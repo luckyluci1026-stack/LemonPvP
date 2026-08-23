@@ -28,6 +28,10 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
 - **Auto-Installer** + fertige Configs für EssentialsX, LuckPerms, Vault,
   PlaceholderAPI und TAB (deutsche EssentialsX-Nachrichten, **ohne Kits**).
 - **/settings-GUI** zum Live-Umschalten der Module.
+- **Tod → Lobby** (optional, `death-redirect` in `config.yml`, Standard AUS):
+  nach dem Respawnen automatisch zurück auf einen Lobby-Server, statt am
+  Bett/Weltspawn weiterzuspielen. Braucht einen Proxy mit Kanal `BungeeCord`
+  (bei Velocity Standard).
 
 ## Wichtige Configs
 - `config.yml` – `brand`, Datenbank, Chat, Combat, Join/Quit, Nametags, Scoreboard, Installer

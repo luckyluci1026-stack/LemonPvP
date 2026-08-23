@@ -10,12 +10,16 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
+import de.lemonpvp.smpproxy.ban.BanStore;
 import de.lemonpvp.smpproxy.command.HubCommand;
+import de.lemonpvp.smpproxy.command.NetworkBanCommand;
+import de.lemonpvp.smpproxy.command.RtpCommand;
 import de.lemonpvp.smpproxy.command.ProxyCommand;
 import de.lemonpvp.smpproxy.command.ServerCommand;
 import de.lemonpvp.smpproxy.config.ProxyConfig;
 import de.lemonpvp.smpproxy.health.HomeTracker;
 import de.lemonpvp.smpproxy.health.ServerWatcher;
+import de.lemonpvp.smpproxy.listener.BanListener;
 import de.lemonpvp.smpproxy.listener.ConnectListener;
 import de.lemonpvp.smpproxy.util.Msg;
 import net.kyori.adventure.text.Component;
@@ -46,6 +50,8 @@ public final class SMPProxy {
     private final ProxyConfig config;
     private final ServerWatcher watcher;
     private final HomeTracker tracker = new HomeTracker();
+    private final BanStore bans;
+    private final BanListener banListener;
 
     private final List<ScheduledTask> tasks = new ArrayList<>();
 
@@ -55,12 +61,17 @@ public final class SMPProxy {
         this.log = log;
         this.config = new ProxyConfig(folder, log);
         this.watcher = new ServerWatcher(proxy, config, log);
+        this.bans = new BanStore(folder, log);
+        this.banListener = new BanListener(this);
     }
 
     @Subscribe
     public void onInit(ProxyInitializeEvent event) {
         config.load();
+        bans.ensureFiles();
+        bans.load();
         proxy.getEventManager().register(this, new ConnectListener(this));
+        proxy.getEventManager().register(this, banListener);
         startTasks();
         registerCommands();
         logRoutes();
@@ -149,6 +160,19 @@ public final class SMPProxy {
         commands.register(commands.metaBuilder("smpproxy").aliases("proxy").build(),
                 new ProxyCommand(this));
 
+        commands.register(commands.metaBuilder("netban").build(),
+                new NetworkBanCommand(this, NetworkBanCommand.Modus.BAN));
+        commands.register(commands.metaBuilder("netunban").build(),
+                new NetworkBanCommand(this, NetworkBanCommand.Modus.UNBAN));
+        commands.register(commands.metaBuilder("netbans").aliases("netbanlist").build(),
+                new NetworkBanCommand(this, NetworkBanCommand.Modus.LIST));
+        commands.register(commands.metaBuilder("netbaninfo").build(),
+                new NetworkBanCommand(this, NetworkBanCommand.Modus.INFO));
+
+        if (config.rtpEnabled() && !config.rtpRedirectServer().isEmpty()) {
+            commands.register(commands.metaBuilder("rtp").build(), new RtpCommand(this));
+        }
+
         if (config.hubEnabled() && !config.limbo().isEmpty()) {
             List<String> aliases = config.hubAliases();
             if (!aliases.isEmpty()) {
@@ -182,6 +206,7 @@ public final class SMPProxy {
     /** Von /smpproxy reload aufgerufen. Befehle bleiben registriert. */
     public void reload() {
         config.load();
+        bans.load();
         watcher.reset();
         tracker.clear();
         startTasks();
@@ -229,6 +254,14 @@ public final class SMPProxy {
 
     public HomeTracker tracker() {
         return tracker;
+    }
+
+    public BanStore bans() {
+        return bans;
+    }
+
+    public BanListener banListener() {
+        return banListener;
     }
 
     public Logger log() {
