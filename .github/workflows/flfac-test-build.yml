@@ -29,6 +29,12 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      # Artifact names may not contain a slash, and branch names like
+      # claude/some-feature do. Flatten the ref to keep the name readable.
+      - name: Compute artifact slug
+        id: slug
+        run: echo "value=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Build (compile + tests + jars)
         run: ./gradlew build --stacktrace --no-daemon
 
@@ -39,7 +45,7 @@ jobs:
       - name: Upload plugin jar (Bukkit/Paper/Spigot)
         uses: actions/upload-artifact@v4
         with:
-          name: flfac-bukkit-${{ github.ref_name }}
+          name: flfac-bukkit-${{ steps.slug.outputs.value }}
           # Only the shaded plugin jar (with dependencies), not the thin jar.
           path: bukkit/build/libs/flfac-bukkit-*.jar
           if-no-files-found: error
@@ -47,6 +53,6 @@ jobs:
       - name: Upload mod jar (Fabric)
         uses: actions/upload-artifact@v4
         with:
-          name: flfac-fabric-${{ github.ref_name }}
+          name: flfac-fabric-${{ steps.slug.outputs.value }}
           path: fabric/build/libs/flfac-fabric-*.jar
           if-no-files-found: warn
