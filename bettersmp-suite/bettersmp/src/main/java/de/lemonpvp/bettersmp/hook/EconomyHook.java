@@ -37,6 +37,11 @@ public final class EconomyHook {
         return isEnabled() ? Bridge.format((Economy) economy, amount) : String.valueOf(amount);
     }
 
+    /** Zahlt gut, falls Vault/eine Economy da ist. Sonst passiert nichts. */
+    public boolean deposit(OfflinePlayer player, double amount) {
+        return isEnabled() && Bridge.deposit((Economy) economy, player, amount);
+    }
+
     private static final class Bridge {
         static Economy load() {
             RegisteredServiceProvider<Economy> rsp =
@@ -50,6 +55,10 @@ public final class EconomyHook {
 
         static String format(Economy eco, double amount) {
             return eco.format(amount);
+        }
+
+        static boolean deposit(Economy eco, OfflinePlayer player, double amount) {
+            return eco.depositPlayer(player, amount).transactionSuccess();
         }
     }
 }

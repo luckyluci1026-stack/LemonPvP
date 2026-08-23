@@ -42,6 +42,26 @@ commands:
     description: Entmutet einen Spieler
     usage: "/gunmute <Spieler>"
     permission: bettersmp.mute
+  freeze:
+    description: Friert einen Spieler ein oder gibt ihn wieder frei
+    usage: "/freeze <Spieler>"
+    permission: bettersmp.freeze
+  report:
+    description: Meldet einen Spieler dem Team
+    usage: "/report <Spieler> <Grund>"
+    permission: bettersmp.report
+  daily:
+    description: Holt die tägliche Kleinigkeit ab
+    usage: "/daily"
+    permission: bettersmp.daily
+  spawn:
+    description: Teleportiert zum Serverspawn
+    usage: "/spawn"
+    permission: bettersmp.spawn
+  setspawn:
+    description: Setzt den Serverspawn auf deine Position
+    usage: "/setspawn"
+    permission: bettersmp.setspawn
 
 permissions:
   bettersmp.admin:
@@ -73,3 +93,21 @@ permissions:
   bettersmp.combat.bypass:
     description: Wird im PvP nicht als im Kampf markiert
     default: false
+  bettersmp.freeze:
+    description: Darf /freeze benutzen
+    default: op
+  bettersmp.report:
+    description: Darf /report benutzen
+    default: true
+  bettersmp.report.receive:
+    description: Bekommt eingehende Meldungen zu sehen
+    default: op
+  bettersmp.daily:
+    description: Darf /daily benutzen
+    default: true
+  bettersmp.spawn:
+    description: Darf /spawn benutzen
+    default: true
+  bettersmp.setspawn:
+    description: Darf /setspawn benutzen
+    default: op

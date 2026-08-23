@@ -46,30 +46,34 @@ public final class DeathRedirectListener implements Listener {
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
-        if (!enabled()) {
-            return;
-        }
         Player player = event.getPlayer();
-        if (player.hasPermission("bettersmp.deathredirect.bypass")) {
-            return;
-        }
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
-            return;
-        }
-        String ziel = plugin.getConfig().getString("death-redirect.server", "lobby");
-        if (ziel == null || ziel.isBlank()) {
-            return;
-        }
-        long verzoegerung = Math.max(0, plugin.getConfig().getLong("death-redirect.delay-ticks", 40));
+        boolean umgehen = player.hasPermission("bettersmp.deathredirect.bypass")
+                || player.getGameMode() == GameMode.CREATIVE
+                || player.getGameMode() == GameMode.SPECTATOR;
 
-        plugin.msgs().send(player, "death-redirect.notice");
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            // Zwischen dem Respawn und jetzt koennen ein paar Sekunden liegen -
-            // in der Zeit kann der Spieler laengst wieder gegangen sein.
-            if (player.isOnline()) {
-                sendeConnect(player, ziel);
+        if (enabled() && !umgehen) {
+            String ziel = plugin.getConfig().getString("death-redirect.server", "lobby");
+            if (ziel != null && !ziel.isBlank()) {
+                long verzoegerung = Math.max(0, plugin.getConfig().getLong("death-redirect.delay-ticks", 40));
+                plugin.msgs().send(player, "death-redirect.notice");
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    // Zwischen dem Respawn und jetzt koennen ein paar Sekunden liegen -
+                    // in der Zeit kann der Spieler laengst wieder gegangen sein.
+                    if (player.isOnline()) {
+                        sendeConnect(player, ziel);
+                    }
+                }, verzoegerung);
+                return;
             }
-        }, verzoegerung);
+        }
+
+        // Keine Lobby-Umleitung (aus, umgangen, oder kein Ziel eingetragen):
+        // dann wenigstens an den eigenen, festen Serverspawn statt an ein
+        // zufaelliges Bett oder den Weltspawn - falls einer gesetzt ist.
+        // Ohne gesetzten Spawn bleibt alles wie zuvor (Vanilla/Essentials).
+        if (plugin.spawn().gesetzt()) {
+            event.setRespawnLocation(plugin.spawn().ort());
+        }
     }
 
     private void sendeConnect(Player player, String server) {

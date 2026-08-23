@@ -61,6 +61,43 @@ stats:
 death-redirect:
   notice: "%prefix%<gray>Du kommst gleich zurück in die Lobby ...</gray>"
 
+# ---------------- Einfrieren ----------------
+freeze:
+  usage: "%prefix%<gray>/freeze <Spieler></gray>"
+  not-online: "%prefix%<red><white>%spieler%</white> ist nicht online.</red>"
+  done: "%prefix%<green><white>%spieler%</white> ist jetzt eingefroren.</green>"
+  undone: "%prefix%<green><white>%spieler%</white> ist wieder frei.</green>"
+  frozen-notice: "%prefix%<gold>Du wurdest von <white>%von%</white> eingefroren.</gold><newline><gray>Du kannst dich nicht bewegen, aber reden geht - warte, bis sich jemand meldet.</gray>"
+  unfrozen-notice: "%prefix%<green>Du bist nicht mehr eingefroren.</green>"
+  still-frozen: "%prefix%<gold>Du bist immer noch eingefroren.</gold>"
+  left-while-frozen: "%prefix%<gray>⚠ <white>%spieler%</white> hat eingefroren die Verbindung getrennt.</gray>"
+  command-blocked: "%prefix%<red>Das geht nicht, solange du eingefroren bist.</red>"
+
+# ---------------- Meldungen ----------------
+report:
+  usage: "%prefix%<gray>/report <Spieler> <Grund></gray>"
+  not-online: "%prefix%<red><white>%spieler%</white> ist nicht online.</red>"
+  not-yourself: "%prefix%<red>Dich selbst kannst du nicht melden.</red>"
+  cooldown: "%prefix%<gold>Warte noch <white>%sekunden%</white> Sekunden, bevor du erneut meldest.</gold>"
+  sent: "%prefix%<green>Meldung zu <white>%spieler%</white> ist raus - das Team schaut sich das an.</green>"
+  received: "%prefix%<gold><bold>Meldung</bold></gold> <dark_gray>-</dark_gray> <white>%melder%</white> <gray>meldet</gray> <white>%spieler%</white><newline><gray>Grund: <white>%grund%</white></gray>"
+
+# ---------------- Tägliche Kleinigkeit ----------------
+daily:
+  already-claimed: "%prefix%<gold>Heute schon abgeholt - versuch es in <white>%stunden%</white> Stunden wieder.</gold>"
+  claimed: "%prefix%<green>Abgeholt! Serie: <white>%serie%</white> Tag(e) am Stück.</green>"
+
+# ---------------- Serverspawn ----------------
+spawn:
+  not-set: "%prefix%<red>Es ist noch kein Spawn gesetzt.</red><newline><gray>Stell dich hin und tipp <white>/setspawn</white>.</gray>"
+  teleported: "%prefix%<gray>Zurück am Spawn.</gray>"
+  set: "%prefix%<green>Spawn gesetzt.</green>"
+
+# ---------------- Serien-Ansagen ----------------
+killstreak:
+  milestone: "<gradient:#6C5CE7:#00D4FF><bold>⚔</bold></gradient> <white>%spieler%</white> <gray>ist auf einer Serie von</gray> <white>%serie%</white><gray>!</gray>"
+  ended: "<dark_gray>[<red>☠</red>]</dark_gray> <white>%toeter%</white> <gray>hat die Serie von</gray> <white>%opfer%</white> <gray>bei</gray> <white>%serie%</white> <gray>beendet.</gray>"
+
 # ---------------- Installer / Ranks / Status ----------------
 installer:
   checking: "%prefix%<gray>Prüfe Begleit-Plugins ...</gray>"

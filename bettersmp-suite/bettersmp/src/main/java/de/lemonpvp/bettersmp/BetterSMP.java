@@ -7,20 +7,31 @@ import de.lemonpvp.bettersmp.chat.ChatModule;
 import de.lemonpvp.bettersmp.combat.CombatListener;
 import de.lemonpvp.bettersmp.combat.CombatManager;
 import de.lemonpvp.bettersmp.command.BetterSMPCommand;
+import de.lemonpvp.bettersmp.command.DailyCommand;
+import de.lemonpvp.bettersmp.command.FreezeCommand;
+import de.lemonpvp.bettersmp.command.ReportCommand;
+import de.lemonpvp.bettersmp.command.SetSpawnCommand;
 import de.lemonpvp.bettersmp.command.SettingsCommand;
+import de.lemonpvp.bettersmp.command.SpawnCommand;
 import de.lemonpvp.bettersmp.gui.SettingsListener;
 import de.lemonpvp.bettersmp.hook.EconomyHook;
 import de.lemonpvp.bettersmp.hook.LuckPermsHook;
 import de.lemonpvp.bettersmp.hook.PapiHook;
 import de.lemonpvp.bettersmp.join.JoinModule;
+import de.lemonpvp.bettersmp.killstreak.KillstreakListener;
+import de.lemonpvp.bettersmp.punish.FreezeListener;
+import de.lemonpvp.bettersmp.punish.FreezeManager;
 import de.lemonpvp.bettersmp.punish.PunishmentCommands;
 import de.lemonpvp.bettersmp.punish.PunishmentConfig;
 import de.lemonpvp.bettersmp.punish.PunishmentListener;
 import de.lemonpvp.bettersmp.punish.PunishmentManager;
+import de.lemonpvp.bettersmp.report.ReportManager;
 import de.lemonpvp.bettersmp.respawn.DeathRedirectListener;
+import de.lemonpvp.bettersmp.reward.DailyRewardManager;
 import de.lemonpvp.bettersmp.setup.ConfigDeployer;
 import de.lemonpvp.bettersmp.setup.Installer;
 import de.lemonpvp.bettersmp.setup.RankSetup;
+import de.lemonpvp.bettersmp.spawn.SpawnManager;
 import de.lemonpvp.bettersmp.stats.StatsCommand;
 import de.lemonpvp.bettersmp.stats.StatsListener;
 import de.lemonpvp.bettersmp.stats.StatsManager;
@@ -53,6 +64,10 @@ public final class BetterSMP extends JavaPlugin {
     private PunishmentManager punishments;
     private StatsManager stats;
     private BoardManager board;
+    private FreezeManager freeze;
+    private ReportManager reports;
+    private DailyRewardManager dailyReward;
+    private SpawnManager spawn;
 
     @Override
     public void onEnable() {
@@ -73,6 +88,11 @@ public final class BetterSMP extends JavaPlugin {
         this.punishments = new PunishmentManager(this, punishConfig);
         this.stats = new StatsManager(this);
         this.board = new BoardManager(this);
+        this.freeze = new FreezeManager();
+        this.reports = new ReportManager(this);
+        this.dailyReward = new DailyRewardManager(this);
+        dailyReward.load();
+        this.spawn = new SpawnManager(this);
 
         BetterSMPApi.init(combat);
         combat.start();
@@ -89,6 +109,8 @@ public final class BetterSMP extends JavaPlugin {
         pm.registerEvents(new StatsListener(this), this);
         pm.registerEvents(new BoardListener(this), this);
         pm.registerEvents(new DeathRedirectListener(this), this);
+        pm.registerEvents(new FreezeListener(this), this);
+        pm.registerEvents(new KillstreakListener(this), this);
 
         // Fuer die Tod-Umleitung - unabhaengig vom Schalter registriert,
         // damit ein spaeteres Einschalten per /bettersmp reload sofort
@@ -103,6 +125,11 @@ public final class BetterSMP extends JavaPlugin {
         for (String cmd : new String[]{"gban", "gunban", "gmute", "gunmute"}) {
             getCommand(cmd).setExecutor(punishmentCommands);
         }
+        getCommand("freeze").setExecutor(new FreezeCommand(this));
+        getCommand("report").setExecutor(new ReportCommand(this));
+        getCommand("daily").setExecutor(new DailyCommand(this));
+        getCommand("spawn").setExecutor(new SpawnCommand(this));
+        getCommand("setspawn").setExecutor(new SetSpawnCommand(this));
 
         logHooks();
         Bukkit.getScheduler().runTaskLater(this, this::firstRunSetup, 40L);
@@ -193,5 +220,21 @@ public final class BetterSMP extends JavaPlugin {
 
     public BoardManager board() {
         return board;
+    }
+
+    public FreezeManager freeze() {
+        return freeze;
+    }
+
+    public ReportManager reports() {
+        return reports;
+    }
+
+    public DailyRewardManager dailyReward() {
+        return dailyReward;
+    }
+
+    public SpawnManager spawn() {
+        return spawn;
     }
 }

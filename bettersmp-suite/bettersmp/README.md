@@ -28,6 +28,17 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
 - **Auto-Installer** + fertige Configs für EssentialsX, LuckPerms, Vault,
   PlaceholderAPI und TAB (deutsche EssentialsX-Nachrichten, **ohne Kits**).
 - **/settings-GUI** zum Live-Umschalten der Module.
+- **/freeze <Spieler>**: friert jemanden ein (Position gesperrt, Bauen/Abbauen/
+  Schaden/Wegwerfen gesperrt, Reden bleibt möglich) - für die Minute vor
+  einem `/gban`, in der man erst reden will.
+- **/report <Spieler> <Grund>**: für alle, mit Cooldown. Landet live bei
+  jedem mit `bettersmp.report.receive` und in `reports.log`.
+- **Serien-Ansagen im PvP**: Meilensteine (3, 5, 10 ...) und "Serie beendet"
+  - reine Stimmung, keine Belohnung, nichts überlebt einen Neustart.
+- **/daily**: eine Kleinigkeit fürs Wiederkommen, mit Bonus für aufeinander-
+  folgende Tage (Kalendertag-genau, kein 24-Stunden-Timer zum Austricksen).
+- **/spawn, /setspawn**: eigener Serverspawn, unabhängig von Essentials.
+  Ohne `death-redirect` respawnt man dort statt am zufälligen Bett.
 - **Tod → Lobby** (optional, `death-redirect` in `config.yml`, Standard AUS):
   nach dem Respawnen automatisch zurück auf einen Lobby-Server, statt am
   Bett/Weltspawn weiterzuspielen. Braucht einen Proxy mit Kanal `BungeeCord`

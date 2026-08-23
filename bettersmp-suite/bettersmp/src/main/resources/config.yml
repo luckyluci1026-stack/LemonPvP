@@ -84,11 +84,53 @@ join-quit:
       - ""
 
 # ----------------------------------------------------------
+# Einfrieren (/freeze)
+#
+# Bewegungsbefehle, die waehrend des Einfrierens gesperrt sind - dieselbe
+# Idee wie combat.blocked-commands oben, nur eine eigene, kuerzere Liste.
+# ----------------------------------------------------------
+freeze:
+  blocked-commands: [tpa, tpahere, tpaccept, home, homes, warp, warps, back, rtp, wild, spawn]
+
+# ----------------------------------------------------------
+# Meldungen (/report)
+# ----------------------------------------------------------
+report:
+  # So lange muss dieselbe Person zwischen zwei Meldungen warten.
+  cooldown-seconds: 60
+
+# ----------------------------------------------------------
+# Tägliche Kleinigkeit (/daily)
+#
+# money-per-streak-day zählt die Serie mit, money-streak-cap deckelt sie
+# nach oben - sonst waechst die Belohnung nach einem Jahr Serie absurd.
+# Ohne Vault/Economy wird der Geld-Teil einfach uebersprungen.
+# ----------------------------------------------------------
+daily-reward:
+  items:
+    - material: BREAD
+      amount: 8
+    - material: EXPERIENCE_BOTTLE
+      amount: 3
+  money-base: 50
+  money-per-streak-day: 5
+  money-streak-cap: 30
+
+# ----------------------------------------------------------
+# Serien-Ansagen im PvP (reine Stimmung, keine Belohnung)
+# ----------------------------------------------------------
+killstreak:
+  enabled: true
+  milestones: [3, 5, 10, 15, 20, 30, 50]
+  # Ab dieser Serienlaenge wird auch ihr Ende angesagt ("X hat Ys Serie beendet").
+  end-announce-threshold: 5
+
+# ----------------------------------------------------------
 # Nach dem Tod in die Lobby
 #
-# AUS heißt: ganz normal am Bett/Weltspawn respawnen, wie bisher - so
-# war es vor dieser Einstellung, und andere Server-Netzwerke, die das
-# nicht wollen, muessen nichts aendern.
+# AUS heißt: kein Serverwechsel beim Respawn. Ist unten unter "spawn"
+# ein eigener Serverspawn gesetzt (/setspawn), landet man dort - ohne
+# einen gesetzten Spawn bleibt es beim gewohnten Bett/Weltspawn.
 #
 # AN heißt: Nach dem Respawnen geht es kurz darauf automatisch auf den
 # unten eingetragenen Lobby-Server. Braucht einen Proxy (SMPProxy) mit
