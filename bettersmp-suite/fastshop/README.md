@@ -11,7 +11,9 @@ Einfaches, customizables Shop-/Verkaufssystem (Paper 1.21.11).
 - **`/worth`**: zeigt Kauf-/Verkaufswert des Items in der Hand.
 - **EssentialsX-/Vault-Economy**: nutzt das vorhandene Economy-System.
 - **Voll konfigurierbar** über `shop.yml` (Kategorien, Items, Preise) – ein
-  reichhaltiger Standard-Katalog ist bereits enthalten. `sell-multiplier` global.
+  reichhaltiger Standard-Katalog ist bereits enthalten, inklusive einer
+  `pvp`-Kategorie mit fertig verzauberten Waffen/Rüstungen (`enchants:` pro
+  Item, rein config-gesteuert). `sell-multiplier` global.
 - **Schutz**: Bulk-Verkauf ignoriert benannte/verzauberte/beschädigte Items
   (deine Ausrüstung wird nicht versehentlich verkauft).
 - `/fastshop additem <Kategorie> <Kaufpreis> <Verkaufspreis>`: Item aus der Hand

@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -12,6 +13,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /** Baut hübsche GUI-Items ohne kursiven Standardtext. */
 public final class GuiUtil {
@@ -61,6 +63,16 @@ public final class GuiUtil {
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    /** Legt fertige Verzauberungen (aus shop.yml) auf einen Stack - leer = keine Änderung. */
+    public static void applyEnchants(ItemStack stack, Map<Enchantment, Integer> enchants) {
+        if (enchants.isEmpty()) {
+            return;
+        }
+        ItemMeta meta = stack.getItemMeta();
+        enchants.forEach((enchantment, level) -> meta.addEnchant(enchantment, level, true));
+        stack.setItemMeta(meta);
     }
 
     public static ItemStack filler(Material material) {

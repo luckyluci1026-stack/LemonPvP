@@ -3,6 +3,12 @@
 #  Einfach Kategorien und Items ergänzen. Preise in der
 #  EssentialsX-Währung. buy: -1 = nicht kaufbar, sell: -1 = nicht verkaufbar.
 #  icon/name/slot pro Kategorie; pro Item optional 'name' & 'lore'.
+#  Optional 'enchants': {verzauberung: stufe} - macht das Item beim Kauf
+#  fertig verzaubert (Stufe darf über das Vanilla-Limit gehen). Verzauberte
+#  Items lassen sich sowieso nie zurückverkaufen (ShopService#isPlain lehnt
+#  jeden Stack mit Verzauberung/Namen/Schaden ab) - sell: -1 steht bei ihnen
+#  trotzdem dabei, damit im Menü ehrlich "Nicht verkaufbar" steht statt ein
+#  Preis, der nie zustande kommen kann.
 # ==========================================================
 categories:
 
@@ -101,3 +107,91 @@ categories:
       - { material: FLINT,         buy: 6,   sell: 2 }
       - { material: GUNPOWDER,     buy: 20,  sell: 6 }
       - { material: BLAZE_ROD,     buy: 40,  sell: 12 }
+
+  pvp:
+    icon: DIAMOND_SWORD
+    name: "&4&lPvP-Ausrüstung"
+    slot: 28
+    items:
+      # ---- Nahkampf: schlicht ----
+      - { material: WOODEN_SWORD,  buy: 15,   sell: 3 }
+      - { material: STONE_SWORD,   buy: 30,   sell: 8 }
+      - { material: GOLDEN_SWORD,  buy: 50,   sell: 10 }
+      - { material: IRON_SWORD,    buy: 120,  sell: 35 }
+      - { material: IRON_AXE,      buy: 140,  sell: 40 }
+
+      # ---- Nahkampf: fertig verzaubert ----
+      - material: DIAMOND_SWORD
+        buy: 900
+        sell: -1
+        name: "<aqua><bold>Klinge der Schärfe</bold></aqua>"
+        lore:
+          - "<gray>Eine Diamantklinge, bereits"
+          - "<gray>verzaubert - startklar für den Kampf."
+        enchants:
+          sharpness: 4
+      - material: DIAMOND_AXE
+        buy: 950
+        sell: -1
+        name: "<aqua><bold>Kriegsbeil</bold></aqua>"
+        lore:
+          - "<gray>Schwerer als ein Schwert,"
+          - "<gray>dafür mit mehr Wucht pro Treffer."
+        enchants:
+          sharpness: 3
+      - material: NETHERITE_SWORD
+        buy: 3200
+        sell: -1
+        name: "<gradient:#6C5CE7:#00D4FF><bold>Schattenklinge</bold></gradient>"
+        lore:
+          - "<gray>Das Beste, was die Schmiede"
+          - "<gray>zu bieten hat."
+        enchants:
+          sharpness: 4
+          unbreaking: 2
+      - material: TRIDENT
+        buy: 700
+        sell: -1
+        name: "<blue><bold>Dreizack der Tiefe</bold></blue>"
+        lore:
+          - "<gray>Normalerweise nur ein seltener Fund -"
+          - "<gray>hier einfach kaufbar."
+        enchants:
+          loyalty: 2
+
+      # ---- Fernkampf ----
+      - material: BOW
+        buy: 600
+        sell: -1
+        name: "<gold><bold>Kraftbogen</bold></gold>"
+        lore:
+          - "<gray>Verzaubert für mehr Wucht"
+          - "<gray>pro Treffer."
+        enchants:
+          power: 4
+      - { material: CROSSBOW,       buy: 250, sell: 60 }
+      - { material: ARROW,          buy: 4,   sell: 1 }
+      - { material: SPECTRAL_ARROW, buy: 10,  sell: 2 }
+
+      # ---- Rüstung: Eisen (schlicht) ----
+      - { material: IRON_HELMET,     buy: 100, sell: 25 }
+      - { material: IRON_CHESTPLATE, buy: 180, sell: 45 }
+      - { material: IRON_LEGGINGS,   buy: 160, sell: 40 }
+      - { material: IRON_BOOTS,      buy: 90,  sell: 20 }
+
+      # ---- Rüstung: Diamant, fertig verzaubert (Protection III) ----
+      - { material: DIAMOND_HELMET,     buy: 700,  sell: -1, enchants: { protection: 3 } }
+      - { material: DIAMOND_CHESTPLATE, buy: 1100, sell: -1, enchants: { protection: 3 } }
+      - { material: DIAMOND_LEGGINGS,   buy: 950,  sell: -1, enchants: { protection: 3 } }
+      - { material: DIAMOND_BOOTS,      buy: 650,  sell: -1, enchants: { protection: 3 } }
+
+      # ---- Rüstung: Netherit, fertig verzaubert (Protection IV) ----
+      - { material: NETHERITE_HELMET,     buy: 1800, sell: -1, enchants: { protection: 4 } }
+      - { material: NETHERITE_CHESTPLATE, buy: 2600, sell: -1, enchants: { protection: 4 } }
+      - { material: NETHERITE_LEGGINGS,   buy: 2300, sell: -1, enchants: { protection: 4 } }
+      - { material: NETHERITE_BOOTS,      buy: 1600, sell: -1, enchants: { protection: 4 } }
+
+      # ---- Sonstiges ----
+      - { material: SHIELD,           buy: 80,   sell: 20 }
+      - { material: TOTEM_OF_UNDYING, buy: 1500, sell: 400 }
+      - { material: FIRE_CHARGE,      buy: 25,   sell: 6 }

@@ -6,6 +6,7 @@ import de.lemonpvp.fastshop.shop.ShopItem;
 import de.lemonpvp.fastshop.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Baut die Shop-Menüs: Hauptmenü mit Kategorien, Kategorieseiten mit
@@ -211,7 +213,9 @@ public final class ShopMenus {
         }
         lore.add("<dark_gray><st>               </st>");
         lore.add("<yellow>Klick <gray>öffnet Kaufen/Verkaufen");
-        return GuiUtil.item(item.material(), 1, name, lore);
+        ItemStack stack = GuiUtil.item(item.material(), 1, name, lore);
+        GuiUtil.applyEnchants(stack, item.enchants());
+        return stack;
     }
 
     // ================= Aktionsmenü =================
@@ -255,6 +259,10 @@ public final class ShopMenus {
         int have = plugin.service().countSellable(player, item.material());
 
         List<String> info = new ArrayList<>();
+        if (!item.enchants().isEmpty()) {
+            info.add(enchantLine(item));
+            info.add("");
+        }
         if (item.buyable()) {
             info.add("<gray>Kaufen  <dark_gray>» <green>" + money(item.buy()));
         }
@@ -314,7 +322,11 @@ public final class ShopMenus {
     }
 
     public static String prettyName(Material material) {
-        String[] parts = material.name().toLowerCase().split("_");
+        return prettyKey(material.name());
+    }
+
+    private static String prettyKey(String raw) {
+        String[] parts = raw.toLowerCase().split("_");
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
             if (!part.isEmpty()) {
@@ -322,6 +334,29 @@ public final class ShopMenus {
             }
         }
         return sb.toString().trim();
+    }
+
+    private static final String[] STUFEN =
+            {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+
+    private static String roemisch(int level) {
+        return level >= 0 && level < STUFEN.length ? STUFEN[level] : String.valueOf(level);
+    }
+
+    /** "Verzaubert: Schärfe V, Unbreaking II" - für Items, deren GUI-Icon die
+     *  Verzauberung sonst verbirgt (glowing() setzt HIDE_ENCHANTS). */
+    private String enchantLine(ShopItem item) {
+        StringBuilder sb = new StringBuilder("<light_purple>Verzaubert: <white>");
+        boolean first = true;
+        for (Map.Entry<Enchantment, Integer> entry : item.enchants().entrySet()) {
+            if (!first) {
+                sb.append("<gray>, <white>");
+            }
+            sb.append(prettyKey(entry.getKey().getKey().getKey()))
+                    .append(' ').append(roemisch(entry.getValue()));
+            first = false;
+        }
+        return sb.toString();
     }
 
     // ================= Verkaufsfenster =================

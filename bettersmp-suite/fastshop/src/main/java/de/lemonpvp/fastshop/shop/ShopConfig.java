@@ -2,8 +2,11 @@ package de.lemonpvp.fastshop.shop;
 
 import de.lemonpvp.fastshop.FastShop;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.enchantments.Enchantment;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -79,7 +82,19 @@ public final class ShopConfig {
                 lore.add(String.valueOf(line));
             }
         }
-        return new ShopItem(material, buy, sell, name, lore);
+        Map<Enchantment, Integer> enchants = new LinkedHashMap<>();
+        if (raw.get("enchants") instanceof Map<?, ?> enchMap) {
+            for (Map.Entry<?, ?> e : enchMap.entrySet()) {
+                String key = String.valueOf(e.getKey()).toLowerCase(Locale.ROOT);
+                Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(key));
+                if (enchantment == null) {
+                    plugin.getLogger().warning("Unbekannte Verzauberung '" + key + "' bei " + matName);
+                    continue;
+                }
+                enchants.put(enchantment, Math.max(1, (int) toDouble(e.getValue(), 1)));
+            }
+        }
+        return new ShopItem(material, buy, sell, name, lore, enchants);
     }
 
     private double toDouble(Object value, double fallback) {
