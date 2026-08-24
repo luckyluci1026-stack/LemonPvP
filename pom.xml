@@ -27,8 +27,14 @@
 
     <properties>
         <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <!--
+          maven.compiler.release (not source/target) so these jars stay runnable on the Java 21
+          servers even when they are compiled with a newer JDK. source/target alone fixes only
+          the bytecode version; the code would still be compiled against the newer JDK's class
+          library, so an API added after Java 21 would compile cleanly and then fail at runtime
+          with NoSuchMethodError. release pins both.
+        -->
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -102,8 +108,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.13.0</version>
                     <configuration>
-                        <source>21</source>
-                        <target>21</target>
+                        <release>21</release>
                         <encoding>UTF-8</encoding>
                     </configuration>
                 </plugin>
