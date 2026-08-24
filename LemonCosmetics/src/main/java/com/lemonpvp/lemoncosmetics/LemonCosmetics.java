@@ -72,6 +72,12 @@ public final class LemonCosmetics extends JavaPlugin {
         cosmeticsMessaging.register();
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        // Typed on a LemonCore event, and LemonCore is only a softdepend — register it only
+        // when LemonCore is actually loaded, so its absence can't break the other listeners.
+        if (getServer().getPluginManager().getPlugin("LemonCore") != null) {
+            getServer().getPluginManager().registerEvents(
+                    new com.lemonpvp.lemoncosmetics.listeners.KillEffectRewardListener(this), this);
+        }
         getServer().getPluginManager().registerEvents(new KillListener(this), this);
         getServer().getPluginManager().registerEvents(new ArrowTrailListener(this), this);
         getServer().getPluginManager().registerEvents(
@@ -149,6 +155,9 @@ public final class LemonCosmetics extends JavaPlugin {
                         .unregisterListener(cosmeticMoveListener);
             } catch (Throwable ignored) { }
         }
+        // Packet display cosmetics exist only on the viewers' clients — despawn them here or
+        // they linger as ghost entities on every screen until the player relogs.
+        if (displayCosmeticManager != null) displayCosmeticManager.shutdownAll();
         if (emoteManager != null) emoteManager.shutdown();
         if (capeManager != null) capeManager.shutdown();
         if (arrowTrailManager != null) arrowTrailManager.cancelAll();

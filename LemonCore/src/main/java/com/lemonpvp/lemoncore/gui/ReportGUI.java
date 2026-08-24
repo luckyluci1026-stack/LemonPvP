@@ -146,10 +146,16 @@ public class ReportGUI implements Listener {
             skull.displayName(TextUtil.parse("<!italic><reset><red><bold>Report #" + r.id
                     + " <reset>" + (online ? "<green>●" : "<dark_gray>●")));
             List<Component> lore = new ArrayList<>();
-            lore.add(TextUtil.parse("<!italic><reset><gray>Reported: <white>" + r.reportedName
+            // Escape everything a player controls: the reason is free text straight from
+            // /report, so unescaped it would let any player inject MiniMessage formatting
+            // into this staff GUI (or break the line entirely with a malformed tag).
+            lore.add(TextUtil.parse("<!italic><reset><gray>Reported: <white>"
+                    + TextUtil.escapeTags(r.reportedName)
                     + (online ? " <green>(online)" : " <dark_gray>(offline)")));
-            lore.add(TextUtil.parse("<!italic><reset><gray>By: <white>" + r.reporterName));
-            lore.add(TextUtil.parse("<!italic><reset><gray>Reason: <yellow>" + r.reason));
+            lore.add(TextUtil.parse("<!italic><reset><gray>By: <white>"
+                    + TextUtil.escapeTags(r.reporterName)));
+            lore.add(TextUtil.parse("<!italic><reset><gray>Reason: <yellow>"
+                    + TextUtil.escapeTags(r.reason)));
             lore.add(TextUtil.parse("<!italic><reset><gray>When: <white>" + relativeTime(r.reportTime.getTime())));
             lore.add(Component.empty());
             lore.add(TextUtil.parse(online
@@ -192,7 +198,8 @@ public class ReportGUI implements Listener {
                 p.teleport(target.getLocation());
                 p.sendMessage(TextUtil.parse("<green>Teleported to <white>" + target.getName()));
             } else {
-                p.sendMessage(TextUtil.parse("<red>" + r.reportedName + " is not online."));
+                p.sendMessage(TextUtil.parse("<red>" + TextUtil.escapeTags(r.reportedName)
+                        + " is not online."));
             }
         }
     }

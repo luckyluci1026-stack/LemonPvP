@@ -80,6 +80,20 @@ public class DisplayCosmeticManager {
         for (Player viewer : vs) for (DisplayCosmetic c : cs) c.remove(viewer);
     }
 
+    /**
+     * Despawns every worn cosmetic for every wearer.
+     *
+     * <p>Packet entities live only in the viewer's client, so nothing removes them when the
+     * plugin stops — without this, a reload leaves permanent ghost hats and capes on every
+     * player's screen until they relog. Call this from {@code onDisable}.
+     */
+    public void shutdownAll() {
+        // Snapshot the keys: clear() mutates `worn` while we iterate.
+        for (java.util.UUID wearer : new java.util.ArrayList<>(worn.keySet())) {
+            clear(wearer);
+        }
+    }
+
     public boolean hasCosmetics(java.util.UUID wearer) {
         List<DisplayCosmetic> cs = worn.get(wearer);
         return cs != null && !cs.isEmpty();

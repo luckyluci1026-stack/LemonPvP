@@ -169,8 +169,11 @@ public class BugReportGUI implements Listener {
                         load();
                     }));
         } else if (e.getClick() == ClickType.LEFT) {
-            p.sendMessage(TextUtil.parse("<gold><bold>Bug #" + r.id + " <reset><gray>by <white>" + r.reporterName + ":"));
-            p.sendMessage(TextUtil.parse("<white>" + r.description));
+            // The description is free text from /bugreport — escape it (and the name) so a
+            // player can't inject MiniMessage formatting into what staff sees.
+            p.sendMessage(TextUtil.parse("<gold><bold>Bug #" + r.id + " <reset><gray>by <white>"
+                    + TextUtil.escapeTags(r.reporterName) + ":"));
+            p.sendMessage(TextUtil.parse("<white>" + TextUtil.escapeTags(r.description)));
         }
     }
 

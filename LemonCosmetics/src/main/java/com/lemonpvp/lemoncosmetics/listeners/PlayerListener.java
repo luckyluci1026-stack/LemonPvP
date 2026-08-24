@@ -2,7 +2,6 @@ package com.lemonpvp.lemoncosmetics.listeners;
 
 import com.lemonpvp.lemoncosmetics.LemonCosmetics;
 import com.lemonpvp.lemoncosmetics.gui.CosmeticsMainGUI;
-import com.lemonpvp.lemoncosmetics.model.KillEffectType;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -68,27 +67,10 @@ public class PlayerListener implements Listener {
         new CosmeticsMainGUI(plugin, player).open();
     }
 
-    @EventHandler
-    public void onKillEffectReward(com.lemonpvp.lemoncore.events.KillEffectRewardEvent event) {
-        Player player = Bukkit.getPlayer(event.getPlayerUuid());
-        if (player == null) return;
-
-        String effectId = event.getEffectId();
-        if (KillEffectType.fromId(effectId).isEmpty()) {
-            plugin.getLogger().warning("Received unknown kill effect id: " + effectId);
-            return;
-        }
-
-        UUID effectUuid = event.getPlayerUuid();
-        plugin.getCosmeticsManager().unlockKillEffect(effectUuid, effectId)
-                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    Player p = Bukkit.getPlayer(effectUuid);
-                    if (p == null) return;
-                    p.sendMessage(MM.deserialize("<green>Unlocked kill effect: <yellow>"
-                            + KillEffectType.fromId(effectId).map(KillEffectType::getDisplayName).orElse(effectId)
-                            + "</yellow>!"));
-                }));
-    }
+    // The kill-effect reward handler moved to KillEffectRewardListener: it is typed on a
+    // LemonCore class, and LemonCore is only a softdepend. Bukkit resolves every handler's
+    // parameter type at registration, so keeping it here would take this entire listener
+    // (join, quit, cosmetics menu) down whenever LemonCore is absent.
 
     private void giveCosmeticsItem(Player player) {
         // LemonPractice owns the lobby hotbar (its cosmetics item sits on

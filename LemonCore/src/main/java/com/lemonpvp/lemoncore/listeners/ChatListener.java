@@ -95,7 +95,12 @@ public class ChatListener implements Listener {
             // Not muted — build the formatted message and broadcast to all viewers
             Component msg = originalMessage;
             if (!player.hasPermission("lemoncore.use.minimessage") && !player.isOp()) {
-                msg = Component.text(TextUtil.escapeTags(plain));
+                // A literal text component is never re-parsed — LemonChat inserts it through
+                // Placeholder.component, and the fallback below appends it as a component too.
+                // Escaping here would therefore only make the backslashes visible in chat
+                // ("I love <red>" would read "I love \<red>"). The literal component already
+                // makes tags inert.
+                msg = Component.text(plain);
             }
             final Component finalMsg = msg;
 
