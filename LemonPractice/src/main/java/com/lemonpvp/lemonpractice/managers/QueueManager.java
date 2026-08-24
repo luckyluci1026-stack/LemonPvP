@@ -74,6 +74,12 @@ public class QueueManager {
         return queue.containsKey(uuid);
     }
 
+    /** The gamemode this player is queued for, or null when they are not queued. */
+    public String getQueuedGamemode(UUID uuid) {
+        QueueEntry entry = queue.get(uuid);
+        return entry != null ? entry.gamemode : null;
+    }
+
     // -----------------------------------------------------------------------
     // Matchmaking  (runs on main thread every 5 s)
     // -----------------------------------------------------------------------

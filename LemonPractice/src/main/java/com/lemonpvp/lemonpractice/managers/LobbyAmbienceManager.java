@@ -56,6 +56,9 @@ public class LobbyAmbienceManager {
             new Portal("trident", "<dark_aqua>Trident",     "",         38, 64,  55, Particle.NAUTILUS)
     );
 
+    /** A portal the player is standing in, with the gamemode it currently advertises. */
+    public record PortalSpot(String key, String gamemode, Particle particle) {}
+
     private static final double PARTICLE_RANGE = 26.0;
     private static final double PARTICLE_RANGE_SQ = PARTICLE_RANGE * PARTICLE_RANGE;
 
@@ -157,9 +160,9 @@ public class LobbyAmbienceManager {
         }
     }
 
-    /** Portal name plus, when it advertises a real gamemode, the live network counts. */
+    /** Portal name plus, when it advertises a real gamemode, the live counts and the walk-in hint. */
     private Component labelText(Portal p) {
-        String gamemode = plugin.getConfig().getString("lobby.portals." + p.key(), p.gamemode());
+        String gamemode = gamemodeOf(p);
         StringBuilder sb = new StringBuilder("<bold>").append(p.label()).append("</bold>");
         if (gamemode != null && !gamemode.isBlank()
                 && plugin.getGamemodeManager() != null
@@ -169,8 +172,39 @@ public class LobbyAmbienceManager {
             int queued  = plugin.getQueueManager().getQueueCount(gamemode);
             sb.append("\n<gray>").append(playing).append(" playing");
             if (queued > 0) sb.append(" <dark_gray>·<gray> ").append(queued).append(" in queue");
+            // Only promise this where walking in actually queues you.
+            if (plugin.getConfig().getBoolean("lobby.portals.walk-in", true)) {
+                sb.append("\n<dark_gray>▸ <white>Walk in to queue");
+            }
         }
         return MM.deserialize(sb.toString());
+    }
+
+    // ── Lookup ──────────────────────────────────────────────────────────────
+
+    /** The gamemode a portal advertises: config override first, then the built-in default. */
+    private String gamemodeOf(Portal p) {
+        return plugin.getConfig().getString("lobby.portals." + p.key(), p.gamemode());
+    }
+
+    /**
+     * The portal a location is standing in, or null. Shared with the walk-in listener so both it
+     * and the signs read one portal table.
+     */
+    public PortalSpot portalAt(Location loc, double radiusSq, double maxYDelta) {
+        if (loc == null || loc.getWorld() == null) return null;
+        World lobby = lobbyWorld();
+        if (lobby == null || !lobby.equals(loc.getWorld())) return null;
+
+        for (Portal p : PORTALS) {
+            if (Math.abs(loc.getY() - p.y()) > maxYDelta) continue;
+            double dx = loc.getX() - (p.x() + 0.5);
+            double dz = loc.getZ() - (p.z() + 0.5);
+            if (dx * dx + dz * dz <= radiusSq) {
+                return new PortalSpot(p.key(), gamemodeOf(p), p.particle());
+            }
+        }
+        return null;
     }
 
     // ── Ambience ────────────────────────────────────────────────────────────

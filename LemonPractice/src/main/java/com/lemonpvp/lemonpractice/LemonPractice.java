@@ -196,6 +196,11 @@ public class LemonPractice extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ZoneListener(this), this);
         getServer().getPluginManager().registerEvents(
                 new com.lemonpvp.lemonpractice.listeners.ReplayHitListener(this), this);
+        // Walk-into-portal queueing — LOBBY only; the listener also checks serverType itself.
+        if (serverType.equals("LOBBY")) {
+            getServer().getPluginManager().registerEvents(
+                    new com.lemonpvp.lemonpractice.listeners.LobbyPortalListener(this), this);
+        }
 
         // 7. Register commands
         AowArenaCommand arenaCmd = new AowArenaCommand(this);
