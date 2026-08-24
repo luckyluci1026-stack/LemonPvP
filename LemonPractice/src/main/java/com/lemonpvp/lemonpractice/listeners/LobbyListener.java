@@ -69,6 +69,11 @@ public class LobbyListener implements Listener {
             }
         }
 
+        // Arrival moment — after the teleport, so the sound plays at the hub.
+        if (plugin.getLobbyAmbienceManager() != null) {
+            plugin.getLobbyAmbienceManager().welcome(player);
+        }
+
         player.setGameMode(GameMode.ADVENTURE);
 
         // Clear any stale queue state

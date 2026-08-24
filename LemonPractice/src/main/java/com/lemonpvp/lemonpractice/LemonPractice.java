@@ -63,6 +63,7 @@ public class LemonPractice extends JavaPlugin {
     private PartyManager partyManager;
     private ZonePracticeManager zonePracticeManager;
     private com.lemonpvp.lemonpractice.managers.ReplayManager replayManager;
+    private com.lemonpvp.lemonpractice.managers.LobbyAmbienceManager lobbyAmbienceManager;
     private VelocityMessaging velocityMessaging;
     private String serverType;
     private Boolean worldEditAvailable;
@@ -152,6 +153,12 @@ public class LemonPractice extends JavaPlugin {
         partyManager = new PartyManager(this);
         zonePracticeManager = new ZonePracticeManager(this);
         replayManager = new com.lemonpvp.lemonpractice.managers.ReplayManager(this);
+
+        // Lobby presentation (portal signs, ambience, arrival) — LOBBY server only.
+        if (serverType.equals("LOBBY")) {
+            lobbyAmbienceManager = new com.lemonpvp.lemonpractice.managers.LobbyAmbienceManager(this);
+            lobbyAmbienceManager.start();
+        }
 
         // 5. Register VelocityMessaging
         velocityMessaging = new VelocityMessaging(this);
@@ -298,6 +305,9 @@ public class LemonPractice extends JavaPlugin {
         if (zonePracticeManager != null) {
             zonePracticeManager.shutdown();
         }
+        if (lobbyAmbienceManager != null) {
+            lobbyAmbienceManager.shutdown(); // despawn the portal signs
+        }
         if (ffaManager != null) {
             ffaManager.shutdown();
         }
@@ -380,6 +390,10 @@ public class LemonPractice extends JavaPlugin {
     }
 
     public VelocityMessaging getVelocityMessaging() { return velocityMessaging; }
+    public com.lemonpvp.lemonpractice.managers.LobbyAmbienceManager getLobbyAmbienceManager() {
+        return lobbyAmbienceManager;
+    }
+
     public String getServerType() { return serverType; }
 
     /**
