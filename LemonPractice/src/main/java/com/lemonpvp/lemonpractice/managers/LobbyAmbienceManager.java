@@ -1,6 +1,7 @@
 package com.lemonpvp.lemonpractice.managers;
 
 import com.lemonpvp.lemonpractice.LemonPractice;
+import com.lemonpvp.lemonpractice.database.PracticeDatabase;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
@@ -19,7 +20,10 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Makes the lobby feel alive: floating portal signs with live player counts, ambient particles
@@ -65,9 +69,14 @@ public class LobbyAmbienceManager {
     private final LemonPractice plugin;
     private final NamespacedKey markerKey;
     private final List<TextDisplay> labels = new ArrayList<>();
+    /** Leaderboard boards, keyed by portal so only mapped arches get one. */
+    private final Map<String, TextDisplay> boards = new HashMap<>();
+    /** Last fetched top-3 per gamemode. Rendered from here so the DB is never on the render path. */
+    private final Map<String, List<PracticeDatabase.LeaderEntry>> topCache = new ConcurrentHashMap<>();
 
     private BukkitTask particleTask;
     private BukkitTask labelTask;
+    private BukkitTask topTask;
 
     public LobbyAmbienceManager(LemonPractice plugin) {
         this.plugin = plugin;
@@ -105,16 +114,29 @@ public class LobbyAmbienceManager {
         labelTask = Bukkit.getScheduler().runTaskTimer(plugin, this::refreshLabels, 40L, 40L);
         particleTask = Bukkit.getScheduler().runTaskTimer(plugin, this::emitParticles, 20L, 10L);
 
-        plugin.getLogger().info("[LobbyAmbience] Lobby ambience active (" + labels.size() + " portal signs).");
+        if (plugin.getConfig().getBoolean("lobby.ambience.leaderboards", true)) {
+            spawnBoards(world);
+            // The query is async and only every 30s; boards render from the cache, so a slow
+            // database never touches the main thread or stalls the display.
+            topTask = Bukkit.getScheduler().runTaskTimer(plugin, this::fetchTop, 60L, 20L * 30L);
+        }
+
+        plugin.getLogger().info("[LobbyAmbience] Lobby ambience active (" + labels.size()
+                + " portal signs, " + boards.size() + " leaderboards).");
     }
 
     public void shutdown() {
         if (particleTask != null) { particleTask.cancel(); particleTask = null; }
         if (labelTask != null)    { labelTask.cancel();    labelTask = null; }
+        if (topTask != null)      { topTask.cancel();      topTask = null; }
         for (TextDisplay d : labels) {
             if (d != null && d.isValid()) d.remove();
         }
         labels.clear();
+        for (TextDisplay d : boards.values()) {
+            if (d != null && d.isValid()) d.remove();
+        }
+        boards.clear();
     }
 
     /**
@@ -178,6 +200,80 @@ public class LobbyAmbienceManager {
             }
         }
         return MM.deserialize(sb.toString());
+    }
+
+    // ── Leaderboard boards ──────────────────────────────────────────────────
+
+    /** One board per arch that actually advertises a gamemode; the decorative ones get none. */
+    private void spawnBoards(World world) {
+        for (Portal p : PORTALS) {
+            String gamemode = gamemodeOf(p);
+            if (gamemode == null || gamemode.isBlank()) continue;
+            if (plugin.getGamemodeManager() == null || !plugin.getGamemodeManager().exists(gamemode)) continue;
+
+            // Sits above the portal sign, so it reads as a board mounted over the arch and the
+            // offset works the same for every compass direction.
+            Location loc = new Location(world, p.x() + 0.5, p.y() + 6.0, p.z() + 0.5);
+            TextDisplay disp = world.spawn(loc, TextDisplay.class, d -> {
+                d.text(boardText(p, gamemode));
+                d.setBillboard(Display.Billboard.CENTER);
+                d.setSeeThrough(false);
+                d.setShadowed(true);
+                d.setBackgroundColor(Color.fromARGB(90, 0, 0, 0)); // faint plate: it's a real board
+                d.setViewRange(1.2f);
+                d.setPersistent(false);
+                d.getPersistentDataContainer().set(markerKey, PersistentDataType.BYTE, (byte) 1);
+            });
+            boards.put(p.key(), disp);
+        }
+    }
+
+    /** Pulls the current top three per mapped gamemode, then repaints on the main thread. */
+    private void fetchTop() {
+        if (plugin.getDatabase() == null) return;
+        int minMatches = plugin.getConfig().getInt("lobby.ambience.leaderboard-min-matches", 5);
+        for (Portal p : PORTALS) {
+            String gamemode = gamemodeOf(p);
+            if (gamemode == null || gamemode.isBlank() || !boards.containsKey(p.key())) continue;
+            plugin.getDatabase().getTopElo(gamemode, minMatches, 3).thenAccept(list -> {
+                if (list == null) return;
+                topCache.put(gamemode.toLowerCase(), list);
+                // Entity writes belong on the main thread.
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    TextDisplay d = boards.get(p.key());
+                    if (d != null && d.isValid()) d.text(boardText(p, gamemode));
+                });
+            });
+        }
+    }
+
+    private Component boardText(Portal p, String gamemode) {
+        List<PracticeDatabase.LeaderEntry> top = topCache.get(gamemode.toLowerCase());
+        StringBuilder sb = new StringBuilder("<gold><bold>TOP ")
+                .append(stripTags(p.label()).toUpperCase()).append("</bold></gold>");
+        if (top == null) {
+            sb.append("\n<dark_gray>loading…");
+        } else if (top.isEmpty()) {
+            sb.append("\n<dark_gray>no ranked players yet");
+        } else {
+            String[] medals = {"<gold>①", "<gray>②", "<#cd7f32>③"};
+            for (int i = 0; i < top.size() && i < medals.length; i++) {
+                PracticeDatabase.LeaderEntry e = top.get(i);
+                sb.append("\n").append(medals[i]).append(" <white>")
+                        .append(escape(e.name())).append(" <dark_gray>— <yellow>").append(e.value());
+            }
+        }
+        return MM.deserialize(sb.toString());
+    }
+
+    /** Player names are shown inside a MiniMessage string, so neutralise any tags in them. */
+    private static String escape(String raw) {
+        return raw == null ? "?" : MM.escapeTags(raw);
+    }
+
+    /** The portal labels carry colour tags; the board heading wants the bare word. */
+    private static String stripTags(String labelWithTags) {
+        return labelWithTags.replaceAll("<[^>]*>", "");
     }
 
     // ── Lookup ──────────────────────────────────────────────────────────────
