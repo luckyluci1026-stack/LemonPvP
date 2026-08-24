@@ -63,7 +63,6 @@ death-redirect:
 
 # ---------------- Einfrieren ----------------
 freeze:
-  usage: "%prefix%<gray>/freeze <Spieler></gray>"
   not-online: "%prefix%<red><white>%spieler%</white> ist nicht online.</red>"
   done: "%prefix%<green><white>%spieler%</white> ist jetzt eingefroren.</green>"
   undone: "%prefix%<green><white>%spieler%</white> ist wieder frei.</green>"
@@ -73,6 +72,9 @@ freeze:
   left-while-frozen: "%prefix%<gray>⚠ <white>%spieler%</white> hat eingefroren die Verbindung getrennt.</gray>"
   command-blocked: "%prefix%<red>Das geht nicht, solange du eingefroren bist.</red>"
   actionbar: "<aqua>❄ Du bist eingefroren ❄</aqua>"
+  list-empty: "%prefix%<green>Niemand ist gerade eingefroren.</green>"
+  list-header: "%prefix%<gold><bold>Eingefroren (%anzahl%):</bold></gold>"
+  list-entry: "%prefix%<gray>• <white>%spieler%</white> <dark_gray>- seit <white>%dauer%</white></dark_gray>%status%"
 
 # ---------------- Meldungen ----------------
 report:
@@ -87,6 +89,7 @@ report:
 daily:
   already-claimed: "%prefix%<gold>Heute schon abgeholt - versuch es in <white>%stunden%</white> Stunden wieder.</gold>"
   claimed: "%prefix%<green>Abgeholt! Serie: <white>%serie%</white> Tag(e) am Stück.</green>"
+  join-reminder: "%prefix%<gray>Deine tägliche Belohnung wartet noch - <white>/daily</white>!</gray>"
 
 # ---------------- Serverspawn ----------------
 spawn:

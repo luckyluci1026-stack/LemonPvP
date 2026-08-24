@@ -32,7 +32,8 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   Schaden/Wegwerfen gesperrt, Reden bleibt möglich) - für die Minute vor
   einem `/gban`, in der man erst reden will. Erinnert per Actionbar 1x/Sekunde
   daran (`freeze.actionbar` in config.yml), damit "warum bewege ich mich
-  nicht" nicht die einzige Rückmeldung ist.
+  nicht" nicht die einzige Rückmeldung ist. **/freeze** ohne Ziel zeigt dem
+  Team, wer gerade eingefroren ist, seit wann und ob noch online.
 - **/report <Spieler> <Grund>**: für alle, mit Cooldown. Landet live bei
   jedem mit `bettersmp.report.receive` und in `reports.log`.
 - **Serien-Ansagen im PvP**: Meilensteine (3, 5, 10 ...) und "Serie beendet"
@@ -40,6 +41,8 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   laufende Serie steht auch auf dem Scoreboard (`%streak%`).
 - **/daily**: eine Kleinigkeit fürs Wiederkommen, mit Bonus für aufeinander-
   folgende Tage (Kalendertag-genau, kein 24-Stunden-Timer zum Austricksen).
+  Wer beim Join noch nicht abgeholt hat, bekommt kurz nach der MOTD einen
+  Hinweis (`daily-reward.join-reminder` in config.yml, Standard an).
 - **/spawn, /setspawn**: eigener Serverspawn, unabhängig von Essentials.
   Ohne `death-redirect` respawnt man dort statt am zufälligen Bett.
 - **Tod → Lobby** (optional, `death-redirect` in `config.yml`, Standard AUS):

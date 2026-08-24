@@ -73,6 +73,18 @@ public final class JoinModule implements Listener {
                 }
             }, delay);
         }
+
+        // Nach der MOTD, sonst geht die Erinnerung darin unter - wer heute
+        // noch nicht abgeholt hat, bekommt einen dezenten Hinweis auf /daily.
+        if (plugin.getConfig().getBoolean("daily-reward.join-reminder", true)
+                && !plugin.dailyReward().bereitsAbgeholt(player.getUniqueId())) {
+            long delay = plugin.getConfig().getLong("join-quit.motd.delay-ticks", 15) + 40;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    plugin.msgs().send(player, "daily.join-reminder");
+                }
+            }, delay);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH)

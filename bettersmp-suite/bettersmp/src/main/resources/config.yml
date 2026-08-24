@@ -119,6 +119,8 @@ daily-reward:
   money-base: 50
   money-per-streak-day: 5
   money-streak-cap: 30
+  # Dezenter Hinweis beim Join, wenn heute noch nicht abgeholt wurde.
+  join-reminder: true
 
 # ----------------------------------------------------------
 # Serien-Ansagen im PvP (reine Stimmung, keine Belohnung)
