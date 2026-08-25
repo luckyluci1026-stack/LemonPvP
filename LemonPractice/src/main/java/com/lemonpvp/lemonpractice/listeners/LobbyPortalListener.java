@@ -87,9 +87,18 @@ public class LobbyPortalListener implements Listener {
         if (queuedFor != null) {
             plugin.getQueueManager().removeFromQueue(player.getUniqueId());
         }
-        plugin.getQueueManager().addToQueue(player.getUniqueId(), gamemodeId);
+        // requestQueue, not addToQueue: on the lobby this hands off to the duels server instead
+        // of parking the player in a local queue that can never start a match.
+        plugin.getQueueManager().requestQueue(player, gamemodeId);
 
         announce(player, gm, spot, queuedFor != null);
+    }
+
+    /** Honest wording: from the lobby the player is being transferred, not searched for yet. */
+    private String subtitle(boolean switched) {
+        if (!plugin.getQueueManager().queuesLocally()) return "<gray>Sending you to the duels server…";
+        return switched ? "<gray>Switched queue — searching for an opponent…"
+                        : "<gray>Searching for an opponent…";
     }
 
     /** The payoff for walking in: a title, a chime and a burst of the arch's own particle. */
@@ -97,13 +106,13 @@ public class LobbyPortalListener implements Listener {
                           boolean switched) {
         player.showTitle(Title.title(
                 MM.deserialize(gm.getDisplayName()),
-                MM.deserialize(switched
-                        ? "<gray>Switched queue — searching for an opponent…"
-                        : "<gray>Searching for an opponent…"),
+                MM.deserialize(subtitle(switched)),
                 Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1600),
                         Duration.ofMillis(500))));
         player.sendMessage(MM.deserialize("<green>Joined queue for " + gm.getDisplayName()
-                + "<green>. <gray>Use the queue menu to leave."));
+                + "<green>."
+                + (plugin.getQueueManager().queuesLocally()
+                        ? " <gray>Use the queue menu to leave." : "")));
         player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.6f, 1.8f);
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.2f);
 

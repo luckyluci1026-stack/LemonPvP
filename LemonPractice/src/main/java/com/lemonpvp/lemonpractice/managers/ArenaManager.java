@@ -43,6 +43,16 @@ public class ArenaManager {
                 .findFirst();
     }
 
+    /**
+     * Whether any arena on this server could ever host this gamemode, regardless of whether one
+     * is free right now. Lets callers tell "everything is busy" (wait) apart from "nothing is
+     * configured" (an admin has to fix it), instead of retrying forever.
+     */
+    public boolean hasArenaForGamemode(String gamemode) {
+        return arenas.values().stream()
+                .anyMatch(a -> a.isBoundTo(gamemode) && a.isFullyConfigured());
+    }
+
     public Arena getArenaByName(String name) {
         return arenas.values().stream()
                 .filter(a -> a.getName().equalsIgnoreCase(name))

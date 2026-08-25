@@ -148,6 +148,24 @@ public class PracticeDatabase {
      * the marker atomically. Returns null when there is none or it is older
      * than 2 minutes (stale handoff — e.g. the transfer failed midway).
      */
+    /**
+     * Writes the lobby -> duels handoff marker. The duels server consumes it on join
+     * ({@link #getPendingQueueAndDelete}) and queues the player there, where the arenas are.
+     */
+    public CompletableFuture<Void> savePendingQueue(java.util.UUID uuid, String gamemode) {
+        return executeAsync(conn -> {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "REPLACE INTO lp_pending_queue (uuid, gamemode, created_at) VALUES (?, ?, ?)")) {
+                ps.setString(1, uuid.toString());
+                ps.setString(2, gamemode.toLowerCase());
+                ps.setLong(3, System.currentTimeMillis());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().severe("savePendingQueue: " + e.getMessage());
+            }
+        });
+    }
+
     public CompletableFuture<String> getPendingQueueAndDelete(java.util.UUID uuid) {
         return queryAsync(conn -> {
             try {

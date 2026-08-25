@@ -111,8 +111,21 @@ public class BotDuelManager {
 
         var arenaOpt = plugin.getArenaManager().getFreeArenaForGamemode(gamemode);
         if (arenaOpt.isEmpty()) {
-            player.sendMessage(MM.deserialize("<red>No free arena for a bot match right now — re-queuing."));
-            plugin.getQueueManager().addToQueue(player.getUniqueId(), gamemode);
+            // Two very different situations hide behind "no free arena". Re-queuing is right when
+            // they are merely all busy, and an infinite loop when none is configured at all.
+            if (plugin.getArenaManager().hasArenaForGamemode(gamemode)) {
+                player.sendMessage(MM.deserialize(
+                        "<yellow>Every arena is busy right now — staying in the queue."));
+                plugin.getQueueManager().addToQueue(player.getUniqueId(), gamemode);
+            } else {
+                player.sendMessage(MM.deserialize("<red>No arena is set up for <yellow>" + gamemode
+                        + "<red> on this server, so a practice bot can't be started. "
+                        + "Please report this to an admin."));
+                plugin.getLogger().warning("[BotDuel] No arena is bound to gamemode '" + gamemode
+                        + "' on this " + plugin.getServerType() + " server, so the bot fallback can"
+                        + " never succeed. Queue players will wait forever. Check duel-worlds.yml /"
+                        + " arenas, and make sure queueing happens on the DUELS server.");
+            }
             return;
         }
         Arena arena = arenaOpt.get();

@@ -50,6 +50,45 @@ public class QueueManager {
     // Queue management
     // -----------------------------------------------------------------------
 
+    /**
+     * The one correct way to put a player into a queue, wherever they happen to be.
+     *
+     * <p>The arenas — and therefore matchmaking and the bot fallback — only exist on the duels
+     * server. Queueing straight into the local queue from the lobby leaves the player waiting
+     * forever, because nothing there can ever start a match for them. From the lobby this
+     * instead writes the handoff marker and sends the player across; the duels server picks the
+     * marker up on join and queues them there.
+     *
+     * @return true if the request was accepted (queued locally, or handed off)
+     */
+    /** Whether a queue request is served here, or handed off to the duels server. */
+    public boolean queuesLocally() {
+        return !"LOBBY".equals(plugin.getServerType());
+    }
+
+    public boolean requestQueue(Player player, String gamemode) {
+        if (player == null || !player.isOnline()) return false;
+
+        if (!"LOBBY".equals(plugin.getServerType())) {
+            addToQueue(player.getUniqueId(), gamemode);
+            return true;
+        }
+
+        UUID uuid = player.getUniqueId();
+        String duels = plugin.getServersConfig() != null
+                ? plugin.getServersConfig().getString("servers.duels.name", "duels")
+                : "duels";
+        // Write the marker first, then switch servers — the duels server reads it on join, so
+        // it has to be there before the transfer lands.
+        plugin.getDatabase().savePendingQueue(uuid, gamemode).thenRun(() ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(uuid);
+                    if (p == null || !p.isOnline()) return;
+                    plugin.getVelocityMessaging().sendToServer(p, duels);
+                }));
+        return true;
+    }
+
     public void addToQueue(UUID uuid, String gamemode) {
         if (queue.containsKey(uuid)) return;
         if (plugin.getDuelManager().isInDuel(uuid)) return;

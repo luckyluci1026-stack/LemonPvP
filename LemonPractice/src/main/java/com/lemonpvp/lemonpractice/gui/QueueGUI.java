@@ -108,9 +108,13 @@ public class QueueGUI implements Listener {
             clicker.playSound(clicker.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 0.8f);
             clicker.sendMessage(MM.deserialize("<red>Left queue."));
         } else {
-            plugin.getQueueManager().addToQueue(clicker.getUniqueId(), gamemodeId);
+            // requestQueue, not addToQueue: from the lobby the queue has to be handed off to
+            // the duels server, where the arenas (and so matchmaking and the bot) actually are.
+            boolean local = plugin.getQueueManager().queuesLocally();
+            plugin.getQueueManager().requestQueue(clicker, gamemodeId);
             clicker.playSound(clicker.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.2f);
-            clicker.sendMessage(MM.deserialize("<green>Joined queue for <yellow>" + gm.getName() + "<green>."));
+            clicker.sendMessage(MM.deserialize("<green>Joined queue for <yellow>" + gm.getName()
+                    + "<green>." + (local ? "" : " <gray>Sending you to the duels server…")));
             clicker.closeInventory();
         }
     }

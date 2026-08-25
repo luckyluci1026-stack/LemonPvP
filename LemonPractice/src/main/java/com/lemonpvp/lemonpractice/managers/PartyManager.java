@@ -336,7 +336,8 @@ public class PartyManager {
     public void queueParty(Player leader, String gamemode) {
         Party party = parties.get(leader.getUniqueId());
         if (party == null) {
-            plugin.getQueueManager().addToQueue(leader.getUniqueId(), gamemode);
+            // requestQueue: from the lobby this hands off to the duels server.
+            plugin.getQueueManager().requestQueue(leader, gamemode);
             return;
         }
         if (!party.isLeader(leader.getUniqueId())) {
@@ -365,10 +366,11 @@ public class PartyManager {
         for (UUID member : party.getMembers()) {
             if (plugin.getQueueManager().isQueued(member)) continue;
             if (plugin.getDuelManager().isInDuel(member)) continue;
-            plugin.getQueueManager().addToQueue(member, gamemode);
-            queued++;
             Player p = Bukkit.getPlayer(member);
-            if (p != null && !p.getUniqueId().equals(leader.getUniqueId())) {
+            if (p == null || !p.isOnline()) continue; // the handoff needs a live connection
+            plugin.getQueueManager().requestQueue(p, gamemode);
+            queued++;
+            if (!p.getUniqueId().equals(leader.getUniqueId())) {
                 p.sendMessage(MM.deserialize(PREFIX
                         + "<gray>You were queued for <gold>" + gamemode
                         + "</gold>."));
