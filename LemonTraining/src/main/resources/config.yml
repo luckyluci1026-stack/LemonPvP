@@ -1,0 +1,48 @@
+database:
+  host: 172.18.0.1
+  port: 3306
+  database: s1_LemonPvP_Network
+  username: u1_zMGE6ZE7k8
+  password: "I.W3m6k5Yb@sZxtwFbtBey9C"
+
+
+arenas:
+  totem:
+    world: training_world
+    center-x: 0
+    center-y: 64
+    center-z: 200
+    size: 20
+  bow:
+    world: training_world
+    center-x: 0
+    center-y: 64
+    center-z: 300
+    size-x: 30
+    size-z: 10
+  mace:
+    world: training_world
+    center-x: 0
+    center-y: 64
+    center-z: 400
+    size: 20
+  sword:
+    world: training_world
+    center-x: 0
+    center-y: 64
+    center-z: 500
+    size: 20
+  crystal:
+    world: training_world
+    center-x: 0
+    center-y: 64
+    center-z: 600
+    size: 20
+
+crystal-kit:
+  helmet: DIAMOND_HELMET
+  chestplate: DIAMOND_CHESTPLATE
+  leggings: DIAMOND_LEGGINGS
+  boots: DIAMOND_BOOTS
+  sword: DIAMOND_SWORD
+  totem-count: 16

@@ -1,0 +1,79 @@
+database:
+  host: 172.18.0.1
+  port: 3306
+  database: s1_LemonPvP_Network
+  username: u1_zMGE6ZE7k8
+  password: "I.W3m6k5Yb@sZxtwFbtBey9C"
+
+server-name: lobby
+restart:
+  time: "02:30"
+  timezone: "Europe/Berlin"
+
+# "Recent Plays" hologram (native TextDisplay) listing the latest duel replays.
+# Place it in-game with /llobby hologram (sets the location below).
+replay-hologram:
+  enabled: true
+  count: 5
+  refresh-seconds: 30
+  # world/x/y/z are filled in by /llobby hologram
+
+# Hub double-jump: press the jump key twice to launch. Fall damage is disabled.
+# Players with lemoncore.use.fly keep normal /fly instead.
+double-jump:
+  enabled: true
+  forward-power: 1.0
+  up-power: 0.9
+
+# Hub elytra boost: lobby players wear locked "Lobby Wings". Double-jump up,
+# open the elytra mid-air, then right-click while gliding for an explosive
+# boost (explosion particles + bang). Crash damage is disabled.
+elytra-boost:
+  enabled: true
+  give-elytra: true   # auto-equip the locked elytra on join
+  power: 1.15         # boost strength in the look direction
+  cooldown-ms: 1500   # delay between boosts
+
+# Golden Hour: a server-wide event that multiplies apple-tree rewards for a
+# while, with a title + bossbar countdown. Fires automatically on the interval,
+# or manually via /llobby goldenhour [minutes] [multiplier].
+golden-hour:
+  enabled: true
+  interval-minutes: 60     # how often it auto-starts
+  duration-seconds: 300    # how long each Golden Hour lasts
+  multiplier: 2.0          # apple multiplier during the event
+
+# Daily reward: a 7-day streak. Each day grants apples; day 7 also grants a
+# booster (tier id from boosters.lemon). Missing a day resets the streak.
+daily:
+  timezone: "Europe/Berlin"
+  day7-booster: L1
+  apples: [100, 150, 200, 300, 400, 500, 1000]
+
+apple-tree:
+  # World name where the apple tree is located
+  world: world
+  # Leaf materials that reward apples on right-click
+  leaf-materials:
+    - OAK_LEAVES
+    - BIRCH_LEAVES
+    - SPRUCE_LEAVES
+    - ACACIA_LEAVES
+    - DARK_OAK_LEAVES
+    - JUNGLE_LEAVES
+    - AZALEA_LEAVES
+    - FLOWERING_AZALEA_LEAVES
+  # Log materials that reward planks on right-click
+  log-materials:
+    - OAK_LOG
+    - BIRCH_LOG
+    - SPRUCE_LOG
+    - ACACIA_LOG
+    - DARK_OAK_LOG
+    - JUNGLE_LOG
+  # Cooldown between leaf clicks per player (in ticks, 20 = 1s)
+  apple-cooldown-ticks: 20
+  # Cooldown between log clicks per player (in ticks, 100 = 5s)
+  plank-cooldown-ticks: 100
+  # Base apples awarded per leaf click (before boosters)
+  base-apples: 1

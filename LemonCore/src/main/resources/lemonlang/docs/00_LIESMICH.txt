@@ -1,0 +1,137 @@
+================================================================
+  LemonLang v3 — LIESMICH (Willkommen!)
+================================================================
+
+Hallo! Schoen, dass du hier bist. LemonLang ist eine super
+einfache Sprache, mit der DU deinem Minecraft-Server neue Sachen
+beibringen kannst — ganz OHNE Programmieren zu koennen.
+
+Versprechen: 15x einfacher als Python. Keine geschweiften
+Klammern { }, keine Punkte, keine runden Klammern ( ), keine
+Anfuehrungszeichen " ". Nur normale Woerter, eins nach dem
+anderen.
+
+
+----------------------------------------------------------------
+  WAS IST LEMONLANG?
+----------------------------------------------------------------
+
+Mit LemonLang schreibst du kleine "Scripte". Ein Script ist eine
+Textdatei, die endet mit .lemon
+
+Darin sagst du dem Server Dinge wie:
+  - "Wenn ein Spieler joint, sag ihm Hallo."
+  - "Mache ein neues Item namens Kirsche."
+  - "Baue einen Shop zum Aepfel kaufen."
+
+Du schreibst einfach in normalen Woertern, was passieren soll.
+
+
+----------------------------------------------------------------
+  WO LIEGEN MEINE SCRIPTE?
+----------------------------------------------------------------
+
+Alle Scripte liegen hier:
+
+  plugins/LemonCore/lemonlang/
+
+Lege dort Dateien an, die mit .lemon enden, zum Beispiel:
+
+  plugins/LemonCore/lemonlang/mein_erstes.lemon
+
+Auch Unterordner sind erlaubt — sie werden alle gefunden.
+
+Beispiele und diese Doku liegen ebenfalls dort:
+
+  plugins/LemonCore/lemonlang/docs/      <- diese Anleitungen
+  plugins/LemonCore/lemonlang/examples/  <- fertige Beispiele
+
+
+----------------------------------------------------------------
+  INSTALLIEREN
+----------------------------------------------------------------
+
+1. LemonCore Plugin in den Ordner plugins/ legen.
+2. Server starten.
+3. Beim ersten Start werden Ordner, Doku und Beispiele
+   automatisch erstellt.
+4. Fertig! Lege deine eigenen .lemon Dateien an.
+
+
+----------------------------------------------------------------
+  AENDERN UND NEU LADEN
+----------------------------------------------------------------
+
+Du musst den Server NICHT neu starten, wenn du ein Script
+aenderst. Tippe im Spiel oder in der Konsole:
+
+  /lemonlang reload
+
+Das laedt alle Scripte neu. Wenn ein Fehler drin ist, bekommst
+du eine klare deutsche Meldung mit der Zeilennummer.
+
+
+----------------------------------------------------------------
+  FEHLER LESEN
+----------------------------------------------------------------
+
+Wenn etwas nicht stimmt, zeigt dir LemonLang:
+
+  - die Datei
+  - die Zeilennummer
+  - was schiefgelaufen ist
+  - oft einen Tipp ("Meintest du ...?")
+
+Beispiel:
+
+  [mein_script.lemon:7] Unbekanntes Wort 'mesage'
+  Tipp: Meintest du 'message'?
+
+Keine Angst vor Fehlern — sie helfen dir nur weiter. Lies die
+Zeile, korrigiere den Tippfehler, dann /lemonlang reload.
+
+
+----------------------------------------------------------------
+  SUPER WICHTIG: EINRUECKUNG MIT 2 LEERZEICHEN!
+----------------------------------------------------------------
+
+LemonLang erkennt zusammengehoerige Zeilen an der EINRUECKUNG
+(also wie weit eine Zeile vom linken Rand entfernt ist).
+
+  -> Eine Ebene tiefer = GENAU 2 Leerzeichen mehr.
+
+Beispiel:
+
+  on join
+    message <green>Hallo!
+
+Die zweite Zeile gehoert zu "on join", weil sie 2 Leerzeichen
+weiter rechts steht.
+
+ACHTUNG — KEINE TABS verwenden!
+Wenn du am Zeilenanfang einen Tab (Tabulatortaste) benutzt,
+bekommst du den Fehler:
+
+  Bitte Leerzeichen statt Tabs.
+
+Stelle deinen Texteditor so ein, dass die Tab-Taste 2
+Leerzeichen einfuegt. Das spart dir viel Aerger.
+
+
+----------------------------------------------------------------
+  DEINE NAECHSTEN SCHRITTE
+----------------------------------------------------------------
+
+  01_grundlagen.txt        -> Dein erstes Script
+  02_variablen_macros.txt  -> Variablen & Bausteine
+  03_nachrichten.txt       -> Text & Farben
+  04_wirtschaft.txt        -> Aepfel, Bretter, Muenzen
+  05_items.txt             -> Eigene Items bauen
+  06_commands.txt          -> Eigene Befehle
+  07_guis.txt              -> Menues / Shops
+  08_trigger.txt           -> Wann passiert was
+  09_bedingungen.txt       -> Wenn / Dann
+  10_effekte.txt           -> Sounds, Partikel, Teleport ...
+  11_referenz.txt          -> Spickzettel mit allem
+
+Viel Spass! 🍋

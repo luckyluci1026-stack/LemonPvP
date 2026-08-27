@@ -1,0 +1,145 @@
+name: LemonPractice
+version: "1.1.0"
+main: com.lemonpvp.lemonpractice.LemonPractice
+api-version: "1.21"
+description: LemonPvP Practice Plugin
+authors: [LemonPvP]
+softdepend: [LuckPerms, FastAsyncWorldEdit, LemonCore, LemonCosmetics, packetevents]
+
+permissions:
+  lemonpractice.admin.reload:
+    description: Reload LemonPractice configs without restarting
+    default: op
+  lemonpractice.admin.tournament:
+    description: Create and manage tournaments
+    default: op
+  lemonpractice.admin.kits:
+    description: Create, edit and delete preset kits
+    default: op
+  lemonpractice.admin.arena:
+    description: Manage arenas
+    default: op
+  lemonpractice.admin.buildspawn:
+    description: Build lobby spawn
+    default: op
+  lemonpractice.admin.elo:
+    description: Manage player ELO
+    default: op
+  lemonpractice.priority.queue:
+    description: Priority queue after restart
+    default: false
+  lemonpractice.use.queue:
+    description: Join queues
+    default: true
+  lemonpractice.use.ffa:
+    description: Join FFA arenas
+    default: true
+  lemonpractice.use.duel:
+    description: Challenge players to direct duels
+    default: true
+  lemonpractice.use.party:
+    description: Use the party system
+    default: true
+  lemonpractice.use.stats:
+    description: View player statistics
+    default: true
+  lemonpractice.use.spectate:
+    description: Spectate running duels
+    default: true
+  lemonpractice.use.top:
+    description: View the network leaderboard
+    default: true
+  lemonpractice.zone:
+    description: Join Zone Practice rounds
+    default: true
+  lemonpractice.replay:
+    description: Watch and manage duel replays
+    default: true
+  lemonpractice.admin.replay:
+    description: View, delete, extend and purge every player's replays
+    default: op
+
+commands:
+  lpractice:
+    description: LemonPractice admin commands
+    permission: lemonpractice.admin.reload
+    usage: /lpractice reload|doctor
+  aowarena:
+    description: Manage arenas
+    permission: lemonpractice.admin.arena
+    usage: /aowarena <create|setspawn1|setspawn2|setspawnspec|setpos1|setpos2|bind|dupe|save|buildarenas> <name> [args]
+  aowbuildspawn:
+    description: Build the tropical lobby spawn
+    permission: lemonpractice.admin.buildspawn
+  gelo:
+    description: Manage player ELO
+    permission: lemonpractice.admin.elo
+    usage: /gelo <player> <add|remove|set|reset> <gamemode> [amount]
+  duel:
+    description: Challenge a player to a direct duel
+    permission: lemonpractice.use.duel
+    usage: /duel <player> [gamemode] | /duel accept|deny <player>
+  stats:
+    description: View your or another player's statistics
+    permission: lemonpractice.use.stats
+    usage: /stats [player]
+  spectate:
+    description: Watch a running duel live
+    permission: lemonpractice.use.spectate
+    aliases: [watch, spec]
+    usage: /spectate [player|leave]
+  leave:
+    description: Stop spectating, leave the queue, or forfeit your match and return to the lobby
+    usage: /leave
+  matchinv:
+    description: Review the loadouts from your last duel
+    permission: lemonpractice.use.stats
+    usage: /matchinv
+  tournament:
+    description: Official multi-day 1v1 tournaments
+    aliases: [tourney, tourny]
+    usage: /tournament — opens the tournament panel (subcommands still work)
+  top:
+    description: Open the network leaderboard
+    permission: lemonpractice.use.top
+    usage: /top
+  leaderboard:
+    description: Open the network leaderboard
+    permission: lemonpractice.use.top
+    aliases: [lb, leaderboards]
+    usage: /leaderboard
+  party:
+    description: Manage your party
+    permission: lemonpractice.use.party
+    usage: /party — opens the party panel (subcommands still work as fallback)
+  p:
+    description: Party chat shortcut
+    permission: lemonpractice.use.party
+    usage: /p <message>
+  partychat:
+    description: Party chat
+    permission: lemonpractice.use.party
+    usage: /partychat <message>
+  zone:
+    description: Join or leave a Zone Practice round (shrinking-zone battle royale practice)
+    permission: lemonpractice.zone
+    usage: /zone <join|leave>
+  ffa:
+    description: Join or leave the roaming-zone FFA
+    permission: lemonpractice.use.ffa
+    usage: /ffa <join|leave>
+  replay:
+    description: Watch and manage duel replays
+    permission: lemonpractice.replay
+    usage: /replay <name> [add <days>] | list | info <name> | stop
+  greplay:
+    description: Admin replay browser — view, delete, extend and purge all replays
+    permission: lemonpractice.admin.replay
+    usage: /greplay | <name> | info <name> | delete <name> | extend <name> <days> | purge
+  kiteditor:
+    description: Open the kit editor (usable from the lobby hotbar)
+    usage: /kiteditor
+  kitadmin:
+    description: Create, edit and delete the per-gamemode preset kits
+    permission: lemonpractice.admin.kits
+    usage: /kitadmin | edit <gamemode> | save | cancel | delete <gamemode>

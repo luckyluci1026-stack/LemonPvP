@@ -1,0 +1,30 @@
+tags:
+  money:
+    price: 500
+  winner:
+    price: 1000
+  veteran:
+    price: 750
+  lemon:
+    price: 300
+  elite:
+    price: 2000
+  ghost:
+    price: 400
+  toxic:
+    price: 400
+  nova:
+    price: 800
+  frost:
+    price: 600
+  inferno:
+    price: 600
+  cosmic:
+    price: 900
+  # developing, staff, holzi, wichtig, hugo have no price — permission only
+  holzi:
+    permission: lemoncosmetics.tag.holzi
+  wichtig:
+    permission: lemoncosmetics.tag.wichtig
+  hugo:
+    permission: lemoncosmetics.tag.hugo

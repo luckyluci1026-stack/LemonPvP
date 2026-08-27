@@ -1,0 +1,15 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {"when": 2001, "model": {"type": "minecraft:model", "model": "lemonpvp:item/hat_lemon_crown"}},
+      {"when": 2002, "model": {"type": "minecraft:model", "model": "lemonpvp:item/hat_tropical_leaf"}},
+      {"when": 2003, "model": {"type": "minecraft:model", "model": "lemonpvp:item/hat_bamboo"}},
+      {"when": 2004, "model": {"type": "minecraft:model", "model": "lemonpvp:item/hat_gold_halo"}},
+      {"when": 2005, "model": {"type": "minecraft:model", "model": "lemonpvp:item/hat_pirate"}},
+      {"when": 2006, "model": {"type": "minecraft:model", "model": "lemonpvp:item/hat_party"}}
+    ],
+    "fallback": {"type": "minecraft:model", "model": "minecraft:item/leather_helmet"}
+  }
+}

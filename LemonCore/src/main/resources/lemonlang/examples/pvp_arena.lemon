@@ -1,0 +1,30 @@
+# ============================================================
+#  BEISPIEL: PvP-Arena
+#  Belohnt Treffer und Kills, traegt Tode mit etwas Trost.
+# ============================================================
+
+set marke = <gold>[<red>Arena<gold>]
+
+on hit
+  actionbar <red>{attacker} hat {victim} getroffen!
+
+on kill
+  give coins 50
+  give apples 5
+  sound ENTITY_PLAYER_LEVELUP
+  title <gold>Kill! | <gray>Du hast {victim} besiegt! +50 Muenzen | 3s
+  broadcast {marke} <green>{player} hat {victim} besiegt!
+  if has perm lemon.vip
+    give coins 25
+    actionbar <gold>VIP-Bonus: +25 Muenzen!
+
+on death
+  repeat 3
+    sound ENTITY_VILLAGER_NO
+  title <red>Gefallen! | <gray>Versuch es nochmal, {player} | 3s
+  message <gray>Kopf hoch! Beim naechsten Mal klappt es.
+
+# Anfeuerung alle 2 Minuten fuer alle in der Arena
+every 2m
+  if chance 50
+    actionbar <aqua>Kaempfe weiter fuer Ruhm und Muenzen!

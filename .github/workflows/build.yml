@@ -1,0 +1,96 @@
+name: Build Plugins
+
+on:
+  push:
+    branches: [ "claude/lemoncore-plugin-EhiMg", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.8'
+          cache-read-only: false
+
+      - name: Diagnostics
+        run: |
+          echo "=== Java version ==="
+          java -version
+          echo "=== Gradle version ==="
+          gradle --version
+          echo "=== Network: repo.papermc.io ==="
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+            "https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/1.21.4-R0.1-SNAPSHOT/maven-metadata.xml" \
+            || echo "curl failed"
+          echo "=== Network: maven central ==="
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" \
+            "https://repo1.maven.org/maven2/com/zaxxer/HikariCP/5.1.0/HikariCP-5.1.0.pom"
+
+      # ── 1. LemonCore (must be first — others depend on it) ──────────────────
+      - name: Build LemonCore
+        working-directory: LemonCore
+        run: gradle shadowJar --no-daemon --info 2>&1 | tail -60
+
+      # ── 2. LemonCosmetics (depends on LemonCore jar) ─────────────────────
+      - name: Build LemonCosmetics
+        working-directory: LemonCosmetics
+        run: gradle shadowJar --no-daemon
+
+      # ── 3. Independent plugins ────────────────────────────────────────────
+      - name: Build LemonPractice
+        working-directory: LemonPractice
+        run: gradle shadowJar --no-daemon
+
+      - name: Build LemonQuests
+        working-directory: LemonQuests
+        run: gradle shadowJar --no-daemon
+
+      - name: Build LemonResourcePack (Velocity)
+        working-directory: LemonResourcePack
+        run: gradle shadowJar --no-daemon
+
+      - name: Build LemonEvents
+        working-directory: LemonEvents
+        run: gradle shadowJar --no-daemon
+
+      - name: Build LemonLobby
+        working-directory: LemonLobby
+        run: gradle shadowJar --no-daemon
+
+      - name: Build LemonTraining
+        working-directory: LemonTraining
+        run: gradle shadowJar --no-daemon
+
+      # ── Collect all jars ──────────────────────────────────────────────────
+      - name: Collect jars
+        run: |
+          mkdir -p artifacts
+          cp LemonCore/build/libs/LemonCore-1.0.0.jar           artifacts/
+          cp LemonCosmetics/build/libs/LemonCosmetics-1.0.0.jar artifacts/
+          cp LemonPractice/build/libs/LemonPractice-1.0.0.jar   artifacts/
+          cp LemonQuests/build/libs/LemonQuests-1.0.0.jar       artifacts/
+          cp LemonResourcePack/build/libs/LemonResourcePack-1.0.0.jar artifacts/
+          cp LemonEvents/build/libs/LemonEvents-1.0.0.jar       artifacts/
+          cp LemonLobby/build/libs/LemonLobby-1.0.0.jar         artifacts/
+          cp LemonTraining/build/libs/LemonTraining-1.0.0.jar   artifacts/
+          ls -lh artifacts/
+
+      - name: Upload plugin jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: LemonPvP-Plugins
+          path: artifacts/*.jar
+          retention-days: 30

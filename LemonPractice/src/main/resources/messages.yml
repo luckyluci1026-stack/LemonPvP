@@ -1,0 +1,60 @@
+prefix: "<bold><gradient:#fffb00:#00ff00>LemonPvP</gradient></bold> <dark_gray>»</dark_gray>"
+
+no-permission: "{prefix} <red>You do not have permission."
+invalid-usage: "{prefix} <red>Usage: <white>{usage}"
+player-not-found: "{prefix} <red>Player not found: <white>{player}"
+
+queue:
+  joined: "{prefix} <green>You joined the queue for <yellow>{gamemode}"
+  left: "{prefix} <yellow>You left the queue."
+  full: "{prefix} <red>That gamemode is not available right now."
+  already-in: "{prefix} <red>You are already in a queue."
+  not-in: "{prefix} <red>You are not in a queue."
+  found: "{prefix} <green>Match found! Sending you to the Duels server..."
+  action-bar: "<yellow>Queuing for {gamemode}... <gray>(<white>{time}s</white>)"
+  waiting: "<white>Waiting for Opponent"
+
+duel:
+  countdown-3: "<bold><white>3</white></bold>"
+  countdown-2: "<bold><white>2</white></bold>"
+  countdown-1: "<bold><white>1</white></bold>"
+  fight: "<bold><gradient:#fffb00:#00ff00>Fight</gradient></bold>"
+  victory: "<bold><gradient:#00ff44:#006600>Victory</gradient></bold>"
+  defeat: "<bold><gradient:#ff4444:#660000>Defeat</gradient></bold>"
+  draw: "<bold><gradient:#44aaff:#0033aa>Rematch</gradient></bold>"
+  action-bar: "<red>❤ {p1_health} <gray>{p1_name} <dark_gray>vs</dark_gray> {p2_name} <green>❤ {p2_health}"
+  spectating: "{prefix} <gray>Spectating {player1} <gray>vs <gray>{player2}"
+
+arena:
+  created: "{prefix} <green>Arena <white>{name} <green>created."
+  spawn1-set: "{prefix} <green>Spawn 1 set for <white>{name}"
+  spawn2-set: "{prefix} <green>Spawn 2 set for <white>{name}"
+  spec-set: "{prefix} <green>Spectator spawn set for <white>{name}"
+  pos1-set: "{prefix} <green>Region corner 1 set for <white>{name}"
+  pos2-set: "{prefix} <green>Region corner 2 set for <white>{name}"
+  bound: "{prefix} <green>Arena <white>{name} <green>bound to <yellow>{gamemode}"
+  duped: "{prefix} <green>Arena <white>{name} <green>duplicated <white>{count} <green>times."
+  not-found: "{prefix} <red>Arena not found: <white>{name}"
+  reset: "{prefix} <green>Arena <white>{name} <green>reset."
+  in-use: "{prefix} <red>Arena <white>{name} <red>is in use."
+
+ffa:
+  join: "{prefix} <green>Joined FFA: <yellow>{arena}"
+  leave: "{prefix} <yellow>Left FFA arena."
+  gui-title: "FFA Arenas"
+  kill: "{prefix} <yellow>{killer} <red>killed <yellow>{victim}"
+
+kit:
+  saved: "{prefix} <green>Kit saved."
+  loaded: "{prefix} <green>Kit loaded."
+  deleted: "{prefix} <red>Kit deleted."
+  delete-confirm: "{prefix} <red>Click again within 3 seconds to confirm deletion."
+
+spawn:
+  building: "{prefix} <green>Building spawn island... Please wait."
+  built: "{prefix} <green>Spawn island built successfully!"
+  set: "{prefix} <green>Lobby spawn point set."
+
+elo:
+  change-win: "{prefix} <green>+{amount} ELO ({gamemode}) — New: {new}"
+  change-loss: "{prefix} <red>-{amount} ELO ({gamemode}) — New: {new}"

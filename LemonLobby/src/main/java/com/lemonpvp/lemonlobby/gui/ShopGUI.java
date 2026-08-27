@@ -1,0 +1,545 @@
+package com.lemonpvp.lemonlobby.gui;
+
+import com.lemonpvp.lemoncore.managers.PlayerData;
+import com.lemonpvp.lemonlobby.LemonLobby;
+import com.lemonpvp.lemonlobby.database.Database;
+import com.lemonpvp.lemonlobby.model.BoosterTier;
+import com.lemonpvp.lemonlobby.model.PlankTier;
+
+import java.util.List;
+import com.lemonpvp.lemonlobby.util.EconomyBridge;
+import com.lemonpvp.lemonlobby.util.FormatUtil;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+public class ShopGUI implements Listener {
+
+    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final int PROGRESS_BARS = 10;
+
+    // ── Slot layout (54 slots / 6 rows) ──────────────────────────────────────
+    private static final int   BALANCE_SLOT      = 4;
+    private static final int[] PLANK_SLOTS       = {10, 11, 12, 13, 14, 15};
+    private static final int   CURRENT_TIER_SLOT = 16;
+    private static final int[] BOOSTER_SLOTS     = {28, 29, 30, 31, 32};
+    private static final int   ACTIVE_BOOSTER_SLOT = 34;
+    private static final int   WOOD_RANK_SLOT    = 38;
+    private static final int   APPLE_RANK_SLOT   = 40;
+    private static final int   CLOSE_SLOT        = 49;
+
+    // ── Buyable ranks (LuckPerms groups). Costs are config-overridable. ──────────
+    private static final String WOOD_RANK_GROUP  = "wood";
+    private static final String APPLE_RANK_GROUP = "apple";
+    private static final long   WOOD_RANK_DEFAULT_COST  = 25_000; // planks
+    private static final long   APPLE_RANK_DEFAULT_COST = 50_000; // apples
+
+    private final LemonLobby plugin;
+    private final Player player;
+    private Inventory inv;
+    private boolean registered;
+
+    // Prevents double-clicks from triggering two purchases simultaneously
+    private boolean purchasing;
+
+    public ShopGUI(LemonLobby plugin, Player player) {
+        this.plugin = plugin;
+        this.player = player;
+    }
+
+    public void open() {
+        inv = Bukkit.createInventory(null, 54,
+                MM.deserialize("<!italic><gradient:#fffb00:#00ff00><bold>Aᴘᴘʟᴇ-Sʜᴏᴘ</bold></gradient>"));
+
+        ItemStack black = pane(Material.BLACK_STAINED_GLASS_PANE);
+        ItemStack gray  = pane(Material.GRAY_STAINED_GLASS_PANE);
+
+        for (int i = 0; i < 54; i++) inv.setItem(i, black);
+        for (int s : PLANK_SLOTS)   inv.setItem(s, gray);
+        for (int s : BOOSTER_SLOTS) inv.setItem(s, gray);
+
+        inv.setItem(WOOD_RANK_SLOT, gray);
+        inv.setItem(APPLE_RANK_SLOT, gray);
+
+        // Section labels
+        inv.setItem(9,  sectionLabel("<#D2691E><bold>Tree Upgrades"));
+        inv.setItem(27, sectionLabel("<gold><bold>Boosters"));
+        inv.setItem(36, sectionLabel("<#e02f2f><bold>Ranks"));
+
+        inv.setItem(BALANCE_SLOT, buildBalanceItem());
+        fillPlankTiers();
+        fillBoosters();
+        fillRanks();
+        inv.setItem(CURRENT_TIER_SLOT,    buildCurrentTierItem());
+        inv.setItem(ACTIVE_BOOSTER_SLOT,  buildActiveBoosterItem());
+        inv.setItem(CLOSE_SLOT,           buildCloseItem());
+
+        player.openInventory(inv);
+        player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.5f, 1.2f);
+
+        if (!registered) {
+            registered = true;
+            Bukkit.getPluginManager().registerEvents(this, plugin);
+        }
+    }
+
+    // ── Plank Tiers ──────────────────────────────────────────────────────────
+
+    private void fillPlankTiers() {
+        PlankTier[] tiers   = PlankTier.values();
+        PlankTier current   = plugin.getTreeUpgradeManager().getCurrentTier(player.getUniqueId());
+        long playerApples   = getApples();
+
+        for (int i = 0; i < PLANK_SLOTS.length && i < tiers.length; i++) {
+            inv.setItem(PLANK_SLOTS[i], buildTierItem(tiers[i], current, playerApples));
+        }
+    }
+
+    private ItemStack buildTierItem(PlankTier tier, PlankTier current, long playerApples) {
+        boolean isActive = tier == current;
+        boolean isOwned  = tier.isFree() || isActive;
+
+        ItemStack item = new ItemStack(tier.material);
+        ItemMeta  meta = item.getItemMeta();
+        if (meta == null) return item;
+
+        String nameColor = isActive ? "<gradient:#fffb00:#00ff00>" : isOwned ? "<green>" : "<gray>";
+        meta.displayName(MM.deserialize("<!italic><bold>" + nameColor + tier.displayName));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><gray>Planks / Click: <white>" + tier.planksPerClick));
+        lore.add(MM.deserialize("<!italic><gray>Duration: " + tier.durationDisplay()));
+        lore.add(Component.empty());
+
+        if (isActive) {
+            lore.add(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>✔ Active"));
+            long expiresAt = plugin.getTreeUpgradeManager().getExpiresAt(player.getUniqueId());
+            if (expiresAt > 0 && expiresAt != Long.MAX_VALUE) {
+                lore.add(MM.deserialize("<!italic><gray>Expires: <white>" + formatExpiry(expiresAt)));
+            }
+        } else if (tier.isFree()) {
+            lore.add(MM.deserialize("<!italic><green>✔ Default"));
+        } else {
+            // Progress bar toward this tier
+            String bar = progressBar(playerApples, tier.appleCost, PROGRESS_BARS);
+            lore.add(MM.deserialize("<!italic>" + bar));
+            lore.add(MM.deserialize("<!italic><gray>"
+                    + FormatUtil.formatAmount(Math.min(playerApples, tier.appleCost))
+                    + " <dark_gray>/ <white>" + FormatUtil.formatAmount(tier.appleCost) + " <green>✿"));
+            lore.add(Component.empty());
+            if (playerApples >= tier.appleCost) {
+                lore.add(MM.deserialize("<!italic><yellow>► Click to buy"));
+            } else {
+                long needed = tier.appleCost - playerApples;
+                lore.add(MM.deserialize("<!italic><dark_gray>Still need <white>"
+                        + FormatUtil.formatAmount(needed) + " <green>✿ <dark_gray>more"));
+            }
+        }
+        lore.add(Component.empty());
+        meta.lore(lore);
+
+        if (isActive) {
+            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack buildCurrentTierItem() {
+        PlankTier tier    = plugin.getTreeUpgradeManager().getCurrentTier(player.getUniqueId());
+        ItemStack item    = new ItemStack(tier.material);  // show actual log, not sapling
+        ItemMeta  meta    = item.getItemMeta();
+        if (meta == null) return item;
+
+        meta.displayName(MM.deserialize("<!italic><bold><gradient:#fffb00:#00ff00>Your Tree Upgrade"));
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><gray>Active: <white>" + tier.displayName));
+        lore.add(MM.deserialize("<!italic><gray>Planks / Click: <white>" + tier.planksPerClick));
+        long expiresAt = plugin.getTreeUpgradeManager().getExpiresAt(player.getUniqueId());
+        if (expiresAt > 0 && expiresAt != Long.MAX_VALUE) {
+            lore.add(MM.deserialize("<!italic><gray>Expires: <white>" + formatExpiry(expiresAt)));
+        } else {
+            lore.add(MM.deserialize("<!italic><green>Permanent"));
+        }
+        lore.add(Component.empty());
+        meta.lore(lore);
+        meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    // ── Boosters ─────────────────────────────────────────────────────────────
+
+    private void fillBoosters() {
+        List<BoosterTier>    tiers  = plugin.getBoosterConfig().getTiers();
+        Database.BoosterEntry active = plugin.getBoosterManager().getActive(player.getUniqueId());
+        long playerApples            = getApples();
+
+        for (int i = 0; i < BOOSTER_SLOTS.length && i < tiers.size(); i++) {
+            inv.setItem(BOOSTER_SLOTS[i], buildBoosterItem(tiers.get(i), active, playerApples));
+        }
+    }
+
+    private ItemStack buildBoosterItem(BoosterTier tier, Database.BoosterEntry active, long playerApples) {
+        boolean isActive = active != null && active.tier() == tier;
+
+        Material mat = switch (tier.level) {
+            case 1  -> Material.SUGAR;
+            case 2  -> Material.BLAZE_POWDER;
+            case 3  -> Material.GLOWSTONE_DUST;
+            case 4  -> Material.NETHER_STAR;
+            case 5  -> Material.DRAGON_BREATH;
+            default -> Material.PAPER;
+        };
+
+        ItemStack item = new ItemStack(mat);
+        ItemMeta  meta = item.getItemMeta();
+        if (meta == null) return item;
+
+        String nameColor = isActive ? "<gradient:#fffb00:#ff9800>" : "<gold>";
+        meta.displayName(MM.deserialize("<!italic><bold>" + nameColor + "Booster " + tier.displayName));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><gray>Bonus Apples: <white>+" + tier.bonusApples + " / Click"));
+        lore.add(MM.deserialize("<!italic><gray>Duration: <white>" + tier.durationDisplay()));
+        lore.add(Component.empty());
+
+        if (isActive) {
+            lore.add(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>✔ Active"));
+            long rem = active.expiresAt() - System.currentTimeMillis();
+            lore.add(MM.deserialize("<!italic><gray>Remaining: <white>" + formatDuration(rem)));
+        } else {
+            // Progress bar
+            String bar = progressBar(playerApples, tier.appleCost, PROGRESS_BARS);
+            lore.add(MM.deserialize("<!italic>" + bar));
+            lore.add(MM.deserialize("<!italic><gray>"
+                    + FormatUtil.formatAmount(Math.min(playerApples, tier.appleCost))
+                    + " <dark_gray>/ <white>" + FormatUtil.formatAmount(tier.appleCost) + " <green>✿"));
+            lore.add(Component.empty());
+            if (active != null) {
+                lore.add(MM.deserialize("<!italic><red>Use up your active booster first!"));
+            } else if (playerApples >= tier.appleCost) {
+                lore.add(MM.deserialize("<!italic><yellow>► Click to buy"));
+            } else {
+                long needed = tier.appleCost - playerApples;
+                lore.add(MM.deserialize("<!italic><dark_gray>Still need <white>"
+                        + FormatUtil.formatAmount(needed) + " <green>✿ <dark_gray>more"));
+            }
+        }
+        lore.add(Component.empty());
+        meta.lore(lore);
+
+        if (isActive) {
+            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack buildActiveBoosterItem() {
+        Database.BoosterEntry active = plugin.getBoosterManager().getActive(player.getUniqueId());
+        ItemStack item = new ItemStack(Material.BEACON);
+        ItemMeta  meta = item.getItemMeta();
+        if (meta == null) return item;
+
+        meta.displayName(MM.deserialize("<!italic><bold><gold>Active Booster"));
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+
+        if (active != null) {
+            lore.add(MM.deserialize("<!italic><gray>Type: <white>" + active.tier().displayName));
+            lore.add(MM.deserialize("<!italic><gray>Bonus: <white>+" + active.tier().bonusApples + " Apples / Click"));
+            long rem = active.expiresAt() - System.currentTimeMillis();
+            lore.add(MM.deserialize("<!italic><gray>Remaining: <white>" + formatDuration(rem)));
+        } else {
+            lore.add(MM.deserialize("<!italic><dark_gray>No active booster."));
+        }
+        lore.add(Component.empty());
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    // ── Buyable ranks ──────────────────────────────────────────────────────────
+
+    private long woodRankCost()  { return plugin.getConfig().getLong("shop.ranks.wood.cost",  WOOD_RANK_DEFAULT_COST); }
+    private long appleRankCost() { return plugin.getConfig().getLong("shop.ranks.apple.cost", APPLE_RANK_DEFAULT_COST); }
+
+    private void fillRanks() {
+        inv.setItem(WOOD_RANK_SLOT,  buildRankItem(false));
+        inv.setItem(APPLE_RANK_SLOT, buildRankItem(true));
+    }
+
+    /**
+     * Builds a buyable-rank icon. {@code apple} selects the Apple rank (apple
+     * currency) vs. the Wood rank (plank currency). Shows an owned state, an
+     * affordable "click to buy", or a progress bar toward the cost.
+     */
+    private ItemStack buildRankItem(boolean apple) {
+        String group   = apple ? APPLE_RANK_GROUP : WOOD_RANK_GROUP;
+        String name    = apple ? "Apple" : "Wood";
+        String color   = apple ? "<gradient:#ff5252:#e02f2f>" : "<gradient:#c8935a:#8B5A2B>";
+        Material mat    = apple ? Material.APPLE : Material.OAK_LOG;
+        String currency = apple ? "✿ Apples" : "▬ Planks";
+        long cost       = apple ? appleRankCost() : woodRankCost();
+        long balance    = apple ? getApples() : EconomyBridge.planks(player.getUniqueId());
+        boolean owned   = EconomyBridge.hasRank(player.getUniqueId(), group);
+
+        ItemStack item = new ItemStack(mat);
+        ItemMeta  meta = item.getItemMeta();
+        if (meta == null) return item;
+
+        meta.displayName(MM.deserialize("<!italic><bold>" + color + name + " Rank"));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
+        lore.add(MM.deserialize("<!italic><gray>A permanent " + color + name + "<gray> rank tag"));
+        lore.add(MM.deserialize("<!italic><gray>shown in chat and the tab list."));
+        lore.add(Component.empty());
+
+        if (owned) {
+            lore.add(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>✔ Owned"));
+        } else {
+            lore.add(MM.deserialize("<!italic><gray>Cost: <white>" + FormatUtil.formatAmount(cost) + " " + currency));
+            String bar = progressBar(balance, cost, PROGRESS_BARS);
+            lore.add(MM.deserialize("<!italic>" + bar));
+            lore.add(Component.empty());
+            if (balance >= cost) {
+                lore.add(MM.deserialize("<!italic><yellow>► Click to buy"));
+            } else {
+                long needed = cost - balance;
+                lore.add(MM.deserialize("<!italic><dark_gray>Still need <white>"
+                        + FormatUtil.formatAmount(needed) + " <gray>" + currency + " <dark_gray>more"));
+            }
+        }
+        lore.add(Component.empty());
+        meta.lore(lore);
+
+        if (owned) {
+            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        }
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private void handleRankPurchase(boolean apple) {
+        String group = apple ? APPLE_RANK_GROUP : WOOD_RANK_GROUP;
+        String name  = apple ? "Apple" : "Wood";
+        long cost    = apple ? appleRankCost() : woodRankCost();
+        long balance = apple ? getApples() : EconomyBridge.planks(player.getUniqueId());
+        String cur   = apple ? "✿" : "▬";
+
+        if (EconomyBridge.hasRank(player.getUniqueId(), group)) {
+            player.sendActionBar(MM.deserialize("<!italic><red>You already own the " + name + " rank!"));
+            return;
+        }
+        if (balance < cost) {
+            player.sendActionBar(MM.deserialize("<!italic><red>Not enough " + cur + "! You still need "
+                    + FormatUtil.formatAmount(cost - balance) + " more."));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
+            return;
+        }
+
+        purchasing = true;
+        var pay = apple
+                ? EconomyBridge.removeApples(player.getUniqueId(), cost)
+                : EconomyBridge.removePlanks(player.getUniqueId(), cost);
+        pay.thenCompose(v -> EconomyBridge.grantRank(player.getUniqueId(), group))
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
+                    player.sendActionBar(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>"
+                            + name + " rank unlocked!"));
+                    purchasing = false;
+                    refresh();
+                }));
+    }
+
+    // ── Balance item ─────────────────────────────────────────────────────────
+
+    private ItemStack buildBalanceItem() {
+        ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+        if (skull.getItemMeta() instanceof SkullMeta meta) {
+            meta.setOwningPlayer(player);
+            meta.displayName(MM.deserialize("<!italic><bold><gradient:#fffb00:#00ff00>" + player.getName()));
+            List<Component> lore = new ArrayList<>();
+            lore.add(Component.empty());
+            PlayerData pd = EconomyBridge.cached(player.getUniqueId());
+            long apples = pd != null ? pd.getApples() : 0;
+            long planks = pd != null ? pd.getPlanks() : 0;
+            lore.add(MM.deserialize("<!italic><gray>✿ Apples: <green>" + FormatUtil.formatAmount(apples)));
+            lore.add(MM.deserialize("<!italic><gray>▬ Planks: <#D2691E>" + FormatUtil.formatAmount(planks)));
+            lore.add(Component.empty());
+            meta.lore(lore);
+            skull.setItemMeta(meta);
+        }
+        return skull;
+    }
+
+    // ── Click handling ────────────────────────────────────────────────────────
+
+    @EventHandler
+    public void onClick(InventoryClickEvent e) {
+        if (!(e.getWhoClicked() instanceof Player p)) return;
+        if (!p.getUniqueId().equals(player.getUniqueId())) return;
+        if (!e.getInventory().equals(inv)) return;
+        e.setCancelled(true);
+
+        int slot = e.getRawSlot();
+        if (slot == CLOSE_SLOT) { player.closeInventory(); return; }
+        if (purchasing) return; // debounce
+
+        if (slot == WOOD_RANK_SLOT)  { handleRankPurchase(false); return; }
+        if (slot == APPLE_RANK_SLOT) { handleRankPurchase(true);  return; }
+
+        PlankTier[] planks   = PlankTier.values();
+        for (int i = 0; i < PLANK_SLOTS.length && i < planks.length; i++) {
+            if (slot == PLANK_SLOTS[i]) { handlePlankPurchase(planks[i]); return; }
+        }
+
+        List<BoosterTier> boosters = plugin.getBoosterConfig().getTiers();
+        for (int i = 0; i < BOOSTER_SLOTS.length && i < boosters.size(); i++) {
+            if (slot == BOOSTER_SLOTS[i]) { handleBoosterPurchase(boosters.get(i)); return; }
+        }
+    }
+
+    private void handlePlankPurchase(PlankTier tier) {
+        if (tier.isFree()) return;
+        PlankTier current = plugin.getTreeUpgradeManager().getCurrentTier(player.getUniqueId());
+        if (current == tier) {
+            player.sendActionBar(MM.deserialize("<!italic><red>You already have this upgrade!"));
+            return;
+        }
+        long apples = getApples();
+        if (apples < tier.appleCost) {
+            player.sendActionBar(MM.deserialize("<!italic><red>Not enough ✿! You still need "
+                    + FormatUtil.formatAmount(tier.appleCost - apples) + " apples."));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
+            return;
+        }
+
+        purchasing = true;
+        EconomyBridge.removeApples(player.getUniqueId(), tier.appleCost)
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    plugin.getTreeUpgradeManager().upgrade(player.getUniqueId(), tier);
+                    player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.3f);
+                    player.sendActionBar(MM.deserialize("<!italic><gradient:#fffb00:#00ff00>Tree upgrade to <white>"
+                            + tier.displayName + " <gradient:#fffb00:#00ff00>activated!"));
+                    purchasing = false;
+                    refresh();
+                }));
+    }
+
+    private void handleBoosterPurchase(BoosterTier tier) {
+        if (plugin.getBoosterManager().getActive(player.getUniqueId()) != null) {
+            player.sendActionBar(MM.deserialize("<!italic><red>You already have an active booster!"));
+            return;
+        }
+        long apples = getApples();
+        if (apples < tier.appleCost) {
+            player.sendActionBar(MM.deserialize("<!italic><red>Not enough ✿! You still need "
+                    + FormatUtil.formatAmount(tier.appleCost - apples) + " apples."));
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 1.0f);
+            return;
+        }
+
+        purchasing = true;
+        EconomyBridge.removeApples(player.getUniqueId(), tier.appleCost)
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    plugin.getBoosterManager().activate(player.getUniqueId(), tier);
+                    player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.8f, 1.0f);
+                    player.sendActionBar(MM.deserialize("<!italic><gradient:#fffb00:#ff9800>Booster "
+                            + tier.displayName + " <gradient:#fffb00:#ff9800>activated!"));
+                    purchasing = false;
+                    refresh();
+                }));
+    }
+
+    private void refresh() {
+        if (inv == null) return;
+        inv.setItem(BALANCE_SLOT,        buildBalanceItem());
+        inv.setItem(CURRENT_TIER_SLOT,   buildCurrentTierItem());
+        inv.setItem(ACTIVE_BOOSTER_SLOT, buildActiveBoosterItem());
+        fillPlankTiers();
+        fillBoosters();
+        fillRanks();
+    }
+
+    @EventHandler
+    public void onClose(InventoryCloseEvent e) {
+        if (!(e.getPlayer() instanceof Player p)) return;
+        if (!p.getUniqueId().equals(player.getUniqueId())) return;
+        if (!e.getInventory().equals(inv)) return;
+        if (registered) { registered = false; HandlerList.unregisterAll(this); }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private long getApples() {
+        return EconomyBridge.apples(player.getUniqueId());
+    }
+
+    private String progressBar(long current, long max, int bars) {
+        float ratio  = max <= 0 ? 1f : Math.min(1f, (float) current / max);
+        int filled   = (int) (ratio * bars);
+        int empty    = bars - filled;
+        String color = ratio >= 1f ? "<green>" : ratio >= 0.6f ? "<yellow>" : "<red>";
+        return color + "█".repeat(filled) + "<dark_gray>" + "░".repeat(empty);
+    }
+
+    private ItemStack pane(Material mat) {
+        ItemStack item = new ItemStack(mat);
+        ItemMeta  meta = item.getItemMeta();
+        if (meta != null) { meta.displayName(Component.empty()); item.setItemMeta(meta); }
+        return item;
+    }
+
+    private ItemStack sectionLabel(String miniMsg) {
+        ItemStack item = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+        ItemMeta  meta = item.getItemMeta();
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic>" + miniMsg)); item.setItemMeta(meta); }
+        return item;
+    }
+
+    private ItemStack buildCloseItem() {
+        ItemStack item = new ItemStack(Material.BARRIER);
+        ItemMeta  meta = item.getItemMeta();
+        if (meta != null) { meta.displayName(MM.deserialize("<!italic><red>Close")); item.setItemMeta(meta); }
+        return item;
+    }
+
+    private String formatExpiry(long expiresAt) {
+        return new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(expiresAt));
+    }
+
+    private String formatDuration(long millis) {
+        if (millis <= 0) return "0s";
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis);
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60;
+        return minutes > 0 ? minutes + "m " + seconds + "s" : seconds + "s";
+    }
+}

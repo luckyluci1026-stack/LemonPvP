@@ -1,0 +1,119 @@
+================================================================
+  03 — NACHRICHTEN UND TEXT
+================================================================
+
+Hier dreht sich alles um Text: Wie schickst du Nachrichten, wie
+machst du sie bunt und wie fuegst du Spielerdaten ein.
+
+
+----------------------------------------------------------------
+  DIE TEXT-VERBEN
+----------------------------------------------------------------
+
+Bei diesen Verben ist der GANZE Rest der Zeile dein Text. Du
+brauchst KEINE Anfuehrungszeichen.
+
+  message <green>Hallo!          -> Nachricht im Chat (nur an den Spieler)
+  actionbar <yellow>Achtung!     -> Text ueber der Hotbar
+  subtitle <gray>Untertitel      -> Untertitel auf dem Bildschirm
+  broadcast <gold>An alle!       -> Nachricht an ALLE Spieler
+  kick <red>Tschuess!            -> Spieler vom Server werfen (mit Grund)
+  title ...                      -> Grosser Titel (siehe unten)
+
+
+----------------------------------------------------------------
+  title MIT | (BALKEN)
+----------------------------------------------------------------
+
+Mit "title" zeigst du grossen Text mitten auf dem Bildschirm.
+Du kannst Haupttitel, Untertitel und Dauer mit | trennen:
+
+  title HAUPTTITEL | UNTERTITEL | DAUER
+
+Beispiele:
+
+  title <gold>Level Up!
+  title <gold>Belohnung! | <gray>+10 Aepfel
+  title <gold>Belohnung! | <gray>+10 Aepfel | 3s
+
+  - Nur ein Teil       -> nur Haupttitel
+  - Zwei Teile         -> Haupttitel + Untertitel
+  - Drei Teile         -> + Anzeigedauer (z.B. 3s)
+
+
+----------------------------------------------------------------
+  FARBEN UND FORMATE (MiniMessage)
+----------------------------------------------------------------
+
+LemonLang nutzt das MiniMessage-Format. Farben und Formate
+schreibst du in spitzen Klammern < >:
+
+  <red>Rot</red>
+  <green>Gruen</green>
+  <gold>Gold</gold>
+  <yellow>Gelb</yellow>
+  <aqua>Tuerkis</aqua>
+  <gray>Grau</gray>
+  <white>Weiss</white>
+
+Eigene Farbe mit Hex-Code:
+
+  <#ff8800>Orange
+
+Formatierungen:
+
+  <bold>Fett</bold>
+  <italic>Kursiv</italic>
+  <underlined>Unterstrichen</underlined>
+
+Schoener Farbverlauf (Gradient):
+
+  <gradient:#fffb00:#00ff00>Bunter Text!
+
+Regenbogen:
+
+  <rainbow>Wuhuu!
+
+Hinweis: Text wird automatisch NICHT kursiv dargestellt, damit
+er sauber aussieht. Mit <italic> kannst du es trotzdem kursiv
+machen.
+
+
+----------------------------------------------------------------
+  PLATZHALTER {...}
+----------------------------------------------------------------
+
+In jedem Text kannst du Platzhalter einsetzen. Sie werden
+automatisch durch echte Werte ersetzt:
+
+  {player}    -> Name des Spielers
+  {apples}    -> Anzahl Aepfel
+  {planks}    -> Anzahl Bretter
+  {coins}     -> Anzahl Muenzen
+  {health}    -> Leben
+  {food}      -> Hunger
+  {world}     -> Name der Welt
+  {x} {y} {z} -> Koordinaten
+  {online}    -> Anzahl Spieler online
+
+Eigene Variablen ebenfalls mit {NAME}.
+
+Beispiel:
+
+  on join
+    message <green>Hallo {player}! Du hast {apples} Aepfel.
+    actionbar <aqua>Welt: {world} bei {x} {y} {z}
+
+
+----------------------------------------------------------------
+  KOMPLETTES BEISPIEL
+----------------------------------------------------------------
+
+  set marke = <gold>[<yellow>LemonPvP<gold>]
+
+  on join
+    broadcast {marke} <green>{player} ist beigetreten!
+    title <gradient:#fffb00:#00ff00>Willkommen! | <gray>Viel Spass, {player} | 4s
+    actionbar <aqua>{online} Spieler online
+
+Weiter mit 04_wirtschaft.txt!

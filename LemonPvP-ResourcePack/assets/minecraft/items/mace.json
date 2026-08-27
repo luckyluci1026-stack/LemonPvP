@@ -1,0 +1,26 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {
+        "when": 6004,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/duel_mace"
+        }
+      },
+      {
+        "when": 6007,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/duel_spear_mace"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/mace"
+    }
+  }
+}

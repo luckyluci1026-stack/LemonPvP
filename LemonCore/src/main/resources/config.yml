@@ -1,0 +1,283 @@
+# LemonCore Configuration
+
+# Set this to the Velocity server name of this backend server (e.g. lobby, ffa, kitpvp)
+server-name: lobby
+database:
+  host: 172.18.0.1
+  port: 3306
+  database: s1_LemonPvP_Network
+  username: u1_zMGE6ZE7k8
+  password: "I.W3m6k5Yb@sZxtwFbtBey9C"
+  pool-size: 10
+
+discord:
+  invite: https://discord.gg/eZWP9EGW7
+
+# Shown by /store
+store:
+  url: https://store.lemonpvp.de
+
+# Maintenance / "server offline" (/goffline <reason>)
+maintenance:
+  # Reason key used when /goffline is run without one.
+  default-reason: general
+  # Selectable reasons: /goffline <key>. {discord} is replaced with discord.invite.
+  # \n = new line. MiniMessage formatting is supported.
+  reasons:
+    general: "<red>The server is currently under maintenance.</red>\n<gray>Follow our Discord for updates:</gray>\n<aqua>{discord}</aqua>"
+    update: "<red>The server is updating to a new version.</red>\n<gray>We'll be back shortly - check Discord:</gray>\n<aqua>{discord}</aqua>"
+    bugfix: "<red>The server is down for urgent bug fixes.</red>\n<gray>Thanks for your patience! Discord:</gray>\n<aqua>{discord}</aqua>"
+    event: "<gold>We're preparing a special event!</gold>\n<gray>Join our Discord to be notified:</gray>\n<aqua>{discord}</aqua>"
+
+discord_webhooks:
+  bans:       ""
+  mutes:      ""
+  unbans:     ""
+  unmutes:    ""
+  public:     ""
+  # Positive gameplay highlights — tournament champions, win-streak milestones.
+  # Point this at a #highlights channel; separate from moderation webhooks above.
+  highlights: ""
+
+lobby:
+  spawn:
+    world: world
+    x: 0.5
+    y: 64.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+
+scoreboard:
+  enabled: true
+  title: "<bold><gradient:#fffb00:#00ff00>LᴇᴍᴏɴPᴠP</gradient></bold>"
+  lines:
+    - "<dark_gray><st>                </st>"
+    - "<gray>Player: <gradient:#fffb00:#00ff00>{player}"
+    - "<gray>Rank: {rank}"
+    - " "
+    - "<gray>Kills: <green>{kills}"
+    - "<gray>Deaths: <red>{deaths}"
+    - "<gray>K/D: <white>{kdr}"
+    - "<gray>Killstreak: <gold>{killstreak}"
+    - " "
+    - "<gray>Coins: <yellow>✦ <gold>{coins_short}"
+    - "<gray>Online: <green>{online}"
+    - "<dark_gray><st>                </st>"
+    - "<yellow>play.lemonpvp.de"
+
+tablist:
+  enabled: true
+  header:
+    - ""
+    - "<bold><gradient:#fffb00:#00ff00>LᴇᴍᴏɴPᴠP</gradient></bold>"
+    - "<gray>The competitive PvP practice network"
+    - ""
+  footer:
+    - ""
+    - "<gray>Online: <green>{online}<gray>/<white>{max}"
+    - "<yellow>play.lemonpvp.de <dark_gray>| <aqua>discord.gg/lemonpvp"
+    - ""
+
+no-chat-reports: true
+
+motd:
+  enabled: true
+  line1: "<gradient:#fffb00:#00ff00><bold>⚔ LᴇᴍᴏɴPᴠP ⚔</bold></gradient>"
+  line2: "<gray>♦ Practice Network  <yellow>✦  <white>play.lemonpvp.de"
+  # Displayed max players = current online + offset (0 = use server default)
+  max-players-offset: 0
+
+ban:
+  reasons:
+    hacking: 30d
+    cheating: 30d
+    cheat: 30d
+    racism: 3d
+    spam: 1d
+    advertising: 7d
+    harassment: 7d
+    exploiting: 14d
+    default: 7d
+  default-duration: "7d"
+
+# Schnell-Strafen mit festem Grund + fester Dauer aus dieser Config.
+#   /offend <player>  → temporärer Bann (duration + reason unten)
+#   /punish <player>  → permanenter Bann (reason unten)
+offend:
+  duration: "7d"
+  reason: "Regelverstoß"
+punish:
+  reason: "Schwerwiegender Regelverstoß"
+
+mute:
+  default-duration: "1d"
+  reasons:
+    spam: 1h
+    advertising: 7d
+    harassment: 1d
+    toxicity: 3d
+    default: 1d
+
+anti-swear:
+  enabled: true
+  nword:
+    first-offense-duration: "3d"
+    second-offense-duration: "14d"
+  other-insult-duration: "1d"
+
+http-api:
+  enabled: true
+  # Native HTTPS: put a PKCS12 keystore (e.g. converted Let's Encrypt cert) in
+  # the plugin folder and enable — the API then serves TLS itself, no reverse
+  # proxy needed. Convert a Let's Encrypt cert with:
+  #   openssl pkcs12 -export -in fullchain.pem -inkey privkey.pem -out keystore.p12
+  https:
+    enabled: false
+    keystore: "keystore.p12"
+    password: ""
+  # bind: which network interface to listen on.
+  #   127.0.0.1 — only reachable from this machine (use when panel is on the same host)
+  #   0.0.0.0   — reachable on all interfaces (use when panel is on a different server)
+  # IMPORTANT: if you use 0.0.0.0, add a firewall rule on this machine that
+  # only allows the panel server's IP on this port. Example (ufw):
+  #   ufw allow from <PANEL_SERVER_IP> to any port 8080
+  bind: "0.0.0.0"
+  port: 8080
+  key: "change-me-in-production"
+
+velocity:
+  channel: "lemonpvp:core"
+
+# Server names are configured in servers.yml
+
+codes:
+  random-length: 26
+
+names:
+  first-names:
+    - Alex
+    - Blake
+    - Cameron
+    - Dakota
+    - Drew
+    - Evan
+    - Finley
+    - Glen
+    - Harper
+    - Ivan
+    - Jordan
+    - Kyle
+    - Logan
+    - Mason
+    - Nathan
+    - Oliver
+    - Parker
+    - Quinn
+    - Riley
+    - Sam
+    - Taylor
+    - Tyler
+    - Victor
+    - Wesley
+    - Xander
+    - Zach
+    - Aaron
+    - Ben
+    - Chris
+    - Daniel
+    - Eric
+    - Frank
+    - George
+    - Henry
+    - Ian
+    - Jack
+    - Kevin
+    - Liam
+    - Mike
+    - Noah
+    - Owen
+    - Paul
+    - Ryan
+    - Sean
+    - Tom
+    - Uriel
+    - Will
+    - Yusuf
+    - Zoe
+    - Amy
+    - Beth
+    - Clara
+    - Diana
+    - Emma
+    - Fiona
+    - Grace
+    - Hannah
+    - Iris
+    - Julia
+    - Kate
+    - Laura
+    - Maya
+    - Nina
+    - Olivia
+    - Petra
+    - Rachel
+    - Sarah
+    - Tara
+    - Uma
+    - Vera
+    - Wendy
+    - Ximena
+    - Yara
+    - Zara
+  last-names:
+    - Smith
+    - Johnson
+    - Williams
+    - Brown
+    - Jones
+    - Garcia
+    - Miller
+    - Davis
+    - Wilson
+    - Moore
+    - Taylor
+    - Anderson
+    - Thomas
+    - Jackson
+    - White
+    - Harris
+    - Martin
+    - Thompson
+    - Young
+    - Allen
+    - King
+    - Wright
+    - Scott
+    - Torres
+    - Nguyen
+    - Hill
+    - Flores
+    - Green
+    - Adams
+    - Nelson
+    - Baker
+    - Hall
+    - Rivera
+    - Campbell
+    - Mitchell
+    - Carter
+    - Roberts
+    - Phillips
+    - Evans
+    - Turner
+    - Parker
+    - Collins
+    - Stewart
+    - Sanchez
+    - Morris
+    - Rogers
+    - Reed
+    - Cook
+    - Morgan
+    - Bell

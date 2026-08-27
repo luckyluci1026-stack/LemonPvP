@@ -1,0 +1,27 @@
+database:
+  host: 172.18.0.1
+  port: 3306
+  database: s1_LemonPvP_Network
+  username: u1_zMGE6ZE7k8
+  password: "I.W3m6k5Yb@sZxtwFbtBey9C"
+  pool-size: 10
+
+server-type: LOBBY  # LOBBY or DUELS
+
+cosmetics:
+  # Global multiplier for how many particles every cosmetic effect spawns
+  # (kill/death/win effects, explosion presets, projectile trails).
+  # 1.0 = full density (default). Turn DOWN on very busy servers (e.g. 0.5
+  # on a packed FFA) to cut packet load; 0.0 disables all effect particles.
+  # Range 0.0–4.0. Applies on restart or /reload of the config.
+  particle-density: 1.0
+
+prices:
+  trim-pattern: 250
+  trim-material: 50
+
+velocity:
+  channel: lemoncosmetics:main
+
+discord:
+  invite: "https://discord.gg/lemonpvp"

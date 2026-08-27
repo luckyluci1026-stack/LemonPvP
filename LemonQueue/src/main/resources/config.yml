@@ -1,0 +1,118 @@
+# ╔════════════════════════════════════════════════════════════╗
+# ║                  LemonQueue – Konfiguration                  ║
+# ║   Warteschlange + Limbo-Routing für das LemonPvP-Netzwerk    ║
+# ╚════════════════════════════════════════════════════════════╝
+
+# Name des Limbo-Servers, wie er in velocity.toml unter [servers] registriert ist.
+# Spieler werden hierhin geparkt, während sie in der Warteschlange stehen.
+# MOTD, die im Minecraft-Server-Browser angezeigt wird (MiniMessage).
+# Überschreibt den Wert aus velocity.toml. Leer lassen ("") = velocity.toml wird verwendet.
+# Wird mit /lq reload sofort aktualisiert — kein Proxy-Neustart nötig!
+motd: ""
+# Beispiel / Example:
+# motd: "                  <#808080>ᴘʟᴀʏ.<bold><gradient:#fffb00:#109010>ʟᴇᴍᴏɴᴘᴠᴘ<reset><#808080>.ᴅᴇ\n<bold><gradient:#fffb00:#109010>    ᴏᴘᴇɴ ᴀʟᴘʜᴀ <gradient:#109010:#fffb00>ʀᴇʟᴇᴀꜱᴇ ᴄᴏᴍɪɴɢ ꜱᴏᴏɴ"
+
+# Name des Limbo-Servers, wie er in velocity.toml unter [servers] registriert ist.
+limbo-server: "limbo"
+
+# Standard-Zielserver für neu verbundene Spieler (z. B. die Lobby).
+default-target: "lobby"
+
+# Maximale Spielerzahl pro Zielserver.
+# Velocity kennt das interne Limit der Backend-Server nicht – daher hier definieren.
+# Sobald ein Server diese Zahl erreicht, landen weitere Spieler in der Warteschlange.
+max-players:
+  lobby: 100
+  practice: 200
+  events: 150
+
+# Rang-Prioritäten für die Warteschlange (höher = weiter vorne).
+# Ein Spieler erhält die höchste Priorität, für die er die Permission besitzt.
+# Bei gleicher Priorität gilt FIFO (wer zuerst kam, kommt zuerst dran).
+priorities:
+  "lemonqueue.priority.owner": 100
+  "lemonqueue.priority.admin": 80
+  "lemonqueue.priority.premium": 50
+  "lemonqueue.priority.vip": 20
+
+# Wer diese Permission hat, überspringt die Warteschlange komplett (Staff/Owner).
+bypass-permission: "lemonqueue.bypass"
+
+# ── Timing (in Millisekunden) ────────────────────────────────
+# Wie oft geprüft wird, ob Spieler aus der Queue weitergeleitet werden können.
+process-interval: 1000
+# Wie oft die animierte ActionBar / Position aktualisiert wird (kleiner = flüssiger).
+update-interval: 250
+# Maximale Anzahl Spieler, die pro Durchlauf und Server weitergeleitet werden
+# (verhindert Lastspitzen beim Backend bei großem Andrang).
+send-batch: 5
+
+# ── Sprache / Language ───────────────────────────────────────
+# Sprache der eingebauten Texte: "de" (Deutsch) oder "en" (English).
+# Affects all built-in messages (action bar, title, queue messages, commands).
+language: "de"
+
+# Animierten Title/Subtitle in der Warteschlange anzeigen (ActionBar bleibt immer aktiv).
+# Show the animated title/subtitle while waiting (the action bar is always shown).
+show-title: true
+
+# ── Texte / Messages (optional überschreiben) ────────────────
+# Jeder Eintrag ist OPTIONAL. Leer lassen ("") = eingebauter (animierter,
+# sprachabhängiger, fetter) Standard. Wird ein Wert gesetzt, gilt er als volles
+# MiniMessage-Template (eigene <gradient>, <bold>, <color> usw.) und überschreibt
+# Sprache + Animation für diese eine Zeile.
+#
+# Every entry is OPTIONAL. Leave empty ("") for the built-in animated, bold,
+# language-dependent default. Any value you set is used as a full MiniMessage
+# template and overrides language + animation for that single line.
+#
+# Platzhalter / Placeholders:
+#   {pos}    – Platz in der Warteschlange / queue position
+#   {total}  – Anzahl wartender Spieler / players waiting
+#   {eta}    – geschätzte Wartezeit / estimated wait (z. B. "1m 20s")
+#   {target} – Zielserver / target server
+#   {server} – betroffener Server / affected server
+#   {size} {max} {count} – nur in Admin-Zeilen / admin lines only
+messages:
+  # Über der Hotbar (ActionBar) – läuft animiert, daher am besten leer lassen
+  # oder ein eigenes MiniMessage mit {pos}/{total}/{eta} angeben.
+  actionbar-waiting: ""
+  actionbar-connected: ""
+  # Title / Subtitle in der Warteschlange
+  title: ""
+  subtitle: ""
+  # Einmalige Meldungen beim Einreihen
+  join-title: ""
+  join-subtitle: ""
+  join-message: ""
+  # Nachricht, wenn ein voller Server dich in die Warteschlange schickt.
+  # {server} = betroffener Server. Frei editierbar, sofort per /lq reload aktiv.
+  # Beispiel: kick-full: "<red>Deine Lobby ist voll – du wartest jetzt in der Warteschlange."
+  kick-full: ""
+  # /lq Befehl
+  cmd-position: ""
+  cmd-not-queued: ""
+  cmd-left: ""
+  cmd-not-in-queue: ""
+  cmd-players-only: ""
+  cmd-no-perm: ""
+  cmd-clear-usage: ""
+  cmd-cleared: ""
+  cmd-unknown: ""
+  admin-header: ""
+  admin-none: ""
+  admin-line: ""
+  admin-total: ""
+  cmd-reloaded: ""
+  leave-proxy: ""
+  # Beispiel / Example (eigenes MiniMessage über der Hotbar):
+  # actionbar-waiting: "<gradient:#fff700:#00ff7f><bold>Queue</bold></gradient> <gray>{pos}/{total} • {eta}</gray>"
+
+# ── VPN blocker ────────────────────────────────────────────────────────────
+# Blocks VPN/proxy connections at the handshake via ip-api.com (cached 6h,
+# fails open if the API is unreachable). Whitelist trusted IPs below.
+vpn-blocker:
+  enabled: true
+  block-hosting: true
+  kick-message: "<gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient>\n\n<yellow>VPN and proxy connections are not allowed.</yellow>\n<gray>Please disable your VPN and reconnect."
+  whitelist: []

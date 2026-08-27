@@ -1,0 +1,67 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  LemonNameTags
+#  Over-head nametags rendered as Text Display entities (Minecraft 1.19.4+),
+#  so the player name can use full MiniMessage / RGB gradients — which vanilla
+#  scoreboard-team nametags cannot do.
+# ─────────────────────────────────────────────────────────────────────────────
+
+display:
+  # Vertical offset of the nametag above the player's head. The display is
+  # mounted as a passenger, which already rides near head height; tune this if
+  # the tag sits too low/high (range roughly 0.0 – 1.5).
+  y-offset: 0.4
+  # Display view range (multiplier of the client render distance). Lower = the
+  # tag only renders for nearby players, which is lighter on busy servers.
+  view-range: 1.0
+  # Render the text through walls?
+  see-through: false
+  # Drop shadow behind the text?
+  shadow: true
+  # Make ranked names bold (the Default rank is never bold).
+  bold-ranked-names: true
+
+# Hide the vanilla white floating name so only the custom display shows. This
+# adds players to a scoreboard team with nametag visibility NEVER. Turn off if
+# another plugin (e.g. TAB) already manages nametag teams.
+hide-vanilla-nametags: true
+
+# Colour the NAME by the player's rank gradient too. Default false = the name
+# is plain white and only the prefix carries the gradient (cleaner look).
+name-gradient: false
+
+# Show a live "❤ 8.5" line under the name (refreshed on damage/regen).
+# Recommended ON for fight servers (FFA/KitPvP), OFF for the lobby.
+show-health: false
+
+# Ticks to wait after a player joins before the first render, so LuckPerms has
+# finished loading their user (20 ticks = 1s).
+update-delay-ticks: 10
+
+# How often (ticks) to re-validate that each player's display still exists and is
+# still mounted — cheaply re-mounts/recreates after respawns, teleports or a
+# /reload. It sends nothing unless something actually needs fixing.
+validate-interval-ticks: 40
+
+# ── Rank → name gradient ─────────────────────────────────────────────────────
+# The KEY must match the player's LuckPerms PRIMARY GROUP name exactly
+# (lower-case, no spaces/dots). Rename these to your real group names.
+# Provide "start" + "end" for a gradient, or only "start" for a solid colour.
+# Optional per-rank "bold: false" overrides display.bold-ranked-names.
+# Any group not listed here falls back to plain white, no bold.
+ranks:
+  owner:     { start: "#fffb00", end: "#00ff00" }
+  manager:   { start: "#0000FF", end: "#800080" }
+  dev:       { start: "#00818B", end: "#30D5C8" }
+  sradmin:   { start: "#FF5348", end: "#8B0000" }
+  admin:     { start: "#8b0000" }
+  srmod:     { start: "#ADD8E6", end: "#0000ff" }
+  mod:       { start: "#00ff00", end: "#0000ff" }
+  srsup:     { start: "#109010", end: "#00ff00" }
+  sup:       { start: "#FF4B33", end: "#fffb00" }
+  jrsup:     { start: "#FFB6C1", end: "#C11C84" }
+  vip:       { start: "#4A148C", end: "#D1C4E9" }
+  media:     { start: "#ffffff", end: "#ff0000" }
+  lemonplus: { start: "#fffb00" }
+  lemon:     { start: "#fffb00" }
+  master:    { start: "#8b5cf6", end: "#d946ef" }
+  pro:       { start: "#C82333", end: "#FF6B6B" }

@@ -1,0 +1,154 @@
+name: LemonCosmetics
+version: "1.1.0"
+main: com.lemonpvp.lemoncosmetics.LemonCosmetics
+api-version: '1.21'
+softdepend: [LuckPerms, LemonCore, packetevents]
+commands:
+  cosmetics:
+    description: Open cosmetics menu (/cosmetics reload for admins)
+    permission: lemoncosmetics.use
+  tags:
+    description: Open the tags menu
+    permission: lemoncosmetics.use
+    aliases: [tag]
+  cape:
+    description: Wear a custom map-rendered cape (no resource pack)
+    permission: lemoncosmetics.cape
+    usage: /cape <name> | list | off | reload
+  bandana:
+    description: Wear a custom map-rendered bandana (no resource pack)
+    permission: lemoncosmetics.bandana
+    usage: /bandana <name> | list | off | reload
+  emote:
+    description: Play a dance emote or an animated image emote (no resource pack)
+    permission: lemoncosmetics.emote
+    usage: /emote <wave|dab|spin|floss|robot|name> | list | stop
+  pcosmetic:
+    description: Test packet Display cosmetics (3D hat/cape/wings, no resource pack)
+    permission: lemoncosmetics.pcosmetic
+    usage: /pcosmetic <hat|head|cape|wings|off>
+permissions:
+  lemoncosmetics.use:
+    description: Access /cosmetics and /tags commands
+    default: true
+  lemoncosmetics.cape:
+    description: Wear custom capes
+    default: true
+  lemoncosmetics.bandana:
+    description: Wear custom bandanas
+    default: true
+  lemoncosmetics.emote:
+    description: Play emotes
+    default: true
+  lemoncosmetics.admin:
+    description: Reload LemonCosmetics config, density and explosion presets
+    default: op
+  lemoncosmetics.pcosmetic:
+    description: Test packet Display cosmetics
+    default: op
+  lemoncosmetics.effect.fire_swarm:
+    description: Fire Swarm kill effect
+    default: false
+  lemoncosmetics.effect.spook_swarm:
+    description: Spook Swarm kill effect
+    default: false
+  lemoncosmetics.effect.totem_explosion:
+    description: Totem Explosion kill effect
+    default: false
+  lemoncosmetics.effect.golden_gap:
+    description: Golden Gap kill effect
+    default: false
+  lemoncosmetics.effect.*:
+    description: All kill effects
+    default: false
+    children:
+      lemoncosmetics.effect.fire_swarm: true
+      lemoncosmetics.effect.spook_swarm: true
+      lemoncosmetics.effect.totem_explosion: true
+      lemoncosmetics.effect.golden_gap: true
+  lemoncosmetics.trim.*:
+    description: All armor trims
+    default: false
+  lemoncosmetics.hat.*:
+    description: All hats
+    default: false
+  lemoncosmetics.trail.*:
+    description: All arrow trails
+    default: false
+  lemoncosmetics.deatheffect.*:
+    description: All death effects (free grant)
+    default: false
+  lemoncosmetics.wineffect.*:
+    description: All win effects (free grant)
+    default: false
+  lemoncosmetics.explosion.*:
+    description: All explosion-particle presets (free grant)
+    default: false
+  lemoncosmetics.tag.developing:
+    description: Developing tag (permission-only)
+    default: false
+  lemoncosmetics.tag.staff:
+    description: Staff tag (permission-only)
+    default: false
+  lemoncosmetics.tag.money:
+    description: Money tag
+    default: false
+  lemoncosmetics.tag.winner:
+    description: Winner tag
+    default: false
+  lemoncosmetics.tag.veteran:
+    description: Veteran tag
+    default: false
+  lemoncosmetics.tag.lemon:
+    description: Lemon tag
+    default: false
+  lemoncosmetics.tag.elite:
+    description: Elite tag
+    default: false
+  lemoncosmetics.tag.ghost:
+    description: Ghost tag
+    default: false
+  lemoncosmetics.tag.toxic:
+    description: Toxic tag
+    default: false
+  lemoncosmetics.tag.nova:
+    description: Nova tag
+    default: false
+  lemoncosmetics.tag.frost:
+    description: Frost tag
+    default: false
+  lemoncosmetics.tag.inferno:
+    description: Inferno tag
+    default: false
+  lemoncosmetics.tag.cosmic:
+    description: Cosmic tag
+    default: false
+  lemoncosmetics.tag.holzi:
+    description: Holzi tag (permission-only)
+    default: false
+  lemoncosmetics.tag.wichtig:
+    description: Wichtig tag (permission-only or /aowcode)
+    default: false
+  lemoncosmetics.tag.hugo:
+    description: Hugo tag (permission-only)
+    default: false
+  lemoncosmetics.tag.*:
+    description: All tags
+    default: false
+    children:
+      lemoncosmetics.tag.developing: true
+      lemoncosmetics.tag.staff: true
+      lemoncosmetics.tag.money: true
+      lemoncosmetics.tag.winner: true
+      lemoncosmetics.tag.veteran: true
+      lemoncosmetics.tag.lemon: true
+      lemoncosmetics.tag.elite: true
+      lemoncosmetics.tag.ghost: true
+      lemoncosmetics.tag.toxic: true
+      lemoncosmetics.tag.nova: true
+      lemoncosmetics.tag.frost: true
+      lemoncosmetics.tag.inferno: true
+      lemoncosmetics.tag.cosmic: true
+      lemoncosmetics.tag.holzi: true
+      lemoncosmetics.tag.wichtig: true
+      lemoncosmetics.tag.hugo: true

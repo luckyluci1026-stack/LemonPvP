@@ -1,0 +1,91 @@
+package com.lemonpvp.lemoncosmetics.listeners;
+
+import com.lemonpvp.lemoncosmetics.LemonCosmetics;
+import com.lemonpvp.lemoncosmetics.gui.CosmeticsMainGUI;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.UUID;
+
+public class PlayerListener implements Listener {
+
+    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final int HOTBAR_SLOT = 8;
+
+    private final LemonCosmetics plugin;
+
+    public PlayerListener(LemonCosmetics plugin) {
+        this.plugin = plugin;
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        UUID joinedUuid = player.getUniqueId();
+        plugin.getCosmeticsManager().loadPlayer(joinedUuid)
+                .thenAccept(cosmetics -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player p = Bukkit.getPlayer(joinedUuid);
+                    if (p == null) return;
+                    plugin.getArmorTrimManager().applyTrimToPlayer(p);
+                    plugin.getTagManager().restoreTag(p);
+                    if (isLobby()) {
+                        giveCosmeticsItem(p);
+                    }
+                }));
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        plugin.getArrowTrailManager().stopAllTrailsForPlayer(player.getUniqueId());
+        plugin.getCapeManager().unequipAll(player.getUniqueId());
+        plugin.getEmoteManager().stop(player.getUniqueId());
+        plugin.getCosmeticsManager().unloadPlayer(player.getUniqueId());
+    }
+
+    @EventHandler
+    public void onInteract(PlayerInteractEvent event) {
+        if (!isLobby()) return;
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        Player player = event.getPlayer();
+        ItemStack item = player.getInventory().getItem(HOTBAR_SLOT);
+        if (item == null || item.getType() != Material.DIAMOND) return;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
+        if (!player.getInventory().getItemInMainHand().equals(item)) return;
+        event.setCancelled(true);
+        new CosmeticsMainGUI(plugin, player).open();
+    }
+
+    // The kill-effect reward handler moved to KillEffectRewardListener: it is typed on a
+    // LemonCore class, and LemonCore is only a softdepend. Bukkit resolves every handler's
+    // parameter type at registration, so keeping it here would take this entire listener
+    // (join, quit, cosmetics menu) down whenever LemonCore is absent.
+
+    private void giveCosmeticsItem(Player player) {
+        // LemonPractice owns the lobby hotbar (its cosmetics item sits on
+        // slot 7) — don't overwrite its Settings item on slot 8.
+        if (Bukkit.getPluginManager().getPlugin("LemonPractice") != null) return;
+        ItemStack item = new ItemStack(Material.DIAMOND);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(MM.deserialize("<aqua>Cosmetics"));
+            item.setItemMeta(meta);
+        }
+        player.getInventory().setItem(HOTBAR_SLOT, item);
+    }
+
+    private boolean isLobby() {
+        return "LOBBY".equalsIgnoreCase(plugin.getConfig().getString("server-type", "LOBBY"));
+    }
+}

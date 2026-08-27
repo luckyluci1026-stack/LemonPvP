@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Vanilla biome duel worlds hosted by THIS Duels server.
+#
+#  Each entry is a REAL Minecraft world (natural biome terrain) — the plugin
+#  loads it on startup and registers it as one duel arena. One duel runs per
+#  world at a time, so 15 worlds = 15 concurrent duels on this server.
+#
+#  No schematics: blocks broken/placed/exploded during a match (crystal, cart,
+#  uhc, mace, fire, buckets, lava/water flow) are rolled back automatically when
+#  the duel ends, so the world stays reusable.
+#
+#  Only used when LemonPractice config.yml has  server-type: DUELS.
+#  Split your worlds across the Duel servers (e.g. Duel-01 lists badlands/plains,
+#  Duel-02 the next biomes, Duel-03 the rest) — each server lists only ITS worlds.
+# ─────────────────────────────────────────────────────────────────────────────
+
+enabled: true
+
+# How the two fighters are placed. Spawns are derived from each world's spawn
+# point: one east, one west, this many blocks apart, facing each other.
+spawn-offset: 20
+
+# Y for the spawns. -1 = stand on the highest block at that X/Z (natural terrain).
+# Set a fixed number only if all your worlds share a flat spawn height.
+spawn-y: -1
+
+# Gamemodes each world may host. Leave empty = every enabled gamemode
+# (recommended — natural terrain works for all kits). Or restrict, e.g.:
+#   gamemodes: [sword, uhc, smp]
+gamemodes: []
+
+# The worlds this server owns. Replace with YOUR world folder names.
+# Example: 5 biomes x 3 = 15 worlds (badlands-01 … taiga-05).
+worlds:
+  - badlands-01
+  - badlands-02
+  - badlands-03
+  - badlands-04
+  - badlands-05
+  - plains-01
+  - plains-02
+  - plains-03
+  - plains-04
+  - plains-05
+  - taiga-01
+  - taiga-02
+  - taiga-03
+  - taiga-04
+  - taiga-05
+
+# Generator shorthand: instead of listing every world above, name the biomes and
+# how many worlds each should have — badlands-01..NN etc. Both merge with 'worlds'.
+biomes: []
+per-biome: 0

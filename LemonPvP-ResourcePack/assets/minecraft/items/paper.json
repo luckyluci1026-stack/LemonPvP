@@ -1,0 +1,61 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {
+        "when": 4001,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/quest_easy"
+        }
+      },
+      {
+        "when": 4002,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/quest_medium"
+        }
+      },
+      {
+        "when": 4003,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/quest_hard"
+        }
+      },
+      {
+        "when": 4004,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/quest_expert"
+        }
+      },
+      {
+        "when": 7003,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/grove_salve"
+        }
+      },
+      {
+        "when": 8001,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/monster_name_tag"
+        }
+      },
+      {
+        "when": 8003,
+        "model": {
+          "type": "minecraft:model",
+          "model": "lemonpvp:item/evidence"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/paper"
+    }
+  }
+}

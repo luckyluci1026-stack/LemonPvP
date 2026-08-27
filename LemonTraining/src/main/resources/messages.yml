@@ -1,0 +1,4 @@
+prefix: "<dark_gray>[<gold>Training</gold>]</dark_gray> "
+join-mode: "<green>You joined {mode} practice!"
+leave: "<yellow>You left practice."
+no-session: "<red>You are not in a practice session."

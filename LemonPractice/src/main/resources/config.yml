@@ -1,0 +1,129 @@
+# LemonPractice Configuration
+server-type: LOBBY  # LOBBY or DUELS
+
+database:
+  host: 172.18.0.1
+  port: 3306
+  database: s1_LemonPvP_Network
+  username: u1_zMGE6ZE7k8
+  password: "I.W3m6k5Yb@sZxtwFbtBey9C"
+  pool-size: 10
+
+# Server names are configured in servers.yml
+
+velocity:
+  channel: "lemonpractice:main"
+
+worlds:
+  lobby: world
+  duels: world_duels
+  ffa: world_ffa
+
+# Roaming-zone FFA: a single fixed-size square play area (a per-player
+# WorldBorder, "size" blocks across) that does NOT shrink. Every
+# relocate-minutes the whole zone jumps to a new random location and everyone is
+# scattered into it with the border re-centered. Players respawn inside the zone.
+# The world should be provided by Multiverse-Core. Join with /ffa.
+ffa:
+  world: world_ffa        # world the FFA runs in (loaded by Multiverse-Core)
+  size: 150               # border size in blocks (play area is size x size)
+  relocate-minutes: 20    # how often the zone jumps to a new location
+  center-range: 2000      # max distance from world spawn for a new random center
+  kit-gamemode: sword     # kit/gamemode id applied to FFA players (see gamemodes.yml)
+  respawn-delay-ticks: 60 # delay before auto-respawn after death (fallback path only)
+  border-warning: 6       # world-border warning distance (blocks)
+  # Death-cam: lethal hits are intercepted (no vanilla death screen) — the victim
+  # is dropped into spectator and orbits their killer for death-cam-ticks before
+  # respawning inside the zone. Players holding a Totem of Undying are exempt.
+  death-cam: true
+  death-cam-ticks: 50     # death-cam length in ticks before respawn (20 = 1s)
+  # Coin rewards per FFA kill (paid via LemonCore; 0 disables).
+  kill-coins: 10
+  killstreak-bonus-coins: 50   # extra on every 5-killstreak milestone
+
+# Duel replays: compact recordings of duels, each capped at 50 KB and kept for
+# 100 days (extend with /replay <name> add <days>). Lower sample-interval-ticks
+# = smoother but larger; the 50 KB cap auto-reduces the rate if needed.
+replays:
+  enabled: true
+  sample-interval-ticks: 2
+  # Kill-cam: after a duel, auto-show the loser a slow-mo of the last few seconds.
+  killcam:
+    enabled: true
+    seconds: 4
+    speed: 0.6
+
+# Ranked / ELO. Disabled = fully casual: duels never change ELO, no rank tiers
+# or rank badges are shown. Set to true to enable competitive ranked play.
+ranked:
+  enabled: false
+
+# Zone Practice — battle-royale style practice in real, random vanilla terrain
+# with a shrinking damage zone (DrDonut style).
+zone:
+  world: world            # vanilla world the rounds run in
+  initial-radius: 200     # starting zone radius (blocks); border diameter is 2x this
+  min-radius: 10          # smallest the zone shrinks to
+  shrink-seconds: 180     # time (s) for the zone to shrink from initial to min
+  damage-per-second: 2.0  # damage applied each second to players outside the zone (2 = 1 heart)
+  kit-gamemode: sword     # kit/gamemode id applied to participants (see gamemodes.yml)
+  min-players: 1          # players required before the shrink/damage starts
+  border-warning: 10      # world-border warning distance (blocks) shown to players
+
+duel-arenas:
+  built: false
+  base-x: 1100
+  base-y: 64
+  base-z: 0
+  spacing: 150
+
+placement_count: 10
+
+elo_scaling:
+  base_range: 100
+  max_range: 1500
+  scale_threshold: 20
+  wait_expansion_seconds: 30
+  wait_expansion_per_10s: 50
+
+countdown:
+  seconds: 3
+  float-height: 2.0
+  fall-speed: 0.08
+
+hotbar:
+  queue:
+    slot: 0
+    name: "<!italic><gradient:#fffb00:#00ff00>Queue</gradient>"
+    material: DIAMOND_SWORD
+    model-data: 0
+  kit-editor:
+    slot: 4
+    name: "<!italic><aqua>Kit Editor</aqua>"
+    material: BOOK
+    model-data: 0
+  cosmetics:
+    slot: 7
+    name: "<!italic><light_purple>Cosmetics</light_purple>"
+    material: DIAMOND
+    model-data: 0
+  settings:
+    slot: 8
+    name: "<!italic><gray>Settings</gray>"
+    material: COMPASS
+    model-data: 0
+
+# Bot fallback: when a queued player finds no opponent within after-seconds,
+# they fight a bot scaled to their ELO (attack speed, sprint, strafing, crits,
+# gapple usage). Bot matches never change ELO or stats.
+queue:
+  bot:
+    enabled: true
+    after-seconds: 15
+
+# Ender-pearl cooldown for players in combat (duel/bot/FFA/zone) — the
+# standard 16s from the big practice servers. Shown via the item cooldown
+# overlay + an action-bar countdown when thrown too early.
+pearl-cooldown:
+  enabled: true
+  seconds: 16

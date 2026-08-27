@@ -1,0 +1,56 @@
+gamemodes:
+  sword:
+    name: "Sword"
+    display-name: "<yellow>Sword"
+    material: IRON_SWORD
+    enabled: true
+    slot: 0
+
+  shield:
+    name: "Shield"
+    display-name: "<blue>Shield"
+    material: SHIELD
+    enabled: true
+    slot: 1
+
+  crystal:
+    name: "Crystal"
+    display-name: "<aqua>Crystal"
+    material: END_CRYSTAL
+    enabled: true
+    slot: 2
+
+  mace:
+    name: "Mace"
+    display-name: "<gold>Mace"
+    material: MACE
+    enabled: true
+    slot: 3
+
+  uhc:
+    name: "UHC"
+    display-name: "<red>UHC"
+    material: GOLDEN_APPLE
+    enabled: true
+    slot: 4
+
+  smp:
+    name: "SMP"
+    display-name: "<green>SMP"
+    material: GRASS_BLOCK
+    enabled: true
+    slot: 5
+
+  spear-mace:
+    name: "Spear Mace"
+    display-name: "<light_purple>Spear Mace"
+    material: TRIDENT
+    enabled: true
+    slot: 6
+
+  cart:
+    name: "Cart"
+    display-name: "<dark_aqua>Cart"
+    material: MINECART
+    enabled: true
+    slot: 7

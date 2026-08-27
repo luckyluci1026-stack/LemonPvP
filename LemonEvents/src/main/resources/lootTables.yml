@@ -1,0 +1,254 @@
+# Loot tables for LemonRoyale and HungerGames chests
+# Each item: material, amount-min, amount-max, weight (relative chance)
+# Custom items use custom-model-data field
+
+loot-tables:
+  COMMON:
+    color: "<gray>"
+    items:
+      - material: WOODEN_SWORD
+        amount-min: 1
+        amount-max: 1
+        weight: 30
+      - material: STONE_SWORD
+        amount-min: 1
+        amount-max: 1
+        weight: 25
+      - material: BREAD
+        amount-min: 2
+        amount-max: 5
+        weight: 40
+      - material: APPLE
+        amount-min: 3
+        amount-max: 6
+        weight: 35
+      - material: LEATHER_HELMET
+        amount-min: 1
+        amount-max: 1
+        weight: 20
+      - material: LEATHER_CHESTPLATE
+        amount-min: 1
+        amount-max: 1
+        weight: 18
+      - material: LEATHER_LEGGINGS
+        amount-min: 1
+        amount-max: 1
+        weight: 18
+      - material: LEATHER_BOOTS
+        amount-min: 1
+        amount-max: 1
+        weight: 22
+      - material: WOODEN_BOW
+        amount-min: 1
+        amount-max: 1
+        weight: 20
+      - material: ARROW
+        amount-min: 4
+        amount-max: 12
+        weight: 30
+
+  UNCOMMON:
+    color: "<white>"
+    items:
+      - material: IRON_SWORD
+        amount-min: 1
+        amount-max: 1
+        weight: 25
+      - material: IRON_AXE
+        amount-min: 1
+        amount-max: 1
+        weight: 15
+      - material: IRON_HELMET
+        amount-min: 1
+        amount-max: 1
+        weight: 20
+      - material: IRON_CHESTPLATE
+        amount-min: 1
+        amount-max: 1
+        weight: 15
+      - material: IRON_LEGGINGS
+        amount-min: 1
+        amount-max: 1
+        weight: 15
+      - material: IRON_BOOTS
+        amount-min: 1
+        amount-max: 1
+        weight: 18
+      - material: GOLDEN_APPLE
+        amount-min: 1
+        amount-max: 2
+        weight: 20
+      - material: COOKED_BEEF
+        amount-min: 3
+        amount-max: 8
+        weight: 30
+      - material: POTION
+        amount-min: 1
+        amount-max: 1
+        weight: 15
+        potion-effect: SPEED
+      - material: BOW
+        amount-min: 1
+        amount-max: 1
+        weight: 20
+      - material: ARROW
+        amount-min: 8
+        amount-max: 24
+        weight: 25
+
+  RARE:
+    color: "<blue>"
+    items:
+      - material: DIAMOND_SWORD
+        amount-min: 1
+        amount-max: 1
+        weight: 15
+      - material: DIAMOND_AXE
+        amount-min: 1
+        amount-max: 1
+        weight: 10
+      - material: DIAMOND_HELMET
+        amount-min: 1
+        amount-max: 1
+        weight: 12
+      - material: DIAMOND_CHESTPLATE
+        amount-min: 1
+        amount-max: 1
+        weight: 10
+      - material: DIAMOND_LEGGINGS
+        amount-min: 1
+        amount-max: 1
+        weight: 10
+      - material: DIAMOND_BOOTS
+        amount-min: 1
+        amount-max: 1
+        weight: 12
+      - material: ENCHANTED_GOLDEN_APPLE
+        amount-min: 1
+        amount-max: 1
+        weight: 8
+      - material: POTION
+        amount-min: 1
+        amount-max: 2
+        weight: 18
+        potion-effect: STRENGTH
+      - material: BOW
+        amount-min: 1
+        amount-max: 1
+        weight: 15
+        enchanted: true
+      - material: ARROW
+        amount-min: 16
+        amount-max: 32
+        weight: 20
+
+  EPIC:
+    color: "<dark_purple>"
+    items:
+      - material: DIAMOND_SWORD
+        amount-min: 1
+        amount-max: 1
+        weight: 20
+        enchanted: true
+      - material: DIAMOND_CHESTPLATE
+        amount-min: 1
+        amount-max: 1
+        weight: 15
+        enchanted: true
+      - material: DIAMOND_BOOTS
+        amount-min: 1
+        amount-max: 1
+        weight: 15
+        enchanted: true
+      - material: SNOWBALL
+        amount-min: 1
+        amount-max: 1
+        weight: 18
+        custom-model-data: 7001
+        display-name: "<dark_purple><bold>Venom Bomb</bold></dark_purple>"
+        lore:
+          - "<gray>Explodes in a vile cloud of venom"
+          - "<gray>Inflicts Wither II on nearby enemies"
+      - material: POTION
+        amount-min: 1
+        amount-max: 1
+        weight: 12
+        custom-model-data: 7002
+        display-name: "<dark_purple><bold>Citrus Shield</bold></dark_purple>"
+        lore:
+          - "<gray>Drink to gain Absorption III"
+          - "<gray>Duration: 20 seconds"
+      - material: PAPER
+        amount-min: 1
+        amount-max: 1
+        weight: 15
+        custom-model-data: 7003
+        display-name: "<dark_purple><bold>Grove Salve</bold></dark_purple>"
+        lore:
+          - "<gray>Right-click to apply healing salve"
+          - "<gray>Grants Regeneration III for 5 seconds"
+
+  LEGENDARY:
+    color: "<gold><bold>"
+    suffix: "</bold></gold>"
+    items:
+      - material: NETHERITE_SWORD
+        amount-min: 1
+        amount-max: 1
+        weight: 10
+      - material: NETHERITE_AXE
+        amount-min: 1
+        amount-max: 1
+        weight: 8
+      - material: NETHERITE_HELMET
+        amount-min: 1
+        amount-max: 1
+        weight: 8
+      - material: NETHERITE_CHESTPLATE
+        amount-min: 1
+        amount-max: 1
+        weight: 6
+      - material: NETHERITE_LEGGINGS
+        amount-min: 1
+        amount-max: 1
+        weight: 6
+      - material: NETHERITE_BOOTS
+        amount-min: 1
+        amount-max: 1
+        weight: 8
+      - material: TORCH
+        amount-min: 1
+        amount-max: 1
+        weight: 12
+        custom-model-data: 7004
+        display-name: "<gold><bold>Lemon Drop</bold></gold>"
+        lore:
+          - "<gray>Right-click to mark a location"
+          - "<gray>After 10 seconds: LEGENDARY loot drop!"
+          - "<yellow>★ Ultra Rare Supply Drop ★"
+      - material: ENCHANTED_GOLDEN_APPLE
+        amount-min: 2
+        amount-max: 4
+        weight: 10
+
+# Rarity weights for chest generation (how likely each rarity appears)
+rarity-weights:
+  COMMON: 50
+  UNCOMMON: 30
+  RARE: 15
+  EPIC: 4
+  LEGENDARY: 1
+
+# Chest positions per LemonRoyale map (relative to map origin)
+lr-chest-positions:
+  LR_Tropic_1:
+    - {x: 30, y: 65, z: 30}
+    - {x: -30, y: 65, z: 30}
+    - {x: 30, y: 65, z: -30}
+    - {x: -30, y: 65, z: -30}
+    - {x: 80, y: 68, z: 10}
+    - {x: -80, y: 68, z: 10}
+    - {x: 10, y: 70, z: 80}
+    - {x: 10, y: 70, z: -80}
+    - {x: 0, y: 65, z: 0}
+    - {x: 50, y: 72, z: -50}

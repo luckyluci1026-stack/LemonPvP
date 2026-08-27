@@ -1,0 +1,89 @@
+================================================================
+  02 — VARIABLEN UND MACROS (BAUSTEINE)
+================================================================
+
+Hier lernst du, wie du dir Texte merkst (Variablen) und wie du
+mehrere Aktionen zu einem Baustein zusammenfasst (Macros).
+
+
+----------------------------------------------------------------
+  VARIABLEN MIT set
+----------------------------------------------------------------
+
+Eine Variable ist wie ein Merkzettel mit einem Namen. Du legst
+sie an mit dem Wort "set":
+
+  set NAME = WERT
+
+Beispiel:
+
+  set willkommen = <gradient:#fffb00:#00ff00>Willkommen {player}!
+
+Ab jetzt kannst du diesen Text ueberall benutzen, indem du den
+Namen in geschweifte Klammern setzt: {willkommen}
+
+  on join
+    message {willkommen}
+
+Das ist praktisch: Aenderst du die Variable einmal oben, aendert
+sich der Text ueberall.
+
+
+----------------------------------------------------------------
+  RECHNEN IN VARIABLEN
+----------------------------------------------------------------
+
+In einer Variable darfst du auch einfache Rechnungen schreiben
+mit + - * / und Platzhaltern:
+
+  set bonus = 10 * 5
+  set gesamt = {apples} + 100
+
+Beim Benutzen wird der Wert ausgerechnet.
+
+
+----------------------------------------------------------------
+  MACROS MIT define UND run
+----------------------------------------------------------------
+
+Ein Macro ist ein Baustein aus mehreren Aktionen, dem du einen
+Namen gibst. So musst du dieselben Aktionen nicht immer wieder
+neu schreiben.
+
+Anlegen mit "define" und einem eingerueckten Block:
+
+  define belohnung
+    give apples 10
+    sound ENTITY_PLAYER_LEVELUP
+    title <gold>Belohnung! | <gray>+10 Aepfel | 3s
+
+Aufrufen (ausfuehren) mit "run":
+
+  on join
+    if has perm lemon.vip
+      run belohnung
+
+Jedes Mal, wenn "run belohnung" laeuft, werden alle drei
+Aktionen aus dem Macro ausgefuehrt.
+
+
+----------------------------------------------------------------
+  KOMPLETTES BEISPIEL
+----------------------------------------------------------------
+
+  # Eine Begruessung als Variable
+  set hallo = <green>Hallo {player}, willkommen zurueck!
+
+  # Ein Belohnungs-Baustein
+  define startgeld
+    give coins 100
+    message <gold>Du hast 100 Muenzen Startgeld erhalten!
+
+  on join
+    message {hallo}
+    run startgeld
+
+Tipp: Variablen und Macros, die du GANZ OBEN (ohne Einrueckung)
+definierst, gelten in deinem ganzen Script.
+
+Weiter mit 03_nachrichten.txt!

@@ -1,0 +1,224 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║             LEMONLANG v3 — NEUE FEATURES (SPRACHERWEITERUNGEN)              ║
+║       system · import · db · thread · sync — Technische Spezifikation       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Diese Datei beschreibt die erweiterten Features von LemonLang v3.
+Sie sind im Tutorial (TUTORIAL.txt) dokumentiert.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. SYSTEM-DEKLARATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Syntax (oben in der Datei, vor allem anderen):
+  system paper       (Standard, kann weggelassen werden)
+  system velocity
+  system folia
+
+Parser-Verhalten:
+  - TopLevel-Keyword: "system"
+  - Argument: paper | velocity | folia
+  - Wird in Program.metadata gespeichert
+  - LemonLangManager überprüft beim Laden: stimmt system mit dem echten Server-Typ überein?
+  - Bei Mismatch: Warnung in Konsole, Skript wird NICHT geladen
+
+Implementation: SystemStmt(String type, int line) extends Node
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. IMPORTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Syntax:
+  import paper              → prüft Paper-API (immer vorhanden)
+  import luckperms          → prüft LuckPerms Plugin
+  import lpc                → LuckPermsContext (Prefix/Suffix/Gruppen)
+  import placeholderapi     → PlaceholderAPI
+  import vault              → Vault Economy
+  import advancedenchantments
+  import itemsadder
+
+Parser-Verhalten:
+  - TopLevel-Keyword: "import"
+  - Argument: Plugin-Name (lowercase)
+  - ImportStmt(String pluginName, int line) extends Node
+  - Beim Laden: Bukkit.getPluginManager().getPlugin(pluginName) != null?
+  - Wenn nicht vorhanden: LemonLangError mit Hinweis
+
+Verfügbare Placeholders mit import placeholderapi:
+  {papi:player_name}
+  {papi:vault_eco_balance}
+  {papi:luckperms_prefix}
+  (und alle anderen PlaceholderAPI-Platzhalter)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. DATENBANK-OPERATIONEN (db)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+LemonLang nutzt die LemonCore-Datenbank (HikariCP, MySQL/SQLite).
+Tabellen werden automatisch erstellt.
+
+SYNTAX:
+  db write [sync] TABLE KEY FIELD VALUE
+  db read [sync] TABLE KEY FIELD -> VARIABLE
+  db delete TABLE KEY FIELD
+
+BEISPIELE:
+  db write lemon_data {player} kills 5              # async (Standard)
+  db write sync lemon_data {player} vip true        # sync (blockierend)
+  db read lemon_data {player} kills -> player_kills  # async
+  db read sync lemon_data {player} rank -> rank      # sync
+  db delete lemon_data {player} temp_data
+
+TABELLENSTRUKTUR (automatisch erstellt):
+  CREATE TABLE IF NOT EXISTS <TABLE> (
+    key_col VARCHAR(128) NOT NULL,
+    field   VARCHAR(128) NOT NULL,
+    value   TEXT,
+    PRIMARY KEY (key_col, field)
+  )
+
+Implementation in Actions.java:
+  verb = "db"
+  args[0] = "write" | "read" | "delete"
+  args[1] = "sync" (optional) oder table name
+  rest = table key field [value | -> varname]
+
+  Async: CompletableFuture via LemonCore.getDatabase()
+  Sync:  direkter JDBC-Call (warnt in Konsole: "sync DB call on main thread!")
+  Nach async db read: Variable im ScriptContext.getEnv() setzen,
+  dann restliche Statements im nächsten main-thread tick ausführen.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. THREAD-KONTROLLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SYNTAX:
+  thread main
+    <indented statements>
+
+  thread async
+    <indented statements>
+
+Parser-Verhalten:
+  - TopLevel-Keyword innerhalb von on/every/command/item blocks: "thread"
+  - Argument: main | async
+  - ThreadStmt(String mode, List<Stmt> body, int line) extends Stmt
+
+Interpreter-Verhalten:
+  thread main:
+    Bukkit.getScheduler().runTask(plugin, () -> interpret(body, ctx))
+  thread async:
+    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> interpret(body, ctx))
+
+Standard (ohne thread): main (Bukkit main thread)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. SERVER-SYNC (API KEY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Skripte werden alle 30s automatisch zwischen Servern synchronisiert.
+Das Skript wird immer LOKAL gespeichert — der Sync überträgt nur Änderungen.
+
+KONFIGURATION (plugins/LemonCore/config.yml):
+  lemonlang:
+    sync:
+      enabled: false          # Standard: aus
+      api_key: "change-me"
+      password: "change-me"
+      interval: 30            # Sekunden
+      port: 7890              # HTTP-Port für LemonSync-Server
+      servers:
+        - name: lobby2
+          host: 192.168.1.2
+          port: 7890
+        - name: minigames
+          host: 192.168.1.3
+          port: 7890
+
+SKRIPT-SYNTAX:
+  sync on           # Dieses Skript synchronisieren (Standard wenn enabled)
+  sync off          # Dieses Skript NICHT synchronisieren
+  sync to lobby2    # Nur an "lobby2" senden
+  sync to lobby2 minigames  # An mehrere senden
+
+IMPLEMENTATION (SyncManager.java):
+  - Eingebetteter Jetty HTTP-Server auf config.port
+  - Endpoint: POST /lemonlang/sync
+    - Auth: Header "X-Api-Key: <api_key>" + "X-Password: <password>"
+    - Body: JSON { "name": "skript", "content": "...", "checksum": "sha256" }
+  - Empfang: validieren, in plugins/LemonCore/lemonlang/<name>.lemon schreiben, reload
+  - Senden: alle 30s, nur geänderte Dateien (Checksum-Vergleich)
+  - Übertragung ist verschlüsselt (API Key + Password = Authentifizierung)
+
+SICHERHEITSHINWEISE:
+  - Ändere api_key und password SOFORT nach der Installation!
+  - Nutze ein sicheres, zufälliges Passwort (min. 32 Zeichen)
+  - Öffne port 7890 NUR für vertrauenswürdige Server in der Firewall
+  - Skripte kommen von anderen Servern — prüfe sie vor der Aktivierung
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. ERWEITERTE CONDITION-SYNTAX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Neu in v3:
+
+  if world == nether
+    message <red>Du bist in der Nether-Welt!
+
+  if gamemode == creative
+    message <yellow>Du bist im Creative-Modus.
+
+  if online >= 50
+    broadcast <gold>50 Spieler online! Party-Zeit!
+
+  if x >= 100 and x <= 200
+    actionbar <green>Du bist in der Ostzone!
+
+  # Mehrere Bedingungen (and / or / not):
+  if apples >= 100 and not has perm lemon.vip
+    message <green>Du könntest VIP werden!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. VOLLSTÄNDIGE DATEI-SYNTAX (Reihenfolge)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Empfohlene Reihenfolge in einer .lemon Datei:
+
+  # 1. Kommentar (optional)
+  # meinskript.lemon — Beschreibung
+
+  # 2. System (optional, Standard: paper)
+  system paper
+
+  # 3. Imports (optional)
+  import luckperms
+
+  # 4. Sync (optional)
+  sync on
+
+  # 5. Variablen (optional)
+  set prefix = <gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray>
+
+  # 6. Makros (optional)
+  define mein_makro
+    message Hallo!
+
+  # 7. Items (optional)
+  item MEIN_ITEM
+    material APPLE
+    ...
+
+  # 8. Commands (optional)
+  command meincommand
+    ...
+
+  # 9. GUIs (optional)
+  gui MEIN_GUI
+    ...
+
+  # 10. Trigger (on/every)
+  on join
+    ...
+
+  every 1m
+    ...

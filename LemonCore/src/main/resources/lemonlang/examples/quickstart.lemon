@@ -1,0 +1,32 @@
+# quickstart.lemon — Dein erstes LemonLang-Skript!
+# Kopiere diese Datei nach: plugins/LemonCore/lemonlang/
+# Dann: /lemonlang reload
+
+system paper
+
+# Variablen definieren
+set prefix = <gradient:#fffb00:#00ff00><bold>LemonPvP</bold></gradient> <dark_gray>»</dark_gray>
+
+# Begrüßung beim Join
+on join
+  message {prefix} <green>Willkommen, <white>{player}<green>!
+  sound ENTITY_PLAYER_LEVELUP
+  actionbar <yellow>Viel Spaß auf LemonPvP!
+
+# Abgang ankündigen
+on quit
+  broadcast <gray>{player} <dark_gray>hat den Server verlassen.
+
+# Beim Tod
+on death
+  title <red>Gestorben! | <gray>Respawne... | 3s
+
+# Beim Respawn
+on respawn
+  heal
+  feed
+  message {prefix} <green>Du bist respawnt!
+
+# Jede Minute eine Nachricht
+every 1m
+  broadcast {prefix} <yellow>Tipp: Verdiene Äpfel durch Holzklicken!

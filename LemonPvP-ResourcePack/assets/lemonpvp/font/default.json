@@ -1,0 +1,13 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "lemonpvp:font/lemon_caps.png",
+      "height": 7,
+      "ascent": 6,
+      "chars": [
+        "abcdefghijklmnopqrstuvwxyz"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+no-permission: "<red>You don't have permission."
+quest-completed: "<green>Quest completed: <quest>! <reward>"
+level-up-title: "<bold><gradient:#fffb00:#00ff00>Level Up!</gradient></bold>"
+level-up-subtitle: "<white>Level <level></white>"
+rank-unlocked: ">> <gradient:#fffb00:#00ff00>Rank Unlocked: <rank></gradient> <<"

@@ -1,0 +1,673 @@
+package com.lemonpvp.lemoncore.api;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.lemonpvp.lemoncore.LemonCore;
+import com.lemonpvp.lemoncore.managers.PlayerData;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.types.InheritanceNode;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
+
+public class HttpApiManager {
+
+    private static final Gson GSON = new Gson();
+
+    private final LemonCore plugin;
+    private final Logger log;
+    private HttpServer server;
+    private java.util.concurrent.ExecutorService executor;
+
+    public HttpApiManager(LemonCore plugin) {
+        this.plugin = plugin;
+        this.log = plugin.getLogger();
+    }
+
+    // ─── Lifecycle ──────────────────────────────────────────────────────────
+
+    public void start() {
+        if (!plugin.getConfig().getBoolean("http-api.enabled", false)) {
+            log.info("[HttpAPI] Disabled in config.");
+            return;
+        }
+
+        int port = plugin.getConfig().getInt("http-api.port", 8080);
+        String bindAddress = plugin.getConfig().getString("http-api.bind", "127.0.0.1");
+        String apiKey = plugin.getConfig().getString("http-api.key", "");
+
+        if (apiKey.isEmpty()) {
+            log.warning("[HttpAPI] No API key configured! Set http-api.key in config.yml to enable the HTTP API.");
+            return;
+        }
+        if ("change-me-in-production".equals(apiKey)) {
+            log.warning("[HttpAPI] http-api.key is still the default value — change it before exposing the API.");
+        }
+
+        try {
+            server = createServer(bindAddress, port);
+            executor = Executors.newFixedThreadPool(4);
+            server.setExecutor(executor);
+            server.createContext("/api/player/",     ex -> route(ex, e -> handlePlayerRoot(e, apiKey)));
+            server.createContext("/api/server/stats", ex -> route(ex, e -> handleStats(e, apiKey)));
+            server.createContext("/api/console",     ex -> route(ex, e -> handleConsole(e, apiKey)));
+            // v2 endpoints
+            server.createContext("/api/status",      ex -> route(ex, this::handleStatus)); // public, read-only
+            server.createContext("/api/leaderboard", ex -> route(ex, e -> handleLeaderboard(e, apiKey)));
+            server.createContext("/api/tournaments", ex -> route(ex, e -> handleTournaments(e, apiKey)));
+            server.createContext("/api/history/",    ex -> route(ex, e -> handleHistory(e, apiKey)));
+            server.createContext("/api/broadcast",   ex -> route(ex, e -> handleBroadcast(e, apiKey)));
+            server.start();
+            log.info("[HttpAPI] Started on " + bindAddress + ":" + port);
+        } catch (IOException e) {
+            log.severe("[HttpAPI] Failed to start: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Creates the underlying server — HTTPS when {@code http-api.https.enabled}
+     * is set (TLS terminated in-process via a PKCS12 keystore, e.g. a converted
+     * Let's Encrypt certificate), plain HTTP otherwise. With HTTPS on, binding a
+     * public address is safe; without it keep {@code bind: 127.0.0.1} and put a
+     * TLS reverse proxy in front.
+     */
+    private HttpServer createServer(String bindAddress, int port) throws IOException {
+        if (!plugin.getConfig().getBoolean("http-api.https.enabled", false)) {
+            return HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
+        }
+        String ksPath = plugin.getConfig().getString("http-api.https.keystore", "keystore.p12");
+        String ksPass = plugin.getConfig().getString("http-api.https.password", "");
+        File ksFile = new File(ksPath).isAbsolute() ? new File(ksPath) : new File(plugin.getDataFolder(), ksPath);
+        try {
+            java.security.KeyStore ks = java.security.KeyStore.getInstance("PKCS12");
+            try (FileInputStream in = new FileInputStream(ksFile)) {
+                ks.load(in, ksPass.toCharArray());
+            }
+            javax.net.ssl.KeyManagerFactory kmf = javax.net.ssl.KeyManagerFactory
+                    .getInstance(javax.net.ssl.KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(ks, ksPass.toCharArray());
+            javax.net.ssl.SSLContext ssl = javax.net.ssl.SSLContext.getInstance("TLS");
+            ssl.init(kmf.getKeyManagers(), null, null);
+
+            com.sun.net.httpserver.HttpsServer https =
+                    com.sun.net.httpserver.HttpsServer.create(new InetSocketAddress(bindAddress, port), 0);
+            https.setHttpsConfigurator(new com.sun.net.httpserver.HttpsConfigurator(ssl));
+            log.info("[HttpAPI] HTTPS enabled (keystore: " + ksFile.getName() + ").");
+            return https;
+        } catch (java.security.GeneralSecurityException e) {
+            throw new IOException("TLS setup failed (" + ksFile + "): " + e.getMessage(), e);
+        }
+    }
+
+    public void stop() {
+        if (server != null) {
+            server.stop(1);
+            log.info("[HttpAPI] Stopped.");
+        }
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+    }
+
+    // ─── Request wrapper ──────────────────────────────────────────────────────
+
+    @FunctionalInterface
+    private interface Route { void handle(HttpExchange ex) throws IOException; }
+
+    /** Carries an HTTP status so handlers can fail cleanly instead of resetting the socket. */
+    private static class ApiException extends IOException {
+        final int status;
+        ApiException(int status, String message) { super(message); this.status = status; }
+    }
+
+    /**
+     * Wraps every handler so any thrown exception still produces a proper HTTP
+     * response and the exchange is always closed. Without this, an exception
+     * (e.g. a timeout) would leave the client with a dropped connection.
+     */
+    private void route(HttpExchange ex, Route handler) {
+        try {
+            handler.handle(ex);
+        } catch (ApiException e) {
+            trySend(ex, e.status, error(e.getMessage()));
+        } catch (Exception e) {
+            log.warning("[HttpAPI] Handler error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            trySend(ex, 500, error("Internal server error"));
+        } finally {
+            ex.close();
+        }
+    }
+
+    private void trySend(HttpExchange ex, int code, String body) {
+        try { send(ex, code, body); } catch (IOException ignored) {}
+    }
+
+    // ─── Auth ───────────────────────────────────────────────────────────────
+
+    private boolean authenticate(HttpExchange ex, String apiKey) {
+        String auth = ex.getRequestHeaders().getFirst("Authorization");
+        if (auth == null) return false;
+        // Constant-time comparison to avoid leaking key bytes via response timing
+        return java.security.MessageDigest.isEqual(
+                auth.getBytes(StandardCharsets.UTF_8),
+                ("Bearer " + apiKey).getBytes(StandardCharsets.UTF_8));
+    }
+
+    // ─── Route dispatcher ────────────────────────────────────────────────────
+
+    private void handlePlayerRoot(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+
+        String path = ex.getRequestURI().getPath();
+        String[] parts = path.replaceAll("^/+|/+$", "").split("/");
+        // parts: ["api","player",name] or ["api","player",name,action]
+        if (parts.length < 3) { send(ex, 400, error("Missing player name")); return; }
+
+        String playerName = parts[2];
+        String action = parts.length >= 4 ? parts[3] : null;
+        String method = ex.getRequestMethod().toUpperCase();
+
+        if ("GET".equals(method) && action == null) {
+            handleGetPlayer(ex, playerName);
+        } else if ("POST".equals(method) && action != null) {
+            String body = readBody(ex);
+            switch (action) {
+                case "ban"    -> handleBan(ex, playerName, body);
+                case "unban"  -> handleUnban(ex, playerName);
+                case "mute"   -> handleMute(ex, playerName, body);
+                case "unmute" -> handleUnmute(ex, playerName);
+                case "coins"  -> handleCoins(ex, playerName, body);
+                case "rank"   -> handleRank(ex, playerName, body);
+                default -> send(ex, 400, error("Unknown action: " + action));
+            }
+        } else {
+            send(ex, 405, error("Method not allowed"));
+        }
+    }
+
+    // ─── GET /api/player/{name} ─────────────────────────────────────────────
+
+    private void handleGetPlayer(HttpExchange ex, String name) throws IOException {
+        UUID uuid = getUuidByName(name);
+        if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
+
+        PlayerData data = plugin.getPlayerDataManager().getCached(uuid);
+        boolean online = Bukkit.getPlayer(uuid) != null;
+
+        JsonObject obj = new JsonObject();
+        obj.addProperty("uuid",   uuid.toString());
+        obj.addProperty("name",   name);
+        obj.addProperty("online", online);
+        obj.addProperty("coins",  data != null ? data.getCoins() : 0);
+
+        JsonObject elo = new JsonObject();
+        if (data != null) {
+            for (Map.Entry<String, Integer> e : data.getElo().entrySet()) {
+                elo.addProperty(e.getKey(), e.getValue());
+            }
+        }
+        obj.add("elo", elo);
+
+        // Rank
+        String rank = "default";
+        LuckPerms lp = plugin.getLuckPerms();
+        if (lp != null) {
+            try {
+                User user = joinWithTimeout(lp.getUserManager().loadUser(uuid));
+                if (user != null) rank = user.getPrimaryGroup();
+            } catch (Exception ignored) {}
+        }
+        obj.addProperty("rank", rank);
+
+        // Ban
+        joinWithTimeout(plugin.getBanManager().getActiveBan(uuid).thenAccept(ban -> {
+            obj.addProperty("banned", ban != null);
+            if (ban != null) {
+                obj.addProperty("ban_reason", ban.reason);
+                if (ban.expires != null)
+                    obj.addProperty("ban_expires", ban.expires.toString());
+            }
+        }));
+
+        // Mute
+        joinWithTimeout(plugin.getMuteManager().getActiveMute(uuid).thenAccept(mute -> {
+            obj.addProperty("muted", mute != null);
+            if (mute != null) {
+                obj.addProperty("mute_reason", mute.reason);
+                if (!mute.isPermanent() && mute.expires != null)
+                    obj.addProperty("mute_expires", mute.expires.toString());
+            }
+        }));
+
+        send(ex, 200, GSON.toJson(obj));
+    }
+
+    // ─── POST /api/player/{name}/ban ────────────────────────────────────────
+
+    private void handleBan(HttpExchange ex, String name, String body) throws IOException {
+        UUID uuid = getUuidByName(name);
+        if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
+
+        JsonObject parsed = parseJson(body);
+        String reason   = getStr(parsed, "reason", "Staff Panel");
+        String duration = getStr(parsed, "duration", "permanent");
+        long durationSecs = parseDuration(duration);
+        if (durationSecs == com.lemonpvp.lemoncore.util.TextUtil.INVALID_DURATION) {
+            send(ex, 400, error("Invalid duration: " + duration + " (use e.g. 30d, 12h, or permanent)"));
+            return;
+        }
+
+        joinWithTimeout(plugin.getBanManager().banPlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
+            .thenAccept(ban -> {
+                if (ban == null) return;
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player online = Bukkit.getPlayer(uuid);
+                    // Route through performBanKick so the proxy gets the PlayerBanning
+                    // signal (no limbo evasion) and the kick screen matches messages.yml.
+                    if (online != null) plugin.getListenerManager().performBanKick(online, ban);
+                });
+            }));
+
+        send(ex, 200, ok());
+    }
+
+    // ─── POST /api/player/{name}/unban ──────────────────────────────────────
+
+    private void handleUnban(HttpExchange ex, String name) throws IOException {
+        UUID uuid = getUuidByName(name);
+        if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
+        joinWithTimeout(plugin.getBanManager().unban(name));
+        send(ex, 200, ok());
+    }
+
+    // ─── POST /api/player/{name}/mute ───────────────────────────────────────
+
+    private void handleMute(HttpExchange ex, String name, String body) throws IOException {
+        UUID uuid = getUuidByName(name);
+        if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
+
+        JsonObject parsed = parseJson(body);
+        String reason   = getStr(parsed, "reason", "Staff Panel");
+        String duration = getStr(parsed, "duration", "permanent");
+        long durationSecs = parseDuration(duration);
+        if (durationSecs == com.lemonpvp.lemoncore.util.TextUtil.INVALID_DURATION) {
+            send(ex, 400, error("Invalid duration: " + duration + " (use e.g. 30d, 12h, or permanent)"));
+            return;
+        }
+
+        joinWithTimeout(plugin.getMuteManager().mutePlayer(uuid, name, reason, null, "StaffPanel", durationSecs)
+            .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                Player online = Bukkit.getPlayer(uuid);
+                if (online != null)
+                    online.sendMessage(net.kyori.adventure.text.Component.text("You have been muted: " + reason));
+            })));
+
+        send(ex, 200, ok());
+    }
+
+    // ─── POST /api/player/{name}/unmute ─────────────────────────────────────
+
+    private void handleUnmute(HttpExchange ex, String name) throws IOException {
+        UUID uuid = getUuidByName(name);
+        if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
+        joinWithTimeout(plugin.getMuteManager().unmute(name));
+        send(ex, 200, ok());
+    }
+
+    // ─── POST /api/player/{name}/coins ──────────────────────────────────────
+
+    private void handleCoins(HttpExchange ex, String name, String body) throws IOException {
+        UUID uuid = getUuidByName(name);
+        if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
+
+        JsonObject parsed = parseJson(body);
+        if (parsed == null) { send(ex, 400, error("Invalid JSON")); return; }
+        long amount = getLong(parsed, "amount", 0L);
+        String action = getStr(parsed, "action", "add");
+
+        switch (action) {
+            case "add"    -> joinWithTimeout(plugin.getPlayerDataManager().addCoins(uuid, amount, "staff-panel", null));
+            case "remove" -> joinWithTimeout(plugin.getPlayerDataManager().removeCoins(uuid, amount, "staff-panel", null));
+            case "set"    -> joinWithTimeout(plugin.getPlayerDataManager().setCoins(uuid, amount, null));
+            default       -> { send(ex, 400, error("Unknown action: " + action)); return; }
+        }
+
+        send(ex, 200, ok());
+    }
+
+    // ─── POST /api/player/{name}/rank ───────────────────────────────────────
+
+    private void handleRank(HttpExchange ex, String name, String body) throws IOException {
+        LuckPerms lp = plugin.getLuckPerms();
+        if (lp == null) { send(ex, 503, error("LuckPerms not available")); return; }
+
+        UUID uuid = getUuidByName(name);
+        if (uuid == null) { send(ex, 404, error("Player not found: " + name)); return; }
+
+        JsonObject parsed = parseJson(body);
+        if (parsed == null) { send(ex, 400, error("Invalid JSON")); return; }
+        String rank = getStr(parsed, "rank", null);
+        if (rank == null) { send(ex, 400, error("rank required")); return; }
+
+        try {
+            User user = joinWithTimeout(lp.getUserManager().loadUser(uuid));
+            if (user == null) { send(ex, 404, error("LuckPerms user not found")); return; }
+            user.data().clear(node -> node instanceof InheritanceNode);
+            user.data().add(InheritanceNode.builder(rank).build());
+            joinWithTimeout(lp.getUserManager().saveUser(user));
+            send(ex, 200, ok());
+        } catch (Exception e) {
+            send(ex, 500, error("LuckPerms error: " + e.getMessage()));
+        }
+    }
+
+    // ─── GET /api/server/stats ───────────────────────────────────────────────
+
+    private void handleStats(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        if (!"GET".equals(ex.getRequestMethod())) { send(ex, 405, error("Method not allowed")); return; }
+
+        long uptime = (System.currentTimeMillis() - plugin.getStartTimeMs()) / 1000L;
+        String version = Bukkit.getVersion();
+
+        // Bukkit.getTPS() / getOnlinePlayers() / getMaxPlayers() are main-thread-only
+        CompletableFuture<JsonObject> mainFuture = new CompletableFuture<>();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            try {
+                double[] tps = Bukkit.getTPS();
+                JsonObject obj = new JsonObject();
+                obj.addProperty("online",         Bukkit.getOnlinePlayers().size());
+                obj.addProperty("max",            Bukkit.getMaxPlayers());
+                obj.addProperty("tps",            Math.round(tps[0] * 10.0) / 10.0);
+                obj.addProperty("uptime_seconds", uptime);
+                obj.addProperty("version",        version);
+                mainFuture.complete(obj);
+            } catch (Exception e) {
+                mainFuture.completeExceptionally(e);
+            }
+        });
+
+        send(ex, 200, GSON.toJson(joinWithTimeout(mainFuture)));
+    }
+
+    // ─── POST /api/console ───────────────────────────────────────────────────
+
+    private void handleConsole(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        if (!"POST".equals(ex.getRequestMethod())) { send(ex, 405, error("Method not allowed")); return; }
+
+        JsonObject parsed = parseJson(readBody(ex));
+        if (parsed == null) { send(ex, 400, error("Invalid JSON")); return; }
+        String command = getStr(parsed, "command", null);
+        if (command == null || command.isBlank()) { send(ex, 400, error("command required")); return; }
+
+        StringBuilder output = new StringBuilder();
+        java.util.logging.Handler handler = new java.util.logging.Handler() {
+            @Override public void publish(java.util.logging.LogRecord r) { output.append(r.getMessage()).append('\n'); }
+            @Override public void flush() {}
+            @Override public void close() {}
+        };
+        Bukkit.getLogger().addHandler(handler);
+        try {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                try {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+                } finally {
+                    future.complete(null);
+                }
+            });
+            try { future.get(5, TimeUnit.SECONDS); } catch (Exception ignored) {}
+        } finally {
+            Bukkit.getLogger().removeHandler(handler);
+        }
+
+        JsonObject result = new JsonObject();
+        result.addProperty("output", output.toString().trim());
+        send(ex, 200, GSON.toJson(result));
+    }
+
+    // ─── Utility ────────────────────────────────────────────────────────────
+
+    private UUID getUuidByName(String name) {
+        Player p = Bukkit.getPlayerExact(name);
+        if (p != null) return p.getUniqueId();
+        org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayerIfCached(name);
+        return op != null ? op.getUniqueId() : null;
+    }
+
+    private static final int MAX_BODY_BYTES = 8192;
+    private static final long FUTURE_TIMEOUT_SECS = 5;
+
+    private <T> T joinWithTimeout(CompletableFuture<T> future) throws IOException {
+        try {
+            return future.get(FUTURE_TIMEOUT_SECS, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            throw new ApiException(504, "Operation timed out");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiException(503, "Operation interrupted");
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            log.warning("[HttpAPI] Async operation failed: "
+                    + (cause != null ? cause.getClass().getSimpleName() + ": " + cause.getMessage() : e.getMessage()));
+            throw new ApiException(500, "Operation failed");
+        }
+    }
+
+    private String readBody(HttpExchange ex) throws IOException {
+        try (InputStream is = ex.getRequestBody()) {
+            byte[] buf = is.readNBytes(MAX_BODY_BYTES + 1);
+            if (buf.length > MAX_BODY_BYTES) throw new ApiException(413, "Request body too large");
+            return new String(buf, StandardCharsets.UTF_8);
+        }
+    }
+
+    private JsonObject parseJson(String body) {
+        if (body == null || body.isBlank()) return new JsonObject();
+        try { return JsonParser.parseString(body).getAsJsonObject(); }
+        catch (Exception e) { return null; }
+    }
+
+    private String getStr(JsonObject obj, String key, String def) {
+        if (obj == null || !obj.has(key)) return def;
+        JsonElement el = obj.get(key);
+        return el.isJsonNull() ? def : el.getAsString();
+    }
+
+    private long getLong(JsonObject obj, String key, long def) {
+        if (obj == null || !obj.has(key)) return def;
+        try { return obj.get(key).getAsLong(); }
+        catch (Exception e) { return def; }
+    }
+
+    /**
+     * Duration for the moderation endpoints, in seconds.
+     *
+     * <p>Returns {@code 0} for an explicit {@code "permanent"} — the sentinel
+     * BanManager/MuteManager read as "never expires" — and
+     * {@link com.lemonpvp.lemoncore.util.TextUtil#INVALID_DURATION} for anything malformed, so
+     * the caller can answer 400 instead of silently issuing a <em>permanent</em> punishment.
+     * A bare number still means seconds, as this endpoint has always accepted.
+     */
+    private long parseDuration(String d) {
+        if (d == null || d.isBlank() || d.equalsIgnoreCase("permanent")) return 0L;
+        String trimmed = d.trim();
+        if (trimmed.chars().allMatch(Character::isDigit)) {
+            try { return Long.parseLong(trimmed); }
+            catch (NumberFormatException e) { return com.lemonpvp.lemoncore.util.TextUtil.INVALID_DURATION; }
+        }
+        return com.lemonpvp.lemoncore.util.TextUtil.parseDuration(trimmed);
+    }
+
+    // ─── v2 endpoints ────────────────────────────────────────────────────────
+
+    /**
+     * GET /api/status — PUBLIC (no token): the health payload the status page
+     * polls. Never exposes player names, only counts + uptime.
+     */
+    private void handleStatus(HttpExchange ex) throws IOException {
+        if (!"GET".equals(ex.getRequestMethod())) { send(ex, 405, error("GET only")); return; }
+        // getOnlinePlayers()/getMaxPlayers()/getTPS() are main-thread-only —
+        // build the snapshot there and hand it back to this executor thread.
+        CompletableFuture<JsonObject> future = new CompletableFuture<>();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            JsonObject o = new JsonObject();
+            o.addProperty("online", true);
+            o.addProperty("server", plugin.getConfig().getString("server-name", Bukkit.getServer().getMotd()));
+            o.addProperty("players", Bukkit.getOnlinePlayers().size());
+            o.addProperty("maxPlayers", Bukkit.getMaxPlayers());
+            o.addProperty("uptimeSeconds", (System.currentTimeMillis() - plugin.getStartTimeMs()) / 1000L);
+            o.addProperty("tps", Math.min(20.0, Bukkit.getServer().getTPS()[0]));
+            o.addProperty("version", Bukkit.getMinecraftVersion());
+            future.complete(o);
+        });
+        send(ex, 200, GSON.toJson(await(future)));
+    }
+
+    /** GET /api/leaderboard?stat=kills|coins&limit=10 — top players from lc_players. */
+    private void handleLeaderboard(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        String query = ex.getRequestURI().getQuery();
+        String stat = query != null && query.contains("stat=coins") ? "coins" : "kills";
+        int limit = 10;
+        if (query != null && query.contains("limit=")) {
+            try { limit = Math.min(50, Integer.parseInt(query.replaceAll(".*limit=(\\d+).*", "$1"))); }
+            catch (NumberFormatException ignored) {}
+        }
+        final int fLimit = limit;
+        var rows = plugin.getDatabaseManager().queryAsync(conn -> {
+            var arr = new com.google.gson.JsonArray();
+            try (var ps = conn.prepareStatement(
+                    "SELECT username, " + stat + " AS v FROM lc_players ORDER BY " + stat + " DESC LIMIT ?")) {
+                ps.setInt(1, fLimit);
+                var rs = ps.executeQuery();
+                int rank = 1;
+                while (rs.next()) {
+                    JsonObject row = new JsonObject();
+                    row.addProperty("rank", rank++);
+                    row.addProperty("name", rs.getString("username"));
+                    row.addProperty(stat, rs.getLong("v"));
+                    arr.add(row);
+                }
+            } catch (java.sql.SQLException e) { log.warning("[HttpAPI] leaderboard: " + e.getMessage()); }
+            return arr;
+        });
+        send(ex, 200, GSON.toJson(await(rows)));
+    }
+
+    /** GET /api/tournaments — every tournament with state/gamemode (shared table). */
+    private void handleTournaments(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        var rows = plugin.getDatabaseManager().queryAsync(conn -> {
+            var arr = new com.google.gson.JsonArray();
+            try (var ps = conn.prepareStatement(
+                    "SELECT id, name, gamemode, state, start_at, end_at FROM lp_tournaments ORDER BY id DESC")) {
+                var rs = ps.executeQuery();
+                while (rs.next()) {
+                    JsonObject row = new JsonObject();
+                    row.addProperty("id", rs.getInt("id"));
+                    row.addProperty("name", rs.getString("name"));
+                    row.addProperty("gamemode", rs.getString("gamemode"));
+                    row.addProperty("state", rs.getString("state"));
+                    row.addProperty("startAt", rs.getLong("start_at"));
+                    row.addProperty("endAt", rs.getLong("end_at"));
+                    arr.add(row);
+                }
+            } catch (java.sql.SQLException e) { log.warning("[HttpAPI] tournaments: " + e.getMessage()); }
+            return arr;
+        });
+        send(ex, 200, GSON.toJson(await(rows)));
+    }
+
+    /** GET /api/history/{name} — ban + mute history for a player. */
+    private void handleHistory(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        String name = ex.getRequestURI().getPath().substring("/api/history/".length());
+        if (name.isBlank()) { send(ex, 400, error("Missing player name")); return; }
+        UUID uuid = await(plugin.getPlayerDataManager().findUUIDByName(name));
+        if (uuid == null) { send(ex, 404, error("Player not found")); return; }
+        var result = plugin.getDatabaseManager().queryAsync(conn -> {
+            JsonObject o = new JsonObject();
+            for (String[] t : new String[][]{{"bans", "lc_bans", "ban_time"}, {"mutes", "lc_mutes", "mute_time"}}) {
+                var arr = new com.google.gson.JsonArray();
+                try (var ps = conn.prepareStatement(
+                        "SELECT reason, " + t[2] + " AS at, expires, active FROM " + t[1]
+                        + " WHERE uuid=? ORDER BY " + t[2] + " DESC LIMIT 25")) {
+                    ps.setString(1, uuid.toString());
+                    var rs = ps.executeQuery();
+                    while (rs.next()) {
+                        JsonObject row = new JsonObject();
+                        row.addProperty("reason", rs.getString("reason"));
+                        row.addProperty("time", String.valueOf(rs.getTimestamp("at")));
+                        row.addProperty("expires", String.valueOf(rs.getTimestamp("expires")));
+                        row.addProperty("active", rs.getBoolean("active"));
+                        arr.add(row);
+                    }
+                } catch (java.sql.SQLException e) { log.warning("[HttpAPI] history: " + e.getMessage()); }
+                o.add(t[0], arr);
+            }
+            return o;
+        });
+        send(ex, 200, GSON.toJson(await(result)));
+    }
+
+    /** POST /api/broadcast {"message": "<minimessage>"} — network-wide announcement. */
+    private void handleBroadcast(HttpExchange ex, String key) throws IOException {
+        if (!authenticate(ex, key)) { send(ex, 401, error("Unauthorized")); return; }
+        if (!"POST".equals(ex.getRequestMethod())) { send(ex, 405, error("POST only")); return; }
+        String body = new String(ex.getRequestBody().readNBytes(MAX_BODY_BYTES), StandardCharsets.UTF_8);
+        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        String message = json.has("message") ? json.get("message").getAsString() : null;
+        if (message == null || message.isBlank()) { send(ex, 400, error("Missing message")); return; }
+        Bukkit.getScheduler().runTask(plugin, () -> Bukkit.broadcast(
+                net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(message)));
+        send(ex, 200, "{\"ok\":true}");
+    }
+
+    /** Joins an async DB future with the standard timeout, surfacing 504 on expiry. */
+    private <T> T await(CompletableFuture<T> future) throws IOException {
+        try {
+            return future.get(FUTURE_TIMEOUT_SECS, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiException(500, "Interrupted");
+        } catch (ExecutionException e) {
+            throw new ApiException(500, "Query failed");
+        } catch (java.util.concurrent.TimeoutException e) {
+            throw new ApiException(504, "Database timeout");
+        }
+    }
+
+    private void send(HttpExchange ex, int code, String body) throws IOException {
+        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+        ex.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+        ex.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+        ex.sendResponseHeaders(code, bytes.length);
+        try (OutputStream os = ex.getResponseBody()) { os.write(bytes); }
+    }
+
+    private String ok() {
+        JsonObject o = new JsonObject(); o.addProperty("ok", true); return GSON.toJson(o);
+    }
+
+    private String error(String msg) {
+        JsonObject o = new JsonObject(); o.addProperty("error", msg); return GSON.toJson(o);
+    }
+}

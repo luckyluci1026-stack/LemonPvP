@@ -1,0 +1,214 @@
+# Pre-configured events (auto-created if not in DB)
+# These serve as templates; actual events are managed via /aowcreateevent
+
+cinema:
+  CINEMA_LemonStory:
+    title: "The Story of LemonPvP"
+    frames:
+      - type: TITLE
+        delay: 0
+        title: "<bold><gradient:#fffb00:#00ff00>LemonPvP</gradient></bold>"
+        subtitle: "<gray>The Beginning</gray>"
+        fade_in: 20
+        stay: 80
+        fade_out: 20
+      - type: CHAT
+        delay: 100
+        message: "<italic><gray>In the beginning, there was only citrus...</gray></italic>"
+      - type: SOUND
+        delay: 100
+        sound: "minecraft:music.game"
+        volume: 0.5
+        pitch: 1.0
+      - type: TITLE
+        delay: 120
+        title: "<gold>A new era began...</gold>"
+        subtitle: "<yellow>And LemonPvP was born.</yellow>"
+        fade_in: 20
+        stay: 100
+        fade_out: 20
+      - type: CHAT
+        delay: 200
+        message: "<bold><gradient:#fffb00:#00ff00>The legend continues. Join the fight!</gradient></bold>"
+
+  CINEMA_TropicDreams:
+    title: "Tropic Dreams"
+    frames:
+      - type: TITLE
+        delay: 0
+        title: "<gradient:#00ff88:#00ffff>Tropic Dreams</gradient>"
+        subtitle: "<gray>A journey through the tropics</gray>"
+        fade_in: 20
+        stay: 80
+        fade_out: 20
+      - type: CHAT
+        delay: 100
+        message: "<aqua>🌴 The warm breeze carries whispers of adventure...</aqua>"
+      - type: SOUND
+        delay: 100
+        sound: "minecraft:ambient.basalt_deltas.mood"
+        volume: 1.0
+        pitch: 0.8
+      - type: TITLE
+        delay: 160
+        title: "<green>Paradise Found</green>"
+        subtitle: "<yellow>Where every sunset is golden.</yellow>"
+        fade_in: 20
+        stay: 100
+        fade_out: 20
+
+  CINEMA_BattleReplay:
+    title: "Epic Battle Replay"
+    frames:
+      - type: TITLE
+        delay: 0
+        title: "<red><bold>BATTLE REPLAY</bold></red>"
+        subtitle: "<gray>Witness the greatest fight</gray>"
+        fade_in: 10
+        stay: 60
+        fade_out: 10
+      - type: SOUND
+        delay: 60
+        sound: "minecraft:entity.wither.spawn"
+        volume: 0.3
+        pitch: 1.2
+      - type: CHAT
+        delay: 80
+        message: "<red>⚔ The warriors clash in an epic showdown!</red>"
+      - type: TITLE
+        delay: 120
+        title: "<gold>🏆 Victory!</gold>"
+        subtitle: "<yellow>The champion stands supreme!</yellow>"
+        fade_in: 20
+        stay: 80
+        fade_out: 20
+
+# Horror event configurations
+horror:
+  HORROR_Escape:
+    labyrinth-size: 50        # N×N labyrinth
+    monster-count: 5
+    jump-scare-interval: 200  # ticks between jump scares
+
+  HORROR_Mafia:
+    mafia-count: 2
+    night-duration: 60        # seconds
+    day-duration: 120         # seconds
+
+  HORROR_Hunt:
+    game-duration: 300        # seconds (5 minutes)
+    hunter-speed-level: 1     # Speed II = level 1 (0-indexed)
+    fog-level: 1              # Blindness amplifier
+
+# PvP event configurations
+pvp:
+  PVP_FreeForAll:
+    game-duration: 300        # seconds (5 minutes)
+
+  PVP_Sumo:
+    platform-radius: 8
+    void-y: 55                # Y level below which player is eliminated
+
+# LemonRoyale maps
+lemon-royale:
+  maps:
+    LR_Tropic_1:
+      theme: TROPIC
+      size: 300
+      spawnpoints:
+        - {x: 50, y: 70, z: 50}
+        - {x: -50, y: 70, z: 50}
+        - {x: 50, y: 70, z: -50}
+        - {x: -50, y: 70, z: -50}
+        - {x: 100, y: 72, z: 0}
+        - {x: -100, y: 72, z: 0}
+        - {x: 0, y: 72, z: 100}
+        - {x: 0, y: 72, z: -100}
+    LR_Desert_2:
+      theme: DESERT
+      size: 300
+      spawnpoints:
+        - {x: 60, y: 68, z: 60}
+        - {x: -60, y: 68, z: 60}
+        - {x: 60, y: 68, z: -60}
+        - {x: -60, y: 68, z: -60}
+        - {x: 120, y: 70, z: 0}
+        - {x: -120, y: 70, z: 0}
+        - {x: 0, y: 70, z: 120}
+        - {x: 0, y: 70, z: -120}
+    LR_Frost_3:
+      theme: FROST
+      size: 300
+      spawnpoints:
+        - {x: 55, y: 65, z: 55}
+        - {x: -55, y: 65, z: 55}
+        - {x: 55, y: 65, z: -55}
+        - {x: -55, y: 65, z: -55}
+        - {x: 110, y: 65, z: 0}
+        - {x: -110, y: 65, z: 0}
+        - {x: 0, y: 65, z: 110}
+        - {x: 0, y: 65, z: -110}
+    LR_Nether_4:
+      theme: NETHER
+      size: 300
+      spawnpoints:
+        - {x: 70, y: 75, z: 70}
+        - {x: -70, y: 75, z: 70}
+        - {x: 70, y: 75, z: -70}
+        - {x: -70, y: 75, z: -70}
+        - {x: 130, y: 75, z: 0}
+        - {x: -130, y: 75, z: 0}
+        - {x: 0, y: 75, z: 130}
+        - {x: 0, y: 75, z: -130}
+    LR_Ancient_5:
+      theme: ANCIENT
+      size: 300
+      spawnpoints:
+        - {x: 45, y: 68, z: 45}
+        - {x: -45, y: 68, z: 45}
+        - {x: 45, y: 68, z: -45}
+        - {x: -45, y: 68, z: -45}
+        - {x: 90, y: 68, z: 0}
+        - {x: -90, y: 68, z: 0}
+        - {x: 0, y: 68, z: 90}
+        - {x: 0, y: 68, z: -90}
+
+# HungerGames maps
+hunger-games:
+  maps:
+    HG_Classic:
+      cornucopia: {x: 0, y: 65, z: 0}
+      size: 200
+      spawnpoints:
+        - {x: 20, y: 65, z: 0}
+        - {x: -20, y: 65, z: 0}
+        - {x: 0, y: 65, z: 20}
+        - {x: 0, y: 65, z: -20}
+        - {x: 14, y: 65, z: 14}
+        - {x: -14, y: 65, z: 14}
+        - {x: 14, y: 65, z: -14}
+        - {x: -14, y: 65, z: -14}
+    HG_Tropic:
+      cornucopia: {x: 1000, y: 65, z: 0}
+      size: 200
+      spawnpoints:
+        - {x: 1020, y: 65, z: 0}
+        - {x: 980, y: 65, z: 0}
+        - {x: 1000, y: 65, z: 20}
+        - {x: 1000, y: 65, z: -20}
+        - {x: 1014, y: 65, z: 14}
+        - {x: 986, y: 65, z: 14}
+        - {x: 1014, y: 65, z: -14}
+        - {x: 986, y: 65, z: -14}
+    HG_Winter:
+      cornucopia: {x: 2000, y: 65, z: 0}
+      size: 200
+      spawnpoints:
+        - {x: 2020, y: 65, z: 0}
+        - {x: 1980, y: 65, z: 0}
+        - {x: 2000, y: 65, z: 20}
+        - {x: 2000, y: 65, z: -20}
+        - {x: 2014, y: 65, z: 14}
+        - {x: 1986, y: 65, z: 14}
+        - {x: 2014, y: 65, z: -14}
+        - {x: 1986, y: 65, z: -14}

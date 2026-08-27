@@ -1,0 +1,10 @@
+database:
+  host: 172.18.0.1
+  port: 3306
+  database: s1_LemonPvP_Network
+  username: u1_zMGE6ZE7k8
+  password: "I.W3m6k5Yb@sZxtwFbtBey9C"
+
+maintenance:
+  # Discord invite link shown in the maintenance kick message
+  discord-link: "https://discord.gg/eZWP9EGW7"

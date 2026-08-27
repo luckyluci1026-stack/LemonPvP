@@ -1,0 +1,53 @@
+# Arena configuration - auto-populated by /aowarena commands
+# Arena positions are managed in MySQL; this file stores metadata
+arenas: {}
+
+duel-arenas:
+  arena1:
+    name: "Jungle Temple Duel"
+    built: false
+    center-x: 1100
+    center-y: 64
+    center-z: 0
+  arena2:
+    name: "Mangrove Dock"
+    built: false
+    center-x: 1250
+    center-y: 64
+    center-z: 0
+  arena3:
+    name: "Bamboo Garden"
+    built: false
+    center-x: 1400
+    center-y: 64
+    center-z: 0
+  arena4:
+    name: "Tropical Cliffside"
+    built: false
+    center-x: 1550
+    center-y: 64
+    center-z: 0
+  arena5:
+    name: "Ancient Ruins Clearing"
+    built: false
+    center-x: 1700
+    center-y: 64
+    center-z: 0
+  arena6:
+    name: "Beachside Dueling Pit"
+    built: false
+    center-x: 1850
+    center-y: 64
+    center-z: 0
+  arena7:
+    name: "Floating Island Showdown"
+    built: false
+    center-x: 2000
+    center-y: 64
+    center-z: 0
+  arena8:
+    name: "Bamboo Forest Shrine"
+    built: false
+    center-x: 2150
+    center-y: 64
+    center-z: 0

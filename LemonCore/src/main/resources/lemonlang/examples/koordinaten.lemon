@@ -1,0 +1,21 @@
+# ============================================================
+#  BEISPIEL: Koordinaten
+#  Reagiert auf die Position des Spielers beim Bewegen.
+#  Nutzt at (genaue Position) und near (in der Naehe).
+# ============================================================
+
+set spawn_text = <gradient:#fffb00:#00ff00>Willkommen am Spawn!
+
+on move
+  if at -125 674 89
+    sound ENTITY_VILLAGER_AMBIENT
+    title <gold>Geheimer Ort! | <gray>Du hast einen versteckten Platz gefunden | 3s
+    particle HAPPY_VILLAGER 10
+  else if near 0 64 0 5
+    actionbar {spawn_text}
+  else if near 100 70 -50 8
+    actionbar <yellow>Du naeherst dich der Arena ...
+
+# Zeigt alle 30 Sekunden die aktuellen Koordinaten an
+every 30s
+  actionbar <aqua>Position: {x} {y} {z} in {world}
