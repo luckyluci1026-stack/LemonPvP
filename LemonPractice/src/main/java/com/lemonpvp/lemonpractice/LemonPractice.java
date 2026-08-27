@@ -290,6 +290,11 @@ public class LemonPractice extends JavaPlugin {
 
         // 9. Done
         getLogger().info("[LemonPractice] Enabled on " + serverType + " server.");
+
+        // 10. Self-check. Most failures on this network are a setting that quietly makes
+        // something impossible rather than a crash — surface those instead of letting an admin
+        // discover them as "the queue does nothing".
+        com.lemonpvp.lemonpractice.util.SetupDoctor.logProblems(this);
     }
 
     @Override

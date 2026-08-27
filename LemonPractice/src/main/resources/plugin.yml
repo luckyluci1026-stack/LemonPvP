@@ -63,7 +63,7 @@ commands:
   lpractice:
     description: LemonPractice admin commands
     permission: lemonpractice.admin.reload
-    usage: /lpractice reload
+    usage: /lpractice reload|doctor
   aowarena:
     description: Manage arenas
     permission: lemonpractice.admin.arena
