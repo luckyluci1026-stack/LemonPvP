@@ -195,3 +195,66 @@ categories:
       - { material: SHIELD,           buy: 80,   sell: 20 }
       - { material: TOTEM_OF_UNDYING, buy: 1500, sell: 400 }
       - { material: FIRE_CHARGE,      buy: 25,   sell: 6 }
+
+  tools:
+    icon: DIAMOND_PICKAXE
+    name: "&e&lWerkzeuge"
+    slot: 34
+    items:
+      # ---- Abbau: schlicht ----
+      - { material: WOODEN_PICKAXE, buy: 10,  sell: 2 }
+      - { material: STONE_PICKAXE,  buy: 25,  sell: 6 }
+      - { material: IRON_PICKAXE,   buy: 100, sell: 28 }
+      - { material: IRON_SHOVEL,    buy: 60,  sell: 15 }
+      - { material: IRON_HOE,       buy: 40,  sell: 10 }
+      - { material: SHEARS,         buy: 30,  sell: 8 }
+
+      # ---- Abbau: fertig verzaubert ----
+      - material: DIAMOND_PICKAXE
+        buy: 850
+        sell: -1
+        name: "<aqua><bold>Glücksspitzhacke</bold></aqua>"
+        lore:
+          - "<gray>Fortune III - mehr Ausbeute"
+          - "<gray>pro Ader."
+        enchants:
+          fortune: 3
+          unbreaking: 2
+      - material: NETHERITE_PICKAXE
+        buy: 2800
+        sell: -1
+        name: "<gradient:#6C5CE7:#00D4FF><bold>Bergbau-Legende</bold></gradient>"
+        lore:
+          - "<gray>Effizienz V, dazu Mending -"
+          - "<gray>repariert sich mit Erfahrung"
+          - "<gray>von selbst (siehe Erfahrungsflaschen"
+          - "<gray>bei Verschiedenes)."
+        enchants:
+          efficiency: 5
+          unbreaking: 3
+          mending: 1
+      - material: DIAMOND_SHOVEL
+        buy: 500
+        sell: -1
+        name: "<aqua><bold>Erdbewegerin</bold></aqua>"
+        lore:
+          - "<gray>Effizienz IV - Sand und Erde"
+          - "<gray>verschwinden im Rekordtempo."
+        enchants:
+          efficiency: 4
+      - material: FISHING_ROD
+        buy: 400
+        sell: -1
+        name: "<blue><bold>Schatzsucher-Angel</bold></blue>"
+        lore:
+          - "<gray>Verlockung III + Meeresglück III -"
+          - "<gray>öfter Beute, seltener Müll."
+        enchants:
+          lure: 3
+          luck_of_the_sea: 3
+
+      # ---- Unterwegs ----
+      - { material: COMPASS,  buy: 20, sell: 5 }
+      - { material: CLOCK,    buy: 20, sell: 5 }
+      - { material: SPYGLASS, buy: 60, sell: 15 }
+      - { material: LEAD,     buy: 15, sell: 4 }
