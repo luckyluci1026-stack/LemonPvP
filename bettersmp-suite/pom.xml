@@ -20,6 +20,7 @@
         <module>fastshop</module>
         <module>smpcontent</module>
         <module>smplobby</module>
+        <module>lobbylock</module>
     </modules>
 
     <properties>

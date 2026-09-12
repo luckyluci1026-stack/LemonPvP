@@ -95,6 +95,11 @@ Auf die Lobby kommt zusätzlich `bettersmp-suite/smplobby/target/SMPLobby-1.0.0.
 nach `plugins/` - siehe `bettersmp-suite/smplobby/README.md` für die
 Einrichtung dort (Spawn setzen, Server-Wähler eintragen).
 
+Optional (nur auf der Lobby, sonst nirgends): `bettersmp-suite/lobbylock/target/LobbyLock-1.0.0.jar`
+sperrt zusätzlich Item-Drop, Inventar-Verschieben, Offhand-Tausch und
+Türen/Falltüren/Schilder-Interaktion - eigenständig, unabhängig von
+SMPLobby installierbar (siehe `bettersmp-suite/lobbylock/README.md`).
+
 ## 4. NanoLimbo als Warteraum
 
 [NanoLimbo](https://github.com/Nan1t/NanoLimbo) herunterladen, nach `limbo/`

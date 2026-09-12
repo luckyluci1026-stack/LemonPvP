@@ -1,6 +1,6 @@
 # BetterSMP Suite
 
-Sechs eigenständige Paper-Plugins für **Minecraft 1.21.11**, gebaut gegen die
+Acht eigenständige Paper-Plugins für **Minecraft 1.21.11**, gebaut gegen die
 **offizielle PaperMC-API** (aus den Quellen des `ver/1.21.11`-Branches kompiliert).
 Ein wiederverwendbares Server-Paket für eigene SMP-Server – neutral gehalten,
 den Server-Namen setzt du einmal über `brand` in der `config.yml`.
@@ -14,6 +14,7 @@ den Server-Namen setzt du einmal über `brand` in der `config.yml`.
 | **FastShop** | DonutSMP-artiges `/shop` + `/sell`, komplett in-game editierbar, EssentialsX-Economy | `/shop`, `/sell`, `/worth`, `/fastshop` |
 | **SMPContent** | **Eigene Blöcke und Items** (8 Blöcke, 7 Items) mit Rezepten, passend zum Texturepack | `/smpcontent` |
 | **SMPLobby** | **Lobby/Hub eines Netzwerks**: Schutz, Spawn, Server-Wähler, Spieler ausblenden, Anzeigetafel, Doppelsprung | `/spawn`, `/smplobby` |
+| **LobbyLock** | Eigenständige Zusatzsperre für die Lobby: Item-Drop, Inventar-Verschieben, Offhand-Tausch, Türen/Falltüren/Schilder - unabhängig von SMPLobby, kein Update daran nötig | `/lobbylock` |
 
 Die externen Begleit-Plugins (EssentialsX, LuckPerms, Vault, PlaceholderAPI, TAB
 bzw. Geyser, Floodgate) sind **nicht mitgebündelt**, sondern werden von BetterSMP
@@ -69,7 +70,8 @@ bettersmp-suite/
 ├── easybedrock/       EasyBedrock
 ├── fastshop/          FastShop
 ├── smpcontent/        SMPContent (eigene Blöcke & Items)
-└── smplobby/          SMPLobby (Lobby-Server des Netzwerks)
+├── smplobby/          SMPLobby (Lobby-Server des Netzwerks)
+└── lobbylock/         LobbyLock (eigenständige Zusatzsperre für die Lobby)
 ```
 
 Jedes Plugin ist eigenständig nutzbar. Lifesteal+ nutzt die CombatLog-API von
