@@ -192,6 +192,29 @@ plugins/smpproxy/bans.yml     - wer gebannt ist, von wem, bis wann
 plugins/smpproxy/spieler.yml  - jeder Name, der sich je verbunden hat -> UUID
 ```
 
+## /offend und /punish: PunishPlus
+
+Zusätzlich zu `/netban` gibt es **PunishPlus** (`punishplus/`) - ein
+eigenes, zweites Velocity-Plugin für Sperren mit **vorgefertigten
+Gründen samt eigener Dauer**, damit nicht jedes Mal von Hand eine Dauer
+und ein Grundtext getippt werden müssen:
+
+| Befehl | Wirkung |
+|---|---|
+| `/offend <Spieler> <Grund>` | Temporäre Sperre - Dauer kommt aus dem Grund (`bans.yml` von PunishPlus). |
+| `/punish <Spieler> <Grund>` | Dauerhafte Sperre - unabhängig von der im Grund hinterlegten Dauer. |
+| `/punishplus reload` | Liest `config.yml` und `bans.yml` von PunishPlus neu ein. |
+
+Genau wie `/netban` wirkt das sofort netzwerkweit (gleicher `LoginEvent`-
+Riegel), braucht aber **keine Dauer-Eingabe von Hand** - stattdessen
+feste, vorgefertigte Gründe mit eigener Dauer aus PunishPlus' eigener
+`bans.yml`. Weder `/offend` noch `/punish` lassen sich per Befehl
+rückgängig machen (Absicht) - nur von Hand in `gesperrt.yml` editieren,
+danach `/punishplus reload`.
+
+`punishplus/target/PunishPlus-1.0.0.jar` kommt genau wie SMPProxy nach
+`proxy/plugins/` - siehe `punishplus/README.md` für Rechte und Details.
+
 ## /rtp auch aus der Lobby
 
 Steht in `config.yml` unter `rtp.redirect-server` ein Server, funktioniert
@@ -232,7 +255,9 @@ Warteraum.
 ```
 proxy/
 ├── velocity.toml     fertige Velocity-Konfiguration
-├── smpproxy/         das Velocity-Plugin (Quellcode + Build)
+├── smpproxy/         Velocity-Plugin: Domain-Routing, Warteraum, /netban
 │   └── .../ban/      Netzwerkbann: Speicher, Dauer-Parser
+├── punishplus/       Velocity-Plugin: /offend + /punish mit vorgefertigten Gründen
+│   └── .../store/    Sperren + Gründe-Katalog: Speicher, Dauer-Parser
 └── README.md         diese Anleitung
 ```

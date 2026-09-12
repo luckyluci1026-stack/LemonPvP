@@ -1,10 +1,10 @@
 package de.lemonpvp.punishplus.api;
 
+import com.velocitypowered.api.proxy.Player;
 import de.lemonpvp.punishplus.PunishManager;
-import org.bukkit.entity.Player;
 
 /**
- * Statische API fuer andere Plugins (gleiches Vorbild wie BetterSMPApi).
+ * Statische API fuer andere Velocity-Plugins im selben Proxy-Prozess.
  * init() setzt PunishPlus beim eigenen Start - Aufrufe davor oder ganz
  * ohne das Plugin liefern einfach false statt eine NullPointerException.
  *

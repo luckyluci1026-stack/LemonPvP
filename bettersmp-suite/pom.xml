@@ -22,7 +22,6 @@
         <module>smplobby</module>
         <module>lobbylock</module>
         <module>reportplus</module>
-        <module>punishplus</module>
     </modules>
 
     <properties>
@@ -78,13 +77,6 @@
             <dependency>
                 <groupId>de.lemonpvp</groupId>
                 <artifactId>bettersmp</artifactId>
-                <version>${project.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <!-- Fuer PunishPlusApi - siehe punishplus/README.md "Von anderen Plugins nutzen". -->
-                <groupId>de.lemonpvp</groupId>
-                <artifactId>punishplus</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>

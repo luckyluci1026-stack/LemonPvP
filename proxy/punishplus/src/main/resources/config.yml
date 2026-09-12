@@ -1,0 +1,35 @@
+# ----------------------------------------------------------
+# PunishPlus - Velocity-Plugin
+#
+# /offend und /punish wirken direkt am Proxy - eine Sperre gilt sofort im
+# GANZEN Netzwerk (jeder Server dahinter), ganz ohne Datenbank: Es gibt
+# nur diesen einen Proxy-Prozess, also reicht eine einfache Datei
+# (gesperrt.yml) fuer echte Netzwerkweite.
+#
+# Vorgefertigte Gruende samt Dauer stehen in bans.yml, nicht hier.
+# ----------------------------------------------------------
+
+messages:
+  prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient> <dark_gray>»</dark_gray> "
+  permanent-word: "für immer"
+
+  no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+  reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
+  not-online: "%prefix%<red><white>%spieler%</white> ist nicht online.</red><newline><gray>Nur online Spieler koennen ge-offended oder ge-punished werden.</gray>"
+  exempt: "%prefix%<gold><white>%spieler%</white> ist davon ausgenommen.</gold>"
+  unknown-reason: "%prefix%<red>Unbekannter Grund <white>%grund%</white>.</red><newline><gray>Verfuegbar: <white>%liste%</white></gray>"
+
+  offend-usage: "%prefix%<gray>/offend <white><Spieler></white> <white><Grund></white></gray><newline><gray>Gruende und ihre Dauer stehen in bans.yml.</gray>"
+  offend-notice: "%prefix%<red>Du wurdest temporär gesperrt (<white>%dauer%</white>).</red><newline><gray>Grund: <white>%grund%</white></gray>"
+  offend-broadcast: "%prefix%<gray><white>%spieler%</white> wurde von <white>%ausfuehrer%</white> temporär gesperrt <dark_gray>(</dark_gray><gray>%grund%</gray><dark_gray>)</dark_gray>.</gray>"
+  offend-success: "%prefix%<green><white>%spieler%</white> ist jetzt temporär gesperrt (<white>%dauer%</white>, <white>%grund%</white>).</green>"
+
+  punish-usage: "%prefix%<gray>/punish <white><Spieler></white> <white><Grund></white></gray><newline><gray>Gruende stehen in bans.yml - /punish ist immer dauerhaft.</gray>"
+  punish-notice: "%prefix%<red>Du wurdest dauerhaft gesperrt.</red><newline><gray>Grund: <white>%grund%</white></gray>"
+  punish-broadcast: "%prefix%<gray><white>%spieler%</white> wurde von <white>%ausfuehrer%</white> dauerhaft gesperrt <dark_gray>(</dark_gray><gray>%grund%</gray><dark_gray>)</dark_gray>.</gray>"
+  punish-success: "%prefix%<green><white>%spieler%</white> ist jetzt dauerhaft gesperrt (<white>%grund%</white>).</green>"
+
+  # Trennbildschirme beim Kick selbst - kein %prefix%, das HIER ist der
+  # ganze Bildschirm.
+  kick-temp: "<gradient:#FF6B6B:#C92A2A><bold>Du bist gesperrt</bold></gradient><newline><newline><gray>Grund:</gray> <white>%grund%</white><newline><gray>Noch:</gray> <white>%bis%</white>"
+  kick-perm: "<gradient:#FF6B6B:#C92A2A><bold>Du bist gesperrt</bold></gradient><newline><newline><gray>Grund:</gray> <white>%grund%</white><newline><gray>Dauer:</gray> <white>für immer</white>"
