@@ -177,10 +177,25 @@ public class BanLadder implements ConfigReloadable {
         }
 
         // Commands must run on the server thread, never on the packet thread.
+        // Same reporting as PunishmentManager: a ban that silently resolves to
+        // nothing is worse than no ban at all, because nobody notices.
         GrimAPI.INSTANCE.getScheduler().getGlobalRegionScheduler().run(
-                GrimAPI.INSTANCE.getGrimPlugin(),
-                () -> GrimAPI.INSTANCE.getPlatformServer().dispatchCommand(
-                        GrimAPI.INSTANCE.getPlatformServer().getConsoleSender(), command));
+                GrimAPI.INSTANCE.getGrimPlugin(), () -> dispatch(command));
+    }
+
+    private void dispatch(String command) {
+        boolean resolved = GrimAPI.INSTANCE.getPlatformServer().dispatchCommandChecked(
+                GrimAPI.INSTANCE.getPlatformServer().getConsoleSender(), command);
+
+        if (resolved) {
+            LogUtil.info("bans.yml rung for " + player.user.getName() + ": " + command);
+            return;
+        }
+
+        LogUtil.warn("bans.yml rung for " + player.user.getName()
+                + " did NOT run — this server has no such command: " + command);
+        LogUtil.warn("Nothing happened to that player. If your ban plugin runs on the proxy, it must also be "
+                + "installed on this backend server (sharing the same database) for bans.yml to reach it.");
     }
 
     private record FlagEntry(long time, String checkName) {

@@ -17,8 +17,15 @@ public class BukkitPlatformServer implements PlatformServer {
 
     @Override
     public void dispatchCommand(Sender sender, String command) {
+        dispatchCommandChecked(sender, command);
+    }
+
+    @Override
+    public boolean dispatchCommandChecked(Sender sender, String command) {
         CommandSender commandSender = GrimACBukkitLoaderPlugin.LOADER.getBukkitSenderFactory().reverse(sender);
-        Bukkit.dispatchCommand(commandSender, command);
+        // Bukkit returns false when nothing claimed the command, which is
+        // exactly the "my ban plugin is only on the proxy" case.
+        return Bukkit.dispatchCommand(commandSender, command);
     }
 
     @Override

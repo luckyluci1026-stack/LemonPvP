@@ -59,10 +59,18 @@ bans:
     #
     # Es gibt keine Kick-Stufe - die Leiter geht direkt auf Ban.
     #
-    # Der Ban-Befehl unten ist Vanilla und bannt im Proxy-Netzwerk nur von
-    # DIESEM Backend; über Velocity kommt der Spieler weiter auf deine
-    # anderen Server. Für einen netzwerkweiten Ban ein proxy-fähiges Plugin
-    # (LiteBans/AdvancedBan) nehmen, z. B.:
+    # Befehle laufen auf der Konsole DIESES Backend-Servers. Ein Ban-Plugin,
+    # das nur auf dem Proxy liegt, ist von hier nicht erreichbar - der
+    # Befehl läuft ins Leere und der Spieler spielt weiter. BuckSMPAC
+    # schreibt dann eine Warnung, also nach dem ersten Ban in die Konsole
+    # schauen.
+    #
+    # AdvancedBan / BanManager / LiteBans / LibertyBans registrieren /ban
+    # und /tempban selbst. Die Zeile unten funktioniert also, solange das
+    # Plugin auch auf diesem Backend liegt und auf dieselbe Datenbank zeigt
+    # wie die Proxy-Installation.
+    #
+    # Für einen zeitlich begrenzten Ban:
     #   "tempban %player% 30d BuckSMPAC > %flags% Flags (%top_check%)"
     ladder:
         - flags: 20
@@ -73,4 +81,4 @@ bans:
           command: "ban %player% BuckSMPAC > %flags% Flags aus %checks% Checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 2
+bans-version: 3

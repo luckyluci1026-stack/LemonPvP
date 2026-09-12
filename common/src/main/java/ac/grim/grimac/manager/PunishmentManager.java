@@ -181,12 +181,9 @@ public class PunishmentManager implements ConfigReloadable {
                                         GrimAPI.INSTANCE.getAlertManager().sendAlert(message, verboseListeners);
                                     }
                                 }
-                                default -> GrimAPI.INSTANCE.getScheduler().getGlobalRegionScheduler().run(GrimAPI.INSTANCE.getGrimPlugin(), () ->
-                                        GrimAPI.INSTANCE.getPlatformServer().dispatchCommand(
-                                                GrimAPI.INSTANCE.getPlatformServer().getConsoleSender(),
-                                                cmd
-                                        )
-                                );
+                                default -> GrimAPI.INSTANCE.getScheduler().getGlobalRegionScheduler().run(
+                                        GrimAPI.INSTANCE.getGrimPlugin(),
+                                        () -> runPunishmentCommand(cmd, check));
                             }
                         }
 
@@ -201,6 +198,29 @@ public class PunishmentManager implements ConfigReloadable {
         }
 
         return sentDebug;
+    }
+
+    /**
+     * Runs one punishment command from the console and says so in the log.
+     *
+     * <p>A ban that quietly does nothing is the worst failure this system has —
+     * the anticheat considers the player dealt with while they keep playing. The
+     * usual cause on a network is a ban plugin that only exists on the proxy, so
+     * the backend console has no such command. Both outcomes are logged.</p>
+     */
+    private void runPunishmentCommand(String cmd, Check check) {
+        boolean resolved = GrimAPI.INSTANCE.getPlatformServer().dispatchCommandChecked(
+                GrimAPI.INSTANCE.getPlatformServer().getConsoleSender(), cmd);
+
+        if (resolved) {
+            LogUtil.info("Punishment for " + player.user.getName() + " (" + check.getCheckName() + "): " + cmd);
+            return;
+        }
+
+        LogUtil.warn("Punishment for " + player.user.getName() + " (" + check.getCheckName()
+                + ") did NOT run — this server has no such command: " + cmd);
+        LogUtil.warn("Nothing happened to that player. If your ban plugin runs on the proxy, it must also be "
+                + "installed on this backend server (sharing the same database) for punishments.yml to reach it.");
     }
 
     private static String safeGet(Supplier<String> supplier) {

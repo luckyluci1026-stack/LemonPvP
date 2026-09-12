@@ -48,9 +48,17 @@
 # only kick. A false positive is therefore a ban, not a kick, so watch the
 # alerts for a few days before trusting the numbers on a live server.
 #
-# IMPORTANT ON A PROXY NETWORK: vanilla /ban only bans on THIS backend
-# server. The player can still reach your other servers through Velocity.
-# For a network-wide ban use a proxy-aware plugin and swap the command:
+# IMPORTANT ON A PROXY NETWORK: these commands run on THIS backend
+# server's console. A ban plugin that only exists on your proxy is not
+# reachable from here - the command resolves to nothing and the player
+# keeps playing. BuckSMPAC now logs a warning when that happens.
+#
+# AdvancedBan / BanManager / LiteBans / LibertyBans all register /ban and
+# /tempban themselves, so the lines below work AS LONG AS the plugin is
+# also installed on this backend server and pointed at the same database
+# as the proxy copy. Then the ban is network-wide.
+#
+# For a timed ban instead of permanent, swap in:
 #     "25:0 tempban %player% 30d BuckSMPAC > Cheating (%check_name%)"
 # ----------------------------------------------------------------------
 
@@ -193,4 +201,4 @@ Punishments:
 # Bump marker — BuckSMPAC compares this against the version it ships and
 # warns in the console when yours is older. This file is never overwritten
 # automatically, so the warning is the only way you would find out.
-punishments-version: 2
+punishments-version: 3

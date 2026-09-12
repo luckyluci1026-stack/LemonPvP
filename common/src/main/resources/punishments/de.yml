@@ -45,10 +45,17 @@
 # hat. Ein Falsch-Positiv ist damit ein Ban, kein Kick - beobachte die
 # Alerts also ein paar Tage, bevor du den Zahlen auf dem Live-Server traust.
 #
-# WICHTIG IM PROXY-NETZWERK: Vanilla-/ban bannt nur auf DIESEM Backend.
-# Der Spieler kommt über Velocity weiterhin auf deine anderen Server. Für
-# einen netzwerkweiten Ban ein proxy-fähiges Plugin nehmen und den Befehl
-# tauschen:
+# WICHTIG IM PROXY-NETZWERK: Diese Befehle laufen auf der Konsole DIESES
+# Backend-Servers. Ein Ban-Plugin, das nur auf dem Proxy liegt, ist von
+# hier aus nicht erreichbar - der Befehl läuft ins Leere und der Spieler
+# spielt weiter. BuckSMPAC schreibt jetzt eine Warnung, wenn das passiert.
+#
+# AdvancedBan / BanManager / LiteBans / LibertyBans registrieren /ban und
+# /tempban selbst. Die Zeilen unten funktionieren also, SOLANGE das Plugin
+# auch auf diesem Backend installiert ist und auf dieselbe Datenbank wie
+# die Proxy-Installation zeigt. Dann ist der Ban netzwerkweit.
+#
+# Für einen zeitlich begrenzten Ban statt permanent:
 #     "25:0 tempban %player% 30d BuckSMPAC > Cheating (%check_name%)"
 # ----------------------------------------------------------------------
 
@@ -190,4 +197,4 @@ Punishments:
 # Bump marker — BuckSMPAC compares this against the version it ships and
 # warns in the console when yours is older. This file is never overwritten
 # automatically, so the warning is the only way you would find out.
-punishments-version: 2
+punishments-version: 3

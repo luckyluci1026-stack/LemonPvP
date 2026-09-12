@@ -58,10 +58,16 @@ bans:
     #
     # There is no kick step - the ladder goes straight to a ban.
     #
-    # The ban command below is vanilla, which on a proxy network only bans
-    # the player from THIS backend server; they can still reach your other
-    # servers through Velocity. For a network-wide ban use a proxy-aware
-    # plugin (LiteBans/AdvancedBan) and swap it for something like:
+    # Commands run on THIS backend server's console. A ban plugin that only
+    # exists on your proxy is not reachable from here - the command resolves
+    # to nothing and the player keeps playing. BuckSMPAC logs a warning when
+    # that happens, so check your console after the first ban.
+    #
+    # AdvancedBan / BanManager / LiteBans / LibertyBans register /ban and
+    # /tempban themselves, so the line below works as long as the plugin is
+    # also on this backend, pointed at the same database as the proxy copy.
+    #
+    # For a timed ban:
     #   "tempban %player% 30d BuckSMPAC > %flags% flags (%top_check%)"
     ladder:
         - flags: 20
@@ -72,4 +78,4 @@ bans:
           command: "ban %player% BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 2
+bans-version: 3
