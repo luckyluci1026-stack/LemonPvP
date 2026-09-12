@@ -1,0 +1,46 @@
+# ReportPlus - Nachrichten (MiniMessage)
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>Report</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+players-only: "%prefix%<red>Nur für Spieler.</red>"
+reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
+
+report:
+  not-online: "%prefix%<red><white>%spieler%</white> ist nicht online.</red>"
+  not-yourself: "%prefix%<red>Dich selbst kannst du nicht melden.</red>"
+  cooldown: "%prefix%<gold>Warte noch <white>%sekunden%</white>s, bevor du erneut meldest.</gold>"
+  picker-title: "<dark_gray>Wen möchtest du melden?"
+  picker-empty: "%prefix%<gray>Gerade ist niemand sonst online.</gray>"
+  reason-title: "<dark_gray>Grund für die Meldung von <white>%spieler%</white>"
+  submitted: "%prefix%<green>Meldung zu <white>%spieler%</white> ist raus - das Team schaut sich das an.</green>"
+  received: "<dark_gray>[<gold><bold>Meldung</bold></gold>]</dark_gray> <white>%melder%</white> <gray>meldet</gray> <white>%spieler%</white> <dark_gray>(<gray>%grund%</gray>)</dark_gray>"
+  list-title: "<dark_gray>Offene Meldungen <gray>(%anzahl%)"
+  list-empty: "%prefix%<green>Keine offenen Meldungen.</green>"
+  detail-title: "<dark_gray>Meldung #%id%"
+  no-such-report: "%prefix%<red>Diese Meldung gibt es nicht (mehr).</red>"
+  resolved: "%prefix%<green>Meldung #%id% als erledigt markiert.</green>"
+  dismissed: "%prefix%<gray>Meldung #%id% verworfen.</gray>"
+  teleported: "%prefix%<green>Zu <white>%spieler%</white> teleportiert.</green>"
+  target-offline: "%prefix%<red><white>%spieler%</white> ist gerade nicht online.</red>"
+
+bugreport:
+  cooldown: "%prefix%<gold>Warte noch <white>%sekunden%</white>s, bevor du erneut eine Bugmeldung schickst.</gold>"
+  category-title: "<dark_gray>Worum geht's bei deinem Bug?"
+  awaiting-text: "%prefix%<gold>Schreib jetzt kurz, worum es geht - einfach hier in den Chat.</gold><newline><gray>('abbrechen' zum Abbrechen)</gray>"
+  cancelled: "%prefix%<gray>Bugmeldung abgebrochen.</gray>"
+  submitted: "%prefix%<green>Danke! Bugmeldung ist raus.</green>"
+  received: "<dark_gray>[<#00D4FF><bold>Bug</bold></#00D4FF>]</dark_gray> <white>%spieler%</white> <dark_gray>(<gray>%kategorie%</gray>)</dark_gray><newline><gray>%text%</gray>"
+  list-title: "<dark_gray>Offene Bugmeldungen <gray>(%anzahl%)"
+  list-empty: "%prefix%<green>Keine offenen Bugmeldungen.</green>"
+  detail-title: "<dark_gray>Bugmeldung #%id%"
+  no-such-report: "%prefix%<red>Diese Bugmeldung gibt es nicht (mehr).</red>"
+  resolved: "%prefix%<green>Bugmeldung #%id% als erledigt markiert.</green>"
+  dismissed: "%prefix%<gray>Bugmeldung #%id% verworfen.</gray>"
+
+gui:
+  back: "<yellow>Zurück"
+  next-page: "<yellow>Weiter"
+  prev-page: "<yellow>Zurück"
+  resolve: "<green><bold>Als erledigt markieren</bold>"
+  dismiss: "<red><bold>Verwerfen</bold>"
+  teleport: "<#00D4FF><bold>Zum Gemeldeten teleportieren</bold>"

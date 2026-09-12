@@ -21,6 +21,7 @@
         <module>smpcontent</module>
         <module>smplobby</module>
         <module>lobbylock</module>
+        <module>reportplus</module>
     </modules>
 
     <properties>
