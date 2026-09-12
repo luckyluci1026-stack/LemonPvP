@@ -22,5 +22,12 @@
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
         </dependency>
+        <!-- Von Paper zur Laufzeit bereitgestellt (plugin.yml libraries) - nur zum Compilieren -->
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>3.4.1</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

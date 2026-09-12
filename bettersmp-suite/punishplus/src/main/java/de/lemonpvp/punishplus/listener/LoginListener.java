@@ -23,7 +23,7 @@ public final class LoginListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
-        plugin.store().aktiv(event.getUniqueId()).ifPresent(record -> {
+        plugin.repository().aktiv(event.getUniqueId()).ifPresent(record -> {
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, bildschirm(record));
         });
     }

@@ -49,8 +49,11 @@ public final class PunishManager {
             return Ergebnis.UNBEKANNTER_GRUND;
         }
         long dauer = immerDauerhaft ? 0L : grund.get().offendDauerMillis();
-        PunishRecord record = plugin.store().sperren(spieler.getUniqueId(), spieler.getName(),
-                grund.get(), art, dauer, ausfuehrer);
+        long jetzt = System.currentTimeMillis();
+        long bis = dauer <= 0 ? 0L : jetzt + dauer;
+        PunishRecord record = new PunishRecord(spieler.getUniqueId(), spieler.getName(),
+                grund.get().id(), grund.get().text(), art, jetzt, bis, ausfuehrer);
+        plugin.repository().speichern(record);
 
         String schluessel = immerDauerhaft ? "punish" : "offend";
         String dauerText = record.dauerhaft() ? "dauerhaft" : Durations.humanize(record.bis() - record.von());

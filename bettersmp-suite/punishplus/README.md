@@ -57,5 +57,31 @@ statt eine Exception zu werfen (gleiches Vorbild wie `BetterSMPApi`).
 - `punishplus.exempt` - kann weder ge-offended noch ge-punished werden (Standard: aus)
 - `punishplus.admin` - `/punishplus reload` (Standard: op)
 
-Keine Abhängigkeiten außer der Paper-API. Speicherung in `gesperrt.yml`
-im Plugin-Ordner, keine Datenbank nötig.
+## Speicherung: pro Server oder netzwerkweit
+
+Steuert `config.yml` → `database.enabled`:
+
+- **`false` (Standard)** - eigene `gesperrt.yml` je Server. Läuft sofort,
+  ohne Einrichtung. Eine Sperre auf Server A gilt nicht auf Server B.
+- **`true`** - alle Sperren landen in einer gemeinsamen MariaDB-Tabelle
+  (`punishplus_gesperrt`). `/offend` und `/punish` wirken dann sofort auf
+  jedem Server, der auf dieselbe Datenbank zeigt. Dafür müssen
+  `host`/`port`/`database`/`user`/`password` in der `config.yml` auf
+  **jedem** Server, auf dem PunishPlus läuft, identisch eingetragen sein.
+
+  Läuft bereits eine MariaDB für BetterSMP (`bettersmp/config.yml`,
+  `database.mariadb`), lassen sich dieselben Zugangsdaten und dieselbe
+  Datenbank wiederverwenden - PunishPlus legt seine eigene Tabelle darin
+  an, ganz ohne Kollision mit BetterSMPs eigenen Tabellen.
+
+  Schlägt die Verbindung beim Start fehl, bleibt PunishPlus auf diesem
+  Server wirkungslos (Meldung in der Konsole) statt den Server zu
+  blockieren - also vor der Umstellung aller Server erst einmal testen.
+
+  Der MariaDB-Treiber wird nur bei `database.enabled: true` tatsächlich
+  gebraucht und kommt über Papers eigenen `libraries`-Mechanismus in der
+  `plugin.yml` - keine zusätzliche Installation nötig.
+
+Ein `/punishplus reload` liest `config.yml` und `bans.yml` neu ein,
+wechselt aber nicht live zwischen den beiden Speicherarten - dafür
+einmal den Server neu starten.

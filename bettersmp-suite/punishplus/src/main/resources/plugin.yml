@@ -5,6 +5,14 @@ api-version: '1.21'
 authors: [SMP]
 description: /offend (temporaer) und /punish (immer dauerhaft) mit vorgefertigten Gruenden samt eigener Dauer aus bans.yml.
 
+# Nur geladen, wenn database.enabled in der config.yml an ist - der
+# Treiber wird sonst nirgends gebraucht. Eigene Deklaration noetig, auch
+# wenn BetterSMP denselben Treiber schon laedt: jedes Plugin hat bei
+# Paper seinen eigenen Classloader, der eine "libraries"-Eintrag vom
+# jeweils anderen Plugin sieht nicht.
+libraries:
+  - org.mariadb.jdbc:mariadb-java-client:3.4.1
+
 commands:
   offend:
     description: Temporaerer Bann mit vorgefertigtem Grund

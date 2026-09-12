@@ -1,0 +1,31 @@
+# ----------------------------------------------------------
+# PunishPlus - Speicherort der Sperren
+#
+# enabled: false (Standard) -> jeder Server hat seine eigene
+#   gesperrt.yml. Eine Sperre auf Server A gilt NICHT auf Server B.
+#   Funktioniert sofort, ohne Einrichtung.
+#
+# enabled: true -> alle Sperren landen in einer gemeinsamen MariaDB-
+#   Tabelle (punishplus_gesperrt). /offend und /punish wirken dann
+#   SOFORT auf jedem Server, der auf dieselbe Datenbank zeigt - dafuer
+#   muessen host/port/database/user/password auf JEDEM Server exakt
+#   gleich eingetragen sein.
+#
+#   Laeuft bereits eine MariaDB fuer BetterSMP (siehe dessen config.yml,
+#   database.mariadb), koennen die gleichen Zugangsdaten und dieselbe
+#   Datenbank wiederverwendet werden - PunishPlus legt seine eigene
+#   Tabelle darin an und stoert BetterSMPs Tabellen nicht.
+#
+#   Klappt die Verbindung beim Start nicht, bleibt PunishPlus auf diesem
+#   Server wirkungslos (siehe Konsole) statt den Server zu blockieren -
+#   also lieber vorher testen, bevor alle Server umgestellt werden.
+# ----------------------------------------------------------
+database:
+  enabled: false
+  host: "127.0.0.1"
+  port: 3306
+  database: "bettersmp"
+  user: "root"
+  password: ""
+  # Zusätzliche JDBC-Parameter
+  properties: "useUnicode=true&characterEncoding=utf8"

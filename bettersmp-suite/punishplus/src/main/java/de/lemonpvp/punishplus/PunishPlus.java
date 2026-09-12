@@ -4,7 +4,9 @@ import de.lemonpvp.punishplus.api.PunishPlusApi;
 import de.lemonpvp.punishplus.command.PunishCommands;
 import de.lemonpvp.punishplus.listener.LoginListener;
 import de.lemonpvp.punishplus.store.Gruende;
-import de.lemonpvp.punishplus.store.PunishStore;
+import de.lemonpvp.punishplus.store.MariaDbPunishRepository;
+import de.lemonpvp.punishplus.store.PunishRepository;
+import de.lemonpvp.punishplus.store.YamlPunishRepository;
 import de.lemonpvp.punishplus.util.Msgs;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,21 +18,28 @@ import org.jetbrains.annotations.NotNull;
  * /offend (temporaer) und /punish (immer dauerhaft), Gruende samt eigener
  * Dauer aus bans.yml. Eigenstaendig, mit statischer API (PunishPlusApi)
  * fuer andere Plugins.
+ *
+ * database.enabled in der config.yml entscheidet, ob Sperren nur lokal
+ * (gesperrt.yml) oder netzwerkweit ueber eine geteilte MariaDB gelten -
+ * siehe PunishRepository.
  */
 public final class PunishPlus extends JavaPlugin implements CommandExecutor {
 
     private Msgs msgs;
     private Gruende gruende;
-    private PunishStore store;
+    private PunishRepository repository;
     private PunishManager manager;
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
         this.msgs = new Msgs(this);
         this.gruende = new Gruende(this);
         gruende.load();
-        this.store = new PunishStore(this);
-        store.load();
+        this.repository = getConfig().getBoolean("database.enabled", false)
+                ? new MariaDbPunishRepository(this)
+                : new YamlPunishRepository(this);
+        repository.load();
         this.manager = new PunishManager(this);
         PunishPlusApi.init(manager);
 
@@ -47,8 +56,16 @@ public final class PunishPlus extends JavaPlugin implements CommandExecutor {
     }
 
     @Override
+    public void onDisable() {
+        if (repository != null) {
+            repository.shutdown();
+        }
+    }
+
+    @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
+        reloadConfig();
         gruende.load();
         msgs.send(sender, "reloaded");
         return true;
@@ -62,8 +79,8 @@ public final class PunishPlus extends JavaPlugin implements CommandExecutor {
         return gruende;
     }
 
-    public PunishStore store() {
-        return store;
+    public PunishRepository repository() {
+        return repository;
     }
 
     public PunishManager manager() {

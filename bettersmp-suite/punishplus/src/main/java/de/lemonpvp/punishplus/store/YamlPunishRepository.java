@@ -12,21 +12,22 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Wer gerade gesperrt ist - eigene gesperrt.yml statt Datenbank-Schema.
+ * Standard-Speicherung: eigene gesperrt.yml, nur fuer DIESEN Server.
  *
  * Weder /offend noch /punish lassen sich per Befehl aufheben - nur von
  * Hand in dieser Datei editieren, danach /punishplus reload.
  */
-public final class PunishStore {
+public final class YamlPunishRepository implements PunishRepository {
 
     private final JavaPlugin plugin;
     private File datei;
     private final Map<UUID, PunishRecord> gesperrt = new ConcurrentHashMap<>();
 
-    public PunishStore(JavaPlugin plugin) {
+    public YamlPunishRepository(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
+    @Override
     public void load() {
         datei = new File(plugin.getDataFolder(), "gesperrt.yml");
         gesperrt.clear();
@@ -60,18 +61,13 @@ public final class PunishStore {
         }
     }
 
-    public PunishRecord sperren(UUID spieler, String spielerName, Grund grund, String art,
-                                 long dauerMillis, String ausfuehrer) {
-        long jetzt = System.currentTimeMillis();
-        long bis = dauerMillis <= 0 ? 0L : jetzt + dauerMillis;
-        PunishRecord record = new PunishRecord(spieler, spielerName, grund.id(), grund.text(),
-                art, jetzt, bis, ausfuehrer);
-        gesperrt.put(spieler, record);
-        speichern();
-        return record;
+    @Override
+    public void speichern(PunishRecord record) {
+        gesperrt.put(record.spieler(), record);
+        schreibeDatei();
     }
 
-    /** Aktive Sperre, falls vorhanden - raeumt abgelaufene automatisch weg. */
+    @Override
     public Optional<PunishRecord> aktiv(UUID spieler) {
         PunishRecord record = gesperrt.get(spieler);
         if (record == null) {
@@ -79,28 +75,33 @@ public final class PunishStore {
         }
         if (!record.aktiv()) {
             gesperrt.remove(spieler);
-            speichern();
+            schreibeDatei();
             return Optional.empty();
         }
         return Optional.of(record);
     }
 
-    private void speichern() {
+    private void schreibeDatei() {
         YamlConfiguration yaml = new YamlConfiguration();
-        for (PunishRecord record : gesperrt.values()) {
-            String pfad = "eintraege." + record.spieler();
-            yaml.set(pfad + ".name", record.spielerName());
-            yaml.set(pfad + ".grundId", record.grundId());
-            yaml.set(pfad + ".grundText", record.grundText());
-            yaml.set(pfad + ".art", record.art());
-            yaml.set(pfad + ".von", record.von());
-            yaml.set(pfad + ".bis", record.bis());
-            yaml.set(pfad + ".ausfuehrer", record.ausfuehrer());
+        for (PunishRecord eintrag : gesperrt.values()) {
+            String pfad = "eintraege." + eintrag.spieler();
+            yaml.set(pfad + ".name", eintrag.spielerName());
+            yaml.set(pfad + ".grundId", eintrag.grundId());
+            yaml.set(pfad + ".grundText", eintrag.grundText());
+            yaml.set(pfad + ".art", eintrag.art());
+            yaml.set(pfad + ".von", eintrag.von());
+            yaml.set(pfad + ".bis", eintrag.bis());
+            yaml.set(pfad + ".ausfuehrer", eintrag.ausfuehrer());
         }
         try {
             yaml.save(datei);
         } catch (IOException e) {
             plugin.getLogger().warning("gesperrt.yml liess sich nicht speichern: " + e.getMessage());
         }
+    }
+
+    @Override
+    public void shutdown() {
+        // Keine Ressourcen zu schliessen - reine Datei-IO.
     }
 }
