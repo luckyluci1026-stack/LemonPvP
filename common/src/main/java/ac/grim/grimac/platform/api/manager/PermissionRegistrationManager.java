@@ -14,7 +14,7 @@ public interface PermissionRegistrationManager {
      * making it available for autocomplete immediately on startup.
      *
      * <p>Registering permissions on startup is important for ensuring that
-     * dynamic permissions (e.g., check-specific permissions like "flfac.exempt.checkname")
+     * dynamic permissions (e.g., check-specific permissions like "bucksmpac.exempt.checkname")
      * are available for autocomplete before Grim attempts to use them. This is
      * particularly useful for command systems and permission management plugins
      * that rely on registered permissions for autocomplete functionality.</p>
@@ -26,7 +26,7 @@ public interface PermissionRegistrationManager {
      * autocomplete immediately, improving user experience and compatibility with
      * older or less dynamic permission systems.</p>
      *
-     * @param name         The permission node to register (e.g., "flfac.exempt").
+     * @param name         The permission node to register (e.g., "bucksmpac.exempt").
      * @param defaultValue The default value for the permission, using the cross-platform
      *                     {@link PermissionDefaultValue} enum.
      */

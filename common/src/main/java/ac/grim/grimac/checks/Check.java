@@ -43,6 +43,8 @@ public class Check extends GrimProcessor implements AbstractCheck {
     private String stableKey = "";
 
     private boolean experimental;
+    /** Check skipped for Geyser players; resolved from bedrock.exempt-checks. */
+    private boolean bedrockExempt;
     @Setter private boolean isEnabled;
 
     private boolean exemptPermission;
@@ -83,9 +85,9 @@ public class Check extends GrimProcessor implements AbstractCheck {
     public final void updatePermissions() {
         if (configName == null) return;
         final String id = configName.toLowerCase();
-        exemptPermission = player.hasPermission("flfac.exempt." + id);
-        noSetbackPermission = player.hasPermission("flfac.nosetback." + id);
-        noModifyPacketPermission = player.hasPermission("flfac.nomodifypacket." + id);
+        exemptPermission = player.hasPermission("bucksmpac.exempt." + id);
+        noSetbackPermission = player.hasPermission("bucksmpac.nosetback." + id);
+        noModifyPacketPermission = player.hasPermission("bucksmpac.nomodifypacket." + id);
     }
 
     public final boolean flag() {
@@ -120,7 +122,8 @@ public class Check extends GrimProcessor implements AbstractCheck {
     }
 
     private boolean recordFlag(@NotNull Supplier<String> verbose) {
-        if (player.disableGrim || (experimental && !player.isExperimentalChecks()) || exemptPermission)
+        if (player.disableGrim || (experimental && !player.isExperimentalChecks()) || exemptPermission
+                || (bedrockExempt && player.isBedrockPlayer()))
             return false; // Avoid calling event if disabled
 
         if (FLAG_CHANNEL.fire(player, this, verbose)) return false;
@@ -136,7 +139,8 @@ public class Check extends GrimProcessor implements AbstractCheck {
         Supplier<String> rendered = verbose.rendered();
         byte[] verboseData = verbose.data();
 
-        if (player.disableGrim || (experimental && !player.isExperimentalChecks()) || exemptPermission)
+        if (player.disableGrim || (experimental && !player.isExperimentalChecks()) || exemptPermission
+                || (bedrockExempt && player.isBedrockPlayer()))
             return false; // Avoid calling event if disabled
 
         if (FLAG_CHANNEL.fire(player, this, rendered)) return false;
@@ -220,7 +224,35 @@ public class Check extends GrimProcessor implements AbstractCheck {
         description = configuration.getStringElse(configName + ".description", description);
 
         if (setbackVL == -1) setbackVL = Double.MAX_VALUE;
+
+        bedrockExempt = resolveBedrockExempt(configuration);
+
         onReload(configuration);
+    }
+
+    /**
+     * Geyser players are checked by BuckSMPAC, but not by the checks whose
+     * maths assume Java movement physics. Names are matched the same way
+     * punishments.yml matches them, so "Elytra" covers ElytraA..ElytraI.
+     */
+    private boolean resolveBedrockExempt(ConfigManager configuration) {
+        if (!configuration.getBooleanElse("bedrock.check-bedrock-players", true)) {
+            // Bedrock players never reach a check in this mode anyway; keeping
+            // this false avoids depending on load order.
+            return false;
+        }
+        if (checkName == null) return false;
+
+        String name = checkName.toLowerCase(java.util.Locale.ROOT);
+        String alternative = alternativeName == null ? "" : alternativeName.toLowerCase(java.util.Locale.ROOT);
+        for (String entry : configuration.getStringListElse("bedrock.exempt-checks", java.util.List.of())) {
+            if (entry == null || entry.isBlank()) continue;
+            String lower = entry.toLowerCase(java.util.Locale.ROOT);
+            if (name.contains(lower) || (!alternative.isEmpty() && alternative.contains(lower))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

@@ -59,10 +59,9 @@ dependencies {
 }
 
 bukkit {
-    name = "FLFAC"
-    author = "LemonPvP"
+    name = "BuckSMPAC"
+    author = "BuckSMP"
     main = "ac.grim.grimac.platform.bukkit.GrimACBukkitLoaderPlugin"
-    website = "https://lemonpvp.eu"
     apiVersion = "1.13"
     foliaSupported = true
 
@@ -92,73 +91,73 @@ bukkit {
     )
 
     permissions {
-        register("flfac.alerts") {
+        register("bucksmpac.alerts") {
             description = "Receive alerts for violations"
             default = Permission.Default.OP
         }
 
-        register("flfac.alerts.enable-on-join") {
+        register("bucksmpac.alerts.enable-on-join") {
             description = "Enable alerts on join"
             default = Permission.Default.OP
         }
 
-        register("flfac.performance") {
+        register("bucksmpac.performance") {
             description = "Check performance metrics"
             default = Permission.Default.OP
         }
 
-        register("flfac.profile") {
+        register("bucksmpac.profile") {
             description = "Check user profile"
             default = Permission.Default.OP
         }
 
-        register("flfac.brand") {
+        register("bucksmpac.brand") {
             description = "Show client brands on join"
             default = Permission.Default.OP
         }
 
-        register("flfac.brand.enable-on-join") {
+        register("bucksmpac.brand.enable-on-join") {
             description = "Enable showing client brands on join"
             default = Permission.Default.OP
         }
 
-        register("flfac.sendalert") {
+        register("bucksmpac.sendalert") {
             description = "Send cheater alert"
             default = Permission.Default.OP
         }
 
-        register("flfac.nosetback") {
+        register("bucksmpac.nosetback") {
             description = "Disable setback"
             default = Permission.Default.FALSE
         }
 
-        register("flfac.nomodifypacket") {
+        register("bucksmpac.nomodifypacket") {
             description = "Disable modifying packets"
             default = Permission.Default.FALSE
         }
 
-        register("flfac.disabled") {
+        register("bucksmpac.disabled") {
             description = "Disable Grim checks while keeping player state tracked"
             default = Permission.Default.FALSE
         }
 
-        register("flfac.exempt") {
+        register("bucksmpac.exempt") {
             description = "Exempt from all checks"
             default = Permission.Default.FALSE
         }
 
-        register("flfac.verbose") {
+        register("bucksmpac.verbose") {
             description = "Receive verbose alerts for violations"
             default = Permission.Default.OP
         }
 
-        register("flfac.verbose.enable-on-join") {
+        register("bucksmpac.verbose.enable-on-join") {
             description =
                 "Enable verbose alerts on join"
             default = Permission.Default.FALSE
         }
 
-        register("flfac.list") {
+        register("bucksmpac.list") {
             description =
                 "Shows lists of specific data"
             default = Permission.Default.FALSE

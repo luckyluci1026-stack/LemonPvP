@@ -1,0 +1,70 @@
+# ======================================================================
+#  BuckSMPAC - bans.yml
+# ======================================================================
+#  THE SIMPLE LADDER:  "at N flags, run this command".
+#
+#  punishments.yml counts flags separately inside each check group, so a
+#  player sitting at 30 Reach flags and 30 Knockback flags never reaches a
+#  50-flag rung in either one. THIS file adds every flag from every check
+#  into a single running total per player - which is the number people
+#  actually mean when they say "he has 50 flags".
+#
+#  Both files are active at the same time and do not interfere with each
+#  other. Use punishments.yml when you want a reaction tied to one specific
+#  check; use this file for the overall "how suspicious is this player"
+#  ladder.
+#
+#  Placeholders you can use in any command below:
+#    %player%     - the player's name
+#    %flags%      - their current total
+#    %checks%     - how many DIFFERENT checks they tripped
+#    %top_check%  - the check they failed most often
+#    %top_count%  - how often they failed that one
+#    %prefix%     - the BuckSMPAC chat prefix (for [alert] only)
+# ======================================================================
+
+bans:
+    enabled: true
+
+    # How long a single flag keeps counting toward the total, in seconds.
+    # 900 = a flag drops back out of the total 15 minutes after it happened,
+    # so someone who trips one check a week does not slowly accumulate a ban.
+    # Set to 0 to keep every flag for as long as the player stays online.
+    remember-flags-for: 900
+
+    # No rung fires until the player has tripped at least this many DIFFERENT
+    # checks. This is the safeguard that makes the ladder safe to run strict:
+    # a real cheat client trips several checks at once, while one check firing
+    # over and over is far more often a false positive or a lag artifact.
+    # Set to 1 to turn the safeguard off.
+    min-different-checks: 2
+
+    # Flags from these checks never count toward the total. Names match the
+    # same way as in punishments.yml, so "BadPackets" covers BadPacketsA,
+    # BadPacketsB and so on. Put a check here while you are still tuning it -
+    # then it can alert you, but it can never ban anybody on its own.
+    ignore-checks:
+        - "Autoclicker"
+
+    # Sent to staff when a rung's command is [alert].
+    alert-format: "%prefix% &f%player% &7is at &c%flags% &7flags across &c%checks% &7checks &8(&f%top_check% &7x%top_count%&8)"
+
+    # The ladder. Each rung fires ONCE per player per session, the moment the
+    # total reaches it. A player who jumps from 20 to 60 flags in one burst
+    # triggers every rung in between, in order.
+    #
+    #   command: "[alert]"     -> message your staff
+    #   command: "<anything>"  -> run it from console
+    #
+    # The ban command below is vanilla. If you use LiteBans/AdvancedBan,
+    # swap it for something like:
+    #   "tempban %player% 30d BuckSMPAC > %flags% flags (%top_check%)"
+    ladder:
+        - flags: 20
+          command: "[alert]"
+        - flags: 35
+          command: "effect give %player% minecraft:slowness 9999 250 true"
+        - flags: 50
+          command: "kick %player% &cBuckSMPAC &8» &fCheating detected (%top_check%)"
+        - flags: 80
+          command: "ban %player% BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"

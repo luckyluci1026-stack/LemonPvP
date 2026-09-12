@@ -1,5 +1,5 @@
 # ======================================================================
-#  FLFAC - Punishments
+#  BuckSMPAC - Punishments
 # ======================================================================
 # Placeholders:
 #   %check_name%  - name of the check
@@ -10,7 +10,7 @@
 #
 # Special commands:
 #   [alert]   - notify staff in-game
-#   [log]     - write to FLFAC violation history
+#   [log]     - write to BuckSMPAC violation history
 #   [webhook] - send to your Discord webhook
 #   [proxy]   - broadcast to other servers via your proxy (Bungee/Velocity)
 #
@@ -25,7 +25,7 @@
 # ----------------------------------------------------------------------
 #  >>> BAN / KICK / FREEZE - this is how you choose the punishment <<<
 # ----------------------------------------------------------------------
-# Every group below has a "FLFAC punishment ladder" section. To turn a
+# Every group below has a "BuckSMPAC punishment ladder" section. To turn a
 # punishment ON, leave the line uncommented; to turn it OFF, put a "#"
 # in front of it. Mix and match per check group however you like.
 #
@@ -35,11 +35,11 @@
 #   FREEZE (if you run a freeze plugin, e.g. command /freeze):
 #     "40:0 freeze %player%"
 #   KICK:
-#     "60:0 kick %player% &cFLFAC &8» &fUnfair advantage detected (%check_name%)"
+#     "60:0 kick %player% &cBuckSMPAC &8» &fUnfair advantage detected (%check_name%)"
 #   BAN (vanilla):
-#     "100:0 ban %player% FLFAC > Cheating detected (%check_name%)"
+#     "100:0 ban %player% BuckSMPAC > Cheating detected (%check_name%)"
 #   BAN (if you use LiteBans/AdvancedBan etc.):
-#     "100:0 tempban %player% 30d FLFAC > Cheating (%check_name%)"
+#     "100:0 tempban %player% 30d BuckSMPAC > Cheating (%check_name%)"
 # ======================================================================
 
 Punishments:
@@ -53,14 +53,14 @@ Punishments:
       - "TimerLimit"
       - "NoFall"
     commands:
-      - "100:40 [alert]"
+      - "60:30 [alert]"
       - "1:1 [log]"
       - "100:100 [webhook]"
       - "100:100 [proxy]"
-      # --- FLFAC punishment ladder ---
-      - "150:0 effect give %player% minecraft:slowness 9999 250 true"     # FREEZE
-      - "200:0 kick %player% &cFLFAC &8» &fInvalid movement (%check_name%)" # KICK
-      - "400:0 ban %player% FLFAC > Cheating detected (%check_name%)"      # BAN
+      # --- BuckSMPAC punishment ladder ---
+      - "80:0 effect give %player% minecraft:slowness 9999 250 true"     # FREEZE
+      - "120:0 kick %player% &cBuckSMPAC &8» &fInvalid movement (%check_name%)" # KICK
+      - "200:0 ban %player% BuckSMPAC > Cheating detected (%check_name%)"      # BAN
 
   Knockback:
     remove-violations-after: 300
@@ -72,19 +72,22 @@ Punishments:
       - "1:1 [log]"
       - "20:20 [webhook]"
       - "20:20 [proxy]"
-      # --- FLFAC punishment ladder ---
-      - "40:0 kick %player% &cFLFAC &8» &fAnti-Knockback (%check_name%)"   # KICK
-      - "80:0 ban %player% FLFAC > Anti-Knockback (%check_name%)"          # BAN
+      # --- BuckSMPAC punishment ladder ---
+      - "25:0 kick %player% &cBuckSMPAC &8» &fAnti-Knockback (%check_name%)"   # KICK
+      - "50:0 ban %player% BuckSMPAC > Anti-Knockback (%check_name%)"          # BAN
 
   Post:
     remove-violations-after: 300
     checks:
       - "Post"
     commands:
-      - "20:20 [alert]"
+      - "15:15 [alert]"
       - "1:1 [log]"
       - "40:40 [webhook]"
       - "40:40 [proxy]"
+      # --- BuckSMPAC punishment ladder (Post is very reliable) ---
+      - "25:0 kick %player% &cBuckSMPAC &8» &fPacket order (%check_name%)"   # KICK
+      - "50:0 ban %player% BuckSMPAC > Packet order (%check_name%)"          # BAN
 
   BadPackets:
     remove-violations-after: 300
@@ -93,13 +96,13 @@ Punishments:
       - "PacketOrder"
       - "Crash"
     commands:
-      - "20:20 [alert]"
+      - "15:15 [alert]"
       - "1:1 [log]"
       - "40:40 [webhook]"
       - "40:40 [proxy]"
-      # --- FLFAC punishment ladder (BadPackets is very reliable) ---
-      - "40:0 kick %player% &cFLFAC &8» &fIllegal packets (%check_name%)"  # KICK
-      - "80:0 ban %player% FLFAC > Illegal packets (%check_name%)"         # BAN
+      # --- BuckSMPAC punishment ladder (BadPackets is very reliable) ---
+      - "25:0 kick %player% &cBuckSMPAC &8» &fIllegal packets (%check_name%)"  # KICK
+      - "50:0 ban %player% BuckSMPAC > Illegal packets (%check_name%)"         # BAN
 
   Reach:
     remove-violations-after: 300
@@ -110,10 +113,10 @@ Punishments:
       - "1:1 [log]"
       - "5:3 [webhook]"
       - "5:3 [proxy]"
-      # --- FLFAC punishment ladder (Reach is very reliable) ---
-      - "15:0 effect give %player% minecraft:slowness 9999 250 true"      # FREEZE
-      - "25:0 kick %player% &cFLFAC &8» &fReach detected (%check_name%)"   # KICK
-      - "50:0 ban %player% FLFAC > Reach detected (%check_name%)"          # BAN
+      # --- BuckSMPAC punishment ladder (Reach is very reliable) ---
+      - "10:0 effect give %player% minecraft:slowness 9999 250 true"      # FREEZE
+      - "15:0 kick %player% &cBuckSMPAC &8» &fReach detected (%check_name%)"   # KICK
+      - "30:0 ban %player% BuckSMPAC > Reach detected (%check_name%)"          # BAN
 
   Hitboxes:
     remove-violations-after: 300
@@ -124,9 +127,9 @@ Punishments:
       - "1:1 [log]"
       - "5:3 [webhook]"
       - "5:3 [proxy]"
-      # --- FLFAC punishment ladder ---
-      - "25:0 kick %player% &cFLFAC &8» &fHitbox detected (%check_name%)"  # KICK
-      - "50:0 ban %player% FLFAC > Hitbox detected (%check_name%)"         # BAN
+      # --- BuckSMPAC punishment ladder ---
+      - "15:0 kick %player% &cBuckSMPAC &8» &fHitbox detected (%check_name%)"  # KICK
+      - "30:0 ban %player% BuckSMPAC > Hitbox detected (%check_name%)"         # BAN
 
   Misc:
     remove-violations-after: 300
@@ -143,13 +146,13 @@ Punishments:
       - "Chat"
       - "Exploit"
     commands:
-      - "10:5 [alert]"
+      - "8:4 [alert]"
       - "1:1 [log]"
       - "20:10 [webhook]"
       - "20:10 [proxy]"
-      # --- FLFAC punishment ladder ---
-      - "60:0 kick %player% &cFLFAC &8» &fUnfair advantage (%check_name%)" # KICK
-      - "120:0 ban %player% FLFAC > Cheating detected (%check_name%)"      # BAN
+      # --- BuckSMPAC punishment ladder ---
+      - "35:0 kick %player% &cBuckSMPAC &8» &fUnfair advantage (%check_name%)" # KICK
+      - "70:0 ban %player% BuckSMPAC > Cheating detected (%check_name%)"      # BAN
 
   Combat:
     remove-violations-after: 300
@@ -157,14 +160,14 @@ Punishments:
       - "Interact"
       - "Aim"
     commands:
-      - "20:40 [alert]"
+      - "15:20 [alert]"
       - "1:1 [log]"
-      # --- FLFAC punishment ladder ---
-      - "60:0 kick %player% &cFLFAC &8» &fCombat anomaly (%check_name%)"   # KICK
-      - "120:0 ban %player% FLFAC > Combat anomaly (%check_name%)"         # BAN
+      # --- BuckSMPAC punishment ladder ---
+      - "35:0 kick %player% &cBuckSMPAC &8» &fCombat anomaly (%check_name%)"   # KICK
+      - "70:0 ban %player% BuckSMPAC > Combat anomaly (%check_name%)"         # BAN
 
-  # FLFAC's own AutoClicker check. It is marked experimental, so it does not run
-  # at all until you set 'experimental-checks: true' in config.yml.
+  # BuckSMPAC's own AutoClicker check. It is marked experimental, and BuckSMPAC
+  # ships with experimental-checks: true - so it IS running.
   #
   # DELIBERATELY ALERTS ONLY. Every other group here punishes a check that
   # upstream has years of field data on; this one is new code with none. Watch
@@ -177,8 +180,8 @@ Punishments:
     checks:
       - "Autoclicker"
     commands:
-      - "20:40 [alert]"
+      - "15:20 [alert]"
       - "1:1 [log]"
-      # --- FLFAC punishment ladder (enable only after tuning - see above) ---
-      #- "60:0 kick %player% &cFLFAC &8» &fAutoClicker (%check_name%)"     # KICK
-      #- "120:0 ban %player% FLFAC > AutoClicker (%check_name%)"           # BAN
+      # --- BuckSMPAC punishment ladder (enable only after tuning - see above) ---
+      #- "60:0 kick %player% &cBuckSMPAC &8» &fAutoClicker (%check_name%)"     # KICK
+      #- "120:0 ban %player% BuckSMPAC > AutoClicker (%check_name%)"           # BAN

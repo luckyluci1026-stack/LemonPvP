@@ -31,16 +31,16 @@ public class FabricPermissionRegistrationManager implements PermissionRegistrati
                                                Consumer<String> onRegister) {
         this.fabricSenderFactory = fabricSenderFactory;
         this.onRegister = onRegister;
-        registerPermission("flfac.exempt", PermissionDefaultValue.FALSE);
-        registerPermission("flfac.nosetback", PermissionDefaultValue.FALSE);
-        registerPermission("flfac.nomodifypacket", PermissionDefaultValue.FALSE);
-        registerPermission("flfac.disabled", PermissionDefaultValue.FALSE);
-        registerPermission("flfac.alerts.enable-on-join", PermissionDefaultValue.FALSE);
-        registerPermission("flfac.verbose.enable-on-join", PermissionDefaultValue.FALSE);
-        registerPermission("flfac.brand.enable-on-join", PermissionDefaultValue.FALSE);
-        registerPermission("flfac.alerts.enable-on-join.silent", PermissionDefaultValue.FALSE);
-        registerPermission("flfac.verbose.enable-on-join.silent", PermissionDefaultValue.FALSE);
-        registerPermission("flfac.brand.enable-on-join.silent", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.exempt", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.nosetback", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.nomodifypacket", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.disabled", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.alerts.enable-on-join", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.verbose.enable-on-join", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.brand.enable-on-join", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.alerts.enable-on-join.silent", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.verbose.enable-on-join.silent", PermissionDefaultValue.FALSE);
+        registerPermission("bucksmpac.brand.enable-on-join.silent", PermissionDefaultValue.FALSE);
     }
 
     @Override

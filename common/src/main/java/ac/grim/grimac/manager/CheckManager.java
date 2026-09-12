@@ -495,9 +495,9 @@ public class CheckManager {
         inited = true;
 
         final String[] permissions = {
-                "flfac.exempt.",
-                "flfac.nosetback.",
-                "flfac.nomodifypacket.",
+                "bucksmpac.exempt.",
+                "bucksmpac.nosetback.",
+                "bucksmpac.nomodifypacket.",
         };
 
         for (final AbstractCheck check : allChecks.values()) {

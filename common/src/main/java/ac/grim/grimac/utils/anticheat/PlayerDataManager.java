@@ -4,7 +4,6 @@ import ac.grim.grimac.GrimAPI;
 import ac.grim.grimac.api.event.events.GrimJoinEvent;
 import ac.grim.grimac.api.event.events.GrimQuitEvent;
 import ac.grim.grimac.player.GrimPlayer;
-import ac.grim.grimac.utils.reflection.GeyserUtil;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.netty.channel.ChannelHelper;
 import com.github.retrooper.packetevents.protocol.player.User;
@@ -66,22 +65,22 @@ public class PlayerDataManager {
         if (!ChannelHelper.isOpen(user.getChannel())) return false;
 
         if (user.getUUID() != null) {
-            // Bedrock players don't have Java movement
-            if (GeyserUtil.isBedrockPlayer(user.getUUID())) {
+            // Bedrock players don't have Java movement. Upstream exempts them
+            // from everything for that reason, which also means a cheating
+            // Bedrock player is never looked at. BuckSMPAC checks them and
+            // instead skips only the checks that model Java physics — see the
+            // `bedrock:` block in config.yml. Setting check-bedrock-players to
+            // false restores the old blanket exemption.
+            if (GrimPlayer.isBedrockUuid(user.getUUID())
+                    && !GrimAPI.INSTANCE.getConfigManager().getConfig()
+                    .getBooleanElse("bedrock.check-bedrock-players", true)) {
                 exemptUser(user);
                 return false;
             }
 
             // Has exempt permission
             GrimPlayer grimPlayer = GrimAPI.INSTANCE.getPlayerDataManager().getPlayer(user);
-            if (grimPlayer != null && grimPlayer.hasPermission("flfac.exempt")) {
-                exemptUser(user);
-                return false;
-            }
-
-            // Geyser formatted player string
-            // This will never happen for Java players, as the first character in the 3rd group is always 4 (xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx)
-            if (user.getUUID().toString().startsWith("00000000-0000-0000-0009")) {
+            if (grimPlayer != null && grimPlayer.hasPermission("bucksmpac.exempt")) {
                 exemptUser(user);
                 return false;
             }

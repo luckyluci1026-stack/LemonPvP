@@ -16,6 +16,7 @@ import ac.grim.grimac.manager.*;
 import ac.grim.grimac.manager.player.features.FeatureManagerImpl;
 import ac.grim.grimac.manager.player.handlers.DefaultResyncHandler;
 import ac.grim.grimac.manager.player.handlers.NoOpResyncHandler;
+import ac.grim.grimac.utils.reflection.GeyserUtil;
 import ac.grim.grimac.platform.api.player.PlatformPlayer;
 import ac.grim.grimac.predictionengine.EntityFluidInteraction;
 import ac.grim.grimac.predictionengine.MovementCheckRunner;
@@ -119,6 +120,7 @@ public class GrimPlayer implements GrimUser {
     public final CheckManager checkManager;
     public final AttackCooldownHandler attackCooldown;
     public final PunishmentManager punishmentManager;
+    public final BanLadder banLadder;
     public final MovementCheckRunner movementCheckRunner;
     public final SyncedTags tagManager;
     // End manager like classes
@@ -272,6 +274,12 @@ public class GrimPlayer implements GrimUser {
     // This variable is for support with test servers that want to be able to disable grim
     // Grim disabler 2022 still working!
     public boolean disableGrim = false;
+    // Geyser/Floodgate player. Upstream exempts these from every check because
+    // their movement does not follow Java physics; BuckSMPAC keeps checking
+    // them but skips the checks that assume it. See the `bedrock:` block in
+    // config.yml.
+    private boolean bedrockPlayer = false;
+    private boolean bedrockNoSetback = true;
     public final ArrayDeque<Movement> movementThisTick = new ArrayDeque<>(8);
     public final List<Movement> finalMovementsThisTick = new ObjectArrayList<>();
     public final LongSet visitedBlocks = new LongOpenHashSet();
@@ -285,6 +293,7 @@ public class GrimPlayer implements GrimUser {
     public GrimPlayer(@NotNull User user) {
         this.user = user;
         this.uuid = user.getUUID();
+        this.bedrockPlayer = this.uuid != null && GrimPlayer.isBedrockUuid(this.uuid);
         fireworks = new CompensatedFireworks(this); // Must be before checkmanager
         inventory = new CompensatedInventory(this);
 
@@ -297,6 +306,7 @@ public class GrimPlayer implements GrimUser {
         attackCooldown = new AttackCooldownHandler(this);
         checkManager = new CheckManager(this);
         punishmentManager = new PunishmentManager(this);
+        banLadder = new BanLadder(this);
         this.tagManager = new SyncedTags(this); // must be after this.user = user
         movementCheckRunner = new MovementCheckRunner(this);
 
@@ -617,10 +627,10 @@ public class GrimPlayer implements GrimUser {
     public void updatePermissions() {
         runSafely(() -> {
             try {
-                boolean noModifyPacketPermission = hasPermission("flfac.nomodifypacket");
-                boolean noSetbackPermission = hasPermission("flfac.nosetback");
-                boolean disabledPermission = hasPermission("flfac.disabled");
-                boolean exemptPermission = hasPermission("flfac.exempt");
+                boolean noModifyPacketPermission = hasPermission("bucksmpac.nomodifypacket");
+                boolean noSetbackPermission = hasPermission("bucksmpac.nosetback");
+                boolean disabledPermission = hasPermission("bucksmpac.disabled");
+                boolean exemptPermission = hasPermission("bucksmpac.exempt");
                 for (AbstractCheck check : checkManager.allChecks.values()) {
                     if (check instanceof Check c) {
                         c.updatePermissions();
@@ -708,6 +718,29 @@ public class GrimPlayer implements GrimUser {
     }
 
     @Override
+    /**
+     * True for Geyser/Floodgate players. Their movement does not follow Java
+     * physics, so the checks that model that physics are skipped for them.
+     */
+    public boolean isBedrockPlayer() {
+        return bedrockPlayer;
+    }
+
+    /** Whether violation setbacks are suppressed for this Bedrock player. */
+    public boolean isBedrockNoSetback() {
+        return bedrockNoSetback;
+    }
+
+    /**
+     * Geyser players either register through Floodgate or arrive with a
+     * Geyser-formatted UUID. A Java client can never produce the latter — its
+     * version nibble is always 4 (xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx).
+     */
+    public static boolean isBedrockUuid(@NotNull UUID uuid) {
+        return GeyserUtil.isBedrockPlayer(uuid)
+                || uuid.toString().startsWith("00000000-0000-0000-0009");
+    }
+
     public int getTransactionPing() {
         return GrimMath.floor(transactionPing / 1e6);
     }
@@ -991,8 +1024,10 @@ public class GrimPlayer implements GrimUser {
         resetItemUsageOnItemUse = config.getBooleanElse("reset-item-usage-on-item-use", true);
         // reload all checks
         for (AbstractCheck value : checkManager.allChecks.values()) value.reload();
+        bedrockNoSetback = config.getBooleanElse("bedrock.no-setbacks", true);
         // reload punishment manager
         punishmentManager.reload(config);
+        banLadder.reload(config);
     }
 
     @Override

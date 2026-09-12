@@ -41,10 +41,10 @@ public class GrimHistoryCopy implements BuildableCommand {
     @Override
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
         commandManager.command(
-                commandManager.commandBuilder("flfac", "grim", "grimac")
+                commandManager.commandBuilder("bucksmpac", "buckac", "bac", "grim", "grimac")
                         .literal("history")
                         .literal("copy")
-                        .permission("flfac.history.copy")
+                        .permission("bucksmpac.history.copy")
                         .required("src", StringParser.stringParser())
                         .required("dst", StringParser.stringParser())
                         .flag(commandManager.flagBuilder("delete")

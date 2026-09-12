@@ -126,8 +126,8 @@ public abstract class AbstractLuckPermsHandler implements StoppableInitable {
 
     private static boolean isGrimPermission(PermissionNode node) {
         String permission = node.getPermission().toLowerCase(Locale.ROOT);
-        return permission.equals("*") || permission.equals("flfac") || permission.equals("grim")
-                || permission.startsWith("flfac.") || permission.startsWith("grim.");
+        return permission.equals("*") || permission.equals("bucksmpac") || permission.equals("grim")
+                || permission.startsWith("bucksmpac.") || permission.startsWith("grim.");
     }
 
     private boolean inheritedGroupMayAffectGrimPermissions(InheritanceNode node) {

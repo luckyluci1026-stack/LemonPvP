@@ -53,7 +53,7 @@ public final class GrimConfigSpecs {
      * config. No explicit migration is needed; the updater's default rewrite
      * adds the key, and auto-lift preserves an existing user value if present.
      *
-     * <p>v11 → v12: adds FLFAC's {@code Autoclicker:} block. No explicit
+     * <p>v11 → v12: adds BuckSMPAC's {@code Autoclicker:} block. No explicit
      * migration — the default rewrite brings the keys in and auto-lift keeps
      * any the operator already set. The bump itself is the point: without it
      * the updater short-circuits on {@code oldVersion >= latestVersion} and a
@@ -62,9 +62,14 @@ public final class GrimConfigSpecs {
      * Note that the old {@code max-cps} key is deliberately not carried over
      * to {@code max-attack-cps}: the check now measures attacks rather than
      * raw swings, so an operator's old number would mean something different.
+     *
+     * <p>v12 → v13: adds the {@code bedrock:} block. Same reasoning as v12 —
+     * without the bump the updater short-circuits and an existing config never
+     * gains the keys, so Bedrock players would silently fall back to the
+     * hardcoded defaults with no way for the operator to tune the exempt list.
      */
     public static @NotNull ConfigUpdater.Spec mainConfig() {
-        return ConfigUpdater.Spec.builder("/config/", 12, ConfigUpdater.ConfigFlavor.V2)
+        return ConfigUpdater.Spec.builder("/config/", 13, ConfigUpdater.ConfigFlavor.V2)
                 .migration(10, ctx -> {
                     String typeRaw = ctx.input().getString("history.database.type");
                     String type = typeRaw == null ? null : typeRaw.trim().toUpperCase(Locale.ROOT);

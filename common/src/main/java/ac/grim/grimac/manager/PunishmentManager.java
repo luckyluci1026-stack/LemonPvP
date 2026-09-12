@@ -217,6 +217,10 @@ public class PunishmentManager implements ConfigReloadable {
     }
 
     public void handleViolation(Check check) {
+        // Outside the group loop on purpose: bans.yml counts every flag the
+        // player collects, including from checks no punishment group lists.
+        player.banLadder.onFlag(check);
+
         for (PunishGroup group : groups) {
             if (group.checks.contains(check)) {
                 long currentTime = System.currentTimeMillis();

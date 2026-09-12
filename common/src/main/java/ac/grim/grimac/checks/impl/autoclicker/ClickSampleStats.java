@@ -1,8 +1,8 @@
 /*
- * This file is part of FLFAC, a fork of GrimAC - https://github.com/GrimAnticheat/Grim
+ * This file is part of BuckSMPAC, a fork of GrimAC - https://github.com/GrimAnticheat/Grim
  * Copyright (C) 2021-2025 DefineOutside and contributors, licensed under GPLv3.
  *
- * FLFAC custom addition.
+ * BuckSMPAC custom addition.
  */
 package ac.grim.grimac.checks.impl.autoclicker;
 

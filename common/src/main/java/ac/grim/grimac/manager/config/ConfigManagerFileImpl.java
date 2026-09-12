@@ -70,6 +70,9 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
             config.addSource(GrimAPI.class, "messages", getConfigFile("messages.yml"));
             config.addSource(GrimAPI.class, "discord", getConfigFile("discord.yml"));
             config.addSource(GrimAPI.class, "punishments", getConfigFile("punishments.yml"));
+            // BuckSMPAC's simple total-flag ladder. Like punishments.yml it is
+            // open-ended operator data, so it gets no schema version either.
+            config.addSource(GrimAPI.class, "bans", getConfigFile("bans.yml"));
             // database.yml + per-backend files load through here too; their
             // keys are namespaced under `database:` / `<id>:` wrappers so
             // they don't collide with config.yml / discord.yml / each other

@@ -15,9 +15,9 @@ public class GrimTestWebhook implements BuildableCommand {
     @Override
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
         commandManager.command(
-                commandManager.commandBuilder("flfac", "grim", "grimac")
+                commandManager.commandBuilder("bucksmpac", "buckac", "bac", "grim", "grimac")
                         .literal("testwebhook")
-                        .permission("flfac.testwebhook")
+                        .permission("bucksmpac.testwebhook")
                         .handler(this::handleTestWebhook)
         );
     }

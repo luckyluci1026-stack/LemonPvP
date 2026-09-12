@@ -72,7 +72,7 @@ if (gradle.startParameter.isBuildScan) {
     }
 }
 
-rootProject.name = "flfac"
+rootProject.name = "bucksmpac"
 include("common")
 include("bukkit")
 include("fabric")

@@ -116,6 +116,13 @@ public class SetbackTeleportUtil extends Check implements PostPredictionCheck {
 
     public boolean executeViolationSetback() {
         if (isExempt()) return false;
+        // Bedrock movement is not Java movement, so a violation setback against
+        // a Geyser player is rubber-banding, not enforcement. Flags for the
+        // movement checks are already suppressed in Check#recordFlag; this
+        // catches the handful of callers that set back without flagging first
+        // (e.g. KnockbackHandler's isSetback branch). Resync setbacks are
+        // untouched — only the punitive path is blocked.
+        if (player.isBedrockPlayer() && player.isBedrockNoSetback()) return false;
         blockMovementsUntilResync(true, false);
         return true;
     }

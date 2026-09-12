@@ -40,6 +40,45 @@ spectators:
     allowed-worlds:
         - ""
 
+# Bedrock-Spieler (Geyser / Floodgate).
+#
+# Upstream-Grim nimmt Bedrock-Spieler von JEDEM Check aus, weil deren
+# Bewegung nicht der Java-Physik folgt und die Prediction sie zerreißen
+# würde. Nebenwirkung: ein cheatender Bedrock-Spieler wird nie angeschaut.
+#
+# BuckSMPAC prüft sie weiter und überspringt nur die Checks, die Java-
+# Bewegung modellieren. Paket-, Kampf- und Exploit-Checks greifen auch bei
+# Bedrock.
+bedrock:
+    # false = zurück zur kompletten Ausnahme für Bedrock-Spieler.
+    check-bedrock-players: true
+    # Bedrock-Spieler nie wegen eines Verstoßes zurücksetzen. Ihre Bewegung
+    # weicht legitim von der Vorhersage ab, ein Setback wäre Rubber-Banding
+    # statt Durchsetzung. Anlassen.
+    no-setbacks: true
+    # Checks, die für Bedrock-Spieler nicht gelten. Namen werden wie in der
+    # punishments.yml gematcht, "Elytra" deckt also ElytraA..ElytraI ab.
+    #
+    # Reach und Hitboxes stehen bewusst NICHT in der Liste - das sind die
+    # wertvollsten Checks, und Geyser normalisiert die Interaktion auf das
+    # Java-Protokoll. Falls deine Bedrock-Spieler dort doch flaggen, sind
+    # diese beiden die ersten Einträge zum Nachtragen.
+    exempt-checks:
+        - "Simulation"
+        - "Phase"
+        - "NoSlow"
+        - "Knockback"
+        - "Explosion"
+        - "GroundSpoof"
+        - "NoFall"
+        - "Timer"
+        - "Sprint"
+        - "Elytra"
+        - "Vehicle"
+        - "Baritone"
+        - "Place"
+        - "Aim"
+
 # Wie lange sollen Spieler Zeit haben, bis wir sie wegen Zeitüberschreitung rauswerfen? Standard = 60 Sekunden
 max-transaction-time: 60
 
@@ -115,7 +154,7 @@ NoSlow:
     # Flags um 0,03-0,2 konsequent mit NoSlow on
     threshold: 0.001
     # Schnell auf das erste Element zurücksetzen, um jeden Vorteil von NoSlow zu beseitigen
-    setbackvl: 5
+    setbackvl: 3
     # Verfall ist, wenn der Spieler einen Gegenstand benutzt UND dadurch verlangsamt wird
     decay: 0.05
 
@@ -136,9 +175,9 @@ Knockback:
 
 Explosion:
     threshold: 0.001
-    setbackvl: 3
+    setbackvl: 2
 
-# FLFAC-Eigencheck. Erkennt AutoClicker daran, wie schnell und wie gleichmäßig
+# BuckSMPAC-Eigencheck. Erkennt AutoClicker daran, wie schnell und wie gleichmäßig
 # ein Spieler ANGREIFT. Ein Armschwung wird nur gezählt, wenn im selben
 # Client-Tick auch ein Entity-Angriff ankommt. Dadurch fließen Blockabbau und
 # harmloses Luftklicken gar nicht erst ein, und es gibt keinen "baut er gerade
@@ -179,7 +218,7 @@ TimerA:
     setbackvl: 10
     # Millisekunden, die der Spieler akkumulieren kann, um sie später zu nutzen, wenn er zurückfällt.
     # Könnte möglicherweise 1,8 schnelle Nutzung/schnelle Heilung/schnelle Bogenumgehungen ermöglichen, wenn zu hoch eingestellt, 120 ms scheint eine gute Balance zu sein
-    drift: 120
+    drift: 80
 
 # This check limits abuse of the TimerA balance by preventing the player's movement falling too far behind realtime
 TimerLimit:
@@ -220,7 +259,7 @@ Reach:
     # Aktivieren Sie diese Option, um mehr Cheater zu erwischen.
     # Bleibt diese Funktion deaktiviert, werden immer noch Cheater erwischt und es kommt nicht zu Fehlalarmen.
     # Sofern es sich nicht um einen 1.8 PvP-Server handelt, wird dieses zusätzliche Paket nicht empfohlen.
-    enable-post-packet: false
+    enable-post-packet: true
 
 exploit:
     allow-sprint-jumping-when-using-elytra: true
@@ -234,7 +273,7 @@ exploit:
 debug-pipeline-on-join: false
 
 # Aktiviert experimentelle Prüfungen
-experimental-checks: false
+experimental-checks: true
 
 reset-item-usage-on-item-update: true
 reset-item-usage-on-attack: true
@@ -243,7 +282,7 @@ reset-item-usage-on-item-use: true
 
 # Grim bricht manchmal illegale Pakete ab, z.B. mit Timer, nachdem X Pakete in einer Sekunde abgebrochen wurden, wann sollte
 # wir den Spieler einfach kicken? Dies ist erforderlich, da einige Paketbegrenzer die von Grim abgebrochenen Pakete nicht zählen.
-packet-spam-threshold: 100
+packet-spam-threshold: 60
 # Aktiviere dies, um einen Stacktrace auszugeben, wenn ein Spieler wegen packet-spam-threshold gekickt wird
 debug-packet-cancel: false
 
@@ -276,4 +315,4 @@ max-ping-firework-boost: 1000
 update-permission-ticks: -1
 
 config-flavor: V2
-config-version: 12
+config-version: 13

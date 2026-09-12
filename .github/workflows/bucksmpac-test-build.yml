@@ -1,4 +1,4 @@
-name: FLFAC Test Build
+name: BuckSMPAC Test Build
 
 # Lightweight build to verify the experimental branches actually compile.
 # GitHub runners have full internet + JDK 25 (temurin), which the sandboxed
@@ -7,9 +7,7 @@ name: FLFAC Test Build
 on:
   push:
     branches:
-      - flfac-checks
-      - flfac-rename
-      - flfac-all
+      - bucksmpac
       - 'claude/**'
   workflow_dispatch:
 
@@ -45,14 +43,14 @@ jobs:
       - name: Upload plugin jar (Bukkit/Paper/Spigot)
         uses: actions/upload-artifact@v4
         with:
-          name: flfac-bukkit-${{ steps.slug.outputs.value }}
+          name: bucksmpac-bukkit-${{ steps.slug.outputs.value }}
           # Only the shaded plugin jar (with dependencies), not the thin jar.
-          path: bukkit/build/libs/flfac-bukkit-*.jar
+          path: bukkit/build/libs/bucksmpac-bukkit-*.jar
           if-no-files-found: error
 
       - name: Upload mod jar (Fabric)
         uses: actions/upload-artifact@v4
         with:
-          name: flfac-fabric-${{ steps.slug.outputs.value }}
-          path: fabric/build/libs/flfac-fabric-*.jar
+          name: bucksmpac-fabric-${{ steps.slug.outputs.value }}
+          path: fabric/build/libs/bucksmpac-fabric-*.jar
           if-no-files-found: warn

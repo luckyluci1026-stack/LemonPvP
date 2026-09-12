@@ -1,8 +1,8 @@
 /*
- * This file is part of FLFAC, a fork of GrimAC - https://github.com/GrimAnticheat/Grim
+ * This file is part of BuckSMPAC, a fork of GrimAC - https://github.com/GrimAnticheat/Grim
  * Copyright (C) 2021-2025 DefineOutside and contributors, licensed under GPLv3.
  *
- * FLFAC custom addition.
+ * BuckSMPAC custom addition.
  */
 package ac.grim.grimac.checks.impl.autoclicker;
 
@@ -19,7 +19,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientIn
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity.InteractAction;
 
 /**
- * FLFAC custom AutoClicker check.
+ * BuckSMPAC custom AutoClicker check.
  *
  * <p>Measures how fast and how regularly a player <i>attacks</i>, and flags a
  * rate no hand can produce or a rhythm no hand can hold.</p>
@@ -69,7 +69,7 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientIn
  * true} is set in the config. Run it in alert-only mode on a live server and tune
  * the thresholds against real players before wiring it to a kick or a ban.</p>
  */
-@CheckData(name = "Autoclicker", configName = "Autoclicker", stableKey = "flfac.autoclicker.cps",
+@CheckData(name = "Autoclicker", configName = "Autoclicker", stableKey = "bucksmpac.autoclicker.cps",
         description = "Attacked at an inhuman rate or with robotic consistency",
         decay = 0.05, experimental = true)
 public class AutoClickerA extends Check implements PacketCheck {

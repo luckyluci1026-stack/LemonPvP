@@ -40,6 +40,45 @@ spectators:
     allowed-worlds:
         - ""
 
+# Bedrock players (Geyser / Floodgate).
+#
+# Upstream Grim exempts Bedrock players from EVERY check, because Bedrock
+# movement does not follow Java physics and the prediction engine would tear
+# them apart. The side effect is that a cheating Bedrock player is never
+# looked at at all.
+#
+# BuckSMPAC keeps checking them and skips only the checks that model Java
+# movement. Packet, combat and exploit checks still apply to Bedrock.
+bedrock:
+    # false = go back to exempting Bedrock players from everything.
+    check-bedrock-players: true
+    # Never set a Bedrock player back for a violation. Their movement legally
+    # differs from the prediction, so a setback is rubber-banding rather than
+    # enforcement. Leave this on.
+    no-setbacks: true
+    # Checks that do not apply to Bedrock players. Matched like the check names
+    # in punishments.yml, so "Elytra" covers ElytraA..ElytraI.
+    #
+    # Reach and Hitboxes are deliberately NOT in this list - they are the most
+    # valuable checks and Geyser normalises interaction to the Java protocol.
+    # If your Bedrock players start flagging them anyway, these two are the
+    # first entries to add.
+    exempt-checks:
+        - "Simulation"
+        - "Phase"
+        - "NoSlow"
+        - "Knockback"
+        - "Explosion"
+        - "GroundSpoof"
+        - "NoFall"
+        - "Timer"
+        - "Sprint"
+        - "Elytra"
+        - "Vehicle"
+        - "Baritone"
+        - "Place"
+        - "Aim"
+
 # How long should players have until we kick them for timing out? Default = 60 seconds
 max-transaction-time: 60
 
@@ -115,7 +154,7 @@ NoSlow:
     # Flags by 0.03-0.2 consistently with NoSlow on
     threshold: 0.001
     # Setback fast on the first item to remove any advantage NoSlow gives
-    setbackvl: 5
+    setbackvl: 3
     # Decay's when the player uses an item AND is slowed by it
     decay: 0.05
 
@@ -136,9 +175,9 @@ Knockback:
 
 Explosion:
     threshold: 0.001
-    setbackvl: 3
+    setbackvl: 2
 
-# FLFAC custom check. Detects auto clickers from how fast and how regularly a
+# BuckSMPAC custom check. Detects auto clickers from how fast and how regularly a
 # player ATTACKS. It counts an arm swing only when an entity attack arrives in
 # the same client tick, so mining and harmless air-clicking never enter the
 # measurement and there is no "is he mining?" state a client can latch to
@@ -176,7 +215,7 @@ TimerA:
     setbackvl: 10
     # Milliseconds that the player can accumulate for later use when they fall behind
     # Could potentially allow 1.8 fast use/fast heal/fast bow bypasses if set too high, 120 ms seems like a good balance
-    drift: 120
+    drift: 80
 
 # This check limits abuse of the TimerA balance by preventing the player's movement falling too far behind realtime
 TimerLimit:
@@ -214,7 +253,7 @@ Reach:
     # Enabling this will catch more cheaters.
     # Leaving this disabled will still catch cheaters and will not cause false positives
     # Unless you are a 1.8 PvP focused server, this additional packet is not recommended
-    enable-post-packet: false
+    enable-post-packet: true
 
 exploit:
     # You can gain high speeds when sprint jumping with an elytra, this prevents the exploit when set to false
@@ -231,7 +270,7 @@ exploit:
 debug-pipeline-on-join: false
 
 # Enables experimental checks
-experimental-checks: false
+experimental-checks: true
 
 reset-item-usage-on-item-update: true
 reset-item-usage-on-attack: true
@@ -240,7 +279,7 @@ reset-item-usage-on-item-use: true
 
 # Grim sometimes cancels illegal packets such as with timer, after X packets in a second cancelled, when should
 # we simply kick the player? This is required as some packet limiters don't count packets cancelled by grim.
-packet-spam-threshold: 100
+packet-spam-threshold: 60
 # Enable this to print a stacktrace when a player is kicked due to packet-spam-threshold
 debug-packet-cancel: false
 
@@ -270,4 +309,4 @@ update-permission-ticks: -1
 #   config-version: bumped on every breaking shape change. Old configs
 #                   auto-migrate up via the bundled updater on next start.
 config-flavor: V2
-config-version: 12
+config-version: 13

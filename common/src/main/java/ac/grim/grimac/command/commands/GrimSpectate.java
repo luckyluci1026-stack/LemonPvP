@@ -20,9 +20,9 @@ public class GrimSpectate implements BuildableCommand {
     @Override
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
         commandManager.command(
-                commandManager.commandBuilder("flfac", "grim", "grimac")
+                commandManager.commandBuilder("bucksmpac", "buckac", "bac", "grim", "grimac")
                         .literal("spectate")
-                        .permission("flfac.spectate")
+                        .permission("bucksmpac.spectate")
                         .required("target", arguments.singlePlayerSelectorParser())
                         .handler(this::handleSpectate)
                         .apply(CloudCommandService.REQUIREMENT_FACTORY.create(PlayerSenderRequirement.INSTANCE))

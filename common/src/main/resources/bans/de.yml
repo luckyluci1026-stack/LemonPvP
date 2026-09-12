@@ -1,0 +1,70 @@
+# ======================================================================
+#  BuckSMPAC - bans.yml
+# ======================================================================
+#  DIE EINFACHE LEITER:  "bei N Flags führe diesen Befehl aus".
+#
+#  Die punishments.yml zählt Flags getrennt innerhalb jeder Check-Gruppe.
+#  Ein Spieler mit 30 Reach-Flags und 30 Knockback-Flags erreicht deshalb
+#  in keiner der beiden Gruppen eine 50er-Stufe. DIESE Datei addiert jeden
+#  Flag aus jedem Check zu einer einzigen laufenden Summe pro Spieler -
+#  also genau die Zahl, die man meint, wenn man sagt "der hat 50 Flags".
+#
+#  Beide Dateien sind gleichzeitig aktiv und stören sich nicht. Nimm die
+#  punishments.yml, wenn du auf einen bestimmten Check reagieren willst,
+#  und diese Datei für die Frage "wie verdächtig ist der Spieler insgesamt".
+#
+#  Platzhalter für jeden Befehl unten:
+#    %player%     - Name des Spielers
+#    %flags%      - aktuelle Gesamtsumme
+#    %checks%     - wie viele VERSCHIEDENE Checks er ausgelöst hat
+#    %top_check%  - der Check, den er am häufigsten ausgelöst hat
+#    %top_count%  - wie oft dieser ausgelöst wurde
+#    %prefix%     - das BuckSMPAC-Chatpräfix (nur für [alert])
+# ======================================================================
+
+bans:
+    enabled: true
+
+    # Wie lange ein einzelner Flag in die Summe zählt, in Sekunden.
+    # 900 = ein Flag fällt 15 Minuten nach dem Vorfall wieder aus der Summe.
+    # So sammelt sich bei jemandem, der einmal pro Woche einen Check
+    # auslöst, nicht langsam ein Ban an.
+    # 0 = jeder Flag bleibt, solange der Spieler online ist.
+    remember-flags-for: 900
+
+    # Keine Stufe greift, bevor der Spieler mindestens so viele
+    # VERSCHIEDENE Checks ausgelöst hat. Das ist die Absicherung, die die
+    # Leiter auch streng sicher macht: ein echter Cheat-Client löst mehrere
+    # Checks gleichzeitig aus, während ein einzelner Check, der immer wieder
+    # feuert, viel häufiger ein Falsch-Positiv oder ein Lag-Artefakt ist.
+    # 1 = Absicherung aus.
+    min-different-checks: 2
+
+    # Flags dieser Checks zählen nie in die Summe. Namen werden wie in der
+    # punishments.yml gematcht, "BadPackets" deckt also BadPacketsA,
+    # BadPacketsB usw. ab. Trag einen Check hier ein, solange du ihn noch
+    # einstellst - dann kann er dich warnen, aber niemanden bannen.
+    ignore-checks:
+        - "Autoclicker"
+
+    # Wird ans Team geschickt, wenn der Befehl einer Stufe [alert] ist.
+    alert-format: "%prefix% &f%player% &7steht bei &c%flags% &7Flags aus &c%checks% &7Checks &8(&f%top_check% &7x%top_count%&8)"
+
+    # Die Leiter. Jede Stufe greift EINMAL pro Spieler pro Sitzung, sobald
+    # die Summe sie erreicht. Wer in einem Schwung von 20 auf 60 Flags
+    # springt, löst alle Stufen dazwischen der Reihe nach aus.
+    #
+    #   command: "[alert]"     -> benachrichtigt dein Team
+    #   command: "<beliebig>"  -> wird von der Konsole ausgeführt
+    #
+    # Der Ban-Befehl unten ist Vanilla. Mit LiteBans/AdvancedBan eher:
+    #   "tempban %player% 30d BuckSMPAC > %flags% Flags (%top_check%)"
+    ladder:
+        - flags: 20
+          command: "[alert]"
+        - flags: 35
+          command: "effect give %player% minecraft:slowness 9999 250 true"
+        - flags: 50
+          command: "kick %player% &cBuckSMPAC &8» &fCheating erkannt (%top_check%)"
+        - flags: 80
+          command: "ban %player% BuckSMPAC > %flags% Flags aus %checks% Checks (%top_check% x%top_count%)"

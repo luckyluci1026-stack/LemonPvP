@@ -1,5 +1,5 @@
 # ======================================================================
-#  FLFAC - Strafen
+#  BuckSMPAC - Strafen
 # ======================================================================
 # Platzhalter:
 #   %check_name%  - Name der Prüfung
@@ -10,7 +10,7 @@
 #
 # Spezielle Befehle:
 #   [alert]   - benachrichtigt das Team im Spiel
-#   [log]     - schreibt in die FLFAC-Verstoßhistorie
+#   [log]     - schreibt in die BuckSMPAC-Verstoßhistorie
 #   [webhook] - sendet an deinen Discord-Webhook
 #   [proxy]   - sendet an andere Server über deinen Proxy (Bungee/Velocity)
 #
@@ -22,7 +22,7 @@
 # ----------------------------------------------------------------------
 #  >>> BAN / KICK / FREEZE - so wählst du die Strafe <<<
 # ----------------------------------------------------------------------
-# Jede Gruppe hat einen "FLFAC Strafen-Leiter"-Abschnitt. Zum AKTIVIEREN
+# Jede Gruppe hat einen "BuckSMPAC Strafen-Leiter"-Abschnitt. Zum AKTIVIEREN
 # einer Strafe die Zeile entkommentieren (das "#" entfernen), zum
 # DEAKTIVIEREN ein "#" davor setzen. Beliebig pro Gruppe kombinierbar.
 #
@@ -32,11 +32,11 @@
 #   FREEZE (mit Freeze-Plugin, z. B. Befehl /freeze):
 #     "40:0 freeze %player%"
 #   KICK:
-#     "60:0 kick %player% &cFLFAC &8» &fUnfairer Vorteil erkannt (%check_name%)"
+#     "60:0 kick %player% &cBuckSMPAC &8» &fUnfairer Vorteil erkannt (%check_name%)"
 #   BAN (Vanilla):
-#     "100:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"
+#     "100:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"
 #   BAN (mit LiteBans/AdvancedBan usw.):
-#     "100:0 tempban %player% 30d FLFAC > Cheating (%check_name%)"
+#     "100:0 tempban %player% 30d BuckSMPAC > Cheating (%check_name%)"
 # ======================================================================
 
 Punishments:
@@ -49,14 +49,14 @@ Punishments:
       - "TimerLimit"
       - "NoFall"
     commands:
-      - "100:40 [alert]"
+      - "60:30 [alert]"
       - "1:1 [log]"
       - "100:100 [webhook]"
       - "100:100 [proxy]"
-      # --- FLFAC Strafen-Leiter ---
-      - "150:0 effect give %player% minecraft:slowness 9999 250 true"     # FREEZE
-      - "200:0 kick %player% &cFLFAC &8» &fUngültige Bewegung (%check_name%)" # KICK
-      - "400:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"       # BAN
+      # --- BuckSMPAC Strafen-Leiter ---
+      - "80:0 effect give %player% minecraft:slowness 9999 250 true"     # FREEZE
+      - "120:0 kick %player% &cBuckSMPAC &8» &fUngültige Bewegung (%check_name%)" # KICK
+      - "200:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
 
   Knockback:
     remove-violations-after: 300
@@ -68,19 +68,22 @@ Punishments:
       - "1:1 [log]"
       - "20:20 [webhook]"
       - "20:20 [proxy]"
-      # --- FLFAC Strafen-Leiter ---
-      - "40:0 kick %player% &cFLFAC &8» &fAnti-Knockback (%check_name%)"   # KICK
-      - "80:0 ban %player% FLFAC > Anti-Knockback (%check_name%)"          # BAN
+      # --- BuckSMPAC Strafen-Leiter ---
+      - "25:0 kick %player% &cBuckSMPAC &8» &fAnti-Knockback (%check_name%)"   # KICK
+      - "50:0 ban %player% BuckSMPAC > Anti-Knockback (%check_name%)"          # BAN
 
   Post:
     remove-violations-after: 300
     checks:
       - "Post"
     commands:
-      - "20:20 [alert]"
+      - "15:15 [alert]"
       - "1:1 [log]"
       - "40:40 [webhook]"
       - "40:40 [proxy]"
+      # --- BuckSMPAC Strafen-Leiter (Post ist sehr zuverlässig) ---
+      - "25:0 kick %player% &cBuckSMPAC &8» &fPaketreihenfolge (%check_name%)" # KICK
+      - "50:0 ban %player% BuckSMPAC > Paketreihenfolge (%check_name%)"        # BAN
 
   BadPackets:
     remove-violations-after: 300
@@ -89,13 +92,13 @@ Punishments:
       - "PacketOrder"
       - "Crash"
     commands:
-      - "20:20 [alert]"
+      - "15:15 [alert]"
       - "1:1 [log]"
       - "40:40 [webhook]"
       - "40:40 [proxy]"
-      # --- FLFAC Strafen-Leiter (BadPackets ist sehr zuverlässig) ---
-      - "40:0 kick %player% &cFLFAC &8» &fIllegale Pakete (%check_name%)"  # KICK
-      - "80:0 ban %player% FLFAC > Illegale Pakete (%check_name%)"         # BAN
+      # --- BuckSMPAC Strafen-Leiter (BadPackets ist sehr zuverlässig) ---
+      - "25:0 kick %player% &cBuckSMPAC &8» &fIllegale Pakete (%check_name%)"  # KICK
+      - "50:0 ban %player% BuckSMPAC > Illegale Pakete (%check_name%)"         # BAN
 
   Reach:
     remove-violations-after: 300
@@ -106,10 +109,10 @@ Punishments:
       - "1:1 [log]"
       - "5:3 [webhook]"
       - "5:3 [proxy]"
-      # --- FLFAC Strafen-Leiter (Reach ist sehr zuverlässig) ---
-      - "15:0 effect give %player% minecraft:slowness 9999 250 true"      # FREEZE
-      - "25:0 kick %player% &cFLFAC &8» &fReach erkannt (%check_name%)"    # KICK
-      - "50:0 ban %player% FLFAC > Reach erkannt (%check_name%)"           # BAN
+      # --- BuckSMPAC Strafen-Leiter (Reach ist sehr zuverlässig) ---
+      - "10:0 effect give %player% minecraft:slowness 9999 250 true"      # FREEZE
+      - "15:0 kick %player% &cBuckSMPAC &8» &fReach erkannt (%check_name%)"    # KICK
+      - "30:0 ban %player% BuckSMPAC > Reach erkannt (%check_name%)"           # BAN
 
   Hitboxes:
     remove-violations-after: 300
@@ -120,9 +123,9 @@ Punishments:
       - "1:1 [log]"
       - "5:3 [webhook]"
       - "5:3 [proxy]"
-      # --- FLFAC Strafen-Leiter ---
-      - "25:0 kick %player% &cFLFAC &8» &fHitbox erkannt (%check_name%)"   # KICK
-      - "50:0 ban %player% FLFAC > Hitbox erkannt (%check_name%)"          # BAN
+      # --- BuckSMPAC Strafen-Leiter ---
+      - "15:0 kick %player% &cBuckSMPAC &8» &fHitbox erkannt (%check_name%)"   # KICK
+      - "30:0 ban %player% BuckSMPAC > Hitbox erkannt (%check_name%)"          # BAN
 
   Misc:
     remove-violations-after: 300
@@ -139,13 +142,13 @@ Punishments:
       - "Chat"
       - "Exploit"
     commands:
-      - "10:5 [alert]"
+      - "8:4 [alert]"
       - "1:1 [log]"
       - "20:10 [webhook]"
       - "20:10 [proxy]"
-      # --- FLFAC Strafen-Leiter ---
-      - "60:0 kick %player% &cFLFAC &8» &fUnfairer Vorteil (%check_name%)" # KICK
-      - "120:0 ban %player% FLFAC > Cheating erkannt (%check_name%)"       # BAN
+      # --- BuckSMPAC Strafen-Leiter ---
+      - "35:0 kick %player% &cBuckSMPAC &8» &fUnfairer Vorteil (%check_name%)" # KICK
+      - "70:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
 
   Combat:
     remove-violations-after: 300
@@ -153,14 +156,14 @@ Punishments:
       - "Interact"
       - "Aim"
     commands:
-      - "20:40 [alert]"
+      - "15:20 [alert]"
       - "1:1 [log]"
-      # --- FLFAC Strafen-Leiter ---
-      - "60:0 kick %player% &cFLFAC &8» &fKampf-Anomalie (%check_name%)"   # KICK
-      - "120:0 ban %player% FLFAC > Kampf-Anomalie (%check_name%)"         # BAN
+      # --- BuckSMPAC Strafen-Leiter ---
+      - "35:0 kick %player% &cBuckSMPAC &8» &fKampf-Anomalie (%check_name%)"   # KICK
+      - "70:0 ban %player% BuckSMPAC > Kampf-Anomalie (%check_name%)"         # BAN
 
-  # FLFACs eigener AutoClicker-Check. Er ist als experimentell markiert und
-  # läuft erst, wenn in der config.yml 'experimental-checks: true' gesetzt ist.
+  # BuckSMPACs eigener AutoClicker-Check. Er ist als experimentell markiert,
+  # und BuckSMPAC liefert experimental-checks: true aus - er LÄUFT also.
   #
   # BEWUSST NUR ALERTS. Hinter jeder anderen Gruppe hier steht ein Check, für
   # den es jahrelange Praxisdaten gibt - hinter diesem nicht. Erst die Alerts
@@ -173,8 +176,8 @@ Punishments:
     checks:
       - "Autoclicker"
     commands:
-      - "20:40 [alert]"
+      - "15:20 [alert]"
       - "1:1 [log]"
-      # --- FLFAC Strafen-Leiter (erst nach dem Einstellen aktivieren) ---
-      #- "60:0 kick %player% &cFLFAC &8» &fAutoClicker (%check_name%)"     # KICK
-      #- "120:0 ban %player% FLFAC > AutoClicker (%check_name%)"           # BAN
+      # --- BuckSMPAC Strafen-Leiter (erst nach dem Einstellen aktivieren) ---
+      #- "60:0 kick %player% &cBuckSMPAC &8» &fAutoClicker (%check_name%)"     # KICK
+      #- "120:0 ban %player% BuckSMPAC > AutoClicker (%check_name%)"           # BAN

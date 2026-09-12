@@ -15,9 +15,9 @@ public class GrimSendAlert implements BuildableCommand {
     @Override
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
         commandManager.command(
-                commandManager.commandBuilder("flfac", "grim", "grimac")
+                commandManager.commandBuilder("bucksmpac", "buckac", "bac", "grim", "grimac")
                         .literal("sendalert")
-                        .permission("flfac.sendalert")
+                        .permission("bucksmpac.sendalert")
                         .required("message", StringParser.greedyStringParser())
                         .handler(this::handleSendAlert)
         );

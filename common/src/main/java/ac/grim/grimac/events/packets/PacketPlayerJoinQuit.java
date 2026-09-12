@@ -59,19 +59,19 @@ public class PacketPlayerJoinQuit extends PacketListenerAbstract {
 
         PlayerToggleStore toggles = GrimAPI.INSTANCE.getDataStoreLifecycle().playerToggleStore();
         applyToggle(platformPlayer, toggles, PlayerToggleStore.KEY_ALERTS,
-                "flfac.alerts", "flfac.alerts.enable-on-join", "flfac.alerts.enable-on-join.silent",
+                "bucksmpac.alerts", "bucksmpac.alerts.enable-on-join", "bucksmpac.alerts.enable-on-join.silent",
                 (p, silent) -> GrimAPI.INSTANCE.getAlertManager().toggleAlerts(p, silent),
                 (p, value) -> GrimAPI.INSTANCE.getAlertManager().setAlertsEnabled(p, value, true));
         applyToggle(platformPlayer, toggles, PlayerToggleStore.KEY_VERBOSE,
-                "flfac.verbose", "flfac.verbose.enable-on-join", "flfac.verbose.enable-on-join.silent",
+                "bucksmpac.verbose", "bucksmpac.verbose.enable-on-join", "bucksmpac.verbose.enable-on-join.silent",
                 (p, silent) -> GrimAPI.INSTANCE.getAlertManager().toggleVerbose(p, silent),
                 (p, value) -> GrimAPI.INSTANCE.getAlertManager().setVerboseEnabled(p, value, true));
         applyToggle(platformPlayer, toggles, PlayerToggleStore.KEY_BRANDS,
-                "flfac.brand", "flfac.brand.enable-on-join", "flfac.brand.enable-on-join.silent",
+                "bucksmpac.brand", "bucksmpac.brand.enable-on-join", "bucksmpac.brand.enable-on-join.silent",
                 (p, silent) -> GrimAPI.INSTANCE.getAlertManager().toggleBrands(p, silent),
                 (p, value) -> GrimAPI.INSTANCE.getAlertManager().setBrandsEnabled(p, value, true));
 
-        if (platformPlayer.hasPermission("flfac.spectate") && GrimAPI.INSTANCE.getConfigManager().getConfig().getBooleanElse("spectators.hide-regardless", false)) {
+        if (platformPlayer.hasPermission("bucksmpac.spectate") && GrimAPI.INSTANCE.getConfigManager().getConfig().getBooleanElse("spectators.hide-regardless", false)) {
             GrimAPI.INSTANCE.getSpectateManager().onLogin(platformPlayer.getUniqueId());
         }
 

@@ -18,9 +18,9 @@ public class GrimBrands implements BuildableCommand {
     @Override
     public void register(CommandManager<Sender> commandManager, CloudPlatformCommandArguments arguments) {
         commandManager.command(
-                commandManager.commandBuilder("flfac", "grim", "grimac")
+                commandManager.commandBuilder("bucksmpac", "buckac", "bac", "grim", "grimac")
                         .literal("brands", Description.of("Toggle brands for the sender"))
-                        .permission("flfac.brand")
+                        .permission("bucksmpac.brand")
                         .handler(this::handleBrands)
         );
     }
