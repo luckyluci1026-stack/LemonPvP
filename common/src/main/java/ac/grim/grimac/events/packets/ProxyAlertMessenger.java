@@ -2,18 +2,16 @@ package ac.grim.grimac.events.packets;
 
 import ac.grim.grimac.GrimAPI;
 import ac.grim.grimac.utils.anticheat.LogUtil;
+import ac.grim.grimac.utils.anticheat.ProxyDetection;
 import ac.grim.grimac.utils.anticheat.MessageUtil;
-import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
-import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPluginMessage;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import github.scarsz.configuralize.DynamicConfig;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 
@@ -24,9 +22,11 @@ public class ProxyAlertMessenger extends PacketListenerAbstract {
     @Getter private static boolean usingProxy;
 
     public ProxyAlertMessenger() {
-        usingProxy = ProxyAlertMessenger.getBooleanFromFile("spigot.yml", "settings.bungeecord")
-                || ProxyAlertMessenger.getBooleanFromFile("paper.yml", "settings.velocity-support.enabled")
-                || (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_19) && ProxyAlertMessenger.getBooleanFromFile("config/paper-global.yml", "proxies.velocity.enabled"));
+        ProxyDetection.detect();
+        usingProxy = ProxyDetection.isBehindProxy();
+        // Say it out loud at boot. A wrong answer here disconnects legitimate
+        // players over proxy plugin messages, so it must not be silent.
+        LogUtil.info("Proxy detection: this server is " + ProxyDetection.describe());
 
         if (usingProxy) {
             LogUtil.info("Registering an outgoing plugin channel...");
@@ -63,21 +63,6 @@ public class ProxyAlertMessenger extends PacketListenerAbstract {
 
     public static boolean canReceiveAlerts() {
         return usingProxy && GrimAPI.INSTANCE.getConfigManager().getConfig().getBooleanElse("alerts.proxy.receive", false) && GrimAPI.INSTANCE.getAlertManager().hasAlertListeners();
-    }
-
-    // TODO (Cross-Platform) check if new getBooleanFromFile impl is correct
-    private static boolean getBooleanFromFile(String pathToFile, String pathToValue) {
-        File file = new File(pathToFile);
-        if (!file.exists()) return false;
-
-        DynamicConfig config = new DynamicConfig();
-        config.addSource(ProxyAlertMessenger.class, "temp", file);
-        try {
-            config.loadAll();
-            return config.getBoolean(pathToValue);
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     @Override

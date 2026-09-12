@@ -79,6 +79,20 @@ bedrock:
         - "Place"
         - "Aim"
 
+# Does this server sit behind a proxy (Velocity / BungeeCord)?
+#
+# This matters more than it looks: proxy-origin plugin messages are only
+# trusted when the answer is yes, and a wrong "no" disconnects legitimate
+# players who joined through your proxy.
+#
+#   auto  - work it out from the server's own config (default). BuckSMPAC
+#           reads the running server's loaded settings, and prints what it
+#           found to the console on startup.
+#   true  - this server is behind a proxy. Say this if detection got it wrong.
+#   false - no proxy in front of this server.
+proxy:
+    behind-proxy: auto
+
 # How long should players have until we kick them for timing out? Default = 60 seconds
 max-transaction-time: 60
 
@@ -309,4 +323,4 @@ update-permission-ticks: -1
 #   config-version: bumped on every breaking shape change. Old configs
 #                   auto-migrate up via the bundled updater on next start.
 config-flavor: V2
-config-version: 13
+config-version: 14

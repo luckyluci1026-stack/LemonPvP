@@ -67,9 +67,15 @@ public final class GrimConfigSpecs {
      * without the bump the updater short-circuits and an existing config never
      * gains the keys, so Bedrock players would silently fall back to the
      * hardcoded defaults with no way for the operator to tune the exempt list.
+     *
+     * <p>v13 → v14: adds the {@code proxy:} block, so an operator can state
+     * outright whether this server sits behind a proxy instead of leaving it
+     * to detection. Getting that answer wrong disconnects legitimate players
+     * over proxy plugin messages, so it needed an override that does not
+     * depend on file paths resolving.
      */
     public static @NotNull ConfigUpdater.Spec mainConfig() {
-        return ConfigUpdater.Spec.builder("/config/", 13, ConfigUpdater.ConfigFlavor.V2)
+        return ConfigUpdater.Spec.builder("/config/", 14, ConfigUpdater.ConfigFlavor.V2)
                 .migration(10, ctx -> {
                     String typeRaw = ctx.input().getString("history.database.type");
                     String type = typeRaw == null ? null : typeRaw.trim().toUpperCase(Locale.ROOT);
@@ -131,7 +137,7 @@ public final class GrimConfigSpecs {
     }
 
     public static @NotNull ConfigUpdater.Spec messages() {
-        return ConfigUpdater.Spec.builder("/messages/", 1, ConfigUpdater.ConfigFlavor.V2)
+        return ConfigUpdater.Spec.builder("/messages/", 2, ConfigUpdater.ConfigFlavor.V2)
                 .build();
     }
 

@@ -79,6 +79,22 @@ bedrock:
         - "Place"
         - "Aim"
 
+# Steht dieser Server hinter einem Proxy (Velocity / BungeeCord)?
+#
+# Das ist wichtiger als es aussieht: Plugin-Nachrichten vom Proxy werden nur
+# dann als vertrauenswürdig behandelt, wenn die Antwort ja lautet - ein
+# falsches "nein" wirft legitime Spieler raus, die über deinen Proxy joinen.
+#
+#   auto  - aus der Server-Konfiguration selbst ermitteln (Standard).
+#           BuckSMPAC liest die tatsächlich geladenen Einstellungen des
+#           laufenden Servers und schreibt beim Start in die Konsole, was es
+#           gefunden hat.
+#   true  - dieser Server steht hinter einem Proxy. Setz das, wenn die
+#           automatische Erkennung danebenliegt.
+#   false - kein Proxy vor diesem Server.
+proxy:
+    behind-proxy: auto
+
 # Wie lange sollen Spieler Zeit haben, bis wir sie wegen Zeitüberschreitung rauswerfen? Standard = 60 Sekunden
 max-transaction-time: 60
 
@@ -315,4 +331,4 @@ max-ping-firework-boost: 1000
 update-permission-ticks: -1
 
 config-flavor: V2
-config-version: 13
+config-version: 14
