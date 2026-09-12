@@ -38,6 +38,19 @@
 #   BAN (mit LiteBans/AdvancedBan usw.):
 #     "100:0 tempban %player% 30d BuckSMPAC > Cheating (%check_name%)"
 # ======================================================================
+# ----------------------------------------------------------------------
+#  DIESE LEITER BANNT DIREKT - es gibt keine Kick-Stufe.
+# ----------------------------------------------------------------------
+# Jede Gruppe unten bannt sofort bei der Schwelle, die vorher nur gekickt
+# hat. Ein Falsch-Positiv ist damit ein Ban, kein Kick - beobachte die
+# Alerts also ein paar Tage, bevor du den Zahlen auf dem Live-Server traust.
+#
+# WICHTIG IM PROXY-NETZWERK: Vanilla-/ban bannt nur auf DIESEM Backend.
+# Der Spieler kommt über Velocity weiterhin auf deine anderen Server. Für
+# einen netzwerkweiten Ban ein proxy-fähiges Plugin nehmen und den Befehl
+# tauschen:
+#     "25:0 tempban %player% 30d BuckSMPAC > Cheating (%check_name%)"
+# ----------------------------------------------------------------------
 
 Punishments:
   Simulation:
@@ -55,8 +68,7 @@ Punishments:
       - "100:100 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
       - "80:0 effect give %player% minecraft:slowness 9999 250 true"     # FREEZE
-      - "120:0 kick %player% &cBuckSMPAC &8» &fUngültige Bewegung (%check_name%)" # KICK
-      - "200:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
+      - "120:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
 
   Knockback:
     remove-violations-after: 300
@@ -69,8 +81,7 @@ Punishments:
       - "20:20 [webhook]"
       - "20:20 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "25:0 kick %player% &cBuckSMPAC &8» &fAnti-Knockback (%check_name%)"   # KICK
-      - "50:0 ban %player% BuckSMPAC > Anti-Knockback (%check_name%)"          # BAN
+      - "25:0 ban %player% BuckSMPAC > Anti-Knockback (%check_name%)"          # BAN
 
   Post:
     remove-violations-after: 300
@@ -82,8 +93,7 @@ Punishments:
       - "40:40 [webhook]"
       - "40:40 [proxy]"
       # --- BuckSMPAC Strafen-Leiter (Post ist sehr zuverlässig) ---
-      - "25:0 kick %player% &cBuckSMPAC &8» &fPaketreihenfolge (%check_name%)" # KICK
-      - "50:0 ban %player% BuckSMPAC > Paketreihenfolge (%check_name%)"        # BAN
+      - "25:0 ban %player% BuckSMPAC > Paketreihenfolge (%check_name%)"        # BAN
 
   BadPackets:
     remove-violations-after: 300
@@ -97,8 +107,7 @@ Punishments:
       - "40:40 [webhook]"
       - "40:40 [proxy]"
       # --- BuckSMPAC Strafen-Leiter (BadPackets ist sehr zuverlässig) ---
-      - "25:0 kick %player% &cBuckSMPAC &8» &fIllegale Pakete (%check_name%)"  # KICK
-      - "50:0 ban %player% BuckSMPAC > Illegale Pakete (%check_name%)"         # BAN
+      - "25:0 ban %player% BuckSMPAC > Illegale Pakete (%check_name%)"         # BAN
 
   Reach:
     remove-violations-after: 300
@@ -111,8 +120,7 @@ Punishments:
       - "5:3 [proxy]"
       # --- BuckSMPAC Strafen-Leiter (Reach ist sehr zuverlässig) ---
       - "10:0 effect give %player% minecraft:slowness 9999 250 true"      # FREEZE
-      - "15:0 kick %player% &cBuckSMPAC &8» &fReach erkannt (%check_name%)"    # KICK
-      - "30:0 ban %player% BuckSMPAC > Reach erkannt (%check_name%)"           # BAN
+      - "15:0 ban %player% BuckSMPAC > Reach erkannt (%check_name%)"           # BAN
 
   Hitboxes:
     remove-violations-after: 300
@@ -124,8 +132,7 @@ Punishments:
       - "5:3 [webhook]"
       - "5:3 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "15:0 kick %player% &cBuckSMPAC &8» &fHitbox erkannt (%check_name%)"   # KICK
-      - "30:0 ban %player% BuckSMPAC > Hitbox erkannt (%check_name%)"          # BAN
+      - "15:0 ban %player% BuckSMPAC > Hitbox erkannt (%check_name%)"          # BAN
 
   Misc:
     remove-violations-after: 300
@@ -147,8 +154,7 @@ Punishments:
       - "20:10 [webhook]"
       - "20:10 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "35:0 kick %player% &cBuckSMPAC &8» &fUnfairer Vorteil (%check_name%)" # KICK
-      - "70:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
+      - "35:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
 
   Combat:
     remove-violations-after: 300
@@ -159,8 +165,7 @@ Punishments:
       - "15:20 [alert]"
       - "1:1 [log]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "35:0 kick %player% &cBuckSMPAC &8» &fKampf-Anomalie (%check_name%)"   # KICK
-      - "70:0 ban %player% BuckSMPAC > Kampf-Anomalie (%check_name%)"         # BAN
+      - "35:0 ban %player% BuckSMPAC > Kampf-Anomalie (%check_name%)"         # BAN
 
   # BuckSMPACs eigener AutoClicker-Check. Er ist als experimentell markiert,
   # und BuckSMPAC liefert experimental-checks: true aus - er LÄUFT also.

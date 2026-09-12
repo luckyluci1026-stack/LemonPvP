@@ -56,8 +56,12 @@ bans:
     #   command: "[alert]"     -> message your staff
     #   command: "<anything>"  -> run it from console
     #
-    # The ban command below is vanilla. If you use LiteBans/AdvancedBan,
-    # swap it for something like:
+    # There is no kick step - the ladder goes straight to a ban.
+    #
+    # The ban command below is vanilla, which on a proxy network only bans
+    # the player from THIS backend server; they can still reach your other
+    # servers through Velocity. For a network-wide ban use a proxy-aware
+    # plugin (LiteBans/AdvancedBan) and swap it for something like:
     #   "tempban %player% 30d BuckSMPAC > %flags% flags (%top_check%)"
     ladder:
         - flags: 20
@@ -65,6 +69,4 @@ bans:
         - flags: 35
           command: "effect give %player% minecraft:slowness 9999 250 true"
         - flags: 50
-          command: "kick %player% &cBuckSMPAC &8» &fCheating detected (%top_check%)"
-        - flags: 80
           command: "ban %player% BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"
