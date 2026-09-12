@@ -70,3 +70,6 @@ bans:
           command: "effect give %player% minecraft:slowness 9999 250 true"
         - flags: 50
           command: "ban %player% BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"
+
+# Bump marker — see the note in punishments.yml.
+bans-version: 2

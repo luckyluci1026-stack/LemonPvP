@@ -186,3 +186,8 @@ Punishments:
       # --- BuckSMPAC Strafen-Leiter (erst nach dem Einstellen aktivieren) ---
       #- "60:0 kick %player% &cBuckSMPAC &8» &fAutoClicker (%check_name%)"     # KICK
       #- "120:0 ban %player% BuckSMPAC > AutoClicker (%check_name%)"           # BAN
+
+# Bump marker — BuckSMPAC compares this against the version it ships and
+# warns in the console when yours is older. This file is never overwritten
+# automatically, so the warning is the only way you would find out.
+punishments-version: 2

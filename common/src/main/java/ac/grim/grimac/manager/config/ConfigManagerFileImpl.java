@@ -115,6 +115,11 @@ public class ConfigManagerFileImpl implements ConfigManager, BasicReloadable {
         // evidence across stacked migration steps.
         runConfigUpdates();
 
+        // punishments.yml and bans.yml are operator-owned and deliberately
+        // never overwritten, so a stale copy would otherwise sit there
+        // silently ignoring everything a new build changed.
+        OperatorConfigVersionCheck.run(config.getLanguage().getCode().toLowerCase());
+
         try {
             config.loadAll();
         } catch (Exception e) {
