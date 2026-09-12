@@ -717,7 +717,6 @@ public class GrimPlayer implements GrimUser {
         return compensatedWorld;
     }
 
-    @Override
     /**
      * True for Geyser/Floodgate players. Their movement does not follow Java
      * physics, so the checks that model that physics are skipped for them.
@@ -741,6 +740,7 @@ public class GrimPlayer implements GrimUser {
                 || uuid.toString().startsWith("00000000-0000-0000-0009");
     }
 
+    @Override
     public int getTransactionPing() {
         return GrimMath.floor(transactionPing / 1e6);
     }
