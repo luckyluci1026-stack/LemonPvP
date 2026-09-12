@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.lemonpvp</groupId>
+    <artifactId>bettersmp-suite</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>BetterSMP Suite</name>
+    <description>SMP-Plugin-Suite fuer LemonPvP: BetterSMP, BetterRTP, Lifesteal+, EasyBedrock, FastShop</description>
+
+    <modules>
+        <module>compile-stubs</module>
+        <module>bettersmp</module>
+        <module>betterrtp</module>
+        <module>lifesteal-plus</module>
+        <module>easybedrock</module>
+        <module>fastshop</module>
+        <module>smpcontent</module>
+        <module>smplobby</module>
+        <module>lobbylock</module>
+        <module>reportplus</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
+        <luckperms.version>5.4</luckperms.version>
+    </properties>
+
+    <!--
+        Die Paper-API und ihre Abhaengigkeiten (brigadier, bungeecord-chat)
+        liegen NICHT auf Maven Central, sondern im PaperMC-Repository.
+        Ohne diesen Block schlaegt der Build mit
+        "com.mojang:brigadier ... was not found in repo.maven.apache.org" fehl.
+    -->
+    <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+    </repositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.papermc.paper</groupId>
+                <artifactId>paper-api</artifactId>
+                <version>${paper.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.luckperms</groupId>
+                <artifactId>api</artifactId>
+                <version>${luckperms.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>de.lemonpvp</groupId>
+                <artifactId>compile-stubs</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>de.lemonpvp</groupId>
+                <artifactId>bettersmp</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>21</release>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>plugin.yml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>plugin.yml</exclude>
+                </excludes>
+            </resource>
+        </resources>
+    </build>
+</project>

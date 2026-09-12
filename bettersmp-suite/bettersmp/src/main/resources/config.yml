@@ -1,0 +1,226 @@
+# ==========================================================
+#  BetterSMP - Konfiguration
+#  Chat, NoChatReports, AntiCombatLog, Ban/Mute, Stats,
+#  Ränge, Nametags und Scoreboard - alles in einem Plugin.
+#
+#  Farben: MiniMessage (<gray>, <#00D4FF>, <gradient:...>)
+#  UND Legacy-Codes (&7, &#FFD75A) werden überall verstanden.
+# ==========================================================
+
+# Dein Server-Name. Wird überall als %brand% eingesetzt
+# (MOTD, Scoreboard-Titel, Willkommen ...). Einmal hier ändern - fertig.
+brand: "BuckSMP"
+
+# ----------------------------------------------------------
+# Datenbank
+# Wird MariaDB aktiviert, landen Stats/Bans/Mutes dort - sonst
+# automatisch in einer lokalen SQLite-Datei (plugins/BetterSMP/data.db).
+# ----------------------------------------------------------
+database:
+  # auto = MariaDB wenn unten aktiviert, sonst SQLite
+  type: auto
+  mariadb:
+    enabled: false
+    host: "127.0.0.1"
+    port: 3306
+    database: "bettersmp"
+    user: "root"
+    password: ""
+    # Zusätzliche JDBC-Parameter
+    properties: "useUnicode=true&characterEncoding=utf8"
+
+# ----------------------------------------------------------
+# Chat im MiniMessage-Stil
+# Platzhalter: %prefix% %suffix% %player% %displayname% %message%
+# + alle PlaceholderAPI-Platzhalter (falls installiert)
+# ----------------------------------------------------------
+chat:
+  enabled: true
+  # Chat als System-Nachricht senden -> nicht über Chat-Reports meldbar
+  no-chat-reports: true
+  formats:
+    default: "%prefix%<hover:show_text:'<#00D4FF>Nachricht an %player% senden'><click:suggest_command:'/msg %player% '><white>%player%</white></click></hover> <dark_gray>»</dark_gray> <message>"
+  mentions:
+    enabled: true
+    color: "<#00D4FF>"
+    sound: "minecraft:block.note_block.pling"
+  clickable-links: true
+
+# NoChatReports: enforce-secure-profile=false setzen (aktiv nach Neustart)
+patch-server-properties: true
+
+# ----------------------------------------------------------
+# AntiCombatLog
+# ----------------------------------------------------------
+combat:
+  enabled: true
+  tag-seconds: 15
+  punishment: KILL
+  untag-opponent-on-log: true
+  blocked-commands: [tpa, tpahere, tpaccept, home, homes, spawn, warp, warps, back, rtp, wild, enderchest, ec, vanish, fly]
+  block-elytra: true
+  actionbar: true
+
+# ----------------------------------------------------------
+# Join/Quit-Nachrichten + Willkommen
+# ----------------------------------------------------------
+join-quit:
+  enabled: true
+  join: "<dark_gray>[<green>+</green>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist dem Server beigetreten.</gray>"
+  quit: "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>hat den Server verlassen.</gray>"
+  first-join: "<dark_gray>[<#00D4FF>★</#00D4FF>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist zum <white>ersten Mal</white> hier! Willkommen!</gray>"
+  first-join-title:
+    enabled: true
+    title: "<gradient:#6C5CE7:#00D4FF>Willkommen!</gradient>"
+    subtitle: "<gray>Viel Spaß auf %brand%</gray>"
+  motd:
+    enabled: true
+    delay-ticks: 15
+    lines:
+      - ""
+      - "  <gradient:#6C5CE7:#00D4FF><bold>%brand%</bold></gradient>"
+      - "  <gray>Willkommen zurück, <white>%player%</white>!</gray>"
+      - "  <gray>Shop: <#00D4FF>/shop</#00D4FF>  Stats: <#00D4FF>/stats</#00D4FF></gray>"
+      - ""
+
+# ----------------------------------------------------------
+# Einfrieren (/freeze)
+#
+# Bewegungsbefehle, die waehrend des Einfrierens gesperrt sind - dieselbe
+# Idee wie combat.blocked-commands oben, nur eine eigene, kuerzere Liste.
+# ----------------------------------------------------------
+freeze:
+  blocked-commands: [tpa, tpahere, tpaccept, home, homes, warp, warps, back, rtp, wild, spawn]
+  # Erinnerung per Actionbar, 1x pro Sekunde, solange jemand eingefroren ist -
+  # sonst ist "warum passiert nichts" die einzige Rueckmeldung beim Versuch,
+  # sich zu bewegen oder zu bauen.
+  actionbar: true
+
+# ----------------------------------------------------------
+# Meldungen (/report)
+# ----------------------------------------------------------
+report:
+  # So lange muss dieselbe Person zwischen zwei Meldungen warten.
+  cooldown-seconds: 60
+
+# ----------------------------------------------------------
+# Tägliche Kleinigkeit (/daily)
+#
+# money-per-streak-day zählt die Serie mit, money-streak-cap deckelt sie
+# nach oben - sonst waechst die Belohnung nach einem Jahr Serie absurd.
+# Ohne Vault/Economy wird der Geld-Teil einfach uebersprungen.
+# ----------------------------------------------------------
+daily-reward:
+  items:
+    - material: BREAD
+      amount: 8
+    - material: EXPERIENCE_BOTTLE
+      amount: 3
+  money-base: 50
+  money-per-streak-day: 5
+  money-streak-cap: 30
+  # Dezenter Hinweis beim Join, wenn heute noch nicht abgeholt wurde.
+  join-reminder: true
+
+# ----------------------------------------------------------
+# Serien-Ansagen im PvP (reine Stimmung, keine Belohnung)
+# ----------------------------------------------------------
+killstreak:
+  enabled: true
+  milestones: [3, 5, 10, 15, 20, 30, 50]
+  # Ab dieser Serienlaenge wird auch ihr Ende angesagt ("X hat Ys Serie beendet").
+  end-announce-threshold: 5
+
+# ----------------------------------------------------------
+# Nach dem Tod in die Lobby
+#
+# AUS heißt: kein Serverwechsel beim Respawn. Ist unten unter "spawn"
+# ein eigener Serverspawn gesetzt (/setspawn), landet man dort - ohne
+# einen gesetzten Spawn bleibt es beim gewohnten Bett/Weltspawn.
+#
+# AN heißt: Nach dem Respawnen geht es kurz darauf automatisch auf den
+# unten eingetragenen Lobby-Server. Braucht einen Proxy (SMPProxy) mit
+# genau diesem Servernamen und den Kanal "BungeeCord" (steht bei
+# Velocity standardmaessig an). Wer testen will, ohne selbst zu sterben:
+# bettersmp.deathredirect.bypass ueberspringt das.
+# ----------------------------------------------------------
+death-redirect:
+  enabled: false
+  server: "lobby"
+  # Wartezeit nach dem Respawn, bevor es losgeht (in Ticks, 20 = 1 Sekunde).
+  # Nicht 0: Der Server braucht selbst einen Moment, um den Spieler nach
+  # dem Tod fertig einzurichten (Inventar, Erfahrungspunkte, Welt).
+  delay-ticks: 40
+
+# ----------------------------------------------------------
+# Nametags (über dem Kopf + Tab)
+# Liest den LuckPerms-Prefix (auch Gradienten!) und zeigt ihn an;
+# der Spielername bleibt weiß. Funktioniert automatisch für JEDE
+# neue LuckPerms-Gruppe - kein Eintrag pro Rang nötig.
+# Auch für Bedrock/Geyser-Spieler sauber sichtbar.
+# ----------------------------------------------------------
+nametags:
+  enabled: true
+  # Aktualisierungsintervall in Ticks (20 = 1s)
+  update-interval: 40
+  # Kollision zwischen Spielern (Anschieben) erlauben?
+  collision: true
+
+# ----------------------------------------------------------
+# Scoreboard (Sidebar) - Details in scoreboard.yml
+# ----------------------------------------------------------
+scoreboard:
+  enabled: true
+  update-interval: 20
+
+# ----------------------------------------------------------
+# Ban/Mute-System - Gründe & Screens in bans.yml / mutes.yml
+# ----------------------------------------------------------
+punishments:
+  enabled: true
+  # Broadcast bei Ban/Mute
+  broadcast: true
+
+# ----------------------------------------------------------
+# Statistiken
+# ----------------------------------------------------------
+stats:
+  enabled: true
+  # Spielzeit alle X Sekunden in die DB schreiben
+  flush-interval-seconds: 60
+
+# ----------------------------------------------------------
+# Auto-Installer
+# ----------------------------------------------------------
+installer:
+  enabled: true
+  auto-install-on-start: true
+  deploy-configs: true
+  auto-restart: false
+  timeout-seconds: 30
+  plugins:
+    EssentialsX:
+      enabled: true
+      source: github
+      repo: EssentialsX/Essentials
+      assets: ["EssentialsX-{version}.jar", "EssentialsXSpawn-{version}.jar"]
+    LuckPerms:
+      enabled: true
+      source: luckperms
+    Vault:
+      enabled: true
+      source: github
+      repo: MilkBowl/Vault
+      assets: ["Vault.jar"]
+    PlaceholderAPI:
+      enabled: true
+      source: github
+      repo: PlaceholderAPI/PlaceholderAPI
+      assets: ["PlaceholderAPI-{version}.jar"]
+    # TAB wird weiterhin installiert (Tablist-Header/Footer), seine
+    # Nametags werden aber deaktiviert - BetterSMP macht die Nametags.
+    TAB:
+      enabled: true
+      source: github
+      repo: NEZNAMY/TAB
+      assets: ["TAB.v{version}.jar"]

@@ -1,0 +1,462 @@
+{
+  "format_version": "2",
+  "items": {
+    "minecraft:carrot": [
+      {
+        "name": "ananas",
+        "custom_model_data": 8149,
+        "icon": "ananas",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "banane",
+        "custom_model_data": 8151,
+        "icon": "banane",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:golden_horse_armor": [
+      {
+        "name": "blood_potion",
+        "custom_model_data": 8138,
+        "icon": "blood_potion",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "flasche_blau",
+        "custom_model_data": 8160,
+        "icon": "flasche_blau",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "flasche_gelb",
+        "custom_model_data": 8133,
+        "icon": "flasche_gelb",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "flasche_gruen",
+        "custom_model_data": 8161,
+        "icon": "flasche_gruen",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "flasche_rot",
+        "custom_model_data": 8162,
+        "icon": "flasche_rot",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "heart",
+        "custom_model_data": 8123,
+        "icon": "heart",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "mana_potion",
+        "custom_model_data": 8131,
+        "icon": "mana_potion",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "shield_rune",
+        "custom_model_data": 8137,
+        "icon": "shield_rune",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "smoke_bomb",
+        "custom_model_data": 8136,
+        "icon": "smoke_bomb",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "teleport_scroll",
+        "custom_model_data": 8130,
+        "icon": "teleport_scroll",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "teleport_scroll_v2",
+        "custom_model_data": 8139,
+        "icon": "teleport_scroll_v2",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "ultimative_potion",
+        "custom_model_data": 8132,
+        "icon": "ultimative_potion",
+        "allow_offhand": true,
+        "display_handheld": true
+      }
+    ],
+    "minecraft:potion": [
+      {
+        "name": "cocktail",
+        "custom_model_data": 8155,
+        "icon": "cocktail",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "kirschsaft",
+        "custom_model_data": 8147,
+        "icon": "kirschsaft",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:gold_nugget": [
+      {
+        "name": "coin",
+        "custom_model_data": 8122,
+        "icon": "coin",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:golden_sword": [
+      {
+        "name": "frost_blade",
+        "custom_model_data": 8142,
+        "icon": "frost_blade",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "laserschwert_orange",
+        "custom_model_data": 8117,
+        "icon": "laserschwert_orange",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "venom_blade",
+        "custom_model_data": 8135,
+        "icon": "venom_blade",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:stick": [
+      {
+        "name": "haltbarer_stick",
+        "custom_model_data": 8134,
+        "icon": "haltbarer_stick",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "kirschzweig",
+        "custom_model_data": 8146,
+        "icon": "kirschzweig",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "treibholz",
+        "custom_model_data": 8159,
+        "icon": "treibholz",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:mace": [
+      {
+        "name": "hammer",
+        "custom_model_data": 8120,
+        "icon": "hammer",
+        "allow_offhand": true,
+        "display_handheld": true
+      }
+    ],
+    "minecraft:totem_of_undying": [
+      {
+        "name": "handy",
+        "custom_model_data": 8121,
+        "icon": "handy",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "revive_totem",
+        "custom_model_data": 8124,
+        "icon": "revive_totem",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:tripwire_hook": [
+      {
+        "name": "key",
+        "custom_model_data": 8108,
+        "icon": "key",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:pink_dye": [
+      {
+        "name": "kirschbluete",
+        "custom_model_data": 8145,
+        "icon": "kirschbluete",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:sweet_berries": [
+      {
+        "name": "kirsche",
+        "custom_model_data": 8144,
+        "icon": "kirsche",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:brown_dye": [
+      {
+        "name": "kokosnuss",
+        "custom_model_data": 8148,
+        "icon": "kokosnuss",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:stone_sword": [
+      {
+        "name": "laserschwert_blau",
+        "custom_model_data": 8114,
+        "icon": "laserschwert_blau",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "laserschwert_lila",
+        "custom_model_data": 8116,
+        "icon": "laserschwert_lila",
+        "allow_offhand": true,
+        "display_handheld": true
+      }
+    ],
+    "minecraft:iron_sword": [
+      {
+        "name": "laserschwert_grau",
+        "custom_model_data": 8119,
+        "icon": "laserschwert_grau",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "laserschwert_gruen",
+        "custom_model_data": 8115,
+        "icon": "laserschwert_gruen",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "laserschwert_rot",
+        "custom_model_data": 8112,
+        "icon": "laserschwert_rot",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "laserschwert_tuerkis",
+        "custom_model_data": 8111,
+        "icon": "laserschwert_tuerkis",
+        "allow_offhand": true,
+        "display_handheld": true
+      },
+      {
+        "name": "ruby_sword",
+        "custom_model_data": 8109,
+        "icon": "ruby_sword",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "sapphire_sword",
+        "custom_model_data": 8141,
+        "icon": "sapphire_sword",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:netherite_sword": [
+      {
+        "name": "laserschwert_schwarz",
+        "custom_model_data": 8113,
+        "icon": "laserschwert_schwarz",
+        "allow_offhand": true,
+        "display_handheld": true
+      }
+    ],
+    "minecraft:wooden_sword": [
+      {
+        "name": "laserschwert_weiss",
+        "custom_model_data": 8118,
+        "icon": "laserschwert_weiss",
+        "allow_offhand": true,
+        "display_handheld": true
+      }
+    ],
+    "minecraft:glowstone_dust": [
+      {
+        "name": "magic_dust",
+        "custom_model_data": 8106,
+        "icon": "magic_dust",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:apple": [
+      {
+        "name": "mango",
+        "custom_model_data": 8150,
+        "icon": "mango",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:nautilus_shell": [
+      {
+        "name": "muschel",
+        "custom_model_data": 8152,
+        "icon": "muschel",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:kelp": [
+      {
+        "name": "palmblatt",
+        "custom_model_data": 8154,
+        "icon": "palmblatt",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:ender_pearl": [
+      {
+        "name": "perle",
+        "custom_model_data": 8158,
+        "icon": "perle",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:amethyst_shard": [
+      {
+        "name": "ruby",
+        "custom_model_data": 8104,
+        "icon": "ruby",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "sapphire",
+        "custom_model_data": 8105,
+        "icon": "sapphire",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:iron_axe": [
+      {
+        "name": "ruby_axe",
+        "custom_model_data": 8125,
+        "icon": "ruby_axe",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "sapphire_axe",
+        "custom_model_data": 8127,
+        "icon": "sapphire_axe",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:iron_pickaxe": [
+      {
+        "name": "ruby_pickaxe",
+        "custom_model_data": 8110,
+        "icon": "ruby_pickaxe",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:iron_shovel": [
+      {
+        "name": "ruby_shovel",
+        "custom_model_data": 8126,
+        "icon": "ruby_shovel",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "sapphire_shovel",
+        "custom_model_data": 8128,
+        "icon": "sapphire_shovel",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:orange_dye": [
+      {
+        "name": "seestern",
+        "custom_model_data": 8153,
+        "icon": "seestern",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:leather_helmet": [
+      {
+        "name": "sonnenbrille",
+        "custom_model_data": 8157,
+        "icon": "sonnenbrille",
+        "allow_offhand": true,
+        "display_handheld": false
+      },
+      {
+        "name": "strohhut",
+        "custom_model_data": 8156,
+        "icon": "strohhut",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:echo_shard": [
+      {
+        "name": "soul_shard",
+        "custom_model_data": 8129,
+        "icon": "soul_shard",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ],
+    "minecraft:paper": [
+      {
+        "name": "voucher",
+        "custom_model_data": 8107,
+        "icon": "voucher",
+        "allow_offhand": true,
+        "display_handheld": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+name: FastShop
+version: ${project.version}
+main: de.lemonpvp.fastshop.FastShop
+api-version: '1.21'
+authors: [SMP]
+description: Einfaches, customizables Shop-/Verkaufssystem (/shop, /sell) auf Basis der EssentialsX-/Vault-Economy.
+softdepend: [Vault, Essentials, PlaceholderAPI]
+
+commands:
+  shop:
+    description: Öffnet den Shop
+    usage: "/shop [Kategorie]"
+    aliases: [markt, store]
+    permission: fastshop.use
+  sell:
+    description: Verkauft Items
+    usage: "/sell <hand|all|gui>"
+    aliases: [verkaufen]
+    permission: fastshop.sell
+  worth:
+    description: Zeigt den Verkaufswert des Items in der Hand
+    usage: "/worth"
+    aliases: [wert]
+    permission: fastshop.worth
+  fastshop:
+    description: FastShop-Verwaltung
+    usage: "/fastshop <reload|additem>"
+    aliases: [fs]
+    permission: fastshop.admin
+
+permissions:
+  fastshop.use:
+    default: true
+  fastshop.sell:
+    default: true
+  fastshop.worth:
+    default: true
+  fastshop.admin:
+    default: op

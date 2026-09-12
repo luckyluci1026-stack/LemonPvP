@@ -1,0 +1,2558 @@
+# ==========================================================
+#  SMPContent - eigene Blöcke und Items
+#
+#  WICHTIG: Die Werte unter "state" müssen exakt zu den
+#  Blockstates im Texturepack passen (texturepack/dist/blocks-states.yml).
+#  Änderst du hier etwas, musst du es auch im Generator ändern.
+#
+#  In Rezepten sind erlaubt:
+#    - Vanilla-Materialien:  STONE, DIAMOND, ...
+#    - eigene Items/Blöcke:  "smp:ruby", "smp:ruby_block", ...
+#
+#  Blöcke können beim Abbauen etwas anderes fallen lassen als sich
+#  selbst - praktisch für Erze:
+#    drops:
+#      - item: "smp:ruby"     Material oder "smp:id"
+#        amount: 1-2          feste Zahl oder Bereich
+#        chance: 1.0          0.0 bis 1.0
+#        fortune: true        Glücksbringer erhöht die Menge
+#    experience: 3            Erfahrung beim Abbauen
+#  Behutsamkeit gibt immer den Block selbst.
+# ==========================================================
+
+texturepack:
+  # Muss zum Namensraum im Texturepack passen
+  namespace: smp
+  # Name der erzeugten Zip in output/
+  pack-name: SMPPack
+  # Beschreibung im Resourcepack-Menü
+  description: "Eigene Blöcke und Items"
+  # 75 = 1.21.11 (das benutzt auch dein Pack)
+  pack-format: 75
+  # Ab welcher/bis zu welcher Packversion es gilt (Standard: wie pack-format)
+  min-format: 75
+  max-format: 75
+
+# Rezepte insgesamt an-/abschalten
+recipes-enabled: true
+
+# ----------------------------------------------------------
+#  Eigene Blöcke
+#  Technik: Note-Block-Zustände. Das Plugin hält den Zustand
+#  stabil (kein Umstimmen per Rechtsklick, kein Instrument-
+#  wechsel durch den Block darunter, kein Notenklang).
+# ----------------------------------------------------------
+blocks:
+  ruby_ore:
+    name: "<red>Rubinerz</red>"
+    lore: ["<dark_gray>Eigener Block", "<gray>Gibt 1-2 Rubine"]
+    state: "minecraft:note_block[instrument=bit,note=1,powered=false]"
+    # Was beim Abbauen faellt. Ohne diesen Abschnitt faellt der Block selbst.
+    # Behutsamkeit gibt immer den Block, Gluecksbringer erhoeht die Menge.
+    drops:
+      - item: "smp:ruby"
+        amount: 1-2
+    experience: 3
+    recipe:
+      shape: ["SSS", "SRS", "SSS"]
+      keys: {S: STONE, R: "smp:ruby"}
+      amount: 1
+
+  sapphire_ore:
+    name: "<aqua>Saphirerz</aqua>"
+    lore: ["<dark_gray>Eigener Block", "<gray>Gibt 1-2 Saphire"]
+    state: "minecraft:note_block[instrument=bit,note=2,powered=false]"
+    drops:
+      - item: "smp:sapphire"
+        amount: 1-2
+    experience: 3
+    recipe:
+      shape: ["SSS", "SRS", "SSS"]
+      keys: {S: STONE, R: "smp:sapphire"}
+      amount: 1
+
+  ruby_block:
+    name: "<red><bold>Rubinblock</bold></red>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=3,powered=false]"
+    recipe:
+      shape: ["RRR", "RRR", "RRR"]
+      keys: {R: "smp:ruby"}
+      amount: 1
+
+  sapphire_block:
+    name: "<aqua><bold>Saphirblock</bold></aqua>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=4,powered=false]"
+    recipe:
+      shape: ["RRR", "RRR", "RRR"]
+      keys: {R: "smp:sapphire"}
+      amount: 1
+
+  marble:
+    name: "<white>Marmor</white>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=5,powered=false]"
+    recipe:
+      shape: ["SSS", "SQS", "SSS"]
+      keys: {S: SMOOTH_STONE, Q: QUARTZ}
+      amount: 8
+
+  dark_marble:
+    name: "<dark_gray>Dunkler Marmor</dark_gray>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=6,powered=false]"
+    recipe:
+      shape: ["BBB", "BQB", "BBB"]
+      keys: {B: BLACKSTONE, Q: QUARTZ}
+      amount: 8
+
+  neon_lamp:
+    name: "<aqua><bold>Neonlampe</bold></aqua>"
+    lore: ["<dark_gray>Eigener Block", "<gray>Leuchtet dekorativ"]
+    state: "minecraft:note_block[instrument=bit,note=7,powered=false]"
+    recipe:
+      shape: [" G ", "GSG", " G "]
+      keys: {G: GLOWSTONE_DUST, S: SEA_LANTERN}
+      amount: 1
+
+  coin_pile:
+    name: "<gold><bold>Münzhaufen</bold></gold>"
+    lore: ["<dark_gray>Eigener Block"]
+    state: "minecraft:note_block[instrument=bit,note=8,powered=false]"
+    recipe:
+      shape: ["GGG", "GGG", "GGG"]
+      keys: {G: GOLD_INGOT}
+
+      amount: 1
+     
+  cherry_chair:
+    name: "<light_purple>Kirschholz-Stuhl</light_purple>"
+    state: "minecraft:note_block[instrument=bit,note=15,powered=false]"
+    recipe:
+      shape: ["P  ", "PPP", "S S"]
+      keys: {P: CHERRY_PLANKS, S: STICK}
+      amount: 1
+
+  cherry_table:
+    name: "<light_purple>Kirschholz-Tisch</light_purple>"
+    state: "minecraft:note_block[instrument=bit,note=16,powered=false]"
+    recipe:
+      shape: ["PPP", "S S", "S S"]
+      keys: {P: CHERRY_PLANKS, S: STICK}
+      amount: 1
+
+  cherry_stool:
+    name: "<light_purple>Kirschholz-Hocker</light_purple>"
+    state: "minecraft:note_block[instrument=bit,note=17,powered=false]"
+    recipe:
+      shape: ["PPP", "S S", "   "]
+      keys: {P: CHERRY_PLANKS, S: STICK}
+      amount: 1
+
+  cherry_shelf:
+    name: "<light_purple>Kirschholz-Regal</light_purple>"
+    state: "minecraft:note_block[instrument=bit,note=18,powered=false]"
+    recipe:
+      shape: ["PPP", "S S", "   "]
+      keys: {P: CHERRY_SLAB, S: STICK}
+      amount: 2
+
+  cherry_workbench:
+    name: "<light_purple>Kirschholz-Werkbank</light_purple>"
+    lore: ["<dark_gray>Zwei Blöcke breit"]
+    state: "minecraft:note_block[instrument=bit,note=19,powered=false]"
+    recipe:
+      shape: ["PPP", "PSP", "S S"]
+      keys: {P: CHERRY_PLANKS, S: STICK}
+      amount: 1
+
+  tropic_chair:
+    name: "<yellow>Bambus-Stuhl</yellow>"
+    state: "minecraft:note_block[instrument=bit,note=20,powered=false]"
+    recipe:
+      shape: ["P  ", "PPP", "S S"]
+      keys: {P: BAMBOO_PLANKS, S: BAMBOO}
+      amount: 1
+
+  tropic_table:
+    name: "<yellow>Bambus-Tisch</yellow>"
+    state: "minecraft:note_block[instrument=bit,note=21,powered=false]"
+    recipe:
+      shape: ["PPP", "S S", "S S"]
+      keys: {P: BAMBOO_PLANKS, S: BAMBOO}
+      amount: 1
+
+  tropic_stool:
+    name: "<yellow>Bambus-Hocker</yellow>"
+    state: "minecraft:note_block[instrument=bit,note=22,powered=false]"
+    recipe:
+      shape: ["PPP", "S S", "   "]
+      keys: {P: BAMBOO_PLANKS, S: BAMBOO}
+      amount: 1
+
+  tropic_shelf:
+    name: "<yellow>Bambus-Regal</yellow>"
+    state: "minecraft:note_block[instrument=bit,note=23,powered=false]"
+    recipe:
+      shape: ["PPP", "S S", "   "]
+      keys: {P: BAMBOO_SLAB, S: BAMBOO}
+      amount: 2
+
+  tropic_workbench:
+    name: "<yellow>Bambus-Werkbank</yellow>"
+    lore: ["<dark_gray>Zwei Blöcke breit"]
+    state: "minecraft:note_block[instrument=bit,note=24,powered=false]"
+    recipe:
+      shape: ["PPP", "PSP", "S S"]
+      keys: {P: BAMBOO_PLANKS, S: BAMBOO}
+      amount: 1
+    
+# ==========================================================
+#  MÖBEL als eigene Blöcke  -  unter "blocks:" einfügen
+#  (NICHT unter "items:", das ist ein eigener Abschnitt!)
+#
+#  Note-Block-Zustände 9-14, deine 1-8 bleiben unberührt.
+# ==========================================================
+
+  chair:
+    name: "<gray>Alter Stuhl</gray>"
+    lore: ["<dark_gray>Knarrt beim Hinsetzen"]
+    state: "minecraft:note_block[instrument=bit,note=9,powered=false]"
+    recipe:
+      shape: ["P  ", "PPP", "S S"]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  table:
+    name: "<gray>Alter Tisch</gray>"
+    lore: ["<dark_gray>Wackelt ein wenig"]
+    state: "minecraft:note_block[instrument=bit,note=10,powered=false]"
+    recipe:
+      shape: ["PPP", "S S", "S S"]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  stool:
+    name: "<gray>Alter Hocker</gray>"
+    lore: ["<dark_gray>Für kurze Pausen"]
+    state: "minecraft:note_block[instrument=bit,note=11,powered=false]"
+    recipe:
+      shape: ["PPP", "S S", "   "]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  shelf:
+    name: "<gray>Altes Wandregal</gray>"
+    lore: ["<dark_gray>Hängt an der Wand"]
+    state: "minecraft:note_block[instrument=bit,note=12,powered=false]"
+    recipe:
+      shape: ["PPP", "S S", "   "]
+      keys: {P: OAK_SLAB, S: STICK}
+      amount: 2
+
+  workbench:
+    name: "<gray>Alte Werkbank</gray>"
+    lore:
+      - "<dark_gray>Zwei Blöcke breit"
+      - "<gray>Nur Deko"
+    state: "minecraft:note_block[instrument=bit,note=13,powered=false]"
+    recipe:
+      shape: ["PPP", "PSP", "S S"]
+      keys: {P: OAK_PLANKS, S: STICK}
+      amount: 1
+
+  easel:
+    name: "<gray>Alte Staffelei</gray>"
+    lore:
+      - "<dark_gray>Für den Künstler"
+      - "<gray>Über zwei Blöcke hoch"
+    state: "minecraft:note_block[instrument=bit,note=14,powered=false]"
+    recipe:
+      shape: [" W ", "SWS", "S S"]
+      keys: {W: WHITE_WOOL, S: STICK}
+      amount: 1
+
+
+# ==========================================================
+#  TRANKFLASCHEN als Items  -  unter "items:" einfügen
+#  Eigenes Modell aus potion-bottle.bbmodel, vier Farben.
+# ==========================================================
+#
+#  flasche_rot:
+#    material: POTION
+#    name: "<red>Rote Flasche</red>"
+#    model-data: 8140
+#
+#  flasche_blau:
+#    material: POTION
+#    name: "<blue>Blaue Flasche</blue>"
+#    model-data: 8141
+#
+#  flasche_gruen:
+#    material: POTION
+#    name: "<green>Grüne Flasche</green>"
+#    model-data: 8142
+#
+#  flasche_gelb:
+#    material: POTION
+#    name: "<yellow>Gelbe Flasche</yellow>"
+#    model-data: 8143
+
+
+# ==========================================================
+#  HINWEIS zu den Möbeln
+#
+#  Die Beine der Originalmodelle stehen leicht schräg (5°,
+#  auf zwei Achsen gleichzeitig). Minecraft erlaubt in
+#  Blockmodellen nur EINE Drehachse pro Element und nur die
+#  Winkel -45 / -22.5 / 0 / 22.5 / 45. Die 5°-Neigung ist
+#  damit nicht darstellbar - die Beine stehen jetzt gerade.
+#  Das ist die einzige sichtbare Abweichung vom Original.
+#
+#  workbench ist 32 Einheiten breit, easel gut zwei Blöcke
+#  hoch. Beide ragen über ihren Block hinaus - das geht in
+#  Minecraft, sieht aber komisch aus, wenn direkt daneben
+#  ein anderer Block steht.
+# ==========================================================
+# ----------------------------------------------------------
+#  Eigene Items
+#  material = das Basis-Item (bestimmt Verhalten & Bedrock-Aussehen)
+#  model-data = muss zum Geyser-Mapping passen
+#
+#  EINRÜCKUNG: Der Name des Items steht mit GENAU 2 Leerzeichen,
+#  seine Eigenschaften mit 4. Keine Tabs. So sieht es richtig aus:
+#
+#  items:
+#  ..mein_item:            <- 2 Leerzeichen
+#  ....material: STICK     <- 4 Leerzeichen
+#
+#  Ein Leerzeichen zu viel und die ganze Datei lässt sich nicht mehr
+#  lesen. /smpcontent reload sagt dir dann Zeile und Grund.
+# ----------------------------------------------------------
+items:
+  ruby:
+    material: AMETHYST_SHARD
+    name: "<red>Rubin</red>"
+    lore: ["<dark_gray>Seltener Edelstein"]
+    model-data: 8104
+    recipe:
+      shape: [" R ", "RDR", " R "]
+      keys: {R: REDSTONE, D: DIAMOND}
+      amount: 1
+
+  sapphire:
+    material: AMETHYST_SHARD
+    name: "<aqua>Saphir</aqua>"
+    lore: ["<dark_gray>Seltener Edelstein"]
+    model-data: 8105
+    recipe:
+      shape: [" L ", "LDL", " L "]
+      keys: {L: LAPIS_LAZULI, D: DIAMOND}
+      amount: 1
+
+  magic_dust:
+    material: GLOWSTONE_DUST
+    name: "<light_purple>Magischer Staub</light_purple>"
+    lore: ["<dark_gray>Glitzert geheimnisvoll"]
+    model-data: 8106
+    recipe:
+      shape: ["   ", "BGR", "   "]
+      keys: {B: BLAZE_POWDER, G: GLOWSTONE_DUST, R: REDSTONE}
+      amount: 3
+
+  voucher:
+    material: PAPER
+    name: "<gold>Shop-Gutschein</gold>"
+    lore: ["<gray>Ein Gutschein für den Shop"]
+    model-data: 8107
+    recipe:
+      shape: ["   ", "PGP", "   "]
+      keys: {P: PAPER, G: GOLD_INGOT}
+      amount: 1
+
+  key:
+    material: TRIPWIRE_HOOK
+    name: "<yellow>Schlüssel</yellow>"
+    lore: ["<gray>Öffnet vielleicht etwas"]
+    model-data: 8108
+    recipe:
+      shape: [" G ", " G ", " I "]
+      keys: {G: GOLD_INGOT, I: IRON_INGOT}
+      amount: 1
+
+  ruby_sword:
+    material: IRON_SWORD
+    name: "<red>Rubinschwert</red>"
+    lore:
+      - "<dark_gray>Aus reinem Rubin geschmiedet"
+      - "<gray>Schaden: <red>9</red>"
+    model-data: 8109
+    # Eigene Werte für Waffen/Werkzeuge (Vanilla-Attributnamen)
+    attributes:
+      attack_damage: 9.0
+      attack_speed: -2.2
+    durability: 1800
+    enchants:
+      sharpness: 3
+    glow: true
+    recipe:
+      shape: [" R ", " R ", " S "]
+      keys: {R: "smp:ruby", S: STICK}
+      amount: 1
+
+  ruby_pickaxe:
+    material: IRON_PICKAXE
+    name: "<red>Rubinspitzhacke</red>"
+    lore:
+      - "<dark_gray>Aus reinem Rubin geschmiedet"
+      - "<gray>Abbaut schneller als Diamant"
+    model-data: 8110
+    attributes:
+      attack_damage: 5.0
+      attack_speed: -2.8
+    durability: 2200
+    enchants:
+      efficiency: 4
+      unbreaking: 2
+    recipe:
+      shape: ["RRR", " S ", " S "]
+      keys: {R: "smp:ruby", S: STICK}
+      amount: 1
+  
+  schadensamulett:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<red>SCHADENSAMULETT</red>"
+    model-data: 8163
+    lore: 
+      - "<dark_gray>Füge deinen Gegenern Schaden zu<reset>"
+    durability: 25
+    glow: true
+    recipe: 
+      shape: ["DDD", "GGG", "GGG"]
+      keys: {D: DIAMOND, G: GOLD_INGOT}
+      amount: 1
+    abilities:
+      - trigger: hit
+        name: "SCHADEN"
+        cooldown: 60
+        actions:
+          - type: potion
+            effect: POISON
+            duration: 12
+            amplifier: 5
+            target: victim
+            
+         
+      
+  handy:
+    material: TOTEM_OF_UNDYING
+    name: "<gray>Handy</gray>"
+    lore: 
+      - "<dark_gray>Lebe Länger"
+    model-data: 8121
+    durability: 20
+    glow: true
+    recipe: 
+      shape: ["III", "DDD", "III"]
+      keys: {I: IRON_INGOT, D: DIAMOND}
+      amount: 1
+    abilities:
+      - trigger: kill
+        actions:
+          - type: animation
+            shape: ring
+            particle: DUST
+            color: "#A9A9A9"
+            size: 10.5
+            radius: 10.4
+            ticks: 20
+          - type: sound
+            sound: entity.warden.angry
+            pitch: 1.8
+            
+      
+    
+  laserschwert_tuerkis:
+    material: IRON_SWORD
+    name: "<aqua>Türkises Laserschwert</aqua>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8111
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -2.0
+    durability: 999
+    enchants:
+      sharpness: 3
+    glow: true
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#FFFB0"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+            
+      - trigger: kill
+        actions:
+         - type: animation
+           shape: ring
+           particle: DUST
+           color: "#fffb0"
+           size: 4.5
+           radius: 10.4
+           ticks: 20
+         - type: sound
+           sound: entity.warden.angry
+           pitch: 1.8
+           
+      - trigger: held
+        actions:
+         - type: animation
+           shape: laserschwert
+           particle: SOUL_FIRE_FLAME
+           size: 0.2
+           radius: 0.4
+           density: 0.6
+           ticks: 20
+           
+    recipe:
+      shape: [" S ", " S ", " H "]
+      keys: {S: "smp:sapphire", H: "smp:haltbarer_stick"}
+      amount: 1
+     
+  laserschwert_rot:
+    material: IRON_SWORD
+    name: "<red>Rotes Laserschwert</red>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8112
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -2.0
+    durability: 999
+    enchants:
+      sharpness: 3
+    glow: true
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#FF0000"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+      - trigger: kill
+        actions:
+         - type: animation
+           shape: ring
+           particle: DUST
+           color: "#ff0000"
+           size: 4.5
+           radius: 10.4
+           ticks: 20
+         - type: sound
+           sound: entity.warden.angry
+           pitch: 1.8
+           
+      - trigger: held
+        actions:
+         - type: animation
+           shape: laserschwert
+           particle: CRIMSON_SPORE
+           size: 0.2
+           radius: 0.4
+           density: 0.8
+           ticks: 20
+    recipe:
+      shape: [" R ", " R ", " H "]
+      keys: {R: "smp:ruby", H: "smp:haltbarer_stick"}
+      amount: 1
+  hammer: 
+    material: MACE
+    name: "<rainbow>Spielzeug Hammer</rainbow>"
+    lore:
+      - "<dark_gray>Zerstört die Gegner</dark_gray>"
+    model-data: 8120
+    durability: 333
+    recipe:
+      shape: ["DDD", "DBD", " B "]
+      keys: {D: DIAMOND_BLOCK, B: BREEZE_ROD}
+    abilities:
+      - trigger: kill
+        actions:
+          - type: animation
+            shape: ring
+            particle: END_ROD
+            color: "#ADD8E6"
+            radius: 8
+            ticks: 15
+          
+  healer:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<gradient:#8B4513:#ff0000>Heiler</gradient>"
+    model-data: 8164
+    lore:
+      - "<dark_gray>Heilt dich<reset>"
+    recipe: 
+      shape: [" R ", "RSR", " R "]
+      keys: {R: REDSTONE, S: SPLASH_POTION}
+    abilities:
+      - trigger: right-click
+        cooldown: 30
+        actions:
+          - type: potion
+            effect: SATURATION
+            duration: 5
+            amplifier: 255
+            
+            
+      - trigger: right-click
+        name: "Heal"
+        cooldown: 30
+        actions:
+          - type: potion
+          
+            effect: REGENERATION
+            duration: 30
+            amplifier: 2
+            
+      - trigger: right-click
+        cooldown: 30
+        actions:
+          - type: heal
+            amount: 6.0
+            
+  
+    
+  springer:
+    material: LEATHER_BOOTS
+    name: "<aqua>Sprungstiefel</aqua>"
+    model-data: 8400
+    abilities:
+      - trigger: right-click
+        name: "Sprung"
+        cooldown: 3
+        actions:
+          - type: launch
+            forward: 0.6
+            up: 1.1
+          - type: animation
+            shape: doppelhelix
+            particle: CLOUD
+            radius: 2.0
+            ticks: 8
+          - type: sound
+            sound: entity.firework_rocket.launch
+
+  laserschwert_schwarz:
+    material: NETHERITE_SWORD
+    name: "<dark_gray>Schwarzes Laserschwert</dark_gray>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8113
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -1.2
+    durability: 999
+    enchants:
+      sharpness: 3
+    glow: true
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#000000"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+      - trigger: kill
+        actions:
+         - type: animation
+           shape: ring
+           particle: DUST
+           color: "#000000"
+           size: 4.5
+           radius: 10.4
+           ticks: 20
+         - type: sound
+           sound: entity.warden.angry
+           pitch: 1.8
+           
+      - trigger: held
+        actions:
+         - type: animation
+           shape: laserschwert
+           particle: ASH
+           size: 0.2
+           radius: 0.4
+           density: 0.9
+           ticks: 20
+    recipe:
+      shape: [" N ", " N ", " H "]
+      keys: {N: NETHERITE_INGOT, H: "smp:haltbarer_stick"}
+      amount: 1
+      
+  laserschwert_blau:
+    material: STONE_SWORD
+    name: "<blue>Blaues Laserschwert</blue>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8114
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -2.0
+    durability: 999
+    enchants:
+      sharpness: 3
+    glow: true
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#0000ff"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+            
+      - trigger: kill
+        actions:
+         - type: animation
+           shape: ring
+           particle: DUST
+           color: "#0000ff"
+           size: 4.5
+           radius: 10.4
+           ticks: 20
+         - type: sound
+           sound: entity.warden.angry
+           pitch: 1.8
+           
+      - trigger: held
+        actions:
+         - type: animation
+           shape: laserschwert
+           particle: SPLASH
+           size: 0.3
+           radius: 0.5
+           density: 0.8
+           ticks: 20
+    recipe:
+      shape: [" L ", " L ", " H "]
+      keys: {L: LAPIS_LAZULI, H: "smp:haltbarer_stick"}
+      amount: 1
+      
+  laserschwert_gruen:
+    material: IRON_SWORD
+    name: "<green>Grünes Laserschwert</green>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8115
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -2.0
+    durability: 999
+    enchants:
+      sharpness: 3
+    glow: true
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#00ff00"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+      - trigger: kill
+        actions:
+         - type: animation
+           shape: ring
+           particle: DUST
+           color: "#00ff00"
+           size: 4.5
+           radius: 10.4
+           ticks: 20
+         - type: sound
+           sound: entity.warden.angry
+           pitch: 1.8
+           
+      - trigger: held
+        actions:
+         - type: animation
+           shape: laserschwert
+           particle: COMPOSTER
+           size: 0.2
+           radius: 0.4
+           density: 0.6
+           ticks: 20
+    recipe:
+      shape: [" E ", " E ", " H "]
+      keys: {E: EMERALD, H: "smp:haltbarer_stick"}
+      amount: 1
+      
+  laserschwert_lila:
+    material: STONE_SWORD
+    name: "<light_purple>Lila Laserschwert</light_purple>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8116
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -2.0
+    durability: 333
+    enchants:
+      sharpness: 4
+    glow: true
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#800080"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+      - trigger: kill
+        actions:
+         - type: animation
+           shape: ring
+           particle: DUST
+           color: "#800080"
+           size: 4.5
+           radius: 10.4
+           ticks: 20
+         - type: sound
+           sound: entity.warden.angry
+           pitch: 1.8
+           
+      - trigger: held
+        actions:
+         - type: animation
+           shape: laserschwert
+           particle: WITCH
+           size: 0.2
+           radius: 0.4
+           density: 0.6
+           ticks: 20
+    recipe:
+      shape: [" A ", " A ", " H "]
+      keys: {A: AMETHYST_SHARD, H: "smp:haltbarer_stick"}
+      amount: 1
+      
+  laserschwert_orange:
+    material: GOLDEN_SWORD
+    name: "<#FFA500>Goldenes Laserschwert</#FFA500>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8117
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -2.0
+    durability: 120
+    enchants:
+      sharpness: 3
+    glow: true
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#FFA500"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+      - trigger: kill
+        actions:
+         - type: animation
+           shape: ring
+           particle: DUST
+           color: "#ffa500"
+           size: 4.5
+           radius: 10.4
+           ticks: 20
+         - type: sound
+           sound: entity.warden.angry
+           pitch: 1.8
+      - trigger: held
+        actions:
+         - type: animation
+           shape: laserschwert
+           particle: FLAME
+           size: 0.2
+           radius: 0.4
+           density: 0.6
+           ticks: 20
+    recipe:
+      shape: [" G ", " G ", " H "]
+      keys: {G: GOLD_INGOT, H: "smp:haltbarer_stick"}
+      amount: 1
+      
+  laserschwert_weiss:
+    material: WOODEN_SWORD
+    name: "<white>Weißes Laserschwert</white>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8118
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -2.0
+    durability: 3
+    glow: true
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#FFffff"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+      - trigger: kill
+        actions:
+         - type: animation
+           shape: ring
+           particle: DUST
+           color: "#ffffff"
+           size: 4.5
+           radius: 10.4
+           ticks: 20
+         - type: sound
+           sound: entity.warden.angry
+           pitch: 1.8
+           
+      - trigger: held
+        actions:
+         - type: animation
+           shape: laserschwert
+           particle: CLOUD
+           size: 0.2
+           radius: 0.4
+           density: 0.4
+           ticks: 20
+    recipe:
+      shape: [" Q ", " Q ", " H "]
+      keys: {Q: QUARTZ, H: "smp:haltbarer_stick"}
+      amount: 1
+     
+  laserschwert_grau:
+    material: IRON_SWORD
+    name: "<gray>Graues Laserschwert</gray>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8119
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -2.0
+    durability: 3
+    glow: true
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#555555"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+      - trigger: kill
+        actions:
+         - type: animation
+           shape: ring
+           particle: DUST
+           color: "#555555"
+           size: 4.5
+           radius: 10.4
+           ticks: 20
+         - type: sound
+           sound: entity.warden.angry
+           pitch: 1.8
+      - trigger: held
+        actions:
+         - type: animation
+           shape: laserschwert
+           particle: SMOKE
+           size: 0.2
+           radius: 0.4
+           density: 0.4
+           ticks: 20
+    recipe:
+      shape: [" I ", " I ", " H "]
+      keys: {I: IRON_INGOT, H: "smp:haltbarer_stick"}
+      amount: 1
+      
+# ==========================================================
+#  NEUE ITEMS - unter "items:" in die config.yml einfügen
+#  Einrückung: Item-Name 2 Leerzeichen, Eigenschaften 4.
+#  Danach:  /smpcontent reload   und   /smpcontent pack
+#
+#  model-data 8121-8132 vergeben (8104-8120 und 8400 waren belegt).
+# ==========================================================
+
+  # --------------------------------------------------------
+  #  WICHTIG: haltbarer_stick war nie definiert, wird aber von
+  #  ALLEN 8 Laserschwert-Rezepten als "smp:haltbarer_stick"
+  #  benutzt. Ohne diesen Eintrag ist kein Laserschwert baubar.
+  # --------------------------------------------------------
+
+  coin:
+    material: GOLD_NUGGET
+    name: "<gold>Münze</gold>"
+    lore: ["<dark_gray>Währung"]
+    model-data: 8122
+    recipe:
+      shape: ["   ", " G ", "   "]
+      keys: {G: GOLD_INGOT}
+      amount: 9
+
+  heart:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<red><bold>Herz</bold></red>"
+    lore:
+      - "<dark_gray>Ein Stück Leben"
+      - "<gray>Rechtsklick heilt dich"
+    model-data: 8123
+    glow: true
+    recipe:
+      shape: ["DGD", "GNG", "DGD"]
+      keys: {D: DIAMOND, G: GOLD_BLOCK, N: NETHER_STAR}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Heilung"
+        cooldown: 30
+        actions:
+          - type: heal
+            amount: 10.0
+          - type: animation
+            shape: ring
+            particle: HEART
+            radius: 1.5
+            ticks: 20
+          - type: sound
+            sound: entity.player.levelup
+            pitch: 1.6
+
+  revive_totem:
+    material: TOTEM_OF_UNDYING
+    name: "<yellow><bold>Wiederbelebungstotem</bold></yellow>"
+    lore: ["<dark_gray>Holt dich zurück"]
+    model-data: 8124
+    glow: true
+    recipe:
+      shape: ["GDG", "GTG", "GGG"]
+      keys: {G: GOLD_BLOCK, D: DIAMOND, T: TOTEM_OF_UNDYING}
+      amount: 1
+
+  # ---------- Werkzeuge ----------
+  ruby_axe:
+    material: IRON_AXE
+    name: "<red>Rubinaxt</red>"
+    lore: ["<dark_gray>Aus reinem Rubin geschmiedet"]
+    model-data: 8125
+    attributes:
+      attack_damage: 8.0
+      attack_speed: -3.0
+    durability: 2200
+    enchants:
+      efficiency: 4
+      unbreaking: 2
+    recipe:
+      shape: ["RR ", "RS ", " S "]
+      keys: {R: "smp:ruby", S: STICK}
+      amount: 1
+
+  ruby_shovel:
+    material: IRON_SHOVEL
+    name: "<red>Rubinschaufel</red>"
+    lore: ["<dark_gray>Aus reinem Rubin geschmiedet"]
+    model-data: 8126
+    attributes:
+      attack_damage: 4.5
+      attack_speed: -3.0
+    durability: 2200
+    enchants:
+      efficiency: 4
+      unbreaking: 2
+    recipe:
+      shape: [" R ", " S ", " S "]
+      keys: {R: "smp:ruby", S: STICK}
+      amount: 1
+
+  sapphire_axe:
+    material: IRON_AXE
+    name: "<aqua>Saphiraxt</aqua>"
+    lore: ["<dark_gray>Aus reinem Saphir geschmiedet"]
+    model-data: 8127
+    attributes:
+      attack_damage: 7.5
+      attack_speed: -2.9
+    durability: 2000
+    enchants:
+      efficiency: 5
+      unbreaking: 2
+    recipe:
+      shape: ["SS ", "SK ", " K "]
+      keys: {S: "smp:sapphire", K: STICK}
+      amount: 1
+
+  sapphire_shovel:
+    material: IRON_SHOVEL
+    name: "<aqua>Saphirschaufel</aqua>"
+    lore: ["<dark_gray>Aus reinem Saphir geschmiedet"]
+    model-data: 8128
+    attributes:
+      attack_damage: 4.0
+      attack_speed: -2.9
+    durability: 2000
+    enchants:
+      efficiency: 5
+      unbreaking: 2
+    recipe:
+      shape: [" S ", " K ", " K "]
+      keys: {S: "smp:sapphire", K: STICK}
+      amount: 1
+
+  # ---------- Magie ----------
+  soul_shard:
+    material: ECHO_SHARD
+    name: "<aqua><bold>Seelenscherbe</bold></aqua>"
+    lore: ["<dark_gray>Flüstert leise"]
+    model-data: 8129
+    glow: true
+    recipe:
+      shape: [" E ", "ESE", " E "]
+      keys: {E: ECHO_SHARD, S: SOUL_SAND}
+      amount: 1
+    abilities:
+      - trigger: held
+        actions:
+          - type: animation
+            shape: sternenfall
+            particle: SOUL_FIRE_FLAME
+            radius: 0.8
+            density: 0.4
+            ticks: 20
+
+  teleport_scroll:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<light_purple><bold>Sprungrolle</bold></light_purple>"
+    lore:
+      - "<dark_gray>Uralte Runen"
+      - "<gray>Rechtsklick schleudert dich nach vorn"
+    model-data: 8130
+    glow: true
+    recipe:
+      shape: ["PPP", "PEP", "PPP"]
+      keys: {P: PAPER, E: ENDER_PEARL}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Sprung"
+        cooldown: 8
+        actions:
+          - type: launch
+            forward: 2.2
+            up: 0.5
+          - type: animation
+            shape: portal
+            particle: PORTAL
+            radius: 2.0
+            ticks: 12
+          - type: sound
+            sound: entity.enderman.teleport
+            pitch: 1.2
+
+  # ---------- Tränke (3D-Modelle) ----------
+  mana_potion:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<blue><bold>Manatrank</bold></blue>"
+    lore:
+      - "<dark_gray>Azurblau und kalt"
+      - "<gray>Rechtsklick: Tempo & Sprungkraft"
+    model-data: 8131
+    glow: true
+    recipe:
+      shape: [" S ", "SLS", " B "]
+      keys: {S: "smp:sapphire", L: LAPIS_BLOCK, B: GLASS_BOTTLE}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Mana"
+        cooldown: 45
+        actions:
+          - type: potion
+            effect: speed
+            duration: 60
+            amplifier: 2
+          - type: potion
+            effect: jump_boost
+            duration: 60
+            amplifier: 2
+          - type: animation
+            shape: spiral
+            particle: DUST
+            color: "#187CD6"
+            size: 1.0
+            radius: 1.2
+            ticks: 25
+          - type: sound
+            sound: entity.generic.drink
+            pitch: 1.3
+  flasche_gelb:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<yellow><bold>Honig</bold></yellow>"
+    lore:
+      - "<dark_gray>Macht dich Stärker"
+    model-data: 8133
+    glow: true
+    recipe:
+      shape: [" S ", "SLS", " B "]
+      keys: {S: "smp:sapphire", L: LAPIS_BLOCK, B: GLASS_BOTTLE}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Kleber"
+        cooldown: 45
+        actions:
+          - type: potion
+            effect: SLOWNESS
+            duration: 60
+            amplifier: 1
+          - type: potion
+            effect: STRENGTH
+            duration: 60
+            amplifier: 2
+          - type: animation
+            shape: spiral
+            particle: DUST
+            color: "#fffb00"
+            size: 1.0
+            radius: 1.2
+            ticks: 25
+          - type: sound
+            sound: entity.generic.drink
+            pitch: 1.3
+            
+  ultimative_potion:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<light_purple><bold>ULTIMATIVE POTION</bold></light_purple>"
+    lore:
+      - "<dark_gray>Der stärkste Trank überhaupt"
+      - "<gray>Rechtsklick: Stärke, Regeneration, Tempo"
+    model-data: 8132
+    glow: true
+    recipe:
+      shape: [" R ", "RNR", " B "]
+      keys: {R: "smp:ruby", N: NETHER_STAR, B: GLASS_BOTTLE}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "ULTIMATIV"
+        cooldown: 120
+        actions:
+          - type: potion
+            effect: strength
+            duration: 45
+            amplifier: 2
+          - type: potion
+            effect: regeneration
+            duration: 30
+            amplifier: 2
+          - type: potion
+            effect: speed
+            duration: 45
+            amplifier: 2
+          - type: potion
+            effect: fire_resistance
+            duration: 60
+            amplifier: 1
+          - type: animation
+            shape: ring
+            particle: DUST
+            color: "#C026D3"
+            size: 1.4
+            radius: 3.0
+            ticks: 30
+          - type: animation
+            shape: spiral
+            particle: END_ROD
+            radius: 1.5
+            ticks: 30
+          - type: sound
+            sound: entity.generic.drink
+            pitch: 0.8
+          - type: sound
+            sound: block.beacon.activate
+            pitch: 1.4
+            shape: slash
+            particle: SNOWFLAKE
+            size: 0.9
+            radius: 1.4
+            ticks: 5
+          - type: sound
+            sound: block.glass.break
+            pitch: 1.6
+
+  venom_blade:
+    material: GOLDEN_SWORD
+    name: "<green><bold>Giftklinge</bold></green>"
+    lore:
+      - "<dark_gray>Die Klinge trieft"
+      - "<gray>Treffer vergiften den Gegner"
+    model-data: 8135
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -1.8
+    durability: 1400
+    glow: true
+    recipe:
+      shape: [" F ", " F ", " K "]
+      keys: {F: FERMENTED_SPIDER_EYE, K: "smp:haltbarer_stick"}
+      amount: 1
+    abilities:
+      - trigger: hit
+        actions:
+          - type: potion
+            effect: poison
+            duration: 6
+            amplifier: 1
+            target: victim
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#5AD03A"
+            size: 0.9
+            radius: 1.4
+            ticks: 5
+          - type: sound
+            sound: entity.spider.hurt
+            pitch: 1.4
+
+  smoke_bomb:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<dark_gray><bold>Rauchbombe</bold></dark_gray>"
+    lore:
+      - "<dark_gray>Zündschnur brennt schon"
+      - "<gray>Rechtsklick: blendet alle in der Nähe"
+    model-data: 8136
+    recipe:
+      shape: ["GCG", "CPC", "GCG"]
+      keys: {G: GUNPOWDER, C: COAL, P: PAPER}
+      amount: 4
+    abilities:
+      - trigger: right-click
+        name: "Rauch"
+        cooldown: 20
+        actions:
+          - type: animation
+            shape: einschlag
+            particle: SMOKE
+            radius: 4.0
+            density: 6
+            ticks: 40
+          - type: potion
+            effect: blindness
+            duration: 5
+            amplifier: 1
+            target: victim
+          - type: push
+            radius: 4.0
+            power: 0.6
+          - type: sound
+            sound: entity.creeper.primed
+            pitch: 1.5
+
+  shield_rune:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<gray><bold>Schutzrune</bold></gray>"
+    lore:
+      - "<dark_gray>Uralter Schutz"
+      - "<gray>Rechtsklick: kurze Resistenz"
+    model-data: 8137
+    durability: 400
+    glow: true
+    recipe:
+      shape: ["SLS", "LDL", "SLS"]
+      keys: {S: STONE, L: LAPIS_LAZULI, D: DIAMOND}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Schutz"
+        cooldown: 40
+        actions:
+          - type: potion
+            effect: resistance
+            duration: 8
+            amplifier: 2
+          - type: animation
+            shape: runenkreis
+            particle: ELECTRIC_SPARK
+            radius: 1.6
+            ticks: 25
+          - type: sound
+            sound: block.beacon.activate
+            pitch: 1.8
+
+  # ---------- dritter Trank ----------
+  blood_potion:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<red><bold>Bluttrank</bold></red>"
+    lore:
+      - "<dark_gray>Schmeckt nach Eisen"
+      - "<gray>Rechtsklick: Stärke & Regeneration"
+    model-data: 8138
+    glow: true
+    recipe:
+      shape: [" R ", "RSR", " B "]
+      keys: {R: REDSTONE_BLOCK, S: "smp:soul_shard", B: GLASS_BOTTLE}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Blutrausch"
+        cooldown: 60
+        actions:
+          - type: potion
+            effect: strength
+            duration: 30
+            amplifier: 1
+          - type: potion
+            effect: regeneration
+            duration: 20
+            amplifier: 2
+          - type: heal
+            amount: 6.0
+          - type: animation
+            shape: spiral
+            particle: DUST
+            color: "#C81A28"
+            size: 1.2
+            radius: 1.2
+            ticks: 25
+          - type: sound
+            sound: entity.generic.drink
+            pitch: 0.7
+
+# ==========================================================
+#  ÄNDERUNG an den beiden bestehenden Tränken
+#
+#  material von GLASS_BOTTLE auf POTION ändern, damit der
+#  Rechtsklick auch in die Luft auslöst statt nur auf Blöcke.
+#  Sonst nichts anfassen.
+# ==========================================================
+#
+#  mana_potion:
+#    material: POTION        <- war GLASS_BOTTLE
+#
+#  ultimative_potion:
+#    material: POTION        <- war GLASS_BOTTLE
+
+# ==========================================================
+#  Sprungrolle II - unter "items:" einfügen
+#  Die normale Sprungrolle (teleport_scroll, 8130) bleibt
+#  unverändert bestehen und ist die Zutat für diese hier.
+# ==========================================================
+
+  teleport_scroll_v2:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<aqua><bold>Sprungrolle v2</bold></aqua>"
+    lore:
+      - "<dark_gray>Verstärkte Runen"
+      - "<gray>Rechtsklick: sehr weiter Sprung"
+      - "<dark_gray>Aus 4 normalen Sprungrollen"
+    model-data: 8139
+    glow: true
+    recipe:
+      shape: ["TT ", "TT ", "   "]
+      keys: {T: "smp:teleport_scroll"}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Weitsprung"
+        cooldown: 25
+        actions:
+          - type: launch
+            forward: 5.0
+            up: 0.9
+          - type: animation
+            shape: ring
+            particle: PORTAL
+            radius: 3.5
+            density: 4
+            ticks: 20
+          - type: animation
+            shape: trail
+            particle: END_ROD
+            ticks: 25
+          - type: sound
+            sound: entity.enderman.teleport
+            pitch: 0.8
+          - type: sound
+            sound: entity.ender_dragon.flap
+            pitch: 1.4
+
+
+  kirsche:
+    material: SWEET_BERRIES
+    name: "<red>Kirschen</red>"
+    lore: ["<dark_gray>Frisch vom Baum"]
+    model-data: 8144
+
+  kirschbluete:
+    material: PINK_DYE
+    name: "<light_purple>Kirschblüte</light_purple>"
+    lore: ["<dark_gray>Fällt im Frühling"]
+    model-data: 8145
+
+  kirschzweig:
+    material: STICK
+    name: "<light_purple>Kirschzweig</light_purple>"
+    model-data: 8146
+    recipe:
+      shape: ["  B", " S ", "S  "]
+      keys: {B: "smp:kirschbluete", S: STICK}
+      amount: 1
+
+  kirschsaft:
+    material: POTION
+    name: "<red>Kirschsaft</red>"
+    lore:
+      - "<dark_gray>Süß und kalt"
+      - "<gray>Rechtsklick: Regeneration"
+    model-data: 8147
+    recipe:
+      shape: [" K ", "KKK", " B "]
+      keys: {K: "smp:kirsche", B: GLASS_BOTTLE}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Erfrischung"
+        cooldown: 20
+        actions:
+          - type: potion
+            effect: regeneration
+            duration: 10
+            amplifier: 1
+          - type: sound
+            sound: entity.generic.drink
+            pitch: 1.4
+
+  # ---------- Tropen ----------
+  kokosnuss:
+    material: BROWN_DYE
+    name: "<gold>Kokosnuss</gold>"
+    lore: ["<dark_gray>Hart geknackt"]
+    model-data: 8148
+
+  ananas:
+    material: CARROT
+    name: "<yellow>Ananas</yellow>"
+    model-data: 8149
+
+  mango:
+    material: APPLE
+    name: "<#FF8C2A>Mango</#FF8C2A>"
+    model-data: 8150
+
+  banane:
+    material: CARROT
+    name: "<yellow>Banane</yellow>"
+    model-data: 8151
+
+  muschel:
+    material: NAUTILUS_SHELL
+    name: "<light_purple>Muschel</light_purple>"
+    model-data: 8152
+
+  seestern:
+    material: ORANGE_DYE
+    name: "<gold>Seestern</gold>"
+    model-data: 8153
+
+  palmblatt:
+    material: KELP
+    name: "<green>Palmblatt</green>"
+    model-data: 8154
+
+  cocktail:
+    material: POTION
+    name: "<#FF9A2E>Strandcocktail</#FF9A2E>"
+    lore:
+      - "<dark_gray>Mit Schirmchen"
+      - "<gray>Rechtsklick: Wasseratmung & Tempo"
+    model-data: 8155
+    glow: true
+    recipe:
+      shape: [" A ", "KMK", " B "]
+      keys: {A: "smp:ananas", K: "smp:kokosnuss", M: "smp:mango", B: GLASS_BOTTLE}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Urlaub"
+        cooldown: 40
+        actions:
+          - type: potion
+            effect: water_breathing
+            duration: 60
+            amplifier: 1
+          - type: potion
+            effect: speed
+            duration: 30
+            amplifier: 1
+          - type: animation
+            shape: ring
+            particle: SPLASH
+            radius: 1.5
+            ticks: 20
+          - type: sound
+            sound: entity.generic.drink
+            pitch: 1.5
+
+  # ---------- Strand & Deko ----------
+  strohhut:
+    material: LEATHER_HELMET
+    name: "<yellow>Strohhut</yellow>"
+    lore: ["<dark_gray>Gegen die Sonne"]
+    model-data: 8156
+    durability: 120
+    recipe:
+      shape: ["   ", "W W", "WWW"]
+      keys: {W: WHEAT}
+      amount: 1
+
+  sonnenbrille:
+    material: LEATHER_HELMET
+    name: "<dark_gray>Sonnenbrille</dark_gray>"
+    lore: ["<dark_gray>Cool bleiben"]
+    model-data: 8157
+    durability: 80
+
+  perle:
+    material: ENDER_PEARL
+    name: "<white>Perle</white>"
+    lore: ["<dark_gray>Aus einer Muschel"]
+    model-data: 8158
+    glow: true
+    recipe:
+      shape: ["   ", " M ", "   "]
+      keys: {M: "smp:muschel"}
+      amount: 1
+
+  treibholz:
+    material: STICK
+    name: "<gray>Treibholz</gray>"
+    lore: ["<dark_gray>Vom Meer angespült"]
+    model-data: 8159
+
+  # ----------------------------------------------------------
+  #  Nachgetragen: Diese Sachen haben im Texturepack schon ein
+  #  Modell, hatten hier aber noch keinen Eintrag - dadurch waren
+  #  sie im Spiel nicht zu bekommen. haltbarer_stick fehlte
+  #  ausserdem 10 Schwert-Rezepten als Zutat.
+  # ----------------------------------------------------------
+
+  haltbarer_stick:
+    material: STICK
+    name: "<gold>Haltbarer Stock</gold>"
+    lore:
+      - "<dark_gray>Geht einfach nicht kaputt"
+      - "<gray>Griff für bessere Waffen"
+    model-data: 8134
+    unbreakable: true
+    attributes:
+      attack_damage: 4.0
+    recipe:
+      shape: [" B ", " S ", " S "]
+      keys: {B: BLAZE_ROD, S: STICK}
+      amount: 1
+
+  laserschwert:
+    material: IRON_SWORD
+    name: "<white>Laserschwert</white>"
+    lore:
+      - "<dark_gray>Summt leise"
+    model-data: 8140
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -2.0
+    durability: 999
+    enchants:
+      sharpness: 3
+    glow: true
+    recipe:
+      shape: [" R ", " R ", " K "]
+      keys: {R: REDSTONE_BLOCK, K: "smp:haltbarer_stick"}
+      amount: 1
+    abilities:
+      - trigger: hit
+        actions:
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#FFFFFF"
+            size: 0.9
+            radius: 1.4
+            ticks: 4
+          - type: sound
+            sound: entity.player.attack_sweep
+            pitch: 1.8
+
+  sapphire_sword:
+    material: IRON_SWORD
+    name: "<aqua>Saphirschwert</aqua>"
+    lore:
+      - "<dark_gray>Kalt und scharf"
+    model-data: 8141
+    attributes:
+      attack_damage: 8.0
+      attack_speed: -2.2
+    durability: 1800
+    glow: true
+    recipe:
+      shape: [" S ", " S ", " K "]
+      keys: {S: "smp:sapphire", K: "smp:haltbarer_stick"}
+      amount: 1
+
+  frost_blade:
+    material: GOLDEN_SWORD
+    name: "<aqua><bold>Frostklinge</bold></aqua>"
+    lore:
+      - "<dark_gray>Die Klinge ist eiskalt"
+      - "<gray>Treffer frieren den Gegner ein"
+    model-data: 8142
+    attributes:
+      attack_damage: 7.0
+      attack_speed: -1.8
+    durability: 1400
+    glow: true
+    recipe:
+      shape: [" I ", " I ", " K "]
+      keys: {I: PACKED_ICE, K: "smp:haltbarer_stick"}
+      amount: 1
+    abilities:
+      - trigger: hit
+        actions:
+          - type: potion
+            effect: slowness
+            duration: 5
+            amplifier: 2
+            target: victim
+          - type: animation
+            shape: slash
+            particle: DUST
+            color: "#7FE3FF"
+            size: 0.9
+            radius: 1.4
+            ticks: 5
+          - type: sound
+            sound: block.glass.break
+            pitch: 1.6
+
+  gooner_helm:
+    material: LEATHER_HELMET
+    name: "<light_purple><bold>Gooner-Helm</bold></light_purple>"
+    lore:
+      - "<dark_gray>Sieht albern aus"
+    model-data: 8143
+    durability: 200
+    recipe:
+      shape: ["LLL", "L L", "   "]
+      keys: {L: LEATHER}
+      amount: 1
+
+  flasche_blau:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<blue><bold>Blaue Flasche</bold></blue>"
+    lore:
+      - "<dark_gray>Kühl und klar"
+      - "<gray>Rechtsklick: Wasseratmung"
+    model-data: 8160
+    glow: true
+    recipe:
+      shape: [" S ", "SLS", " B "]
+      keys: {S: "smp:sapphire", L: LAPIS_BLOCK, B: GLASS_BOTTLE}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Blaue Flasche"
+        cooldown: 45
+        actions:
+          - type: potion
+            effect: water_breathing
+            duration: 120
+            amplifier: 1
+          - type: potion
+            effect: dolphins_grace
+            duration: 60
+            amplifier: 1
+          - type: animation
+            shape: spiral
+            particle: DUST
+            color: "#187CD6"
+            size: 1.0
+            radius: 1.2
+            ticks: 25
+          - type: sound
+            sound: entity.generic.drink
+
+  flasche_gruen:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<green><bold>Grüne Flasche</bold></green>"
+    lore:
+      - "<dark_gray>Riecht nach Kräutern"
+      - "<gray>Rechtsklick: Regeneration"
+    model-data: 8161
+    glow: true
+    recipe:
+      shape: [" S ", "SLS", " B "]
+      keys: {S: "smp:sapphire", L: EMERALD_BLOCK, B: GLASS_BOTTLE}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Grüne Flasche"
+        cooldown: 45
+        actions:
+          - type: potion
+            effect: regeneration
+            duration: 20
+            amplifier: 2
+          - type: heal
+            amount: 6.0
+          - type: animation
+            shape: spiral
+            particle: DUST
+            color: "#3AD03A"
+            size: 1.0
+            radius: 1.2
+            ticks: 25
+          - type: sound
+            sound: entity.generic.drink
+
+  flasche_rot:
+    material: GOLDEN_HORSE_ARMOR
+    name: "<red><bold>Rote Flasche</bold></red>"
+    lore:
+      - "<dark_gray>Brennt in der Kehle"
+      - "<gray>Rechtsklick: Feuerschutz & Stärke"
+    model-data: 8162
+    glow: true
+    recipe:
+      shape: [" S ", "SLS", " B "]
+      keys: {S: "smp:ruby", L: REDSTONE_BLOCK, B: GLASS_BOTTLE}
+      amount: 1
+    abilities:
+      - trigger: right-click
+        name: "Rote Flasche"
+        cooldown: 45
+        actions:
+          - type: potion
+            effect: fire_resistance
+            duration: 90
+            amplifier: 1
+          - type: potion
+            effect: strength
+            duration: 60
+            amplifier: 2
+          - type: animation
+            shape: spiral
+            particle: DUST
+            color: "#FF3030"
+            size: 1.0
+            radius: 1.2
+            ticks: 25
+          - type: sound
+            sound: entity.generic.drink
+
+  # ------------------------------------------------------------------
+  #  Waffen mit Schuss
+  #
+  #  "projectile" macht aus einem Item eine Schusswaffe. Munition ist
+  #  freiwillig - ohne "ammo" schießt es einfach immer.
+  # ------------------------------------------------------------------
+
+  kugel:
+    material: IRON_NUGGET
+    name: "<gray>Kugel"
+    lore: ["<dark_gray>Munition"]
+    model-data: 8500
+    recipe:
+      shape: [" I ", " G ", "   "]
+      keys: {I: IRON_NUGGET, G: GUNPOWDER}
+      amount: 8
+
+  pistole:
+    material: IRON_HORSE_ARMOR
+    name: "<white>Pistole"
+    lore:
+      - "<dark_gray>Rechtsklick: schießen"
+      - "<gray>Braucht Kugeln"
+    model-data: 8501
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Schuss"
+        cooldown: 0.4
+        actions:
+          - type: projectile
+            entity: ARROW
+            speed: 3.6
+            damage: 5.0
+            spread: 0.6
+            gravity: false
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.firework_rocket.blast
+            pitch: 1.6
+          - type: animation
+            shape: beam
+            particle: SMOKE
+            length: 3
+            ticks: 3
+
+  schrotflinte:
+    material: IRON_HORSE_ARMOR
+    name: "<gold>Schrotflinte"
+    lore:
+      - "<dark_gray>Rechtsklick: acht Schrotkugeln"
+      - "<gray>Auf kurze Entfernung"
+    model-data: 8502
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Schrot"
+        cooldown: 1.5
+        actions:
+          - type: projectile
+            entity: ARROW
+            amount: 8
+            speed: 2.4
+            damage: 2.5
+            spread: 9.0
+            gravity: true
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.generic.explode
+            volume: 0.6
+            pitch: 1.8
+          - type: push
+            strength: -0.35
+
+  raketenwerfer:
+    material: DIAMOND_HORSE_ARMOR
+    name: "<red>Raketenwerfer"
+    lore: ["<dark_gray>Rechtsklick: Rakete"]
+    model-data: 8503
+    max-stack: 1
+    glow: true
+    abilities:
+      - trigger: right-click
+        name: "Rakete"
+        cooldown: 6
+        actions:
+          - type: projectile
+            entity: FIREBALL
+            speed: 1.8
+            gravity: false
+          - type: sound
+            sound: entity.blaze.shoot
+
+  # ------------------------------------------------------------------
+  #  Zweite Reihe Waffen
+  #
+  #  Jede fuehlt sich anders an - das machen drei Zahlen:
+  #  cooldown (wie schnell), damage (wie hart), spread (wie genau).
+  # ------------------------------------------------------------------
+
+  scharfschuetze:
+    material: IRON_HORSE_ARMOR
+    name: "<dark_green>Scharfschützengewehr"
+    lore:
+      - "<dark_gray>Rechtsklick: ein Schuss, der sitzt"
+      - "<gray>Langsam, weit, sehr hart"
+    model-data: 8580
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Schuss"
+        cooldown: 2.0
+        actions:
+          - type: projectile
+            entity: ARROW
+            speed: 5.0
+            damage: 16.0
+            spread: 0.0
+            gravity: false
+            pierce: 2
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.generic.explode
+            pitch: 0.7
+
+  maschinenpistole:
+    material: IRON_HORSE_ARMOR
+    name: "<gray>Maschinenpistole"
+    lore:
+      - "<dark_gray>Rechtsklick: Dauerfeuer"
+      - "<gray>Schnell, aber streut"
+    model-data: 8581
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Salve"
+        cooldown: 0.15
+        actions:
+          - type: projectile
+            entity: ARROW
+            speed: 3.2
+            damage: 3.0
+            spread: 3.0
+            gravity: false
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.firework_rocket.blast
+            pitch: 1.9
+
+  minigun:
+    material: IRON_HORSE_ARMOR
+    name: "<dark_gray>Minigun"
+    lore:
+      - "<dark_gray>Rechtsklick: sechs Läufe"
+      - "<gray>Frisst Munition wie nichts"
+    model-data: 8582
+    max-stack: 1
+    glow: true
+    abilities:
+      - trigger: right-click
+        name: "Feuer"
+        cooldown: 0.1
+        actions:
+          - type: projectile
+            entity: ARROW
+            amount: 2
+            speed: 3.0
+            damage: 2.5
+            spread: 6.0
+            gravity: false
+            ammo: "smp:kugel"
+          - type: sound
+            sound: entity.firework_rocket.blast
+            pitch: 2.0
+
+  flammenwerfer:
+    material: IRON_HORSE_ARMOR
+    name: "<gold>Flammenwerfer"
+    lore:
+      - "<dark_gray>Rechtsklick: Feuerstrahl"
+      - "<gray>Kurze Reichweite, brennt nach"
+    model-data: 8583
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Flamme"
+        cooldown: 0.2
+        actions:
+          - type: projectile
+            entity: SMALL_FIREBALL
+            amount: 3
+            speed: 0.9
+            spread: 12.0
+            gravity: true
+          - type: animation
+            shape: drachenatem
+            particle: FLAME
+            radius: 1.5
+            length: 6
+            ticks: 6
+          - type: sound
+            sound: entity.blaze.shoot
+            pitch: 1.4
+
+  railgun:
+    material: DIAMOND_HORSE_ARMOR
+    name: "<aqua>Railgun"
+    lore:
+      - "<dark_gray>Rechtsklick: Strahl durch alles"
+      - "<gray>Braucht Energiezellen"
+    model-data: 8584
+    max-stack: 1
+    glow: true
+    abilities:
+      - trigger: right-click
+        name: "Entladung"
+        cooldown: 3.0
+        actions:
+          - type: damage-beam
+            range: 30
+            amount: 13.0
+          - type: animation
+            shape: blitzbogen
+            particle: END_ROD
+            length: 30
+            ticks: 10
+          - type: sound
+            sound: block.beacon.deactivate
+            pitch: 1.8
+
+  granate:
+    material: IRON_HORSE_ARMOR
+    name: "<dark_green>Handgranate"
+    lore:
+      - "<dark_gray>Rechtsklick: werfen"
+      - "<gray>Fliegt im Bogen und kracht"
+    model-data: 8585
+    max-stack: 16
+    abilities:
+      - trigger: right-click
+        name: "Wurf"
+        cooldown: 1.2
+        actions:
+          - type: projectile
+            entity: FIREBALL
+            speed: 1.1
+            gravity: true
+          - type: sound
+            sound: entity.arrow.shoot
+            pitch: 0.8
+
+  jagdbogen:
+    material: IRON_HORSE_ARMOR
+    name: "<gold>Jagdbogen"
+    lore:
+      - "<dark_gray>Rechtsklick: Pfeil"
+      - "<gray>Leise - und du kannst ihn aufheben"
+    model-data: 8586
+    max-stack: 1
+    abilities:
+      - trigger: right-click
+        name: "Pfeil"
+        cooldown: 0.8
+        actions:
+          - type: projectile
+            entity: ARROW
+            speed: 2.6
+            damage: 3.0
+            spread: 0.4
+            gravity: true
+            bullet: false      # echter Pfeil: sichtbar und aufsammelbar
+          - type: sound
+            sound: entity.arrow.shoot
+
+  energiezelle:
+    material: IRON_HORSE_ARMOR
+    name: "<aqua>Energiezelle"
+    lore:
+      - "<dark_gray>Munition für schwere Sachen"
+    model-data: 8587
+    max-stack: 64
+
+  # ------------------------------------------------------------------
+  #  Fahrzeuge - die Werte stehen in der fahrzeuge.yml
+  # ------------------------------------------------------------------
+
+  auto_sport:
+    material: MINECART
+    name: "<red>Sportwagen"
+    lore: ["<dark_gray>Rechtsklick auf den Boden zum Hinstellen"]
+    model-data: 8510
+    max-stack: 1
+
+  auto_roadster:
+    material: MINECART
+    name: "<gold>Roadster"
+    lore:
+      - "<dark_gray>Offen, leicht, wendig"
+      - "<gray>Dreht fast auf der Stelle"
+    model-data: 8520
+    max-stack: 1
+
+  auto_muscle:
+    material: MINECART
+    name: "<dark_red>Muscle Car"
+    lore:
+      - "<dark_gray>Viel Hubraum, wenig Lenkung"
+      - "<gray>Geradeaus kaum zu halten"
+    model-data: 8521
+    max-stack: 1
+
+  auto_renn:
+    material: MINECART
+    name: "<yellow>Rennwagen"
+    lore:
+      - "<dark_gray>Einsitzer, giftiger Antritt"
+      - "<gray>Für die Rennstrecke"
+    model-data: 8522
+    max-stack: 1
+    glow: true
+
+  auto_hyper:
+    material: MINECART
+    name: "<light_purple>Hypercar"
+    lore:
+      - "<dark_gray>Höchstgeschwindigkeit"
+      - "<gray>Will lange Geraden"
+    model-data: 8523
+    max-stack: 1
+    glow: true
+
+  auto_stier:
+    material: MINECART
+    name: "<yellow>Stier GT"
+    lore:
+      - "<dark_gray>Mittelmotor, Zwölfzylinder"
+      - "<gray>Giftiger Antritt, sehr direkt"
+    model-data: 8560
+    max-stack: 1
+    glow: true
+
+  auto_veloce:
+    material: MINECART
+    name: "<blue>Veloce Hyper"
+    lore:
+      - "<dark_gray>Das schnellste Auto im Stall"
+      - "<gray>Will lange Geraden"
+    model-data: 8561
+    max-stack: 1
+    glow: true
+
+  # ---- Keil-Familie: Mittelmotor, scharfe Kante, giftiger Antritt ----
+
+  auto_aventador:
+    material: MINECART
+    name: "<yellow>Lamborghini Aventador"
+    lore:
+      - "<dark_gray>Zwölfzylinder, Mittelmotor"
+      - "<gray>Der Klassiker der Familie"
+    model-data: 8562
+    max-stack: 1
+    glow: true
+
+  auto_huracan:
+    material: MINECART
+    name: "<green>Lamborghini Huracán"
+    lore:
+      - "<dark_gray>Zehnzylinder, kurzer Radstand"
+      - "<gray>Der wendigste Keil"
+    model-data: 8563
+    max-stack: 1
+    glow: true
+
+  auto_revuelto:
+    material: MINECART
+    name: "<red>Lamborghini Revuelto"
+    lore:
+      - "<dark_gray>Hybrid: V12 plus drei E-Motoren"
+      - "<gray>Antritt wie ein Tritt"
+    model-data: 8564
+    max-stack: 1
+    glow: true
+
+  auto_countach:
+    material: MINECART
+    name: "<white>Lamborghini Countach"
+    lore:
+      - "<dark_gray>Der Keil, der alle Keile erfand"
+      - "<gray>Langsamer, aber dafür schön"
+    model-data: 8565
+    max-stack: 1
+    glow: true
+
+  auto_diablo:
+    material: MINECART
+    name: "<dark_purple>Lamborghini Diablo"
+    lore:
+      - "<dark_gray>Breit, laut, ungezogen"
+      - "<gray>Bricht gern hinten aus"
+    model-data: 8566
+    max-stack: 1
+    glow: true
+
+  # ---- Rundheck-Familie: Heckmotor, kurz, kurvenfest ----
+
+  auto_carrera:
+    material: MINECART
+    name: "<gray>Porsche 911 Carrera"
+    lore:
+      - "<dark_gray>Sechszylinder ganz hinten"
+      - "<gray>Fährt sich wie auf Schienen"
+    model-data: 8567
+    max-stack: 1
+    glow: true
+
+  auto_turbo_s:
+    material: MINECART
+    name: "<blue>Porsche 911 Turbo S"
+    lore:
+      - "<dark_gray>Allrad, zwei Turbolader"
+      - "<gray>Beschleunigt am härtesten"
+    model-data: 8568
+    max-stack: 1
+    glow: true
+
+  auto_gt3:
+    material: MINECART
+    name: "<gold>Porsche 911 GT3 RS"
+    lore:
+      - "<dark_gray>Sauger, Rennstrecke, Heckflügel"
+      - "<gray>Die beste Lenkung im Spiel"
+    model-data: 8569
+    max-stack: 1
+    glow: true
+
+  auto_taycan:
+    material: MINECART
+    name: "<aqua>Porsche Taycan"
+    lore:
+      - "<dark_gray>Elektrisch - und darum leise"
+      - "<gray>Volles Drehmoment ab dem ersten Tick"
+    model-data: 8570
+    max-stack: 1
+    glow: true
+
+  auto_neunelf:
+    material: MINECART
+    name: "<white>Porsche 917"
+    lore:
+      - "<dark_gray>Le-Mans-Sieger von 1970"
+      - "<gray>Schnell, aber nichts für Anfänger"
+    model-data: 8571
+    max-stack: 1
+    glow: true
+
+  # ---- Breitbau-Familie: sehr lang, sehr breit, Endgeschwindigkeit ----
+
+  auto_chiron:
+    material: MINECART
+    name: "<blue>Bugatti Chiron"
+    lore:
+      - "<dark_gray>Sechzehn Zylinder, vier Turbos"
+      - "<gray>Braucht eine sehr lange Gerade"
+    model-data: 8572
+    max-stack: 1
+    glow: true
+
+  auto_veyron:
+    material: MINECART
+    name: "<dark_red>Bugatti Veyron"
+    lore:
+      - "<dark_gray>Der erste mit tausend PS"
+      - "<gray>Schwer, schnell, gutmütig"
+    model-data: 8573
+    max-stack: 1
+    glow: true
+
+  auto_divo:
+    material: MINECART
+    name: "<aqua>Bugatti Divo"
+    lore:
+      - "<dark_gray>Weniger Endspeed, mehr Kurve"
+      - "<gray>Der handlichste der Breitbauten"
+    model-data: 8574
+    max-stack: 1
+    glow: true
+
+  auto_bolide:
+    material: MINECART
+    name: "<yellow>Bugatti Bolide"
+    lore:
+      - "<dark_gray>Rennwagen ohne Strassenzulassung"
+      - "<gray>Leicht - beschleunigt und lenkt besser"
+    model-data: 8575
+    max-stack: 1
+    glow: true
+
+  auto_tourbillon:
+    material: MINECART
+    name: "<white>Bugatti Tourbillon"
+    lore:
+      - "<dark_gray>Hybrid, das schnellste Auto überhaupt"
+      - "<gray>Lenkt dafür wie ein Schiff"
+    model-data: 8576
+    max-stack: 1
+    glow: true
+
+  auto_oldtimer:
+    material: MINECART
+    name: "<dark_aqua>Oldtimer"
+    lore:
+      - "<dark_gray>Vier Plätze, viel Zeit"
+      - "<gray>Für Spazierfahrten"
+    model-data: 8524
+    max-stack: 1
+
+  auto_polizei:
+    material: MINECART
+    name: "<blue>Streifenwagen"
+    lore:
+      - "<dark_gray>Holt auch schnelle Leute ein"
+      - "<gray>Vier Plätze"
+    model-data: 8525
+    max-stack: 1
+
+  auto_gelaende:
+    material: MINECART
+    name: "<dark_green>Geländewagen"
+    lore: ["<dark_gray>Vier Plätze"]
+    model-data: 8511
+    max-stack: 1
+
+  fallschirm:
+    material: WHITE_BANNER
+    name: "<white>Fallschirm"
+    lore:
+      - "<dark_gray>Rechtsklick im Fall: Schirm auf"
+      - "<gray>Im Flugzeug: zweimal schleichen"
+    model-data: 8540
+    max-stack: 1
+    recipe:
+      shape: ["WWW", "S S", " S "]
+      keys: {W: WHITE_WOOL, S: STRING}
+      amount: 1
+
+  jet_kampf:
+    material: MINECART
+    name: "<gray>Kampfjet"
+    lore:
+      - "<dark_gray>Das schnellste Stück am Himmel"
+      - "<gray>Einsitzer"
+    model-data: 8530
+    max-stack: 1
+    glow: true
+
+  jet_passagier:
+    material: MINECART
+    name: "<white>Passagierjet"
+    lore:
+      - "<dark_gray>Sechs Plätze, dreht behäbig"
+      - "<gray>Für lange Strecken"
+    model-data: 8531
+    max-stack: 1
+
+  flugzeug_propeller:
+    material: MINECART
+    name: "<yellow>Propellermaschine"
+    lore:
+      - "<dark_gray>Langsam und gutmütig"
+      - "<gray>Gut zum Üben"
+    model-data: 8532
+    max-stack: 1
+
+  flugzeug_doppeldecker:
+    material: MINECART
+    name: "<gold>Doppeldecker"
+    lore:
+      - "<dark_gray>Wendig, aber kein Renner"
+      - "<gray>Zwei Plätze"
+    model-data: 8533
+    max-stack: 1
+
+  flugzeug_fracht:
+    material: MINECART
+    name: "<dark_green>Frachtflugzeug"
+    lore:
+      - "<dark_gray>Acht Plätze, dreht wie ein Schiff"
+      - "<gray>Für die ganze Klasse"
+    model-data: 8534
+    max-stack: 1
+
+  boot_ruder:
+    material: MINECART
+    name: "<gold>Ruderboot"
+    lore: ["<dark_gray>Zwei Plätze, gemütlich"]
+    model-data: 8550
+    max-stack: 1
+
+  boot_motor:
+    material: MINECART
+    name: "<aqua>Motorboot"
+    lore: ["<dark_gray>Vier Plätze, schnell"]
+    model-data: 8551
+    max-stack: 1
+
+  boot_yacht:
+    material: MINECART
+    name: "<white>Yacht"
+    lore: ["<dark_gray>Acht Plätze, dreht wie ein Schiff"]
+    model-data: 8552
+    max-stack: 1
+
+  rotorblatt:
+    material: MINECART
+    name: "<dark_gray>Rotorblatt"
+    lore: ["<dark_gray>Teil eines Hubschraubers"]
+    model-data: 8541
+    max-stack: 1
+
+  heli_leicht:
+    material: MINECART
+    name: "<dark_aqua>Hubschrauber"
+    lore:
+      - "<dark_gray>Bleibt in der Luft stehen"
+      - "<gray>Vier Plätze"
+    model-data: 8535
+    max-stack: 1
+
+  heli_rettung:
+    material: MINECART
+    name: "<red>Rettungshubschrauber"
+    lore:
+      - "<dark_gray>Bleibt in der Luft stehen"
+      - "<gray>Sechs Plätze"
+    model-data: 8536
+    max-stack: 1
+    glow: true
+
+  jet_renn:
+    material: MINECART
+    name: "<aqua>Rennjet"
+    lore: ["<dark_gray>Leertaste steigen, Schleichen sinken"]
+    model-data: 8512
+    max-stack: 1
+
+  zug_lok:
+    material: MINECART
+    name: "<gray>Dampflok"
+    lore: ["<dark_gray>Fährt auf Schienen"]
+    model-data: 8513
+    max-stack: 1

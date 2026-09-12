@@ -1,0 +1,579 @@
+# ==========================================================
+#  Bosse
+#
+#  Ein Boss ist ein normales Mob mit aufgebohrten Werten, einer
+#  Lebensleiste oben am Bildschirm und - das ist der Punkt -
+#  Angriffen, die sich mit sinkendem Leben ändern.
+#
+#  Hinstellen:  /smpcontent boss <Id>
+#               (dorthin, wohin du schaust)
+#               /smpcontent boss <Id> <x> <y> <z>
+#
+#  Im Plugin steht kein einziger Boss fest. Alles hier ist deins:
+#  Wer einen eigenen will, schreibt ihn dazu.
+#
+#  ---------------------------------------------------------
+#  Die Werte oben
+#
+#    typ           Grundmob: ZOMBIE, SKELETON, WITHER_SKELETON,
+#                  BLAZE, RAVAGER, IRON_GOLEM, PIGLIN_BRUTE ...
+#    name          Anzeigename, MiniMessage - <red>, <bold>, <gradient>
+#    leben         Lebenspunkte
+#    ruestung      Rüstungspunkte (20 = volles Diamant)
+#    tempo         Laufgeschwindigkeit (0.23 ist ein Zombie)
+#    standfest     0..1, wie wenig ihn Schläge zurückwerfen
+#    groesse       Skalierung, 1.0 ist normal
+#    leuchten      Umrandung, auch durch Wände sichtbar
+#    feuerfest     brennt nicht in der Sonne
+#    ausruestung   hand, nebenhand, kopf, brust, hose, schuhe
+#                  smp:<id> aus deiner config.yml oder DIAMOND_SWORD
+#    bossbar-farbe PINK BLUE RED GREEN YELLOW PURPLE WHITE
+#    bossbar-stil  SOLID SEGMENTED_6 SEGMENTED_10 SEGMENTED_12 SEGMENTED_20
+#    ansage        was beim Erscheinen im Chat steht
+#    todesansage   was beim Tod im Chat steht
+#
+#  ---------------------------------------------------------
+#  Phasen
+#
+#  "ab" ist der Lebensanteil in Prozent, ab dem die Phase gilt.
+#  Genommen wird immer die erste von oben, deren Schwelle noch
+#  erreicht ist - bei 45 % Leben also die mit ab: 50.
+#
+#    eintritt-animation   Form aus deiner animationen.yml
+#    eintritt-teilchen    z.B. FLAME, SNOWFLAKE, SOUL_FIRE_FLAME
+#    eintritt-farbe       "#RRGGBB" (nur bei DUST)
+#    eintritt-ton         z.B. entity.wither.spawn
+#
+#  ---------------------------------------------------------
+#  Angriffe
+#
+#  Jeder Angriff hat eine eigene Abklingzeit und feuert von
+#  selbst, sobald ein Spieler nah genug ist.
+#
+#    typ: welle      Ring um den Boss, wirft alle weg
+#    typ: strahl     Linie auf das Ziel zu, trifft alles darauf
+#    typ: sprung     springt zum Ziel  (staerke = wie weit)
+#    typ: zug        zieht alle heran  (staerke = wie stark)
+#    typ: meteor     Einschläge um das Ziel herum, mit Vorwarnung
+#                    (anzahl = wie viele, reichweite = Streuung)
+#    typ: diener     ruft Helfer (mob, anzahl, staerke = deren Leben)
+#    typ: trank      Effekt auf alle in Reichweite
+#                    (trank, trank-sekunden, trank-stufe)
+#    typ: heilen     heilt sich selbst (staerke = wieviel)
+#    typ: geschoss   Feuerkugeln (anzahl, staerke = Tempo)
+#
+#  Gemeinsame Werte:
+#    abklingzeit  Sekunden bis zum nächsten Mal
+#    reichweite   Blöcke
+#    schaden      Lebenspunkte beim Treffer
+#    animation    Form aus der animationen.yml
+#    teilchen     welches Teilchen die Form zeichnet
+#    farbe        "#RRGGBB"
+#    ton          Klang beim Auslösen
+#    ansage       kurzer Text über der Hotbar für alle in der Nähe
+# ==========================================================
+
+bosse:
+
+  # ----------------------------------------------------------
+  #  Der Einstieg. Drei Phasen, nichts Überraschendes -
+  #  gut geeignet, um die Werte einmal selbst zu verstellen.
+  # ----------------------------------------------------------
+  grabfuerst:
+    typ: ZOMBIE
+    name: "<dark_green><bold>Grabfürst"
+    leben: 300
+    ruestung: 8
+    tempo: 0.26
+    standfest: 0.5
+    groesse: 1.6
+    leuchten: true
+    feuerfest: true
+    ausruestung:
+      hand: IRON_SWORD
+      kopf: IRON_HELMET
+    bossbar-farbe: GREEN
+    bossbar-stil: SEGMENTED_10
+    ansage: "<dark_green>Die Erde bricht auf. <bold>Der Grabfürst</bold> steht."
+    todesansage: "<green>Der Grabfürst sinkt zurück in die Erde."
+    phasen:
+      - ab: 100
+        name: "Erwacht"
+        eintritt-animation: einschlag
+        eintritt-teilchen: DUST
+        eintritt-farbe: "#4A7C3A"
+        eintritt-ton: entity.zombie.ambient
+        angriffe:
+          - typ: welle
+            abklingzeit: 7
+            reichweite: 5
+            schaden: 7
+            staerke: 0.8
+            animation: einschlag
+            teilchen: DUST
+            farbe: "#4A7C3A"
+            ton: entity.ravager.roar
+          - typ: diener
+            abklingzeit: 12
+            reichweite: 20
+            mob: ZOMBIE
+            anzahl: 3
+            staerke: 20
+            animation: runenkreis
+            teilchen: DUST
+            farbe: "#2F4520"
+            ansage: "<dark_green>Der Grabfürst ruft seine Toten."
+
+      - ab: 60
+        name: "Zorn"
+        eintritt-animation: druckwelle
+        eintritt-teilchen: DUST
+        eintritt-farbe: "#8B1A1A"
+        eintritt-ton: entity.ravager.roar
+        angriffe:
+          - typ: welle
+            abklingzeit: 5
+            reichweite: 6
+            schaden: 9
+            staerke: 1.0
+            animation: einschlag
+            teilchen: DUST
+            farbe: "#8B1A1A"
+            ton: entity.ravager.roar
+          - typ: sprung
+            abklingzeit: 8
+            reichweite: 14
+            staerke: 1.1
+            animation: klingenwirbel
+            teilchen: CRIT
+            ton: entity.ravager.attack
+          - typ: diener
+            abklingzeit: 14
+            reichweite: 20
+            mob: HUSK
+            anzahl: 4
+            staerke: 24
+
+      - ab: 25
+        name: "Letztes Aufbäumen"
+        eintritt-animation: aura
+        eintritt-teilchen: DUST
+        eintritt-farbe: "#E02020"
+        eintritt-ton: entity.wither.spawn
+        angriffe:
+          - typ: welle
+            abklingzeit: 4
+            reichweite: 7
+            schaden: 11
+            staerke: 1.2
+            animation: einschlag
+            teilchen: DUST
+            farbe: "#E02020"
+            ton: entity.generic.explode
+          - typ: zug
+            abklingzeit: 9
+            reichweite: 12
+            staerke: 0.9
+            animation: portal
+            teilchen: PORTAL
+            ansage: "<red>Er lässt dich nicht gehen."
+          - typ: meteor
+            abklingzeit: 10
+            reichweite: 6
+            anzahl: 5
+            schaden: 9
+            animation: einschlag
+            teilchen: DUST
+            farbe: "#E08020"
+    beute:
+      - item: smp:ruby
+        min: 3
+        max: 8
+        chance: 1.0
+      - item: smp:revive_totem
+        chance: 0.35
+      - item: smp:ruby_sword
+        chance: 0.2
+
+  # ----------------------------------------------------------
+  #  Fernkämpfer. Bleibt auf Abstand und deckt dich zu.
+  # ----------------------------------------------------------
+  frostmonarch:
+    typ: STRAY
+    name: "<aqua><bold>Frostmonarch"
+    leben: 260
+    ruestung: 6
+    tempo: 0.3
+    standfest: 0.4
+    groesse: 1.7
+    leuchten: true
+    ausruestung:
+      hand: BOW
+      kopf: DIAMOND_HELMET
+    bossbar-farbe: BLUE
+    bossbar-stil: SEGMENTED_12
+    ansage: "<aqua>Es wird kalt. <bold>Der Frostmonarch</bold> ist da."
+    todesansage: "<aqua>Der Frostmonarch zerspringt."
+    phasen:
+      - ab: 100
+        name: "Frost"
+        eintritt-animation: bluete
+        eintritt-teilchen: SNOWFLAKE
+        eintritt-ton: block.glass.break
+        angriffe:
+          - typ: trank
+            abklingzeit: 8
+            reichweite: 10
+            trank: slowness
+            trank-sekunden: 5
+            trank-stufe: 2
+            animation: einschlag
+            teilchen: SNOWFLAKE
+            ton: block.powder_snow.step
+            ansage: "<aqua>Der Boden gefriert."
+          - typ: strahl
+            abklingzeit: 6
+            reichweite: 16
+            schaden: 8
+            animation: blitzbogen
+            teilchen: SNOWFLAKE
+            ton: entity.player.hurt_freeze
+
+      - ab: 50
+        name: "Eissturm"
+        eintritt-animation: sternenfall
+        eintritt-teilchen: SNOWFLAKE
+        eintritt-ton: entity.wither.shoot
+        angriffe:
+          - typ: meteor
+            abklingzeit: 7
+            reichweite: 7
+            anzahl: 6
+            schaden: 8
+            animation: bluete
+            teilchen: SNOWFLAKE
+            farbe: "#8FD8FF"
+            ansage: "<aqua>Eiszapfen!"
+          - typ: strahl
+            abklingzeit: 5
+            reichweite: 18
+            schaden: 10
+            animation: blitzbogen
+            teilchen: SNOWFLAKE
+          - typ: zug
+            abklingzeit: 11
+            reichweite: 14
+            staerke: 0.8
+            animation: portal
+            teilchen: SNOWFLAKE
+    beute:
+      - item: smp:sapphire
+        min: 4
+        max: 10
+        chance: 1.0
+      - item: smp:frost_blade
+        chance: 0.4
+      - item: smp:shield_rune
+        chance: 0.5
+
+  # ----------------------------------------------------------
+  #  Feuer. Bleibt in der Luft, wirft Kugeln, brennt.
+  # ----------------------------------------------------------
+  aschekoenig:
+    typ: BLAZE
+    name: "<gradient:#FF6A00:#FFD000><bold>Aschekönig</bold></gradient>"
+    leben: 220
+    ruestung: 4
+    tempo: 0.28
+    standfest: 0.3
+    groesse: 2.0
+    leuchten: true
+    bossbar-farbe: RED
+    bossbar-stil: SEGMENTED_10
+    ansage: "<gold>Die Luft flimmert. <bold>Der Aschekönig</bold> steigt auf."
+    todesansage: "<gold>Der Aschekönig verglüht."
+    phasen:
+      - ab: 100
+        name: "Glut"
+        eintritt-animation: aura
+        eintritt-teilchen: FLAME
+        eintritt-ton: entity.blaze.ambient
+        angriffe:
+          - typ: geschoss
+            abklingzeit: 3
+            reichweite: 22
+            anzahl: 3
+            staerke: 1.1
+            animation: drachenatem
+            teilchen: FLAME
+            ton: entity.blaze.shoot
+          - typ: welle
+            abklingzeit: 9
+            reichweite: 5
+            schaden: 8
+            staerke: 0.9
+            animation: einschlag
+            teilchen: FLAME
+
+      - ab: 40
+        name: "Feuersturm"
+        eintritt-animation: drachenatem
+        eintritt-teilchen: FLAME
+        eintritt-ton: entity.blaze.death
+        angriffe:
+          - typ: geschoss
+            abklingzeit: 2
+            reichweite: 24
+            anzahl: 6
+            staerke: 1.3
+            animation: drachenatem
+            teilchen: FLAME
+            ton: entity.blaze.shoot
+          - typ: meteor
+            abklingzeit: 8
+            reichweite: 8
+            anzahl: 7
+            schaden: 10
+            animation: einschlag
+            teilchen: FLAME
+            farbe: "#FF6A00"
+            ansage: "<gold>Es regnet Feuer!"
+          - typ: heilen
+            abklingzeit: 20
+            reichweite: 30
+            staerke: 25
+            animation: bluete
+            teilchen: FLAME
+            ton: block.beacon.activate
+            ansage: "<gold>Der Aschekönig zieht Hitze in sich."
+    beute:
+      - item: smp:magic_dust
+        min: 6
+        max: 14
+        chance: 1.0
+      - item: smp:laserschwert_orange
+        chance: 0.3
+      - item: smp:ultimative_potion
+        chance: 0.45
+
+  # ----------------------------------------------------------
+  #  Der Brecher. Langsam, zäh, schlägt hart zu.
+  # ----------------------------------------------------------
+  steinkoloss:
+    typ: IRON_GOLEM
+    name: "<gray><bold>Steinkoloss"
+    leben: 500
+    ruestung: 14
+    tempo: 0.2
+    standfest: 0.95
+    groesse: 2.2
+    leuchten: true
+    bossbar-farbe: WHITE
+    bossbar-stil: SEGMENTED_20
+    ansage: "<gray>Der Boden zittert. <bold>Der Steinkoloss</bold> kommt."
+    todesansage: "<gray>Der Steinkoloss fällt in sich zusammen."
+    phasen:
+      - ab: 100
+        name: "Schwer"
+        eintritt-animation: einschlag
+        eintritt-teilchen: DUST
+        eintritt-farbe: "#9AA0A6"
+        eintritt-ton: entity.iron_golem.damage
+        angriffe:
+          - typ: welle
+            abklingzeit: 6
+            reichweite: 6
+            schaden: 12
+            staerke: 1.4
+            animation: einschlag
+            teilchen: DUST
+            farbe: "#9AA0A6"
+            ton: entity.iron_golem.attack
+          - typ: sprung
+            abklingzeit: 10
+            reichweite: 16
+            staerke: 1.3
+            animation: meteor
+            teilchen: DUST
+            farbe: "#9AA0A6"
+            ansage: "<gray>Er hebt ab - weg da!"
+
+      - ab: 35
+        name: "Bruchstelle"
+        eintritt-animation: druckwelle
+        eintritt-teilchen: DUST
+        eintritt-farbe: "#E8D020"
+        eintritt-ton: block.anvil_land
+        angriffe:
+          - typ: welle
+            abklingzeit: 4
+            reichweite: 8
+            schaden: 14
+            staerke: 1.6
+            animation: einschlag
+            teilchen: DUST
+            farbe: "#E8D020"
+            ton: entity.iron_golem.attack
+          - typ: meteor
+            abklingzeit: 9
+            reichweite: 7
+            anzahl: 6
+            schaden: 12
+            animation: einschlag
+            teilchen: DUST
+            farbe: "#9AA0A6"
+          - typ: trank
+            abklingzeit: 12
+            reichweite: 9
+            trank: mining_fatigue
+            trank-sekunden: 8
+            trank-stufe: 2
+            animation: runenkreis
+            teilchen: DUST
+            farbe: "#6B7280"
+    beute:
+      - item: smp:marble
+        min: 16
+        max: 32
+        chance: 1.0
+      - item: smp:hammer
+        chance: 0.4
+      - item: smp:schadensamulett
+        chance: 0.3
+
+  # ----------------------------------------------------------
+  #  Der schwerste. Vier Phasen, jede fühlt sich anders an -
+  #  hier lohnt es sich, zu zweit oder zu dritt zu kommen.
+  # ----------------------------------------------------------
+  leerenwandler:
+    typ: WITHER_SKELETON
+    name: "<gradient:#7A3AC8:#20B8C8><bold>Leerenwandler</bold></gradient>"
+    leben: 600
+    ruestung: 12
+    tempo: 0.32
+    standfest: 0.7
+    groesse: 1.9
+    leuchten: true
+    ausruestung:
+      hand: smp:laserschwert_lila
+      kopf: NETHERITE_HELMET
+    bossbar-farbe: PURPLE
+    bossbar-stil: SEGMENTED_20
+    ansage: "<light_purple>Der Himmel reißt. <bold>Der Leerenwandler</bold> tritt hindurch."
+    todesansage: "<light_purple>Der Leerenwandler fällt zurück in die Leere."
+    phasen:
+      - ab: 100
+        name: "Ankunft"
+        eintritt-animation: portal
+        eintritt-teilchen: PORTAL
+        eintritt-ton: entity.enderman.teleport
+        angriffe:
+          - typ: strahl
+            abklingzeit: 5
+            reichweite: 18
+            schaden: 10
+            animation: blitzbogen
+            teilchen: PORTAL
+            ton: entity.illusioner_cast_spell
+          - typ: welle
+            abklingzeit: 8
+            reichweite: 6
+            schaden: 9
+            staerke: 1.0
+            animation: einschlag
+            teilchen: PORTAL
+
+      - ab: 70
+        name: "Riss"
+        eintritt-animation: doppelhelix
+        eintritt-teilchen: PORTAL
+        eintritt-ton: block.portal.travel
+        angriffe:
+          - typ: zug
+            abklingzeit: 7
+            reichweite: 16
+            staerke: 1.0
+            animation: portal
+            teilchen: PORTAL
+            ansage: "<light_purple>Der Riss zieht dich hinein."
+          - typ: strahl
+            abklingzeit: 4
+            reichweite: 20
+            schaden: 11
+            animation: blitzbogen
+            teilchen: PORTAL
+          - typ: diener
+            abklingzeit: 15
+            reichweite: 24
+            mob: ENDERMITE
+            anzahl: 5
+            staerke: 16
+
+      - ab: 40
+        name: "Sturm"
+        eintritt-animation: sternenfall
+        eintritt-teilchen: PORTAL
+        eintritt-ton: entity.wither.spawn
+        angriffe:
+          - typ: meteor
+            abklingzeit: 6
+            reichweite: 8
+            anzahl: 7
+            schaden: 11
+            animation: portal
+            teilchen: PORTAL
+            ansage: "<light_purple>Über dir bricht es auf!"
+          - typ: sprung
+            abklingzeit: 7
+            reichweite: 18
+            staerke: 1.4
+            animation: klingenwirbel
+            teilchen: PORTAL
+          - typ: trank
+            abklingzeit: 13
+            reichweite: 12
+            trank: blindness
+            trank-sekunden: 4
+            trank-stufe: 1
+            animation: aura
+            teilchen: SQUID_INK
+
+      - ab: 15
+        name: "Zusammenbruch"
+        eintritt-animation: meteor
+        eintritt-teilchen: PORTAL
+        eintritt-ton: entity.ender_dragon_growl
+        angriffe:
+          - typ: welle
+            abklingzeit: 3
+            reichweite: 9
+            schaden: 14
+            staerke: 1.5
+            animation: einschlag
+            teilchen: PORTAL
+            ton: entity.generic.explode
+          - typ: meteor
+            abklingzeit: 5
+            reichweite: 9
+            anzahl: 9
+            schaden: 12
+            animation: einschlag
+            teilchen: PORTAL
+          - typ: heilen
+            abklingzeit: 25
+            reichweite: 40
+            staerke: 40
+            animation: aura
+            teilchen: PORTAL
+            ansage: "<light_purple>Er zieht Kraft aus dem Riss."
+    beute:
+      - item: smp:soul_shard
+        min: 8
+        max: 16
+        chance: 1.0
+      - item: smp:laserschwert_lila
+        chance: 0.5
+      - item: smp:teleport_scroll_v2
+        chance: 0.6
+      - item: smp:revive_totem
+        chance: 0.5

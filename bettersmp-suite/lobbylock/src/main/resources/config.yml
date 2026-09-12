@@ -1,0 +1,27 @@
+# ==========================================================
+#  LobbyLock - kleines, eigenstaendiges Plugin.
+#
+#  worlds: leer = gilt ueberall auf diesem Server (Normalfall fuer
+#  einen dedizierten Lobby-Server). Sonst nur in den hier genannten Welten.
+#
+#  Wer die Permission lobbylock.bypass hat (Standard: nur OP), ist von
+#  allem hier unten ausgenommen.
+# ==========================================================
+worlds: []
+
+block-drop: true
+block-inventory-move: true
+block-offhand-swap: true
+block-doors: true
+block-trapdoors: true
+block-signs: true
+
+# Kurze Erinnerung per Actionbar, wenn etwas blockiert wurde - hoechstens
+# alle X Sekunden pro Spieler, damit es bei wiederholten Versuchen nicht flutet.
+feedback:
+  enabled: true
+  cooldown-seconds: 2
+  message: "<red>Das ist hier nicht erlaubt.</red>"
+
+reload-message: "<green>LobbyLock neu geladen.</green>"
+no-permission-message: "<red>Dazu hast du keine Rechte.</red>"

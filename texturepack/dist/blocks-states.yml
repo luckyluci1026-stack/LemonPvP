@@ -1,0 +1,34 @@
+# Von generate.py erzeugt - Zustände müssen zum Texturepack passen!
+blocks:
+  ruby_ore:
+    instrument: bit
+    note: 1
+    powered: false
+  sapphire_ore:
+    instrument: bit
+    note: 2
+    powered: false
+  ruby_block:
+    instrument: bit
+    note: 3
+    powered: false
+  sapphire_block:
+    instrument: bit
+    note: 4
+    powered: false
+  marble:
+    instrument: bit
+    note: 5
+    powered: false
+  dark_marble:
+    instrument: bit
+    note: 6
+    powered: false
+  neon_lamp:
+    instrument: bit
+    note: 7
+    powered: false
+  coin_pile:
+    instrument: bit
+    note: 8
+    powered: false

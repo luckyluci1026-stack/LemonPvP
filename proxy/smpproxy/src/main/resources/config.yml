@@ -1,0 +1,163 @@
+# ==========================================================
+#  SMPProxy - Velocity-Plugin
+#
+#  Domain -> Server:  smp1.lemon-servers.de landet direkt auf smp1,
+#                     smp2.lemon-servers.de direkt auf smp2.
+#  Fällt ein SMP aus, kommen die Spieler in den Warteraum (NanoLimbo)
+#  und werden automatisch zurückgeholt, sobald der Server wieder läuft.
+#
+#  Die Servernamen hier müssen exakt so heißen wie in der
+#  velocity.toml unter [servers].
+# ==========================================================
+
+# ----------------------------------------------------------
+#  Domain -> Server
+#  Groß-/Kleinschreibung egal, ein Punkt am Ende wird ignoriert.
+#  Ein * am Anfang gilt für alle Subdomains, z.B. "*.lemon-servers.de".
+#  Ein genauer Treffer geht immer vor einem Stern-Eintrag.
+# ----------------------------------------------------------
+domains:
+  "smp1.lemon-servers.de": smp1
+  "smp2.lemon-servers.de": smp2
+  "lemon-servers.de": smp1
+
+# Wohin geht es, wenn die Domain oben nicht vorkommt?
+default-server: smp1
+
+# Der Warteraum (NanoLimbo) - nur fuer Abstuerze, niemand geht da freiwillig
+# hin. Leer lassen = wer keinen Server mehr hat, wird getrennt.
+limbo: limbo
+
+# Wohin /hub und /lobby wirklich bringen: der SMPLobby-Server (siehe
+# bettersmp-suite/smplobby) mit Spawn, Serverauswahl und allem drumherum.
+# Muss in der velocity.toml unter [servers] genauso heissen.
+#
+# Leer lassen faellt auf den Warteraum von oben zurueck - das alte
+# Verhalten, falls (noch) kein eigener Lobby-Server steht.
+hub-server: lobby
+
+# ----------------------------------------------------------
+#  Server-Überwachung
+#  Daraus ergibt sich alles Weitere: wohin ein Spieler kommt,
+#  ob ein Rauswurf ein Absturz oder ein echter Kick war und
+#  wann jemand aus dem Warteraum zurück darf.
+# ----------------------------------------------------------
+monitor:
+  # Alle wie viel Sekunden wird jeder Server angepingt?
+  interval: 5
+  # Wie lange darf ein Ping dauern, bevor der Server als offline gilt?
+  timeout: 3
+  # Direkt beim Start einmal prüfen, statt erst nach dem Intervall
+  check-on-start: true
+
+# ----------------------------------------------------------
+#  Automatisch zurück aus dem Warteraum
+# ----------------------------------------------------------
+auto-return:
+  enabled: true
+  # So viele erfolgreiche Pings hintereinander, bevor zurückgeschickt wird.
+  # Verhindert, dass Spieler in einen gerade erst startenden Server laufen.
+  confirmations: 3
+  # Sekunden Wartezeit zwischen zwei Rückhol-Versuchen pro Spieler
+  cooldown: 5
+  # Hinweise im Chat anzeigen
+  show-notice: true
+
+# ----------------------------------------------------------
+#  Befehle
+# ----------------------------------------------------------
+commands:
+  # /hub bzw. /lobby schickt zur Lobby (hub-server oben). "limbo" ist
+  # absichtlich kein Alias mehr: den Warteraum betritt niemand freiwillig,
+  # man landet nur automatisch dort, wenn ein Server abstuerzt.
+  hub-enabled: true
+  hub-aliases: ["hub", "lobby"]
+  # /smp1, /smp2 ... als Kurzbefehle für /server <name>
+  server-shortcuts: true
+
+# ----------------------------------------------------------
+#  /rtp von überall im Netzwerk
+#
+#  Steht der Spieler schon auf einem Server aus passthrough-servers
+#  (BetterRTP ist dort installiert), geht /rtp unverändert dorthin durch
+#  - nichts ändert sich für Spieler, die schon auf dem SMP sind.
+#
+#  Steht er woanders (z.B. in der Lobby), wird er erst auf
+#  redirect-server geschickt, und sobald er dort angekommen ist, startet
+#  automatisch RTP. Dafür muss BetterRTP auf redirect-server installiert
+#  sein und denselben Kanal abhören (siehe dessen eigene config.yml).
+# ----------------------------------------------------------
+rtp:
+  enabled: true
+  passthrough-servers: ["smp1"]
+  redirect-server: "smp1"
+
+# ----------------------------------------------------------
+#  Nachrichten (MiniMessage - Gradients, Farben, alles erlaubt)
+# ----------------------------------------------------------
+messages:
+  prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient> <dark_gray>»</dark_gray> "
+
+  # Beim Verbinden ist der Zielserver aus
+  server-offline: "%prefix%<red><white>%server%</white> ist gerade nicht erreichbar.</red><newline><gray>Du wartest hier, bis er wieder da ist.</gray>"
+  # Der Server ist während des Spielens weggebrochen
+  server-crashed: "%prefix%<red>Verbindung zu <white>%server%</white> verloren.</red><newline><gray>Du wurdest in den Warteraum gebracht.</gray>"
+  # Zurückholen läuft
+  return-soon: "%prefix%<green><white>%server%</white> ist wieder da - du kommst gleich zurück.</green>"
+  return-ok: "%prefix%<green>Willkommen zurück auf <white>%server%</white>.</green>"
+  return-failed: "%prefix%<gold><white>%server%</white> startet noch. Ich versuche es gleich nochmal.</gold>"
+
+  # Es gibt keinen Warteraum -> Spieler wird getrennt (Trennbildschirm)
+  no-limbo: "<gradient:#FF6B6B:#C92A2A><bold>Server nicht erreichbar</bold></gradient><newline><newline><gray>%server% ist gerade offline.</gray><newline><gray>Bitte versuche es in ein paar Minuten nochmal.</gray>"
+  limbo-crashed: "<gradient:#FF6B6B:#C92A2A><bold>Verbindung verloren</bold></gradient><newline><newline><gray>Auch der Warteraum ist nicht erreichbar.</gray><newline><gray>Bitte versuche es gleich nochmal.</gray>"
+
+  # /hub
+  hub-sending: "%prefix%<gray>Bringe dich zur Lobby ...</gray>"
+  hub-already: "%prefix%<gold>Du bist bereits in der Lobby.</gold>"
+  hub-missing: "%prefix%<red>Es ist keine Lobby eingerichtet.</red>"
+
+  # /smp1, /smp2 ...
+  switch-sending: "%prefix%<gray>Verbinde dich mit <white>%server%</white> ...</gray>"
+  switch-already: "%prefix%<gold>Du bist bereits auf <white>%server%</white>.</gold>"
+  switch-offline: "%prefix%<red><white>%server%</white> ist gerade offline.</red>"
+  switch-failed: "%prefix%<red>Verbindung zu <white>%server%</white> fehlgeschlagen.</red>"
+
+  # /smpproxy
+  player-only: "%prefix%<red>Das geht nur im Spiel.</red>"
+  no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+  reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
+  help: "%prefix%<gray>/smpproxy <white>status</white> <dark_gray>|</dark_gray> <white>reload</white></gray>"
+  status-header: "%prefix%<gray>Serverstatus:</gray>"
+  status-online: "<dark_gray> ▪ </dark_gray><white>%server%</white> <dark_gray>-</dark_gray> <green>online</green> <dark_gray>(</dark_gray><gray>%spieler% Spieler</gray><dark_gray>)</dark_gray>"
+  status-offline: "<dark_gray> ▪ </dark_gray><white>%server%</white> <dark_gray>-</dark_gray> <red>offline</red>"
+  unknown-server: "%prefix%<red>Server <white>%server%</white> gibt es nicht.</red>"
+
+  # /netban, /netunban, /netbans, /netbaninfo
+  #
+  # Netzwerkbann: kickt vom Proxy selbst, nicht von einem Server -
+  # betroffen ist damit das GANZE Netzwerk inklusive Lobby. Fuer einen
+  # Rauswurf nur von einem einzelnen SMP gibt es weiterhin BetterSMPs
+  # eigenes /gban dort.
+  ban-permanent-word: "für immer"
+  netban-usage: "%prefix%<gray>/netban <white><Spieler></white> [Dauer] [Grund]</gray><newline><gray>Dauer: <white>30m 12h 7d 2w</white> oder <white>perm</white> - weglassen heißt permanent.</gray>"
+  netban-default-reason: "Kein Grund angegeben"
+  netban-unknown: "%prefix%<red><white>%spieler%</white> ist unbekannt.</red><newline><gray>Der Name muss sich schon einmal mit diesem Netzwerk verbunden haben - oder gib gleich die UUID an.</gray>"
+  netban-ok: "%prefix%<green><white>%spieler%</white> ist jetzt gebannt (<white>%dauer%</white>).</green>"
+  netunban-usage: "%prefix%<gray>/netunban <Spieler></gray>"
+  netunban-ok: "%prefix%<green><white>%spieler%</white> ist entbannt.</green>"
+  netunban-not-banned: "%prefix%<gold><white>%spieler%</white> war gar nicht gebannt.</gold>"
+  netbans-empty: "%prefix%<gray>Niemand ist gerade gebannt.</gray>"
+  netbans-header: "%prefix%<gray><white>%anzahl%</white> Bann(s):</gray>"
+  netbans-entry: "<dark_gray> ▪ </dark_gray><white>%spieler%</white> <dark_gray>bis</dark_gray> <gray>%dauer%</gray> <dark_gray>-</dark_gray> <gray>%grund%</gray>"
+  netbaninfo-usage: "%prefix%<gray>/netbaninfo <Spieler></gray>"
+  netbaninfo-not-banned: "%prefix%<gray><white>%spieler%</white> ist nicht gebannt.</gray>"
+  netbaninfo-header: "%prefix%<white>%spieler%</white><newline><gray>Grund: <white>%grund%</white></gray><newline><gray>Von: <white>%von%</white></gray><newline><gray>Bis: <white>%dauer%</white></gray>"
+
+  # /rtp
+  rtp-sending: "%prefix%<gray>Bringe dich rüber, dann geht's direkt mit RTP weiter ...</gray>"
+  rtp-not-configured: "%prefix%<red>/rtp ist nicht eingerichtet.</red><newline><gray>In config.yml unter <white>rtp.redirect-server</white> einen Server eintragen.</gray>"
+
+  # Der Trennbildschirm beim Bann selbst - kein %prefix%, das HIER ist
+  # der ganze Bildschirm.
+  ban-screen-perm: "<gradient:#FF6B6B:#C92A2A><bold>Du bist gebannt</bold></gradient><newline><newline><gray>Grund:</gray> <white>%reason%</white><newline><gray>Von:</gray> <white>%by%</white><newline><gray>Dauer:</gray> <white>für immer</white>"
+  ban-screen-temp: "<gradient:#FF6B6B:#C92A2A><bold>Du bist gebannt</bold></gradient><newline><newline><gray>Grund:</gray> <white>%reason%</white><newline><gray>Von:</gray> <white>%by%</white><newline><gray>Läuft ab:</gray> <white>%expires%</white><newline><gray>Noch:</gray> <white>%remaining%</white>"

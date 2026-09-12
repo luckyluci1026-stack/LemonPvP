@@ -1,0 +1,30 @@
+{
+  "BetterSMP": {
+    "name": "BetterSMP",
+    "beschreibung": "Das Grundgerüst: Ränge mit Farbverlauf, Nametags, Scoreboard, /stats, Bans und Mutes."
+  },
+  "BetterRTP": {
+    "name": "BetterRTP",
+    "beschreibung": "Zufälliges Teleportieren in die Wildnis, mit Abklingzeit und sicherem Landeplatz."
+  },
+  "LifestealPlus": {
+    "name": "Lifesteal+",
+    "beschreibung": "Wer tötet, nimmt ein Herz mit. Bei null Herzen ist Schluss — bis jemand ein Revive-Item benutzt."
+  },
+  "EasyBedrock": {
+    "name": "EasyBedrock",
+    "beschreibung": "Macht den Server für Bedrock-Spieler brauchbar: passende Menüs und Eingabemasken."
+  },
+  "FastShop": {
+    "name": "FastShop",
+    "beschreibung": "Shop im DonutSMP-Stil. Items, Preise und Kategorien stehen in einer YAML-Datei."
+  },
+  "SMPContent": {
+    "name": "SMPContent",
+    "beschreibung": "Eigene Items und Blöcke: Fahrzeuge, Flugzeuge, Waffen, Bosse. Braucht das Texturepack."
+  },
+  "SMPProxy": {
+    "name": "SMPProxy",
+    "beschreibung": "Für den Velocity-Proxy, nicht für den Spielserver. Nur installieren, wenn du weißt, wofür."
+  }
+}

@@ -1,0 +1,92 @@
+# ==========================================================
+#  Velocity - Proxy-Konfiguration
+#
+#  smp1.lemon-servers.de   ->  landet direkt auf smp1
+#  smp2.lemon-servers.de   ->  landet direkt auf smp2
+#  lobby.lemon-servers.de  ->  landet auf der Lobby (SMPLobby-Plugin)
+#  /hub bzw. /lobby        ->  bringt von überall zur Lobby
+#  Stürzt ein SMP ab, landen die Spieler automatisch im Limbo.
+#
+#  Das Routing macht das Plugin SMPProxy (plugins/SMPProxy-1.0.0.jar),
+#  die Domains stehen in plugins/smpproxy/config.yml.
+#  Die [forced-hosts] unten sind nur das Sicherheitsnetz, falls das
+#  Plugin mal nicht geladen ist. Anleitung: siehe README.md.
+# ==========================================================
+
+config-version = "2.7"
+
+# Der Port, auf den deine Domain zeigt
+bind = "0.0.0.0:25565"
+
+motd = "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient>\n<gray>smp1 · smp2</gray>"
+show-max-players = 100
+
+# Der Proxy prüft die Mojang-Accounts. Die Backend-Server stehen dann
+# auf online-mode=false und vertrauen dem Proxy (siehe README).
+online-mode = true
+
+# Passt zu NoChatReports: verlangt keine signierten Chat-Schlüssel
+force-key-authentication = false
+
+prevent-client-proxy-connections = false
+player-info-forwarding-mode = "modern"
+forwarding-secret-file = "forwarding.secret"
+
+announce-forge = false
+kick-existing-players = false
+ping-passthrough = "disabled"
+enable-player-address-logging = true
+
+# ----------------------------------------------------------
+#  Deine Server
+#  Adressen anpassen! Wenn alles auf derselben Maschine läuft,
+#  bleibt 127.0.0.1 und nur die Ports ändern sich.
+# ----------------------------------------------------------
+[servers]
+lobby = "127.0.0.1:25569"
+smp1 = "127.0.0.1:25566"
+smp2 = "127.0.0.1:25567"
+limbo = "127.0.0.1:25568"
+
+# Reihenfolge für Spieler OHNE passende Domain (z.B. lemon-servers.de direkt)
+# und gleichzeitig die Ausweich-Reihenfolge, wenn ein Server wegbricht.
+# Absichtlich ohne "lobby" - das ist ein Ort, den man bewusst besucht
+# (/hub, /lobby), keiner, auf dem man ungefragt landet.
+try = ["smp1", "limbo"]
+
+# ----------------------------------------------------------
+#  Domain -> Server (Sicherheitsnetz)
+#
+#  Im Normalfall entscheidet SMPProxy. Fällt das Plugin aus, greift
+#  diese Liste: Sie ist gleichzeitig die Ausweichkette, und Velocity
+#  merkt sie sich pro Spieler. Wer über smp2.lemon-servers.de kommt,
+#  landet bei einem Absturz von smp2 im Limbo - NICHT auf smp1.
+#
+#  Dieselben Domains gehören auch in plugins/smpproxy/config.yml.
+# ----------------------------------------------------------
+[forced-hosts]
+"lobby.lemon-servers.de" = ["lobby", "limbo"]
+"smp1.lemon-servers.de" = ["smp1", "limbo"]
+"smp2.lemon-servers.de" = ["smp2", "limbo"]
+"lemon-servers.de" = ["smp1", "limbo"]
+
+[advanced]
+compression-threshold = 256
+compression-level = -1
+login-ratelimit = 3000
+connection-timeout = 5000
+read-timeout = 30000
+haproxy-protocol = false
+tcp-fast-open = false
+bungee-plugin-message-channel = true
+show-ping-requests = false
+failover-on-unexpected-server-disconnect = true
+announce-proxy-commands = true
+log-command-executions = false
+log-player-connections = true
+
+[query]
+enabled = false
+port = 25565
+map = "Velocity"
+show-plugins = false

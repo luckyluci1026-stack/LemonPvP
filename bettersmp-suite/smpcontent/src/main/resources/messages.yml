@@ -1,0 +1,38 @@
+# SMPContent - Nachrichten (MiniMessage + Legacy-Codes)
+prefix: "<gradient:#A78BFA:#6D28D9><bold>Content</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+reloaded: "%prefix%<green>Inhalte neu geladen.</green>"
+config-error: "%prefix%<red><white>%file%</white> hat einen Fehler in <white>Zeile %line%</white>.</red><newline><gold>%hint%</gold><newline><gray>Die alten Einstellungen bleiben aktiv.</gray>"
+player-not-found: "%prefix%<red>Spieler nicht gefunden.</red>"
+
+usage: "%prefix%<gray>/smpcontent <white>give <Spieler> <Id> [Menge]</white> | <white>list</white> | <white>pack</white> | <white>bedrock</white> | <white>boss <Id></white> | <white>reload</white></gray>"
+pack-building: "%prefix%<gray>Baue das Resourcepack ...</gray>"
+pack-done: "%prefix%<green>Pack gebaut: <white>%items%</white> Items, <white>%blocks%</white> Blöcke, <white>%models%</white> eigene Blockbench-Modelle.</green><newline><gray>Liegt in <white>plugins/SMPContent/output/</white></gray>"
+pack-missing: "%prefix%<gold>%count% Textur(en) fehlen noch:</gold><newline><gray>%details%</gray>"
+pack-bedrock: "%prefix%<aqua>Bedrock-Pack gebaut: <white>%solid%</white> Items mit 3D-Modell, <white>%flat%</white> flach, <white>%blocks%</white> eigene Blöcke.</aqua><newline><gray>Pack nach <white>Geyser/packs/</white>, beide json nach <white>Geyser/custom_mappings/</white></gray>"
+pack-failed: "%prefix%<red>Pack-Bau fehlgeschlagen: <white>%error%</white></red>"
+bedrock-building: "%prefix%<gray>Hole das Pack aus der <white>server.properties</white> und baue daraus das Bedrock-Pack ...</gray>"
+bedrock-done: "%prefix%<aqua>Bedrock-Pack aus <white>%origin%</white> gebaut:</aqua><newline><gray>  <white>%solid%</white> Items mit 3D-Modell, <white>%flat%</white> flach, <white>%blocks%</white> eigene Blöcke</gray><newline><gray>Pack nach <white>Geyser/packs/</white>, beide json nach <white>Geyser/custom_mappings/</white></gray>"
+bedrock-missing: "%prefix%<red>Kein Pack gefunden: <white>%error%</white></red><newline><gray>Trage in der <white>server.properties</white> ein <white>resource-pack=...</white> ein, lege die ZIP nach <white>plugins/SMPContent/pack/</white> oder gib den Pfad an: <white>/smpcontent bedrock <URL|Datei></white></gray>"
+give-usage: "%prefix%<gray>Nutzung: <white>/smpcontent give <Spieler> <Id> [Menge]</white></gray>"
+unknown-content: "%prefix%<red>Unbekannt: <white>%id%</white></red><newline><gray>Verfügbar: <white>%list%</white></gray>"
+given: "%prefix%<green><white>%amount%x %id%</white> an <white>%player%</white> gegeben.</green>"
+given-self: "%prefix%<green><white>%amount%x %id%</white> erhalten.</green>"
+list-console: "%prefix%<gray>Verfügbar: <white>%list%</white></gray>"
+
+vehicle-placed: "%prefix%<green>%name% steht bereit.</green> <gray>Rechtsklick zum Einsteigen, Schleichen zum Aussteigen.</gray>"
+vehicle-empty: "%prefix%<gold>Der Tank ist leer.</gold>"
+vehicle-eject: "%prefix%<aqua>Schleudersitz!</aqua> <gray>Der Schirm geht gleich auf.</gray>"
+vehicle-crash: "%prefix%<red>Aufprall!</red>"
+vehicle-not-yours: "%prefix%<gold>Das Fahrzeug gehört jemand anderem.</gold>"
+pack-busy: "%prefix%<gold>Es wird gerade schon ein Pack gebaut - einen Moment.</gold>"
+
+gui-title: "<gradient:#A78BFA:#6D28D9><bold>Eigene Inhalte</bold></gradient>"
+
+# ---- Bosse ----
+boss-usage: "%prefix%<gray>Nutzung: <white>/smpcontent boss <Id> [x y z]</white><newline>Da sind: <white>%list%</white></gray>"
+boss-unknown: "%prefix%<red>Den Boss <white>%id%</white> gibt es nicht.</red><newline><gray>Da sind: <white>%list%</white></gray>"
+boss-none: "%prefix%<red>In der bosse.yml steht kein Boss.</red>"
+boss-failed: "%prefix%<red>Boss <white>%id%</white> liess sich nicht hinstellen - siehe Konsole.</red>"
+boss-spawned: "%prefix%<gold>Boss <white>%id%</white> steht bei <white>%x% %y% %z%</white>.</gold>"

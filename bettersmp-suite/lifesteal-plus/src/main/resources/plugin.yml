@@ -1,0 +1,42 @@
+name: LifestealPlus
+version: ${project.version}
+main: de.lemonpvp.lifesteal.LifestealPlus
+api-version: '1.21'
+authors: [SMP]
+description: Lifesteal mit Herzverlust, Herz-Items, Elimination/Revive und BetterSMP-CombatLog-Integration.
+softdepend: [BetterSMP, PlaceholderAPI]
+
+commands:
+  hearts:
+    description: Zeigt die Herzen an
+    usage: "/hearts [Spieler]"
+    aliases: [heart, herzen]
+    permission: lifesteal.hearts
+  withdraw:
+    description: Wandelt Herzen in ein Herz-Item um
+    usage: "/withdraw [Anzahl]"
+    aliases: [herzabheben]
+    permission: lifesteal.withdraw
+  revive:
+    description: Belebt einen eliminierten Spieler wieder
+    usage: "/revive <Spieler>"
+    aliases: [wiederbeleben]
+    permission: lifesteal.revive
+  lifesteal:
+    description: Lifesteal-Verwaltung
+    usage: "/lifesteal <reload|set|give|eliminate|revive> ..."
+    aliases: [ls, lsp]
+    permission: lifesteal.admin
+
+permissions:
+  lifesteal.hearts:
+    default: true
+  lifesteal.withdraw:
+    default: true
+  lifesteal.revive:
+    default: true
+  lifesteal.admin:
+    default: op
+  lifesteal.craft:
+    description: Darf Herz-Items herstellen und benutzen
+    default: true

@@ -1,0 +1,72 @@
+# ============================================================
+#  EssentialsX - Konfiguration (von BetterSMP vorbereitet)
+#  Nur die wichtigsten Einstellungen sind gesetzt - alle
+#  fehlenden Werte nutzt EssentialsX automatisch als Standard.
+#  Volle Doku: https://essentialsx.net/wiki/Home.html
+# ============================================================
+
+# Deutsche Nachrichten (BetterSMP legt zusätzlich eine hübsche
+# messages_de.properties in diesem Ordner an)
+locale: de
+per-player-locale: false
+
+# ---------------- Teleport ----------------
+teleport-delay: 3
+teleport-cooldown: 3
+teleport-safety: true
+force-disable-teleport-safety: false
+tpa-accept-cancellation: 120
+teleport-back-when-freed-from-jail: true
+respawn-listener-priority: high
+spawn-on-join: newbies
+
+# ---------------- Homes ----------------
+sethome-multiple:
+  default: 3
+  vip: 5
+  mod: 8
+  admin: 10
+
+# ---------------- Economy ----------------
+starting-balance: 1000
+currency-symbol: '$'
+currency-symbol-suffix: false
+min-money: 0
+max-money: 10000000000
+economy-log-enabled: false
+command-costs: {}
+
+# ---------------- Chat / Join ----------------
+# Chat-Formatierung übernimmt BetterSMP (LPC-MiniMessage-Stil).
+# Join/Quit-Nachrichten übernimmt ebenfalls BetterSMP:
+allow-silent-join-quit: false
+custom-join-message: "none"
+custom-quit-message: "none"
+announce-format: "none"
+
+# ---------------- Kits ----------------
+# Bewusst leer - keine Standard-Kits.
+kits: {}
+
+# ---------------- Sonstiges ----------------
+auto-afk: 300
+auto-afk-kick: -1
+freeze-afk-players: false
+disable-item-pickup-while-afk: false
+cancel-afk-on-interact: true
+cancel-afk-on-move: true
+
+remove-god-on-disconnect: true
+world-change-fly-reset: true
+world-change-speed-reset: true
+
+# Befehle nicht überschreiben, die andere Plugins registrieren
+overridden-commands: []
+disabled-commands: []
+
+# /back nach Tod aktivieren
+death-messages: false
+send-info-after-death: true
+
+update-check: true
+metrics: true

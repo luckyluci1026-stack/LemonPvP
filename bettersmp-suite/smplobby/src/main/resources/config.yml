@@ -1,0 +1,175 @@
+# ==========================================================
+#  SMPLobby - das Plugin für den Hub deines Netzwerks
+#
+#  Es gehört auf den LOBBY-Server, nicht auf die SMPs und
+#  nicht auf den Proxy. Der Proxy (SMPProxy) schickt die
+#  Spieler hierher; alles Weitere passiert hier.
+#
+#  Zum Weiterschicken redet das Plugin über den Kanal
+#  "BungeeCord" mit dem Proxy - Velocity versteht den auch.
+#  Dafür muss in der velocity.toml stehen:
+#
+#      [advanced]
+#      player-info-forwarding-mode = "modern"
+#
+#  und der Lobby-Server braucht in der spigot.yml
+#  bungeecord: true (bzw. in der paper-global.yml den
+#  passenden Proxy-Abschnitt).
+# ==========================================================
+
+# ----------------------------------------------------------
+#  Schutz
+#  Eine Lobby ist zum Anschauen da, nicht zum Bauen. Alles
+#  hier lässt sich einzeln abschalten - wer mit der Rechtigung
+#  smplobby.bauen unterwegs ist, kommt an allem vorbei.
+# ----------------------------------------------------------
+schutz:
+  bloecke-abbauen: false      # false = niemand baut ab
+  bloecke-setzen: false
+  schaden: false              # Fallschaden, Feuer, Ertrinken ...
+  pvp: false
+  hunger: false               # Hungerbalken bleibt voll
+  items-wegwerfen: false
+  items-aufheben: false
+  mobs-spawnen: false
+  wetter: false               # false = es bleibt immer trocken
+
+  # Feste Tageszeit, damit die Lobby immer gleich aussieht.
+  # -1 heißt: Zeit läuft normal weiter.
+  uhrzeit: 1000
+
+# ----------------------------------------------------------
+#  Spawn
+#  Setzen mit /setspawn, dorthin mit /spawn. Der Punkt landet
+#  in spawn.yml und überlebt einen Neustart.
+# ----------------------------------------------------------
+spawn:
+  # Beim Betreten der Lobby zum Spawn teleportieren
+  bei-ankunft: true
+  # Beim Sterben ebenfalls (sollte in der Lobby nie vorkommen)
+  bei-tod: true
+  # Wer unter diese Höhe fällt, kommt zurück statt in die Leere
+  rettungshoehe: 0
+
+# ----------------------------------------------------------
+#  Gegenstände in der Schnellleiste
+#
+#  slot: 0 bis 8 (0 ist ganz links)
+#  material: ein Minecraft-Material, z.B. COMPASS, CLOCK
+#  aktion: waehler | verstecken | keine
+# ----------------------------------------------------------
+gegenstaende:
+  aktiv: true
+  # Beim Ankommen ins Inventar legen und bei jedem Wechsel neu setzen
+  beim-ankommen: true
+
+  liste:
+    - slot: 0
+      material: COMPASS
+      name: "<gradient:#6C5CE7:#00D4FF><bold>Server wählen</bold></gradient>"
+      beschreibung:
+        - "<gray>Rechtsklick öffnet die Auswahl</gray>"
+      aktion: waehler
+    - slot: 4
+      material: PLAYER_HEAD
+      name: "<aqua><bold>Spieler anzeigen</bold></aqua>"
+      beschreibung:
+        - "<gray>Rechtsklick blendet die anderen aus</gray>"
+      aktion: verstecken
+    - slot: 8
+      material: BOOK
+      name: "<gold><bold>Regeln</bold></gold>"
+      beschreibung:
+        - "<gray>Rechtsklick zeigt die Regeln</gray>"
+      aktion: regeln
+
+# ----------------------------------------------------------
+#  Server-Auswahl
+#
+#  server: der Name AUS DER velocity.toml - genau so
+#          geschrieben, sonst passiert beim Klick nichts.
+#  Die Spielerzahlen holt das Plugin selbst beim Proxy.
+# ----------------------------------------------------------
+waehler:
+  titel: "<dark_gray>» <gradient:#6C5CE7:#00D4FF>Server wählen</gradient>"
+  # 3 Reihen = 27 Plätze. Erlaubt sind 9, 18, 27, 36, 45, 54.
+  plaetze: 27
+
+  eintraege:
+    - platz: 11
+      server: smp1
+      material: GRASS_BLOCK
+      name: "<green><bold>SMP 1</bold></green>"
+      beschreibung:
+        - "<gray>Der Hauptserver</gray>"
+        - ""
+        - "<dark_gray>» <white>%spieler% online</white>"
+    - platz: 13
+      server: smp2
+      material: DIAMOND_PICKAXE
+      name: "<aqua><bold>SMP 2</bold></aqua>"
+      beschreibung:
+        - "<gray>Der zweite Server</gray>"
+        - ""
+        - "<dark_gray>» <white>%spieler% online</white>"
+    - platz: 15
+      server: kreativ
+      material: BRICKS
+      name: "<light_purple><bold>Kreativ</bold></light_purple>"
+      beschreibung:
+        - "<gray>Zum Bauen ohne Grenzen</gray>"
+        - ""
+        - "<dark_gray>» <white>%spieler% online</white>"
+
+# ----------------------------------------------------------
+#  Spieler verstecken
+#  Praktisch, wenn dreißig Leute gleichzeitig in der Lobby
+#  stehen und man den Weg nicht mehr sieht.
+# ----------------------------------------------------------
+verstecken:
+  aktiv: true
+  # Womit die Anzeige umschaltet, wenn versteckt wird
+  material-versteckt: GRAY_DYE
+
+# ----------------------------------------------------------
+#  Doppelsprung
+#  Zweimal Leertaste und man fliegt ein Stück. Kostet nichts
+#  und macht eine leere Lobby sofort lebendiger.
+# ----------------------------------------------------------
+doppelsprung:
+  aktiv: true
+  hoehe: 0.9
+  weite: 1.1
+
+# ----------------------------------------------------------
+#  Anzeigetafel am Bildschirmrand
+#  %spieler%   Spieler in der Lobby
+#  %netzwerk%  Spieler im ganzen Netzwerk (kommt vom Proxy)
+#  %name%      Name des Spielers
+#  %ping%      Ping in Millisekunden
+# ----------------------------------------------------------
+tafel:
+  aktiv: true
+  titel: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient>"
+  # Wie oft die Zahlen aktualisiert werden (in Ticks, 20 = eine Sekunde)
+  takt: 20
+  zeilen:
+    - "<dark_gray>▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪"
+    - "<gray>Willkommen,"
+    - "<white>%name%</white>"
+    - ""
+    - "<gray>In der Lobby: <white>%spieler%</white>"
+    - "<gray>Im Netzwerk:  <white>%netzwerk%</white>"
+    - ""
+    - "<yellow>lemon-servers.de"
+
+# ----------------------------------------------------------
+#  Ankommen
+# ----------------------------------------------------------
+ankunft:
+  # Titel in der Bildschirmmitte
+  titel-aktiv: true
+  # Nachricht im Chat für alle anderen
+  ankunft-melden: false
+  # Kurz ein Geräusch, damit man merkt, dass man da ist
+  geraeusch: "minecraft:entity.player.levelup"
