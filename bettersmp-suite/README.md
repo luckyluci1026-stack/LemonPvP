@@ -17,10 +17,6 @@ den Server-Namen setzt du einmal über `brand` in der `config.yml`.
 | **LobbyLock** | Eigenständige Zusatzsperre für die Lobby: Item-Drop, Inventar-Verschieben, Offhand-Tausch, Türen/Falltüren/Schilder - unabhängig von SMPLobby, kein Update daran nötig | `/lobbylock` |
 | **ReportPlus** | GUI-`/report` (überschreibt BetterSMPs Text-Version) + neues `/bugreport`, mit Warteschlangen-GUIs fürs Team | `/report`, `/bugreport`, `/reports`, `/bugreports` |
 
-`/offend` und `/punish` (vorgefertigte Gründe samt Dauer, netzwerkweite Sperre)
-sind **kein** Paper-Plugin mehr, sondern **PunishPlus** am Proxy - siehe
-`proxy/punishplus/README.md`.
-
 Die externen Begleit-Plugins (EssentialsX, LuckPerms, Vault, PlaceholderAPI, TAB
 bzw. Geyser, Floodgate) sind **nicht mitgebündelt**, sondern werden von BetterSMP
 bzw. EasyBedrock beim ersten Start automatisch von den **offiziellen Quellen**
@@ -79,9 +75,6 @@ bettersmp-suite/
 ├── lobbylock/         LobbyLock (eigenständige Zusatzsperre für die Lobby)
 └── reportplus/        ReportPlus (GUI-Report + Bugreport, überschreibt BetterSMPs /report)
 ```
-
-PunishPlus (`/offend` + `/punish`) liegt **nicht** hier, sondern unter
-`proxy/punishplus/` - ein Velocity-Plugin, kein Paper-Plugin (siehe dort).
 
 Jedes Plugin ist eigenständig nutzbar. Lifesteal+ nutzt die CombatLog-API von
 BetterSMP, funktioniert aber auch ohne (die Integration schaltet sich dann ab).

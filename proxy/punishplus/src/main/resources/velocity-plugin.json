@@ -1,9 +1,0 @@
-{
-  "id": "punishplus",
-  "name": "PunishPlus",
-  "version": "${project.version}",
-  "description": "/offend (temporaer) und /punish (immer dauerhaft) mit vorgefertigten Gruenden aus bans.yml - netzwerkweit.",
-  "authors": ["SMP"],
-  "dependencies": [],
-  "main": "de.lemonpvp.punishplus.PunishPlus"
-}
