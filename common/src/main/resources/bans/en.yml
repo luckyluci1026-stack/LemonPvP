@@ -30,7 +30,7 @@ bans:
     # 900 = a flag drops back out of the total 15 minutes after it happened,
     # so someone who trips one check a week does not slowly accumulate a ban.
     # Set to 0 to keep every flag for as long as the player stays online.
-    remember-flags-for: 900
+    remember-flags-for: 1800
 
     # No rung fires until the player has tripped at least this many DIFFERENT
     # checks. This is the safeguard that makes the ladder safe to run strict:
@@ -70,12 +70,10 @@ bans:
     # For a timed ban:
     #   "tempban %player% 30d BuckSMPAC > %flags% flags (%top_check%)"
     ladder:
-        - flags: 20
+        - flags: 10
           command: "[alert]"
-        - flags: 35
-          command: "effect give %player% minecraft:slowness 9999 250 true"
-        - flags: 50
+        - flags: 25
           command: "ban %player% BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 3
+bans-version: 4

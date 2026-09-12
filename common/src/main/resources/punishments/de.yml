@@ -20,48 +20,51 @@
 #   M = 0 -> läuft einmalig bei N.
 #
 # ----------------------------------------------------------------------
-#  >>> BAN / KICK / FREEZE - so wählst du die Strafe <<<
+#  NUR BANS, UND SEHR STRENG
 # ----------------------------------------------------------------------
-# Jede Gruppe hat einen "BuckSMPAC Strafen-Leiter"-Abschnitt. Zum AKTIVIEREN
-# einer Strafe die Zeile entkommentieren (das "#" entfernen), zum
-# DEAKTIVIEREN ein "#" davor setzen. Beliebig pro Gruppe kombinierbar.
+# Keine Kicks, keine Freezes. Jede Gruppe unten hat genau eine Strafe:
+# einen permanenten Ban, bei einer niedrigen Schwelle.
 #
-#   FREEZE (Vanilla, ohne Zusatz-Plugin):
-#     "40:0 effect give %player% minecraft:slowness 9999 250 true"
-#     "40:0 effect give %player% minecraft:blindness 9999 1 true"
-#   FREEZE (mit Freeze-Plugin, z. B. Befehl /freeze):
-#     "40:0 freeze %player%"
-#   KICK:
-#     "60:0 kick %player% &cBuckSMPAC &8» &fUnfairer Vorteil erkannt (%check_name%)"
-#   BAN (Vanilla):
-#     "100:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"
-#   BAN (mit LiteBans/AdvancedBan usw.):
-#     "100:0 tempban %player% 30d BuckSMPAC > Cheating (%check_name%)"
-# ======================================================================
+#   Reach        8   Knockback  15
+#   Hitboxes     8   Combat     15
+#   BadPackets  12   Misc       20
+#   Post        12   Simulation 60
+#
+# Flags bleiben außerdem doppelt so lange liegen wie vorher
+# (remove-violations-after: 600), sammeln sich also Richtung Ban statt
+# abzukühlen.
+#
+# WAS DAS BEDEUTET: Bei diesen Zahlen ist ein Falsch-Positiv ein
+# permanenter Ban. Simulation ist bewusst die locker­ste der acht Gruppen,
+# weil dieser Check unter Lag am ehesten daneben greift - und es ist die
+# erste Zahl, die du hochsetzen solltest, wenn legitime Spieler
+# verschwinden.
+#
+# Lass es erst ein paar Tage nur mit den Alert-Zeilen laufen (BAN-Zeilen
+# auskommentieren) und prüfe, ob jeder genannte Spieler wirklich cheatet,
+# bevor du es bannen lässt.
+#
 # ----------------------------------------------------------------------
-#  DIESE LEITER BANNT DIREKT - es gibt keine Kick-Stufe.
+#  BANMANAGER-SETUP
 # ----------------------------------------------------------------------
-# Jede Gruppe unten bannt sofort bei der Schwelle, die vorher nur gekickt
-# hat. Ein Falsch-Positiv ist damit ein Ban, kein Kick - beobachte die
-# Alerts also ein paar Tage, bevor du den Zahlen auf dem Live-Server traust.
+# Diese Befehle laufen auf der Konsole DIESES Backend-Servers. BanManager
+# nur auf dem Proxy ist von hier nicht erreichbar - der Befehl läuft ins
+# Leere und der Spieler spielt weiter. BuckSMPAC schreibt dann eine
+# Warnung, also nach dem ersten Ban in die Konsole schauen.
 #
-# WICHTIG IM PROXY-NETZWERK: Diese Befehle laufen auf der Konsole DIESES
-# Backend-Servers. Ein Ban-Plugin, das nur auf dem Proxy liegt, ist von
-# hier aus nicht erreichbar - der Befehl läuft ins Leere und der Spieler
-# spielt weiter. BuckSMPAC schreibt jetzt eine Warnung, wenn das passiert.
+# Installier BanManagers Spigot/Paper-Build zusätzlich auf diesem Server
+# und zeig es auf DIESELBE Datenbank wie die Proxy-Installation.
+# BanManager dokumentiert genau diesen Betrieb, dann ist der Ban unten
+# netzwerkweit.
 #
-# AdvancedBan / BanManager / LiteBans / LibertyBans registrieren /ban und
-# /tempban selbst. Die Zeilen unten funktionieren also, SOLANGE das Plugin
-# auch auf diesem Backend installiert ist und auf dieselbe Datenbank wie
-# die Proxy-Installation zeigt. Dann ist der Ban netzwerkweit.
-#
-# Für einen zeitlich begrenzten Ban statt permanent:
-#     "25:0 tempban %player% 30d BuckSMPAC > Cheating (%check_name%)"
+#   permanent (ausgeliefert): "8:0 ban %player% <Grund>"
+#   stattdessen zeitlich:     "8:0 tempban %player% 30d <Grund>"
+#   zusätzlich IP:            "8:0 banip %player% <Grund>"
 # ----------------------------------------------------------------------
 
 Punishments:
   Simulation:
-    remove-violations-after: 300
+    remove-violations-after: 600
     checks:
       - "Simulation"
       - "GroundSpoof"
@@ -69,16 +72,15 @@ Punishments:
       - "TimerLimit"
       - "NoFall"
     commands:
-      - "60:30 [alert]"
+      - "30:15 [alert]"
       - "1:1 [log]"
       - "100:100 [webhook]"
       - "100:100 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "80:0 effect give %player% minecraft:slowness 9999 250 true"     # FREEZE
-      - "120:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
+      - "60:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
 
   Knockback:
-    remove-violations-after: 300
+    remove-violations-after: 600
     checks:
       - "Knockback"
       - "Explosion"
@@ -88,36 +90,36 @@ Punishments:
       - "20:20 [webhook]"
       - "20:20 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "25:0 ban %player% BuckSMPAC > Anti-Knockback (%check_name%)"          # BAN
+      - "15:0 ban %player% BuckSMPAC > Anti-Knockback (%check_name%)"          # BAN
 
   Post:
-    remove-violations-after: 300
+    remove-violations-after: 600
     checks:
       - "Post"
     commands:
-      - "15:15 [alert]"
+      - "8:8 [alert]"
       - "1:1 [log]"
       - "40:40 [webhook]"
       - "40:40 [proxy]"
       # --- BuckSMPAC Strafen-Leiter (Post ist sehr zuverlässig) ---
-      - "25:0 ban %player% BuckSMPAC > Paketreihenfolge (%check_name%)"        # BAN
+      - "12:0 ban %player% BuckSMPAC > Paketreihenfolge (%check_name%)"        # BAN
 
   BadPackets:
-    remove-violations-after: 300
+    remove-violations-after: 600
     checks:
       - "BadPackets"
       - "PacketOrder"
       - "Crash"
     commands:
-      - "15:15 [alert]"
+      - "8:8 [alert]"
       - "1:1 [log]"
       - "40:40 [webhook]"
       - "40:40 [proxy]"
       # --- BuckSMPAC Strafen-Leiter (BadPackets ist sehr zuverlässig) ---
-      - "25:0 ban %player% BuckSMPAC > Illegale Pakete (%check_name%)"         # BAN
+      - "12:0 ban %player% BuckSMPAC > Illegale Pakete (%check_name%)"         # BAN
 
   Reach:
-    remove-violations-after: 300
+    remove-violations-after: 600
     checks:
       - "Reach"
     commands:
@@ -126,11 +128,10 @@ Punishments:
       - "5:3 [webhook]"
       - "5:3 [proxy]"
       # --- BuckSMPAC Strafen-Leiter (Reach ist sehr zuverlässig) ---
-      - "10:0 effect give %player% minecraft:slowness 9999 250 true"      # FREEZE
-      - "15:0 ban %player% BuckSMPAC > Reach erkannt (%check_name%)"           # BAN
+      - "8:0 ban %player% BuckSMPAC > Reach erkannt (%check_name%)"           # BAN
 
   Hitboxes:
-    remove-violations-after: 300
+    remove-violations-after: 600
     checks:
       - "Hitboxes"
     commands:
@@ -139,10 +140,10 @@ Punishments:
       - "5:3 [webhook]"
       - "5:3 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "15:0 ban %player% BuckSMPAC > Hitbox erkannt (%check_name%)"          # BAN
+      - "8:0 ban %player% BuckSMPAC > Hitbox erkannt (%check_name%)"          # BAN
 
   Misc:
-    remove-violations-after: 300
+    remove-violations-after: 600
     checks:
       - "Vehicle"
       - "NoSlow"
@@ -156,23 +157,23 @@ Punishments:
       - "Chat"
       - "Exploit"
     commands:
-      - "8:4 [alert]"
+      - "5:3 [alert]"
       - "1:1 [log]"
       - "20:10 [webhook]"
       - "20:10 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "35:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
+      - "20:0 ban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
 
   Combat:
-    remove-violations-after: 300
+    remove-violations-after: 600
     checks:
       - "Interact"
       - "Aim"
     commands:
-      - "15:20 [alert]"
+      - "8:10 [alert]"
       - "1:1 [log]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "35:0 ban %player% BuckSMPAC > Kampf-Anomalie (%check_name%)"         # BAN
+      - "15:0 ban %player% BuckSMPAC > Kampf-Anomalie (%check_name%)"         # BAN
 
   # BuckSMPACs eigener AutoClicker-Check. Er ist als experimentell markiert,
   # und BuckSMPAC liefert experimental-checks: true aus - er LÄUFT also.
@@ -184,17 +185,16 @@ Punishments:
   # schnellsten legitimen Klicker setzen - und erst danach die Leiter unten
   # einkommentieren. Ungetestet aktiviert bannt sie Butterfly-Clicker.
   Autoclicker:
-    remove-violations-after: 300
+    remove-violations-after: 600
     checks:
       - "Autoclicker"
     commands:
       - "15:20 [alert]"
       - "1:1 [log]"
       # --- BuckSMPAC Strafen-Leiter (erst nach dem Einstellen aktivieren) ---
-      #- "60:0 kick %player% &cBuckSMPAC &8» &fAutoClicker (%check_name%)"     # KICK
       #- "120:0 ban %player% BuckSMPAC > AutoClicker (%check_name%)"           # BAN
 
 # Bump marker — BuckSMPAC compares this against the version it ships and
 # warns in the console when yours is older. This file is never overwritten
 # automatically, so the warning is the only way you would find out.
-punishments-version: 3
+punishments-version: 4

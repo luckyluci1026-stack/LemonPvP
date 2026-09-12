@@ -30,7 +30,7 @@ bans:
     # So sammelt sich bei jemandem, der einmal pro Woche einen Check
     # auslöst, nicht langsam ein Ban an.
     # 0 = jeder Flag bleibt, solange der Spieler online ist.
-    remember-flags-for: 900
+    remember-flags-for: 1800
 
     # Keine Stufe greift, bevor der Spieler mindestens so viele
     # VERSCHIEDENE Checks ausgelöst hat. Das ist die Absicherung, die die
@@ -73,12 +73,10 @@ bans:
     # Für einen zeitlich begrenzten Ban:
     #   "tempban %player% 30d BuckSMPAC > %flags% Flags (%top_check%)"
     ladder:
-        - flags: 20
+        - flags: 10
           command: "[alert]"
-        - flags: 35
-          command: "effect give %player% minecraft:slowness 9999 250 true"
-        - flags: 50
+        - flags: 25
           command: "ban %player% BuckSMPAC > %flags% Flags aus %checks% Checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 3
+bans-version: 4
