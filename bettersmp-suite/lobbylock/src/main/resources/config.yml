@@ -15,6 +15,7 @@ block-offhand-swap: true
 block-doors: true
 block-trapdoors: true
 block-signs: true
+block-chat: true
 
 # Kurze Erinnerung per Actionbar, wenn etwas blockiert wurde - hoechstens
 # alle X Sekunden pro Spieler, damit es bei wiederholten Versuchen nicht flutet.
@@ -25,3 +26,8 @@ feedback:
 
 reload-message: "<green>LobbyLock neu geladen.</green>"
 no-permission-message: "<red>Dazu hast du keine Rechte.</red>"
+
+# Eigene, direkte Chat-Antwort statt der Actionbar-Erinnerung oben - eine
+# verschluckte Chatnachricht soll eindeutig als "kam nicht an" erkennbar
+# sein, nicht als kurzes Aufblitzen leicht uebersehen werden.
+chat-blocked-message: "<red>Der Chat ist in der Lobby deaktiviert.</red>"

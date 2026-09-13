@@ -3,7 +3,7 @@ version: ${project.version}
 main: de.lemonpvp.lobbylock.LobbyLock
 api-version: '1.21'
 authors: [SMP]
-description: Sperrt Item-Drop, Inventar-Verschieben, Offhand-Tausch sowie Tueren/Falltueren/Schilder - eigenstaendig, ohne andere Plugins zu beruehren.
+description: Sperrt Item-Drop, Inventar-Verschieben, Offhand-Tausch, Chat sowie Tueren/Falltueren/Schilder - eigenstaendig, ohne andere Plugins zu beruehren.
 
 commands:
   lobbylock:

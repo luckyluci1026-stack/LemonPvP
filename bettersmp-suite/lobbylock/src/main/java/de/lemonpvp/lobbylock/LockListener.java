@@ -1,5 +1,6 @@
 package de.lemonpvp.lobbylock;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -133,6 +134,21 @@ public final class LockListener implements Listener {
         if (gesperrt(event.getPlayer(), schluessel)) {
             event.setCancelled(true);
             warnen(event.getPlayer());
+        }
+    }
+
+    /**
+     * Eigene, direkte Chat-Antwort statt der Actionbar-Erinnerung: Eine
+     * verschluckte Chatnachricht soll eindeutig als "kam nicht an"
+     * erkennbar sein. Adventure-Nachrichten sind auch aus dem Async-
+     * Kontext heraus sicher zu verschicken - kein Thread-Wechsel noetig.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void beimSchreiben(AsyncChatEvent event) {
+        if (gesperrt(event.getPlayer(), "block-chat")) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(LobbyLock.mm(plugin.getConfig().getString("chat-blocked-message",
+                    "<red>Der Chat ist in der Lobby deaktiviert.</red>")));
         }
     }
 

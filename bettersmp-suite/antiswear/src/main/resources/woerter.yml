@@ -1,0 +1,24 @@
+# ----------------------------------------------------------
+#  Wortliste fuer AntiSwear: Wort -> Punkte (je schwerer, desto mehr).
+#
+#  Gross-/Kleinschreibung ist egal. Je nach Einstellung in config.yml
+#  werden Leetspeak (3 statt e), Trennzeichen (s.c.h.e.i.s.s.e) und
+#  wiederholte Buchstaben (scheeiisse) vorher automatisch entfernt -
+#  hier reicht die normale Schreibweise.
+#
+#  Ein Treffer zaehlt auch als Teil eines laengeren Wortes (z.B. faengt
+#  "arschloch" auch "arschlochgesicht" ab).
+#
+#  Das hier ist bewusst nur eine kurze Startliste mit Beispielen -
+#  eigene Woerter je nach Bedarf auf dem eigenen Server ergaenzen,
+#  danach /antiswear reload.
+# ----------------------------------------------------------
+woerter:
+  scheisse: 1
+  arschloch: 2
+  wichser: 3
+  hurensohn: 3
+  bastard: 2
+  idiot: 1
+  trottel: 1
+  spast: 2

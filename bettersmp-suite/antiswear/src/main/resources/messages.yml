@@ -1,0 +1,23 @@
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient> <dark_gray>»</dark_gray> "
+
+reloaded: "%prefix%<green>Konfiguration und Wortliste neu geladen.</green>"
+
+hilfe: "%prefix%<gray>/antiswear <white>reload</white> <dark_gray>|</dark_gray> <white>check <Text></white> <dark_gray>|</dark_gray> <white>punkte <Spieler></white> <dark_gray>|</dark_gray> <white>reset <Spieler></white></gray>"
+
+blockiert: "%prefix%<red>Deine Nachricht wurde blockiert.</red>"
+stummgeschaltet: "%prefix%<red>Du bist stummgeschaltet.</red> <gray>Noch <white>%rest%</white>.</gray>"
+
+stufe-warnen: "%prefix%<gold>Bitte den Ton im Chat maessigen - beim naechsten Mal folgt eine Stummschaltung.</gold>"
+stufe-stummschalten: "%prefix%<red>Du wurdest fuer <white>%dauer%</white> stummgeschaltet.</red> <gray>(Wiederholte Verstoesse)</gray>"
+
+team-hinweis: "<dark_gray>[<gradient:#6C5CE7:#00D4FF>AntiSwear</gradient><dark_gray>]</dark_gray> <white>%spieler%</white> <gray>(<white>%punkte%</white> Pkt.) -</gray> <yellow>%woerter%</yellow><newline><dark_gray> ▪ </dark_gray><gray><italic>%text%</italic></gray>"
+
+check-usage: "%prefix%<gray>/antiswear check <Text></gray>"
+check-sauber: "%prefix%<green>Kein Treffer - dieser Text wuerde durchgehen.</green>"
+check-treffer: "%prefix%<red>Treffer:</red> <white>%woerter%</white> <gray>(<white>%punkte%</white> Pkt.)</gray><newline><gray>Zensiert:</gray> <white>%zensiert%</white>"
+
+punkte-usage: "%prefix%<gray>/antiswear punkte <Spieler></gray>"
+punkte-anzeige: "%prefix%<white>%spieler%</white><gray> steht aktuell bei </gray><white>%punkte%</white><gray> Punkten.</gray>"
+
+reset-usage: "%prefix%<gray>/antiswear reset <Spieler></gray>"
+reset-ok: "%prefix%<green>Punkte und Stummschaltung von <white>%spieler%</white> wurden zurueckgesetzt.</green>"

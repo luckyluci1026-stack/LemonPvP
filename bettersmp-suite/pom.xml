@@ -22,6 +22,7 @@
         <module>smplobby</module>
         <module>lobbylock</module>
         <module>reportplus</module>
+        <module>antiswear</module>
     </modules>
 
     <properties>

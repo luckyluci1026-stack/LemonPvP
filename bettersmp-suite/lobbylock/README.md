@@ -1,7 +1,7 @@
 # LobbyLock
 
 Kleines, eigenständiges Plugin: sperrt Item-Drop, Inventar-Verschieben,
-Offhand-Tausch sowie das Interagieren mit Türen/Falltüren/Schildern.
+Offhand-Tausch, Chat sowie das Interagieren mit Türen/Falltüren/Schildern.
 Absichtlich **nicht** Teil von SMPLobby - lässt sich dazu-installieren,
 ohne ein bestehendes Plugin zu ersetzen oder neu zu bauen.
 
@@ -11,6 +11,9 @@ ohne ein bestehendes Plugin zu ersetzen oder neu zu bauen.
   - Greift nur im eigenen Inventar - andere GUIs (z.B. der Serverwähler
     von SMPLobby) bleiben unberührt.
 - Offhand-Tausch sperren (`block-offhand-swap`)
+- Chat sperren (`block-chat`) - verschluckte Nachrichten bekommen eine
+  eigene, direkte Chat-Antwort statt nur der Actionbar-Erinnerung unten,
+  damit eindeutig ist, dass die Nachricht nicht angekommen ist.
 - Türen/Falltüren/Schilder-Interaktion sperren, jede Art einzeln
   (`block-doors`, `block-trapdoors`, `block-signs`) - erkennt alle
   Holzarten/Varianten über den Materialnamen, keine feste Liste.
