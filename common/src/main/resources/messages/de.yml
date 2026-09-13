@@ -1,4 +1,4 @@
-prefix: "<gradient:#ffd500:#ff8a00:#ff4d00><bold>BuckSMPAC</bold></gradient> &8\u00BB"
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMPAC</bold></gradient> &8\u00BB"
 
 alerts-enabled: "%prefix% &fBenachrichtigungen aktiviert"
 alerts-disabled: "%prefix% &fBenachrichtigungen deaktiviert"
@@ -6,7 +6,7 @@ verbose-enabled: "%prefix% &fVerbose enabled"
 verbose-disabled: "%prefix% &fVerbose disabled"
 brands-enabled: "%prefix% &fBrands enabled"
 brands-disabled: "%prefix% &fBrands disabled"
-client-brand-format: "%prefix% &f%player% &7hat sich mit <gradient:#00ff95:#00d4ff>%brand%</gradient> &7verbunden"
+client-brand-format: "%prefix% &f%player% &7hat sich mit <gradient:#6C5CE7:#00D4FF>%brand%</gradient> &7verbunden"
 console-specify-target: "%prefix% &cDu musst ein Ziel angeben, da du die Konsole benutzt!"
 reloading: "%prefix% &7Konfiguration wird neu geladen..."
 reloaded: "%prefix% &fDie Konfiguration wurde neu geladen."
@@ -42,23 +42,25 @@ webhook-test-failed: "Discord webhook test failed!"
 # %experimental%
 # %vl% - Verstöße
 # %verbose% - zusätzliche Informationen von der Prüfung, nicht alle Prüfungen liefern zusätzliche Informationen
-alerts-format: "%prefix% &f%player% <gradient:#ff2d00:#ff9d00>scheiterte an</gradient> <hover:show_text:\"<gradient:#ff2d00:#ff9d00>%check_name%%experimental%</gradient>\n&8Beschreibung: &f%description%\"><gradient:#ff2d00:#ff9d00>%check_name%%experimental%</gradient></hover> &f(x&c%vl%&f) &7%verbose%"
+alerts-format: "%prefix% &f%player% <gradient:#6C5CE7:#00D4FF>scheiterte an</gradient> <hover:show_text:\"<gradient:#6C5CE7:#00D4FF>%check_name%%experimental%</gradient>\n&8Beschreibung: &f%description%\"><gradient:#6C5CE7:#00D4FF>%check_name%%experimental%</gradient></hover> &f(x&c%vl%&f) &7%verbose%"
 alerts-format-proxy: "%prefix% &f[&cproxy&f] &f%player% &bbestand <hover:show_text:\"&b%check_name%%experimental%\n&8Beschreibung: &f%description%\">&f%check_name%%experimental%</hover> &bnicht &f(x&c%vl%&f) &7%verbose%"
 experimental-symbol: "*"
 
 profile:
-    - "<gradient:#ffd500:#ff4d00>========================</gradient>"
-    - "%prefix% <gradient:#ffd500:#ff4d00>Profil für</gradient> &f%player%"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
+    - "%prefix% <gradient:#6C5CE7:#00D4FF>Profil für</gradient> &f%player%"
     - "&bPing: &f%ping%"
     - "&bVersion: &f%version%"
     - "&bClient Marke: &f%brand%"
     - "&bHorizontale Sensitivität: &f%h_sensitivity%%"
     - "&bVertikale Sensitivität: &f%v_sensitivity%%"
     - "&bFastMath aktiviert: &f%fast_math%"
-    - "<gradient:#ffd500:#ff4d00>========================</gradient>"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
 help:
-    - "<gradient:#ffd500:#ff4d00>========================</gradient>"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
     - "&7Kurzformen: &f/buckac &7und &f/bac"
+    - "/acban <Spieler> [Grund] &f- &7Bannt einen Spieler (BuckSMPACs eigene Liste)"
+    - "/acunban <Spieler> &f- &7Hebt einen BuckSMPAC-Ban auf"
     - "/bucksmpac alerts &f- &7Schaltet Benachrichtigungen um"
     - "/bucksmpac brands &f- &7Toggle brands"
     - "/bucksmpac profile <player> &f- &7Zeigt Informationen über einen Spieler an"
@@ -73,7 +75,7 @@ help:
     - "/bucksmpac history <player> page <N> &f- &7Springt zu Seite N der Sitzungsliste"
     - "/bucksmpac history <player> session <N|latest> [-d] [-v] &f- &7Sitzungsdetails (neueste Verstöße zuerst)"
     - "/bucksmpac history <player> session <N|latest> page <N> [-d] [-v] &f- &7Sitzungsdetails, Verstoß-Seite N"
-    - "<gradient:#ffd500:#ff4d00>========================</gradient>"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
 
 # === /bucksmpac history ===
 # Sitzungsbasierte Verlaufs-UI. Alle Zeilen unten sind frei konfigurierbar;
@@ -124,6 +126,15 @@ grim-history-detail-group: "%prefix% &7- %checks_list% &8(&b%offset%&8)"
 grim-history-detail-entry: "%prefix% &7- &f%check% &8(&b%offset%&8)&7 %verbose%"
 # Inneres Format für jeden Check in einer Gruppen-%checks_list% — gültige Platzhalter: %check_name% %count%
 grim-history-check-count: "&f%check_name%&7 x&c%count%"
+
+# === /acban ===
+# BuckSMPACs eigene Ban-Liste. %target% ist der Spieler, %reason% der Grund.
+acban-success: "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>wurde gebannt.</gray> <dark_gray>(%reason%)</dark_gray>"
+acunban-success: "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>wurde entbannt.</gray>"
+acunban-not-banned: "%prefix% <gray>Kein BuckSMPAC-Ban gefunden für</gray> <gradient:#6C5CE7:#00D4FF>%target%</gradient><gray>.</gray>"
+acban-storage-unavailable: "%prefix% <red>Die Ban-Liste ist nicht verfügbar — BuckSMPACs Datenbank ist aus oder konnte nicht laden. Siehe Konsole."
+# Der Bildschirm, den ein gebannter Spieler sieht. %reason% und %date% werden eingesetzt.
+acban-screen: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMPAC</bold></gradient><newline><newline><white>Du bist von diesem Netzwerk gebannt.<newline><newline><gray>Grund: <white>%reason%<newline><gray>Datum: <white>%date%"
 
 # Schema-Marker — siehe Kopf-Kommentar in config.yml.
 config-flavor: V2

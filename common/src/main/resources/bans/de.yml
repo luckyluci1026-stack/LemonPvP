@@ -65,18 +65,17 @@ bans:
     # schreibt dann eine Warnung, also nach dem ersten Ban in die Konsole
     # schauen.
     #
-    # AdvancedBan / BanManager / LiteBans / LibertyBans registrieren /ban
-    # und /tempban selbst. Die Zeile unten funktioniert also, solange das
-    # Plugin auch auf diesem Backend liegt und auf dieselbe Datenbank zeigt
-    # wie die Proxy-Installation.
+    # acban ist BuckSMPACs eigener Ban - nichts zu installieren, nichts zu
+    # konfigurieren. Liegt in BuckSMPACs Datenbank (database.yml); zeig jeden
+    # Server auf dieselbe MySQL/MariaDB, dann gilt ein Ban überall.
     #
-    # Für einen zeitlich begrenzten Ban:
+    # Lieber ein externes Plugin? Dann tauschen gegen z. B.
     #   "tempban %player% 30d BuckSMPAC > %flags% Flags (%top_check%)"
     ladder:
         - flags: 10
           command: "[alert]"
         - flags: 25
-          command: "ban %player% BuckSMPAC > %flags% Flags aus %checks% Checks (%top_check% x%top_count%)"
+          command: "acban %player% BuckSMPAC > %flags% Flags aus %checks% Checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 4
+bans-version: 5

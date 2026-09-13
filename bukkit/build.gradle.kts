@@ -157,6 +157,14 @@ bukkit {
             default = Permission.Default.FALSE
         }
 
+        register("bucksmpac.acban") {
+            description = "Ban a player using BuckSMPAC's own ban list"
+            default = Permission.Default.OP
+        }
+        register("bucksmpac.acunban") {
+            description = "Lift a BuckSMPAC ban"
+            default = Permission.Default.OP
+        }
         register("bucksmpac.list") {
             description =
                 "Shows lists of specific data"

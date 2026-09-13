@@ -63,17 +63,17 @@ bans:
     # to nothing and the player keeps playing. BuckSMPAC logs a warning when
     # that happens, so check your console after the first ban.
     #
-    # AdvancedBan / BanManager / LiteBans / LibertyBans register /ban and
-    # /tempban themselves, so the line below works as long as the plugin is
-    # also on this backend, pointed at the same database as the proxy copy.
+    # acban is BuckSMPAC's own ban - nothing to install, nothing to
+    # configure. Stored in BuckSMPAC's database (database.yml); point every
+    # server at the same MySQL/MariaDB and one ban covers all of them.
     #
-    # For a timed ban:
+    # Prefer an external plugin? Swap it for e.g.
     #   "tempban %player% 30d BuckSMPAC > %flags% flags (%top_check%)"
     ladder:
         - flags: 10
           command: "[alert]"
         - flags: 25
-          command: "ban %player% BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"
+          command: "acban %player% BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 4
+bans-version: 5

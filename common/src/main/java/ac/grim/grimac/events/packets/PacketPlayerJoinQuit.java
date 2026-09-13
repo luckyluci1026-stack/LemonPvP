@@ -1,6 +1,7 @@
 package ac.grim.grimac.events.packets;
 
 import ac.grim.grimac.GrimAPI;
+import ac.grim.grimac.manager.AcBanEnforcer;
 import ac.grim.grimac.manager.datastore.PlayerToggleStore;
 import ac.grim.grimac.platform.api.player.PlatformPlayer;
 import ac.grim.grimac.utils.anticheat.LogUtil;
@@ -22,6 +23,9 @@ public class PacketPlayerJoinQuit extends PacketListenerAbstract {
             // Do this after send to avoid sending packets before the PLAY state
             event.getTasksAfterSend().add(() -> {
                 GrimAPI.INSTANCE.getPlayerDataManager().addUser(event.getUser());
+                // BuckSMPAC's own ban list. Asynchronous on purpose - a database
+                // round-trip on the Netty thread would tax every legitimate join.
+                AcBanEnforcer.checkOnLogin(event.getUser());
                 // Prefetch the player's persisted alerts/verbose/brands toggles so onUserLogin can apply them immediately instead of falling back to the permission-default when the read hasn't completed in time.
                 //
                 // Runs on the backend's reader executor: never blocks this Netty thread. By the time onUserLogin fires (after chunk load / resource pack / motd) the prefetch has typically settled, and onUserLogin reads from the in-memory cache. A slow DB or a brand-new player with no row yet falls through to the permission-default.

@@ -1,5 +1,5 @@
 # \u00BB is » (double >>), ANSI and UTF-8 interpret this differently... you may even see ? due to this
-prefix: "<gradient:#ffd500:#ff8a00:#ff4d00><bold>BuckSMPAC</bold></gradient> &8\u00BB"
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMPAC</bold></gradient> &8\u00BB"
 
 alerts-enabled: "%prefix% &fAlerts enabled"
 alerts-disabled: "%prefix% &fAlerts disabled"
@@ -7,7 +7,7 @@ verbose-enabled: "%prefix% &fVerbose enabled"
 verbose-disabled: "%prefix% &fVerbose disabled"
 brands-enabled: "%prefix% &fBrands enabled"
 brands-disabled: "%prefix% &fBrands disabled"
-client-brand-format: "%prefix% &f%player% &7joined using <gradient:#00ff95:#00d4ff>%brand%</gradient>"
+client-brand-format: "%prefix% &f%player% &7joined using <gradient:#6C5CE7:#00D4FF>%brand%</gradient>"
 console-specify-target: "%prefix% &cYou must specify a target as the console!"
 reloading: "%prefix% &7Reloading config..."
 reloaded: "%prefix% &fConfig has been reloaded."
@@ -43,23 +43,25 @@ webhook-test-failed: "Discord webhook test failed!"
 # %experimental%
 # %vl% - violations
 # %verbose% - extra information from the check such as offsets, not all checks will add information
-alerts-format: "%prefix% &f%player% <gradient:#ff2d00:#ff9d00>failed</gradient> <hover:show_text:\"<gradient:#ff2d00:#ff9d00>%check_name%%experimental%</gradient>\n&8Description: &f%description%\"><gradient:#ff2d00:#ff9d00>%check_name%%experimental%</gradient></hover> &f(x&c%vl%&f) &7%verbose%"
+alerts-format: "%prefix% &f%player% <gradient:#6C5CE7:#00D4FF>failed</gradient> <hover:show_text:\"<gradient:#6C5CE7:#00D4FF>%check_name%%experimental%</gradient>\n&8Description: &f%description%\"><gradient:#6C5CE7:#00D4FF>%check_name%%experimental%</gradient></hover> &f(x&c%vl%&f) &7%verbose%"
 alerts-format-proxy: "%prefix% &f[&cproxy&f] &f%player% &bfailed &f%check_name%%experimental% &f(x&c%vl%&f) &7%verbose%"
 experimental-symbol: "*"
 
 profile:
-    - "<gradient:#ffd500:#ff4d00>========================</gradient>"
-    - "%prefix% <gradient:#ffd500:#ff4d00>Profile for</gradient> &f%player%"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
+    - "%prefix% <gradient:#6C5CE7:#00D4FF>Profile for</gradient> &f%player%"
     - "&bPing: &f%ping%"
     - "&bVersion: &f%version%"
     - "&bClient Brand: &f%brand%"
     - "&bHorizontal Sensitivity: &f%h_sensitivity%%"
     - "&bVertical Sensitivity: &f%v_sensitivity%%"
     - "&bFastMath Enabled: &f%fast_math%"
-    - "<gradient:#ffd500:#ff4d00>========================</gradient>"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
 help:
-    - "<gradient:#ffd500:#ff4d00>========================</gradient>"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
     - "&7Short forms: &f/buckac &7and &f/bac"
+    - "/acban <player> [reason] &f- &7Ban a player (BuckSMPAC's own list)"
+    - "/acunban <player> &f- &7Lift a BuckSMPAC ban"
     - "/bucksmpac alerts &f- &7Toggle alerts"
     - "/bucksmpac brands &f- &7Toggle brands"
     - "/bucksmpac profile <player> &f- &7View player info"
@@ -74,7 +76,7 @@ help:
     - "/bucksmpac history <player> page <N> &f- &7Jump to page N of the session list"
     - "/bucksmpac history <player> session <N|latest> [-d] [-v] &f- &7Session detail (most recent violations first)"
     - "/bucksmpac history <player> session <N|latest> page <N> [-d] [-v] &f- &7Session detail, violation page N"
-    - "<gradient:#ffd500:#ff4d00>========================</gradient>"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
 
 # === /bucksmpac history ===
 # Session-based history UI. All lines below are fully configurable; placeholders
@@ -125,6 +127,15 @@ grim-history-detail-group: "%prefix% &7- %checks_list% &8(&b%offset%&8)"
 grim-history-detail-entry: "%prefix% &7- &f%check% &8(&b%offset%&8)&7 %verbose%"
 # Inner format for each check in a group's %checks_list% — valid placeholders: %check_name% %count%
 grim-history-check-count: "&f%check_name%&7 x&c%count%"
+
+# === /acban ===
+# BuckSMPAC's own ban list. %target% is the player, %reason% the reason.
+acban-success: "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>has been banned.</gray> <dark_gray>(%reason%)</dark_gray>"
+acunban-success: "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>has been unbanned.</gray>"
+acunban-not-banned: "%prefix% <gray>No BuckSMPAC ban found for</gray> <gradient:#6C5CE7:#00D4FF>%target%</gradient><gray>.</gray>"
+acban-storage-unavailable: "%prefix% <red>The ban list is unavailable — BuckSMPAC's database is off or failed to load. See the console."
+# The screen a banned player sees. %reason% and %date% are filled in.
+acban-screen: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMPAC</bold></gradient><newline><newline><white>You are banned from this network.<newline><newline><gray>Reason: <white>%reason%<newline><gray>Date: <white>%date%"
 
 # Schema markers — see header comment in config.yml.
 config-flavor: V2
