@@ -1,0 +1,21 @@
+# BetterRTP - Nachrichten (MiniMessage + Legacy-Codes)
+prefix: "<gradient:#66E0FF:#3399FF><bold>RTP</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+players-only: "%prefix%<red>Nur für Spieler.</red>"
+reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
+
+searching: "%prefix%<gray>Suche eine sichere Position ...</gray>"
+warmup: "%prefix%<gray>Teleport in <white>%seconds%s</white> - beweg dich nicht!</gray>"
+warmup-actionbar: "<#66E0FF>Teleport in <white>%seconds%</white> ...</#66E0FF>"
+warmup-cancelled: "%prefix%<red>Teleport abgebrochen (Bewegung/Schaden).</red>"
+success: "%prefix%<green>Willkommen bei <white>%x%, %y%, %z%</white> in <white>%world%</white>!</green>"
+failed: "%prefix%<red>Keine sichere Position gefunden. Versuch es nochmal.</red>"
+cooldown: "%prefix%<red>Bitte warte noch <white>%seconds%s</white>.</red>"
+world-disabled: "%prefix%<red>In dieser Welt ist RTP deaktiviert.</red>"
+world-not-found: "%prefix%<red>Welt <white>%world%</white> nicht gefunden.</red>"
+already-teleporting: "%prefix%<red>Du wartest bereits auf einen Teleport.</red>"
+not-enough-money: "%prefix%<red>Du brauchst <white>%cost%</white> für einen RTP.</red>"
+paid: "%prefix%<gray>Kosten: <white>%cost%</white></gray>"
+usage: "%prefix%<gray>Nutzung: <white>/rtp [Welt]</white></gray>"
+admin-usage: "%prefix%<gray>Nutzung: <white>/betterrtp <reload|version></white></gray>"

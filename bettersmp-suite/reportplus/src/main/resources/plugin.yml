@@ -1,0 +1,43 @@
+name: ReportPlus
+version: ${project.version}
+main: de.lemonpvp.reportplus.ReportPlus
+api-version: '1.21'
+authors: [SMP]
+description: GUI-/report (ersetzt BetterSMPs Text-Version) und neues /bugreport, mit Warteschlangen-GUIs fuers Team.
+# Vor BetterSMP laden: Bukkit vergibt einen doppelt vergebenen Befehlsnamen
+# an das zuerst aktivierte Plugin - ohne das hier wuerde BetterSMPs eigenes
+# /report weiter gewinnen und unseres nur ueber "reportplus:report" gehen.
+loadbefore: [BetterSMP]
+
+commands:
+  report:
+    description: Meldet einen Spieler (mit GUI)
+    usage: "/report [Spieler]"
+  bugreport:
+    description: Meldet einen Bug (mit GUI)
+    usage: "/bugreport"
+  reports:
+    description: Offene Spieler-Meldungen (Team)
+    usage: "/reports"
+  bugreports:
+    description: Offene Bug-Meldungen (Team)
+    usage: "/bugreports"
+  reportplus:
+    description: ReportPlus-Verwaltung
+    usage: "/reportplus reload"
+    permission: reportplus.admin
+
+permissions:
+  # bettersmp.report und bettersmp.report.receive werden absichtlich NICHT
+  # hier neu deklariert - die gehoeren schon BetterSMP (default: true bzw.
+  # op) und sollen unveraendert weiterwirken, damit niemand in LuckPerms
+  # etwas nachziehen muss, nur weil dieses Plugin die Meldung uebernimmt.
+  bettersmp.bugreport:
+    description: /bugreport nutzen
+    default: true
+  bettersmp.bugreport.receive:
+    description: Neue Bug-Meldungen live sehen + /bugreports nutzen
+    default: op
+  reportplus.admin:
+    description: /reportplus reload
+    default: op

@@ -1,0 +1,130 @@
+# BetterSMP - Nachrichten (MiniMessage + Legacy-Codes möglich)
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>%brand%</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
+players-only: "%prefix%<red>Nur für Spieler.</red>"
+player-not-found: "%prefix%<red>Spieler nicht gefunden.</red>"
+
+combat:
+  tagged: "%prefix%<red>Du bist im Kampf mit <white>%opponent%</white>! Logge nicht aus! (<white>%seconds%s</white>)</red>"
+  expired: "%prefix%<green>Du bist nicht mehr im Kampf.</green>"
+  actionbar: "<red>⚔ Im Kampf: <white>%seconds%s</white> ⚔</red>"
+  command-blocked: "%prefix%<red>Dieser Befehl ist im Kampf gesperrt! (<white>%seconds%s</white>)</red>"
+  logged-broadcast: "<dark_gray>[<red>⚔</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>hat im Kampf ausgeloggt und wurde bestraft!</gray>"
+  opponent-logged: "%prefix%<green>Dein Gegner <white>%player%</white> hat ausgeloggt - du bist wieder frei.</green>"
+
+mentions:
+  notify-actionbar: "<#00D4FF>%player% hat dich im Chat erwähnt!</#00D4FF>"
+
+# ---------------- Ban / Mute ----------------
+ban:
+  usage: "%prefix%<gray>Nutzung: <white>/gban <Spieler> <Grund></white></gray>"
+  unknown-reason: "%prefix%<red>Unbekannter Grund <white>%reason%</white>. Verfügbar: <gray>%list%</gray></red>"
+  success: "%prefix%<green><white>%player%</white> wurde gebannt <gray>(%reason%, %duration%)</gray>.</green>"
+  broadcast: "<dark_gray>[<red>⛔</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>wurde von <white>%actor%</white> gebannt <dark_gray>(%reason%)</dark_gray></gray>"
+  already-banned: "%prefix%<red><white>%player%</white> ist bereits gebannt.</red>"
+  exempt: "%prefix%<red><white>%player%</white> kann nicht gebannt werden.</red>"
+  unban-usage: "%prefix%<gray>Nutzung: <white>/gunban <Spieler></white></gray>"
+  unban-success: "%prefix%<green><white>%player%</white> wurde entbannt.</green>"
+  not-banned: "%prefix%<red><white>%player%</white> ist nicht gebannt.</red>"
+
+mute:
+  usage: "%prefix%<gray>Nutzung: <white>/gmute <Spieler> <Grund></white></gray>"
+  unknown-reason: "%prefix%<red>Unbekannter Grund <white>%reason%</white>. Verfügbar: <gray>%list%</gray></red>"
+  success: "%prefix%<green><white>%player%</white> wurde gemutet <gray>(%reason%, %duration%)</gray>.</green>"
+  broadcast: "<dark_gray>[<gold>🔇</gold>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>wurde von <white>%actor%</white> gemutet <dark_gray>(%reason%)</dark_gray></gray>"
+  already-muted: "%prefix%<red><white>%player%</white> ist bereits gemutet.</red>"
+  exempt: "%prefix%<red><white>%player%</white> kann nicht gemutet werden.</red>"
+  unmute-usage: "%prefix%<gray>Nutzung: <white>/gunmute <Spieler></white></gray>"
+  unmute-success: "%prefix%<green><white>%player%</white> wurde entmutet.</green>"
+  not-muted: "%prefix%<red><white>%player%</white> ist nicht gemutet.</red>"
+
+# ---------------- Dauer-Wörter ----------------
+duration:
+  permanent: "Permanent"
+  never: "Nie"
+  format: "%days%d %hours%h %minutes%m"
+
+# ---------------- Stats ----------------
+stats:
+  header: "<dark_gray>▏</dark_gray> <gradient:#6C5CE7:#00D4FF><bold>Statistiken</bold></gradient> <dark_gray>von <white>%player%</white>"
+  line-rank: "<dark_gray> • </dark_gray><gray>Rang: %rank%"
+  line-money: "<dark_gray> • </dark_gray><gray>Geld: <#7CFC00>%money%</#7CFC00>"
+  line-kills: "<dark_gray> • </dark_gray><gray>Kills: <white>%kills%</white>  Tode: <white>%deaths%</white>  K/D: <#00D4FF>%kd%</#00D4FF>"
+  line-mobkills: "<dark_gray> • </dark_gray><gray>Mob-Kills: <white>%mobkills%</white>"
+  line-playtime: "<dark_gray> • </dark_gray><gray>Spielzeit: <white>%playtime%</white>"
+  line-joins: "<dark_gray> • </dark_gray><gray>Beitritte: <white>%joins%</white>  Zuletzt: <white>%lastseen%</white>"
+  loading: "%prefix%<gray>Lade Statistiken ...</gray>"
+
+# ---------------- Tod -> Lobby ----------------
+death-redirect:
+  notice: "%prefix%<gray>Du kommst gleich zurück in die Lobby ...</gray>"
+
+# ---------------- Einfrieren ----------------
+freeze:
+  not-online: "%prefix%<red><white>%spieler%</white> ist nicht online.</red>"
+  done: "%prefix%<green><white>%spieler%</white> ist jetzt eingefroren.</green>"
+  undone: "%prefix%<green><white>%spieler%</white> ist wieder frei.</green>"
+  frozen-notice: "%prefix%<gold>Du wurdest von <white>%von%</white> eingefroren.</gold><newline><gray>Du kannst dich nicht bewegen, aber reden geht - warte, bis sich jemand meldet.</gray>"
+  unfrozen-notice: "%prefix%<green>Du bist nicht mehr eingefroren.</green>"
+  still-frozen: "%prefix%<gold>Du bist immer noch eingefroren.</gold>"
+  left-while-frozen: "%prefix%<gray>⚠ <white>%spieler%</white> hat eingefroren die Verbindung getrennt.</gray>"
+  command-blocked: "%prefix%<red>Das geht nicht, solange du eingefroren bist.</red>"
+  actionbar: "<aqua>❄ Du bist eingefroren ❄</aqua>"
+  list-empty: "%prefix%<green>Niemand ist gerade eingefroren.</green>"
+  list-header: "%prefix%<gold><bold>Eingefroren (%anzahl%):</bold></gold>"
+  list-entry: "%prefix%<gray>• <white>%spieler%</white> <dark_gray>- seit <white>%dauer%</white></dark_gray>%status%"
+
+# ---------------- Meldungen ----------------
+report:
+  usage: "%prefix%<gray>/report <Spieler> <Grund></gray>"
+  not-online: "%prefix%<red><white>%spieler%</white> ist nicht online.</red>"
+  not-yourself: "%prefix%<red>Dich selbst kannst du nicht melden.</red>"
+  cooldown: "%prefix%<gold>Warte noch <white>%sekunden%</white> Sekunden, bevor du erneut meldest.</gold>"
+  sent: "%prefix%<green>Meldung zu <white>%spieler%</white> ist raus - das Team schaut sich das an.</green>"
+  received: "%prefix%<gold><bold>Meldung</bold></gold> <dark_gray>-</dark_gray> <white>%melder%</white> <gray>meldet</gray> <white>%spieler%</white><newline><gray>Grund: <white>%grund%</white></gray>"
+
+# ---------------- Tägliche Kleinigkeit ----------------
+daily:
+  already-claimed: "%prefix%<gold>Heute schon abgeholt - versuch es in <white>%stunden%</white> Stunden wieder.</gold>"
+  claimed: "%prefix%<green>Abgeholt! Serie: <white>%serie%</white> Tag(e) am Stück.</green>"
+  join-reminder: "%prefix%<gray>Deine tägliche Belohnung wartet noch - <white>/daily</white>!</gray>"
+
+# ---------------- Serverspawn ----------------
+spawn:
+  not-set: "%prefix%<red>Es ist noch kein Spawn gesetzt.</red><newline><gray>Stell dich hin und tipp <white>/setspawn</white>.</gray>"
+  teleported: "%prefix%<gray>Zurück am Spawn.</gray>"
+  set: "%prefix%<green>Spawn gesetzt.</green>"
+
+# ---------------- Serien-Ansagen ----------------
+killstreak:
+  milestone: "<gradient:#6C5CE7:#00D4FF><bold>⚔</bold></gradient> <white>%spieler%</white> <gray>ist auf einer Serie von</gray> <white>%serie%</white><gray>!</gray>"
+  ended: "<dark_gray>[<red>☠</red>]</dark_gray> <white>%toeter%</white> <gray>hat die Serie von</gray> <white>%opfer%</white> <gray>bei</gray> <white>%serie%</white> <gray>beendet.</gray>"
+
+# ---------------- Installer / Ranks / Status ----------------
+installer:
+  checking: "%prefix%<gray>Prüfe Begleit-Plugins ...</gray>"
+  already-installed: "%prefix%<gray>%plugin% ist bereits installiert - übersprungen.</gray>"
+  downloading: "%prefix%<gray>Lade <white>%plugin%</white> herunter ...</gray>"
+  downloaded: "%prefix%<green>%plugin% installiert: <white>%file%</white></green>"
+  failed: "%prefix%<red>Download von %plugin% fehlgeschlagen: <white>%error%</white></red>"
+  nothing-to-do: "%prefix%<green>Alle Begleit-Plugins sind bereits installiert.</green>"
+  restart-needed: "%prefix%<#00D4FF>Installation abgeschlossen! Bitte starte den Server EINMAL neu.</#00D4FF>"
+  configs-deployed: "%prefix%<green>Fertige Configs für <white>%target%</white> angelegt.</green>"
+  properties-patched: "%prefix%<green>server.properties: enforce-secure-profile=false gesetzt (aktiv nach Neustart).</green>"
+
+ranks:
+  started: "%prefix%<gray>Erstelle LuckPerms-Standard-Ränge ...</gray>"
+  done: "%prefix%<green>Ränge eingerichtet! Vergabe z.B.: <white>/lp user <Name> parent set owner1</white></green>"
+  no-luckperms: "%prefix%<red>LuckPerms ist nicht geladen. Erst installieren (/bettersmp install) und neu starten.</red>"
+
+status:
+  header: "%prefix%<white>Status</white>"
+  line: "<dark_gray> • </dark_gray><gray>%plugin%: %status%</gray>"
+  installed: "<green>installiert (%version%)</green>"
+  missing: "<red>fehlt</red>"
+  combat-line: "<dark_gray> • </dark_gray><gray>Spieler im Kampf: <white>%count%</white></gray>"
+  db-line: "<dark_gray> • </dark_gray><gray>Datenbank: <white>%type%</white></gray>"
+
+usage: "%prefix%<gray>Befehle: <white>/bettersmp status | install | update | ranks | deployconfigs | reload</white></gray>"

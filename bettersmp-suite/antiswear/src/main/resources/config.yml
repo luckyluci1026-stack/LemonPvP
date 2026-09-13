@@ -1,0 +1,58 @@
+# ==========================================================
+#  AntiSwear - Chat-Filter
+#
+#  Die Wortliste steht NICHT hier, sondern in woerter.yml (eigene
+#  Datei), damit sie bei einer langen Liste nicht diese config.yml
+#  zumuellt.
+# ==========================================================
+
+# ----------------------------------------------------------
+#  Erkennung
+# ----------------------------------------------------------
+erkennung:
+  # ERSETZEN   = nur das/die Wort(e) werden zu Sternchen zensiert,
+  #              der Rest der Nachricht kommt trotzdem an.
+  # BLOCKIEREN = die ganze Nachricht wird verschluckt.
+  modus: ERSETZEN
+
+  # Umgehungsversuche abfangen - alle drei zusammen fangen z.B.
+  # "sch3iss3", "s c h e i s s e" und "scheeeiiisse" gleichermassen ab:
+  leetspeak: true        # 3->e, 4->a, 1->i, 0->o, 5->s, 7->t, @->a, $->s
+  trennzeichen: true      # "s.c.h.e.i.s.s.e" bzw. "s c h e i s s e"
+  wiederholungen: true    # "scheeeiiisse" -> "scheisse"
+
+# ----------------------------------------------------------
+#  Punkte-Stufen
+#
+#  Jeder Treffer aus woerter.yml zaehlt seine Punkte auf das Konto des
+#  Spielers. Ohne neuen Verstoss verfallen alle Punkte nach
+#  verfall-minuten wieder auf 0 - eine einzelne Entgleisung vor Wochen
+#  soll nicht ewig nachwirken.
+#
+#  Bei jedem Verstoss wird geprueft, ob eine neue Schwelle ueberschritten
+#  wurde - nur die HOECHSTE neu erreichte Stufe loest aus, nicht alle
+#  gleichzeitig.
+#
+#  aktion:
+#    WARNEN         - nur eine Nachricht an den Spieler
+#    STUMMSCHALTEN  - AntiSwears eigene, eingebaute Kurzzeit-Stummschaltung
+#                     (dauer: 30m 12h 7d 2w) - komplett ohne anderes Plugin
+#    BEFEHL         - fuehrt "befehl" ueber die Konsole aus, %spieler% wird
+#                     ersetzt. Hier kann z.B. ein Befehl von AdvancedBan
+#                     oder jedem anderen gerade installierten Plugin rein -
+#                     AntiSwear selbst muss dafuer nichts davon kennen.
+# ----------------------------------------------------------
+strikes:
+  verfall-minuten: 60
+  stufen:
+    3:
+      aktion: WARNEN
+    6:
+      aktion: STUMMSCHALTEN
+      dauer: "10m"
+    10:
+      aktion: BEFEHL
+      befehl: "mute %spieler% 1h Wiederholte Beleidigungen (AntiSwear)"
+    15:
+      aktion: BEFEHL
+      befehl: "ban %spieler% Wiederholte schwere Verstoesse (AntiSwear)"

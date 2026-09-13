@@ -1,0 +1,24 @@
+# EasyBedrock - Nachrichten (MiniMessage + Legacy-Codes)
+prefix: "<gradient:#2ECC71:#27AE60><bold>EasyBedrock</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+usage: "%prefix%<gray>Nutzung: <white>/easybedrock <status|install|optimize></white></gray>"
+
+checking: "%prefix%<gray>Prüfe Bedrock-Komponenten ...</gray>"
+already-installed: "%prefix%<gray>%comp% ist bereits installiert - übersprungen.</gray>"
+downloading: "%prefix%<gray>Lade <white>%comp%</white> ...</gray>"
+downloaded: "%prefix%<green>%comp% installiert: <white>%file%</white></green>"
+failed: "%prefix%<red>%comp% fehlgeschlagen: <white>%error%</white></red>"
+nothing-to-do: "%prefix%<green>Alle Bedrock-Komponenten sind bereits installiert.</green>"
+restart-needed: "%prefix%<#2ECC71>Fertig! Bitte starte den Server EINMAL neu, damit Geyser/Floodgate geladen werden.</#2ECC71>"
+no-geyser-folder: "%prefix%<gray>Geyser-Ordner noch nicht vorhanden - Optimierung nach dem Geyser-Erststart erneut ausführen.</gray>"
+
+optimized: "%prefix%<green>Geyser optimiert (%changes% Änderung(en)). Neustart wendet sie an.</green>"
+optimize-none: "%prefix%<gray>Geyser ist bereits optimal eingestellt.</gray>"
+
+status-header: "%prefix%<white>Status</white>"
+status-line: "<dark_gray> • </dark_gray><gray>%comp%: %state%</gray>"
+status-installed: "<green>installiert</green>"
+status-missing: "<red>fehlt</red>"
+status-bedrock-players: "<dark_gray> • </dark_gray><gray>Bedrock-Spieler online: <white>%count%</white></gray>"
+status-direct: "<dark_gray> • </dark_gray><gray>Direktverbindung (Java-Last): %state%</gray>"

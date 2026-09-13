@@ -1,0 +1,48 @@
+# ==========================================================
+#  EasyBedrock - Konfiguration
+#  Bedrock-Crossplay in einem Schritt: Geyser + Floodgate.
+#  Ziel: Ein Bedrock-Spieler verbraucht etwa so viele Ressourcen
+#  wie ein Java-Spieler (Direktverbindung, keine Doppel-Verbindung).
+# ==========================================================
+
+installer:
+  # Beim Start fehlende Komponenten automatisch herunterladen
+  auto-install-on-start: true
+  timeout-seconds: 30
+
+  # Kernkomponenten (offizielle GeyserMC-Downloads)
+  geyser: true      # GeyserMC (Bedrock <-> Java Brücke)
+  floodgate: true   # Floodgate (Bedrock-Spieler ohne Java-Account)
+
+  # Geyser-Erweiterungen (landen in plugins/Geyser-Spigot/extensions/)
+  geyserconnect:
+    enabled: false
+    # GitHub-Release, aus dem die Extension geladen wird
+    repo: "GeyserMC/GeyserConnect"
+    asset: "GeyserConnect.jar"
+  thunder:
+    enabled: false
+    # Quelle bitte selbst eintragen (offizieller Download nicht verifiziert).
+    # Sobald repo + asset gesetzt sind und enabled: true, wird sie geladen.
+    repo: ""
+    asset: "Thunder.jar"
+
+# ----------------------------------------------------------
+#  Ressourcen-Optimierung
+#  Patcht NUR wenige, seit Jahren stabile Geyser-Schlüssel -
+#  versionssicher, der Rest der Geyser-Config bleibt unangetastet.
+# ----------------------------------------------------------
+optimize:
+  enabled: true
+  # Direktverbindung: Bedrock-Spieler gehen ohne zweite (Java-)Verbindung
+  # direkt auf den Server -> Ressourcenverbrauch ~ wie ein Java-Spieler.
+  use-direct-connection: true
+  # Bei Direktverbindung doppelte Komprimierung abschalten -> spart CPU.
+  disable-compression: true
+  # Debug aus -> weniger Log/CPU.
+  debug-mode: false
+  # Maximale Bedrock-Spielerzahl in der Geyser-Anzeige (0 = nicht anfassen)
+  max-players: 0
+
+# Beim Start eine kurze Info in die Konsole schreiben
+log-status: true

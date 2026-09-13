@@ -1,0 +1,46 @@
+# ============================================================
+#  TAB - Konfiguration (von BetterSMP vorbereitet)
+#  Hübsche Tablist mit LuckPerms-Prefixen, Sortierung nach
+#  Rängen, Header/Footer mit Online-Zahl, Ping und TPS.
+#  Doku: https://github.com/NEZNAMY/TAB/wiki
+# ============================================================
+
+header-footer:
+  enabled: true
+  header:
+    - "<#00D4FF>&l☀ SMP ☀"
+    - "&7Willkommen, &f%player%&7!"
+    - "&r"
+  footer:
+    - "&r"
+    - "&7Online: <#00D4FF>%online%&7 ┃ Ping: <#00D4FF>%ping%ms&7 ┃ TPS: <#00D4FF>%tps%"
+    - "&7Shop: <#00D4FF>/shop&7 ┃ RTP: <#00D4FF>/rtp"
+
+tablist-name-formatting:
+  enabled: true
+  anti-override: true
+
+scoreboard-teams:
+  # AUS - die Nametags macht BetterSMP (Gradient-Prefix, Name weiß).
+  # So gibt es keine Konflikte und neue LuckPerms-Ränge wirken sofort.
+  enabled: false
+
+ping-spoof:
+  enabled: false
+
+bossbar:
+  enabled: false
+
+scoreboard:
+  enabled: false
+
+layout:
+  enabled: false
+
+placeholders:
+  date-format: "dd.MM.yyyy"
+  time-format: "HH:mm:ss"
+  register-tab-expansion: true
+
+placeholderapi-refresh-intervals:
+  default-refresh-interval: 500

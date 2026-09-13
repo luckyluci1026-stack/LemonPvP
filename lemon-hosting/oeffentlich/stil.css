@@ -1,0 +1,205 @@
+/* Lemon Hosting - Kundenportal. Farbwelt wie auf der LemonPvP-Seite. */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --g1: #fffb00; --g2: #7dff3a;
+  --grad: linear-gradient(135deg, #fffb00 0%, #7dff3a 100%);
+  --bg: #0a0a0c; --flaeche: #131316; --flaeche2: #1a1a1f;
+  --rand: rgba(255,255,255,.08); --rand-akzent: rgba(180,255,0,.28);
+  --text: #f2f2f4; --leise: #8b8b95; --leiser: #5c5c66;
+  --gut: #56d364; --warn: #e3b341; --schlecht: #f85149;
+  --radius: 14px;
+}
+
+body {
+  background: var(--bg); color: var(--text); min-height: 100vh;
+  font: 400 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+h1, h2, h3 { line-height: 1.25; font-weight: 700; letter-spacing: -.01em; }
+h1 { font-size: 1.9rem; } h2 { font-size: 1.3rem; } h3 { font-size: 1.05rem; }
+
+.zitrone { background: var(--grad); -webkit-background-clip: text;
+           background-clip: text; color: transparent; }
+
+/* ---------------------------------------------------------- Gerüst */
+.kopf {
+  position: sticky; top: 0; z-index: 30; background: rgba(10,10,12,.88);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--rand);
+}
+.kopf-innen { max-width: 1180px; margin: 0 auto; padding: .85rem 1.25rem;
+              display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap; }
+.marke { font-weight: 800; font-size: 1.15rem; text-decoration: none;
+         display: flex; align-items: center; gap: .5rem; }
+.nav { display: flex; gap: .3rem; flex-wrap: wrap; margin-left: auto; align-items: center; }
+.nav a { text-decoration: none; color: var(--leise); padding: .45rem .8rem;
+         border-radius: 9px; font-size: .92rem; font-weight: 500; }
+.nav a:hover { color: var(--text); background: var(--flaeche2); }
+.nav a.hier { color: #0a0a0c; background: var(--grad); font-weight: 700; }
+
+main { max-width: 1180px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+.eng { max-width: 640px; }
+.fuss { max-width: 1180px; margin: 0 auto; padding: 2rem 1.25rem 3rem;
+        color: var(--leiser); font-size: .85rem; border-top: 1px solid var(--rand); }
+
+/* ---------------------------------------------------------- Bausteine */
+.karte { background: var(--flaeche); border: 1px solid var(--rand);
+         border-radius: var(--radius); padding: 1.4rem; }
+.karte + .karte { margin-top: 1rem; }
+.gitter { display: grid; gap: 1rem; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.g4 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+.knopf {
+  display: inline-flex; align-items: center; gap: .45rem; cursor: pointer;
+  background: var(--grad); color: #0a0a0c; border: 0; border-radius: 10px;
+  padding: .62rem 1.15rem; font: 700 .93rem/1 inherit; text-decoration: none;
+}
+.knopf:hover { filter: brightness(1.08); }
+.knopf.stil2 { background: var(--flaeche2); color: var(--text);
+               border: 1px solid var(--rand); font-weight: 600; }
+.knopf.stil2:hover { border-color: var(--rand-akzent); }
+.knopf.gefahr { background: #3a1a1c; color: #ffb4b0; border: 1px solid #5c2427; }
+.knopf.klein { padding: .4rem .75rem; font-size: .84rem; }
+
+label { display: block; font-size: .86rem; color: var(--leise);
+        margin: 0 0 .3rem; font-weight: 500; }
+input, select, textarea {
+  width: 100%; background: var(--flaeche2); color: var(--text);
+  border: 1px solid var(--rand); border-radius: 9px; padding: .6rem .75rem;
+  font: inherit; font-size: .93rem;
+}
+input:focus, select:focus, textarea:focus {
+  outline: 0; border-color: var(--rand-akzent);
+  box-shadow: 0 0 0 3px rgba(180,255,0,.09);
+}
+.feld { margin-bottom: .95rem; }
+.feld-reihe { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+input[type=checkbox], input[type=radio] { width: auto; margin-right: .5rem; }
+
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th { text-align: left; font-size: .78rem; text-transform: uppercase;
+     letter-spacing: .06em; color: var(--leiser); padding: .55rem .6rem;
+     border-bottom: 1px solid var(--rand); font-weight: 600; }
+td { padding: .68rem .6rem; border-bottom: 1px solid rgba(255,255,255,.04);
+     vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+td.zahl, th.zahl { text-align: right; font-variant-numeric: tabular-nums; }
+
+.marke-punkt { display: inline-flex; align-items: center; gap: .4rem;
+               font-size: .82rem; font-weight: 600; padding: .2rem .6rem;
+               border-radius: 999px; border: 1px solid var(--rand); }
+.marke-punkt::before { content: ''; width: 7px; height: 7px; border-radius: 50%;
+                       background: currentColor; }
+.aktiv { color: var(--gut); } .archiviert { color: var(--warn); }
+.geloescht { color: var(--schlecht); } .offen { color: var(--warn); }
+
+.hinweis { border-radius: 11px; padding: .85rem 1rem; font-size: .9rem;
+           border: 1px solid; margin-bottom: 1rem; }
+.hinweis.info { background: rgba(125,255,58,.06); border-color: rgba(125,255,58,.25); }
+.hinweis.warn { background: rgba(227,179,65,.08); border-color: rgba(227,179,65,.3);
+                color: #f0d08a; }
+.hinweis.schlecht { background: rgba(248,81,73,.08); border-color: rgba(248,81,73,.3);
+                    color: #ffb4b0; }
+
+.leise { color: var(--leise); } .klein { font-size: .86rem; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .88rem; }
+.zwischen { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.reihe { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.abstand { margin-top: 1.5rem; }
+
+/* ---------------------------------------------------------- Pakete */
+.paket { position: relative; }
+.paket.gewaehlt { border-color: var(--rand-akzent);
+                  box-shadow: 0 0 0 1px var(--rand-akzent), 0 8px 30px rgba(125,255,58,.06); }
+.paket .preis { font-size: 2rem; font-weight: 800; margin: .3rem 0 .1rem; }
+.paket ul { list-style: none; margin: 1rem 0 0; font-size: .9rem; }
+.paket li { padding: .28rem 0; color: var(--leise); }
+.paket li strong { color: var(--text); font-weight: 600; }
+
+/* Die Preiskarte klebte hier mal per position:sticky - dabei ist sie beim
+   Scrollen ueber die Formularfelder darunter gelaufen, weil beide in
+   derselben Spalte stehen. Ohne sticky ist nichts verdeckt. */
+.summe { }
+.summe-zeile { display: flex; justify-content: space-between; gap: 1rem;
+               padding: .4rem 0; font-size: .92rem; }
+.summe-gesamt { border-top: 1px solid var(--rand); margin-top: .6rem;
+                padding-top: .8rem; font-size: 1.25rem; font-weight: 800; }
+
+/* ---------------------------------------------------------- Balken */
+.balken { height: 6px; border-radius: 99px; background: var(--flaeche2);
+          overflow: hidden; margin-top: .5rem; }
+.balken i { display: block; height: 100%; background: var(--grad); }
+.balken.knapp i { background: linear-gradient(135deg, #e3b341, #f0a04b); }
+.balken.aus i { background: linear-gradient(135deg, #f85149, #d0342c); }
+
+/* ---------------------------------------------------------- Druck */
+.druck { background: #fff; color: #111; max-width: 800px; margin: 1.5rem auto;
+         padding: 2.5rem 3rem; border-radius: 8px; }
+.druck h1, .druck h2, .druck h3 { color: #111; }
+.druck table { font-size: .9rem; }
+.druck th { color: #555; border-bottom-color: #ddd; }
+.druck td { border-bottom-color: #eee; }
+.druck .linie { border-bottom: 1px solid #999; min-height: 1.6rem;
+                margin: .2rem 0 1rem; }
+.druck-kopf { border-bottom: 3px solid #111; padding-bottom: .8rem;
+              margin-bottom: 1.6rem; }
+
+@media print {
+  .kopf, .fuss, .nicht-drucken { display: none !important; }
+  body { background: #fff; }
+  main { padding: 0; max-width: none; }
+  .druck { margin: 0; padding: 0; border-radius: 0; max-width: none; }
+}
+
+/* ---------------------------------------------------------- Konsole */
+/* Dunkler als der Rest der Seite: Die Konsole ist ein Terminal, kein
+   Textfeld. Feste Zeilenhöhe, damit Minecraft-Logs sauber untereinander
+   stehen. */
+.konsole {
+  background: #08080a; border: 1px solid var(--rand); border-radius: 11px;
+  padding: .9rem 1rem; height: 26rem; overflow-y: auto; overflow-x: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: .8rem; line-height: 1.55; white-space: pre;
+  color: #c8c8d0; scrollbar-width: thin;
+}
+.konsole .z { white-space: pre-wrap; word-break: break-word; }
+.konsole .panel   { color: var(--g2); }
+.konsole .eingabe { color: #6ea8fe; font-weight: 600; }
+.konsole .fehler,
+.konsole .schlimm { color: #ff9a94; }
+.konsole .warnung { color: #f0d08a; }
+
+.konsole::-webkit-scrollbar { width: 9px; height: 9px; }
+.konsole::-webkit-scrollbar-thumb { background: #2a2a32; border-radius: 99px; }
+
+/* ---------------------------------------------------------- Dateien */
+.ablage {
+  border: 2px dashed var(--rand); border-radius: var(--radius);
+  padding: 1.6rem; text-align: center; color: var(--leise);
+  transition: border-color .12s, background .12s;
+}
+.ablage.drueber { border-color: var(--g2); background: rgba(125,255,58,.05); }
+.ablage input[type=file] { display: none; }
+
+.pfadleiste { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+.pfadleiste a { text-decoration: none; color: var(--leise); }
+.pfadleiste a:hover { color: var(--text); }
+.pfadleiste a:last-child { color: var(--text); font-weight: 600; }
+
+td .name { display: flex; align-items: center; gap: .5rem; }
+td .name a { text-decoration: none; }
+td .name a:hover { text-decoration: underline; }
+
+.schlimm { color: var(--schlecht); }
+
+/* Spielernamen als kleine Plaketten - so sieht man auf einen Blick,
+   wie viele es sind, ohne zu zaehlen. */
+.spieler {
+  display: inline-block; margin: .15rem .3rem .15rem 0;
+  padding: .18rem .55rem; border-radius: 999px;
+  background: var(--flaeche2); border: 1px solid var(--rand);
+  font-size: .84rem; font-weight: 500;
+}

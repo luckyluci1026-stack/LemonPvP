@@ -1,0 +1,236 @@
+# ==========================================================
+#  Eigene Animationen
+#
+#  Hier baust du deine eigenen Teilchen-Formen. Jede Animation
+#  bekommt einen Namen, den du dann in der Fähigkeit benutzt:
+#
+#    - type: animation
+#      shape: meine_spirale      <- Name von hier
+#      particle: DUST
+#      color: "#FF0000"
+#      ticks: 20
+#
+#  Wie es funktioniert:
+#  Pro Tick werden "points" Teilchen gesetzt. Wo jedes einzelne
+#  landet, sagen die drei Formeln x, y und z.
+#
+#  Verfügbare Werte in den Formeln:
+#    t        Tick, zählt von 0 bis ticks-1
+#    p        Fortschritt, 0.0 am Anfang bis 1.0 am Ende
+#    i        Nummer des Teilchens in diesem Tick (0 bis points-1)
+#    n        points
+#    a        Winkel für dieses Teilchen = 2*pi*i/n  (praktisch für Kreise)
+#    ticks    Gesamtdauer
+#    radius   der Wert "radius" aus der Fähigkeit
+#    length   der Wert "length" aus der Fähigkeit
+#
+#  Rechnen: + - * / % ^ und Klammern
+#  Funktionen: sin cos tan asin acos atan atan2 sqrt abs floor
+#              ceil round sign exp log random min max pow
+#  Konstanten: pi, e, tau
+#
+#  relative-to:  player  = Füße des Spielers (Standard)
+#                eyes    = Augenhöhe
+#                look    = Augenhöhe, und z zeigt nach VORNE,
+#                          x nach rechts, y nach oben
+#  follow: true  = die Animation läuft mit, wenn der Spieler geht
+# ==========================================================
+
+animations:
+
+  # Kreis, der sich dreht und dabei größer wird
+  meine_spirale:
+    points: 16
+    x: "cos(a + t * 0.3) * (radius * p)"
+    y: "p * 2"
+    z: "sin(a + t * 0.3) * (radius * p)"
+    relative-to: player
+
+  # Herz vor dem Spieler - zeigt, was mit Formeln geht
+  herz:
+    points: 40
+    x: "sin(a) ^ 3 * 0.35"
+    y: "(0.325 * cos(a) - 0.125 * cos(2 * a) - 0.05 * cos(3 * a) - 0.025 * cos(4 * a)) * 1.2 + 1.4"
+    z: "1.5"
+    relative-to: look
+
+  # Zwei Ringe, die aneinander vorbeilaufen
+  doppelring:
+    points: 24
+    x: "cos(a + t * 0.25) * radius"
+    y: "sin(t * 0.4 + i) * 0.4 + 1"
+    z: "sin(a + t * 0.25) * radius"
+    follow: true
+
+  # Explosion nach außen, wird langsamer
+  druckwelle:
+    points: 30
+    x: "cos(a) * sqrt(p) * radius"
+    y: "0.2"
+    z: "sin(a) * sqrt(p) * radius"
+
+  # Tornado: dreht schnell und wird nach oben breiter
+  tornado:
+    points: 20
+    x: "cos(a * 3 + t * 0.6) * (0.3 + p * radius)"
+    y: "p * 3"
+    z: "sin(a * 3 + t * 0.6) * (0.3 + p * radius)"
+    follow: true
+
+  # Strahl nach vorne, der zusätzlich rotiert
+  bohrer:
+    points: 12
+    x: "cos(a + t * 0.8) * 0.4"
+    y: "sin(a + t * 0.8) * 0.4"
+    z: "p * length"
+    relative-to: look
+
+  # Flügel links und rechts hinter dem Spieler
+  fluegel:
+    points: 28
+    x: "sign(i - n / 2) * (0.3 + abs(sin(a * 2)) * 1.3)"
+    y: "1.6 + cos(a * 2) * 0.8"
+    z: "-0.4"
+    relative-to: look
+    follow: true
+
+  # Regen, der auf den Spieler fällt
+  funkenregen:
+    points: 10
+    x: "(random(2) - 1) * radius"
+    y: "3 - p * 3"
+    z: "(random(2) - 1) * radius"
+    follow: true
+    
+  laserschwert:
+    points: 3
+    x: "cos(a + t * 0.4) * (0.3 + (i / (n - 1)) * 0.2)"
+    y: "0.2 + ((i / (n - 1)) ^ 2) * 1.1 - p * 0.5"
+    z: "sin(a + t * 0.4) * (0.3 + (i / (n - 1)) * 0.2)"
+    follow: true
+    # Die Klinge fährt nach vorne aus, Energie dreht sich um sie herum
+  # und läuft zur Spitze hin dünn aus. Braucht "length" in der Fähigkeit.
+  lichtklinge:
+    points: 40
+    x: "cos(a * 2 + t * 0.9) * 0.3 * (1 - i / n)"
+    y: "sin(a * 2 + t * 0.9) * 0.3 * (1 - i / n)"
+    z: "(i / n) * length * min(1, p * 2)"
+    relative-to: look
+
+  # Kreuzhieb: ein X vor dem Spieler, das aus der Mitte aufblitzt
+  kreuzschlag:
+    points: 40
+    x: "((i % (n / 2)) / (n / 2) * 2 - 1) * 1.4 * min(1, p * 1.6)"
+    y: "sign(i - n / 2 + 0.5) * ((i % (n / 2)) / (n / 2) * 2 - 1) * 1.4 * min(1, p * 1.6) + 1.3"
+    z: "1.6"
+    relative-to: look
+
+  # Rundumschlag: die Klinge zieht zweimal um dich herum,
+  # die Punkte hängen leicht hinterher - das gibt den Schweif.
+  klingenwirbel:
+    points: 14
+    x: "cos(p * tau * 2 + a * 0.12) * radius"
+    y: "1.2 + sin(p * tau * 2) * 0.15"
+    z: "sin(p * tau * 2 + a * 0.12) * radius"
+    follow: true
+
+  # Plasmapuls: eine Kugel bläht sich auf und fällt wieder zusammen
+  plasmapuls:
+    points: 60
+    x: "cos(a * 7.6) * sqrt(1 - (1 - 2 * i / n) ^ 2) * sin(p * pi) * radius"
+    y: "(1 - 2 * i / n) * sin(p * pi) * radius + 1.3"
+    z: "sin(a * 7.6) * sqrt(1 - (1 - 2 * i / n) ^ 2) * sin(p * pi) * radius"
+
+  # ==========================================================
+  #  Die grossen Auftritte
+  #
+  #  Zehn Formen, die man von weitem sieht. Alle nur aus den
+  #  drei Formeln oben - nichts davon steckt im Plugin fest,
+  #  du kannst jede Zahl hier ändern.
+  # ==========================================================
+
+  # Runenkreis: zwei Ringe unter dir, die gegeneinander laufen,
+  # dazu vier Marken, die dabei stehen bleiben. Der Klassiker
+  # für alles, was nach Zauber aussehen soll.
+  runenkreis:
+    points: 24
+    x: "cos(a + p * tau * (1 - 2 * floor(2 * i / n))) * (radius * (0.6 + 0.4 * floor(2 * i / n)))"
+    y: "0.05 + sin(p * pi) * 0.1"
+    z: "sin(a + p * tau * (1 - 2 * floor(2 * i / n))) * (radius * (0.6 + 0.4 * floor(2 * i / n)))"
+    relative-to: player
+    follow: true
+
+  # Doppelhelix: zwei Stränge, die umeinander nach oben wachsen
+  doppelhelix:
+    points: 12
+    x: "cos(a * 0.5 + p * tau * 2 + pi * (i % 2)) * radius * 0.7"
+    y: "p * length * 0.35"
+    z: "sin(a * 0.5 + p * tau * 2 + pi * (i % 2)) * radius * 0.7"
+    relative-to: player
+
+  # Meteor: kommt von schräg oben herunter und schlägt am Ende
+  # in einer flachen Welle auf
+  meteor:
+    points: 14
+    x: "cos(a) * radius * 0.25 * (1 - p) + (1 - p) * 5"
+    y: "(1 - p) * 12 + sin(a) * radius * 0.25 * (1 - p)"
+    z: "sin(a) * radius * 0.25 * (1 - p) + (1 - p) * 5"
+    relative-to: player
+
+  # Einschlagwelle: flacher Ring, der schnell aufgeht und ausfranst
+  einschlag:
+    points: 30
+    x: "cos(a) * (radius * 2.5 * p) * (1 + random(0.06))"
+    y: "0.15 + (1 - p) * 0.5"
+    z: "sin(a) * (radius * 2.5 * p) * (1 + random(0.06))"
+    relative-to: player
+
+  # Blitzbogen: zackt nach vorn, jeder Punkt springt seitlich weg
+  blitzbogen:
+    points: 10
+    x: "(random(1) - 0.5) * 0.9"
+    y: "1.3 + (random(1) - 0.5) * 0.9"
+    z: "i / n * length + p * 0.5"
+    relative-to: look
+
+  # Drachenatem: ein Kegel nach vorn, der breiter wird
+  drachenatem:
+    points: 20
+    x: "cos(a + t) * (i / n) * radius * 0.9"
+    y: "1.3 + sin(a + t) * (i / n) * radius * 0.9"
+    z: "(i / n) * length * 0.6 + p * length * 0.4"
+    relative-to: look
+
+  # Blüte: sechs Blätter gehen auf und wieder zu
+  bluete:
+    points: 36
+    x: "cos(a) * sin(a * 3) * radius * sin(p * pi)"
+    y: "0.2 + sin(p * pi) * 0.6"
+    z: "sin(a) * sin(a * 3) * radius * sin(p * pi)"
+    relative-to: player
+
+  # Portal: stehender Wirbel vor dir, innen enger als aussen
+  portal:
+    points: 26
+    x: "cos(a + p * tau) * radius * (0.3 + 0.7 * (i / n))"
+    y: "1.3 + sin(a + p * tau) * radius * (0.3 + 0.7 * (i / n))"
+    z: "1.8"
+    relative-to: look
+
+  # Sternenfall: Punkte rieseln von oben um dich herum herunter
+  sternenfall:
+    points: 8
+    x: "cos(a * 3.7 + t) * radius * (0.5 + random(0.5))"
+    y: "4 - ((t * 0.35 + i * 0.6) % 4)"
+    z: "sin(a * 3.7 + t) * radius * (0.5 + random(0.5))"
+    relative-to: player
+    follow: true
+
+  # Aura: eine Kugel, die im Takt atmet - gut als Dauerzustand
+  aura:
+    points: 40
+    x: "cos(a * 6.3) * sqrt(1 - (1 - 2 * i / n) ^ 2) * radius * (0.85 + 0.15 * sin(t * 0.4))"
+    y: "1.0 + (1 - 2 * i / n) * radius * (0.85 + 0.15 * sin(t * 0.4))"
+    z: "sin(a * 6.3) * sqrt(1 - (1 - 2 * i / n) ^ 2) * radius * (0.85 + 0.15 * sin(t * 0.4))"
+    relative-to: player
+    follow: true

@@ -1,0 +1,523 @@
+# ==========================================================
+#  100 Platzhalter-Blöcke - noch ohne Textur
+#
+#  Jeder Block funktioniert sofort: setzen, abbauen, Rezept.
+#  Ohne Textur sieht er aus wie ein normaler Notenblock.
+#
+#  So machst du einen davon zu deinem Block:
+#    1. name/lore hier anpassen (Id gerne umbenennen)
+#    2. Textur nach plugins/SMPContent/textures/block/<id>.png
+#       (optional Blockbench-Modell nach models/block/<id>.json)
+#    3. /smpcontent reload   und   /smpcontent pack
+#
+#  Der "state" ist die Kennung des Blocks - jeder Wert darf nur
+#  EINMAL vorkommen. Am besten so lassen, wie er ist.
+#
+#  Rezepte kannst du wie bei den fertigen Blöcken ergänzen:
+#    recipe:
+#      shape: ["SSS", "SRS", "SSS"]
+#      keys: {S: STONE, R: DIAMOND}
+#      amount: 1
+# ==========================================================
+
+blocks:
+
+  custom_block_001:
+    name: "<gray>Platzhalter-Block 1</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=0,powered=false]"
+
+  custom_block_002:
+    name: "<gray>Platzhalter-Block 2</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=1,powered=false]"
+
+  custom_block_003:
+    name: "<gray>Platzhalter-Block 3</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=2,powered=false]"
+
+  custom_block_004:
+    name: "<gray>Platzhalter-Block 4</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=3,powered=false]"
+
+  custom_block_005:
+    name: "<gray>Platzhalter-Block 5</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=4,powered=false]"
+
+  custom_block_006:
+    name: "<gray>Platzhalter-Block 6</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=5,powered=false]"
+
+  custom_block_007:
+    name: "<gray>Platzhalter-Block 7</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=6,powered=false]"
+
+  custom_block_008:
+    name: "<gray>Platzhalter-Block 8</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=7,powered=false]"
+
+  custom_block_009:
+    name: "<gray>Platzhalter-Block 9</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=8,powered=false]"
+
+  custom_block_010:
+    name: "<gray>Platzhalter-Block 10</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=9,powered=false]"
+
+  custom_block_011:
+    name: "<gray>Platzhalter-Block 11</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=10,powered=false]"
+
+  custom_block_012:
+    name: "<gray>Platzhalter-Block 12</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=11,powered=false]"
+
+  custom_block_013:
+    name: "<gray>Platzhalter-Block 13</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=12,powered=false]"
+
+  custom_block_014:
+    name: "<gray>Platzhalter-Block 14</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=13,powered=false]"
+
+  custom_block_015:
+    name: "<gray>Platzhalter-Block 15</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=14,powered=false]"
+
+  custom_block_016:
+    name: "<gray>Platzhalter-Block 16</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=15,powered=false]"
+
+  custom_block_017:
+    name: "<gray>Platzhalter-Block 17</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=16,powered=false]"
+
+  custom_block_018:
+    name: "<gray>Platzhalter-Block 18</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=17,powered=false]"
+
+  custom_block_019:
+    name: "<gray>Platzhalter-Block 19</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=18,powered=false]"
+
+  custom_block_020:
+    name: "<gray>Platzhalter-Block 20</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=19,powered=false]"
+
+  custom_block_021:
+    name: "<gray>Platzhalter-Block 21</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=20,powered=false]"
+
+  custom_block_022:
+    name: "<gray>Platzhalter-Block 22</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=21,powered=false]"
+
+  custom_block_023:
+    name: "<gray>Platzhalter-Block 23</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=22,powered=false]"
+
+  custom_block_024:
+    name: "<gray>Platzhalter-Block 24</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=23,powered=false]"
+
+  custom_block_025:
+    name: "<gray>Platzhalter-Block 25</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=banjo,note=24,powered=false]"
+
+  custom_block_026:
+    name: "<gray>Platzhalter-Block 26</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=0,powered=false]"
+
+  custom_block_027:
+    name: "<gray>Platzhalter-Block 27</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=1,powered=false]"
+
+  custom_block_028:
+    name: "<gray>Platzhalter-Block 28</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=2,powered=false]"
+
+  custom_block_029:
+    name: "<gray>Platzhalter-Block 29</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=3,powered=false]"
+
+  custom_block_030:
+    name: "<gray>Platzhalter-Block 30</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=4,powered=false]"
+
+  custom_block_031:
+    name: "<gray>Platzhalter-Block 31</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=5,powered=false]"
+
+  custom_block_032:
+    name: "<gray>Platzhalter-Block 32</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=6,powered=false]"
+
+  custom_block_033:
+    name: "<gray>Platzhalter-Block 33</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=7,powered=false]"
+
+  custom_block_034:
+    name: "<gray>Platzhalter-Block 34</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=8,powered=false]"
+
+  custom_block_035:
+    name: "<gray>Platzhalter-Block 35</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=9,powered=false]"
+
+  custom_block_036:
+    name: "<gray>Platzhalter-Block 36</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=10,powered=false]"
+
+  custom_block_037:
+    name: "<gray>Platzhalter-Block 37</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=11,powered=false]"
+
+  custom_block_038:
+    name: "<gray>Platzhalter-Block 38</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=12,powered=false]"
+
+  custom_block_039:
+    name: "<gray>Platzhalter-Block 39</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=13,powered=false]"
+
+  custom_block_040:
+    name: "<gray>Platzhalter-Block 40</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=14,powered=false]"
+
+  custom_block_041:
+    name: "<gray>Platzhalter-Block 41</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=15,powered=false]"
+
+  custom_block_042:
+    name: "<gray>Platzhalter-Block 42</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=16,powered=false]"
+
+  custom_block_043:
+    name: "<gray>Platzhalter-Block 43</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=17,powered=false]"
+
+  custom_block_044:
+    name: "<gray>Platzhalter-Block 44</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=18,powered=false]"
+
+  custom_block_045:
+    name: "<gray>Platzhalter-Block 45</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=19,powered=false]"
+
+  custom_block_046:
+    name: "<gray>Platzhalter-Block 46</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=20,powered=false]"
+
+  custom_block_047:
+    name: "<gray>Platzhalter-Block 47</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=21,powered=false]"
+
+  custom_block_048:
+    name: "<gray>Platzhalter-Block 48</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=22,powered=false]"
+
+  custom_block_049:
+    name: "<gray>Platzhalter-Block 49</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=23,powered=false]"
+
+  custom_block_050:
+    name: "<gray>Platzhalter-Block 50</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=pling,note=24,powered=false]"
+
+  custom_block_051:
+    name: "<gray>Platzhalter-Block 51</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=0,powered=false]"
+
+  custom_block_052:
+    name: "<gray>Platzhalter-Block 52</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=1,powered=false]"
+
+  custom_block_053:
+    name: "<gray>Platzhalter-Block 53</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=2,powered=false]"
+
+  custom_block_054:
+    name: "<gray>Platzhalter-Block 54</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=3,powered=false]"
+
+  custom_block_055:
+    name: "<gray>Platzhalter-Block 55</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=4,powered=false]"
+
+  custom_block_056:
+    name: "<gray>Platzhalter-Block 56</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=5,powered=false]"
+
+  custom_block_057:
+    name: "<gray>Platzhalter-Block 57</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=6,powered=false]"
+
+  custom_block_058:
+    name: "<gray>Platzhalter-Block 58</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=7,powered=false]"
+
+  custom_block_059:
+    name: "<gray>Platzhalter-Block 59</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=8,powered=false]"
+
+  custom_block_060:
+    name: "<gray>Platzhalter-Block 60</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=9,powered=false]"
+
+  custom_block_061:
+    name: "<gray>Platzhalter-Block 61</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=10,powered=false]"
+
+  custom_block_062:
+    name: "<gray>Platzhalter-Block 62</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=11,powered=false]"
+
+  custom_block_063:
+    name: "<gray>Platzhalter-Block 63</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=12,powered=false]"
+
+  custom_block_064:
+    name: "<gray>Platzhalter-Block 64</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=13,powered=false]"
+
+  custom_block_065:
+    name: "<gray>Platzhalter-Block 65</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=14,powered=false]"
+
+  custom_block_066:
+    name: "<gray>Platzhalter-Block 66</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=15,powered=false]"
+
+  custom_block_067:
+    name: "<gray>Platzhalter-Block 67</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=16,powered=false]"
+
+  custom_block_068:
+    name: "<gray>Platzhalter-Block 68</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=17,powered=false]"
+
+  custom_block_069:
+    name: "<gray>Platzhalter-Block 69</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=18,powered=false]"
+
+  custom_block_070:
+    name: "<gray>Platzhalter-Block 70</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=19,powered=false]"
+
+  custom_block_071:
+    name: "<gray>Platzhalter-Block 71</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=20,powered=false]"
+
+  custom_block_072:
+    name: "<gray>Platzhalter-Block 72</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=21,powered=false]"
+
+  custom_block_073:
+    name: "<gray>Platzhalter-Block 73</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=22,powered=false]"
+
+  custom_block_074:
+    name: "<gray>Platzhalter-Block 74</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=23,powered=false]"
+
+  custom_block_075:
+    name: "<gray>Platzhalter-Block 75</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=didgeridoo,note=24,powered=false]"
+
+  custom_block_076:
+    name: "<gray>Platzhalter-Block 76</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=0,powered=false]"
+
+  custom_block_077:
+    name: "<gray>Platzhalter-Block 77</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=1,powered=false]"
+
+  custom_block_078:
+    name: "<gray>Platzhalter-Block 78</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=2,powered=false]"
+
+  custom_block_079:
+    name: "<gray>Platzhalter-Block 79</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=3,powered=false]"
+
+  custom_block_080:
+    name: "<gray>Platzhalter-Block 80</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=4,powered=false]"
+
+  custom_block_081:
+    name: "<gray>Platzhalter-Block 81</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=5,powered=false]"
+
+  custom_block_082:
+    name: "<gray>Platzhalter-Block 82</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=6,powered=false]"
+
+  custom_block_083:
+    name: "<gray>Platzhalter-Block 83</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=7,powered=false]"
+
+  custom_block_084:
+    name: "<gray>Platzhalter-Block 84</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=8,powered=false]"
+
+  custom_block_085:
+    name: "<gray>Platzhalter-Block 85</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=9,powered=false]"
+
+  custom_block_086:
+    name: "<gray>Platzhalter-Block 86</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=10,powered=false]"
+
+  custom_block_087:
+    name: "<gray>Platzhalter-Block 87</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=11,powered=false]"
+
+  custom_block_088:
+    name: "<gray>Platzhalter-Block 88</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=12,powered=false]"
+
+  custom_block_089:
+    name: "<gray>Platzhalter-Block 89</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=13,powered=false]"
+
+  custom_block_090:
+    name: "<gray>Platzhalter-Block 90</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=14,powered=false]"
+
+  custom_block_091:
+    name: "<gray>Platzhalter-Block 91</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=15,powered=false]"
+
+  custom_block_092:
+    name: "<gray>Platzhalter-Block 92</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=16,powered=false]"
+
+  custom_block_093:
+    name: "<gray>Platzhalter-Block 93</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=17,powered=false]"
+
+  custom_block_094:
+    name: "<gray>Platzhalter-Block 94</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=18,powered=false]"
+
+  custom_block_095:
+    name: "<gray>Platzhalter-Block 95</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=19,powered=false]"
+
+  custom_block_096:
+    name: "<gray>Platzhalter-Block 96</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=20,powered=false]"
+
+  custom_block_097:
+    name: "<gray>Platzhalter-Block 97</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=21,powered=false]"
+
+  custom_block_098:
+    name: "<gray>Platzhalter-Block 98</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=22,powered=false]"
+
+  custom_block_099:
+    name: "<gray>Platzhalter-Block 99</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=23,powered=false]"
+
+  custom_block_100:
+    name: "<gray>Platzhalter-Block 100</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    state: "minecraft:note_block[instrument=cow_bell,note=24,powered=false]"

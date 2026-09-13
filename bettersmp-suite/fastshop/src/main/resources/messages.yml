@@ -1,0 +1,43 @@
+# FastShop - Nachrichten (MiniMessage + Legacy-Codes)
+prefix: "<gradient:#F1C40F:#E67E22><bold>Shop</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+players-only: "%prefix%<red>Nur für Spieler.</red>"
+reloaded: "%prefix%<green>Shop neu geladen.</green>"
+no-economy: "%prefix%<red>Kein Economy-System gefunden (Vault + EssentialsX nötig).</red>"
+
+bought: "%prefix%<green>Gekauft: <white>%amount%x %item%</white> für <green>%price%</green>.</green>"
+sold: "%prefix%<gold>Verkauft: <white>%amount%x %item%</white> für <gold>%price%</gold>.</gold>"
+sold-multi: "%prefix%<gold>Verkauft: <white>%count%</white> Item(s) für <gold>%price%</gold>.</gold>"
+not-enough-money: "%prefix%<red>Du brauchst <white>%price%</white>, hast aber nur <white>%balance%</white>.</red>"
+not-enough-items: "%prefix%<red>Du hast nicht so viele <white>%item%</white>.</red>"
+inventory-full: "%prefix%<red>Dein Inventar ist voll.</red>"
+not-buyable: "%prefix%<red>Dieses Item kann man nicht kaufen.</red>"
+not-sellable: "%prefix%<red>Dieses Item kann man nicht verkaufen.</red>"
+nothing-in-hand: "%prefix%<red>Du hältst nichts in der Hand.</red>"
+nothing-sold: "%prefix%<gray>Nichts Verkaufbares gefunden.</gray>"
+
+worth: "%prefix%<gray><white>%item%</white> <dark_gray>│</dark_gray> Verkauf <gold>%sell%</gold> <dark_gray>│</dark_gray> Kauf <green>%buy%</green></gray>"
+worth-none: "%prefix%<gray>Dieses Item hat keinen Wert im Shop.</gray>"
+
+sell-gui-title: "<gradient:#F1C40F:#E67E22>Zum Verkaufen ablegen</gradient>"
+sell-gui-hint: "%prefix%<gray>Lege Items hinein und schließe das Fenster zum Verkaufen.</gray>"
+
+additem-usage: "%prefix%<gray>/fastshop additem <Kategorie> <Kaufpreis> <Verkaufspreis> <gray>(Item in der Hand)</gray></gray>"
+additem-done: "%prefix%<green><white>%item%</white> zu <white>%category%</white> hinzugefügt (Kauf %buy%, Verkauf %sell%).</green>"
+additem-no-category: "%prefix%<red>Kategorie <white>%category%</white> existiert nicht.</red>"
+
+setprice-usage: "%prefix%<gray>/fastshop <setbuy|setsell> <Kategorie> <Preis> <gray>(Item in der Hand)</gray></gray>"
+setprice-done: "%prefix%<green>%field% von <white>%item%</white> in <white>%category%</white> auf <white>%value%</white> gesetzt.</green>"
+item-not-in-category: "%prefix%<red><white>%item%</white> ist nicht in Kategorie <white>%category%</white>.</red>"
+removeitem-usage: "%prefix%<gray>/fastshop removeitem <Kategorie> <gray>(Item in der Hand)</gray></gray>"
+removeitem-done: "%prefix%<green><white>%item%</white> aus <white>%category%</white> entfernt.</green>"
+addcategory-usage: "%prefix%<gray>/fastshop addcategory <Id> <Slot> <Name...> <gray>(Item in der Hand = Icon)</gray></gray>"
+addcategory-done: "%prefix%<green>Kategorie <white>%category%</white> angelegt.</green>"
+addcategory-exists: "%prefix%<red>Kategorie <white>%category%</white> existiert bereits.</red>"
+removecategory-usage: "%prefix%<gray>/fastshop removecategory <Id></gray>"
+removecategory-done: "%prefix%<green>Kategorie <white>%category%</white> entfernt.</green>"
+removecategory-not-found: "%prefix%<red>Kategorie <white>%category%</white> existiert nicht.</red>"
+
+usage-sell: "%prefix%<gray>Nutzung: <white>/sell <hand|all|gui></white></gray>"
+usage-fastshop: "%prefix%<gray>/fastshop <white>reload | additem | setbuy | setsell | removeitem | addcategory | removecategory</white></gray>"

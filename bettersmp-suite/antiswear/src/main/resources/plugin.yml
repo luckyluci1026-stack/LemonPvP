@@ -1,0 +1,23 @@
+name: AntiSwear
+version: ${project.version}
+main: de.lemonpvp.antiswear.AntiSwear
+api-version: '1.21'
+authors: [SMP]
+description: Chat-Filter mit Umgehungsschutz, Punkte-Stufen mit eigener Kurzzeit-Stummschaltung und optionalen Konsolenbefehlen fuer weitergehende Strafen.
+
+commands:
+  antiswear:
+    description: AntiSwear-Verwaltung
+    usage: "/antiswear <reload|check|punkte|reset>"
+    permission: antiswear.admin
+
+permissions:
+  antiswear.bypass:
+    description: Chat wird bei dieser Person gar nicht erst geprueft
+    default: op
+  antiswear.notify:
+    description: Sieht im Team-Chat jeden Treffer unzensiert, inklusive Punktestand
+    default: op
+  antiswear.admin:
+    description: /antiswear nutzen (reload, check, punkte, reset)
+    default: op
