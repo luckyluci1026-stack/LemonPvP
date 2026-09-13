@@ -38,7 +38,7 @@ jobs:
 
       - name: List built jars
         if: always()
-        run: ls -laR bukkit/build/libs fabric/build/libs 2>/dev/null || true
+        run: ls -laR bukkit/build/libs fabric/build/libs velocity/build/libs 2>/dev/null || true
 
       - name: Upload plugin jar (Bukkit/Paper/Spigot)
         uses: actions/upload-artifact@v4
@@ -47,6 +47,13 @@ jobs:
           # Only the shaded plugin jar (with dependencies), not the thin jar.
           path: bukkit/build/libs/bucksmpac-bukkit-*.jar
           if-no-files-found: error
+
+      - name: Upload proxy plugin jar (Velocity)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bucksmpac-velocity-${{ steps.slug.outputs.value }}
+          path: velocity/build/libs/velocity-*.jar
+          if-no-files-found: warn
 
       - name: Upload mod jar (Fabric)
         uses: actions/upload-artifact@v4

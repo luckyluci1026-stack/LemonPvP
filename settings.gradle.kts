@@ -75,6 +75,7 @@ if (gradle.startParameter.isBuildScan) {
 rootProject.name = "bucksmpac"
 include("common")
 include("bukkit")
+include("velocity")
 include("fabric")
 include(":fabric:shared")
 include(":fabric:intermediary")

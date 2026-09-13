@@ -124,6 +124,10 @@ public class AcBanStore {
 
         write(store, uuid.toString(), KEY_BAN, encoded, now);
         write(store, nameKey(name), KEY_NAME_INDEX, uuid.toString(), now);
+
+        // Push it to the proxy so the player is refused at PreLoginEvent
+        // rather than only being kept out of each backend.
+        AcBanProxyBridge.sendBan(uuid, name, now, actor, reason);
     }
 
     /** Clears the ban. The name index is cleared too so a stale row cannot resurrect it. */
@@ -134,6 +138,8 @@ public class AcBanStore {
         long now = System.currentTimeMillis();
         write(store, uuid.toString(), KEY_BAN, "", now);
         if (name != null) write(store, nameKey(name), KEY_NAME_INDEX, "", now);
+
+        AcBanProxyBridge.sendUnban(uuid, name);
     }
 
     private static void write(DataStore store, String scopeKey, String key, String value, long now) {

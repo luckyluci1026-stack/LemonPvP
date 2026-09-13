@@ -43,6 +43,8 @@ public class PacketManager implements StartableInitable {
         }
 
         PacketEvents.getAPI().getEventManager().registerListener(new ProxyAlertMessenger());
+        // Outgoing channel for pushing bans to the BuckSMPAC Velocity plugin.
+        ac.grim.grimac.manager.AcBanProxyBridge.register();
         PacketEvents.getAPI().getEventManager().registerListener(new PacketHidePlayerInfo());
 
         PacketEvents.getAPI().init();

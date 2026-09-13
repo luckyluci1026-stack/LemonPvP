@@ -30,7 +30,7 @@ bans:
     # So sammelt sich bei jemandem, der einmal pro Woche einen Check
     # auslöst, nicht langsam ein Ban an.
     # 0 = jeder Flag bleibt, solange der Spieler online ist.
-    remember-flags-for: 1800
+    remember-flags-for: 900
 
     # Keine Stufe greift, bevor der Spieler mindestens so viele
     # VERSCHIEDENE Checks ausgelöst hat. Das ist die Absicherung, die die
@@ -38,7 +38,7 @@ bans:
     # Checks gleichzeitig aus, während ein einzelner Check, der immer wieder
     # feuert, viel häufiger ein Falsch-Positiv oder ein Lag-Artefakt ist.
     # 1 = Absicherung aus.
-    min-different-checks: 2
+    min-different-checks: 3
 
     # Flags dieser Checks zählen nie in die Summe. Namen werden wie in der
     # punishments.yml gematcht, "BadPackets" deckt also BadPacketsA,
@@ -72,10 +72,10 @@ bans:
     # Lieber ein externes Plugin? Dann tauschen gegen z. B.
     #   "tempban %player% 30d BuckSMPAC > %flags% Flags (%top_check%)"
     ladder:
-        - flags: 10
+        - flags: 15
           command: "[alert]"
-        - flags: 25
+        - flags: 45
           command: "acban %player% BuckSMPAC > %flags% Flags aus %checks% Checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 5
+bans-version: 6

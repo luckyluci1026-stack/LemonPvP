@@ -134,7 +134,7 @@ acunban-success: "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>w
 acunban-not-banned: "%prefix% <gray>Kein BuckSMPAC-Ban gefunden für</gray> <gradient:#6C5CE7:#00D4FF>%target%</gradient><gray>.</gray>"
 acban-storage-unavailable: "%prefix% <red>Die Ban-Liste ist nicht verfügbar — BuckSMPACs Datenbank ist aus oder konnte nicht laden. Siehe Konsole."
 # Der Bildschirm, den ein gebannter Spieler sieht. %reason% und %date% werden eingesetzt.
-acban-screen: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMPAC</bold></gradient><newline><newline><white>Du bist von diesem Netzwerk gebannt.<newline><newline><gray>Grund: <white>%reason%<newline><gray>Datum: <white>%date%"
+acban-screen: "<gradient:#6C5CE7:#00D4FF><bold>▄▀▄▀▄  B U C K S M P  ▄▀▄▀▄</bold></gradient><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><white><bold>Du bist permanent gebannt.</bold></white><newline><newline><gray>Grund</gray>  <dark_gray>»</dark_gray>  <gradient:#6C5CE7:#00D4FF>%reason%</gradient><newline><gray>Datum</gray>  <dark_gray>»</dark_gray>  <white>%date%</white><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><gray>Du hältst das für einen Fehler?</gray><newline><gradient:#6C5CE7:#00D4FF>discord.gg/bucksmp</gradient>"
 
 # Schema-Marker — siehe Kopf-Kommentar in config.yml.
 config-flavor: V2

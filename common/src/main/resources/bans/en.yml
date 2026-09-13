@@ -30,14 +30,14 @@ bans:
     # 900 = a flag drops back out of the total 15 minutes after it happened,
     # so someone who trips one check a week does not slowly accumulate a ban.
     # Set to 0 to keep every flag for as long as the player stays online.
-    remember-flags-for: 1800
+    remember-flags-for: 900
 
     # No rung fires until the player has tripped at least this many DIFFERENT
     # checks. This is the safeguard that makes the ladder safe to run strict:
     # a real cheat client trips several checks at once, while one check firing
     # over and over is far more often a false positive or a lag artifact.
     # Set to 1 to turn the safeguard off.
-    min-different-checks: 2
+    min-different-checks: 3
 
     # Flags from these checks never count toward the total. Names match the
     # same way as in punishments.yml, so "BadPackets" covers BadPacketsA,
@@ -70,10 +70,10 @@ bans:
     # Prefer an external plugin? Swap it for e.g.
     #   "tempban %player% 30d BuckSMPAC > %flags% flags (%top_check%)"
     ladder:
-        - flags: 10
+        - flags: 15
           command: "[alert]"
-        - flags: 25
+        - flags: 45
           command: "acban %player% BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 5
+bans-version: 6
