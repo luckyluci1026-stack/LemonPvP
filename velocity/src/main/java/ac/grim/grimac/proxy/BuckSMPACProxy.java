@@ -16,7 +16,6 @@ import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
@@ -29,7 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -161,20 +159,23 @@ public class BuckSMPACProxy {
         UUID uuid = tryUuid(parts[1]);
         if (uuid == null) return;
 
-        long when;
-        try {
-            when = Long.parseLong(parts[3]);
-        } catch (NumberFormatException e) {
-            when = System.currentTimeMillis();
-        }
+        ProxyBanList.BanRecord record =
+                new ProxyBanList.BanRecord(uuid, parts[2], parseWhen(parts[3]), parts[4], parts[5]);
 
-        bans.add(new ProxyBanList.BanRecord(uuid, parts[2], when, parts[4], parts[5]));
-        logger.info("Banned {} ({})", parts[2], parts[5]);
+        bans.add(record);
+        logger.info("Banned {} ({})", record.name(), record.reason());
 
         // They are still connected at this moment - the backend disconnects
         // them too, but doing it here covers the case where it cannot.
-        server.getPlayer(uuid).ifPresent(p ->
-                p.disconnect(screen(new ProxyBanList.BanRecord(uuid, parts[2], when, parts[4], parts[5]))));
+        server.getPlayer(uuid).ifPresent(p -> p.disconnect(screen(record)));
+    }
+
+    private static long parseWhen(String raw) {
+        try {
+            return Long.parseLong(raw.trim());
+        } catch (NumberFormatException e) {
+            return System.currentTimeMillis();
+        }
     }
 
     private void handleUnban(String[] parts) {
@@ -267,10 +268,5 @@ public class BuckSMPACProxy {
         } catch (RuntimeException e) {
             return null;
         }
-    }
-
-    @SuppressWarnings("unused")
-    private Optional<Player> online(UUID uuid) {
-        return server.getPlayer(uuid);
     }
 }
