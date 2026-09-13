@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 
@@ -60,10 +61,11 @@ public class BuckSMPACProxy {
     private static final String DEFAULT_SCREEN =
             "<gradient:#6C5CE7:#00D4FF><bold>▄▀▄▀▄  B U C K S M P  ▄▀▄▀▄</bold></gradient>"
                     + "<newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray>"
-                    + "<newline><newline><white><bold>You are permanently banned.</bold></white>"
+                    + "<newline><newline><white><bold>You are banned from this network.</bold></white>"
                     + "<newline><newline><gray>Reason</gray>  <dark_gray>»</dark_gray>  "
                     + "<gradient:#6C5CE7:#00D4FF>%reason%</gradient>"
                     + "<newline><gray>Date</gray>    <dark_gray>»</dark_gray>  <white>%date%</white>"
+                    + "<newline><gray>Expires</gray> <dark_gray>»</dark_gray>  <gradient:#6C5CE7:#00D4FF>%remaining%</gradient>"
                     + "<newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray>"
                     + "<newline><newline><gray>Think this is a mistake?</gray>"
                     + "<newline><gradient:#6C5CE7:#00D4FF>discord.gg/bucksmp</gradient>";
@@ -143,7 +145,7 @@ public class BuckSMPACProxy {
         if (bans == null) return;
 
         String payload = new String(event.getData(), StandardCharsets.UTF_8);
-        String[] parts = payload.split("\\|", 6);
+        String[] parts = payload.split("\\|", 7);
         if (parts.length < 2) return;
 
         switch (parts[0]) {
@@ -154,13 +156,13 @@ public class BuckSMPACProxy {
     }
 
     private void handleBan(String[] parts) {
-        // BAN|uuid|name|epochMs|actor|reason
-        if (parts.length < 6) return;
+        // BAN|uuid|name|epochMs|expiresEpochMs|actor|reason
+        if (parts.length < 7) return;
         UUID uuid = tryUuid(parts[1]);
         if (uuid == null) return;
 
-        ProxyBanList.BanRecord record =
-                new ProxyBanList.BanRecord(uuid, parts[2], parseWhen(parts[3]), parts[4], parts[5]);
+        ProxyBanList.BanRecord record = new ProxyBanList.BanRecord(
+                uuid, parts[2], parseWhen(parts[3]), parseExpiry(parts[4]), parts[5], parts[6]);
 
         bans.add(record);
         logger.info("Banned {} ({})", record.name(), record.reason());
@@ -168,6 +170,15 @@ public class BuckSMPACProxy {
         // They are still connected at this moment - the backend disconnects
         // them too, but doing it here covers the case where it cannot.
         server.getPlayer(uuid).ifPresent(p -> p.disconnect(screen(record)));
+    }
+
+    /** An unparseable expiry is safer read as "never" than as "already over". */
+    private static long parseExpiry(String raw) {
+        try {
+            return Long.parseLong(raw.trim());
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
     }
 
     private static long parseWhen(String raw) {
@@ -250,7 +261,27 @@ public class BuckSMPACProxy {
         return mini(screenTemplate
                 .replace("%reason%", sanitise(record.reason()))
                 .replace("%date%", date)
+                .replace("%remaining%", remaining(record.expiresEpochMs()))
                 .replace("%player%", sanitise(record.name())));
+    }
+
+    /** Same wording the backend uses, kept here so the proxy needs no shared code. */
+    private static String remaining(long expiresEpochMs) {
+        if (expiresEpochMs == 0L) return "never";
+        long left = expiresEpochMs - System.currentTimeMillis();
+        if (left <= 0) return "expired";
+
+        long days = TimeUnit.MILLISECONDS.toDays(left);
+        long hours = TimeUnit.MILLISECONDS.toHours(left) % 24;
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(left) % 60;
+
+        if (days > 0) return plural(days, "day") + " " + plural(hours, "hour");
+        if (hours > 0) return plural(hours, "hour") + " " + plural(minutes, "minute");
+        return plural(Math.max(1, minutes), "minute");
+    }
+
+    private static String plural(long value, String unit) {
+        return value + " " + unit + (value == 1 ? "" : "s");
     }
 
     private static Component mini(String text) {

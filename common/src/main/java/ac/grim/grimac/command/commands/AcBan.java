@@ -8,6 +8,7 @@ package ac.grim.grimac.command.commands;
 
 import ac.grim.grimac.GrimAPI;
 import ac.grim.grimac.command.BuildableCommand;
+import ac.grim.grimac.manager.AcBanDuration;
 import ac.grim.grimac.manager.AcBanEnforcer;
 import ac.grim.grimac.manager.AcBanStore;
 import ac.grim.grimac.platform.api.command.PlayerSelector;
@@ -23,6 +24,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * {@code /acban <player> [reason]} — BuckSMPAC's own ban.
+ *
+ * <p>Takes an optional leading duration: {@code /acban Steve 7d flying}. A
+ * first word that does not parse as one ({@code 7d}, {@code 12h},
+ * {@code perm}) is treated as the start of the reason instead, so an admin
+ * in a hurry still gets the configured default length.</p>
  *
  * <p>Mostly issued by the anticheat itself from punishments.yml and bans.yml,
  * but usable by hand. The ban lands in BuckSMPAC's own datastore rather than in
@@ -60,28 +66,59 @@ public class AcBan implements BuildableCommand {
             return;
         }
 
-        String reason = context.getOrDefault("reason", "");
-        if (reason == null || reason.isBlank()) reason = "Cheating";
+        String rest = context.getOrDefault("reason", "");
+        if (rest == null) rest = "";
 
-        AcBanStore.ban(target.getUniqueId(), target.getName(), reason, sender.getName());
-        AcBanEnforcer.kickBanned(target.getUniqueId(), reason);
+        // First word may be a duration. If it is not, it belongs to the reason.
+        long durationMs = defaultDurationMs();
+        String[] split = rest.strip().split("\\s+", 2);
+        if (split.length > 0 && !split[0].isEmpty()) {
+            Long parsed = AcBanDuration.parse(split[0]);
+            if (parsed != null) {
+                durationMs = parsed;
+                rest = split.length > 1 ? split[1] : "";
+            }
+        }
 
-        LogUtil.info("acban: " + target.getName() + " banned by " + sender.getName() + " (" + reason + ")");
+        String reason = rest.isBlank() ? "Cheating" : rest.strip();
+        long expires = durationMs == AcBanDuration.PERMANENT
+                ? AcBanDuration.PERMANENT
+                : System.currentTimeMillis() + durationMs;
+
+        AcBanStore.ban(target.getUniqueId(), target.getName(), reason, sender.getName(), expires);
+        AcBanEnforcer.kickBanned(target.getUniqueId(), reason, expires);
+
+        LogUtil.info("acban: " + target.getName() + " banned by " + sender.getName()
+                + " for " + AcBanDuration.remaining(expires) + " (" + reason + ")");
 
         send(sender, "acban-success",
-                "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>has been banned.</gray> <dark_gray>(%reason%)</dark_gray>",
-                target.getName(), reason);
+                "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>has been banned for</gray> "
+                        + "<white>%duration%</white><gray>.</gray> <dark_gray>(%reason%)</dark_gray>",
+                target.getName(), reason, AcBanDuration.remaining(expires));
+    }
+
+    /** How long a ban lasts when the command did not say. */
+    private static long defaultDurationMs() {
+        String raw = GrimAPI.INSTANCE.getConfigManager().getConfig()
+                .getStringElse("acban-default-duration", "10d");
+        Long parsed = AcBanDuration.parse(raw);
+        return parsed == null ? java.util.concurrent.TimeUnit.DAYS.toMillis(10) : parsed;
     }
 
     static void send(Sender sender, String key, String fallback) {
-        send(sender, key, fallback, null, null);
+        send(sender, key, fallback, null, null, null);
     }
 
-    /** Renders a message key with BuckSMPAC's own %target% / %reason% placeholders. */
     static void send(Sender sender, String key, String fallback, String target, String reason) {
+        send(sender, key, fallback, target, reason, null);
+    }
+
+    /** Renders a message key with BuckSMPAC's %target% / %reason% / %duration% placeholders. */
+    static void send(Sender sender, String key, String fallback, String target, String reason, String duration) {
         String raw = GrimAPI.INSTANCE.getConfigManager().getConfig().getStringElse(key, fallback);
         if (target != null) raw = raw.replace("%target%", target);
         if (reason != null) raw = raw.replace("%reason%", MessageUtil.miniMessageSafe(reason));
+        if (duration != null) raw = raw.replace("%duration%", duration);
         sender.sendMessage(MessageUtil.miniMessage(MessageUtil.replacePlaceholders(sender, raw)));
     }
 }

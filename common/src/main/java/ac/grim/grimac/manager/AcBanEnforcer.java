@@ -40,7 +40,8 @@ public class AcBanEnforcer {
             "<gradient:#6C5CE7:#00D4FF><bold>BuckSMPAC</bold></gradient>"
                     + "<newline><newline><white>You are banned from this network."
                     + "<newline><newline><gray>Reason: <white>%reason%"
-                    + "<newline><gray>Date: <white>%date%";
+                    + "<newline><gray>Date: <white>%date%"
+                    + "<newline><gray>Expires in: <white>%remaining%";
 
     /** Checks the ban list for a joining player and disconnects them if banned. */
     public static void checkOnLogin(@NotNull User user) {
@@ -49,16 +50,16 @@ public class AcBanEnforcer {
 
         AcBanStore.lookup(uuid).thenAccept(record -> {
             if (record == null) return;
-            disconnect(user, screen(record.reason(), record.whenEpochMs()));
+            disconnect(user, screen(record.reason(), record.whenEpochMs(), record.expiresEpochMs()));
             LogUtil.info("Refused " + user.getName() + " — banned by BuckSMPAC (" + record.reason() + ")");
         });
     }
 
     /** Disconnects a player who was just banned while online. */
-    public static void kickBanned(@NotNull UUID uuid, @NotNull String reason) {
+    public static void kickBanned(@NotNull UUID uuid, @NotNull String reason, long expiresEpochMs) {
         User user = findUser(uuid);
         if (user == null) return;
-        disconnect(user, screen(reason, System.currentTimeMillis()));
+        disconnect(user, screen(reason, System.currentTimeMillis(), expiresEpochMs));
     }
 
     private static @Nullable User findUser(UUID uuid) {
@@ -80,12 +81,13 @@ public class AcBanEnforcer {
         user.closeConnection();
     }
 
-    private static Component screen(String reason, long whenEpochMs) {
+    private static Component screen(String reason, long whenEpochMs, long expiresEpochMs) {
         String raw = GrimAPI.INSTANCE.getConfigManager().getConfig()
                 .getStringElse("acban-screen", DEFAULT_SCREEN);
         String date = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(whenEpochMs));
         return MessageUtil.miniMessage(raw
                 .replace("%reason%", MessageUtil.miniMessageSafe(reason))
-                .replace("%date%", date));
+                .replace("%date%", date)
+                .replace("%remaining%", AcBanDuration.remaining(expiresEpochMs)));
     }
 }

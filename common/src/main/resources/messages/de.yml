@@ -59,7 +59,7 @@ profile:
 help:
     - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
     - "&7Kurzformen: &f/buckac &7und &f/bac"
-    - "/acban <Spieler> [Grund] &f- &7Bannt einen Spieler (BuckSMPACs eigene Liste)"
+    - "/acban <Spieler> [7d|14d|perm] [Grund] &f- &7Bannt einen Spieler (Standard 10 Tage)"
     - "/acunban <Spieler> &f- &7Hebt einen BuckSMPAC-Ban auf"
     - "/bucksmpac alerts &f- &7Schaltet Benachrichtigungen um"
     - "/bucksmpac brands &f- &7Toggle brands"
@@ -134,7 +134,9 @@ acunban-success: "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>w
 acunban-not-banned: "%prefix% <gray>Kein BuckSMPAC-Ban gefunden für</gray> <gradient:#6C5CE7:#00D4FF>%target%</gradient><gray>.</gray>"
 acban-storage-unavailable: "%prefix% <red>Die Ban-Liste ist nicht verfügbar — BuckSMPACs Datenbank ist aus oder konnte nicht laden. Siehe Konsole."
 # Der Bildschirm, den ein gebannter Spieler sieht. %reason% und %date% werden eingesetzt.
-acban-screen: "<gradient:#6C5CE7:#00D4FF><bold>▄▀▄▀▄  B U C K S M P  ▄▀▄▀▄</bold></gradient><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><white><bold>Du bist permanent gebannt.</bold></white><newline><newline><gray>Grund</gray>  <dark_gray>»</dark_gray>  <gradient:#6C5CE7:#00D4FF>%reason%</gradient><newline><gray>Datum</gray>  <dark_gray>»</dark_gray>  <white>%date%</white><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><gray>Du hältst das für einen Fehler?</gray><newline><gradient:#6C5CE7:#00D4FF>discord.gg/bucksmp</gradient>"
+# Wie lange ein /acban gilt, wenn im Befehl keine Dauer steht.
+acban-default-duration: "10d"
+acban-screen: "<gradient:#6C5CE7:#00D4FF><bold>▄▀▄▀▄  B U C K S M P  ▄▀▄▀▄</bold></gradient><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><white><bold>Du bist von diesem Netzwerk gebannt.</bold></white><newline><newline><gray>Grund</gray>  <dark_gray>»</dark_gray>  <gradient:#6C5CE7:#00D4FF>%reason%</gradient><newline><gray>Datum</gray>  <dark_gray>»</dark_gray>  <white>%date%</white><newline><gray>Endet</gray>  <dark_gray>»</dark_gray>  <gradient:#6C5CE7:#00D4FF>%remaining%</gradient><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><gray>Du hältst das für einen Fehler?</gray><newline><gradient:#6C5CE7:#00D4FF>discord.gg/bucksmp</gradient>"
 
 # Schema-Marker — siehe Kopf-Kommentar in config.yml.
 config-flavor: V2

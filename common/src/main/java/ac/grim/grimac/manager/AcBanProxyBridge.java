@@ -48,10 +48,11 @@ public class AcBanProxyBridge {
     }
 
     public static void sendBan(@NotNull UUID uuid, @NotNull String name, long whenEpochMs,
-                               @NotNull String actor, @NotNull String reason) {
+                               long expiresEpochMs, @NotNull String actor, @NotNull String reason) {
         // Pipes separate the fields, and the reason is last so one inside it
         // cannot shift anything - but the proxy splits with a limit anyway.
-        send("BAN|" + uuid + '|' + name + '|' + whenEpochMs + '|' + clean(actor) + '|' + clean(reason),
+        send("BAN|" + uuid + '|' + name + '|' + whenEpochMs + '|' + expiresEpochMs
+                        + '|' + clean(actor) + '|' + clean(reason),
                 "ban of " + name);
     }
 

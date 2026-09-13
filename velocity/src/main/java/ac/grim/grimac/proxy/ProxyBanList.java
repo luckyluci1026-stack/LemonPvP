@@ -42,7 +42,12 @@ public final class ProxyBanList {
     private final Path file;
     private final Logger logger;
 
-    public record BanRecord(UUID uuid, String name, long whenEpochMs, String actor, String reason) {
+    /** {@code expiresEpochMs} of 0 means the ban never lifts. */
+    public record BanRecord(UUID uuid, String name, long whenEpochMs, long expiresEpochMs,
+                            String actor, String reason) {
+        public boolean isExpired() {
+            return expiresEpochMs != 0L && System.currentTimeMillis() >= expiresEpochMs;
+        }
     }
 
     public ProxyBanList(Path file, Logger logger) {
@@ -68,12 +73,24 @@ public final class ProxyBanList {
     }
 
     public BanRecord lookup(UUID uuid) {
-        return byUuid.get(uuid);
+        return live(byUuid.get(uuid));
     }
 
     public BanRecord lookup(String name) {
         UUID uuid = byName.get(name.toLowerCase(Locale.ROOT));
-        return uuid == null ? null : byUuid.get(uuid);
+        return uuid == null ? null : live(byUuid.get(uuid));
+    }
+
+    /**
+     * Drops a ban that has served its time. Swept on read rather than on a
+     * timer: nothing else needs to know, and the only moment the answer
+     * matters is when somebody tries to join.
+     */
+    private BanRecord live(BanRecord record) {
+        if (record == null) return null;
+        if (!record.isExpired()) return record;
+        remove(record.uuid(), record.name());
+        return null;
     }
 
     public void add(BanRecord record) {
@@ -112,7 +129,8 @@ public final class ProxyBanList {
     private synchronized void save() {
         List<String> lines = new ArrayList<>();
         lines.add("# BuckSMPAC proxy ban list. One ban per line:");
-        lines.add("#   uuid|name|epochMillis|bannedBy|reason");
+        lines.add("#   uuid|name|epochMillis|expiresEpochMillis|bannedBy|reason");
+        lines.add("# An expiry of 0 means the ban never lifts.");
         lines.add("# Deleting a line unbans that player on the next proxy start,");
         lines.add("# or immediately with /acunban on the proxy console.");
         for (BanRecord r : byUuid.values()) {
@@ -120,6 +138,7 @@ public final class ProxyBanList {
                     r.uuid().toString(),
                     nullSafe(r.name()),
                     Long.toString(r.whenEpochMs()),
+                    Long.toString(r.expiresEpochMs()),
                     nullSafe(r.actor()),
                     // The reason is last, so a pipe inside it cannot shift the
                     // other fields - but strip it anyway to keep lines clean.
@@ -134,15 +153,16 @@ public final class ProxyBanList {
     }
 
     private static BanRecord parse(String line) {
-        String[] parts = line.split("\\|", 5);
-        if (parts.length < 3) return null;
+        String[] parts = line.split("\\|", 6);
+        if (parts.length < 4) return null;
         try {
             return new BanRecord(
                     UUID.fromString(parts[0].trim()),
                     parts[1],
                     Long.parseLong(parts[2].trim()),
-                    parts.length > 3 ? parts[3] : "",
-                    parts.length > 4 ? parts[4] : "");
+                    Long.parseLong(parts[3].trim()),
+                    parts.length > 4 ? parts[4] : "",
+                    parts.length > 5 ? parts[5] : "");
         } catch (IllegalArgumentException e) {
             return null; // malformed line: skip rather than refuse to start
         }

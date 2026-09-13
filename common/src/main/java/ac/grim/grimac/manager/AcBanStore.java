@@ -49,8 +49,11 @@ public class AcBanStore {
      *  the split is limited to three parts, so spaces inside it survive. */
     private static final char SEP = ' ';
 
-    /** One stored ban. */
-    public record BanRecord(long whenEpochMs, @NotNull String actor, @NotNull String reason) {
+    /** One stored ban. {@code expiresEpochMs} of 0 means it never lifts. */
+    public record BanRecord(long whenEpochMs, long expiresEpochMs, @NotNull String actor, @NotNull String reason) {
+        public boolean isExpired() {
+            return expiresEpochMs != AcBanDuration.PERMANENT && System.currentTimeMillis() >= expiresEpochMs;
+        }
     }
 
     private static @Nullable DataStore store() {
@@ -111,7 +114,8 @@ public class AcBanStore {
                 .toCompletableFuture();
     }
 
-    public static void ban(@NotNull UUID uuid, @NotNull String name, @NotNull String reason, @NotNull String actor) {
+    public static void ban(@NotNull UUID uuid, @NotNull String name, @NotNull String reason,
+                           @NotNull String actor, long expiresEpochMs) {
         DataStore store = store();
         if (store == null) {
             LogUtil.warn("Refusing to ban " + name + " — BuckSMPAC's datastore is not available, "
@@ -120,14 +124,14 @@ public class AcBanStore {
         }
 
         long now = System.currentTimeMillis();
-        String encoded = now + String.valueOf(SEP) + actor + SEP + reason;
+        String encoded = now + String.valueOf(SEP) + expiresEpochMs + SEP + actor + SEP + reason;
 
         write(store, uuid.toString(), KEY_BAN, encoded, now);
         write(store, nameKey(name), KEY_NAME_INDEX, uuid.toString(), now);
 
         // Push it to the proxy so the player is refused at PreLoginEvent
         // rather than only being kept out of each backend.
-        AcBanProxyBridge.sendBan(uuid, name, now, actor, reason);
+        AcBanProxyBridge.sendBan(uuid, name, now, expiresEpochMs, actor, reason);
     }
 
     /** Clears the ban. The name index is cleared too so a stale row cannot resurrect it. */
@@ -172,16 +176,24 @@ public class AcBanStore {
         // empty string here means "not banned", not "corrupt".
         if (raw == null || raw.isEmpty()) return null;
 
-        String[] parts = raw.split(String.valueOf(SEP), 3);
-        if (parts.length < 2) return null;
-        String reason = parts.length >= 3 ? parts[2] : "";
+        String[] parts = raw.split(String.valueOf(SEP), 4);
+        if (parts.length < 3) return null;
 
-        long when;
+        long when = parseLong(parts[0]);
+        long expires = parseLong(parts[1]);
+        String reason = parts.length >= 4 ? parts[3] : "";
+
+        BanRecord record = new BanRecord(when, expires, parts[2], reason);
+        // A lapsed ban is simply not a ban. Reporting it as one would keep the
+        // player out past their sentence just because nothing swept the row.
+        return record.isExpired() ? null : record;
+    }
+
+    private static long parseLong(String raw) {
         try {
-            when = Long.parseLong(parts[0]);
+            return Long.parseLong(raw.trim());
         } catch (NumberFormatException e) {
-            when = 0L;
+            return 0L;
         }
-        return new BanRecord(when, parts[1], reason);
     }
 }

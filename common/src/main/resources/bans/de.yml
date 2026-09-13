@@ -75,7 +75,7 @@ bans:
         - flags: 15
           command: "[alert]"
         - flags: 45
-          command: "acban %player% BuckSMPAC > %flags% Flags aus %checks% Checks (%top_check% x%top_count%)"
+          command: "acban %player% 14d BuckSMPAC > %flags% Flags aus %checks% Checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 6
+bans-version: 7

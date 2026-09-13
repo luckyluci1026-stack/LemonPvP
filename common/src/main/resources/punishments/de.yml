@@ -22,12 +22,19 @@
 # ----------------------------------------------------------------------
 #  NUR BANS — keine Kicks, keine Freezes
 # ----------------------------------------------------------------------
-# Jede Gruppe unten hat genau eine Strafe: einen permanenten Ban.
+# Jede Gruppe unten hat genau eine Strafe: einen zeitlich begrenzten Ban.
+# Nichts hier bannt für immer - die Länge hängt an der Gruppe, länger wo
+# der Check fast nie danebengreift, kürzer wo er es manchmal tut.
 #
-#   Reach       14   Knockback   25
-#   Hitboxes    14   Combat      25
-#   Post        20   Misc        32
-#   BadPackets  20   Simulation 100
+#   Gruppe       Flags   Ban
+#   Reach          14    14 Tage
+#   Hitboxes       14    14 Tage
+#   Post           20    14 Tage
+#   BadPackets     20    14 Tage
+#   Knockback      25    10 Tage
+#   Combat         25    10 Tage
+#   Misc           32     7 Tage
+#   Simulation    100     7 Tage
 #
 # Ein Flag zählt 450 Sekunden nach dem Vorfall nicht mehr mit. Ein Spieler
 # muss also in einer Sitzung wiederholt auffallen, um einen Ban zu
@@ -48,8 +55,11 @@
 # konfigurieren, und er kann nicht ins Leere laufen, weil ein Ban-Plugin
 # woanders liegt.
 #
-#   /acban <Spieler> [Grund]
+#   /acban <Spieler> [Dauer] [Grund]     z. B.  /acban Steve 7d Fly
 #   /acunban <Spieler>
+#
+# Die Dauer ist optional: 7d, 12h, 30m oder perm. Ohne Angabe gilt
+# acban-default-duration aus der messages.yml (10 Tage).
 #
 # Mit dem Velocity-Plugin wird der Ban am Proxy durchgesetzt - ein
 # gebannter Spieler wird abgewiesen, bevor er irgendeinen Server erreicht.
@@ -74,7 +84,7 @@ Punishments:
       - "100:100 [webhook]"
       - "100:100 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "100:0 acban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
+      - "100:0 acban %player% 7d BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
 
   Knockback:
     remove-violations-after: 450
@@ -87,7 +97,7 @@ Punishments:
       - "20:20 [webhook]"
       - "20:20 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "25:0 acban %player% BuckSMPAC > Anti-Knockback (%check_name%)"          # BAN
+      - "25:0 acban %player% 10d BuckSMPAC > Anti-Knockback (%check_name%)"          # BAN
 
   Post:
     remove-violations-after: 450
@@ -99,7 +109,7 @@ Punishments:
       - "40:40 [webhook]"
       - "40:40 [proxy]"
       # --- BuckSMPAC Strafen-Leiter (Post ist sehr zuverlässig) ---
-      - "20:0 acban %player% BuckSMPAC > Paketreihenfolge (%check_name%)"        # BAN
+      - "20:0 acban %player% 14d BuckSMPAC > Paketreihenfolge (%check_name%)"        # BAN
 
   BadPackets:
     remove-violations-after: 450
@@ -113,7 +123,7 @@ Punishments:
       - "40:40 [webhook]"
       - "40:40 [proxy]"
       # --- BuckSMPAC Strafen-Leiter (BadPackets ist sehr zuverlässig) ---
-      - "20:0 acban %player% BuckSMPAC > Illegale Pakete (%check_name%)"         # BAN
+      - "20:0 acban %player% 14d BuckSMPAC > Illegale Pakete (%check_name%)"         # BAN
 
   Reach:
     remove-violations-after: 450
@@ -125,7 +135,7 @@ Punishments:
       - "5:3 [webhook]"
       - "5:3 [proxy]"
       # --- BuckSMPAC Strafen-Leiter (Reach ist sehr zuverlässig) ---
-      - "14:0 acban %player% BuckSMPAC > Reach erkannt (%check_name%)"           # BAN
+      - "14:0 acban %player% 14d BuckSMPAC > Reach erkannt (%check_name%)"           # BAN
 
   Hitboxes:
     remove-violations-after: 450
@@ -137,7 +147,7 @@ Punishments:
       - "5:3 [webhook]"
       - "5:3 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "14:0 acban %player% BuckSMPAC > Hitbox erkannt (%check_name%)"          # BAN
+      - "14:0 acban %player% 14d BuckSMPAC > Hitbox erkannt (%check_name%)"          # BAN
 
   Misc:
     remove-violations-after: 450
@@ -159,7 +169,7 @@ Punishments:
       - "20:10 [webhook]"
       - "20:10 [proxy]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "32:0 acban %player% BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
+      - "32:0 acban %player% 7d BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
 
   Combat:
     remove-violations-after: 450
@@ -170,7 +180,7 @@ Punishments:
       - "12:15 [alert]"
       - "1:1 [log]"
       # --- BuckSMPAC Strafen-Leiter ---
-      - "25:0 acban %player% BuckSMPAC > Kampf-Anomalie (%check_name%)"         # BAN
+      - "25:0 acban %player% 10d BuckSMPAC > Kampf-Anomalie (%check_name%)"         # BAN
 
   # BuckSMPACs eigener AutoClicker-Check. Er ist als experimentell markiert,
   # und BuckSMPAC liefert experimental-checks: true aus - er LÄUFT also.
@@ -194,4 +204,4 @@ Punishments:
 # Bump marker — BuckSMPAC compares this against the version it ships and
 # warns in the console when yours is older. This file is never overwritten
 # automatically, so the warning is the only way you would find out.
-punishments-version: 6
+punishments-version: 7
