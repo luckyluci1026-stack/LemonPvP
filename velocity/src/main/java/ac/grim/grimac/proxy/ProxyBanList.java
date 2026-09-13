@@ -8,68 +8,43 @@ package ac.grim.grimac.proxy;
 
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The proxy's ban list, held in memory and mirrored to a plain text file.
+ * The proxy's in-memory view of who is banned, backed by a {@link BanStorage}.
  *
- * <p>Deliberately not a database. The proxy has to answer during
- * {@code PreLoginEvent}, before the player reaches any backend, so it cannot
- * ask the anticheat — and giving it its own JDBC connection would mean sharing
- * a table schema with the backend plugin, which is one more thing to keep in
- * step and get wrong. Instead the backend pushes each ban over a plugin
- * message and this file is the proxy's own copy.</p>
+ * <p>Everything is held in memory because the answer is needed during
+ * {@code PreLoginEvent}: a database round-trip there would put its latency in
+ * front of every login on the network. The store is read once at startup and
+ * written when something changes.</p>
  *
- * <p>One record per line, pipe-separated:
- * {@code uuid|name|epochMs|actor|reason}. Readable and hand-editable on
- * purpose — deleting a line is a valid way to unban somebody.</p>
+ * <p>Indexed by UUID and by lowercased name. The name index is what makes a
+ * pre-login refusal possible at all — at that point the UUID is not known
+ * yet.</p>
  */
 public final class ProxyBanList {
 
-    /** Both maps point at the same records; name lookup is for PreLoginEvent. */
     private final Map<UUID, BanRecord> byUuid = new ConcurrentHashMap<>();
     private final Map<String, UUID> byName = new ConcurrentHashMap<>();
 
-    private final Path file;
+    private final BanStorage storage;
     private final Logger logger;
 
-    /** {@code expiresEpochMs} of 0 means the ban never lifts. */
-    public record BanRecord(UUID uuid, String name, long whenEpochMs, long expiresEpochMs,
-                            String actor, String reason) {
-        public boolean isExpired() {
-            return expiresEpochMs != 0L && System.currentTimeMillis() >= expiresEpochMs;
-        }
-    }
-
-    public ProxyBanList(Path file, Logger logger) {
-        this.file = file;
+    public ProxyBanList(BanStorage storage, Logger logger) {
+        this.storage = storage;
         this.logger = logger;
     }
 
     public void load() {
         byUuid.clear();
         byName.clear();
-
-        if (!Files.exists(file)) return;
-        try {
-            for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
-                if (line.isBlank() || line.startsWith("#")) continue;
-                BanRecord record = parse(line);
-                if (record != null) index(record);
-            }
-            logger.info("Loaded {} ban(s).", byUuid.size());
-        } catch (IOException e) {
-            logger.error("Could not read {} — nobody will be blocked at the proxy until this is fixed.", file, e);
+        for (BanRecord record : storage.loadAll()) {
+            index(record);
         }
+        logger.info("Loaded {} ban(s) from {}.", byUuid.size(), storage.describe());
     }
 
     public BanRecord lookup(UUID uuid) {
@@ -81,21 +56,9 @@ public final class ProxyBanList {
         return uuid == null ? null : live(byUuid.get(uuid));
     }
 
-    /**
-     * Drops a ban that has served its time. Swept on read rather than on a
-     * timer: nothing else needs to know, and the only moment the answer
-     * matters is when somebody tries to join.
-     */
-    private BanRecord live(BanRecord record) {
-        if (record == null) return null;
-        if (!record.isExpired()) return record;
-        remove(record.uuid(), record.name());
-        return null;
-    }
-
     public void add(BanRecord record) {
         index(record);
-        save();
+        storage.save(record);
     }
 
     /** @return true if anything was actually removed. */
@@ -111,7 +74,7 @@ public final class ProxyBanList {
         }
         if (name != null) byName.remove(name.toLowerCase(Locale.ROOT));
 
-        if (removed != null) save();
+        if (removed != null) storage.delete(removed.uuid());
         return removed != null;
     }
 
@@ -119,56 +82,22 @@ public final class ProxyBanList {
         return byUuid.size();
     }
 
+    /**
+     * Drops a ban that has served its time. Swept on read rather than on a
+     * timer: nothing else needs to know it lapsed, and the only moment the
+     * answer matters is when somebody tries to join.
+     */
+    private BanRecord live(BanRecord record) {
+        if (record == null) return null;
+        if (!record.isExpired()) return record;
+        remove(record.uuid(), record.name());
+        return null;
+    }
+
     private void index(BanRecord record) {
         byUuid.put(record.uuid(), record);
         if (record.name() != null && !record.name().isBlank()) {
             byName.put(record.name().toLowerCase(Locale.ROOT), record.uuid());
         }
-    }
-
-    private synchronized void save() {
-        List<String> lines = new ArrayList<>();
-        lines.add("# BuckSMPAC proxy ban list. One ban per line:");
-        lines.add("#   uuid|name|epochMillis|expiresEpochMillis|bannedBy|reason");
-        lines.add("# An expiry of 0 means the ban never lifts.");
-        lines.add("# Deleting a line unbans that player on the next proxy start,");
-        lines.add("# or immediately with /acunban on the proxy console.");
-        for (BanRecord r : byUuid.values()) {
-            lines.add(String.join("|",
-                    r.uuid().toString(),
-                    nullSafe(r.name()),
-                    Long.toString(r.whenEpochMs()),
-                    Long.toString(r.expiresEpochMs()),
-                    nullSafe(r.actor()),
-                    // The reason is last, so a pipe inside it cannot shift the
-                    // other fields - but strip it anyway to keep lines clean.
-                    nullSafe(r.reason()).replace('|', '/')));
-        }
-        try {
-            Files.createDirectories(file.getParent());
-            Files.write(file, lines, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            logger.error("Could not write {} — this ban is active now but will be lost on restart.", file, e);
-        }
-    }
-
-    private static BanRecord parse(String line) {
-        String[] parts = line.split("\\|", 6);
-        if (parts.length < 4) return null;
-        try {
-            return new BanRecord(
-                    UUID.fromString(parts[0].trim()),
-                    parts[1],
-                    Long.parseLong(parts[2].trim()),
-                    Long.parseLong(parts[3].trim()),
-                    parts.length > 4 ? parts[4] : "",
-                    parts.length > 5 ? parts[5] : "");
-        } catch (IllegalArgumentException e) {
-            return null; // malformed line: skip rather than refuse to start
-        }
-    }
-
-    private static String nullSafe(String s) {
-        return s == null ? "" : s;
     }
 }

@@ -2,6 +2,7 @@
 # --- Platform Dependencies ---
 adventure = "4.23.0"
 velocity = "3.3.0-SNAPSHOT"
+mariadb-client = "3.4.1"
 adventure-platform-bukkit = "4.4.0"
 paper-api = "1.20.6-R0.1-SNAPSHOT"
 cloud = "2.0.0"
@@ -36,6 +37,7 @@ spotless = "6.25.0"
 
 [libraries]
 # --- Core Frameworks: Adventure (Text) & Cloud (Commands) ---
+mariadb-client = { group = "org.mariadb.jdbc", name = "mariadb-java-client", version.ref = "mariadb-client" }
 velocity-api = { group = "com.velocitypowered", name = "velocity-api", version.ref = "velocity" }
 adventure-platform-bukkit = { group = "net.kyori", name = "adventure-platform-bukkit", version.ref = "adventure-platform-bukkit" }
 adventure-text-minimessage = { group = "net.kyori", name = "adventure-text-minimessage", version.ref = "adventure" }

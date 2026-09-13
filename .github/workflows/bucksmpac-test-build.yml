@@ -52,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bucksmpac-velocity-${{ steps.slug.outputs.value }}
-          path: velocity/build/libs/velocity-*.jar
+          path: velocity/build/libs/bucksmpac-velocity-*.jar
           if-no-files-found: warn
 
       - name: Upload mod jar (Fabric)

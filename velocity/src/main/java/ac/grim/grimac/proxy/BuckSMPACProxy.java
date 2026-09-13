@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
@@ -40,11 +41,13 @@ import org.slf4j.Logger;
  * player once they try to enter a server — they still reach the proxy and land
  * in limbo. This refuses them at the front door instead.</p>
  *
- * <p>It holds no anticheat logic and never talks to the anticheat's database.
+ * <p>It holds no anticheat logic and never reads the anticheat's own tables.
  * The backend pushes each ban over the {@code bucksmpac:bans} plugin channel
- * and this keeps its own copy in {@code plugins/bucksmpac/bans.txt}, which is
- * what makes an answer possible during {@link PreLoginEvent} — at that point
- * there is no backend connection to ask.</p>
+ * and this keeps its own copy — in a MySQL/MariaDB table it owns, or a text
+ * file when no database is configured. Either way the list is in memory by the
+ * time anybody connects, which is what makes an answer possible during
+ * {@link PreLoginEvent}: at that point there is no backend to ask, and a
+ * database round-trip would put its latency in front of every login.</p>
  */
 @Plugin(
         id = "bucksmpac",
@@ -86,7 +89,7 @@ public class BuckSMPACProxy {
 
     @Subscribe
     public void onInit(ProxyInitializeEvent event) {
-        bans = new ProxyBanList(dataDirectory.resolve("bans.txt"), logger);
+        bans = new ProxyBanList(chooseStorage(), logger);
         bans.load();
         screenTemplate = loadScreen();
 
@@ -95,6 +98,33 @@ public class BuckSMPACProxy {
         server.getCommandManager().register("acbans", new ListCommand());
 
         logger.info("Ready — banned players are refused before they reach a server.");
+    }
+
+    /**
+     * Database when config.properties says so, the text file otherwise.
+     *
+     * <p>A database that cannot be reached falls back to the file rather than
+     * leaving the proxy with no ban list at all — losing durability is bad,
+     * letting every banned player back in is worse. The reason is logged.</p>
+     */
+    private BanStorage chooseStorage() {
+        Path configFile = dataDirectory.resolve("config.properties");
+        ProxyBanConfig config = ProxyBanConfig.loadOrCreate(configFile, logger);
+
+        if (!config.databaseEnabled()) {
+            return new FileBanStorage(dataDirectory.resolve("bans.txt"), logger);
+        }
+
+        SqlBanStorage sql = new SqlBanStorage(config.host(), config.port(), config.database(),
+                config.user(), config.password(), logger);
+        try {
+            sql.connectAndPrepare();
+            return sql;
+        } catch (SQLException e) {
+            logger.error("Could not reach the database named in {} — falling back to bans.txt. "
+                    + "Bans still work, they just are not shared with anything else.", configFile, e);
+            return new FileBanStorage(dataDirectory.resolve("bans.txt"), logger);
+        }
     }
 
     // --- enforcement -------------------------------------------------------
@@ -106,7 +136,7 @@ public class BuckSMPACProxy {
     @Subscribe
     public void onPreLogin(PreLoginEvent event) {
         if (bans == null) return;
-        ProxyBanList.BanRecord record = bans.lookup(event.getUsername());
+        BanRecord record = bans.lookup(event.getUsername());
         if (record == null) return;
 
         event.setResult(PreLoginEvent.PreLoginComponentResult.denied(screen(record)));
@@ -120,7 +150,7 @@ public class BuckSMPACProxy {
     @Subscribe
     public void onLogin(LoginEvent event) {
         if (bans == null) return;
-        ProxyBanList.BanRecord record = bans.lookup(event.getPlayer().getUniqueId());
+        BanRecord record = bans.lookup(event.getPlayer().getUniqueId());
         if (record == null) return;
 
         event.setResult(com.velocitypowered.api.event.ResultedEvent.ComponentResult.denied(screen(record)));
@@ -161,7 +191,7 @@ public class BuckSMPACProxy {
         UUID uuid = tryUuid(parts[1]);
         if (uuid == null) return;
 
-        ProxyBanList.BanRecord record = new ProxyBanList.BanRecord(
+        BanRecord record = new BanRecord(
                 uuid, parts[2], parseWhen(parts[3]), parseExpiry(parts[4]), parts[5], parts[6]);
 
         bans.add(record);
@@ -256,7 +286,7 @@ public class BuckSMPACProxy {
         return DEFAULT_SCREEN;
     }
 
-    private Component screen(ProxyBanList.BanRecord record) {
+    private Component screen(BanRecord record) {
         String date = new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date(record.whenEpochMs()));
         return mini(screenTemplate
                 .replace("%reason%", sanitise(record.reason()))
