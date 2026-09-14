@@ -20,6 +20,18 @@ dependencies {
     // Velocity has no library loader, so the JDBC driver has to travel in the
     // jar. MariaDB's driver talks to MySQL too.
     implementation(libs.mariadb.client)
+
+    // The proxy's half of the ban channel is pinned by tests against
+    // protocol/ban-channel-samples.tsv, the same file the backend's encoder
+    // is pinned to. velocity-api is compileOnly above, so the test source set
+    // needs its own copy (it also carries slf4j, which ProxyBanList takes).
+    testImplementation(libs.velocity.api)
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.named<ShadowJar>("shadowJar") {

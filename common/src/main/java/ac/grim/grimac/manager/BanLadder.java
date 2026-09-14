@@ -184,6 +184,11 @@ public class BanLadder implements ConfigReloadable {
     }
 
     private void dispatch(String command) {
+        if (TestMode.isDryRun()) {
+            TestMode.record(player.user.getName(), "bans.yml ladder", command);
+            return;
+        }
+
         boolean resolved = GrimAPI.INSTANCE.getPlatformServer().dispatchCommandChecked(
                 GrimAPI.INSTANCE.getPlatformServer().getConsoleSender(), command);
 

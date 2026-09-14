@@ -174,57 +174,32 @@ public class BuckSMPACProxy {
         }
         if (bans == null) return;
 
-        String payload = new String(event.getData(), StandardCharsets.UTF_8);
-        String[] parts = payload.split("\\|", 7);
-        if (parts.length < 2) return;
+        BanMessage message = BanMessage.parse(new String(event.getData(), StandardCharsets.UTF_8));
+        if (message == null) {
+            logger.warn("Ignoring an unreadable {} message.", CHANNEL.getId());
+            return;
+        }
 
-        switch (parts[0]) {
-            case "BAN" -> handleBan(parts);
-            case "UNBAN" -> handleUnban(parts);
-            default -> logger.warn("Unknown {} command: {}", CHANNEL.getId(), parts[0]);
+        switch (message.kind()) {
+            case BAN -> handleBan(message);
+            case UNBAN -> handleUnban(message);
         }
     }
 
-    private void handleBan(String[] parts) {
-        // BAN|uuid|name|epochMs|expiresEpochMs|actor|reason
-        if (parts.length < 7) return;
-        UUID uuid = tryUuid(parts[1]);
-        if (uuid == null) return;
-
-        BanRecord record = new BanRecord(
-                uuid, parts[2], parseWhen(parts[3]), parseExpiry(parts[4]), parts[5], parts[6]);
-
+    private void handleBan(BanMessage message) {
+        BanRecord record = message.toRecord();
         bans.add(record);
         logger.info("Banned {} ({})", record.name(), record.reason());
 
         // They are still connected at this moment - the backend disconnects
         // them too, but doing it here covers the case where it cannot.
-        server.getPlayer(uuid).ifPresent(p -> p.disconnect(screen(record)));
+        server.getPlayer(record.uuid()).ifPresent(p -> p.disconnect(screen(record)));
     }
 
-    /** An unparseable expiry is safer read as "never" than as "already over". */
-    private static long parseExpiry(String raw) {
-        try {
-            return Long.parseLong(raw.trim());
-        } catch (NumberFormatException e) {
-            return 0L;
-        }
-    }
-
-    private static long parseWhen(String raw) {
-        try {
-            return Long.parseLong(raw.trim());
-        } catch (NumberFormatException e) {
-            return System.currentTimeMillis();
-        }
-    }
-
-    private void handleUnban(String[] parts) {
-        // UNBAN|uuid|name
-        UUID uuid = tryUuid(parts[1]);
-        String name = parts.length > 2 ? parts[2] : null;
-        if (bans.remove(uuid, name)) {
-            logger.info("Unbanned {}", name != null && !name.isBlank() ? name : uuid);
+    private void handleUnban(BanMessage message) {
+        String name = message.name().isBlank() ? null : message.name();
+        if (bans.remove(message.uuid(), name)) {
+            logger.info("Unbanned {}", name != null ? name : message.uuid());
         }
     }
 
@@ -269,13 +244,21 @@ public class BuckSMPACProxy {
 
     // --- helpers -----------------------------------------------------------
 
-    /** Reads ban-screen.txt, creating it from the default on first start. */
+    /**
+     * Reads ban-screen.txt, creating it from the default on first start.
+     *
+     * <p>The result is checked here rather than where it is used. An unclosed
+     * tag makes MiniMessage throw, and the place that renders this is inside
+     * the login path — a throw there costs every banned player their refusal,
+     * or worse, lets them through. Better to find out at startup, with a line
+     * in the log saying which file to fix.</p>
+     */
     private String loadScreen() {
         Path path = dataDirectory.resolve("ban-screen.txt");
         try {
             if (Files.exists(path)) {
                 String text = Files.readString(path, StandardCharsets.UTF_8).strip();
-                if (!text.isEmpty()) return text;
+                if (!text.isEmpty()) return validated(text, path);
             } else {
                 Files.createDirectories(dataDirectory);
                 Files.writeString(path, DEFAULT_SCREEN, StandardCharsets.UTF_8);
@@ -284,6 +267,23 @@ public class BuckSMPACProxy {
             logger.warn("Could not read or create {}; using the built-in screen.", path, e);
         }
         return DEFAULT_SCREEN;
+    }
+
+    private String validated(String template, Path path) {
+        try {
+            // The placeholders are substituted before rendering, so fill them
+            // with something harmless to exercise the whole template.
+            MiniMessage.miniMessage().deserialize(template
+                    .replace("%reason%", "reason")
+                    .replace("%date%", "01.01.2026 00:00")
+                    .replace("%remaining%", "7 days 0 hours")
+                    .replace("%player%", "Player"));
+            return template;
+        } catch (RuntimeException e) {
+            logger.error("{} is not valid MiniMessage, so the built-in ban screen is being used instead. "
+                    + "Fix the tags and restart the proxy.", path, e);
+            return DEFAULT_SCREEN;
+        }
     }
 
     private Component screen(BanRecord record) {

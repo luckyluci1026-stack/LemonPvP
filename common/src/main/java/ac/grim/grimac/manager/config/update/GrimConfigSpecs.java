@@ -73,9 +73,15 @@ public final class GrimConfigSpecs {
      * to detection. Getting that answer wrong disconnects legitimate players
      * over proxy plugin messages, so it needed an override that does not
      * depend on file paths resolving.
+     *
+     * <p>v14 → v15: adds {@code punishment-dry-run}. Same reasoning as the
+     * three bumps above — without it an existing config never gains the key,
+     * and the operator has no way to rehearse the punishment ladders against
+     * real traffic before arming them. Off by default, so the bump changes
+     * nothing for a server that does not go looking for it.
      */
     public static @NotNull ConfigUpdater.Spec mainConfig() {
-        return ConfigUpdater.Spec.builder("/config/", 14, ConfigUpdater.ConfigFlavor.V2)
+        return ConfigUpdater.Spec.builder("/config/", 15, ConfigUpdater.ConfigFlavor.V2)
                 .migration(10, ctx -> {
                     String typeRaw = ctx.input().getString("history.database.type");
                     String type = typeRaw == null ? null : typeRaw.trim().toUpperCase(Locale.ROOT);
@@ -136,8 +142,17 @@ public final class GrimConfigSpecs {
                 .build();
     }
 
+    /**
+     * Chat strings and the ban screen.
+     *
+     * <p>v2 → v3: adds {@code acban-max-duration} and
+     * {@code acban-dry-run-note}. The bundled files carried a stale
+     * {@code config-version: 1} while this spec already said 2 — harmless,
+     * since the updater stamps its own latest version into the operator's
+     * file, but misleading to read. Both say 3 from here on.
+     */
     public static @NotNull ConfigUpdater.Spec messages() {
-        return ConfigUpdater.Spec.builder("/messages/", 2, ConfigUpdater.ConfigFlavor.V2)
+        return ConfigUpdater.Spec.builder("/messages/", 3, ConfigUpdater.ConfigFlavor.V2)
                 .build();
     }
 

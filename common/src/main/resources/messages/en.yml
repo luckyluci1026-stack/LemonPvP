@@ -60,7 +60,7 @@ profile:
 help:
     - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
     - "&7Short forms: &f/buckac &7and &f/bac"
-    - "/acban <player> [7d|14d|perm] [reason] &f- &7Ban a player (default 10 days)"
+    - "/acban <player> [7d|14d] [reason] &f- &7Ban a player (default 10 days)"
     - "/acunban <player> &f- &7Lift a BuckSMPAC ban"
     - "/bucksmpac alerts &f- &7Toggle alerts"
     - "/bucksmpac brands &f- &7Toggle brands"
@@ -137,8 +137,15 @@ acban-storage-unavailable: "%prefix% <red>The ban list is unavailable — BuckSM
 # The screen a banned player sees. %reason% and %date% are filled in.
 # How long an /acban lasts when the command did not name a duration.
 acban-default-duration: "10d"
+# The longest ban /acban hands out. "perm" and anything longer collapse to
+# this, so nobody leaves a permanent ban behind by mistake. Set it to
+# "perm" to remove the ceiling entirely.
+acban-max-duration: "14d"
+# Shown after /acban while punishment-dry-run is on, so nobody mistakes a
+# real ban for part of the rehearsal.
+acban-dry-run-note: "%prefix% <gray>Note: test mode is on, so the ladders are only logging — but this ban was real.</gray>"
 acban-screen: "<gradient:#6C5CE7:#00D4FF><bold>▄▀▄▀▄  B U C K S M P  ▄▀▄▀▄</bold></gradient><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><white><bold>You are banned from this network.</bold></white><newline><newline><gray>Reason</gray>  <dark_gray>»</dark_gray>  <gradient:#6C5CE7:#00D4FF>%reason%</gradient><newline><gray>Date</gray>    <dark_gray>»</dark_gray>  <white>%date%</white><newline><gray>Expires</gray> <dark_gray>»</dark_gray>  <gradient:#6C5CE7:#00D4FF>%remaining%</gradient><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><gray>Think this is a mistake?</gray><newline><gradient:#6C5CE7:#00D4FF>discord.gg/bucksmp</gradient>"
 
 # Schema markers — see header comment in config.yml.
 config-flavor: V2
-config-version: 1
+config-version: 3

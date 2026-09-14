@@ -11,6 +11,7 @@ import ac.grim.grimac.command.BuildableCommand;
 import ac.grim.grimac.manager.AcBanDuration;
 import ac.grim.grimac.manager.AcBanEnforcer;
 import ac.grim.grimac.manager.AcBanStore;
+import ac.grim.grimac.manager.TestMode;
 import ac.grim.grimac.platform.api.command.PlayerSelector;
 import ac.grim.grimac.platform.api.manager.cloud.CloudPlatformCommandArguments;
 import ac.grim.grimac.platform.api.player.PlatformPlayer;
@@ -81,6 +82,11 @@ public class AcBan implements BuildableCommand {
         }
 
         String reason = rest.isBlank() ? "Cheating" : rest.strip();
+
+        // BuckSMP hands out days, not forever. "perm" and an over-long
+        // duration both collapse to the ceiling rather than escaping it.
+        durationMs = AcBanDuration.clamp(durationMs, maxDurationMs());
+
         long expires = durationMs == AcBanDuration.PERMANENT
                 ? AcBanDuration.PERMANENT
                 : System.currentTimeMillis() + durationMs;
@@ -95,6 +101,27 @@ public class AcBan implements BuildableCommand {
                 "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>has been banned for</gray> "
                         + "<white>%duration%</white><gray>.</gray> <dark_gray>(%reason%)</dark_gray>",
                 target.getName(), reason, AcBanDuration.remaining(expires));
+
+        // Test mode holds back the ladders, not a human typing the command.
+        // Saying so avoids an admin assuming this one was a rehearsal too.
+        if (TestMode.isDryRun()) {
+            send(sender, "acban-dry-run-note",
+                    "%prefix% <gray>Note: test mode is on, so the ladders are only logging — "
+                            + "but this ban was real.</gray>");
+        }
+    }
+
+    /**
+     * The longest ban {@code /acban} will hand out.
+     *
+     * <p>Set it to {@code perm} to lift the ceiling entirely; anything else
+     * caps both an over-long duration and {@code perm} itself.</p>
+     */
+    private static long maxDurationMs() {
+        String raw = GrimAPI.INSTANCE.getConfigManager().getConfig()
+                .getStringElse("acban-max-duration", "14d");
+        Long parsed = AcBanDuration.parse(raw);
+        return parsed == null ? java.util.concurrent.TimeUnit.DAYS.toMillis(14) : parsed;
     }
 
     /** How long a ban lasts when the command did not say. */

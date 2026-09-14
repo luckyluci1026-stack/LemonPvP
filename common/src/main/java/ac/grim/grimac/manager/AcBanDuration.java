@@ -54,6 +54,24 @@ public class AcBanDuration {
         };
     }
 
+    /**
+     * Holds a duration inside what the network actually hands out.
+     *
+     * <p>BuckSMP bans for days, not forever, and that is a rule rather than a
+     * default: an admin typing {@code perm} or {@code 365d} in the heat of the
+     * moment should still produce a ban that lifts itself. {@link #PERMANENT}
+     * therefore collapses to the maximum instead of escaping it.</p>
+     *
+     * @param durationMs a parsed duration, possibly {@link #PERMANENT}
+     * @param maxMs      the longest ban this server hands out
+     * @return a duration in {@code (0, maxMs]}, never {@link #PERMANENT}
+     */
+    public static long clamp(long durationMs, long maxMs) {
+        if (maxMs <= 0) return durationMs; // no ceiling configured
+        if (durationMs == PERMANENT) return maxMs;
+        return Math.min(durationMs, maxMs);
+    }
+
     /** Human-readable time left, e.g. {@code 6 days 3 hours}. */
     public static @NotNull String remaining(long expiresEpochMs) {
         if (expiresEpochMs == PERMANENT) return "never";

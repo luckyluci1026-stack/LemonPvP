@@ -311,6 +311,29 @@ max-ping-out-of-flying: 1000
 # Dies verhindert, dass Spieler mit hoher Latenz einen einzigen Feuerwerks‑Boost mit Elytra unbegrenzt nutzen können.
 max-ping-firework-boost: 1000
 
+# ----------------------------------------------------------------------
+#  TESTMODUS
+# ----------------------------------------------------------------------
+# true  = BuckSMPAC schaut zu und meldet, bestraft aber nie. Jeder Ban und
+#         jeder Konsolen-Befehl, den punishments.yml oder bans.yml
+#         ausgeloest haetten, landet stattdessen in
+#         plugins/BuckSMPAC/testmode.log - mit Spieler, Check und dem
+#         genauen Befehl.
+# false = normaler Betrieb.
+#
+# Alerts, /grim verbose und die Verstoss-Historie laufen normal weiter. Die
+# Zahlen, die du im Test siehst, sind also genau die Zahlen, bei denen ein
+# scharfer Lauf zugeschlagen haette.
+#
+# Lass das ein paar Tage mit echten Spielern laufen, bevor du die Bans
+# scharf schaltest. Anders findest du nicht heraus, ob die Schwellen zu
+# DEINEM Server passen - seine TPS, sein Ping, seine Bedrock-Spieler, seine
+# Elytra-Strecken - ausser dadurch, dass jemand zu Unrecht gebannt wird.
+#
+# Ein selbst getipptes /acban bannt weiterhin: zurueckgehalten werden die
+# Leitern, nicht ein Mensch, der entschieden hat.
+punishment-dry-run: false
+
 # Schema-Marker — nur ändern, wenn du weißt, was du tust.
 #   config-flavor:  V2 = Grim-2.x-Build, V3 = Grim-3.x. Das Plugin lehnt eine
 #                   Config ab, deren Flavor nicht zum eigenen Build passt —
@@ -331,4 +354,4 @@ max-ping-firework-boost: 1000
 update-permission-ticks: -1
 
 config-flavor: V2
-config-version: 14
+config-version: 15

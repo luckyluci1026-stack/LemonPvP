@@ -209,6 +209,14 @@ public class PunishmentManager implements ConfigReloadable {
      * the backend console has no such command. Both outcomes are logged.</p>
      */
     private void runPunishmentCommand(String cmd, Check check) {
+        // Test mode: write down what would have happened and stop. The flag
+        // counting above already ran, so the numbers in testmode.log are the
+        // same ones a live run would have punished on.
+        if (TestMode.isDryRun()) {
+            TestMode.record(player.user.getName(), "punishments.yml " + check.getCheckName(), cmd);
+            return;
+        }
+
         boolean resolved = GrimAPI.INSTANCE.getPlatformServer().dispatchCommandChecked(
                 GrimAPI.INSTANCE.getPlatformServer().getConsoleSender(), cmd);
 
