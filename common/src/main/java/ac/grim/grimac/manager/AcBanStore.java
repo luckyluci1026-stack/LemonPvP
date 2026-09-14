@@ -45,16 +45,6 @@ public class AcBanStore {
 
     private static final String KEY_BAN = "bucksmpac.ban";
     private static final String KEY_NAME_INDEX = "bucksmpac.ban.name";
-    /** Field separator. A space is safe: the reason is the last field and
-     *  the split is limited to three parts, so spaces inside it survive. */
-    private static final char SEP = ' ';
-
-    /** One stored ban. {@code expiresEpochMs} of 0 means it never lifts. */
-    public record BanRecord(long whenEpochMs, long expiresEpochMs, @NotNull String actor, @NotNull String reason) {
-        public boolean isExpired() {
-            return expiresEpochMs != AcBanDuration.PERMANENT && System.currentTimeMillis() >= expiresEpochMs;
-        }
-    }
 
     private static @Nullable DataStore store() {
         try {
@@ -76,7 +66,7 @@ public class AcBanStore {
      * the future — a storage error resolves to null and is logged, because
      * refusing a join on a database hiccup is worse than missing one ban.
      */
-    public static CompletableFuture<@Nullable BanRecord> lookup(@NotNull UUID uuid) {
+    public static CompletableFuture<@Nullable AcBanRecord> lookup(@NotNull UUID uuid) {
         DataStore store = store();
         if (store == null) return CompletableFuture.completedFuture(null);
 
@@ -124,7 +114,7 @@ public class AcBanStore {
         }
 
         long now = System.currentTimeMillis();
-        String encoded = now + String.valueOf(SEP) + expiresEpochMs + SEP + actor + SEP + reason;
+        String encoded = new AcBanRecord(now, expiresEpochMs, actor, reason).encode();
 
         write(store, uuid.toString(), KEY_BAN, encoded, now);
         write(store, nameKey(name), KEY_NAME_INDEX, uuid.toString(), now);
@@ -170,30 +160,10 @@ public class AcBanStore {
         return new String(value, StandardCharsets.UTF_8);
     }
 
-    private static @Nullable BanRecord decode(@Nullable Page<SettingRecord> page) {
-        String raw = readString(page);
-        // An unban writes an empty value rather than deleting the row, so an
-        // empty string here means "not banned", not "corrupt".
-        if (raw == null || raw.isEmpty()) return null;
-
-        String[] parts = raw.split(String.valueOf(SEP), 4);
-        if (parts.length < 3) return null;
-
-        long when = parseLong(parts[0]);
-        long expires = parseLong(parts[1]);
-        String reason = parts.length >= 4 ? parts[3] : "";
-
-        BanRecord record = new BanRecord(when, expires, parts[2], reason);
+    private static @Nullable AcBanRecord decode(@Nullable Page<SettingRecord> page) {
+        AcBanRecord record = AcBanRecord.decode(readString(page));
         // A lapsed ban is simply not a ban. Reporting it as one would keep the
         // player out past their sentence just because nothing swept the row.
-        return record.isExpired() ? null : record;
-    }
-
-    private static long parseLong(String raw) {
-        try {
-            return Long.parseLong(raw.trim());
-        } catch (NumberFormatException e) {
-            return 0L;
-        }
+        return record == null || record.isExpired() ? null : record;
     }
 }
