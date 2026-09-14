@@ -74,9 +74,21 @@ public class AcBanDuration {
 
     /** Human-readable time left, e.g. {@code 6 days 3 hours}. */
     public static @NotNull String remaining(long expiresEpochMs) {
+        return remaining(expiresEpochMs, System.currentTimeMillis());
+    }
+
+    /**
+     * The same wording measured against a clock the caller supplies.
+     *
+     * <p>Exists so the wording can be pinned by a test. Reading
+     * {@link System#currentTimeMillis()} inside meant the answer depended on
+     * how long the test itself took to reach the assertion, which is a race
+     * that only shows up on a loaded build machine.</p>
+     */
+    public static @NotNull String remaining(long expiresEpochMs, long nowEpochMs) {
         if (expiresEpochMs == PERMANENT) return "never";
 
-        long left = expiresEpochMs - System.currentTimeMillis();
+        long left = expiresEpochMs - nowEpochMs;
         if (left <= 0) return "expired";
 
         long days = TimeUnit.MILLISECONDS.toDays(left);

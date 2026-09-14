@@ -123,11 +123,13 @@ class ProxyBanListTest {
         // The sweep runs on the write thread precisely so a login never waits
         // on a database. If that ever regresses, this test hangs rather than
         // quietly costing every login a round-trip.
+        // Wide margins on purpose: this must fail because the lookup waited on
+        // the store, never because a build machine was busy for a moment.
         FakeStorage slow = new FakeStorage() {
             @Override
             public synchronized void delete(UUID uuid) {
                 try {
-                    Thread.sleep(300);
+                    Thread.sleep(3_000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -141,7 +143,7 @@ class ProxyBanListTest {
         assertNull(bans.lookup("Steve"));
         long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 
-        assertTrue(elapsedMs < 200, "lookup waited " + elapsedMs + "ms on the store");
+        assertTrue(elapsedMs < 1_500, "lookup waited " + elapsedMs + "ms on the store");
     }
 
     @Test

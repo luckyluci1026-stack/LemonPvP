@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Durations as typed by a person in a hurry.
@@ -77,20 +78,44 @@ class AcBanDurationTest {
 
     @Test
     void describesWhatIsLeftInWordsAPlayerCanRead() {
-        long now = System.currentTimeMillis();
+        // Against a fixed clock. The wall clock made these assertions depend
+        // on how long the test took to reach them, which held on a quiet
+        // machine and broke on a loaded CI runner.
+        long now = 1_700_000_000_000L;
 
-        assertEquals("never", AcBanDuration.remaining(AcBanDuration.PERMANENT));
-        assertEquals("expired", AcBanDuration.remaining(now - 1000));
-        assertEquals("7 days 1 hour", AcBanDuration.remaining(now + 7 * DAY + TimeUnit.MINUTES.toMillis(90)));
-        assertEquals("1 day 0 hours", AcBanDuration.remaining(now + DAY + TimeUnit.MINUTES.toMillis(1)));
-        assertEquals("1 hour 30 minutes", AcBanDuration.remaining(now + TimeUnit.MINUTES.toMillis(91)));
-        assertEquals("5 minutes", AcBanDuration.remaining(now + TimeUnit.MINUTES.toMillis(6)));
+        assertEquals("never", AcBanDuration.remaining(AcBanDuration.PERMANENT, now));
+        assertEquals("expired", AcBanDuration.remaining(now - 1000, now));
+        assertEquals("7 days 1 hour", AcBanDuration.remaining(now + 7 * DAY + TimeUnit.MINUTES.toMillis(90), now));
+        assertEquals("1 day 0 hours", AcBanDuration.remaining(now + DAY + TimeUnit.MINUTES.toMillis(1), now));
+        assertEquals("1 hour 30 minutes", AcBanDuration.remaining(now + TimeUnit.MINUTES.toMillis(90), now));
+        assertEquals("5 minutes", AcBanDuration.remaining(now + TimeUnit.MINUTES.toMillis(5), now));
+    }
+
+    @Test
+    void singularAndPluralAreBothSpelledOut() {
+        long now = 1_700_000_000_000L;
+
+        assertEquals("1 day 1 hour", AcBanDuration.remaining(now + DAY + TimeUnit.HOURS.toMillis(1), now));
+        assertEquals("2 days 2 hours", AcBanDuration.remaining(now + 2 * DAY + TimeUnit.HOURS.toMillis(2), now));
+        assertEquals("1 hour 1 minute", AcBanDuration.remaining(now + TimeUnit.MINUTES.toMillis(61), now));
     }
 
     @Test
     void theLastMinuteNeverReadsAsZero() {
         // "0 minutes" on a ban screen reads as a bug to the player looking at it.
-        assertEquals("1 minute", AcBanDuration.remaining(System.currentTimeMillis() + 5_000));
+        long now = 1_700_000_000_000L;
+        assertEquals("1 minute", AcBanDuration.remaining(now + 5_000, now));
+    }
+
+    @Test
+    void theWallClockOverloadAgreesWithTheFixedOne() {
+        // The one-argument form is what production calls; this is the only
+        // assertion loose enough to survive an arbitrarily slow machine.
+        assertEquals("never", AcBanDuration.remaining(AcBanDuration.PERMANENT));
+        assertEquals("expired", AcBanDuration.remaining(System.currentTimeMillis() - DAY));
+        assertTrue(AcBanDuration.remaining(System.currentTimeMillis() + 7 * DAY).startsWith("6 days ")
+                        || AcBanDuration.remaining(System.currentTimeMillis() + 7 * DAY).startsWith("7 days "),
+                "7 days out should read as 6 or 7 days, depending on the millisecond");
     }
 
     @Test
