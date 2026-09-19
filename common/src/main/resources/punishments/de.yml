@@ -22,31 +22,31 @@
 # ----------------------------------------------------------------------
 #  NUR BANS — keine Kicks, keine Freezes
 # ----------------------------------------------------------------------
-# Jede Gruppe unten hat genau eine Strafe: einen zeitlich begrenzten Ban.
-# Nichts hier bannt für immer - die Länge hängt an der Gruppe, länger wo
-# der Check fast nie danebengreift, kürzer wo er es manchmal tut.
+# Zwei Stufen. Checks, die sich mit Lag streiten, melden nur - ein Mensch
+# entscheidet. Checks, die das nicht tun, duerfen selbst bannen, und zwar
+# erst bei Zahlen, die ein ehrlicher Spieler nicht erreicht.
 #
-#   Gruppe       Flags   Ban
-#   Reach          14    14 Tage
-#   Hitboxes       14    14 Tage
-#   Post           20    14 Tage
-#   BadPackets     20    14 Tage
-#   Knockback      25    10 Tage
-#   Combat         25    10 Tage
-#   Misc           32     7 Tage
-#   Simulation    100     7 Tage
+#   Gruppe       Flags   Ban        warum
+#   Reach          45    14 Tage    irrt sich selten
+#   Hitboxes       45    14 Tage    irrt sich selten
+#   Post           60    14 Tage    irrt sich selten
+#   BadPackets     60    14 Tage    irrt sich selten
+#   Misc          100     7 Tage    irrt sich selten
+#   Simulation      -    Alert      Lag, Eis, Boote, Kolben, Bedrock
+#   Knockback       -    Alert      jeder Aussetzer entsynct einen Treffer
+#   Combat          -    Alert      Aim liest Drehung; Ruckler sehen komisch aus
+#   Movement        -    Alert      Fahrzeuge und Elytra werden lose berechnet
+#   Autoclicker     -    Alert      neuer Code, keine Praxisdaten
 #
-# Ein Flag zählt 450 Sekunden nach dem Vorfall nicht mehr mit. Ein Spieler
-# muss also in einer Sitzung wiederholt auffallen, um einen Ban zu
-# erreichen - vereinzelte Falsch-Positive über einen Abend verteilt kühlen
-# ab, statt sich aufzusummieren.
+# Ein Flag zaehlt 300 Sekunden nach dem Auftreten nicht mehr mit. Ein
+# Spieler muss also in einer Sitzung wiederholt auffallen - der einzelne
+# Fehlalarm ueber einen Abend verteilt kuehlt ab statt sich zu summieren.
 #
-# Simulation liegt bewusst weit über dem Rest: dieser Check greift unter
-# Lag am ehesten daneben, und es ist die erste Zahl, die du hochsetzen
-# solltest, wenn legitime Spieler verschwinden.
-#
-# TROTZDEM SINNVOLL: erst ein paar Tage mit auskommentierten BAN-Zeilen
-# laufen lassen und prüfen, ob die Alerts wirklich Cheater nennen.
+# Jede Alert-Gruppe hat ihre Ban-Zeile weiterhin dabei, auskommentiert, mit
+# einem Startwert. Beobachte die Alerts einer Gruppe eine Woche lang; wenn
+# jeder genannte Spieler wirklich gecheatet hat, nimm das # weg. Im Zweifel
+# lass es - ein verpasster Cheater kostet dich einen Spieler, ein
+# Fehlbann den, der fair gespielt hat.
 #
 # ----------------------------------------------------------------------
 #  /acban — BUCKSMPACS EIGENER BAN
@@ -70,8 +70,18 @@
 # ----------------------------------------------------------------------
 
 Punishments:
+  # ------------------------------------------------------------------
+  #  NUR ALERTS - diese bannen nie von allein
+  # ------------------------------------------------------------------
+  # Simulation is the movement prediction engine. It is the single largest
+  # source of false positives on any anticheat: lag spikes, ice, boats,
+  # elytra, pistons and Bedrock movement all push a legitimate player past
+  # it. It watches and reports; a person decides.
+  #
+  # Arm it only once you have watched its alerts for a week and every player
+  # it named was actually cheating. The line is below, ready to uncomment.
   Simulation:
-    remove-violations-after: 450
+    remove-violations-after: 300
     checks:
       - "Simulation"
       - "GroundSpoof"
@@ -83,11 +93,13 @@ Punishments:
       - "1:1 [log]"
       - "100:100 [webhook]"
       - "100:100 [proxy]"
-      # --- BuckSMPAC Strafen-Leiter ---
-      - "100:0 acban %player% 7d BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
+      # --- Ban-Leiter (erst nach dem Einstellen scharf schalten - siehe oben) ---
+      #- "400:0 acban %player% 7d BuckSMPAC > Cheating erkannt (%check_name%)"     # BAN
 
+  # Knockback misfires whenever the server and the client disagree about a
+  # hit, which is every time the connection hiccups.
   Knockback:
-    remove-violations-after: 450
+    remove-violations-after: 300
     checks:
       - "Knockback"
       - "Explosion"
@@ -96,11 +108,41 @@ Punishments:
       - "1:1 [log]"
       - "20:20 [webhook]"
       - "20:20 [proxy]"
-      # --- BuckSMPAC Strafen-Leiter ---
-      - "25:0 acban %player% 10d BuckSMPAC > Anti-Knockback (%check_name%)"          # BAN
+      # --- Ban-Leiter (erst nach dem Einstellen scharf schalten) ---
+      #- "150:0 acban %player% 10d BuckSMPAC > Anti-Knockback (%check_name%)"       # BAN
 
+  # Aim reads rotation patterns. Controller players, high-DPI mice and
+  # anybody whose framerate stutters all look unusual to it.
+  Combat:
+    remove-violations-after: 300
+    checks:
+      - "Interact"
+      - "Aim"
+    commands:
+      - "12:15 [alert]"
+      - "1:1 [log]"
+      # --- Ban-Leiter (erst nach dem Einstellen scharf schalten) ---
+      #- "150:0 acban %player% 10d BuckSMPAC > Kampf-Anomalie (%check_name%)"       # BAN
+
+  # Boats, horses, minecarts and elytra. Vehicle movement is predicted much
+  # more loosely than walking, so these flag honest players more than
+  # anything else in Misc used to - which is why they moved out of it.
+  Movement:
+    remove-violations-after: 300
+    checks:
+      - "Vehicle"
+      - "Elytra"
+    commands:
+      - "10:10 [alert]"
+      - "1:1 [log]"
+      # --- Ban-Leiter (erst nach dem Einstellen scharf schalten) ---
+      #- "200:0 acban %player% 7d BuckSMPAC > Bewegung (%check_name%)"              # BAN
+
+  # ------------------------------------------------------------------
+  #  DIESE BANNEN - die Checks, die mit Lag klarkommen
+  # ------------------------------------------------------------------
   Post:
-    remove-violations-after: 450
+    remove-violations-after: 300
     checks:
       - "Post"
     commands:
@@ -108,11 +150,11 @@ Punishments:
       - "1:1 [log]"
       - "40:40 [webhook]"
       - "40:40 [proxy]"
-      # --- BuckSMPAC Strafen-Leiter (Post ist sehr zuverlässig) ---
-      - "20:0 acban %player% 14d BuckSMPAC > Paketreihenfolge (%check_name%)"        # BAN
+      # --- BuckSMPAC Ban-Leiter ---
+      - "60:0 acban %player% 14d BuckSMPAC > Paketreihenfolge (%check_name%)"           # BAN
 
   BadPackets:
-    remove-violations-after: 450
+    remove-violations-after: 300
     checks:
       - "BadPackets"
       - "PacketOrder"
@@ -122,11 +164,11 @@ Punishments:
       - "1:1 [log]"
       - "40:40 [webhook]"
       - "40:40 [proxy]"
-      # --- BuckSMPAC Strafen-Leiter (BadPackets ist sehr zuverlässig) ---
-      - "20:0 acban %player% 14d BuckSMPAC > Illegale Pakete (%check_name%)"         # BAN
+      # --- BuckSMPAC Ban-Leiter ---
+      - "60:0 acban %player% 14d BuckSMPAC > Illegale Pakete (%check_name%)"        # BAN
 
   Reach:
-    remove-violations-after: 450
+    remove-violations-after: 300
     checks:
       - "Reach"
     commands:
@@ -134,11 +176,11 @@ Punishments:
       - "1:1 [log]"
       - "5:3 [webhook]"
       - "5:3 [proxy]"
-      # --- BuckSMPAC Strafen-Leiter (Reach ist sehr zuverlässig) ---
-      - "14:0 acban %player% 14d BuckSMPAC > Reach erkannt (%check_name%)"           # BAN
+      # --- BuckSMPAC Ban-Leiter ---
+      - "45:0 acban %player% 14d BuckSMPAC > Reach erkannt (%check_name%)"         # BAN
 
   Hitboxes:
-    remove-violations-after: 450
+    remove-violations-after: 300
     checks:
       - "Hitboxes"
     commands:
@@ -146,13 +188,12 @@ Punishments:
       - "1:1 [log]"
       - "5:3 [webhook]"
       - "5:3 [proxy]"
-      # --- BuckSMPAC Strafen-Leiter ---
-      - "14:0 acban %player% 14d BuckSMPAC > Hitbox erkannt (%check_name%)"          # BAN
+      # --- BuckSMPAC Ban-Leiter ---
+      - "45:0 acban %player% 14d BuckSMPAC > Hitbox erkannt (%check_name%)"        # BAN
 
   Misc:
-    remove-violations-after: 450
+    remove-violations-after: 300
     checks:
-      - "Vehicle"
       - "NoSlow"
       - "Sprint"
       - "MultiActions"
@@ -160,7 +201,6 @@ Punishments:
       - "Baritone"
       - "Break"
       - "TransactionOrder"
-      - "Elytra"
       - "Chat"
       - "Exploit"
     commands:
@@ -168,40 +208,29 @@ Punishments:
       - "1:1 [log]"
       - "20:10 [webhook]"
       - "20:10 [proxy]"
-      # --- BuckSMPAC Strafen-Leiter ---
-      - "32:0 acban %player% 7d BuckSMPAC > Cheating erkannt (%check_name%)"       # BAN
+      # --- BuckSMPAC Ban-Leiter ---
+      - "100:0 acban %player% 7d BuckSMPAC > Cheating erkannt (%check_name%)"      # BAN
 
-  Combat:
-    remove-violations-after: 450
-    checks:
-      - "Interact"
-      - "Aim"
-    commands:
-      - "12:15 [alert]"
-      - "1:1 [log]"
-      # --- BuckSMPAC Strafen-Leiter ---
-      - "25:0 acban %player% 10d BuckSMPAC > Kampf-Anomalie (%check_name%)"         # BAN
-
-  # BuckSMPACs eigener AutoClicker-Check. Er ist als experimentell markiert,
-  # und BuckSMPAC liefert experimental-checks: true aus - er LÄUFT also.
+  # BuckSMPAC's own AutoClicker check. It is marked experimental, and BuckSMPAC
+  # ships with experimental-checks: true - so it IS running.
   #
-  # BEWUSST NUR ALERTS. Hinter jeder anderen Gruppe hier steht ein Check, für
-  # den es jahrelange Praxisdaten gibt - hinter diesem nicht. Erst die Alerts
-  # auf dem eigenen Server beobachten, prüfen ob die genannten Spieler wirklich
-  # cheaten, dann Autoclicker.max-attack-cps in der config.yml über den
-  # schnellsten legitimen Klicker setzen - und erst danach die Leiter unten
-  # einkommentieren. Ungetestet aktiviert bannt sie Butterfly-Clicker.
+  # DELIBERATELY ALERTS ONLY. Every other group here punishes a check that
+  # upstream has years of field data on; this one is new code with none. Watch
+  # the alerts on your own server first, confirm the players it names are
+  # actually cheating, tune Autoclicker.max-attack-cps in config.yml to sit
+  # above your fastest legitimate clicker, and only then uncomment the ladder
+  # below. Enabling it untested will ban butterfly clickers.
   Autoclicker:
-    remove-violations-after: 450
+    remove-violations-after: 300
     checks:
       - "Autoclicker"
     commands:
       - "15:20 [alert]"
       - "1:1 [log]"
-      # --- BuckSMPAC Strafen-Leiter (erst nach dem Einstellen aktivieren) ---
-      #- "120:0 acban %player% BuckSMPAC > AutoClicker (%check_name%)"           # BAN
+      # --- BuckSMPAC Ban-Leiter (erst nach dem Einstellen aktivieren - siehe oben) ---
+      #- "120:0 acban %player% 7d BuckSMPAC > AutoClicker (%check_name%)"           # BAN
 
 # Bump marker — BuckSMPAC compares this against the version it ships and
 # warns in the console when yours is older. This file is never overwritten
 # automatically, so the warning is the only way you would find out.
-punishments-version: 7
+punishments-version: 8

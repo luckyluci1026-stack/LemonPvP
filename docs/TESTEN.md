@@ -122,17 +122,54 @@ ehrlichen Klicker und nimm dann das `#` vor der Ban-Zeile weg.
 
 ---
 
-## Bandauern
+## Wer bannt, wer meldet nur
 
-Nichts bannt für immer.
+Zwei Stufen. Checks, die sich mit Lag streiten, bannen **gar nicht** — sie
+melden, und du entscheidest. Nur die zuverlässigen dürfen selbst bannen, und
+zwar erst bei Zahlen, die ein ehrlicher Spieler nicht erreicht.
 
-| Gruppe | Ban |
+| Gruppe | ab Flags | Ban |
+|---|---|---|
+| Reach | 45 | 14 Tage |
+| Hitboxes | 45 | 14 Tage |
+| Post | 60 | 14 Tage |
+| BadPackets | 60 | 14 Tage |
+| Misc | 100 | 7 Tage |
+| `bans.yml` Gesamt-Leiter | 200 (bei ≥6 verschiedenen Checks) | 14 Tage |
+
+Nur Alarm, kein Ban:
+
+| Gruppe | warum |
 |---|---|
-| Reach, Hitboxes, Post, BadPackets | 14 Tage |
-| Knockback, Combat | 10 Tage |
-| Misc, Simulation | 7 Tage |
-| `bans.yml` Gesamt-Leiter (45 Flags) | 14 Tage |
+| Simulation | Lag, Eis, Boote, Kolben, Bedrock-Bewegung |
+| Knockback | jeder Aussetzer entsynchronisiert einen Treffer |
+| Combat (Aim) | liest Drehbewegungen; Ruckler sehen verdächtig aus |
+| Movement | Fahrzeuge und Elytra werden viel lockerer berechnet |
+| Autoclicker | neuer Code ohne Praxisdaten |
 
-Von Hand: `/acban Steve 7d Grund`. Ohne Dauer gilt `acban-default-duration`
-(10 Tage). Länger als `acban-max-duration` (14 Tage) geht nicht — auch `perm`
-wird darauf gekürzt.
+Jede dieser Gruppen hat ihre Ban-Zeile weiter in der `punishments.yml`, nur
+auskommentiert und mit einem Startwert. Beobachte die Alerts einer Gruppe eine
+Woche; wenn wirklich jeder genannte Spieler gecheatet hat, nimm das `#` weg.
+
+Von Hand bannen geht immer: `/acban Steve 7d Grund`. Ohne Dauer gelten 10 Tage,
+länger als 14 Tage geht nicht.
+
+---
+
+## Wenn du dich selbst aussperrst
+
+Auf der **Velocity-Konsole**:
+
+```
+/acunban DeinName
+```
+
+Das geht auch, während du gebannt bist — die Konsole braucht keinen Login.
+
+Und um sofort alle Bans zu stoppen, ohne irgendwas zu tunen:
+
+```yaml
+punishment-dry-run: true
+```
+
+Neu starten, fertig. Ab dann wird nur noch aufgeschrieben.

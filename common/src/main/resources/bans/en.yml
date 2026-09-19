@@ -27,23 +27,40 @@ bans:
     enabled: true
 
     # How long a single flag keeps counting toward the total, in seconds.
-    # 900 = a flag drops back out of the total 15 minutes after it happened,
+    # 600 = a flag drops back out of the total 10 minutes after it happened,
     # so someone who trips one check a week does not slowly accumulate a ban.
     # Set to 0 to keep every flag for as long as the player stays online.
-    remember-flags-for: 900
+    remember-flags-for: 600
 
     # No rung fires until the player has tripped at least this many DIFFERENT
-    # checks. This is the safeguard that makes the ladder safe to run strict:
+    # checks. This is the safeguard that makes the ladder safe to run at all:
     # a real cheat client trips several checks at once, while one check firing
     # over and over is far more often a false positive or a lag artifact.
-    # Set to 1 to turn the safeguard off.
-    min-different-checks: 3
+    # Set to 1 to turn the safeguard off - but 1 makes this ladder a second,
+    # independent way to get banned, which is how false bans happen twice.
+    #
+    # Set bans.enabled to false above if you would rather have one ban path
+    # (punishments.yml) and nothing else.
+    min-different-checks: 6
 
     # Flags from these checks never count toward the total. Names match the
     # same way as in punishments.yml, so "BadPackets" covers BadPacketsA,
     # BadPacketsB and so on. Put a check here while you are still tuning it -
     # then it can alert you, but it can never ban anybody on its own.
+    #
+    # The list below mirrors the alert-only groups in punishments.yml. Those
+    # checks argue with lag, so letting them push somebody up this ladder
+    # would undo the whole point of not letting them ban directly.
     ignore-checks:
+        - "Simulation"
+        - "GroundSpoof"
+        - "Timer"
+        - "NoFall"
+        - "Knockback"
+        - "Explosion"
+        - "Vehicle"
+        - "Elytra"
+        - "Aim"
         - "Autoclicker"
 
     # Sent to staff when a rung's command is [alert].
@@ -72,8 +89,8 @@ bans:
     ladder:
         - flags: 15
           command: "[alert]"
-        - flags: 45
+        - flags: 200
           command: "acban %player% 14d BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"
 
 # Bump marker — see the note in punishments.yml.
-bans-version: 7
+bans-version: 8
