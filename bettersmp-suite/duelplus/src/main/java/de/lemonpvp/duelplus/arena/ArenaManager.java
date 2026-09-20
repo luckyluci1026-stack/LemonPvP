@@ -265,13 +265,19 @@ public final class ArenaManager {
      * der sichtbaren Mauer, in der VOLLEN Start-Groesse der Arena - macht
      * ein Entkommen (z.B. per Enderperle ueber/durch die eigentliche,
      * schrumpfende Worldborder, siehe ladeOderErzeuge) unabhaengig vom
-     * aktuellen Border-Stand unmoeglich. Bewusst KEIN Boden: Durch die
+     * aktuellen Border-Stand unmoeglich. Reicht bewusst 10 Bloecke unter
+     * ArenaGuardListener.beimAbsturzUnterDieArena's Ausloese-Schwelle
+     * (Plattform - 5) hinunter, nicht nur bis knapp unter die Plattform -
+     * sonst gaebe es genau in der kurzen Fallstrecke dazwischen ein Loch in
+     * der Seitenwand, durch das eine Enderperle noch haette entkommen
+     * koennen, bevor der Absturz-Check greift. KEIN Boden: durch die
      * Plattform nach unten fallen ist ein gewolltes "Ring-Out" (siehe
-     * ArenaGuardListener/README), kein Fluchtweg.
+     * ArenaGuardListener/README), kein Fluchtweg - die Box soll nur
+     * seitliches Entkommen verhindern, nicht das Fallen selbst.
      */
     private void barriereBauen(World world, int radius, int y) {
         int aussen = radius + 1;
-        int unten = y - 2;
+        int unten = y - 15;
         int oben = y + BARRIERE_HOEHE;
         for (int x = -aussen; x <= aussen; x++) {
             for (int z = -aussen; z <= aussen; z++) {

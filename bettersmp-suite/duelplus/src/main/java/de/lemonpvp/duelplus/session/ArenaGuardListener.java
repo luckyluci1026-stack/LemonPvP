@@ -1,6 +1,7 @@
 package de.lemonpvp.duelplus.session;
 
 import de.lemonpvp.duelplus.DuelPlus;
+import de.lemonpvp.duelplus.arena.Arena;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -138,9 +139,23 @@ public final class ArenaGuardListener implements Listener {
             return;
         }
         int plattformHoehe = plugin.getConfig().getInt("arenen.plattform-hoehe", 100);
-        if (zu.getY() < plattformHoehe - 5) {
-            plugin.sessionManager().niederlageAusloesen(event.getPlayer().getUniqueId(), true);
+        if (zu.getY() >= plattformHoehe - 5) {
+            return;
         }
+        DuellSession session = sessionOpt.get();
+        Player spieler = event.getPlayer();
+        // Erst zurueck auf die Plattform, DANN erst die Niederlage
+        // ausloesen - niederlageAusloesen liest die AKTUELLE Position fuer
+        // den Loot-Abwurf UND die Todeskamera. Ohne das wuerde beides tief
+        // unter der Arena landen: Loot dort faktisch unerreichbar fuer den
+        // Gewinner, Todeskamera optisch kaputt (Orbit um die leere Luft
+        // unter der Plattform statt um die Arena).
+        Arena arena = plugin.arenaManager().arena(session.arenaName());
+        if (arena != null) {
+            Location sicher = session.spielerA().equals(spieler.getUniqueId()) ? arena.spawnA() : arena.spawnB();
+            spieler.teleport(sicher);
+        }
+        plugin.sessionManager().niederlageAusloesen(spieler.getUniqueId(), true);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
