@@ -23,12 +23,16 @@ import java.util.Optional;
 /**
  * Erzeugt und verwaltet die Arenen - nur auf dem Duels-Server aktiv.
  *
- * Jede Arena ist eine eigene, komplett LEERE ("Void") Welt mit einer
- * flachen, dekorierten Plattform als Kampfboden: echtes Vanilla-Gelaende
- * waere je nach Landeplatz fuer die zwei Duellanten unterschiedlich fair
- * (Deckung, Hoehenvorteil, Wasser/Lava in der Naehe, ...) UND man wuerde
- * am Rand der Plattform in die "echte" Welt darunter/darum schauen -
- * beides verhindert die Void-Welt zuverlaessig.
+ * Jede Arena ist eine eigene, flache Welt OHNE echte Vanilla-
+ * Terraingenerierung mit einer erhoehten, dekorierten Plattform als
+ * Kampfboden: echtes Vanilla-Gelaende waere je nach Landeplatz fuer die
+ * zwei Duellanten unterschiedlich fair (Deckung, Hoehenvorteil, Wasser/
+ * Lava in der Naehe, ...) UND man wuerde am Rand der Plattform in die
+ * "echte" Welt darunter/darum schauen - das verhindert die eigene,
+ * simple Flachwelt zuverlaessig. Trotzdem KEIN reiner Luft-Void: weit
+ * unter der Plattform liegt eine einfache Boden-Schicht mit Bedrock
+ * ganz unten (siehe VOID_GENERATOR_SETTINGS) - wer durch/von der
+ * Plattform faellt, faellt auf echten Boden, nicht ins Nichts.
  *
  * Der Boden ist ein Kompassmuster: konzentrische Kreise als Textur,
  * ueberlagert von acht Speichen durch die Mitte - waagerecht/senkrecht
@@ -43,15 +47,31 @@ import java.util.Optional;
 public final class ArenaManager {
 
     /**
-     * Dasselbe Void-Preset, das Vanilla selbst fuer den Welttyp "Leere"
-     * verwendet - nur EINE Luft-Schicht, keine Bloecke, Biom "the_void".
+     * Flache Welt OHNE echte Vanilla-Terraingenerierung (kein Blick auf
+     * "die echte Welt" am Rand), aber auch KEIN reiner Luft-Void: eine
+     * einfache, immer gleich flache Boden-Schicht ganz unten mit
+     * Bedrock als allerunterster Lage - wie in einer echten Welt, nur
+     * simpel und ueberall identisch (kein generiertes Gelaende, keine
+     * Hoehlen). Faellt jemand durch/von der Plattform (Y siehe
+     * arenen.plattform-hoehe), faellt er also nicht in einen echten
+     * Void, sondern auf diesen Boden weit darunter - der Sturz allein
+     * ist ueber diese Distanz so gut wie immer toedlich (siehe
+     * ArenaGuardListener.beimAbsturzUnterDieArena, das zusaetzlich noch
+     * unabhaengig vom tatsaechlichen Sturzschaden greift, falls doch mal
+     * Federfall-Stiefel o.ae. im Spiel sind).
      * Wirkt nur beim ALLERERSTEN Erzeugen einer Arena-Welt: bereits
      * vorhandene Weltordner (z.B. aus einer aelteren DuelPlus-Version mit
-     * echtem Gelaende) muessen einmalig manuell geloescht werden, damit
-     * sie mit diesem Preset neu entstehen - siehe README.
+     * echtem Gelaende oder reinem Luft-Void) muessen einmalig manuell
+     * geloescht werden, damit sie mit diesem Preset neu entstehen - siehe
+     * README.
      */
     private static final String VOID_GENERATOR_SETTINGS =
-            "{\"layers\":[{\"block\":\"minecraft:air\",\"height\":1}],\"biome\":\"minecraft:the_void\"}";
+            "{\"layers\":["
+                    + "{\"block\":\"minecraft:bedrock\",\"height\":1},"
+                    + "{\"block\":\"minecraft:stone\",\"height\":40},"
+                    + "{\"block\":\"minecraft:dirt\",\"height\":3},"
+                    + "{\"block\":\"minecraft:grass_block\",\"height\":1}"
+                    + "],\"biome\":\"minecraft:the_void\"}";
 
     /**
      * Je Arena ein anderes Aussehen (Boden, Akzent, Mauer, Licht) - sonst

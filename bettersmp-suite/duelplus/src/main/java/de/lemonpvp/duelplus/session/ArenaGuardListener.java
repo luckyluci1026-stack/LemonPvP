@@ -31,6 +31,11 @@ import java.util.Optional;
  *    ganz normal (vanilla) - wir greifen dann bewusst NICHT ein.
  *  - Waehrend des Countdowns stehen beide fest an ihrem Startpunkt -
  *    nur Umsehen bleibt erlaubt, Weglaufen (z.B. ueber den Rand) nicht.
+ *  - Faellt jemand zu weit unter die Plattform (durchgebrochen, ueber den
+ *    Rand geworfen, ...), zaehlt das als automatische Niederlage -
+ *    unabhaengig vom tatsaechlichen Sturzschaden (siehe
+ *    beimAbsturzUnterDieArena), damit z.B. Federfall-Stiefel kein
+ *    Schlupfloch sind.
  *  - Verbindung getrennt waehrend eines eigenen Duells = automatische
  *    Niederlage - verhindert, sich durch Abbrechen das eigene
  *    Inventar zu retten.
@@ -109,6 +114,33 @@ public final class ArenaGuardListener implements Listener {
             return;
         }
         event.setTo(von.clone().setDirection(zu.getDirection()));
+    }
+
+    /**
+     * Die Plattform ist nur 1 Block dick, darunter geht es weit hinunter
+     * bis zu einem einfachen Boden mit Bedrock (siehe ArenaManager) - wer
+     * durch sie faellt oder ueber den Rand geknockt wird, faellt also weit
+     * und nimmt dabei so gut wie immer toedlichen Sturzschaden (der ganz
+     * normal ueber beiSchaden abgefangen wird). Dieser Check greift
+     * UNABHAENGIG davon zusaetzlich, sobald klar zu weit unterhalb der
+     * Plattform - damit z.B. Federfall-Stiefel oder ein Zaubertrank gegen
+     * Fallschaden kein Schlupfloch sind, um sich einfach aus der Arena
+     * herauszuwerfen und unten zu ueberleben.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void beimAbsturzUnterDieArena(PlayerMoveEvent event) {
+        Location zu = event.getTo();
+        if (zu == null) {
+            return;
+        }
+        Optional<DuellSession> sessionOpt = plugin.sessionManager().sessionVon(event.getPlayer().getUniqueId());
+        if (sessionOpt.isEmpty() || !sessionOpt.get().kampfLaeuft()) {
+            return;
+        }
+        int plattformHoehe = plugin.getConfig().getInt("arenen.plattform-hoehe", 100);
+        if (zu.getY() < plattformHoehe - 5) {
+            plugin.sessionManager().niederlageAusloesen(event.getPlayer().getUniqueId(), true);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

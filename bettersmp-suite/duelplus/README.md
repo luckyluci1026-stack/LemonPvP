@@ -58,16 +58,18 @@ erreichbar sein (Netzwerk/Firewall).
 Die Arena-Welten werden nur **beim allerersten Erzeugen** aufgebaut -
 eine ältere Version hat dafür noch echtes Vanilla-Gelände verwendet
 (daher konnte man am Rand der Plattform in die "echte" Welt
-darunter/darum schauen), und eine etwas neuere Version noch ohne die
-unsichtbare Barriere-Box gegen Enderperlen-Fluchten. Damit Arenen
-stattdessen als komplett leere Void-Welt **mit** Barriere-Box entstehen
-(siehe unten), müssen auf dem **Duels-Server** einmalig die alten
-Weltordner gelöscht werden - Standard-Namen `duell_arena_1` bis
-`duell_arena_4` (siehe `arenen.welt-praefix` / `arenen.anzahl`), bei
-gestopptem Server. Beim nächsten Start entstehen sie automatisch neu.
-Das gilt auch für jedes künftige Arena-Update dieser Art - nur ein
-Löschen der Weltordner erzeugt sie wirklich neu, ein reines
-Plugin-Update oder `/duelplus reload` reicht dafür nicht.
+darunter/darum schauen), eine etwas neuere Version noch ohne die
+unsichtbare Barriere-Box gegen Enderperlen-Fluchten, und eine dritte
+Version noch mit reinem Luft-Void unter der Plattform statt eines
+richtigen Bodens mit Bedrock. Damit Arenen stattdessen mit dem
+aktuellen Aufbau entstehen (siehe unten), müssen auf dem
+**Duels-Server** einmalig die alten Weltordner gelöscht werden -
+Standard-Namen `duell_arena_1` bis `duell_arena_4` (siehe
+`arenen.welt-praefix` / `arenen.anzahl`), bei gestopptem Server. Beim
+nächsten Start entstehen sie automatisch neu. Das gilt auch für jedes
+künftige Arena-Update dieser Art - nur ein Löschen der Weltordner
+erzeugt sie wirklich neu, ein reines Plugin-Update oder
+`/duelplus reload` reicht dafür nicht.
 
 ## Ablauf eines Duells
 
@@ -83,9 +85,9 @@ Plugin-Update oder `/duelplus reload` reicht dafür nicht.
 4. Auf **Duels** angekommen: Inventar wird angewendet, sobald beide da
    sind, startet ein Countdown (`kampf.countdown-sekunden`, während
    dessen unverwundbar), dann beginnt der Kampf.
-5. **Arena**: eine von mehreren automatisch erzeugten, komplett
-   **leeren Void-Welten** (kein echtes Vanilla-Gelände - man soll am
-   Rand nicht in "die echte Welt" schauen können) mit einer flachen,
+5. **Arena**: eine von mehreren automatisch erzeugten Welten **ohne
+   echte Vanilla-Terraingenerierung** (man soll am Rand nicht in "die
+   echte Welt" schauen können) mit einer flachen,
    dekorierten Plattform (jede Arena mit eigener Optik: Stein,
    Tiefenschiefer, Sandstein oder Schwarzstein) mit einem
    Kompassmuster als Boden - konzentrische Kreise, durchzogen von acht
@@ -174,7 +176,12 @@ Ausweichen über `/shop` oder Ähnliches.
 
 - Fallende Blöcke (Sand/Kies) durch Schwerkraft werden vom Rollback
   nicht erfasst - eher kosmetisch, kein Stakes-Thema.
-- Gräbt sich jemand durch die Plattform nach unten oder springt über
-  die niedrige Randmauer, fällt er ins Void darunter - das zählt wie
-  jeder andere tödliche Treffer als Niederlage ("Ring-Out"), kein
-  Absturz oder Sonderfall.
+- Gräbt sich jemand durch die Plattform nach unten oder wird über die
+  niedrige Randmauer hinaus geworfen (z.B. durch eine Explosion), fällt
+  er weit - unter der Plattform liegt kein Void, sondern ein einfacher
+  Boden mit Bedrock ganz unten, aber bis dahin ist es ein sehr tiefer
+  Sturz. Das zählt wie jeder andere tödliche Treffer als Niederlage
+  ("Ring-Out") - sobald klar zu weit unterhalb der Plattform, unabhängig
+  vom tatsächlichen Sturzschaden (siehe
+  `ArenaGuardListener.beimAbsturzUnterDieArena`), damit z.B.
+  Federfall-Stiefel dabei kein Schlupfloch sind.
