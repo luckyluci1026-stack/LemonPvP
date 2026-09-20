@@ -65,6 +65,10 @@ public final class ArenaGuardListener implements Listener {
             event.setCancelled(true);
             return;
         }
+        // Jeder verarbeitete Treffer zaehlt als "es wird gekaempft" - Basis
+        // fuer die Camping-Erkennung der schrumpfenden Worldborder (siehe
+        // DuellSessionManager.worldborderSchrumpfenStarten).
+        session.treffer();
         double verbleibend = spieler.getHealth() - event.getFinalDamage();
         if (verbleibend > 0) {
             return;

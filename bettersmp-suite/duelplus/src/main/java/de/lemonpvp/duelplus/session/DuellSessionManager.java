@@ -152,11 +152,7 @@ public final class DuellSessionManager implements Listener {
                         }
                     }
                     session.kampfStarten();
-                    // Zwingt beide nach und nach zueinander - verhindert
-                    // endloses Ausweichen/Verstecken am Rand der Arena.
-                    int zielGroesse = Math.max(2, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.ziel-groesse", 10));
-                    int dauerSekunden = Math.max(1, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.dauer-sekunden", 270));
-                    arena.world().getWorldBorder().setSize(zielGroesse, dauerSekunden);
+                    worldborderSchrumpfenStarten(arena, session);
                     cancel();
                     return;
                 }
@@ -168,6 +164,46 @@ public final class DuellSessionManager implements Listener {
                 rest--;
             }
         }.runTaskTimer(plugin, 0L, 20L);
+    }
+
+    /**
+     * Schrumpft die Worldborder nicht einfach linear ueber eine feste Zeit,
+     * sondern im Sekundentakt neu berechnet: solange getroffen wird
+     * (session.treffer(), siehe ArenaGuardListener.beiSchaden), im
+     * normalen (langsamen) Tempo - kommt laenger als camping-nach-sekunden
+     * kein Treffer, wird auf das schnellere Camping-Tempo umgeschaltet.
+     * Jeder Schritt selbst laeuft ueber 1 Sekunde sanft (WorldBorder#
+     * setSize mit Uebergangszeit), damit es trotz der haeufigen
+     * Neuberechnung nicht ruckelt.
+     */
+    private void worldborderSchrumpfenStarten(Arena arena, DuellSession session) {
+        double zielGroesse = Math.max(2, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.ziel-groesse", 10));
+        int normalDauer = Math.max(1, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.dauer-sekunden", 270));
+        long campingNachMillis = Math.max(1, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.camping-nach-sekunden", 15)) * 1000L;
+        int campingDauer = Math.max(1, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.camping-dauer-sekunden", 60));
+
+        double startGroesse = arena.vollGroesse();
+        double gesamtStrecke = Math.max(0, startGroesse - zielGroesse);
+        double normalProSekunde = gesamtStrecke / normalDauer;
+        double campingProSekunde = gesamtStrecke / campingDauer;
+
+        new BukkitRunnable() {
+            double aktuelleGroesse = startGroesse;
+
+            @Override
+            public void run() {
+                // Session vorbei (Sieg/Niederlage/Unentschieden) oder schon
+                // ganz durchgeschrumpft - nichts mehr zu tun.
+                if (sessionNachSpieler.get(session.spielerA()) != session || aktuelleGroesse <= zielGroesse) {
+                    cancel();
+                    return;
+                }
+                boolean campt = session.millisSeitLetztemTreffer() >= campingNachMillis;
+                double proSekunde = campt ? campingProSekunde : normalProSekunde;
+                aktuelleGroesse = Math.max(zielGroesse, aktuelleGroesse - proSekunde);
+                arena.world().getWorldBorder().setSize(aktuelleGroesse, 1);
+            }
+        }.runTaskTimer(plugin, 20L, 20L);
     }
 
     // ================================================================

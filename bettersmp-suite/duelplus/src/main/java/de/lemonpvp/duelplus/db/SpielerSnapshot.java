@@ -11,12 +11,15 @@ import org.bukkit.inventory.PlayerInventory;
 public record SpielerSnapshot(ItemStack[] hauptinventar, ItemStack[] ruestung, ItemStack offhand) {
 
     public static SpielerSnapshot von(PlayerInventory inv) {
-        return new SpielerSnapshot(inv.getContents().clone(), inv.getArmorContents().clone(),
+        // getStorageContents() statt getContents() - eindeutig NUR Hotbar+
+        // Rucksack, ohne jede Unklarheit ueber eine moegliche Ueberschneidung
+        // mit den separat erfassten Ruestungs-Slots.
+        return new SpielerSnapshot(inv.getStorageContents().clone(), inv.getArmorContents().clone(),
                 cloneOrNull(inv.getItemInOffHand()));
     }
 
     public void anwenden(PlayerInventory inv) {
-        inv.setContents(hauptinventar);
+        inv.setStorageContents(hauptinventar);
         inv.setArmorContents(ruestung);
         inv.setItemInOffHand(offhand);
     }

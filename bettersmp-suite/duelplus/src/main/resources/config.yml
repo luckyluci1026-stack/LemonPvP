@@ -104,12 +104,18 @@ kampf:
   # Sekunden, die die Todeskamera nach einer Niederlage laeuft, bevor
   # es zurueck auf den Herkunftsserver geht
   todeskamera-sekunden: 5
-  # Sobald der Kampf beginnt, schrumpft die Worldborder langsam von der
-  # vollen Arena-Groesse auf ziel-groesse - zwingt beide nach und nach
-  # zueinander, verhindert endloses Ausweichen/Verstecken am Rand.
+  # Sobald der Kampf beginnt, schrumpft die Worldborder von der vollen
+  # Arena-Groesse auf ziel-groesse - zwingt beide nach und nach
+  # zueinander, verhindert endloses Ausweichen/Verstecken am Rand. Das
+  # Tempo passt sich dabei laufend an: solange getroffen wird, laeuft es
+  # im normalen (langsamen) Tempo (dauer-sekunden) - campen beide nur
+  # und es faellt laenger als camping-nach-sekunden kein Treffer, wird
+  # auf das schnellere Camping-Tempo (camping-dauer-sekunden) umgestellt.
   worldborder-schrumpfen:
     ziel-groesse: 10
     dauer-sekunden: 270
+    camping-nach-sekunden: 15
+    camping-dauer-sekunden: 60
 
 # ----------------------------------------------------------
 #  Loot

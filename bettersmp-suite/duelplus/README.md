@@ -83,16 +83,22 @@ sie automatisch neu, dieses Mal als Void mit dekorierter Plattform.
    **leeren Void-Welten** (kein echtes Vanilla-Gelände - man soll am
    Rand nicht in "die echte Welt" schauen können) mit einer flachen,
    dekorierten Plattform (jede Arena mit eigener Optik: Stein,
-   Tiefenschiefer, Sandstein oder Schwarzstein) und einer Worldborder.
+   Tiefenschiefer, Sandstein oder Schwarzstein, dazu zwei symmetrische
+   Deckungspfeiler für etwas taktische Tiefe) und einer Worldborder.
    Bauen/Abbauen ist während des Duells erlaubt - danach wird die
    Arena **komplett zurückgerollt** (jede Blockänderung: Abbauen,
    Platzieren, Explosionen, Eimer, Flüssigkeiten, Feuer), damit sie
    für das nächste Duell wieder genau so aussieht wie vorher.
    Während des Countdowns (siehe Punkt 4) stehen beide fest an ihrem
    Platz und sehen sich an - sobald der Kampf beginnt, schrumpft die
-   Worldborder langsam (`kampf.worldborder-schrumpfen`, Standard 270
-   Sekunden bis auf 10 Blöcke) und zwingt beide nach und nach
-   zueinander.
+   Worldborder (`kampf.worldborder-schrumpfen`) in Richtung `ziel-groesse`
+   (Standard 10 Blöcke). Das Tempo passt sich laufend an: Solange
+   getroffen wird, läuft es im normalen, langsamen Tempo
+   (`dauer-sekunden`, Standard 270s) - fällt länger als
+   `camping-nach-sekunden` (Standard 15s) kein Treffer, schaltet es auf
+   das deutlich schnellere Camping-Tempo (`camping-dauer-sekunden`,
+   Standard 60s) um. Aktiver Kampf wird also nicht bestraft, reines
+   Ausweichen/Verstecken schon.
 6. **Ein tödlicher Treffer wird abgefangen statt eines echten Todes** -
    der Verlierer sieht stattdessen eine **Todeskamera** (ein paar
    Sekunden Orbit um die Stelle), sein komplettes mitgebrachtes

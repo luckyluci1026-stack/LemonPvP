@@ -131,6 +131,13 @@ public final class DuelItemListener implements Listener {
             return;
         }
         event.setCancelled(true);
+        if (event.getClickedInventory() == null || !(event.getClickedInventory().getHolder() instanceof AuswahlHolder)) {
+            // getInventory() meldet hier IMMER die obere (Auswahl-)GUI,
+            // auch wenn tatsaechlich im EIGENEN Inventar (unterer Teil)
+            // geklickt wurde - ohne diese Pruefung koennte ein eigener
+            // Spielerkopf im Rucksack versehentlich als Auswahl zaehlen.
+            return;
+        }
         ItemStack geklickt = event.getCurrentItem();
         if (geklickt == null || geklickt.getType() != Material.PLAYER_HEAD
                 || !(event.getWhoClicked() instanceof Player spieler)) {

@@ -188,6 +188,20 @@ public final class ArenaManager {
             world.getBlockAt(ex, y + 2, ez).setType(mauer, false);
             world.getBlockAt(ex, y + 3, ez).setType(licht, false);
         }
+        // Zwei Deckungspfeiler auf der Z-Achse (X=0) - taktische Tiefe
+        // gegen die sonst komplett leere Mitte. Bewusst NUR auf der Achse
+        // SENKRECHT zur Spawn-Linie (die liegt auf X, siehe spawnA/spawnB
+        // unten): jeder Punkt mit X=0 ist per Pythagoras IMMER exakt gleich
+        // weit von beiden Startpunkten entfernt, egal welches Z - keiner
+        // der beiden wird dadurch bevorteilt.
+        int deckungsAbstand = Math.min(radius - 8, 16);
+        if (deckungsAbstand > 0) {
+            for (int vorzeichen : new int[]{-1, 1}) {
+                int dz = vorzeichen * deckungsAbstand;
+                world.getBlockAt(0, y + 1, dz).setType(mauer, false);
+                world.getBlockAt(0, y + 2, dz).setType(mauer, false);
+            }
+        }
     }
 
     // ------------------------------------------------------------ Belegung

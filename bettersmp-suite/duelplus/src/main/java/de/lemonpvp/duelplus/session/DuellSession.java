@@ -17,6 +17,7 @@ public final class DuellSession {
     private final String spielerBServer;
     private volatile boolean kampfLaeuft = false;
     private final Set<UUID> unentschiedenZustimmung = ConcurrentHashMap.newKeySet();
+    private volatile long letzterTrefferMillis = System.currentTimeMillis();
 
     public DuellSession(String duellId, String arenaName,
                          UUID spielerA, String spielerAName, String spielerAServer,
@@ -71,6 +72,16 @@ public final class DuellSession {
 
     public void kampfStarten() {
         this.kampfLaeuft = true;
+        this.letzterTrefferMillis = System.currentTimeMillis();
+    }
+
+    /** Von ArenaGuardListener bei jedem verarbeiteten Treffer aufgerufen - Basis fuer die Camping-Erkennung. */
+    public void treffer() {
+        this.letzterTrefferMillis = System.currentTimeMillis();
+    }
+
+    public long millisSeitLetztemTreffer() {
+        return System.currentTimeMillis() - letzterTrefferMillis;
     }
 
     /** Traegt spieler als /draw-zustimmend ein - true, wenn danach BEIDE zugestimmt haben. */
