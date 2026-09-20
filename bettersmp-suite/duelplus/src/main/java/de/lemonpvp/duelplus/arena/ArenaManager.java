@@ -30,6 +30,12 @@ import java.util.Optional;
  * am Rand der Plattform in die "echte" Welt darunter/darum schauen -
  * beides verhindert die Void-Welt zuverlaessig.
  *
+ * Der Boden ist ein Kompassmuster: konzentrische Kreise als Textur,
+ * ueberlagert von acht Speichen durch die Mitte - waagerecht/senkrecht
+ * zu den Spawnpunkten bzw. den Deckungspfeilern, diagonal zu den vier
+ * Eck-Tuermen. Wirkt dadurch gestaltet statt willkuerlich, weil es
+ * tatsaechlich alle anderen Bauten der Arena optisch verbindet.
+ *
  * Block-Aenderungen sind waehrend eines Duells erlaubt (siehe
  * RollbackTracker), deshalb muss hier nichts nach jedem Kampf neu
  * gebaut werden - nur einmal beim allerersten Start.
@@ -159,20 +165,33 @@ public final class ArenaManager {
         int ringBreite = 6;
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
-                int rand = Math.max(Math.abs(x), Math.abs(z));
+                // Quadratischer Abstand (Chebyshev) NUR fuer die Aussenmauer -
+                // die muss dem eckigen Rand der Iteration/Worldborder folgen
+                // (Minecrafts Worldborder ist selbst ein Quadrat, kein Kreis).
+                int eckigerRand = Math.max(Math.abs(x), Math.abs(z));
+                // Echter (runder) Abstand fuer das Bodenmuster selbst - wirkt
+                // als konzentrische Kreise deutlich "gestalteter" als eckige
+                // Ringe.
+                double rundeEntfernung = Math.sqrt((double) x * x + (double) z * z);
+                // Speichen: verbinden ueber die Mitte die Spawnpunkte (Z=0),
+                // die Deckungspfeiler (X=0) und diagonal alle vier Eck-
+                // tuerme (|X|=|Z|) - das Muster bekommt dadurch einen echten
+                // Bezug zum Rest der Arena statt willkuerlich zu wirken.
+                boolean speiche = (x == 0 || z == 0 || Math.abs(x) == Math.abs(z)) && rundeEntfernung > 3;
                 Material bodenBlock;
-                if (rand <= 2) {
+                if (rundeEntfernung <= 3) {
                     bodenBlock = akzent;
-                } else if ((rand / ringBreite) % 2 == 0) {
-                    bodenBlock = boden;
+                } else if (speiche) {
+                    bodenBlock = mauer;
                 } else {
-                    bodenBlock = akzent;
+                    int ring = (int) (rundeEntfernung / ringBreite);
+                    bodenBlock = (ring % 2 == 0) ? boden : akzent;
                 }
                 world.getBlockAt(x, y, z).setType(bodenBlock, false);
                 for (int dy = 1; dy <= 5; dy++) {
                     world.getBlockAt(x, y + dy, z).setType(Material.AIR, false);
                 }
-                if (rand == radius) {
+                if (eckigerRand == radius) {
                     world.getBlockAt(x, y + 1, z).setType(mauer, false);
                 }
             }

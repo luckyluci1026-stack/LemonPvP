@@ -83,8 +83,10 @@ sie automatisch neu, dieses Mal als Void mit dekorierter Plattform.
    **leeren Void-Welten** (kein echtes Vanilla-Gelände - man soll am
    Rand nicht in "die echte Welt" schauen können) mit einer flachen,
    dekorierten Plattform (jede Arena mit eigener Optik: Stein,
-   Tiefenschiefer, Sandstein oder Schwarzstein, dazu zwei symmetrische
-   Deckungspfeiler für etwas taktische Tiefe) und einer Worldborder.
+   Tiefenschiefer, Sandstein oder Schwarzstein) mit einem
+   Kompassmuster als Boden - konzentrische Kreise, durchzogen von acht
+   Speichen zu den Spawnpunkten, den zwei symmetrischen
+   Deckungspfeilern und den vier Eck-Türmen - und einer Worldborder.
    Bauen/Abbauen ist während des Duells erlaubt - danach wird die
    Arena **komplett zurückgerollt** (jede Blockänderung: Abbauen,
    Platzieren, Explosionen, Eimer, Flüssigkeiten, Feuer), damit sie
