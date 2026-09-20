@@ -29,10 +29,12 @@ import java.util.Optional;
  * zwei Duellanten unterschiedlich fair (Deckung, Hoehenvorteil, Wasser/
  * Lava in der Naehe, ...) UND man wuerde am Rand der Plattform in die
  * "echte" Welt darunter/darum schauen - das verhindert die eigene,
- * simple Flachwelt zuverlaessig. Trotzdem KEIN reiner Luft-Void: weit
- * unter der Plattform liegt eine einfache Boden-Schicht mit Bedrock
- * ganz unten (siehe VOID_GENERATOR_SETTINGS) - wer durch/von der
- * Plattform faellt, faellt auf echten Boden, nicht ins Nichts.
+ * simple Flachwelt zuverlaessig. Trotzdem KEIN reiner Luft-Void: ein
+ * kurzes Stueck unter der Plattform liegt eine einfache Boden-Schicht
+ * mit Bedrock ganz unten (siehe VOID_GENERATOR_SETTINGS) - wer durch/
+ * von der Plattform faellt, faellt auf echten Boden, nicht ins Nichts,
+ * und das nach einem kurzen, aber spuerbaren Sturz statt einer langen
+ * Faelle-Strecke.
  *
  * Der Boden ist ein Kompassmuster: konzentrische Kreise als Textur,
  * ueberlagert von acht Speichen durch die Mitte - waagerecht/senkrecht
@@ -52,23 +54,28 @@ public final class ArenaManager {
      * einfache, immer gleich flache Boden-Schicht ganz unten mit
      * Bedrock als allerunterster Lage - wie in einer echten Welt, nur
      * simpel und ueberall identisch (kein generiertes Gelaende, keine
-     * Hoehlen). Faellt jemand durch/von der Plattform (Y siehe
-     * arenen.plattform-hoehe), faellt er also nicht in einen echten
-     * Void, sondern auf diesen Boden weit darunter - der Sturz allein
-     * ist ueber diese Distanz so gut wie immer toedlich (siehe
-     * ArenaGuardListener.beimAbsturzUnterDieArena, das zusaetzlich noch
-     * unabhaengig vom tatsaechlichen Sturzschaden greift, falls doch mal
-     * Federfall-Stiefel o.ae. im Spiel sind).
+     * Hoehlen). Faellt jemand durch/von der Plattform, faellt er also
+     * nicht in einen echten Void, sondern auf diesen Boden.
+     *
+     * WICHTIG: Diese Schicht faengt IMMER ganz unten am Minimum der Welt
+     * an (Y=-64) - das laesst sich beim Flachwelt-Generator nicht
+     * verschieben. Um den Sturz trotzdem kurz zu halten (nicht 100+
+     * Bloecke bis zum sichtbaren Gras), liegt deshalb NICHT der Boden
+     * naeher an einer hohen Plattform, sondern arenen.plattform-hoehe
+     * selbst nah an dieser Schicht (Standard-Boden endet bei Y=-45, siehe
+     * Kommentar dort) - beide zusammen ergeben einen kurzen, aber immer
+     * noch spuerbaren Sturz von ca. 25 Bloecken.
      * Wirkt nur beim ALLERERSTEN Erzeugen einer Arena-Welt: bereits
      * vorhandene Weltordner (z.B. aus einer aelteren DuelPlus-Version mit
-     * echtem Gelaende oder reinem Luft-Void) muessen einmalig manuell
+     * echtem Gelaende, reinem Luft-Void oder einer hoch gelegenen
+     * Plattform mit sehr weit entferntem Boden) muessen einmalig manuell
      * geloescht werden, damit sie mit diesem Preset neu entstehen - siehe
      * README.
      */
     private static final String VOID_GENERATOR_SETTINGS =
             "{\"layers\":["
                     + "{\"block\":\"minecraft:bedrock\",\"height\":1},"
-                    + "{\"block\":\"minecraft:stone\",\"height\":40},"
+                    + "{\"block\":\"minecraft:stone\",\"height\":15},"
                     + "{\"block\":\"minecraft:dirt\",\"height\":3},"
                     + "{\"block\":\"minecraft:grass_block\",\"height\":1}"
                     + "],\"biome\":\"minecraft:the_void\"}";
@@ -121,7 +128,7 @@ public final class ArenaManager {
         konfiguriereWelt(world);
 
         int radius = Math.max(10, plugin.getConfig().getInt("arenen.worldborder-groesse", 50));
-        int hoehe = plugin.getConfig().getInt("arenen.plattform-hoehe", 100);
+        int hoehe = plugin.getConfig().getInt("arenen.plattform-hoehe", -20);
         int abstand = Math.max(4, plugin.getConfig().getInt("arenen.spawn-abstand", 20));
 
         // Die Plattform bleibt dauerhaft geladen (nicht erst, wenn zufaellig
@@ -154,7 +161,7 @@ public final class ArenaManager {
         // sich ANSEHEN. Minecraft-Yaw: 0=Sued, 90=West, -90=Ost.
         spawnA.setYaw(-90f);
         spawnB.setYaw(90f);
-        return new Arena(name, world, spawnA, spawnB, vollGroesse);
+        return new Arena(name, world, spawnA, spawnB, vollGroesse, hoehe);
     }
 
     /** Haelt die Chunks der kompletten Plattform dauerhaft geladen (siehe ladeOderErzeuge). */

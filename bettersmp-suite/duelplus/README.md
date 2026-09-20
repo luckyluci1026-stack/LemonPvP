@@ -59,11 +59,13 @@ Die Arena-Welten werden nur **beim allerersten Erzeugen** aufgebaut -
 eine ältere Version hat dafür noch echtes Vanilla-Gelände verwendet
 (daher konnte man am Rand der Plattform in die "echte" Welt
 darunter/darum schauen), eine etwas neuere Version noch ohne die
-unsichtbare Barriere-Box gegen Enderperlen-Fluchten, und eine dritte
+unsichtbare Barriere-Box gegen Enderperlen-Fluchten, eine dritte
 Version noch mit reinem Luft-Void unter der Plattform statt eines
-richtigen Bodens mit Bedrock. Damit Arenen stattdessen mit dem
-aktuellen Aufbau entstehen (siehe unten), müssen auf dem
-**Duels-Server** einmalig die alten Weltordner gelöscht werden -
+richtigen Bodens mit Bedrock, und eine vierte Version noch mit einer
+sehr hoch gelegenen Plattform (Sturz bis zum Boden weit über 100
+Blöcke) statt der aktuellen, viel niedrigeren. Damit Arenen
+stattdessen mit dem aktuellen Aufbau entstehen (siehe unten), müssen auf
+dem **Duels-Server** einmalig die alten Weltordner gelöscht werden -
 Standard-Namen `duell_arena_1` bis `duell_arena_4` (siehe
 `arenen.welt-praefix` / `arenen.anzahl`), bei gestopptem Server. Beim
 nächsten Start entstehen sie automatisch neu. Das gilt auch für jedes
@@ -178,10 +180,11 @@ Ausweichen über `/shop` oder Ähnliches.
   nicht erfasst - eher kosmetisch, kein Stakes-Thema.
 - Gräbt sich jemand durch die Plattform nach unten oder wird über die
   niedrige Randmauer hinaus geworfen (z.B. durch eine Explosion), fällt
-  er weit - unter der Plattform liegt kein Void, sondern ein einfacher
-  Boden mit Bedrock ganz unten, aber bis dahin ist es ein sehr tiefer
-  Sturz. Das zählt wie jeder andere tödliche Treffer als Niederlage
-  ("Ring-Out") - sobald klar zu weit unterhalb der Plattform, unabhängig
-  vom tatsächlichen Sturzschaden (siehe
+  er - unter der Plattform liegt kein Void, sondern ein einfacher Boden
+  mit Bedrock ganz unten, bei Standardwerten (`arenen.plattform-hoehe`)
+  nur rund 25 Blöcke unterhalb der Plattform: kurz, aber spürbar. Das
+  zählt wie jeder andere tödliche Treffer als Niederlage ("Ring-Out") -
+  sobald klar zu weit unterhalb der Plattform, unabhängig vom
+  tatsächlichen Sturzschaden (siehe
   `ArenaGuardListener.beimAbsturzUnterDieArena`), damit z.B.
   Federfall-Stiefel dabei kein Schlupfloch sind.

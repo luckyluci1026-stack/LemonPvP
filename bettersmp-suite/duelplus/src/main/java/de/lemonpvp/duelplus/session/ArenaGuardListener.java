@@ -118,15 +118,21 @@ public final class ArenaGuardListener implements Listener {
     }
 
     /**
-     * Die Plattform ist nur 1 Block dick, darunter geht es weit hinunter
-     * bis zu einem einfachen Boden mit Bedrock (siehe ArenaManager) - wer
-     * durch sie faellt oder ueber den Rand geknockt wird, faellt also weit
-     * und nimmt dabei so gut wie immer toedlichen Sturzschaden (der ganz
+     * Die Plattform ist nur 1 Block dick, darunter geht es hinunter bis
+     * zu einem einfachen Boden mit Bedrock (siehe ArenaManager) - wer
+     * durch sie faellt oder ueber den Rand geknockt wird, faellt also und
+     * nimmt dabei so gut wie immer toedlichen Sturzschaden (der ganz
      * normal ueber beiSchaden abgefangen wird). Dieser Check greift
      * UNABHAENGIG davon zusaetzlich, sobald klar zu weit unterhalb der
      * Plattform - damit z.B. Federfall-Stiefel oder ein Zaubertrank gegen
      * Fallschaden kein Schlupfloch sind, um sich einfach aus der Arena
      * herauszuwerfen und unten zu ueberleben.
+     *
+     * Die Schwelle kommt bewusst aus arena.plattformHoehe() (dort, wo die
+     * Plattform TATSAECHLICH gebaut wurde), NICHT live aus der config.yml
+     * - sonst wuerde ein spaeter geaenderter Config-Wert nicht mehr zur
+     * wirklich gebauten Plattform passen und Spieler, die ganz normal
+     * darauf stehen, faelschlich als "abgestuerzt" behandeln.
      */
     @EventHandler(ignoreCancelled = true)
     public void beimAbsturzUnterDieArena(PlayerMoveEvent event) {
@@ -138,11 +144,11 @@ public final class ArenaGuardListener implements Listener {
         if (sessionOpt.isEmpty() || !sessionOpt.get().kampfLaeuft()) {
             return;
         }
-        int plattformHoehe = plugin.getConfig().getInt("arenen.plattform-hoehe", 100);
-        if (zu.getY() >= plattformHoehe - 5) {
+        DuellSession session = sessionOpt.get();
+        Arena arena = plugin.arenaManager().arena(session.arenaName());
+        if (arena == null || zu.getY() >= arena.plattformHoehe() - 5) {
             return;
         }
-        DuellSession session = sessionOpt.get();
         Player spieler = event.getPlayer();
         // Erst zurueck auf die Plattform, DANN erst die Niederlage
         // ausloesen - niederlageAusloesen liest die AKTUELLE Position fuer
@@ -150,11 +156,8 @@ public final class ArenaGuardListener implements Listener {
         // unter der Arena landen: Loot dort faktisch unerreichbar fuer den
         // Gewinner, Todeskamera optisch kaputt (Orbit um die leere Luft
         // unter der Plattform statt um die Arena).
-        Arena arena = plugin.arenaManager().arena(session.arenaName());
-        if (arena != null) {
-            Location sicher = session.spielerA().equals(spieler.getUniqueId()) ? arena.spawnA() : arena.spawnB();
-            spieler.teleport(sicher);
-        }
+        Location sicher = session.spielerA().equals(spieler.getUniqueId()) ? arena.spawnA() : arena.spawnB();
+        spieler.teleport(sicher);
         plugin.sessionManager().niederlageAusloesen(spieler.getUniqueId(), true);
     }
 
