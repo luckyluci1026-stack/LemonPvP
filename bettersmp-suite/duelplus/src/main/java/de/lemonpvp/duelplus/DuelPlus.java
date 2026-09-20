@@ -100,7 +100,10 @@ public final class DuelPlus extends JavaPlugin {
         }
 
         getLogger().info("DuelPlus aktiviert (Server: " + serverName
-                + ", Rolle: " + (istArenaServer ? "Arena" : "Herkunft") + ").");
+                + ", Rolle: " + (istArenaServer ? "Arena" : "Herkunft")
+                + (istArenaServer ? "" : ", Loot-Quelle: " + (istLootQuelle ? "JA" : "nein"))
+                + "). Genau EIN Server im Netzwerk (der mit dem echten Loot, i.d.R. SMP) braucht "
+                + "'Loot-Quelle: JA' - alle anderen (Lobby, Duels) bleiben bei 'nein'.");
     }
 
     @Override

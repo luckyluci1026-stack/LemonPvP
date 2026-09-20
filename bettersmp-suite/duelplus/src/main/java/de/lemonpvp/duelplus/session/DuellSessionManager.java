@@ -155,7 +155,7 @@ public final class DuellSessionManager implements Listener {
                     // Zwingt beide nach und nach zueinander - verhindert
                     // endloses Ausweichen/Verstecken am Rand der Arena.
                     int zielGroesse = Math.max(2, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.ziel-groesse", 10));
-                    int dauerSekunden = Math.max(1, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.dauer-sekunden", 90));
+                    int dauerSekunden = Math.max(1, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.dauer-sekunden", 270));
                     arena.world().getWorldBorder().setSize(zielGroesse, dauerSekunden);
                     cancel();
                     return;

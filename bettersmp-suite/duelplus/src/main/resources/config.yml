@@ -109,7 +109,7 @@ kampf:
   # zueinander, verhindert endloses Ausweichen/Verstecken am Rand.
   worldborder-schrumpfen:
     ziel-groesse: 10
-    dauer-sekunden: 90
+    dauer-sekunden: 270
 
 # ----------------------------------------------------------
 #  Loot

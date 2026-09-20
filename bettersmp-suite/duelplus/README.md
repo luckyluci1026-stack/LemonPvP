@@ -90,7 +90,7 @@ sie automatisch neu, dieses Mal als Void mit dekorierter Plattform.
    für das nächste Duell wieder genau so aussieht wie vorher.
    Während des Countdowns (siehe Punkt 4) stehen beide fest an ihrem
    Platz und sehen sich an - sobald der Kampf beginnt, schrumpft die
-   Worldborder langsam (`kampf.worldborder-schrumpfen`, Standard 90
+   Worldborder langsam (`kampf.worldborder-schrumpfen`, Standard 270
    Sekunden bis auf 10 Blöcke) und zwingt beide nach und nach
    zueinander.
 6. **Ein tödlicher Treffer wird abgefangen statt eines echten Todes** -
