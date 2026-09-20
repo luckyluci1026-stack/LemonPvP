@@ -102,20 +102,103 @@ SMPLobby installierbar (siehe `bettersmp-suite/lobbylock/README.md`).
 
 ### Optional: ein vierter Server für Duelle (DuelPlus)
 
-Für `bettersmp-suite/duelplus` (Duell-System mit echtem SMP-Loot,
-siehe dessen README) braucht es einen zusätzlichen, eigenen Paper-
-Server namens **Duels** - in der `velocity.toml` unter `[servers]`
-genauso eintragen wie `smp1`/`lobby` oben:
+`bettersmp-suite/duelplus` (Duell-System mit echtem SMP-Loot) braucht
+einen zusätzlichen, eigenen Paper-Server namens **Duels** - genau wie
+smp1/smp2/lobby ein eigener, separater Serverprozess, keine Welt
+innerhalb eines bestehenden Servers.
+
+**1. Ordner anlegen**, neben `lobby/`, `smp1/` usw.:
+
+```
+/opt/mc/
+└── duels/     Paper 1.21.11 + DuelPlus-1.0.0.jar
+```
+
+**2. In der `velocity.toml`** unter `[servers]` eintragen - **genau so
+heißen**, wie du es hier nennst, muss überall wortgleich wieder
+auftauchen (config.yml von DuelPlus, gleich mehr dazu):
 
 ```toml
 [servers]
-duels = "127.0.0.1:25570"
+Duels = "127.0.0.1:25570"
 ```
 
-Auf dem Duels-Server läuft `DuelPlus-1.0.0.jar` mit `ist-arena-server:
-true` in dessen `config.yml`, auf SMP und Lobby dasselbe Jar mit
-`ist-arena-server: false`. DuelPlus braucht zwingend eine gemeinsame
-MariaDB zwischen allen drei Servern - siehe `bettersmp-suite/duelplus/README.md`.
+Bewusst **nicht** in `try` und **nicht** unter `[forced-hosts]`
+eintragen: Duels soll niemand durch Zufall, einen Serverwechsel-Befehl
+oder eine Domain erreichen - nur DuelPlus selbst schickt Spieler dort
+hin (über den Standard-`BungeeCord`-Kanal), wenn ein Duell angenommen
+wurde. Die Zeile steht schon fertig in der `velocity.toml` in diesem
+Ordner - nutzt du DuelPlus nicht, einfach ignorieren oder löschen.
+
+**3. Die neue `duels/`-Instanz einrichten** - genau wie bei smp1/smp2
+in Abschnitt 3 oben:
+
+```properties
+# duels/server.properties
+online-mode=false
+server-port=25570
+```
+
+```yaml
+# duels/config/paper-global.yml
+proxies:
+  velocity:
+    enabled: true
+    online-mode: true
+    secret: 'HIER DEN INHALT VON proxy/forwarding.secret EINFÜGEN'
+```
+
+Derselbe Inhalt wie bei den anderen Servern - es ist ja derselbe Proxy.
+
+**4. `DuelPlus-1.0.0.jar` nach `duels/plugins/` legen**, einmal
+starten, dann in der erzeugten `plugins/DuelPlus/config.yml`:
+
+```yaml
+server-name: "Duels"        # exakt wie oben in velocity.toml [servers]
+ist-arena-server: true
+```
+
+**5. Dasselbe Jar zusätzlich auf SMP und Lobby installieren** (dort
+existiert es noch nicht, nur DuelPlus selbst ist auf allen drei
+Servern dasselbe Plugin) - dort aber mit:
+
+```yaml
+# smp/plugins/DuelPlus/config.yml
+server-name: "SMP"          # bzw. "Lobby" auf dem Lobby-Server -
+                             # exakt wie der Name, unter dem dieser
+                             # Server selbst in velocity.toml steht
+ist-arena-server: false
+arena-server-name: "Duels"  # exakt wie oben in velocity.toml [servers] (Standardwert, unveraendert lassen)
+```
+
+**6. MariaDB.** DuelPlus braucht zwingend eine gemeinsame Datenbank
+zwischen **allen drei** Servern (SMP, Lobby, Duels) - ohne die kann
+kein Spielerinventar zwischen den Servern wandern. Läuft schon eine
+für BetterSMP (dessen `config.yml`, `database.mariadb.enabled: true`
+setzen, falls noch nicht geschehen), einfach dieselben Zugangsdaten in
+**jeder** der drei `DuelPlus/config.yml` eintragen:
+
+```yaml
+database:
+  host: "127.0.0.1"      # bzw. die echte Adresse deiner MariaDB
+  port: 3306
+  database: "bettersmp"
+  user: "root"
+  password: "..."
+```
+
+Alle drei Server müssen diese Datenbank tatsächlich erreichen können
+(Netzwerk/Firewall) - DuelPlus legt eigene Tabellen darin an
+(`duelplus_*`), ohne BetterSMPs eigene zu berühren.
+
+Danach `duels/` (und die geänderten `config.yml` auf SMP/Lobby) neu
+starten. Ausführliche Erklärung des Duell-Ablaufs selbst:
+`bettersmp-suite/duelplus/README.md`.
+
+**Testen:** `/duel <Name>` auf dem SMP, annehmen, beide sollten kurz
+"Du wirst zur Arena gebracht ..." sehen und in der Duels-Instanz
+landen. Kommt stattdessen gar nichts - zuerst die Konsole von SMP UND
+von Duels auf `DuelPlus: MariaDB-Verbindung fehlgeschlagen` prüfen.
 
 ## 4. NanoLimbo als Warteraum
 

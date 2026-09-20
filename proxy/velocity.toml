@@ -47,6 +47,13 @@ lobby = "127.0.0.1:25569"
 smp1 = "127.0.0.1:25566"
 smp2 = "127.0.0.1:25567"
 limbo = "127.0.0.1:25568"
+# Nur noetig, falls bettersmp-suite/duelplus im Einsatz ist - siehe
+# "Optional: ein vierter Server fuer Duelle (DuelPlus)" weiter unten
+# in dieser README. Sonst diese Zeile einfach löschen/ignorieren.
+# Gross-/Kleinschreibung des Namens "Duels" muss exakt zu
+# arena-server-name in jeder DuelPlus/config.yml passen (Standardwert
+# dort ist bereits "Duels" - deshalb hier genauso geschrieben).
+Duels = "127.0.0.1:25570"
 
 # Reihenfolge für Spieler OHNE passende Domain (z.B. lemon-servers.de direkt)
 # und gleichzeitig die Ausweich-Reihenfolge, wenn ein Server wegbricht.
