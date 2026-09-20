@@ -154,7 +154,13 @@ public final class ArenaManager {
         world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         world.setTime(6000);
         world.setStorm(false);
-        world.setDifficulty(org.bukkit.Difficulty.PEACEFUL);
+        // BEWUSST NICHT Difficulty.PEACEFUL: das erledigt DO_MOB_SPAWNING
+        // oben schon vollstaendig (keine Mobs in einer frischen Void-Welt
+        // sowieso). Peaceful hat bei manchen Bedrock-/Geyser-Clients dazu
+        // gefuehrt, dass eigene Treffer serverseitig komplett ins Leere
+        // gingen (kein Ton, kein Knockback, kein Schaden) - Java-PvP ist
+        // von der Difficulty unabhaengig, Bedrock-seitig offenbar nicht
+        // immer.
     }
 
     private void plattformBauen(World world, int radius, int y, Material[] palette) {

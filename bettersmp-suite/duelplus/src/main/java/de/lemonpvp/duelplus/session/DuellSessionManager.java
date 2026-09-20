@@ -283,6 +283,15 @@ public final class DuellSessionManager implements Listener {
         Player verlierer = Bukkit.getPlayer(verliererUuid);
         Player gewinnerSpieler = Bukkit.getPlayer(gegnerUuid);
 
+        // Sofort, im Moment des Ausgangs selbst - nicht erst nach der
+        // (teils viel spaeteren) Rueckreise auf den Herkunftsserver.
+        if (verlierer != null) {
+            plugin.msgs().title(verlierer, "title-lost", "title-lost-sub", "gegner", session.gegnerNameVon(verliererUuid));
+        }
+        if (gewinnerSpieler != null) {
+            plugin.msgs().title(gewinnerSpieler, "title-won", "title-won-sub", "gegner", session.gegnerNameVon(gegnerUuid));
+        }
+
         if (verlierer != null) {
             Location ort = verlierer.getLocation();
             loot.verliererLootAbwerfen(verlierer, gewinner, ort);
@@ -327,11 +336,17 @@ public final class DuellSessionManager implements Listener {
             // wirklich mit zurueckreist.
             SpielerSnapshot gewinnerSnapshot = SpielerSnapshot.von(gewinnerSpieler.getInventory());
             zustandZuruecksetzen(gewinnerSpieler);
-            gewinnerSpieler.setGameMode(GameMode.SURVIVAL);
-            gewinnerSpieler.setInvulnerable(false);
+            // GameMode/Unverwundbarkeit bewusst ERST im Callback (NACH dem
+            // DB-Schreiben) umstellen, nicht schon hier - sonst waere der
+            // Gewinner fuer die Dauer des (asynchronen) Schreibens kurz in
+            // Survival, mitten in der Arena, und koennte dort noch Bloecke
+            // abbauen, die zu dem Zeitpunkt nichtmal mehr vom RollbackTracker
+            // erfasst wuerden (der ist ja schon oben gestoppt worden).
             plugin.db().snapshotSchreiben(session.duellId(), gegnerUuid, DuelDatabase.RICHTUNG_ZURUECK, gewinnerSnapshot)
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         if (gewinnerSpieler.isOnline()) {
+                            gewinnerSpieler.setGameMode(GameMode.SURVIVAL);
+                            gewinnerSpieler.setInvulnerable(false);
                             plugin.bridge().sende(gewinnerSpieler, session.herkunftsServerVon(gegnerUuid));
                         }
                     }));
@@ -367,6 +382,12 @@ public final class DuellSessionManager implements Listener {
      * wechselt den Besitzer, kein Shulker wird abgeworfen.
      */
     private void unentschiedenAusloesen(DuellSession session) {
+        for (UUID uuid : new UUID[]{session.spielerA(), session.spielerB()}) {
+            Player spieler = Bukkit.getPlayer(uuid);
+            if (spieler != null) {
+                plugin.msgs().title(spieler, "title-draw", "title-draw-sub");
+            }
+        }
         ohneSiegerBeenden(session);
     }
 
@@ -384,6 +405,7 @@ public final class DuellSessionManager implements Listener {
             }
             inventarAnteilVerlieren(spieler, anteil);
             plugin.msgs().send(spieler, "inactivity-forfeit");
+            plugin.msgs().title(spieler, "title-forfeit", "title-forfeit-sub");
         }
         ohneSiegerBeenden(session);
     }

@@ -128,6 +128,11 @@ sie automatisch neu, dieses Mal als Void mit dekorierter Plattform.
    sonst wäre das exklusive Loot-Zeitfenster nutzlos, weil er längst
    weg wäre, bevor er es überhaupt selbst aufheben könnte.
 
+Sieg, Niederlage und Unentschieden werden zusätzlich zur Chat-Nachricht
+**groß auf dem Bildschirm** angezeigt (Title/Subtitle) - und zwar
+**sofort im Moment des Ausgangs**, nicht erst nach der (beim Gewinner
+teils viel späteren) Rückreise.
+
 **Verbindung während des eigenen Duells getrennt = automatische
 Niederlage** (inklusive Loot-Verlust) - verhindert, sich durch
 Abbrechen das eigene Inventar zu retten.

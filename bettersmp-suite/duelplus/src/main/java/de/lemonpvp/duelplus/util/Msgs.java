@@ -2,8 +2,10 @@ package de.lemonpvp.duelplus.util;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.title.Title;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -11,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 /** Laedt messages.yml, ersetzt Platzhalter-Paare (key, value, key, value ...) und %prefix%. */
 public final class Msgs {
@@ -50,5 +53,13 @@ public final class Msgs {
 
     public void send(CommandSender to, String path, String... replacements) {
         to.sendMessage(format(path, replacements));
+    }
+
+    private static final Title.Times TITLE_ZEITEN = Title.Times.times(
+            Duration.ofMillis(300), Duration.ofSeconds(3), Duration.ofMillis(500));
+
+    /** Grosse Bildschirmmitte-Anzeige (Title/Subtitle) - fuer Sieg/Niederlage/Unentschieden, nicht nur Chat. */
+    public void title(Player to, String titlePath, String subtitlePath, String... replacements) {
+        to.showTitle(Title.title(format(titlePath, replacements), format(subtitlePath, replacements), TITLE_ZEITEN));
     }
 }

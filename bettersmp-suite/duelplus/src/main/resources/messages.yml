@@ -28,6 +28,18 @@ you-won: "%prefix%<green><bold>Sieg!</bold></green> <gray>Das Loot von <white>%g
 you-lost: "%prefix%<red><bold>Niederlage.</bold></red> <gray>Dein Inventar ist weg - <white>%gegner%</white> hat gewonnen.</gray>"
 draw-result: "%prefix%<yellow><bold>Unentschieden!</bold></yellow> <gray>Kein Loot hat den Besitzer gewechselt.</gray>"
 
+# Grosse Bildschirmmitte-Anzeige (Title/Subtitle), zusaetzlich zu den
+# Chat-Nachrichten oben - erscheint SOFORT im Moment des Ausgangs, nicht
+# erst nach der Rueckreise.
+title-won: "<green><bold>SIEG</bold></green>"
+title-won-sub: "<gray>gegen <white>%gegner%</white></gray>"
+title-lost: "<red><bold>NIEDERLAGE</bold></red>"
+title-lost-sub: "<gray>gegen <white>%gegner%</white></gray>"
+title-draw: "<yellow><bold>UNENTSCHIEDEN</bold></yellow>"
+title-draw-sub: "<gray>Niemand hat gewonnen</gray>"
+title-forfeit: "<red><bold>AUFGEGEBEN</bold></red>"
+title-forfeit-sub: "<gray>Zu lange kein Treffer</gray>"
+
 draw-not-in-duel: "%prefix%<red>Du bist gerade in keinem laufenden Duell.</red>"
 draw-already-requested: "%prefix%<gray>Du hast bereits ein Unentschieden vorgeschlagen - warte auf <white>%gegner%</white>.</gray>"
 draw-requested: "%prefix%<gray>Unentschieden vorgeschlagen - wartet auf <white>%gegner%</white>.</gray>"
