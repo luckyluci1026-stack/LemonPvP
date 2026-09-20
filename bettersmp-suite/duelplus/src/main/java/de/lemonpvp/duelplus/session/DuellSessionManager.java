@@ -9,14 +9,18 @@ import de.lemonpvp.duelplus.loot.LootManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -152,7 +156,7 @@ public final class DuellSessionManager implements Listener {
                         }
                     }
                     session.kampfStarten();
-                    worldborderSchrumpfenStarten(arena, session);
+                    kampfUeberwachungStarten(arena, session);
                     cancel();
                     return;
                 }
@@ -167,16 +171,24 @@ public final class DuellSessionManager implements Listener {
     }
 
     /**
-     * Schrumpft die Worldborder nicht einfach linear ueber eine feste Zeit,
-     * sondern im Sekundentakt neu berechnet: solange getroffen wird
-     * (session.treffer(), siehe ArenaGuardListener.beiSchaden), im
-     * normalen (langsamen) Tempo - kommt laenger als camping-nach-sekunden
-     * kein Treffer, wird auf das schnellere Camping-Tempo umgeschaltet.
-     * Jeder Schritt selbst laeuft ueber 1 Sekunde sanft (WorldBorder#
-     * setSize mit Uebergangszeit), damit es trotz der haeufigen
-     * Neuberechnung nicht ruckelt.
+     * Eine gemeinsame Sekundentakt-Ueberwachung fuer alles, was vom
+     * Treffer-Zeitpunkt abhaengt (session.treffer(), siehe ArenaGuardListener.
+     * beiSchaden):
+     *
+     *  - Worldborder: nicht einfach linear ueber eine feste Zeit, sondern
+     *    jede Sekunde neu berechnet - solange getroffen wird, im normalen
+     *    (langsamen) Tempo, faellt laenger als camping-nach-sekunden kein
+     *    Treffer, auf das schnellere Camping-Tempo. Jeder Schritt selbst
+     *    laeuft ueber 1 Sekunde sanft (WorldBorder#setSize mit
+     *    Uebergangszeit), damit es trotz haeufiger Neuberechnung nicht
+     *    ruckelt.
+     *  - Aufgabe bei Inaktivitaet: faellt laenger als warnung-nach-minuten
+     *    KEIN Treffer, eine Warnung an beide - faellt danach nochmal
+     *    frist-danach-minuten lang keiner, automatische Aufgabe mit
+     *    Inventar-Teilverlust fuer beide (kein Sieger). Jeder Treffer
+     *    setzt das komplett zurueck (siehe DuellSession.treffer()).
      */
-    private void worldborderSchrumpfenStarten(Arena arena, DuellSession session) {
+    private void kampfUeberwachungStarten(Arena arena, DuellSession session) {
         double zielGroesse = Math.max(2, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.ziel-groesse", 10));
         int normalDauer = Math.max(1, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.dauer-sekunden", 270));
         long campingNachMillis = Math.max(1, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.camping-nach-sekunden", 15)) * 1000L;
@@ -187,21 +199,48 @@ public final class DuellSessionManager implements Listener {
         double normalProSekunde = gesamtStrecke / normalDauer;
         double campingProSekunde = gesamtStrecke / campingDauer;
 
+        boolean inaktivitaetsAufgabeAktiv = plugin.getConfig().getBoolean("kampf.aufgabe-bei-inaktivitaet.aktiv", true);
+        long warnungNachMillis = Math.max(1, plugin.getConfig().getInt("kampf.aufgabe-bei-inaktivitaet.warnung-nach-minuten", 10)) * 60_000L;
+        long fristMillis = Math.max(1, plugin.getConfig().getInt("kampf.aufgabe-bei-inaktivitaet.frist-danach-minuten", 5)) * 60_000L;
+
         new BukkitRunnable() {
             double aktuelleGroesse = startGroesse;
 
             @Override
             public void run() {
-                // Session vorbei (Sieg/Niederlage/Unentschieden) oder schon
-                // ganz durchgeschrumpft - nichts mehr zu tun.
-                if (sessionNachSpieler.get(session.spielerA()) != session || aktuelleGroesse <= zielGroesse) {
+                // Session vorbei (Sieg/Niederlage/Unentschieden/Aufgabe) -
+                // nichts mehr zu tun.
+                if (sessionNachSpieler.get(session.spielerA()) != session) {
                     cancel();
                     return;
                 }
-                boolean campt = session.millisSeitLetztemTreffer() >= campingNachMillis;
-                double proSekunde = campt ? campingProSekunde : normalProSekunde;
-                aktuelleGroesse = Math.max(zielGroesse, aktuelleGroesse - proSekunde);
-                arena.world().getWorldBorder().setSize(aktuelleGroesse, 1);
+                long seitTreffer = session.millisSeitLetztemTreffer();
+
+                if (aktuelleGroesse > zielGroesse) {
+                    boolean campt = seitTreffer >= campingNachMillis;
+                    double proSekunde = campt ? campingProSekunde : normalProSekunde;
+                    aktuelleGroesse = Math.max(zielGroesse, aktuelleGroesse - proSekunde);
+                    arena.world().getWorldBorder().setSize(aktuelleGroesse, 1);
+                }
+
+                if (!inaktivitaetsAufgabeAktiv) {
+                    return;
+                }
+                if (!session.inaktivitaetsWarnungGezeigt() && seitTreffer >= warnungNachMillis) {
+                    session.inaktivitaetsWarnungSetzen();
+                    String minuten = String.valueOf(fristMillis / 60_000L);
+                    Player a = Bukkit.getPlayer(session.spielerA());
+                    Player b = Bukkit.getPlayer(session.spielerB());
+                    if (a != null) {
+                        plugin.msgs().send(a, "inactivity-warning", "minuten", minuten);
+                    }
+                    if (b != null) {
+                        plugin.msgs().send(b, "inactivity-warning", "minuten", minuten);
+                    }
+                } else if (session.inaktivitaetsWarnungGezeigt() && seitTreffer >= warnungNachMillis + fristMillis) {
+                    cancel();
+                    inaktivitaetsAufgabeAusloesen(session);
+                }
             }
         }.runTaskTimer(plugin, 20L, 20L);
     }
@@ -328,6 +367,79 @@ public final class DuellSessionManager implements Listener {
      * wechselt den Besitzer, kein Shulker wird abgeworfen.
      */
     private void unentschiedenAusloesen(DuellSession session) {
+        ohneSiegerBeenden(session);
+    }
+
+    // ================================================================
+    //  Aufgabe bei Inaktivitaet (siehe kampfUeberwachungStarten)
+    // ================================================================
+
+    private void inaktivitaetsAufgabeAusloesen(DuellSession session) {
+        double anteil = Math.max(0, Math.min(1,
+                plugin.getConfig().getDouble("kampf.aufgabe-bei-inaktivitaet.inventar-verlust-anteil", 0.2)));
+        for (UUID uuid : new UUID[]{session.spielerA(), session.spielerB()}) {
+            Player spieler = Bukkit.getPlayer(uuid);
+            if (spieler == null) {
+                continue;
+            }
+            inventarAnteilVerlieren(spieler, anteil);
+            plugin.msgs().send(spieler, "inactivity-forfeit");
+        }
+        ohneSiegerBeenden(session);
+    }
+
+    /** Entfernt ersatzlos einen zufaelligen Anteil der BELEGTEN Faecher (Hauptinventar+Ruestung+Offhand zusammen). */
+    private void inventarAnteilVerlieren(Player spieler, double anteil) {
+        var inv = spieler.getInventory();
+        ItemStack[] haupt = inv.getStorageContents();
+        ItemStack[] ruestung = inv.getArmorContents();
+        boolean offhandBelegt = inv.getItemInOffHand().getType() != Material.AIR;
+
+        List<int[]> belegt = new ArrayList<>();
+        for (int i = 0; i < haupt.length; i++) {
+            if (haupt[i] != null && haupt[i].getType() != Material.AIR) {
+                belegt.add(new int[]{0, i});
+            }
+        }
+        for (int i = 0; i < ruestung.length; i++) {
+            if (ruestung[i] != null && ruestung[i].getType() != Material.AIR) {
+                belegt.add(new int[]{1, i});
+            }
+        }
+        if (offhandBelegt) {
+            belegt.add(new int[]{2, 0});
+        }
+        if (belegt.isEmpty()) {
+            return;
+        }
+        Collections.shuffle(belegt);
+        int anzahl = (int) Math.ceil(belegt.size() * anteil);
+        boolean offhandEntfernen = false;
+        for (int i = 0; i < anzahl && i < belegt.size(); i++) {
+            int[] ziel = belegt.get(i);
+            if (ziel[0] == 0) {
+                haupt[ziel[1]] = null;
+            } else if (ziel[0] == 1) {
+                ruestung[ziel[1]] = null;
+            } else {
+                offhandEntfernen = true;
+            }
+        }
+        inv.setStorageContents(haupt);
+        inv.setArmorContents(ruestung);
+        if (offhandEntfernen) {
+            inv.setItemInOffHand(null);
+        }
+    }
+
+    /**
+     * Gemeinsamer Abschluss fuer jedes Duell-Ende OHNE Sieger (Unentschieden
+     * per /draw ODER automatische Aufgabe bei Inaktivitaet) - jeder bekommt
+     * sein aktuelles Inventar zurueck (bei Inaktivitaets-Aufgabe also schon
+     * OHNE den verlorenen Anteil, der wurde vorher entfernt), kein Loot
+     * wechselt den Besitzer, kein Shulker wird abgeworfen.
+     */
+    private void ohneSiegerBeenden(DuellSession session) {
         UUID aUuid = session.spielerA();
         UUID bUuid = session.spielerB();
         // Beide IMMER entfernen (nicht kurzschliessen) - sonst bliebe bei

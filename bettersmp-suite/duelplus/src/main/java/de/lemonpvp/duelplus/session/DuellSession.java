@@ -18,6 +18,7 @@ public final class DuellSession {
     private volatile boolean kampfLaeuft = false;
     private final Set<UUID> unentschiedenZustimmung = ConcurrentHashMap.newKeySet();
     private volatile long letzterTrefferMillis = System.currentTimeMillis();
+    private volatile boolean inaktivitaetsWarnungGezeigt = false;
 
     public DuellSession(String duellId, String arenaName,
                          UUID spielerA, String spielerAName, String spielerAServer,
@@ -75,13 +76,28 @@ public final class DuellSession {
         this.letzterTrefferMillis = System.currentTimeMillis();
     }
 
-    /** Von ArenaGuardListener bei jedem verarbeiteten Treffer aufgerufen - Basis fuer die Camping-Erkennung. */
+    /**
+     * Von ArenaGuardListener bei jedem verarbeiteten Treffer aufgerufen -
+     * Basis fuer die Camping-Erkennung UND die Aufgabe-bei-Inaktivitaet:
+     * JEDER Treffer setzt beides komplett zurueck, egal wie weit die Uhr
+     * schon gelaufen war.
+     */
     public void treffer() {
         this.letzterTrefferMillis = System.currentTimeMillis();
+        this.inaktivitaetsWarnungGezeigt = false;
     }
 
     public long millisSeitLetztemTreffer() {
         return System.currentTimeMillis() - letzterTrefferMillis;
+    }
+
+    /** true, sobald die 10-Minuten-Warnung schon rausgegangen ist - verhindert Mehrfachversand. */
+    public boolean inaktivitaetsWarnungGezeigt() {
+        return inaktivitaetsWarnungGezeigt;
+    }
+
+    public void inaktivitaetsWarnungSetzen() {
+        this.inaktivitaetsWarnungGezeigt = true;
     }
 
     /** Traegt spieler als /draw-zustimmend ein - true, wenn danach BEIDE zugestimmt haben. */

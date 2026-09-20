@@ -101,6 +101,18 @@ sie automatisch neu, dieses Mal als Void mit dekorierter Plattform.
    das deutlich schnellere Camping-Tempo (`camping-dauer-sekunden`,
    Standard 60s) um. Aktiver Kampf wird also nicht bestraft, reines
    Ausweichen/Verstecken schon.
+
+   Zusätzliche Absicherung gegen (auch unfreiwillige, z.B. AFK) totale
+   Untätigkeit: Fällt `kampf.aufgabe-bei-inaktivitaet.warnung-nach-minuten`
+   (Standard 10) lang **gar kein** Treffer, warnt eine Chat-Nachricht
+   beide. Fällt danach nochmal `frist-danach-minuten` (Standard 5) lang
+   keiner, wird die Runde automatisch aufgegeben - **ohne Sieger**,
+   aber beide verlieren `inventar-verlust-anteil` (Standard 1/5) ihres
+   Inventars (zufällig ausgewählte, belegte Fächer, ersatzlos - kein
+   Loot für den jeweils anderen). Jeder einzelne Treffer setzt diese
+   Uhr komplett zurück, ganz gleich wie weit sie schon gelaufen war -
+   ein normal geführter Kampf ist davon nie betroffen. Lässt sich mit
+   `aktiv: false` komplett abschalten.
 6. **Ein tödlicher Treffer wird abgefangen statt eines echten Todes** -
    der Verlierer sieht stattdessen eine **Todeskamera** (ein paar
    Sekunden Orbit um die Stelle), sein komplettes mitgebrachtes

@@ -33,6 +33,9 @@ draw-already-requested: "%prefix%<gray>Du hast bereits ein Unentschieden vorgesc
 draw-requested: "%prefix%<gray>Unentschieden vorgeschlagen - wartet auf <white>%gegner%</white>.</gray>"
 draw-requested-by: "%prefix%<gold><white>%gegner%</white> schlägt ein Unentschieden vor.</gold> <gray>Schreib ebenfalls <white>/draw</white>, um zuzustimmen.</gray>"
 
+inactivity-warning: "%prefix%<gold><bold>Seit einer Weile kein Treffer!</bold></gold> <gray>Fällt in <white>%minuten% Minuten</white> weiterhin keiner, wird die Runde automatisch aufgegeben - ihr verliert dann beide ein Fünftel eures Inventars.</gray>"
+inactivity-forfeit: "%prefix%<red><bold>Automatisch aufgegeben.</bold></red> <gray>Zu lange ohne Treffer - ihr habt beide ein Fünftel eures Inventars verloren.</gray>"
+
 loot-dropped: "%prefix%<gold>Das Loot liegt am Boden - <white>%sekunden%s</white> lang gehört es nur dir.</gold>"
 enderchest-disabled: "%prefix%<red>Enderkisten sind in der Arena deaktiviert.</red>"
 command-blocked: "%prefix%<red>Befehle sind während eines Duells gesperrt.</red>"

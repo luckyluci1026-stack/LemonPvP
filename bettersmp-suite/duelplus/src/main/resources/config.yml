@@ -116,6 +116,20 @@ kampf:
     dauer-sekunden: 270
     camping-nach-sekunden: 15
     camping-dauer-sekunden: 60
+  # Faellt waehrend des Kampfes laenger als warnung-nach-minuten kein
+  # Treffer, warnt eine Chat-Nachricht beide Duellanten vor: faellt
+  # danach nochmal frist-danach-minuten lang kein Treffer, wird die
+  # Runde automatisch aufgegeben - OHNE Sieger, aber beide verlieren
+  # inventar-verlust-anteil ihres Inventars (zufaellig ausgewaehlte,
+  # belegte Faecher aus Hauptinventar+Ruestung+Offhand zusammen,
+  # ersatzlos - kein Loot fuer den jeweils anderen). JEDER Treffer
+  # setzt die Uhr komplett zurueck, egal wie weit sie schon gelaufen
+  # war - ein Duell mit normalem Kampf ist davon nie betroffen.
+  aufgabe-bei-inaktivitaet:
+    aktiv: true
+    warnung-nach-minuten: 10
+    frist-danach-minuten: 5
+    inventar-verlust-anteil: 0.2
 
 # ----------------------------------------------------------
 #  Loot
