@@ -40,14 +40,23 @@ public final class LootManager implements Listener {
     /** Liest das AKTUELLE Inventar des Verlierers, leert es und wirft es als Shulker an "ort" ab. */
     public void verliererLootAbwerfen(Player verlierer, UUID gewinner, Location ort) {
         List<ItemStack> alles = new ArrayList<>();
-        sammeln(alles, verlierer.getInventory().getContents());
+        // getStorageContents() statt getContents() - eindeutig NUR Hotbar+
+        // Rucksack (36 Plaetze), garantiert ohne Ueberschneidung mit der
+        // Ruestung gleich danach. getContents() ist da je nach Bukkit-
+        // Version nicht so eindeutig spezifiziert.
+        sammeln(alles, verlierer.getInventory().getStorageContents());
         sammeln(alles, verlierer.getInventory().getArmorContents());
         ItemStack offhand = verlierer.getInventory().getItemInOffHand();
         if (offhand.getType() != Material.AIR) {
             alles.add(offhand.clone());
         }
 
-        verlierer.getInventory().clear();
+        // Jeden Bereich EINZELN und explizit leeren statt nur clear() -
+        // sonst koennte die Ruestung (je nach Bukkit-Version deckt clear()
+        // sie nicht zuverlaessig ab) weiter angezogen bleiben, WAEHREND
+        // schon eine Kopie im Shulker steckt = Dupe.
+        verlierer.getInventory().setStorageContents(new ItemStack[verlierer.getInventory().getStorageContents().length]);
+        verlierer.getInventory().setArmorContents(new ItemStack[verlierer.getInventory().getArmorContents().length]);
         verlierer.getInventory().setItemInOffHand(null);
 
         if (alles.isEmpty()) {

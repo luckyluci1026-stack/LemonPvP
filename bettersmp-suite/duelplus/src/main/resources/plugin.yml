@@ -15,6 +15,9 @@ commands:
   duel:
     description: Fordert jemanden zu einem Duell heraus
     usage: "/duel <Spieler|accept|decline>"
+  draw:
+    description: Schlaegt im laufenden Duell ein Unentschieden vor - wirkt erst, wenn beide zustimmen
+    usage: "/draw"
   duelplus:
     description: DuelPlus-Verwaltung
     usage: "/duelplus reload"

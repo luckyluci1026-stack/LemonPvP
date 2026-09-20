@@ -263,6 +263,71 @@ public final class DuellSessionManager implements Listener {
         }, lootSekunden * 20L);
     }
 
+    // ================================================================
+    //  /draw - Unentschieden per gegenseitiger Zustimmung
+    // ================================================================
+
+    /** Ein Spieler hat /draw benutzt - traegt seine Zustimmung ein und loest bei beidseitiger Zustimmung aus. */
+    public void unentschiedenVorschlagen(DuellSession session, Player spieler) {
+        UUID gegnerUuid = session.gegnerVon(spieler.getUniqueId());
+        if (session.hatUnentschiedenVorgeschlagen(spieler.getUniqueId())) {
+            plugin.msgs().send(spieler, "draw-already-requested", "gegner", session.gegnerNameVon(spieler.getUniqueId()));
+            return;
+        }
+        boolean beideEinverstanden = session.unentschiedenZustimmen(spieler.getUniqueId());
+        if (beideEinverstanden) {
+            unentschiedenAusloesen(session);
+            return;
+        }
+        plugin.msgs().send(spieler, "draw-requested", "gegner", session.gegnerNameVon(spieler.getUniqueId()));
+        Player gegnerSpieler = Bukkit.getPlayer(gegnerUuid);
+        if (gegnerSpieler != null) {
+            plugin.msgs().send(gegnerSpieler, "draw-requested-by", "gegner", spieler.getName());
+        }
+    }
+
+    /**
+     * Beide haben /draw zugestimmt - beendet das Duell OHNE Sieger: jeder
+     * bekommt sein eigenes, unveraendertes Inventar zurueck, kein Loot
+     * wechselt den Besitzer, kein Shulker wird abgeworfen.
+     */
+    private void unentschiedenAusloesen(DuellSession session) {
+        UUID aUuid = session.spielerA();
+        UUID bUuid = session.spielerB();
+        // Beide IMMER entfernen (nicht kurzschliessen) - sonst bliebe bei
+        // bereits anderweitig beendeter Session (z.B. Verbindungsabbruch im
+        // selben Moment) einer der beiden faelschlich als "in Session" stehen.
+        boolean aEntfernt = sessionNachSpieler.remove(aUuid) != null;
+        boolean bEntfernt = sessionNachSpieler.remove(bUuid) != null;
+        if (!aEntfernt && !bEntfernt) {
+            return;
+        }
+
+        Player a = Bukkit.getPlayer(aUuid);
+        Player b = Bukkit.getPlayer(bUuid);
+
+        var aGeschrieben = plugin.db().snapshotSchreiben(session.duellId(), aUuid, DuelDatabase.RICHTUNG_ZURUECK,
+                a != null ? SpielerSnapshot.von(a.getInventory()) : SpielerSnapshot.leer());
+        var bGeschrieben = plugin.db().snapshotSchreiben(session.duellId(), bUuid, DuelDatabase.RICHTUNG_ZURUECK,
+                b != null ? SpielerSnapshot.von(b.getInventory()) : SpielerSnapshot.leer());
+        java.util.concurrent.CompletableFuture.allOf(aGeschrieben, bGeschrieben)
+                .thenCompose(unused -> plugin.db().beenden(session.duellId(), null));
+
+        Arena arena = plugin.arenaManager().arena(session.arenaName());
+        if (arena != null) {
+            plugin.rollback().zuruecksetzenUndStoppen(arena.world());
+            plugin.arenaManager().freigeben(arena.name());
+        }
+        for (Player p : new Player[]{a, b}) {
+            if (p == null || !p.isOnline()) {
+                continue;
+            }
+            zustandZuruecksetzen(p);
+            p.setGameMode(GameMode.SURVIVAL);
+            plugin.bridge().sende(p, session.herkunftsServerVon(p.getUniqueId()));
+        }
+    }
+
     private void zustandZuruecksetzen(Player spieler) {
         spieler.setFireTicks(0);
         spieler.setFallDistance(0f);

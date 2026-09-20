@@ -26,6 +26,12 @@ fight: "%prefix%<gradient:#FF6B6B:#C92A2A><bold>Kampf!</bold></gradient>"
 
 you-won: "%prefix%<green><bold>Sieg!</bold></green> <gray>Das Loot von <white>%gegner%</white> liegt an der Stelle, an der es gefallen ist.</gray>"
 you-lost: "%prefix%<red><bold>Niederlage.</bold></red> <gray>Dein Inventar ist weg - <white>%gegner%</white> hat gewonnen.</gray>"
+draw-result: "%prefix%<yellow><bold>Unentschieden!</bold></yellow> <gray>Kein Loot hat den Besitzer gewechselt.</gray>"
+
+draw-not-in-duel: "%prefix%<red>Du bist gerade in keinem laufenden Duell.</red>"
+draw-already-requested: "%prefix%<gray>Du hast bereits ein Unentschieden vorgeschlagen - warte auf <white>%gegner%</white>.</gray>"
+draw-requested: "%prefix%<gray>Unentschieden vorgeschlagen - wartet auf <white>%gegner%</white>.</gray>"
+draw-requested-by: "%prefix%<gold><white>%gegner%</white> schlägt ein Unentschieden vor.</gold> <gray>Schreib ebenfalls <white>/draw</white>, um zuzustimmen.</gray>"
 
 loot-dropped: "%prefix%<gold>Das Loot liegt am Boden - <white>%sekunden%s</white> lang gehört es nur dir.</gold>"
 enderchest-disabled: "%prefix%<red>Enderkisten sind in der Arena deaktiviert.</red>"

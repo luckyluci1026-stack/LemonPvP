@@ -412,12 +412,13 @@ public final class DuelDatabase {
         });
     }
 
+    /** gewinner darf null sein - bedeutet Unentschieden (siehe /draw), kein Sieger. */
     public CompletableFuture<Void> beenden(String id, UUID gewinner) {
         return run(() -> {
             try (PreparedStatement ps = conn().prepareStatement(
                     "UPDATE duelplus_duelle SET status=?, gewinner=?, a_bearbeitet=FALSE, b_bearbeitet=FALSE WHERE id=?")) {
                 ps.setString(1, DuelRecord.BEENDET);
-                ps.setString(2, gewinner.toString());
+                ps.setString(2, gewinner == null ? null : gewinner.toString());
                 ps.setString(3, id);
                 ps.executeUpdate();
             } catch (SQLException e) {

@@ -127,10 +127,22 @@ public final class ArenaGuardListener implements Listener {
         if (spieler.hasPermission("duelplus.command.bypass")) {
             return;
         }
+        if (istBefehlsName(event.getMessage(), "draw")) {
+            // /draw muss waehrend eines eigenen Duells gerade FUNKTIONIEREN
+            // (das ist der ganze Sinn) - explizit von der Sperre ausgenommen.
+            return;
+        }
         if (plugin.sessionManager().sessionVon(spieler.getUniqueId()).isPresent()) {
             event.setCancelled(true);
             plugin.msgs().send(spieler, "command-blocked");
         }
+    }
+
+    private boolean istBefehlsName(String nachricht, String name) {
+        String ohneSlash = nachricht.length() > 1 ? nachricht.substring(1) : "";
+        int leerzeichen = ohneSlash.indexOf(' ');
+        String befehl = leerzeichen < 0 ? ohneSlash : ohneSlash.substring(0, leerzeichen);
+        return befehl.equalsIgnoreCase(name);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

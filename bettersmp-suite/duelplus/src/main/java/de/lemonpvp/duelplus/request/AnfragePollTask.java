@@ -161,7 +161,8 @@ public final class AnfragePollTask {
                 if (spieler == null) {
                     continue;
                 }
-                boolean gewonnen = spielerUuid.equals(duell.gewinner());
+                String ergebnisKey = duell.gewinner() == null ? "draw-result"
+                        : spielerUuid.equals(duell.gewinner()) ? "you-won" : "you-lost";
                 // Erst wirklich anwenden, DANACH als erledigt markieren - sonst
                 // wuerde ein Fehler mittendrin die Zeile trotzdem als erledigt
                 // stehen lassen und es gaebe keinen zweiten Versuch mehr.
@@ -183,7 +184,7 @@ public final class AnfragePollTask {
                                 snapshotOpt.ifPresent(snap -> snap.anwenden(spieler.getInventory()));
                             }
                             String gegnerName = istA ? duell.spielerBName() : duell.spielerAName();
-                            plugin.msgs().send(spieler, gewonnen ? "you-won" : "you-lost", "gegner", gegnerName);
+                            plugin.msgs().send(spieler, ergebnisKey, "gegner", gegnerName);
                             if (istA) {
                                 plugin.db().markiereBearbeitetA(duell.id());
                             } else {

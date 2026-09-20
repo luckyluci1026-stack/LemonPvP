@@ -1,6 +1,8 @@
 package de.lemonpvp.duelplus.session;
 
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Eine laufende Arena-Session - nur auf dem Duels-Server im Speicher, waehrend ein Duell aktiv ist. */
 public final class DuellSession {
@@ -14,6 +16,7 @@ public final class DuellSession {
     private final String spielerBName;
     private final String spielerBServer;
     private volatile boolean kampfLaeuft = false;
+    private final Set<UUID> unentschiedenZustimmung = ConcurrentHashMap.newKeySet();
 
     public DuellSession(String duellId, String arenaName,
                          UUID spielerA, String spielerAName, String spielerAServer,
@@ -68,5 +71,15 @@ public final class DuellSession {
 
     public void kampfStarten() {
         this.kampfLaeuft = true;
+    }
+
+    /** Traegt spieler als /draw-zustimmend ein - true, wenn danach BEIDE zugestimmt haben. */
+    public boolean unentschiedenZustimmen(UUID spieler) {
+        unentschiedenZustimmung.add(spieler);
+        return unentschiedenZustimmung.contains(spielerA) && unentschiedenZustimmung.contains(spielerB);
+    }
+
+    public boolean hatUnentschiedenVorgeschlagen(UUID spieler) {
+        return unentschiedenZustimmung.contains(spieler);
     }
 }

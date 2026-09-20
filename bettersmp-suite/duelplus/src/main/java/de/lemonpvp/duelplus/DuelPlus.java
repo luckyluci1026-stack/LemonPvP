@@ -2,6 +2,7 @@ package de.lemonpvp.duelplus;
 
 import de.lemonpvp.duelplus.arena.ArenaManager;
 import de.lemonpvp.duelplus.arena.RollbackTracker;
+import de.lemonpvp.duelplus.command.DrawCommand;
 import de.lemonpvp.duelplus.command.DuelCommand;
 import de.lemonpvp.duelplus.db.DuelDatabase;
 import de.lemonpvp.duelplus.item.DuelItemListener;
@@ -83,6 +84,10 @@ public final class DuelPlus extends JavaPlugin {
         if (duelCmd != null) {
             duelCmd.setExecutor(command);
             duelCmd.setTabCompleter(command);
+        }
+        var drawCmd = getCommand("draw");
+        if (drawCmd != null) {
+            drawCmd.setExecutor(new DrawCommand(this));
         }
         var adminCmd = getCommand("duelplus");
         if (adminCmd != null) {

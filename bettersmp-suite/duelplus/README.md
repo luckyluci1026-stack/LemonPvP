@@ -122,6 +122,9 @@ Ausweichen über `/shop` oder Ähnliches.
 /duel <Spieler>          - herausfordern
 /duel accept <Spieler>   - annehmen
 /duel decline <Spieler>  - ablehnen
+/draw                    - Unentschieden vorschlagen (nur waehrend des eigenen Duells,
+                            wirkt erst, wenn BEIDE es benutzen - keiner gewinnt/verliert,
+                            jeder bekommt sein eigenes Inventar unveraendert zurueck)
 /duelplus reload         - config.yml neu einlesen, DB-Verbindung neu aufbauen
 ```
 
