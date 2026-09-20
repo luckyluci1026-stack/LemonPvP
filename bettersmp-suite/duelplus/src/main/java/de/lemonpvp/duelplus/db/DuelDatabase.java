@@ -97,7 +97,9 @@ public final class DuelDatabase {
                 + "ziel_gezeigt BOOLEAN DEFAULT FALSE)",
             "CREATE TABLE IF NOT EXISTS duelplus_inventar ("
                 + "duell_id VARCHAR(36), spieler VARCHAR(36), richtung VARCHAR(16), "
-                + "daten LONGTEXT, erstellt BIGINT, PRIMARY KEY (duell_id, spieler, richtung))"
+                + "daten LONGTEXT, erstellt BIGINT, PRIMARY KEY (duell_id, spieler, richtung))",
+            "CREATE TABLE IF NOT EXISTS duelplus_stamm_inventar ("
+                + "uuid VARCHAR(36) PRIMARY KEY, daten LONGTEXT, aktualisiert BIGINT)"
         };
         try (var st = conn().createStatement()) {
             for (String sql : ddl) {
@@ -503,6 +505,47 @@ public final class DuelDatabase {
                 }
             } catch (Exception e) {
                 plugin.getLogger().warning("DuelPlus: Inventar-Snapshot konnte nicht gelesen werden: " + e.getMessage());
+                return Optional.empty();
+            }
+        });
+    }
+
+    // ================================================================
+    //  Stamm-Inventar (staendig aktueller Spiegel des ECHTEN Inventars,
+    //  nur von der Loot-Quelle aus geschrieben - siehe ist-loot-quelle)
+    // ================================================================
+
+    /** Wird laufend UEBERSCHRIEBEN (kein Einmal-Transport wie snapshotSchreiben) - ein staendiger Spiegel. */
+    public CompletableFuture<Void> stammInventarSchreiben(UUID spieler, SpielerSnapshot snapshot) {
+        return run(() -> {
+            try {
+                String daten = InventarCodec.kodieren(snapshot);
+                try (PreparedStatement ps = conn().prepareStatement(
+                        "REPLACE INTO duelplus_stamm_inventar(uuid,daten,aktualisiert) VALUES(?,?,?)")) {
+                    ps.setString(1, spieler.toString());
+                    ps.setString(2, daten);
+                    ps.setLong(3, System.currentTimeMillis());
+                    ps.executeUpdate();
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("DuelPlus: Stamm-Inventar konnte nicht gespeichert werden: " + e.getMessage());
+            }
+        });
+    }
+
+    public CompletableFuture<Optional<SpielerSnapshot>> stammInventarLesen(UUID spieler) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT daten FROM duelplus_stamm_inventar WHERE uuid=?")) {
+                ps.setString(1, spieler.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        return Optional.empty();
+                    }
+                    return Optional.of(InventarCodec.dekodieren(rs.getString("daten")));
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("DuelPlus: Stamm-Inventar konnte nicht gelesen werden: " + e.getMessage());
                 return Optional.empty();
             }
         });

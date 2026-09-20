@@ -16,6 +16,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -124,6 +125,11 @@ public final class DuellSessionManager implements Listener {
                 p.setHealth(maxHealth.getValue());
             }
             p.setFoodLevel(20);
+            p.setSaturation(20f);
+            // Sonst waere man z.B. noch vom letzten Duell in Folge am
+            // Brennen oder haette einen Trank-Effekt vom Herkunftsserver
+            // dabei - beides waere fuer ein faires Duell nicht in Ordnung.
+            zustandZuruecksetzen(p);
         }
 
         DuellSession session = new DuellSession(duell.id(), arena.name(),
@@ -146,6 +152,11 @@ public final class DuellSessionManager implements Listener {
                         }
                     }
                     session.kampfStarten();
+                    // Zwingt beide nach und nach zueinander - verhindert
+                    // endloses Ausweichen/Verstecken am Rand der Arena.
+                    int zielGroesse = Math.max(2, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.ziel-groesse", 10));
+                    int dauerSekunden = Math.max(1, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.dauer-sekunden", 90));
+                    arena.world().getWorldBorder().setSize(zielGroesse, dauerSekunden);
                     cancel();
                     return;
                 }
@@ -167,6 +178,23 @@ public final class DuellSessionManager implements Listener {
      * Ein Teilnehmer hat verloren (toedlicher Treffer abgefangen ODER
      * die Verbindung getrennt) - beendet die Session, verteilt das
      * Loot, setzt die Arena zurueck und schickt beide zurueck.
+     *
+     * Verlierer und Gewinner verlassen die Arena bewusst zu
+     * VERSCHIEDENEN Zeitpunkten: der Verlierer schon nach der kurzen
+     * Todeskamera, der Gewinner erst nach seinem vollen Loot-
+     * Schutzfenster (loot.schutz-sekunden) - sonst waere das exklusive
+     * Zeitfenster aus LootManager fuer ihn nutzlos, weil er laengst weg
+     * waere, bevor er das abgeworfene Loot ueberhaupt selbst aufheben
+     * konnte. Deshalb wird auch sein Rueckreise-Inventar-Schnappschuss
+     * ERST in dem Moment erfasst, in dem er wirklich geht - nicht schon
+     * beim Sieg selbst, sonst wuerde aufgehobenes Loot gar nicht mit
+     * zurueckreisen.
+     *
+     * Der Status faellt trotzdem schon sofort auf BEENDET: das ist
+     * ungefaehrlich, weil AnfragePollTask.ergebnisAnwenden auf jedem
+     * Server ohnehin erst dann etwas tut, wenn er den jeweiligen Spieler
+     * DORT wirklich online findet - und der Gewinner wird ja erst NACH
+     * dem finalen Schreiben seines Schnappschusses ueberhaupt losgeschickt.
      */
     public void niederlageAusloesen(UUID verliererUuid, boolean nochOnlineFuerTodeskamera) {
         DuellSession session = sessionNachSpieler.remove(verliererUuid);
@@ -184,45 +212,63 @@ public final class DuellSessionManager implements Listener {
             Location ort = verlierer.getLocation();
             loot.verliererLootAbwerfen(verlierer, gewinner, ort);
         }
-        SpielerSnapshot gewinnerSnapshot = gewinnerSpieler != null
-                ? SpielerSnapshot.von(gewinnerSpieler.getInventory()) : SpielerSnapshot.leer();
 
-        // Erst muessen BEIDE Rueckreise-Schnappschuesse sicher in der DB
-        // stehen, DANACH erst den Status auf BEENDET setzen - sonst koennte
-        // ein Herkunftsserver schneller pollen, als die Daten geschrieben
-        // sind, und das Ergebnis faelschlich als "kein Inventar da"
-        // abhaken (siehe AnfragePollTask.ergebnisAnwenden).
-        var verliererGeschrieben = plugin.db().snapshotSchreiben(
-                session.duellId(), verliererUuid, DuelDatabase.RICHTUNG_ZURUECK, SpielerSnapshot.leer());
-        var gewinnerGeschrieben = plugin.db().snapshotSchreiben(
-                session.duellId(), gegnerUuid, DuelDatabase.RICHTUNG_ZURUECK, gewinnerSnapshot);
-        java.util.concurrent.CompletableFuture.allOf(verliererGeschrieben, gewinnerGeschrieben)
+        plugin.db().snapshotSchreiben(session.duellId(), verliererUuid, DuelDatabase.RICHTUNG_ZURUECK, SpielerSnapshot.leer())
                 .thenCompose(unused -> plugin.db().beenden(session.duellId(), gewinner));
 
         Arena arena = plugin.arenaManager().arena(session.arenaName());
         int anzeigeSekunden = Math.max(1, plugin.getConfig().getInt("kampf.todeskamera-sekunden", 5));
+        int lootSekunden = Math.max(anzeigeSekunden, plugin.getConfig().getInt("loot.schutz-sekunden", 60));
 
         if (verlierer != null && nochOnlineFuerTodeskamera) {
             todeskameraStarten(verlierer, anzeigeSekunden);
         }
         if (gewinnerSpieler != null) {
             gewinnerSpieler.setGameMode(GameMode.ADVENTURE);
+            // Sonst waere der Gewinner waehrend der Wartezeit auf sein
+            // eigenes Loot ganz normal verwundbar (Feuer, Sturz, ...) -
+            // ein Sieg soll keinen nachtraeglichen Schaden mehr bedeuten.
+            gewinnerSpieler.setInvulnerable(true);
         }
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (verlierer != null && verlierer.isOnline()) {
+                zustandZuruecksetzen(verlierer);
+                verlierer.setGameMode(GameMode.SURVIVAL);
+                plugin.bridge().sende(verlierer, session.herkunftsServerVon(verliererUuid));
+            }
+        }, anzeigeSekunden * 20L);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (arena != null) {
                 plugin.rollback().zuruecksetzenUndStoppen(arena.world());
                 plugin.arenaManager().freigeben(arena.name());
             }
-            if (verlierer != null && verlierer.isOnline()) {
-                verlierer.setGameMode(GameMode.SURVIVAL);
-                plugin.bridge().sende(verlierer, session.herkunftsServerVon(verliererUuid));
+            if (gewinnerSpieler == null || !gewinnerSpieler.isOnline()) {
+                return;
             }
-            if (gewinnerSpieler != null && gewinnerSpieler.isOnline()) {
-                gewinnerSpieler.setGameMode(GameMode.SURVIVAL);
-                plugin.bridge().sende(gewinnerSpieler, session.herkunftsServerVon(gegnerUuid));
-            }
-        }, anzeigeSekunden * 20L);
+            // Erst JETZT, nach dem vollen Schutzfenster, das tatsaechliche
+            // Inventar erfassen - damit auch selbst aufgehobenes Loot
+            // wirklich mit zurueckreist.
+            SpielerSnapshot gewinnerSnapshot = SpielerSnapshot.von(gewinnerSpieler.getInventory());
+            zustandZuruecksetzen(gewinnerSpieler);
+            gewinnerSpieler.setGameMode(GameMode.SURVIVAL);
+            gewinnerSpieler.setInvulnerable(false);
+            plugin.db().snapshotSchreiben(session.duellId(), gegnerUuid, DuelDatabase.RICHTUNG_ZURUECK, gewinnerSnapshot)
+                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (gewinnerSpieler.isOnline()) {
+                            plugin.bridge().sende(gewinnerSpieler, session.herkunftsServerVon(gegnerUuid));
+                        }
+                    }));
+        }, lootSekunden * 20L);
+    }
+
+    private void zustandZuruecksetzen(Player spieler) {
+        spieler.setFireTicks(0);
+        spieler.setFallDistance(0f);
+        for (var effekt : new ArrayList<>(spieler.getActivePotionEffects())) {
+            spieler.removePotionEffect(effekt.getType());
+        }
     }
 
     private void todeskameraStarten(Player verlierer, int sekunden) {

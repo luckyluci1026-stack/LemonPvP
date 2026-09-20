@@ -21,6 +21,13 @@ server-name: "SMP"
 # die eigentlichen Kaempfe verwaltet. Auf SMP und Lobby: false.
 ist-arena-server: false
 
+# true NUR auf dem SMP-Server (dem Server mit dem "echten" Loot) - dort
+# wird das Inventar laufend in die Datenbank gespiegelt, damit eine
+# Herausforderung von einem ANDEREN Server aus (z.B. der Lobby)
+# tatsaechlich das SMP-Inventar mitschickt, statt des dortigen, meist
+# leeren/anderen Live-Inventars. Auf Lobby und Duels: false.
+ist-loot-quelle: false
+
 # Wohin herausgeforderte Duelle geschickt werden - muss in der
 # velocity.toml unter [servers] genauso heissen wie dort eingetragen.
 arena-server-name: "Duels"
@@ -97,6 +104,12 @@ kampf:
   # Sekunden, die die Todeskamera nach einer Niederlage laeuft, bevor
   # es zurueck auf den Herkunftsserver geht
   todeskamera-sekunden: 5
+  # Sobald der Kampf beginnt, schrumpft die Worldborder langsam von der
+  # vollen Arena-Groesse auf ziel-groesse - zwingt beide nach und nach
+  # zueinander, verhindert endloses Ausweichen/Verstecken am Rand.
+  worldborder-schrumpfen:
+    ziel-groesse: 10
+    dauer-sekunden: 90
 
 # ----------------------------------------------------------
 #  Loot

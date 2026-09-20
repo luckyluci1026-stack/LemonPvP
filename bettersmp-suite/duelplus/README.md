@@ -8,21 +8,29 @@ mit ihrem echten SMP-Inventar auf einem eigenen, dritten Server -
 
 ## Aufbau
 
-**Ein** Plugin, installiert auf **drei** Servern - `server-name` und
-`ist-arena-server` in der `config.yml` stellen pro Server ein, wie es
-sich verhält:
+**Ein** Plugin, installiert auf **drei** Servern - `server-name`,
+`ist-arena-server` und `ist-loot-quelle` in der `config.yml` stellen
+pro Server ein, wie es sich verhält:
 
-| Server | `server-name` | `ist-arena-server` | `gegenstand.aktiv` | Rolle |
-|---|---|---|---|---|
-| SMP | `SMP` | `false` | `false` (Standard) | `/duel`, Herausforderungen |
-| Lobby | `Lobby` | `false` | `true` (dort umstellen) | `/duel`, Gegenstand, Herausforderungen |
-| Duels | `Duels` | `true` | - (ohne Wirkung) | Arenen, Kämpfe, Loot |
+| Server | `server-name` | `ist-arena-server` | `ist-loot-quelle` | `gegenstand.aktiv` | Rolle |
+|---|---|---|---|---|---|
+| SMP | `SMP` | `false` | `true` | `false` (Standard) | `/duel`, Herausforderungen, **echtes Loot** |
+| Lobby | `Lobby` | `false` | `false` | `true` (dort umstellen) | `/duel`, Gegenstand, Herausforderungen |
+| Duels | `Duels` | `true` | `false` (ohne Wirkung) | - (ohne Wirkung) | Arenen, Kämpfe, Loot |
 
 `gegenstand.aktiv` ist standardmäßig **aus** - der Gegenstand ist nur
 eine Zusatz-Option, `/duel <Spieler>` funktioniert unabhängig davon
 überall. Empfehlung: nur in der Lobby auf `true` stellen (thematisch
 passend, genau wie SMPLobbys eigene Menü-Gegenstände) - auf dem
 SMP-Server wirkt ein zusätzliches Schwert im Inventar eher störend.
+
+`ist-loot-quelle: true` gehört auf **genau einen** Server - den mit
+dem "echten" Loot (in den meisten Setups: SMP). Nur dort wird das
+Inventar laufend in die Datenbank gespiegelt. Ohne das würde eine
+Herausforderung, die von einem ANDEREN Server aus angenommen wird
+(z.B. in der Lobby), fälschlich das dortige, meist leere/andere
+Live-Inventar mitschicken, statt des echten SMP-Inventars. Auf allen
+anderen Servern muss diese Zeile `false` sein (Standard).
 
 Kein eigenes Velocity-Plugin nötig: Der Serverwechsel läuft über den
 Standard-`BungeeCord`-Kanal, den Velocity auch versteht (gleiches
@@ -45,6 +53,18 @@ drei `config.yml` eintragen - DuelPlus legt eigene Tabellen an
 selbst muss vorher existieren und von allen drei Servern aus
 erreichbar sein (Netzwerk/Firewall).
 
+## Wichtig nach einem Update von einer älteren DuelPlus-Version
+
+Die Arena-Welten werden nur **beim allerersten Erzeugen** aufgebaut -
+eine ältere Version hat dafür noch echtes Vanilla-Gelände verwendet
+(daher konnte man am Rand der Plattform in die "echte" Welt
+darunter/darum schauen). Damit Arenen stattdessen als komplett leere
+Void-Welt entstehen (siehe unten), müssen auf dem **Duels-Server**
+einmalig die alten Weltordner gelöscht werden - Standard-Namen
+`duell_arena_1` bis `duell_arena_4` (siehe `arenen.welt-praefix` /
+`arenen.anzahl`), bei gestopptem Server. Beim nächsten Start entstehen
+sie automatisch neu, dieses Mal als Void mit dekorierter Plattform.
+
 ## Ablauf eines Duells
 
 1. **Herausfordern**: `/duel <Spieler>` (überall) oder Rechtsklick auf
@@ -59,22 +79,34 @@ erreichbar sein (Netzwerk/Firewall).
 4. Auf **Duels** angekommen: Inventar wird angewendet, sobald beide da
    sind, startet ein Countdown (`kampf.countdown-sekunden`, während
    dessen unverwundbar), dann beginnt der Kampf.
-5. **Arena**: eine von mehreren automatisch erzeugten Vanilla-Welten
-   mit einer flachen Steinplattform (fair für beide, unabhängig vom
-   Landeplatz) und einer Worldborder. Bauen/Abbauen ist während des
-   Duells erlaubt - danach wird die Arena **komplett zurückgerollt**
-   (jede Blockänderung: Abbauen, Platzieren, Explosionen, Eimer,
-   Flüssigkeiten, Feuer), damit sie für das nächste Duell wieder genau
-   so aussieht wie vorher.
+5. **Arena**: eine von mehreren automatisch erzeugten, komplett
+   **leeren Void-Welten** (kein echtes Vanilla-Gelände - man soll am
+   Rand nicht in "die echte Welt" schauen können) mit einer flachen,
+   dekorierten Plattform (jede Arena mit eigener Optik: Stein,
+   Tiefenschiefer, Sandstein oder Schwarzstein) und einer Worldborder.
+   Bauen/Abbauen ist während des Duells erlaubt - danach wird die
+   Arena **komplett zurückgerollt** (jede Blockänderung: Abbauen,
+   Platzieren, Explosionen, Eimer, Flüssigkeiten, Feuer), damit sie
+   für das nächste Duell wieder genau so aussieht wie vorher.
+   Während des Countdowns (siehe Punkt 4) stehen beide fest an ihrem
+   Platz und sehen sich an - sobald der Kampf beginnt, schrumpft die
+   Worldborder langsam (`kampf.worldborder-schrumpfen`, Standard 90
+   Sekunden bis auf 10 Blöcke) und zwingt beide nach und nach
+   zueinander.
 6. **Ein tödlicher Treffer wird abgefangen statt eines echten Todes** -
    der Verlierer sieht stattdessen eine **Todeskamera** (ein paar
    Sekunden Orbit um die Stelle), sein komplettes mitgebrachtes
    Inventar wird in **Shulker-Kisten verpackt und dort abgeworfen** -
    `loot.schutz-sekunden` (Standard 60) lang gehören sie exklusiv dem
-   Gewinner, danach frei für alle.
-7. Beide werden zurück auf ihren jeweiligen Herkunftsserver geschickt:
-   der Gewinner mit seinem (überlebenden) Inventar, der Verlierer mit
-   leerem Inventar.
+   Gewinner, danach frei für alle. Ein **Totem der Unsterblichkeit**
+   in Haupt- oder Nebenhand rettet ganz normal wie in Vanilla.
+7. Der Verlierer geht kurz danach zurück auf seinen Herkunftsserver,
+   mit leerem Inventar. Der Gewinner bleibt bewusst **die volle
+   `loot.schutz-sekunden`-Zeit** in der Arena (in der Zeit unverwundbar
+   - kein nachträglicher Schaden mehr möglich) und erst DANN geht es
+   für ihn zurück, mit allem, was er bis dahin eingesammelt hat -
+   sonst wäre das exklusive Loot-Zeitfenster nutzlos, weil er längst
+   weg wäre, bevor er es überhaupt selbst aufheben könnte.
 
 **Verbindung während des eigenen Duells getrennt = automatische
 Niederlage** (inklusive Loot-Verlust) - verhindert, sich durch
@@ -104,7 +136,7 @@ Ausweichen über `/shop` oder Ähnliches.
 
 - Fallende Blöcke (Sand/Kies) durch Schwerkraft werden vom Rollback
   nicht erfasst - eher kosmetisch, kein Stakes-Thema.
-- Gräbt sich jemand durch die Plattform nach unten, landet er im
-  natürlichen (unbearbeiteten) Gelände darunter - die
-  Sturz-/Fallschaden-Abfangung greift trotzdem, es geht dabei kein
-  Inventar verloren.
+- Gräbt sich jemand durch die Plattform nach unten oder springt über
+  die niedrige Randmauer, fällt er ins Void darunter - das zählt wie
+  jeder andere tödliche Treffer als Niederlage ("Ring-Out"), kein
+  Absturz oder Sonderfall.

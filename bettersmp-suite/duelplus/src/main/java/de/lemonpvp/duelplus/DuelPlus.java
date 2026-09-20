@@ -6,6 +6,7 @@ import de.lemonpvp.duelplus.command.DuelCommand;
 import de.lemonpvp.duelplus.db.DuelDatabase;
 import de.lemonpvp.duelplus.item.DuelItemListener;
 import de.lemonpvp.duelplus.presence.PresenceService;
+import de.lemonpvp.duelplus.presence.StammInventarService;
 import de.lemonpvp.duelplus.request.AnfrageManager;
 import de.lemonpvp.duelplus.request.AnfragePollTask;
 import de.lemonpvp.duelplus.session.ArenaGuardListener;
@@ -38,6 +39,7 @@ public final class DuelPlus extends JavaPlugin {
     private String serverName;
     private boolean istArenaServer;
     private String arenaServerName;
+    private boolean istLootQuelle;
 
     @Override
     public void onEnable() {
@@ -46,6 +48,7 @@ public final class DuelPlus extends JavaPlugin {
         this.serverName = getConfig().getString("server-name", "SMP");
         this.istArenaServer = getConfig().getBoolean("ist-arena-server", false);
         this.arenaServerName = getConfig().getString("arena-server-name", "Duels");
+        this.istLootQuelle = getConfig().getBoolean("ist-loot-quelle", false);
 
         this.db = new DuelDatabase(this);
         db.init();
@@ -58,6 +61,9 @@ public final class DuelPlus extends JavaPlugin {
         this.anfragen = new AnfrageManager(this);
 
         getServer().getPluginManager().registerEvents(new PresenceService(this), this);
+        if (istLootQuelle) {
+            getServer().getPluginManager().registerEvents(new StammInventarService(this), this);
+        }
         new AnfragePollTask(this).starten();
 
         if (istArenaServer) {
@@ -87,6 +93,7 @@ public final class DuelPlus extends JavaPlugin {
                 this.serverName = getConfig().getString("server-name", "SMP");
                 this.istArenaServer = getConfig().getBoolean("ist-arena-server", false);
                 this.arenaServerName = getConfig().getString("arena-server-name", "Duels");
+                this.istLootQuelle = getConfig().getBoolean("ist-loot-quelle", false);
                 msgs.send(sender, "reloaded");
                 return true;
             });
@@ -141,5 +148,9 @@ public final class DuelPlus extends JavaPlugin {
 
     public String arenaServerName() {
         return arenaServerName;
+    }
+
+    public boolean istLootQuelle() {
+        return istLootQuelle;
     }
 }

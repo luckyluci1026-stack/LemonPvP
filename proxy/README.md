@@ -166,6 +166,11 @@ Servern dasselbe Plugin) - dort aber mit:
 # smp/plugins/DuelPlus/config.yml
 server-name: "SMP"
 ist-arena-server: false
+ist-loot-quelle: true       # NUR hier auf true - SMP hat das "echte" Loot,
+                             # wird laufend in die DB gespiegelt (siehe
+                             # DuelPlus-README), sonst wuerde eine von der
+                             # Lobby aus angenommene Herausforderung das
+                             # falsche (dortige) Inventar mitschicken
 arena-server-name: "Duels"  # exakt wie oben in velocity.toml [servers] (Standardwert, unveraendert lassen)
 # gegenstand.aktiv bleibt hier auf dem Standardwert "false" - auf dem
 # SMP-Server gibt es KEIN zusätzliches Schwert im Inventar, /duel
@@ -176,6 +181,8 @@ arena-server-name: "Duels"  # exakt wie oben in velocity.toml [servers] (Standar
 # lobby/plugins/DuelPlus/config.yml
 server-name: "Lobby"
 ist-arena-server: false
+ist-loot-quelle: false   # Standardwert, hier unveraendert lassen - nur SMP
+                          # ist die Loot-Quelle (siehe oben)
 arena-server-name: "Duels"
 
 gegenstand:

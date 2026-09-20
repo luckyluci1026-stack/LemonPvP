@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Der Hintergrundabgleich, der alle Server ueber dieselbe Datenbank
@@ -95,11 +96,20 @@ public final class AnfragePollTask {
                 if (spieler == null) {
                     continue;
                 }
+                // Auf der Loot-Quelle selbst (in der Praxis: SMP) ist das
+                // Live-Inventar bereits das "echte". Ueberall sonst (z.B.
+                // Lobby) ist das lokale Live-Inventar NICHT, was auf dem
+                // Spiel steht - dort stattdessen der staendig aktuelle
+                // Spiegel aus duelplus_stamm_inventar (siehe
+                // StammInventarService, nur auf der Loot-Quelle aktiv).
+                CompletableFuture<SpielerSnapshot> quelle = plugin.istLootQuelle()
+                        ? CompletableFuture.completedFuture(SpielerSnapshot.von(spieler.getInventory()))
+                        : plugin.db().stammInventarLesen(spielerUuid).thenApply(opt -> opt.orElseGet(SpielerSnapshot::leer));
                 // Erst den Schnappschuss sicher in der DB haben, dann erst
                 // schicken - sonst koennte der Spieler auf der Arena ankommen,
                 // bevor sein Inventar dort ueberhaupt abholbereit ist.
-                SpielerSnapshot snapshot = SpielerSnapshot.von(spieler.getInventory());
-                plugin.db().snapshotSchreiben(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_HIN, snapshot)
+                quelle.thenCompose(snapshot ->
+                                plugin.db().snapshotSchreiben(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_HIN, snapshot))
                         .thenCompose(unused -> istA ? plugin.db().markiereBearbeitetA(duell.id())
                                                      : plugin.db().markiereBearbeitetB(duell.id()))
                         .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
@@ -156,8 +166,22 @@ public final class AnfragePollTask {
                 // wuerde ein Fehler mittendrin die Zeile trotzdem als erledigt
                 // stehen lassen und es gaebe keinen zweiten Versuch mehr.
                 plugin.db().snapshotHolenUndLoeschen(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_ZURUECK)
+                        .thenCompose(snapshotOpt -> {
+                            if (plugin.istLootQuelle() || snapshotOpt.isEmpty()) {
+                                return CompletableFuture.completedFuture(snapshotOpt);
+                            }
+                            // Nicht die Loot-Quelle (z.B. Lobby): das Ergebnis
+                            // gehoert in den Spiegel, NICHT in das lokale
+                            // Live-Inventar dieses Servers - erst beim
+                            // naechsten Beitritt zur Loot-Quelle (SMP) wird
+                            // es wirklich uebernommen (StammInventarService).
+                            return plugin.db().stammInventarSchreiben(spielerUuid, snapshotOpt.get())
+                                    .thenApply(unused -> snapshotOpt);
+                        })
                         .thenAccept(snapshotOpt -> Bukkit.getScheduler().runTask(plugin, () -> {
-                            snapshotOpt.ifPresent(snap -> snap.anwenden(spieler.getInventory()));
+                            if (plugin.istLootQuelle()) {
+                                snapshotOpt.ifPresent(snap -> snap.anwenden(spieler.getInventory()));
+                            }
                             String gegnerName = istA ? duell.spielerBName() : duell.spielerAName();
                             plugin.msgs().send(spieler, gewonnen ? "you-won" : "you-lost", "gegner", gegnerName);
                             if (istA) {
