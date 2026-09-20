@@ -164,11 +164,23 @@ Servern dasselbe Plugin) - dort aber mit:
 
 ```yaml
 # smp/plugins/DuelPlus/config.yml
-server-name: "SMP"          # bzw. "Lobby" auf dem Lobby-Server -
-                             # exakt wie der Name, unter dem dieser
-                             # Server selbst in velocity.toml steht
+server-name: "SMP"
 ist-arena-server: false
 arena-server-name: "Duels"  # exakt wie oben in velocity.toml [servers] (Standardwert, unveraendert lassen)
+# gegenstand.aktiv bleibt hier auf dem Standardwert "false" - auf dem
+# SMP-Server gibt es KEIN zusätzliches Schwert im Inventar, /duel
+# funktioniert trotzdem ganz normal.
+```
+
+```yaml
+# lobby/plugins/DuelPlus/config.yml
+server-name: "Lobby"
+ist-arena-server: false
+arena-server-name: "Duels"
+
+gegenstand:
+  aktiv: true   # NUR hier auf true stellen - der Duell-Gegenstand
+                # soll ausschliesslich in der Lobby ausgegeben werden
 ```
 
 **6. MariaDB.** DuelPlus braucht zwingend eine gemeinsame Datenbank

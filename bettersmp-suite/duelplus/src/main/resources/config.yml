@@ -47,10 +47,19 @@ anfrage:
   poll-takt: 20
 
 # ----------------------------------------------------------
-#  Gegenstand am Spawn (SMP + Lobby)
+#  Gegenstand am Spawn
+#
+#  Wird nur auf Servern mit ist-arena-server: false ueberhaupt
+#  beruecksichtigt (SMP, Lobby). Standardmaessig AUS - /duel <Spieler>
+#  funktioniert ohnehin ueberall, unabhaengig davon; der Gegenstand ist
+#  nur eine Zusatz-Moeglichkeit. Empfehlung: nur in der Lobby auf
+#  "true" stellen (dort passt ein Menue-Gegenstand thematisch, genau
+#  wie SMPLobbys eigene Kompass/Buch-Gegenstaende), auf dem SMP-Server
+#  aus lassen - dort wirkt ein zusaetzliches Schwert im Inventar eher
+#  störend als hilfreich.
 # ----------------------------------------------------------
 gegenstand:
-  aktiv: true
+  aktiv: false
   slot: 1
   material: IRON_SWORD
   name: "<gradient:#FF6B6B:#C92A2A><bold>Duell</bold></gradient>"

@@ -1,9 +1,10 @@
 # DuelPlus
 
 Duell-System mit echtem SMP-Loot, wie auf den großen Servern: **`/duel
-<Spieler>`** (SMP + Lobby) oder der Duell-Gegenstand am Spawn, dann
-kämpfen beide mit ihrem echten SMP-Inventar auf einem eigenen,
-dritten Server - **Duels**.
+<Spieler>`** (auf jedem Herkunftsserver nutzbar) oder - standardmäßig
+nur in der Lobby - der Duell-Gegenstand am Spawn, dann kämpfen beide
+mit ihrem echten SMP-Inventar auf einem eigenen, dritten Server -
+**Duels**.
 
 ## Aufbau
 
@@ -11,11 +12,17 @@ dritten Server - **Duels**.
 `ist-arena-server` in der `config.yml` stellen pro Server ein, wie es
 sich verhält:
 
-| Server | `server-name` | `ist-arena-server` | Rolle |
-|---|---|---|---|
-| SMP | `SMP` | `false` | `/duel`, Gegenstand, Herausforderungen |
-| Lobby | `Lobby` | `false` | `/duel`, Gegenstand, Herausforderungen |
-| Duels | `Duels` | `true` | Arenen, Kämpfe, Loot |
+| Server | `server-name` | `ist-arena-server` | `gegenstand.aktiv` | Rolle |
+|---|---|---|---|---|
+| SMP | `SMP` | `false` | `false` (Standard) | `/duel`, Herausforderungen |
+| Lobby | `Lobby` | `false` | `true` (dort umstellen) | `/duel`, Gegenstand, Herausforderungen |
+| Duels | `Duels` | `true` | - (ohne Wirkung) | Arenen, Kämpfe, Loot |
+
+`gegenstand.aktiv` ist standardmäßig **aus** - der Gegenstand ist nur
+eine Zusatz-Option, `/duel <Spieler>` funktioniert unabhängig davon
+überall. Empfehlung: nur in der Lobby auf `true` stellen (thematisch
+passend, genau wie SMPLobbys eigene Menü-Gegenstände) - auf dem
+SMP-Server wirkt ein zusätzliches Schwert im Inventar eher störend.
 
 Kein eigenes Velocity-Plugin nötig: Der Serverwechsel läuft über den
 Standard-`BungeeCord`-Kanal, den Velocity auch versteht (gleiches
@@ -40,9 +47,10 @@ erreichbar sein (Netzwerk/Firewall).
 
 ## Ablauf eines Duells
 
-1. **Herausfordern**: `/duel <Spieler>` oder Rechtsklick auf den
-   Duell-Gegenstand (öffnet eine Spieler-Auswahl) - funktioniert auch
-   serverübergreifend (Herausforderer auf dem SMP, Ziel in der Lobby).
+1. **Herausfordern**: `/duel <Spieler>` (überall) oder Rechtsklick auf
+   den Duell-Gegenstand, wo aktiviert (öffnet eine Spieler-Auswahl) -
+   funktioniert auch serverübergreifend (Herausforderer auf dem SMP,
+   Ziel in der Lobby).
 2. Das Ziel bekommt eine klickbare Nachricht (`Annehmen` / `Ablehnen`),
    läuft nach `anfrage.timeout-sekunden` (Standard 60) von selbst ab.
 3. Bei Annahme: **beide** Inventare (Hotbar, Rucksack, Rüstung,
