@@ -1,6 +1,6 @@
 # BetterSMP Suite
 
-Elf eigenständige Paper-Plugins für **Minecraft 1.21.11**, gebaut gegen die
+Zwölf eigenständige Paper-Plugins für **Minecraft 1.21.11**, gebaut gegen die
 **offizielle PaperMC-API** (aus den Quellen des `ver/1.21.11`-Branches kompiliert).
 Ein wiederverwendbares Server-Paket für eigene SMP-Server – neutral gehalten,
 den Server-Namen setzt du einmal über `brand` in der `config.yml`.
@@ -18,6 +18,7 @@ den Server-Namen setzt du einmal über `brand` in der `config.yml`.
 | **ReportPlus** | GUI-`/report` (überschreibt BetterSMPs Text-Version) + neues `/bugreport`, mit Warteschlangen-GUIs fürs Team | `/report`, `/bugreport`, `/reports`, `/bugreports` |
 | **AntiSwear** | Chat-Filter mit Umgehungsschutz (Leetspeak, Trennzeichen, Buchstaben-Wiederholung), Punkte-Stufen mit eigener Kurzzeit-Stummschaltung, optionale Konsolenbefehle für z.B. AdvancedBan | `/antiswear` |
 | **DuelPlus** | Duell-System mit echtem SMP-Loot über SMP, Lobby und einen dritten Duels-Server: Rollback-Arenen, Todeskamera, Loot-Shulker für den Gewinner - **eigene Anleitung**, braucht eine gemeinsame MariaDB | `/duel`, `/duelplus` |
+| **DBWipe** | Notfallwerkzeug: löscht nach drei Warnungen und Passwort ALLE Datenbank-Tabellen (nicht nur eines Plugins), vorher automatisches `.tar.gz`-Backup - **nur über die Serverkonsole** | `/dbwipe` |
 
 Die externen Begleit-Plugins (EssentialsX, LuckPerms, Vault, PlaceholderAPI, TAB
 bzw. Geyser, Floodgate) sind **nicht mitgebündelt**, sondern werden von BetterSMP
@@ -77,7 +78,8 @@ bettersmp-suite/
 ├── lobbylock/         LobbyLock (eigenständige Zusatzsperre für die Lobby)
 ├── reportplus/        ReportPlus (GUI-Report + Bugreport, überschreibt BetterSMPs /report)
 ├── antiswear/         AntiSwear (Chat-Filter mit Umgehungsschutz und Punkte-Stufen)
-└── duelplus/          DuelPlus (Duell-System auf SMP + Lobby + Duels-Server, siehe eigene README)
+├── duelplus/          DuelPlus (Duell-System auf SMP + Lobby + Duels-Server, siehe eigene README)
+└── dbwipe/            DBWipe (Notfallwerkzeug: alle DB-Tabellen löschen, nur per Konsole)
 ```
 
 Jedes Plugin ist eigenständig nutzbar. Lifesteal+ nutzt die CombatLog-API von
