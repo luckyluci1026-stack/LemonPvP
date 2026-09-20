@@ -58,12 +58,16 @@ erreichbar sein (Netzwerk/Firewall).
 Die Arena-Welten werden nur **beim allerersten Erzeugen** aufgebaut -
 eine ältere Version hat dafür noch echtes Vanilla-Gelände verwendet
 (daher konnte man am Rand der Plattform in die "echte" Welt
-darunter/darum schauen). Damit Arenen stattdessen als komplett leere
-Void-Welt entstehen (siehe unten), müssen auf dem **Duels-Server**
-einmalig die alten Weltordner gelöscht werden - Standard-Namen
-`duell_arena_1` bis `duell_arena_4` (siehe `arenen.welt-praefix` /
-`arenen.anzahl`), bei gestopptem Server. Beim nächsten Start entstehen
-sie automatisch neu, dieses Mal als Void mit dekorierter Plattform.
+darunter/darum schauen), und eine etwas neuere Version noch ohne die
+unsichtbare Barriere-Box gegen Enderperlen-Fluchten. Damit Arenen
+stattdessen als komplett leere Void-Welt **mit** Barriere-Box entstehen
+(siehe unten), müssen auf dem **Duels-Server** einmalig die alten
+Weltordner gelöscht werden - Standard-Namen `duell_arena_1` bis
+`duell_arena_4` (siehe `arenen.welt-praefix` / `arenen.anzahl`), bei
+gestopptem Server. Beim nächsten Start entstehen sie automatisch neu.
+Das gilt auch für jedes künftige Arena-Update dieser Art - nur ein
+Löschen der Weltordner erzeugt sie wirklich neu, ein reines
+Plugin-Update oder `/duelplus reload` reicht dafür nicht.
 
 ## Ablauf eines Duells
 
@@ -87,6 +91,12 @@ sie automatisch neu, dieses Mal als Void mit dekorierter Plattform.
    Kompassmuster als Boden - konzentrische Kreise, durchzogen von acht
    Speichen zu den Spawnpunkten, den zwei symmetrischen
    Deckungspfeilern und den vier Eck-Türmen - und einer Worldborder.
+   Zusätzlich zur (schrumpfenden) Worldborder steckt die ganze Arena in
+   einer unsichtbaren, unzerstörbaren Barriere-Box in der vollen
+   Start-Größe (vier Wände + Decke) - die Worldborder allein reicht
+   nicht, weil eine Enderperle ihre sanfte Zurückdräng-Kollision instant
+   überspringt (bekannter Vanilla-Kniff); die Barriere-Box stoppt das
+   unabhängig vom aktuellen Border-Stand zuverlässig.
    Bauen/Abbauen ist während des Duells erlaubt - danach wird die
    Arena **komplett zurückgerollt** (jede Blockänderung: Abbauen,
    Platzieren, Explosionen, Eimer, Flüssigkeiten, Feuer), damit sie

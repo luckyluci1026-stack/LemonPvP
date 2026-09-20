@@ -112,6 +112,14 @@ public final class ArenaManager {
         if (neu) {
             Material[] palette = PALETTEN[(index - 1) % PALETTEN.length];
             plattformBauen(world, radius, hoehe, palette);
+            // NICHT auf die (schrumpfende!) Worldborder verlassen - ein
+            // Enderperlen-Wurf teleportiert instant und wird von deren
+            // sanfter Zurueckdraeng-Kollision NICHT erfasst (langjaehriger,
+            // bekannter Vanilla-Kniff). Eine echte, unbrechbare Barriere-Box
+            // in der VOLLEN Start-Groesse (die Border schrumpft ja nur nach
+            // INNEN) macht ein Entkommen unmoeglich, ganz unabhaengig vom
+            // aktuellen Border-Stand.
+            barriereBauen(world, radius, hoehe);
         }
 
         Location mitte = new Location(world, 0.5, hoehe + 1, 0.5);
@@ -225,6 +233,35 @@ public final class ArenaManager {
                 int dz = vorzeichen * deckungsAbstand;
                 world.getBlockAt(0, y + 1, dz).setType(mauer, false);
                 world.getBlockAt(0, y + 2, dz).setType(mauer, false);
+            }
+        }
+    }
+
+    /** Wie hoch die unsichtbare Barriere-Box ueber der Plattform reicht - komfortable Reserve gegen jeden Enderperlen-Bogen. */
+    private static final int BARRIERE_HOEHE = 30;
+
+    /**
+     * Unsichtbare, unzerstoerbare Box (vier Waende + Decke) knapp ausserhalb
+     * der sichtbaren Mauer, in der VOLLEN Start-Groesse der Arena - macht
+     * ein Entkommen (z.B. per Enderperle ueber/durch die eigentliche,
+     * schrumpfende Worldborder, siehe ladeOderErzeuge) unabhaengig vom
+     * aktuellen Border-Stand unmoeglich. Bewusst KEIN Boden: Durch die
+     * Plattform nach unten fallen ist ein gewolltes "Ring-Out" (siehe
+     * ArenaGuardListener/README), kein Fluchtweg.
+     */
+    private void barriereBauen(World world, int radius, int y) {
+        int aussen = radius + 1;
+        int unten = y - 2;
+        int oben = y + BARRIERE_HOEHE;
+        for (int x = -aussen; x <= aussen; x++) {
+            for (int z = -aussen; z <= aussen; z++) {
+                if (Math.max(Math.abs(x), Math.abs(z)) == aussen) {
+                    for (int by = unten; by <= oben; by++) {
+                        world.getBlockAt(x, by, z).setType(Material.BARRIER, false);
+                    }
+                } else {
+                    world.getBlockAt(x, oben, z).setType(Material.BARRIER, false);
+                }
             }
         }
     }
