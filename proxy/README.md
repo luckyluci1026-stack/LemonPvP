@@ -100,6 +100,23 @@ sperrt zusätzlich Item-Drop, Inventar-Verschieben, Offhand-Tausch und
 Türen/Falltüren/Schilder-Interaktion - eigenständig, unabhängig von
 SMPLobby installierbar (siehe `bettersmp-suite/lobbylock/README.md`).
 
+### Optional: ein vierter Server für Duelle (DuelPlus)
+
+Für `bettersmp-suite/duelplus` (Duell-System mit echtem SMP-Loot,
+siehe dessen README) braucht es einen zusätzlichen, eigenen Paper-
+Server namens **Duels** - in der `velocity.toml` unter `[servers]`
+genauso eintragen wie `smp1`/`lobby` oben:
+
+```toml
+[servers]
+duels = "127.0.0.1:25570"
+```
+
+Auf dem Duels-Server läuft `DuelPlus-1.0.0.jar` mit `ist-arena-server:
+true` in dessen `config.yml`, auf SMP und Lobby dasselbe Jar mit
+`ist-arena-server: false`. DuelPlus braucht zwingend eine gemeinsame
+MariaDB zwischen allen drei Servern - siehe `bettersmp-suite/duelplus/README.md`.
+
 ## 4. NanoLimbo als Warteraum
 
 [NanoLimbo](https://github.com/Nan1t/NanoLimbo) herunterladen, nach `limbo/`

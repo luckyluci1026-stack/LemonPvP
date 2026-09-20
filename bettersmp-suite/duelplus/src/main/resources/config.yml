@@ -1,0 +1,99 @@
+# ==========================================================
+#  DuelPlus - Duell-System mit echtem SMP-Loot
+#
+#  EIN Plugin, installiert auf SMP, Lobby UND dem Duels-Server.
+#  server-name und ist-arena-server unten steuern, wie es sich auf
+#  DIESEM konkreten Server verhaelt - auf jedem Server eine eigene,
+#  passende config.yml.
+#
+#  Braucht zwingend eine gemeinsame MariaDB (siehe database unten) -
+#  ohne die kann kein Spielerinventar zwischen den Servern wandern.
+#  Laeuft bereits eine fuer BetterSMP (dessen config.yml,
+#  database.mariadb), einfach dieselben Zugangsdaten eintragen -
+#  DuelPlus legt eigene Tabellen an, ohne BetterSMPs zu beruehren.
+# ==========================================================
+
+# Muss GENAU dem Namen entsprechen, unter dem DIESER Server in der
+# velocity.toml unter [servers] steht (z.B. "SMP", "Lobby", "Duels").
+server-name: "SMP"
+
+# true NUR auf dem Duels-Server - dort werden die Arenen erzeugt und
+# die eigentlichen Kaempfe verwaltet. Auf SMP und Lobby: false.
+ist-arena-server: false
+
+# Wohin herausgeforderte Duelle geschickt werden - muss in der
+# velocity.toml unter [servers] genauso heissen wie dort eingetragen.
+arena-server-name: "Duels"
+
+# ----------------------------------------------------------
+#  Datenbank - siehe Hinweis oben, kein Betrieb ohne MariaDB moeglich.
+# ----------------------------------------------------------
+database:
+  host: "127.0.0.1"
+  port: 3306
+  database: "bettersmp"
+  user: "root"
+  password: ""
+  properties: "useUnicode=true&characterEncoding=utf8"
+
+# ----------------------------------------------------------
+#  Herausforderungen (/duel <Spieler>)
+# ----------------------------------------------------------
+anfrage:
+  # Sekunden, bis eine unbeantwortete Herausforderung von selbst verfaellt
+  timeout-sekunden: 60
+  # Wie oft (in Ticks) ueber alle Server hinweg nach neuen bzw.
+  # beantworteten Anfragen geschaut wird. 20 Ticks = 1 Sekunde.
+  poll-takt: 20
+
+# ----------------------------------------------------------
+#  Gegenstand am Spawn (SMP + Lobby)
+# ----------------------------------------------------------
+gegenstand:
+  aktiv: true
+  slot: 1
+  material: IRON_SWORD
+  name: "<gradient:#FF6B6B:#C92A2A><bold>Duell</bold></gradient>"
+  beschreibung:
+    - "<gray>Rechtsklick fordert jemanden heraus</gray>"
+  # Beim Beitreten neu ins Inventar legen
+  beim-ankommen: true
+
+# ----------------------------------------------------------
+#  Arenen - nur auf dem Duels-Server (ist-arena-server: true) relevant.
+#  Jede Arena ist eine EIGENE, beim ersten Start automatisch mit dem
+#  normalen Vanilla-Generator erzeugte Welt, mit einer flachen,
+#  ebenfalls automatisch gebauten Steinplattform als fairer Kampfboden
+#  (rohes, unbearbeitetes Vanilla-Gelaende waere fuer die zwei
+#  Duellanten unterschiedlich fair je nach Landeplatz). Kein manuelles
+#  Bauen noetig. Block-Aenderungen sind waehrend des Duells erlaubt,
+#  werden aber danach komplett zurueckgerollt (siehe RollbackTracker).
+# ----------------------------------------------------------
+arenen:
+  anzahl: 4
+  welt-praefix: "duell_arena_"
+  # Radius der flachen Arena-Plattform UND der Worldborder darum -
+  # beides zusammen ergibt die komplette begehbare Flaeche.
+  worldborder-groesse: 50
+  # Wie weit die zwei Startpunkte innerhalb einer Arena auseinander liegen
+  spawn-abstand: 20
+  # Y-Koordinate der Plattform
+  plattform-hoehe: 100
+
+# ----------------------------------------------------------
+#  Ablauf eines Duells
+# ----------------------------------------------------------
+kampf:
+  countdown-sekunden: 5
+  # Sekunden, die die Todeskamera nach einer Niederlage laeuft, bevor
+  # es zurueck auf den Herkunftsserver geht
+  todeskamera-sekunden: 5
+
+# ----------------------------------------------------------
+#  Loot
+# ----------------------------------------------------------
+loot:
+  # Sekunden, in denen NUR der Gewinner die Shulker aufheben darf -
+  # danach frei fuer alle (die normale Minecraft-Despawnzeit laeuft
+  # trotzdem parallel weiter)
+  schutz-sekunden: 60

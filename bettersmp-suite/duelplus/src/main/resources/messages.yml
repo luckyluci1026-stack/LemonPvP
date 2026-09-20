@@ -1,0 +1,38 @@
+prefix: "<gradient:#FF6B6B:#C92A2A><bold>Duell</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
+player-only: "%prefix%<red>Das geht nur im Spiel.</red>"
+not-ready: "%prefix%<red>DuelPlus ist auf diesem Server nicht richtig eingerichtet.</red> <gray>(keine Datenbankverbindung - Konsole prüfen)</gray>"
+
+usage: "%prefix%<gray>/duel <white><Spieler></white></gray>"
+self: "%prefix%<red>Du kannst dich nicht selbst herausfordern.</red>"
+target-offline: "%prefix%<red><white>%spieler%</white> ist gerade nicht im Netzwerk.</red>"
+target-busy: "%prefix%<gold><white>%spieler%</white> ist bereits in einem Duell oder einer offenen Anfrage.</gold>"
+already-pending: "%prefix%<gold>Du hast bereits eine offene Anfrage mit <white>%spieler%</white>.</gold>"
+
+sent: "%prefix%<green>Herausforderung an <white>%spieler%</white> gesendet.</green> <gray>(läuft in %timeout% ab)</gray>"
+received: "%prefix%<gold><bold>%spieler%</bold></gold> <gray>fordert dich zu einem Duell heraus!</gray><newline><gray>Es steht dein komplettes Inventar auf dem Spiel.</gray><newline><click:run_command:'/duel accept %spieler%'><hover:show_text:'<green>Klicken zum Annehmen</green>'><green>[Annehmen]</green></hover></click> <dark_gray>|</dark_gray> <click:run_command:'/duel decline %spieler%'><hover:show_text:'<red>Klicken zum Ablehnen</red>'><red>[Ablehnen]</red></hover></click>"
+
+no-pending: "%prefix%<red>Du hast keine offene Anfrage von <white>%spieler%</white>.</red>"
+accepted-both: "%prefix%<green>Angenommen! Ihr werdet gleich zur Arena gebracht ...</green>"
+declined-to-challenger: "%prefix%<red><white>%spieler%</white> hat deine Herausforderung abgelehnt.</red>"
+declined-confirm: "%prefix%<gray>Herausforderung von <white>%spieler%</white> abgelehnt.</gray>"
+expired-to-challenger: "%prefix%<gray><white>%spieler%</white> hat nicht rechtzeitig reagiert - Herausforderung abgelaufen.</gray>"
+
+teleporting: "%prefix%<gray>Du wirst zur Arena gebracht ...</gray>"
+countdown: "%prefix%<gold><bold>%sekunden%</bold></gold>"
+fight: "%prefix%<gradient:#FF6B6B:#C92A2A><bold>Kampf!</bold></gradient>"
+
+you-won: "%prefix%<green><bold>Sieg!</bold></green> <gray>Das Loot von <white>%gegner%</white> liegt an der Stelle, an der es gefallen ist.</gray>"
+you-lost: "%prefix%<red><bold>Niederlage.</bold></red> <gray>Dein Inventar ist weg - <white>%gegner%</white> hat gewonnen.</gray>"
+
+loot-dropped: "%prefix%<gold>Das Loot liegt am Boden - <white>%sekunden%s</white> lang gehört es nur dir.</gold>"
+enderchest-disabled: "%prefix%<red>Enderkisten sind in der Arena deaktiviert.</red>"
+command-blocked: "%prefix%<red>Befehle sind während eines Duells gesperrt.</red>"
+
+arena-queue: "%prefix%<gray>Gerade sind alle Arenen belegt - du kommst automatisch dran, sobald eine frei wird.</gray>"
+
+item-received: "%prefix%<gray>Rechtsklick mit dem Schwert in Slot %slot% fordert jemanden heraus.</gray>"
+gui-title: "<dark_gray>» <gradient:#FF6B6B:#C92A2A>Wen herausfordern?</gradient>"
+gui-empty: "%prefix%<gray>Gerade ist niemand zum Herausfordern online.</gray>"

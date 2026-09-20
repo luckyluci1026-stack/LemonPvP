@@ -23,6 +23,7 @@
         <module>lobbylock</module>
         <module>reportplus</module>
         <module>antiswear</module>
+        <module>duelplus</module>
     </modules>
 
     <properties>
