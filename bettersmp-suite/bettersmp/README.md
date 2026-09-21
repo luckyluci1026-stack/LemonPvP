@@ -22,7 +22,10 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   Online-Spielers in eine **komplett eigene** zweite Datenbank (eigene
   SQLite-Datei standardmäßig, optional eigene MariaDB) - unabhängig von der
   Haupt-Datenbank, damit ein Problem dort diese Sicherung nicht mitreißt.
-  Immer nur der letzte Stand, kein Verlauf. Wiederherstellen für einen
+  Klappt die eigene Backup-MariaDB mal nicht (falsche Zugangsdaten, Server
+  down), fällt auch dieses Backup automatisch auf die lokale SQLite-Datei
+  zurück, statt komplett auszusetzen - dasselbe Prinzip wie bei der
+  Haupt-Datenbank. Immer nur der letzte Stand, kein Verlauf. Wiederherstellen für einen
   ONLINE Spieler: `/bettersmp backup restore <Spieler>`, Status prüfen:
   `/bettersmp backup status <Spieler>`.
 - **/stats [Spieler]** – Kills, Tode, K/D, Mob-Kills, Spielzeit, Geld, Rang.

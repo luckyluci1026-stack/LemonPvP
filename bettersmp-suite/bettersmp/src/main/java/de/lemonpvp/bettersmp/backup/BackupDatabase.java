@@ -62,14 +62,22 @@ public final class BackupDatabase {
             } else {
                 setupSQLite();
             }
-            run(this::createTables).join();
-            bereit = true;
-            plugin.getLogger().info("Backup-Datenbank verbunden (" + (sqlite ? "SQLite" : "MariaDB") + ").");
         } catch (Throwable t) {
-            bereit = false;
-            plugin.getLogger().severe("Backup-Datenbank-Verbindung fehlgeschlagen (" + t.getMessage()
-                    + ") - periodische Inventar-Sicherungen bleiben aus, bis das behoben ist.");
+            plugin.getLogger().warning("Backup-MariaDB-Verbindung fehlgeschlagen (" + t.getMessage()
+                    + ") - nutze stattdessen die lokale Backup-SQLite-Datei, damit dieses "
+                    + "Sicherheitsnetz nicht durch genau die Art von Datenbank-Problem ausfaellt, vor der es schuetzen soll.");
+            try {
+                setupSQLite();
+            } catch (Throwable inner) {
+                bereit = false;
+                plugin.getLogger().severe("Auch die lokale Backup-SQLite-Datei fehlgeschlagen (" + inner.getMessage()
+                        + ") - periodische Inventar-Sicherungen bleiben aus, bis das behoben ist.");
+                return;
+            }
         }
+        run(this::createTables).join();
+        bereit = true;
+        plugin.getLogger().info("Backup-Datenbank verbunden (" + (sqlite ? "SQLite" : "MariaDB") + ").");
     }
 
     private void setupMariaDB() throws Exception {
