@@ -37,12 +37,15 @@ import java.util.Optional;
  *    ganz normal (vanilla) - wir greifen dann bewusst NICHT ein.
  *  - Waehrend des Countdowns stehen beide fest an ihrem Startpunkt -
  *    nur Umsehen bleibt erlaubt, Weglaufen (z.B. ueber den Rand) nicht.
- *  - Reines Sicherheitsnetz (siehe beimAbsturzUnterDieArena): die ganze
- *    Arena liegt nur 1 Block ueber unzerstoerbarem Bedrock, seitlich
- *    haelt eine unsichtbare Barriere-Box jeden drinnen - Explosionen
- *    (Endkristall/Anker) reissen also hoechstens den Boden weg, kein
- *    Absturz ins Leere. Sollte trotzdem jemand weit unter das Bedrock
- *    geraten, zaehlt das als automatische Niederlage.
+ *  - Verlaesst jemand die normale Steh-Hoehe der Plattform nach unten
+ *    (durchgebrochen, ueber den Rand geworfen, Plattform weggesprengt
+ *    z.B. per Endkristall/Anker, ...), zaehlt das OHNE Puffer sofort als
+ *    automatische Niederlage (siehe beimAbsturzUnterDieArena) -
+ *    unabhaengig vom tatsaechlichen Sturzschaden. Die ganze Arena liegt
+ *    nur 1 Block ueber unzerstoerbarem Bedrock, seitlich haelt eine
+ *    unsichtbare Barriere-Box jeden drinnen (siehe ArenaManager) -
+ *    Explosionen reissen also hoechstens den Boden weg, kein langer
+ *    Sturz, aber trotzdem sofortiges Aus.
  *  - Verbindung getrennt waehrend eines eigenen Duells = automatische
  *    Niederlage - verhindert, sich durch Abbrechen das eigene
  *    Inventar zu retten.
@@ -160,21 +163,18 @@ public final class ArenaGuardListener implements Listener {
     }
 
     /**
-     * Reines Sicherheitsnetz, kein primaerer Spielmechanismus mehr: die
-     * gesamte Arena liegt nur 1 Block ueber unzerstoerbarem Bedrock
-     * (siehe ArenaManager) - wer durch die Plattform faellt (z.B. weil
-     * ein Endkristall/Anker sie weggesprengt hat), landet also so gut
-     * wie immer sofort auf dem Bedrock, nicht in einem echten Abgrund.
-     * Seitlich haelt zusaetzlich die unsichtbare Barriere-Box (bis auf
-     * Bedrock-Niveau hinunter, kein Spalt) jeden vom Entkommen ab. Unter
-     * normalen Umstaenden sollte dieser Check also NIE ausloesen.
-     *
-     * Die Schwelle liegt deshalb bewusst grosszuegig (20 Bloecke unter
-     * der Plattform, also weit unterhalb des Bedrocks) - faengt nur den
-     * theoretischen Fall ab, dass jemand trotzdem unter das Bedrock
-     * gelangt (z.B. durch einen Bug anderswo), OHNE normales Spiel auf
-     * der Plattform, den Eck-Tuermen oder den Deckungspfeilern
-     * faelschlich als Absturz zu werten.
+     * KEIN Puffer: sobald die Y-Koordinate auch nur einen Hauch unter die
+     * normale Steh-Hoehe auf der Plattform faellt (arena.plattformHoehe()
+     * + 1 - die komplette Innenflaeche ist ein einziger flacher Block,
+     * dort steht man IMMER exakt auf dieser Hoehe, nie darunter), zaehlt
+     * das sofort als Niederlage. Es gibt keine begehbare Randmauer mehr,
+     * auf der ein normaler Huepfer diesen Check faelschlich ausloesen
+     * koennte (siehe ArenaManager) - Eck-Tuerme und Deckungspfeiler sind
+     * beide zu hoch (8 bzw. 2 Bloecke), um waehrend eines normalen
+     * Gefechts aus Versehen dort zu landen. Ein echter Sturz (durch die
+     * Plattform, ueber den Rand, Plattform weggesprengt) loest also ohne
+     * jede Verzoegerung aus - unabhaengig vom tatsaechlichen Sturzschaden,
+     * damit z.B. Federfall-Stiefel kein Schlupfloch sind.
      *
      * Die Schwelle kommt bewusst aus arena.plattformHoehe() (dort, wo die
      * Plattform TATSAECHLICH gebaut wurde), NICHT live aus der config.yml
@@ -194,7 +194,7 @@ public final class ArenaGuardListener implements Listener {
         }
         DuellSession session = sessionOpt.get();
         Arena arena = plugin.arenaManager().arena(session.arenaName());
-        if (arena == null || zu.getY() >= arena.plattformHoehe() - 20) {
+        if (arena == null || zu.getY() >= arena.plattformHoehe() + 1) {
             return;
         }
         Player spieler = event.getPlayer();

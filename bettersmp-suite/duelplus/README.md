@@ -227,14 +227,16 @@ nur der Weg dorthin unterscheidet sich.
 
 - Fallende Blöcke (Sand/Kies) durch Schwerkraft werden vom Rollback
   nicht erfasst - eher kosmetisch, kein Stakes-Thema.
-- Ein "Absturz" ist im normalen Spiel praktisch ausgeschlossen: die
-  gesamte Arena liegt nur 1 Block über unzerstörbarem Bedrock, seitlich
-  hält die unsichtbare Barriere-Box (bis auf Bedrock-Niveau hinunter,
-  kein Spalt) jeden drinnen. Gräbt sich jemand durch den Boden oder
-  wird eine Stelle durch eine Explosion (Endkristall/Anker) weggerissen,
-  fällt man höchstens 1 Block auf das Bedrock - kein Ring-Out, keine
-  automatische Niederlage. `ArenaGuardListener.beimAbsturzUnterDieArena`
-  ist nur noch ein reines Sicherheitsnetz mit großzügiger Schwelle (20
-  Blöcke unter der Plattform, weit unterhalb des Bedrocks) für den
-  theoretischen Fall, dass jemand trotzdem darunter gerät (z.B. ein Bug
-  anderswo) - im normalen Spiel wird das nie erreicht.
+- Verlässt jemand die normale Steh-Höhe der Plattform nach unten
+  (durchgebrochen, über den Rand geworfen, Plattform weggesprengt z.B.
+  per Endkristall/Anker, ...), zählt das **ohne jeden Puffer sofort**
+  als Niederlage - unabhängig vom tatsächlichen Sturzschaden, damit
+  z.B. Federfall-Stiefel kein Schlupfloch sind (`ArenaGuardListener.
+  beimAbsturzUnterDieArena`). Reißt eine Explosion den Boden unter
+  jemandem weg, ist das also ein gültiger, sofortiger K.o. - genau wie
+  in typischem Kristall-PvP. Die Arena liegt trotzdem nur 1 Block über
+  unzerstörbarem Bedrock und steckt seitlich in einer unsichtbaren
+  Barriere-Box bis auf Bedrock-Niveau (kein Spalt) - ein echter, langer
+  Sturz ins Leere kommt gar nicht erst vor, das Bedrock ist reines
+  Sicherheitsnetz für den unwahrscheinlichen Fall, dass der Check mal
+  durchrutscht.
