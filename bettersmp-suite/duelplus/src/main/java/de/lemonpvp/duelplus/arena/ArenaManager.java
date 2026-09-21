@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 
 /**
  * Erzeugt und verwaltet die Arenen - nur auf dem Duels-Server aktiv.
@@ -32,15 +33,25 @@ import java.util.Optional;
  * simple Flachwelt zuverlaessig. Trotzdem KEIN reiner Luft-Void: ein
  * kurzes Stueck unter der Plattform liegt eine einfache Boden-Schicht
  * mit Bedrock ganz unten (siehe VOID_GENERATOR_SETTINGS) - wer durch/
- * von der Plattform faellt, faellt auf echten Boden, nicht ins Nichts,
- * und das nach einem kurzen, aber spuerbaren Sturz statt einer langen
- * Faelle-Strecke.
+ * von der Plattform faellt, faellt auf echten Boden, nicht ins Nichts.
  *
- * Der Boden ist ein Kompassmuster: konzentrische Kreise als Textur,
- * ueberlagert von acht Speichen durch die Mitte - waagerecht/senkrecht
- * zu den Spawnpunkten bzw. den Deckungspfeilern, diagonal zu den vier
- * Eck-Tuermen. Wirkt dadurch gestaltet statt willkuerlich, weil es
- * tatsaechlich alle anderen Bauten der Arena optisch verbindet.
+ * VIER strukturell komplett unterschiedliche Boden-Themes, reihum
+ * verteilt nach Arena-Nummer (siehe bodenBauen) - nicht nur andere
+ * Bloecke, sondern andere Taktik:
+ *  - Kompass: das urspruengliche Ringe+Speichen-Muster mit Deckung
+ *    in der Mitte.
+ *  - Feuergraben: ein Lavagraben entlang X=0 trennt beide Haelften,
+ *    nur an drei festen Stellen ueberbrueckt.
+ *  - Eisarena: rutschiges PACKED_ICE/BLUE_ICE (schmilzt NICHT wie
+ *    normales Eis) - veraendert das Bewegungsgefuehl im Kampf wirklich.
+ *  - Ozean-Tempel: ein flacher, begehbarer Wasserring aus Prismarine
+ *    nahe am Rand.
+ * Alle vier teilen sich denselben aeusseren Aufbau (Eck-Tuerme,
+ * zerklüfteter Fels-Rand, unsichtbare Barriere-Box, Sturz-Erkennung) -
+ * nur der INNERE Boden unterscheidet sich, damit die inzwischen mehrfach
+ * gehaerteten Sicherheits-Mechaniken (siehe randfelsenBauen,
+ * barriereBauen, ArenaGuardListener) fuer jede Arena unveraendert
+ * gelten.
  *
  * Block-Aenderungen sind waehrend eines Duells erlaubt (siehe
  * RollbackTracker), deshalb muss hier nichts nach jedem Kampf neu
@@ -63,8 +74,11 @@ public final class ArenaManager {
      * Bloecke bis zum sichtbaren Gras), liegt deshalb NICHT der Boden
      * naeher an einer hohen Plattform, sondern arenen.plattform-hoehe
      * selbst nah an dieser Schicht (Standard-Boden endet bei Y=-45, siehe
-     * Kommentar dort) - beide zusammen ergeben einen kurzen, aber immer
-     * noch spuerbaren Sturz von ca. 25 Bloecken.
+     * Kommentar dort). In der Praxis spielt das ohnehin kaum eine Rolle:
+     * ArenaGuardListener.beimAbsturzUnterDieArena loest schon aus, sobald
+     * jemand die Plattform ueberhaupt verlaesst - dieser Boden ist nur
+     * noch ein Sicherheitsnetz fuer den Fall, dass der Check einmal
+     * durchrutscht.
      * Wirkt nur beim ALLERERSTEN Erzeugen einer Arena-Welt: bereits
      * vorhandene Weltordner (z.B. aus einer aelteren DuelPlus-Version mit
      * echtem Gelaende, reinem Luft-Void oder einer hoch gelegenen
@@ -81,15 +95,17 @@ public final class ArenaManager {
                     + "],\"biome\":\"minecraft:the_void\"}";
 
     /**
-     * Je Arena ein anderes Aussehen (Boden, Akzent, Mauer, Licht) - sonst
-     * wirkt spaetestens die dritte/vierte Arena immer gleich und "tot".
-     * Reihum verteilt nach Arena-Nummer.
+     * Je Boden-Theme (siehe Klassen-Kommentar) eine eigene Materialpalette
+     * (Boden, Akzent, Mauer/Struktur, Licht) - reihum verteilt nach
+     * Arena-Nummer, siehe bodenBauen. Index 0=Kompass, 1=Feuergraben,
+     * 2=Eisarena, 3=Ozean-Tempel - MUSS mit dem switch in bodenBauen
+     * uebereinstimmen.
      */
     private static final Material[][] PALETTEN = {
             {Material.SMOOTH_STONE, Material.POLISHED_ANDESITE, Material.STONE_BRICK_WALL, Material.LANTERN},
-            {Material.POLISHED_DEEPSLATE, Material.DEEPSLATE_TILES, Material.POLISHED_DEEPSLATE_WALL, Material.SOUL_LANTERN},
-            {Material.SMOOTH_SANDSTONE, Material.CUT_SANDSTONE, Material.SANDSTONE_WALL, Material.LANTERN},
-            {Material.POLISHED_BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS, Material.POLISHED_BLACKSTONE_WALL, Material.SOUL_LANTERN},
+            {Material.BLACKSTONE, Material.POLISHED_BLACKSTONE, Material.NETHER_BRICK_WALL, Material.SOUL_LANTERN},
+            {Material.PACKED_ICE, Material.BLUE_ICE, Material.SNOW_BLOCK, Material.SEA_LANTERN},
+            {Material.PRISMARINE, Material.PRISMARINE_BRICKS, Material.DARK_PRISMARINE, Material.SEA_LANTERN},
     };
 
     private final DuelPlus plugin;
@@ -127,7 +143,7 @@ public final class ArenaManager {
         }
         konfiguriereWelt(world);
 
-        int radius = Math.max(10, plugin.getConfig().getInt("arenen.worldborder-groesse", 50));
+        int radius = Math.max(10, plugin.getConfig().getInt("arenen.worldborder-groesse", 115));
         int hoehe = plugin.getConfig().getInt("arenen.plattform-hoehe", -20);
         int abstand = Math.max(4, plugin.getConfig().getInt("arenen.spawn-abstand", 20));
 
@@ -137,8 +153,10 @@ public final class ArenaManager {
         chunksLaden(world, radius);
 
         if (neu) {
-            Material[] palette = PALETTEN[(index - 1) % PALETTEN.length];
-            plattformBauen(world, radius, hoehe, palette);
+            int themeIndex = (index - 1) % PALETTEN.length;
+            Material[] palette = PALETTEN[themeIndex];
+            bodenBauen(world, radius, hoehe, themeIndex, palette);
+            strukturenBauen(world, radius, hoehe, palette);
             // NICHT auf die (schrumpfende!) Worldborder verlassen - ein
             // Enderperlen-Wurf teleportiert instant und wird von deren
             // sanfter Zurueckdraeng-Kollision NICHT erfasst (langjaehriger,
@@ -164,7 +182,15 @@ public final class ArenaManager {
         return new Arena(name, world, spawnA, spawnB, vollGroesse, hoehe);
     }
 
-    /** Haelt die Chunks der kompletten Plattform dauerhaft geladen (siehe ladeOderErzeuge). */
+    /**
+     * Haelt die Chunks der kompletten Plattform dauerhaft geladen (siehe
+     * ladeOderErzeuge). Skaliert quadratisch mit arenen.worldborder-groesse
+     * - bei einem grossen Radius (z.B. 115) kommen so pro Arena einige
+     * hundert dauerhaft geladene Chunks zusammen (4 Arenen mit Standard-
+     * Anzahl macht ueber 1000 insgesamt). Rein informativ, kein
+     * automatisches Limit - wer die Arenen bewusst gross will, bekommt sie
+     * auch gross, sollte die Server-Hardware aber im Blick behalten.
+     */
     private void chunksLaden(World world, int radius) {
         int min = (-radius) >> 4;
         int max = radius >> 4;
@@ -198,27 +224,53 @@ public final class ArenaManager {
         // immer.
     }
 
-    private void plattformBauen(World world, int radius, int y, Material[] palette) {
+    // ------------------------------------------------------------ Boden-Themes
+
+    /** Waehlt das Boden-Theme nach Arena-Nummer - siehe Klassen-Kommentar. MUSS mit PALETTEN uebereinstimmen. */
+    private void bodenBauen(World world, int radius, int y, int themeIndex, Material[] palette) {
+        switch (themeIndex) {
+            case 1 -> bodenFeuergraben(world, radius, y, palette);
+            case 2 -> bodenEisarena(world, radius, y, palette);
+            case 3 -> bodenOzean(world, radius, y, palette);
+            default -> bodenKompass(world, radius, y, palette);
+        }
+    }
+
+    /**
+     * Bodenblock setzen und die 5 Bloecke darueber freiraeumen - gemeinsame
+     * Basis fuer alle Boden-Themes, damit ueberall gleich viel Kopf-/
+     * Sprung-Freiraum ueber der begehbaren Flaeche bleibt.
+     */
+    private void platzieren(World world, int x, int y, int z, Material bodenBlock) {
+        world.getBlockAt(x, y, z).setType(bodenBlock, false);
+        for (int dy = 1; dy <= 5; dy++) {
+            world.getBlockAt(x, y + dy, z).setType(Material.AIR, false);
+        }
+    }
+
+    /**
+     * Am aeusseren Rand (eckigerRand == radius): 1-Block-Mauer + der
+     * zerklüftete Fels-Ansatz darunter (siehe randfelsenBauen) - fuer
+     * ALLE Boden-Themes identisch, damit der "im Nichts schwebende
+     * Plattform"-Look und die damit verbundenen Sicherheits-Abstaende
+     * (Barriere-Box, Absturz-Check) ueberall gleich funktionieren.
+     */
+    private void randBauen(World world, int x, int y, int z, Material mauer, Random zufall, Material boden, Material akzent) {
+        world.getBlockAt(x, y + 1, z).setType(mauer, false);
+        randfelsenBauen(world, x, y, z, zufall, boden, akzent);
+    }
+
+    /** Kompass: konzentrische Ringe, ueberlagert von acht Speichen zu Spawnpunkten/Deckung/Eck-Tuermen - das urspruengliche Design. */
+    private void bodenKompass(World world, int radius, int y, Material[] palette) {
         Material boden = palette[0];
         Material akzent = palette[1];
         Material mauer = palette[2];
-        Material licht = palette[3];
         int ringBreite = 6;
-        java.util.Random zufall = new java.util.Random();
+        Random zufall = new Random();
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
-                // Quadratischer Abstand (Chebyshev) NUR fuer die Aussenmauer -
-                // die muss dem eckigen Rand der Iteration/Worldborder folgen
-                // (Minecrafts Worldborder ist selbst ein Quadrat, kein Kreis).
                 int eckigerRand = Math.max(Math.abs(x), Math.abs(z));
-                // Echter (runder) Abstand fuer das Bodenmuster selbst - wirkt
-                // als konzentrische Kreise deutlich "gestalteter" als eckige
-                // Ringe.
                 double rundeEntfernung = Math.sqrt((double) x * x + (double) z * z);
-                // Speichen: verbinden ueber die Mitte die Spawnpunkte (Z=0),
-                // die Deckungspfeiler (X=0) und diagonal alle vier Eck-
-                // tuerme (|X|=|Z|) - das Muster bekommt dadurch einen echten
-                // Bezug zum Rest der Arena statt willkuerlich zu wirken.
                 boolean speiche = (x == 0 || z == 0 || Math.abs(x) == Math.abs(z)) && rundeEntfernung > 3;
                 Material bodenBlock;
                 if (rundeEntfernung <= 3) {
@@ -229,16 +281,158 @@ public final class ArenaManager {
                     int ring = (int) (rundeEntfernung / ringBreite);
                     bodenBlock = (ring % 2 == 0) ? boden : akzent;
                 }
-                world.getBlockAt(x, y, z).setType(bodenBlock, false);
-                for (int dy = 1; dy <= 5; dy++) {
-                    world.getBlockAt(x, y + dy, z).setType(Material.AIR, false);
-                }
+                platzieren(world, x, y, z, bodenBlock);
                 if (eckigerRand == radius) {
-                    world.getBlockAt(x, y + 1, z).setType(mauer, false);
-                    randfelsenBauen(world, x, y, z, zufall, boden, akzent);
+                    randBauen(world, x, y, z, mauer, zufall, boden, akzent);
                 }
             }
         }
+    }
+
+    /**
+     * Feuergraben: ein Lavagraben entlang X=0 trennt die Arena in eine
+     * West- und eine Ost-Haelfte - bewusst NICHT auf der Spawn-Achse: die
+     * Startpunkte liegen bei X=+-abstand/2, Z=0 (siehe ladeOderErzeuge),
+     * also NIE auf X=0, jeder Punkt auf X=0 ist ausserdem per Pythagoras
+     * von beiden Startpunkten gleich weit entfernt. Drei feste Bruecken
+     * bleiben als sichere Uebergaenge frei.
+     *
+     * Die Lava ersetzt den festen Boden komplett (kein Block darunter) -
+     * bewusst kein reiner Deko-Hazard: ohne festen Untergrund sackt man
+     * beim Hineinlaufen sofort unter die Plattform-Hoehe und das zaehlt
+     * (wie ueberall sonst am Rand, siehe ArenaGuardListener) SOFORT als
+     * Niederlage. Der Graben ist also eine echte Grenze, kein bisschen
+     * Schaden zum Durchlaufen - genau das macht die drei Bruecken zu
+     * echten Engpaessen.
+     */
+    private void bodenFeuergraben(World world, int radius, int y, Material[] palette) {
+        Material boden = palette[0];
+        Material akzent = palette[1];
+        Material mauer = palette[2];
+        int grabenBreite = 2;
+        int bruecken = 3;
+        Random zufall = new Random();
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                int eckigerRand = Math.max(Math.abs(x), Math.abs(z));
+                boolean imGraben = Math.abs(x) <= grabenBreite && !istBrueckenZeile(z, radius, bruecken);
+                if (imGraben) {
+                    platzieren(world, x, y, z, Material.LAVA);
+                } else {
+                    int ring = (int) (Math.sqrt((double) x * x + (double) z * z) / 8);
+                    Material bodenBlock = (ring % 2 == 0) ? boden : akzent;
+                    platzieren(world, x, y, z, bodenBlock);
+                }
+                if (eckigerRand == radius) {
+                    randBauen(world, x, y, z, mauer, zufall, boden, akzent);
+                }
+            }
+        }
+    }
+
+    /** true fuer die Z-Reihen, an denen eine feste Bruecke ueber den Feuergraben fuehrt - gleichmaessig ueber die volle Arena-Tiefe verteilt. */
+    private boolean istBrueckenZeile(int z, int radius, int anzahl) {
+        int breite = 3;
+        for (int i = 0; i < anzahl; i++) {
+            int mitte = -radius + (i + 1) * (2 * radius) / (anzahl + 1);
+            if (Math.abs(z - mitte) <= breite) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Eisarena: konzentrische Ringe aus PACKED_ICE/BLUE_ICE - beide
+     * schmelzen (anders als normales ICE) NICHT durch nahe Lichtquellen,
+     * sind aber genauso rutschig. Veraendert das Bewegungsgefuehl im
+     * Kampf wirklich (schwerer abzubremsen/zu wenden), nicht nur die
+     * Optik - bewusst ohne Speichen-Muster, damit sie sich von der
+     * Kompass-Arena auch klar im Grundriss unterscheidet.
+     */
+    private void bodenEisarena(World world, int radius, int y, Material[] palette) {
+        Material boden = palette[0];
+        Material akzent = palette[1];
+        Material mauer = palette[2];
+        Random zufall = new Random();
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                int eckigerRand = Math.max(Math.abs(x), Math.abs(z));
+                double rundeEntfernung = Math.sqrt((double) x * x + (double) z * z);
+                int ring = (int) (rundeEntfernung / 10);
+                Material bodenBlock = (ring % 2 == 0) ? boden : akzent;
+                platzieren(world, x, y, z, bodenBlock);
+                if (eckigerRand == radius) {
+                    randBauen(world, x, y, z, mauer, zufall, boden, akzent);
+                }
+            }
+        }
+    }
+
+    /**
+     * Ozean-Tempel: Prismarine-Boden mit einem Wasserring nahe am Rand.
+     * Die Wasserschicht liegt bewusst NUR OBEN AUF dem festen Boden (ein
+     * zusaetzlicher Block bei y+1), keine abgesenkte Wassergrube - sonst
+     * haette Wasser genau wie beim Feuergraben KEINEN tragenden Block,
+     * man wuerde beim Hineinwaten sofort unter die Steh-Hoehe sacken und
+     * das zaehlt als Niederlage. So bleibt es ein durchwatbarer, aber
+     * spuerbar bremsender taktischer Bereich statt eines toedlichen -
+     * bewusst anders als der Feuergraben, nicht nur optisch.
+     */
+    private void bodenOzean(World world, int radius, int y, Material[] palette) {
+        Material boden = palette[0];
+        Material akzent = palette[1];
+        Material mauer = palette[2];
+        int ringInnen = (int) (radius * 0.75);
+        int ringAussen = (int) (radius * 0.85);
+        Random zufall = new Random();
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                int eckigerRand = Math.max(Math.abs(x), Math.abs(z));
+                double rundeEntfernung = Math.sqrt((double) x * x + (double) z * z);
+                int ring = (int) (rundeEntfernung / 8);
+                Material bodenBlock = (ring % 2 == 0) ? boden : akzent;
+                platzieren(world, x, y, z, bodenBlock);
+                if (rundeEntfernung >= ringInnen && rundeEntfernung <= ringAussen) {
+                    world.getBlockAt(x, y + 1, z).setType(Material.WATER, false);
+                }
+                if (eckigerRand == radius) {
+                    randBauen(world, x, y, z, mauer, zufall, boden, akzent);
+                }
+            }
+        }
+    }
+
+    /**
+     * Zerklüfteter Fels-Ansatz unter dem äusseren Rand einer einzelnen
+     * Rand-Zelle - laesst die Arena wie eine abgebrochene, im Nichts
+     * schwebende Kampf-Plattform wirken statt wie eine glatt
+     * abgeschnittene Flaeche. Zufaellige Tiefe (1-3 Bloecke) und
+     * zufaellig gemischtes Material sorgen fuer eine unregelmaessige,
+     * organische Silhouette statt eines gleichmaessigen Blocks.
+     *
+     * Bewusst auf maximal 3 Bloecke Tiefe begrenzt: ArenaGuardListener.
+     * beimAbsturzUnterDieArena loest schon aus, sobald die Y-Koordinate
+     * auch nur einen Hauch unter die Plattform faellt (kein Gnaden-
+     * Sturz mehr) - diese Felsen liegen also WEIT unterhalb jeder
+     * Stelle, die noch erreichbar waere, bevor der Absturz-Check
+     * bereits ausgeloest haette, und koennen daher nie zu einer
+     * tatsaechlich erreichbaren Landestelle werden.
+     */
+    private void randfelsenBauen(World world, int x, int y, int z, Random zufall, Material boden, Material akzent) {
+        int tiefe = 1 + zufall.nextInt(3);
+        for (int dy = 1; dy <= tiefe; dy++) {
+            Material stein = zufall.nextBoolean() ? boden : akzent;
+            world.getBlockAt(x, y - dy, z).setType(stein, false);
+        }
+    }
+
+    // ------------------------------------------------------------ Struktur (gemeinsam fuer alle Themes)
+
+    /** Eck-Tuerme + Deckungspfeiler - fuer ALLE Boden-Themes identisch, siehe Klassen-Kommentar. */
+    private void strukturenBauen(World world, int radius, int y, Material[] palette) {
+        Material mauer = palette[2];
+        Material licht = palette[3];
         // Vier Eck-TUERME statt einfacher Pfeiler - deutlich imposanter,
         // mit einem Zinnenkranz kurz unter der Spitze fuer eine echte
         // Turm-Silhouette statt eines duennen Stabes. Blickfang gegen die
@@ -266,9 +460,9 @@ public final class ArenaManager {
         // Zwei Deckungspfeiler auf der Z-Achse (X=0) - taktische Tiefe
         // gegen die sonst komplett leere Mitte. Bewusst NUR auf der Achse
         // SENKRECHT zur Spawn-Linie (die liegt auf X, siehe spawnA/spawnB
-        // unten): jeder Punkt mit X=0 ist per Pythagoras IMMER exakt gleich
-        // weit von beiden Startpunkten entfernt, egal welches Z - keiner
-        // der beiden wird dadurch bevorteilt.
+        // in ladeOderErzeuge): jeder Punkt mit X=0 ist per Pythagoras IMMER
+        // exakt gleich weit von beiden Startpunkten entfernt, egal welches
+        // Z - keiner der beiden wird dadurch bevorteilt.
         int deckungsAbstand = Math.min(radius - 8, 16);
         if (deckungsAbstand > 0) {
             for (int vorzeichen : new int[]{-1, 1}) {
@@ -276,30 +470,6 @@ public final class ArenaManager {
                 world.getBlockAt(0, y + 1, dz).setType(mauer, false);
                 world.getBlockAt(0, y + 2, dz).setType(mauer, false);
             }
-        }
-    }
-
-    /**
-     * Zerklüfteter Fels-Ansatz unter dem äusseren Rand einer einzelnen
-     * Rand-Zelle - laesst die Arena wie eine abgebrochene, im Nichts
-     * schwebende Kampf-Plattform wirken statt wie eine glatt
-     * abgeschnittene Flaeche. Zufaellige Tiefe (1-3 Bloecke) und
-     * zufaellig gemischtes Material sorgen fuer eine unregelmaessige,
-     * organische Silhouette statt eines gleichmaessigen Blocks.
-     *
-     * Bewusst auf maximal 3 Bloecke Tiefe begrenzt: ArenaGuardListener.
-     * beimAbsturzUnterDieArena loest schon aus, sobald die Y-Koordinate
-     * auch nur einen Hauch unter die Plattform faellt (kein Gnaden-
-     * Sturz mehr) - diese Felsen liegen also WEIT unterhalb jeder
-     * Stelle, die noch erreichbar waere, bevor der Absturz-Check
-     * bereits ausgeloest haette, und koennen daher nie zu einer
-     * tatsaechlich erreichbaren Landestelle werden.
-     */
-    private void randfelsenBauen(World world, int x, int y, int z, java.util.Random zufall, Material boden, Material akzent) {
-        int tiefe = 1 + zufall.nextInt(3);
-        for (int dy = 1; dy <= tiefe; dy++) {
-            Material stein = zufall.nextBoolean() ? boden : akzent;
-            world.getBlockAt(x, y - dy, z).setType(stein, false);
         }
     }
 

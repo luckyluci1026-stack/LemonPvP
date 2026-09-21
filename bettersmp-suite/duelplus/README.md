@@ -61,9 +61,11 @@ eine ältere Version hat dafür noch echtes Vanilla-Gelände verwendet
 darunter/darum schauen), eine etwas neuere Version noch ohne die
 unsichtbare Barriere-Box gegen Enderperlen-Fluchten, eine dritte
 Version noch mit reinem Luft-Void unter der Plattform statt eines
-richtigen Bodens mit Bedrock, und eine vierte Version noch mit einer
-sehr hoch gelegenen Plattform (Sturz bis zum Boden weit über 100
-Blöcke) statt der aktuellen, viel niedrigeren. Damit Arenen
+richtigen Bodens mit Bedrock, eine vierte Version noch mit einer sehr
+hoch gelegenen Plattform (Sturz bis zum Boden weit über 100 Blöcke)
+statt der aktuellen, viel niedrigeren, und eine fünfte Version noch mit
+kleinerer Worldborder-Größe und nur EINEM Boden-Design (statt der vier
+strukturell unterschiedlichen Themes, siehe unten). Damit Arenen
 stattdessen mit dem aktuellen Aufbau entstehen (siehe unten), müssen auf
 dem **Duels-Server** einmalig die alten Weltordner gelöscht werden -
 Standard-Namen `duell_arena_1` bis `duell_arena_4` (siehe
@@ -89,18 +91,29 @@ erzeugt sie wirklich neu, ein reines Plugin-Update oder
    dessen unverwundbar), dann beginnt der Kampf.
 5. **Arena**: eine von mehreren automatisch erzeugten Welten **ohne
    echte Vanilla-Terraingenerierung** (man soll am Rand nicht in "die
-   echte Welt" schauen können) mit einer flachen,
-   dekorierten Plattform (jede Arena mit eigener Optik: Stein,
-   Tiefenschiefer, Sandstein oder Schwarzstein) mit einem
-   Kompassmuster als Boden - konzentrische Kreise, durchzogen von acht
-   Speichen zu den Spawnpunkten, den zwei symmetrischen
-   Deckungspfeilern und vier hohen **Eck-Türmen** (mit Zinnenkranz und
-   Licht auf der Spitze). Der äußere Rand ist bewusst **kein glatter
-   Schnitt**: darunter hängt ein zerklüfteter, zufällig geformter
-   Fels-Ansatz - die Arena soll wie eine abgebrochene, im Nichts
-   schwebende Kampf-Plattform wirken, nicht wie eine einfache Fläche.
-   Während des Kampfes steigen zusätzlich laufend Seelen-Partikel nahe
-   am Rand auf. Um das alles herum eine Worldborder.
+   echte Welt" schauen können). Reihum **vier strukturell komplett
+   unterschiedliche Boden-Themes** (nicht nur andere Bloecke, andere
+   Taktik), siehe `ArenaManager`:
+   - **Kompass**: das urspruengliche Design - konzentrische Kreise,
+     durchzogen von acht Speichen zu den Spawnpunkten, den zwei
+     symmetrischen Deckungspfeilern und den vier Eck-Tuermen.
+   - **Feuergraben**: ein Lavagraben trennt beide Haelften, nur an
+     drei festen Stellen ueberbrueckt - reinfallen zaehlt sofort als
+     Niederlage (kein fester Boden darunter), kein bisschen Schaden
+     zum Durchlaufen.
+   - **Eisarena**: rutschiges PACKED_ICE/BLUE_ICE (schmilzt anders als
+     normales Eis NICHT) - veraendert das Bewegungsgefuehl im Kampf
+     wirklich.
+   - **Ozean-Tempel**: Prismarine-Boden mit einem flachen, begehbaren
+     Wasserring nahe am Rand - bremst, schadet aber nicht.
+
+   Alle vier teilen sich denselben Rahmen: vier hohe **Eck-Türme** (mit
+   Zinnenkranz und Licht auf der Spitze), einen bewusst **nicht glatt
+   abgeschnittenen** äußeren Rand (ein zerklüfteter, zufällig geformter
+   Fels-Ansatz darunter - die Arena soll wie eine abgebrochene, im
+   Nichts schwebende Kampf-Plattform wirken) und laufend aufsteigende
+   Seelen-Partikel nahe am Rand während des Kampfes. Um das alles herum
+   eine Worldborder.
    Zusätzlich zur (schrumpfenden) Worldborder steckt die ganze Arena in
    einer unsichtbaren, unzerstörbaren Barriere-Box in der vollen
    Start-Größe (vier Wände + Decke) - die Worldborder allein reicht

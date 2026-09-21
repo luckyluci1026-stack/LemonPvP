@@ -85,13 +85,19 @@ gegenstand:
 #  unterschiedlich fair je nach Landeplatz). Kein manuelles Bauen
 #  noetig. Block-Aenderungen sind waehrend des Duells erlaubt, werden
 #  aber danach komplett zurueckgerollt (siehe RollbackTracker).
+#  Reihum 4 strukturell unterschiedliche Boden-Themes (Kompass,
+#  Feuergraben, Eisarena, Ozean-Tempel, siehe ArenaManager) - nicht nur
+#  andere Bloecke, sondern jeweils andere Taktik.
 # ----------------------------------------------------------
 arenen:
   anzahl: 4
   welt-praefix: "duell_arena_"
   # Radius der flachen Arena-Plattform UND der Worldborder darum -
-  # beides zusammen ergibt die komplette begehbare Flaeche.
-  worldborder-groesse: 50
+  # beides zusammen ergibt die komplette begehbare Flaeche. Bei diesem
+  # Standardwert (115) bleiben pro Arena dauerhaft ca. 256 Chunks
+  # geladen (siehe ArenaManager.chunksLaden) - bei 4 Arenen also ueber
+  # 1000 insgesamt. Auf schwacher Hardware ggf. kleiner waehlen.
+  worldborder-groesse: 115
   # Wie weit die zwei Startpunkte innerhalb einer Arena auseinander liegen
   spawn-abstand: 20
   # Y-Koordinate der Plattform. Bewusst NICHT hoch (z.B. Y=100): unter
