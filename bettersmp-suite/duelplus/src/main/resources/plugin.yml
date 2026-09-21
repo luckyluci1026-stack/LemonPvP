@@ -14,7 +14,7 @@ libraries:
 commands:
   duel:
     description: Fordert jemanden zu einem Duell heraus
-    usage: "/duel <Spieler|accept|decline>"
+    usage: "/duel <Spieler|accept|decline|stats|top>"
   draw:
     description: Schlaegt im laufenden Duell ein Unentschieden vor - wirkt erst, wenn beide zustimmen
     usage: "/draw"

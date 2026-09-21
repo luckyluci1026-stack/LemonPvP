@@ -405,6 +405,8 @@ public final class DuellSessionManager implements Listener {
         sessionNachSpieler.remove(gegnerUuid);
         UUID gewinner = gegnerUuid;
         bossBarVerstecken(session);
+        plugin.db().siegHinzufuegen(gewinner, session.eigenerName(gewinner));
+        plugin.db().niederlageHinzufuegen(verliererUuid, session.eigenerName(verliererUuid));
 
         Player verlierer = Bukkit.getPlayer(verliererUuid);
         Player gewinnerSpieler = Bukkit.getPlayer(gegnerUuid);
@@ -600,6 +602,8 @@ public final class DuellSessionManager implements Listener {
             return;
         }
         bossBarVerstecken(session);
+        plugin.db().unentschiedenHinzufuegen(aUuid, session.eigenerName(aUuid));
+        plugin.db().unentschiedenHinzufuegen(bUuid, session.eigenerName(bUuid));
 
         Player a = Bukkit.getPlayer(aUuid);
         Player b = Bukkit.getPlayer(bUuid);

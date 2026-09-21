@@ -99,7 +99,10 @@ public final class DuelDatabase {
                 + "duell_id VARCHAR(36), spieler VARCHAR(36), richtung VARCHAR(16), "
                 + "daten LONGTEXT, erstellt BIGINT, PRIMARY KEY (duell_id, spieler, richtung))",
             "CREATE TABLE IF NOT EXISTS duelplus_stamm_inventar ("
-                + "uuid VARCHAR(36) PRIMARY KEY, daten LONGTEXT, aktualisiert BIGINT)"
+                + "uuid VARCHAR(36) PRIMARY KEY, daten LONGTEXT, aktualisiert BIGINT)",
+            "CREATE TABLE IF NOT EXISTS duelplus_stats ("
+                + "uuid VARCHAR(36) PRIMARY KEY, name VARCHAR(32), "
+                + "siege INT DEFAULT 0, niederlagen INT DEFAULT 0, unentschieden INT DEFAULT 0)"
         };
         try (var st = conn().createStatement()) {
             for (String sql : ddl) {
@@ -550,6 +553,82 @@ public final class DuelDatabase {
                 return Optional.empty();
             }
         });
+    }
+
+    // ================================================================
+    //  Statistik (Sieg/Niederlage/Unentschieden je Spieler, /duel stats + /duel top)
+    // ================================================================
+
+    public CompletableFuture<Void> siegHinzufuegen(UUID spieler, String name) {
+        return run(() -> statistikErhoehen(spieler, name, "siege"));
+    }
+
+    public CompletableFuture<Void> niederlageHinzufuegen(UUID spieler, String name) {
+        return run(() -> statistikErhoehen(spieler, name, "niederlagen"));
+    }
+
+    public CompletableFuture<Void> unentschiedenHinzufuegen(UUID spieler, String name) {
+        return run(() -> statistikErhoehen(spieler, name, "unentschieden"));
+    }
+
+    /**
+     * spalte kommt IMMER aus dieser Klasse selbst (nur die drei Aufrufe
+     * oben, nie aus einer Spielereingabe) - als Teil des SQL-Texts
+     * eingesetzt waere das sonst ein SQL-Injection-Risiko, hier
+     * unbedenklich, weil der Wert fest im Code steht.
+     */
+    private void statistikErhoehen(UUID spieler, String name, String spalte) {
+        try (PreparedStatement ps = conn().prepareStatement(
+                "INSERT INTO duelplus_stats(uuid,name,siege,niederlagen,unentschieden) VALUES(?,?,0,0,0) "
+                        + "ON DUPLICATE KEY UPDATE " + spalte + "=" + spalte + "+1, name=VALUES(name)")) {
+            ps.setString(1, spieler.toString());
+            ps.setString(2, name);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            warn("statistikErhoehen(" + spalte + ")", e);
+        }
+    }
+
+    public CompletableFuture<Optional<StatEintrag>> statistikVon(UUID spieler) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement("SELECT * FROM duelplus_stats WHERE uuid=?")) {
+                ps.setString(1, spieler.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? Optional.of(leseStat(rs)) : Optional.empty();
+                }
+            } catch (SQLException e) {
+                warn("statistikVon", e);
+                return Optional.empty();
+            }
+        });
+    }
+
+    /** Rangliste nach Siegen absteigend (bei Gleichstand wenigsten Niederlagen zuerst) - fuer /duel top. */
+    public CompletableFuture<List<StatEintrag>> rangliste(int anzahl) {
+        return supply(() -> {
+            List<StatEintrag> ergebnis = new ArrayList<>();
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT * FROM duelplus_stats ORDER BY siege DESC, niederlagen ASC LIMIT ?")) {
+                ps.setInt(1, anzahl);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        ergebnis.add(leseStat(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                warn("rangliste", e);
+            }
+            return ergebnis;
+        });
+    }
+
+    private StatEintrag leseStat(ResultSet rs) throws SQLException {
+        return new StatEintrag(
+                UUID.fromString(rs.getString("uuid")),
+                rs.getString("name"),
+                rs.getInt("siege"),
+                rs.getInt("niederlagen"),
+                rs.getInt("unentschieden"));
     }
 
     // ================================================================

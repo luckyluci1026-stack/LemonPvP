@@ -192,11 +192,21 @@ Ausweichen über `/shop` oder Ähnliches.
 /duel <Spieler>          - herausfordern
 /duel accept <Spieler>   - annehmen
 /duel decline <Spieler>  - ablehnen
+/duel stats [Spieler]    - Sieg/Niederlage/Unentschieden-Statistik (ohne Angabe: die eigene;
+                            das Ziel muss gerade ONLINE sein, egal auf welchem Server)
+/duel top [Anzahl]       - Rangliste nach Siegen absteigend (Standard 10, maximal 15)
 /draw                    - Unentschieden vorschlagen (nur waehrend des eigenen Duells,
                             wirkt erst, wenn BEIDE es benutzen - keiner gewinnt/verliert,
                             jeder bekommt sein eigenes Inventar unveraendert zurueck)
 /duelplus reload         - config.yml neu einlesen, DB-Verbindung neu aufbauen
 ```
+
+Die Statistik zaehlt jeden Duell-Ausgang serverübergreifend (gemeinsame
+MariaDB, siehe unten): ein normaler Sieg/eine Niederlage erhöht
+`siege`/`niederlagen` des jeweiligen Spielers, ein `/draw` UND eine
+automatische Aufgabe bei Inaktivitaet (siehe unten) zaehlen beide als
+`unentschieden` fuer beide Beteiligten - beides endet ja ohne Sieger,
+nur der Weg dorthin unterscheidet sich.
 
 ## Rechte
 

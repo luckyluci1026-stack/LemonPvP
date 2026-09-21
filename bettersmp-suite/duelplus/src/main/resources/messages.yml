@@ -60,6 +60,12 @@ draw-requested-by: "%prefix%<gold><white>%gegner%</white> schlägt ein Unentschi
 inactivity-warning: "%prefix%<gold><bold>Seit einer Weile kein Treffer!</bold></gold> <gray>Fällt in <white>%minuten% Minuten</white> weiterhin keiner, wird die Runde automatisch aufgegeben - ihr verliert dann beide ein Fünftel eures Inventars.</gray>"
 inactivity-forfeit: "%prefix%<red><bold>Automatisch aufgegeben.</bold></red> <gray>Zu lange ohne Treffer - ihr habt beide ein Fünftel eures Inventars verloren.</gray>"
 
+# Statistik - /duel stats [Spieler] und /duel top [Anzahl]
+stats-anzeige: "%prefix%<gray>Statistik von <white>%spieler%</white>: <green>%siege% Siege</green>, <red>%niederlagen% Niederlagen</red>, <yellow>%unentschieden% Unentschieden</yellow> <gray>(%quote%% Siegquote)</gray>"
+top-leer: "%prefix%<gray>Noch keine Duelle mit Ergebnis - die Rangliste ist leer.</gray>"
+top-kopf: "%prefix%<gold><bold>Rangliste</bold></gold>"
+top-zeile: "<gray>%platz%.</gray> <white>%spieler%</white> <green>%siege%S</green>/<red>%niederlagen%N</red>"
+
 loot-dropped: "%prefix%<gold>Das Loot liegt am Boden - <white>%sekunden%s</white> lang gehört es nur dir.</gold>"
 enderchest-disabled: "%prefix%<red>Enderkisten sind in der Arena deaktiviert.</red>"
 command-blocked: "%prefix%<red>Befehle sind während eines Duells gesperrt.</red>"

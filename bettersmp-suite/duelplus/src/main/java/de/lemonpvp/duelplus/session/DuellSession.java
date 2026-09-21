@@ -61,6 +61,11 @@ public final class DuellSession {
         return spieler.equals(spielerA) ? spielerBName : spielerAName;
     }
 
+    /** Der eigene (nicht der gegnerische) Name dieses Spielers - fuer die Statistik (siehe DuellSessionManager). */
+    public String eigenerName(UUID spieler) {
+        return spieler.equals(spielerA) ? spielerAName : spielerBName;
+    }
+
     /** Herkunftsserver (SMP/Lobby/...), auf den dieser Spieler nach dem Duell zurueck soll. */
     public String herkunftsServerVon(UUID spieler) {
         return spieler.equals(spielerA) ? spielerAServer : spielerBServer;
