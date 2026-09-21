@@ -17,6 +17,14 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   - Neue Gründe einfach ergänzen (Dauer wie `30m`, `7d`, `perm`).
 - **Datenbank**: MariaDB (wenn konfiguriert) oder automatisch SQLite. Speichert
   Stats, Bans und Mutes. JDBC-Treiber lädt Paper via `libraries:` zur Laufzeit.
+- **Inventar-/Enderkisten-Backup** (`backup` in `config.yml`): sichert alle
+  15 Sekunden (einstellbar) asynchron Inventar + Enderkiste jedes
+  Online-Spielers in eine **komplett eigene** zweite Datenbank (eigene
+  SQLite-Datei standardmäßig, optional eigene MariaDB) - unabhängig von der
+  Haupt-Datenbank, damit ein Problem dort diese Sicherung nicht mitreißt.
+  Immer nur der letzte Stand, kein Verlauf. Wiederherstellen für einen
+  ONLINE Spieler: `/bettersmp backup restore <Spieler>`, Status prüfen:
+  `/bettersmp backup status <Spieler>`.
 - **/stats [Spieler]** – Kills, Tode, K/D, Mob-Kills, Spielzeit, Geld, Rang.
 - **Ränge** (`/bettersmp ranks`): Owner in 5 Gradient-Looks, Admin (rot), Mod, Sup,
   default – als LuckPerms-Gruppen mit MiniMessage-Gradient-Prefixen.
@@ -51,7 +59,7 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   (bei Velocity Standard).
 
 ## Wichtige Configs
-- `config.yml` – `brand`, Datenbank, Chat, Combat, Join/Quit, Nametags, Scoreboard, Installer
+- `config.yml` – `brand`, Datenbank, Inventar-/Enderkisten-Backup, Chat, Combat, Join/Quit, Nametags, Scoreboard, Installer
 - `bans.yml` / `mutes.yml` – Gründe, Dauern, Ban-Screen
 - `scoreboard.yml` – Sidebar-Zeilen
 - `messages.yml` – alle Texte (MiniMessage **und** Legacy-Farbcodes)

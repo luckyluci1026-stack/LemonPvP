@@ -30,6 +30,33 @@ database:
     properties: "useUnicode=true&characterEncoding=utf8"
 
 # ----------------------------------------------------------
+# Inventar-/Enderkisten-Backup
+# VOELLIG UNABHAENGIG von der Datenbank oben - eigene Verbindung, eigene
+# Datei/Datenbank. Der Sinn ist gerade, dass ein Problem mit der
+# Haupt-Datenbank (oder der Spielerdatei) diese Sicherung nicht
+# mitreisst. Sichert alle X Sekunden asynchron Inventar + Enderkiste
+# JEDES Online-Spielers - immer nur der LETZTE Stand (kein Verlauf).
+# Wiederherstellen: /bettersmp backup restore <Spieler> (Ziel muss
+# online sein). Status pruefen: /bettersmp backup status <Spieler>.
+# ----------------------------------------------------------
+backup:
+  enabled: true
+  interval-seconds: 15
+  # Standardmaessig eine eigene lokale SQLite-Datei (plugins/BetterSMP/
+  # backup.db, sofort einsatzbereit). Fuer echte Redundanz optional eine
+  # EIGENE MariaDB - am besten eine andere Datenbank/Instanz als oben,
+  # sonst waere die Trennung nur auf Tabellenebene, nicht auf
+  # Verbindungsebene.
+  mariadb:
+    enabled: false
+    host: "127.0.0.1"
+    port: 3306
+    database: "bettersmp_backup"
+    user: "root"
+    password: ""
+    properties: "useUnicode=true&characterEncoding=utf8"
+
+# ----------------------------------------------------------
 # Chat im MiniMessage-Stil
 # Platzhalter: %prefix% %suffix% %player% %displayname% %message%
 # + alle PlaceholderAPI-Platzhalter (falls installiert)

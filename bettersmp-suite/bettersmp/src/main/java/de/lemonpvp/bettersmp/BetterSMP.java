@@ -1,6 +1,7 @@
 package de.lemonpvp.bettersmp;
 
 import de.lemonpvp.bettersmp.api.BetterSMPApi;
+import de.lemonpvp.bettersmp.backup.BackupManager;
 import de.lemonpvp.bettersmp.board.BoardListener;
 import de.lemonpvp.bettersmp.board.BoardManager;
 import de.lemonpvp.bettersmp.chat.ChatModule;
@@ -69,6 +70,7 @@ public final class BetterSMP extends JavaPlugin {
     private DailyRewardManager dailyReward;
     private SpawnManager spawn;
     private KillstreakListener killstreaks;
+    private BackupManager backup;
 
     @Override
     public void onEnable() {
@@ -85,6 +87,11 @@ public final class BetterSMP extends JavaPlugin {
         // Datenbank + darauf aufbauende Systeme
         this.database = new Database(this);
         database.init();
+        // Bewusst eine KOMPLETT EIGENE Verbindung (nicht dieselbe wie oben) -
+        // siehe BackupDatabase-Kommentar: der Sinn ist, dass ein Problem mit
+        // der einen die andere nicht mitreisst.
+        this.backup = new BackupManager(this);
+        backup.start();
         this.punishConfig = new PunishmentConfig(this);
         this.punishments = new PunishmentManager(this, punishConfig);
         this.stats = new StatsManager(this);
@@ -147,6 +154,7 @@ public final class BetterSMP extends JavaPlugin {
         if (stats != null) stats.stop();
         if (board != null) board.stop();
         if (freeze != null) freeze.stop();
+        if (backup != null) backup.stop();
         if (database != null) database.shutdown();
     }
 
@@ -214,6 +222,10 @@ public final class BetterSMP extends JavaPlugin {
 
     public Database database() {
         return database;
+    }
+
+    public BackupManager backup() {
+        return backup;
     }
 
     public PunishmentManager punishments() {

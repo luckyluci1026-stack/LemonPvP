@@ -127,4 +127,11 @@ status:
   combat-line: "<dark_gray> • </dark_gray><gray>Spieler im Kampf: <white>%count%</white></gray>"
   db-line: "<dark_gray> • </dark_gray><gray>Datenbank: <white>%type%</white></gray>"
 
-usage: "%prefix%<gray>Befehle: <white>/bettersmp status | install | update | ranks | deployconfigs | reload</white></gray>"
+backup:
+  usage: "%prefix%<gray>Befehle: <white>/bettersmp backup status <Spieler></white> | <white>/bettersmp backup restore <Spieler></white></gray>"
+  player-offline: "%prefix%<red><white>%spieler%</white> ist gerade nicht online.</red>"
+  none: "%prefix%<gray>Fuer <white>%spieler%</white> liegt noch keine Sicherung vor.</gray>"
+  status: "%prefix%<gray>Letzte Sicherung von <white>%spieler%</white>: vor <white>%sekunden%s</white>.</gray>"
+  restored: "%prefix%<green>Inventar + Enderkiste von <white>%spieler%</white> aus der letzten Sicherung wiederhergestellt.</green>"
+
+usage: "%prefix%<gray>Befehle: <white>/bettersmp status | install | update | ranks | deployconfigs | reload | backup</white></gray>"

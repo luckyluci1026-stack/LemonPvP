@@ -14,7 +14,7 @@ libraries:
 commands:
   bettersmp:
     description: BetterSMP-Verwaltung
-    usage: "/bettersmp <status|install|update|ranks|deployconfigs|reload>"
+    usage: "/bettersmp <status|install|update|ranks|deployconfigs|reload|backup>"
     aliases: [bsmp]
     permission: bettersmp.admin
   settings:
