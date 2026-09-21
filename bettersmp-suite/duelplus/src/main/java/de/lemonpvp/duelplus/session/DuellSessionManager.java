@@ -339,6 +339,23 @@ public final class DuellSessionManager implements Listener {
         }
     }
 
+    /**
+     * Groesserer Partikel-/Sound-Ausbruch genau im Moment des
+     * entscheidenden Treffers - zusaetzlich zum kleineren Effekt, den
+     * JEDER Treffer schon ueber ArenaGuardListener.trefferEffekt bekommt,
+     * und zusaetzlich zu den Sieg/Niederlage-Titeln oben. Beide Parameter
+     * koennen null sein (z.B. Verbindung waehrend des eigenen Duells
+     * getrennt) - dann faellt der jeweilige Teil einfach aus.
+     */
+    private void killEffekt(Player verlierer, Player gewinnerSpieler) {
+        if (verlierer != null) {
+            verlierer.getWorld().spawnParticle(Particle.CRIT, verlierer.getLocation().add(0, 1, 0), 40, 0.4, 0.6, 0.4, 0.15);
+        }
+        if (gewinnerSpieler != null) {
+            gewinnerSpieler.playSound(gewinnerSpieler.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.3f);
+        }
+    }
+
     /** Boss-Bar fuer beide ausblenden - bei JEDEM Ende einer Session aufgerufen (Sieg/Niederlage, Unentschieden, Aufgabe). */
     private void bossBarVerstecken(DuellSession session) {
         BossBar bar = session.bossBar();
@@ -400,6 +417,7 @@ public final class DuellSessionManager implements Listener {
         if (gewinnerSpieler != null) {
             plugin.msgs().title(gewinnerSpieler, "title-won", "title-won-sub", "gegner", session.gegnerNameVon(gegnerUuid));
         }
+        killEffekt(verlierer, gewinnerSpieler);
 
         if (verlierer != null) {
             Location ort = verlierer.getLocation();

@@ -160,7 +160,11 @@ erzeugt sie wirklich neu, ein reines Plugin-Update oder
    Inventar wird in **Shulker-Kisten verpackt und dort abgeworfen** -
    `loot.schutz-sekunden` (Standard 60) lang gehören sie exklusiv dem
    Gewinner, danach frei für alle. Ein **Totem der Unsterblichkeit**
-   in Haupt- oder Nebenhand rettet ganz normal wie in Vanilla.
+   in Haupt- oder Nebenhand rettet ganz normal wie in Vanilla. Jeder
+   Treffer bekommt zusätzliches Partikel-Feedback am Opfer plus einen
+   Bestätigungs-Ton für den Angreifer - der entscheidende Treffer
+   zusätzlich einen größeren Partikel-Ausbruch und einen eigenen Ton
+   für den Gewinner.
 7. Der Verlierer geht kurz danach zurück auf seinen Herkunftsserver,
    mit leerem Inventar. Der Gewinner bleibt bewusst **die volle
    `loot.schutz-sekunden`-Zeit** in der Arena (in der Zeit unverwundbar

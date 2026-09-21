@@ -4,11 +4,16 @@ import de.lemonpvp.duelplus.DuelPlus;
 import de.lemonpvp.duelplus.arena.Arena;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -49,6 +54,10 @@ import java.util.Optional;
  *    Loot ausserhalb der mitgebrachten Kampfausruestung geben.
  *  - Join-/Leave-Nachrichten sind auf dem Duels-Server generell stumm -
  *    hier landet ohnehin niemand, der nicht gerade duelliert.
+ *  - Jeder Treffer bekommt zusaetzliches Partikel-/Sound-Feedback ueber
+ *    das Vanilla-Minimum hinaus (siehe trefferEffekt) - der entscheidende
+ *    Treffer bekommt in DuellSessionManager.niederlageAusloesen
+ *    zusaetzlich einen groesseren Effekt.
  */
 public final class ArenaGuardListener implements Listener {
 
@@ -76,6 +85,7 @@ public final class ArenaGuardListener implements Listener {
         // fuer die Camping-Erkennung der schrumpfenden Worldborder (siehe
         // DuellSessionManager.worldborderSchrumpfenStarten).
         session.treffer();
+        trefferEffekt(event, spieler);
         double verbleibend = spieler.getHealth() - event.getFinalDamage();
         if (verbleibend > 0) {
             return;
@@ -89,6 +99,37 @@ public final class ArenaGuardListener implements Listener {
         }
         event.setCancelled(true);
         plugin.sessionManager().niederlageAusloesen(spieler.getUniqueId(), true);
+    }
+
+    /**
+     * Zusaetzliches Treffer-Feedback ueber das Vanilla-Minimum hinaus (rotes
+     * Aufblitzen + Aua-Ton kommen bei jedem Schaden schon automatisch): ein
+     * Partikel-Ausbruch am Opfer, sichtbar fuer beide, plus ein knackiger
+     * Bestaetigungs-Ton NUR fuer den Angreifer - fuer den entscheidenden
+     * (toedlichen) Treffer kommt in DuellSessionManager.niederlageAusloesen
+     * zusaetzlich ein groesserer Effekt obendrauf.
+     */
+    private void trefferEffekt(EntityDamageEvent event, Player opfer) {
+        opfer.getWorld().spawnParticle(Particle.CRIT, opfer.getLocation().add(0, 1, 0), 14, 0.3, 0.5, 0.3, 0.05);
+        Player angreifer = angreiferVon(event);
+        if (angreifer != null) {
+            angreifer.playSound(angreifer.getLocation(), Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 1f, 1.4f);
+        }
+    }
+
+    /** Ermittelt den zuschlagenden Spieler, falls es ein direkter oder Projektil-Treffer war - bei anderen Schadensarten (Sturz, Feuer, ...) null. */
+    private Player angreiferVon(EntityDamageEvent event) {
+        if (!(event instanceof EntityDamageByEntityEvent byEntity)) {
+            return null;
+        }
+        Entity damager = byEntity.getDamager();
+        if (damager instanceof Player spieler) {
+            return spieler;
+        }
+        if (damager instanceof Projectile projectile && projectile.getShooter() instanceof Player spieler) {
+            return spieler;
+        }
+        return null;
     }
 
     private boolean haelTotem(Player spieler) {
