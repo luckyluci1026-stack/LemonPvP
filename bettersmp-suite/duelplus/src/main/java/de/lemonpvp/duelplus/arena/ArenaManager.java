@@ -76,15 +76,27 @@ public final class ArenaManager {
 
     /**
      * Je Arena eine andere Materialpalette (Boden, Akzent, Mauer/Struktur,
-     * Licht) - sonst wirkt spaetestens die dritte/vierte Arena immer
-     * gleich. Reihum verteilt nach Arena-Nummer. Bewusst nur gewoehnliche,
-     * robuste Bloecke - keine Gefahren-Materialien.
+     * Licht, Ring-Akzent) - sonst wirkt spaetestens die dritte/vierte Arena
+     * immer gleich. Reihum verteilt nach Arena-Nummer. Bewusst nur
+     * gewoehnliche, robuste Bloecke - keine Gefahren-Materialien.
+     *
+     * Ring-Akzent (5. Spalte) ist bewusst ein ganz normaler VOLLBLOCK, NIE
+     * eine _WALL-Sorte: _WALL-Bloecke haben eine eigene, erhoehte Hitbox
+     * (ein Pfosten in der Mitte, der sich zu Nachbar-Waenden verbindet) -
+     * als einzelner Bodenblock verlegt wuerde ueberall dort, wo Ring/
+     * Speichen-Linien aneinanderstossen, eine echte kleine Mauer aus dem
+     * Boden ragen ("Stone Fences" mitten in der Arena). Fuer die Ringe/
+     * Speichen im Boden zaehlt nur die Optik, keine Mauer-Kollision - dafuer
+     * hier der gemeißelte Vollblock-Vetter der jeweiligen _WALL-Sorte.
+     * mauer (3. Spalte) bleibt _WALL und wird NUR fuer echte aufragende
+     * Struktur (Tuerme/Zinnen/Deckungspfeiler in strukturenBauen) benutzt,
+     * dort ist die erhoehte Mauer-Form ausdruecklich gewollt.
      */
     private static final Material[][] PALETTEN = {
-            {Material.SMOOTH_STONE, Material.POLISHED_ANDESITE, Material.STONE_BRICK_WALL, Material.LANTERN},
-            {Material.POLISHED_DEEPSLATE, Material.DEEPSLATE_TILES, Material.POLISHED_DEEPSLATE_WALL, Material.SOUL_LANTERN},
-            {Material.SMOOTH_SANDSTONE, Material.CUT_SANDSTONE, Material.SANDSTONE_WALL, Material.LANTERN},
-            {Material.POLISHED_BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS, Material.POLISHED_BLACKSTONE_WALL, Material.SOUL_LANTERN},
+            {Material.SMOOTH_STONE, Material.POLISHED_ANDESITE, Material.STONE_BRICK_WALL, Material.LANTERN, Material.CHISELED_STONE_BRICKS},
+            {Material.POLISHED_DEEPSLATE, Material.DEEPSLATE_TILES, Material.POLISHED_DEEPSLATE_WALL, Material.SOUL_LANTERN, Material.CHISELED_DEEPSLATE},
+            {Material.SMOOTH_SANDSTONE, Material.CUT_SANDSTONE, Material.SANDSTONE_WALL, Material.LANTERN, Material.CHISELED_SANDSTONE},
+            {Material.POLISHED_BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS, Material.POLISHED_BLACKSTONE_WALL, Material.SOUL_LANTERN, Material.CHISELED_POLISHED_BLACKSTONE},
     };
 
     private final DuelPlus plugin;
@@ -265,6 +277,7 @@ public final class ArenaManager {
         Material akzent = palette[1];
         Material mauer = palette[2];
         Material licht = palette[3];
+        Material ringAkzent = palette[4];
         double ringInnen = radius * 0.35;
         double ringAussen = radius * 0.75;
         double ringBreite = 3.0;
@@ -282,7 +295,7 @@ public final class ArenaManager {
                 if (rundeEntfernung <= 3) {
                     bodenBlock = akzent;
                 } else if (ring1 || ring2 || speiche) {
-                    bodenBlock = mauer;
+                    bodenBlock = ringAkzent;
                 } else {
                     // Feine 2x2-Schachbrett-Textur zwischen den Ringen/
                     // Speichen - floorDiv statt normaler Ganzzahl-Division,
