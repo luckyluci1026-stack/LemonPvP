@@ -195,11 +195,21 @@ Ausweichen über `/shop` oder Ähnliches.
 /duel stats [Spieler]    - Sieg/Niederlage/Unentschieden-Statistik (ohne Angabe: die eigene;
                             das Ziel muss gerade ONLINE sein, egal auf welchem Server)
 /duel top [Anzahl]       - Rangliste nach Siegen absteigend (Standard 10, maximal 15)
+/duel watch <Spieler>    - einem laufenden Duell als Zuschauer beiwohnen (SPECTATOR-Modus) -
+                            funktioniert von JEDEM Server aus, auch wenn das Duell auf dem
+                            Duels-Server laeuft; das Ziel muss gerade ONLINE und in einem
+                            AKTIVEN Duell sein
+/duel unwatch            - Zuschauen beenden, zurueck auf den Herkunftsserver
 /draw                    - Unentschieden vorschlagen (nur waehrend des eigenen Duells,
                             wirkt erst, wenn BEIDE es benutzen - keiner gewinnt/verliert,
                             jeder bekommt sein eigenes Inventar unveraendert zurueck)
 /duelplus reload         - config.yml neu einlesen, DB-Verbindung neu aufbauen
 ```
+
+Ein Zuschauer wird NIE in die eigentliche Duell-Session aufgenommen
+(SPECTATOR-Modus uebernimmt Kollision/Schaden/Interaktion ohnehin
+komplett) und landet automatisch wieder auf seinem Herkunftsserver,
+sobald das beobachtete Duell endet.
 
 Die Statistik zaehlt jeden Duell-Ausgang serverübergreifend (gemeinsame
 MariaDB, siehe unten): ein normaler Sieg/eine Niederlage erhöht

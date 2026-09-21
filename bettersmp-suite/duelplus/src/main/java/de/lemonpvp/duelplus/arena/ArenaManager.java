@@ -524,6 +524,18 @@ public final class ArenaManager {
         return Optional.empty();
     }
 
+    /**
+     * Laeuft in dieser Arena GERADE ein Duell? Arenen selbst existieren
+     * dauerhaft (einmal gebaut, nie wieder entfernt) - arena(name) liefert
+     * also so gut wie immer ein Ergebnis, ganz unabhaengig davon, ob dort
+     * gerade wirklich gekaempft wird. Fuer Faelle, die das wirklich
+     * wissen muessen (z.B. ZuschauerManager: ist das beobachtete Duell
+     * inzwischen zu Ende?), zaehlt NUR das hier.
+     */
+    public synchronized boolean istBelegt(String arenaName) {
+        return belegtVon.containsKey(arenaName);
+    }
+
     public synchronized void freigeben(String arenaName) {
         belegtVon.remove(arenaName);
         Arena arena = arenen.get(arenaName);

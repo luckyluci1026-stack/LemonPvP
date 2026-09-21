@@ -456,6 +456,7 @@ public final class DuellSessionManager implements Listener {
             if (arena != null) {
                 plugin.rollback().zuruecksetzenUndStoppen(arena.world());
                 plugin.arenaManager().freigeben(arena.name());
+                plugin.zuschauer().arenaBeendet(arena.name());
             }
             if (gewinnerSpieler == null || !gewinnerSpieler.isOnline()) {
                 return;
@@ -619,6 +620,7 @@ public final class DuellSessionManager implements Listener {
         if (arena != null) {
             plugin.rollback().zuruecksetzenUndStoppen(arena.world());
             plugin.arenaManager().freigeben(arena.name());
+            plugin.zuschauer().arenaBeendet(arena.name());
         }
         for (Player p : new Player[]{a, b}) {
             if (p == null || !p.isOnline()) {

@@ -66,6 +66,15 @@ top-leer: "%prefix%<gray>Noch keine Duelle mit Ergebnis - die Rangliste ist leer
 top-kopf: "%prefix%<gold><bold>Rangliste</bold></gold>"
 top-zeile: "<gray>%platz%.</gray> <white>%spieler%</white> <green>%siege%S</green>/<red>%niederlagen%N</red>"
 
+# Zuschauer - /duel watch <Spieler> und /duel unwatch
+watch-busy: "%prefix%<red>Du kannst nicht zuschauen, waehrend du selbst in einem Duell oder einer offenen Anfrage steckst.</red>"
+watch-not-dueling: "%prefix%<red><white>%spieler%</white> ist gerade in keinem laufenden Duell.</red>"
+watch-teleporting: "%prefix%<gray>Du wirst zum Duell gebracht ...</gray>"
+watch-arena-gone: "%prefix%<gray>Das Duell ist inzwischen schon zu Ende - nichts mehr zum Zuschauen da.</gray>"
+watch-started: "%prefix%<green>Du schaust jetzt zu.</green> <gray>Mit <white>/duel unwatch</white> kommst du zurueck.</gray>"
+watch-not-watching: "%prefix%<red>Du schaust gerade niemandem zu.</red>"
+watch-stopped: "%prefix%<gray>Zuschauen beendet.</gray>"
+
 loot-dropped: "%prefix%<gold>Das Loot liegt am Boden - <white>%sekunden%s</white> lang gehört es nur dir.</gold>"
 enderchest-disabled: "%prefix%<red>Enderkisten sind in der Arena deaktiviert.</red>"
 command-blocked: "%prefix%<red>Befehle sind während eines Duells gesperrt.</red>"

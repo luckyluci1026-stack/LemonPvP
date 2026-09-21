@@ -14,6 +14,7 @@ import de.lemonpvp.duelplus.session.ArenaGuardListener;
 import de.lemonpvp.duelplus.session.DuellSessionManager;
 import de.lemonpvp.duelplus.util.Msgs;
 import de.lemonpvp.duelplus.util.ProxyBridge;
+import de.lemonpvp.duelplus.zuschauer.ZuschauerManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -36,6 +37,7 @@ public final class DuelPlus extends JavaPlugin {
     private ArenaManager arenaManager;
     private DuellSessionManager sessionManager;
     private RollbackTracker rollback;
+    private ZuschauerManager zuschauer;
 
     private String serverName;
     private boolean istArenaServer;
@@ -60,6 +62,12 @@ public final class DuelPlus extends JavaPlugin {
 
         this.bridge = new ProxyBridge(this);
         this.anfragen = new AnfrageManager(this);
+        // Auf JEDEM Server instanziiert (anfordern() muss serveruebergreifend
+        // per DB funktionieren, siehe ZuschauerManager), aber ihr
+        // PlayerJoinEvent-Handler wird bewusst nur unten, im istArenaServer-
+        // Zweig, als Listener registriert - angewendet wird ein Zuschauer-
+        // Status ohnehin nur dort, wo die Arena-Welten tatsaechlich existieren.
+        this.zuschauer = new ZuschauerManager(this);
 
         getServer().getPluginManager().registerEvents(new PresenceService(this), this);
         if (istLootQuelle) {
@@ -75,6 +83,7 @@ public final class DuelPlus extends JavaPlugin {
             this.sessionManager = new DuellSessionManager(this);
             sessionManager.starten();
             getServer().getPluginManager().registerEvents(new ArenaGuardListener(this), this);
+            getServer().getPluginManager().registerEvents(zuschauer, this);
         } else {
             getServer().getPluginManager().registerEvents(new DuelItemListener(this), this);
         }
@@ -144,6 +153,10 @@ public final class DuelPlus extends JavaPlugin {
 
     public RollbackTracker rollback() {
         return rollback;
+    }
+
+    public ZuschauerManager zuschauer() {
+        return zuschauer;
     }
 
     public String serverName() {

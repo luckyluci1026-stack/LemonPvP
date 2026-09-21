@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-/** /duel <Spieler> | /duel accept <Spieler> | /duel decline <Spieler> | /duel stats [Spieler] | /duel top [Anzahl] */
+/** /duel <Spieler> | /duel accept <Spieler> | /duel decline <Spieler> | /duel stats [Spieler] | /duel top [Anzahl] | /duel watch <Spieler> | /duel unwatch */
 public final class DuelCommand implements TabExecutor {
 
     private final DuelPlus plugin;
@@ -76,6 +76,18 @@ public final class DuelCommand implements TabExecutor {
             ranglisteZeigen(spieler, anzahl);
             return true;
         }
+        if (erstesArgument.equals("watch")) {
+            if (args.length < 2) {
+                plugin.msgs().send(spieler, "usage");
+                return true;
+            }
+            plugin.zuschauer().anfordern(spieler, args[1]);
+            return true;
+        }
+        if (erstesArgument.equals("unwatch")) {
+            plugin.zuschauer().beenden(spieler);
+            return true;
+        }
         plugin.anfragen().anfordern(spieler, args[0]);
         return true;
     }
@@ -114,13 +126,13 @@ public final class DuelCommand implements TabExecutor {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                       @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> vorschlaege = new ArrayList<>(List.of("accept", "decline", "stats", "top"));
+            List<String> vorschlaege = new ArrayList<>(List.of("accept", "decline", "stats", "top", "watch", "unwatch"));
             for (Player online : Bukkit.getOnlinePlayers()) {
                 vorschlaege.add(online.getName());
             }
             return vorschlaege;
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("stats")) {
+        if (args.length == 2 && (args[0].equalsIgnoreCase("stats") || args[0].equalsIgnoreCase("watch"))) {
             List<String> vorschlaege = new ArrayList<>();
             for (Player online : Bukkit.getOnlinePlayers()) {
                 vorschlaege.add(online.getName());

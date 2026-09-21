@@ -102,7 +102,10 @@ public final class DuelDatabase {
                 + "uuid VARCHAR(36) PRIMARY KEY, daten LONGTEXT, aktualisiert BIGINT)",
             "CREATE TABLE IF NOT EXISTS duelplus_stats ("
                 + "uuid VARCHAR(36) PRIMARY KEY, name VARCHAR(32), "
-                + "siege INT DEFAULT 0, niederlagen INT DEFAULT 0, unentschieden INT DEFAULT 0)"
+                + "siege INT DEFAULT 0, niederlagen INT DEFAULT 0, unentschieden INT DEFAULT 0)",
+            "CREATE TABLE IF NOT EXISTS duelplus_zuschauer_anfrage ("
+                + "spieler VARCHAR(36) PRIMARY KEY, arena_welt VARCHAR(64), "
+                + "herkunft_server VARCHAR(48), erstellt BIGINT)"
         };
         try (var st = conn().createStatement()) {
             for (String sql : ddl) {
@@ -629,6 +632,69 @@ public final class DuelDatabase {
                 rs.getInt("siege"),
                 rs.getInt("niederlagen"),
                 rs.getInt("unentschieden"));
+    }
+
+    // ================================================================
+    //  Zuschauer (/duel watch, serveruebergreifend - siehe ZuschauerManager)
+    // ================================================================
+
+    /** AKTIV-Duell (mit gesetzter Arena) dieses Spielers - anders als aktivesDuellFuer bewusst NICHT ANGENOMMEN, da dort noch keine Arena zugewiesen ist. */
+    public CompletableFuture<Optional<DuelRecord>> laufendesDuellMitArena(UUID spieler) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT * FROM duelplus_duelle WHERE (spieler_a=? OR spieler_b=?) AND status=? LIMIT 1")) {
+                ps.setString(1, spieler.toString());
+                ps.setString(2, spieler.toString());
+                ps.setString(3, DuelRecord.AKTIV);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? Optional.of(lese(rs)) : Optional.empty();
+                }
+            } catch (SQLException e) {
+                warn("laufendesDuellMitArena", e);
+                return Optional.empty();
+            }
+        });
+    }
+
+    /** Wird laufend UEBERSCHRIEBEN (REPLACE) - falls ein Spieler mehrfach /duel watch benutzt, bevor die erste Anfrage abgeholt wurde, zaehlt nur die letzte. */
+    public CompletableFuture<Void> zuschauerAnfrageSchreiben(UUID spieler, String arenaWelt, String herkunftServer) {
+        return run(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "REPLACE INTO duelplus_zuschauer_anfrage(spieler,arena_welt,herkunft_server,erstellt) VALUES(?,?,?,?)")) {
+                ps.setString(1, spieler.toString());
+                ps.setString(2, arenaWelt);
+                ps.setString(3, herkunftServer);
+                ps.setLong(4, System.currentTimeMillis());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                warn("zuschauerAnfrageSchreiben", e);
+            }
+        });
+    }
+
+    /** Liest die Zuschauer-Anfrage UND loescht sie gleich - einmal abgeholt (beim Ankommen auf dem Duels-Server), wird sie nicht nochmal gebraucht. */
+    public CompletableFuture<Optional<ZuschauerAnfrage>> zuschauerAnfrageHolenUndLoeschen(UUID spieler) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT arena_welt, herkunft_server FROM duelplus_zuschauer_anfrage WHERE spieler=?")) {
+                ps.setString(1, spieler.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        return Optional.empty();
+                    }
+                    ZuschauerAnfrage anfrage = new ZuschauerAnfrage(rs.getString("arena_welt"), rs.getString("herkunft_server"));
+                    try (PreparedStatement del = conn().prepareStatement(
+                            "DELETE FROM duelplus_zuschauer_anfrage WHERE spieler=?")) {
+                        del.setString(1, spieler.toString());
+                        del.executeUpdate();
+                    }
+                    return Optional.of(anfrage);
+                }
+            } catch (SQLException e) {
+                warn("zuschauerAnfrageHolenUndLoeschen", e);
+                return Optional.empty();
+            }
+        });
     }
 
     // ================================================================
