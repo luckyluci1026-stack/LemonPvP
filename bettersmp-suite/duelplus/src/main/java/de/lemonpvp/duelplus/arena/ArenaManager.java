@@ -8,10 +8,13 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Item;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -89,8 +92,26 @@ public final class ArenaManager {
     private final Map<String, String> belegtVon = new LinkedHashMap<>();
     private final Deque<String> warteschlange = new ArrayDeque<>();
 
+    /**
+     * Haelt fest, mit welchem Radius/welcher Hoehe eine Arena TATSAECHLICH
+     * gebaut wurde (siehe ladeOderErzeuge) - unabhaengig davon, ob
+     * arenen.worldborder-groesse/plattform-hoehe in der config.yml sich
+     * DANACH nochmal geaendert haben, ohne dass der Weltordner geloescht
+     * wurde. Ohne das wuerden bei einer bereits vorhandenen Welt Radius/
+     * Hoehe live (und potenziell falsch) aus der aktuellen config.yml
+     * gelesen - mit genau den Folgen, die Arena's Klassen-Kommentar fuer
+     * plattformHoehe beschreibt (falsche Absturz-Schwelle), zusaetzlich
+     * beim Radius auch eine falsch grosse Worldborder UND eine Barriere-
+     * Box, die nicht bis zum (neuen) Rand reicht.
+     */
+    private final File metaDatei;
+    private final YamlConfiguration meta;
+
     public ArenaManager(DuelPlus plugin) {
         this.plugin = plugin;
+        plugin.getDataFolder().mkdirs();
+        this.metaDatei = new File(plugin.getDataFolder(), "arena-meta.yml");
+        this.meta = YamlConfiguration.loadConfiguration(metaDatei);
     }
 
     public void arenenVorbereiten() {
@@ -119,34 +140,45 @@ public final class ArenaManager {
         }
         konfiguriereWelt(world);
 
-        int radius = Math.max(10, plugin.getConfig().getInt("arenen.worldborder-groesse", 115));
-        int hoehe = plugin.getConfig().getInt("arenen.plattform-hoehe", -63);
-        int abstand = Math.max(4, plugin.getConfig().getInt("arenen.spawn-abstand", 20));
-
-        // Die Plattform bleibt dauerhaft geladen (nicht erst, wenn zufaellig
-        // ein Spieler in der Naehe ist) - sonst kann direkt nach der Ankunft
-        // ein kurzes Nachladen wie ein Ruckler/"Zurueckgebuggtwerden" wirken.
-        chunksLaden(world, radius);
-
+        int radius;
+        int hoehe;
         int paletteIndex = (index - 1) % PALETTEN.length;
         if (neu) {
+            // Nur beim ALLERERSTEN Bauen aus der aktuellen config.yml lesen -
+            // das sind die Werte, die JETZT tatsaechlich verbaut werden.
+            radius = Math.max(10, plugin.getConfig().getInt("arenen.worldborder-groesse", 115));
+            hoehe = plugin.getConfig().getInt("arenen.plattform-hoehe", -63);
             Material[] palette = PALETTEN[paletteIndex];
+            chunksLaden(world, radius);
             plattformBauen(world, radius, hoehe, palette);
             barriereBauen(world, radius, hoehe);
+            metaSchreiben(name, radius, hoehe);
             plugin.getLogger().info("DuelPlus: Arena '" + name + "' NEU gebaut (Palette "
                     + (paletteIndex + 1) + "/" + PALETTEN.length + ", Radius " + radius
                     + ", Plattform-Hoehe " + hoehe + ").");
         } else {
-            // Nur aus der Welt geladen, NICHT neu gebaut - eine bereits
-            // vorhandene Weltdatei behaelt ihren alten Aufbau, ganz gleich,
-            // was jetzt in der config.yml oder im Plugin-Code steht. Wer
-            // eine strukturelle Aenderung erwartet, aber diese Zeile hier
-            // im Log sieht statt "NEU gebaut" oben, hat die Weltordner
-            // nicht wirklich geloescht (oder der Server wurde seitdem nicht
-            // neu gestartet - ein reines /duelplus reload baut nichts neu).
+            // Bereits vorhandene Weltdatei - Radius/Hoehe kommen bewusst aus
+            // arena-meta.yml (dort, wo sie beim tatsaechlichen Bauen
+            // hinterlegt wurden), NICHT live aus der aktuellen config.yml:
+            // die behaelt ihren alten Aufbau, ganz gleich, was inzwischen in
+            // der config.yml steht. Nur falls diese Arena noch NIE ueber
+            // diesen Mechanismus gebaut wurde (Update von einer sehr alten
+            // DuelPlus-Version ohne arena-meta.yml), bleibt als bestmoeglicher
+            // Ersatz die aktuelle config.yml.
+            int radiusFallback = Math.max(10, plugin.getConfig().getInt("arenen.worldborder-groesse", 115));
+            int hoeheFallback = plugin.getConfig().getInt("arenen.plattform-hoehe", -63);
+            radius = meta.getInt(name + ".radius", radiusFallback);
+            hoehe = meta.getInt(name + ".plattform-hoehe", hoeheFallback);
+            chunksLaden(world, radius);
+            // Wer eine strukturelle Aenderung erwartet, aber diese Zeile hier
+            // im Log sieht statt "NEU gebaut" oben, hat die Weltordner nicht
+            // wirklich geloescht (oder der Server wurde seitdem nicht neu
+            // gestartet - ein reines /duelplus reload baut nichts neu).
             plugin.getLogger().info("DuelPlus: Arena '" + name + "' aus vorhandener Welt geladen - "
-                    + "KEINE Struktur-Aenderung uebernommen (Weltordner dafuer loeschen + Server neu starten).");
+                    + "KEINE Struktur-Aenderung uebernommen (Weltordner dafuer loeschen + Server neu starten). "
+                    + "Tatsaechlicher Radius " + radius + ", Plattform-Hoehe " + hoehe + ".");
         }
+        int abstand = Math.max(4, plugin.getConfig().getInt("arenen.spawn-abstand", 20));
 
         Location mitte = new Location(world, 0.5, hoehe + 1, 0.5);
         world.setSpawnLocation(mitte.getBlockX(), mitte.getBlockY(), mitte.getBlockZ());
@@ -163,7 +195,25 @@ public final class ArenaManager {
         return new Arena(name, world, spawnA, spawnB, vollGroesse, hoehe);
     }
 
-    /** Haelt die Chunks der kompletten Plattform dauerhaft geladen (siehe ladeOderErzeuge). */
+    /** Haelt fest, mit welchem Radius/welcher Hoehe arenaName TATSAECHLICH gebaut wurde - siehe Kommentar beim meta-Feld. */
+    private void metaSchreiben(String arenaName, int radius, int hoehe) {
+        meta.set(arenaName + ".radius", radius);
+        meta.set(arenaName + ".plattform-hoehe", hoehe);
+        try {
+            meta.save(metaDatei);
+        } catch (IOException e) {
+            plugin.getLogger().warning("DuelPlus: Arena-Metadaten fuer '" + arenaName + "' konnten nicht "
+                    + "gespeichert werden (" + e.getMessage() + ") - bei einem spaeteren Server-Neustart wuerde "
+                    + "dann als Ersatz auf die dann aktuelle config.yml zurueckgefallen.");
+        }
+    }
+
+    /**
+     * Haelt die Chunks der kompletten Plattform dauerhaft geladen (nicht
+     * erst, wenn zufaellig ein Spieler in der Naehe ist) - sonst kann
+     * direkt nach der Ankunft ein kurzes Nachladen wie ein Ruckler/
+     * "Zurueckgebuggtwerden" wirken.
+     */
     private void chunksLaden(World world, int radius) {
         int min = (-radius) >> 4;
         int max = radius >> 4;

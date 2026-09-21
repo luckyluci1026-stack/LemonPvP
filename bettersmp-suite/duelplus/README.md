@@ -78,6 +78,20 @@ künftige Arena-Update dieser Art - nur ein Löschen der Weltordner
 erzeugt sie wirklich neu, ein reines Plugin-Update oder
 `/duelplus reload` reicht dafür nicht.
 
+**Woran erkenne ich, ob es geklappt hat?** Im Server-Log beim Start
+steht pro Arena entweder `NEU gebaut` (Weltordner war weg, Arena wurde
+mit dem aktuellen Aufbau + der aktuellen `config.yml` neu erzeugt) oder
+`aus vorhandener Welt geladen` (Weltordner war noch da - keine
+Struktur-Änderung übernommen). Radius und Plattform-Höhe, mit denen
+eine Arena tatsächlich gebaut wurde, merkt sich das Plugin zusätzlich
+dauerhaft in `plugins/DuelPlus/arena-meta.yml` - **unabhängig davon**,
+was später in der `config.yml` steht. Ändert man `worldborder-groesse`
+oder `plattform-hoehe`, ohne den zugehörigen Weltordner zu löschen,
+bleibt die Arena also exakt bei ihren ursprünglichen Werten (Absturz-
+Schwelle, Worldborder-Größe, Barriere-Box - alles bleibt zueinander
+konsistent), statt durch einen live gelesenen, nicht mehr passenden
+Config-Wert kaputtzugehen.
+
 ## Ablauf eines Duells
 
 1. **Herausfordern**: `/duel <Spieler>` (überall) oder Rechtsklick auf
