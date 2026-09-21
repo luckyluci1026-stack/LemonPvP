@@ -287,11 +287,13 @@ public final class ArenaManager {
      * zufaellig gemischtes Material sorgen fuer eine unregelmaessige,
      * organische Silhouette statt eines gleichmaessigen Blocks.
      *
-     * Bewusst auf maximal 3 Bloecke Tiefe begrenzt: bleibt damit WEIT
-     * oberhalb von ArenaGuardListener.beimAbsturzUnterDieArena's
-     * Ausloese-Schwelle (5 Bloecke unter der Plattform) - kann also nie
-     * zu einer Landestelle werden, auf der jemand stehen bleiben koennte,
-     * OHNE dass der Absturz-Check bereits ausgeloest haette.
+     * Bewusst auf maximal 3 Bloecke Tiefe begrenzt: ArenaGuardListener.
+     * beimAbsturzUnterDieArena loest schon aus, sobald die Y-Koordinate
+     * auch nur einen Hauch unter die Plattform faellt (kein Gnaden-
+     * Sturz mehr) - diese Felsen liegen also WEIT unterhalb jeder
+     * Stelle, die noch erreichbar waere, bevor der Absturz-Check
+     * bereits ausgeloest haette, und koennen daher nie zu einer
+     * tatsaechlich erreichbaren Landestelle werden.
      */
     private void randfelsenBauen(World world, int x, int y, int z, java.util.Random zufall, Material boden, Material akzent) {
         int tiefe = 1 + zufall.nextInt(3);
@@ -309,15 +311,16 @@ public final class ArenaManager {
      * der sichtbaren Mauer, in der VOLLEN Start-Groesse der Arena - macht
      * ein Entkommen (z.B. per Enderperle ueber/durch die eigentliche,
      * schrumpfende Worldborder, siehe ladeOderErzeuge) unabhaengig vom
-     * aktuellen Border-Stand unmoeglich. Reicht bewusst 10 Bloecke unter
-     * ArenaGuardListener.beimAbsturzUnterDieArena's Ausloese-Schwelle
-     * (Plattform - 5) hinunter, nicht nur bis knapp unter die Plattform -
-     * sonst gaebe es genau in der kurzen Fallstrecke dazwischen ein Loch in
-     * der Seitenwand, durch das eine Enderperle noch haette entkommen
-     * koennen, bevor der Absturz-Check greift. KEIN Boden: durch die
-     * Plattform nach unten fallen ist ein gewolltes "Ring-Out" (siehe
-     * ArenaGuardListener/README), kein Fluchtweg - die Box soll nur
-     * seitliches Entkommen verhindern, nicht das Fallen selbst.
+     * aktuellen Border-Stand unmoeglich. Reicht bewusst 15 Bloecke unter
+     * die Plattform hinunter, nicht nur bis knapp darunter - sonst gaebe
+     * es genau in der (kurzen) Fallstrecke ein Loch in der Seitenwand,
+     * durch das eine Enderperle noch haette entkommen koennen. Seit
+     * ArenaGuardListener.beimAbsturzUnterDieArena schon beim allerersten
+     * Verlassen der Plattform-Hoehe ausloest (kein Gnaden-Sturz mehr) ist
+     * dieser Puffer weit grosszuegiger als noetig - schadet aber nicht.
+     * KEIN Boden: durch die Plattform nach unten fallen ist ein gewolltes
+     * "Ring-Out" (siehe ArenaGuardListener/README), kein Fluchtweg - die
+     * Box soll nur seitliches Entkommen verhindern, nicht das Fallen selbst.
      */
     private void barriereBauen(World world, int radius, int y) {
         int aussen = radius + 1;

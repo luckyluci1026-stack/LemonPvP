@@ -193,12 +193,14 @@ Ausweichen über `/shop` oder Ähnliches.
 - Fallende Blöcke (Sand/Kies) durch Schwerkraft werden vom Rollback
   nicht erfasst - eher kosmetisch, kein Stakes-Thema.
 - Gräbt sich jemand durch die Plattform nach unten oder wird über die
-  niedrige Randmauer hinaus geworfen (z.B. durch eine Explosion), fällt
-  er - unter der Plattform liegt kein Void, sondern ein einfacher Boden
-  mit Bedrock ganz unten, bei Standardwerten (`arenen.plattform-hoehe`)
-  nur rund 25 Blöcke unterhalb der Plattform: kurz, aber spürbar. Das
-  zählt wie jeder andere tödliche Treffer als Niederlage ("Ring-Out") -
-  sobald klar zu weit unterhalb der Plattform, unabhängig vom
-  tatsächlichen Sturzschaden (siehe
-  `ArenaGuardListener.beimAbsturzUnterDieArena`), damit z.B.
-  Federfall-Stiefel dabei kein Schlupfloch sind.
+  niedrige Randmauer hinaus geworfen (z.B. durch eine Explosion), zählt
+  das **sofort** als Niederlage ("Ring-Out") - kein spürbarer Sturz
+  mehr vorher: `ArenaGuardListener.beimAbsturzUnterDieArena` löst schon
+  aus, sobald die Y-Koordinate auch nur einen Hauch unter die normale
+  Steh-Höhe der Plattform fällt, unabhängig vom tatsächlichen
+  Sturzschaden, damit z.B. Federfall-Stiefel dabei kein Schlupfloch
+  sind. Unter der Plattform liegt trotzdem kein echter Void, sondern
+  ein einfacher Boden mit Bedrock ganz unten (bei Standardwerten rund
+  25 Blöcke tiefer) - reines Sicherheitsnetz für den unwahrscheinlichen
+  Fall, dass der Check doch einmal durchrutscht, wird im normalen Spiel
+  aber nie erreicht.

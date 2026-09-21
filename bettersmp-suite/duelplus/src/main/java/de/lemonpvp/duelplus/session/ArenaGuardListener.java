@@ -32,11 +32,12 @@ import java.util.Optional;
  *    ganz normal (vanilla) - wir greifen dann bewusst NICHT ein.
  *  - Waehrend des Countdowns stehen beide fest an ihrem Startpunkt -
  *    nur Umsehen bleibt erlaubt, Weglaufen (z.B. ueber den Rand) nicht.
- *  - Faellt jemand zu weit unter die Plattform (durchgebrochen, ueber den
- *    Rand geworfen, ...), zaehlt das als automatische Niederlage -
- *    unabhaengig vom tatsaechlichen Sturzschaden (siehe
- *    beimAbsturzUnterDieArena), damit z.B. Federfall-Stiefel kein
- *    Schlupfloch sind.
+ *  - Verlaesst jemand die normale Steh-Hoehe der Plattform nach unten
+ *    (durchgebrochen, ueber den Rand geworfen, Plattform weggesprengt,
+ *    ...), zaehlt das SOFORT (kein spuerbarer Sturz mehr) als
+ *    automatische Niederlage - unabhaengig vom tatsaechlichen
+ *    Sturzschaden (siehe beimAbsturzUnterDieArena), damit z.B.
+ *    Federfall-Stiefel kein Schlupfloch sind.
  *  - Verbindung getrennt waehrend eines eigenen Duells = automatische
  *    Niederlage - verhindert, sich durch Abbrechen das eigene
  *    Inventar zu retten.
@@ -118,15 +119,19 @@ public final class ArenaGuardListener implements Listener {
     }
 
     /**
-     * Die Plattform ist nur 1 Block dick, darunter geht es hinunter bis
-     * zu einem einfachen Boden mit Bedrock (siehe ArenaManager) - wer
-     * durch sie faellt oder ueber den Rand geknockt wird, faellt also und
-     * nimmt dabei so gut wie immer toedlichen Sturzschaden (der ganz
-     * normal ueber beiSchaden abgefangen wird). Dieser Check greift
-     * UNABHAENGIG davon zusaetzlich, sobald klar zu weit unterhalb der
-     * Plattform - damit z.B. Federfall-Stiefel oder ein Zaubertrank gegen
-     * Fallschaden kein Schlupfloch sind, um sich einfach aus der Arena
-     * herauszuwerfen und unten zu ueberleben.
+     * Kein Gnaden-Sturz mehr: sobald die Y-Koordinate auch nur einen
+     * Hauch unter die normale Steh-Hoehe auf der Plattform faellt
+     * (arena.plattformHoehe() + 1 - die komplette Innenflaeche ist ein
+     * einziger flacher Block, dort steht man IMMER exakt auf dieser
+     * Hoehe, nie darunter), zaehlt das sofort als Niederlage - kein
+     * spuerbarer Sturz mehr, bevor es ausgeloest wird. Faellt jemand
+     * durch die Plattform, wird ueber den Rand geworfen ODER die
+     * Plattform wird ihm unter den Fuessen weggesprengt (z.B. ein
+     * Endkristall/Anker, siehe ArenaManager), greift dieser Check
+     * unabhaengig vom tatsaechlichen Sturzschaden - damit z.B.
+     * Federfall-Stiefel oder ein Zaubertrank gegen Fallschaden kein
+     * Schlupfloch sind, um sich einfach aus der Arena herauszuwerfen
+     * und unten zu ueberleben.
      *
      * Die Schwelle kommt bewusst aus arena.plattformHoehe() (dort, wo die
      * Plattform TATSAECHLICH gebaut wurde), NICHT live aus der config.yml
@@ -146,7 +151,7 @@ public final class ArenaGuardListener implements Listener {
         }
         DuellSession session = sessionOpt.get();
         Arena arena = plugin.arenaManager().arena(session.arenaName());
-        if (arena == null || zu.getY() >= arena.plattformHoehe() - 5) {
+        if (arena == null || zu.getY() >= arena.plattformHoehe() + 1) {
             return;
         }
         Player spieler = event.getPlayer();
