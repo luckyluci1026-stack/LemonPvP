@@ -23,6 +23,8 @@ expired-to-challenger: "%prefix%<gray><white>%spieler%</white> hat nicht rechtze
 teleporting: "%prefix%<gray>Du wirst zur Arena gebracht ...</gray>"
 countdown: "%prefix%<gold><bold>%sekunden%</bold></gold>"
 fight: "%prefix%<gradient:#FF6B6B:#C92A2A><bold>Kampf!</bold></gradient>"
+title-fight: "<gradient:#FF6B6B:#C92A2A><bold>KAMPF!</bold></gradient>"
+title-fight-sub: "<gray>Möge der Bessere gewinnen</gray>"
 
 you-won: "%prefix%<green><bold>Sieg!</bold></green> <gray>Das Loot von <white>%gegner%</white> liegt an der Stelle, an der es gefallen ist.</gray>"
 you-lost: "%prefix%<red><bold>Niederlage.</bold></red> <gray>Dein Inventar ist weg - <white>%gegner%</white> hat gewonnen.</gray>"
@@ -39,6 +41,16 @@ title-draw: "<yellow><bold>UNENTSCHIEDEN</bold></yellow>"
 title-draw-sub: "<gray>Niemand hat gewonnen</gray>"
 title-forfeit: "<red><bold>AUFGEGEBEN</bold></red>"
 title-forfeit-sub: "<gray>Zu lange kein Treffer</gray>"
+title-suddendeath: "<dark_red><bold>⚠ PLÖTZLICHER TOD ⚠</bold></dark_red>"
+title-suddendeath-sub: "<red>Die Grenze ist am Minimum - jeder Treffer zählt!</red>"
+
+# Boss-Bar waehrend des Kampfes (siehe DuellSessionManager.
+# bossBarAktualisieren) - zeigt laufend den Grenz-Fortschritt, faerbt
+# sich waehrend Camping gelb und bei Ploetzlichem Tod (Grenze am
+# Minimum) dauerhaft rot.
+bossbar-normal: "<gradient:#4FA8FF:#1E3A8A><bold>Grenze</bold></gradient> <white>schrumpft - noch %groesse% Blöcke</white>"
+bossbar-camping: "<gold><bold>⚡ Kein Treffer</bold></gold> <white>- Grenze schrumpft jetzt schneller (%groesse% Blöcke)</white>"
+bossbar-suddendeath: "<dark_red><bold>☠ PLÖTZLICHER TOD - Grenze am Minimum ☠</bold></dark_red>"
 
 draw-not-in-duel: "%prefix%<red>Du bist gerade in keinem laufenden Duell.</red>"
 draw-already-requested: "%prefix%<gray>Du hast bereits ein Unentschieden vorgeschlagen - warte auf <white>%gegner%</white>.</gray>"

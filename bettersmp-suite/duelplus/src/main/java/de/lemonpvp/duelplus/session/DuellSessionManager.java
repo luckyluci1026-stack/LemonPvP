@@ -6,10 +6,14 @@ import de.lemonpvp.duelplus.db.DuelDatabase;
 import de.lemonpvp.duelplus.db.DuelRecord;
 import de.lemonpvp.duelplus.db.SpielerSnapshot;
 import de.lemonpvp.duelplus.loot.LootManager;
+import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -26,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Nur auf dem Duels-Server aktiv. Erkennt die Ankunft von Duellanten
@@ -153,6 +158,21 @@ public final class DuellSessionManager implements Listener {
                         if (p.isOnline()) {
                             p.setGameMode(GameMode.SURVIVAL);
                             plugin.msgs().send(p, "fight");
+                            plugin.msgs().title(p, "title-fight", "title-fight-sub");
+                        }
+                    }
+                    // Blitzeinschlag NUR als optischer/akustischer Effekt
+                    // (strikeLightningEffect statt strikeLightning) - macht
+                    // KEINEN Schaden und zuendet nichts an, ist aber ein
+                    // dramatischer Start-Moment fuer beide sichtbar.
+                    arena.world().strikeLightningEffect(arena.world().getSpawnLocation());
+                    BossBar bossBar = BossBar.bossBar(
+                            plugin.msgs().format("bossbar-normal", "groesse", String.valueOf((int) arena.vollGroesse())),
+                            1f, BossBar.Color.BLUE, BossBar.Overlay.NOTCHED_10);
+                    session.bossBarSetzen(bossBar);
+                    for (Player p : new Player[]{a, b}) {
+                        if (p.isOnline()) {
+                            p.showBossBar(bossBar);
                         }
                     }
                     session.kampfStarten();
@@ -163,6 +183,7 @@ public final class DuellSessionManager implements Listener {
                 for (Player p : new Player[]{a, b}) {
                     if (p.isOnline()) {
                         plugin.msgs().send(p, "countdown", "sekunden", String.valueOf(rest));
+                        p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
                     }
                 }
                 rest--;
@@ -187,6 +208,12 @@ public final class DuellSessionManager implements Listener {
      *    frist-danach-minuten lang keiner, automatische Aufgabe mit
      *    Inventar-Teilverlust fuer beide (kein Sieger). Jeder Treffer
      *    setzt das komplett zurueck (siehe DuellSession.treffer()).
+     *  - Boss-Bar + Atmosphaere: dieselbe Sekundentakt-Schleife haelt auch
+     *    die Boss-Bar auf dem aktuellen Grenz-Stand (siehe
+     *    bossBarAktualisieren) und streut Seelen-Partikel am Rand (siehe
+     *    atmosphaerePartikel). Erreicht die Grenze zum ERSTEN Mal ihre
+     *    Ziel-Groesse, loest das einmalig den "Ploetzlicher Tod"-Moment
+     *    aus (siehe ploetzlicherTodAusloesen).
      */
     private void kampfUeberwachungStarten(Arena arena, DuellSession session) {
         double zielGroesse = Math.max(2, plugin.getConfig().getInt("kampf.worldborder-schrumpfen.ziel-groesse", 10));
@@ -215,12 +242,20 @@ public final class DuellSessionManager implements Listener {
                     return;
                 }
                 long seitTreffer = session.millisSeitLetztemTreffer();
+                boolean campt = seitTreffer >= campingNachMillis;
 
                 if (aktuelleGroesse > zielGroesse) {
-                    boolean campt = seitTreffer >= campingNachMillis;
                     double proSekunde = campt ? campingProSekunde : normalProSekunde;
                     aktuelleGroesse = Math.max(zielGroesse, aktuelleGroesse - proSekunde);
                     arena.world().getWorldBorder().setSize(aktuelleGroesse, 1);
+                }
+                boolean ploetzlicherTod = aktuelleGroesse <= zielGroesse;
+
+                bossBarAktualisieren(session, aktuelleGroesse, startGroesse, zielGroesse, campt, ploetzlicherTod);
+                atmosphaerePartikel(arena);
+                if (ploetzlicherTod && !session.ploetzlicherTodGezeigt()) {
+                    session.ploetzlicherTodSetzen();
+                    ploetzlicherTodAusloesen(session);
                 }
 
                 if (!inaktivitaetsAufgabeAktiv) {
@@ -243,6 +278,79 @@ public final class DuellSessionManager implements Listener {
                 }
             }
         }.runTaskTimer(plugin, 20L, 20L);
+    }
+
+    /**
+     * Text/Fortschritt/Farbe der Boss-Bar passend zum aktuellen
+     * Grenz-Zustand: normal (blau, schrumpft im normalen Tempo), Camping
+     * (gelb, schrumpft schneller, siehe kampfUeberwachungStarten) oder
+     * Ploetzlicher Tod (rot, volle Bar, Boss-Musik + abgedunkelter
+     * Bildschirm als zusaetzlicher Nachdruck - siehe ploetzlicherTodAusloesen).
+     */
+    private void bossBarAktualisieren(DuellSession session, double aktuelleGroesse, double startGroesse,
+                                       double zielGroesse, boolean campt, boolean ploetzlicherTod) {
+        BossBar bar = session.bossBar();
+        if (bar == null) {
+            return;
+        }
+        if (ploetzlicherTod) {
+            bar.name(plugin.msgs().format("bossbar-suddendeath"));
+            bar.progress(1f);
+            bar.color(BossBar.Color.RED);
+            bar.addFlags(BossBar.Flag.PLAY_BOSS_MUSIC, BossBar.Flag.DARKEN_SCREEN);
+            return;
+        }
+        String groesseText = String.valueOf((int) Math.round(aktuelleGroesse));
+        float fortschritt = (float) Math.max(0.0, Math.min(1.0,
+                (aktuelleGroesse - zielGroesse) / Math.max(0.0001, startGroesse - zielGroesse)));
+        bar.progress(fortschritt);
+        if (campt) {
+            bar.name(plugin.msgs().format("bossbar-camping", "groesse", groesseText));
+            bar.color(BossBar.Color.YELLOW);
+        } else {
+            bar.name(plugin.msgs().format("bossbar-normal", "groesse", groesseText));
+            bar.color(BossBar.Color.BLUE);
+        }
+    }
+
+    /** Seelen-Partikel nahe am aeusseren Rand - Atmosphaere fuer die "im Nichts schwebende Plattform" (siehe ArenaManager). */
+    private void atmosphaerePartikel(Arena arena) {
+        World world = arena.world();
+        Location mitte = world.getSpawnLocation();
+        double radius = arena.vollGroesse() / 2.0;
+        for (int i = 0; i < 5; i++) {
+            double winkel = ThreadLocalRandom.current().nextDouble() * Math.PI * 2;
+            double r = radius - ThreadLocalRandom.current().nextDouble() * 5;
+            double x = mitte.getX() + r * Math.cos(winkel);
+            double z = mitte.getZ() + r * Math.sin(winkel);
+            world.spawnParticle(Particle.SOUL, x, mitte.getY() + 0.2, z, 1, 0, 0.4, 0, 0.01);
+        }
+    }
+
+    /** Einmaliger dramatischer Moment, sobald die Grenze zum ersten Mal ihre Ziel-Groesse erreicht - siehe kampfUeberwachungStarten. */
+    private void ploetzlicherTodAusloesen(DuellSession session) {
+        for (UUID uuid : new UUID[]{session.spielerA(), session.spielerB()}) {
+            Player spieler = Bukkit.getPlayer(uuid);
+            if (spieler == null) {
+                continue;
+            }
+            plugin.msgs().title(spieler, "title-suddendeath", "title-suddendeath-sub");
+            spieler.playSound(spieler.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1f, 1f);
+        }
+    }
+
+    /** Boss-Bar fuer beide ausblenden - bei JEDEM Ende einer Session aufgerufen (Sieg/Niederlage, Unentschieden, Aufgabe). */
+    private void bossBarVerstecken(DuellSession session) {
+        BossBar bar = session.bossBar();
+        if (bar == null) {
+            return;
+        }
+        for (UUID uuid : new UUID[]{session.spielerA(), session.spielerB()}) {
+            Player spieler = Bukkit.getPlayer(uuid);
+            if (spieler != null) {
+                spieler.hideBossBar(bar);
+            }
+        }
     }
 
     // ================================================================
@@ -279,6 +387,7 @@ public final class DuellSessionManager implements Listener {
         UUID gegnerUuid = session.gegnerVon(verliererUuid);
         sessionNachSpieler.remove(gegnerUuid);
         UUID gewinner = gegnerUuid;
+        bossBarVerstecken(session);
 
         Player verlierer = Bukkit.getPlayer(verliererUuid);
         Player gewinnerSpieler = Bukkit.getPlayer(gegnerUuid);
@@ -472,6 +581,7 @@ public final class DuellSessionManager implements Listener {
         if (!aEntfernt && !bEntfernt) {
             return;
         }
+        bossBarVerstecken(session);
 
         Player a = Bukkit.getPlayer(aUuid);
         Player b = Bukkit.getPlayer(bUuid);

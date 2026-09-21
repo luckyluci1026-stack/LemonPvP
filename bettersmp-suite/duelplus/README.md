@@ -94,7 +94,13 @@ erzeugt sie wirklich neu, ein reines Plugin-Update oder
    Tiefenschiefer, Sandstein oder Schwarzstein) mit einem
    Kompassmuster als Boden - konzentrische Kreise, durchzogen von acht
    Speichen zu den Spawnpunkten, den zwei symmetrischen
-   Deckungspfeilern und den vier Eck-Türmen - und einer Worldborder.
+   Deckungspfeilern und vier hohen **Eck-Türmen** (mit Zinnenkranz und
+   Licht auf der Spitze). Der äußere Rand ist bewusst **kein glatter
+   Schnitt**: darunter hängt ein zerklüfteter, zufällig geformter
+   Fels-Ansatz - die Arena soll wie eine abgebrochene, im Nichts
+   schwebende Kampf-Plattform wirken, nicht wie eine einfache Fläche.
+   Während des Kampfes steigen zusätzlich laufend Seelen-Partikel nahe
+   am Rand auf. Um das alles herum eine Worldborder.
    Zusätzlich zur (schrumpfenden) Worldborder steckt die ganze Arena in
    einer unsichtbaren, unzerstörbaren Barriere-Box in der vollen
    Start-Größe (vier Wände + Decke) - die Worldborder allein reicht
@@ -106,15 +112,23 @@ erzeugt sie wirklich neu, ein reines Plugin-Update oder
    Platzieren, Explosionen, Eimer, Flüssigkeiten, Feuer), damit sie
    für das nächste Duell wieder genau so aussieht wie vorher.
    Während des Countdowns (siehe Punkt 4) stehen beide fest an ihrem
-   Platz und sehen sich an - sobald der Kampf beginnt, schrumpft die
-   Worldborder (`kampf.worldborder-schrumpfen`) in Richtung `ziel-groesse`
-   (Standard 10 Blöcke). Das Tempo passt sich laufend an: Solange
-   getroffen wird, läuft es im normalen, langsamen Tempo
-   (`dauer-sekunden`, Standard 270s) - fällt länger als
-   `camping-nach-sekunden` (Standard 15s) kein Treffer, schaltet es auf
-   das deutlich schnellere Camping-Tempo (`camping-dauer-sekunden`,
-   Standard 60s) um. Aktiver Kampf wird also nicht bestraft, reines
-   Ausweichen/Verstecken schon.
+   Platz und sehen sich an, bei jeder verbleibenden Sekunde ein kurzer
+   Ton - sobald der Kampf beginnt, schlägt sichtbar/hörbar ein
+   **Blitz** am Arena-Zentrum ein (nur Effekt, macht keinen Schaden und
+   zündet nichts an) und beide sehen "KAMPF!" groß auf dem Bildschirm.
+   Ab da läuft für beide eine **Boss-Bar**, die laufend zeigt, wie weit
+   die Worldborder (`kampf.worldborder-schrumpfen`) noch bis
+   `ziel-groesse` (Standard 10 Blöcke) schrumpft. Das Tempo passt sich
+   laufend an: Solange getroffen wird, läuft es im normalen, langsamen
+   Tempo (`dauer-sekunden`, Standard 270s, Boss-Bar blau) - fällt
+   länger als `camping-nach-sekunden` (Standard 15s) kein Treffer,
+   schaltet es auf das deutlich schnellere Camping-Tempo
+   (`camping-dauer-sekunden`, Standard 60s, Boss-Bar gelb) um. Aktiver
+   Kampf wird also nicht bestraft, reines Ausweichen/Verstecken schon.
+   Erreicht die Grenze zum ersten Mal ihr Minimum, schlägt das Spiel
+   einmalig in einen **"Plötzlicher Tod"**-Moment um: Boss-Bar wird rot
+   und bleibt es, beide bekommen einen Warn-Titel samt Ton, und für die
+   Dauer wird zusätzlich die eigentliche Boss-Musik eingespielt.
 
    Zusätzliche Absicherung gegen (auch unfreiwillige, z.B. AFK) totale
    Untätigkeit: Fällt `kampf.aufgabe-bei-inaktivitaet.warnung-nach-minuten`

@@ -204,6 +204,7 @@ public final class ArenaManager {
         Material mauer = palette[2];
         Material licht = palette[3];
         int ringBreite = 6;
+        java.util.Random zufall = new java.util.Random();
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
                 // Quadratischer Abstand (Chebyshev) NUR fuer die Aussenmauer -
@@ -234,19 +235,33 @@ public final class ArenaManager {
                 }
                 if (eckigerRand == radius) {
                     world.getBlockAt(x, y + 1, z).setType(mauer, false);
+                    randfelsenBauen(world, x, y, z, zufall, boden, akzent);
                 }
             }
         }
-        // Vier Eckpfeiler mit Licht - Blickfang gegen die "leere graue
-        // Flaeche" UND ein staerkerer Hinweis auf den Rand als nur die
-        // 1 Block hohe Mauer.
+        // Vier Eck-TUERME statt einfacher Pfeiler - deutlich imposanter,
+        // mit einem Zinnenkranz kurz unter der Spitze fuer eine echte
+        // Turm-Silhouette statt eines duennen Stabes. Blickfang gegen die
+        // "leere graue Flaeche" UND ein staerkerer Hinweis auf den Rand als
+        // nur die 1 Block hohe Mauer.
         int[][] ecken = {{-radius, -radius}, {-radius, radius}, {radius, -radius}, {radius, radius}};
+        int turmHoehe = 8;
         for (int[] ecke : ecken) {
             int ex = ecke[0];
             int ez = ecke[1];
-            world.getBlockAt(ex, y + 1, ez).setType(mauer, false);
-            world.getBlockAt(ex, y + 2, ez).setType(mauer, false);
-            world.getBlockAt(ex, y + 3, ez).setType(licht, false);
+            for (int ty = 1; ty <= turmHoehe; ty++) {
+                world.getBlockAt(ex, y + ty, ez).setType(mauer, false);
+            }
+            // Zinnenkranz NUR nach INNEN versetzt (nie nach aussen) - sonst
+            // wuerden zwei der vier Bloecke exakt auf dem Ring landen, auf
+            // dem gleich danach barriereBauen die unsichtbare Barriere-Box
+            // baut, und dort wieder spurlos verschwinden.
+            int kranzY = y + turmHoehe - 1;
+            int dx = ex < 0 ? 1 : -1;
+            int dz = ez < 0 ? 1 : -1;
+            world.getBlockAt(ex + dx, kranzY, ez).setType(mauer, false);
+            world.getBlockAt(ex, kranzY, ez + dz).setType(mauer, false);
+            world.getBlockAt(ex, y + turmHoehe + 1, ez).setType(licht, false);
         }
         // Zwei Deckungspfeiler auf der Z-Achse (X=0) - taktische Tiefe
         // gegen die sonst komplett leere Mitte. Bewusst NUR auf der Achse
@@ -261,6 +276,28 @@ public final class ArenaManager {
                 world.getBlockAt(0, y + 1, dz).setType(mauer, false);
                 world.getBlockAt(0, y + 2, dz).setType(mauer, false);
             }
+        }
+    }
+
+    /**
+     * Zerklüfteter Fels-Ansatz unter dem äusseren Rand einer einzelnen
+     * Rand-Zelle - laesst die Arena wie eine abgebrochene, im Nichts
+     * schwebende Kampf-Plattform wirken statt wie eine glatt
+     * abgeschnittene Flaeche. Zufaellige Tiefe (1-3 Bloecke) und
+     * zufaellig gemischtes Material sorgen fuer eine unregelmaessige,
+     * organische Silhouette statt eines gleichmaessigen Blocks.
+     *
+     * Bewusst auf maximal 3 Bloecke Tiefe begrenzt: bleibt damit WEIT
+     * oberhalb von ArenaGuardListener.beimAbsturzUnterDieArena's
+     * Ausloese-Schwelle (5 Bloecke unter der Plattform) - kann also nie
+     * zu einer Landestelle werden, auf der jemand stehen bleiben koennte,
+     * OHNE dass der Absturz-Check bereits ausgeloest haette.
+     */
+    private void randfelsenBauen(World world, int x, int y, int z, java.util.Random zufall, Material boden, Material akzent) {
+        int tiefe = 1 + zufall.nextInt(3);
+        for (int dy = 1; dy <= tiefe; dy++) {
+            Material stein = zufall.nextBoolean() ? boden : akzent;
+            world.getBlockAt(x, y - dy, z).setType(stein, false);
         }
     }
 

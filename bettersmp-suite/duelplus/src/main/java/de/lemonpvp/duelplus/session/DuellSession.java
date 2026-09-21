@@ -1,5 +1,7 @@
 package de.lemonpvp.duelplus.session;
 
+import net.kyori.adventure.bossbar.BossBar;
+
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +21,8 @@ public final class DuellSession {
     private final Set<UUID> unentschiedenZustimmung = ConcurrentHashMap.newKeySet();
     private volatile long letzterTrefferMillis = System.currentTimeMillis();
     private volatile boolean inaktivitaetsWarnungGezeigt = false;
+    private volatile BossBar bossBar;
+    private volatile boolean ploetzlicherTodGezeigt = false;
 
     public DuellSession(String duellId, String arenaName,
                          UUID spielerA, String spielerAName, String spielerAServer,
@@ -108,5 +112,23 @@ public final class DuellSession {
 
     public boolean hatUnentschiedenVorgeschlagen(UUID spieler) {
         return unentschiedenZustimmung.contains(spieler);
+    }
+
+    /** Boss-Bar dieser Session (zeigt den Grenz-Fortschritt waehrend des Kampfes) - null vor Kampfbeginn. */
+    public BossBar bossBar() {
+        return bossBar;
+    }
+
+    public void bossBarSetzen(BossBar bossBar) {
+        this.bossBar = bossBar;
+    }
+
+    /** true, sobald der Ploetzlicher-Tod-Moment (Grenze am Minimum) schon einmal ausgeloest wurde - verhindert Mehrfachversand. */
+    public boolean ploetzlicherTodGezeigt() {
+        return ploetzlicherTodGezeigt;
+    }
+
+    public void ploetzlicherTodSetzen() {
+        this.ploetzlicherTodGezeigt = true;
     }
 }
