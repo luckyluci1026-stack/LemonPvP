@@ -85,9 +85,10 @@ gegenstand:
 #  unterschiedlich fair je nach Landeplatz). Kein manuelles Bauen
 #  noetig. Block-Aenderungen sind waehrend des Duells erlaubt, werden
 #  aber danach komplett zurueckgerollt (siehe RollbackTracker).
-#  Reihum 4 strukturell unterschiedliche Boden-Themes (Kompass,
-#  Feuergraben, Eisarena, Ozean-Tempel, siehe ArenaManager) - nicht nur
-#  andere Bloecke, sondern jeweils andere Taktik.
+#  Die gesamte begehbare Flaeche liegt nur 1 Block ueber Bedrock - macht
+#  Endkristall-/Anker-PvP unbedenklich (siehe ArenaManager). Reihum 4
+#  verschiedene Materialpaletten, gleicher Aufbau (zwei Ringe + feine
+#  Schachbrett-Textur + Speichen).
 # ----------------------------------------------------------
 arenen:
   anzahl: 4
@@ -100,15 +101,15 @@ arenen:
   worldborder-groesse: 115
   # Wie weit die zwei Startpunkte innerhalb einer Arena auseinander liegen
   spawn-abstand: 20
-  # Y-Koordinate der Plattform. Bewusst NICHT hoch (z.B. Y=100): unter
-  # der Arena liegt immer ein einfacher Boden mit Bedrock, der beim
-  # Flachwelt-Generator fest am Minimum der Welt (Y=-64) anfaengt und
-  # sich nicht verschieben laesst - eine hohe Plattform wuerde also
-  # einen sehr langen, zaehen Sturz bedeuten. Bei diesem Standardwert
-  # (Boden endet bei Y=-45) ist der Sturz nur rund 25 Bloecke lang -
-  # kurz, aber spuerbar. Aendert man diesen Wert nachtraeglich, wirkt
-  # das erst nach dem Loeschen der Arena-Weltordner (siehe README).
-  plattform-hoehe: -20
+  # Y-Koordinate der Plattform. Bewusst NUR 1 Block ueber dem Bedrock,
+  # das beim Flachwelt-Generator fest am Minimum der Welt (Y=-64)
+  # anfaengt und sich nicht verschieben laesst - die gesamte Arena
+  # liegt dadurch praktisch direkt auf unzerstoerbarem Grund: reisst
+  # eine Explosion (Endkristall/Anker) den Boden weg, faellt man
+  # hoechstens 1 Block auf das Bedrock, kein langer Sturz. Aendert man
+  # diesen Wert nachtraeglich, wirkt das erst nach dem Loeschen der
+  # Arena-Weltordner (siehe README).
+  plattform-hoehe: -63
 
 # ----------------------------------------------------------
 #  Ablauf eines Duells

@@ -63,9 +63,12 @@ unsichtbare Barriere-Box gegen Enderperlen-Fluchten, eine dritte
 Version noch mit reinem Luft-Void unter der Plattform statt eines
 richtigen Bodens mit Bedrock, eine vierte Version noch mit einer sehr
 hoch gelegenen Plattform (Sturz bis zum Boden weit über 100 Blöcke)
-statt der aktuellen, viel niedrigeren, und eine fünfte Version noch mit
-kleinerer Worldborder-Größe und nur EINEM Boden-Design (statt der vier
-strukturell unterschiedlichen Themes, siehe unten). Damit Arenen
+statt der aktuellen, viel niedrigeren, eine fünfte Version noch mit
+kleinerer Worldborder-Größe, und eine sechste Version noch mit
+mehreren strukturell verschiedenen Boden-Themes (Lavagraben, Eis,
+Wasserring) UND einer sichtbaren Randmauer, auf der man stehen/von der
+man abrutschen konnte - beides durch Live-Tests als Fehlerquelle
+identifiziert und wieder entfernt (siehe unten). Damit Arenen
 stattdessen mit dem aktuellen Aufbau entstehen (siehe unten), müssen auf
 dem **Duels-Server** einmalig die alten Weltordner gelöscht werden -
 Standard-Namen `duell_arena_1` bis `duell_arena_4` (siehe
@@ -91,39 +94,34 @@ erzeugt sie wirklich neu, ein reines Plugin-Update oder
    dessen unverwundbar), dann beginnt der Kampf.
 5. **Arena**: eine von mehreren automatisch erzeugten Welten **ohne
    echte Vanilla-Terraingenerierung** (man soll am Rand nicht in "die
-   echte Welt" schauen können). Reihum **vier strukturell komplett
-   unterschiedliche Boden-Themes** (nicht nur andere Bloecke, andere
-   Taktik), siehe `ArenaManager`:
-   - **Kompass**: das urspruengliche Design - konzentrische Kreise,
-     durchzogen von acht Speichen zu den Spawnpunkten, den zwei
-     symmetrischen Deckungspfeilern und den vier Eck-Tuermen.
-   - **Feuergraben**: ein Lavagraben trennt beide Haelften, nur an
-     drei festen Stellen ueberbrueckt - reinfallen zaehlt sofort als
-     Niederlage (kein fester Boden darunter), kein bisschen Schaden
-     zum Durchlaufen.
-   - **Eisarena**: rutschiges PACKED_ICE/BLUE_ICE (schmilzt anders als
-     normales Eis NICHT) - veraendert das Bewegungsgefuehl im Kampf
-     wirklich.
-   - **Ozean-Tempel**: Prismarine-Boden mit einem flachen, begehbaren
-     Wasserring nahe am Rand - bremst, schadet aber nicht.
+   echte Welt" schauen können). Die komplette begehbare Fläche liegt
+   nur **1 Block über unzerstörbarem Bedrock** - macht Endkristall-/
+   Anker-PvP unbedenklich: reißt eine Explosion den Boden weg, fällt
+   man höchstens 1 Block auf das Bedrock, statt durch eine große Lücke.
+   Der Boden ist ein aufwendiges Muster aus **zwei konzentrischen
+   Ringen** plus einer feinen Schachbrett-Textur dazwischen, überlagert
+   von acht Speichen durch die Mitte (zu Spawnpunkten, Deckungspfeilern,
+   Eck-Türmen) - alles aus gewöhnlichen, robusten Blöcken (keine
+   Gefahren-Materialien wie Lava/Wasser/Eis). Reihum vier verschiedene
+   Materialpaletten (Stein, Tiefenschiefer, Sandstein, Schwarzstein),
+   gleicher Aufbau. Dazu vier hohe **Eck-Türme** (mit Zinnenkranz und
+   Licht auf der Spitze) und zwei Deckungspfeiler in der Mitte.
 
-   Alle vier teilen sich denselben Rahmen: vier hohe **Eck-Türme** (mit
-   Zinnenkranz und Licht auf der Spitze), einen bewusst **nicht glatt
-   abgeschnittenen** äußeren Rand (ein zerklüfteter, zufällig geformter
-   Fels-Ansatz darunter - die Arena soll wie eine abgebrochene, im
-   Nichts schwebende Kampf-Plattform wirken) und laufend aufsteigende
-   Seelen-Partikel nahe am Rand während des Kampfes. Um das alles herum
-   eine Worldborder.
-   Zusätzlich zur (schrumpfenden) Worldborder steckt die ganze Arena in
-   einer unsichtbaren, unzerstörbaren Barriere-Box in der vollen
-   Start-Größe (vier Wände + Decke) - die Worldborder allein reicht
-   nicht, weil eine Enderperle ihre sanfte Zurückdräng-Kollision instant
-   überspringt (bekannter Vanilla-Kniff); die Barriere-Box stoppt das
-   unabhängig vom aktuellen Border-Stand zuverlässig.
+   Bewusst **keine sichtbare Randmauer** mehr: der äußere Abschluss ist
+   ausschließlich eine unsichtbare, unzerstörbare **Barriere-Box**
+   (vier Wände + Decke, bis exakt auf Bedrock-Niveau hinunter, kein
+   Spalt) in der vollen Start-Größe der Arena - die Worldborder allein
+   reicht nicht, weil eine Enderperle ihre sanfte Zurückdräng-Kollision
+   instant überspringt (bekannter Vanilla-Kniff); die Barriere-Box
+   stoppt das unabhängig vom aktuellen Border-Stand zuverlässig, ohne
+   eine begehbare Kante zu bieten, auf der man stehen oder von der man
+   unerwartet abrutschen/durchfallen könnte.
    Bauen/Abbauen ist während des Duells erlaubt - danach wird die
    Arena **komplett zurückgerollt** (jede Blockänderung: Abbauen,
    Platzieren, Explosionen, Eimer, Flüssigkeiten, Feuer), damit sie
    für das nächste Duell wieder genau so aussieht wie vorher.
+   Während des Kampfes steigen zusätzlich laufend Seelen-Partikel nahe
+   am Rand auf.
    Während des Countdowns (siehe Punkt 4) stehen beide fest an ihrem
    Platz und sehen sich an, bei jeder verbleibenden Sekunde ein kurzer
    Ton - sobald der Kampf beginnt, schlägt sichtbar/hörbar ein
@@ -229,15 +227,14 @@ nur der Weg dorthin unterscheidet sich.
 
 - Fallende Blöcke (Sand/Kies) durch Schwerkraft werden vom Rollback
   nicht erfasst - eher kosmetisch, kein Stakes-Thema.
-- Gräbt sich jemand durch die Plattform nach unten oder wird über die
-  niedrige Randmauer hinaus geworfen (z.B. durch eine Explosion), zählt
-  das **sofort** als Niederlage ("Ring-Out") - kein spürbarer Sturz
-  mehr vorher: `ArenaGuardListener.beimAbsturzUnterDieArena` löst schon
-  aus, sobald die Y-Koordinate auch nur einen Hauch unter die normale
-  Steh-Höhe der Plattform fällt, unabhängig vom tatsächlichen
-  Sturzschaden, damit z.B. Federfall-Stiefel dabei kein Schlupfloch
-  sind. Unter der Plattform liegt trotzdem kein echter Void, sondern
-  ein einfacher Boden mit Bedrock ganz unten (bei Standardwerten rund
-  25 Blöcke tiefer) - reines Sicherheitsnetz für den unwahrscheinlichen
-  Fall, dass der Check doch einmal durchrutscht, wird im normalen Spiel
-  aber nie erreicht.
+- Ein "Absturz" ist im normalen Spiel praktisch ausgeschlossen: die
+  gesamte Arena liegt nur 1 Block über unzerstörbarem Bedrock, seitlich
+  hält die unsichtbare Barriere-Box (bis auf Bedrock-Niveau hinunter,
+  kein Spalt) jeden drinnen. Gräbt sich jemand durch den Boden oder
+  wird eine Stelle durch eine Explosion (Endkristall/Anker) weggerissen,
+  fällt man höchstens 1 Block auf das Bedrock - kein Ring-Out, keine
+  automatische Niederlage. `ArenaGuardListener.beimAbsturzUnterDieArena`
+  ist nur noch ein reines Sicherheitsnetz mit großzügiger Schwelle (20
+  Blöcke unter der Plattform, weit unterhalb des Bedrocks) für den
+  theoretischen Fall, dass jemand trotzdem darunter gerät (z.B. ein Bug
+  anderswo) - im normalen Spiel wird das nie erreicht.
