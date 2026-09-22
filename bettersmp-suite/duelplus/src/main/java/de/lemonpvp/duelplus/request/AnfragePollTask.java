@@ -167,30 +167,47 @@ public final class AnfragePollTask {
                 // wuerde ein Fehler mittendrin die Zeile trotzdem als erledigt
                 // stehen lassen und es gaebe keinen zweiten Versuch mehr.
                 plugin.db().snapshotHolenUndLoeschen(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_ZURUECK)
-                        .thenCompose(snapshotOpt -> {
-                            if (plugin.istLootQuelle() || snapshotOpt.isEmpty()) {
-                                return CompletableFuture.completedFuture(snapshotOpt);
+                        .thenAccept(snapshotOpt -> {
+                            if (snapshotOpt.isEmpty()) {
+                                // Status faellt beim Gewinner schon auf BEENDET,
+                                // BEVOR sein Schnappschuss ueberhaupt existiert -
+                                // der wird ja erst nach dem vollen
+                                // loot.schutz-sekunden-Fenster geschrieben (siehe
+                                // DuellSessionManager.niederlageAusloesen), der
+                                // Status-Wechsel selbst aber schon direkt nach dem
+                                // (sofortigen) Verlierer-Schnappschuss. Auf GAR
+                                // KEINEN Fall hier schon als bearbeitet markieren -
+                                // sonst wuerde der naechste Poll-Tick (typischerweise
+                                // schon nach ~1 Sekunde, siehe anfrage.poll-takt)
+                                // diese Zeile faelschlich als erledigt liegen lassen,
+                                // WEIT bevor der eigentliche Schnappschuss ueberhaupt
+                                // da ist - der Gewinner haette sein gewonnenes
+                                // Inventar dann NIE bekommen. Einfach nichts tun,
+                                // der naechste Tick versucht es von selbst erneut.
+                                return;
                             }
+                            SpielerSnapshot snapshot = snapshotOpt.get();
                             // Nicht die Loot-Quelle (z.B. Lobby): das Ergebnis
                             // gehoert in den Spiegel, NICHT in das lokale
                             // Live-Inventar dieses Servers - erst beim
                             // naechsten Beitritt zur Loot-Quelle (SMP) wird
                             // es wirklich uebernommen (StammInventarService).
-                            return plugin.db().stammInventarSchreiben(spielerUuid, snapshotOpt.get())
-                                    .thenApply(unused -> snapshotOpt);
-                        })
-                        .thenAccept(snapshotOpt -> Bukkit.getScheduler().runTask(plugin, () -> {
-                            if (plugin.istLootQuelle()) {
-                                snapshotOpt.ifPresent(snap -> snap.anwenden(spieler.getInventory()));
-                            }
-                            String gegnerName = istA ? duell.spielerBName() : duell.spielerAName();
-                            plugin.msgs().send(spieler, ergebnisKey, "gegner", gegnerName);
-                            if (istA) {
-                                plugin.db().markiereBearbeitetA(duell.id());
-                            } else {
-                                plugin.db().markiereBearbeitetB(duell.id());
-                            }
-                        }));
+                            CompletableFuture<Void> vorbereitung = plugin.istLootQuelle()
+                                    ? CompletableFuture.completedFuture(null)
+                                    : plugin.db().stammInventarSchreiben(spielerUuid, snapshot);
+                            vorbereitung.thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                                if (plugin.istLootQuelle()) {
+                                    snapshot.anwenden(spieler.getInventory());
+                                }
+                                String gegnerName = istA ? duell.spielerBName() : duell.spielerAName();
+                                plugin.msgs().send(spieler, ergebnisKey, "gegner", gegnerName);
+                                if (istA) {
+                                    plugin.db().markiereBearbeitetA(duell.id());
+                                } else {
+                                    plugin.db().markiereBearbeitetB(duell.id());
+                                }
+                            }));
+                        });
             }
         });
     }
