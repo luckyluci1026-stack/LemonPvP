@@ -207,7 +207,13 @@ Abbrechen das eigene Inventar zu retten.
 
 Während eines Duells sind **Enderkisten deaktiviert** und **alle
 Befehle gesperrt** (`duelplus.command.bypass` fürs Team) - kein
-Ausweichen über `/shop` oder Ähnliches.
+Ausweichen über `/shop` oder Ähnliches. Die Befehlssperre gilt auch
+noch direkt NACH dem Kampfende bis zur tatsächlichen Rückreise
+(Todeskamera beim Verlierer, volles `loot.schutz-sekunden`-Fenster
+beim Gewinner) - sonst könnte sich z.B. der Gewinner per `/spawn`
+selbst wegteleportieren, bevor sein gewonnenes Inventar überhaupt in
+die Datenbank geschrieben wurde (Loot wäre dann verloren, Arena/
+Worldborder blieben für diese Runde hängen).
 
 ## Befehle
 

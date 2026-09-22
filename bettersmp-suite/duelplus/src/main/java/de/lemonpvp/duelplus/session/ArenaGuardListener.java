@@ -50,10 +50,14 @@ import java.util.Optional;
  *  - Verbindung getrennt waehrend eines eigenen Duells = automatische
  *    Niederlage - verhindert, sich durch Abbrechen das eigene
  *    Inventar zu retten.
- *  - Befehle sind waehrend eines eigenen Duells komplett gesperrt
+ *  - Befehle sind waehrend eines eigenen Duells UND direkt danach, bis
+ *    zur tatsaechlichen Rueckreise (Todeskamera/Loot-Schutzfenster,
+ *    siehe DuellSessionManager.nachbereitung), komplett gesperrt
  *    (duelplus.command.bypass umgeht das, fuers Team) - einfacher und
  *    sicherer als einzelne Befehle wie /shop auf eine Sperrliste zu
- *    setzen.
+ *    setzen. Ohne die zweite Haelfte koennte sich z.B. der Gewinner per
+ *    /spawn selbst wegteleportieren, bevor sein gewonnenes Inventar
+ *    ueberhaupt geschrieben wurde.
  *  - Enderkisten sind in jeder Arena-Welt deaktiviert - es soll kein
  *    Loot ausserhalb der mitgebrachten Kampfausruestung geben.
  *  - Join-/Leave-Nachrichten sind auf dem Duels-Server generell stumm -
@@ -233,7 +237,13 @@ public final class ArenaGuardListener implements Listener {
             // (das ist der ganze Sinn) - explizit von der Sperre ausgenommen.
             return;
         }
-        if (plugin.sessionManager().sessionVon(spieler.getUniqueId()).isPresent()) {
+        // Zweiter Fall NACH sessionVon(): auch wer gerade kein aktives
+        // Duell (mehr) hat, aber noch in der Nachbereitung steckt
+        // (Todeskamera/Loot-Schutzfenster, siehe DuellSessionManager.
+        // nachbereitung) - sonst koennte z.B. der Gewinner per /spawn
+        // verschwinden, bevor sein Inventar ueberhaupt geschrieben wurde.
+        if (plugin.sessionManager().sessionVon(spieler.getUniqueId()).isPresent()
+                || plugin.sessionManager().inNachbereitung(spieler.getUniqueId())) {
             event.setCancelled(true);
             plugin.msgs().send(spieler, "command-blocked");
         }

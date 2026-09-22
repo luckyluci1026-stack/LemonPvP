@@ -77,7 +77,7 @@ watch-stopped: "%prefix%<gray>Zuschauen beendet.</gray>"
 
 loot-dropped: "%prefix%<gold>Das Loot liegt am Boden - <white>%sekunden%s</white> lang gehört es nur dir.</gold>"
 enderchest-disabled: "%prefix%<red>Enderkisten sind in der Arena deaktiviert.</red>"
-command-blocked: "%prefix%<red>Befehle sind während eines Duells gesperrt.</red>"
+command-blocked: "%prefix%<red>Befehle sind während eines Duells sowie kurz danach (Todeskamera/Loot-Schutzfenster) gesperrt.</red>"
 
 arena-queue: "%prefix%<gray>Gerade sind alle Arenen belegt - du kommst automatisch dran, sobald eine frei wird.</gray>"
 

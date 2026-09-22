@@ -50,6 +50,24 @@ public final class DuellSessionManager implements Listener {
     private final Map<String, Set<UUID>> wartendAufAnkunft = new ConcurrentHashMap<>();
     private final Map<UUID, DuellSession> sessionNachSpieler = new ConcurrentHashMap<>();
 
+    /**
+     * Wer gerade zwischen Kampfende und der TATSAECHLICHEN Rueckreise steckt
+     * (Todeskamera beim Verlierer, Loot-Schutzfenster beim Gewinner) - siehe
+     * niederlageAusloesen. Getrennt von sessionNachSpieler, weil dieses schon
+     * GANZ AM ANFANG von niederlageAusloesen fuer beide geleert wird (u.a.
+     * damit ArenaGuardListener.beiSchaden danach nicht mehr eingreift), das
+     * eigentliche Aufraeumen (Inventar-Schnappschuss schreiben, GameMode
+     * zuruecksetzen, Arena freigeben) aber danach noch bis zu
+     * loot.schutz-sekunden lang dauert. Ohne diese zweite Sperre koennte der
+     * Gewinner in genau diesem Fenster z.B. per /spawn selbst die Arena
+     * verlassen, BEVOR sein gerade gewonnenes Inventar ueberhaupt geschrieben
+     * wurde - er wuerde auf seinem Herkunftsserver dann mit seinem alten,
+     * dort gespeicherten Vor-Duell-Inventar ankommen (sein Loot faktisch
+     * verloren), UND Arena/Worldborder blieben fuer diese Runde haengen,
+     * weil auch das erst am Ende dieses Fensters passiert (siehe unten).
+     */
+    private final Set<UUID> nachbereitung = ConcurrentHashMap.newKeySet();
+
     public DuellSessionManager(DuelPlus plugin) {
         this.plugin = plugin;
         this.loot = new LootManager(plugin);
@@ -69,6 +87,11 @@ public final class DuellSessionManager implements Listener {
 
     public Optional<DuellSession> sessionVon(UUID spieler) {
         return Optional.ofNullable(sessionNachSpieler.get(spieler));
+    }
+
+    /** true zwischen Kampfende und der tatsaechlichen Rueckreise (Todeskamera/Loot-Schutzfenster) - siehe nachbereitung-Feld. */
+    public boolean inNachbereitung(UUID spieler) {
+        return nachbereitung.contains(spieler);
     }
 
     // ================================================================
@@ -404,6 +427,13 @@ public final class DuellSessionManager implements Listener {
         UUID gegnerUuid = session.gegnerVon(verliererUuid);
         sessionNachSpieler.remove(gegnerUuid);
         UUID gewinner = gegnerUuid;
+        // Beide bis zur TATSAECHLICHEN Rueckreise gesperrt halten (siehe
+        // Feld-Kommentar) - sessionNachSpieler ist ab hier schon leer, ohne
+        // dieses zweite Set koennten beide sofort z.B. per /spawn selbst
+        // verschwinden, bevor ihr jeweiliges Inventar ueberhaupt geschrieben
+        // bzw. die Arena/Worldborder zurueckgesetzt wurde.
+        nachbereitung.add(verliererUuid);
+        nachbereitung.add(gewinner);
         bossBarVerstecken(session);
         plugin.db().siegHinzufuegen(gewinner, session.eigenerName(gewinner));
         plugin.db().niederlageHinzufuegen(verliererUuid, session.eigenerName(verliererUuid));
@@ -445,6 +475,7 @@ public final class DuellSessionManager implements Listener {
         }
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            nachbereitung.remove(verliererUuid);
             if (verlierer != null && verlierer.isOnline()) {
                 zustandZuruecksetzen(verlierer);
                 verlierer.setGameMode(GameMode.SURVIVAL);
@@ -458,6 +489,7 @@ public final class DuellSessionManager implements Listener {
                 plugin.arenaManager().freigeben(arena.name());
                 plugin.zuschauer().arenaBeendet(arena.name());
             }
+            nachbereitung.remove(gewinner);
             if (gewinnerSpieler == null || !gewinnerSpieler.isOnline()) {
                 return;
             }
