@@ -12,6 +12,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Item;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,26 +28,30 @@ import java.util.Optional;
  * Erzeugt und verwaltet die Arenen - nur auf dem Duels-Server aktiv.
  *
  * Jede Arena ist eine eigene, flache Welt OHNE echte Vanilla-
- * Terraingenerierung, deren komplette begehbare Flaeche DIREKT auf
- * Bedrock liegt (nur 1 Block Abstand, siehe VOID_GENERATOR_SETTINGS) -
- * bewusst KEIN tiefer Abgrund mehr darunter. Das macht Endkristall-/
- * Anker-PvP unbedenklich: reisst eine Explosion den Boden weg, faellt
- * man hoechstens 1 Block auf den unzerstoerbaren Bedrock statt durch
- * eine grosse Luecke. Seitlich steckt die ganze Arena in einer
- * unsichtbaren, unzerstoerbaren Barriere-Box bis hinunter auf
- * Bedrock-Niveau (siehe barriereBauen) - kein sichtbarer, begehbarer
- * Rand mehr, auf dem man stehen oder von dem man abrutschen koennte,
- * kein Spalt, durch den man seitlich entkommen koennte. Die
- * schrumpfende Worldborder (siehe DuellSessionManager) bleibt der
- * Druckmechanismus, der beide zueinander zwingt - inklusive ihres
- * normalen Vanilla-Schadens ausserhalb.
+ * Terraingenerierung. Unter der begehbaren Steinplattform folgt
+ * luecken-los echtes, grabbares Terrain bis zum Bedrock hinunter -
+ * Erde, dann Stein, dann Tiefenschiefer (siehe terrainFuellen) - statt
+ * wie frueher nur 1 Block Luft ueber dem Bedrock. Reisst eine Explosion
+ * (Endkristall/Anker) den Boden weg, faellt man dadurch jetzt in
+ * echtes Gestein statt direkt auf/durch den Bedrock - erst weit
+ * UNTERHALB des (unzerstoerbaren) Bedrocks zaehlt das ueberhaupt noch
+ * als automatische Niederlage, siehe ArenaGuardListener und
+ * arenen.todeslinie-y. Seitlich steckt die ganze Arena in einer
+ * unsichtbaren, unzerstoerbaren Barriere-Box, die bis auf Bedrock-
+ * Niveau hinunterreicht (siehe barriereBauen) - sonst koennte man sich
+ * durch das jetzt echte Terrain seitlich aus der Arena heraus graben.
+ * Kein sichtbarer, begehbarer Rand, auf dem man stehen oder von dem
+ * man abrutschen koennte. Die schrumpfende Worldborder (siehe
+ * DuellSessionManager) bleibt der Druckmechanismus, der beide
+ * zueinander zwingt - inklusive ihres normalen Vanilla-Schadens
+ * ausserhalb.
  *
  * Der Boden ist ein aufwendiges Muster: zwei konzentrische Ringe plus
  * eine feine Schachbrett-Textur dazwischen, ueberlagert von acht
  * Speichen durch die Mitte (zu Spawnpunkten, Deckungspfeilern, Eck-
  * Tuermen) - alles aus gewoehnlichen, robusten Bloecken (keine Gefahren-
- * Materialien wie Lava/Wasser/Eis). Je Arena eine andere
- * Materialpalette, sonst identischer Aufbau.
+ * Materialien wie Lava/Wasser/Eis). Zwei Materialpaletten (Stein,
+ * Tiefenschiefer), reihum nach Arena-Nummer verteilt.
  *
  * Block-Aenderungen sind waehrend eines Duells erlaubt (siehe
  * RollbackTracker), deshalb muss hier nichts nach jedem Kampf neu
@@ -56,16 +61,16 @@ public final class ArenaManager {
 
     /**
      * Flache Welt OHNE echte Vanilla-Terraingenerierung - nur eine
-     * einzelne Bedrock-Schicht als Fundament. Alles andere (der
-     * komplette begehbare Boden) malt plattformBauen direkt DARAUF,
-     * innerhalb des Arena-Radius - ausserhalb davon (durch die
-     * Barriere-Box ohnehin nicht erreichbar) bleibt es bei nacktem
-     * Bedrock.
+     * einzelne Bedrock-Schicht als Fundament. Alles andere (Plattform UND
+     * das Terrain darunter) malt ladeOderErzeuge direkt DARAUF, innerhalb
+     * des Arena-Radius - ausserhalb davon (durch die Barriere-Box ohnehin
+     * nicht erreichbar) bleibt es bei nacktem Bedrock.
      *
      * WICHTIG: Bedrock liegt beim Flachwelt-Generator IMMER fest am
-     * Minimum der Welt (Y=-64) und laesst sich nicht verschieben -
-     * deshalb setzt arenen.plattform-hoehe die Plattform bewusst nur
-     * 1 Block darueber (Standard Y=-63). Wirkt nur beim ALLERERSTEN
+     * Minimum der Welt (Y=BEDROCK_Y) und laesst sich nicht verschieben -
+     * die Plattform-Hoehe ergibt sich deshalb rechnerisch aus BEDROCK_Y
+     * plus den drei Terrain-Tiefen (siehe terrainHoeheBerechnen), nicht
+     * mehr aus einem eigenen config-Wert. Wirkt nur beim ALLERERSTEN
      * Erzeugen einer Arena-Welt: bereits vorhandene Weltordner (z.B.
      * aus einer aelteren DuelPlus-Version mit anderem Aufbau) muessen
      * einmalig manuell geloescht werden, damit sie mit diesem Preset
@@ -74,11 +79,16 @@ public final class ArenaManager {
     private static final String VOID_GENERATOR_SETTINGS =
             "{\"layers\":[{\"block\":\"minecraft:bedrock\",\"height\":1}],\"biome\":\"minecraft:the_void\"}";
 
+    /** Fixe Y-Koordinate der einzelnen Bedrock-Schicht beim Flachwelt-Generator (siehe VOID_GENERATOR_SETTINGS) - Welt-Minimum, nicht verschiebbar. */
+    private static final int BEDROCK_Y = -64;
+
     /**
-     * Je Arena eine andere Materialpalette (Boden, Akzent, Mauer/Struktur,
-     * Licht, Ring-Akzent) - sonst wirkt spaetestens die dritte/vierte Arena
-     * immer gleich. Reihum verteilt nach Arena-Nummer. Bewusst nur
-     * gewoehnliche, robuste Bloecke - keine Gefahren-Materialien.
+     * Zwei Materialpaletten (Boden, Akzent, Mauer/Struktur, Licht,
+     * Ring-Akzent) - bewusst nur "echte Stein"-Familien (Stein,
+     * Tiefenschiefer), damit die Plattform optisch zu dem Gestein passt,
+     * das direkt darunter beginnt (siehe terrainFuellen). Reihum verteilt
+     * nach Arena-Nummer. Bewusst nur gewoehnliche, robuste Bloecke - keine
+     * Gefahren-Materialien.
      *
      * Ring-Akzent (5. Spalte) ist bewusst ein ganz normaler VOLLBLOCK, NIE
      * eine _WALL-Sorte: _WALL-Bloecke haben eine eigene, erhoehte Hitbox
@@ -95,8 +105,6 @@ public final class ArenaManager {
     private static final Material[][] PALETTEN = {
             {Material.SMOOTH_STONE, Material.POLISHED_ANDESITE, Material.STONE_BRICK_WALL, Material.LANTERN, Material.CHISELED_STONE_BRICKS},
             {Material.POLISHED_DEEPSLATE, Material.DEEPSLATE_TILES, Material.POLISHED_DEEPSLATE_WALL, Material.SOUL_LANTERN, Material.CHISELED_DEEPSLATE},
-            {Material.SMOOTH_SANDSTONE, Material.CUT_SANDSTONE, Material.SANDSTONE_WALL, Material.LANTERN, Material.CHISELED_SANDSTONE},
-            {Material.POLISHED_BLACKSTONE, Material.POLISHED_BLACKSTONE_BRICKS, Material.POLISHED_BLACKSTONE_WALL, Material.SOUL_LANTERN, Material.CHISELED_POLISHED_BLACKSTONE},
     };
 
     private final DuelPlus plugin;
@@ -107,14 +115,15 @@ public final class ArenaManager {
     /**
      * Haelt fest, mit welchem Radius/welcher Hoehe eine Arena TATSAECHLICH
      * gebaut wurde (siehe ladeOderErzeuge) - unabhaengig davon, ob
-     * arenen.worldborder-groesse/plattform-hoehe in der config.yml sich
-     * DANACH nochmal geaendert haben, ohne dass der Weltordner geloescht
-     * wurde. Ohne das wuerden bei einer bereits vorhandenen Welt Radius/
-     * Hoehe live (und potenziell falsch) aus der aktuellen config.yml
-     * gelesen - mit genau den Folgen, die Arena's Klassen-Kommentar fuer
-     * plattformHoehe beschreibt (falsche Absturz-Schwelle), zusaetzlich
-     * beim Radius auch eine falsch grosse Worldborder UND eine Barriere-
-     * Box, die nicht bis zum (neuen) Rand reicht.
+     * arenen.worldborder-groesse/boden-tiefe/stein-tiefe/deepslate-tiefe
+     * in der config.yml sich DANACH nochmal geaendert haben, ohne dass
+     * der Weltordner geloescht wurde. Ohne das wuerden bei einer bereits
+     * vorhandenen Welt Radius/Hoehe live (und potenziell falsch) aus der
+     * aktuellen config.yml berechnet - mit genau den Folgen, die Arena's
+     * Klassen-Kommentar fuer plattformHoehe beschreibt (falsche Spawn-
+     * Hoehe, falsche Worldborder-Mitte), zusaetzlich beim Radius auch
+     * eine falsch grosse Worldborder UND eine Barriere-Box, die nicht bis
+     * zum (neuen) Rand reicht.
      */
     private final File metaDatei;
     private final YamlConfiguration meta;
@@ -159,15 +168,21 @@ public final class ArenaManager {
             // Nur beim ALLERERSTEN Bauen aus der aktuellen config.yml lesen -
             // das sind die Werte, die JETZT tatsaechlich verbaut werden.
             radius = Math.max(10, plugin.getConfig().getInt("arenen.worldborder-groesse", 115));
-            hoehe = plugin.getConfig().getInt("arenen.plattform-hoehe", -63);
+            int bodenTiefe = Math.max(0, plugin.getConfig().getInt("arenen.boden-tiefe", 7));
+            int steinTiefe = Math.max(0, plugin.getConfig().getInt("arenen.stein-tiefe", 35));
+            int deepslateTiefe = Math.max(0, plugin.getConfig().getInt("arenen.deepslate-tiefe", 15));
+            hoehe = terrainHoeheBerechnen(bodenTiefe, steinTiefe, deepslateTiefe);
             Material[] palette = PALETTEN[paletteIndex];
             chunksLaden(world, radius);
             plattformBauen(world, radius, hoehe, palette);
             barriereBauen(world, radius, hoehe);
+            terrainFuellen(world, radius, hoehe, bodenTiefe, steinTiefe, deepslateTiefe);
             metaSchreiben(name, radius, hoehe);
             plugin.getLogger().info("DuelPlus: Arena '" + name + "' NEU gebaut (Palette "
                     + (paletteIndex + 1) + "/" + PALETTEN.length + ", Radius " + radius
-                    + ", Plattform-Hoehe " + hoehe + ").");
+                    + ", Plattform-Hoehe " + hoehe + ", Terrain darunter " + bodenTiefe + "/" + steinTiefe
+                    + "/" + deepslateTiefe + " Erde/Stein/Tiefenschiefer - fuellt sich ueber die naechsten "
+                    + "Sekunden asynchron auf).");
         } else {
             // Bereits vorhandene Weltdatei - Radius/Hoehe kommen bewusst aus
             // arena-meta.yml (dort, wo sie beim tatsaechlichen Bauen
@@ -178,7 +193,10 @@ public final class ArenaManager {
             // DuelPlus-Version ohne arena-meta.yml), bleibt als bestmoeglicher
             // Ersatz die aktuelle config.yml.
             int radiusFallback = Math.max(10, plugin.getConfig().getInt("arenen.worldborder-groesse", 115));
-            int hoeheFallback = plugin.getConfig().getInt("arenen.plattform-hoehe", -63);
+            int hoeheFallback = terrainHoeheBerechnen(
+                    Math.max(0, plugin.getConfig().getInt("arenen.boden-tiefe", 7)),
+                    Math.max(0, plugin.getConfig().getInt("arenen.stein-tiefe", 35)),
+                    Math.max(0, plugin.getConfig().getInt("arenen.deepslate-tiefe", 15)));
             radius = meta.getInt(name + ".radius", radiusFallback);
             hoehe = meta.getInt(name + ".plattform-hoehe", hoeheFallback);
             chunksLaden(world, radius);
@@ -205,6 +223,19 @@ public final class ArenaManager {
         spawnA.setYaw(-90f);
         spawnB.setYaw(90f);
         return new Arena(name, world, spawnA, spawnB, vollGroesse, hoehe);
+    }
+
+    /**
+     * Plattform-Hoehe RECHNERISCH aus dem Terrain-Aufbau darunter, nicht
+     * mehr als eigener config-Wert: BEDROCK_Y ist fest (siehe Feld-
+     * Kommentar), direkt darueber liegt luecken-los Tiefenschiefer, dann
+     * Stein, dann Erde, dann - genau 1 Block darueber - die begehbare
+     * Plattform. So kann die Plattform nie versehentlich einen Spalt zum
+     * Terrain darunter haben, ganz gleich, welche Tiefen in der config.yml
+     * stehen.
+     */
+    private int terrainHoeheBerechnen(int bodenTiefe, int steinTiefe, int deepslateTiefe) {
+        return BEDROCK_Y + 1 + deepslateTiefe + steinTiefe + bodenTiefe;
     }
 
     /** Haelt fest, mit welchem Radius/welcher Hoehe arenaName TATSAECHLICH gebaut wurde - siehe Kommentar beim meta-Feld. */
@@ -265,12 +296,12 @@ public final class ArenaManager {
      * Zwei konzentrische Ringe (bei 35% und 75% des Radius) plus eine
      * feine Schachbrett-Textur dazwischen, ueberlagert von acht Speichen
      * durch die Mitte - waagerecht/senkrecht zu den Spawnpunkten bzw.
-     * den Deckungspfeilern, diagonal zu den vier Eck-Tuermen. Direkt auf
-     * dem Bedrock der Welt gebaut (siehe VOID_GENERATOR_SETTINGS),
-     * bewusst OHNE sichtbare Randmauer: der aeussere Abschluss ist
-     * ausschliesslich die unsichtbare Barriere-Box (siehe
-     * barriereBauen) - keine begehbare Kante mehr, auf der man stehen
-     * oder von der man unerwartet abrutschen/durchfallen koennte.
+     * den Deckungspfeilern, diagonal zu den vier Eck-Tuermen. Bewusst OHNE
+     * sichtbare Randmauer: der aeussere Abschluss ist ausschliesslich die
+     * unsichtbare Barriere-Box (siehe barriereBauen) - keine begehbare
+     * Kante mehr, auf der man stehen oder von der man unerwartet
+     * abrutschen/durchfallen koennte. Was UNTER dieser einen Blockschicht
+     * liegt, baut nicht diese Methode, sondern terrainFuellen.
      */
     private void plattformBauen(World world, int radius, int y, Material[] palette) {
         Material boden = palette[0];
@@ -361,6 +392,55 @@ public final class ArenaManager {
         }
     }
 
+    /**
+     * Fuellt das echte Terrain UNTER der Plattform auf: Erde, dann Stein,
+     * dann Tiefenschiefer, luecken-los bis direkt auf den Bedrock (siehe
+     * terrainHoeheBerechnen - die Plattform-Hoehe ist so gewaehlt, dass
+     * exakt das aufgeht). Bei voller Arena-Groesse waeren das schnell
+     * mehrere Millionen Bloecke auf einen Schlag - statt das synchron in
+     * EINEM Aufruf zu erledigen (Absturzrisiko: der Server-Watchdog killt
+     * den Prozess, wenn der Haupt-Thread zu lange nicht reagiert), baut
+     * dieser Task pro Tick genau EINE horizontale Schicht (radius- und
+     * nicht tiefenabhaengig - ungefaehr so viele Bloecke wie eine einzelne
+     * Plattform-Schicht, das laeuft nachweislich schon synchron
+     * problemlos). Faellt ueber ein paar Sekunden nach dem Bauen komplett
+     * auf - bis dahin ist die Arena oben schon voll begehbar, es fehlt nur
+     * das kosmetische Gestein tief darunter, das ohnehin niemand in den
+     * ersten Sekunden nach einem Server-Neustart erreicht.
+     */
+    private void terrainFuellen(World world, int radius, int plattformY, int bodenTiefe, int steinTiefe, int deepslateTiefe) {
+        List<Material> schichten = new ArrayList<>();
+        for (int i = 0; i < bodenTiefe; i++) {
+            schichten.add(Material.DIRT);
+        }
+        for (int i = 0; i < steinTiefe; i++) {
+            schichten.add(Material.STONE);
+        }
+        for (int i = 0; i < deepslateTiefe; i++) {
+            schichten.add(Material.DEEPSLATE);
+        }
+        new BukkitRunnable() {
+            private int index = 0;
+
+            @Override
+            public void run() {
+                if (index >= schichten.size()) {
+                    plugin.getLogger().info("DuelPlus: Terrain unter Arena '" + world.getName() + "' fertig aufgefuellt.");
+                    cancel();
+                    return;
+                }
+                int y = plattformY - 1 - index;
+                Material material = schichten.get(index);
+                for (int x = -radius; x <= radius; x++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        world.getBlockAt(x, y, z).setType(material, false);
+                    }
+                }
+                index++;
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
+    }
+
     /** Wie hoch die unsichtbare Barriere-Box ueber der Plattform reicht - komfortable Reserve gegen jeden Enderperlen-Bogen. */
     private static final int BARRIERE_HOEHE = 30;
 
@@ -370,15 +450,16 @@ public final class ArenaManager {
      * Klassen-Kommentar) - macht ein Entkommen (z.B. per Enderperle ueber
      * die schrumpfende Worldborder, siehe ladeOderErzeuge) unabhaengig
      * vom aktuellen Border-Stand unmoeglich. Reicht bis EXAKT auf
-     * Bedrock-Niveau hinunter (kein Spalt): das gesamte Fundament der
-     * Arena liegt nur 1 Block ueber dem Bedrock, ein tieferer Puffer ist
-     * nicht mehr noetig UND wuerde unterhalb des Bedrocks ohnehin nur ins
-     * Leere zeigen. KEIN Boden in der Box selbst - das Bedrock der Welt
-     * ist bereits der Boden.
+     * Bedrock-Niveau hinunter (kein Spalt): seit es unter der Plattform
+     * echtes, grabbares Terrain gibt (siehe terrainFuellen), MUSS die
+     * Barriere bis dorthin reichen - sonst koennte man sich seitlich durch
+     * Erde/Stein/Tiefenschiefer aus der Arena heraus graben, weit unterhalb
+     * der eigentlichen Plattform. KEIN Boden in der Box selbst - das
+     * Bedrock der Welt ist bereits der Boden.
      */
     private void barriereBauen(World world, int radius, int y) {
         int aussen = radius + 1;
-        int unten = y - 1;
+        int unten = BEDROCK_Y + 1;
         int oben = y + BARRIERE_HOEHE;
         for (int x = -aussen; x <= aussen; x++) {
             for (int z = -aussen; z <= aussen; z++) {

@@ -37,15 +37,16 @@ import java.util.Optional;
  *    ganz normal (vanilla) - wir greifen dann bewusst NICHT ein.
  *  - Waehrend des Countdowns stehen beide fest an ihrem Startpunkt -
  *    nur Umsehen bleibt erlaubt, Weglaufen (z.B. ueber den Rand) nicht.
- *  - Verlaesst jemand die normale Steh-Hoehe der Plattform nach unten
- *    (durchgebrochen, ueber den Rand geworfen, Plattform weggesprengt
- *    z.B. per Endkristall/Anker, ...), zaehlt das OHNE Puffer sofort als
- *    automatische Niederlage (siehe beimAbsturzUnterDieArena) -
- *    unabhaengig vom tatsaechlichen Sturzschaden. Die ganze Arena liegt
- *    nur 1 Block ueber unzerstoerbarem Bedrock, seitlich haelt eine
- *    unsichtbare Barriere-Box jeden drinnen (siehe ArenaManager) -
- *    Explosionen reissen also hoechstens den Boden weg, kein langer
- *    Sturz, aber trotzdem sofortiges Aus.
+ *  - Unter der Plattform folgt echtes, grabbares Terrain (Erde, Stein,
+ *    Tiefenschiefer) bis auf den unzerstoerbaren Bedrock hinunter (siehe
+ *    ArenaManager) - reisst eine Explosion (z.B. Endkristall/Anker) den
+ *    Boden weg, faellt man in dieses Terrain statt in einen leeren
+ *    Abgrund. Erst WEIT darunter (arenen.todeslinie-y, normalerweise
+ *    unerreichbar) zaehlt das als automatische Niederlage (siehe
+ *    beimAbsturzUnterDieArena) - reines Sicherheitsnetz gegen Bugs/
+ *    Luecken, nicht der normale Ablauf. Seitlich haelt eine unsichtbare
+ *    Barriere-Box bis auf Bedrock-Niveau jeden drinnen (siehe
+ *    ArenaManager).
  *  - Verbindung getrennt waehrend eines eigenen Duells = automatische
  *    Niederlage - verhindert, sich durch Abbrechen das eigene
  *    Inventar zu retten.
@@ -163,24 +164,21 @@ public final class ArenaGuardListener implements Listener {
     }
 
     /**
-     * KEIN Puffer: sobald die Y-Koordinate auch nur einen Hauch unter die
-     * normale Steh-Hoehe auf der Plattform faellt (arena.plattformHoehe()
-     * + 1 - die komplette Innenflaeche ist ein einziger flacher Block,
-     * dort steht man IMMER exakt auf dieser Hoehe, nie darunter), zaehlt
-     * das sofort als Niederlage. Es gibt keine begehbare Randmauer mehr,
-     * auf der ein normaler Huepfer diesen Check faelschlich ausloesen
-     * koennte (siehe ArenaManager) - Eck-Tuerme und Deckungspfeiler sind
-     * beide zu hoch (8 bzw. 2 Bloecke), um waehrend eines normalen
-     * Gefechts aus Versehen dort zu landen. Ein echter Sturz (durch die
-     * Plattform, ueber den Rand, Plattform weggesprengt) loest also ohne
-     * jede Verzoegerung aus - unabhaengig vom tatsaechlichen Sturzschaden,
-     * damit z.B. Federfall-Stiefel kein Schlupfloch sind.
-     *
-     * Die Schwelle kommt bewusst aus arena.plattformHoehe() (dort, wo die
-     * Plattform TATSAECHLICH gebaut wurde), NICHT live aus der config.yml
-     * - sonst wuerde ein spaeter geaenderter Config-Wert nicht mehr zur
-     * wirklich gebauten Plattform passen und Spieler, die ganz normal
-     * darauf stehen, faelschlich als "abgestuerzt" behandeln.
+     * Seit die Plattform auf echtem, grabbarem Terrain (Erde -> Stein ->
+     * Tiefenschiefer -> Bedrock) steht, ist ein Sturz durch den Boden fuer
+     * sich genommen KEIN Notfall mehr - man faellt in Gestein, nicht ins
+     * Leere, und landet spaetestens auf dem unzerstoerbaren Bedrock.
+     * Automatische Niederlage gibt es deshalb erst, wenn jemand WEIT
+     * darunter landet (arenen.todeslinie-y, Standard Y=-100 - 36 Bloecke
+     * unter dem Bedrock bei Y=-64) - im Normalfall voellig unerreichbar,
+     * rein ein Sicherheitsnetz gegen Bugs oder Luecken in der Barriere-Box
+     * (siehe ArenaManager), NICHT der normale Ablauf bei einer
+     * weggesprengten Plattform. Bewusst live aus der config.yml gelesen
+     * (nicht wie Radius/Plattform-Hoehe aus arena-meta.yml): diese Zahl
+     * beschreibt keine tatsaechlich gebaute Geometrie, die aus dem Takt
+     * geraten koennte, sondern nur eine reine Vergleichs-Schwelle - ein
+     * spaeter per config.yml + /duelplus reload geaenderter Wert wirkt
+     * hier deshalb sofort und unbedenklich.
      */
     @EventHandler(ignoreCancelled = true)
     public void beimAbsturzUnterDieArena(PlayerMoveEvent event) {
@@ -194,7 +192,8 @@ public final class ArenaGuardListener implements Listener {
         }
         DuellSession session = sessionOpt.get();
         Arena arena = plugin.arenaManager().arena(session.arenaName());
-        if (arena == null || zu.getY() >= arena.plattformHoehe() + 1) {
+        int todeslinie = plugin.getConfig().getInt("arenen.todeslinie-y", -100);
+        if (arena == null || zu.getY() >= todeslinie) {
             return;
         }
         Player spieler = event.getPlayer();

@@ -8,16 +8,16 @@ import org.bukkit.World;
  * Worldborder-Groesse (zum Zuruecksetzen nach dem Schrumpfen) und die
  * Y-Hoehe, auf der die Plattform TATSAECHLICH gebaut wurde.
  *
- * plattformHoehe wird bewusst HIER gespeichert statt spaeter live aus
- * arenen.plattform-hoehe in der config.yml nachgelesen: die Plattform
- * wird nur beim ALLERERSTEN Erzeugen der Welt gebaut (siehe
- * ArenaManager) - aendert sich der Config-Wert danach (z.B. durch einen
- * spaeteren Server-Neustart mit angepasster config.yml, ohne die
- * Weltordner zu loeschen), wuerde ein live nachgelesener Wert nicht
- * mehr zur tatsaechlich gebauten Plattform passen. Das hat frueher dazu
- * gefuehrt, dass ArenaGuardListener.beimAbsturzUnterDieArena mit einer
- * falschen Schwelle rechnete und Spieler, die ganz normal auf der
- * Plattform standen, sofort als "abgestuerzt" behandelt wurden.
+ * plattformHoehe wird bewusst HIER gespeichert (aus arena-meta.yml,
+ * siehe ArenaManager) statt spaeter live aus der config.yml berechnet:
+ * die Plattform wird nur beim ALLERERSTEN Erzeugen der Welt gebaut -
+ * aendern sich die Terrain-Tiefen in der config.yml danach (z.B. durch
+ * einen spaeteren Server-Neustart, ohne die Weltordner zu loeschen),
+ * wuerde ein live neu berechneter Wert nicht mehr zur tatsaechlich
+ * gebauten Plattform passen (falsche Spawn-Hoehe, falsche Worldborder-
+ * Mitte). Der Sturz-Check in ArenaGuardListener haengt inzwischen NICHT
+ * mehr von plattformHoehe ab (siehe arenen.todeslinie-y) - dieses Feld
+ * bleibt trotzdem aus genau diesem Grund persistiert, nicht live gelesen.
  */
 public record Arena(String name, World world, Location spawnA, Location spawnB, double vollGroesse, int plattformHoehe) {
 }

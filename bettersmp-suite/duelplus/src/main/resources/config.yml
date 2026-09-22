@@ -85,10 +85,12 @@ gegenstand:
 #  unterschiedlich fair je nach Landeplatz). Kein manuelles Bauen
 #  noetig. Block-Aenderungen sind waehrend des Duells erlaubt, werden
 #  aber danach komplett zurueckgerollt (siehe RollbackTracker).
-#  Die gesamte begehbare Flaeche liegt nur 1 Block ueber Bedrock - macht
-#  Endkristall-/Anker-PvP unbedenklich (siehe ArenaManager). Reihum 4
-#  verschiedene Materialpaletten, gleicher Aufbau (zwei Ringe + feine
-#  Schachbrett-Textur + Speichen).
+#  Unter der Plattform folgt echtes, grabbares Terrain (Erde -> Stein ->
+#  Tiefenschiefer) luecken-los bis zum unzerstoerbaren Bedrock hinunter -
+#  reisst eine Explosion (Endkristall/Anker) den Boden weg, faellt man in
+#  dieses Terrain statt in einen leeren Abgrund (siehe ArenaManager).
+#  Reihum 2 verschiedene Materialpaletten (Stein, Tiefenschiefer),
+#  gleicher Aufbau (zwei Ringe + feine Schachbrett-Textur + Speichen).
 # ----------------------------------------------------------
 arenen:
   anzahl: 4
@@ -101,15 +103,24 @@ arenen:
   worldborder-groesse: 115
   # Wie weit die zwei Startpunkte innerhalb einer Arena auseinander liegen
   spawn-abstand: 20
-  # Y-Koordinate der Plattform. Bewusst NUR 1 Block ueber dem Bedrock,
-  # das beim Flachwelt-Generator fest am Minimum der Welt (Y=-64)
-  # anfaengt und sich nicht verschieben laesst - die gesamte Arena
-  # liegt dadurch praktisch direkt auf unzerstoerbarem Grund: reisst
-  # eine Explosion (Endkristall/Anker) den Boden weg, faellt man
-  # hoechstens 1 Block auf das Bedrock, kein langer Sturz. Aendert man
-  # diesen Wert nachtraeglich, wirkt das erst nach dem Loeschen der
-  # Arena-Weltordner (siehe README).
-  plattform-hoehe: -63
+  # Terrain-Aufbau UNTER der Plattform, von oben nach unten, OHNE Luecke
+  # bis zum Bedrock (Y=-64, beim Flachwelt-Generator fest am Minimum der
+  # Welt und nicht verschiebbar). Die Plattform-Hoehe selbst ist KEIN
+  # eigener Wert mehr, sondern ergibt sich rechnerisch aus diesen drei
+  # Tiefen (siehe ArenaManager.terrainHoeheBerechnen) - bei den
+  # Standardwerten unten liegt sie bei Y=-6. Aendert man diese Werte
+  # nachtraeglich, wirkt das erst nach dem Loeschen der Arena-Weltordner
+  # (siehe README).
+  boden-tiefe: 7
+  stein-tiefe: 35
+  deepslate-tiefe: 15
+  # Erst SO WEIT unter dem Bedrock (Y=-64) zaehlt ein Sturz noch als
+  # automatische Niederlage - im Normalfall voellig unerreichbar (Bedrock
+  # ist unzerstoerbar, eine unsichtbare Barriere-Box haelt seitlich
+  # dicht), rein ein Sicherheitsnetz gegen Bugs/Luecken. Reisst eine
+  # Explosion die Plattform weg, faellt man in echtes Gestein statt in
+  # diese Todeslinie.
+  todeslinie-y: -100
 
 # ----------------------------------------------------------
 #  Ablauf eines Duells

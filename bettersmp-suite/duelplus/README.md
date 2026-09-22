@@ -64,12 +64,15 @@ Version noch mit reinem Luft-Void unter der Plattform statt eines
 richtigen Bodens mit Bedrock, eine vierte Version noch mit einer sehr
 hoch gelegenen Plattform (Sturz bis zum Boden weit über 100 Blöcke)
 statt der aktuellen, viel niedrigeren, eine fünfte Version noch mit
-kleinerer Worldborder-Größe, und eine sechste Version noch mit
-mehreren strukturell verschiedenen Boden-Themes (Lavagraben, Eis,
-Wasserring) UND einer sichtbaren Randmauer, auf der man stehen/von der
-man abrutschen konnte - beides durch Live-Tests als Fehlerquelle
-identifiziert und wieder entfernt (siehe unten). Damit Arenen
-stattdessen mit dem aktuellen Aufbau entstehen (siehe unten), müssen auf
+kleinerer Worldborder-Größe, eine sechste Version noch mit mehreren
+strukturell verschiedenen Boden-Themes (Lavagraben, Eis, Wasserring)
+UND einer sichtbaren Randmauer, auf der man stehen/von der man
+abrutschen konnte - beides durch Live-Tests als Fehlerquelle
+identifiziert und wieder entfernt -, und eine siebte Version noch mit
+der Plattform nur 1 Block über nacktem Bedrock (kein echtes Terrain
+darunter) statt des aktuellen, mehrere Blöcke tiefen Erde/Stein/
+Tiefenschiefer-Aufbaus (siehe unten). Damit Arenen stattdessen mit dem
+aktuellen Aufbau entstehen (siehe unten), müssen auf
 dem **Duels-Server** einmalig die alten Weltordner gelöscht werden -
 Standard-Namen `duell_arena_1` bis `duell_arena_4` (siehe
 `arenen.welt-praefix` / `arenen.anzahl`), bei gestopptem Server. Beim
@@ -86,11 +89,14 @@ Struktur-Änderung übernommen). Radius und Plattform-Höhe, mit denen
 eine Arena tatsächlich gebaut wurde, merkt sich das Plugin zusätzlich
 dauerhaft in `plugins/DuelPlus/arena-meta.yml` - **unabhängig davon**,
 was später in der `config.yml` steht. Ändert man `worldborder-groesse`
-oder `plattform-hoehe`, ohne den zugehörigen Weltordner zu löschen,
-bleibt die Arena also exakt bei ihren ursprünglichen Werten (Absturz-
-Schwelle, Worldborder-Größe, Barriere-Box - alles bleibt zueinander
-konsistent), statt durch einen live gelesenen, nicht mehr passenden
-Config-Wert kaputtzugehen.
+oder die Terrain-Tiefen (`boden-tiefe`/`stein-tiefe`/`deepslate-tiefe`),
+ohne den zugehörigen Weltordner zu löschen, bleibt die Arena also exakt
+bei ihren ursprünglichen Werten (Plattform-Höhe, Worldborder-Größe,
+Barriere-Box - alles bleibt zueinander konsistent), statt durch einen
+live berechneten, nicht mehr passenden Wert kaputtzugehen. Nach `NEU
+gebaut` füllt sich das Terrain unter der Plattform noch ein paar
+Sekunden lang asynchron auf (siehe unten) - eine eigene Log-Zeile
+`Terrain ... fertig aufgefuellt` meldet, wann das fertig ist.
 
 ## Ablauf eines Duells
 
@@ -108,18 +114,21 @@ Config-Wert kaputtzugehen.
    dessen unverwundbar), dann beginnt der Kampf.
 5. **Arena**: eine von mehreren automatisch erzeugten Welten **ohne
    echte Vanilla-Terraingenerierung** (man soll am Rand nicht in "die
-   echte Welt" schauen können). Die komplette begehbare Fläche liegt
-   nur **1 Block über unzerstörbarem Bedrock** - macht Endkristall-/
-   Anker-PvP unbedenklich: reißt eine Explosion den Boden weg, fällt
-   man höchstens 1 Block auf das Bedrock, statt durch eine große Lücke.
-   Der Boden ist ein aufwendiges Muster aus **zwei konzentrischen
-   Ringen** plus einer feinen Schachbrett-Textur dazwischen, überlagert
-   von acht Speichen durch die Mitte (zu Spawnpunkten, Deckungspfeilern,
-   Eck-Türmen) - alles aus gewöhnlichen, robusten Blöcken (keine
-   Gefahren-Materialien wie Lava/Wasser/Eis). Reihum vier verschiedene
-   Materialpaletten (Stein, Tiefenschiefer, Sandstein, Schwarzstein),
-   gleicher Aufbau. Dazu vier hohe **Eck-Türme** (mit Zinnenkranz und
-   Licht auf der Spitze) und zwei Deckungspfeiler in der Mitte.
+   echte Welt" schauen können). Unter der begehbaren Steinplattform
+   folgt luecken-los **echtes, grabbares Terrain** bis zum
+   unzerstörbaren Bedrock hinunter: standardmäßig 7 Blöcke Erde, dann
+   35 Blöcke Stein, dann 15 Blöcke Tiefenschiefer (`arenen.boden-tiefe`
+   / `stein-tiefe` / `deepslate-tiefe`) - reißt eine Explosion
+   (Endkristall/Anker) den Boden weg, fällt man in dieses Terrain
+   statt in einen leeren Abgrund. Der Boden ist ein aufwendiges Muster
+   aus **zwei konzentrischen Ringen** plus einer feinen Schachbrett-
+   Textur dazwischen, überlagert von acht Speichen durch die Mitte (zu
+   Spawnpunkten, Deckungspfeilern, Eck-Türmen) - alles aus
+   gewöhnlichen, robusten Blöcken (keine Gefahren-Materialien wie
+   Lava/Wasser/Eis). Reihum zwei verschiedene Materialpaletten (Stein,
+   Tiefenschiefer), gleicher Aufbau. Dazu vier hohe **Eck-Türme** (mit
+   Zinnenkranz und Licht auf der Spitze) und zwei Deckungspfeiler in
+   der Mitte.
 
    Bewusst **keine sichtbare Randmauer** mehr: der äußere Abschluss ist
    ausschließlich eine unsichtbare, unzerstörbare **Barriere-Box**
@@ -129,7 +138,9 @@ Config-Wert kaputtzugehen.
    instant überspringt (bekannter Vanilla-Kniff); die Barriere-Box
    stoppt das unabhängig vom aktuellen Border-Stand zuverlässig, ohne
    eine begehbare Kante zu bieten, auf der man stehen oder von der man
-   unerwartet abrutschen/durchfallen könnte.
+   unerwartet abrutschen/durchfallen könnte, UND verhindert, dass sich
+   jemand seitlich durch das jetzt echte Terrain aus der Arena
+   heraus gräbt.
    Bauen/Abbauen ist während des Duells erlaubt - danach wird die
    Arena **komplett zurückgerollt** (jede Blockänderung: Abbauen,
    Platzieren, Explosionen, Eimer, Flüssigkeiten, Feuer), damit sie
@@ -241,16 +252,16 @@ nur der Weg dorthin unterscheidet sich.
 
 - Fallende Blöcke (Sand/Kies) durch Schwerkraft werden vom Rollback
   nicht erfasst - eher kosmetisch, kein Stakes-Thema.
-- Verlässt jemand die normale Steh-Höhe der Plattform nach unten
-  (durchgebrochen, über den Rand geworfen, Plattform weggesprengt z.B.
-  per Endkristall/Anker, ...), zählt das **ohne jeden Puffer sofort**
-  als Niederlage - unabhängig vom tatsächlichen Sturzschaden, damit
-  z.B. Federfall-Stiefel kein Schlupfloch sind (`ArenaGuardListener.
-  beimAbsturzUnterDieArena`). Reißt eine Explosion den Boden unter
-  jemandem weg, ist das also ein gültiger, sofortiger K.o. - genau wie
-  in typischem Kristall-PvP. Die Arena liegt trotzdem nur 1 Block über
-  unzerstörbarem Bedrock und steckt seitlich in einer unsichtbaren
-  Barriere-Box bis auf Bedrock-Niveau (kein Spalt) - ein echter, langer
-  Sturz ins Leere kommt gar nicht erst vor, das Bedrock ist reines
-  Sicherheitsnetz für den unwahrscheinlichen Fall, dass der Check mal
-  durchrutscht.
+- Reißt eine Explosion (z.B. Endkristall/Anker) den Boden unter
+  jemandem weg, fällt man in das echte Terrain darunter (Erde/Stein/
+  Tiefenschiefer) statt in einen leeren Abgrund - genau wie in
+  typischem Kristall-PvP, nur ohne den sofortigen K.o. eines reinen
+  Luft-Void-Designs. Automatische Niederlage gibt es erst bei einem
+  Sturz bis `arenen.todeslinie-y` (Standard Y=-100, 36 Blöcke unter dem
+  unzerstörbaren Bedrock bei Y=-64) - im Normalfall völlig
+  unerreichbar (`ArenaGuardListener.beimAbsturzUnterDieArena`). Die
+  Arena steckt seitlich in einer unsichtbaren Barriere-Box bis auf
+  Bedrock-Niveau (kein Spalt) - ein echtes Entkommen, seitlich oder
+  nach unten, kommt gar nicht erst vor, die Todeslinie ist reines
+  Sicherheitsnetz für den unwahrscheinlichen Fall, dass doch mal eine
+  Lücke auftritt.
