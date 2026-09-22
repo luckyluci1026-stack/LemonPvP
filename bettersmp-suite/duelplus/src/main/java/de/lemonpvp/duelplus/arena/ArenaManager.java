@@ -2,6 +2,7 @@ package de.lemonpvp.duelplus.arena;
 
 import de.lemonpvp.duelplus.DuelPlus;
 import org.bukkit.Bukkit;
+import org.bukkit.Difficulty;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -281,13 +282,23 @@ public final class ArenaManager {
         world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         world.setTime(6000);
         world.setStorm(false);
-        // BEWUSST NICHT Difficulty.PEACEFUL: das erledigt DO_MOB_SPAWNING
-        // oben schon vollstaendig (keine Mobs in einer frischen Void-Welt
-        // sowieso). Peaceful hat bei manchen Bedrock-/Geyser-Clients dazu
-        // gefuehrt, dass eigene Treffer serverseitig komplett ins Leere
-        // gingen (kein Ton, kein Knockback, kein Schaden) - Java-PvP ist
-        // von der Difficulty unabhaengig, Bedrock-seitig offenbar nicht
-        // immer.
+        // BEWUSST NICHT Difficulty.PEACEFUL, sondern EXPLIZIT NORMAL: das
+        // erledigt DO_MOB_SPAWNING oben schon vollstaendig (keine Mobs in
+        // einer frischen Void-Welt sowieso). Peaceful hat bei manchen
+        // Bedrock-/Geyser-Clients dazu gefuehrt, dass eigene Treffer
+        // serverseitig komplett ins Leere gingen (kein Ton, kein
+        // Knockback, kein Schaden) - Java-PvP ist von der Difficulty
+        // unabhaengig, Bedrock-seitig offenbar nicht immer. Ohne dieses
+        // explizite setDifficulty erbt eine frisch erzeugte Welt die
+        // Server-weite Standard-Difficulty aus server.properties - stand
+        // die (aus welchem Grund auch immer) auf Peaceful, heilte dessen
+        // extrem schnelle natuerliche Regeneration jeden Treffer quasi
+        // sofort wieder weg: wirkte nach aussen wie "gar kein Schaden".
+        world.setDifficulty(Difficulty.NORMAL);
+        // Ebenfalls explizit statt dem Server-Standard ueberlassen - ohne
+        // das koennte PvP zwischen den beiden Duellanten je nach globaler
+        // server.properties (pvp=false) komplett wirkungslos bleiben.
+        world.setPVP(true);
     }
 
     // ------------------------------------------------------------ Boden
