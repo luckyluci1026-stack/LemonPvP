@@ -21,6 +21,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -163,6 +165,7 @@ public final class DuellSessionManager implements Listener {
             // dabei - beides waere fuer ein faires Duell nicht in Ordnung.
             zustandZuruecksetzen(p);
         }
+        kampfTeamZuweisen(a, b);
 
         DuellSession session = new DuellSession(duell.id(), arena.name(),
                 duell.spielerA(), duell.spielerAName(), duell.spielerAServer(),
@@ -263,6 +266,19 @@ public final class DuellSessionManager implements Listener {
                 if (sessionNachSpieler.get(session.spielerA()) != session) {
                     cancel();
                     return;
+                }
+                // Jede Sekunde erneut zuweisen, nicht nur einmal beim Start:
+                // falls ein anderes Plugin (z.B. TAB) Team-Mitgliedschaften
+                // periodisch neu synchronisiert, wuerde es die beiden sonst
+                // stillschweigend wieder aus unserem Team herausnehmen und
+                // in sein eigenes (Friendly-Fire-loses) Team zurueckstecken -
+                // dann waere der Schaden-Fix nur fuer die ersten Sekunden
+                // des Kampfes wirksam. addEntry auf ein Team, in dem der
+                // Spieler schon steckt, ist ein reines No-Op.
+                Player teamA = Bukkit.getPlayer(session.spielerA());
+                Player teamB = Bukkit.getPlayer(session.spielerB());
+                if (teamA != null && teamB != null) {
+                    kampfTeamZuweisen(teamA, teamB);
                 }
                 long seitTreffer = session.millisSeitLetztemTreffer();
                 boolean campt = seitTreffer >= campingNachMillis;
@@ -434,6 +450,7 @@ public final class DuellSessionManager implements Listener {
         // bzw. die Arena/Worldborder zurueckgesetzt wurde.
         nachbereitung.add(verliererUuid);
         nachbereitung.add(gewinner);
+        kampfTeamEntfernen(session.eigenerName(verliererUuid), session.eigenerName(gewinner));
         bossBarVerstecken(session);
         plugin.db().siegHinzufuegen(gewinner, session.eigenerName(gewinner));
         plugin.db().niederlageHinzufuegen(verliererUuid, session.eigenerName(verliererUuid));
@@ -634,6 +651,7 @@ public final class DuellSessionManager implements Listener {
         if (!aEntfernt && !bEntfernt) {
             return;
         }
+        kampfTeamEntfernen(session.eigenerName(aUuid), session.eigenerName(bUuid));
         bossBarVerstecken(session);
         plugin.db().unentschiedenHinzufuegen(aUuid, session.eigenerName(aUuid));
         plugin.db().unentschiedenHinzufuegen(bUuid, session.eigenerName(bUuid));
@@ -669,6 +687,52 @@ public final class DuellSessionManager implements Listener {
         spieler.setFallDistance(0f);
         for (var effekt : new ArrayList<>(spieler.getActivePotionEffects())) {
             spieler.removePotionEffect(effekt.getType());
+        }
+    }
+
+    /**
+     * Eigenes Scoreboard-Team NUR mit Friendly Fire an, extra fuer die Dauer
+     * des Kampfes - ohne das koennten zwei Duellanten sich gar nicht
+     * gegenseitig treffen, falls ein anderes Plugin (z.B. TAB anhand der
+     * LuckPerms-Gruppe fuers Tabliste-/Namensschild-Einfaerben) beide schon
+     * in EIN gemeinsames Team mit Friendly Fire AUS gesteckt hat - Minecraft
+     * blockt Schaden zwischen Team-Mitgliedern dann naemlich schon auf
+     * Server-Engine-Ebene, bevor ueberhaupt ein abfangbares Bukkit-Event
+     * entsteht (Hiebgeraeusch/-animation bleiben rein clientseitig trotzdem
+     * sichtbar - wirkt fuer die Spieler wie "Treffer kommt an, aber 0
+     * Schaden"). Ein Spieler ist pro Scoreboard immer nur in HOECHSTENS
+     * einem Team - das Hinzufuegen hier entfernt ihn automatisch aus einem
+     * eventuell vorherigen (z.B. dem Tabliste-Team), OHNE dass DuelPlus das
+     * selbst nachbilden muesste.
+     */
+    private static final String KAMPF_TEAM_NAME = "duelplus_kampf";
+
+    private Team kampfTeam() {
+        Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
+        Team team = board.getTeam(KAMPF_TEAM_NAME);
+        if (team == null) {
+            team = board.registerNewTeam(KAMPF_TEAM_NAME);
+            team.setAllowFriendlyFire(true);
+        }
+        return team;
+    }
+
+    private void kampfTeamZuweisen(Player a, Player b) {
+        Team team = kampfTeam();
+        team.addEntry(a.getName());
+        team.addEntry(b.getName());
+    }
+
+    /** Wieder entfernen, sobald der Kampf vorbei ist - sonst wuerde der Team-Eintrag (ein blosser Name-String) dauerhaft haengen bleiben. */
+    private void kampfTeamEntfernen(String... namen) {
+        Team team = Bukkit.getScoreboardManager().getMainScoreboard().getTeam(KAMPF_TEAM_NAME);
+        if (team == null) {
+            return;
+        }
+        for (String name : namen) {
+            if (name != null) {
+                team.removeEntry(name);
+            }
         }
     }
 

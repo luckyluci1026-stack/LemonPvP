@@ -215,6 +215,19 @@ selbst wegteleportieren, bevor sein gewonnenes Inventar überhaupt in
 die Datenbank geschrieben wurde (Loot wäre dann verloren, Arena/
 Worldborder blieben für diese Runde hängen).
 
+Für die Dauer des Kampfes steckt DuelPlus beide Duellanten zusätzlich
+in ein eigenes Scoreboard-Team `duelplus_kampf` mit **Friendly Fire
+erzwungen an** (jede Sekunde neu durchgesetzt, nicht nur einmal beim
+Start). Grund: ein Spieler ist pro Scoreboard immer nur in höchstens
+einem Team - packt ein anderes Plugin (z.B. TAB anhand der
+LuckPerms-Gruppe fürs Tabliste-/Namensschild-Einfärben) beide
+Duellanten schon in ein gemeinsames Team OHNE Friendly Fire, blockt
+die Server-Engine Schaden zwischen ihnen komplett, BEVOR überhaupt ein
+abfangbares Event entsteht - Hieb-Geräusch/-Animation bleiben dabei
+client-seitig trotzdem sichtbar, es wirkt also wie "Treffer kommt an,
+aber 0 Schaden". Das Team wird beim Kampfende (Sieg/Niederlage/
+Unentschieden/Aufgabe) wieder verlassen.
+
 ## Befehle
 
 ```
