@@ -337,6 +337,38 @@ update-permission-ticks: -1
 # human who decided somebody should go.
 punishment-dry-run: false
 
+# ----------------------------------------------------------------------
+#  DUELS EDITION
+# ----------------------------------------------------------------------
+# Turn this on for duel, arena and minigame servers. BuckSMPAC then keeps
+# watching, flagging, alerting and banning - but it never touches what a
+# player is doing.
+#
+# Two things here can swallow a hit, and this switches off both:
+#
+#   * a check cancelling the attack packet outright, and
+#   * a setback - the rubber-band back to a known-good position - which
+#     makes Reach drop every attack until the client catches up, because a
+#     player mid-teleport could otherwise land hits from anywhere.
+#
+# Both are right on an SMP. In a duel they are not: a dropped hit decides
+# the match, and the player it was taken from cannot tell a cheat
+# mitigation from a bad tick. They only know they hit and nothing happened.
+#
+# WHAT STAYS ON: every check, every alert, punishments.yml, bans.yml,
+# /acban. Detection is untouched - only intervention stops.
+#
+# WHAT IT COSTS: a reach cheat whose hits would have been cancelled now
+# lands them. It is still flagged and still banned at the configured
+# threshold; it simply gets to hit until then. On a duel server that trade
+# is usually right, because the alternative punishes honest players every
+# time the connection stutters.
+#
+# Resynchronisation is deliberately left alone: that repairs a genuine
+# desync rather than punishing anybody, and switching it off would trade
+# dropped hits for players standing where the server disagrees.
+duels-mode: false
+
 # Schema markers — touch only if you know what you're doing.
 #   config-flavor:  V2 = Grim 2.x build, V3 = Grim 3.x. The plugin refuses
 #                   to load a config whose flavor doesn't match its own
@@ -345,4 +377,4 @@ punishment-dry-run: false
 #   config-version: bumped on every breaking shape change. Old configs
 #                   auto-migrate up via the bundled updater on next start.
 config-flavor: V2
-config-version: 15
+config-version: 16

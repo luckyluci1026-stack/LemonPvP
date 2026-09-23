@@ -3,6 +3,7 @@ package ac.grim.grimac.checks;
 import ac.grim.grimac.GrimAPI;
 import ac.grim.grimac.api.AbstractCheck;
 import ac.grim.grimac.api.config.ConfigManager;
+import ac.grim.grimac.manager.DuelsMode;
 import ac.grim.grimac.api.event.events.FlagEvent;
 import ac.grim.grimac.api.storage.verbose.Verbose;
 import ac.grim.grimac.api.storage.verbose.VerboseBuf;
@@ -76,6 +77,7 @@ public class Check extends GrimProcessor implements AbstractCheck {
 
     public boolean shouldModifyPackets() {
         return isEnabled
+                && !DuelsMode.isOn()
                 && !player.disableGrim
                 && !player.noModifyPacketPermission
                 && !noModifyPacketPermission
@@ -218,6 +220,10 @@ public class Check extends GrimProcessor implements AbstractCheck {
 
     @Override
     public final void reload(ConfigManager configuration) {
+        // Runs for every check on every reload, which makes it the one place
+        // guaranteed to see a config change before the next packet arrives.
+        DuelsMode.refresh(configuration);
+
         decay = configuration.getDoubleElse(configName + ".decay", decay);
         setbackVL = configuration.getDoubleElse(configName + ".setbackvl", setbackVL);
         displayName = configuration.getStringElse(configName + ".displayname", checkName);

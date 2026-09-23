@@ -96,6 +96,11 @@ class ConfigMigrationTest {
         Map<String, Object> migrated = read(configFile);
         assertTrue(migrated.containsKey("punishment-dry-run"), "punishment-dry-run never reached the file");
         assertEquals(Boolean.FALSE, migrated.get("punishment-dry-run"), "must default to off");
+
+        // Same story one version later: a duel server on an existing config
+        // would otherwise have no way to stop hits being cancelled.
+        assertTrue(migrated.containsKey("duels-mode"), "duels-mode never reached the file");
+        assertEquals(Boolean.FALSE, migrated.get("duels-mode"), "must default to off");
     }
 
     @Test

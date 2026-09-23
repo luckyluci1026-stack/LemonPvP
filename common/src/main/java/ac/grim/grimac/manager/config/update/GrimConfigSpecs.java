@@ -79,9 +79,13 @@ public final class GrimConfigSpecs {
      * and the operator has no way to rehearse the punishment ladders against
      * real traffic before arming them. Off by default, so the bump changes
      * nothing for a server that does not go looking for it.
+     *
+     * <p>v15 → v16: adds {@code duels-mode}. Same reasoning again — a duel
+     * server running an existing config would have no way to stop the
+     * anticheat cancelling hits, which is the one thing it cannot tolerate.
      */
     public static @NotNull ConfigUpdater.Spec mainConfig() {
-        return ConfigUpdater.Spec.builder("/config/", 15, ConfigUpdater.ConfigFlavor.V2)
+        return ConfigUpdater.Spec.builder("/config/", 16, ConfigUpdater.ConfigFlavor.V2)
                 .migration(10, ctx -> {
                     String typeRaw = ctx.input().getString("history.database.type");
                     String type = typeRaw == null ? null : typeRaw.trim().toUpperCase(Locale.ROOT);

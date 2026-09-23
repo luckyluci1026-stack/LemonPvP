@@ -334,6 +334,41 @@ max-ping-firework-boost: 1000
 # Leitern, nicht ein Mensch, der entschieden hat.
 punishment-dry-run: false
 
+# ----------------------------------------------------------------------
+#  DUELS EDITION
+# ----------------------------------------------------------------------
+# Fuer Duell-, Arena- und Minigame-Server einschalten. BuckSMPAC schaut
+# dann weiter zu, flaggt, meldet und bannt - greift aber nie in das ein,
+# was ein Spieler gerade tut.
+#
+# Zwei Dinge koennen hier einen Treffer verschlucken, und beide werden
+# abgeschaltet:
+#
+#   * ein Check bricht das Angriffs-Paket ab, und
+#   * ein Setback - das Zurueckziehen auf die letzte gueltige Position -
+#     laesst Reach jeden Angriff fallen, bis der Client aufgeholt hat.
+#     Sonst koennte jemand mitten im Teleport von ueberall treffen.
+#
+# Auf einem SMP ist beides richtig. Im Duell nicht: ein verschluckter
+# Treffer entscheidet das Match, und der Spieler kann nicht unterscheiden,
+# ob das eine Cheat-Abwehr war oder ein schlechter Tick. Er weiss nur, dass
+# er getroffen hat und nichts passiert ist.
+#
+# WAS AN BLEIBT: jeder Check, jeder Alert, punishments.yml, bans.yml,
+# /acban. Die Erkennung bleibt unberuehrt - nur das Eingreifen hoert auf.
+#
+# WAS ES KOSTET: Ein Reach-Cheat, dessen Treffer sonst abgebrochen worden
+# waeren, landet sie jetzt. Er wird weiterhin geflaggt und bei der
+# eingestellten Schwelle gebannt - er darf bis dahin nur treffen. Auf einem
+# Duell-Server ist der Tausch meist richtig, weil die Alternative ehrliche
+# Spieler jedes Mal bestraft, wenn die Verbindung stockt.
+#
+# Die Resynchronisation bleibt bewusst an: die repariert einen echten
+# Desync und bestraft niemanden. Sie abzuschalten wuerde verschluckte
+# Treffer gegen Spieler tauschen, die dort stehen, wo der Server sie nicht
+# vermutet.
+duels-mode: false
+
 # Schema-Marker — nur ändern, wenn du weißt, was du tust.
 #   config-flavor:  V2 = Grim-2.x-Build, V3 = Grim-3.x. Das Plugin lehnt eine
 #                   Config ab, deren Flavor nicht zum eigenen Build passt —
@@ -354,4 +389,4 @@ punishment-dry-run: false
 update-permission-ticks: -1
 
 config-flavor: V2
-config-version: 15
+config-version: 16

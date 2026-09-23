@@ -2,6 +2,7 @@ package ac.grim.grimac.checks.impl.movement;
 
 import ac.grim.grimac.checks.Check;
 import ac.grim.grimac.checks.type.PacketCheck;
+import ac.grim.grimac.manager.DuelsMode;
 import ac.grim.grimac.player.GrimPlayer;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
@@ -17,9 +18,18 @@ public class SetbackBlocker extends Check implements PacketCheck {
         if (player.disableGrim)
             return; // Let's avoid letting people disable grim with grim.nomodifypackets
 
-        if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY
+        // The only place outside Reach that drops an attack. Duels mode takes
+        // it out: on a duel server a swallowed hit decides a match, and the
+        // player it was taken from cannot tell a mitigation from a bad tick.
+        //
+        // Checked directly rather than through shouldModifyPackets(), because
+        // this class carries no @CheckData and so is never "enabled" in the
+        // sense that method means - gating on it would switch this off
+        // permanently instead of only for duels.
+        if (!DuelsMode.isOn()
+                && (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY
                 || event.getPacketType() == PacketType.Play.Client.ATTACK
-                || event.getPacketType() == PacketType.Play.Client.SPECTATE_ENTITY) {
+                || event.getPacketType() == PacketType.Play.Client.SPECTATE_ENTITY)) {
             if (player.getSetbackTeleportUtil().cheatVehicleInterpolationDelay > 0) {
                 event.setCancelled(true); // Player is in the vehicle
             }

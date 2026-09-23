@@ -108,6 +108,7 @@ public class SetbackTeleportUtil extends Check implements PostPredictionCheck {
     }
 
     public void executeNonSimulatingSetback() {
+        if (DuelsMode.isOn()) return; // Punishment, not repair - see DuelsMode
         if (player.gamemode == GameMode.SPECTATOR || player.disableGrim)
             return; // We don't care about spectators, they don't flag
         if (lastKnownGoodPosition == null) return; // Player hasn't spawned yet
@@ -128,6 +129,10 @@ public class SetbackTeleportUtil extends Check implements PostPredictionCheck {
     }
 
     private boolean isExempt() {
+        // A duel server wants the flag without the rubber-band; the two
+        // force-resync paths above stay live, because those repair a real
+        // desync rather than punishing anybody.
+        if (DuelsMode.isOn()) return true;
         // Not exempting spectators here because timer check for spectators is actually valid.
         // Player hasn't spawned yet
         if (lastKnownGoodPosition == null) return true;

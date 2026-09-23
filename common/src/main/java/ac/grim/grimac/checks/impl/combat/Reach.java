@@ -94,8 +94,13 @@ public class Reach extends Check implements PacketCheck {
     }
 
     private void onInteract(PacketReceiveEvent event, int entityId, InteractionHand hand) {
-        // Don't let the player teleport to bypass reach
-        if (player.getSetbackTeleportUtil().shouldBlockMovement()) {
+        // Don't let the player teleport to bypass reach.
+        //
+        // This was the one cancel in Reach that did not consult
+        // shouldModifyPackets(), which made it the path a duel server could
+        // not switch off: any setback, including one from a check misfiring
+        // under lag, silently ate every attack until the client caught up.
+        if (shouldModifyPackets() && player.getSetbackTeleportUtil().shouldBlockMovement()) {
             event.setCancelled(true);
             player.onPacketCancel();
             return;
