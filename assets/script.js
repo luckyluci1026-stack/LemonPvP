@@ -262,3 +262,69 @@ function copyIP() {
     if (e.key === 'Escape' && lightbox.classList.contains('open')) lightboxSchliessen();
   });
 })();
+
+/* ---------------- Team (/team/) ----------------
+ *
+ * Neues Mitglied/Rolle aendern: unten im TEAM-Array eintragen (id, name,
+ * rolle). Die id ist frei waehlbar, aber danach stabil halten - sie
+ * bestimmt nur den Bild-Dateinamen und sollte sich nicht mehr aendern,
+ * auch wenn spaeter mal der Name oder die Rolle wechselt.
+ *
+ * Profilbild hinzufuegen: Datei als team/media/<id>.jpg (oder .png)
+ * ablegen - siehe team/media/README.md. Kein weiterer Code-Edit noetig,
+ * die Karte probiert das Bild selbst aus (erst .jpg, dann .png) und
+ * faellt ohne Treffer auf das generische Platzhalter-Icon zurueck,
+ * genau wie bei den Aura Moments oben.
+ * -------------------------------------------------------------------- */
+(function teamGrid(){
+  const grid = document.getElementById('teamGrid');
+  if (!grid) return;
+
+  const MEDIA_ORDNER = 'media/';
+
+  const TEAM = [
+    {id:'owner', name:'Name eintragen', rolle:'Owner'},
+    {id:'admin', name:'Name eintragen', rolle:'Admin'},
+    {id:'mod1',  name:'Name eintragen', rolle:'Moderator'},
+    {id:'mod2',  name:'Name eintragen', rolle:'Moderator'},
+  ];
+
+  function karteBauen(mitglied){
+    const card = document.createElement('div');
+    card.className = 'team-card';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'team-avatar';
+    avatar.innerHTML = '<svg><use href="#i-person"/></svg>';
+
+    // Erst .jpg versuchen, dann .png, sonst bleibt das Platzhalter-Icon
+    // oben einfach stehen - exakt dasselbe Fallback-Prinzip wie bei den
+    // Aura Moments (media/<id>.* probieren statt eine Liste pflegen,
+    // welche Bilder es schon gibt).
+    const img = document.createElement('img');
+    img.alt = mitglied.name;
+    img.addEventListener('load', () => avatar.replaceChildren(img), { once:true });
+    img.addEventListener('error', () => {
+      if (img.dataset.stufe === 'png') return; // auch .png nicht da - Platzhalter-Icon bleibt
+      img.dataset.stufe = 'png';
+      img.src = `${MEDIA_ORDNER}${mitglied.id}.png`;
+    }, { once:false });
+    img.src = `${MEDIA_ORDNER}${mitglied.id}.jpg`;
+
+    card.appendChild(avatar);
+
+    const name = document.createElement('div');
+    name.className = 'team-name';
+    name.textContent = mitglied.name;
+    card.appendChild(name);
+
+    const rolle = document.createElement('div');
+    rolle.className = 'team-role';
+    rolle.textContent = mitglied.rolle;
+    card.appendChild(rolle);
+
+    return card;
+  }
+
+  TEAM.forEach(mitglied => grid.appendChild(karteBauen(mitglied)));
+})();
