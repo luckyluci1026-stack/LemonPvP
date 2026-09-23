@@ -47,66 +47,218 @@ function copyIP() {
   });
 }
 
-/* ---------------- Live-Zaehler (Startseite) ---------------- */
-(function liveCounter(){
-  if (!document.getElementById('liveCount') && !document.getElementById('statN')) return;
-  let cnt = 247;
-  setInterval(() => {
-    cnt += Math.floor(Math.random() * 6) - 3;
-    cnt = Math.max(180, Math.min(320, cnt));
-    ['liveCount','statN'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = cnt; });
-  }, 5000);
+/* ---------------- Live-Serverstatus (Startseite) ----------------
+ *
+ * Echte Daten von api.mcsrvstat.us statt fest eingetragener Zahlen -
+ * fragt Online/Offline + aktuelle Spieleranzahl fuer lemon-servers.de
+ * ab und aktualisiert #liveStatus/#liveCount/#statN/#liveDot damit.
+ * Die Versions-Pill (#verPill) bleibt bewusst der manuell gepflegte
+ * Text aus dem HTML: die API liefert nur die Kern-Protokollversion
+ * des Servers, nicht die per ViaVersion/ViaBackwards unterstuetzte
+ * Bandbreite - ein Live-Ueberschreiben wuerde hier also eher weniger
+ * korrekte Infos zeigen als die gepflegte Angabe.
+ *
+ * Schlaegt die Abfrage fehl (Netzwerk, API down, o.ae.), bleiben
+ * einfach die im HTML hinterlegten Platzhalter-Werte stehen statt
+ * irgendwas Falsches anzuzeigen.
+ * -------------------------------------------------------------- */
+(function liveServerStatus(){
+  const elCount  = document.getElementById('liveCount');
+  const elStatN  = document.getElementById('statN');
+  const elStatus = document.getElementById('liveStatus');
+  const elDot    = document.getElementById('liveDot');
+  if (!elCount && !elStatN) return;
+
+  const SERVER_HOST = 'lemon-servers.de';
+  const ABFRAGE_TAKT_MS = 60000;
+
+  async function aktualisieren(){
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(`https://api.mcsrvstat.us/3/${SERVER_HOST}`, { signal: controller.signal });
+      if (!res.ok) return;
+      const data = await res.json();
+      const online = !!data.online;
+      const spieler = online && data.players && typeof data.players.online === 'number'
+        ? String(data.players.online) : (online ? '0' : '–');
+
+      if (elStatus) elStatus.textContent = online ? 'online' : 'offline';
+      if (elCount)  elCount.textContent  = spieler;
+      if (elStatN)  elStatN.textContent  = spieler;
+      if (elDot)    elDot.style.animationPlayState = online ? 'running' : 'paused';
+      if (elDot)    elDot.style.background = online ? '' : 'var(--muted)';
+    } catch (err) {
+      // Fetch fehlgeschlagen/Timeout - Platzhalter aus dem HTML stehen lassen.
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  aktualisieren();
+  setInterval(aktualisieren, ABFRAGE_TAKT_MS);
 })();
 
 /* ---------------- Top 10 Aura Moments (/top/10/aura-moments/) ----------------
  *
- * Neuen Moment hinzufuegen: einfach einen weiteren Eintrag unten ins
- * MOMENTS-Array kopieren und die Felder anpassen:
- *   rank        - Platz 1-10 (bestimmt nur die Gold/Silber/Bronze-Faerbung
- *                 bei 1-3, die Reihenfolge kommt von der Position im Array)
- *   title       - Titel des Moments
- *   player      - wer die Aktion gemacht hat
- *   description - kurze Beschreibung, 1-2 Saetze reichen
- *   thumbnail   - Bild-URL fuers Vorschaubild (z.B. ein hochgeladener
- *                 Screenshot/Thumbnail, auch relative Pfade gehen)
- *   link        - wohin der Klick fuehrt (z.B. YouTube/Twitter/Discord-Link
- *                 zum vollen Clip) - "#" wenn noch kein Clip verlinkt ist
+ * Neuen Moment hinzufuegen: NUR die Datei nach media/ hochladen, benannt
+ * nach dem Platz - z.B. media/1.mp4 fuer Platz 1, media/7.jpg fuer
+ * Platz 7 (siehe media/README.md). Mehr ist nicht noetig - diese Seite
+ * probiert beim Laden fuer jeden Platz 1-10 selbst aus, ob es dafuer
+ * ein Video (.mp4, zuerst versucht) oder ein Foto (.jpg) gibt, und
+ * zeigt sonst einen Platzhalter. Kein Array, kein Code hier anfassen.
+ *
+ * Titel/Spieler/Beschreibung sind optional und rein kosmetisch - unten
+ * im MOMENTS-Array nach Platz eintragen (Index 0 = Platz 1). Leer
+ * lassen ist ok, dann steht nur "Platz N" da.
  * -------------------------------------------------------------------- */
 (function auraMoments(){
   const grid = document.getElementById('momentsGrid');
   if (!grid) return;
 
-  const MOMENTS=[
-    {title:'Platzhalter-Titel #1', player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
-    {title:'Platzhalter-Titel #2', player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
-    {title:'Platzhalter-Titel #3', player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
-    {title:'Platzhalter-Titel #4', player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
-    {title:'Platzhalter-Titel #5', player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
-    {title:'Platzhalter-Titel #6', player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
-    {title:'Platzhalter-Titel #7', player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
-    {title:'Platzhalter-Titel #8', player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
-    {title:'Platzhalter-Titel #9', player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
-    {title:'Platzhalter-Titel #10',player:'SpielerName', description:'Kurze Beschreibung des Moments hier eintragen.', thumbnail:'', link:'#'},
+  const RAENGE = 10;
+  const MEDIA_ORDNER = 'media/';
+
+  const MOMENTS = [
+    {title:'', player:'', description:''}, // Platz 1
+    {title:'', player:'', description:''}, // Platz 2
+    {title:'', player:'', description:''}, // Platz 3
+    {title:'', player:'', description:''}, // Platz 4
+    {title:'', player:'', description:''}, // Platz 5
+    {title:'', player:'', description:''}, // Platz 6
+    {title:'', player:'', description:''}, // Platz 7
+    {title:'', player:'', description:''}, // Platz 8
+    {title:'', player:'', description:''}, // Platz 9
+    {title:'', player:'', description:''}, // Platz 10
   ];
 
-  const FALLBACK_THUMB = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 180'%3E%3Crect width='320' height='180' fill='%23161616'/%3E%3Ctext x='160' y='96' font-family='sans-serif' font-size='14' fill='%23555' text-anchor='middle'%3EKein Bild hinterlegt%3C/text%3E%3C/svg%3E";
+  const FALLBACK_THUMB = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 180'%3E%3Crect width='320' height='180' fill='%23161616'/%3E%3Ctext x='160' y='96' font-family='sans-serif' font-size='13' fill='%23555' text-anchor='middle'%3ENoch kein Clip hochgeladen%3C/text%3E%3C/svg%3E";
 
   function rankClass(i){ return i===0?'top1':i===1?'top2':i===2?'top3':''; }
 
-  grid.innerHTML = MOMENTS.map((m,i)=>`
-    <a class="moment" href="${m.link}" target="${m.link&&m.link!=='#'?'_blank':'_self'}" rel="noopener">
-      <div class="moment-thumb">
-        <img src="${m.thumbnail||FALLBACK_THUMB}" alt="${m.title}" onerror="this.onerror=null;this.src='${FALLBACK_THUMB}'">
-        <div class="moment-rank ${rankClass(i)}">#${i+1}</div>
-        <div class="moment-play">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        </div>
-      </div>
-      <div class="moment-body">
-        <div class="moment-title">${m.title}</div>
-        <div class="moment-player">${m.player}</div>
-        <p class="moment-desc">${m.description}</p>
-      </div>
-    </a>
-  `).join('');
+  function karteBauen(rank, meta){
+    const wrap = document.createElement('div');
+    wrap.className = 'moment';
+    wrap.tabIndex = 0;
+    wrap.setAttribute('role', 'button');
+
+    const thumb = document.createElement('div');
+    thumb.className = 'moment-thumb';
+
+    // Erst Video versuchen (media/{rank}.mp4) - klappt das nicht (kein
+    // Treffer -> 'error'-Event, wie bei img.onerror), auf Foto
+    // (media/{rank}.jpg) umschwenken, und wenn das auch fehlt, auf den
+    // Platzhalter. wrap.dataset.media* haelt fest, was am Ende wirklich
+    // da ist, fuers Oeffnen der Lightbox beim Klick.
+    const video = document.createElement('video');
+    video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'metadata';
+    video.addEventListener('loadedmetadata', () => {
+      wrap.dataset.mediaType = 'video';
+      wrap.dataset.mediaSrc = video.src;
+    });
+    video.addEventListener('mouseenter', () => video.play().catch(() => {}));
+    video.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+    video.addEventListener('error', () => {
+      video.remove();
+      const img = document.createElement('img');
+      img.alt = meta.title || `Platz ${rank}`;
+      img.addEventListener('load', () => {
+        // Feuert auch fuer die Zuweisung von FALLBACK_THUMB unten (ist ja
+        // auch ein "erfolgreiches Laden") - das darf NICHT als echtes
+        // Foto durchgehen, sonst oeffnet die Lightbox spaeter leere
+        // Platzhalter-Karten mit dem Platzhalterbild als "Inhalt".
+        if (img.src === FALLBACK_THUMB) return;
+        wrap.dataset.mediaType = 'image';
+        wrap.dataset.mediaSrc = img.src;
+      }, { once:true });
+      img.addEventListener('error', () => {
+        img.onerror = null;
+        img.src = FALLBACK_THUMB;
+      }, { once:true });
+      img.src = `${MEDIA_ORDNER}${rank}.jpg`;
+      thumb.prepend(img);
+    }, { once:true });
+    video.src = `${MEDIA_ORDNER}${rank}.mp4`;
+    thumb.appendChild(video);
+
+    const rankEl = document.createElement('div');
+    rankEl.className = `moment-rank ${rankClass(rank - 1)}`;
+    rankEl.textContent = `#${rank}`;
+    thumb.appendChild(rankEl);
+
+    const play = document.createElement('div');
+    play.className = 'moment-play';
+    play.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    thumb.appendChild(play);
+
+    wrap.appendChild(thumb);
+
+    const body = document.createElement('div');
+    body.className = 'moment-body';
+    const titel = meta.title || `Platz ${rank}`;
+    body.innerHTML = `
+      <div class="moment-title"></div>
+      ${meta.player ? '<div class="moment-player"></div>' : ''}
+      ${meta.description ? '<p class="moment-desc"></p>' : ''}
+    `;
+    body.querySelector('.moment-title').textContent = titel;
+    if (meta.player) body.querySelector('.moment-player').textContent = meta.player;
+    if (meta.description) body.querySelector('.moment-desc').textContent = meta.description;
+    wrap.appendChild(body);
+
+    function oeffnen(){
+      if (!wrap.dataset.mediaType) return; // noch kein Clip hochgeladen - nichts zu zeigen
+      lightboxOeffnen(wrap.dataset.mediaType, wrap.dataset.mediaSrc, titel);
+    }
+    wrap.addEventListener('click', oeffnen);
+    wrap.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); oeffnen(); }
+    });
+
+    return wrap;
+  }
+
+  for (let rank = 1; rank <= RAENGE; rank++) {
+    grid.appendChild(karteBauen(rank, MOMENTS[rank - 1] || {}));
+  }
+
+  /* ---- Lightbox: Klick auf eine Karte spielt Video/Foto gross ab ---- */
+  const lightbox = document.createElement('div');
+  lightbox.className = 'lightbox';
+  lightbox.innerHTML = `
+    <div class="lightbox-inner">
+      <button class="lightbox-close" aria-label="Schließen" type="button">&times;</button>
+      <div class="lightbox-media"></div>
+      <div class="lightbox-caption"></div>
+    </div>
+  `;
+  document.body.appendChild(lightbox);
+  const lbMedia = lightbox.querySelector('.lightbox-media');
+  const lbCaption = lightbox.querySelector('.lightbox-caption');
+
+  function lightboxOeffnen(typ, src, titel){
+    lbMedia.innerHTML = '';
+    if (typ === 'video') {
+      const v = document.createElement('video');
+      v.src = src; v.controls = true; v.autoplay = true; v.playsInline = true;
+      lbMedia.appendChild(v);
+    } else {
+      const img = document.createElement('img');
+      img.src = src; img.alt = titel;
+      lbMedia.appendChild(img);
+    }
+    lbCaption.textContent = titel;
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function lightboxSchliessen(){
+    lightbox.classList.remove('open');
+    lbMedia.innerHTML = ''; // Video wirklich stoppen, nicht nur verstecken
+    document.body.style.overflow = '';
+  }
+  lightbox.querySelector('.lightbox-close').addEventListener('click', lightboxSchliessen);
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) lightboxSchliessen(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && lightbox.classList.contains('open')) lightboxSchliessen();
+  });
 })();
