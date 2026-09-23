@@ -219,8 +219,8 @@ Worldborder blieben für diese Runde hängen).
 
 ```
 /duel <Spieler>          - herausfordern
-/duel accept <Spieler>   - annehmen
-/duel decline <Spieler>  - ablehnen
+/duel <Spieler> accept   - annehmen
+/duel <Spieler> decline  - ablehnen
 /duel stats [Spieler]    - Sieg/Niederlage/Unentschieden-Statistik (ohne Angabe: die eigene;
                             das Ziel muss gerade ONLINE sein, egal auf welchem Server)
 /duel top [Anzahl]       - Rangliste nach Siegen absteigend (Standard 10, maximal 15)

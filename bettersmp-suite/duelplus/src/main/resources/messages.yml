@@ -12,7 +12,7 @@ target-busy: "%prefix%<gold><white>%spieler%</white> ist bereits in einem Duell 
 already-pending: "%prefix%<gold>Du hast bereits eine offene Anfrage mit <white>%spieler%</white>.</gold>"
 
 sent: "%prefix%<green>Herausforderung an <white>%spieler%</white> gesendet.</green> <gray>(läuft in %timeout% ab)</gray>"
-received: "%prefix%<gold><bold>%spieler%</bold></gold> <gray>fordert dich zu einem Duell heraus!</gray><newline><gray>Es steht dein komplettes Inventar auf dem Spiel.</gray><newline><click:run_command:'/duel accept %spieler%'><hover:show_text:'<green>Klicken zum Annehmen</green>'><green>[Annehmen]</green></hover></click> <dark_gray>|</dark_gray> <click:run_command:'/duel decline %spieler%'><hover:show_text:'<red>Klicken zum Ablehnen</red>'><red>[Ablehnen]</red></hover></click>"
+received: "%prefix%<gold><bold>%spieler%</bold></gold> <gray>fordert dich zu einem Duell heraus!</gray><newline><gray>Es steht dein komplettes Inventar auf dem Spiel.</gray><newline><click:run_command:'/duel %spieler% accept'><hover:show_text:'<green>Klicken zum Annehmen</green>'><green>[Annehmen]</green></hover></click> <dark_gray>|</dark_gray> <click:run_command:'/duel %spieler% decline'><hover:show_text:'<red>Klicken zum Ablehnen</red>'><red>[Ablehnen]</red></hover></click>"
 
 no-pending: "%prefix%<red>Du hast keine offene Anfrage von <white>%spieler%</white>.</red>"
 accepted-both: "%prefix%<green>Angenommen! Ihr werdet gleich zur Arena gebracht ...</green>"

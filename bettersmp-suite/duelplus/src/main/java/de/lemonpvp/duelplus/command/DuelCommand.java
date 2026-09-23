@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-/** /duel <Spieler> | /duel accept <Spieler> | /duel decline <Spieler> | /duel stats [Spieler] | /duel top [Anzahl] | /duel watch <Spieler> | /duel unwatch */
+/** /duel <Spieler> [accept|decline] | /duel stats [Spieler] | /duel top [Anzahl] | /duel watch <Spieler> | /duel unwatch */
 public final class DuelCommand implements TabExecutor {
 
     private final DuelPlus plugin;
@@ -43,18 +43,6 @@ public final class DuelCommand implements TabExecutor {
             return true;
         }
         String erstesArgument = args[0].toLowerCase(Locale.ROOT);
-        if (erstesArgument.equals("accept") || erstesArgument.equals("decline")) {
-            if (args.length < 2) {
-                plugin.msgs().send(spieler, "usage");
-                return true;
-            }
-            if (erstesArgument.equals("accept")) {
-                plugin.anfragen().annehmen(spieler, args[1]);
-            } else {
-                plugin.anfragen().ablehnen(spieler, args[1]);
-            }
-            return true;
-        }
         if (erstesArgument.equals("stats")) {
             Player ziel = args.length >= 2 ? Bukkit.getPlayer(args[1]) : spieler;
             if (ziel == null) {
@@ -87,6 +75,21 @@ public final class DuelCommand implements TabExecutor {
         if (erstesArgument.equals("unwatch")) {
             plugin.zuschauer().beenden(spieler);
             return true;
+        }
+        // Ab hier ist args[0] der Zielspieler (der Herausforderer bei accept/
+        // decline, oder das Ziel einer neuen Herausforderung) - "Zielspieler
+        // zuerst" wie schon beim reinen Herausfordern, statt wie frueher
+        // Verb-zuerst nur bei accept/decline.
+        if (args.length >= 2) {
+            String zweitesArgument = args[1].toLowerCase(Locale.ROOT);
+            if (zweitesArgument.equals("accept")) {
+                plugin.anfragen().annehmen(spieler, args[0]);
+                return true;
+            }
+            if (zweitesArgument.equals("decline")) {
+                plugin.anfragen().ablehnen(spieler, args[0]);
+                return true;
+            }
         }
         plugin.anfragen().anfordern(spieler, args[0]);
         return true;
@@ -126,7 +129,7 @@ public final class DuelCommand implements TabExecutor {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                       @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> vorschlaege = new ArrayList<>(List.of("accept", "decline", "stats", "top", "watch", "unwatch"));
+            List<String> vorschlaege = new ArrayList<>(List.of("stats", "top", "watch", "unwatch"));
             for (Player online : Bukkit.getOnlinePlayers()) {
                 vorschlaege.add(online.getName());
             }
@@ -138,6 +141,11 @@ public final class DuelCommand implements TabExecutor {
                 vorschlaege.add(online.getName());
             }
             return vorschlaege;
+        }
+        // args[0] ist hier weder stats/top/watch/unwatch - also ein
+        // Zielspieler, per "/duel <Spieler> accept|decline" (siehe onCommand).
+        if (args.length == 2 && !args[0].equalsIgnoreCase("top") && !args[0].equalsIgnoreCase("unwatch")) {
+            return List.of("accept", "decline");
         }
         return List.of();
     }
