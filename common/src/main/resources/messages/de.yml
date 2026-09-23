@@ -1,0 +1,150 @@
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMPAC</bold></gradient> &8\u00BB"
+
+alerts-enabled: "%prefix% &fBenachrichtigungen aktiviert"
+alerts-disabled: "%prefix% &fBenachrichtigungen deaktiviert"
+verbose-enabled: "%prefix% &fVerbose enabled"
+verbose-disabled: "%prefix% &fVerbose disabled"
+brands-enabled: "%prefix% &fBrands enabled"
+brands-disabled: "%prefix% &fBrands disabled"
+client-brand-format: "%prefix% &f%player% &7hat sich mit <gradient:#6C5CE7:#00D4FF>%brand%</gradient> &7verbunden"
+console-specify-target: "%prefix% &cDu musst ein Ziel angeben, da du die Konsole benutzt!"
+reloading: "%prefix% &7Konfiguration wird neu geladen..."
+reloaded: "%prefix% &fDie Konfiguration wurde neu geladen."
+reload-failed: "%prefix% &cFehler beim Neuladen der Konfiguration."
+player-not-found: "%prefix% &cSpieler ist nicht auffindbar oder geschützt!"
+player-not-this-server: "%prefix% &cSpieler ist nicht auf diesem Server!"
+sender-not-found: "%prefix% &cDu kannst diesen Befehl nicht verwenden, wenn du ausgenommen bist!"
+spectate-return: "<click:run_command:/bucksmpac stopspectating><hover:show_text:\"/bucksmpac stopspectating\">\n%prefix% &fKlicke hier, um zur vorherigen Position zurückzukehren\n</hover></click>"
+cannot-spectate-return: "%prefix% &cDas kannst du nur tun, nachdem du einen Spieler beobachtet hast."
+cannot-run-on-self: "%prefix% &cDu kannst diesen Befehl nicht auf dich selbst anwenden!"
+upload-log: "%prefix% &fDebug wurde hochgeladen zu: %url%"
+upload-log-start: "%prefix% &fHochladen des Logs... Bitte warten"
+upload-log-not-found: "%prefix% &cLog konnte nicht gefunden werden"
+upload-log-upload-failure: "%prefix% &cFehler beim Hochladen des Logs, siehe Konsole für weitere Informationen"
+disconnect:
+    timeout: "<lang:disconnect.timeout>"
+    closed: "<lang:disconnect.closed>"
+    error: "<red>An error occurred whilst processing packets. Please contact the administrators."
+    blacklisted-forge: "<red>Your forge version is blacklisted due to inbuilt reach hacks.<newline><gold>Versions affected: 1.18.2-1.19.3<newline><newline><red>Please see https://github.com/MinecraftForge/MinecraftForge/issues/9309."
+    via-proxy: "<red>Dieser Server ist nicht dafür eingerichtet, ViaVersion-Daten von einem Proxy anzunehmen.<newline><gold>Bitte einen Administrator, in die Serverkonsole zu schauen - dort steht genau, was zu ändern ist."
+run-as-player: "%prefix% &cDiesen Befehl können nur Spieler verwenden!"
+run-as-player-or-console: "%prefix% &cDiesen Befehl können nur Spieler oder die Konsole verwenden!"
+webhook-not-enabled: "Discord webhooks are not enabled!"
+webhook-test-message: "test message"
+webhook-test-succeeded: "Discord webhook test succeeded!"
+webhook-test-failed: "Discord webhook test failed!"
+
+# Gültige Platzhalter:
+# %prefix%
+# %player%
+# %check_name%
+# %description%
+# %experimental%
+# %vl% - Verstöße
+# %verbose% - zusätzliche Informationen von der Prüfung, nicht alle Prüfungen liefern zusätzliche Informationen
+alerts-format: "%prefix% &f%player% <gradient:#6C5CE7:#00D4FF>scheiterte an</gradient> <hover:show_text:\"<gradient:#6C5CE7:#00D4FF>%check_name%%experimental%</gradient>\n&8Beschreibung: &f%description%\"><gradient:#6C5CE7:#00D4FF>%check_name%%experimental%</gradient></hover> &f(x&c%vl%&f) &7%verbose%"
+alerts-format-proxy: "%prefix% &f[&cproxy&f] &f%player% &bbestand <hover:show_text:\"&b%check_name%%experimental%\n&8Beschreibung: &f%description%\">&f%check_name%%experimental%</hover> &bnicht &f(x&c%vl%&f) &7%verbose%"
+experimental-symbol: "*"
+
+profile:
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
+    - "%prefix% <gradient:#6C5CE7:#00D4FF>Profil für</gradient> &f%player%"
+    - "&bPing: &f%ping%"
+    - "&bVersion: &f%version%"
+    - "&bClient Marke: &f%brand%"
+    - "&bHorizontale Sensitivität: &f%h_sensitivity%%"
+    - "&bVertikale Sensitivität: &f%v_sensitivity%%"
+    - "&bFastMath aktiviert: &f%fast_math%"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
+help:
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
+    - "&7Kurzformen: &f/buckac &7und &f/bac"
+    - "/acban <Spieler> [7d|14d|perm] [Grund] &f- &7Bannt einen Spieler (Standard 10 Tage)"
+    - "/acunban <Spieler> &f- &7Hebt einen BuckSMPAC-Ban auf"
+    - "/bucksmpac alerts &f- &7Schaltet Benachrichtigungen um"
+    - "/bucksmpac brands &f- &7Toggle brands"
+    - "/bucksmpac profile <player> &f- &7Zeigt Informationen über einen Spieler an"
+    - "/bucksmpac help &f- &7Zeigt diese Hilfsnachricht an"
+    - "/bucksmpac debug <player> &f- &7Entwicklerausgabe für Vorhersagen"
+    - "/bucksmpac perf &f- &7Entwickler ms/Vorhersage"
+    - "/bucksmpac reload &f- &7Lädt die Konfiguration neu"
+    - "/bucksmpac spectate <player> &f- &7Beobachte einen Spieler"
+    - "/bucksmpac verbose &f- &7Zeigt dir jeden Verstoß ohne Puffer an"
+    - "/bucksmpac log [0-255] &f- &7Lädt ein Debug-Log für Vorhersagefehler hoch"
+    - "/bucksmpac history <player> &f- &7Sitzungsliste (neueste zuerst)"
+    - "/bucksmpac history <player> page <N> &f- &7Springt zu Seite N der Sitzungsliste"
+    - "/bucksmpac history <player> session <N|latest> [-d] [-v] &f- &7Sitzungsdetails (neueste Verstöße zuerst)"
+    - "/bucksmpac history <player> session <N|latest> page <N> [-d] [-v] &f- &7Sitzungsdetails, Verstoß-Seite N"
+    - "<gradient:#6C5CE7:#00D4FF>========================</gradient>"
+
+# === /bucksmpac history ===
+# Sitzungsbasierte Verlaufs-UI. Alle Zeilen unten sind frei konfigurierbar;
+# Platzhalter sind pro Schlüssel dokumentiert. Hover-Texte für Sitzungs- und
+# Verstoßzeilen werden vom Renderer aus den Rohdaten gebaut (verbose,
+# Check-Aufschlüsselung) und brauchen keine Vorlage — du kannst aber jeder
+# Zeile <hover:show_text:'...'> hinzufügen, um zusätzliche Tooltips zu legen.
+
+grim-history-load-failure: "%prefix% &cDas Verlaufs-Subsystem konnte nicht geladen werden! Überprüfe die Serverkonsole auf Fehler."
+grim-history-disabled: "%prefix% &cDas History-Subsystem ist deaktiviert!"
+grim-history-failed: "%prefix% &cVerlauf konnte nicht geladen werden: &7%error%"
+grim-history-unknown-player: "%prefix% &cUnbekannter Spieler: &f%player%"
+grim-history-no-sessions: "%prefix% &7Keine Sitzungs-Historie für &f%player%&7."
+grim-history-session-not-found: "%prefix% &cSitzung &f%ordinal%&c für &f%player%&c nicht gefunden."
+
+# Sitzungsliste — gültige Platzhalter: %prefix% %player% %page% %max_pages%
+grim-history-header: "%prefix% &bZeige Sitzungs-Historie für &f%player% &8[&f%page%&7/&f%max_pages%&8]"
+# Einzelne Sitzungszeile — gültige Platzhalter:
+#   %prefix% %player% %ordinal% %grim_version% %server_name%
+#   %client_version% %client_brand% %duration% %timeago%
+#   %violations% %unique_checks% %crashed_marker%
+# %crashed_marker% wird zu grim-history-crashed-marker erweitert für Sitzungen,
+# deren Verbindung ohne sauberes Schließen wegfiel (Server-Crash, kill -9,
+# Channel-RST ohne UserDisconnectEvent). Für laufende oder sauber geschlossene
+# Sitzungen leerer String.
+grim-history-session: "%prefix% &8[&b%grim_version%&8] &8[&b%server_name%&8] &8[&b%client_version%&8] &bSitzung &f%ordinal%&b, Dauer &f%duration%&b, &c%violations%&b Verstöße &8[&c%unique_checks%&8]%crashed_marker% &8(&7vor %timeago%&8)"
+
+# Inline-Marker, der in %crashed_marker% eingesetzt wird bei Sitzungen mit
+# closed_at == last_activity (also vom Crash-Sweep beim nächsten Start
+# gestempelt, nicht vom Disconnect-Pfad). Mit führendem Leerzeichen, damit
+# der Marker beim Vorhandensein natürlich liest und beim Fehlen verschwindet.
+grim-history-crashed-marker: " &8(&cabgestürzt&8)"
+
+# Sitzungsdetails — gültige Platzhalter:
+#   %prefix% %player% %ordinal% %grim_version% %server_name%
+#   %client_version% %client_brand% %duration% %timeago%
+#   %violations% %unique_checks% %bucket_size%
+grim-history-detail-header: "%prefix% &bDetails zu Sitzung &f%ordinal% &bvon &f%player%&b:"
+grim-history-detail-meta1: "%prefix% &bGrim: &f%grim_version%&b, Server: &f%server_name%&b, Dauer: &f%duration%&b, Datum: &7vor %timeago%"
+grim-history-detail-meta2: "%prefix% &bClient: &f%client_version%&b, Marke: &f%client_brand%"
+grim-history-detail-violations-header: "%prefix% &bVerstöße: &8(%violations% gesamt, %unique_checks% verschiedene)"
+grim-history-detail-empty: "%prefix% &7- (keine)"
+# Gruppenzeile (Standard) — gültige Platzhalter: %prefix% %offset% %checks_list%
+#   %checks_list% wird gebaut aus grim-history-check-count-Einträgen, getrennt mit ", "
+grim-history-detail-group: "%prefix% &7- %checks_list% &8(&b%offset%&8)"
+# Einzelner Verstoß (--detailed) — gültige Platzhalter:
+#   %prefix% %offset% %check% %vl% %verbose%
+grim-history-detail-entry: "%prefix% &7- &f%check% &8(&b%offset%&8)&7 %verbose%"
+# Inneres Format für jeden Check in einer Gruppen-%checks_list% — gültige Platzhalter: %check_name% %count%
+grim-history-check-count: "&f%check_name%&7 x&c%count%"
+
+# === /acban ===
+# BuckSMPACs eigene Ban-Liste. %target% ist der Spieler, %reason% der Grund.
+acban-success: "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>wurde gebannt.</gray> <dark_gray>(%reason%)</dark_gray>"
+acunban-success: "%prefix% <gradient:#6C5CE7:#00D4FF>%target%</gradient> <gray>wurde entbannt.</gray>"
+acunban-not-banned: "%prefix% <gray>Kein BuckSMPAC-Ban gefunden für</gray> <gradient:#6C5CE7:#00D4FF>%target%</gradient><gray>.</gray>"
+acban-storage-unavailable: "%prefix% <red>Die Ban-Liste ist nicht verfügbar — BuckSMPACs Datenbank ist aus oder konnte nicht laden. Siehe Konsole."
+# Der Bildschirm, den ein gebannter Spieler sieht. %reason% und %date% werden eingesetzt.
+# Wie lange ein /acban gilt, wenn im Befehl keine Dauer steht.
+acban-default-duration: "10d"
+# Die laengste Bandauer, die /acban vergibt. "perm" und alles Laengere
+# werden darauf gekuerzt, damit niemand aus Versehen einen Perma-Ban
+# hinterlaesst. Auf "perm" setzen hebt die Grenze ganz auf.
+acban-max-duration: "14d"
+# Wird nach /acban angezeigt, solange punishment-dry-run an ist - damit
+# niemand einen echten Ban fuer einen Probelauf haelt.
+acban-dry-run-note: "%prefix% <gray>Hinweis: Der Testmodus ist an, die Leitern protokollieren nur — dieser Ban war aber echt.</gray>"
+acban-screen: "<gradient:#6C5CE7:#00D4FF><bold>▄▀▄▀▄  B U C K S M P  ▄▀▄▀▄</bold></gradient><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><white><bold>Du bist von diesem Netzwerk gebannt.</bold></white><newline><newline><gray>Grund</gray>  <dark_gray>»</dark_gray>  <gradient:#6C5CE7:#00D4FF>%reason%</gradient><newline><gray>Datum</gray>  <dark_gray>»</dark_gray>  <white>%date%</white><newline><gray>Endet</gray>  <dark_gray>»</dark_gray>  <gradient:#6C5CE7:#00D4FF>%remaining%</gradient><newline><newline><dark_gray>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</dark_gray><newline><newline><gray>Du hältst das für einen Fehler?</gray><newline><gradient:#6C5CE7:#00D4FF>discord.gg/bucksmp</gradient>"
+
+# Schema-Marker — siehe Kopf-Kommentar in config.yml.
+config-flavor: V2
+config-version: 3

@@ -1,0 +1,96 @@
+# ======================================================================
+#  BuckSMPAC - bans.yml
+# ======================================================================
+#  THE SIMPLE LADDER:  "at N flags, run this command".
+#
+#  punishments.yml counts flags separately inside each check group, so a
+#  player sitting at 30 Reach flags and 30 Knockback flags never reaches a
+#  50-flag rung in either one. THIS file adds every flag from every check
+#  into a single running total per player - which is the number people
+#  actually mean when they say "he has 50 flags".
+#
+#  Both files are active at the same time and do not interfere with each
+#  other. Use punishments.yml when you want a reaction tied to one specific
+#  check; use this file for the overall "how suspicious is this player"
+#  ladder.
+#
+#  Placeholders you can use in any command below:
+#    %player%     - the player's name
+#    %flags%      - their current total
+#    %checks%     - how many DIFFERENT checks they tripped
+#    %top_check%  - the check they failed most often
+#    %top_count%  - how often they failed that one
+#    %prefix%     - the BuckSMPAC chat prefix (for [alert] only)
+# ======================================================================
+
+bans:
+    enabled: true
+
+    # How long a single flag keeps counting toward the total, in seconds.
+    # 600 = a flag drops back out of the total 10 minutes after it happened,
+    # so someone who trips one check a week does not slowly accumulate a ban.
+    # Set to 0 to keep every flag for as long as the player stays online.
+    remember-flags-for: 600
+
+    # No rung fires until the player has tripped at least this many DIFFERENT
+    # checks. This is the safeguard that makes the ladder safe to run at all:
+    # a real cheat client trips several checks at once, while one check firing
+    # over and over is far more often a false positive or a lag artifact.
+    # Set to 1 to turn the safeguard off - but 1 makes this ladder a second,
+    # independent way to get banned, which is how false bans happen twice.
+    #
+    # Set bans.enabled to false above if you would rather have one ban path
+    # (punishments.yml) and nothing else.
+    min-different-checks: 6
+
+    # Flags from these checks never count toward the total. Names match the
+    # same way as in punishments.yml, so "BadPackets" covers BadPacketsA,
+    # BadPacketsB and so on. Put a check here while you are still tuning it -
+    # then it can alert you, but it can never ban anybody on its own.
+    #
+    # The list below mirrors the alert-only groups in punishments.yml. Those
+    # checks argue with lag, so letting them push somebody up this ladder
+    # would undo the whole point of not letting them ban directly.
+    ignore-checks:
+        - "Simulation"
+        - "GroundSpoof"
+        - "Timer"
+        - "NoFall"
+        - "Knockback"
+        - "Explosion"
+        - "Vehicle"
+        - "Elytra"
+        - "Aim"
+        - "Autoclicker"
+
+    # Sent to staff when a rung's command is [alert].
+    alert-format: "%prefix% &f%player% &7is at &c%flags% &7flags across &c%checks% &7checks &8(&f%top_check% &7x%top_count%&8)"
+
+    # The ladder. Each rung fires ONCE per player per session, the moment the
+    # total reaches it. A player who jumps from 20 to 60 flags in one burst
+    # triggers every rung in between, in order.
+    #
+    #   command: "[alert]"     -> message your staff
+    #   command: "<anything>"  -> run it from console
+    #
+    # There is no kick step - the ladder goes straight to a ban.
+    #
+    # Commands run on THIS backend server's console. A ban plugin that only
+    # exists on your proxy is not reachable from here - the command resolves
+    # to nothing and the player keeps playing. BuckSMPAC logs a warning when
+    # that happens, so check your console after the first ban.
+    #
+    # acban is BuckSMPAC's own ban - nothing to install, nothing to
+    # configure. Stored in BuckSMPAC's database (database.yml); point every
+    # server at the same MySQL/MariaDB and one ban covers all of them.
+    #
+    # Prefer an external plugin? Swap it for e.g.
+    #   "tempban %player% 30d BuckSMPAC > %flags% flags (%top_check%)"
+    ladder:
+        - flags: 15
+          command: "[alert]"
+        - flags: 200
+          command: "acban %player% 14d BuckSMPAC > %flags% flags across %checks% checks (%top_check% x%top_count%)"
+
+# Bump marker — see the note in punishments.yml.
+bans-version: 8

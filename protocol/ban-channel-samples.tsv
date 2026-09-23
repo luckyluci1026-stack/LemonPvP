@@ -1,0 +1,21 @@
+# BuckSMPAC "bucksmpac:bans" channel — canonical samples.
+#
+# The backend (common/AcBanProxyBridge) writes these strings and the proxy
+# (velocity/BanMessage) reads them. Each side has a test that reads this file,
+# so changing one side alone fails the build instead of silently breaking bans
+# on a live network, where the only symptom is that nobody gets refused at the
+# proxy any more.
+#
+# Tab-separated. Columns:
+#   payload  kind  uuid  name  when  expires  actor  reason
+#
+# "-" means the column does not apply to that kind, "<empty>" an empty string.
+# Every sample here is already free of the separator and of line breaks, so it
+# round-trips unchanged; escaping of unsafe input is tested separately on the
+# encoding side.
+BAN|3f2504e0-4f89-11d3-9a0c-0305e82c3301|Steve|1700000000000|1701209600000|CONSOLE|Reach	BAN	3f2504e0-4f89-11d3-9a0c-0305e82c3301	Steve	1700000000000	1701209600000	CONSOLE	Reach
+BAN|3f2504e0-4f89-11d3-9a0c-0305e82c3302|Lemonightt|1700000000000|1701209600000|Notch|Killaura (autoclicker)	BAN	3f2504e0-4f89-11d3-9a0c-0305e82c3302	Lemonightt	1700000000000	1701209600000	Notch	Killaura (autoclicker)
+BAN|3f2504e0-4f89-11d3-9a0c-0305e82c3303|.BedrockGuy|1700000000000|1700604800000|CONSOLE|Simulation	BAN	3f2504e0-4f89-11d3-9a0c-0305e82c3303	.BedrockGuy	1700000000000	1700604800000	CONSOLE	Simulation
+BAN|3f2504e0-4f89-11d3-9a0c-0305e82c3304|Herobrine|1700000000000|0|CONSOLE|Manual	BAN	3f2504e0-4f89-11d3-9a0c-0305e82c3304	Herobrine	1700000000000	0	CONSOLE	Manual
+UNBAN|3f2504e0-4f89-11d3-9a0c-0305e82c3301|Steve	UNBAN	3f2504e0-4f89-11d3-9a0c-0305e82c3301	Steve	-	-	-	-
+UNBAN|3f2504e0-4f89-11d3-9a0c-0305e82c3305|	UNBAN	3f2504e0-4f89-11d3-9a0c-0305e82c3305	<empty>	-	-	-	-

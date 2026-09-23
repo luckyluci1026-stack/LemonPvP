@@ -1,0 +1,236 @@
+# ======================================================================
+#  BuckSMPAC - Strafen
+# ======================================================================
+# Platzhalter:
+#   %check_name%  - Name der Prüfung
+#   %description% - Beschreibung der Prüfung
+#   %vl%          - Verstöße
+#   %verbose%     - zusätzliche Informationen
+#   %player%      - Spielername
+#
+# Spezielle Befehle:
+#   [alert]   - benachrichtigt das Team im Spiel
+#   [log]     - schreibt in die BuckSMPAC-Verstoßhistorie
+#   [webhook] - sendet an deinen Discord-Webhook
+#   [proxy]   - sendet an andere Server über deinen Proxy (Bungee/Velocity)
+#
+# Befehlsformat:  "Schwelle:Intervall Befehl"
+#   N = benötigte Verstöße, damit der Befehl ausgeführt wird.
+#   M > 0 -> läuft bei N, dann N+M, N+2M, ...
+#   M = 0 -> läuft einmalig bei N.
+#
+# ----------------------------------------------------------------------
+#  NUR BANS — keine Kicks, keine Freezes
+# ----------------------------------------------------------------------
+# Zwei Stufen. Checks, die sich mit Lag streiten, melden nur - ein Mensch
+# entscheidet. Checks, die das nicht tun, duerfen selbst bannen, und zwar
+# erst bei Zahlen, die ein ehrlicher Spieler nicht erreicht.
+#
+#   Gruppe       Flags   Ban        warum
+#   Reach          45    14 Tage    irrt sich selten
+#   Hitboxes       45    14 Tage    irrt sich selten
+#   Post           60    14 Tage    irrt sich selten
+#   BadPackets     60    14 Tage    irrt sich selten
+#   Misc          100     7 Tage    irrt sich selten
+#   Simulation      -    Alert      Lag, Eis, Boote, Kolben, Bedrock
+#   Knockback       -    Alert      jeder Aussetzer entsynct einen Treffer
+#   Combat          -    Alert      Aim liest Drehung; Ruckler sehen komisch aus
+#   Movement        -    Alert      Fahrzeuge und Elytra werden lose berechnet
+#   Autoclicker     -    Alert      neuer Code, keine Praxisdaten
+#
+# Ein Flag zaehlt 300 Sekunden nach dem Auftreten nicht mehr mit. Ein
+# Spieler muss also in einer Sitzung wiederholt auffallen - der einzelne
+# Fehlalarm ueber einen Abend verteilt kuehlt ab statt sich zu summieren.
+#
+# Jede Alert-Gruppe hat ihre Ban-Zeile weiterhin dabei, auskommentiert, mit
+# einem Startwert. Beobachte die Alerts einer Gruppe eine Woche lang; wenn
+# jeder genannte Spieler wirklich gecheatet hat, nimm das # weg. Im Zweifel
+# lass es - ein verpasster Cheater kostet dich einen Spieler, ein
+# Fehlbann den, der fair gespielt hat.
+#
+# ----------------------------------------------------------------------
+#  /acban — BUCKSMPACS EIGENER BAN
+# ----------------------------------------------------------------------
+# Kein fremder Plugin-Befehl: nichts zu installieren, nichts zu
+# konfigurieren, und er kann nicht ins Leere laufen, weil ein Ban-Plugin
+# woanders liegt.
+#
+#   /acban <Spieler> [Dauer] [Grund]     z. B.  /acban Steve 7d Fly
+#   /acunban <Spieler>
+#
+# Die Dauer ist optional: 7d, 12h, 30m oder perm. Ohne Angabe gilt
+# acban-default-duration aus der messages.yml (10 Tage).
+#
+# Mit dem Velocity-Plugin wird der Ban am Proxy durchgesetzt - ein
+# gebannter Spieler wird abgewiesen, bevor er irgendeinen Server erreicht.
+# Ohne das Plugin gilt der Ban auf jedem Backend mit BuckSMPAC.
+#
+# Lieber ein externes Plugin? Dann acban durch dessen Befehl ersetzen:
+#   "14:0 tempban %player% 30d BuckSMPAC > Cheating (%check_name%)"
+# ----------------------------------------------------------------------
+
+Punishments:
+  # ------------------------------------------------------------------
+  #  NUR ALERTS - diese bannen nie von allein
+  # ------------------------------------------------------------------
+  # Simulation is the movement prediction engine. It is the single largest
+  # source of false positives on any anticheat: lag spikes, ice, boats,
+  # elytra, pistons and Bedrock movement all push a legitimate player past
+  # it. It watches and reports; a person decides.
+  #
+  # Arm it only once you have watched its alerts for a week and every player
+  # it named was actually cheating. The line is below, ready to uncomment.
+  Simulation:
+    remove-violations-after: 300
+    checks:
+      - "Simulation"
+      - "GroundSpoof"
+      - "Timer"
+      - "TimerLimit"
+      - "NoFall"
+    commands:
+      - "40:20 [alert]"
+      - "1:1 [log]"
+      - "100:100 [webhook]"
+      - "100:100 [proxy]"
+      # --- Ban-Leiter (erst nach dem Einstellen scharf schalten - siehe oben) ---
+      #- "400:0 acban %player% 7d BuckSMPAC > Cheating erkannt (%check_name%)"     # BAN
+
+  # Knockback misfires whenever the server and the client disagree about a
+  # hit, which is every time the connection hiccups.
+  Knockback:
+    remove-violations-after: 300
+    checks:
+      - "Knockback"
+      - "Explosion"
+    commands:
+      - "8:8 [alert]"
+      - "1:1 [log]"
+      - "20:20 [webhook]"
+      - "20:20 [proxy]"
+      # --- Ban-Leiter (erst nach dem Einstellen scharf schalten) ---
+      #- "150:0 acban %player% 10d BuckSMPAC > Anti-Knockback (%check_name%)"       # BAN
+
+  # Aim reads rotation patterns. Controller players, high-DPI mice and
+  # anybody whose framerate stutters all look unusual to it.
+  Combat:
+    remove-violations-after: 300
+    checks:
+      - "Interact"
+      - "Aim"
+    commands:
+      - "12:15 [alert]"
+      - "1:1 [log]"
+      # --- Ban-Leiter (erst nach dem Einstellen scharf schalten) ---
+      #- "150:0 acban %player% 10d BuckSMPAC > Kampf-Anomalie (%check_name%)"       # BAN
+
+  # Boats, horses, minecarts and elytra. Vehicle movement is predicted much
+  # more loosely than walking, so these flag honest players more than
+  # anything else in Misc used to - which is why they moved out of it.
+  Movement:
+    remove-violations-after: 300
+    checks:
+      - "Vehicle"
+      - "Elytra"
+    commands:
+      - "10:10 [alert]"
+      - "1:1 [log]"
+      # --- Ban-Leiter (erst nach dem Einstellen scharf schalten) ---
+      #- "200:0 acban %player% 7d BuckSMPAC > Bewegung (%check_name%)"              # BAN
+
+  # ------------------------------------------------------------------
+  #  DIESE BANNEN - die Checks, die mit Lag klarkommen
+  # ------------------------------------------------------------------
+  Post:
+    remove-violations-after: 300
+    checks:
+      - "Post"
+    commands:
+      - "12:12 [alert]"
+      - "1:1 [log]"
+      - "40:40 [webhook]"
+      - "40:40 [proxy]"
+      # --- BuckSMPAC Ban-Leiter ---
+      - "60:0 acban %player% 14d BuckSMPAC > Paketreihenfolge (%check_name%)"           # BAN
+
+  BadPackets:
+    remove-violations-after: 300
+    checks:
+      - "BadPackets"
+      - "PacketOrder"
+      - "Crash"
+    commands:
+      - "12:12 [alert]"
+      - "1:1 [log]"
+      - "40:40 [webhook]"
+      - "40:40 [proxy]"
+      # --- BuckSMPAC Ban-Leiter ---
+      - "60:0 acban %player% 14d BuckSMPAC > Illegale Pakete (%check_name%)"        # BAN
+
+  Reach:
+    remove-violations-after: 300
+    checks:
+      - "Reach"
+    commands:
+      - "6:4 [alert]"
+      - "1:1 [log]"
+      - "5:3 [webhook]"
+      - "5:3 [proxy]"
+      # --- BuckSMPAC Ban-Leiter ---
+      - "45:0 acban %player% 14d BuckSMPAC > Reach erkannt (%check_name%)"         # BAN
+
+  Hitboxes:
+    remove-violations-after: 300
+    checks:
+      - "Hitboxes"
+    commands:
+      - "6:4 [alert]"
+      - "1:1 [log]"
+      - "5:3 [webhook]"
+      - "5:3 [proxy]"
+      # --- BuckSMPAC Ban-Leiter ---
+      - "45:0 acban %player% 14d BuckSMPAC > Hitbox erkannt (%check_name%)"        # BAN
+
+  Misc:
+    remove-violations-after: 300
+    checks:
+      - "NoSlow"
+      - "Sprint"
+      - "MultiActions"
+      - "Place"
+      - "Baritone"
+      - "Break"
+      - "TransactionOrder"
+      - "Chat"
+      - "Exploit"
+    commands:
+      - "8:5 [alert]"
+      - "1:1 [log]"
+      - "20:10 [webhook]"
+      - "20:10 [proxy]"
+      # --- BuckSMPAC Ban-Leiter ---
+      - "100:0 acban %player% 7d BuckSMPAC > Cheating erkannt (%check_name%)"      # BAN
+
+  # BuckSMPAC's own AutoClicker check. It is marked experimental, and BuckSMPAC
+  # ships with experimental-checks: true - so it IS running.
+  #
+  # DELIBERATELY ALERTS ONLY. Every other group here punishes a check that
+  # upstream has years of field data on; this one is new code with none. Watch
+  # the alerts on your own server first, confirm the players it names are
+  # actually cheating, tune Autoclicker.max-attack-cps in config.yml to sit
+  # above your fastest legitimate clicker, and only then uncomment the ladder
+  # below. Enabling it untested will ban butterfly clickers.
+  Autoclicker:
+    remove-violations-after: 300
+    checks:
+      - "Autoclicker"
+    commands:
+      - "15:20 [alert]"
+      - "1:1 [log]"
+      # --- BuckSMPAC Ban-Leiter (erst nach dem Einstellen aktivieren - siehe oben) ---
+      #- "120:0 acban %player% 7d BuckSMPAC > AutoClicker (%check_name%)"           # BAN
+
+# Bump marker — BuckSMPAC compares this against the version it ships and
+# warns in the console when yours is older. This file is never overwritten
+# automatically, so the warning is the only way you would find out.
+punishments-version: 8

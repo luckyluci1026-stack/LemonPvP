@@ -1,0 +1,185 @@
+package ac.grim.grimac.manager.config.update;
+
+import lombok.experimental.UtilityClass;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Locale;
+
+/**
+ * Centralised registry of {@link ConfigUpdater.Spec} instances for every
+ * Grim config file. Each yml file owns:
+ *
+ * <ul>
+ *   <li>a {@code config-flavor} marker (V2 / V3) that the updater rejects on
+ *       a mismatch — a wrong-flavor file fails fast instead of silently
+ *       flat-merging into the wrong key set;</li>
+ *   <li>a {@code config-version} integer bumped on every breaking shape
+ *       change to the bundled default;</li>
+ *   <li>an optional in-version {@link ConfigUpdater.Migration} chain that
+ *       lifts values forward across each version step. Multiple steps
+ *       stack — v3 → v8 runs each registered v4/v5/v6/v7/v8 migration.</li>
+ * </ul>
+ *
+ * <p>Resource paths name the directory ({@code "/database/"}) — the updater
+ * picks the language-appropriate {@code en.yml} / {@code zh.yml} / … from
+ * inside it at update time, falling back to {@code en.yml} when the active
+ * locale isn't bundled. Same shape Configuralize uses for runtime loading.
+ *
+ * <p>Migrations write through the {@link MigrationContext} API: typed
+ * dotted-path reads from {@code input()}, writes to {@code output()},
+ * cross-file pushes via {@code otherFile(name)}. The updater applies
+ * recorded write ops via the line-mapped patcher so the bundled default's
+ * comments survive the rewrite.
+ *
+ * <p>{@code punishments.yml} is intentionally absent — open-ended user-
+ * defined data (operator-authored punishment groups), no schema versioning.
+ */
+@UtilityClass
+public final class GrimConfigSpecs {
+
+    /**
+     * Spec for the main {@code config.yml}.
+     *
+     * <p>v9 → v10: migrates Grim 2.x's {@code history:} block out of
+     * config.yml and into the new {@code database.yml} + the matching
+     * {@code databases/<id>.yml}. Pre-V2 operators had all DB settings
+     * inline in config.yml; V2 splits the datastore config into its own
+     * file. The bundled default at v10 has no {@code history:} block, so
+     * the auto-lift naturally drops it from the new file; the migration
+     * only needs to ferry the values over.
+     *
+     * <p>v10 → v11: adds {@code update-permission-ticks} to the bundled
+     * config. No explicit migration is needed; the updater's default rewrite
+     * adds the key, and auto-lift preserves an existing user value if present.
+     *
+     * <p>v11 → v12: adds BuckSMPAC's {@code Autoclicker:} block. No explicit
+     * migration — the default rewrite brings the keys in and auto-lift keeps
+     * any the operator already set. The bump itself is the point: without it
+     * the updater short-circuits on {@code oldVersion >= latestVersion} and a
+     * server that already has a v11 config.yml never receives the new section,
+     * leaving the check running on hardcoded defaults with nothing to tune.
+     * Note that the old {@code max-cps} key is deliberately not carried over
+     * to {@code max-attack-cps}: the check now measures attacks rather than
+     * raw swings, so an operator's old number would mean something different.
+     *
+     * <p>v12 → v13: adds the {@code bedrock:} block. Same reasoning as v12 —
+     * without the bump the updater short-circuits and an existing config never
+     * gains the keys, so Bedrock players would silently fall back to the
+     * hardcoded defaults with no way for the operator to tune the exempt list.
+     *
+     * <p>v13 → v14: adds the {@code proxy:} block, so an operator can state
+     * outright whether this server sits behind a proxy instead of leaving it
+     * to detection. Getting that answer wrong disconnects legitimate players
+     * over proxy plugin messages, so it needed an override that does not
+     * depend on file paths resolving.
+     *
+     * <p>v14 → v15: adds {@code punishment-dry-run}. Same reasoning as the
+     * three bumps above — without it an existing config never gains the key,
+     * and the operator has no way to rehearse the punishment ladders against
+     * real traffic before arming them. Off by default, so the bump changes
+     * nothing for a server that does not go looking for it.
+     *
+     * <p>v15 → v16: adds {@code duels-mode}. Same reasoning again — a duel
+     * server running an existing config would have no way to stop the
+     * anticheat cancelling hits, which is the one thing it cannot tolerate.
+     */
+    public static @NotNull ConfigUpdater.Spec mainConfig() {
+        return ConfigUpdater.Spec.builder("/config/", 16, ConfigUpdater.ConfigFlavor.V2)
+                .migration(10, ctx -> {
+                    String typeRaw = ctx.input().getString("history.database.type");
+                    String type = typeRaw == null ? null : typeRaw.trim().toUpperCase(Locale.ROOT);
+                    String backendId = backendIdFor(type);
+                    if (backendId != null) {
+                        // Route every relational category to the operator's
+                        // chosen backend so the new layout matches the old
+                        // single-DB shape. blob is intentionally absent —
+                        // none of the SQL backends declare support for it
+                        // (would fail capability validation); leave it on
+                        // whatever the bundled default routes blob to.
+                        for (String cat : new String[]{"violation", "session", "player-identity", "setting"}) {
+                            ctx.otherFile("database.yml").put("database.routing." + cat, backendId);
+                        }
+                    }
+                    // Carry the rendering settings over — these moved out of
+                    // history: into database.* with the same names.
+                    Integer entriesPerPage = ctx.input().getInt("history.entries-per-page");
+                    if (entriesPerPage != null) {
+                        ctx.otherFile("database.yml").put("database.history.entries-per-page", entriesPerPage);
+                    }
+                    String serverName = ctx.input().getString("history.server-name");
+                    if (serverName != null) {
+                        ctx.otherFile("database.yml").put("database.server-name", serverName);
+                    }
+                    if (backendId != null && !backendId.equals("sqlite")) {
+                        // Connection details only matter for networked backends.
+                        // SQLite settings (file path) stay at their defaults.
+                        String target = "databases/" + backendId + ".yml";
+                        Object host = ctx.input().get("history.database.host");
+                        Object port = ctx.input().get("history.database.port");
+                        Object db = ctx.input().get("history.database.database");
+                        Object user = ctx.input().get("history.database.username");
+                        Object pass = ctx.input().get("history.database.password");
+                        if (host != null) ctx.otherFile(target).put(backendId + ".host", host);
+                        if (port != null) ctx.otherFile(target).put(backendId + ".port", port);
+                        if (db != null) ctx.otherFile(target).put(backendId + ".database", db);
+                        if (user != null) ctx.otherFile(target).put(backendId + ".user", user);
+                        if (pass != null) ctx.otherFile(target).put(backendId + ".password", pass);
+                    }
+                })
+                .build();
+    }
+
+    private static @Nullable String backendIdFor(@Nullable String legacyType) {
+        if (legacyType == null) return null;
+        return switch (legacyType) {
+            case "SQLITE" -> "sqlite";
+            case "MYSQL" -> "mysql";
+            case "POSTGRESQL", "POSTGRES" -> "postgres";
+            case "NOOP", "NONE", "DISABLED" -> null;
+            default -> null;
+        };
+    }
+
+    public static @NotNull ConfigUpdater.Spec discord() {
+        return ConfigUpdater.Spec.builder("/discord/", 1, ConfigUpdater.ConfigFlavor.V2)
+                .build();
+    }
+
+    /**
+     * Chat strings and the ban screen.
+     *
+     * <p>v2 → v3: adds {@code acban-max-duration} and
+     * {@code acban-dry-run-note}. The bundled files carried a stale
+     * {@code config-version: 1} while this spec already said 2 — harmless,
+     * since the updater stamps its own latest version into the operator's
+     * file, but misleading to read. Both say 3 from here on.
+     */
+    public static @NotNull ConfigUpdater.Spec messages() {
+        return ConfigUpdater.Spec.builder("/messages/", 3, ConfigUpdater.ConfigFlavor.V2)
+                .build();
+    }
+
+    /**
+     * The datastore router config (top-level {@code database:} wrapper).
+     * No own-file migrations — operators arriving from Grim 2.x have no
+     * existing database.yml on disk; the legacy lift happens on the
+     * config.yml side via cross-file writes (see {@link #mainConfig}).
+     */
+    public static @NotNull ConfigUpdater.Spec database() {
+        return ConfigUpdater.Spec.builder("/database/", 1, ConfigUpdater.ConfigFlavor.V2)
+                .build();
+    }
+
+    /**
+     * Per-backend file at {@code databases/<id>/en.yml}. Each backend's
+     * settings live under a top-level {@code <id>:} wrapper so all
+     * per-backend files load through the shared ConfigManager without
+     * key collisions across backends.
+     */
+    public static @NotNull ConfigUpdater.Spec backend(@NotNull String backendId) {
+        return ConfigUpdater.Spec.builder("/databases/" + backendId + "/", 1,
+                        ConfigUpdater.ConfigFlavor.V2)
+                .build();
+    }
+}
