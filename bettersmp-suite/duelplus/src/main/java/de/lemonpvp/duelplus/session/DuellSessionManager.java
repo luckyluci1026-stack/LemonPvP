@@ -103,6 +103,16 @@ public final class DuellSessionManager implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void beimJoin(PlayerJoinEvent event) {
         Player spieler = event.getPlayer();
+        // Sicherheitsnetz gegen dauerhaft haengengebliebene Unverwundbarkeit
+        // (siehe zustandZuruecksetzen): normalerweise faengt schon der
+        // naechste Duellstart das ab, aber steckt jemand die ganze Zeit auf
+        // dem Duels-Server fest oder joint erst nach laengerer Pause wieder,
+        // soll das nicht erst beim naechsten eigenen Duell auffallen. Waehrend
+        // des legitimen Sieger-Schutzfensters (nachbereitung) NICHT anfassen -
+        // da ist Unverwundbarkeit gerade beabsichtigt.
+        if (spieler.isInvulnerable() && !nachbereitung.contains(spieler.getUniqueId())) {
+            spieler.setInvulnerable(false);
+        }
         // Schon in einer laufenden Session (z.B. kurz die Verbindung
         // verloren und wieder da)? Einfach zurueck in die Arena.
         DuellSession laufend = sessionNachSpieler.get(spieler.getUniqueId());
@@ -524,8 +534,10 @@ public final class DuellSessionManager implements Listener {
             plugin.db().snapshotSchreiben(session.duellId(), gegnerUuid, DuelDatabase.RICHTUNG_ZURUECK, gewinnerSnapshot)
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         if (gewinnerSpieler.isOnline()) {
+                            // Unverwundbarkeit ist an dieser Stelle schon durch
+                            // zustandZuruecksetzen oben aufgehoben - siehe
+                            // Kommentar dort.
                             gewinnerSpieler.setGameMode(GameMode.SURVIVAL);
-                            gewinnerSpieler.setInvulnerable(false);
                             plugin.bridge().sende(gewinnerSpieler, session.herkunftsServerVon(gegnerUuid));
                         }
                     }));
@@ -688,6 +700,17 @@ public final class DuellSessionManager implements Listener {
         for (var effekt : new ArrayList<>(spieler.getActivePotionEffects())) {
             spieler.removePotionEffect(effekt.getType());
         }
+        // Unverwundbarkeit hier IMMER mit zuruecksetzen (nicht erst im
+        // Erfolgspfad nach dem DB-Schreiben, siehe niederlageAusloesen) -
+        // Entity#setInvulnerable ist ein echtes, persistentes NBT-Flag
+        // (uebersteht Relog UND Server-Neustart). Wuerde der Gewinner
+        // waehrend seines Loot-Schutzfensters die Verbindung verlieren
+        // oder das anschliessende DB-Schreiben haengen bleiben, bliebe er
+        // sonst fuer immer unverwundbar - genau das sah live aus wie
+        // "kann nicht getroffen werden". Da zustandZuruecksetzen bei
+        // JEDEM Duellstart fuer beide Spieler laeuft, heilt das auch
+        // schon laenger bestehende Faelle beim naechsten Duell selbst aus.
+        spieler.setInvulnerable(false);
     }
 
     /**
