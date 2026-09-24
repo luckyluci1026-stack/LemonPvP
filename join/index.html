@@ -3,113 +3,298 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Join – BuckSMP</title>
-<meta name="description" content="So trittst du BuckSMP bei – Server-IP, Anleitung und WhatsApp Channel.">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Beitreten – BuckSMP</title>
+<meta name="description" content="So trittst du BuckSMP bei – Server-IP, Anleitung für Java, Bedrock und Konsole und Hilfe bei Verbindungsproblemen.">
+<meta name="theme-color" content="#07080a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Pixelify+Sans:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
 
-<nav>
-  <a class="nav-logo" href="../">BuckSMP</a>
-  <ul class="nav-links">
-    <li><a href="../">Startseite</a></li>
-    <li><a href="../features/">Alle Features</a></li>
-    <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
-    <li><a href="../regeln/">Regeln</a></li>
-    <li><a href="../team/">Team</a></li>
-    <li><a href="./" class="active">Join</a></li>
-  </ul>
-  <div class="nav-right">
-    <a class="btn-dc" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
-      <i class="fa-brands fa-whatsapp"></i>
-      <span class="dt">WhatsApp</span>
-    </a>
-    <div class="ham" onclick="toggleNav(this)"><span></span><span></span><span></span></div>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="../">BuckSMP</a>
+    <ul class="nav-links">
+      <li><a href="../">Startseite</a></li>
+      <li><a href="../features/">Features</a></li>
+      <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
+      <li><a href="../regeln/">Regeln</a></li>
+      <li><a href="../team/">Team</a></li>
+    </ul>
+    <div class="nav-right">
+      <a class="btn-wa" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener" aria-label="WhatsApp Channel">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp</span>
+      </a>
+      <a class="btn-join" href="./">
+        <i class="fa-solid fa-play"></i>
+        Join
+      </a>
+      <button class="ham" type="button" onclick="toggleNav(this)" aria-label="Menü öffnen"><span></span><span></span><span></span></button>
+    </div>
   </div>
 </nav>
 
 <div class="mob-menu" id="mobMenu">
-  <a href="../" onclick="closeNav()">Startseite</a>
-  <a href="../features/">Alle Features</a>
-  <a href="../top/10/aura-moments/">Aura Moments</a>
-  <a href="../regeln/">Regeln</a>
-  <a href="../team/">Team</a>
-  <a href="./" onclick="closeNav()">Beitreten</a>
-  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp ↗</a>
+  <a href="../" onclick="closeNav()">Startseite <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../features/" onclick="closeNav()">Features <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../top/10/aura-moments/" onclick="closeNav()">Aura Moments <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../team/" onclick="closeNav()">Team <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="./" class="active" onclick="closeNav()">Beitreten <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
 </div>
 
-<div class="page-head">
-  <a class="back-link" href="../">
-    <i class="fa-solid fa-arrow-left"></i>
-    Zurück zur Startseite
-  </a>
-  <h1 class="page-title">Server <span class="g">beitreten</span></h1>
-  <p class="page-sub">Kein Whitelist-Antrag, kein Bewerbungsformular – IP eintragen und spielen.</p>
-</div>
-
-<section class="sec" style="padding-top:0">
-  <div class="ip-wrap" style="margin-top:0">
-    <p class="ip-lbl">Server-IP — Klicken zum Kopieren</p>
-    <div class="ip-box" onclick="copyIP()">
-      <div class="ip-addr">BuckSMP.de</div>
-      <button class="ip-copy" aria-label="IP kopieren">
-        <i id="copyIco" class="fa-regular fa-copy"></i>
-        <span class="ct" id="copyTxt">Kopieren</span>
-      </button>
+<header class="page-head">
+  <div class="pixel-grid"></div>
+  <div class="wrap page-head-row">
+    <div>
+      <nav class="crumbs" aria-label="Brotkrumen">
+        <a href="../">Startseite</a>
+        <span>/</span>
+        <span>Beitreten</span>
+      </nav>
+      <h1 class="page-title">Server <span class="g">beitreten</span></h1>
+      <p class="page-sub">Kein Whitelist-Antrag, kein Bewerbungsformular – IP eintragen und spielen.</p>
+    </div>
+    <div class="page-head-ip">
+      <div class="ip-wrap">
+        <p class="ip-lbl">Server-IP — Klicken zum Kopieren</p>
+        <div class="ip-box" onclick="copyIP()">
+          <div class="ip-addr"><i class="fa-solid fa-cube"></i>BuckSMP.de</div>
+          <button class="ip-copy" type="button" aria-label="IP kopieren">
+            <i id="copyIco" class="fa-regular fa-copy"></i>
+            <span class="ct" id="copyTxt">Kopieren</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-</section>
-
-<div class="rule"></div>
+</header>
 
 <section class="sec">
-  <div class="sec-head">
-    <p class="sec-tag">So geht's</p>
-    <h2 class="sec-title">In <span class="g">4 Schritten</span> dabei</h2>
-  </div>
-  <div class="feats">
-    <div class="feat">
-      <div class="feat-name">1. Minecraft öffnen</div>
-      <p class="feat-desc">BuckSMP läuft auf Java und unterstützt jede Konsole - egal ob PC, Xbox, PlayStation oder Switch, du kommst direkt rein.</p>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-tag">So geht's</p>
+      <h2 class="sec-title">In <span class="g">4 Schritten</span> dabei</h2>
+      <p class="sec-sub">Wähle aus, womit du spielst.</p>
     </div>
-    <div class="feat">
-      <div class="feat-name">2. Multiplayer → Server hinzufügen</div>
-      <p class="feat-desc">Im Hauptmenü auf "Mehrspieler", dann "Server hinzufügen" (oder direkt "Server beitreten" mit der IP).</p>
+
+    <div class="tabs" role="tablist" aria-label="Womit spielst du?">
+      <button class="tab aktiv" type="button" role="tab" aria-selected="true" data-ziel="tab-java" data-anker="java">
+        <i class="fa-solid fa-desktop"></i>
+        Java Edition
+      </button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-ziel="tab-bedrock" data-anker="bedrock">
+        <i class="fa-solid fa-mobile-screen-button"></i>
+        Bedrock (Handy &amp; PC)
+      </button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-ziel="tab-konsole" data-anker="konsole">
+        <i class="fa-solid fa-gamepad"></i>
+        Konsole
+      </button>
     </div>
-    <div class="feat">
-      <div class="feat-name">3. IP eintragen</div>
-      <p class="feat-desc">Oben auf die IP klicken zum Kopieren, als Server-Adresse einfügen: <strong style="color:#fff">BuckSMP.de</strong></p>
+
+    <div class="tab-panel" id="tab-java" role="tabpanel">
+      <p class="panel-intro">Für Minecraft auf <strong>Windows, macOS und Linux</strong> (Java Edition).</p>
+      <ol class="steps">
+        <li class="step">
+          <span class="step-num">1</span>
+          <div>
+            <h3 class="step-name">Minecraft öffnen</h3>
+            <p class="step-desc">Starte Minecraft: Java Edition über den Launcher – am besten mit der aktuellen Version.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num">2</span>
+          <div>
+            <h3 class="step-name">Mehrspieler → Server hinzufügen</h3>
+            <p class="step-desc">Im Hauptmenü auf „Mehrspieler“, dann „Server hinzufügen“ (oder „Direkt verbinden“).</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num">3</span>
+          <div>
+            <h3 class="step-name">IP eintragen</h3>
+            <p class="step-desc">Oben auf die IP klicken zum Kopieren und als Serveradresse einfügen: <strong>BuckSMP.de</strong></p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num">4</span>
+          <div>
+            <h3 class="step-name">Verbinden &amp; loslegen</h3>
+            <p class="step-desc">Server anklicken, verbinden – fertig. Neuigkeiten gibt es im WhatsApp Channel.</p>
+          </div>
+        </li>
+      </ol>
     </div>
-    <div class="feat">
-      <div class="feat-name">4. Verbinden &amp; loslegen</div>
-      <p class="feat-desc">Server anklicken, verbinden – fertig. Bei Fragen hilft die Community jederzeit im WhatsApp Channel weiter.</p>
+
+    <div class="tab-panel" id="tab-bedrock" role="tabpanel" hidden>
+      <p class="panel-intro">Für Minecraft auf <strong>Handy, Tablet und Windows</strong> (Bedrock Edition). Hier brauchst du zusätzlich den Port.</p>
+      <ol class="steps">
+        <li class="step">
+          <span class="step-num">1</span>
+          <div>
+            <h3 class="step-name">Minecraft öffnen</h3>
+            <p class="step-desc">Starte Minecraft auf deinem Handy, Tablet oder Windows-PC und tippe auf „Spielen“.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num">2</span>
+          <div>
+            <h3 class="step-name">Reiter „Server“</h3>
+            <p class="step-desc">Wechsle oben zum Reiter „Server“ und scrolle nach unten zu „Server hinzufügen“.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num">3</span>
+          <div>
+            <h3 class="step-name">Daten eintragen</h3>
+            <p class="step-desc">Servername: <strong>BuckSMP</strong><br>Adresse: <strong>BuckSMP.de</strong><br>Port: <strong>19132</strong></p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num">4</span>
+          <div>
+            <h3 class="step-name">Speichern &amp; beitreten</h3>
+            <p class="step-desc">Auf „Speichern“ tippen, BuckSMP in der Liste auswählen und beitreten.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="tab-panel" id="tab-konsole" role="tabpanel" hidden>
+      <p class="panel-intro">Auf <strong>Xbox, PlayStation und Switch</strong> kann man eigene Server nicht direkt eintragen. Mit einem kleinen Umweg über dein Handy klappt es trotzdem.</p>
+      <ol class="steps">
+        <li class="step">
+          <span class="step-num">1</span>
+          <div>
+            <h3 class="step-name">App aufs Handy</h3>
+            <p class="step-desc">Lade dir die App „BedrockTogether“ auf dein Handy. Handy und Konsole müssen im selben WLAN sein.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num">2</span>
+          <div>
+            <h3 class="step-name">Server eintragen</h3>
+            <p class="step-desc">Gib in der App die Adresse <strong>BuckSMP.de</strong> und den Port <strong>19132</strong> ein und tippe auf „Run“.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num">3</span>
+          <div>
+            <h3 class="step-name">Minecraft auf der Konsole</h3>
+            <p class="step-desc">Öffne Minecraft, geh auf „Spielen“ und wechsle zum Reiter „Freunde“.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num">4</span>
+          <div>
+            <h3 class="step-name">LAN-Spiel beitreten</h3>
+            <p class="step-desc">BuckSMP taucht unter den LAN-Spielen auf. Auswählen, beitreten, fertig.</p>
+          </div>
+        </li>
+      </ol>
     </div>
   </div>
 </section>
 
-<div class="rule"></div>
-
-<div class="cta">
-  <p class="cta-tag">Noch Fragen?</p>
-  <h2 class="cta-h">Sag <span class="g">Hallo</span></h2>
-  <p class="cta-sub">Support, Ankündigungen und die Community – alles an einem Ort.</p>
-  <div class="cta-btns">
-    <a class="btn-p" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
-      <i class="fa-brands fa-whatsapp"></i>
-      WhatsApp Channel
-    </a>
-    <a class="btn-o" href="../regeln/">Serverregeln lesen</a>
+<section class="sec band" id="probleme">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-tag">Hilfe</p>
+      <h2 class="sec-title">Probleme beim <span class="g">Verbinden?</span></h2>
+      <p class="sec-sub">Die häufigsten Stolpersteine – und wie du sie löst.</p>
+    </div>
+    <div class="hilfe-grid">
+      <div class="hilfe-karte gold">
+        <div class="slot"><i class="fa-solid fa-code-branch"></i></div>
+        <div>
+          <h3 class="hilfe-name">„Veraltete Version“</h3>
+          <p class="hilfe-desc">Aktualisiere Minecraft auf die neueste Version und versuch es noch einmal.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte redstone">
+        <div class="slot"><i class="fa-solid fa-plug-circle-xmark"></i></div>
+        <div>
+          <h3 class="hilfe-name">„Verbindung fehlgeschlagen“</h3>
+          <p class="hilfe-desc">Prüf die Adresse: <strong>BuckSMP.de</strong> ohne Leerzeichen. Auf Bedrock muss der Port <strong>19132</strong> sein. Im Schul-WLAN sind Spiele oft gesperrt – probier ein anderes Netz.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte lapis">
+        <div class="slot"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div>
+          <h3 class="hilfe-name">Du landest im Warteraum</h3>
+          <p class="hilfe-desc">Der Server startet gerade neu. Bleib einfach online – du wirst automatisch zurückgeholt.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte amethyst">
+        <div class="slot"><i class="fa-solid fa-ban"></i></div>
+        <div>
+          <h3 class="hilfe-name">Du wurdest gebannt</h3>
+          <p class="hilfe-desc">Den Grund siehst du direkt auf dem Bildschirm. Wenn du denkst, dass es ein Fehler war, sprich jemanden aus dem Team an.</p>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+</section>
+
+<section class="cta">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <p class="cta-tag">Noch Fragen?</p>
+    <h2 class="cta-h">Bleib auf dem <span class="g">Laufenden</span></h2>
+    <p class="cta-sub">Ankündigungen, Updates und Events – alles im WhatsApp Channel.</p>
+    <div class="cta-btns">
+      <a class="btn-p" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
+        <i class="fa-brands fa-whatsapp"></i>
+        WhatsApp Channel
+      </a>
+      <a class="btn-o" href="../regeln/">Serverregeln lesen</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer-top">
+    <div class="footer-brand">
+      <a class="nav-logo" href="../">BuckSMP</a>
+      <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
+      <button class="footer-ip" type="button" onclick="copyIP()">
+        BuckSMP.de
+        <i class="fa-regular fa-copy"></i>
+      </button>
+    </div>
+    <div class="footer-col">
+      <h4>Server</h4>
+      <a href="../features/">Features</a>
+      <a href="./">Beitreten</a>
+      <a href="../regeln/">Regeln</a>
+      <a href="../features/#befehle">Befehle</a>
+    </div>
+    <div class="footer-col">
+      <h4>Community</h4>
+      <a href="../top/10/aura-moments/">Aura Moments</a>
+      <a href="../team/">Team</a>
+      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+    </div>
+    <div class="footer-col">
+      <h4>Hilfe</h4>
+      <a href="../#faq">Häufige Fragen</a>
+      <a href="#probleme">Verbindungsprobleme</a>
+      <a href="../regeln/#melden">Spieler melden</a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
+    <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+  </div>
+</footer>
 
 <div id="toast">✓ BuckSMP.de kopiert!</div>
-
-<footer>
-  <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
-  <p style="margin-top:6px"><a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank">WhatsApp Channel</a> · <a href="../">Startseite</a></p>
-</footer>
 
 <script src="../assets/script.js" defer></script>
 </body>

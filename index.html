@@ -4,122 +4,447 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BuckSMP – Minecraft Server</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="description" content="BuckSMP ist der private Minecraft-Server vom Gymnasium Buckhorn – Survival, Duelle und Crossplay für Java und Bedrock.">
+<meta name="theme-color" content="#07080a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Pixelify+Sans:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
-<nav>
-  <a class="nav-logo" href="./">BuckSMP</a>
-  <ul class="nav-links">
-    <li><a href="#features">Features</a></li>
-    <li><a href="features/">Alle Features</a></li>
-    <li><a href="top/10/aura-moments/">Aura Moments</a></li>
-    <li><a href="regeln/">Regeln</a></li>
-    <li><a href="team/">Team</a></li>
-    <li><a href="join/">Join</a></li>
-  </ul>
-  <div class="nav-right">
-    <a class="btn-dc" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
-      <i class="fa-brands fa-whatsapp"></i>
-      <span class="dt">WhatsApp</span>
-    </a>
-    <div class="ham" onclick="toggleNav(this)"><span></span><span></span><span></span></div>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="./">BuckSMP</a>
+    <ul class="nav-links">
+      <li><a href="./" class="active">Startseite</a></li>
+      <li><a href="features/">Features</a></li>
+      <li><a href="top/10/aura-moments/">Aura Moments</a></li>
+      <li><a href="regeln/">Regeln</a></li>
+      <li><a href="team/">Team</a></li>
+    </ul>
+    <div class="nav-right">
+      <a class="btn-wa" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener" aria-label="WhatsApp Channel">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp</span>
+      </a>
+      <a class="btn-join" href="join/">
+        <i class="fa-solid fa-play"></i>
+        Join
+      </a>
+      <button class="ham" type="button" onclick="toggleNav(this)" aria-label="Menü öffnen"><span></span><span></span><span></span></button>
+    </div>
   </div>
 </nav>
 
 <div class="mob-menu" id="mobMenu">
-  <a href="#features" onclick="closeNav()">Features</a>
-  <a href="features/">Alle Features</a>
-  <a href="top/10/aura-moments/">Aura Moments</a>
-  <a href="regeln/">Regeln</a>
-  <a href="team/">Team</a>
-  <a href="join/" onclick="closeNav()">Beitreten</a>
-  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp ↗</a>
+  <a href="./" class="active" onclick="closeNav()">Startseite <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="features/" onclick="closeNav()">Features <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="top/10/aura-moments/" onclick="closeNav()">Aura Moments <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="team/" onclick="closeNav()">Team <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="join/" onclick="closeNav()">Beitreten <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
 </div>
 
-<div class="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-hline" style="top:40%"></div>
-  <div class="hero-hline" style="top:60%"></div>
+<header class="hero">
+  <div class="pixel-grid"></div>
+  <div class="wrap hero-grid">
+    <div class="hero-text">
+      <div class="eyebrow">
+        <span class="eyebrow-dot"></span>
+        BuckSMP · Gymnasium Buckhorn
+      </div>
 
-  <div class="eyebrow">
-    <div class="eyebrow-dot"></div>
-    BuckSMP · Gymnasium Buckhorn
-  </div>
+      <h1 class="hero-title">
+        <span class="t-g">BuckSMP</span><span class="t-w"></span>
+      </h1>
 
-  <h1 class="hero-title">
-    <span class="t-g">BuckSMP</span><span class="t-w"></span>
-  </h1>
+      <p class="hero-sub">
+        Spiele auf dem Besten SchulSMP Server den es gibt <br>
+        Und erlebe spaß auf einem anderen Level
+      </p>
 
-  <p class="hero-sub">
-    Spiele auf dem Besten SchulSMP Server den es gibt <br>
-    Und erlebe spaß auf einem anderen Level
-  </p>
+      <div class="ip-wrap">
+        <p class="ip-lbl">Server-IP — Klicken zum Kopieren</p>
+        <div class="ip-box" onclick="copyIP()">
+          <div class="ip-addr"><i class="fa-solid fa-cube"></i>BuckSMP.de</div>
+          <button class="ip-copy" type="button" aria-label="IP kopieren">
+            <i id="copyIco" class="fa-regular fa-copy"></i>
+            <span class="ct" id="copyTxt">Kopieren</span>
+          </button>
+        </div>
+      </div>
 
-  <div class="ip-wrap">
-    <p class="ip-lbl">Server-IP — Klicken zum Kopieren</p>
-    <div class="ip-box" onclick="copyIP()">
-      <div class="ip-addr">BuckSMP.de</div>
-      <button class="ip-copy" aria-label="IP kopieren">
-        <i id="copyIco" class="fa-regular fa-copy"></i>
-        <span class="ct" id="copyTxt">Kopieren</span>
-      </button>
+      <div class="hero-links">
+        <a class="text-link" href="join/">So trittst du bei <i class="fa-solid fa-arrow-right"></i></a>
+        <span class="hero-meta">
+          <i class="fa-solid fa-desktop"></i>
+          <i class="fa-solid fa-mobile-screen-button"></i>
+          <i class="fa-solid fa-gamepad"></i>
+          Java &amp; Bedrock
+        </span>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <div class="mc-view">
+        <div class="mc-view-bar">
+          <span>Minecraft · Mehrspieler</span>
+          <span class="mc-view-dots"><span></span><span></span><span></span></span>
+        </div>
+        <p class="mc-screen-title">Mehrspieler</p>
+        <div class="mc-server">
+          <div class="mc-server-icon">B</div>
+          <div class="mc-server-text">
+            <p class="mc-server-name">BuckSMP</p>
+            <p class="mc-server-motd"><span class="mc-aqua">Gymnasium Buckhorn</span> <span class="mc-dgray">·</span> Survival</p>
+            <p class="mc-server-motd">Java <span class="mc-dgray">&amp;</span> Bedrock</p>
+          </div>
+        </div>
+        <div class="mc-buttons">
+          <span class="mc-btn active">Server beitreten</span>
+          <span class="mc-btn">Direkt verbinden</span>
+        </div>
+      </div>
+      <div class="mc-chat">
+        <p><span class="mc-brand">BuckSMP</span></p>
+        <p class="mc-gray">Willkommen zurück, <span class="mc-white">Steve</span>!</p>
+        <p><span class="mc-dgray">[</span><span class="mc-green">+</span><span class="mc-dgray">]</span> <span class="mc-aqua">.erbse</span> <span class="mc-gray">ist dem Server beigetreten.</span></p>
+        <p><span class="mc-duell">Duell</span> <span class="mc-dgray">»</span> <span class="mc-gold">Catze99</span> <span class="mc-gray">fordert dich zu einem Duell heraus!</span></p>
+        <p class="mc-gray">Es steht dein komplettes Inventar auf dem Spiel.</p>
+        <p><span class="mc-green mc-click">[Annehmen]</span> <span class="mc-dgray">|</span> <span class="mc-red mc-click">[Ablehnen]</span></p>
+      </div>
     </div>
   </div>
-</div>
+</header>
 
-<div class="rule"></div>
-
-<section class="sec" id="features">
-  <div class="sec-head">
-    <h2 class="sec-title">Server <span class="g">Features</span></h2>
+<section class="platforms" aria-label="Spielbar auf">
+  <div class="wrap platforms-inner">
+    <span class="platforms-label">Spielbar auf</span>
+    <span class="platform"><i class="fa-brands fa-windows"></i>Windows</span>
+    <span class="platform"><i class="fa-brands fa-apple"></i>macOS</span>
+    <span class="platform"><i class="fa-brands fa-linux"></i>Linux</span>
+    <span class="platform"><i class="fa-brands fa-xbox"></i>Xbox</span>
+    <span class="platform"><i class="fa-brands fa-playstation"></i>PlayStation</span>
+    <span class="platform"><i class="fa-solid fa-gamepad"></i>Switch</span>
+    <span class="platform"><i class="fa-solid fa-mobile-screen-button"></i>iOS</span>
+    <span class="platform"><i class="fa-brands fa-android"></i>Android</span>
   </div>
-  <div class="feats">
-    <div class="feat feat-redstone">
-      <div class="feat-ico"><i class="fa-solid fa-heart-pulse"></i></div>
-      <div class="feat-name">Zero Lag Erfahrung</div>
-      <p class="feat-desc">Ein Optimiertes System gewährleistet das jeder Hit Lag-Frei Ankommt.</p>
-    </div>
-    <div class="feat feat-lapis">
-      <div class="feat-ico"><i class="fa-solid fa-gamepad"></i></div>
-      <div class="feat-name">Konsolen Support</div>
-      <p class="feat-desc">Wir unterstützen jede Konsole die Minecraft hat, damit niemand ausgeschlossen ist.</p>
-    </div>
-    <div class="feat feat-emerald">
-      <div class="feat-ico"><i class="fa-solid fa-shield-halved"></i></div>
-      <div class="feat-name">Anti-Cheat</div>
-      <p class="feat-desc">Unser eigenes Anti-Cheat nutzt fortgeschrittene Predictions um die False Flags so gering wie möglich zu halten. Damit können wir gewährleisten das auch Jeder Cheater gebannt wird.</p>
-    </div>
-  </div>
-  <p style="margin-top:24px"><a class="btn-o" style="display:inline-flex" href="features/">Alle Features ansehen</a></p>
 </section>
 
-<div class="rule"></div>
-
-<div class="cta" id="join">
-  <p class="cta-tag">Startklar?</p>
-  <h2 class="cta-h">Jetzt <span class="g">einloggen</span></h2>
-  <p class="cta-sub">Kopiere die IP, öffne Minecraft und leg los.</p>
-  <div class="cta-btns">
-    <button class="btn-p" onclick="copyIP()">
-      <i class="fa-regular fa-copy"></i>
-      IP kopieren
-    </button>
-    <a class="btn-o" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
-      <i class="fa-brands fa-whatsapp"></i>
-      WhatsApp
-    </a>
+<section class="sec" id="features">
+  <div class="wrap">
+    <div class="sec-head-row">
+      <div class="sec-head">
+        <p class="sec-tag">Was dich erwartet</p>
+        <h2 class="sec-title">Server <span class="g">Features</span></h2>
+        <p class="sec-sub">Die meisten Systeme auf BuckSMP sind selbst programmiert – vom Shop über die Duelle bis zum Anti-Cheat.</p>
+      </div>
+      <a class="text-link" href="features/">Alle Features ansehen <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+    <div class="feats">
+      <div class="feat redstone">
+        <div class="slot"><i class="fa-solid fa-bolt"></i></div>
+        <h3 class="feat-name">Zero Lag Erfahrung</h3>
+        <p class="feat-desc">Ein Optimiertes System gewährleistet das jeder Hit Lag-Frei Ankommt.</p>
+        <span class="feat-badge">Performance</span>
+      </div>
+      <div class="feat lapis">
+        <div class="slot"><i class="fa-solid fa-gamepad"></i></div>
+        <h3 class="feat-name">Konsolen Support</h3>
+        <p class="feat-desc">Wir unterstützen jede Konsole die Minecraft hat, damit niemand ausgeschlossen ist.</p>
+        <span class="feat-badge">Java &amp; Bedrock</span>
+      </div>
+      <div class="feat emerald">
+        <div class="slot"><i class="fa-solid fa-shield-halved"></i></div>
+        <h3 class="feat-name">Anti-Cheat</h3>
+        <p class="feat-desc">Unser eigenes Anti-Cheat nutzt fortgeschrittene Predictions um die False Flags so gering wie möglich zu halten. Damit können wir gewährleisten das auch Jeder Cheater gebannt wird.</p>
+        <span class="feat-badge">Eigenentwicklung</span>
+      </div>
+    </div>
   </div>
-</div>
+</section>
+
+<section class="sec band">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="sec-tag">Unter der Haube</p>
+      <h2 class="sec-title">Kleine Details, die den <span class="g">Unterschied</span> machen</h2>
+      <p class="sec-sub">Vieles davon merkst du erst, wenn es darauf ankommt.</p>
+    </div>
+    <div class="details">
+      <div class="detail gold">
+        <div class="detail-head">
+          <div class="slot"><i class="fa-solid fa-life-ring"></i></div>
+          <h3 class="detail-name">Warteraum statt Rauswurf</h3>
+        </div>
+        <p class="detail-desc">Stürzt ein Server ab, landest du kurz in einem Warteraum und wirst automatisch zurückgeholt, sobald er wieder läuft.</p>
+      </div>
+      <div class="detail redstone">
+        <div class="detail-head">
+          <div class="slot"><i class="fa-solid fa-door-open"></i></div>
+          <h3 class="detail-name">Kein Kampf-Logout</h3>
+        </div>
+        <p class="detail-desc">Wer mitten im Kampf das Spiel verlässt, stirbt. Ausloggen rettet dich hier nicht.</p>
+      </div>
+      <div class="detail lapis">
+        <div class="detail-head">
+          <div class="slot"><i class="fa-solid fa-comment-slash"></i></div>
+          <h3 class="detail-name">Keine Chat-Reports</h3>
+        </div>
+        <p class="detail-desc">Chat-Meldungen an Microsoft sind abgeschaltet. Was im Chat passiert, klärt unser Team.</p>
+      </div>
+      <div class="detail emerald">
+        <div class="detail-head">
+          <div class="slot"><i class="fa-solid fa-calendar-check"></i></div>
+          <h3 class="detail-name">Tägliche Belohnung</h3>
+        </div>
+        <p class="detail-desc">Mit <code class="cmd">/daily</code> holst du dir jeden Tag eine Belohnung ab – je länger deine Serie, desto mehr Geld.</p>
+      </div>
+      <div class="detail amethyst">
+        <div class="detail-head">
+          <div class="slot"><i class="fa-solid fa-flag"></i></div>
+          <h3 class="detail-name">Melden per Menü</h3>
+        </div>
+        <p class="detail-desc"><code class="cmd">/report</code> und <code class="cmd">/bugreport</code> öffnen ein eigenes Menü. Das Team sieht jede Meldung sofort.</p>
+      </div>
+      <div class="detail diamond">
+        <div class="detail-head">
+          <div class="slot"><i class="fa-solid fa-filter"></i></div>
+          <h3 class="detail-name">Schlauer Chat-Filter</h3>
+        </div>
+        <p class="detail-desc">Beleidigungen werden erkannt – auch mit Tricks wie L3etspeak, Punkten dazwischen oder gedehnten Buchstaben.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="duelle">
+  <div class="wrap split">
+    <div class="split-text">
+      <div class="sec-head">
+        <p class="sec-tag">Duelle</p>
+        <h2 class="sec-title">Streit auf dem SMP? <span class="g">Klärt es im Duell.</span></h2>
+        <p class="sec-sub">Fordere jeden Spieler im Netzwerk heraus – egal ob er gerade auf dem SMP oder in der Lobby ist. Gekämpft wird auf einem eigenen Server, mit eurem echten SMP-Inventar.</p>
+      </div>
+      <ul class="checklist">
+        <li><i class="fa-solid fa-check"></i><span><strong>Echtes Risiko:</strong> Wer verliert, lässt sein ganzes Inventar in Shulker-Kisten fallen.</span></li>
+        <li><i class="fa-solid fa-check"></i><span><strong>Schrumpfende Grenze:</strong> Wer nur wegrennt, macht sie schneller.</span></li>
+        <li><i class="fa-solid fa-check"></i><span><strong>Faire Arena:</strong> Nach jedem Kampf wird sie komplett zurückgesetzt.</span></li>
+        <li><i class="fa-solid fa-check"></i><span><strong>Zuschauen:</strong> Mit <code class="cmd">/duel watch Name</code> bist du live dabei.</span></li>
+      </ul>
+      <div class="split-cta">
+        <span class="hero-meta">Herausfordern mit <code class="cmd">/duel &lt;Spieler&gt;</code></span>
+        <a class="text-link" href="features/#duelle">So läuft ein Duell ab <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+    </div>
+    <div class="split-visual" aria-hidden="true">
+      <div class="mc-view">
+        <div class="mc-view-bar">
+          <span>Duels-Server · Arena</span>
+          <span class="mc-view-dots"><span></span><span></span><span></span></span>
+        </div>
+        <div class="mc-bossbar blau" style="--fuellung: 72%">
+          <p class="mc-bossbar-text"><span class="mc-grenze">Grenze</span> schrumpft - noch 84 Blöcke</p>
+          <div class="mc-bossbar-track"><div class="mc-bossbar-fill"></div></div>
+        </div>
+        <div class="mc-titel">
+          <p class="mc-titel-gross">KAMPF!</p>
+          <p class="mc-titel-klein">Möge der Bessere gewinnen</p>
+        </div>
+      </div>
+      <div class="phasen">
+        <div class="phase blau">
+          <span class="phase-farbe"></span>
+          <div><strong>Grenze schrumpft</strong><span>Solange getroffen wird, geht es langsam.</span></div>
+        </div>
+        <div class="phase gelb">
+          <span class="phase-farbe"></span>
+          <div><strong>Kein Treffer</strong><span>15 Sekunden ohne Treffer – die Grenze wird schneller.</span></div>
+        </div>
+        <div class="phase rot">
+          <span class="phase-farbe"></span>
+          <div><strong>Plötzlicher Tod</strong><span>Die Grenze ist am Minimum. Jetzt zählt jeder Schlag.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec band" id="crossplay">
+  <div class="wrap split reverse">
+    <div class="split-text">
+      <div class="sec-head">
+        <p class="sec-tag">Crossplay</p>
+        <h2 class="sec-title">Java oder Bedrock? <span class="g">Egal.</span></h2>
+        <p class="sec-sub">Java-Spieler am PC und Bedrock-Spieler auf Handy, Tablet oder Konsole spielen zusammen auf demselben Server. Bedrock-Namen erkennst du am Punkt davor – so wie bei <code class="cmd">.erbse</code>.</p>
+      </div>
+      <ul class="checklist">
+        <li><i class="fa-solid fa-check"></i><span><strong>Eine Welt</strong> und dieselben Regeln für alle.</span></li>
+        <li><i class="fa-solid fa-check"></i><span><strong>Keine Extra-App</strong> auf PC, Handy und Tablet nötig.</span></li>
+        <li><i class="fa-solid fa-check"></i><span><strong>Konsolen</strong> kommen mit einem kleinen Umweg rein – die Anleitung zeigt dir, wie.</span></li>
+      </ul>
+      <div class="split-cta">
+        <a class="btn-p" href="join/"><i class="fa-solid fa-play"></i>Anleitung zum Beitreten</a>
+      </div>
+    </div>
+    <div class="split-visual">
+      <div class="editions">
+        <div class="edition diamond">
+          <div class="edition-head">
+            <div class="slot"><i class="fa-solid fa-desktop"></i></div>
+            <div>
+              <p class="edition-name">Java Edition</p>
+              <p class="edition-for">Windows · macOS · Linux</p>
+            </div>
+          </div>
+          <div class="edition-rows">
+            <div class="edition-row"><span>Serveradresse</span><strong>BuckSMP.de</strong></div>
+          </div>
+        </div>
+        <div class="edition emerald">
+          <div class="edition-head">
+            <div class="slot"><i class="fa-solid fa-mobile-screen-button"></i></div>
+            <div>
+              <p class="edition-name">Bedrock Edition</p>
+              <p class="edition-for">Handy · Tablet · Windows · Konsole</p>
+            </div>
+          </div>
+          <div class="edition-rows">
+            <div class="edition-row"><span>Serveradresse</span><strong>BuckSMP.de</strong></div>
+            <div class="edition-row"><span>Port</span><strong>19132</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head-row">
+      <div class="sec-head">
+        <p class="sec-tag">Community</p>
+        <h2 class="sec-title">Top 10 <span class="g">Aura Moments</span></h2>
+        <p class="sec-sub">Die legendärsten Plays, Clutches und Momente von BuckSMP – von der Community gesammelt.</p>
+      </div>
+      <a class="text-link" href="top/10/aura-moments/">Alle 10 ansehen <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+    <div class="moments vorschau" id="momentsVorschau" data-media="top/10/aura-moments/media/" data-anzahl="3"></div>
+  </div>
+</section>
+
+<section class="sec band">
+  <div class="wrap">
+    <div class="sec-head-row">
+      <div class="sec-head">
+        <p class="sec-tag">Team</p>
+        <h2 class="sec-title">Das <span class="g">Team</span></h2>
+        <p class="sec-sub">Die Leute, die BuckSMP am Laufen halten.</p>
+      </div>
+      <a class="text-link" href="team/">Zum Team <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+    <div class="team-strip" id="teamVorschau" data-media="team/media/" data-link="team/"></div>
+  </div>
+</section>
+
+<section class="sec" id="faq">
+  <div class="wrap faq-layout">
+    <div class="sec-head">
+      <p class="sec-tag">FAQ</p>
+      <h2 class="sec-title">Häufige <span class="g">Fragen</span></h2>
+      <p class="sec-sub">Die wichtigsten Antworten auf einen Blick. Neuigkeiten und Ankündigungen gibt es im WhatsApp Channel.</p>
+      <div class="faq-hilfe">
+        <a class="btn-o" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i>WhatsApp Channel</a>
+      </div>
+    </div>
+    <div class="faq">
+      <details open>
+        <summary>Wer darf auf BuckSMP spielen?</summary>
+        <p class="faq-antwort">BuckSMP ist ein privater Server für Schülerinnen und Schüler vom Gymnasium Buckhorn.</p>
+      </details>
+      <details>
+        <summary>Kostet BuckSMP etwas?</summary>
+        <p class="faq-antwort">Nein. Du brauchst nur dein eigenes Minecraft – egal ob Java oder Bedrock.</p>
+      </details>
+      <details>
+        <summary>Kann ich mit Handy oder Konsole spielen?</summary>
+        <p class="faq-antwort">Ja. Java und Bedrock spielen zusammen auf demselben Server. Auf Bedrock trägst du zusätzlich den Port <code class="cmd">19132</code> ein. Wie es auf Konsolen klappt, steht in der <a href="join/#konsole">Anleitung</a>.</p>
+      </details>
+      <details>
+        <summary>Welche Minecraft-Version brauche ich?</summary>
+        <p class="faq-antwort">Am besten immer die aktuelle. Auf Java funktionieren aber auch viele ältere Versionen.</p>
+      </details>
+      <details>
+        <summary>Was passiert, wenn der Server abstürzt?</summary>
+        <p class="faq-antwort">Du fliegst nicht raus. Du landest kurz in einem Warteraum und wirst automatisch zurückgeholt, sobald der Server wieder läuft.</p>
+      </details>
+      <details>
+        <summary>Wie melde ich einen Spieler oder einen Bug?</summary>
+        <p class="faq-antwort">Schreib im Spiel <code class="cmd">/report</code> oder <code class="cmd">/bugreport</code>. Es öffnet sich ein Menü, und das Team bekommt deine Meldung sofort.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="join">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <p class="cta-tag">Startklar?</p>
+    <h2 class="cta-h">Jetzt <span class="g">einloggen</span></h2>
+    <p class="cta-sub">Kopiere die IP, öffne Minecraft und leg los.</p>
+    <div class="cta-btns">
+      <button class="btn-p" type="button" onclick="copyIP()">
+        <i class="fa-regular fa-copy"></i>
+        IP kopieren
+      </button>
+      <a class="btn-o" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
+        <i class="fa-brands fa-whatsapp"></i>
+        WhatsApp
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer-top">
+    <div class="footer-brand">
+      <a class="nav-logo" href="./">BuckSMP</a>
+      <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
+      <button class="footer-ip" type="button" onclick="copyIP()">
+        BuckSMP.de
+        <i class="fa-regular fa-copy"></i>
+      </button>
+    </div>
+    <div class="footer-col">
+      <h4>Server</h4>
+      <a href="features/">Features</a>
+      <a href="join/">Beitreten</a>
+      <a href="regeln/">Regeln</a>
+      <a href="features/#befehle">Befehle</a>
+    </div>
+    <div class="footer-col">
+      <h4>Community</h4>
+      <a href="top/10/aura-moments/">Aura Moments</a>
+      <a href="team/">Team</a>
+      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+    </div>
+    <div class="footer-col">
+      <h4>Hilfe</h4>
+      <a href="#faq">Häufige Fragen</a>
+      <a href="join/#probleme">Verbindungsprobleme</a>
+      <a href="regeln/#melden">Spieler melden</a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
+    <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+  </div>
+</footer>
 
 <div id="toast">✓ BuckSMP.de kopiert!</div>
-
-<footer>
-  <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
-  <p style="margin-top:6px"><a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank">WhatsApp Channel</a></p>
-</footer>
 
 <script src="assets/script.js" defer></script>
 </body>

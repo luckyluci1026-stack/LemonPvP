@@ -5,58 +5,107 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Team – BuckSMP</title>
 <meta name="description" content="Das Team hinter BuckSMP.">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#07080a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Pixelify+Sans:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
 
-<nav>
-  <a class="nav-logo" href="../">BuckSMP</a>
-  <ul class="nav-links">
-    <li><a href="../">Startseite</a></li>
-    <li><a href="../features/">Alle Features</a></li>
-    <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
-    <li><a href="../regeln/">Regeln</a></li>
-    <li><a href="./" class="active">Team</a></li>
-    <li><a href="../join/">Join</a></li>
-  </ul>
-  <div class="nav-right">
-    <a class="btn-dc" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
-      <i class="fa-brands fa-whatsapp"></i>
-      <span class="dt">WhatsApp</span>
-    </a>
-    <div class="ham" onclick="toggleNav(this)"><span></span><span></span><span></span></div>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="../">BuckSMP</a>
+    <ul class="nav-links">
+      <li><a href="../">Startseite</a></li>
+      <li><a href="../features/">Features</a></li>
+      <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
+      <li><a href="../regeln/">Regeln</a></li>
+      <li><a href="./" class="active">Team</a></li>
+    </ul>
+    <div class="nav-right">
+      <a class="btn-wa" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener" aria-label="WhatsApp Channel">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp</span>
+      </a>
+      <a class="btn-join" href="../join/">
+        <i class="fa-solid fa-play"></i>
+        Join
+      </a>
+      <button class="ham" type="button" onclick="toggleNav(this)" aria-label="Menü öffnen"><span></span><span></span><span></span></button>
+    </div>
   </div>
 </nav>
 
 <div class="mob-menu" id="mobMenu">
-  <a href="../" onclick="closeNav()">Startseite</a>
-  <a href="../features/">Alle Features</a>
-  <a href="../top/10/aura-moments/">Aura Moments</a>
-  <a href="../regeln/">Regeln</a>
-  <a href="./" onclick="closeNav()">Team</a>
-  <a href="../join/" onclick="closeNav()">Beitreten</a>
-  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel ↗</a>
+  <a href="../" onclick="closeNav()">Startseite <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../features/" onclick="closeNav()">Features <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../top/10/aura-moments/" onclick="closeNav()">Aura Moments <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="./" class="active" onclick="closeNav()">Team <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../join/" onclick="closeNav()">Beitreten <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
 </div>
 
-<div class="page-head">
-  <a class="back-link" href="../">
-    <i class="fa-solid fa-arrow-left"></i>
-    Zurück zur Startseite
-  </a>
-  <h1 class="page-title">Das <span class="g">Team</span></h1>
-  <p class="page-sub">Die Leute, die BuckSMP am Laufen halten.</p>
-</div>
+<header class="page-head">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <div>
+      <nav class="crumbs" aria-label="Brotkrumen">
+        <a href="../">Startseite</a>
+        <span>/</span>
+        <span>Team</span>
+      </nav>
+      <h1 class="page-title">Das <span class="g">Team</span></h1>
+      <p class="page-sub">Die Leute, die BuckSMP am Laufen halten.</p>
+    </div>
+  </div>
+</header>
 
-<section class="sec" style="padding-top:0">
-  <div class="team-grid" id="teamGrid"></div>
+<section class="sec">
+  <div class="wrap">
+    <div id="teamGrid" data-media="media/"></div>
+  </div>
 </section>
 
-<footer>
-  <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
-  <p style="margin-top:6px"><a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank">WhatsApp Channel</a> · <a href="../">Startseite</a></p>
+<footer class="footer">
+  <div class="wrap footer-top">
+    <div class="footer-brand">
+      <a class="nav-logo" href="../">BuckSMP</a>
+      <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
+      <button class="footer-ip" type="button" onclick="copyIP()">
+        BuckSMP.de
+        <i class="fa-regular fa-copy"></i>
+      </button>
+    </div>
+    <div class="footer-col">
+      <h4>Server</h4>
+      <a href="../features/">Features</a>
+      <a href="../join/">Beitreten</a>
+      <a href="../regeln/">Regeln</a>
+      <a href="../features/#befehle">Befehle</a>
+    </div>
+    <div class="footer-col">
+      <h4>Community</h4>
+      <a href="../top/10/aura-moments/">Aura Moments</a>
+      <a href="./">Team</a>
+      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+    </div>
+    <div class="footer-col">
+      <h4>Hilfe</h4>
+      <a href="../#faq">Häufige Fragen</a>
+      <a href="../join/#probleme">Verbindungsprobleme</a>
+      <a href="../regeln/#melden">Spieler melden</a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
+    <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+  </div>
 </footer>
+
+<div id="toast">✓ BuckSMP.de kopiert!</div>
 
 <script src="../assets/script.js" defer></script>
 </body>

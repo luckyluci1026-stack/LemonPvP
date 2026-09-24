@@ -4,99 +4,189 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Regeln – BuckSMP</title>
-<meta name="description" content="Die Serverregeln von BuckSMP.">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="description" content="Die Serverregeln von BuckSMP – und wie du Regelverstöße meldest.">
+<meta name="theme-color" content="#07080a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Pixelify+Sans:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
 
-<nav>
-  <a class="nav-logo" href="../">BuckSMP</a>
-  <ul class="nav-links">
-    <li><a href="../">Startseite</a></li>
-    <li><a href="../features/">Alle Features</a></li>
-    <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
-    <li><a href="./" class="active">Regeln</a></li>
-    <li><a href="../team/">Team</a></li>
-    <li><a href="../join/">Join</a></li>
-  </ul>
-  <div class="nav-right">
-    <a class="btn-dc" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
-      <i class="fa-brands fa-whatsapp"></i>
-      <span class="dt">WhatsApp</span>
-    </a>
-    <div class="ham" onclick="toggleNav(this)"><span></span><span></span><span></span></div>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="../">BuckSMP</a>
+    <ul class="nav-links">
+      <li><a href="../">Startseite</a></li>
+      <li><a href="../features/">Features</a></li>
+      <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
+      <li><a href="./" class="active">Regeln</a></li>
+      <li><a href="../team/">Team</a></li>
+    </ul>
+    <div class="nav-right">
+      <a class="btn-wa" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener" aria-label="WhatsApp Channel">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp</span>
+      </a>
+      <a class="btn-join" href="../join/">
+        <i class="fa-solid fa-play"></i>
+        Join
+      </a>
+      <button class="ham" type="button" onclick="toggleNav(this)" aria-label="Menü öffnen"><span></span><span></span><span></span></button>
+    </div>
   </div>
 </nav>
 
 <div class="mob-menu" id="mobMenu">
-  <a href="../" onclick="closeNav()">Startseite</a>
-  <a href="../features/">Alle Features</a>
-  <a href="../top/10/aura-moments/">Aura Moments</a>
-  <a href="./" onclick="closeNav()">Regeln</a>
-  <a href="../team/">Team</a>
-  <a href="../join/" onclick="closeNav()">Beitreten</a>
-  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp ↗</a>
+  <a href="../" onclick="closeNav()">Startseite <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../features/" onclick="closeNav()">Features <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../top/10/aura-moments/" onclick="closeNav()">Aura Moments <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="./" class="active" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../team/" onclick="closeNav()">Team <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../join/" onclick="closeNav()">Beitreten <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
 </div>
 
-<div class="page-head">
-  <a class="back-link" href="../">
-    <i class="fa-solid fa-arrow-left"></i>
-    Zurück zur Startseite
-  </a>
-  <h1 class="page-title">Server<span class="g">regeln</span></h1>
-  <p class="page-sub">Kurz gehalten, aber verbindlich - für ein faires Miteinander auf BuckSMP.</p>
-</div>
-
-<section class="sec" style="padding-top:0">
-  <div class="rules-list">
-    <div class="rule-item">
-      <div class="rule-num">1</div>
-      <div><div class="rule-name">Respektvoller Umgang</div><p class="rule-desc">Beleidigungen, Hassrede, Rassismus und Diskriminierung jeder Art sind nicht erlaubt - im Chat, Voice und im WhatsApp Channel.</p></div>
-    </div>
-    <div class="rule-item">
-      <div class="rule-num">2</div>
-      <div><div class="rule-name">Kein Cheaten</div><p class="rule-desc">Hacks, X-Ray, Autoclicker, Exploits und Bugusing sind verboten. Unser Anti-Cheat läuft mit - Verstöße fliegen auf.</p></div>
-    </div>
-    <div class="rule-item">
-      <div class="rule-num">3</div>
-      <div><div class="rule-name">Kein Griefing & Diebstahl</div><p class="rule-desc">Fremde Bauten, Farmen und Truhen bleiben unangetastet, außer im ausdrücklich erlaubten PvP-/Duell-Kontext.</p></div>
-    </div>
-    <div class="rule-item">
-      <div class="rule-num">4</div>
-      <div><div class="rule-name">Kein Spam & keine Werbung</div><p class="rule-desc">Kein Werben für andere Server, keine Dauerwerbung eigener Projekte, kein Chat-Spam oder Caps-Flooding.</p></div>
-    </div>
-    <div class="rule-item">
-      <div class="rule-num">5</div>
-      <div><div class="rule-name">Ein Account pro Spieler</div><p class="rule-desc">Multi-Accounts zum Umgehen von Strafen oder zum Ausnutzen von Vorteilen sind nicht gestattet.</p></div>
-    </div>
-    <div class="rule-item">
-      <div class="rule-num">6</div>
-      <div><div class="rule-name">Anweisungen vom Team befolgen</div><p class="rule-desc">Team-Mitglieder moderieren im Sinne der Community - ihren Anweisungen ist Folge zu leisten. Unstimmigkeiten bitte sachlich im WhatsApp Channel klären.</p></div>
+<header class="page-head">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <div>
+      <nav class="crumbs" aria-label="Brotkrumen">
+        <a href="../">Startseite</a>
+        <span>/</span>
+        <span>Regeln</span>
+      </nav>
+      <h1 class="page-title">Server<span class="g">regeln</span></h1>
+      <p class="page-sub">Kurz gehalten, aber verbindlich - für ein faires Miteinander auf BuckSMP.</p>
     </div>
   </div>
-  <p class="rules-note">
-    Verstöße können je nach Schwere zu Verwarnung, temporärem Mute/Kick oder dauerhaftem Bann führen - das Team entscheidet im Einzelfall.
-  </p>
+</header>
+
+<section class="sec">
+  <div class="wrap rules-layout">
+    <div class="rules-list">
+      <div class="rule-item">
+        <div class="rule-num">1</div>
+        <div>
+          <h2 class="rule-name">Respektvoller Umgang</h2>
+          <p class="rule-desc">Beleidigungen, Hassrede, Rassismus und Diskriminierung jeder Art sind nicht erlaubt - im Chat, Voice und im WhatsApp Channel.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">2</div>
+        <div>
+          <h2 class="rule-name">Kein Cheaten</h2>
+          <p class="rule-desc">Hacks, X-Ray, Autoclicker, Exploits und Bugusing sind verboten. Unser Anti-Cheat läuft mit - Verstöße fliegen auf.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">3</div>
+        <div>
+          <h2 class="rule-name">Kein Griefing &amp; Diebstahl</h2>
+          <p class="rule-desc">Fremde Bauten, Farmen und Truhen bleiben unangetastet, außer im ausdrücklich erlaubten PvP-/Duell-Kontext.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">4</div>
+        <div>
+          <h2 class="rule-name">Kein Spam &amp; keine Werbung</h2>
+          <p class="rule-desc">Kein Werben für andere Server, keine Dauerwerbung eigener Projekte, kein Chat-Spam oder Caps-Flooding.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">5</div>
+        <div>
+          <h2 class="rule-name">Ein Account pro Spieler</h2>
+          <p class="rule-desc">Multi-Accounts zum Umgehen von Strafen oder zum Ausnutzen von Vorteilen sind nicht gestattet.</p>
+        </div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-num">6</div>
+        <div>
+          <h2 class="rule-name">Anweisungen vom Team befolgen</h2>
+          <p class="rule-desc">Team-Mitglieder moderieren im Sinne der Community - ihren Anweisungen ist Folge zu leisten. Unstimmigkeiten bitte sachlich im WhatsApp Channel klären.</p>
+        </div>
+      </div>
+    </div>
+    <aside class="rules-side">
+      <div class="side-box" id="melden">
+        <p class="side-titel"><i class="fa-solid fa-flag"></i>Regelverstoß gesehen?</p>
+        <p class="side-text">Melde ihn direkt im Spiel. Es öffnet sich ein Menü, und das Team sieht deine Meldung sofort.</p>
+        <div class="side-cmds">
+          <div class="side-cmd"><code class="cmd">/report</code><span>Spieler melden</span></div>
+          <div class="side-cmd"><code class="cmd">/bugreport</code><span>Bug melden</span></div>
+        </div>
+      </div>
+      <div class="side-box">
+        <p class="side-titel"><i class="fa-solid fa-gavel"></i>Mögliche Strafen</p>
+        <ul class="strafen">
+          <li class="strafe stufe-1">Verwarnung</li>
+          <li class="strafe stufe-2">Temporärer Mute oder Kick</li>
+          <li class="strafe stufe-3">Dauerhafter Bann</li>
+        </ul>
+        <p class="strafen-note">Verstöße können je nach Schwere zu Verwarnung, temporärem Mute/Kick oder dauerhaftem Bann führen - das Team entscheidet im Einzelfall.</p>
+      </div>
+    </aside>
+  </div>
 </section>
 
-<div class="rule"></div>
-
-<div class="cta">
-  <p class="cta-tag">Alles klar?</p>
-  <h2 class="cta-h">Dann <span class="g">viel Spaß</span></h2>
-  <p class="cta-sub">Bei Fragen zu den Regeln hilft das Team jederzeit weiter.</p>
-  <div class="cta-btns">
-    <a class="btn-p" href="../join/">Server beitreten</a>
-    <a class="btn-o" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp</a>
+<section class="cta">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <p class="cta-tag">Alles klar?</p>
+    <h2 class="cta-h">Dann <span class="g">viel Spaß</span></h2>
+    <p class="cta-sub">Bei Fragen zu den Regeln hilft das Team jederzeit weiter.</p>
+    <div class="cta-btns">
+      <a class="btn-p" href="../join/">
+        <i class="fa-solid fa-play"></i>
+        Server beitreten
+      </a>
+      <a class="btn-o" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
+        <i class="fa-brands fa-whatsapp"></i>
+        WhatsApp
+      </a>
+    </div>
   </div>
-</div>
+</section>
 
-<footer>
-  <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
-  <p style="margin-top:6px"><a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank">WhatsApp Channel</a> · <a href="../">Startseite</a></p>
+<footer class="footer">
+  <div class="wrap footer-top">
+    <div class="footer-brand">
+      <a class="nav-logo" href="../">BuckSMP</a>
+      <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
+      <button class="footer-ip" type="button" onclick="copyIP()">
+        BuckSMP.de
+        <i class="fa-regular fa-copy"></i>
+      </button>
+    </div>
+    <div class="footer-col">
+      <h4>Server</h4>
+      <a href="../features/">Features</a>
+      <a href="../join/">Beitreten</a>
+      <a href="./">Regeln</a>
+      <a href="../features/#befehle">Befehle</a>
+    </div>
+    <div class="footer-col">
+      <h4>Community</h4>
+      <a href="../top/10/aura-moments/">Aura Moments</a>
+      <a href="../team/">Team</a>
+      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+    </div>
+    <div class="footer-col">
+      <h4>Hilfe</h4>
+      <a href="../#faq">Häufige Fragen</a>
+      <a href="../join/#probleme">Verbindungsprobleme</a>
+      <a href="#melden">Spieler melden</a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
+    <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+  </div>
 </footer>
+
+<div id="toast">✓ BuckSMP.de kopiert!</div>
 
 <script src="../assets/script.js" defer></script>
 </body>
