@@ -278,9 +278,21 @@ function copyIP() {
     { id: 'sup', name: '.erbse', rolle: 'Supporter' },
   ];
 
+  const ROLLEN_FARBE = {
+    Owner: 'feat-gold',
+    Admin: 'feat-redstone',
+    Manager: 'feat-lapis',
+    Moderator: 'feat-emerald',
+    Supporter: 'feat-amethyst',
+  };
+
   function karteBauen(mitglied) {
     const card = document.createElement('div');
     card.className = 'team-card';
+    const farbKlasse = ROLLEN_FARBE[mitglied.rolle];
+    if (farbKlasse) {
+      card.classList.add(farbKlasse);
+    }
 
     const avatar = document.createElement('div');
     avatar.className = 'team-avatar';
