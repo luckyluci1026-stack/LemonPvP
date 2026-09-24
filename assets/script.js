@@ -62,42 +62,6 @@ function copyIP() {
   });
 }
 
-(function liveServerStatus() {
-  const statNEl = document.getElementById('statN');
-
-  if (!statNEl) {
-    return;
-  }
-
-  const SERVER_HOST = 'bucksmp.de';
-  const REFRESH_MS = 60000;
-
-  async function refresh() {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    try {
-      const response = await fetch(`https://api.mcsrvstat.us/3/${SERVER_HOST}`, { signal: controller.signal });
-      if (!response.ok) {
-        return;
-      }
-      const data = await response.json();
-      const isOnline = !!data.online;
-      const playerCount = isOnline && data.players && typeof data.players.online === 'number'
-        ? String(data.players.online)
-        : (isOnline ? '0' : '–');
-
-      statNEl.textContent = playerCount;
-    } catch (error) {
-      return;
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-
-  refresh();
-  setInterval(refresh, REFRESH_MS);
-})();
-
 (function auraMoments() {
   const grid = document.getElementById('momentsGrid');
   if (!grid) {
