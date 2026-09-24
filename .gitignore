@@ -6,3 +6,6 @@ build/
 .DS_Store
 gen-mvn-settings.sh
 texturepack/build/
+daten/
+top/10/aura-moments/media/.upload-*
+top/10/aura-moments/media/.tausch-*

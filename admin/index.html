@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#07080a">
+<title>Admin-Panel – BuckSMP</title>
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="admin.css">
+<script src="admin.js" defer></script>
+</head>
+<body>
+
+<div class="startbild" id="startbild">
+  <img src="../assets/logo.png" alt="" width="72" height="72">
+</div>
+
+<main class="zugang" id="zugang" hidden>
+  <form class="zugang-karte" id="anmeldeFormular">
+    <img class="zugang-logo" src="../assets/logo.png" alt="" width="84" height="84">
+    <p class="zugang-marke">BuckSMP</p>
+    <h1 class="zugang-titel">Admin-Panel</h1>
+    <p class="zugang-text">Melde dich mit dem Admin-Passwort an, um Wiki, Aura Moments und mehr zu bearbeiten.</p>
+    <label class="feld">
+      <span class="feld-name">Passwort</span>
+      <input class="eingabe" type="password" id="anmeldePasswort" autocomplete="current-password" required>
+    </label>
+    <p class="formular-fehler" id="anmeldeFehler" role="alert" hidden></p>
+    <button class="knopf haupt breit" type="submit" id="anmeldeKnopf">
+      <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+      <span>Anmelden</span>
+    </button>
+    <a class="zugang-zurueck" href="../"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Zur Website</a>
+  </form>
+</main>
+
+<main class="zugang" id="ohneServer" hidden>
+  <div class="zugang-karte">
+    <img class="zugang-logo" src="../assets/logo.png" alt="" width="84" height="84">
+    <p class="zugang-marke">BuckSMP</p>
+    <h1 class="zugang-titel">Server nicht erreichbar</h1>
+    <p class="zugang-text">Das Admin-Panel funktioniert nur, wenn die Website mit <code>node server.js</code> gestartet wurde. Auf einem reinen Webspace ohne Node gibt es keinen Server, der deine Änderungen speichern kann.</p>
+    <button class="knopf breit" type="button" id="erneutVersuchen">
+      <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+      <span>Erneut versuchen</span>
+    </button>
+    <a class="zugang-zurueck" href="../"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Zur Website</a>
+  </div>
+</main>
+
+<div class="app" id="app" hidden>
+  <aside class="seitenleiste">
+    <a class="marke" href="#uebersicht">
+      <img src="../assets/logo.png" alt="" width="34" height="34">
+      <span class="marke-name">BuckSMP</span>
+      <span class="marke-zusatz">Admin</span>
+    </a>
+    <nav class="menue" aria-label="Bereiche">
+      <a href="#uebersicht" data-bereich="uebersicht"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Übersicht</span></a>
+      <a href="#wiki" data-bereich="wiki"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span>Wiki</span></a>
+      <a href="#moments" data-bereich="moments"><i class="fa-solid fa-film" aria-hidden="true"></i><span>Aura Moments</span></a>
+      <a href="#code" data-bereich="code" id="menueCode" hidden><i class="fa-solid fa-code" aria-hidden="true"></i><span>Code</span></a>
+      <a href="#einstellungen" data-bereich="einstellungen"><i class="fa-solid fa-gear" aria-hidden="true"></i><span>Einstellungen</span></a>
+    </nav>
+    <div class="menue-unten">
+      <a href="../" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i><span>Website ansehen</span></a>
+      <button type="button" id="abmelden"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span>Abmelden</span></button>
+    </div>
+  </aside>
+
+  <main class="inhalt">
+
+    <section class="bereich" id="bereich-uebersicht" hidden>
+      <header class="bereich-kopf">
+        <div>
+          <p class="bereich-marke">Admin-Panel</p>
+          <h1 class="bereich-titel">Willkommen zurück</h1>
+          <p class="bereich-text">Alles, was du hier änderst, ist sofort auf der Website zu sehen – ohne etwas neu hochzuladen.</p>
+        </div>
+      </header>
+      <div class="kacheln" id="uebersichtKacheln"></div>
+      <div class="karte">
+        <div class="karte-kopf">
+          <div>
+            <h2 class="karte-titel">Letzte Änderungen</h2>
+            <p class="karte-text">Was zuletzt im Admin-Panel passiert ist.</p>
+          </div>
+        </div>
+        <ul class="verlauf" id="verlauf"></ul>
+      </div>
+    </section>
+
+    <section class="bereich" id="bereich-wiki" hidden>
+      <div id="wikiListe">
+        <header class="bereich-kopf">
+          <div>
+            <p class="bereich-marke">Inhalte</p>
+            <h1 class="bereich-titel">Wiki</h1>
+            <p class="bereich-text">Artikel schreiben, sortieren und löschen. Beim Speichern werden die Wiki-Seiten sofort neu erzeugt.</p>
+          </div>
+          <button class="knopf haupt" type="button" id="neuerArtikel">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            <span>Neuer Artikel</span>
+          </button>
+        </header>
+
+        <div id="wikiGruppen"></div>
+
+        <div class="karte">
+          <div class="karte-kopf">
+            <div>
+              <h2 class="karte-titel">Weiterleitungen</h2>
+              <p class="karte-text">Alte oder andere Adressen, die automatisch zu einem Artikel führen – zum Beispiel <code>/wiki/duell/</code> zu „Duelle“.</p>
+            </div>
+          </div>
+          <div class="weiterleitungen" id="weiterleitungen"></div>
+          <form class="weiterleitung-neu" id="weiterleitungFormular">
+            <label class="feld">
+              <span class="feld-name">Adresse</span>
+              <span class="feld-adresse">
+                <span>/wiki/</span>
+                <input class="eingabe" id="weiterleitungVon" maxlength="60" placeholder="z. B. commands" required>
+                <span>/</span>
+              </span>
+            </label>
+            <label class="feld">
+              <span class="feld-name">Führt zu</span>
+              <select class="eingabe" id="weiterleitungNach"></select>
+            </label>
+            <button class="knopf" type="submit">
+              <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              <span>Anlegen</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div id="wikiEditor" hidden>
+        <div class="editor-leiste">
+          <button class="knopf leise" type="button" id="editorZurueck">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+            <span>Alle Artikel</span>
+          </button>
+          <span class="status" id="editorStatus"></span>
+          <div class="knopf-reihe">
+            <a class="knopf leise" id="editorAnsehen" href="../wiki/" target="_blank" rel="noopener" hidden>
+              <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+              <span>Ansehen</span>
+            </a>
+            <button class="knopf haupt" type="button" id="editorSpeichern">
+              <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+              <span>Speichern</span>
+            </button>
+          </div>
+        </div>
+
+        <header class="bereich-kopf">
+          <div>
+            <p class="bereich-marke" id="editorMarke">Neuer Artikel</p>
+            <h1 class="bereich-titel" id="editorTitel">Neuer Artikel</h1>
+          </div>
+        </header>
+
+        <div class="karte formular-raster">
+          <label class="feld breit">
+            <span class="feld-name">Titel</span>
+            <input class="eingabe" id="feldTitel" maxlength="80" placeholder="z. B. Alle Befehle">
+          </label>
+          <label class="feld">
+            <span class="feld-name">Adresse</span>
+            <span class="feld-adresse">
+              <span>/wiki/</span>
+              <input class="eingabe" id="feldSlug" maxlength="60" placeholder="wird-automatisch-erzeugt" spellcheck="false">
+              <span>/</span>
+            </span>
+            <span class="feld-hilfe" id="slugHilfe"></span>
+          </label>
+          <label class="feld">
+            <span class="feld-name">Name in der Seitenleiste</span>
+            <input class="eingabe" id="feldKurz" maxlength="40" placeholder="Leer lassen = wie der Titel">
+          </label>
+          <label class="feld">
+            <span class="feld-name">Kategorie</span>
+            <input class="eingabe" id="feldKat" maxlength="40" list="kategorien" placeholder="z. B. Spielen">
+            <datalist id="kategorien"></datalist>
+            <span class="feld-hilfe">Neuen Namen eintippen = neue Kategorie.</span>
+          </label>
+          <div class="feld">
+            <span class="feld-name" id="farbeName">Farbe</span>
+            <div class="farben" id="farbWahl" role="radiogroup" aria-labelledby="farbeName"></div>
+          </div>
+          <div class="feld breit">
+            <span class="feld-name">Symbol</span>
+            <div class="symbol-wahl">
+              <span class="slot" id="symbolVorschau"><i class="fa-solid fa-book" aria-hidden="true"></i></span>
+              <input class="eingabe" id="feldIcon" maxlength="50" placeholder="fa-book" spellcheck="false" aria-label="Symbol-Name">
+            </div>
+            <div class="symbole" id="symbolListe"></div>
+            <span class="feld-hilfe">Weitere Symbole findest du auf fontawesome.com (kostenlose „Solid“-Symbole), zum Beispiel <code>fa-dragon</code>.</span>
+          </div>
+          <label class="feld breit">
+            <span class="feld-name">Kurzbeschreibung</span>
+            <input class="eingabe" id="feldText" maxlength="200" placeholder="Ein Satz, der in der Wiki-Übersicht unter dem Titel steht.">
+          </label>
+          <label class="feld breit">
+            <span class="feld-name">Stichworte für die Suche</span>
+            <input class="eingabe" id="feldStichworte" maxlength="300" placeholder="z. B. commands befehle hilfe">
+          </label>
+        </div>
+
+        <div class="karte schreibfeld">
+          <div class="schreib-kopf">
+            <div class="werkzeuge" id="werkzeuge" role="toolbar" aria-label="Bausteine einfügen"></div>
+            <div class="ansicht-wahl" role="group" aria-label="Ansicht">
+              <button type="button" data-ansicht-wahl="schreiben"><i class="fa-solid fa-pen" aria-hidden="true"></i><span>Schreiben</span></button>
+              <button type="button" data-ansicht-wahl="geteilt"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><span>Geteilt</span></button>
+              <button type="button" data-ansicht-wahl="vorschau"><i class="fa-solid fa-eye" aria-hidden="true"></i><span>Vorschau</span></button>
+            </div>
+          </div>
+          <div class="schreib-flaeche" id="schreibFlaeche" data-ansicht="geteilt">
+            <textarea class="code-eingabe" id="feldInhalt" spellcheck="true" aria-label="Inhalt des Artikels"></textarea>
+            <div class="vorschau-rahmen">
+              <iframe id="vorschau" title="Vorschau des Artikels" sandbox="allow-same-origin allow-scripts"></iframe>
+            </div>
+          </div>
+          <p class="schreib-hilfe">Der Inhalt ist HTML. Die Knöpfe oben fügen fertige Bausteine ein – markierten Text packen sie gleich mit hinein. Überschriften bekommen beim Speichern automatisch einen Anker für das Inhaltsverzeichnis. <kbd>Strg</kbd> + <kbd>S</kbd> speichert.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bereich" id="bereich-moments" hidden>
+      <header class="bereich-kopf">
+        <div>
+          <p class="bereich-marke">Inhalte</p>
+          <h1 class="bereich-titel">Aura Moments</h1>
+          <p class="bereich-text">Die Top 10 der besten Clips. Lade für jeden Platz ein Video oder Bild hoch – es erscheint sofort auf der Website.</p>
+        </div>
+        <a class="knopf leise" href="../top/10/aura-moments/" target="_blank" rel="noopener">
+          <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+          <span>Seite ansehen</span>
+        </a>
+      </header>
+      <div class="hinweis-box" id="momentsFormate">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        <p><strong>Videos</strong> als MP4 (am besten H.264), höchstens <span id="momentsMax">300</span> MB. <strong>Bilder</strong> als JPG, PNG oder WebP – sie werden automatisch in JPG umgewandelt und verkleinert. Du kannst Dateien auch einfach auf einen Platz ziehen.</p>
+      </div>
+      <div class="hinweis-box warnung" id="momentsWarnung" hidden>
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+        <p>Die gespeicherten Texte konnten nicht gelesen werden. Wenn du hier Texte speicherst, werden sie komplett neu geschrieben.</p>
+      </div>
+      <div class="moment-liste" id="momentListe"></div>
+    </section>
+
+    <section class="bereich" id="bereich-code" hidden>
+      <header class="bereich-kopf">
+        <div>
+          <p class="bereich-marke">Fortgeschritten</p>
+          <h1 class="bereich-titel">Code</h1>
+          <p class="bereich-text">HTML, CSS und JavaScript der Website direkt bearbeiten. Vor jedem Speichern wird automatisch eine Sicherung angelegt.</p>
+        </div>
+      </header>
+      <div class="hinweis-box warnung">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+        <p>Ein Fehler im Code kann Seiten kaputt machen. Wenn etwas schiefgeht: Datei öffnen, unten bei „Sicherungen“ einen älteren Stand wiederherstellen. Die Wiki-Seiten fehlen hier absichtlich – die bearbeitest du im Bereich „Wiki“.</p>
+      </div>
+      <div class="code-layout">
+        <div class="karte code-dateien">
+          <label class="suchfeld">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input class="eingabe" type="search" id="codeSuche" placeholder="Datei suchen …" aria-label="Datei suchen">
+          </label>
+          <div class="code-datei-liste" id="codeDateiListe"></div>
+        </div>
+        <div class="karte code-editor">
+          <div class="code-kopf">
+            <div class="code-titel">
+              <p class="code-pfad" id="codePfad">Keine Datei geöffnet</p>
+              <p class="status" id="codeStatus">Wähle links eine Datei aus.</p>
+            </div>
+            <div class="knopf-reihe">
+              <a class="knopf leise klein" id="codeAnsehen" href="../" target="_blank" rel="noopener" hidden>
+                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                <span>Ansehen</span>
+              </a>
+              <button class="knopf leise klein" type="button" id="codeVerwerfen" disabled>
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+                <span>Verwerfen</span>
+              </button>
+              <button class="knopf haupt klein" type="button" id="codeSpeichern" disabled>
+                <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                <span>Speichern</span>
+              </button>
+            </div>
+          </div>
+          <div class="code-flaeche">
+            <pre class="zeilen" id="codeZeilen" aria-hidden="true">1</pre>
+            <textarea class="code-eingabe" id="codeText" spellcheck="false" wrap="off" disabled aria-label="Inhalt der Datei"></textarea>
+          </div>
+          <p class="code-fuss"><kbd>Strg</kbd> + <kbd>S</kbd> speichert · <kbd>Tab</kbd> rückt ein · <kbd>Esc</kbd> und dann <kbd>Tab</kbd> verlässt das Feld</p>
+          <details class="sicherungen">
+            <summary><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Sicherungen (<span id="codeSicherungenAnzahl">0</span>)</span></summary>
+            <ul class="sicherungs-liste" id="codeSicherungsListe"></ul>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="bereich" id="bereich-einstellungen" hidden>
+      <header class="bereich-kopf">
+        <div>
+          <p class="bereich-marke">Admin-Panel</p>
+          <h1 class="bereich-titel">Einstellungen</h1>
+          <p class="bereich-text">Code-Editor, Passwort und Wartung.</p>
+        </div>
+      </header>
+
+      <div class="karte einstellung">
+        <div class="einstellung-text">
+          <h2 class="karte-titel">Code-Editor</h2>
+          <p class="karte-text">Schaltet den Bereich „Code“ frei. Damit kannst du HTML, CSS und JavaScript der Website direkt ändern – zum Beispiel Texte auf der Startseite oder die Team-Liste. Solange er aus ist, kann auch niemand über das Admin-Panel Code verändern.</p>
+        </div>
+        <label class="schalter">
+          <input type="checkbox" id="schalterCode">
+          <span class="schalter-bahn" aria-hidden="true"></span>
+          <span class="nur-vorleser">Code-Editor einschalten</span>
+        </label>
+      </div>
+
+      <div class="karte">
+        <div class="karte-kopf">
+          <div>
+            <h2 class="karte-titel">Passwort ändern</h2>
+            <p class="karte-text">Mindestens 8 Zeichen. Nach dem Ändern werden alle anderen Geräte abgemeldet.</p>
+          </div>
+        </div>
+        <form class="passwort-formular" id="passwortFormular">
+          <label class="feld">
+            <span class="feld-name">Aktuelles Passwort</span>
+            <input class="eingabe" type="password" id="passwortAlt" autocomplete="current-password" required>
+          </label>
+          <label class="feld">
+            <span class="feld-name">Neues Passwort</span>
+            <input class="eingabe" type="password" id="passwortNeu" autocomplete="new-password" minlength="8" required>
+          </label>
+          <label class="feld">
+            <span class="feld-name">Neues Passwort wiederholen</span>
+            <input class="eingabe" type="password" id="passwortWiederholung" autocomplete="new-password" minlength="8" required>
+          </label>
+          <button class="knopf haupt" type="submit">
+            <i class="fa-solid fa-key" aria-hidden="true"></i>
+            <span>Passwort ändern</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="karte einstellung">
+        <div class="einstellung-text">
+          <h2 class="karte-titel">Andere Geräte abmelden</h2>
+          <p class="karte-text">Beendet alle Anmeldungen außer dieser – zum Beispiel, wenn du dich an einem Schul-PC nicht abgemeldet hast.</p>
+        </div>
+        <button class="knopf" type="button" id="ueberallAbmelden">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+          <span>Abmelden</span>
+        </button>
+      </div>
+
+      <div class="karte einstellung">
+        <div class="einstellung-text">
+          <h2 class="karte-titel">Wiki-Seiten neu erzeugen</h2>
+          <p class="karte-text">Schreibt alle Wiki-Seiten neu aus den gespeicherten Artikeln. Nur nötig, wenn Dateien im Ordner <code>wiki/</code> von Hand verändert oder gelöscht wurden.</p>
+        </div>
+        <button class="knopf" type="button" id="wikiNeuErzeugen">
+          <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+          <span>Neu erzeugen</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="meldungen" id="meldungen" aria-live="polite"></div>
+
+<dialog class="dialog" id="dialog" aria-labelledby="dialogTitel">
+  <form method="dialog" class="dialog-form">
+    <h2 class="dialog-titel" id="dialogTitel"></h2>
+    <div class="dialog-inhalt" id="dialogInhalt"></div>
+    <div class="dialog-knoepfe">
+      <button class="knopf leise" type="button" id="dialogAbbrechen">Abbrechen</button>
+      <button class="knopf haupt" type="submit" value="ok" id="dialogOk">OK</button>
+    </div>
+  </form>
+</dialog>
+
+</body>
+</html>
