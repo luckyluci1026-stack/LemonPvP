@@ -5,9 +5,11 @@ Bild für ein Team-Mitglied hinzufügen: Datei hier in diesen Ordner legen, bena
 | id (im TEAM-Array) | Datei |
 |---|---|
 | `lemon` | `lemon.jpg` (oder `lemon.png`) |
+| `pneu` | `pneu.jpg` (oder `pneu.png`) – noch kein Bild hochgeladen |
 | `owner` | `owner.jpg` (oder `owner.png`) |
 | `manager` | `manager.jpg` (oder `manager.png`) |
 | `admin` | `admin.jpg` (oder `admin.png`) |
+| `mod` | `mod.jpg` (oder `mod.png`) – noch kein Bild hochgeladen |
 | `sup` | `sup.jpg` (oder `sup.png`) |
 
 - `.jpg` wird zuerst versucht, dann `.png`. Gibt es keins von beiden, bleibt das generische Platzhalter-Icon stehen – kein Fehler, nichts kaputt.

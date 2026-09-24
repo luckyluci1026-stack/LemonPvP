@@ -327,11 +327,13 @@ function copyIP() {
   const MEDIA_ORDNER = 'media/';
 
   const TEAM = [
-    { id: 'lemon', name: 'Name eintragen', rolle: 'Lemon' },
-    { id: 'owner', name: 'Name eintragen', rolle: 'Owner' },
-    { id: 'manager', name: 'Name eintragen', rolle: 'Manager' },
-    { id: 'admin', name: 'Name eintragen', rolle: 'Admin' },
-    { id: 'sup', name: 'Name eintragen', rolle: 'Supporter' },
+    { id: 'lemon', name: 'Lemonightt', rolle: 'Owner' },
+    { id: 'pneu', name: '.Pneuer13', rolle: 'Owner' },
+    { id: 'owner', name: 'Catze99', rolle: 'Owner' },
+    { id: 'manager', name: 'Noah', rolle: 'Manager' },
+    { id: 'admin', name: 'Nani0000', rolle: 'Admin' },
+    { id: 'mod', name: '.Colixiander', rolle: 'Moderator' },
+    { id: 'sup', name: '.erbse', rolle: 'Supporter' },
   ];
 
   function karteBauen(mitglied) {
