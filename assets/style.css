@@ -21,6 +21,7 @@
   --muted2: #888;
   --wa: #25D366;
   --wa-text: #7CF0A6;
+  --radius: 4px;
 }
 
 html {
@@ -49,8 +50,8 @@ body::after {
   position: fixed;
   inset: -15%;
   background:
-    radial-gradient(circle at 18% 25%, rgba(108, 92, 231, 0.055), transparent 42%),
-    radial-gradient(circle at 82% 75%, rgba(0, 212, 255, 0.045), transparent 42%);
+    radial-gradient(circle at 18% 25%, rgba(108, 92, 231, 0.04), transparent 42%),
+    radial-gradient(circle at 82% 75%, rgba(0, 212, 255, 0.035), transparent 42%);
   animation: bgDrift 46s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 0;
@@ -88,10 +89,8 @@ nav {
 }
 
 .nav-logo {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.2rem;
-  font-weight: 800;
-  letter-spacing: 1px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .85rem;
   background: var(--grad-text);
   -webkit-background-clip: text;
   background-clip: text;
@@ -134,7 +133,7 @@ nav {
   font-size: .82rem;
   font-weight: 600;
   padding: 8px 16px;
-  border-radius: 7px;
+  border-radius: var(--radius);
   text-decoration: none;
   transition: background .2s, border-color .2s;
 }
@@ -253,7 +252,7 @@ nav {
   color: var(--muted);
   border: 1px solid var(--border);
   padding: 3px 11px;
-  border-radius: 100px;
+  border-radius: var(--radius);
   background: var(--bg);
   white-space: nowrap;
 }
@@ -278,7 +277,7 @@ nav {
   transform: translate(-50%, -58%);
   width: clamp(300px, 80vw, 860px);
   height: clamp(300px, 80vw, 860px);
-  background: radial-gradient(circle, rgba(108, 92, 231, .10) 0%, rgba(0, 212, 255, .07) 35%, transparent 68%);
+  background: radial-gradient(circle, rgba(108, 92, 231, .05) 0%, rgba(0, 212, 255, .035) 35%, transparent 68%);
   pointer-events: none;
 }
 
@@ -303,7 +302,7 @@ nav {
   background: var(--surface);
   border: 1px solid var(--border);
   padding: 7px 16px;
-  border-radius: 100px;
+  border-radius: var(--radius);
   margin-bottom: 32px;
   animation: fadeUp .6s ease both;
 }
@@ -318,11 +317,9 @@ nav {
 }
 
 h1.hero-title {
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(2.8rem, 11vw, 10rem);
-  font-weight: 800;
-  line-height: .95;
-  letter-spacing: -3px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(1.4rem, 7vw, 3.5rem);
+  line-height: 1.4;
   animation: fadeUp .7s ease both .1s;
 }
 
@@ -362,7 +359,7 @@ h1.hero-title {
 .ip-box {
   position: relative;
   display: inline-flex;
-  border-radius: 10px;
+  border-radius: var(--radius);
   overflow: hidden;
   cursor: pointer;
 }
@@ -371,7 +368,7 @@ h1.hero-title {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 1.5px;
   background: var(--grad);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -384,8 +381,8 @@ h1.hero-title {
   padding: 14px 30px;
   background: var(--surface2);
   color: #fff;
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(1rem, 4vw, 1.45rem);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(1.1rem, 4vw, 1.6rem);
   font-weight: 700;
   letter-spacing: 3px;
   user-select: none;
@@ -428,10 +425,7 @@ h1.hero-title {
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  background: var(--grad-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--g2);
   opacity: 0;
   transition: opacity .3s;
 }
@@ -460,21 +454,18 @@ h1.hero-title {
 }
 
 .s:first-child {
-  border-radius: 8px 0 0 8px;
+  border-radius: var(--radius) 0 0 var(--radius);
 }
 
 .s:last-child {
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
 }
 
 .s-n {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.7rem;
-  font-weight: 800;
-  background: var(--grad-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--g2);
 }
 
 .s-l {
@@ -513,18 +504,14 @@ h1.hero-title {
 }
 
 .sec-title {
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  font-weight: 800;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(1.9rem, 4vw, 2.9rem);
+  font-weight: 700;
   color: #fff;
-  letter-spacing: -1px;
 }
 
 .sec-title .g {
-  background: var(--grad-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--g2);
 }
 
 .feats {
@@ -536,11 +523,11 @@ h1.hero-title {
 .feat {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 28px 24px;
   position: relative;
   overflow: hidden;
-  transition: border-color .25s, transform .2s;
+  transition: border-color .25s;
 }
 
 .feat::before {
@@ -550,13 +537,12 @@ h1.hero-title {
   left: 0;
   width: 3px;
   height: 0;
-  background: var(--grad);
+  background: var(--g2);
   transition: height .3s ease;
 }
 
 .feat:hover {
   border-color: var(--border-a);
-  transform: translateY(-2px);
 }
 
 .feat:hover::before {
@@ -575,9 +561,9 @@ h1.hero-title {
 }
 
 .feat-name {
-  font-family: 'Syne', sans-serif;
-  font-size: .95rem;
-  font-weight: 800;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: #fff;
   text-transform: uppercase;
   letter-spacing: .5px;
@@ -595,7 +581,7 @@ h1.hero-title {
   z-index: 1;
   text-align: center;
   padding: 100px 28px;
-  background: linear-gradient(180deg, transparent, rgba(108, 92, 231, .05), transparent);
+  background: linear-gradient(180deg, transparent, rgba(108, 92, 231, .04), transparent);
 }
 
 .cta-tag {
@@ -607,19 +593,15 @@ h1.hero-title {
 }
 
 .cta-h {
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(2.2rem, 6vw, 4rem);
-  font-weight: 800;
-  letter-spacing: -1.5px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(2.2rem, 6vw, 3.6rem);
+  font-weight: 700;
   color: #fff;
   margin-bottom: 12px;
 }
 
 .cta-h .g {
-  background: var(--grad-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--g2);
 }
 
 .cta-sub {
@@ -645,18 +627,15 @@ h1.hero-title {
   font-size: .88rem;
   letter-spacing: 1px;
   padding: 14px 26px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   border: none;
   cursor: pointer;
   text-decoration: none;
-  box-shadow: 0 4px 28px rgba(108, 92, 231, .35);
-  transition: opacity .2s, transform .15s, box-shadow .2s;
+  transition: opacity .2s;
 }
 
 .btn-p:hover {
-  opacity: .9;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 40px rgba(108, 92, 231, .45);
+  opacity: .88;
 }
 
 .btn-o {
@@ -669,7 +648,7 @@ h1.hero-title {
   font-size: .88rem;
   letter-spacing: 1px;
   padding: 14px 26px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   cursor: pointer;
   text-decoration: none;
@@ -748,18 +727,14 @@ footer a:hover {
 }
 
 .page-title {
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(2rem, 6vw, 3.2rem);
-  font-weight: 800;
-  letter-spacing: -1px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(2.1rem, 6vw, 3.4rem);
+  font-weight: 700;
   color: #fff;
 }
 
 .page-title .g {
-  background: var(--grad-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--g2);
 }
 
 .page-sub {
@@ -780,18 +755,17 @@ footer a:hover {
   display: block;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   overflow: hidden;
   position: relative;
   color: inherit;
   text-decoration: none;
   cursor: pointer;
-  transition: border-color .25s, transform .2s;
+  transition: border-color .25s;
 }
 
 .moment:hover {
   border-color: var(--border-a);
-  transform: translateY(-3px);
 }
 
 .moment:focus-visible {
@@ -826,13 +800,13 @@ footer a:hover {
   top: 10px;
   left: 10px;
   z-index: 2;
-  font-family: 'Syne', sans-serif;
-  font-weight: 800;
-  font-size: .85rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: .95rem;
   background: rgba(8, 8, 8, .8);
   backdrop-filter: blur(6px);
   padding: 5px 12px;
-  border-radius: 100px;
+  border-radius: var(--radius);
   color: #fff;
   border: 1px solid var(--border);
 }
@@ -879,9 +853,9 @@ footer a:hover {
 }
 
 .moment-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 1rem;
-  font-weight: 800;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: #fff;
   margin-bottom: 6px;
 }
@@ -932,7 +906,7 @@ footer a:hover {
   align-items: center;
   justify-content: center;
   background: #000;
-  border-radius: 10px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -990,32 +964,32 @@ footer a:hover {
 }
 
 .rule-item:first-child {
-  border-radius: 10px 10px 0 0;
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .rule-item:last-child {
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 
 .rule-num {
   flex-shrink: 0;
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--grad);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Syne', sans-serif;
-  font-weight: 800;
-  font-size: .9rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
   color: #fff;
 }
 
 .rule-name {
-  font-family: 'Syne', sans-serif;
-  font-size: .95rem;
-  font-weight: 800;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: #fff;
   margin-bottom: 5px;
 }
@@ -1044,22 +1018,21 @@ footer a:hover {
 .team-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 28px 22px;
   text-align: center;
-  transition: border-color .25s, transform .2s;
+  transition: border-color .25s;
 }
 
 .team-card:hover {
   border-color: var(--border-a);
-  transform: translateY(-3px);
 }
 
 .team-avatar {
   width: 64px;
   height: 64px;
   margin: 0 auto 16px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--surface2);
   border: 1px solid var(--border);
   display: flex;
@@ -1076,14 +1049,14 @@ footer a:hover {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 13px;
+  border-radius: 3px;
   display: block;
 }
 
 .team-name {
-  font-family: 'Syne', sans-serif;
-  font-size: .95rem;
-  font-weight: 800;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: #fff;
   margin-bottom: 4px;
 }
@@ -1108,7 +1081,7 @@ footer a:hover {
   font-size: .85rem;
   font-weight: 600;
   padding: 12px 22px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   z-index: 999;
   opacity: 0;
   pointer-events: none;
@@ -1174,7 +1147,7 @@ footer a:hover {
   }
 
   .s-n {
-    font-size: 1.35rem;
+    font-size: 1.5rem;
   }
 
   .feats {
@@ -1203,6 +1176,6 @@ footer a:hover {
 
   .s {
     min-width: 200px;
-    border-radius: 8px !important;
+    border-radius: var(--radius) !important;
   }
 }
