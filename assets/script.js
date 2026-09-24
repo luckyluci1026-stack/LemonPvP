@@ -34,13 +34,9 @@ let toastTimer;
 
 function copyIP() {
   navigator.clipboard.writeText(SERVER_IP).then(() => {
-    const feed = document.getElementById('ipFeed');
     const icon = document.getElementById('copyIco');
     const label = document.getElementById('copyTxt');
 
-    if (feed) {
-      feed.classList.add('show');
-    }
     if (label) {
       label.textContent = 'Kopiert!';
     }
@@ -56,9 +52,6 @@ function copyIP() {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
-      if (feed) {
-        feed.classList.remove('show');
-      }
       if (label) {
         label.textContent = 'Kopieren';
       }
@@ -70,12 +63,9 @@ function copyIP() {
 }
 
 (function liveServerStatus() {
-  const countEl = document.getElementById('liveCount');
   const statNEl = document.getElementById('statN');
-  const statusEl = document.getElementById('liveStatus');
-  const dotEl = document.getElementById('liveDot');
 
-  if (!countEl && !statNEl) {
+  if (!statNEl) {
     return;
   }
 
@@ -96,19 +86,7 @@ function copyIP() {
         ? String(data.players.online)
         : (isOnline ? '0' : '–');
 
-      if (statusEl) {
-        statusEl.textContent = isOnline ? 'online' : 'offline';
-      }
-      if (countEl) {
-        countEl.textContent = playerCount;
-      }
-      if (statNEl) {
-        statNEl.textContent = playerCount;
-      }
-      if (dotEl) {
-        dotEl.style.animationPlayState = isOnline ? 'running' : 'paused';
-        dotEl.style.background = isOnline ? '' : 'var(--muted)';
-      }
+      statNEl.textContent = playerCount;
     } catch (error) {
       return;
     } finally {
