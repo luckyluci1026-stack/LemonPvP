@@ -175,7 +175,7 @@ public final class DuellSessionManager implements Listener {
             // dabei - beides waere fuer ein faires Duell nicht in Ordnung.
             zustandZuruecksetzen(p);
         }
-        kampfTeamZuweisen(a, b);
+        kampfTeamZuweisen(a, b, true);
 
         DuellSession session = new DuellSession(duell.id(), arena.name(),
                 duell.spielerA(), duell.spielerAName(), duell.spielerAServer(),
@@ -741,9 +741,44 @@ public final class DuellSessionManager implements Listener {
     }
 
     private void kampfTeamZuweisen(Player a, Player b) {
+        kampfTeamZuweisen(a, b, false);
+    }
+
+    private void kampfTeamZuweisen(Player a, Player b, boolean mitProtokoll) {
         Team team = kampfTeam();
         team.addEntry(a.getName());
         team.addEntry(b.getName());
+        if (!mitProtokoll) {
+            return;
+        }
+        // Verifizieren statt blind vertrauen: addEntry() auf einen String
+        // sollte eigentlich nie stillschweigend fehlschlagen, aber genau das
+        // ist bisher unbewiesen - u.a. fuer Bedrock/Floodgate-Namen (die per
+        // Standard-Konfiguration ein "." vorangestellt bekommen). Landet
+        // hier eine Warnung im Server-Log, ist DAS der Beweis, dass die
+        // Team-Zuweisung fuer den genannten Namen nicht greift und das
+        // naechste Ziel; bleibt die Konsole sauber, ist dieses Team
+        // definitiv NICHT (mehr) die Ursache fuer ausbleibenden PVP-Schaden.
+        // Nur EINMAL beim Kampfstart geloggt (nicht bei jeder Sekunden-
+        // Neuzuweisung waehrend des Kampfes) - sonst wuerde die Konsole bei
+        // einem laengeren Duell mit Warnungen zugespammt.
+        pruefeTeamZuweisung(team, a);
+        pruefeTeamZuweisung(team, b);
+    }
+
+    private void pruefeTeamZuweisung(Team team, Player spieler) {
+        if (team.hasEntry(spieler.getName())) {
+            return;
+        }
+        plugin.getLogger().warning("DuelPlus: '" + spieler.getName() + "' (UUID " + spieler.getUniqueId()
+                + ") steckt NICHT im Friendly-Fire-Team '" + KAMPF_TEAM_NAME + "', obwohl gerade zugewiesen - "
+                + "PVP-Schaden gegen diesen Spieler wird vermutlich weiterhin blockiert. Aktuelles Team laut "
+                + "Scoreboard: " + describeEntryTeam(spieler.getName()));
+    }
+
+    private String describeEntryTeam(String name) {
+        Team aktuell = Bukkit.getScoreboardManager().getMainScoreboard().getEntryTeam(name);
+        return aktuell == null ? "keins" : aktuell.getName();
     }
 
     /** Wieder entfernen, sobald der Kampf vorbei ist - sonst wuerde der Team-Eintrag (ein blosser Name-String) dauerhaft haengen bleiben. */
