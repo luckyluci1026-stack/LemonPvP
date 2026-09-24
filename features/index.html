@@ -4,25 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Features – BuckSMP</title>
-<meta name="description" content="Alle Features von BuckSMP – Duelle, Shop, Anti-Cheat, Crossplay und die wichtigsten Befehle.">
+<meta name="description" content="Alle Features von BuckSMP – Duelle, Shop, Anti-Cheat, Crossplay und das Netzwerk.">
 <meta name="theme-color" content="#07080a">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Pixelify+Sans:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-inner">
-    <a class="nav-logo" href="../">BuckSMP</a>
+    <a class="nav-logo" href="../">
+      <img src="../assets/logo.png" alt="" width="34" height="34">
+      <span>BuckSMP</span>
+    </a>
     <ul class="nav-links">
       <li><a href="../">Startseite</a></li>
       <li><a href="./" class="active">Features</a></li>
       <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
-      <li><a href="../regeln/">Regeln</a></li>
       <li><a href="../team/">Team</a></li>
+      <li><a href="../wiki/">Wiki</a></li>
+      <li><a href="../regeln/">Regeln</a></li>
+      <li><a href="../help/">Hilfe</a></li>
     </ul>
     <div class="nav-right">
       <a class="btn-wa" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener" aria-label="WhatsApp Channel">
@@ -42,8 +46,10 @@
   <a href="../" onclick="closeNav()">Startseite <i class="fa-solid fa-chevron-right"></i></a>
   <a href="./" class="active" onclick="closeNav()">Features <i class="fa-solid fa-chevron-right"></i></a>
   <a href="../top/10/aura-moments/" onclick="closeNav()">Aura Moments <i class="fa-solid fa-chevron-right"></i></a>
-  <a href="../regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
   <a href="../team/" onclick="closeNav()">Team <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../wiki/" onclick="closeNav()">Wiki <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../help/" onclick="closeNav()">Hilfe <i class="fa-solid fa-chevron-right"></i></a>
   <a href="../join/" onclick="closeNav()">Beitreten <i class="fa-solid fa-chevron-right"></i></a>
   <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
 </div>
@@ -82,7 +88,7 @@
         <div class="slot"><i class="fa-solid fa-shield-halved"></i></div>
         <h3 class="feat-name">Anti-Cheat</h3>
         <p class="feat-desc">Unser eigenes Anti-Cheat nutzt fortgeschrittene Predictions um die False Flags so gering wie möglich zu halten. Damit können wir gewährleisten das auch Jeder Cheater gebannt wird.</p>
-        <span class="feat-badge">Eigenentwicklung</span>
+        <span class="feat-badge">Prediction-basiert</span>
       </div>
       <div class="feat gold">
         <div class="slot"><i class="fa-solid fa-store"></i></div>
@@ -108,10 +114,13 @@
 
 <section class="sec band" id="duelle">
   <div class="wrap">
-    <div class="sec-head">
-      <p class="sec-tag">Duelle</p>
-      <h2 class="sec-title">So läuft ein <span class="g">Duell</span> ab</h2>
-      <p class="sec-sub">Vom Herausfordern bis zum Loot in fünf Schritten. Gekämpft wird auf einem eigenen Duels-Server – mit eurem echten SMP-Inventar.</p>
+    <div class="sec-head-row">
+      <div class="sec-head">
+        <p class="sec-tag">Duelle</p>
+        <h2 class="sec-title">So läuft ein <span class="g">Duell</span> ab</h2>
+        <p class="sec-sub">Vom Herausfordern bis zum Loot in fünf Schritten. Gekämpft wird auf einem eigenen Duels-Server – mit eurem echten SMP-Inventar.</p>
+      </div>
+      <a class="text-link" href="../wiki/duels/">Alles über Duelle im Wiki <i class="fa-solid fa-arrow-right"></i></a>
     </div>
     <ol class="ablauf">
       <li class="ablauf-schritt">
@@ -185,41 +194,35 @@
   </div>
 </section>
 
-<section class="sec band" id="befehle">
+<section class="sec band" id="wissen">
   <div class="wrap">
-    <div class="sec-head">
-      <p class="sec-tag">Befehle</p>
-      <h2 class="sec-title">Die wichtigsten <span class="g">Befehle</span></h2>
-      <p class="sec-sub">Alles, was du im Alltag auf BuckSMP brauchst – zum Nachschlagen.</p>
+    <div class="sec-head-row">
+      <div class="sec-head">
+        <p class="sec-tag">Wiki</p>
+        <h2 class="sec-title">Mehr <span class="g">erfahren</span></h2>
+        <p class="sec-sub">Befehle, Duelle und unser Anti-Cheat – im Wiki ausführlich erklärt.</p>
+      </div>
+      <a class="text-link" href="../wiki/">Zum Wiki <i class="fa-solid fa-arrow-right"></i></a>
     </div>
-    <div class="cmd-groups">
-      <div class="cmd-group diamond">
-        <div class="cmd-group-kopf"><i class="fa-solid fa-compass"></i>Allgemein</div>
-        <div class="cmd-row"><code class="cmd">/spawn</code><span>Bringt dich zum Spawn</span></div>
-        <div class="cmd-row"><code class="cmd">/daily</code><span>Holt deine tägliche Belohnung ab</span></div>
-      </div>
-      <div class="cmd-group emerald">
-        <div class="cmd-group-kopf"><i class="fa-solid fa-flag"></i>Hilfe &amp; Melden</div>
-        <div class="cmd-row"><code class="cmd">/report</code><span>Meldet einen Spieler über ein Menü</span></div>
-        <div class="cmd-row"><code class="cmd">/bugreport</code><span>Meldet einen Bug über ein Menü</span></div>
-      </div>
-      <div class="cmd-group gold">
-        <div class="cmd-group-kopf"><i class="fa-solid fa-store"></i>Shop</div>
-        <div class="cmd-row"><code class="cmd">/shop</code><span>Öffnet den Shop</span></div>
-        <div class="cmd-row"><code class="cmd">/sell</code><span>Öffnet das Verkaufsfenster</span></div>
-        <div class="cmd-row"><code class="cmd">/sell hand</code><span>Verkauft das Item in deiner Hand</span></div>
-        <div class="cmd-row"><code class="cmd">/sell all</code><span>Verkauft alles Verkaufbare aus deinem Inventar</span></div>
-        <div class="cmd-row"><code class="cmd">/worth</code><span>Zeigt den Wert des Items in deiner Hand</span></div>
-      </div>
-      <div class="cmd-group redstone">
-        <div class="cmd-group-kopf"><i class="fa-solid fa-hand-fist"></i>Duelle</div>
-        <div class="cmd-row"><code class="cmd">/duel &lt;Spieler&gt;</code><span>Fordert jemanden heraus</span></div>
-        <div class="cmd-row"><code class="cmd">/duel &lt;Spieler&gt; accept</code><span>Nimmt eine Herausforderung an</span></div>
-        <div class="cmd-row"><code class="cmd">/duel &lt;Spieler&gt; decline</code><span>Lehnt eine Herausforderung ab</span></div>
-        <div class="cmd-row"><code class="cmd">/duel watch &lt;Spieler&gt;</code><span>Schaut einem laufenden Duell zu</span></div>
-        <div class="cmd-row"><code class="cmd">/duel unwatch</code><span>Beendet das Zuschauen</span></div>
-        <div class="cmd-row"><code class="cmd">/draw</code><span>Schlägt ein Unentschieden vor</span></div>
-      </div>
+    <div class="wiki-karten">
+      <a class="wiki-karte diamond" href="../wiki/befehle/">
+        <div class="slot"><i class="fa-solid fa-terminal"></i></div>
+        <p class="wiki-karte-titel">Alle Befehle</p>
+        <p class="wiki-karte-text">Jeder Befehl für Spieler – sortiert nach Thema.</p>
+        <p class="wiki-karte-meta">Artikel lesen <i class="fa-solid fa-arrow-right"></i></p>
+      </a>
+      <a class="wiki-karte redstone" href="../wiki/duels/">
+        <div class="slot"><i class="fa-solid fa-hand-fist"></i></div>
+        <p class="wiki-karte-titel">Duelle</p>
+        <p class="wiki-karte-text">Herausfordern, kämpfen, Loot kassieren – so laufen Duelle ab.</p>
+        <p class="wiki-karte-meta">Artikel lesen <i class="fa-solid fa-arrow-right"></i></p>
+      </a>
+      <a class="wiki-karte emerald" href="../wiki/anticheat/">
+        <div class="slot"><i class="fa-solid fa-shield-halved"></i></div>
+        <p class="wiki-karte-titel">So funktioniert unser Anti-Cheat</p>
+        <p class="wiki-karte-text">Warum unser Anti-Cheat rechnet statt rät – und Lag kein Problem ist.</p>
+        <p class="wiki-karte-meta">Artikel lesen <i class="fa-solid fa-arrow-right"></i></p>
+      </a>
     </div>
   </div>
 </section>
@@ -243,7 +246,10 @@
 <footer class="footer">
   <div class="wrap footer-top">
     <div class="footer-brand">
-      <a class="nav-logo" href="../">BuckSMP</a>
+      <a class="nav-logo" href="../">
+        <img src="../assets/logo.png" alt="" width="34" height="34">
+        <span>BuckSMP</span>
+      </a>
       <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
       <button class="footer-ip" type="button" onclick="copyIP()">
         BuckSMP.de
@@ -255,24 +261,31 @@
       <a href="./">Features</a>
       <a href="../join/">Beitreten</a>
       <a href="../regeln/">Regeln</a>
-      <a href="#befehle">Befehle</a>
+      <a href="../team/">Team</a>
     </div>
     <div class="footer-col">
-      <h4>Community</h4>
-      <a href="../top/10/aura-moments/">Aura Moments</a>
-      <a href="../team/">Team</a>
-      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+      <h4>Wissen</h4>
+      <a href="../wiki/">Wiki</a>
+      <a href="../wiki/befehle/">Alle Befehle</a>
+      <a href="../wiki/duels/">Duelle</a>
+      <a href="../wiki/anticheat/">Anti-Cheat</a>
     </div>
     <div class="footer-col">
       <h4>Hilfe</h4>
-      <a href="../#faq">Häufige Fragen</a>
-      <a href="../join/#probleme">Verbindungsprobleme</a>
-      <a href="../regeln/#melden">Spieler melden</a>
+      <a href="../help/">Hilfe-Center</a>
+      <a href="../help/#verbindung">Verbindungsprobleme</a>
+      <a href="../help/#melden">Spieler melden</a>
+      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
     </div>
   </div>
   <div class="wrap footer-bottom">
     <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
-    <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+    <div class="footer-recht">
+      <a href="../impressum/">Impressum</a>
+      <a href="../datenschutz/">Datenschutz</a>
+      <a href="../agb/">AGB</a>
+      <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+    </div>
   </div>
 </footer>
 

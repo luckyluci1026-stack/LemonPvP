@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiki – BuckSMP</title>
+<meta name="description" content="Das Wiki von BuckSMP – Befehle, Duelle, Crossplay, Shop und wie unser Anti-Cheat funktioniert.">
+<meta name="theme-color" content="#07080a">
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="../">
+      <img src="../assets/logo.png" alt="" width="34" height="34">
+      <span>BuckSMP</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="../">Startseite</a></li>
+      <li><a href="../features/">Features</a></li>
+      <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
+      <li><a href="../team/">Team</a></li>
+      <li><a href="./" class="active">Wiki</a></li>
+      <li><a href="../regeln/">Regeln</a></li>
+      <li><a href="../help/">Hilfe</a></li>
+    </ul>
+    <div class="nav-right">
+      <a class="btn-wa" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener" aria-label="WhatsApp Channel">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp</span>
+      </a>
+      <a class="btn-join" href="../join/">
+        <i class="fa-solid fa-play"></i>
+        Join
+      </a>
+      <button class="ham" type="button" onclick="toggleNav(this)" aria-label="Menü öffnen"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="mob-menu" id="mobMenu">
+  <a href="../" onclick="closeNav()">Startseite <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../features/" onclick="closeNav()">Features <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../top/10/aura-moments/" onclick="closeNav()">Aura Moments <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../team/" onclick="closeNav()">Team <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="./" class="active" onclick="closeNav()">Wiki <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../help/" onclick="closeNav()">Hilfe <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../join/" onclick="closeNav()">Beitreten <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+</div>
+
+<header class="page-head">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <div>
+      <nav class="crumbs" aria-label="Brotkrumen">
+        <a href="../">Startseite</a>
+        <span>/</span>
+        <span>Wiki</span>
+      </nav>
+      <h1 class="page-title">BuckSMP <span class="g">Wiki</span></h1>
+      <p class="page-sub">Anleitungen und Hintergründe rund um den Server – vom ersten Login bis zum Anti-Cheat.</p>
+      <div class="suche">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" placeholder="Artikel suchen, z. B. „Befehle“ oder „Reach“" aria-label="Wiki durchsuchen" data-such-bereich="wikiListe">
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="sec such-bereich" id="wikiListe">
+  <div class="wrap">
+    <div class="gruppe such-gruppe">
+      <div class="gruppe-kopf">
+        <h2 class="gruppe-titel">Spielen</h2>
+        <span class="gruppe-anzahl">5</span>
+      </div>
+      <div class="wiki-karten">
+        <a class="wiki-karte emerald such-eintrag" href="erste-schritte/" data-stichworte="anfang neu start lobby kompass">
+          <div class="slot"><i class="fa-solid fa-flag-checkered"></i></div>
+          <p class="wiki-karte-titel">Erste Schritte</p>
+          <p class="wiki-karte-text">Vom ersten Login bis zum eigenen Zuhause – alles für deinen Start.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>2 Min. Lesezeit</p>
+        </a>
+        <a class="wiki-karte diamond such-eintrag" href="befehle/" data-stichworte="commands befehle spawn shop tpa home msg report">
+          <div class="slot"><i class="fa-solid fa-terminal"></i></div>
+          <p class="wiki-karte-titel">Alle Befehle</p>
+          <p class="wiki-karte-text">Jeder Befehl für Spieler – sortiert nach Thema.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>2 Min. Lesezeit</p>
+        </a>
+        <a class="wiki-karte redstone such-eintrag" href="duels/" data-stichworte="duel duell pvp arena loot draw">
+          <div class="slot"><i class="fa-solid fa-hand-fist"></i></div>
+          <p class="wiki-karte-titel">Duelle</p>
+          <p class="wiki-karte-text">Herausfordern, kämpfen, Loot kassieren – so laufen Duelle ab.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>3 Min. Lesezeit</p>
+        </a>
+        <a class="wiki-karte lapis such-eintrag" href="bedrock/" data-stichworte="bedrock handy konsole xbox playstation switch port 19132">
+          <div class="slot"><i class="fa-solid fa-mobile-screen-button"></i></div>
+          <p class="wiki-karte-titel">Bedrock &amp; Konsole</p>
+          <p class="wiki-karte-text">Mit Handy, Tablet oder Konsole auf BuckSMP spielen.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>2 Min. Lesezeit</p>
+        </a>
+        <a class="wiki-karte gold such-eintrag" href="shop/" data-stichworte="geld shop sell worth pay balance wirtschaft">
+          <div class="slot"><i class="fa-solid fa-coins"></i></div>
+          <p class="wiki-karte-titel">Shop &amp; Geld</p>
+          <p class="wiki-karte-text">Geld verdienen, kaufen, verkaufen und überweisen.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>1 Min. Lesezeit</p>
+        </a>
+      </div>
+    </div>
+    <div class="gruppe such-gruppe">
+      <div class="gruppe-kopf">
+        <h2 class="gruppe-titel">Anti-Cheat</h2>
+        <span class="gruppe-anzahl">5</span>
+      </div>
+      <div class="wiki-karten">
+        <a class="wiki-karte emerald such-eintrag" href="anticheat/" data-stichworte="anticheat cheat hacks vorhersage">
+          <div class="slot"><i class="fa-solid fa-shield-halved"></i></div>
+          <p class="wiki-karte-titel">So funktioniert unser Anti-Cheat</p>
+          <p class="wiki-karte-text">Warum unser Anti-Cheat rechnet statt rät – und Lag kein Problem ist.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>2 Min. Lesezeit</p>
+        </a>
+        <a class="wiki-karte lapis such-eintrag" href="anticheat-bewegung/" data-stichworte="fly speed nofall jesus timer knockback">
+          <div class="slot"><i class="fa-solid fa-person-running"></i></div>
+          <p class="wiki-karte-titel">Bewegung: Fly, Speed &amp; Co.</p>
+          <p class="wiki-karte-text">Wie Bewegungs-Cheats auffallen – von Fly bis Anti-Knockback.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>2 Min. Lesezeit</p>
+        </a>
+        <a class="wiki-karte redstone such-eintrag" href="anticheat-kampf/" data-stichworte="reach killaura aimbot hitbox autoclicker pvp">
+          <div class="slot"><i class="fa-solid fa-crosshairs"></i></div>
+          <p class="wiki-karte-titel">Kampf: Reach, KillAura &amp; Co.</p>
+          <p class="wiki-karte-text">Wie jeder Schlag geprüft wird – fair auch bei hohem Ping.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>1 Min. Lesezeit</p>
+        </a>
+        <a class="wiki-karte gold such-eintrag" href="anticheat-bauen/" data-stichworte="scaffold tower nuker fastbreak xray">
+          <div class="slot"><i class="fa-solid fa-cube"></i></div>
+          <p class="wiki-karte-titel">Bauen &amp; Abbauen</p>
+          <p class="wiki-karte-text">Scaffold, Nuker und unmögliche Blöcke – was beim Bauen auffällt.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>1 Min. Lesezeit</p>
+        </a>
+        <a class="wiki-karte amethyst such-eintrag" href="anticheat-fehlalarme/" data-stichworte="lag rubberbanding fehlalarm bann strafe kick">
+          <div class="slot"><i class="fa-solid fa-scale-balanced"></i></div>
+          <p class="wiki-karte-titel">Lag, Fehlalarme &amp; Strafen</p>
+          <p class="wiki-karte-text">Was bei einem Verdacht passiert – und was du bei einem Fehler tust.</p>
+          <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>2 Min. Lesezeit</p>
+        </a>
+      </div>
+    </div>
+    <div class="such-leer" hidden>
+      <strong>Kein Artikel gefunden.</strong>
+      Versuch es mit einem anderen Wort – oder schau ins <a href="../help/">Hilfe-Center</a>.
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <p class="cta-tag">Etwas fehlt?</p>
+    <h2 class="cta-h">Frag das <span class="g">Team</span></h2>
+    <p class="cta-sub">Wenn du etwas nicht findest, hilft dir das Team gern weiter.</p>
+    <div class="cta-btns">
+      <a class="btn-p" href="../help/">
+        <i class="fa-solid fa-life-ring"></i>
+        Hilfe-Center
+      </a>
+      <a class="btn-o" href="../team/">
+        <i class="fa-solid fa-users"></i>
+        Zum Team
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer-top">
+    <div class="footer-brand">
+      <a class="nav-logo" href="../">
+        <img src="../assets/logo.png" alt="" width="34" height="34">
+        <span>BuckSMP</span>
+      </a>
+      <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
+      <button class="footer-ip" type="button" onclick="copyIP()">
+        BuckSMP.de
+        <i class="fa-regular fa-copy"></i>
+      </button>
+    </div>
+    <div class="footer-col">
+      <h4>Server</h4>
+      <a href="../features/">Features</a>
+      <a href="../join/">Beitreten</a>
+      <a href="../regeln/">Regeln</a>
+      <a href="../team/">Team</a>
+    </div>
+    <div class="footer-col">
+      <h4>Wissen</h4>
+      <a href="./">Wiki</a>
+      <a href="../wiki/befehle/">Alle Befehle</a>
+      <a href="../wiki/duels/">Duelle</a>
+      <a href="../wiki/anticheat/">Anti-Cheat</a>
+    </div>
+    <div class="footer-col">
+      <h4>Hilfe</h4>
+      <a href="../help/">Hilfe-Center</a>
+      <a href="../help/#verbindung">Verbindungsprobleme</a>
+      <a href="../help/#melden">Spieler melden</a>
+      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
+    <div class="footer-recht">
+      <a href="../impressum/">Impressum</a>
+      <a href="../datenschutz/">Datenschutz</a>
+      <a href="../agb/">AGB</a>
+      <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+    </div>
+  </div>
+</footer>
+
+<div id="toast">✓ BuckSMP.de kopiert!</div>
+
+<script src="../assets/script.js" defer></script>
+</body>
+</html>

@@ -6,23 +6,27 @@
 <title>Team – BuckSMP</title>
 <meta name="description" content="Das Team hinter BuckSMP.">
 <meta name="theme-color" content="#07080a">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Pixelify+Sans:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-inner">
-    <a class="nav-logo" href="../">BuckSMP</a>
+    <a class="nav-logo" href="../">
+      <img src="../assets/logo.png" alt="" width="34" height="34">
+      <span>BuckSMP</span>
+    </a>
     <ul class="nav-links">
       <li><a href="../">Startseite</a></li>
       <li><a href="../features/">Features</a></li>
       <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
-      <li><a href="../regeln/">Regeln</a></li>
       <li><a href="./" class="active">Team</a></li>
+      <li><a href="../wiki/">Wiki</a></li>
+      <li><a href="../regeln/">Regeln</a></li>
+      <li><a href="../help/">Hilfe</a></li>
     </ul>
     <div class="nav-right">
       <a class="btn-wa" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener" aria-label="WhatsApp Channel">
@@ -42,8 +46,10 @@
   <a href="../" onclick="closeNav()">Startseite <i class="fa-solid fa-chevron-right"></i></a>
   <a href="../features/" onclick="closeNav()">Features <i class="fa-solid fa-chevron-right"></i></a>
   <a href="../top/10/aura-moments/" onclick="closeNav()">Aura Moments <i class="fa-solid fa-chevron-right"></i></a>
-  <a href="../regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
   <a href="./" class="active" onclick="closeNav()">Team <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../wiki/" onclick="closeNav()">Wiki <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../help/" onclick="closeNav()">Hilfe <i class="fa-solid fa-chevron-right"></i></a>
   <a href="../join/" onclick="closeNav()">Beitreten <i class="fa-solid fa-chevron-right"></i></a>
   <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
 </div>
@@ -65,14 +71,17 @@
 
 <section class="sec">
   <div class="wrap">
-    <div id="teamGrid" data-media="media/"></div>
+    <div id="teamGrid" data-media="media/" data-profile=""></div>
   </div>
 </section>
 
 <footer class="footer">
   <div class="wrap footer-top">
     <div class="footer-brand">
-      <a class="nav-logo" href="../">BuckSMP</a>
+      <a class="nav-logo" href="../">
+        <img src="../assets/logo.png" alt="" width="34" height="34">
+        <span>BuckSMP</span>
+      </a>
       <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
       <button class="footer-ip" type="button" onclick="copyIP()">
         BuckSMP.de
@@ -84,24 +93,31 @@
       <a href="../features/">Features</a>
       <a href="../join/">Beitreten</a>
       <a href="../regeln/">Regeln</a>
-      <a href="../features/#befehle">Befehle</a>
+      <a href="./">Team</a>
     </div>
     <div class="footer-col">
-      <h4>Community</h4>
-      <a href="../top/10/aura-moments/">Aura Moments</a>
-      <a href="./">Team</a>
-      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+      <h4>Wissen</h4>
+      <a href="../wiki/">Wiki</a>
+      <a href="../wiki/befehle/">Alle Befehle</a>
+      <a href="../wiki/duels/">Duelle</a>
+      <a href="../wiki/anticheat/">Anti-Cheat</a>
     </div>
     <div class="footer-col">
       <h4>Hilfe</h4>
-      <a href="../#faq">Häufige Fragen</a>
-      <a href="../join/#probleme">Verbindungsprobleme</a>
-      <a href="../regeln/#melden">Spieler melden</a>
+      <a href="../help/">Hilfe-Center</a>
+      <a href="../help/#verbindung">Verbindungsprobleme</a>
+      <a href="../help/#melden">Spieler melden</a>
+      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
     </div>
   </div>
   <div class="wrap footer-bottom">
     <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
-    <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+    <div class="footer-recht">
+      <a href="../impressum/">Impressum</a>
+      <a href="../datenschutz/">Datenschutz</a>
+      <a href="../agb/">AGB</a>
+      <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+    </div>
   </div>
 </footer>
 

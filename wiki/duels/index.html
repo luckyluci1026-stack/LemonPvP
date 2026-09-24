@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Duelle – Wiki – BuckSMP</title>
+<meta name="description" content="Herausfordern, kämpfen, Loot kassieren – so laufen Duelle ab.">
+<meta name="theme-color" content="#07080a">
+<link rel="icon" type="image/png" href="../../assets/favicon.png">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/vendor/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="../../">
+      <img src="../../assets/logo.png" alt="" width="34" height="34">
+      <span>BuckSMP</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="../../">Startseite</a></li>
+      <li><a href="../../features/">Features</a></li>
+      <li><a href="../../top/10/aura-moments/">Aura Moments</a></li>
+      <li><a href="../../team/">Team</a></li>
+      <li><a href="../../wiki/" class="active">Wiki</a></li>
+      <li><a href="../../regeln/">Regeln</a></li>
+      <li><a href="../../help/">Hilfe</a></li>
+    </ul>
+    <div class="nav-right">
+      <a class="btn-wa" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener" aria-label="WhatsApp Channel">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp</span>
+      </a>
+      <a class="btn-join" href="../../join/">
+        <i class="fa-solid fa-play"></i>
+        Join
+      </a>
+      <button class="ham" type="button" onclick="toggleNav(this)" aria-label="Menü öffnen"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="mob-menu" id="mobMenu">
+  <a href="../../" onclick="closeNav()">Startseite <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../../features/" onclick="closeNav()">Features <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../../top/10/aura-moments/" onclick="closeNav()">Aura Moments <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../../team/" onclick="closeNav()">Team <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../../wiki/" class="active" onclick="closeNav()">Wiki <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../../regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../../help/" onclick="closeNav()">Hilfe <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../../join/" onclick="closeNav()">Beitreten <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+</div>
+
+<header class="page-head">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <div>
+      <nav class="crumbs" aria-label="Brotkrumen">
+        <a href="../../">Startseite</a>
+        <span>/</span>
+        <a href="../../wiki/">Wiki</a>
+        <span>/</span>
+        <span>Duelle</span>
+      </nav>
+      <h1 class="page-title">Duelle</h1>
+      <p class="page-sub">Herausfordern, kämpfen, Loot kassieren – so laufen Duelle ab.</p>
+      <div class="wiki-meta">
+        <span class="wiki-kat redstone">Spielen</span>
+        <span><i class="fa-regular fa-clock"></i>3 Min. Lesezeit</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="sec">
+  <div class="wrap wiki-layout">
+    <article class="wiki-artikel text-inhalt">
+      <p class="lead">Auf BuckSMP kannst du jeden Spieler im Netzwerk zum 1v1 herausfordern. Gekämpft wird auf einem eigenen Duels-Server – mit eurem echten SMP-Inventar.</p>
+
+      <h2 id="herausfordern">Herausfordern</h2>
+      <p><code class="cmd">/duel &lt;Spieler&gt;</code> funktioniert auf jedem Server, auch wenn dein Gegner gerade woanders ist. In der Lobby geht es noch schneller: Rechtsklick mit dem Duell-Schwert öffnet eine Spielerauswahl.</p>
+
+      <h2 id="annehmen">Annehmen oder ablehnen</h2>
+      <p>Dein Gegner bekommt diese Nachricht im Chat:</p>
+      <div class="mc-chat">
+        <p><span class="mc-duell">Duell</span> <span class="mc-dgray">»</span> <span class="mc-gold">Catze99</span> <span class="mc-gray">fordert dich zu einem Duell heraus!</span></p>
+        <p class="mc-gray">Es steht dein komplettes Inventar auf dem Spiel.</p>
+        <p><span class="mc-green mc-click">[Annehmen]</span> <span class="mc-dgray">|</span> <span class="mc-red mc-click">[Ablehnen]</span></p>
+      </div>
+      <p>Ein Klick genügt – oder man schreibt <code class="cmd">/duel &lt;Name&gt; accept</code>. Nach 60 Sekunden läuft die Anfrage automatisch ab.</p>
+
+      <h2 id="einsatz">Was auf dem Spiel steht</h2>
+      <p>Beide nehmen ihr komplettes Inventar mit: Hotbar, Rucksack, Rüstung und Zweithand. Deine <strong>Enderkiste bleibt sicher</strong> – sie ist während des Duells gesperrt.</p>
+
+      <h2 id="kampf">Der Kampf</h2>
+      <p>Nach einem kurzen Countdown schlägt ein Blitz ein und auf dem Bildschirm steht <strong>KAMPF!</strong>. Ab jetzt schrumpft die Grenze der Arena – eine Boss-Leiste zeigt dir, wie weit:</p>
+      <div class="phasen">
+        <div class="phase blau">
+          <span class="phase-farbe"></span>
+          <div><strong>Grenze schrumpft</strong><span>Solange getroffen wird, geht es langsam.</span></div>
+        </div>
+        <div class="phase gelb">
+          <span class="phase-farbe"></span>
+          <div><strong>Kein Treffer</strong><span>15 Sekunden ohne Treffer – die Grenze wird schneller.</span></div>
+        </div>
+        <div class="phase rot">
+          <span class="phase-farbe"></span>
+          <div><strong>Plötzlicher Tod</strong><span>Die Grenze ist am Minimum. Jetzt zählt jeder Schlag.</span></div>
+        </div>
+      </div>
+      <p>Bauen und Abbauen ist erlaubt – nach dem Kampf wird die Arena komplett zurückgesetzt. Rundherum ist sie abgesichert, auch Enderperlen bringen dich nicht raus.</p>
+
+      <h2 id="sieg">Sieg und Loot</h2>
+      <p>Wer verliert, stirbt nicht wirklich: Statt eines echten Todes gibt es eine Todeskamera, und das gesamte Inventar landet in <strong>Shulker-Kisten</strong> auf dem Boden. 60 Sekunden lang kann nur der Gewinner sie aufheben – so lange bleibt er in der Arena. Ein Totem der Unsterblichkeit rettet dich wie gewohnt.</p>
+
+      <h2 id="unentschieden">Unentschieden &amp; Aufgabe</h2>
+      <ul class="eintraege">
+        <li><strong>/draw</strong><span>Schreiben beide <code class="cmd">/draw</code>, endet das Duell ohne Sieger. Jeder bekommt sein Inventar unverändert zurück.</span></li>
+        <li><strong>Kein Treffer</strong><span>Fällt 10 Minuten lang kein Treffer, gibt es eine Warnung. Nach 5 weiteren Minuten wird die Runde aufgegeben – und beide verlieren ein Fünftel ihres Inventars.</span></li>
+        <li><strong>Ausloggen</strong><span>Wer während des eigenen Duells die Verbindung trennt, verliert automatisch – inklusive Loot.</span></li>
+      </ul>
+
+      <h2 id="zuschauen">Zuschauen &amp; Statistik</h2>
+      <p>Mit <code class="cmd">/duel watch &lt;Spieler&gt;</code> schaust du einem laufenden Duell zu – von jedem Server aus. Deine Bilanz zeigt dir <code class="cmd">/duel stats</code>, die erfolgreichsten Duellanten <code class="cmd">/duel top</code>.</p>
+      <div class="hinweis">
+        <i class="fa-solid fa-terminal"></i>
+        <p>Alle Duell-Befehle auf einen Blick findest du unter <a href="../befehle/#duelle">Alle Befehle</a>.</p>
+      </div>
+
+      <nav class="wiki-weiter" aria-label="Weitere Artikel">
+        <a class="vorheriger" href="../befehle/"><span><i class="fa-solid fa-arrow-left"></i> Vorheriger Artikel</span><strong>Alle Befehle</strong></a>
+        <a class="naechster" href="../bedrock/"><span>Nächster Artikel <i class="fa-solid fa-arrow-right"></i></span><strong>Bedrock &amp; Konsole</strong></a>
+      </nav>
+    </article>
+    <nav class="wiki-nav" aria-label="Alle Artikel">
+      <div class="wiki-nav-gruppe">
+        <p class="wiki-nav-titel">Spielen</p>
+        <a href="../erste-schritte/">Erste Schritte</a>
+        <a href="../befehle/">Alle Befehle</a>
+        <a href="../duels/" class="aktiv">Duelle</a>
+        <a href="../bedrock/">Bedrock &amp; Konsole</a>
+        <a href="../shop/">Shop &amp; Geld</a>
+      </div>
+      <div class="wiki-nav-gruppe">
+        <p class="wiki-nav-titel">Anti-Cheat</p>
+        <a href="../anticheat/">So funktioniert’s</a>
+        <a href="../anticheat-bewegung/">Bewegung</a>
+        <a href="../anticheat-kampf/">Kampf</a>
+        <a href="../anticheat-bauen/">Bauen &amp; Abbauen</a>
+        <a href="../anticheat-fehlalarme/">Lag &amp; Strafen</a>
+      </div>
+    </nav>
+    <aside class="wiki-toc">
+      <p class="wiki-toc-titel">Auf dieser Seite</p>
+      <nav aria-label="Inhaltsverzeichnis"></nav>
+    </aside>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer-top">
+    <div class="footer-brand">
+      <a class="nav-logo" href="../../">
+        <img src="../../assets/logo.png" alt="" width="34" height="34">
+        <span>BuckSMP</span>
+      </a>
+      <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
+      <button class="footer-ip" type="button" onclick="copyIP()">
+        BuckSMP.de
+        <i class="fa-regular fa-copy"></i>
+      </button>
+    </div>
+    <div class="footer-col">
+      <h4>Server</h4>
+      <a href="../../features/">Features</a>
+      <a href="../../join/">Beitreten</a>
+      <a href="../../regeln/">Regeln</a>
+      <a href="../../team/">Team</a>
+    </div>
+    <div class="footer-col">
+      <h4>Wissen</h4>
+      <a href="../../wiki/">Wiki</a>
+      <a href="../../wiki/befehle/">Alle Befehle</a>
+      <a href="./">Duelle</a>
+      <a href="../../wiki/anticheat/">Anti-Cheat</a>
+    </div>
+    <div class="footer-col">
+      <h4>Hilfe</h4>
+      <a href="../../help/">Hilfe-Center</a>
+      <a href="../../help/#verbindung">Verbindungsprobleme</a>
+      <a href="../../help/#melden">Spieler melden</a>
+      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
+    <div class="footer-recht">
+      <a href="../../impressum/">Impressum</a>
+      <a href="../../datenschutz/">Datenschutz</a>
+      <a href="../../agb/">AGB</a>
+      <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+    </div>
+  </div>
+</footer>
+
+<div id="toast">✓ BuckSMP.de kopiert!</div>
+
+<script src="../../assets/script.js" defer></script>
+</body>
+</html>

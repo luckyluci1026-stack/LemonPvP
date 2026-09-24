@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hilfe – BuckSMP</title>
+<meta name="description" content="Hilfe-Center von BuckSMP – Antworten auf häufige Fragen, Lösungen für Verbindungsprobleme und wie du Spieler meldest.">
+<meta name="theme-color" content="#07080a">
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="../">
+      <img src="../assets/logo.png" alt="" width="34" height="34">
+      <span>BuckSMP</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="../">Startseite</a></li>
+      <li><a href="../features/">Features</a></li>
+      <li><a href="../top/10/aura-moments/">Aura Moments</a></li>
+      <li><a href="../team/">Team</a></li>
+      <li><a href="../wiki/">Wiki</a></li>
+      <li><a href="../regeln/">Regeln</a></li>
+      <li><a href="./" class="active">Hilfe</a></li>
+    </ul>
+    <div class="nav-right">
+      <a class="btn-wa" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener" aria-label="WhatsApp Channel">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>WhatsApp</span>
+      </a>
+      <a class="btn-join" href="../join/">
+        <i class="fa-solid fa-play"></i>
+        Join
+      </a>
+      <button class="ham" type="button" onclick="toggleNav(this)" aria-label="Menü öffnen"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="mob-menu" id="mobMenu">
+  <a href="../" onclick="closeNav()">Startseite <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../features/" onclick="closeNav()">Features <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../top/10/aura-moments/" onclick="closeNav()">Aura Moments <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../team/" onclick="closeNav()">Team <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../wiki/" onclick="closeNav()">Wiki <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../regeln/" onclick="closeNav()">Regeln <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="./" class="active" onclick="closeNav()">Hilfe <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="../join/" onclick="closeNav()">Beitreten <i class="fa-solid fa-chevron-right"></i></a>
+  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+</div>
+
+<header class="page-head">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <div>
+      <nav class="crumbs" aria-label="Brotkrumen">
+        <a href="../">Startseite</a>
+        <span>/</span>
+        <span>Hilfe</span>
+      </nav>
+      <h1 class="page-title">Wie können wir <span class="g">helfen?</span></h1>
+      <p class="page-sub">Antworten, Lösungen und Anleitungen rund um BuckSMP – durchsuche einfach alles auf dieser Seite.</p>
+      <div class="suche">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" placeholder="Suchen, z. B. „Port“, „Duell“ oder „Bann“" aria-label="Hilfe durchsuchen" data-such-bereich="hilfeInhalt">
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="such-bereich" id="hilfeInhalt">
+  <section class="sec such-gruppe" id="themen">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="sec-tag">Themen</p>
+        <h2 class="sec-title">Beliebte <span class="g">Themen</span></h2>
+      </div>
+      <div class="themen">
+      <a class="thema emerald such-eintrag" href="../join/" data-stichworte="join ip adresse port verbinden">
+        <div class="slot"><i class="fa-solid fa-play"></i></div>
+        <div>
+          <p class="thema-name">Server beitreten <i class="fa-solid fa-arrow-right"></i></p>
+          <p class="thema-desc">IP, Port und Anleitung für Java, Bedrock und Konsole.</p>
+        </div>
+      </a>
+      <a class="thema redstone such-eintrag" href="#verbindung" data-stichworte="fehler verbindung lag">
+        <div class="slot"><i class="fa-solid fa-plug-circle-xmark"></i></div>
+        <div>
+          <p class="thema-name">Verbindungsprobleme <i class="fa-solid fa-arrow-right"></i></p>
+          <p class="thema-desc">Wenn es beim Verbinden hakt.</p>
+        </div>
+      </a>
+      <a class="thema diamond such-eintrag" href="../wiki/befehle/" data-stichworte="commands befehle">
+        <div class="slot"><i class="fa-solid fa-terminal"></i></div>
+        <div>
+          <p class="thema-name">Alle Befehle <i class="fa-solid fa-arrow-right"></i></p>
+          <p class="thema-desc">Jeder Befehl mit kurzer Erklärung.</p>
+        </div>
+      </a>
+      <a class="thema gold such-eintrag" href="../wiki/duels/" data-stichworte="duel duell pvp">
+        <div class="slot"><i class="fa-solid fa-hand-fist"></i></div>
+        <div>
+          <p class="thema-name">Duelle <i class="fa-solid fa-arrow-right"></i></p>
+          <p class="thema-desc">Herausfordern, kämpfen, Loot kassieren.</p>
+        </div>
+      </a>
+      <a class="thema lapis such-eintrag" href="../wiki/anticheat/" data-stichworte="anticheat hacks cheat">
+        <div class="slot"><i class="fa-solid fa-shield-halved"></i></div>
+        <div>
+          <p class="thema-name">Anti-Cheat <i class="fa-solid fa-arrow-right"></i></p>
+          <p class="thema-desc">Wie Cheater erkannt werden – und warum Lag kein Problem ist.</p>
+        </div>
+      </a>
+      <a class="thema amethyst such-eintrag" href="#melden" data-stichworte="report melden">
+        <div class="slot"><i class="fa-solid fa-flag"></i></div>
+        <div>
+          <p class="thema-name">Spieler melden <i class="fa-solid fa-arrow-right"></i></p>
+          <p class="thema-desc">So meldest du Regelverstöße an das Team.</p>
+        </div>
+      </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec band such-gruppe" id="faq">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="sec-tag">FAQ</p>
+        <h2 class="sec-title">Häufige <span class="g">Fragen</span></h2>
+      </div>
+      <div class="faq">
+      <details class="such-eintrag" open>
+        <summary>Wer darf auf BuckSMP spielen?</summary>
+        <p class="faq-antwort">BuckSMP ist ein privater Server für Schülerinnen und Schüler vom Gymnasium Buckhorn.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Kostet BuckSMP etwas?</summary>
+        <p class="faq-antwort">Nein. Wir verkaufen nichts – weder Ränge noch Items oder andere Vorteile. Du brauchst nur dein eigenes Minecraft.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Welche Adresse und welcher Port?</summary>
+        <p class="faq-antwort">Java: <code class="cmd">BuckSMP.de</code>. Bedrock: <code class="cmd">BuckSMP.de</code> mit Port <code class="cmd">19132</code>.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Kann ich mit Handy oder Konsole spielen?</summary>
+        <p class="faq-antwort">Ja. Java und Bedrock spielen zusammen. Für Konsolen gibt es einen kleinen Umweg – die <a href="../join/#konsole">Anleitung</a> zeigt dir, wie.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Welche Minecraft-Version brauche ich?</summary>
+        <p class="faq-antwort">Am besten immer die aktuelle. Auf Java funktionieren aber auch viele ältere Versionen.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Warum hat mein Name einen Punkt davor?</summary>
+        <p class="faq-antwort">Du spielst mit Bedrock. Bedrock-Namen bekommen auf BuckSMP einen Punkt davor, damit sie sich nicht mit Java-Namen überschneiden.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Was passiert, wenn der Server abstürzt?</summary>
+        <p class="faq-antwort">Du fliegst nicht raus. Du landest kurz in einem Warteraum und wirst automatisch zurückgeholt, sobald der Server wieder läuft.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Wie melde ich einen Spieler?</summary>
+        <p class="faq-antwort">Schreib im Spiel <code class="cmd">/report &lt;Spieler&gt; &lt;Grund&gt;</code>. Der Spieler muss gerade online sein. Das Team bekommt deine Meldung sofort.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Ich wurde gebannt – was nun?</summary>
+        <p class="faq-antwort">Den Grund siehst du beim Verbinden direkt auf dem Bildschirm. Wenn du denkst, dass es ein Fehler war, sprich jemanden aus dem Team an.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Kann ich im Duell mein Inventar verlieren?</summary>
+        <p class="faq-antwort">Ja – wer verliert, lässt sein komplettes Inventar fallen. Deine Enderkiste bleibt aber sicher. Mehr dazu im <a href="../wiki/duels/">Wiki</a>.</p>
+      </details>
+      <details class="such-eintrag">
+        <summary>Wie verdiene ich Geld?</summary>
+        <p class="faq-antwort">Vor allem durch Verkaufen mit <code class="cmd">/sell</code> und die tägliche Belohnung mit <code class="cmd">/daily</code>. Alles zur Wirtschaft steht im Artikel <a href="../wiki/shop/">Shop &amp; Geld</a>.</p>
+      </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec such-gruppe" id="verbindung">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="sec-tag">Verbindung</p>
+        <h2 class="sec-title">Probleme beim <span class="g">Verbinden?</span></h2>
+        <p class="sec-sub">Die häufigsten Stolpersteine – und wie du sie löst.</p>
+      </div>
+      <div class="hilfe-grid">
+      <div class="hilfe-karte gold such-eintrag" data-stichworte="outdated client version update">
+        <div class="slot"><i class="fa-solid fa-code-branch"></i></div>
+        <div>
+          <h3 class="hilfe-name">„Veraltete Version“</h3>
+          <p class="hilfe-desc">Aktualisiere Minecraft auf die neueste Version und versuch es noch einmal.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte redstone such-eintrag" data-stichworte="timeout connection refused">
+        <div class="slot"><i class="fa-solid fa-plug-circle-xmark"></i></div>
+        <div>
+          <h3 class="hilfe-name">„Verbindung fehlgeschlagen“</h3>
+          <p class="hilfe-desc">Prüf die Adresse: <strong>BuckSMP.de</strong> ohne Leerzeichen. Auf Bedrock muss der Port <strong>19132</strong> sein.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte lapis such-eintrag" data-stichworte="wlan wifi schule netz">
+        <div class="slot"><i class="fa-solid fa-school"></i></div>
+        <div>
+          <h3 class="hilfe-name">Im Schul-WLAN klappt nichts</h3>
+          <p class="hilfe-desc">In Schul-Netzen sind Spiele oft gesperrt. Probier es zu Hause oder mit einem anderen Netz.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte emerald such-eintrag" data-stichworte="limbo warteraum neustart">
+        <div class="slot"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div>
+          <h3 class="hilfe-name">Du landest im Warteraum</h3>
+          <p class="hilfe-desc">Der Server startet gerade neu. Bleib einfach online – du wirst automatisch zurückgeholt.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte amethyst such-eintrag" data-stichworte="bedrock handy tablet">
+        <div class="slot"><i class="fa-solid fa-mobile-screen-button"></i></div>
+        <div>
+          <h3 class="hilfe-name">Bedrock: Server nicht in der Liste</h3>
+          <p class="hilfe-desc">Tippe unter „Server“ ganz unten auf „Server hinzufügen“ und trag Adresse und Port selbst ein.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte diamond such-eintrag" data-stichworte="xbox playstation switch konsole">
+        <div class="slot"><i class="fa-solid fa-gamepad"></i></div>
+        <div>
+          <h3 class="hilfe-name">Konsole: kein „Server hinzufügen“</h3>
+          <p class="hilfe-desc">Auf Xbox, PlayStation und Switch geht das nur über einen Umweg – die <a href="../join/#konsole">Anleitung</a> zeigt dir, wie.</p>
+        </div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec band such-gruppe" id="melden">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="sec-tag">Melden &amp; Kontakt</p>
+        <h2 class="sec-title">Hilfe vom <span class="g">Team</span></h2>
+      </div>
+      <div class="hilfe-grid">
+      <div class="hilfe-karte redstone such-eintrag" data-stichworte="report melden spieler">
+        <div class="slot"><i class="fa-solid fa-flag"></i></div>
+        <div>
+          <h3 class="hilfe-name">Regelverstoß gesehen?</h3>
+          <p class="hilfe-desc">Schreib im Spiel <code class="cmd">/report &lt;Spieler&gt; &lt;Grund&gt;</code>. Der Spieler muss online sein – das Team bekommt die Meldung sofort.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte gold such-eintrag" data-stichworte="bug fehler">
+        <div class="slot"><i class="fa-solid fa-bug"></i></div>
+        <div>
+          <h3 class="hilfe-name">Bug gefunden?</h3>
+          <p class="hilfe-desc">Sag jemandem aus dem Team Bescheid – am besten mit einer kurzen Beschreibung, wo und wie der Fehler passiert.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte emerald such-eintrag" data-stichworte="news whatsapp channel">
+        <div class="slot"><i class="fa-solid fa-bullhorn"></i></div>
+        <div>
+          <h3 class="hilfe-name">Neuigkeiten</h3>
+          <p class="hilfe-desc">Updates, Events und Ankündigungen findest du im <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel</a>.</p>
+        </div>
+      </div>
+      <div class="hilfe-karte lapis such-eintrag" data-stichworte="team kontakt">
+        <div class="slot"><i class="fa-solid fa-users"></i></div>
+        <div>
+          <h3 class="hilfe-name">Das Team erreichen</h3>
+          <p class="hilfe-desc">Sprich jemanden aus dem <a href="../team/">Team</a> an – im Spiel oder in der Schule.</p>
+        </div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="such-leer" hidden>
+      <strong>Nichts gefunden.</strong>
+      Versuch es mit einem anderen Wort – oder schau ins <a href="../wiki/">Wiki</a>.
+    </div>
+  </div>
+</div>
+
+<section class="cta">
+  <div class="pixel-grid"></div>
+  <div class="wrap">
+    <p class="cta-tag">Nichts gefunden?</p>
+    <h2 class="cta-h">Frag das <span class="g">Team</span></h2>
+    <p class="cta-sub">Sprich jemanden aus dem Team an – im Spiel oder in der Schule.</p>
+    <div class="cta-btns">
+      <a class="btn-p" href="../team/">
+        <i class="fa-solid fa-users"></i>
+        Zum Team
+      </a>
+      <a class="btn-o" href="../wiki/">
+        <i class="fa-solid fa-book"></i>
+        Wiki durchsuchen
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap footer-top">
+    <div class="footer-brand">
+      <a class="nav-logo" href="../">
+        <img src="../assets/logo.png" alt="" width="34" height="34">
+        <span>BuckSMP</span>
+      </a>
+      <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
+      <button class="footer-ip" type="button" onclick="copyIP()">
+        BuckSMP.de
+        <i class="fa-regular fa-copy"></i>
+      </button>
+    </div>
+    <div class="footer-col">
+      <h4>Server</h4>
+      <a href="../features/">Features</a>
+      <a href="../join/">Beitreten</a>
+      <a href="../regeln/">Regeln</a>
+      <a href="../team/">Team</a>
+    </div>
+    <div class="footer-col">
+      <h4>Wissen</h4>
+      <a href="../wiki/">Wiki</a>
+      <a href="../wiki/befehle/">Alle Befehle</a>
+      <a href="../wiki/duels/">Duelle</a>
+      <a href="../wiki/anticheat/">Anti-Cheat</a>
+    </div>
+    <div class="footer-col">
+      <h4>Hilfe</h4>
+      <a href="./">Hilfe-Center</a>
+      <a href="#verbindung">Verbindungsprobleme</a>
+      <a href="#melden">Spieler melden</a>
+      <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp Channel <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
+    <div class="footer-recht">
+      <a href="../impressum/">Impressum</a>
+      <a href="../datenschutz/">Datenschutz</a>
+      <a href="../agb/">AGB</a>
+      <a href="#">Nach oben <i class="fa-solid fa-arrow-up"></i></a>
+    </div>
+  </div>
+</footer>
+
+<div id="toast">✓ BuckSMP.de kopiert!</div>
+
+<script src="../assets/script.js" defer></script>
+</body>
+</html>

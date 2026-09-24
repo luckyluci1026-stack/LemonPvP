@@ -18,19 +18,6 @@ const ROLLEN_FARBE = {
   Supporter: 'amethyst',
 };
 
-const MOMENTS = [
-  { title: '', player: '', description: '' },
-  { title: '', player: '', description: '' },
-  { title: '', player: '', description: '' },
-  { title: '', player: '', description: '' },
-  { title: '', player: '', description: '' },
-  { title: '', player: '', description: '' },
-  { title: '', player: '', description: '' },
-  { title: '', player: '', description: '' },
-  { title: '', player: '', description: '' },
-  { title: '', player: '', description: '' },
-];
-
 function toggleNav(btn) {
   const menu = document.getElementById('mobMenu');
   if (!menu) {
@@ -110,13 +97,109 @@ function copyIP() {
   });
 }
 
+function pfadVon(adresse) {
+  return new URL(adresse, window.location.href).pathname.replace(/index\.html$/, '');
+}
+
+(function navStrich() {
+  const leiste = document.querySelector('.nav-links');
+  if (!leiste) {
+    return;
+  }
+
+  const aktiverLink = leiste.querySelector('a.active');
+  if (!aktiverLink) {
+    return;
+  }
+
+  const strich = document.createElement('li');
+  strich.className = 'nav-strich';
+  strich.setAttribute('aria-hidden', 'true');
+  leiste.appendChild(strich);
+
+  function strichSetzen(link, gleiten) {
+    const stil = getComputedStyle(link);
+    const abstandLinks = parseFloat(stil.paddingLeft);
+    const abstandRechts = parseFloat(stil.paddingRight);
+    const breite = Math.max(0, link.offsetWidth - abstandLinks - abstandRechts);
+
+    strich.classList.toggle('gleitet', gleiten);
+    strich.style.width = `${breite}px`;
+    strich.style.transform = `translateX(${link.offsetLeft + abstandLinks}px)`;
+  }
+
+  function linkDerVorherigenSeite() {
+    if (!document.referrer) {
+      return null;
+    }
+
+    let vorherigeSeite;
+    try {
+      vorherigeSeite = new URL(document.referrer);
+    } catch (fehler) {
+      return null;
+    }
+    if (vorherigeSeite.origin !== window.location.origin) {
+      return null;
+    }
+
+    const vorherigerPfad = pfadVon(document.referrer);
+    const links = Array.from(leiste.querySelectorAll('a'));
+    const startseitenPfad = links
+      .map(link => pfadVon(link.href))
+      .sort((a, b) => a.length - b.length)[0];
+
+    let treffer = null;
+    links.forEach(link => {
+      const linkPfad = pfadVon(link.href);
+      let passt;
+      if (linkPfad === startseitenPfad) {
+        passt = vorherigerPfad === startseitenPfad;
+      } else {
+        passt = vorherigerPfad.startsWith(linkPfad);
+      }
+      if (passt && (!treffer || linkPfad.length > pfadVon(treffer.href).length)) {
+        treffer = link;
+      }
+    });
+    return treffer;
+  }
+
+  const startLink = linkDerVorherigenSeite();
+
+  if (startLink && startLink !== aktiverLink) {
+    strichSetzen(startLink, false);
+    strich.classList.add('sichtbar');
+    strich.getBoundingClientRect();
+    requestAnimationFrame(() => strichSetzen(aktiverLink, true));
+  } else {
+    strichSetzen(aktiverLink, false);
+    strich.classList.add('sichtbar');
+  }
+
+  document.fonts.ready.then(() => strichSetzen(aktiverLink, true));
+  window.addEventListener('resize', () => strichSetzen(aktiverLink, false));
+})();
+
 (function tabsSteuern() {
   const knoepfe = Array.from(document.querySelectorAll('.tab'));
   if (knoepfe.length === 0) {
     return;
   }
 
-  function tabZeigen(gewaehlterKnopf) {
+  const leiste = knoepfe[0].parentElement;
+  const strich = document.createElement('span');
+  strich.className = 'tabs-strich';
+  strich.setAttribute('aria-hidden', 'true');
+  leiste.appendChild(strich);
+
+  function strichZu(knopf, gleiten) {
+    strich.classList.toggle('gleitet', gleiten);
+    strich.style.width = `${knopf.offsetWidth}px`;
+    strich.style.transform = `translateX(${knopf.offsetLeft}px)`;
+  }
+
+  function tabZeigen(gewaehlterKnopf, gleiten) {
     knoepfe.forEach(knopf => {
       const istGewaehlt = knopf === gewaehlterKnopf;
       knopf.classList.toggle('aktiv', istGewaehlt);
@@ -127,17 +210,127 @@ function copyIP() {
         panel.hidden = !istGewaehlt;
       }
     });
+    strichZu(gewaehlterKnopf, gleiten);
   }
 
   knoepfe.forEach(knopf => {
-    knopf.addEventListener('click', () => tabZeigen(knopf));
+    knopf.addEventListener('click', () => tabZeigen(knopf, true));
   });
 
   const ankerAusDerAdresse = window.location.hash.replace('#', '');
   const startKnopf = knoepfe.find(knopf => knopf.dataset.anker === ankerAusDerAdresse);
-  if (startKnopf) {
-    tabZeigen(startKnopf);
+  tabZeigen(startKnopf || knoepfe.find(knopf => knopf.classList.contains('aktiv')) || knoepfe[0], false);
+
+  document.fonts.ready.then(() => {
+    const aktiverKnopf = knoepfe.find(knopf => knopf.classList.contains('aktiv'));
+    strichZu(aktiverKnopf, false);
+  });
+  window.addEventListener('resize', () => {
+    const aktiverKnopf = knoepfe.find(knopf => knopf.classList.contains('aktiv'));
+    strichZu(aktiverKnopf, false);
+  });
+})();
+
+(function suchen() {
+  const felder = document.querySelectorAll('[data-such-bereich]');
+
+  function woerterVon(text) {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .split(/[^a-z0-9]+/)
+      .filter(wort => wort !== '');
   }
+
+  felder.forEach(feld => {
+    const bereich = document.getElementById(feld.dataset.suchBereich);
+    if (!bereich) {
+      return;
+    }
+
+    const eintraege = Array.from(bereich.querySelectorAll('.such-eintrag'));
+    const gruppen = Array.from(bereich.querySelectorAll('.such-gruppe'));
+    const keinTreffer = bereich.querySelector('.such-leer');
+
+    feld.addEventListener('input', () => {
+      const suchwoerter = woerterVon(feld.value);
+      let anzahlTreffer = 0;
+
+      eintraege.forEach(eintrag => {
+        const woerter = woerterVon(`${eintrag.textContent} ${eintrag.dataset.stichworte || ''}`);
+        const passt = suchwoerter.every(suchwort => woerter.some(wort => wort.startsWith(suchwort)));
+        eintrag.hidden = !passt;
+        if (passt) {
+          anzahlTreffer++;
+        }
+        if (eintrag.tagName === 'DETAILS' && suchwoerter.length > 0 && passt) {
+          eintrag.open = true;
+        }
+      });
+
+      gruppen.forEach(gruppe => {
+        const sichtbareEintraege = gruppe.querySelectorAll('.such-eintrag:not([hidden])');
+        gruppe.hidden = sichtbareEintraege.length === 0;
+      });
+
+      if (keinTreffer) {
+        keinTreffer.hidden = anzahlTreffer > 0;
+      }
+    });
+  });
+})();
+
+(function inhaltsverzeichnis() {
+  const liste = document.querySelector('.wiki-toc nav');
+  const artikel = document.querySelector('.text-inhalt');
+  if (!liste || !artikel) {
+    return;
+  }
+
+  const ueberschriften = Array.from(artikel.querySelectorAll('h2[id]'));
+  if (ueberschriften.length < 2) {
+    liste.closest('.wiki-toc').hidden = true;
+    return;
+  }
+
+  ueberschriften.forEach(ueberschrift => {
+    const link = document.createElement('a');
+    link.href = `#${ueberschrift.id}`;
+    link.textContent = ueberschrift.textContent;
+    liste.appendChild(link);
+  });
+
+  const links = Array.from(liste.querySelectorAll('a'));
+
+  function markieren(id) {
+    links.forEach(link => {
+      link.classList.toggle('aktiv', link.getAttribute('href') === `#${id}`);
+    });
+  }
+
+  let wartet = false;
+
+  function aktuellenAbschnittFinden() {
+    const lesezeile = window.innerHeight * 0.3;
+    let aktuell = ueberschriften[0];
+    ueberschriften.forEach(ueberschrift => {
+      if (ueberschrift.getBoundingClientRect().top <= lesezeile) {
+        aktuell = ueberschrift;
+      }
+    });
+    markieren(aktuell.id);
+    wartet = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!wartet) {
+      wartet = true;
+      requestAnimationFrame(aktuellenAbschnittFinden);
+    }
+  }, { passive: true });
+
+  aktuellenAbschnittFinden();
 })();
 
 function teamBildSuchen(mitglied, mediaOrdner, wennGefunden) {
@@ -164,13 +357,22 @@ function istBedrockSpieler(mitglied) {
   return mitglied.name.startsWith('.');
 }
 
-function teamKarteBauen(mitglied, mediaOrdner) {
-  const karte = document.createElement('article');
+function profilName(mitglied) {
+  return mitglied.name.toLowerCase().replace(/^\./, '');
+}
+
+function leererKopf() {
+  return '<span class="kopf-leer">?</span>';
+}
+
+function teamKarteBauen(mitglied, mediaOrdner, profilOrdner) {
+  const karte = document.createElement('a');
   karte.className = `team-card ${farbeFuerRolle(mitglied.rolle)}`;
+  karte.href = `${profilOrdner}${profilName(mitglied)}/`;
 
   const banner = document.createElement('div');
   banner.className = 'team-banner';
-  banner.innerHTML = '<i class="fa-solid fa-user"></i>';
+  banner.innerHTML = leererKopf();
   teamBildSuchen(mitglied, mediaOrdner, bild => banner.replaceChildren(bild));
   karte.appendChild(banner);
 
@@ -198,9 +400,38 @@ function teamKarteBauen(mitglied, mediaOrdner) {
     edition.innerHTML = '<i class="fa-solid fa-desktop"></i>Java';
   }
   meta.appendChild(edition);
-
   info.appendChild(meta);
+
+  const weiter = document.createElement('span');
+  weiter.className = 'team-link';
+  weiter.innerHTML = 'Profil ansehen <i class="fa-solid fa-arrow-right"></i>';
+  info.appendChild(weiter);
+
   karte.appendChild(info);
+  return karte;
+}
+
+function teamMiniBauen(mitglied, mediaOrdner, profilOrdner) {
+  const karte = document.createElement('a');
+  karte.className = `team-mini ${farbeFuerRolle(mitglied.rolle)}`;
+  karte.href = `${profilOrdner}${profilName(mitglied)}/`;
+
+  const bildRahmen = document.createElement('div');
+  bildRahmen.className = 'team-mini-bild';
+  bildRahmen.innerHTML = leererKopf();
+  teamBildSuchen(mitglied, mediaOrdner, bild => bildRahmen.replaceChildren(bild));
+  karte.appendChild(bildRahmen);
+
+  const name = document.createElement('span');
+  name.className = 'team-mini-name';
+  name.textContent = mitglied.name;
+  karte.appendChild(name);
+
+  const rolle = document.createElement('span');
+  rolle.className = 'team-mini-rolle';
+  rolle.textContent = mitglied.rolle;
+  karte.appendChild(rolle);
+
   return karte;
 }
 
@@ -211,6 +442,7 @@ function teamKarteBauen(mitglied, mediaOrdner) {
   }
 
   const mediaOrdner = ziel.dataset.media || 'media/';
+  const profilOrdner = ziel.dataset.profile || '';
   const owner = TEAM.filter(mitglied => mitglied.rolle === 'Owner');
   const restlichesTeam = TEAM.filter(mitglied => mitglied.rolle !== 'Owner');
 
@@ -220,18 +452,18 @@ function teamKarteBauen(mitglied, mediaOrdner) {
     }
 
     const gruppe = document.createElement('section');
-    gruppe.className = 'team-gruppe';
+    gruppe.className = 'gruppe';
 
     const kopf = document.createElement('div');
-    kopf.className = 'team-gruppe-kopf';
+    kopf.className = 'gruppe-kopf';
 
     const ueberschrift = document.createElement('h2');
-    ueberschrift.className = 'team-gruppe-titel';
+    ueberschrift.className = 'gruppe-titel';
     ueberschrift.textContent = titel;
     kopf.appendChild(ueberschrift);
 
     const anzahl = document.createElement('span');
-    anzahl.className = 'team-gruppe-anzahl';
+    anzahl.className = 'gruppe-anzahl';
     anzahl.textContent = mitglieder.length;
     kopf.appendChild(anzahl);
 
@@ -239,7 +471,7 @@ function teamKarteBauen(mitglied, mediaOrdner) {
 
     const raster = document.createElement('div');
     raster.className = 'team-grid';
-    mitglieder.forEach(mitglied => raster.appendChild(teamKarteBauen(mitglied, mediaOrdner)));
+    mitglieder.forEach(mitglied => raster.appendChild(teamKarteBauen(mitglied, mediaOrdner, profilOrdner)));
     gruppe.appendChild(raster);
 
     ziel.appendChild(gruppe);
@@ -250,37 +482,32 @@ function teamKarteBauen(mitglied, mediaOrdner) {
 })();
 
 (function teamVorschau() {
-  const ziel = document.getElementById('teamVorschau');
-  if (!ziel) {
+  const ziele = document.querySelectorAll('.team-strip[data-media]');
+
+  ziele.forEach(ziel => {
+    const mediaOrdner = ziel.dataset.media;
+    const profilOrdner = ziel.dataset.profile || '';
+    const ohne = ziel.dataset.ohne || '';
+
+    TEAM
+      .filter(mitglied => mitglied.id !== ohne)
+      .forEach(mitglied => ziel.appendChild(teamMiniBauen(mitglied, mediaOrdner, profilOrdner)));
+  });
+})();
+
+(function teamProfil() {
+  const bildFeld = document.getElementById('profilBild');
+  if (!bildFeld) {
     return;
   }
 
-  const mediaOrdner = ziel.dataset.media || 'team/media/';
-  const teamSeite = ziel.dataset.link || 'team/';
+  const mitglied = TEAM.find(eintrag => eintrag.id === bildFeld.dataset.id);
+  if (!mitglied) {
+    return;
+  }
 
-  TEAM.forEach(mitglied => {
-    const karte = document.createElement('a');
-    karte.className = `team-mini ${farbeFuerRolle(mitglied.rolle)}`;
-    karte.href = teamSeite;
-
-    const bildRahmen = document.createElement('div');
-    bildRahmen.className = 'team-mini-bild';
-    bildRahmen.innerHTML = '<i class="fa-solid fa-user"></i>';
-    teamBildSuchen(mitglied, mediaOrdner, bild => bildRahmen.replaceChildren(bild));
-    karte.appendChild(bildRahmen);
-
-    const name = document.createElement('span');
-    name.className = 'team-mini-name';
-    name.textContent = mitglied.name;
-    karte.appendChild(name);
-
-    const rolle = document.createElement('span');
-    rolle.className = 'team-mini-rolle';
-    rolle.textContent = mitglied.rolle;
-    karte.appendChild(rolle);
-
-    ziel.appendChild(karte);
-  });
+  bildFeld.innerHTML = leererKopf();
+  teamBildSuchen(mitglied, bildFeld.dataset.media || '../media/', bild => bildFeld.replaceChildren(bild));
 })();
 
 let lightbox = null;
