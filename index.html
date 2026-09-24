@@ -5,86 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BuckSMP – Minecraft Server</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
-<!-- SVG ICON DEFS -->
-<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
-
-<!-- ════════════════════════════════════
-     FEATURE ICONS (outline stroke style)
-     ════════════════════════════════════ -->
-
-<!-- HEART (Hardcore PvP feature) -->
-<symbol id="i-heart-pvp" viewBox="0 0 40 40" fill="none">
-  <path d="M20 34C20 34 4 23.5 4 13.5C4 8.5 7.8 5 12.5 5C15.6 5 18.1 6.9 20 10C21.9 6.9 24.4 5 27.5 5C32.2 5 36 8.5 36 13.5C36 23.5 20 34 20 34Z" stroke="#00D4FF" stroke-width="2.5" stroke-linejoin="round"/>
-  <path d="M9 11C8.2 13 8.5 16 10 18.5" stroke="#00D4FF" stroke-width="2" stroke-linecap="round" opacity=".45"/>
-</symbol>
-
-<!-- SHIELD with check (Anti-Cheat feature) -->
-<symbol id="i-shield" viewBox="0 0 40 40" fill="none">
-  <path d="M20 5L34 11V22C34 30 20 36 20 36S6 30 6 22V11L20 5Z" stroke="#00D4FF" stroke-width="2.2" stroke-linejoin="round"/>
-  <polyline points="14,20 18,25 26,15" stroke="#00D4FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-</symbol>
-<!-- BOLT (Low Latency) -->
-<symbol id="i-bolt" viewBox="0 0 40 40" fill="none">
-  <polyline points="24,4 14,22 21,22 16,36 26,18 19,18 24,4" stroke="#00D4FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-</symbol>
-<!-- TROPHY -->
-<symbol id="i-trophy" viewBox="0 0 40 40" fill="none">
-  <path d="M13 7H27V22C27 26.4 23.9 30 20 30C16.1 30 13 26.4 13 22V7Z" stroke="#00D4FF" stroke-width="2.2"/>
-  <path d="M13 11H7C7 11 7 21 13 21" stroke="#00D4FF" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M27 11H33C33 11 33 21 27 21" stroke="#00D4FF" stroke-width="2.2" stroke-linecap="round"/>
-  <line x1="20" y1="30" x2="20" y2="34" stroke="#00D4FF" stroke-width="2.2" stroke-linecap="round"/>
-  <line x1="14" y1="34" x2="26" y2="34" stroke="#00D4FF" stroke-width="2.2" stroke-linecap="round"/>
-</symbol>
-<!-- STAR (Events) -->
-<symbol id="i-star" viewBox="0 0 40 40" fill="none">
-  <polygon points="20,4 23.5,15 35,15 25.5,22 29,33 20,26 11,33 14.5,22 5,15 16.5,15" stroke="#00D4FF" stroke-width="2" stroke-linejoin="round"/>
-</symbol>
-<!-- PEOPLE (Community) -->
-<symbol id="i-people" viewBox="0 0 40 40" fill="none">
-  <circle cx="15" cy="13" r="5.5" stroke="#00D4FF" stroke-width="2"/>
-  <path d="M4 35C4 28 9 24 15 24C21 24 26 28 26 35" stroke="#00D4FF" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="29" cy="13" r="4" stroke="#00D4FF" stroke-width="2"/>
-  <path d="M27 24C31 24 36 27 36 35" stroke="#00D4FF" stroke-width="2" stroke-linecap="round"/>
-</symbol>
-
-</svg>
-
-<!-- NAV -->
 <nav>
-  <a class="nav-logo" href="index.html">BuckSMP</a>
+  <a class="nav-logo" href="./">BuckSMP</a>
   <ul class="nav-links">
     <li><a href="#features">Features</a></li>
-    <li><a href="features/index.html">Alle Features</a></li>
-    <li><a href="top/10/aura-moments/index.html">Aura Moments</a></li>
-    <li><a href="regeln/index.html">Regeln</a></li>
-    <li><a href="team/index.html">Team</a></li>
-    <li><a href="join/index.html">Join</a></li>
+    <li><a href="features/">Alle Features</a></li>
+    <li><a href="top/10/aura-moments/">Aura Moments</a></li>
+    <li><a href="regeln/">Regeln</a></li>
+    <li><a href="team/">Team</a></li>
+    <li><a href="join/">Join</a></li>
   </ul>
   <div class="nav-right">
-    <a class="btn-dc" href="https://discord.gg/tsJKNEFYmm" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.93 19.93 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.133 13.133 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-      <span class="dt">Discord</span>
+    <a class="btn-dc" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
+      <i class="fa-brands fa-whatsapp"></i>
+      <span class="dt">WhatsApp</span>
     </a>
     <div class="ham" onclick="toggleNav(this)"><span></span><span></span><span></span></div>
   </div>
 </nav>
 
-<!-- MOBILE MENU -->
 <div class="mob-menu" id="mobMenu">
   <a href="#features" onclick="closeNav()">Features</a>
-  <a href="features/index.html">Alle Features</a>
-  <a href="top/10/aura-moments/index.html">Aura Moments</a>
-  <a href="regeln/index.html">Regeln</a>
-  <a href="team/index.html">Team</a>
-  <a href="join/index.html" onclick="closeNav()">Beitreten</a>
-  <a href="https://discord.gg/tsJKNEFYmm" target="_blank" rel="noopener">Discord ↗</a>
+  <a href="features/">Alle Features</a>
+  <a href="top/10/aura-moments/">Aura Moments</a>
+  <a href="regeln/">Regeln</a>
+  <a href="team/">Team</a>
+  <a href="join/" onclick="closeNav()">Beitreten</a>
+  <a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">WhatsApp ↗</a>
 </div>
 
-<!-- LIVE BAR -->
 <div class="live-bar">
   <div class="live-inner">
     <div class="live-dot" id="liveDot"></div>
@@ -93,7 +47,6 @@
   </div>
 </div>
 
-<!-- HERO -->
 <div class="hero">
   <div class="hero-glow"></div>
   <div class="hero-hline" style="top:40%"></div>
@@ -105,20 +58,20 @@
   </div>
 
   <h1 class="hero-title">
-    <span class="t-g">Buck</span><span class="t-w">SMP</span>
+    <span class="t-g">BuckSMP</span><span class="t-w"></span>
   </h1>
 
   <p class="hero-sub">
-    Spiele auf dem besten SchulSMP Server den es gibt<br>
-    und erlebe Spaß auf einem anderen Level.
+    Spiele auf dem Besten SchulSMP Server den es gibt <br>
+    Und erlebe spaß auf einem anderen Level
   </p>
 
   <div class="ip-wrap">
     <p class="ip-lbl">Server-IP — Klicken zum Kopieren</p>
     <div class="ip-box" onclick="copyIP()">
-      <div class="ip-addr">lemon-servers.de</div>
+      <div class="ip-addr">BuckSMP.de</div>
       <button class="ip-copy" aria-label="IP kopieren">
-        <svg id="copyIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <i id="copyIco" class="fa-regular fa-copy"></i>
         <span class="ct" id="copyTxt">Kopieren</span>
       </button>
     </div>
@@ -135,53 +88,53 @@
 
 <div class="rule"></div>
 
-<!-- FEATURES -->
 <section class="sec" id="features">
   <div class="sec-head">
-    <p class="sec-tag">Was uns ausmacht</p>
     <h2 class="sec-title">Server <span class="g">Features</span></h2>
   </div>
   <div class="feats">
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-heart-pvp"/></svg></div><div class="feat-name">Hardcore PvP</div><p class="feat-desc">Optimiertes Kampfsystem mit echtem Skill-Gap. Hier zählen deine Moves — nicht dein Rang.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-trophy"/></svg></div><div class="feat-name">1v1 Duelle</div><p class="feat-desc">Fordere jeden Spieler serverübergreifend heraus - eigene Arenen, echtes Loot, Rangliste inklusive.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-shield"/></svg></div><div class="feat-name">Anti-Cheat</div><p class="feat-desc">Fortschrittliches System blockiert Hacks in Echtzeit. Fair play, immer.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-bolt"/></svg></div><div class="feat-name">Low Latency</div><p class="feat-desc">Eigene Infrastruktur mit niedrigem Ping für DE-Spieler. Kein Lag, kein Excuse.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-star"/></svg></div><div class="feat-name">Events & Drops</div><p class="feat-desc">Regelmäßige Community-Events, Crate-Drops und exklusive Belohnungen.</p></div>
-    <div class="feat"><div class="feat-ico"><svg class="ic-feat"><use href="#i-people"/></svg></div><div class="feat-name">Community</div><p class="feat-desc">Aktiver Discord, schneller Support und eine wachsende, engagierte Playerbase.</p></div>
+    <div class="feat">
+      <div class="feat-ico"><i class="fa-solid fa-heart-pulse"></i></div>
+      <div class="feat-name">Zero Lag Erfahrung</div>
+      <p class="feat-desc">Ein Optimiertes System gewährleistet das jeder Hit Lag-Frei Ankommt.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-ico"><i class="fa-solid fa-gamepad"></i></div>
+      <div class="feat-name">Konsolen Support</div>
+      <p class="feat-desc">Wir unterstützen jede Konsole die Minecraft hat, damit niemand ausgeschlossen ist.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-ico"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="feat-name">Anti-Cheat</div>
+      <p class="feat-desc">Unser eigenes Anti-Cheat nutzt fortgeschrittene Predictions um die False Flags so gering wie möglich zu halten. Damit können wir gewährleisten das auch Jeder Cheater gebannt wird.</p>
+    </div>
   </div>
-  <p style="margin-top:24px"><a class="btn-o" style="display:inline-flex" href="features/index.html">Alle Features ansehen</a></p>
+  <p style="margin-top:24px"><a class="btn-o" style="display:inline-flex" href="features/">Alle Features ansehen</a></p>
 </section>
 
 <div class="rule"></div>
 
-<!-- CTA -->
 <div class="cta" id="join">
-  <p class="cta-tag">Bereit?</p>
+  <p class="cta-tag">Startklar?</p>
   <h2 class="cta-h">Jetzt <span class="g">einloggen</span></h2>
   <p class="cta-sub">Kopiere die IP, öffne Minecraft und leg los.</p>
   <div class="cta-btns">
     <button class="btn-p" onclick="copyIP()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      <i class="fa-regular fa-copy"></i>
       IP kopieren
     </button>
-    <a class="btn-o" href="https://discord.gg/tsJKNEFYmm" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.93 19.93 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.133 13.133 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-      Discord
+    <a class="btn-o" href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank" rel="noopener">
+      <i class="fa-brands fa-whatsapp"></i>
+      WhatsApp
     </a>
   </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast">✓ lemon-servers.de kopiert!</div>
+<div id="toast">✓ BuckSMP.de kopiert!</div>
 
-<!-- FOOTER -->
 <footer>
-  <p>© 2025–2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
-  <p style="margin-top:6px">
-    <a href="https://discord.gg/tsJKNEFYmm" target="_blank">Discord</a> ·
-    <a href="regeln/index.html">Regeln</a> ·
-    <a href="team/index.html">Team</a>
-  </p>
+  <p>© 2026 BuckSMP · Nicht offiziell mit Mojang / Microsoft assoziiert</p>
+  <p style="margin-top:6px"><a href="https://whatsapp.com/channel/0029VbE22M2JENxzB754C70C" target="_blank">WhatsApp Channel</a></p>
 </footer>
 
 <script src="assets/script.js" defer></script>

@@ -1,142 +1,162 @@
-// ============================================================
-//  BuckSMP – gemeinsames Script fuer alle Seiten.
-//  Jeder Block prueft zuerst, ob die noetigen Elemente auf der
-//  aktuellen Seite ueberhaupt existieren - so kann diese eine Datei
-//  von JEDER Seite eingebunden werden, ohne dass Konsole-Fehler
-//  entstehen, nur weil z.B. das Aura-Moments-Grid auf der Startseite
-//  gar nicht vorkommt.
-// ============================================================
-
-/* ---------------- Mobile-Nav (alle Seiten) ---------------- */
 function toggleNav(btn) {
-  const m = document.getElementById('mobMenu');
-  if (!m) return;
-  const o = m.classList.toggle('open');
-  const s = btn.querySelectorAll('span');
-  if (o) { s[0].style.transform='rotate(45deg) translate(5px,5px)'; s[1].style.opacity='0'; s[2].style.transform='rotate(-45deg) translate(5px,-5px)'; }
-  else   { s.forEach(x => { x.style.transform=''; x.style.opacity=''; }); }
-}
-function closeNav() {
-  const m = document.getElementById('mobMenu');
-  if (!m) return;
-  m.classList.remove('open');
-  document.querySelectorAll('.ham span').forEach(x => { x.style.transform=''; x.style.opacity=''; });
+  const menu = document.getElementById('mobMenu');
+  if (!menu) {
+    return;
+  }
+  const isOpen = menu.classList.toggle('open');
+  const bars = btn.querySelectorAll('span');
+  if (isOpen) {
+    bars[0].style.transform = 'rotate(45deg) translate(5px,5px)';
+    bars[1].style.opacity = '0';
+    bars[2].style.transform = 'rotate(-45deg) translate(5px,-5px)';
+  } else {
+    bars.forEach(bar => {
+      bar.style.transform = '';
+      bar.style.opacity = '';
+    });
+  }
 }
 
-/* ---------------- IP kopieren (Startseite) ---------------- */
-const SERVER_IP = 'lemon-servers.de';
+function closeNav() {
+  const menu = document.getElementById('mobMenu');
+  if (!menu) {
+    return;
+  }
+  menu.classList.remove('open');
+  document.querySelectorAll('.ham span').forEach(bar => {
+    bar.style.transform = '';
+    bar.style.opacity = '';
+  });
+}
+
+const SERVER_IP = 'bucksmp.de';
 let toastTimer;
+
 function copyIP() {
   navigator.clipboard.writeText(SERVER_IP).then(() => {
     const feed = document.getElementById('ipFeed');
-    const ico  = document.getElementById('copyIco');
-    const txt  = document.getElementById('copyTxt');
-    if (feed) feed.classList.add('show');
-    if (txt)  txt.textContent = 'Kopiert!';
-    if (ico)  ico.innerHTML = '<polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2.5" fill="none"/>';
+    const icon = document.getElementById('copyIco');
+    const label = document.getElementById('copyTxt');
+
+    if (feed) {
+      feed.classList.add('show');
+    }
+    if (label) {
+      label.textContent = 'Kopiert!';
+    }
+    if (icon) {
+      icon.className = 'fa-solid fa-check';
+    }
+
     const toast = document.getElementById('toast');
-    if (!toast) return;
+    if (!toast) {
+      return;
+    }
     toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       toast.classList.remove('show');
-      if (feed) feed.classList.remove('show');
-      if (txt)  txt.textContent = 'Kopieren';
-      if (ico)  ico.innerHTML = '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>';
+      if (feed) {
+        feed.classList.remove('show');
+      }
+      if (label) {
+        label.textContent = 'Kopieren';
+      }
+      if (icon) {
+        icon.className = 'fa-regular fa-copy';
+      }
     }, 2500);
   });
 }
 
-/* ---------------- Live-Serverstatus (Startseite) ----------------
- *
- * Echte Daten von api.mcsrvstat.us statt fest eingetragener Zahlen -
- * fragt Online/Offline + aktuelle Spieleranzahl fuer lemon-servers.de
- * ab und aktualisiert #liveStatus/#liveCount/#statN/#liveDot damit.
- * Die Versions-Pill (#verPill) bleibt bewusst der manuell gepflegte
- * Text aus dem HTML: die API liefert nur die Kern-Protokollversion
- * des Servers, nicht die per ViaVersion/ViaBackwards unterstuetzte
- * Bandbreite - ein Live-Ueberschreiben wuerde hier also eher weniger
- * korrekte Infos zeigen als die gepflegte Angabe.
- *
- * Schlaegt die Abfrage fehl (Netzwerk, API down, o.ae.), bleiben
- * einfach die im HTML hinterlegten Platzhalter-Werte stehen statt
- * irgendwas Falsches anzuzeigen.
- * -------------------------------------------------------------- */
-(function liveServerStatus(){
-  const elCount  = document.getElementById('liveCount');
-  const elStatN  = document.getElementById('statN');
-  const elStatus = document.getElementById('liveStatus');
-  const elDot    = document.getElementById('liveDot');
-  if (!elCount && !elStatN) return;
+(function liveServerStatus() {
+  const countEl = document.getElementById('liveCount');
+  const statNEl = document.getElementById('statN');
+  const statusEl = document.getElementById('liveStatus');
+  const dotEl = document.getElementById('liveDot');
 
-  const SERVER_HOST = 'lemon-servers.de';
-  const ABFRAGE_TAKT_MS = 60000;
+  if (!countEl && !statNEl) {
+    return;
+  }
 
-  async function aktualisieren(){
+  const SERVER_HOST = 'bucksmp.de';
+  const REFRESH_MS = 60000;
+
+  async function refresh() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await fetch(`https://api.mcsrvstat.us/3/${SERVER_HOST}`, { signal: controller.signal });
-      if (!res.ok) return;
-      const data = await res.json();
-      const online = !!data.online;
-      const spieler = online && data.players && typeof data.players.online === 'number'
-        ? String(data.players.online) : (online ? '0' : '–');
+      const response = await fetch(`https://api.mcsrvstat.us/3/${SERVER_HOST}`, { signal: controller.signal });
+      if (!response.ok) {
+        return;
+      }
+      const data = await response.json();
+      const isOnline = !!data.online;
+      const playerCount = isOnline && data.players && typeof data.players.online === 'number'
+        ? String(data.players.online)
+        : (isOnline ? '0' : '–');
 
-      if (elStatus) elStatus.textContent = online ? 'online' : 'offline';
-      if (elCount)  elCount.textContent  = spieler;
-      if (elStatN)  elStatN.textContent  = spieler;
-      if (elDot)    elDot.style.animationPlayState = online ? 'running' : 'paused';
-      if (elDot)    elDot.style.background = online ? '' : 'var(--muted)';
-    } catch (err) {
-      // Fetch fehlgeschlagen/Timeout - Platzhalter aus dem HTML stehen lassen.
+      if (statusEl) {
+        statusEl.textContent = isOnline ? 'online' : 'offline';
+      }
+      if (countEl) {
+        countEl.textContent = playerCount;
+      }
+      if (statNEl) {
+        statNEl.textContent = playerCount;
+      }
+      if (dotEl) {
+        dotEl.style.animationPlayState = isOnline ? 'running' : 'paused';
+        dotEl.style.background = isOnline ? '' : 'var(--muted)';
+      }
+    } catch (error) {
+      return;
     } finally {
       clearTimeout(timeout);
     }
   }
 
-  aktualisieren();
-  setInterval(aktualisieren, ABFRAGE_TAKT_MS);
+  refresh();
+  setInterval(refresh, REFRESH_MS);
 })();
 
-/* ---------------- Top 10 Aura Moments (/top/10/aura-moments/) ----------------
- *
- * Neuen Moment hinzufuegen: NUR die Datei nach media/ hochladen, benannt
- * nach dem Platz - z.B. media/1.mp4 fuer Platz 1, media/7.jpg fuer
- * Platz 7 (siehe media/README.md). Mehr ist nicht noetig - diese Seite
- * probiert beim Laden fuer jeden Platz 1-10 selbst aus, ob es dafuer
- * ein Video (.mp4, zuerst versucht) oder ein Foto (.jpg) gibt, und
- * zeigt sonst einen Platzhalter. Kein Array, kein Code hier anfassen.
- *
- * Titel/Spieler/Beschreibung sind optional und rein kosmetisch - unten
- * im MOMENTS-Array nach Platz eintragen (Index 0 = Platz 1). Leer
- * lassen ist ok, dann steht nur "Platz N" da.
- * -------------------------------------------------------------------- */
-(function auraMoments(){
+(function auraMoments() {
   const grid = document.getElementById('momentsGrid');
-  if (!grid) return;
+  if (!grid) {
+    return;
+  }
 
-  const RAENGE = 10;
+  const TOTAL_PLAETZE = 10;
   const MEDIA_ORDNER = 'media/';
-
-  const MOMENTS = [
-    {title:'', player:'', description:''}, // Platz 1
-    {title:'', player:'', description:''}, // Platz 2
-    {title:'', player:'', description:''}, // Platz 3
-    {title:'', player:'', description:''}, // Platz 4
-    {title:'', player:'', description:''}, // Platz 5
-    {title:'', player:'', description:''}, // Platz 6
-    {title:'', player:'', description:''}, // Platz 7
-    {title:'', player:'', description:''}, // Platz 8
-    {title:'', player:'', description:''}, // Platz 9
-    {title:'', player:'', description:''}, // Platz 10
-  ];
-
   const FALLBACK_THUMB = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 180'%3E%3Crect width='320' height='180' fill='%23161616'/%3E%3Ctext x='160' y='96' font-family='sans-serif' font-size='13' fill='%23555' text-anchor='middle'%3ENoch kein Clip hochgeladen%3C/text%3E%3C/svg%3E";
 
-  function rankClass(i){ return i===0?'top1':i===1?'top2':i===2?'top3':''; }
+  const MOMENTS = [
+    { title: '', player: '', description: '' },
+    { title: '', player: '', description: '' },
+    { title: '', player: '', description: '' },
+    { title: '', player: '', description: '' },
+    { title: '', player: '', description: '' },
+    { title: '', player: '', description: '' },
+    { title: '', player: '', description: '' },
+    { title: '', player: '', description: '' },
+    { title: '', player: '', description: '' },
+    { title: '', player: '', description: '' },
+  ];
 
-  function karteBauen(rank, meta){
+  function rankClass(index) {
+    if (index === 0) {
+      return 'top1';
+    }
+    if (index === 1) {
+      return 'top2';
+    }
+    if (index === 2) {
+      return 'top3';
+    }
+    return '';
+  }
+
+  function karteBauen(rank, meta) {
     const wrap = document.createElement('div');
     wrap.className = 'moment';
     wrap.tabIndex = 0;
@@ -145,84 +165,106 @@ function copyIP() {
     const thumb = document.createElement('div');
     thumb.className = 'moment-thumb';
 
-    // Erst Video versuchen (media/{rank}.mp4) - klappt das nicht (kein
-    // Treffer -> 'error'-Event, wie bei img.onerror), auf Foto
-    // (media/{rank}.jpg) umschwenken, und wenn das auch fehlt, auf den
-    // Platzhalter. wrap.dataset.media* haelt fest, was am Ende wirklich
-    // da ist, fuers Oeffnen der Lightbox beim Klick.
     const video = document.createElement('video');
-    video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'metadata';
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.preload = 'metadata';
+
     video.addEventListener('loadedmetadata', () => {
       wrap.dataset.mediaType = 'video';
       wrap.dataset.mediaSrc = video.src;
     });
     video.addEventListener('mouseenter', () => video.play().catch(() => {}));
-    video.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+    video.addEventListener('mouseleave', () => {
+      video.pause();
+      video.currentTime = 0;
+    });
     video.addEventListener('error', () => {
       video.remove();
+
       const img = document.createElement('img');
       img.alt = meta.title || `Platz ${rank}`;
+
       img.addEventListener('load', () => {
-        // Feuert auch fuer die Zuweisung von FALLBACK_THUMB unten (ist ja
-        // auch ein "erfolgreiches Laden") - das darf NICHT als echtes
-        // Foto durchgehen, sonst oeffnet die Lightbox spaeter leere
-        // Platzhalter-Karten mit dem Platzhalterbild als "Inhalt".
-        if (img.src === FALLBACK_THUMB) return;
+        if (img.src === FALLBACK_THUMB) {
+          return;
+        }
         wrap.dataset.mediaType = 'image';
         wrap.dataset.mediaSrc = img.src;
-      }, { once:true });
+      }, { once: true });
+
       img.addEventListener('error', () => {
         img.onerror = null;
         img.src = FALLBACK_THUMB;
-      }, { once:true });
+      }, { once: true });
+
       img.src = `${MEDIA_ORDNER}${rank}.jpg`;
       thumb.prepend(img);
-    }, { once:true });
+    }, { once: true });
+
     video.src = `${MEDIA_ORDNER}${rank}.mp4`;
     thumb.appendChild(video);
 
-    const rankEl = document.createElement('div');
-    rankEl.className = `moment-rank ${rankClass(rank - 1)}`;
-    rankEl.textContent = `#${rank}`;
-    thumb.appendChild(rankEl);
+    const rankBadge = document.createElement('div');
+    rankBadge.className = `moment-rank ${rankClass(rank - 1)}`;
+    rankBadge.textContent = `#${rank}`;
+    thumb.appendChild(rankBadge);
 
-    const play = document.createElement('div');
-    play.className = 'moment-play';
-    play.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-    thumb.appendChild(play);
+    const playOverlay = document.createElement('div');
+    playOverlay.className = 'moment-play';
+    playOverlay.innerHTML = '<i class="fa-solid fa-play"></i>';
+    thumb.appendChild(playOverlay);
 
     wrap.appendChild(thumb);
 
     const body = document.createElement('div');
     body.className = 'moment-body';
+
     const titel = meta.title || `Platz ${rank}`;
-    body.innerHTML = `
-      <div class="moment-title"></div>
-      ${meta.player ? '<div class="moment-player"></div>' : ''}
-      ${meta.description ? '<p class="moment-desc"></p>' : ''}
-    `;
-    body.querySelector('.moment-title').textContent = titel;
-    if (meta.player) body.querySelector('.moment-player').textContent = meta.player;
-    if (meta.description) body.querySelector('.moment-desc').textContent = meta.description;
+    const titleEl = document.createElement('div');
+    titleEl.className = 'moment-title';
+    titleEl.textContent = titel;
+    body.appendChild(titleEl);
+
+    if (meta.player) {
+      const playerEl = document.createElement('div');
+      playerEl.className = 'moment-player';
+      playerEl.textContent = meta.player;
+      body.appendChild(playerEl);
+    }
+
+    if (meta.description) {
+      const descEl = document.createElement('p');
+      descEl.className = 'moment-desc';
+      descEl.textContent = meta.description;
+      body.appendChild(descEl);
+    }
+
     wrap.appendChild(body);
 
-    function oeffnen(){
-      if (!wrap.dataset.mediaType) return; // noch kein Clip hochgeladen - nichts zu zeigen
+    function oeffnen() {
+      if (!wrap.dataset.mediaType) {
+        return;
+      }
       lightboxOeffnen(wrap.dataset.mediaType, wrap.dataset.mediaSrc, titel);
     }
+
     wrap.addEventListener('click', oeffnen);
-    wrap.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); oeffnen(); }
+    wrap.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        oeffnen();
+      }
     });
 
     return wrap;
   }
 
-  for (let rank = 1; rank <= RAENGE; rank++) {
+  for (let rank = 1; rank <= TOTAL_PLAETZE; rank++) {
     grid.appendChild(karteBauen(rank, MOMENTS[rank - 1] || {}));
   }
 
-  /* ---- Lightbox: Klick auf eine Karte spielt Video/Foto gross ab ---- */
   const lightbox = document.createElement('div');
   lightbox.className = 'lightbox';
   lightbox.innerHTML = `
@@ -233,95 +275,97 @@ function copyIP() {
     </div>
   `;
   document.body.appendChild(lightbox);
-  const lbMedia = lightbox.querySelector('.lightbox-media');
-  const lbCaption = lightbox.querySelector('.lightbox-caption');
 
-  function lightboxOeffnen(typ, src, titel){
-    lbMedia.innerHTML = '';
+  const lightboxMedia = lightbox.querySelector('.lightbox-media');
+  const lightboxCaption = lightbox.querySelector('.lightbox-caption');
+
+  function lightboxOeffnen(typ, src, titel) {
+    lightboxMedia.innerHTML = '';
     if (typ === 'video') {
-      const v = document.createElement('video');
-      v.src = src; v.controls = true; v.autoplay = true; v.playsInline = true;
-      lbMedia.appendChild(v);
+      const videoEl = document.createElement('video');
+      videoEl.src = src;
+      videoEl.controls = true;
+      videoEl.autoplay = true;
+      videoEl.playsInline = true;
+      lightboxMedia.appendChild(videoEl);
     } else {
-      const img = document.createElement('img');
-      img.src = src; img.alt = titel;
-      lbMedia.appendChild(img);
+      const imgEl = document.createElement('img');
+      imgEl.src = src;
+      imgEl.alt = titel;
+      lightboxMedia.appendChild(imgEl);
     }
-    lbCaption.textContent = titel;
+    lightboxCaption.textContent = titel;
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
-  function lightboxSchliessen(){
+
+  function lightboxSchliessen() {
     lightbox.classList.remove('open');
-    lbMedia.innerHTML = ''; // Video wirklich stoppen, nicht nur verstecken
+    lightboxMedia.innerHTML = '';
     document.body.style.overflow = '';
   }
+
   lightbox.querySelector('.lightbox-close').addEventListener('click', lightboxSchliessen);
-  lightbox.addEventListener('click', e => { if (e.target === lightbox) lightboxSchliessen(); });
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && lightbox.classList.contains('open')) lightboxSchliessen();
+  lightbox.addEventListener('click', event => {
+    if (event.target === lightbox) {
+      lightboxSchliessen();
+    }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && lightbox.classList.contains('open')) {
+      lightboxSchliessen();
+    }
   });
 })();
 
-/* ---------------- Team (/team/) ----------------
- *
- * Neues Mitglied/Rolle aendern: unten im TEAM-Array eintragen (id, name,
- * rolle). Die id ist frei waehlbar, aber danach stabil halten - sie
- * bestimmt nur den Bild-Dateinamen und sollte sich nicht mehr aendern,
- * auch wenn spaeter mal der Name oder die Rolle wechselt.
- *
- * Profilbild hinzufuegen: Datei als team/media/<id>.jpg (oder .png)
- * ablegen - siehe team/media/README.md. Kein weiterer Code-Edit noetig,
- * die Karte probiert das Bild selbst aus (erst .jpg, dann .png) und
- * faellt ohne Treffer auf das generische Platzhalter-Icon zurueck,
- * genau wie bei den Aura Moments oben.
- * -------------------------------------------------------------------- */
-(function teamGrid(){
+(function teamGrid() {
   const grid = document.getElementById('teamGrid');
-  if (!grid) return;
+  if (!grid) {
+    return;
+  }
 
   const MEDIA_ORDNER = 'media/';
 
   const TEAM = [
-    {id:'owner', name:'Name eintragen', rolle:'Owner'},
-    {id:'admin', name:'Name eintragen', rolle:'Admin'},
-    {id:'mod1',  name:'Name eintragen', rolle:'Moderator'},
-    {id:'mod2',  name:'Name eintragen', rolle:'Moderator'},
+    { id: 'lemon', name: 'Name eintragen', rolle: 'Lemon' },
+    { id: 'owner', name: 'Name eintragen', rolle: 'Owner' },
+    { id: 'manager', name: 'Name eintragen', rolle: 'Manager' },
+    { id: 'admin', name: 'Name eintragen', rolle: 'Admin' },
+    { id: 'sup', name: 'Name eintragen', rolle: 'Supporter' },
   ];
 
-  function karteBauen(mitglied){
+  function karteBauen(mitglied) {
     const card = document.createElement('div');
     card.className = 'team-card';
 
     const avatar = document.createElement('div');
     avatar.className = 'team-avatar';
-    avatar.innerHTML = '<svg><use href="#i-person"/></svg>';
+    avatar.innerHTML = '<i class="fa-solid fa-user"></i>';
 
-    // Erst .jpg versuchen, dann .png, sonst bleibt das Platzhalter-Icon
-    // oben einfach stehen - exakt dasselbe Fallback-Prinzip wie bei den
-    // Aura Moments (media/<id>.* probieren statt eine Liste pflegen,
-    // welche Bilder es schon gibt).
     const img = document.createElement('img');
     img.alt = mitglied.name;
-    img.addEventListener('load', () => avatar.replaceChildren(img), { once:true });
+
+    img.addEventListener('load', () => avatar.replaceChildren(img), { once: true });
     img.addEventListener('error', () => {
-      if (img.dataset.stufe === 'png') return; // auch .png nicht da - Platzhalter-Icon bleibt
+      if (img.dataset.stufe === 'png') {
+        return;
+      }
       img.dataset.stufe = 'png';
       img.src = `${MEDIA_ORDNER}${mitglied.id}.png`;
-    }, { once:false });
-    img.src = `${MEDIA_ORDNER}${mitglied.id}.jpg`;
+    });
 
+    img.src = `${MEDIA_ORDNER}${mitglied.id}.jpg`;
     card.appendChild(avatar);
 
-    const name = document.createElement('div');
-    name.className = 'team-name';
-    name.textContent = mitglied.name;
-    card.appendChild(name);
+    const nameEl = document.createElement('div');
+    nameEl.className = 'team-name';
+    nameEl.textContent = mitglied.name;
+    card.appendChild(nameEl);
 
-    const rolle = document.createElement('div');
-    rolle.className = 'team-role';
-    rolle.textContent = mitglied.rolle;
-    card.appendChild(rolle);
+    const rolleEl = document.createElement('div');
+    rolleEl.className = 'team-role';
+    rolleEl.textContent = mitglied.rolle;
+    card.appendChild(rolleEl);
 
     return card;
   }
