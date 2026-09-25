@@ -886,6 +886,7 @@ h1.hero-title {
 }
 
 .mc-server-text {
+  flex: 1;
   min-width: 0;
   font-family: var(--font-mc);
   font-size: 18px;
@@ -894,12 +895,11 @@ h1.hero-title {
 
 .mc-server-name {
   color: #fff;
-  text-shadow: 2px 2px 0 #3f3f3f;
 }
 
 .mc-server-motd {
-  color: var(--mc-gray);
-  text-shadow: 2px 2px 0 #2a2a2a;
+  color: #808080;
+  text-align: center;
 }
 
 .mc-buttons {
@@ -956,15 +956,8 @@ h1.hero-title {
   margin-top: 4px;
 }
 
-.mc-brand {
-  display: inline-block;
-  font-weight: 700;
-  text-shadow: none;
-  background: var(--grad-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.7));
+.mc-verlauf > span {
+  text-shadow: 2px 2px 0 color-mix(in srgb, currentColor 25%, #000);
 }
 
 .mc-duell {
@@ -972,17 +965,6 @@ h1.hero-title {
   font-weight: 700;
   text-shadow: none;
   background: linear-gradient(90deg, #FF6B6B, #C92A2A);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.7));
-}
-
-.mc-grenze {
-  display: inline-block;
-  font-weight: 700;
-  text-shadow: none;
-  background: linear-gradient(90deg, #4FA8FF, #3565d6);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1041,7 +1023,7 @@ h1.hero-title {
   font-family: var(--font-mc);
   font-size: 18px;
   line-height: 20px;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+  text-shadow: 2px 2px 0 #3f3f3f;
 }
 
 .mc-bossbar-track {
@@ -1093,11 +1075,10 @@ h1.hero-title {
   font-size: 54px;
   font-weight: 700;
   line-height: 54px;
-  background: linear-gradient(90deg, #FF6B6B, #C92A2A);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.6));
+}
+
+.mc-titel-gross.mc-verlauf > span {
+  text-shadow: 6px 6px 0 color-mix(in srgb, currentColor 25%, #000);
 }
 
 .mc-titel-klein {
@@ -4068,8 +4049,8 @@ h1.hero-title {
   }
 }
 
-@media (max-width: 560px) {
-  .mc-motd-zusatz {
+@media (max-width: 480px) {
+  .mc-breit {
     display: none;
   }
 }
@@ -4079,15 +4060,6 @@ h1.hero-title {
   .nav-inner {
     padding-left: 16px;
     padding-right: 16px;
-  }
-
-  .mc-server {
-    gap: 10px;
-  }
-
-  .mc-server-icon {
-    width: 48px;
-    height: 48px;
   }
 
   .nav-inner {
@@ -4137,20 +4109,6 @@ h1.hero-title {
 
   .ip-copy .ct {
     display: none;
-  }
-
-  .mc-server-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .mc-server-name {
-    font-size: 16px;
-  }
-
-  .mc-server-motd,
-  .mc-chat {
-    font-size: 13px;
   }
 
   .cta-btns .btn-p,

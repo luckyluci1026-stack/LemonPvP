@@ -10,7 +10,7 @@ Bild für ein Team-Mitglied hinzufügen: Datei hier in diesen Ordner legen, bena
 | `manager` | `manager.jpg` (oder `manager.png`) |
 | `admin` | `admin.jpg` (oder `admin.png`) |
 | `mod` | `mod.jpg` (oder `mod.png`) – noch kein Bild hochgeladen |
-| `sup` | `sup.jpg` (oder `sup.png`) – ist im Moment dieselbe Datei wie `manager.png` |
+| `sup` | `sup.jpg` (oder `sup.png`) – gleiches Bild wie `manager.png`, weil beide den Standard-Skin haben |
 
 - `.jpg` wird zuerst versucht, dann `.png`. Gibt es keins von beiden, erscheint ein „?“-Kopf in der Farbe der Rolle – kein Fehler, nichts kaputt.
 - Am besten sehen **PNG-Bilder mit durchsichtigem Hintergrund** aus: Dann steht der Kopf direkt auf dem farbigen Hintergrund der Rolle. Die vorhandenen Bilder sind schon so freigestellt (960 × 540 Pixel).
