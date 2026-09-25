@@ -1,0 +1,20 @@
+# Die Datenbank gehoert niemandem ausser dem Server, auf dem sie laeuft.
+daten/
+*.db
+*.db-shm
+*.db-wal
+
+# Die Minecraft-Server selbst: Jars, Welten, Plugins. Nichts davon
+# gehoert in ein Repository - Welten werden gross und Jars sind nicht
+# unser Code.
+server/
+
+# Die Backups. Sie liegen neben dem Serverordner und sind ZIPs ganzer
+# Welten - schnell dreistellige Megabyte. Ohne diese Zeile landen sie
+# beim naechsten `git add -A` im Repository, und dann bekommt man sie
+# aus der Geschichte auch nicht mehr heraus.
+sicherungen/
+
+# Der Ersatzserver, den test/alles.sh baut.
+test/ersatzserver/*.class
+test/ersatzserver/*.jar

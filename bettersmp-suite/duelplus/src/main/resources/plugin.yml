@@ -1,0 +1,35 @@
+name: DuelPlus
+version: ${project.version}
+main: de.lemonpvp.duelplus.DuelPlus
+api-version: '1.21'
+authors: [SMP]
+description: Duell-System mit echtem SMP-Loot ueber SMP, Lobby und den Duels-Server - Rollback-Arenen, Todeskamera, Loot-Shulker fuer den Gewinner.
+
+# Treiber nur gebraucht, wenn dieses Plugin laeuft - eigene Deklaration
+# noetig, auch wenn BetterSMP denselben Treiber schon laedt: jedes
+# Plugin hat bei Paper seinen eigenen Classloader.
+libraries:
+  - org.mariadb.jdbc:mariadb-java-client:3.4.1
+
+commands:
+  duel:
+    description: Fordert jemanden zu einem Duell heraus
+    usage: "/duel <Spieler> [accept|decline] | /duel <stats|top|watch|unwatch>"
+  draw:
+    description: Schlaegt im laufenden Duell ein Unentschieden vor - wirkt erst, wenn beide zustimmen
+    usage: "/draw"
+  duelplus:
+    description: DuelPlus-Verwaltung
+    usage: "/duelplus reload"
+    permission: duelplus.admin
+
+permissions:
+  duelplus.use:
+    description: /duel und der Duell-Gegenstand nutzen
+    default: true
+  duelplus.command.bypass:
+    description: Befehle bleiben waehrend eines eigenen Duells nutzbar (fuer Team)
+    default: op
+  duelplus.admin:
+    description: /duelplus reload
+    default: op

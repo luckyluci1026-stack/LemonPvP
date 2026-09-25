@@ -1,0 +1,38 @@
+name: BetterRTP
+version: ${project.version}
+main: de.lemonpvp.betterrtp.BetterRTP
+api-version: '1.21'
+authors: [SMP]
+description: Sehr gutes, vollständig asynchrones Random-Teleport-Plugin mit sicherer Positionssuche, Cooldowns, Warmup und Welt-Profilen.
+
+commands:
+  rtp:
+    description: Teleportiert dich an eine zufällige, sichere Position
+    usage: "/rtp [Welt|Spieler]"
+    aliases: [wild, randomtp, rteleport]
+    permission: betterrtp.use
+  betterrtp:
+    description: BetterRTP-Verwaltung
+    usage: "/betterrtp <reload|version>"
+    aliases: [brtp]
+    permission: betterrtp.admin
+
+permissions:
+  betterrtp.use:
+    description: Darf /rtp benutzen
+    default: true
+  betterrtp.admin:
+    description: Verwaltung + andere teleportieren
+    default: op
+  betterrtp.bypass.cooldown:
+    description: Umgeht den Cooldown
+    default: op
+  betterrtp.bypass.warmup:
+    description: Umgeht den Warmup
+    default: op
+  betterrtp.bypass.cost:
+    description: Muss nichts bezahlen
+    default: op
+  betterrtp.world:
+    description: Darf RTP in beliebiger Welt
+    default: op

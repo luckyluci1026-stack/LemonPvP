@@ -1,0 +1,73 @@
+# ==========================================================
+#  BetterRTP - Konfiguration
+#  Vollständig asynchrone, sichere Zufalls-Teleportation.
+#  Nachrichten: MiniMessage + Legacy-Farbcodes (&7, &#FFD75A).
+# ==========================================================
+
+settings:
+  # Maximale Suchversuche pro RTP, bevor abgebrochen wird
+  max-attempts: 60
+  # Cooldown in Sekunden (betterrtp.bypass.cooldown umgeht ihn)
+  cooldown-seconds: 30
+  # Warmup in Sekunden - Teleport startet verzögert; Bewegung bricht ab
+  warmup-seconds: 3
+  # Bricht der Warmup bei Bewegung ab?
+  cancel-on-move: true
+  # Bricht der Warmup bei Schaden ab?
+  cancel-on-damage: true
+  # Sekunden Unverwundbarkeit direkt nach der Ankunft
+  invulnerable-after-seconds: 3
+  # Standardwelt, wenn keine angegeben wird (leer = aktuelle Welt des Spielers)
+  default-world: ""
+
+# ---------------- Economy (optional) ----------------
+# Nutzt Vault -> EssentialsX-Economy, falls installiert.
+economy:
+  enabled: false
+  cost: 100.0
+
+# ---------------- Welt-Profile ----------------
+# Für jede Welt eigene Radien/Center. "default" gilt für alle
+# Welten ohne eigenen Eintrag. RTP in nicht aufgeführten und nicht
+# per default erlaubten Welten ist gesperrt.
+worlds:
+  default:
+    enabled: true
+    # Kreisförmige Suche um center-x/center-z
+    center-x: 0
+    center-z: 0
+    min-radius: 500
+    max-radius: 10000
+    # Weltborder respektieren (Suche bleibt innerhalb)
+    respect-worldborder: true
+    # Diese Biome werden gemieden (Namen aus der Vanilla-Registry, klein)
+    blacklist-biomes:
+      - ocean
+      - deep_ocean
+      - cold_ocean
+      - deep_cold_ocean
+      - frozen_ocean
+      - deep_frozen_ocean
+      - lukewarm_ocean
+      - deep_lukewarm_ocean
+      - warm_ocean
+      - river
+      - frozen_river
+
+  world_nether:
+    enabled: true
+    center-x: 0
+    center-z: 0
+    min-radius: 200
+    max-radius: 3000
+    respect-worldborder: true
+    blacklist-biomes: []
+
+  world_the_end:
+    enabled: false
+    center-x: 0
+    center-z: 0
+    min-radius: 200
+    max-radius: 5000
+    respect-worldborder: true
+    blacklist-biomes: []

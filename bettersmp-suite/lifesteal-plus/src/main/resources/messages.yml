@@ -1,0 +1,41 @@
+# Lifesteal+ - Nachrichten (MiniMessage + Legacy-Codes)
+prefix: "<gradient:#FF5A7A:#C0392B><bold>Lifesteal</bold></gradient> <dark_gray>»</dark_gray> "
+
+no-permission: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+players-only: "%prefix%<red>Nur für Spieler.</red>"
+reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
+player-not-found: "%prefix%<red>Spieler nicht gefunden.</red>"
+
+hearts-self: "%prefix%<gray>Du hast <red>❤ %hearts%</red> Herzen.</gray>"
+hearts-other: "%prefix%<gray><white>%player%</white> hat <red>❤ %hearts%</red> Herzen.</gray>"
+
+kill-gained: "%prefix%<green>+%amount% ❤</green> <gray>für den Kill von <white>%victim%</white>! (jetzt <white>%hearts%</white>)</gray>"
+death-lost: "%prefix%<red>-%amount% ❤</red> <gray>durch <white>%killer%</white>. (jetzt <white>%hearts%</white>)</gray>"
+death-lost-generic: "%prefix%<red>-%amount% ❤</red> <gray>(jetzt <white>%hearts%</white>)</gray>"
+max-reached: "%prefix%<gray>Du hast bereits das Maximum an Herzen.</gray>"
+
+anti-farm: "%prefix%<gray>Kein Herz - du hast <white>%victim%</white> zu kurz nacheinander besiegt.</gray>"
+anti-farm-ip: "%prefix%<gray>Kein Herz - gleiche IP-Adresse.</gray>"
+
+withdraw-success: "%prefix%<green>%amount% Herz(en) in ein Item umgewandelt.</green>"
+withdraw-too-few: "%prefix%<red>Du kannst nicht so viele Herzen abheben (min. 1 muss bleiben).</red>"
+withdraw-inventory-full: "%prefix%<red>Dein Inventar ist voll.</red>"
+
+heart-used: "%prefix%<green>+1 ❤</green> <gray>(jetzt <white>%hearts%</white>)</gray>"
+heart-used-max: "%prefix%<gray>Du bist bereits am Maximum - Item nicht verbraucht.</gray>"
+
+eliminated-self: "%prefix%<red>Du wurdest eliminiert!</red>"
+eliminated-broadcast: "<dark_gray>[<red>☠</red>]</dark_gray> <#FF5A7A>%player%</#FF5A7A> <gray>wurde eliminiert!</gray>"
+
+revive-success: "%prefix%<green><white>%player%</white> wurde wiederbelebt!</green>"
+revive-not-eliminated: "%prefix%<red>Dieser Spieler ist gar nicht eliminiert.</red>"
+revive-need-heart: "%prefix%<red>Du brauchst mindestens 2 Herzen, um jemanden wiederzubeleben.</red>"
+revive-broadcast: "<dark_gray>[<green>✚</green>]</dark_gray> <#FF5A7A>%player%</#FF5A7A> <gray>wurde von <white>%by%</white> wiederbelebt!</gray>"
+revive-prompt: "%prefix%<gray>Gib den Namen des Spielers in den Chat ein, den du wiederbeleben willst. (<white>abbrechen</white> zum Abbrechen)</gray>"
+revive-cancelled: "%prefix%<gray>Wiederbelebung abgebrochen.</gray>"
+
+combatlog-death: "%prefix%<gray><white>%player%</white> hat im Kampf ausgeloggt und Herzen verloren!</gray>"
+
+admin-usage: "%prefix%<gray>/lifesteal <reload | set <Spieler> <Herzen> | give <Spieler> [Anzahl] | eliminate <Spieler> | revive <Spieler>></gray>"
+admin-set: "%prefix%<green><white>%player%</white> hat jetzt <white>%hearts%</white> Herzen.</green>"
+admin-give: "%prefix%<green><white>%amount%</white> Herz-Item(s) an <white>%player%</white> gegeben.</green>"

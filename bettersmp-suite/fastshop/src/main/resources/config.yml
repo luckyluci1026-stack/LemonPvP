@@ -1,0 +1,17 @@
+# ==========================================================
+#  FastShop - Einstellungen
+# ==========================================================
+settings:
+  # Globaler Multiplikator auf alle Verkaufspreise (z.B. 0.9 = 10% weniger)
+  sell-multiplier: 1.0
+  # Titel des Hauptmenüs (MiniMessage)
+  menu-title: "<gradient:#6C5CE7:#00D4FF><bold>Shop</bold></gradient>"
+  # Zeilen des Hauptmenüs (1-6). 5 lässt Platz für Kopf- und Fußzeile.
+  menu-rows: 5
+  # Rahmenfarbe des Hauptmenüs (Material eines Glasfensters o.ä.)
+  border-material: BLACK_STAINED_GLASS_PANE
+  # Rahmenfarbe der Kategorieseiten
+  category-border-material: GRAY_STAINED_GLASS_PANE
+  # Sounds bei Kauf/Verkauf/Fehler
+  sounds: true
+
