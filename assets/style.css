@@ -1327,22 +1327,21 @@ h1.hero-title {
 }
 
 .mc-hotbar {
+  position: relative;
   display: flex;
-  padding: 2px;
-  background: rgba(0, 0, 0, 0.6);
-  border: 2px solid #000;
+  gap: 8px;
+  width: 204px;
+  height: 44px;
+  padding: 6px;
+  background: url('mc/hotbar_5.png') 0 0 / 204px 44px no-repeat;
+  image-rendering: pixelated;
 }
 
 .mc-hotbar span {
-  position: relative;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  box-shadow:
-    inset 0 0 0 2px #6f6f6f,
-    inset 0 0 0 4px rgba(0, 0, 0, 0.55);
-  background: rgba(58, 58, 58, 0.55);
+  width: 32px;
+  height: 32px;
 }
 
 .mc-hotbar i {
@@ -1370,38 +1369,35 @@ h1.hero-title {
   color: #dfe3e8;
 }
 
-.mc-hotbar .aktiv::after {
-  content: '';
+.mc-hotbar-auswahl {
   position: absolute;
-  inset: -6px;
-  border: 4px solid #fff;
-  box-shadow:
-    0 0 0 2px #000,
-    inset 0 0 0 2px #000;
+  top: -2px;
+  left: 78px;
 }
 
 .bild-shop {
   justify-content: flex-start;
+  padding-top: 12px;
   padding-bottom: 0;
 }
 
 .mc-gui {
+  position: relative;
+  width: 352px;
+  height: 236px;
   margin: 0 auto;
-  padding: 8px 12px 14px;
   color: #404040;
   line-height: 18px;
-  background: #c6c6c6;
-  border: 2px solid #000;
-  box-shadow:
-    inset 4px 4px 0 #fff,
-    inset -4px -4px 0 #555;
-  clip-path: polygon(4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px), calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px), 2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 2px 4px, 2px 2px, 4px 2px);
-  -webkit-mask-image: linear-gradient(#000 62%, transparent 96%);
-  mask-image: linear-gradient(#000 62%, transparent 96%);
+  background: url('mc/generic_54_5.png') 0 0 / 352px 406px no-repeat;
+  image-rendering: pixelated;
+  -webkit-mask-image: linear-gradient(#000 214px, transparent 236px);
+  mask-image: linear-gradient(#000 214px, transparent 236px);
 }
 
 .mc-gui-titel {
-  margin: 0 0 6px 2px;
+  position: absolute;
+  top: 10px;
+  left: 16px;
   font-weight: 700;
 }
 
@@ -1410,6 +1406,9 @@ h1.hero-title {
 }
 
 .mc-slots {
+  position: absolute;
+  top: 34px;
+  left: 14px;
   display: grid;
   grid-template-columns: repeat(9, 36px);
   grid-auto-rows: 36px;
@@ -1419,51 +1418,71 @@ h1.hero-title {
   position: relative;
   display: grid;
   place-items: center;
-  background: #8b8b8b url('mc/glas.png') center / 32px 32px no-repeat;
-  border: 2px solid;
-  border-color: #373737 #fff #fff #373737;
-  image-rendering: pixelated;
+  background: url('mc/black_stained_glass_pane.png') center / 32px 32px no-repeat;
 }
 
 .mc-slots > span.item {
   background-image: none;
 }
 
-.mc-slots > span.zeiger {
-  background-color: #c5c5c5;
-}
-
 .mc-slots img {
+  position: relative;
+  z-index: 1;
   width: 32px;
   height: 32px;
 }
 
-.mc-slots img.kopf {
-  width: 24px;
-  height: 24px;
+.mc-slots > span.zeiger::before,
+.mc-slots > span.zeiger::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+}
+
+.mc-slots > span.zeiger::before {
+  background: rgba(255, 255, 255, 0.376);
+}
+
+.mc-slots > span.zeiger::after {
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.125);
+}
+
+.mc-slots > span.glanz::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 2px;
+  background: url('mc/enchanted_glint_item.png') 0 0 / 64px 64px;
+  image-rendering: auto;
+  mix-blend-mode: screen;
+  mix-blend-mode: plus-lighter;
+  -webkit-mask: url('mc/nether_star.png') center / 32px 32px no-repeat;
+  mask: url('mc/nether_star.png') center / 32px 32px no-repeat;
+  animation: glanz 7s linear infinite;
+}
+
+@keyframes glanz {
+  to {
+    background-position: 64px -64px;
+  }
 }
 
 .mc-tooltip {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   top: -14px;
-  left: 42px;
-  padding: 6px 8px 4px;
+  left: 34px;
   color: #fff;
   line-height: 20px;
   text-align: left;
   white-space: nowrap;
   text-shadow: 2px 2px 0 #3f3f3f;
-  background: rgba(16, 0, 16, 0.94);
-  clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
-}
-
-.mc-tooltip::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border: 2px solid;
-  border-image: linear-gradient(rgba(80, 0, 255, 0.31), rgba(40, 0, 127, 0.31)) 1;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 5px 8px 11px;
+  border-image: url('mc/tooltip.png') 4 fill / 8px;
+  image-rendering: pixelated;
 }
 
 .mc-tooltip > span {
@@ -1496,34 +1515,21 @@ h1.hero-title {
 .mc-sonne,
 .mc-mond {
   position: absolute;
-  top: 40px;
+  top: 14px;
+  mix-blend-mode: screen;
 }
 
 .mc-sonne {
-  left: 21%;
-  width: 36px;
-  height: 36px;
-  background: #fffbe0;
-  box-shadow:
-    0 0 0 4px #ffe06a,
-    0 0 0 14px rgba(255, 214, 90, 0.22);
+  left: 12%;
 }
 
 .mc-mond {
-  right: 21%;
-  width: 30px;
-  height: 30px;
-  background:
-    linear-gradient(#b9c2cf, #b9c2cf) 6px 6px / 8px 8px no-repeat,
-    linear-gradient(#b9c2cf, #b9c2cf) 18px 18px / 6px 6px no-repeat,
-    linear-gradient(#c9d1dc, #c9d1dc) 20px 6px / 4px 4px no-repeat,
-    #e6ebf2;
-  box-shadow: 0 0 0 10px rgba(200, 214, 240, 0.08);
+  right: 12%;
 }
 
 .mc-wolke {
   position: absolute;
-  top: 122px;
+  top: 132px;
   left: 4%;
   width: 96px;
   height: 16px;
@@ -1557,7 +1563,7 @@ h1.hero-title {
   height: 32px;
   background:
     linear-gradient(90deg, transparent 42%, rgba(6, 8, 26, 0.7) 66%),
-    url('mc/gras-seite.png') 0 0 / 32px 32px repeat-x;
+    url('mc/grass_side.png') 0 0 / 32px 32px repeat-x;
   image-rendering: pixelated;
 }
 
@@ -1570,16 +1576,14 @@ h1.hero-title {
   align-items: center;
   gap: 12px;
   width: 320px;
+  max-width: 100%;
   height: 64px;
-  padding: 0 16px;
+  padding: 0 8px;
   color: #fff;
-  line-height: 20px;
-  background: #1f1f1f;
-  border: 2px solid #000;
-  box-shadow:
-    inset 0 0 0 2px #5a5a5a,
-    inset 0 0 0 4px #121212;
-  clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
+  line-height: 22px;
+  border: 8px solid transparent;
+  border-image: url('mc/toast_advancement.png') 4 fill / 8px;
+  image-rendering: pixelated;
 }
 
 .mc-toast img {
@@ -4033,7 +4037,8 @@ h1.hero-title {
   .hero .ip-wrap,
   .hero-links,
   .hero-visual,
-  .hero-logo {
+  .hero-logo,
+  .mc-slots > span.glanz::after {
     animation: none;
   }
 }
@@ -4293,6 +4298,12 @@ h1.hero-title {
   .feat-bild {
     height: 224px;
     padding: 16px;
+  }
+
+  .feat-bild.bild-shop {
+    height: 248px;
+    padding-top: 12px;
+    padding-bottom: 0;
   }
 
   .feat-text {
