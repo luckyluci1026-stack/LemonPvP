@@ -265,7 +265,30 @@ nur der Weg dorthin unterscheidet sich.
 - `duelplus.use` - `/duel` und der Gegenstand nutzen (Standard: an)
 - `duelplus.command.bypass` - Befehle bleiben während eines eigenen
   Duells nutzbar, fürs Team (Standard: nur OP)
-- `duelplus.admin` - `/duelplus reload` (Standard: nur OP)
+- `duelplus.admin` - `/duelplus reload`, außerdem sieht man die
+  Meldungen der Treffer-Prüfung im Chat (Standard: nur OP)
+
+## Treffer-Prüfung (Schläge ohne Schaden, z. B. bei Bedrock-Spielern)
+
+Auf dem Duels-Server prüft DuelPlus jeden Schlag zwischen den beiden
+Duellanten (`kampf.treffer-pruefung`, Standard: an).
+
+- **Beim Kampfstart und danach jede Sekunde** wird für beide sichergestellt:
+  nicht unverwundbar, Survival, PvP in der Arena-Welt an, gemeinsames
+  Friendly-Fire-Team (auch auf einem eigenen Scoreboard, falls ein anderes
+  Plugin eins vergibt), Weltwechsel abgeschlossen und Welt als geladen
+  markiert. War etwas davon kaputt, steht in der Konsole
+  `Treffer-Pruefung: <Name> war nicht kampfbereit und wurde repariert: ...`.
+- **Kommt ein Schlag ohne Schaden an**, obwohl er zählen müsste (also nicht
+  in der kurzen Schutzzeit direkt nach einem Treffer und nicht mit einem
+  Schild geblockt), repariert DuelPlus den Zustand sofort. Den genauen
+  Grund schreibt es in die Konsole und schickt ihn Duellanten mit
+  `duelplus.admin` in den Chat: z. B. unverwundbar markiert, falscher
+  Spielmodus, Team ohne Friendly Fire, ein anderes Plugin hat den Schaden
+  abgebrochen (mit Namen), oder Schläge kommen gar nicht erst beim Server an
+  (dann blockiert sie ein Anticheat oder Paket-Plugin schon vorher).
+- Jede Meldung kommt höchstens alle 5 Sekunden pro Spielerpaar, damit die
+  Konsole nicht vollläuft.
 
 ## Bekannte Grenzen
 

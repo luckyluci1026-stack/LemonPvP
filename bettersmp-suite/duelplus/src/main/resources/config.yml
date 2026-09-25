@@ -156,6 +156,11 @@ kampf:
     warnung-nach-minuten: 10
     frist-danach-minuten: 5
     inventar-verlust-anteil: 0.2
+  # Prueft jeden Schlag zwischen den beiden Duellanten. Macht ein Treffer
+  # keinen Schaden, obwohl er zaehlen muesste (z.B. bei Bedrock-Spielern),
+  # repariert DuelPlus den Zustand sofort und schreibt den genauen Grund
+  # in die Konsole - Duellanten mit duelplus.admin sehen ihn auch im Chat.
+  treffer-pruefung: true
 
 # ----------------------------------------------------------
 #  Loot

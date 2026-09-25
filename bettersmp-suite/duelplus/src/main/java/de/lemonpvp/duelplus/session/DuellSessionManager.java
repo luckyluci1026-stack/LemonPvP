@@ -197,6 +197,12 @@ public final class DuellSessionManager implements Listener {
                             plugin.msgs().title(p, "title-fight", "title-fight-sub");
                         }
                     }
+                    Player kampfA = Bukkit.getPlayer(duell.spielerA());
+                    Player kampfB = Bukkit.getPlayer(duell.spielerB());
+                    if (kampfA != null && kampfB != null) {
+                        plugin.trefferWaechter().kampfbereitMachen(kampfA, kampfB);
+                        plugin.trefferWaechter().kampfbereitMachen(kampfB, kampfA);
+                    }
                     // Blitzeinschlag NUR als optischer/akustischer Effekt
                     // (strikeLightningEffect statt strikeLightning) - macht
                     // KEINEN Schaden und zuendet nichts an, ist aber ein
@@ -289,6 +295,8 @@ public final class DuellSessionManager implements Listener {
                 Player teamB = Bukkit.getPlayer(session.spielerB());
                 if (teamA != null && teamB != null) {
                     kampfTeamZuweisen(teamA, teamB);
+                    plugin.trefferWaechter().kampfbereitMachen(teamA, teamB);
+                    plugin.trefferWaechter().kampfbereitMachen(teamB, teamA);
                 }
                 long seitTreffer = session.millisSeitLetztemTreffer();
                 boolean campt = seitTreffer >= campingNachMillis;
@@ -728,7 +736,7 @@ public final class DuellSessionManager implements Listener {
      * eventuell vorherigen (z.B. dem Tabliste-Team), OHNE dass DuelPlus das
      * selbst nachbilden muesste.
      */
-    private static final String KAMPF_TEAM_NAME = "duelplus_kampf";
+    static final String KAMPF_TEAM_NAME = "duelplus_kampf";
 
     private Team kampfTeam() {
         Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
@@ -783,6 +791,7 @@ public final class DuellSessionManager implements Listener {
 
     /** Wieder entfernen, sobald der Kampf vorbei ist - sonst wuerde der Team-Eintrag (ein blosser Name-String) dauerhaft haengen bleiben. */
     private void kampfTeamEntfernen(String... namen) {
+        plugin.trefferWaechter().eigeneTeamsAufraeumen(namen);
         Team team = Bukkit.getScoreboardManager().getMainScoreboard().getTeam(KAMPF_TEAM_NAME);
         if (team == null) {
             return;

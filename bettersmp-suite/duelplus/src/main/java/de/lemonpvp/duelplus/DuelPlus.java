@@ -12,6 +12,7 @@ import de.lemonpvp.duelplus.request.AnfrageManager;
 import de.lemonpvp.duelplus.request.AnfragePollTask;
 import de.lemonpvp.duelplus.session.ArenaGuardListener;
 import de.lemonpvp.duelplus.session.DuellSessionManager;
+import de.lemonpvp.duelplus.session.TrefferWaechter;
 import de.lemonpvp.duelplus.util.Msgs;
 import de.lemonpvp.duelplus.util.ProxyBridge;
 import de.lemonpvp.duelplus.zuschauer.ZuschauerManager;
@@ -36,6 +37,7 @@ public final class DuelPlus extends JavaPlugin {
     private AnfrageManager anfragen;
     private ArenaManager arenaManager;
     private DuellSessionManager sessionManager;
+    private TrefferWaechter trefferWaechter;
     private RollbackTracker rollback;
     private ZuschauerManager zuschauer;
 
@@ -80,6 +82,8 @@ public final class DuelPlus extends JavaPlugin {
             getServer().getPluginManager().registerEvents(rollback, this);
             this.arenaManager = new ArenaManager(this);
             arenaManager.arenenVorbereiten();
+            this.trefferWaechter = new TrefferWaechter(this);
+            getServer().getPluginManager().registerEvents(trefferWaechter, this);
             this.sessionManager = new DuellSessionManager(this);
             sessionManager.starten();
             getServer().getPluginManager().registerEvents(new ArenaGuardListener(this), this);
@@ -149,6 +153,10 @@ public final class DuelPlus extends JavaPlugin {
 
     public DuellSessionManager sessionManager() {
         return sessionManager;
+    }
+
+    public TrefferWaechter trefferWaechter() {
+        return trefferWaechter;
     }
 
     public RollbackTracker rollback() {

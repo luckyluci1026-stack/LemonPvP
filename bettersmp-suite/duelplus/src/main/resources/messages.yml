@@ -84,3 +84,4 @@ arena-queue: "%prefix%<gray>Gerade sind alle Arenen belegt - du kommst automatis
 item-received: "%prefix%<gray>Rechtsklick mit dem Schwert in Slot %slot% fordert jemanden heraus.</gray>"
 gui-title: "<dark_gray>» <gradient:#FF6B6B:#C92A2A>Wen herausfordern?</gradient>"
 gui-empty: "%prefix%<gray>Gerade ist niemand zum Herausfordern online.</gray>"
+hit-check: "%prefix%<gold>Schlag von <white>%angreifer%</white> auf <white>%opfer%</white> ohne Schaden.</gold> <gray>Grund: %grund%.</gray>%behoben%"
