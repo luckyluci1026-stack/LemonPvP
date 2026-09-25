@@ -145,7 +145,7 @@ ${gruppen}
   </div>
 </section>
 ` + aufruf('Etwas fehlt?', 'Frag das <span class="g">Team</span>', 'Wenn du etwas nicht findest, hilft dir das Team gern weiter.', `      <a class="btn-p" href="../help/">
-        <i class="fa-solid fa-life-ring"></i>
+        <i class="fa-solid fa-circle-question"></i>
         Hilfe-Center
       </a>
       <a class="btn-o" href="../team/">

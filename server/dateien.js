@@ -94,7 +94,7 @@ function fehlerSeite(urlPfad) {
   const ziele = [
     ['emerald', 'fa-house', 'Startseite', 'Alles über BuckSMP auf einen Blick.', 'start'],
     ['diamond', 'fa-book-open', 'Wiki', 'Anleitungen, Befehle und Hintergründe.', 'wiki'],
-    ['gold', 'fa-life-ring', 'Hilfe-Center', 'Antworten auf die häufigsten Fragen.', 'help'],
+    ['gold', 'fa-circle-question', 'Hilfe-Center', 'Antworten auf die häufigsten Fragen.', 'help'],
   ];
   const karten = ziele.map(([farbe, icon, name, beschreibung, ziel]) => `      <a class="thema ${farbe}" href="${link(seitenPfad, ziel)}">
         <div class="slot"><i class="fa-solid ${icon}"></i></div>

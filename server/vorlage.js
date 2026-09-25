@@ -86,7 +86,7 @@ function navigation(seitenPfad, aktiv) {
 <nav class="nav">
   <div class="nav-inner">
     <a class="nav-logo" href="${link(seitenPfad, 'start')}">
-      <img src="${p}assets/logo.png" alt="" width="34" height="34">
+      <img src="${p}assets/logo.webp" alt="" width="34" height="34">
       <span>BuckSMP</span>
     </a>
     <ul class="nav-links">
@@ -120,7 +120,7 @@ function fussbereich(seitenPfad, skripte = []) {
   <div class="wrap footer-top">
     <div class="footer-brand">
       <a class="nav-logo" href="${link(seitenPfad, 'start')}">
-        <img src="${p}assets/logo.png" alt="" width="34" height="34">
+        <img src="${p}assets/logo.webp" alt="" width="34" height="34">
         <span>BuckSMP</span>
       </a>
       <p>Der private Minecraft-Server vom Gymnasium Buckhorn. Survival, Duelle und Crossplay für Java und Bedrock.</p>
