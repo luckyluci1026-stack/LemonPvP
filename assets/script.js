@@ -71,12 +71,16 @@ function copyIP() {
   textKopieren(SERVER_IP).then(() => {
     const icon = document.getElementById('copyIco');
     const label = document.getElementById('copyTxt');
+    const knopf = document.querySelector('.ip-copy');
 
     if (label) {
       label.textContent = 'Kopiert!';
     }
     if (icon) {
       icon.className = 'fa-solid fa-check';
+    }
+    if (knopf) {
+      knopf.classList.add('kopiert');
     }
 
     const toast = document.getElementById('toast');
@@ -92,6 +96,9 @@ function copyIP() {
       }
       if (icon) {
         icon.className = 'fa-regular fa-copy';
+      }
+      if (knopf) {
+        knopf.classList.remove('kopiert');
       }
     }, 2500);
   });
