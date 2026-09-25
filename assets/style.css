@@ -1190,22 +1190,405 @@ h1.hero-title {
   gap: 16px;
 }
 
+.feats.start {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .feat {
   --accent: var(--diamond);
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 30px 28px 28px;
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition: border-color 0.15s ease;
+}
+
+.feat.breit {
+  grid-column: span 2;
 }
 
 .feat:hover {
-  transform: translateY(-3px);
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.feat-bild {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 248px;
+  padding: 24px;
+  overflow: hidden;
+  color: #fff;
+  font-family: var(--font-mc);
+  font-size: 18px;
+  line-height: 22px;
+  background-color: #0c0f13;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  border-bottom: 1px solid var(--line-strong);
+  user-select: none;
+}
+
+.feat-bild > * {
+  flex-shrink: 0;
+  max-width: none;
+}
+
+.feat-bild img {
+  image-rendering: pixelated;
+}
+
+.feat-bild img.mc-zeichen {
+  display: inline-block;
+  vertical-align: -3px;
+}
+
+.feat-text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 28px 28px;
+}
+
+.bild-chat {
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+.bild-chat .mc-chat {
+  width: 100%;
+  max-width: 640px;
+}
+
+.mc-tab {
+  padding: 2px 2px 6px;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: 2px 2px 0 #3f3f3f;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.mc-tab-kopf {
+  padding: 0 4px;
+}
+
+.mc-tab-kopf b {
+  color: var(--g2);
+  text-shadow: 2px 2px 0 #00353f;
+}
+
+.mc-tab-liste {
+  display: grid;
+  gap: 2px;
+  width: max-content;
+  margin: 18px auto 0;
+  list-style: none;
+}
+
+.mc-tab-liste li {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+  padding-right: 2px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.mc-tab-liste li span {
+  flex: 1;
+  min-width: 96px;
+  line-height: 16px;
+}
+
+.mc-tab-fuss {
+  margin-top: 18px;
+  padding: 0 4px;
+}
+
+.mc-strich {
+  display: inline-block;
+  width: 2px;
+  height: 16px;
+  vertical-align: -2px;
+  background: currentColor;
+  box-shadow: 2px 2px 0 #2a2a2a;
+}
+
+.mc-hotbar-name {
+  margin-bottom: 14px;
+  text-shadow: 2px 2px 0 #3f3f3f;
+}
+
+.mc-hotbar {
+  display: flex;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #000;
+}
+
+.mc-hotbar span {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  box-shadow:
+    inset 0 0 0 2px #6f6f6f,
+    inset 0 0 0 4px rgba(0, 0, 0, 0.55);
+  background: rgba(58, 58, 58, 0.55);
+}
+
+.mc-hotbar i {
+  font-size: 20px;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
+}
+
+.mc-hotbar .fa-windows {
+  color: #3ea6f2;
+}
+
+.mc-hotbar .fa-xbox {
+  color: #5dc04a;
+}
+
+.mc-hotbar .fa-playstation {
+  color: #5b93f5;
+}
+
+.mc-hotbar .fa-gamepad {
+  color: #ff4b4b;
+}
+
+.mc-hotbar .fa-mobile-screen-button {
+  color: #dfe3e8;
+}
+
+.mc-hotbar .aktiv::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 4px solid #fff;
+  box-shadow:
+    0 0 0 2px #000,
+    inset 0 0 0 2px #000;
+}
+
+.bild-shop {
+  justify-content: flex-start;
+  padding-bottom: 0;
+}
+
+.mc-gui {
+  margin: 0 auto;
+  padding: 8px 12px 14px;
+  color: #404040;
+  line-height: 18px;
+  background: #c6c6c6;
+  border: 2px solid #000;
+  box-shadow:
+    inset 4px 4px 0 #fff,
+    inset -4px -4px 0 #555;
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px), calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px), 2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 2px 4px, 2px 2px, 4px 2px);
+  -webkit-mask-image: linear-gradient(#000 62%, transparent 96%);
+  mask-image: linear-gradient(#000 62%, transparent 96%);
+}
+
+.mc-gui-titel {
+  margin: 0 0 6px 2px;
+  font-weight: 700;
+}
+
+.mc-gui-titel.mc-verlauf > span {
+  text-shadow: none;
+}
+
+.mc-slots {
+  display: grid;
+  grid-template-columns: repeat(9, 36px);
+  grid-auto-rows: 36px;
+}
+
+.mc-slots > span {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: #8b8b8b url('mc/glas.png') center / 32px 32px no-repeat;
+  border: 2px solid;
+  border-color: #373737 #fff #fff #373737;
+  image-rendering: pixelated;
+}
+
+.mc-slots > span.item {
+  background-image: none;
+}
+
+.mc-slots > span.zeiger {
+  background-color: #c5c5c5;
+}
+
+.mc-slots img {
+  width: 32px;
+  height: 32px;
+}
+
+.mc-slots img.kopf {
+  width: 24px;
+  height: 24px;
+}
+
+.mc-tooltip {
+  position: absolute;
+  z-index: 2;
+  top: -14px;
+  left: 42px;
+  padding: 6px 8px 4px;
+  color: #fff;
+  line-height: 20px;
+  text-align: left;
+  white-space: nowrap;
+  text-shadow: 2px 2px 0 #3f3f3f;
+  background: rgba(16, 0, 16, 0.94);
+  clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
+}
+
+.mc-tooltip::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 2px solid;
+  border-image: linear-gradient(rgba(80, 0, 255, 0.31), rgba(40, 0, 127, 0.31)) 1;
+}
+
+.mc-tooltip > span {
+  display: block;
+}
+
+.mc-tooltip > span:first-child {
+  margin-bottom: 4px;
+}
+
+.mc-tooltip .leer {
+  height: 20px;
+}
+
+.mc-green-fett {
+  color: var(--mc-green);
+  font-weight: 700;
+  text-shadow: 2px 2px 0 #153f15;
+}
+
+.mc-yellow {
+  color: var(--mc-yellow);
+  text-shadow: 2px 2px 0 #3f3f15;
+}
+
+.bild-himmel {
+  background: linear-gradient(90deg, #6f9df5 0%, #93b8fb 30%, #f2a867 49%, #4b3a74 58%, #141a42 74%, #080b22 100%);
+}
+
+.mc-sonne,
+.mc-mond {
+  position: absolute;
+  top: 40px;
+}
+
+.mc-sonne {
+  left: 21%;
+  width: 36px;
+  height: 36px;
+  background: #fffbe0;
+  box-shadow:
+    0 0 0 4px #ffe06a,
+    0 0 0 14px rgba(255, 214, 90, 0.22);
+}
+
+.mc-mond {
+  right: 21%;
+  width: 30px;
+  height: 30px;
+  background:
+    linear-gradient(#b9c2cf, #b9c2cf) 6px 6px / 8px 8px no-repeat,
+    linear-gradient(#b9c2cf, #b9c2cf) 18px 18px / 6px 6px no-repeat,
+    linear-gradient(#c9d1dc, #c9d1dc) 20px 6px / 4px 4px no-repeat,
+    #e6ebf2;
+  box-shadow: 0 0 0 10px rgba(200, 214, 240, 0.08);
+}
+
+.mc-wolke {
+  position: absolute;
+  top: 122px;
+  left: 4%;
+  width: 96px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 32px -16px 0 rgba(255, 255, 255, 0.85);
+}
+
+.mc-sterne {
+  position: absolute;
+  top: 30px;
+  left: 62%;
+  width: 2px;
+  height: 2px;
+  background: #fff;
+  box-shadow:
+    40px 16px #fff,
+    84px -6px rgba(255, 255, 255, 0.7),
+    118px 38px #fff,
+    22px 66px rgba(255, 255, 255, 0.6),
+    70px 92px #fff,
+    132px 104px rgba(255, 255, 255, 0.7),
+    -18px 118px rgba(255, 255, 255, 0.5),
+    100px 64px rgba(255, 255, 255, 0.5);
+}
+
+.mc-boden {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 32px;
+  background:
+    linear-gradient(90deg, transparent 42%, rgba(6, 8, 26, 0.7) 66%),
+    url('mc/gras-seite.png') 0 0 / 32px 32px repeat-x;
+  image-rendering: pixelated;
+}
+
+.bild-toasts {
+  gap: 8px;
+}
+
+.mc-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 320px;
+  height: 64px;
+  padding: 0 16px;
+  color: #fff;
+  line-height: 20px;
+  background: #1f1f1f;
+  border: 2px solid #000;
+  box-shadow:
+    inset 0 0 0 2px #5a5a5a,
+    inset 0 0 0 4px #121212;
+  clip-path: polygon(2px 0, calc(100% - 2px) 0, 100% 2px, 100% calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 0 calc(100% - 2px), 0 2px);
+}
+
+.mc-toast img {
+  width: 32px;
+  height: 32px;
+}
+
+.mc-toast-titel {
+  color: #ffff00;
 }
 
 .slot {
@@ -1227,8 +1610,8 @@ h1.hero-title {
   filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.55));
 }
 
-.feat .slot {
-  margin-bottom: 8px;
+.slot img {
+  image-rendering: pixelated;
 }
 
 .feat-name {
@@ -1243,22 +1626,6 @@ h1.hero-title {
   color: var(--text-soft);
   font-size: 0.98rem;
   line-height: 1.65;
-}
-
-.feat-badge {
-  align-self: flex-start;
-  margin-top: auto;
-  padding: 5px 10px;
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
-}
-
-.feats-more {
-  margin-top: 36px;
 }
 
 .details {
@@ -2777,10 +3144,9 @@ h1.hero-title {
   border: 1px dashed rgba(255, 255, 255, 0.2);
 }
 
-.netz-warte i {
+.netz-warte img {
   flex-shrink: 0;
-  color: var(--gold);
-  font-size: 20px;
+  image-rendering: pixelated;
 }
 
 .netz-warte strong {
@@ -3681,6 +4047,10 @@ h1.hero-title {
   .hero-visual {
     max-width: 560px;
   }
+
+  .feats.start {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1200px) {
@@ -3820,8 +4190,17 @@ h1.hero-title {
   }
 
   .feats,
+  .feats.start,
   .details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .feat.breit {
+    grid-column: auto;
+  }
+
+  .feats.start .feat.breit {
+    grid-column: span 2;
   }
 
   .moments {
@@ -3896,6 +4275,7 @@ h1.hero-title {
   }
 
   .feats,
+  .feats.start,
   .details,
   .moments,
   .moments.vorschau,
@@ -3904,6 +4284,19 @@ h1.hero-title {
   .gut-zu-wissen,
   .rules-side {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feats.start .feat.breit {
+    grid-column: auto;
+  }
+
+  .feat-bild {
+    height: 224px;
+    padding: 16px;
+  }
+
+  .feat-text {
+    padding: 20px 20px 24px;
   }
 
   .moment.podest {
