@@ -2,6 +2,7 @@ const { Fehler, jsonSenden, jsonKoerper } = require('./antwort');
 const anmeldung = require('./anmeldung');
 const einstellungen = require('./einstellungen');
 const wiki = require('./wiki');
+const { SYMBOLE, DREI_D } = require('./symbole');
 const moments = require('./moments');
 const code = require('./code');
 const { lesezeit } = require('./vorlage');
@@ -30,6 +31,8 @@ function wikiAntwort(daten) {
     artikel: daten.artikel.map(artikel => ({ ...artikel, minuten: lesezeit(artikel.inhalt) })),
     weiterleitungen: daten.weiterleitungen,
     farben: wiki.FARBEN,
+    symbole: SYMBOLE,
+    dreiD: DREI_D,
   };
 }
 

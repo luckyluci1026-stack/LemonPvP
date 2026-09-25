@@ -4,11 +4,11 @@ const { WIKI_DATEN, WIKI_ORDNER } = require('./pfade');
 const { jsonLesen, jsonSchreiben, wennGeaendertSchreiben, nacheinander } = require('./speicher');
 const { Fehler } = require('./antwort');
 const { text, attribut, vorsilbe, seitenKopf, aufruf, lesezeit, seite } = require('./vorlage');
+const { symbolName, symbolBild } = require('./symbole');
 
 const FARBEN = ['emerald', 'diamond', 'redstone', 'lapis', 'gold', 'amethyst'];
 const EINRUECKUNG = '      ';
 const SLUG_MUSTER = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const ICON_MUSTER = /^fa-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_INHALT = 200000;
 
 function slugAusText(wert) {
@@ -106,7 +106,7 @@ function leseReihenfolge(daten) {
 function wikiKarte(artikel, href) {
   const minuten = lesezeit(artikel.inhalt);
   return `        <a class="wiki-karte ${artikel.farbe} such-eintrag" href="${href}" data-stichworte="${attribut(artikel.stichworte)}">
-          <div class="slot"><i class="fa-solid ${artikel.icon}"></i></div>
+          <div class="slot">${symbolBild(artikel.icon, '../')}</div>
           <p class="wiki-karte-titel">${text(artikel.titel)}</p>
           <p class="wiki-karte-text">${text(artikel.text)}</p>
           <p class="wiki-karte-meta"><i class="fa-regular fa-clock"></i>${minuten} Min. Lesezeit</p>
@@ -292,7 +292,7 @@ function datenBereinigen(roh) {
       kurz: zeichenkette(eintrag.kurz) || titel,
       kat: zeichenkette(eintrag.kat) || 'Allgemein',
       farbe: FARBEN.includes(eintrag.farbe) ? eintrag.farbe : 'diamond',
-      icon: ICON_MUSTER.test(zeichenkette(eintrag.icon)) ? eintrag.icon : 'fa-book',
+      icon: symbolName(zeichenkette(eintrag.icon)) || 'book',
       text: zeichenkette(eintrag.text),
       stichworte: zeichenkette(eintrag.stichworte),
       inhalt: zeichenkette(eintrag.inhalt),
@@ -329,13 +329,13 @@ async function ausSeitenLesen() {
   }
 
   let gruppe = 'Allgemein';
-  const muster = /<h2 class="gruppe-titel">([^<]*)<\/h2>|<a class="wiki-karte ([a-z]+) such-eintrag" href="([a-z0-9-]+)\/" data-stichworte="([^"]*)">\s*<div class="slot"><i class="fa-solid ([a-z0-9-]+)"><\/i><\/div>/g;
+  const muster = /<h2 class="gruppe-titel">([^<]*)<\/h2>|<a class="wiki-karte ([a-z]+) such-eintrag" href="([a-z0-9-]+)\/" data-stichworte="([^"]*)">\s*<div class="slot">(?:<i class="fa-solid ([a-z0-9-]+)"><\/i>|<img src="\.\.\/assets\/mc\/([a-z0-9_]+)\.png"[^>]*>)<\/div>/g;
   for (const treffer of uebersicht.matchAll(muster)) {
     if (treffer[1] !== undefined) {
       gruppe = dekodieren(treffer[1]);
       continue;
     }
-    const [, , farbe, slug, stichworte, icon] = treffer;
+    const [, , farbe, slug, stichworte, altesSymbol, symbol] = treffer;
     let artikelSeiteHtml;
     try {
       artikelSeiteHtml = await fs.readFile(path.join(WIKI_ORDNER, slug, 'index.html'), 'utf8');
@@ -355,7 +355,7 @@ async function ausSeitenLesen() {
       kurz: dekodieren(kurz ? kurz[1] : titel[1]),
       kat: gruppe,
       farbe,
-      icon,
+      icon: symbolName(symbol || altesSymbol) || 'book',
       text: dekodieren(beschreibung ? beschreibung[1] : ''),
       stichworte: dekodieren(stichworte),
       inhalt: ausgerueckt(inhalt[1]),
@@ -456,7 +456,7 @@ function artikelAusEingabe(eingabe) {
     kurz: einzeilig(quelle.kurz) || titel,
     kat: einzeilig(quelle.kat),
     farbe: einzeilig(quelle.farbe),
-    icon: einzeilig(quelle.icon).toLowerCase(),
+    icon: symbolName(einzeilig(quelle.icon)),
     text: einzeilig(quelle.text),
     stichworte: einzeilig(quelle.stichworte),
     inhalt: inhaltAufraeumen(quelle.inhalt),
@@ -488,8 +488,8 @@ function artikelFehler(artikel, daten, alterSlug) {
   if (!FARBEN.includes(artikel.farbe)) {
     return 'Bitte wähle eine Farbe aus.';
   }
-  if (!ICON_MUSTER.test(artikel.icon) || artikel.icon.length > 50) {
-    return 'Das Symbol muss ein Font-Awesome-Name sein, zum Beispiel „fa-book“.';
+  if (!artikel.icon) {
+    return 'Bitte wähle ein Symbol aus der Liste aus.';
   }
   if (artikel.text === '') {
     return 'Bitte schreib eine kurze Beschreibung.';
@@ -651,7 +651,7 @@ function artikelFuerVorschau(artikel) {
     kurz: artikel.kurz || titel,
     kat: artikel.kat || 'Allgemein',
     farbe: FARBEN.includes(artikel.farbe) ? artikel.farbe : 'diamond',
-    icon: ICON_MUSTER.test(artikel.icon) ? artikel.icon : 'fa-book',
+    icon: artikel.icon || 'book',
   };
 }
 

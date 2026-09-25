@@ -4,7 +4,8 @@ const path = require('node:path');
 const { pipeline } = require('node:stream/promises');
 const { WURZEL, NIE_AUSLIEFERN, istSichererTeil } = require('./pfade');
 const { textSenden } = require('./antwort');
-const { link, seitenKopf, seite } = require('./vorlage');
+const { link, vorsilbe, seitenKopf, seite } = require('./vorlage');
+const { symbolBild } = require('./symbole');
 
 const DATEITYPEN = {
   '.html': 'text/html; charset=utf-8',
@@ -92,12 +93,12 @@ function fehlerSeite(urlPfad) {
   const tiefe = Math.max(0, (urlPfad.match(/\//g) || []).length - 1);
   const seitenPfad = 'x/'.repeat(tiefe);
   const ziele = [
-    ['emerald', 'fa-house', 'Startseite', 'Alles über BuckSMP auf einen Blick.', 'start'],
-    ['diamond', 'fa-book-open', 'Wiki', 'Anleitungen, Befehle und Hintergründe.', 'wiki'],
-    ['gold', 'fa-circle-question', 'Hilfe-Center', 'Antworten auf die häufigsten Fragen.', 'help'],
+    ['emerald', 'oak_door', 'Startseite', 'Alles über BuckSMP auf einen Blick.', 'start'],
+    ['diamond', 'enchanted_book', 'Wiki', 'Anleitungen, Befehle und Hintergründe.', 'wiki'],
+    ['gold', 'book', 'Hilfe-Center', 'Antworten auf die häufigsten Fragen.', 'help'],
   ];
-  const karten = ziele.map(([farbe, icon, name, beschreibung, ziel]) => `      <a class="thema ${farbe}" href="${link(seitenPfad, ziel)}">
-        <div class="slot"><i class="fa-solid ${icon}"></i></div>
+  const karten = ziele.map(([farbe, symbol, name, beschreibung, ziel]) => `      <a class="thema ${farbe}" href="${link(seitenPfad, ziel)}">
+        <div class="slot">${symbolBild(symbol, vorsilbe(seitenPfad))}</div>
         <div>
           <p class="thema-name">${name} <i class="fa-solid fa-arrow-right"></i></p>
           <p class="thema-desc">${beschreibung}</p>

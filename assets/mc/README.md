@@ -8,6 +8,7 @@ BuckSMP ist nicht offiziell mit Mojang oder Microsoft verbunden.
 |---|---|
 | Items wie `diamond.png`, `clock.png`, `hopper.png` | Original-Texturen |
 | `face_*.png` | Gesicht und Hut aus den Standard-Skins |
-| `grass_block`, `chest`, `player_head` (mit `@2x`/`@3x`) | Aus den Original-Texturen im Inventar-Winkel gerendert |
+| `grass_block`, `bedrock`, `bricks`, `command_block`, `observer`, `crafting_table`, `chest`, `player_head` (mit `@2x`/`@3x`) | Aus den Original-Texturen im Inventar-Winkel gerendert |
 | `hotbar_5.png`, `generic_54_5.png`, `tooltip.png`, `grass_side.png` | Aus Original-Texturen zusammengesetzt |
+| `button*.png`, `boss_bar_*.png`, `*_separator.png`, `menu_list_background.png` | Original-GUI-Texturen |
 | `zeichen-verbot.png`, `zeichen-sonne.png` | Selbst gezeichnet (die Chat-Zeichen ⛔ und ☀) |

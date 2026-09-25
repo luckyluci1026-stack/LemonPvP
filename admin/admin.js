@@ -19,14 +19,6 @@ const FARB_NAMEN = {
   amethyst: 'Amethyst',
 };
 
-const SYMBOLE = [
-  'fa-book', 'fa-book-open', 'fa-terminal', 'fa-hand-fist', 'fa-shield-halved', 'fa-coins',
-  'fa-flag-checkered', 'fa-mobile-screen-button', 'fa-person-running', 'fa-crosshairs', 'fa-cube',
-  'fa-scale-balanced', 'fa-house', 'fa-map', 'fa-compass', 'fa-gem', 'fa-hammer', 'fa-trophy',
-  'fa-users', 'fa-circle-question', 'fa-lightbulb', 'fa-gear', 'fa-wheat-awn', 'fa-dragon',
-  'fa-skull', 'fa-heart', 'fa-star', 'fa-fire', 'fa-bolt', 'fa-gamepad',
-];
-
 const SEITEN_LINKS = [
   ['Startseite', '../../'],
   ['Features', '../../features/'],
@@ -122,6 +114,19 @@ function el(tag, eigenschaften = {}, ...kinder) {
 
 function icon(name) {
   return el('i', { klasse: `fa-solid ${name}`, 'aria-hidden': 'true' });
+}
+
+function symbolBild(name) {
+  const wiki = zustand.wiki || { symbole: [], dreiD: [] };
+  const symbol = wiki.symbole.includes(name) ? name : 'barrier';
+  const datei = `../assets/mc/${symbol}`;
+  return el('img', {
+    src: `${datei}.png`,
+    srcset: wiki.dreiD.includes(symbol) ? `${datei}.png 1x, ${datei}@2x.png 2x, ${datei}@3x.png 3x` : null,
+    alt: '',
+    width: 32,
+    height: 32,
+  });
 }
 
 function knopf({ text, symbol, klick, klasse = '', titel, aus = false }) {
@@ -427,6 +432,7 @@ function wikiUebernehmen(daten) {
   zustand.wiki = daten;
   if (ersterAufruf) {
     farbenAnlegen(daten.farben);
+    symboleAnlegen();
   }
   wikiZeichnen();
 }
@@ -458,7 +464,7 @@ function gruppeKarte(gruppe, index, anzahl, artikelListe) {
 
 function artikelZeile(artikel, position, anzahl) {
   return el('li', { klasse: 'artikel-zeile' },
-    el('span', { klasse: `slot ${artikel.farbe}` }, icon(artikel.icon)),
+    el('span', { klasse: `slot ${artikel.farbe}` }, symbolBild(artikel.icon)),
     el('div', { klasse: 'artikel-info' },
       el('button', { type: 'button', klasse: 'artikel-titel', text: artikel.titel, bei: { click: () => editorOeffnen(artikel.slug) } }),
       el('span', { klasse: 'artikel-meta' }, el('code', { text: `/wiki/${artikel.slug}/` }), ` · ${artikel.minuten} Min. Lesezeit`)),
@@ -594,14 +600,14 @@ function gewaehlteFarbe() {
 }
 
 function symboleAnlegen() {
-  holen('symbolListe').replaceChildren(...SYMBOLE.map(name => el('button', {
+  holen('symbolListe').replaceChildren(...zustand.wiki.symbole.map(name => el('button', {
     type: 'button',
     klasse: 'symbol-knopf',
     title: name,
     'aria-label': name,
     daten: { symbol: name },
     bei: { click: () => symbolSetzen(name) },
-  }, icon(name))));
+  }, symbolBild(name))));
 }
 
 function symbolSetzen(name) {
@@ -611,7 +617,7 @@ function symbolSetzen(name) {
 
 function symbolVorschauZeigen() {
   const name = holen('feldIcon').value.trim();
-  holen('symbolVorschau').replaceChildren(icon(/^fa-[a-z0-9-]+$/.test(name) ? name : 'fa-question'));
+  holen('symbolVorschau').replaceChildren(symbolBild(name));
   for (const knopfElement of holen('symbolListe').children) {
     knopfElement.classList.toggle('aktiv', knopfElement.dataset.symbol === name);
   }
@@ -672,7 +678,7 @@ function editorFuellen(artikel) {
     kurz: '',
     kat: zustand.wiki.gruppen[0] || '',
     farbe: 'diamond',
-    icon: 'fa-book',
+    icon: 'book',
     text: '',
     stichworte: '',
     inhalt: NEUER_INHALT,
@@ -1753,7 +1759,6 @@ window.addEventListener('beforeunload', event => {
 });
 
 werkzeugeAnlegen();
-symboleAnlegen();
 ansichtSetzen(startAnsicht());
 sicherungenZeichnen([]);
 starten();

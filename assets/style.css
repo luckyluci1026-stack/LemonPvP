@@ -914,27 +914,33 @@ h1.hero-title {
 
 .mc-btn {
   display: block;
-  padding: 8px 10px;
+  height: 40px;
+  padding: 0 4px 2px;
+  overflow: hidden;
   color: #fff;
   font-family: var(--font-mc);
   font-size: 18px;
-  line-height: 20px;
+  line-height: 26px;
   text-align: center;
+  white-space: nowrap;
   text-shadow: 2px 2px 0 #3f3f3f;
-  background: #6f6f6f;
-  border: 2px solid #000;
-  box-shadow:
-    inset 2px 2px 0 #a9a9a9,
-    inset -2px -3px 0 #555;
+  border: 6px solid transparent;
+  border-image: url('mc/button.png') 3 fill / 6px repeat;
+  image-rendering: pixelated;
 }
 
 .mc-btn.active {
-  color: var(--mc-yellow);
-  text-shadow: 2px 2px 0 #3f3f15;
-  background: #7e8a9c;
-  box-shadow:
-    inset 2px 2px 0 #b8c4d6,
-    inset -2px -3px 0 #5b6575;
+  border-image-source: url('mc/button_highlighted.png');
+}
+
+.mc-liste {
+  margin: 0 -28px;
+  padding: 16px 28px;
+  background:
+    url('mc/header_separator.png') 0 0 / 64px 4px repeat-x,
+    url('mc/footer_separator.png') 0 100% / 64px 4px repeat-x,
+    url('mc/menu_list_background.png') 0 0 / 32px 32px;
+  image-rendering: pixelated;
 }
 
 .mc-chat {
@@ -1031,40 +1037,23 @@ h1.hero-title {
 
 .mc-bossbar-track {
   position: relative;
-  height: 12px;
-  background: #202020;
-  border: 2px solid #000;
+  width: 364px;
+  max-width: 100%;
+  height: 10px;
+  margin: 0 auto;
+  background:
+    url('mc/boss_bar_notched_10_background.png') 0 0 / 100% 100%,
+    url('mc/boss_bar_blue_background.png') 0 0 / 100% 100%;
+  image-rendering: pixelated;
 }
 
 .mc-bossbar-fill {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: var(--fuellung, 60%);
-  background: var(--balken, #3a8ee6);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.25);
-}
-
-.mc-bossbar-track::after {
-  content: '';
-  position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), rgba(0, 0, 0, 0.45) calc(10% - 2px) 10%);
-}
-
-.mc-bossbar.blau {
-  --balken: #3a8ee6;
-}
-
-.mc-bossbar.gelb {
-  --balken: #e9c93a;
-}
-
-.mc-bossbar.rot {
-  --balken: #dd3f3a;
+  background:
+    url('mc/boss_bar_notched_10_progress.png') 0 0 / 100% 100%,
+    url('mc/boss_bar_blue_progress.png') 0 0 / 100% 100%;
+  clip-path: inset(0 calc(100% - var(--fuellung, 60%)) 0 0);
 }
 
 .mc-titel {
@@ -4358,6 +4347,11 @@ h1.hero-title {
 
   .mc-view-bar {
     margin: -18px -18px 18px;
+  }
+
+  .mc-liste {
+    margin: 0 -18px;
+    padding: 16px 18px;
   }
 
   .mc-buttons {

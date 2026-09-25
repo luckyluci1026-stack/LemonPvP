@@ -681,6 +681,11 @@ select.eingabe {
   filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.55));
 }
 
+.slot img,
+.symbol-knopf img {
+  image-rendering: pixelated;
+}
+
 .kacheln {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
