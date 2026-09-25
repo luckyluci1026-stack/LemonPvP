@@ -635,40 +635,8 @@ button {
   gap: 64px;
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  color: var(--text-soft);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  animation: fadeUp 0.6s ease both;
-}
-
-.eyebrow-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--g2);
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.7);
-  animation: blink 2s ease infinite;
-}
-
-@keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}
-
 h1.hero-title {
-  margin: 30px 0 26px;
+  margin: 0 0 26px;
   font-family: var(--font-pixel);
   font-size: clamp(2.1rem, 5.4vw, 4.4rem);
   font-weight: 400;
@@ -4019,8 +3987,6 @@ h1.hero-title {
     animation: none;
   }
 
-  .eyebrow,
-  .eyebrow-dot,
   h1.hero-title,
   .hero-sub,
   .hero .ip-wrap,
