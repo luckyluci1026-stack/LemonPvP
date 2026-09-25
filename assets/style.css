@@ -848,6 +848,7 @@ h1.hero-title {
 }
 
 .mc-server {
+  --symbol: 64px;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -856,10 +857,16 @@ h1.hero-title {
   border: 2px solid #fff;
 }
 
+.mc-server::after {
+  content: '';
+  flex-shrink: 0;
+  width: var(--symbol);
+}
+
 .mc-server-icon {
   flex-shrink: 0;
-  width: 64px;
-  height: 64px;
+  width: var(--symbol);
+  height: var(--symbol);
   object-fit: contain;
 }
 
@@ -891,10 +898,6 @@ h1.hero-title {
   font-family: var(--font-mc);
   font-size: 18px;
   line-height: 22px;
-}
-
-.mc-server-name {
-  color: #fff;
 }
 
 .mc-server-motd {
@@ -4052,6 +4055,18 @@ h1.hero-title {
 @media (max-width: 480px) {
   .mc-breit {
     display: none;
+  }
+
+  .mc-server {
+    --symbol: 48px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 370px) {
+  .mc-server {
+    --symbol: 40px;
+    gap: 8px;
   }
 }
 
