@@ -13,10 +13,9 @@ Einfaches, customizables Shop-/Verkaufssystem (Paper 1.21.11).
 - **Voll konfigurierbar** über `shop.yml` (Kategorien, Items, Preise) – ein
   reichhaltiger Standard-Katalog ist bereits enthalten, inklusive `pvp`- und
   `tools`-Kategorien mit fertig verzauberten Waffen/Rüstungen/Werkzeugen
-  (`enchants:` pro Item, rein config-gesteuert). Preise in `ores` (ab Diamant
-  aufwärts) und die Diamant-/Netherit-Ausrüstung sind an echten
-  DonutSMP-Marktpreisen ausgerichtet (Stand September 2026) – ein reines
-  Preisgefühl, kein Live-Feed, da DonutSMPs Markt spielergetrieben schwankt.
+  (`enchants:` pro Item, rein config-gesteuert). Die Preise für Erze, Barren
+  und Netherit legt das Server-Team fest (Stand September 2026: Diamant
+  1.250, Netherit-Block 90.000, Netherit-Rüstung höchstens 15.000).
   `sell-multiplier` global.
 - **Schutz**: Bulk-Verkauf ignoriert benannte/verzauberte/beschädigte Items
   (deine Ausrüstung wird nicht versehentlich verkauft).

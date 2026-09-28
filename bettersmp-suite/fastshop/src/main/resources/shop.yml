@@ -27,28 +27,37 @@ categories:
       - { material: GLASS,        buy: 6,   sell: 2 }
       - { material: SANDSTONE,    buy: 8,   sell: 2 }
       - { material: OBSIDIAN,     buy: 80,  sell: 20 }
+      - { material: SPRUCE_LOG,   buy: 12,  sell: 4 }
+      - { material: BIRCH_LOG,    buy: 12,  sell: 4 }
+      - { material: STONE_BRICKS, buy: 7,   sell: 2 }
+      - { material: SMOOTH_STONE, buy: 8,   sell: 2 }
+      - { material: COBBLED_DEEPSLATE, buy: 4, sell: 1 }
+      - { material: BRICKS,       buy: 20,  sell: 5 }
+      - { material: TERRACOTTA,   buy: 10,  sell: 3 }
+      - { material: WHITE_WOOL,   buy: 10,  sell: 3 }
+      - { material: WHITE_CONCRETE, buy: 12, sell: 3 }
+      - { material: QUARTZ_BLOCK, buy: 120, sell: 36 }
 
   ores:
     icon: DIAMOND
     name: "&b&lErze & Barren"
     slot: 12
     items:
-      # Skalierung an echten DonutSMP-Marktpreisen orientiert (Stand
-      # September 2026, donutsmp.finance/donutsmpterminal.com) - dort ein
-      # live schwankender Spieler-Markt, hier feste Zahlen als Anhaltspunkt.
+      # Preise vom Server-Team festgelegt (Stand September 2026). Der
+      # Netherit-Barren ist aus dem Block abgeleitet (Block = 9 Barren).
       - { material: COAL,           buy: 25,   sell: 7 }
-      - { material: IRON_INGOT,     buy: 100,  sell: 30 }
-      - { material: GOLD_INGOT,     buy: 150,  sell: 45 }
-      - { material: DIAMOND,        buy: 1500, sell: 450 }
+      - { material: IRON_INGOT,     buy: 115,  sell: 45 }
+      - { material: GOLD_INGOT,     buy: 225,  sell: 85 }
+      - { material: DIAMOND,        buy: 1250, sell: 400 }
       - { material: EMERALD,        buy: 500,  sell: 150 }
       - { material: REDSTONE,       buy: 20,   sell: 6 }
       - { material: LAPIS_LAZULI,   buy: 20,   sell: 6 }
       - { material: COPPER_INGOT,   buy: 50,   sell: 15 }
       - { material: QUARTZ,         buy: 30,   sell: 9 }
-      - { material: ANCIENT_DEBRIS,   buy: -1,        sell: 390000 }
-      - { material: NETHERITE_SCRAP,  buy: -1,        sell: 360000 }
-      - { material: NETHERITE_INGOT,  buy: 4000000,   sell: 1200000 }
-      - { material: NETHERITE_BLOCK,  buy: 48000000,  sell: 14400000 }
+      - { material: ANCIENT_DEBRIS,   buy: 1750,   sell: 400 }
+      - { material: NETHERITE_SCRAP,  buy: 1850,   sell: 450 }
+      - { material: NETHERITE_INGOT,  buy: 10000,  sell: 1650 }
+      - { material: NETHERITE_BLOCK,  buy: 90000,  sell: 15000 }
 
   food:
     icon: COOKED_BEEF
@@ -62,7 +71,7 @@ categories:
       - { material: COOKED_CHICKEN, buy: 12, sell: 4 }
       - { material: CARROT,        buy: 5,   sell: 1 }
       - { material: POTATO,        buy: 5,   sell: 1 }
-      - { material: GOLDEN_APPLE,  buy: 250, sell: 80 }
+      - { material: GOLDEN_APPLE,  buy: 375, sell: 80 }
       - { material: SUGAR_CANE,    buy: 6,   sell: 2 }
       - { material: MELON_SLICE,   buy: 3,   sell: 1 }
 
@@ -127,9 +136,10 @@ categories:
       - { material: IRON_AXE,      buy: 280,  sell: 85 }
 
       # ---- Nahkampf: fertig verzaubert (Preis am Materialwert oben in
-      # "Erze & Barren" ausgerichtet: Diamant 1500, Netherit-Barren 4 Mio.) ----
+      # "Erze & Barren" ausgerichtet: Diamant 1250, Netherit-Ausrüstung
+      # höchstens 15.000) ----
       - material: DIAMOND_SWORD
-        buy: 3200
+        buy: 2650
         sell: -1
         name: "<aqua><bold>Klinge der Schärfe</bold></aqua>"
         lore:
@@ -138,7 +148,7 @@ categories:
         enchants:
           sharpness: 4
       - material: DIAMOND_AXE
-        buy: 4700
+        buy: 3900
         sell: -1
         name: "<aqua><bold>Kriegsbeil</bold></aqua>"
         lore:
@@ -147,7 +157,7 @@ categories:
         enchants:
           sharpness: 3
       - material: NETHERITE_SWORD
-        buy: 4200000
+        buy: 8000
         sell: -1
         name: "<gradient:#6C5CE7:#00D4FF><bold>Schattenklinge</bold></gradient>"
         lore:
@@ -187,16 +197,16 @@ categories:
       - { material: IRON_BOOTS,      buy: 190, sell: 55 }
 
       # ---- Rüstung: Diamant, fertig verzaubert (Protection III) ----
-      - { material: DIAMOND_HELMET,     buy: 7800,  sell: -1, enchants: { protection: 3 } }
-      - { material: DIAMOND_CHESTPLATE, buy: 12500, sell: -1, enchants: { protection: 3 } }
-      - { material: DIAMOND_LEGGINGS,   buy: 11000, sell: -1, enchants: { protection: 3 } }
-      - { material: DIAMOND_BOOTS,      buy: 6300,  sell: -1, enchants: { protection: 3 } }
+      - { material: DIAMOND_HELMET,     buy: 6500,  sell: -1, enchants: { protection: 3 } }
+      - { material: DIAMOND_CHESTPLATE, buy: 10400, sell: -1, enchants: { protection: 3 } }
+      - { material: DIAMOND_LEGGINGS,   buy: 9150,  sell: -1, enchants: { protection: 3 } }
+      - { material: DIAMOND_BOOTS,      buy: 5250,  sell: -1, enchants: { protection: 3 } }
 
       # ---- Rüstung: Netherit, fertig verzaubert (Protection IV) ----
-      - { material: NETHERITE_HELMET,     buy: 4050000, sell: -1, enchants: { protection: 4 } }
-      - { material: NETHERITE_CHESTPLATE, buy: 4120000, sell: -1, enchants: { protection: 4 } }
-      - { material: NETHERITE_LEGGINGS,   buy: 4100000, sell: -1, enchants: { protection: 4 } }
-      - { material: NETHERITE_BOOTS,      buy: 4040000, sell: -1, enchants: { protection: 4 } }
+      - { material: NETHERITE_HELMET,     buy: 11000, sell: -1, enchants: { protection: 4 } }
+      - { material: NETHERITE_CHESTPLATE, buy: 15000, sell: -1, enchants: { protection: 4 } }
+      - { material: NETHERITE_LEGGINGS,   buy: 13500, sell: -1, enchants: { protection: 4 } }
+      - { material: NETHERITE_BOOTS,      buy: 10000, sell: -1, enchants: { protection: 4 } }
 
       # ---- Sonstiges ----
       - { material: SHIELD,           buy: 80,   sell: 20 }
@@ -218,7 +228,7 @@ categories:
 
       # ---- Abbau: fertig verzaubert ----
       - material: DIAMOND_PICKAXE
-        buy: 3200
+        buy: 2650
         sell: -1
         name: "<aqua><bold>Glücksspitzhacke</bold></aqua>"
         lore:
@@ -228,7 +238,7 @@ categories:
           fortune: 3
           unbreaking: 2
       - material: NETHERITE_PICKAXE
-        buy: 4200000
+        buy: 12500
         sell: -1
         name: "<gradient:#6C5CE7:#00D4FF><bold>Bergbau-Legende</bold></gradient>"
         lore:
@@ -241,7 +251,7 @@ categories:
           unbreaking: 3
           mending: 1
       - material: DIAMOND_SHOVEL
-        buy: 1600
+        buy: 1350
         sell: -1
         name: "<aqua><bold>Erdbewegerin</bold></aqua>"
         lore:
