@@ -4,12 +4,15 @@ import de.lemonpvp.duelplus.DuelPlus;
 import de.lemonpvp.duelplus.db.DuelDatabase;
 import de.lemonpvp.duelplus.db.DuelRecord;
 import de.lemonpvp.duelplus.db.SpielerSnapshot;
+import de.lemonpvp.duelplus.loot.Nachlieferung;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Der Hintergrundabgleich, der alle Server ueber dieselbe Datenbank
@@ -30,6 +33,7 @@ import java.util.concurrent.CompletableFuture;
 public final class AnfragePollTask {
 
     private final DuelPlus plugin;
+    private final Set<String> inArbeit = ConcurrentHashMap.newKeySet();
 
     public AnfragePollTask(DuelPlus plugin) {
         this.plugin = plugin;
@@ -158,15 +162,17 @@ public final class AnfragePollTask {
             for (DuelRecord duell : liste) {
                 UUID spielerUuid = istA ? duell.spielerA() : duell.spielerB();
                 Player spieler = Bukkit.getPlayer(spielerUuid);
-                if (spieler == null) {
+                String schluessel = duell.id() + ":" + spielerUuid;
+                if (spieler == null || !inArbeit.add(schluessel)) {
                     continue;
                 }
                 String ergebnisKey = duell.gewinner() == null ? "draw-result"
                         : spielerUuid.equals(duell.gewinner()) ? "you-won" : "you-lost";
-                // Erst wirklich anwenden, DANACH als erledigt markieren - sonst
-                // wuerde ein Fehler mittendrin die Zeile trotzdem als erledigt
-                // stehen lassen und es gaebe keinen zweiten Versuch mehr.
-                plugin.db().snapshotHolenUndLoeschen(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_ZURUECK)
+                // Erst wirklich anwenden, DANACH den Schnappschuss loeschen und
+                // als erledigt markieren - sonst wuerde ein Fehler mittendrin
+                // (oder ein Spieler, der genau in diesem Moment offline geht)
+                // das Ergebnis verlieren, ohne dass es einen zweiten Versuch gibt.
+                plugin.db().snapshotLesen(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_ZURUECK)
                         .thenAccept(snapshotOpt -> {
                             if (snapshotOpt.isEmpty()) {
                                 // Status faellt beim Gewinner schon auf BEENDET,
@@ -177,38 +183,50 @@ public final class AnfragePollTask {
                                 // Status-Wechsel selbst aber schon direkt nach dem
                                 // (sofortigen) Verlierer-Schnappschuss. Auf GAR
                                 // KEINEN Fall hier schon als bearbeitet markieren -
-                                // sonst wuerde der naechste Poll-Tick (typischerweise
-                                // schon nach ~1 Sekunde, siehe anfrage.poll-takt)
-                                // diese Zeile faelschlich als erledigt liegen lassen,
-                                // WEIT bevor der eigentliche Schnappschuss ueberhaupt
-                                // da ist - der Gewinner haette sein gewonnenes
-                                // Inventar dann NIE bekommen. Einfach nichts tun,
-                                // der naechste Tick versucht es von selbst erneut.
+                                // sonst wuerde der naechste Poll-Tick diese Zeile
+                                // faelschlich als erledigt liegen lassen, WEIT bevor
+                                // der eigentliche Schnappschuss ueberhaupt da ist.
+                                // Einfach nichts tun, der naechste Tick versucht es
+                                // von selbst erneut.
+                                inArbeit.remove(schluessel);
                                 return;
                             }
                             SpielerSnapshot snapshot = snapshotOpt.get();
+                            if (plugin.istLootQuelle()) {
+                                Bukkit.getScheduler().runTask(plugin, () -> {
+                                    if (!spieler.isOnline()) {
+                                        inArbeit.remove(schluessel);
+                                        return;
+                                    }
+                                    snapshot.anwenden(spieler.getInventory());
+                                    Nachlieferung.zustellen(plugin, spieler, snapshot.nachlieferung());
+                                    abschliessen(duell, istA, spieler, ergebnisKey, schluessel);
+                                });
+                                return;
+                            }
                             // Nicht die Loot-Quelle (z.B. Lobby): das Ergebnis
                             // gehoert in den Spiegel, NICHT in das lokale
                             // Live-Inventar dieses Servers - erst beim
                             // naechsten Beitritt zur Loot-Quelle (SMP) wird
                             // es wirklich uebernommen (StammInventarService).
-                            CompletableFuture<Void> vorbereitung = plugin.istLootQuelle()
-                                    ? CompletableFuture.completedFuture(null)
-                                    : plugin.db().stammInventarSchreiben(spielerUuid, snapshot);
-                            vorbereitung.thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                                if (plugin.istLootQuelle()) {
-                                    snapshot.anwenden(spieler.getInventory());
-                                }
-                                String gegnerName = istA ? duell.spielerBName() : duell.spielerAName();
-                                plugin.msgs().send(spieler, ergebnisKey, "gegner", gegnerName);
-                                if (istA) {
-                                    plugin.db().markiereBearbeitetA(duell.id());
-                                } else {
-                                    plugin.db().markiereBearbeitetB(duell.id());
-                                }
-                            }));
+                            plugin.db().stammInventarSchreiben(spielerUuid, snapshot.ohneNachlieferung())
+                                    .thenCompose(unused -> plugin.db().nachlieferungAnhaengen(spielerUuid, snapshot.nachlieferung()))
+                                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () ->
+                                            abschliessen(duell, istA, spieler, ergebnisKey, schluessel)));
                         });
             }
         });
+    }
+
+    private void abschliessen(DuelRecord duell, boolean istA, Player spieler, String ergebnisKey, String schluessel) {
+        UUID spielerUuid = istA ? duell.spielerA() : duell.spielerB();
+        if (spieler.isOnline()) {
+            String gegnerName = istA ? duell.spielerBName() : duell.spielerAName();
+            plugin.msgs().send(spieler, ergebnisKey, "gegner", gegnerName);
+        }
+        plugin.db().snapshotLoeschen(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_ZURUECK);
+        CompletableFuture<Void> markiert = istA ? plugin.db().markiereBearbeitetA(duell.id())
+                                                : plugin.db().markiereBearbeitetB(duell.id());
+        markiert.whenComplete((unused, fehler) -> inArbeit.remove(schluessel));
     }
 }

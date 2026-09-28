@@ -1,6 +1,7 @@
 package de.lemonpvp.duelplus.db;
 
 import de.lemonpvp.duelplus.DuelPlus;
+import org.bukkit.inventory.ItemStack;
 
 import java.sql.Connection;
 import java.sql.Driver;
@@ -8,7 +9,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
@@ -100,6 +104,9 @@ public final class DuelDatabase {
                 + "daten LONGTEXT, erstellt BIGINT, PRIMARY KEY (duell_id, spieler, richtung))",
             "CREATE TABLE IF NOT EXISTS duelplus_stamm_inventar ("
                 + "uuid VARCHAR(36) PRIMARY KEY, daten LONGTEXT, aktualisiert BIGINT)",
+            "CREATE TABLE IF NOT EXISTS duelplus_nachlieferung ("
+                + "id BIGINT AUTO_INCREMENT PRIMARY KEY, uuid VARCHAR(36), daten LONGTEXT, erstellt BIGINT, "
+                + "INDEX (uuid))",
             "CREATE TABLE IF NOT EXISTS duelplus_stats ("
                 + "uuid VARCHAR(36) PRIMARY KEY, name VARCHAR(32), "
                 + "siege INT DEFAULT 0, niederlagen INT DEFAULT 0, unentschieden INT DEFAULT 0)",
@@ -281,21 +288,34 @@ public final class DuelDatabase {
         });
     }
 
-    /** ANGENOMMEN- oder AKTIV-Duell, an dem dieser Spieler gerade beteiligt ist - fuer die Ankunft auf dem Arena-Server. */
-    public CompletableFuture<Optional<DuelRecord>> aktivesDuellFuer(UUID spieler) {
+    public CompletableFuture<Optional<DuelRecord>> angenommenesDuellFuer(UUID spieler) {
         return supply(() -> {
             try (PreparedStatement ps = conn().prepareStatement(
-                    "SELECT * FROM duelplus_duelle WHERE (spieler_a=? OR spieler_b=?) AND status IN (?,?) LIMIT 1")) {
+                    "SELECT * FROM duelplus_duelle WHERE (spieler_a=? OR spieler_b=?) AND status=? "
+                            + "ORDER BY erstellt DESC LIMIT 1")) {
                 ps.setString(1, spieler.toString());
                 ps.setString(2, spieler.toString());
                 ps.setString(3, DuelRecord.ANGENOMMEN);
-                ps.setString(4, DuelRecord.AKTIV);
                 try (ResultSet rs = ps.executeQuery()) {
                     return rs.next() ? Optional.of(lese(rs)) : Optional.empty();
                 }
             } catch (SQLException e) {
-                warn("aktivesDuellFuer", e);
+                warn("angenommenesDuellFuer", e);
                 return Optional.empty();
+            }
+        });
+    }
+
+    public CompletableFuture<Integer> aktiveDuelleAbbrechen() {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "UPDATE duelplus_duelle SET status=?, a_bearbeitet=TRUE, b_bearbeitet=TRUE WHERE status=?")) {
+                ps.setString(1, DuelRecord.ABGELAUFEN);
+                ps.setString(2, DuelRecord.AKTIV);
+                return ps.executeUpdate();
+            } catch (SQLException e) {
+                warn("aktiveDuelleAbbrechen", e);
+                return 0;
             }
         });
     }
@@ -523,6 +543,81 @@ public final class DuelDatabase {
     // ================================================================
 
     /** Wird laufend UEBERSCHRIEBEN (kein Einmal-Transport wie snapshotSchreiben) - ein staendiger Spiegel. */
+    public CompletableFuture<Optional<SpielerSnapshot>> snapshotLesen(String duellId, UUID spieler, String richtung) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT daten FROM duelplus_inventar WHERE duell_id=? AND spieler=? AND richtung=?")) {
+                ps.setString(1, duellId);
+                ps.setString(2, spieler.toString());
+                ps.setString(3, richtung);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? Optional.of(InventarCodec.dekodieren(rs.getString("daten"))) : Optional.empty();
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("DuelPlus: Inventar-Snapshot konnte nicht gelesen werden: " + e.getMessage());
+                return Optional.empty();
+            }
+        });
+    }
+
+    public CompletableFuture<Void> snapshotLoeschen(String duellId, UUID spieler, String richtung) {
+        return run(() -> update("DELETE FROM duelplus_inventar WHERE duell_id=? AND spieler=? AND richtung=?",
+                duellId, spieler.toString(), richtung));
+    }
+
+    public CompletableFuture<Void> nachlieferungAnhaengen(UUID spieler, List<ItemStack> items) {
+        if (items.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return run(() -> {
+            try {
+                String daten = InventarCodec.kodierenListe(items);
+                try (PreparedStatement ps = conn().prepareStatement(
+                        "INSERT INTO duelplus_nachlieferung(uuid,daten,erstellt) VALUES(?,?,?)")) {
+                    ps.setString(1, spieler.toString());
+                    ps.setString(2, daten);
+                    ps.setLong(3, System.currentTimeMillis());
+                    ps.executeUpdate();
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("DuelPlus: Nachlieferung konnte nicht gespeichert werden: " + e.getMessage());
+            }
+        });
+    }
+
+    public CompletableFuture<Map<Long, List<ItemStack>>> nachlieferungLesen(UUID spieler) {
+        return supply(() -> {
+            Map<Long, List<ItemStack>> eintraege = new LinkedHashMap<>();
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT id, daten FROM duelplus_nachlieferung WHERE uuid=? ORDER BY id")) {
+                ps.setString(1, spieler.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        eintraege.put(rs.getLong("id"), InventarCodec.dekodierenListe(rs.getString("daten")));
+                    }
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("DuelPlus: Nachlieferung konnte nicht gelesen werden: " + e.getMessage());
+                return Map.of();
+            }
+            return eintraege;
+        });
+    }
+
+    public CompletableFuture<Void> nachlieferungLoeschen(Collection<Long> ids) {
+        List<Long> kopie = new ArrayList<>(ids);
+        return run(() -> {
+            for (Long id : kopie) {
+                try (PreparedStatement ps = conn().prepareStatement("DELETE FROM duelplus_nachlieferung WHERE id=?")) {
+                    ps.setLong(1, id);
+                    ps.executeUpdate();
+                } catch (SQLException e) {
+                    warn("nachlieferungLoeschen", e);
+                }
+            }
+        });
+    }
+
     public CompletableFuture<Void> stammInventarSchreiben(UUID spieler, SpielerSnapshot snapshot) {
         return run(() -> {
             try {
@@ -701,9 +796,11 @@ public final class DuelDatabase {
     //  Gemeinsame Helfer
     // ================================================================
 
-    private void update(String sql, String id) {
+    private void update(String sql, String... werte) {
         try (PreparedStatement ps = conn().prepareStatement(sql)) {
-            ps.setString(1, id);
+            for (int i = 0; i < werte.length; i++) {
+                ps.setString(i + 1, werte[i]);
+            }
             ps.executeUpdate();
         } catch (SQLException e) {
             warn("update " + sql, e);

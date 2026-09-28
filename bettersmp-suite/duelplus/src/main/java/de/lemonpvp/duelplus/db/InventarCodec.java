@@ -6,8 +6,11 @@ import org.bukkit.util.io.BukkitObjectOutputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * SpielerSnapshot <-> Text, fuer die Datenbank-Spalte. Gleiches Prinzip
@@ -27,6 +30,7 @@ public final class InventarCodec {
             schreibe(out, snapshot.hauptinventar());
             schreibe(out, snapshot.ruestung());
             out.writeObject(snapshot.offhand());
+            schreibe(out, snapshot.nachlieferung().toArray(new ItemStack[0]));
         }
         return Base64.getEncoder().encodeToString(bytes.toByteArray());
     }
@@ -37,8 +41,41 @@ public final class InventarCodec {
             ItemStack[] haupt = lese(in);
             ItemStack[] ruestung = lese(in);
             ItemStack offhand = (ItemStack) in.readObject();
-            return new SpielerSnapshot(haupt, ruestung, offhand);
+            return new SpielerSnapshot(haupt, ruestung, offhand, nachlieferungLesen(in));
         }
+    }
+
+    public static String kodierenListe(List<ItemStack> items) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (BukkitObjectOutputStream out = new BukkitObjectOutputStream(bytes)) {
+            schreibe(out, items.toArray(new ItemStack[0]));
+        }
+        return Base64.getEncoder().encodeToString(bytes.toByteArray());
+    }
+
+    public static List<ItemStack> dekodierenListe(String daten) throws IOException, ClassNotFoundException {
+        byte[] bytes = Base64.getDecoder().decode(daten);
+        try (BukkitObjectInputStream in = new BukkitObjectInputStream(new ByteArrayInputStream(bytes))) {
+            return ohneLuecken(lese(in));
+        }
+    }
+
+    private static List<ItemStack> nachlieferungLesen(BukkitObjectInputStream in) throws IOException, ClassNotFoundException {
+        try {
+            return ohneLuecken(lese(in));
+        } catch (EOFException e) {
+            return List.of();
+        }
+    }
+
+    private static List<ItemStack> ohneLuecken(ItemStack[] items) {
+        List<ItemStack> liste = new ArrayList<>();
+        for (ItemStack item : items) {
+            if (item != null) {
+                liste.add(item);
+            }
+        }
+        return liste;
     }
 
     private static void schreibe(BukkitObjectOutputStream out, ItemStack[] items) throws IOException {

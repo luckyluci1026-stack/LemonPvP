@@ -26,7 +26,7 @@ fight: "%prefix%<gradient:#FF6B6B:#C92A2A><bold>Kampf!</bold></gradient>"
 title-fight: "<gradient:#FF6B6B:#C92A2A><bold>KAMPF!</bold></gradient>"
 title-fight-sub: "<gray>Möge der Bessere gewinnen</gray>"
 
-you-won: "%prefix%<green><bold>Sieg!</bold></green> <gray>Das Loot von <white>%gegner%</white> liegt an der Stelle, an der es gefallen ist.</gray>"
+you-won: "%prefix%<green><bold>Sieg!</bold></green> <gray>Das Loot von <white>%gegner%</white> gehört jetzt dir.</gray>"
 you-lost: "%prefix%<red><bold>Niederlage.</bold></red> <gray>Dein Inventar ist weg - <white>%gegner%</white> hat gewonnen.</gray>"
 draw-result: "%prefix%<yellow><bold>Unentschieden!</bold></yellow> <gray>Kein Loot hat den Besitzer gewechselt.</gray>"
 
@@ -75,7 +75,7 @@ watch-started: "%prefix%<green>Du schaust jetzt zu.</green> <gray>Mit <white>/du
 watch-not-watching: "%prefix%<red>Du schaust gerade niemandem zu.</red>"
 watch-stopped: "%prefix%<gray>Zuschauen beendet.</gray>"
 
-loot-dropped: "%prefix%<gold>Das Loot liegt am Boden - <white>%sekunden%s</white> lang gehört es nur dir.</gold>"
+loot-dropped: "%prefix%<gold>Das Loot liegt am Boden - <white>%sekunden%s</white> lang gehört es nur dir.</gold> <gray>Was du nicht aufhebst, bekommst du danach automatisch.</gray>"
 enderchest-disabled: "%prefix%<red>Enderkisten sind in der Arena deaktiviert.</red>"
 command-blocked: "%prefix%<red>Befehle sind während eines Duells sowie kurz danach (Todeskamera/Loot-Schutzfenster) gesperrt.</red>"
 
@@ -85,3 +85,5 @@ item-received: "%prefix%<gray>Rechtsklick mit dem Schwert in Slot %slot% fordert
 gui-title: "<dark_gray>» <gradient:#FF6B6B:#C92A2A>Wen herausfordern?</gradient>"
 gui-empty: "%prefix%<gray>Gerade ist niemand zum Herausfordern online.</gray>"
 hit-check: "%prefix%<gold>Schlag von <white>%angreifer%</white> auf <white>%opfer%</white> ohne Schaden.</gold> <gray>Grund: %grund%.</gray>%behoben%"
+loot-delivered: "%prefix%<green>Dein restliches Duell-Loot ist da: <white>%anzahl%</white> Item(s) - im Inventar oder in deiner Enderkiste.</green>"
+loot-delivered-dropped: "%prefix%<gold>Inventar und Enderkiste waren voll - <white>%anzahl%</white> Item(s) aus dem Duell liegen direkt vor dir.</gold>"

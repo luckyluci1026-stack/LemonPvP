@@ -19,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Scoreboard;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -70,6 +72,8 @@ public final class DuellSessionManager implements Listener {
      */
     private final Set<UUID> nachbereitung = ConcurrentHashMap.newKeySet();
 
+    private final Map<UUID, DuellSession> offeneGewinner = new ConcurrentHashMap<>();
+
     public DuellSessionManager(DuelPlus plugin) {
         this.plugin = plugin;
         this.loot = new LootManager(plugin);
@@ -81,6 +85,14 @@ public final class DuellSessionManager implements Listener {
         // Arena-Warteschlange: alle paar Sekunden pruefen, ob inzwischen
         // wieder eine Arena frei ist und jemand wartet.
         Bukkit.getScheduler().runTaskTimer(plugin, this::warteschlangeVerarbeiten, 40L, 40L);
+        if (plugin.db().bereit()) {
+            plugin.db().aktiveDuelleAbbrechen().thenAccept(anzahl -> {
+                if (anzahl > 0) {
+                    plugin.getLogger().info("DuelPlus: " + anzahl + " Duell(e) vom letzten Serverlauf waren noch als aktiv "
+                            + "markiert und wurden beendet - die Spieler behalten ihr Inventar vom Herkunftsserver.");
+                }
+            });
+        }
     }
 
     public LootManager loot() {
@@ -124,7 +136,7 @@ public final class DuellSessionManager implements Listener {
             }
             return;
         }
-        plugin.db().aktivesDuellFuer(spieler.getUniqueId()).thenAccept(duellOpt ->
+        plugin.db().angenommenesDuellFuer(spieler.getUniqueId()).thenAccept(duellOpt ->
                 duellOpt.filter(d -> DuelRecord.ANGENOMMEN.equals(d.status())).ifPresent(duell ->
                         Bukkit.getScheduler().runTask(plugin, () -> ankunftVerarbeiten(spieler, duell))));
     }
@@ -507,6 +519,7 @@ public final class DuellSessionManager implements Listener {
             // eigenes Loot ganz normal verwundbar (Feuer, Sturz, ...) -
             // ein Sieg soll keinen nachtraeglichen Schaden mehr bedeuten.
             gewinnerSpieler.setInvulnerable(true);
+            offeneGewinner.put(gewinner, session);
         }
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -519,37 +532,55 @@ public final class DuellSessionManager implements Listener {
         }, anzeigeSekunden * 20L);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Player gewinnerJetzt = Bukkit.getPlayer(gewinner);
+            boolean nochOffen = offeneGewinner.remove(gewinner) != null && gewinnerJetzt != null;
+            // Erst JETZT, nach dem vollen Schutzfenster, das tatsaechliche
+            // Inventar erfassen - damit auch selbst aufgehobenes Loot
+            // wirklich mit zurueckreist.
+            CompletableFuture<Void> geschrieben = nochOffen
+                    ? gewinnerSnapshotSchreiben(session, gewinnerJetzt)
+                    : CompletableFuture.completedFuture(null);
             if (arena != null) {
                 plugin.rollback().zuruecksetzenUndStoppen(arena.world());
                 plugin.arenaManager().freigeben(arena.name());
                 plugin.zuschauer().arenaBeendet(arena.name());
             }
             nachbereitung.remove(gewinner);
-            if (gewinnerSpieler == null || !gewinnerSpieler.isOnline()) {
+            if (!nochOffen) {
                 return;
             }
-            // Erst JETZT, nach dem vollen Schutzfenster, das tatsaechliche
-            // Inventar erfassen - damit auch selbst aufgehobenes Loot
-            // wirklich mit zurueckreist.
-            SpielerSnapshot gewinnerSnapshot = SpielerSnapshot.von(gewinnerSpieler.getInventory());
-            zustandZuruecksetzen(gewinnerSpieler);
             // GameMode/Unverwundbarkeit bewusst ERST im Callback (NACH dem
             // DB-Schreiben) umstellen, nicht schon hier - sonst waere der
             // Gewinner fuer die Dauer des (asynchronen) Schreibens kurz in
             // Survival, mitten in der Arena, und koennte dort noch Bloecke
             // abbauen, die zu dem Zeitpunkt nichtmal mehr vom RollbackTracker
             // erfasst wuerden (der ist ja schon oben gestoppt worden).
-            plugin.db().snapshotSchreiben(session.duellId(), gegnerUuid, DuelDatabase.RICHTUNG_ZURUECK, gewinnerSnapshot)
-                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        if (gewinnerSpieler.isOnline()) {
-                            // Unverwundbarkeit ist an dieser Stelle schon durch
-                            // zustandZuruecksetzen oben aufgehoben - siehe
-                            // Kommentar dort.
-                            gewinnerSpieler.setGameMode(GameMode.SURVIVAL);
-                            plugin.bridge().sende(gewinnerSpieler, session.herkunftsServerVon(gegnerUuid));
-                        }
-                    }));
+            geschrieben.thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                if (gewinnerJetzt.isOnline()) {
+                    gewinnerJetzt.setGameMode(GameMode.SURVIVAL);
+                    plugin.bridge().sende(gewinnerJetzt, session.herkunftsServerVon(gewinner));
+                }
+            }));
         }, lootSekunden * 20L);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void beimVerlassenNachSieg(PlayerQuitEvent event) {
+        Player spieler = event.getPlayer();
+        DuellSession session = offeneGewinner.remove(spieler.getUniqueId());
+        if (session == null) {
+            return;
+        }
+        gewinnerSnapshotSchreiben(session, spieler);
+        spieler.setGameMode(GameMode.SURVIVAL);
+    }
+
+    private CompletableFuture<Void> gewinnerSnapshotSchreiben(DuellSession session, Player gewinner) {
+        Arena arena = plugin.arenaManager().arena(session.arenaName());
+        List<ItemStack> liegengeblieben = arena == null ? List.of() : loot.restEinsammeln(arena.world());
+        SpielerSnapshot snapshot = SpielerSnapshot.von(gewinner.getInventory()).mitZusatz(liegengeblieben);
+        zustandZuruecksetzen(gewinner);
+        return plugin.db().snapshotSchreiben(session.duellId(), gewinner.getUniqueId(), DuelDatabase.RICHTUNG_ZURUECK, snapshot);
     }
 
     // ================================================================

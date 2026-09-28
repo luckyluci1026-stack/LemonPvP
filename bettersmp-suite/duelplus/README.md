@@ -182,7 +182,9 @@ Sekunden lang asynchron auf (siehe unten) - eine eigene Log-Zeile
    Sekunden Orbit um die Stelle), sein komplettes mitgebrachtes
    Inventar wird in **Shulker-Kisten verpackt und dort abgeworfen** -
    `loot.schutz-sekunden` (Standard 60) lang gehören sie exklusiv dem
-   Gewinner, danach frei für alle. Ein **Totem der Unsterblichkeit**
+   Gewinner. Eigene Shulker-Kisten des Verlierers werden einzeln
+   abgeworfen statt in eine neue Kiste gesteckt (keine Kisten in
+   Kisten). Ein **Totem der Unsterblichkeit**
    in Haupt- oder Nebenhand rettet ganz normal wie in Vanilla. Jeder
    Treffer bekommt zusätzliches Partikel-Feedback am Opfer plus einen
    Bestätigungs-Ton für den Angreifer - der entscheidende Treffer
@@ -195,6 +197,17 @@ Sekunden lang asynchron auf (siehe unten) - eine eigene Log-Zeile
    für ihn zurück, mit allem, was er bis dahin eingesammelt hat -
    sonst wäre das exklusive Loot-Zeitfenster nutzlos, weil er längst
    weg wäre, bevor er es überhaupt selbst aufheben könnte.
+8. **Es geht kein Loot verloren:** Was der Gewinner nicht aufgehoben hat
+   (zum Beispiel, weil sein Inventar voll war), sammelt DuelPlus am Ende
+   ein. Es kommt in freie Plätze seines Inventars, der Rest wird auf dem
+   SMP nachgeliefert (Inventar, sonst Enderkiste, sonst direkt vor ihm).
+   Verlässt der Gewinner die Arena vorher (Verbindungsabbruch, `/hub`
+   über den Proxy), wird sein Inventar samt Loot sofort in diesem Moment
+   gespeichert. Auf dem Herkunftsserver wird das Ergebnis erst gelöscht,
+   wenn es wirklich angewendet wurde - geht der Spieler genau dann
+   offline, klappt es beim nächsten Mal. Kommt der Spieler in der Lobby
+   zurück, landet die Nachlieferung in `duelplus_nachlieferung` und
+   wird beim nächsten SMP-Beitritt zugestellt.
 
 Sieg, Niederlage und Unentschieden werden zusätzlich zur Chat-Nachricht
 **groß auf dem Bildschirm** angezeigt (Title/Subtitle) - und zwar

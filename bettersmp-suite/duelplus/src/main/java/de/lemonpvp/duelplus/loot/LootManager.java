@@ -4,6 +4,8 @@ import de.lemonpvp.duelplus.DuelPlus;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Tag;
+import org.bukkit.World;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -66,8 +68,19 @@ public final class LootManager implements Listener {
         int schutzSekunden = plugin.getConfig().getInt("loot.schutz-sekunden", 60);
         long ablauf = System.currentTimeMillis() + schutzSekunden * 1000L;
 
-        for (ItemStack shulker : baueShulker(alles)) {
-            Item entity = ort.getWorld().dropItemNaturally(ort, shulker);
+        List<ItemStack> einzeln = new ArrayList<>();
+        List<ItemStack> packbar = new ArrayList<>();
+        for (ItemStack item : alles) {
+            if (Tag.SHULKER_BOXES.isTagged(item.getType())) {
+                einzeln.add(item);
+            } else {
+                packbar.add(item);
+            }
+        }
+        List<ItemStack> abwurf = new ArrayList<>(baueShulker(packbar));
+        abwurf.addAll(einzeln);
+        for (ItemStack stapel : abwurf) {
+            Item entity = ort.getWorld().dropItemNaturally(ort, stapel);
             entity.getPersistentDataContainer().set(gewinnerKey, PersistentDataType.STRING, gewinner.toString());
             entity.getPersistentDataContainer().set(ablaufKey, PersistentDataType.LONG, ablauf);
             entity.setGlowing(true);
@@ -77,6 +90,18 @@ public final class LootManager implements Listener {
         if (gewinnerSpieler != null) {
             plugin.msgs().send(gewinnerSpieler, "loot-dropped", "sekunden", String.valueOf(schutzSekunden));
         }
+    }
+
+    public List<ItemStack> restEinsammeln(World welt) {
+        List<ItemStack> rest = new ArrayList<>();
+        for (Item item : welt.getEntitiesByClass(Item.class)) {
+            if (item.isDead() || !item.isValid()) {
+                continue;
+            }
+            rest.add(item.getItemStack().clone());
+            item.remove();
+        }
+        return rest;
     }
 
     private void sammeln(List<ItemStack> ziel, ItemStack[] quelle) {

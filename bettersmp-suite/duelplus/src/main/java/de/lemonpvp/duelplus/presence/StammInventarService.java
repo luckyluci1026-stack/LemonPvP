@@ -2,6 +2,7 @@ package de.lemonpvp.duelplus.presence;
 
 import de.lemonpvp.duelplus.DuelPlus;
 import de.lemonpvp.duelplus.db.SpielerSnapshot;
+import de.lemonpvp.duelplus.loot.Nachlieferung;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -9,6 +10,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * NUR auf dem Server mit ist-loot-quelle: true (in der Praxis: SMP)
@@ -52,7 +57,26 @@ public final class StammInventarService implements Listener {
                     // bleibt einfach wie es ist.
                     snapshotOpt.ifPresent(snap -> snap.anwenden(spieler.getInventory()));
                     sichern(spieler);
+                    nachlieferungZustellen(spieler);
                 }));
+    }
+
+    private void nachlieferungZustellen(Player spieler) {
+        plugin.db().nachlieferungLesen(spieler.getUniqueId()).thenAccept(eintraege -> {
+            if (eintraege.isEmpty()) {
+                return;
+            }
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!spieler.isOnline()) {
+                    return;
+                }
+                List<ItemStack> alle = new ArrayList<>();
+                eintraege.values().forEach(alle::addAll);
+                plugin.db().nachlieferungLoeschen(eintraege.keySet());
+                Nachlieferung.zustellen(plugin, spieler, alle);
+                sichern(spieler);
+            });
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
