@@ -3,7 +3,7 @@ version: ${project.version}
 main: de.lemonpvp.fastshop.FastShop
 api-version: '1.21'
 authors: [SMP]
-description: Einfaches, customizables Shop-/Verkaufssystem (/shop, /sell) auf Basis der EssentialsX-/Vault-Economy.
+description: Einfaches, customizables Shop-/Verkaufssystem (/shop, /sell) und Auktionshaus (/ah) auf Basis der EssentialsX-/Vault-Economy.
 softdepend: [Vault, Essentials, PlaceholderAPI]
 
 commands:
@@ -22,6 +22,11 @@ commands:
     usage: "/worth"
     aliases: [wert]
     permission: fastshop.worth
+  ah:
+    description: Auktionshaus - Items an andere Spieler verkaufen
+    usage: "/ah [sell <Preis> | search <Begriff> | meine]"
+    aliases: [auktionshaus, auktion, auction, auctionhouse]
+    permission: fastshop.ah
   fastshop:
     description: FastShop-Verwaltung
     usage: "/fastshop <reload|additem>"
@@ -34,6 +39,8 @@ permissions:
   fastshop.sell:
     default: true
   fastshop.worth:
+    default: true
+  fastshop.ah:
     default: true
   fastshop.admin:
     default: op

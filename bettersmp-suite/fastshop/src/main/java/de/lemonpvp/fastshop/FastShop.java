@@ -1,5 +1,9 @@
 package de.lemonpvp.fastshop;
 
+import de.lemonpvp.fastshop.auktion.AuktionsCommand;
+import de.lemonpvp.fastshop.auktion.AuktionsHaus;
+import de.lemonpvp.fastshop.auktion.AuktionsListener;
+import de.lemonpvp.fastshop.auktion.AuktionsMenus;
 import de.lemonpvp.fastshop.command.FastShopCommand;
 import de.lemonpvp.fastshop.command.SellCommand;
 import de.lemonpvp.fastshop.command.ShopCommand;
@@ -24,6 +28,8 @@ public final class FastShop extends JavaPlugin {
     private ShopConfig shop;
     private ShopService service;
     private ShopMenus menus;
+    private AuktionsHaus auktionen;
+    private AuktionsMenus auktionsMenus;
 
     @Override
     public void onEnable() {
@@ -33,18 +39,31 @@ public final class FastShop extends JavaPlugin {
         this.shop = new ShopConfig(this);
         this.service = new ShopService(this);
         this.menus = new ShopMenus(this);
+        this.auktionen = new AuktionsHaus(this);
+        this.auktionsMenus = new AuktionsMenus(this);
 
         Bukkit.getPluginManager().registerEvents(new ShopListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new AuktionsListener(this), this);
 
         getCommand("shop").setExecutor(new ShopCommand(this));
         getCommand("sell").setExecutor(new SellCommand(this));
         getCommand("worth").setExecutor(new WorthCommand(this));
         getCommand("fastshop").setExecutor(new FastShopCommand(this));
+        AuktionsCommand auktionsCommand = new AuktionsCommand(this);
+        getCommand("ah").setExecutor(auktionsCommand);
+        getCommand("ah").setTabCompleter(auktionsCommand);
 
         if (!economy.isEnabled()) {
             getLogger().warning("Kein Vault-Economy gefunden - /shop und /sell brauchen Vault + EssentialsX.");
         }
         getLogger().info("FastShop aktiviert (" + shop.categories().size() + " Kategorien).");
+    }
+
+    @Override
+    public void onDisable() {
+        if (auktionen != null) {
+            auktionen.speichernSofort();
+        }
     }
 
     public Msgs msgs() {
@@ -66,5 +85,13 @@ public final class FastShop extends JavaPlugin {
 
     public ShopMenus menus() {
         return menus;
+    }
+
+    public AuktionsHaus auktionen() {
+        return auktionen;
+    }
+
+    public AuktionsMenus auktionsMenus() {
+        return auktionsMenus;
     }
 }

@@ -2,6 +2,7 @@ package de.lemonpvp.fastshop.economy;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
@@ -42,6 +43,10 @@ public final class EconomyHook {
         return isEnabled() && Bridge.deposit((Economy) economy, player, amount);
     }
 
+    public boolean depositOffline(OfflinePlayer player, double amount) {
+        return isEnabled() && Bridge.deposit((Economy) economy, player, amount);
+    }
+
     public double balance(Player player) {
         return isEnabled() ? Bridge.balance((Economy) economy, player) : 0.0;
     }
@@ -65,7 +70,7 @@ public final class EconomyHook {
             return eco.withdrawPlayer(player, amount).transactionSuccess();
         }
 
-        static boolean deposit(Economy eco, Player player, double amount) {
+        static boolean deposit(Economy eco, OfflinePlayer player, double amount) {
             return eco.depositPlayer(player, amount).transactionSuccess();
         }
 

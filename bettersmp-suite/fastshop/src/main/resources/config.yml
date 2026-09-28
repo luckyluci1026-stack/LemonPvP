@@ -15,3 +15,15 @@ settings:
   # Sounds bei Kauf/Verkauf/Fehler
   sounds: true
 
+# ==========================================================
+#  Auktionshaus (/ah)
+# ==========================================================
+auktionshaus:
+  # So lange bleibt ein Angebot drin, danach kann man es unter /ah meine abholen
+  dauer-stunden: 48
+  # Höchstens so viele Angebote pro Spieler (abgelaufene zählen mit, bis man sie abholt)
+  max-angebote: 10
+  min-preis: 1
+  max-preis: 1000000000
+  # Anteil in Prozent, den der Server beim Verkauf einbehält (0 = keine Gebühr)
+  steuer-prozent: 0

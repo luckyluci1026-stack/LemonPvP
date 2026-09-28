@@ -22,11 +22,36 @@ Einfaches, customizables Shop-/Verkaufssystem (Paper 1.21.11).
 - `/fastshop additem <Kategorie> <Kaufpreis> <Verkaufspreis>`: Item aus der Hand
   direkt in den Katalog aufnehmen.
 
+## Auktionshaus (`/ah`)
+Spieler verkaufen Items an andere Spieler, wie auf DonutSMP.
+- **Anbieten**: Item in die Hand nehmen, `/ah sell <Preis>` tippen. Preise
+  gehen auch kurz: `1500`, `2.5k`, `1m`, `1.000.000`.
+- **Kaufen**: `/ah` öffnet die Übersicht (45 Angebote pro Seite). Klick auf
+  ein Item, dann auf das grüne Feld. Das Geld geht sofort an den Verkäufer,
+  auch wenn er offline ist. Beim nächsten Join sieht er, was verkauft wurde.
+- **Sortieren und Filtern**: Neueste, Günstigste, Teuerste, Endet bald und
+  Kategorien (Blöcke, Werkzeuge, Kampf & Rüstung, Essen, Tränke & Bücher,
+  Sonstiges). `/ah search <Begriff>` sucht nach Item- oder Spielernamen.
+- **Deine Angebote**: `/ah meine` oder die Endertruhe im Menü. Dort nimmst
+  du Angebote zurück und holst abgelaufene Items ab.
+- Ein Angebot läuft 48 Stunden. Danach bleibt das Item sicher liegen, bis
+  du es abholst. Es geht nichts verloren.
+- Alles liegt in `plugins/FastShop/auktionen.yml` und übersteht Neustarts.
+
+Einstellungen in `config.yml` unter `auktionshaus:` (fehlt der Abschnitt,
+gelten diese Werte):
+- `dauer-stunden: 48`
+- `max-angebote: 10` pro Spieler, abgelaufene zählen mit
+- `min-preis: 1`, `max-preis: 1000000000`
+- `steuer-prozent: 0` Gebühr, die beim Verkauf einbehalten wird
+
 ## Befehle
 - `/shop [Kategorie]` (`fastshop.use`)
 - `/sell <hand|all|gui>` (`fastshop.sell`)
 - `/worth` (`fastshop.worth`)
+- `/ah [sell <Preis> | search <Begriff> | meine]` (`fastshop.ah`, für alle)
 - `/fastshop reload|additem` (`fastshop.admin`)
 
-Konfiguration: `config.yml` (Menü, Multiplikator), `shop.yml` (Katalog),
-`messages.yml`. Braucht **Vault + EssentialsX** (installiert BetterSMP automatisch).
+Konfiguration: `config.yml` (Menü, Multiplikator, Auktionshaus), `shop.yml`
+(Katalog), `messages.yml`. Braucht **Vault + EssentialsX** (installiert
+BetterSMP automatisch).
