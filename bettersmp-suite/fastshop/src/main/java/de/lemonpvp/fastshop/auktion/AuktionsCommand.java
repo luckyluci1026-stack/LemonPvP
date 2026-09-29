@@ -6,7 +6,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,56 +25,53 @@ public final class AuktionsCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        AuktionsHaus haus = plugin.auktionen();
         if (!(sender instanceof Player spieler)) {
             plugin.msgs().send(sender, "players-only");
             return true;
         }
+        AuktionsMenus menus = plugin.auktionsMenus();
         if (args.length == 0) {
-            plugin.auktionsMenus().uebersichtOeffnen(spieler, AuktionsMenus.Ansicht.start());
+            menus.uebersichtOeffnen(spieler, AuktionsMenus.Ansicht.start());
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
-            case "sell", "verkaufen", "list" -> anbieten(spieler, args);
+            case "sell", "verkaufen", "list" -> verkaufen(spieler, args);
             case "search", "suche", "suchen" -> {
-                if (args.length < 2) {
-                    haus.senden(spieler, "ah-search-hint");
-                    return true;
+                String begriff = AuktionsDialoge.begriffBereinigen(String.join(" ", Arrays.copyOfRange(args, 1, args.length)));
+                if (begriff.isEmpty()) {
+                    plugin.auktionsDialoge().suche(spieler, AuktionsMenus.Ansicht.start());
+                } else {
+                    menus.uebersichtOeffnen(spieler, suche(begriff));
                 }
-                String begriff = String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim();
-                int treffer = haus.kaufbare(Sortierung.NEUESTE, Filter.ALLE, begriff).size();
-                haus.senden(spieler, "ah-search", "query", begriff.replace("<", "").replace(">", ""),
-                        "count", String.valueOf(treffer));
-                plugin.auktionsMenus().uebersichtOeffnen(spieler, new AuktionsMenus.Ansicht(0, Sortierung.NEUESTE, Filter.ALLE, begriff));
             }
-            case "meine", "angebote", "own" -> plugin.auktionsMenus().eigeneOeffnen(spieler, AuktionsMenus.Ansicht.start());
-            default -> haus.senden(spieler, "ah-usage");
+            case "meine", "angebote", "own" -> menus.eigeneOeffnen(spieler, AuktionsMenus.Ansicht.start());
+            default -> menus.uebersichtOeffnen(spieler, suche(AuktionsDialoge.begriffBereinigen(String.join(" ", args))));
         }
         return true;
     }
 
-    private void anbieten(Player spieler, String[] args) {
+    private static AuktionsMenus.Ansicht suche(String begriff) {
+        return new AuktionsMenus.Ansicht(0, Sortierung.NEUESTE, Filter.ALLE, begriff);
+    }
+
+    private void verkaufen(Player spieler, String[] args) {
         AuktionsHaus haus = plugin.auktionen();
+        int slot = spieler.getInventory().getHeldItemSlot();
         if (args.length < 2) {
-            haus.senden(spieler, "ah-sell-hint", "hours", String.valueOf(haus.dauerStunden()));
+            plugin.auktionsMenus().verkaufenOeffnen(spieler, AuktionsMenus.Ansicht.start(), slot, 0, false);
             return;
         }
         double preis = preisLesen(args[1]);
         if (preis <= 0) {
             haus.senden(spieler, "ah-invalid-price");
+            plugin.auktionsMenus().verkaufenOeffnen(spieler, AuktionsMenus.Ansicht.start(), slot, 0, false);
             return;
         }
-        ItemStack hand = spieler.getInventory().getItemInMainHand().clone();
-        switch (haus.anbieten(spieler, preis)) {
-            case ANGEBOTEN -> haus.senden(spieler, "ah-listed", "amount", String.valueOf(hand.getAmount()),
-                    "item", AuktionsHaus.itemText(hand), "price", plugin.economy().format(preis),
-                    "hours", String.valueOf(haus.dauerStunden()));
-            case KEINE_WIRTSCHAFT -> haus.senden(spieler, "ah-no-economy");
-            case NICHTS_IN_DER_HAND -> haus.senden(spieler, "ah-nothing-in-hand");
-            case PREIS_AUSSERHALB -> haus.senden(spieler, "ah-price-range",
+        if (preis < haus.minPreis() || preis > haus.maxPreis()) {
+            haus.senden(spieler, "ah-price-range",
                     "min", plugin.economy().format(haus.minPreis()), "max", plugin.economy().format(haus.maxPreis()));
-            case ZU_VIELE -> haus.senden(spieler, "ah-limit", "max", String.valueOf(haus.maxAngebote()));
         }
+        plugin.auktionsMenus().verkaufenOeffnen(spieler, AuktionsMenus.Ansicht.start(), slot, preis, true);
     }
 
     public static double preisLesen(String eingabe) {

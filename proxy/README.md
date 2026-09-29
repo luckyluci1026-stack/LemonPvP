@@ -353,6 +353,26 @@ weg. Ausschalten: `combat.enabled: false`. Die Texte heißen `combat-blocked`,
 Dafür müssen SMPProxy, BetterSMP (SMP) und DuelPlus (SMP, Lobby, Duels) in
 der neuen Version laufen.
 
+## /ah (Auktionshaus) von überall
+
+`/ah` geht auf jedem Server im Netzwerk. Auf dem SMP öffnet FastShop das
+Auktionshaus direkt. Aus der Lobby (oder vom Duels-Server außerhalb eines
+Duells) bringt der Proxy den Spieler erst auf den SMP, und dort öffnet sich
+sofort das Fenster. Suchbegriffe kommen mit: `/ah diamant` in der Lobby
+landet direkt bei der Suche auf dem SMP.
+
+```yaml
+ah:
+  enabled: true
+  aliases: ["ah", "auktionshaus", "auktion", "auction", "auctionhouse"]
+  passthrough-servers: ["SMP"]
+  redirect-server: "SMP"
+```
+
+Im Duell, im Kampf und eingefroren ist dieser Wechsel gesperrt – genauso
+wie `/rtp` von einem Server ohne eigenes `/rtp`. Vorher konnte man mit
+`/rtp` mitten aus einem Duell auf den SMP springen.
+
 ## Chat zwischen Lobby und SMP
 
 Was in der Lobby geschrieben wird, sieht man auf dem SMP - und umgekehrt.

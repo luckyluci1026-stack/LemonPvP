@@ -2,6 +2,7 @@ package de.lemonpvp.fastshop.auktion;
 
 import de.lemonpvp.fastshop.FastShop;
 import de.lemonpvp.fastshop.gui.GuiUtil;
+import de.lemonpvp.fastshop.shop.ShopItem;
 import de.lemonpvp.fastshop.util.Text;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -34,6 +36,17 @@ public final class AuktionsMenus {
     public static final int WEITER = 53;
     public static final int KAUF_ITEM = 13;
     public static final int EIGENE_ZURUECK = 49;
+    public static final int VERKAUF_ITEM = 13;
+    public static final int VERKAUF_PREIS = 22;
+    public static final int VERKAUF_ZURUECK = 45;
+    public static final int VERKAUF_EINTIPPEN = 48;
+    public static final int VERKAUF_ANBIETEN = 50;
+    public static final int VERKAUF_SCHLIESSEN = 52;
+
+    private static final int[] PLUS_PLAETZE = {29, 30, 31, 32, 33};
+    private static final int[] MINUS_PLAETZE = {38, 39, 40, 41, 42};
+    private static final double[] SCHRITTE = {10, 100, 1_000, 10_000, 100_000};
+    private static final double STANDARD_PREIS = 100;
 
     public record Ansicht(int seite, Sortierung sortierung, Filter filter, String suche) {
 
@@ -78,6 +91,33 @@ public final class AuktionsMenus {
     public static final class Eigene extends Menue {
         Eigene(Ansicht ansicht) {
             super(ansicht);
+        }
+    }
+
+    public static final class Verkaufen extends Menue {
+        private int slot = -1;
+        private ItemStack vorschau;
+        private double preis;
+        private boolean preisGesetzt;
+
+        Verkaufen(Ansicht ansicht) {
+            super(ansicht);
+        }
+
+        public int slot() {
+            return slot;
+        }
+
+        public ItemStack vorschau() {
+            return vorschau == null ? null : vorschau.clone();
+        }
+
+        public double preis() {
+            return preis;
+        }
+
+        public boolean preisGesetzt() {
+            return preisGesetzt;
         }
     }
 
@@ -144,9 +184,11 @@ public final class AuktionsMenus {
                 auswahl(Filter.values(), aktuell.filter())));
         inv.setItem(SUCHE, aktuell.suche().isBlank()
                 ? GuiUtil.item(Material.OAK_SIGN, 1, "<white><bold>Suchen",
-                        List.of("<gray>Tippe <white>/ah search <Begriff>", "<gray>zum Beispiel <white>/ah search diamond"))
+                        List.of("<gray>Item oder Spielername,", "<gray>Deutsch oder Englisch, z.B. <white>Diamant", "",
+                                "<yellow>Klick zum Suchen", "<dark_gray>Geht auch: /ah <Begriff>"))
                 : GuiUtil.glowing(Material.OAK_SIGN, 1, "<white><bold>Suche: <yellow>" + sicher(aktuell.suche()),
-                        List.of("<gray>" + liste.size() + " Treffer", "", "<yellow>Klick zum Zurücksetzen")));
+                        List.of("<gray>" + liste.size() + " Treffer", "",
+                                "<yellow>Klick für eine neue Suche", "<gray>Leer lassen zeigt wieder alles.")));
         inv.setItem(GUTHABEN, GuiUtil.head(spieler, "<green><bold>Dein Guthaben",
                 List.of("<white>" + geld(plugin.economy().balance(spieler)), "",
                         "<gray>Angebote gesamt: <white>" + liste.size(), "", "<yellow>Klick zum Aktualisieren")));
@@ -156,9 +198,9 @@ public final class AuktionsMenus {
                         "<gray>Hier nimmst du Angebote zurück", "<gray>und holst abgelaufene Items ab.", "",
                         "<yellow>Klick zum Öffnen")));
         inv.setItem(VERKAUFEN, GuiUtil.item(Material.EMERALD, 1, "<green><bold>Item verkaufen",
-                List.of("<gray>Nimm das Item in die Hand und tippe", "<white>/ah sell <Preis>", "",
-                        "<gray>Beispiele: <white>1500<gray>, <white>2.5k<gray>, <white>1m",
-                        "<gray>Ein Angebot läuft <white>" + haus().dauerStunden() + " Stunden<gray>.")));
+                List.of("<gray>Item auswählen, Preis einstellen,", "<gray>fertig. Ein Angebot läuft <white>"
+                                + haus().dauerStunden() + " Stunden<gray>.", "",
+                        "<yellow>Klick zum Verkaufen", "<dark_gray>Geht auch: /ah sell <Preis>")));
         inv.setItem(SCHLIESSEN, GuiUtil.item(Material.BARRIER, 1, "<red><bold>Schließen", List.of()));
         spieler.openInventory(inv);
     }
@@ -209,6 +251,131 @@ public final class AuktionsMenus {
         spieler.openInventory(inv);
     }
 
+    public void verkaufenOeffnen(Player spieler, Ansicht zurueck, int slot, double preis, boolean preisGesetzt) {
+        Verkaufen holder = new Verkaufen(zurueck);
+        Inventory inv = Bukkit.createInventory(holder, 54, plugin.msgs().format("ah-title-sell"));
+        holder.inventory = inv;
+        waehlen(spieler, holder, slot);
+        holder.preisGesetzt = preisGesetzt;
+        holder.preis = preisGesetzt ? haus().preisBegrenzen(preis) : vorschlag(holder.vorschau);
+        verkaufenZeichnen(spieler, holder);
+        spieler.openInventory(inv);
+    }
+
+    public void verkaufenWaehlen(Player spieler, Verkaufen holder, int slot) {
+        waehlen(spieler, holder, slot);
+        if (!holder.preisGesetzt) {
+            holder.preis = vorschlag(holder.vorschau);
+        }
+        verkaufenZeichnen(spieler, holder);
+    }
+
+    public void verkaufenPreisAendern(Player spieler, Verkaufen holder, double preis) {
+        holder.preis = haus().preisBegrenzen(preis);
+        holder.preisGesetzt = true;
+        verkaufenZeichnen(spieler, holder);
+    }
+
+    public static double schrittAuf(int slot) {
+        for (int i = 0; i < SCHRITTE.length; i++) {
+            if (PLUS_PLAETZE[i] == slot) {
+                return SCHRITTE[i];
+            }
+            if (MINUS_PLAETZE[i] == slot) {
+                return -SCHRITTE[i];
+            }
+        }
+        return 0;
+    }
+
+    public double vorschlag(ItemStack item) {
+        double wert = shopWert(item);
+        return haus().preisBegrenzen(wert > 0 ? wert : STANDARD_PREIS);
+    }
+
+    private double shopWert(ItemStack item) {
+        if (item == null) {
+            return 0;
+        }
+        ShopItem eintrag = plugin.shop().item(item.getType());
+        if (eintrag == null || !eintrag.sellable()) {
+            return 0;
+        }
+        return eintrag.sell() * plugin.shop().sellMultiplier() * item.getAmount();
+    }
+
+    private void waehlen(Player spieler, Verkaufen holder, int slot) {
+        ItemStack item = slot < 0 || slot > AuktionsHaus.LETZTER_INVENTAR_PLATZ ? null : spieler.getInventory().getItem(slot);
+        if (item == null || item.isEmpty()) {
+            holder.slot = -1;
+            holder.vorschau = null;
+        } else {
+            holder.slot = slot;
+            holder.vorschau = item.clone();
+        }
+    }
+
+    private void verkaufenZeichnen(Player spieler, Verkaufen holder) {
+        Inventory inv = holder.inventory;
+        ItemStack rahmen = GuiUtil.filler(Material.GRAY_STAINED_GLASS_PANE);
+        for (int slot = 0; slot < 45; slot++) {
+            inv.setItem(slot, rahmen);
+        }
+        ItemStack leiste = GuiUtil.filler(Material.BLACK_STAINED_GLASS_PANE);
+        for (int slot = 45; slot < 54; slot++) {
+            inv.setItem(slot, leiste);
+        }
+        if (holder.vorschau == null) {
+            inv.setItem(VERKAUF_ITEM, GuiUtil.item(Material.HOPPER, 1, "<yellow><bold>Item auswählen",
+                    List.of("<gray>Klick unten in deinem Inventar", "<gray>auf das Item, das du verkaufen willst.")));
+        } else {
+            inv.setItem(VERKAUF_ITEM, mitZeilen(holder.vorschau.clone(), List.of("<dark_gray>───────────────",
+                    "<green>Dieses Item bietest du an", "<gray>Klick unten auf ein anderes Item,", "<gray>um es zu wechseln.")));
+        }
+        double steuer = haus().steuerAnteil();
+        List<String> preisZeilen = new ArrayList<>();
+        preisZeilen.add("<gray>Du bekommst: <white>" + geld(holder.preis * (1 - steuer))
+                + (steuer > 0 ? " <dark_gray>(" + Math.round(steuer * 100) + "% Gebühr)" : ""));
+        preisZeilen.add("<gray>Läuft: <white>" + haus().dauerStunden() + " Stunden");
+        double shop = shopWert(holder.vorschau);
+        if (shop > 0) {
+            preisZeilen.add("<gray>Der Shop zahlt dafür: <white>" + geld(shop));
+        }
+        preisZeilen.add("");
+        preisZeilen.add("<gray>Ändern mit den grünen und roten");
+        preisZeilen.add("<gray>Feldern oder mit <white>Preis eintippen<gray>.");
+        inv.setItem(VERKAUF_PREIS, GuiUtil.glowing(Material.GOLD_INGOT, 1, "<gold><bold>Preis: <green>" + geld(holder.preis),
+                preisZeilen));
+        for (int i = 0; i < SCHRITTE.length; i++) {
+            inv.setItem(PLUS_PLAETZE[i], GuiUtil.item(Material.LIME_STAINED_GLASS_PANE, i + 1,
+                    "<green><bold>+" + zahl(SCHRITTE[i]), List.of("<gray>Klick: Preis erhöhen")));
+            inv.setItem(MINUS_PLAETZE[i], GuiUtil.item(Material.RED_STAINED_GLASS_PANE, i + 1,
+                    "<red><bold>-" + zahl(SCHRITTE[i]), List.of("<gray>Klick: Preis senken")));
+        }
+        inv.setItem(VERKAUF_ZURUECK, GuiUtil.item(Material.ARROW, 1, "<yellow><bold>Zurück zum Auktionshaus", List.of()));
+        inv.setItem(VERKAUF_EINTIPPEN, GuiUtil.item(Material.NAME_TAG, 1, "<white><bold>Preis eintippen",
+                List.of("<gray>Genauen Preis eingeben,", "<gray>zum Beispiel <white>1500<gray>, <white>2.5k<gray>, <white>1m", "",
+                        "<yellow>Klick zum Eintippen", "<dark_gray>Geht auch: /ah sell <Preis>")));
+        inv.setItem(VERKAUF_ANBIETEN, anbietenKnopf(spieler, holder));
+        inv.setItem(VERKAUF_SCHLIESSEN, GuiUtil.item(Material.BARRIER, 1, "<red><bold>Schließen", List.of()));
+    }
+
+    private ItemStack anbietenKnopf(Player spieler, Verkaufen holder) {
+        if (holder.vorschau == null) {
+            return GuiUtil.item(Material.GRAY_DYE, 1, "<gray><bold>Angebot erstellen",
+                    List.of("<red>Wähle zuerst unten ein Item aus."));
+        }
+        if (haus().anzahlVon(spieler.getUniqueId()) >= haus().maxAngebote()) {
+            return GuiUtil.item(Material.GRAY_DYE, 1, "<gray><bold>Angebot erstellen",
+                    List.of("<red>Alle " + haus().maxAngebote() + " Plätze sind belegt.",
+                            "<gray>Hol erst eins unter <white>Deine Angebote<gray> ab."));
+        }
+        return GuiUtil.glowing(Material.LIME_CONCRETE, 1, "<green><bold>Angebot erstellen",
+                List.of("<white>" + holder.vorschau.getAmount() + "x " + AuktionsHaus.itemText(holder.vorschau),
+                        "<gray>für <green>" + geld(holder.preis), "<gray>Läuft <white>" + haus().dauerStunden() + " Stunden", "",
+                        "<yellow>Klick zum Anbieten"));
+    }
+
     public static boolean istKaufen(int slot) {
         return slot == 10 || slot == 11 || slot == 12;
     }
@@ -218,26 +385,35 @@ public final class AuktionsMenus {
     }
 
     private ItemStack anzeige(Angebot angebot, long jetzt, List<String> hinweis) {
-        ItemStack item = angebot.item();
+        List<String> zeilen = new ArrayList<>();
+        zeilen.add("<dark_gray>───────────────");
+        zeilen.add("<gray>Preis: <green>" + geld(angebot.preis()));
+        zeilen.add("<gray>Verkäufer: <white>" + angebot.verkaeuferName());
+        zeilen.add("<gray>Endet in: <white>" + restzeit(angebot.endet() - jetzt));
+        if (!hinweis.isEmpty()) {
+            zeilen.add("");
+            zeilen.addAll(hinweis);
+        }
+        return mitZeilen(angebot.item(), zeilen);
+    }
+
+    private static ItemStack mitZeilen(ItemStack item, List<String> zeilen) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             return item;
         }
         List<Component> lore = meta.hasLore() && meta.lore() != null ? new ArrayList<>(meta.lore()) : new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(zeile("<dark_gray>───────────────"));
-        lore.add(zeile("<gray>Preis: <green>" + geld(angebot.preis())));
-        lore.add(zeile("<gray>Verkäufer: <white>" + angebot.verkaeuferName()));
-        lore.add(zeile("<gray>Endet in: <white>" + restzeit(angebot.endet() - jetzt)));
-        if (!hinweis.isEmpty()) {
-            lore.add(Component.empty());
-            for (String text : hinweis) {
-                lore.add(zeile(text));
-            }
+        for (String text : zeilen) {
+            lore.add(text.isEmpty() ? Component.empty() : zeile(text));
         }
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
+    }
+
+    private static String zahl(double wert) {
+        return String.format(Locale.GERMANY, "%,.0f", wert);
     }
 
     private static <T extends Enum<T>> List<String> auswahl(T[] werte, T aktuell) {

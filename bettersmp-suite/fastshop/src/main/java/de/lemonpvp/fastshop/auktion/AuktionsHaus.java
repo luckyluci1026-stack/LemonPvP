@@ -11,6 +11,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.File;
@@ -38,9 +39,12 @@ public final class AuktionsHaus {
         ANGEBOTEN,
         KEINE_WIRTSCHAFT,
         NICHTS_IN_DER_HAND,
+        VERAENDERT,
         PREIS_AUSSERHALB,
         ZU_VIELE
     }
+
+    public static final int LETZTER_INVENTAR_PLATZ = 35;
 
     public enum KaufErgebnis {
         GEKAUFT,
@@ -93,9 +97,16 @@ public final class AuktionsHaus {
         return Math.max(minPreis(), plugin.getConfig().getDouble("auktionshaus.max-preis", 1_000_000_000));
     }
 
-    private double steuerAnteil() {
+    public double steuerAnteil() {
         double prozent = plugin.getConfig().getDouble("auktionshaus.steuer-prozent", 0);
         return Math.max(0, Math.min(100, prozent)) / 100.0;
+    }
+
+    public double preisBegrenzen(double preis) {
+        if (!Double.isFinite(preis)) {
+            return minPreis();
+        }
+        return runden(Math.max(minPreis(), Math.min(maxPreis(), preis)));
     }
 
     public Angebot angebot(UUID id) {
@@ -137,13 +148,20 @@ public final class AuktionsHaus {
         return anzahl;
     }
 
-    public AnbietenErgebnis anbieten(Player spieler, double preis) {
+    public AnbietenErgebnis anbieten(Player spieler, int slot, ItemStack erwartet, double preis) {
         if (!plugin.economy().isEnabled()) {
             return AnbietenErgebnis.KEINE_WIRTSCHAFT;
         }
-        ItemStack hand = spieler.getInventory().getItemInMainHand();
-        if (hand.isEmpty()) {
+        if (slot < 0 || slot > LETZTER_INVENTAR_PLATZ) {
             return AnbietenErgebnis.NICHTS_IN_DER_HAND;
+        }
+        PlayerInventory inventar = spieler.getInventory();
+        ItemStack item = inventar.getItem(slot);
+        if (item == null || item.isEmpty()) {
+            return AnbietenErgebnis.NICHTS_IN_DER_HAND;
+        }
+        if (erwartet != null && (!item.isSimilar(erwartet) || item.getAmount() != erwartet.getAmount())) {
+            return AnbietenErgebnis.VERAENDERT;
         }
         if (!Double.isFinite(preis) || preis < minPreis() || preis > maxPreis()) {
             return AnbietenErgebnis.PREIS_AUSSERHALB;
@@ -152,9 +170,9 @@ public final class AuktionsHaus {
             return AnbietenErgebnis.ZU_VIELE;
         }
         long jetzt = System.currentTimeMillis();
-        Angebot angebot = new Angebot(UUID.randomUUID(), spieler.getUniqueId(), spieler.getName(), hand,
+        Angebot angebot = new Angebot(UUID.randomUUID(), spieler.getUniqueId(), spieler.getName(), item,
                 runden(preis), jetzt, jetzt + dauerStunden() * 3_600_000L, Angebot.Status.AKTIV);
-        spieler.getInventory().setItemInMainHand(null);
+        inventar.setItem(slot, null);
         angebote.put(angebot.id(), angebot);
         speichern();
         return AnbietenErgebnis.ANGEBOTEN;

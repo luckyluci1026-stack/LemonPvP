@@ -9,6 +9,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,6 +39,11 @@ public final class ProxyConfig {
             Map.entry("server-crashed-home", "%prefix%<red>Verbindung zu <white>%server%</white> verloren.</red>"
                     + "<newline><gray>Du bist wieder auf <white>%home%</white>.</gray>"),
             Map.entry("server-unreachable", "%prefix%<red><white>%server%</white> ist gerade nicht erreichbar.</red>"),
+            Map.entry("switch-failed", "%prefix%<red>Verbindung zu <white>%server%</white> fehlgeschlagen.</red>"),
+            Map.entry("player-only", "%prefix%<red>Das geht nur im Spiel.</red>"),
+            Map.entry("ah-sending", "%prefix%<gray>Das Auktionshaus ist auf <white>%server%</white> - einen Moment ...</gray>"),
+            Map.entry("ah-not-configured", "%prefix%<red>/ah ist nicht eingerichtet.</red><newline>"
+                    + "<gray>In config.yml unter <white>ah.redirect-server</white> einen Server eintragen.</gray>"),
             Map.entry("muted", "%prefix%<red>Du bist stummgeschaltet und kannst gerade nicht schreiben "
                     + "(noch <white>%dauer%</white>).</red>"),
             Map.entry("network-join", "<dark_gray>[<green>+</green>]</dark_gray> <#00D4FF>%player%</#00D4FF> "
@@ -288,6 +294,29 @@ public final class ProxyConfig {
     /** Wohin /rtp von ueberall sonst zuerst schickt, bevor RTP ausgeloest wird. */
     public String rtpRedirectServer() {
         return string("rtp.redirect-server", "");
+    }
+
+    public boolean ahEnabled() {
+        return bool("ah.enabled", true);
+    }
+
+    public List<String> ahAliases() {
+        List<String> namen = new ArrayList<>();
+        for (String name : strings("ah.aliases", List.of("ah", "auktionshaus", "auktion", "auction", "auctionhouse"))) {
+            String klein = name.toLowerCase(Locale.ROOT).trim();
+            if (!klein.isEmpty() && !namen.contains(klein)) {
+                namen.add(klein);
+            }
+        }
+        return namen;
+    }
+
+    public List<String> ahPassthroughServers() {
+        return strings("ah.passthrough-servers", List.of("SMP"));
+    }
+
+    public String ahRedirectServer() {
+        return string("ah.redirect-server", "SMP");
     }
 
     // ------------------------------------------------------------------

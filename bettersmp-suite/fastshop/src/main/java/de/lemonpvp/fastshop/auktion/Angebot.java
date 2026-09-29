@@ -6,7 +6,6 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.Locale;
 import java.util.UUID;
 
 public final class Angebot {
@@ -36,8 +35,7 @@ public final class Angebot {
         this.erstellt = erstellt;
         this.endet = endet;
         this.status = status;
-        this.suchText = (item.getType().name().replace('_', ' ') + " " + anzeigeName(item) + " " + verkaeuferName)
-                .toLowerCase(Locale.ROOT);
+        this.suchText = Suchbegriffe.normalisieren(item.getType().name() + " " + anzeigeName(item) + " " + verkaeuferName);
     }
 
     private static String anzeigeName(ItemStack item) {
@@ -74,7 +72,7 @@ public final class Angebot {
     }
 
     public boolean passtZu(String begriff) {
-        return suchText.contains(begriff);
+        return Suchbegriffe.passt(suchText, begriff);
     }
 
     public double preis() {

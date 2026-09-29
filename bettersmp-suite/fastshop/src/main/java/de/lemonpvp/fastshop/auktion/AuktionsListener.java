@@ -9,6 +9,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
 
@@ -28,15 +30,20 @@ public final class AuktionsListener implements Listener {
         return plugin.auktionsMenus();
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void beimKlick(InventoryClickEvent event) {
         if (!(event.getInventory().getHolder() instanceof AuktionsMenus.Menue menue)) {
             return;
         }
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player spieler)
-                || event.getClickedInventory() == null
-                || !event.getClickedInventory().equals(event.getInventory())) {
+        if (!(event.getWhoClicked() instanceof Player spieler) || event.getClickedInventory() == null) {
+            return;
+        }
+        if (menue instanceof AuktionsMenus.Verkaufen verkaufen) {
+            verkaufenKlick(spieler, verkaufen, event.getClickedInventory(), event.getInventory(), event.getSlot());
+            return;
+        }
+        if (!event.getClickedInventory().equals(event.getInventory())) {
             return;
         }
         int slot = event.getSlot();
@@ -95,23 +102,75 @@ public final class AuktionsListener implements Listener {
                     ansicht.sortierung().naechste(), ansicht.filter(), ansicht.suche()));
             case AuktionsMenus.FILTER -> menus().uebersichtOeffnen(spieler, new AuktionsMenus.Ansicht(0,
                     ansicht.sortierung(), ansicht.filter().naechster(), ansicht.suche()));
-            case AuktionsMenus.SUCHE -> {
-                if (ansicht.suche().isBlank()) {
-                    spieler.closeInventory();
-                    haus().senden(spieler, "ah-search-hint");
-                } else {
-                    menus().uebersichtOeffnen(spieler, new AuktionsMenus.Ansicht(0, ansicht.sortierung(), ansicht.filter(), ""));
-                }
-            }
+            case AuktionsMenus.SUCHE -> plugin.auktionsDialoge().suche(spieler, ansicht);
             case AuktionsMenus.GUTHABEN -> menus().uebersichtOeffnen(spieler, ansicht);
             case AuktionsMenus.EIGENE -> menus().eigeneOeffnen(spieler, ansicht);
-            case AuktionsMenus.VERKAUFEN -> {
-                spieler.closeInventory();
-                haus().senden(spieler, "ah-sell-hint", "hours", String.valueOf(haus().dauerStunden()));
-            }
+            case AuktionsMenus.VERKAUFEN -> menus().verkaufenOeffnen(spieler, ansicht,
+                    spieler.getInventory().getHeldItemSlot(), 0, false);
             case AuktionsMenus.SCHLIESSEN -> spieler.closeInventory();
             default -> {
             }
+        }
+    }
+
+    private void verkaufenKlick(Player spieler, AuktionsMenus.Verkaufen menue, Inventory geklickt, Inventory oben, int slot) {
+        if (geklickt.equals(spieler.getInventory())) {
+            if (slot >= 0 && slot <= AuktionsHaus.LETZTER_INVENTAR_PLATZ) {
+                menus().verkaufenWaehlen(spieler, menue, slot);
+                klick(spieler);
+            }
+            return;
+        }
+        if (!geklickt.equals(oben)) {
+            return;
+        }
+        double schritt = AuktionsMenus.schrittAuf(slot);
+        if (schritt != 0) {
+            menus().verkaufenPreisAendern(spieler, menue, menue.preis() + schritt);
+            klick(spieler);
+            return;
+        }
+        switch (slot) {
+            case AuktionsMenus.VERKAUF_ZURUECK -> menus().uebersichtOeffnen(spieler, menue.ansicht());
+            case AuktionsMenus.VERKAUF_EINTIPPEN -> plugin.auktionsDialoge().preis(spieler, menue);
+            case AuktionsMenus.VERKAUF_ANBIETEN -> anbieten(spieler, menue);
+            case AuktionsMenus.VERKAUF_SCHLIESSEN -> spieler.closeInventory();
+            default -> {
+            }
+        }
+    }
+
+    private void anbieten(Player spieler, AuktionsMenus.Verkaufen menue) {
+        ItemStack vorschau = menue.vorschau();
+        if (vorschau == null) {
+            haus().senden(spieler, "ah-select-item");
+            ton(spieler, false);
+            return;
+        }
+        switch (haus().anbieten(spieler, menue.slot(), vorschau, menue.preis())) {
+            case ANGEBOTEN -> {
+                haus().senden(spieler, "ah-listed", "amount", String.valueOf(vorschau.getAmount()),
+                        "item", AuktionsHaus.itemText(vorschau), "price", plugin.economy().format(menue.preis()),
+                        "hours", String.valueOf(haus().dauerStunden()));
+                ton(spieler, true);
+                menus().eigeneOeffnen(spieler, menue.ansicht());
+                return;
+            }
+            case VERAENDERT -> haus().senden(spieler, "ah-changed");
+            case NICHTS_IN_DER_HAND -> haus().senden(spieler, "ah-select-item");
+            case PREIS_AUSSERHALB -> haus().senden(spieler, "ah-price-range",
+                    "min", plugin.economy().format(haus().minPreis()), "max", plugin.economy().format(haus().maxPreis()));
+            case ZU_VIELE -> haus().senden(spieler, "ah-limit", "max", String.valueOf(haus().maxAngebote()));
+            case KEINE_WIRTSCHAFT -> haus().senden(spieler, "ah-no-economy");
+        }
+        ton(spieler, false);
+        menus().verkaufenWaehlen(spieler, menue, menue.slot());
+    }
+
+    private void klick(Player spieler) {
+        if (plugin.getConfig().getBoolean("settings.sounds", true)) {
+            spieler.playSound(net.kyori.adventure.sound.Sound.sound(net.kyori.adventure.key.Key.key("minecraft:ui.button.click"),
+                    net.kyori.adventure.sound.Sound.Source.MASTER, 0.5f, 1.4f));
         }
     }
 

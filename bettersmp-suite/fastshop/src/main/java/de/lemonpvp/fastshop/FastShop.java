@@ -1,6 +1,7 @@
 package de.lemonpvp.fastshop;
 
 import de.lemonpvp.fastshop.auktion.AuktionsCommand;
+import de.lemonpvp.fastshop.auktion.AuktionsDialoge;
 import de.lemonpvp.fastshop.auktion.AuktionsHaus;
 import de.lemonpvp.fastshop.auktion.AuktionsListener;
 import de.lemonpvp.fastshop.auktion.AuktionsMenus;
@@ -30,6 +31,7 @@ public final class FastShop extends JavaPlugin {
     private ShopMenus menus;
     private AuktionsHaus auktionen;
     private AuktionsMenus auktionsMenus;
+    private AuktionsDialoge auktionsDialoge;
 
     @Override
     public void onEnable() {
@@ -41,6 +43,7 @@ public final class FastShop extends JavaPlugin {
         this.menus = new ShopMenus(this);
         this.auktionen = new AuktionsHaus(this);
         this.auktionsMenus = new AuktionsMenus(this);
+        this.auktionsDialoge = new AuktionsDialoge(this);
 
         Bukkit.getPluginManager().registerEvents(new ShopListener(this), this);
         Bukkit.getPluginManager().registerEvents(new AuktionsListener(this), this);
@@ -93,5 +96,9 @@ public final class FastShop extends JavaPlugin {
 
     public AuktionsMenus auktionsMenus() {
         return auktionsMenus;
+    }
+
+    public AuktionsDialoge auktionsDialoge() {
+        return auktionsDialoge;
     }
 }

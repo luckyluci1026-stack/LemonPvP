@@ -115,6 +115,7 @@ public final class AnfragePollTask {
                 }
                 kampfHinweis.remove(hinweisSchluessel);
                 if (plugin.istLootQuelle()) {
+                    spieler.closeInventory();
                     plugin.inventarSperre().sperren(spielerUuid, UEBERGABE_SPERRE_MILLIS);
                 }
                 // Auf der Loot-Quelle selbst (in der Praxis: SMP) ist das

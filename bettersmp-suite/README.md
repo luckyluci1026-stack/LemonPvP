@@ -11,7 +11,7 @@ den Server-Namen setzt du einmal über `brand` in der `config.yml`.
 | **BetterRTP** | Vollständig asynchrones Random-Teleport-Plugin | `/rtp` (`/wild`), `/betterrtp` |
 | **Lifesteal+** | Lifesteal mit Herzverlust, Elimination/Revive, BetterSMP-CombatLog | `/hearts`, `/withdraw`, `/revive`, `/lifesteal` |
 | **EasyBedrock** | Bedrock-Crossplay (Geyser + Floodgate), Bedrock-Spieler ≈ Java-Spieler an Ressourcen | `/easybedrock` |
-| **FastShop** | DonutSMP-artiges `/shop` + `/sell`, komplett in-game editierbar, EssentialsX-Economy | `/shop`, `/sell`, `/worth`, `/fastshop` |
+| **FastShop** | DonutSMP-artiges `/shop` + `/sell` und Auktionshaus `/ah` (alles mit Fenstern), komplett in-game editierbar, EssentialsX-Economy | `/shop`, `/sell`, `/worth`, `/ah`, `/fastshop` |
 | **SMPContent** | **Eigene Blöcke und Items** (8 Blöcke, 7 Items) mit Rezepten, passend zum Texturepack | `/smpcontent` |
 | **SMPLobby** | **Lobby/Hub eines Netzwerks**: Schutz, Spawn, Server-Wähler, Spieler ausblenden, Anzeigetafel, Doppelsprung | `/spawn`, `/smplobby` |
 | **LobbyLock** | Eigenständige Zusatzsperre für die Lobby: Item-Drop, Inventar-Verschieben, Offhand-Tausch, Türen/Falltüren/Schilder - unabhängig von SMPLobby, kein Update daran nötig | `/lobbylock` |

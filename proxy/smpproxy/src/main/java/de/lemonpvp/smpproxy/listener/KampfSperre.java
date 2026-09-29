@@ -10,6 +10,8 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import de.lemonpvp.smpproxy.SMPProxy;
+import de.lemonpvp.smpproxy.config.ProxyConfig;
+import de.lemonpvp.smpproxy.netzwerk.ChatRelay;
 import de.lemonpvp.smpproxy.util.Msg;
 
 import java.nio.ByteBuffer;
@@ -76,7 +78,11 @@ public final class KampfSperre {
             return;
         }
         Sperre sperre = aktiveSperre(spieler.getUniqueId());
-        if (sperre == null || !plugin.config().combatBlockedCommands().contains(befehlsName(event.getCommand()))) {
+        if (sperre == null) {
+            return;
+        }
+        String name = befehlsName(event.getCommand());
+        if (!plugin.config().combatBlockedCommands().contains(name) && !wechseltServer(spieler, name)) {
             return;
         }
         event.setResult(CommandExecuteEvent.CommandResult.denied());
@@ -99,6 +105,18 @@ public final class KampfSperre {
     @Subscribe
     public void beimTrennen(DisconnectEvent event) {
         sperren.remove(event.getPlayer().getUniqueId());
+    }
+
+    private boolean wechseltServer(Player spieler, String name) {
+        ProxyConfig config = plugin.config();
+        String hier = ChatRelay.serverVon(spieler);
+        if (name.equals("rtp") && config.rtpEnabled() && !config.rtpRedirectServer().isEmpty()) {
+            return !config.rtpPassthroughServers().contains(hier) && !config.rtpRedirectServer().equals(hier);
+        }
+        if (config.ahEnabled() && config.ahAliases().contains(name)) {
+            return !config.ahPassthroughServers().contains(hier) && !config.ahRedirectServer().equals(hier);
+        }
+        return false;
     }
 
     private Sperre aktiveSperre(UUID spieler) {

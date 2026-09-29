@@ -55,7 +55,8 @@ themen:
     text:
       - "<gold><bold>Auktionshaus</bold></gold>"
       - "<gray><white>/ah</white> zeigt alle Angebote. Klick auf ein Item zum Kaufen.</gray>"
-      - "<gray>Nimm ein Item in die Hand und tippe <white>/ah sell <Preis></white>, zum Beispiel <white>/ah sell 2.5k</white>.</gray>"
+      - "<gray>Verkaufen: <white>/ah sell</white> oder im Menü auf <white>Item verkaufen</white> klicken, Item auswählen, Preis einstellen, fertig.</gray>"
+      - "<gray>Suchen: <white>/ah</white> und ein Wort, zum Beispiel <white>/ah diamant</white>.</gray>"
       - "<gray>Ein Angebot läuft 48 Stunden. Unter <white>/ah meine</white> nimmst du es zurück.</gray>"
       - "<gray>Das Geld bekommst du auch, wenn du gerade offline bist.</gray>"
 

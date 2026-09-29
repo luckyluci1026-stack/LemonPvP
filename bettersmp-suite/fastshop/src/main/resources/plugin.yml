@@ -24,7 +24,7 @@ commands:
     permission: fastshop.worth
   ah:
     description: Auktionshaus - Items an andere Spieler verkaufen
-    usage: "/ah [sell <Preis> | search <Begriff> | meine]"
+    usage: "/ah [Begriff | sell [Preis] | search [Begriff] | meine]"
     aliases: [auktionshaus, auktion, auction, auctionhouse]
     permission: fastshop.ah
   fastshop:

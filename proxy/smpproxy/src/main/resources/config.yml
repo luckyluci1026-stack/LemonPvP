@@ -145,6 +145,20 @@ rtp:
   redirect-server: "SMP"
 
 # ----------------------------------------------------------
+#  /ah (Auktionshaus) von überall im Netzwerk
+#
+#  Auf den Servern unter passthrough-servers geht /ah direkt an
+#  FastShop. Von allen anderen (z.B. der Lobby) geht es erst auf
+#  redirect-server, dort öffnet sich dann sofort das Auktionshaus.
+#  Im Duell, im Kampf und eingefroren ist dieser Wechsel gesperrt.
+# ----------------------------------------------------------
+ah:
+  enabled: true
+  aliases: ["ah", "auktionshaus", "auktion", "auction", "auctionhouse"]
+  passthrough-servers: ["SMP"]
+  redirect-server: "SMP"
+
+# ----------------------------------------------------------
 #  Nachrichten (MiniMessage - Gradients, Farben, alles erlaubt)
 # ----------------------------------------------------------
 messages:
@@ -232,6 +246,10 @@ messages:
   # /rtp
   rtp-sending: "%prefix%<gray>Bringe dich rüber, dann geht's direkt mit RTP weiter ...</gray>"
   rtp-not-configured: "%prefix%<red>/rtp ist nicht eingerichtet.</red><newline><gray>In config.yml unter <white>rtp.redirect-server</white> einen Server eintragen.</gray>"
+
+  # /ah von einem anderen Server aus (siehe ah oben)
+  ah-sending: "%prefix%<gray>Das Auktionshaus ist auf <white>%server%</white> - einen Moment ...</gray>"
+  ah-not-configured: "%prefix%<red>/ah ist nicht eingerichtet.</red><newline><gray>In config.yml unter <white>ah.redirect-server</white> einen Server eintragen.</gray>"
 
   # Der Trennbildschirm beim Bann selbst - kein %prefix%, das HIER ist
   # der ganze Bildschirm.

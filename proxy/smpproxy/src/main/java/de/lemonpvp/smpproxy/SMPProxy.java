@@ -2,6 +2,7 @@ package de.lemonpvp.smpproxy;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandManager;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
@@ -11,6 +12,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import de.lemonpvp.smpproxy.ban.BanStore;
+import de.lemonpvp.smpproxy.command.AhCommand;
 import de.lemonpvp.smpproxy.command.HubCommand;
 import de.lemonpvp.smpproxy.command.MsgCommand;
 import de.lemonpvp.smpproxy.command.NetworkBanCommand;
@@ -190,6 +192,10 @@ public final class SMPProxy {
             commands.register(commands.metaBuilder("rtp").build(), new RtpCommand(this));
         }
 
+        if (config.ahEnabled()) {
+            registrieren(commands, config.ahAliases(), new AhCommand(this));
+        }
+
         if (config.hubEnabled() && !config.limbo().isEmpty()) {
             List<String> aliases = config.hubAliases();
             if (!aliases.isEmpty()) {
@@ -215,7 +221,7 @@ public final class SMPProxy {
         }
     }
 
-    private void registrieren(CommandManager commands, List<String> namen, MsgCommand befehl) {
+    private void registrieren(CommandManager commands, List<String> namen, SimpleCommand befehl) {
         if (namen.isEmpty()) {
             return;
         }
