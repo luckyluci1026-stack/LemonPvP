@@ -53,6 +53,20 @@ heruntergeladen und mit fertigen Configs eingerichtet.
 > Für MariaDB: in `config.yml` unter `database.mariadb` `enabled: true` und die
 > Zugangsdaten eintragen. Sonst wird automatisch SQLite genutzt.
 
+## Welches Jar auf welchen Server (Netzwerk mit Proxy)
+
+| Server | Jars aus `dist/` |
+|--------|------------------|
+| Proxy (Velocity) | `SMPProxy` |
+| SMP | `BetterSMP`, `BetterRTP`, `FastShop`, `DuelPlus` |
+| Lobby | `SMPLobby`, `LobbyLock`, `DuelPlus` |
+| Duels | `DuelPlus` |
+
+Chat zwischen Lobby und SMP, `/msg` über alle Server, die einmaligen
+Beitritts-Nachrichten und die Sperren im Kampf laufen über SMPProxy - dafür
+müssen Proxy und Server-Plugins aus derselben Version stammen. Details in
+`../proxy/README.md`.
+
 ## Selbst bauen
 
 Voraussetzungen: **JDK 21** und **Maven**. Siehe `../BUILDING.md` (die Paper-API

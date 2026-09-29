@@ -93,6 +93,10 @@ combat:
 # ----------------------------------------------------------
 join-quit:
   enabled: true
+  # true: "X ist dem Server beigetreten" kommt vom Proxy (SMPProxy) und nur,
+  # wenn jemand das Netzwerk betritt oder verlaesst - nicht bei jedem Wechsel
+  # zwischen SMP, Lobby und Duels. Die drei Texte hier gelten dann nicht.
+  netzwerk: true
   join: "<dark_gray>[<green>+</green>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist dem Server beigetreten.</gray>"
   quit: "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>hat den Server verlassen.</gray>"
   first-join: "<dark_gray>[<#00D4FF>★</#00D4FF>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist zum <white>ersten Mal</white> hier! Willkommen!</gray>"
@@ -172,8 +176,8 @@ killstreak:
 # bettersmp.deathredirect.bypass ueberspringt das.
 # ----------------------------------------------------------
 death-redirect:
-  enabled: false
-  server: "lobby"
+  enabled: true
+  server: "Lobby"
   # Wartezeit nach dem Respawn, bevor es losgeht (in Ticks, 20 = 1 Sekunde).
   # Nicht 0: Der Server braucht selbst einen Moment, um den Spieler nach
   # dem Tod fertig einzurichten (Inventar, Erfahrungspunkte, Welt).

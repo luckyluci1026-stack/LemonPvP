@@ -18,6 +18,7 @@ passiert hier.
 | **Spieler ausblenden** | Ein Klick, und die anderen sind weg — nur für dich. |
 | **Anzeigetafel** | Sidebar mit Name, Spielern in der Lobby und im Netzwerk. Flackerfrei. |
 | **Doppelsprung** | Zweimal Leertaste, und man fliegt ein Stück. |
+| **Chat** | Mit `chat.netzwerk: true` (Standard) geht der Lobby-Chat über SMPProxy auch an den SMP, und der SMP-Chat erscheint hier. Wer auf dem SMP stummgeschaltet ist, kann auch hier nicht schreiben. |
 
 ## Einrichten
 
@@ -27,6 +28,8 @@ passiert hier.
    eintragen. **Wichtig:** `server:` muss exakt so heißen wie in der
    `velocity.toml` unter `[servers]` — sonst passiert beim Klick nichts.
 4. `/smplobby reload`
+5. Läuft auch LobbyLock: dort `block-chat: false` setzen, sonst kommt keine
+   Nachricht aus der Lobby im Netzwerk an.
 
 ### Damit der Wähler funktioniert
 

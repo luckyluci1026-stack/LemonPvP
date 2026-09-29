@@ -19,6 +19,8 @@ import de.lemonpvp.bettersmp.hook.EconomyHook;
 import de.lemonpvp.bettersmp.hook.LuckPermsHook;
 import de.lemonpvp.bettersmp.hook.PapiHook;
 import de.lemonpvp.bettersmp.join.JoinModule;
+import de.lemonpvp.bettersmp.netzwerk.NetzwerkBruecke;
+import de.lemonpvp.bettersmp.tutorial.Tutorial;
 import de.lemonpvp.bettersmp.killstreak.KillstreakListener;
 import de.lemonpvp.bettersmp.punish.FreezeListener;
 import de.lemonpvp.bettersmp.punish.FreezeManager;
@@ -56,6 +58,8 @@ public final class BetterSMP extends JavaPlugin {
     private PapiHook papi;
     private EconomyHook economy;
     private CombatManager combat;
+    private NetzwerkBruecke netzwerk;
+    private Tutorial tutorial;
     private Installer installer;
     private ConfigDeployer configDeployer;
     private RankSetup rankSetup;
@@ -105,6 +109,9 @@ public final class BetterSMP extends JavaPlugin {
         // /reload) sofort das Scoreboard auf, das killstreaks() schon liest.
         this.killstreaks = new KillstreakListener(this);
 
+        this.netzwerk = new NetzwerkBruecke(this);
+        netzwerk.start();
+        this.tutorial = new Tutorial(this);
         BetterSMPApi.init(combat);
         combat.start();
         stats.start();
@@ -123,6 +130,7 @@ public final class BetterSMP extends JavaPlugin {
         pm.registerEvents(new DeathRedirectListener(this), this);
         pm.registerEvents(new FreezeListener(this), this);
         pm.registerEvents(killstreaks, this);
+        pm.registerEvents(tutorial, this);
 
         // Fuer die Tod-Umleitung - unabhaengig vom Schalter registriert,
         // damit ein spaeteres Einschalten per /bettersmp reload sofort
@@ -142,6 +150,7 @@ public final class BetterSMP extends JavaPlugin {
         getCommand("daily").setExecutor(new DailyCommand(this));
         getCommand("spawn").setExecutor(new SpawnCommand(this));
         getCommand("setspawn").setExecutor(new SetSpawnCommand(this));
+        getCommand("tutorial").setExecutor(tutorial);
 
         logHooks();
         Bukkit.getScheduler().runTaskLater(this, this::firstRunSetup, 40L);
@@ -151,6 +160,7 @@ public final class BetterSMP extends JavaPlugin {
     @Override
     public void onDisable() {
         if (combat != null) combat.stop();
+        if (netzwerk != null) netzwerk.stop();
         if (stats != null) stats.stop();
         if (board != null) board.stop();
         if (freeze != null) freeze.stop();
@@ -181,6 +191,7 @@ public final class BetterSMP extends JavaPlugin {
     public void reloadModules() {
         punishConfig.reload();
         board.loadBoardConfig();
+        tutorial.laden();
     }
 
     public void setupRanks(CommandSender feedback) {
@@ -206,6 +217,14 @@ public final class BetterSMP extends JavaPlugin {
 
     public EconomyHook economy() {
         return economy;
+    }
+
+    public Tutorial tutorial() {
+        return tutorial;
+    }
+
+    public NetzwerkBruecke netzwerk() {
+        return netzwerk;
     }
 
     public CombatManager combat() {

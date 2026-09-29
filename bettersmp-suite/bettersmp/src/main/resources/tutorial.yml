@@ -1,0 +1,119 @@
+# ==========================================================
+#  BetterSMP - /tutorial
+#
+#  Ein Menue mit allen wichtigen Themen fuer neue Spieler.
+#  Klick auf ein Thema = die Erklaerung kommt in den Chat.
+#  /tutorial <Nummer> zeigt ein Thema direkt im Chat.
+#
+#  befehl: Das Thema erscheint nur, wenn es diesen Befehl auf dem
+#          Server gibt (z.B. "ah" fuer das Auktionshaus). Leer = immer.
+#  platz:  Feld im Menue (0 = oben links, 26 = unten rechts bei 27).
+# ==========================================================
+
+titel: "<dark_gray>» <gradient:#6C5CE7:#00D4FF>Tutorial</gradient>"
+plaetze: 27
+
+# Beim allerersten Beitreten nach ein paar Sekunden automatisch oeffnen
+beim-ersten-join-oeffnen: true
+erster-join-hinweis: "<gray>Neu hier? Mit <white>/tutorial</white> lernst du alles Wichtige in zwei Minuten.</gray>"
+kopfzeile: "<dark_gray><st>                                        </st>"
+fusszeile: "<gray>Alle Themen: <white>/tutorial</white></gray>"
+unbekannt: "<red>Das Thema gibt es nicht. Tippe <white>/tutorial</white>.</red>"
+
+themen:
+  - platz: 10
+    material: GRASS_BLOCK
+    name: "<green><bold>Erste Schritte</bold></green>"
+    kurz:
+      - "<gray>So startest du auf BuckSMP"
+    text:
+      - "<green><bold>Erste Schritte</bold></green>"
+      - "<gray>Mit <white>/rtp</white> landest du an einem zufälligen Ort in der Wildnis.</gray>"
+      - "<gray>Bau dir ein Zuhause und speichere es mit <white>/sethome</white>.</gray>"
+      - "<gray>Mit <white>/home</white> kommst du jederzeit dorthin zurück.</gray>"
+      - "<gray>Hol dir jeden Tag deine Belohnung mit <white>/daily</white>.</gray>"
+
+  - platz: 11
+    material: EMERALD
+    befehl: shop
+    name: "<#7CFC00><bold>Geld & Shop</bold></#7CFC00>"
+    kurz:
+      - "<gray>Geld verdienen und ausgeben"
+    text:
+      - "<#7CFC00><bold>Geld & Shop</bold></#7CFC00>"
+      - "<gray><white>/shop</white> öffnet den Shop zum Kaufen und Verkaufen.</gray>"
+      - "<gray><white>/sell hand</white> verkauft das Item in deiner Hand, <white>/sell all</white> alles Verkaufbare.</gray>"
+      - "<gray><white>/worth</white> zeigt, was das Item in deiner Hand wert ist.</gray>"
+      - "<gray><white>/balance</white> zeigt dein Geld, <white>/pay <Spieler> <Betrag></white> überweist es.</gray>"
+
+  - platz: 12
+    material: GOLD_INGOT
+    befehl: ah
+    name: "<gold><bold>Auktionshaus</bold></gold>"
+    kurz:
+      - "<gray>Items an andere Spieler verkaufen"
+    text:
+      - "<gold><bold>Auktionshaus</bold></gold>"
+      - "<gray><white>/ah</white> zeigt alle Angebote. Klick auf ein Item zum Kaufen.</gray>"
+      - "<gray>Nimm ein Item in die Hand und tippe <white>/ah sell <Preis></white>, zum Beispiel <white>/ah sell 2.5k</white>.</gray>"
+      - "<gray>Ein Angebot läuft 48 Stunden. Unter <white>/ah meine</white> nimmst du es zurück.</gray>"
+      - "<gray>Das Geld bekommst du auch, wenn du gerade offline bist.</gray>"
+
+  - platz: 13
+    material: ENDER_PEARL
+    befehl: tpa
+    name: "<light_purple><bold>Teleportieren</bold></light_purple>"
+    kurz:
+      - "<gray>Zu Freunden und nach Hause"
+    text:
+      - "<light_purple><bold>Teleportieren</bold></light_purple>"
+      - "<gray><white>/tpa <Spieler></white> fragt, ob du zu jemandem darfst.</gray>"
+      - "<gray>Mit <white>/tpaccept</white> nimmst du eine Anfrage an, mit <white>/tpdeny</white> lehnst du sie ab.</gray>"
+      - "<gray><white>/spawn</white> bringt dich in die Lobby.</gray>"
+
+  - platz: 14
+    material: IRON_SWORD
+    befehl: duel
+    name: "<red><bold>Duelle</bold></red>"
+    kurz:
+      - "<gray>1 gegen 1 um euer Loot"
+    text:
+      - "<red><bold>Duelle</bold></red>"
+      - "<gray><white>/duel <Spieler></white> fordert jemanden heraus, <white>/duel <Spieler> accept</white> nimmt an.</gray>"
+      - "<gray>Ihr kämpft mit eurem echten Inventar in einer eigenen Arena.</gray>"
+      - "<gray>Wer gewinnt, bekommt das Loot des anderen.</gray>"
+      - "<gray>Mit <white>/duel watch <Spieler></white> schaust du zu.</gray>"
+
+  - platz: 15
+    material: SHIELD
+    name: "<#FF6B6B><bold>Kämpfen</bold></#FF6B6B>"
+    kurz:
+      - "<gray>Was im Kampf gilt"
+    text:
+      - "<#FF6B6B><bold>Kämpfen</bold></#FF6B6B>"
+      - "<gray>Wenn du einen Spieler triffst oder getroffen wirst, bist du 15 Sekunden im Kampf.</gray>"
+      - "<gray>So lange gehen <white>/spawn</white>, <white>/tpa</white> und <white>/home</white> nicht.</gray>"
+      - "<gray>Wer im Kampf das Spiel verlässt, stirbt. Ausloggen rettet dich nicht.</gray>"
+
+  - platz: 16
+    material: WRITABLE_BOOK
+    name: "<#00D4FF><bold>Chat</bold></#00D4FF>"
+    kurz:
+      - "<gray>Schreiben und private Nachrichten"
+    text:
+      - "<#00D4FF><bold>Chat</bold></#00D4FF>"
+      - "<gray>Der Chat ist zwischen Lobby und SMP verbunden.</gray>"
+      - "<gray><white>/msg <Spieler> <Nachricht></white> schreibt jemandem privat, egal auf welchem Server.</gray>"
+      - "<gray>Mit <white>/r <Nachricht></white> antwortest du auf die letzte Nachricht.</gray>"
+      - "<gray>Im Duell sieht nur dein Gegner, was du schreibst.</gray>"
+
+  - platz: 22
+    material: BOOK
+    name: "<yellow><bold>Regeln & Hilfe</bold></yellow>"
+    kurz:
+      - "<gray>Fair bleiben und Hilfe holen"
+    text:
+      - "<yellow><bold>Regeln & Hilfe</bold></yellow>"
+      - "<gray>Lies einmal die Regeln: Das Regelbuch hast du in der Lobby in deiner Hotbar.</gray>"
+      - "<gray>Wenn jemand cheatet oder beleidigt: <white>/report <Spieler> <Grund></white>.</gray>"
+      - "<gray>Bei Fragen hilft dir jemand aus dem Team.</gray>"

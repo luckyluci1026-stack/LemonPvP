@@ -154,6 +154,7 @@ public final class DuellSessionManager implements Listener {
     }
 
     private void ankunftVerarbeiten(Player spieler, DuelRecord duell) {
+        plugin.duellChat().partnerSetzen(duell.spielerA(), duell.spielerB());
         plugin.db().snapshotHolenUndLoeschen(duell.id(), spieler.getUniqueId(), DuelDatabase.RICHTUNG_HIN)
                 .thenAccept(snapshotOpt -> Bukkit.getScheduler().runTask(plugin, () -> {
                     snapshotOpt.ifPresent(snap -> snap.anwenden(spieler.getInventory()));

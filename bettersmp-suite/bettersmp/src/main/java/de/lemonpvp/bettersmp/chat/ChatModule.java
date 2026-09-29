@@ -65,6 +65,7 @@ public final class ChatModule implements Listener {
         } else {
             event.renderer((source, displayName, msg, viewer) -> out);
         }
+        plugin.netzwerk().chatWeitergeben(player, out);
 
         notifyMentions(player, mentioned);
     }

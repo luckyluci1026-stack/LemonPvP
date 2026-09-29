@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import de.lemonpvp.smpproxy.ban.BanStore;
 import de.lemonpvp.smpproxy.command.HubCommand;
+import de.lemonpvp.smpproxy.command.MsgCommand;
 import de.lemonpvp.smpproxy.command.NetworkBanCommand;
 import de.lemonpvp.smpproxy.command.RtpCommand;
 import de.lemonpvp.smpproxy.command.ProxyCommand;
@@ -22,6 +23,10 @@ import de.lemonpvp.smpproxy.health.ServerWatcher;
 import de.lemonpvp.smpproxy.listener.BanListener;
 import de.lemonpvp.smpproxy.listener.ConnectListener;
 import de.lemonpvp.smpproxy.listener.KampfSperre;
+import de.lemonpvp.smpproxy.netzwerk.ChatRelay;
+import de.lemonpvp.smpproxy.netzwerk.JoinQuitNachrichten;
+import de.lemonpvp.smpproxy.netzwerk.Privatnachrichten;
+import de.lemonpvp.smpproxy.netzwerk.StummListe;
 import de.lemonpvp.smpproxy.util.Msg;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
@@ -53,6 +58,9 @@ public final class SMPProxy {
     private final HomeTracker tracker = new HomeTracker();
     private final BanStore bans;
     private final BanListener banListener;
+    private final StummListe stummListe = new StummListe();
+    private final ChatRelay chatRelay;
+    private final Privatnachrichten privatnachrichten;
 
     private final List<ScheduledTask> tasks = new ArrayList<>();
 
@@ -64,6 +72,8 @@ public final class SMPProxy {
         this.watcher = new ServerWatcher(proxy, config, log);
         this.bans = new BanStore(folder, log);
         this.banListener = new BanListener(this);
+        this.chatRelay = new ChatRelay(this);
+        this.privatnachrichten = new Privatnachrichten(this);
     }
 
     @Subscribe
@@ -73,8 +83,12 @@ public final class SMPProxy {
         bans.load();
         proxy.getEventManager().register(this, new ConnectListener(this));
         proxy.getEventManager().register(this, banListener);
-        proxy.getChannelRegistrar().register(KampfSperre.KANAL);
+        proxy.getChannelRegistrar().register(KampfSperre.KANAL, ChatRelay.CHAT, ChatRelay.STUMM,
+                RtpCommand.RTP_CHANNEL);
         proxy.getEventManager().register(this, new KampfSperre(this));
+        proxy.getEventManager().register(this, chatRelay);
+        proxy.getEventManager().register(this, privatnachrichten);
+        proxy.getEventManager().register(this, new JoinQuitNachrichten(this));
         startTasks();
         registerCommands();
         logRoutes();
@@ -186,6 +200,11 @@ public final class SMPProxy {
             }
         }
 
+        if (config.msgEnabled()) {
+            registrieren(commands, config.msgAliases(), new MsgCommand(this, false));
+            registrieren(commands, config.replyAliases(), new MsgCommand(this, true));
+        }
+
         if (config.serverShortcuts()) {
             for (String server : config.domains().values().stream().distinct().toList()) {
                 if (server.equals(config.limbo())) {
@@ -194,6 +213,14 @@ public final class SMPProxy {
                 commands.register(commands.metaBuilder(server).build(), new ServerCommand(this, server));
             }
         }
+    }
+
+    private void registrieren(CommandManager commands, List<String> namen, MsgCommand befehl) {
+        if (namen.isEmpty()) {
+            return;
+        }
+        String[] weitere = namen.subList(1, namen.size()).toArray(new String[0]);
+        commands.register(commands.metaBuilder(namen.get(0)).aliases(weitere).build(), befehl);
     }
 
     private void logRoutes() {
@@ -261,6 +288,18 @@ public final class SMPProxy {
 
     public BanStore bans() {
         return bans;
+    }
+
+    public StummListe stummListe() {
+        return stummListe;
+    }
+
+    public ChatRelay chatRelay() {
+        return chatRelay;
+    }
+
+    public Privatnachrichten privatnachrichten() {
+        return privatnachrichten;
     }
 
     public BanListener banListener() {

@@ -340,13 +340,102 @@ ist, und DuelPlus meldet vom Duels-Server, wer gerade ein Duell spielt
 - die Kurzbefehle `/smp1`, `/smp2` ...
 - alles, was zusätzlich unter `combat.blocked-commands` steht
 
+Dasselbe gilt für eingefrorene Spieler (`/freeze` auf dem SMP): Wer
+eingefroren ist, kann sich nicht mit `/spawn` oder `/server` davonmachen.
+Kampf, Duell und Freeze werden getrennt gemerkt - wer aufgetaut wird, ist
+trotzdem noch im Kampf, wenn er gerade gekämpft hat.
+
 Nach einem Serverwechsel oder beim Verlassen des Netzwerks fällt die Sperre
-weg. Ausschalten: `combat.enabled: false`. Die Texte heißen `combat-blocked`
-und `duel-blocked`. Fehlen sie in einer älteren `config.yml`, nimmt der
-Proxy eingebaute Texte.
+weg. Ausschalten: `combat.enabled: false`. Die Texte heißen `combat-blocked`,
+`duel-blocked` und `freeze-blocked`. Fehlen sie in einer älteren
+`config.yml`, nimmt der Proxy eingebaute Texte.
 
 Dafür müssen SMPProxy, BetterSMP (SMP) und DuelPlus (SMP, Lobby, Duels) in
 der neuen Version laufen.
+
+## Chat zwischen Lobby und SMP
+
+Was in der Lobby geschrieben wird, sieht man auf dem SMP - und umgekehrt.
+Nachrichten vom jeweils anderen Server haben den Servernamen davor:
+
+```
+[Lobby] [Spieler] Max » hi
+```
+
+Auf dem Duels-Server sieht man nur, was der eigene Gegner schreibt. Wer dort
+gerade kein Duell hat (z. B. als Zuschauer), schreibt nur für sich selbst
+und bekommt einen Hinweis.
+
+```yaml
+chat-sync:
+  enabled: true
+  servers: ["SMP", "Lobby"]
+  server-tag: "<dark_gray>[<gray>%server%</gray>]</dark_gray>"
+```
+
+Stummschaltungen gelten überall: Wer auf dem SMP mit `/gmute` stumm
+geschaltet wird, kann auch in der Lobby, im Duell und per `/msg` nichts
+schreiben. BetterSMP meldet das dem Proxy, der Proxy blockt.
+
+Damit das klappt:
+
+- SMP: BetterSMP (Chat-Modul an, `chat.enabled: true`)
+- Lobby: SMPLobby, und in `plugins/LobbyLock/config.yml` muss
+  `block-chat: false` stehen - sonst schluckt LobbyLock jede Nachricht,
+  bevor sie weitergegeben wird.
+- Duels: DuelPlus
+
+Jede Chatnachricht aus Lobby und Duels steht zusätzlich in der
+Proxy-Konsole (`[Chat Lobby] ...`).
+
+## /msg und /r über alle Server
+
+`/msg <Spieler> <Nachricht>` erreicht jeden im Netzwerk, egal auf welchem
+Server er gerade ist. `/r <Nachricht>` antwortet auf die letzte Nachricht.
+Namen werden beim Tippen mit Tab vervollständigt.
+
+```yaml
+msg:
+  enabled: true
+  aliases: ["msg", "tell", "w", "whisper", "pm", "m"]
+  reply-aliases: ["r", "reply"]
+```
+
+Weil der Proxy diese Befehle übernimmt, sieht das `/socialspy` von
+EssentialsX sie nicht mehr. Stattdessen steht jede private Nachricht in der
+Proxy-Konsole (`[MSG] Max -> Tom: ...`).
+
+## Beitritts-Nachrichten nur einmal
+
+"Max ist dem Server beigetreten" kommt jetzt vom Proxy - genau einmal, wenn
+jemand das Netzwerk betritt, und einmal beim Verlassen. Wer zwischen Lobby,
+SMP und Duels wechselt, löst keine Nachricht mehr aus. Beim allerersten
+Besuch gibt es die Willkommens-Variante mit Stern.
+
+```yaml
+join-quit:
+  enabled: true
+```
+
+Die Texte heißen `network-join`, `network-first-join` und `network-quit`.
+BetterSMP schweigt dafür von selbst (`join-quit.netzwerk: true` in dessen
+`config.yml`).
+
+## Absturz des Duels-Servers
+
+Stürzt der Duels-Server mitten im Duell ab, kommt man sofort dorthin zurück,
+wo man vor dem Duell war (SMP oder Lobby) - ohne Umweg über den Warteraum
+und ohne später in eine leere Arena geholt zu werden. Ist der alte Server
+auch weg, geht es wie gewohnt in den Warteraum und von dort später zurück
+auf den alten Server. Klappt schon der Wechsel zum Duels-Server nicht, bleibt
+man einfach, wo man ist, und bekommt einen Hinweis.
+
+```yaml
+auto-return:
+  skip-servers: ["Duels"]
+```
+
+Die Texte heißen `server-crashed-home` und `server-unreachable`.
 
 ## Testen
 

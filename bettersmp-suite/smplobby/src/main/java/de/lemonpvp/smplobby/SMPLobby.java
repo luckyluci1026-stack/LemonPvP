@@ -1,6 +1,7 @@
 package de.lemonpvp.smplobby;
 
 import de.lemonpvp.smplobby.board.LobbyBoard;
+import de.lemonpvp.smplobby.chat.ChatWeiterleitung;
 import de.lemonpvp.smplobby.command.LobbyCommand;
 import de.lemonpvp.smplobby.hide.HideModule;
 import de.lemonpvp.smplobby.items.ItemListener;
@@ -42,6 +43,7 @@ public final class SMPLobby extends JavaPlugin {
     private LobbyBoard board;
     private DoubleJump doppelsprung;
     private JoinListener ankunft;
+    private ChatWeiterleitung chat;
 
     @Override
     public void onEnable() {
@@ -59,12 +61,15 @@ public final class SMPLobby extends JavaPlugin {
         this.ankunft = new JoinListener(this);
 
         proxy.start();
+        this.chat = new ChatWeiterleitung(this);
+        chat.start();
 
         Bukkit.getPluginManager().registerEvents(ankunft, this);
         Bukkit.getPluginManager().registerEvents(new ProtectListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ItemListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SelectorListener(this), this);
         Bukkit.getPluginManager().registerEvents(doppelsprung, this);
+        Bukkit.getPluginManager().registerEvents(chat, this);
 
         befehl("spawn");
         befehl("setspawn");
@@ -99,6 +104,9 @@ public final class SMPLobby extends JavaPlugin {
         }
         if (proxy != null) {
             proxy.stop();
+        }
+        if (chat != null) {
+            chat.stop();
         }
     }
 

@@ -83,11 +83,7 @@ public final class SelectorGui {
                 continue;
             }
             String server = Werte.text(roh, "server", "");
-            if (server.isEmpty()) {
-                plugin.getLogger().warning("Wähler-Eintrag ohne \"server\" übersprungen.");
-                continue;
-            }
-            int online = plugin.proxy().zahl(server);
+            int online = server.isEmpty() ? -1 : plugin.proxy().zahl(server);
 
             ItemStack stapel = new ItemStack(material);
             ItemMeta meta = stapel.getItemMeta();
@@ -105,7 +101,9 @@ public final class SelectorGui {
                 stapel.setItemMeta(meta);
             }
             holder.inventar.setItem(platz, stapel);
-            holder.ziele.put(platz, server);
+            if (!server.isEmpty()) {
+                holder.ziele.put(platz, server);
+            }
         }
 
         spieler.openInventory(holder.getInventory());

@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
@@ -179,6 +180,27 @@ public final class ShopListener implements org.bukkit.event.Listener {
             // Guthaben und Mengen im Menü sofort aktualisieren
             plugin.menus().openAction(player, holder.categoryId, holder.page, holder.itemIndex);
         }
+    }
+
+    @EventHandler
+    public void onDrag(InventoryDragEvent event) {
+        InventoryHolder holder = event.getInventory().getHolder();
+        if (holder instanceof ShopMenus.MainHolder || holder instanceof ShopMenus.CategoryHolder
+                || holder instanceof ShopMenus.ActionHolder) {
+            event.setCancelled(true);
+            return;
+        }
+        if (!(holder instanceof ShopMenus.SellHolder sellHolder)) {
+            return;
+        }
+        int obereGroesse = event.getView().getTopInventory().getSize();
+        for (int rawSlot : event.getRawSlots()) {
+            if (rawSlot < obereGroesse && rawSlot >= ShopMenus.SELL_AREA) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+        Bukkit.getScheduler().runTask(plugin, () -> plugin.menus().refreshSell(sellHolder.getInventory()));
     }
 
     @EventHandler

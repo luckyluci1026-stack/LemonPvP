@@ -23,13 +23,15 @@ public final class KampfSperre {
     public static final MinecraftChannelIdentifier KANAL = MinecraftChannelIdentifier.create("bettersmp", "combat");
 
     private static final long HOECHSTENS_MILLIS = 10L * 60L * 1000L;
+    private static final byte ART_KAMPF = 0;
     private static final byte ART_DUELL = 1;
+    private static final byte ART_FREEZE = 2;
 
-    private record Sperre(long bis, boolean duell) {
+    private record Sperre(long bis, byte art) {
     }
 
     private final SMPProxy plugin;
-    private final Map<UUID, Sperre> sperren = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<Byte, Long>> sperren = new ConcurrentHashMap<>();
 
     public KampfSperre(SMPProxy plugin) {
         this.plugin = plugin;
@@ -54,12 +56,16 @@ public final class KampfSperre {
         }
         ByteBuffer puffer = ByteBuffer.wrap(daten);
         long rest = puffer.getLong();
-        boolean duell = puffer.hasRemaining() && puffer.get() == ART_DUELL;
+        byte art = puffer.hasRemaining() ? puffer.get() : ART_KAMPF;
         UUID spieler = verbindung.getPlayer().getUniqueId();
         if (rest <= 0) {
-            sperren.remove(spieler);
+            sperren.computeIfPresent(spieler, (id, arten) -> {
+                arten.remove(art);
+                return arten.isEmpty() ? null : arten;
+            });
         } else {
-            sperren.put(spieler, new Sperre(System.currentTimeMillis() + Math.min(rest, HOECHSTENS_MILLIS), duell));
+            sperren.computeIfAbsent(spieler, id -> new ConcurrentHashMap<>())
+                    .put(art, System.currentTimeMillis() + Math.min(rest, HOECHSTENS_MILLIS));
         }
     }
 
@@ -75,7 +81,11 @@ public final class KampfSperre {
         }
         event.setResult(CommandExecuteEvent.CommandResult.denied());
         long rest = sperre.bis() - System.currentTimeMillis();
-        String text = sperre.duell() ? plugin.config().duelBlockedMessage() : plugin.config().combatBlockedMessage();
+        String text = switch (sperre.art()) {
+            case ART_DUELL -> plugin.config().duelBlockedMessage();
+            case ART_FREEZE -> plugin.config().message("freeze-blocked");
+            default -> plugin.config().combatBlockedMessage();
+        };
         spieler.sendMessage(Msg.of(text, plugin.config().prefix(), "%seconds%", String.valueOf(Math.max(1, (rest + 999) / 1000))));
     }
 
@@ -92,15 +102,19 @@ public final class KampfSperre {
     }
 
     private Sperre aktiveSperre(UUID spieler) {
-        Sperre sperre = sperren.get(spieler);
-        if (sperre == null) {
+        Map<Byte, Long> arten = sperren.get(spieler);
+        if (arten == null) {
             return null;
         }
-        if (sperre.bis() <= System.currentTimeMillis()) {
-            sperren.remove(spieler, sperre);
-            return null;
+        long jetzt = System.currentTimeMillis();
+        arten.values().removeIf(bis -> bis <= jetzt);
+        for (byte art : new byte[]{ART_DUELL, ART_FREEZE, ART_KAMPF}) {
+            Long bis = arten.get(art);
+            if (bis != null) {
+                return new Sperre(bis, art);
+            }
         }
-        return sperre;
+        return null;
     }
 
     private static String befehlsName(String befehl) {

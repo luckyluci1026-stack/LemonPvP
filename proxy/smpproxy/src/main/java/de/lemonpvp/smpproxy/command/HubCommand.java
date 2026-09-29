@@ -29,7 +29,7 @@ public final class HubCommand implements SimpleCommand {
                 .filter(ziel::equals)
                 .isPresent();
         if (alreadyThere) {
-            player.sendMessage(plugin.message("hub-already"));
+            player.spoofChatInput("/spawn");
             return;
         }
         player.sendMessage(plugin.message("hub-sending"));

@@ -66,11 +66,19 @@ public final class BackupManager {
         // Kopien statt der Live-Arrays - die Serialisierung laeuft asynchron
         // weiter, das Original darf sich in der Zwischenzeit ganz normal
         // aendern, ohne die Sicherung zu verfaelschen.
-        ItemStack[] inventar = inv.getStorageContents().clone();
-        ItemStack[] ruestung = inv.getArmorContents().clone();
+        ItemStack[] inventar = kopie(inv.getStorageContents());
+        ItemStack[] ruestung = kopie(inv.getArmorContents());
         ItemStack offhand = inv.getItemInOffHand().clone();
-        ItemStack[] enderkiste = spieler.getEnderChest().getContents().clone();
+        ItemStack[] enderkiste = kopie(spieler.getEnderChest().getContents());
         db.sichern(spieler.getUniqueId(), spieler.getName(), inventar, ruestung, offhand, enderkiste);
+    }
+
+    private static ItemStack[] kopie(ItemStack[] original) {
+        ItemStack[] kopie = new ItemStack[original.length];
+        for (int i = 0; i < original.length; i++) {
+            kopie[i] = original[i] == null ? null : original[i].clone();
+        }
+        return kopie;
     }
 
     /**

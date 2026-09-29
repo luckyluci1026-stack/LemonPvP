@@ -6,7 +6,7 @@
 
 settings:
   # Maximale Suchversuche pro RTP, bevor abgebrochen wird
-  max-attempts: 60
+  max-attempts: 300
   # Cooldown in Sekunden (betterrtp.bypass.cooldown umgeht ihn)
   cooldown-seconds: 30
   # Warmup in Sekunden - Teleport startet verzögert; Bewegung bricht ab
@@ -18,7 +18,7 @@ settings:
   # Sekunden Unverwundbarkeit direkt nach der Ankunft
   invulnerable-after-seconds: 3
   # Standardwelt, wenn keine angegeben wird (leer = aktuelle Welt des Spielers)
-  default-world: ""
+  default-world: "world"
 
 # ---------------- Economy (optional) ----------------
 # Nutzt Vault -> EssentialsX-Economy, falls installiert.

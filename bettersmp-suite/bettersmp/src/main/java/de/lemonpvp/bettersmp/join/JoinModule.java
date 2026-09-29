@@ -29,6 +29,10 @@ public final class JoinModule implements Listener {
         return plugin.getConfig().getBoolean("join-quit.enabled", true);
     }
 
+    private boolean vomProxy() {
+        return plugin.getConfig().getBoolean("join-quit.netzwerk", true);
+    }
+
     private String applied(Player player, String path) {
         String text = plugin.getConfig().getString(path, "");
         text = text.replace("%player%", player.getName()).replace("%brand%", plugin.brand());
@@ -37,14 +41,26 @@ public final class JoinModule implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onJoin(PlayerJoinEvent event) {
-        if (!enabled()) {
-            return;
+        if (vomProxy()) {
+            event.joinMessage(null);
         }
         Player player = event.getPlayer();
         boolean first = !player.hasPlayedBefore();
+        if (first) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    plugin.tutorial().ersterJoin(player);
+                }
+            }, 80L);
+        }
+        if (!enabled()) {
+            return;
+        }
 
-        String key = first ? "join-quit.first-join" : "join-quit.join";
-        event.joinMessage(Text.mm(applied(player, key)));
+        if (!vomProxy()) {
+            String key = first ? "join-quit.first-join" : "join-quit.join";
+            event.joinMessage(Text.mm(applied(player, key)));
+        }
 
         if (first && plugin.getConfig().getBoolean("join-quit.first-join-title.enabled", true)) {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -89,9 +105,10 @@ public final class JoinModule implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onQuit(PlayerQuitEvent event) {
-        if (!enabled()) {
-            return;
+        if (vomProxy()) {
+            event.quitMessage(null);
+        } else if (enabled()) {
+            event.quitMessage(Text.mm(applied(event.getPlayer(), "join-quit.quit")));
         }
-        event.quitMessage(Text.mm(applied(event.getPlayer(), "join-quit.quit")));
     }
 }

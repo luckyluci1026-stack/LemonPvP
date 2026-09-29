@@ -12,6 +12,7 @@ import de.lemonpvp.duelplus.presence.StammInventarService;
 import de.lemonpvp.duelplus.request.AnfrageManager;
 import de.lemonpvp.duelplus.request.AnfragePollTask;
 import de.lemonpvp.duelplus.session.ArenaGuardListener;
+import de.lemonpvp.duelplus.session.DuellChat;
 import de.lemonpvp.duelplus.session.DuellSessionManager;
 import de.lemonpvp.duelplus.session.TrefferWaechter;
 import de.lemonpvp.duelplus.util.KampfPruefung;
@@ -46,6 +47,7 @@ public final class DuelPlus extends JavaPlugin {
     private final KampfPruefung kampf = new KampfPruefung();
     private InventarSperre inventarSperre;
     private ProxySperre proxySperre;
+    private DuellChat duellChat;
 
     private String serverName;
     private boolean istArenaServer;
@@ -96,6 +98,8 @@ public final class DuelPlus extends JavaPlugin {
             this.sessionManager = new DuellSessionManager(this);
             sessionManager.starten();
             getServer().getPluginManager().registerEvents(new ArenaGuardListener(this), this);
+            this.duellChat = new DuellChat(this);
+            getServer().getPluginManager().registerEvents(duellChat, this);
             getServer().getPluginManager().registerEvents(zuschauer, this);
         } else {
             getServer().getPluginManager().registerEvents(new DuelItemListener(this), this);
@@ -202,5 +206,9 @@ public final class DuelPlus extends JavaPlugin {
 
     public ProxySperre proxySperre() {
         return proxySperre;
+    }
+
+    public DuellChat duellChat() {
+        return duellChat;
     }
 }

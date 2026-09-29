@@ -96,28 +96,14 @@ waehler:
   plaetze: 27
 
   eintraege:
-    - platz: 11
-      server: smp1
-      material: GRASS_BLOCK
-      name: "<green><bold>SMP 1</bold></green>"
-      beschreibung:
-        - "<gray>Der Hauptserver</gray>"
-        - ""
-        - "<dark_gray>» <white>%spieler% online</white>"
+    - platz: 1
+      material: GRAY_STAINED_GLASS_PANE
+      name: "<green><bold> </bold></green>"
     - platz: 13
-      server: smp2
-      material: DIAMOND_PICKAXE
-      name: "<aqua><bold>SMP 2</bold></aqua>"
+      server: SMP
+      material: GRASS_BLOCK
+      name: "<gradient:#6C5CE7:#00D4FF>BuckSMP"
       beschreibung:
-        - "<gray>Der zweite Server</gray>"
-        - ""
-        - "<dark_gray>» <white>%spieler% online</white>"
-    - platz: 15
-      server: kreativ
-      material: BRICKS
-      name: "<light_purple><bold>Kreativ</bold></light_purple>"
-      beschreibung:
-        - "<gray>Zum Bauen ohne Grenzen</gray>"
         - ""
         - "<dark_gray>» <white>%spieler% online</white>"
 
@@ -154,14 +140,23 @@ tafel:
   # Wie oft die Zahlen aktualisiert werden (in Ticks, 20 = eine Sekunde)
   takt: 20
   zeilen:
-    - "<dark_gray>▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪ ▪"
     - "<gray>Willkommen,"
     - "<white>%name%</white>"
     - ""
     - "<gray>In der Lobby: <white>%spieler%</white>"
     - "<gray>Im Netzwerk:  <white>%netzwerk%</white>"
     - ""
-    - "<yellow>lemon-servers.de"
+    - "<gradient:#6C5CE7:#00D4FF>BuckSMP.de</gradient>"
+
+# ----------------------------------------------------------
+#  Chat
+#  netzwerk: true schickt den Lobby-Chat ueber den Proxy
+#  (SMPProxy), damit ihn auch alle auf dem SMP sehen und
+#  stummgeschaltete Spieler hier genauso geblockt werden.
+#  Wichtig: In LobbyLock muss dafuer block-chat: false stehen.
+# ----------------------------------------------------------
+chat:
+  netzwerk: true
 
 # ----------------------------------------------------------
 #  Ankommen

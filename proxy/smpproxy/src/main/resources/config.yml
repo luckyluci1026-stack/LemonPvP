@@ -16,17 +16,18 @@
 #  Ein * am Anfang gilt für alle Subdomains, z.B. "*.lemon-servers.de".
 #  Ein genauer Treffer geht immer vor einem Stern-Eintrag.
 # ----------------------------------------------------------
+#  Beispiel:
+#    "smp1.lemon-servers.de": smp1
+#    "smp2.lemon-servers.de": smp2
+# ----------------------------------------------------------
 domains:
-  "smp1.lemon-servers.de": smp1
-  "smp2.lemon-servers.de": smp2
-  "lemon-servers.de": smp1
 
 # Wohin geht es, wenn die Domain oben nicht vorkommt?
-default-server: smp1
+default-server: SMP
 
 # Der Warteraum (NanoLimbo) - nur fuer Abstuerze, niemand geht da freiwillig
 # hin. Leer lassen = wer keinen Server mehr hat, wird getrennt.
-limbo: limbo
+limbo: Limbo
 
 # Wohin /hub und /lobby wirklich bringen: der SMPLobby-Server (siehe
 # bettersmp-suite/smplobby) mit Spawn, Serverauswahl und allem drumherum.
@@ -34,7 +35,7 @@ limbo: limbo
 #
 # Leer lassen faellt auf den Warteraum von oben zurueck - das alte
 # Verhalten, falls (noch) kein eigener Lobby-Server steht.
-hub-server: lobby
+hub-server: Lobby
 
 # ----------------------------------------------------------
 #  Server-Überwachung
@@ -62,6 +63,10 @@ auto-return:
   cooldown: 5
   # Hinweise im Chat anzeigen
   show-notice: true
+  # Auf diese Server wird nie zurueckgeholt - stuerzt z.B. der Duels-
+  # Server mitten im Duell ab, geht es sofort dorthin zurueck, wo man
+  # vorher war (ohne Umweg ueber den Warteraum).
+  skip-servers: ["Duels"]
 
 # ----------------------------------------------------------
 #  Befehle
@@ -71,7 +76,7 @@ commands:
   # absichtlich kein Alias mehr: den Warteraum betritt niemand freiwillig,
   # man landet nur automatisch dort, wenn ein Server abstuerzt.
   hub-enabled: true
-  hub-aliases: ["hub", "lobby"]
+  hub-aliases: ["spawn", "lobby"]
   # /smp1, /smp2 ... als Kurzbefehle für /server <name>
   server-shortcuts: true
 
@@ -90,6 +95,39 @@ combat:
   blocked-commands: []
 
 # ----------------------------------------------------------
+#  Chat zwischen den Servern
+#
+#  Was auf einem dieser Server geschrieben wird, sehen auch alle
+#  auf den anderen - mit dem Servernamen davor. Auf dem Duels-
+#  Server sieht man nur die Nachrichten seines Gegners (DuelPlus).
+#  Stummgeschaltete Spieler (/gmute auf dem SMP) werden ueberall
+#  geblockt, auch in der Lobby und bei /msg.
+# ----------------------------------------------------------
+chat-sync:
+  enabled: true
+  servers: ["SMP", "Lobby"]
+  # Steht vor Nachrichten von einem anderen Server. Leer = nichts davor.
+  server-tag: "<dark_gray>[<gray>%server%</gray>]</dark_gray>"
+
+# ----------------------------------------------------------
+#  Beitreten/Verlassen
+#
+#  Nur wenn jemand das Netzwerk betritt oder verlaesst - nicht bei
+#  jedem Wechsel zwischen SMP, Lobby und Duels. Die Nachricht sehen
+#  alle auf den Servern unter chat-sync.servers.
+# ----------------------------------------------------------
+join-quit:
+  enabled: true
+
+# ----------------------------------------------------------
+#  /msg und /r ueber alle Server
+# ----------------------------------------------------------
+msg:
+  enabled: true
+  aliases: ["msg", "tell", "w", "whisper", "pm", "m"]
+  reply-aliases: ["r", "reply"]
+
+# ----------------------------------------------------------
 #  /rtp von überall im Netzwerk
 #
 #  Steht der Spieler schon auf einem Server aus passthrough-servers
@@ -103,8 +141,8 @@ combat:
 # ----------------------------------------------------------
 rtp:
   enabled: true
-  passthrough-servers: ["smp1"]
-  redirect-server: "smp1"
+  passthrough-servers: ["SMP"]
+  redirect-server: "SMP"
 
 # ----------------------------------------------------------
 #  Nachrichten (MiniMessage - Gradients, Farben, alles erlaubt)
@@ -116,6 +154,10 @@ messages:
   server-offline: "%prefix%<red><white>%server%</white> ist gerade nicht erreichbar.</red><newline><gray>Du wartest hier, bis er wieder da ist.</gray>"
   # Der Server ist während des Spielens weggebrochen
   server-crashed: "%prefix%<red>Verbindung zu <white>%server%</white> verloren.</red><newline><gray>Du wurdest in den Warteraum gebracht.</gray>"
+  # Absturz eines Servers aus auto-return.skip-servers (z.B. Duels): direkt zurueck
+  server-crashed-home: "%prefix%<red>Verbindung zu <white>%server%</white> verloren.</red><newline><gray>Du bist wieder auf <white>%home%</white>.</gray>"
+  # Wechsel auf so einen Server klappt nicht - man bleibt, wo man ist
+  server-unreachable: "%prefix%<red><white>%server%</white> ist gerade nicht erreichbar.</red>"
   # Zurückholen läuft
   return-soon: "%prefix%<green><white>%server%</white> ist wieder da - du kommst gleich zurück.</green>"
   return-ok: "%prefix%<green>Willkommen zurück auf <white>%server%</white>.</green>"
@@ -139,6 +181,22 @@ messages:
   # Im Kampf gesperrt (siehe combat oben)
   combat-blocked: "%prefix%<red>Dieser Befehl ist im Kampf gesperrt! (<white>%seconds%s</white>)</red>"
   duel-blocked: "%prefix%<red>Das geht erst, wenn das Duell vorbei ist.</red>"
+  freeze-blocked: "%prefix%<red>Du bist eingefroren und kannst den Server gerade nicht wechseln.</red>"
+
+  # Beitreten/Verlassen (siehe join-quit oben)
+  network-join: "<dark_gray>[<green>+</green>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist dem Server beigetreten.</gray>"
+  network-first-join: "<dark_gray>[<#00D4FF>★</#00D4FF>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist zum <white>ersten Mal</white> hier! Willkommen!</gray>"
+  network-quit: "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>hat den Server verlassen.</gray>"
+
+  # /msg und /r
+  msg-usage: "%prefix%<gray>/msg <Spieler> <Nachricht></gray>"
+  reply-usage: "%prefix%<gray>/r <Nachricht></gray>"
+  msg-offline: "%prefix%<red><white>%target%</white> ist gerade nicht online.</red>"
+  msg-self: "%prefix%<red>Du kannst dir nicht selbst schreiben.</red>"
+  msg-no-reply: "%prefix%<red>Du hast noch keine Nachricht, auf die du antworten kannst.</red>"
+  msg-sent: "<dark_gray>[<gray>Du</gray> <dark_gray>→</dark_gray> <#00D4FF>%target%</#00D4FF>]</dark_gray> <white>%message%</white>"
+  msg-received: "<hover:show_text:'<gray>Klick zum Antworten'><click:suggest_command:'/msg %sender% '><dark_gray>[<#00D4FF>%sender%</#00D4FF> <dark_gray>→</dark_gray> <gray>Dir</gray>]</dark_gray></click></hover> <white>%message%</white>"
+  muted: "%prefix%<red>Du bist stummgeschaltet und kannst gerade nicht schreiben (noch <white>%dauer%</white>).</red>"
 
   # /smpproxy
   player-only: "%prefix%<red>Das geht nur im Spiel.</red>"

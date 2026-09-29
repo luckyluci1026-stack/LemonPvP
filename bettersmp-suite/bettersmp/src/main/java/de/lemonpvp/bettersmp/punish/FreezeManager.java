@@ -20,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class FreezeManager {
 
+    private static final long PROXY_SPERRE_MILLIS = 3_000L;
+
     private final BetterSMP plugin;
     /** UUID -> Zeitpunkt des Einfrierens (Unix-Millisekunden). */
     private final Map<UUID, Long> eingefroren = new ConcurrentHashMap<>();
@@ -36,9 +38,11 @@ public final class FreezeManager {
     /** @return true, wenn danach eingefroren ist (vorher war er es nicht) */
     public boolean umschalten(UUID spieler) {
         if (eingefroren.remove(spieler) != null) {
+            plugin.netzwerk().freezeSperre(Bukkit.getPlayer(spieler), 0L);
             return false;
         }
         eingefroren.put(spieler, System.currentTimeMillis());
+        plugin.netzwerk().freezeSperre(Bukkit.getPlayer(spieler), PROXY_SPERRE_MILLIS);
         return true;
     }
 
@@ -67,12 +71,17 @@ public final class FreezeManager {
     }
 
     private void tick() {
-        if (eingefroren.isEmpty() || !plugin.getConfig().getBoolean("freeze.actionbar", true)) {
+        if (eingefroren.isEmpty()) {
             return;
         }
+        boolean actionbar = plugin.getConfig().getBoolean("freeze.actionbar", true);
         for (UUID id : eingefroren.keySet()) {
             Player spieler = Bukkit.getPlayer(id);
-            if (spieler != null) {
+            if (spieler == null) {
+                continue;
+            }
+            plugin.netzwerk().freezeSperre(spieler, PROXY_SPERRE_MILLIS);
+            if (actionbar) {
                 spieler.sendActionBar(plugin.msgs().format("freeze.actionbar"));
             }
         }

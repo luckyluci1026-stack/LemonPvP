@@ -10,7 +10,11 @@ Vollständig asynchrones, sicheres Random-Teleport-Plugin (Paper 1.21.11).
   eigenes Nether-Deckenscan (kein Bedrock-Dach).
 - **Welt-Profile**: pro Welt Radius/Zentrum, Biom-Blacklist, Weltborder wird respektiert.
 - **Cooldown & Warmup**: Warmup bricht bei Bewegung/Schaden ab, Actionbar-Countdown,
-  kurze Unverwundbarkeit nach der Ankunft.
+  kurzer Schadensschutz nach der Ankunft. Der Schutz steckt nur im
+  Arbeitsspeicher - wer in genau diesem Moment rausgeht oder der Server
+  neu startet, bleibt nicht dauerhaft unverwundbar (ältere Versionen haben
+  das im Spielstand gespeichert; BetterRTP repariert solche Spieler beim
+  nächsten Beitreten selbst).
 - **Optionale Kosten** über Vault/EssentialsX-Economy.
 
 ## Befehle
@@ -23,7 +27,9 @@ Läuft SMPProxy (Velocity) davor und ist dort `rtp.redirect-server` auf diesen
 Server gesetzt, kann `/rtp` auch von einem Server ohne eigenes BetterRTP
 kommen (typisch: die Lobby). BetterRTP hört dafür auf dem Plugin-Kanal
 `betterrtp:run` und löst beim Empfang ganz normal `/rtp` aus - Cooldown,
-Warmup und Rechte greifen genauso wie sonst. Ohne SMPProxy passiert auf
+Warmup und Rechte greifen genauso wie sonst. Angenommen wird das nur einmal
+und nur in den ersten Sekunden nach dem Beitreten; ein gefälschter Client
+kann so kein `/rtp` am Cooldown vorbei auslösen. Ohne SMPProxy passiert auf
 diesem Kanal einfach nie etwas; nichts davon ist Voraussetzung fürs normale
 `/rtp`.
 

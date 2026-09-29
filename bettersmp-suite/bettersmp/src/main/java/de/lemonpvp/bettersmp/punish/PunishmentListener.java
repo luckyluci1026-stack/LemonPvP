@@ -3,12 +3,15 @@ package de.lemonpvp.bettersmp.punish;
 import de.lemonpvp.bettersmp.BetterSMP;
 import de.lemonpvp.bettersmp.storage.Punishment;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+
+import java.util.UUID;
 
 /**
  * Setzt Bans (beim Login) und Mutes (im Chat) durch.
@@ -53,9 +56,16 @@ public final class PunishmentListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        if (enabled()) {
-            plugin.punishments().loadMute(event.getPlayer().getUniqueId());
+        if (!enabled()) {
+            return;
         }
+        UUID uuid = event.getPlayer().getUniqueId();
+        plugin.punishments().loadMute(uuid);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (event.getPlayer().isOnline()) {
+                plugin.punishments().stummAnProxyMelden(uuid);
+            }
+        }, 40L);
     }
 
     @EventHandler

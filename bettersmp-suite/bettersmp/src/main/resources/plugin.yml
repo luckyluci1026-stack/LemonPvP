@@ -58,6 +58,11 @@ commands:
     description: Teleportiert zum Serverspawn
     usage: "/spawn"
     permission: bettersmp.spawn
+  tutorial:
+    description: Zeigt neuen Spielern alles Wichtige
+    usage: "/tutorial [Nummer]"
+    aliases: [anleitung]
+    permission: bettersmp.tutorial
   setspawn:
     description: Setzt den Serverspawn auf deine Position
     usage: "/setspawn"
@@ -98,6 +103,9 @@ permissions:
     default: op
   bettersmp.report:
     description: Darf /report benutzen
+    default: true
+  bettersmp.tutorial:
+    description: Darf /tutorial benutzen
     default: true
   bettersmp.report.receive:
     description: Bekommt eingehende Meldungen zu sehen

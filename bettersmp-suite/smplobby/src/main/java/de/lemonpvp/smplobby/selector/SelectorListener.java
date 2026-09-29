@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 
 /** Klicks in der Serverauswahl. */
 public final class SelectorListener implements Listener {
@@ -15,6 +16,13 @@ public final class SelectorListener implements Listener {
 
     public SelectorListener(SMPLobby plugin) {
         this.plugin = plugin;
+    }
+
+    @EventHandler
+    public void beimZiehen(InventoryDragEvent ereignis) {
+        if (ereignis.getInventory().getHolder() instanceof SelectorGui.Holder) {
+            ereignis.setCancelled(true);
+        }
     }
 
     @EventHandler

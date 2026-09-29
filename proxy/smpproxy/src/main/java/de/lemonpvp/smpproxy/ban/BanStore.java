@@ -175,6 +175,10 @@ public final class BanStore {
         return Optional.ofNullable(bekannt.get(name.toLowerCase(Locale.ROOT)));
     }
 
+    public boolean kennt(UUID id) {
+        return anzeigename.containsKey(id);
+    }
+
     public String nameFuer(UUID id) {
         return anzeigename.getOrDefault(id, id.toString());
     }

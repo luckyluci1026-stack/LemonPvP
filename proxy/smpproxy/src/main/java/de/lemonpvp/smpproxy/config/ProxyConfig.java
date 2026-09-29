@@ -23,6 +23,30 @@ import java.util.Set;
  */
 public final class ProxyConfig {
 
+    private static final Map<String, String> STANDARD_TEXTE = Map.ofEntries(
+            Map.entry("msg-usage", "%prefix%<gray>/msg <Spieler> <Nachricht></gray>"),
+            Map.entry("reply-usage", "%prefix%<gray>/r <Nachricht></gray>"),
+            Map.entry("msg-offline", "%prefix%<red><white>%target%</white> ist gerade nicht online.</red>"),
+            Map.entry("msg-self", "%prefix%<red>Du kannst dir nicht selbst schreiben.</red>"),
+            Map.entry("msg-no-reply", "%prefix%<red>Du hast noch keine Nachricht, auf die du antworten kannst.</red>"),
+            Map.entry("msg-sent", "<dark_gray>[<gray>Du</gray> <dark_gray>→</dark_gray> "
+                    + "<#00D4FF>%target%</#00D4FF>]</dark_gray> <white>%message%</white>"),
+            Map.entry("msg-received", "<hover:show_text:'<gray>Klick zum Antworten'><click:suggest_command:'/msg %sender% '>"
+                    + "<dark_gray>[<#00D4FF>%sender%</#00D4FF> <dark_gray>→</dark_gray> <gray>Dir</gray>]</dark_gray>"
+                    + "</click></hover> <white>%message%</white>"),
+            Map.entry("freeze-blocked", "%prefix%<red>Du bist eingefroren und kannst den Server gerade nicht wechseln.</red>"),
+            Map.entry("server-crashed-home", "%prefix%<red>Verbindung zu <white>%server%</white> verloren.</red>"
+                    + "<newline><gray>Du bist wieder auf <white>%home%</white>.</gray>"),
+            Map.entry("server-unreachable", "%prefix%<red><white>%server%</white> ist gerade nicht erreichbar.</red>"),
+            Map.entry("muted", "%prefix%<red>Du bist stummgeschaltet und kannst gerade nicht schreiben "
+                    + "(noch <white>%dauer%</white>).</red>"),
+            Map.entry("network-join", "<dark_gray>[<green>+</green>]</dark_gray> <#00D4FF>%player%</#00D4FF> "
+                    + "<gray>ist dem Server beigetreten.</gray>"),
+            Map.entry("network-first-join", "<dark_gray>[<#00D4FF>★</#00D4FF>]</dark_gray> <#00D4FF>%player%</#00D4FF> "
+                    + "<gray>ist zum <white>ersten Mal</white> hier! Willkommen!</gray>"),
+            Map.entry("network-quit", "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> "
+                    + "<gray>hat den Server verlassen.</gray>"));
+
     private final Path folder;
     private final Logger log;
 
@@ -193,6 +217,10 @@ public final class ProxyConfig {
         return Math.max(1, integer("auto-return.cooldown", 5));
     }
 
+    public List<String> returnSkipServers() {
+        return strings("auto-return.skip-servers", List.of("Duels"));
+    }
+
     public boolean returnNotice() {
         return bool("auto-return.show-notice", true);
     }
@@ -271,7 +299,60 @@ public final class ProxyConfig {
     }
 
     public String message(String key) {
-        return string("messages." + key, "");
+        return string("messages." + key, STANDARD_TEXTE.getOrDefault(key, ""));
+    }
+
+    public boolean chatSyncEnabled() {
+        return bool("chat-sync.enabled", true);
+    }
+
+    public List<String> chatServers() {
+        return strings("chat-sync.servers", List.of("SMP", "Lobby"));
+    }
+
+    public String chatServerTag() {
+        String tag = string("chat-sync.server-tag", "<dark_gray>[<gray>%server%</gray>]</dark_gray>");
+        return tag.isEmpty() ? "" : tag + " ";
+    }
+
+    public boolean joinQuitEnabled() {
+        return bool("join-quit.enabled", true);
+    }
+
+    public boolean msgEnabled() {
+        return bool("msg.enabled", true);
+    }
+
+    public List<String> msgAliases() {
+        return strings("msg.aliases", List.of("msg", "tell", "w", "whisper", "pm", "m"));
+    }
+
+    public List<String> replyAliases() {
+        return strings("msg.reply-aliases", List.of("r", "reply"));
+    }
+
+    public String joinMessage() {
+        return message("network-join");
+    }
+
+    public String firstJoinMessage() {
+        return message("network-first-join");
+    }
+
+    public String quitMessage() {
+        return message("network-quit");
+    }
+
+    public String msgSentMessage() {
+        return message("msg-sent");
+    }
+
+    public String msgReceivedMessage() {
+        return message("msg-received");
+    }
+
+    public String mutedMessage() {
+        return message("muted");
     }
 
     /** Reines Wort, kein Nachrichten-Baustein - wird in andere Texte eingesetzt. */

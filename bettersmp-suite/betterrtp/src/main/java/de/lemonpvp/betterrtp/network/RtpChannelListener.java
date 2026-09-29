@@ -3,12 +3,19 @@ package de.lemonpvp.betterrtp.network;
 import de.lemonpvp.betterrtp.BetterRTP;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Hört auf den Kanal "betterrtp:run", über den der Proxy (SMPProxy)
@@ -25,9 +32,13 @@ import java.io.IOException;
  * Warmup, Welt-Profile und Rechte-Prüfung genauso wie bei jedem Spieler,
  * der /rtp selbst eintippt - keine zweite, abweichende Ausnahme-Regel.
  */
-public final class RtpChannelListener implements PluginMessageListener {
+public final class RtpChannelListener implements PluginMessageListener, Listener {
 
     public static final String KANAL = "betterrtp:run";
+
+    private static final long GUELTIG_NACH_JOIN_MILLIS = 15_000L;
+
+    private final Map<UUID, Long> beigetreten = new ConcurrentHashMap<>();
 
     private final BetterRTP plugin;
 
@@ -38,7 +49,9 @@ public final class RtpChannelListener implements PluginMessageListener {
     @Override
     public void onPluginMessageReceived(@NotNull String kanal, @NotNull Player spieler,
                                         byte @NotNull [] daten) {
-        if (!KANAL.equals(kanal)) {
+        Long joinZeit = beigetreten.remove(spieler.getUniqueId());
+        if (!KANAL.equals(kanal) || joinZeit == null
+                || System.currentTimeMillis() - joinZeit > GUELTIG_NACH_JOIN_MILLIS) {
             return;
         }
         String argument;
@@ -54,5 +67,15 @@ public final class RtpChannelListener implements PluginMessageListener {
         // jeder andere Spielerbefehl auch.
         Bukkit.getScheduler().runTask(plugin,
                 () -> Bukkit.dispatchCommand(spieler, ("rtp " + argument).trim()));
+    }
+
+    @EventHandler
+    public void beimJoin(PlayerJoinEvent event) {
+        beigetreten.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
+    }
+
+    @EventHandler
+    public void beimVerlassen(PlayerQuitEvent event) {
+        beigetreten.remove(event.getPlayer().getUniqueId());
     }
 }

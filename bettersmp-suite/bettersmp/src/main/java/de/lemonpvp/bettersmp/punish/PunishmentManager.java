@@ -133,6 +133,7 @@ public final class PunishmentManager {
                     null, expires, actorName(actor), now);
             plugin.database().setMute(mute).thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                 muteCache.put(uuid, mute);
+                stummAnProxyMelden(uuid);
                 plugin.msgs().send(actor, "mute.success", "player", name,
                         "reason", reason.display(),
                         "duration", durationWord(reason.durationMillis(), config.mutePermanentWord()));
@@ -147,6 +148,7 @@ public final class PunishmentManager {
     public void unmute(CommandSender actor, OfflinePlayer target) {
         String name = target.getName() != null ? target.getName() : target.getUniqueId().toString();
         muteCache.remove(target.getUniqueId());
+        plugin.netzwerk().stummMelden(target.getUniqueId(), 0L);
         plugin.database().removeMute(target.getUniqueId())
                 .thenAccept(removed -> Bukkit.getScheduler().runTask(plugin,
                         () -> plugin.msgs().send(actor, removed ? "mute.unmute-success" : "mute.not-muted",
@@ -160,6 +162,13 @@ public final class PunishmentManager {
                 muteCache.put(uuid, mute);
             }
         });
+    }
+
+    public void stummAnProxyMelden(UUID uuid) {
+        Punishment mute = activeMute(uuid);
+        if (mute != null) {
+            plugin.netzwerk().stummMelden(uuid, mute.permanent() ? -1L : Math.max(1L, mute.remainingMillis()));
+        }
     }
 
     public void unloadMute(UUID uuid) {

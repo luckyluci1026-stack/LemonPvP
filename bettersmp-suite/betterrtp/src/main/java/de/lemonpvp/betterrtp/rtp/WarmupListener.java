@@ -1,11 +1,13 @@
 package de.lemonpvp.betterrtp.rtp;
 
 import de.lemonpvp.betterrtp.BetterRTP;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -43,17 +45,32 @@ public final class WarmupListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onDamage(EntityDamageEvent event) {
-        if (!plugin.getConfig().getBoolean("settings.cancel-on-damage", true)) {
+        if (!(event.getEntity() instanceof Player player)) {
             return;
         }
-        if (event.getEntity() instanceof Player player
+        if (plugin.rtp().geschuetzt(player.getUniqueId())) {
+            event.setCancelled(true);
+            return;
+        }
+        if (plugin.getConfig().getBoolean("settings.cancel-on-damage", true)
                 && plugin.rtp().warmupOrigin(player.getUniqueId()) != null) {
             plugin.rtp().cancelWarmup(player.getUniqueId());
         }
     }
 
     @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        if (player.isInvulnerable()
+                && (player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE)) {
+            player.setInvulnerable(false);
+            plugin.getLogger().info(player.getName() + " war noch vom alten RTP-Schutz unverwundbar - behoben.");
+        }
+    }
+
+    @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         plugin.rtp().cancelWarmup(event.getPlayer().getUniqueId());
+        plugin.rtp().schutzVergessen(event.getPlayer().getUniqueId());
     }
 }

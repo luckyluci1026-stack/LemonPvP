@@ -15,7 +15,7 @@ block-offhand-swap: true
 block-doors: true
 block-trapdoors: true
 block-signs: true
-block-chat: true
+block-chat: false
 
 # Kurze Erinnerung per Actionbar, wenn etwas blockiert wurde - hoechstens
 # alle X Sekunden pro Spieler, damit es bei wiederholten Versuchen nicht flutet.

@@ -96,7 +96,7 @@ categories:
     name: "&c&lRedstone"
     slot: 30
     items:
-      - { material: REDSTONE,      buy: 15,  sell: 4 }
+      - { material: REDSTONE,      buy: 20,  sell: 6 }
       - { material: REDSTONE_TORCH, buy: 20, sell: 5 }
       - { material: REPEATER,      buy: 40,  sell: 10 }
       - { material: COMPARATOR,    buy: 45,  sell: 12 }

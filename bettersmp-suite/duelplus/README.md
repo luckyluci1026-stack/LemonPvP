@@ -259,6 +259,19 @@ Unentschieden/Aufgabe) wieder verlassen.
   jede Sekunde an SMPProxy, der diese Befehle dann blockt.
 - Geht man nach einem Lobby-Duell so schnell auf den SMP, dass die Lobby
   das Ergebnis noch nicht übernommen hat, wendet der SMP es selbst an.
+- **Absturz des Duels-Servers:** SMPProxy schickt beide sofort dorthin
+  zurück, wo sie vor dem Duell waren (`auto-return.skip-servers` in der
+  Proxy-Config). Das Duell zählt dann nicht, beim nächsten Start bricht der
+  Duels-Server es ab.
+
+## Chat auf dem Duels-Server
+
+Auf dem Duels-Server sieht nur der eigene Gegner, was man schreibt - kein
+anderes Duell, keine Zuschauer, nicht der Rest des Netzwerks. Wer dort
+gerade kein Duell hat (z. B. als Zuschauer), schreibt nur für sich selbst
+und bekommt einen kurzen Hinweis (`chat-only-opponent` in `messages.yml`).
+Die Nachricht läuft über SMPProxy, der auch Stummschaltungen vom SMP
+beachtet. Ohne SMPProxy filtert DuelPlus die Empfänger selbst.
 
 ## Befehle
 

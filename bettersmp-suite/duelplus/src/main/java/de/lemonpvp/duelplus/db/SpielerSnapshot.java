@@ -33,8 +33,16 @@ public record SpielerSnapshot(ItemStack[] hauptinventar, ItemStack[] ruestung, I
         // getStorageContents() statt getContents() - eindeutig NUR Hotbar+
         // Rucksack, ohne jede Unklarheit ueber eine moegliche Ueberschneidung
         // mit den separat erfassten Ruestungs-Slots.
-        return new SpielerSnapshot(inv.getStorageContents().clone(), inv.getArmorContents().clone(),
+        return new SpielerSnapshot(kopie(inv.getStorageContents()), kopie(inv.getArmorContents()),
                 cloneOrNull(inv.getItemInOffHand()));
+    }
+
+    private static ItemStack[] kopie(ItemStack[] original) {
+        ItemStack[] kopie = new ItemStack[original.length];
+        for (int i = 0; i < original.length; i++) {
+            kopie[i] = cloneOrNull(original[i]);
+        }
+        return kopie;
     }
 
     public void anwenden(PlayerInventory inv) {

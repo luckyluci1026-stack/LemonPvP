@@ -24,6 +24,7 @@ public final class RTPManager {
     private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> warmups = new ConcurrentHashMap<>();
     private final Map<UUID, Location> warmupOrigin = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> schutzBis = new ConcurrentHashMap<>();
 
     public RTPManager(BetterRTP plugin) {
         this.plugin = plugin;
@@ -137,6 +138,22 @@ public final class RTPManager {
         return warmupOrigin.get(uuid);
     }
 
+    public boolean geschuetzt(UUID uuid) {
+        Long bis = schutzBis.get(uuid);
+        if (bis == null) {
+            return false;
+        }
+        if (bis <= System.currentTimeMillis()) {
+            schutzBis.remove(uuid, bis);
+            return false;
+        }
+        return true;
+    }
+
+    public void schutzVergessen(UUID uuid) {
+        schutzBis.remove(uuid);
+    }
+
     private void finishAndTeleport(Player player, World world, Profile profile,
                                    boolean charge, double cost) {
         UUID uuid = player.getUniqueId();
@@ -173,12 +190,7 @@ public final class RTPManager {
         player.setFallDistance(0);
         int invuln = cfg("invulnerable-after-seconds", 3);
         if (invuln > 0) {
-            player.setInvulnerable(true);
-            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                if (player.isOnline()) {
-                    player.setInvulnerable(false);
-                }
-            }, invuln * 20L);
+            schutzBis.put(player.getUniqueId(), System.currentTimeMillis() + invuln * 1000L);
         }
         plugin.msgs().send(player, "success",
                 "x", String.valueOf(location.getBlockX()),
@@ -212,5 +224,6 @@ public final class RTPManager {
         }
         warmups.clear();
         warmupOrigin.clear();
+        schutzBis.clear();
     }
 }

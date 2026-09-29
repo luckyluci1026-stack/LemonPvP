@@ -30,8 +30,9 @@ public final class BetterRTP extends JavaPlugin {
         // Nimmt "/rtp" vom Netzwerk-Proxy entgegen - fuer Spieler, die von
         // der Lobby (oder einem anderen Server ohne eigenes /rtp) hierher
         // geschickt wurden. Ohne SMPProxy passiert hier einfach nie etwas.
-        Bukkit.getMessenger().registerIncomingPluginChannel(this,
-                RtpChannelListener.KANAL, new RtpChannelListener(this));
+        RtpChannelListener rtpKanal = new RtpChannelListener(this);
+        Bukkit.getPluginManager().registerEvents(rtpKanal, this);
+        Bukkit.getMessenger().registerIncomingPluginChannel(this, RtpChannelListener.KANAL, rtpKanal);
 
         getLogger().info("BetterRTP aktiviert.");
     }

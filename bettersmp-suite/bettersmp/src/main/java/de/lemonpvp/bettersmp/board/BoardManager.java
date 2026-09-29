@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Verwaltet Nametags (Gradient-Prefix aus LuckPerms über dem Kopf + Tab,
@@ -34,13 +35,15 @@ public final class BoardManager {
 
     /** Sidebar-Zeilen nutzen unsichtbare, eindeutige Einträge (Farbcodes). */
     private static final char[] TOKENS = "0123456789abcdef".toCharArray();
+    private static final List<String> STAT_PLATZHALTER =
+            List.of("%kills%", "%deaths%", "%kd%", "%mobkills%", "%playtime%");
 
     private final BetterSMP plugin;
 
-    private final Map<UUID, Scoreboard> boards = new HashMap<>();
+    private final Map<UUID, Scoreboard> boards = new ConcurrentHashMap<>();
     private final Map<UUID, Map<UUID, String>> nametagTeams = new HashMap<>();
     private final Map<UUID, Integer> sidebarLineCount = new HashMap<>();
-    private final Map<UUID, StatSnapshot> statCache = new HashMap<>();
+    private final Map<UUID, StatSnapshot> statCache = new ConcurrentHashMap<>();
 
     private YamlConfiguration board;
     private BukkitTask nametagTask;
@@ -278,10 +281,31 @@ public final class BoardManager {
     // ---------------- Platzhalter ----------------
 
     private void refreshStats() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            plugin.database().getStats(player.getUniqueId())
-                    .thenAccept(snapshot -> statCache.put(player.getUniqueId(), snapshot));
+        if (!brauchtStats()) {
+            statCache.clear();
+            return;
         }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            UUID id = player.getUniqueId();
+            plugin.database().getStats(id).thenAccept(snapshot -> {
+                if (snapshot != null && boards.containsKey(id)) {
+                    statCache.put(id, snapshot);
+                }
+            });
+        }
+    }
+
+    private boolean brauchtStats() {
+        List<String> texte = new ArrayList<>(board.getStringList("lines"));
+        texte.add(board.getString("title", ""));
+        for (String text : texte) {
+            for (String platzhalter : STAT_PLATZHALTER) {
+                if (text != null && text.contains(platzhalter)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private String resolve(Player viewer, String line) {

@@ -85,7 +85,7 @@ public final class ConnectListener {
     @Subscribe
     public void onConnected(ServerConnectedEvent event) {
         String name = event.getServer().getServerInfo().getName();
-        if (!name.equals(plugin.config().limbo())) {
+        if (!name.equals(plugin.config().limbo()) && !plugin.config().returnSkipServers().contains(name)) {
             // Der letzte echte Server ist ab jetzt sein Zuhause.
             plugin.tracker().setHome(event.getPlayer().getUniqueId(), name);
         }
@@ -99,6 +99,20 @@ public final class ConnectListener {
     // ------------------------------------------------------------------
     //  3. Rauswurf: Absturz oder echter Kick?
     // ------------------------------------------------------------------
+
+    private boolean zurueckNachHause(KickedFromServerEvent event, Player player, String from) {
+        String zuhause = plugin.tracker().home(player.getUniqueId());
+        if (zuhause == null || zuhause.equals(from) || !plugin.watcher().isOnline(zuhause)) {
+            return false;
+        }
+        Optional<RegisteredServer> ziel = plugin.proxy().getServer(zuhause);
+        if (ziel.isEmpty()) {
+            return false;
+        }
+        event.setResult(KickedFromServerEvent.RedirectPlayer.create(ziel.get(),
+                plugin.message("server-crashed-home", "%server%", from, "%home%", zuhause)));
+        return true;
+    }
 
     @Subscribe
     public void onKicked(KickedFromServerEvent event) {
@@ -121,6 +135,16 @@ public final class ConnectListener {
             return;
         }
 
+        boolean ohneRueckkehr = plugin.config().returnSkipServers().contains(from);
+        if (ohneRueckkehr && event.kickedDuringServerConnect() && player.getCurrentServer().isPresent()) {
+            event.setResult(KickedFromServerEvent.Notify.create(
+                    plugin.message("server-unreachable", "%server%", from)));
+            return;
+        }
+        if (ohneRueckkehr && zurueckNachHause(event, player, from)) {
+            return;
+        }
+
         Optional<RegisteredServer> fallback = limbo.isEmpty()
                 ? Optional.empty()
                 : plugin.proxy().getServer(limbo);
@@ -131,7 +155,11 @@ public final class ConnectListener {
             return;
         }
 
-        plugin.tracker().setHome(player.getUniqueId(), from);
+        if (!ohneRueckkehr) {
+            plugin.tracker().setHome(player.getUniqueId(), from);
+        } else if (plugin.tracker().home(player.getUniqueId()) == null) {
+            plugin.tracker().setHome(player.getUniqueId(), plugin.config().defaultServer());
+        }
         Component note = event.kickedDuringServerConnect()
                 ? plugin.message("server-offline", "%server%", from)
                 : plugin.message("server-crashed", "%server%", from);
