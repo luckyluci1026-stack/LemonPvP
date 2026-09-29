@@ -34,11 +34,15 @@ import java.util.function.Supplier;
 public final class DuelDatabase {
 
     private final DuelPlus plugin;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
-        Thread t = new Thread(r, "DuelPlus-DB");
-        t.setDaemon(true);
-        return t;
-    });
+    private volatile ExecutorService executor = neuerExecutor();
+
+    private static ExecutorService neuerExecutor() {
+        return Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "DuelPlus-DB");
+            t.setDaemon(true);
+            return t;
+        });
+    }
 
     private Driver driver;
     private String url;
@@ -55,6 +59,9 @@ public final class DuelDatabase {
     }
 
     public void init() {
+        if (executor.isShutdown()) {
+            executor = neuerExecutor();
+        }
         try {
             String host = plugin.getConfig().getString("database.host", "127.0.0.1");
             int port = plugin.getConfig().getInt("database.port", 3306);
@@ -121,6 +128,11 @@ public final class DuelDatabase {
         } catch (SQLException e) {
             plugin.getLogger().severe("DuelPlus: Tabellen konnten nicht angelegt werden: " + e.getMessage());
         }
+        try (var st = conn().createStatement()) {
+            st.executeUpdate("ALTER TABLE duelplus_duelle ADD COLUMN IF NOT EXISTS angenommen_um BIGINT");
+        } catch (SQLException e) {
+            plugin.getLogger().warning("DuelPlus: Spalte angenommen_um konnte nicht angelegt werden: " + e.getMessage());
+        }
     }
 
     public void shutdown() {
@@ -167,10 +179,11 @@ public final class DuelDatabase {
         });
     }
 
-    public CompletableFuture<Void> presenceEntfernen(UUID uuid) {
+    public CompletableFuture<Void> presenceEntfernen(UUID uuid, String server) {
         return run(() -> {
-            try (PreparedStatement ps = conn().prepareStatement("DELETE FROM duelplus_presence WHERE uuid=?")) {
+            try (PreparedStatement ps = conn().prepareStatement("DELETE FROM duelplus_presence WHERE uuid=? AND server=?")) {
                 ps.setString(1, uuid.toString());
+                ps.setString(2, server);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 warn("presenceEntfernen", e);
@@ -202,15 +215,18 @@ public final class DuelDatabase {
     /** UUID zu einem Namen - fuer /duel <Name>. Nur unter denen, die gerade als anwesend gelten. */
     public CompletableFuture<Optional<UUID>> presenceUuidFuerName(String name, int veraltetSekunden) {
         return supply(() -> {
+            String ohnePunkt = name.startsWith(".") ? name.substring(1) : name;
             try (PreparedStatement ps = conn().prepareStatement(
-                    "SELECT uuid, aktualisiert FROM duelplus_presence WHERE LOWER(name)=LOWER(?)")) {
+                    "SELECT uuid, aktualisiert, LOWER(name)=LOWER(?) AS genau FROM duelplus_presence "
+                            + "WHERE (LOWER(name)=LOWER(?) OR LOWER(name)=LOWER(?)) AND aktualisiert>=? "
+                            + "ORDER BY genau DESC, aktualisiert DESC LIMIT 1")) {
                 ps.setString(1, name);
+                ps.setString(2, ohnePunkt);
+                ps.setString(3, "." + ohnePunkt);
+                ps.setLong(4, System.currentTimeMillis() - veraltetSekunden * 1000L);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        long alterMillis = System.currentTimeMillis() - rs.getLong("aktualisiert");
-                        if (alterMillis <= veraltetSekunden * 1000L) {
-                            return Optional.of(UUID.fromString(rs.getString("uuid")));
-                        }
+                        return Optional.of(UUID.fromString(rs.getString("uuid")));
                     }
                 }
             } catch (SQLException e) {
@@ -345,14 +361,23 @@ public final class DuelDatabase {
         return run(() -> update("UPDATE duelplus_duelle SET ziel_gezeigt=TRUE WHERE id=?", id));
     }
 
+    /** Alle WARTEND-Anfragen AN diesen Spieler, neueste zuerst - fuer /duel <Name> accept|decline. */
+    public CompletableFuture<List<DuelRecord>> offeneAnfragenFuerZiel(UUID ziel) {
+        return supply(() -> liste(
+                "SELECT * FROM duelplus_duelle WHERE status=? AND spieler_b=? ORDER BY erstellt DESC",
+                DuelRecord.WARTEND, ziel.toString()));
+    }
+
     /** Atomarer Statuswechsel, nur wenn der bisherige Status noch passt - true, wenn DIESER Aufruf gewonnen hat. */
     public CompletableFuture<Boolean> statusWechseln(String id, String von, String zu) {
         return supply(() -> {
             try (PreparedStatement ps = conn().prepareStatement(
-                    "UPDATE duelplus_duelle SET status=? WHERE id=? AND status=?")) {
+                    "UPDATE duelplus_duelle SET status=?, angenommen_um=IF(?, ?, angenommen_um) WHERE id=? AND status=?")) {
                 ps.setString(1, zu);
-                ps.setString(2, id);
-                ps.setString(3, von);
+                ps.setBoolean(2, DuelRecord.ANGENOMMEN.equals(zu));
+                ps.setLong(3, System.currentTimeMillis());
+                ps.setString(4, id);
+                ps.setString(5, von);
                 return ps.executeUpdate() > 0;
             } catch (SQLException e) {
                 warn("statusWechseln", e);
@@ -385,13 +410,34 @@ public final class DuelDatabase {
     public CompletableFuture<Void> verfalleFestsitzendeAngenommen(int sekunden) {
         return run(() -> {
             try (PreparedStatement ps = conn().prepareStatement(
-                    "UPDATE duelplus_duelle SET status=? WHERE status=? AND erstellt<?")) {
+                    "UPDATE duelplus_duelle SET status=? WHERE status=? AND COALESCE(angenommen_um, erstellt)<?")) {
                 ps.setString(1, DuelRecord.ABGELAUFEN);
                 ps.setString(2, DuelRecord.ANGENOMMEN);
                 ps.setLong(3, System.currentTimeMillis() - sekunden * 1000L);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 warn("verfalleFestsitzendeAngenommen", e);
+            }
+        });
+    }
+
+    public CompletableFuture<Void> angenommenAuffrischen(Collection<String> ids) {
+        if (ids.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        List<String> kopie = List.copyOf(ids);
+        return run(() -> {
+            String platzhalter = String.join(",", java.util.Collections.nCopies(kopie.size(), "?"));
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "UPDATE duelplus_duelle SET angenommen_um=? WHERE status=? AND id IN (" + platzhalter + ")")) {
+                ps.setLong(1, System.currentTimeMillis());
+                ps.setString(2, DuelRecord.ANGENOMMEN);
+                for (int i = 0; i < kopie.size(); i++) {
+                    ps.setString(i + 3, kopie.get(i));
+                }
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                warn("angenommenAuffrischen", e);
             }
         });
     }

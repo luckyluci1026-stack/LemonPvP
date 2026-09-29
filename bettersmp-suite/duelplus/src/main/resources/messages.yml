@@ -5,7 +5,7 @@ reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
 player-only: "%prefix%<red>Das geht nur im Spiel.</red>"
 not-ready: "%prefix%<red>DuelPlus ist auf diesem Server nicht richtig eingerichtet.</red> <gray>(keine Datenbankverbindung - Konsole prüfen)</gray>"
 
-usage: "%prefix%<gray>/duel <white><Spieler></white></gray>"
+usage: "%prefix%<gray>/duel <white><Spieler></white> <dark_gray>|</dark_gray> /duel <white><Spieler></white> accept <dark_gray>|</dark_gray> /duel <white><Spieler></white> decline</gray>"
 self: "%prefix%<red>Du kannst dich nicht selbst herausfordern.</red>"
 target-offline: "%prefix%<red><white>%spieler%</white> ist gerade nicht im Netzwerk.</red>"
 target-busy: "%prefix%<gold><white>%spieler%</white> ist bereits in einem Duell oder einer offenen Anfrage.</gold>"
@@ -15,6 +15,9 @@ sent: "%prefix%<green>Herausforderung an <white>%spieler%</white> gesendet.</gre
 received: "%prefix%<gold><bold>%spieler%</bold></gold> <gray>fordert dich zu einem Duell heraus!</gray><newline><gray>Es steht dein komplettes Inventar auf dem Spiel.</gray><newline><click:run_command:'/duel %spieler% accept'><hover:show_text:'<green>Klicken zum Annehmen</green>'><green>[Annehmen]</green></hover></click> <dark_gray>|</dark_gray> <click:run_command:'/duel %spieler% decline'><hover:show_text:'<red>Klicken zum Ablehnen</red>'><red>[Ablehnen]</red></hover></click>"
 
 no-pending: "%prefix%<red>Du hast keine offene Anfrage von <white>%spieler%</white>.</red>"
+no-pending-any: "%prefix%<red>Du hast gerade keine offene Duell-Anfrage.</red>"
+pending-entry: "<dark_gray> ▪ </dark_gray><gray>Offen von</gray> <white>%spieler%</white> <click:run_command:'/duel %spieler% accept'><hover:show_text:'<green>Klicken zum Annehmen</green>'><green>[Annehmen]</green></hover></click> <click:run_command:'/duel %spieler% decline'><hover:show_text:'<red>Klicken zum Ablehnen</red>'><red>[Ablehnen]</red></hover></click>"
+opponent-missing: "%prefix%<gold>Dein Gegner ist nicht in der Arena angekommen - das Duell fällt aus.</gold> <gray>Dein Inventar bleibt, wie es war.</gray>"
 accepted-both: "%prefix%<green>Angenommen! Ihr werdet gleich zur Arena gebracht ...</green>"
 declined-to-challenger: "%prefix%<red><white>%spieler%</white> hat deine Herausforderung abgelehnt.</red>"
 declined-confirm: "%prefix%<gray>Herausforderung von <white>%spieler%</white> abgelehnt.</gray>"

@@ -38,7 +38,7 @@ public final class PresenceService implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void beimVerlassen(PlayerQuitEvent event) {
-        plugin.db().presenceEntfernen(event.getPlayer().getUniqueId());
+        plugin.db().presenceEntfernen(event.getPlayer().getUniqueId(), plugin.serverName());
     }
 
     private void herzschlag() {

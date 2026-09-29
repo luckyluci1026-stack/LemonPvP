@@ -54,6 +54,9 @@ public final class DuellSessionManager implements Listener {
 
     /** Wer fuer ein noch nicht gestartetes Duell schon angekommen ist (Ankunft + Inventar angewendet, wartet auf den Gegner). */
     private final Map<String, Set<UUID>> wartendAufAnkunft = new ConcurrentHashMap<>();
+    private final Map<String, Long> wartetSeit = new ConcurrentHashMap<>();
+    private final Set<String> ankunftPruefung = ConcurrentHashMap.newKeySet();
+    private long letzteAuffrischung;
     private final Map<UUID, DuellSession> sessionNachSpieler = new ConcurrentHashMap<>();
 
     /**
@@ -159,9 +162,11 @@ public final class DuellSessionManager implements Listener {
                 .thenAccept(snapshotOpt -> Bukkit.getScheduler().runTask(plugin, () -> {
                     snapshotOpt.ifPresent(snap -> snap.anwenden(spieler.getInventory()));
                     Set<UUID> wartend = wartendAufAnkunft.computeIfAbsent(duell.id(), k -> ConcurrentHashMap.newKeySet());
+                    wartetSeit.putIfAbsent(duell.id(), System.currentTimeMillis());
                     wartend.add(spieler.getUniqueId());
                     if (wartend.contains(duell.spielerA()) && wartend.contains(duell.spielerB())) {
                         wartendAufAnkunft.remove(duell.id());
+                        wartetSeit.remove(duell.id());
                         duellStarten(duell);
                     }
                 }));
@@ -877,12 +882,73 @@ public final class DuellSessionManager implements Listener {
     //  Arena-Warteschlange
     // ================================================================
 
+    private void gegnerNichtAngekommen() {
+        long jetzt = System.currentTimeMillis();
+        long grenze = Math.max(30, plugin.getConfig().getInt("anfrage.ankunft-warten-sekunden", 90)) * 1000L;
+        for (Map.Entry<String, Long> eintrag : wartetSeit.entrySet()) {
+            String duellId = eintrag.getKey();
+            if (jetzt - eintrag.getValue() < grenze || !ankunftPruefung.add(duellId)) {
+                continue;
+            }
+            plugin.db().holeById(duellId).thenAccept(duellOpt -> Bukkit.getScheduler().runTask(plugin, () -> {
+                ankunftPruefung.remove(duellId);
+                Set<UUID> wartend = wartendAufAnkunft.get(duellId);
+                if (wartend == null) {
+                    wartetSeit.remove(duellId);
+                    return;
+                }
+                if (duellOpt.isPresent() && DuelRecord.ANGENOMMEN.equals(duellOpt.get().status())) {
+                    plugin.db().statusWechseln(duellId, DuelRecord.ANGENOMMEN, DuelRecord.ABGELAUFEN);
+                }
+                wartendAufAnkunft.remove(duellId);
+                wartetSeit.remove(duellId);
+                for (UUID uuid : wartend) {
+                    Player spieler = Bukkit.getPlayer(uuid);
+                    if (spieler == null || sessionNachSpieler.containsKey(uuid)) {
+                        continue;
+                    }
+                    plugin.msgs().send(spieler, "opponent-missing");
+                    String zurueck = duellOpt.map(d -> uuid.equals(d.spielerA()) ? d.spielerAServer() : d.spielerBServer())
+                            .orElse(null);
+                    if (zurueck != null && !zurueck.equals(plugin.serverName())) {
+                        plugin.bridge().sende(spieler, zurueck);
+                    }
+                }
+            }));
+        }
+    }
+
     private void warteschlangeVerarbeiten() {
+        gegnerNichtAngekommen();
+        long jetzt = System.currentTimeMillis();
+        if (jetzt - letzteAuffrischung >= 30_000L) {
+            letzteAuffrischung = jetzt;
+            plugin.db().angenommenAuffrischen(plugin.arenaManager().wartendeDuelle());
+        }
         String duellId = plugin.arenaManager().naechsterAusWarteschlange();
         if (duellId == null) {
             return;
         }
-        plugin.db().holeById(duellId).thenAccept(duellOpt -> Bukkit.getScheduler().runTask(plugin, () ->
-                duellOpt.filter(d -> DuelRecord.ANGENOMMEN.equals(d.status())).ifPresent(this::duellStarten)));
+        plugin.db().holeById(duellId).thenAccept(duellOpt -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (duellOpt.isEmpty()) {
+                return;
+            }
+            DuelRecord duell = duellOpt.get();
+            if (DuelRecord.ANGENOMMEN.equals(duell.status())) {
+                duellStarten(duell);
+                return;
+            }
+            for (UUID uuid : new UUID[]{duell.spielerA(), duell.spielerB()}) {
+                Player spieler = Bukkit.getPlayer(uuid);
+                if (spieler == null || sessionNachSpieler.containsKey(uuid) || nachbereitung.contains(uuid)) {
+                    continue;
+                }
+                plugin.msgs().send(spieler, "opponent-missing");
+                String zurueck = uuid.equals(duell.spielerA()) ? duell.spielerAServer() : duell.spielerBServer();
+                if (!zurueck.equals(plugin.serverName())) {
+                    plugin.bridge().sende(spieler, zurueck);
+                }
+            }
+        }));
     }
 }

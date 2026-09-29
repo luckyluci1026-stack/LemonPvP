@@ -52,6 +52,10 @@ anfrage:
   # Wie oft (in Ticks) ueber alle Server hinweg nach neuen bzw.
   # beantworteten Anfragen geschaut wird. 20 Ticks = 1 Sekunde.
   poll-takt: 20
+  # Ist nach einem angenommenen Duell nur einer in der Arena angekommen,
+  # wartet er hoechstens so lange auf den Gegner - danach faellt das
+  # Duell aus und er kommt zurueck (Inventar bleibt unveraendert).
+  ankunft-warten-sekunden: 90
 
 # ----------------------------------------------------------
 #  Gegenstand am Spawn

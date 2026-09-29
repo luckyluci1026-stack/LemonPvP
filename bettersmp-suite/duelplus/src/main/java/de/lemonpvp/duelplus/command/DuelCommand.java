@@ -13,10 +13,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 /** /duel <Spieler> [accept|decline] | /duel stats [Spieler] | /duel top [Anzahl] | /duel watch <Spieler> | /duel unwatch */
 public final class DuelCommand implements TabExecutor {
+
+    private static final Set<String> ANNEHMEN = Set.of("accept", "annehmen", "ja");
+    private static final Set<String> ABLEHNEN = Set.of("decline", "ablehnen", "deny", "nein");
 
     private final DuelPlus plugin;
 
@@ -84,16 +88,14 @@ public final class DuelCommand implements TabExecutor {
         // decline, oder das Ziel einer neuen Herausforderung) - "Zielspieler
         // zuerst" wie schon beim reinen Herausfordern, statt wie frueher
         // Verb-zuerst nur bei accept/decline.
+        if (ANNEHMEN.contains(erstesArgument) || ABLEHNEN.contains(erstesArgument)) {
+            entscheiden(spieler, args.length >= 2 ? args[1] : null, ANNEHMEN.contains(erstesArgument));
+            return true;
+        }
         if (args.length >= 2) {
             String zweitesArgument = args[1].toLowerCase(Locale.ROOT);
-            if (zweitesArgument.equals("accept")) {
-                if (!imKampf(spieler)) {
-                    plugin.anfragen().annehmen(spieler, args[0]);
-                }
-                return true;
-            }
-            if (zweitesArgument.equals("decline")) {
-                plugin.anfragen().ablehnen(spieler, args[0]);
+            if (ANNEHMEN.contains(zweitesArgument) || ABLEHNEN.contains(zweitesArgument)) {
+                entscheiden(spieler, args[0], ANNEHMEN.contains(zweitesArgument));
                 return true;
             }
         }
@@ -101,6 +103,16 @@ public final class DuelCommand implements TabExecutor {
             plugin.anfragen().anfordern(spieler, args[0]);
         }
         return true;
+    }
+
+    private void entscheiden(Player spieler, String herausforderer, boolean annehmen) {
+        if (!annehmen) {
+            plugin.anfragen().ablehnen(spieler, herausforderer);
+            return;
+        }
+        if (!imKampf(spieler)) {
+            plugin.anfragen().annehmen(spieler, herausforderer);
+        }
     }
 
     private boolean imKampf(Player spieler) {
@@ -146,13 +158,14 @@ public final class DuelCommand implements TabExecutor {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
                                       @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> vorschlaege = new ArrayList<>(List.of("stats", "top", "watch", "unwatch"));
+            List<String> vorschlaege = new ArrayList<>(List.of("accept", "decline", "stats", "top", "watch", "unwatch"));
             for (Player online : Bukkit.getOnlinePlayers()) {
                 vorschlaege.add(online.getName());
             }
             return vorschlaege;
         }
-        if (args.length == 2 && (args[0].equalsIgnoreCase("stats") || args[0].equalsIgnoreCase("watch"))) {
+        if (args.length == 2 && (args[0].equalsIgnoreCase("stats") || args[0].equalsIgnoreCase("watch")
+                || ANNEHMEN.contains(args[0].toLowerCase(Locale.ROOT)) || ABLEHNEN.contains(args[0].toLowerCase(Locale.ROOT)))) {
             List<String> vorschlaege = new ArrayList<>();
             for (Player online : Bukkit.getOnlinePlayers()) {
                 vorschlaege.add(online.getName());

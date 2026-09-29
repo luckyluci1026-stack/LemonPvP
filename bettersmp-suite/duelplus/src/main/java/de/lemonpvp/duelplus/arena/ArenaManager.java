@@ -543,6 +543,10 @@ public final class ArenaManager {
         return warteschlange.poll();
     }
 
+    public synchronized List<String> wartendeDuelle() {
+        return new ArrayList<>(warteschlange);
+    }
+
     public Arena arena(String name) {
         return arenen.get(name);
     }
