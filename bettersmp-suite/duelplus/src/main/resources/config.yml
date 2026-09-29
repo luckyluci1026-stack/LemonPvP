@@ -174,3 +174,29 @@ loot:
   # danach frei fuer alle (die normale Minecraft-Despawnzeit laeuft
   # trotzdem parallel weiter)
   schutz-sekunden: 60
+
+# ----------------------------------------------------------
+#  Replays
+#
+#  Jedes Duell auf dem Duels-Server wird aufgezeichnet: Bewegungen,
+#  Treffer, Ruestung und Waffen, Bloecke, Geschosse, Explosionen,
+#  die Grenze und der Duell-Chat (kein Ton, keine Sprache).
+#  Aufbewahrt wird aufbewahren-tage lang. Wird einer der beiden per
+#  /report gemeldet, bleiben seine Replays der letzten Tage
+#  gemeldet-tage lang (gerechnet ab dem Duell).
+#  Alle Replays zusammen belegen hoechstens max-gb - wird es enger,
+#  gehen zuerst die aeltesten ungemeldeten. Ein Duell braucht meist
+#  nur einige hundert KB, 300-400 Duelle passen also locker.
+#  Ansehen mit /replay (Recht duelplus.replay, Standard: OP), auch
+#  vom SMP aus - man wird dafuer kurz auf den Duels-Server gebracht.
+# ----------------------------------------------------------
+replay:
+  aktiv: true
+  aufbewahren-tage: 3
+  gemeldet-tage: 30
+  max-gb: 3
+  # Laengere Duelle werden hier abgeschnitten
+  max-minuten: 30
+  max-mb-pro-replay: 50
+  # Ordner unter plugins/DuelPlus/
+  ordner: "replays"

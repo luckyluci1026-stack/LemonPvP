@@ -60,6 +60,8 @@ public final class ReportCommand implements TabExecutor {
         String grund = String.join(" ", java.util.Arrays.asList(args).subList(1, args.length));
         plugin.reports().vermerken(melder, gemeldet, grund);
         plugin.msgs().send(melder, "report.sent", "spieler", gemeldet.getName());
+        Bukkit.getPluginManager().callEvent(new de.lemonpvp.bettersmp.api.SpielerGemeldetEvent(
+                melder.getUniqueId(), melder.getName(), gemeldet.getUniqueId(), gemeldet.getName(), grund));
 
         for (Player teammitglied : Bukkit.getOnlinePlayers()) {
             if (teammitglied.hasPermission("bettersmp.report.receive")) {

@@ -6,6 +6,7 @@ import de.lemonpvp.duelplus.db.DuelDatabase;
 import de.lemonpvp.duelplus.db.DuelRecord;
 import de.lemonpvp.duelplus.db.SpielerSnapshot;
 import de.lemonpvp.duelplus.loot.LootManager;
+import de.lemonpvp.duelplus.replay.ReplayDaten;
 import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -212,6 +213,7 @@ public final class DuellSessionManager implements Listener {
                 duell.spielerB(), duell.spielerBName(), duell.spielerBServer());
         sessionNachSpieler.put(duell.spielerA(), session);
         sessionNachSpieler.put(duell.spielerB(), session);
+        plugin.replays().duellGestartet(session, arena, a, b);
         plugin.proxySperre().duellSperre(a, PROXY_SPERRE_MILLIS);
         plugin.proxySperre().duellSperre(b, PROXY_SPERRE_MILLIS);
 
@@ -493,6 +495,7 @@ public final class DuellSessionManager implements Listener {
         UUID gegnerUuid = session.gegnerVon(verliererUuid);
         sessionNachSpieler.remove(gegnerUuid);
         UUID gewinner = gegnerUuid;
+        plugin.replays().duellBeendet(session.duellId(), ReplayDaten.ERGEBNIS_SIEG, gewinner);
         // Beide bis zur TATSAECHLICHEN Rueckreise gesperrt halten (siehe
         // Feld-Kommentar) - sessionNachSpieler ist ab hier schon leer, ohne
         // dieses zweite Set koennten beide sofort z.B. per /spawn selbst
@@ -632,6 +635,7 @@ public final class DuellSessionManager implements Listener {
      * wechselt den Besitzer, kein Shulker wird abgeworfen.
      */
     private void unentschiedenAusloesen(DuellSession session) {
+        plugin.replays().duellBeendet(session.duellId(), ReplayDaten.ERGEBNIS_UNENTSCHIEDEN, null);
         for (UUID uuid : new UUID[]{session.spielerA(), session.spielerB()}) {
             Player spieler = Bukkit.getPlayer(uuid);
             if (spieler != null) {
@@ -646,6 +650,7 @@ public final class DuellSessionManager implements Listener {
     // ================================================================
 
     private void inaktivitaetsAufgabeAusloesen(DuellSession session) {
+        plugin.replays().duellBeendet(session.duellId(), ReplayDaten.ERGEBNIS_AUFGABE, null);
         double anteil = Math.max(0, Math.min(1,
                 plugin.getConfig().getDouble("kampf.aufgabe-bei-inaktivitaet.inventar-verlust-anteil", 0.2)));
         for (UUID uuid : new UUID[]{session.spielerA(), session.spielerB()}) {

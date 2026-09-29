@@ -119,7 +119,13 @@ public final class DuelDatabase {
                 + "siege INT DEFAULT 0, niederlagen INT DEFAULT 0, unentschieden INT DEFAULT 0)",
             "CREATE TABLE IF NOT EXISTS duelplus_zuschauer_anfrage ("
                 + "spieler VARCHAR(36) PRIMARY KEY, arena_welt VARCHAR(64), "
-                + "herkunft_server VARCHAR(48), erstellt BIGINT)"
+                + "herkunft_server VARCHAR(48), erstellt BIGINT)",
+            "CREATE TABLE IF NOT EXISTS duelplus_replays ("
+                + "id VARCHAR(36) PRIMARY KEY, spieler_a VARCHAR(36), spieler_a_name VARCHAR(32), "
+                + "spieler_b VARCHAR(36), spieler_b_name VARCHAR(32), arena VARCHAR(64), start BIGINT, "
+                + "dauer BIGINT, groesse BIGINT, gewinner VARCHAR(36), ergebnis INT, "
+                + "gemeldet BOOLEAN DEFAULT FALSE, behalten_bis BIGINT, server VARCHAR(48), "
+                + "INDEX (spieler_a), INDEX (spieler_b), INDEX (start))"
         };
         try (var st = conn().createStatement()) {
             for (String sql : ddl) {
@@ -869,6 +875,162 @@ public final class DuelDatabase {
                 return Optional.empty();
             }
         });
+    }
+
+    // ================================================================
+    //  Replays (siehe replay/ReplayManager)
+    // ================================================================
+
+    public CompletableFuture<Void> replayEintragen(ReplayEintrag eintrag) {
+        return run(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "REPLACE INTO duelplus_replays(id,spieler_a,spieler_a_name,spieler_b,spieler_b_name,arena,start,dauer,"
+                            + "groesse,gewinner,ergebnis,gemeldet,behalten_bis,server) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
+                ps.setString(1, eintrag.id());
+                ps.setString(2, eintrag.spielerA().toString());
+                ps.setString(3, eintrag.spielerAName());
+                ps.setString(4, eintrag.spielerB().toString());
+                ps.setString(5, eintrag.spielerBName());
+                ps.setString(6, eintrag.arena());
+                ps.setLong(7, eintrag.start());
+                ps.setLong(8, eintrag.dauerMillis());
+                ps.setLong(9, eintrag.groesse());
+                ps.setString(10, eintrag.gewinner() == null ? null : eintrag.gewinner().toString());
+                ps.setInt(11, eintrag.ergebnis());
+                ps.setBoolean(12, eintrag.gemeldet());
+                ps.setLong(13, eintrag.behaltenBis());
+                ps.setString(14, eintrag.server());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                warn("replayEintragen", e);
+            }
+        });
+    }
+
+    public CompletableFuture<Optional<ReplayEintrag>> replayHolen(String idOderAnfang) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT * FROM duelplus_replays WHERE id LIKE ? ORDER BY start DESC LIMIT 2")) {
+                ps.setString(1, idOderAnfang.replace("%", "").replace("_", "\\_") + "%");
+                try (ResultSet rs = ps.executeQuery()) {
+                    List<ReplayEintrag> treffer = new ArrayList<>();
+                    while (rs.next()) {
+                        treffer.add(replayLesen(rs));
+                    }
+                    return treffer.size() == 1 ? Optional.of(treffer.get(0)) : Optional.<ReplayEintrag>empty();
+                }
+            } catch (SQLException e) {
+                warn("replayHolen", e);
+                return Optional.<ReplayEintrag>empty();
+            }
+        });
+    }
+
+    public CompletableFuture<List<ReplayEintrag>> replayListe(UUID spieler, int anzahl) {
+        return supply(() -> {
+            List<ReplayEintrag> liste = new ArrayList<>();
+            String sql = spieler == null
+                    ? "SELECT * FROM duelplus_replays ORDER BY start DESC LIMIT ?"
+                    : "SELECT * FROM duelplus_replays WHERE spieler_a=? OR spieler_b=? ORDER BY start DESC LIMIT ?";
+            try (PreparedStatement ps = conn().prepareStatement(sql)) {
+                int i = 1;
+                if (spieler != null) {
+                    ps.setString(i++, spieler.toString());
+                    ps.setString(i++, spieler.toString());
+                }
+                ps.setInt(i, anzahl);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        liste.add(replayLesen(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                warn("replayListe", e);
+            }
+            return liste;
+        });
+    }
+
+    public CompletableFuture<Optional<UUID>> replaySpielerFuerName(String name) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT spieler_a AS id FROM duelplus_replays WHERE LOWER(spieler_a_name)=LOWER(?) "
+                            + "UNION SELECT spieler_b AS id FROM duelplus_replays WHERE LOWER(spieler_b_name)=LOWER(?) LIMIT 1")) {
+                ps.setString(1, name);
+                ps.setString(2, name);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? Optional.of(UUID.fromString(rs.getString("id"))) : Optional.<UUID>empty();
+                }
+            } catch (SQLException e) {
+                warn("replaySpielerFuerName", e);
+                return Optional.<UUID>empty();
+            }
+        });
+    }
+
+    public CompletableFuture<Integer> replaysMelden(UUID spieler, long seit, long aufbewahrenMillis) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "UPDATE duelplus_replays SET gemeldet=TRUE, behalten_bis=GREATEST(behalten_bis, start + ?) "
+                            + "WHERE (spieler_a=? OR spieler_b=?) AND start>=?")) {
+                ps.setLong(1, aufbewahrenMillis);
+                ps.setString(2, spieler.toString());
+                ps.setString(3, spieler.toString());
+                ps.setLong(4, seit);
+                return ps.executeUpdate();
+            } catch (SQLException e) {
+                warn("replaysMelden", e);
+                return 0;
+            }
+        });
+    }
+
+    public CompletableFuture<Boolean> replayBehalten(String id, long bis) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "UPDATE duelplus_replays SET gemeldet=TRUE, behalten_bis=GREATEST(behalten_bis, ?) WHERE id=?")) {
+                ps.setLong(1, bis);
+                ps.setString(2, id);
+                return ps.executeUpdate() > 0;
+            } catch (SQLException e) {
+                warn("replayBehalten", e);
+                return false;
+            }
+        });
+    }
+
+    public CompletableFuture<List<ReplayEintrag>> replaysAufServer(String server) {
+        return supply(() -> {
+            List<ReplayEintrag> liste = new ArrayList<>();
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT * FROM duelplus_replays WHERE server=? ORDER BY start ASC")) {
+                ps.setString(1, server);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        liste.add(replayLesen(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                warn("replaysAufServer", e);
+                return null;
+            }
+            return liste;
+        });
+    }
+
+    public CompletableFuture<Void> replayLoeschen(String id) {
+        return run(() -> update("DELETE FROM duelplus_replays WHERE id=?", id));
+    }
+
+    private ReplayEintrag replayLesen(ResultSet rs) throws SQLException {
+        String gewinner = rs.getString("gewinner");
+        return new ReplayEintrag(
+                rs.getString("id"),
+                UUID.fromString(rs.getString("spieler_a")), rs.getString("spieler_a_name"),
+                UUID.fromString(rs.getString("spieler_b")), rs.getString("spieler_b_name"),
+                rs.getString("arena"), rs.getLong("start"), rs.getLong("dauer"), rs.getLong("groesse"),
+                gewinner == null ? null : UUID.fromString(gewinner), rs.getInt("ergebnis"),
+                rs.getBoolean("gemeldet"), rs.getLong("behalten_bis"), rs.getString("server"));
     }
 
     // ================================================================

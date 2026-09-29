@@ -7,6 +7,7 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.json.JSONOptions;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -52,6 +53,7 @@ public final class DuellChat implements Listener {
         UUID gegner = partner.get(spieler.getUniqueId());
         if (gegner != null) {
             empfaenger.add(gegner);
+            plugin.replays().chat(spieler, PlainTextComponentSerializer.plainText().serialize(event.message()));
         } else {
             hinweisen(spieler);
         }

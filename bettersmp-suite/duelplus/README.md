@@ -273,12 +273,51 @@ und bekommt einen kurzen Hinweis (`chat-only-opponent` in `messages.yml`).
 Die Nachricht läuft über SMPProxy, der auch Stummschaltungen vom SMP
 beachtet. Ohne SMPProxy filtert DuelPlus die Empfänger selbst.
 
+## Replays
+
+Jedes Duell auf dem Duels-Server wird aufgezeichnet: Bewegungen, Blickrichtung,
+Schleichen/Sprinten/Gleiten, Leben, Schläge und Treffer, Rüstung und Waffen,
+platzierte und zerstörte Blöcke, Pfeile/Perlen/Tränke/Kristalle, Explosionen,
+die schrumpfende Grenze und der Duell-Chat. Kein Ton, keine Sprache.
+
+- **Aufbewahrung:** 3 Tage (`replay.aufbewahren-tage`). Wird einer der beiden
+  per `/report` gemeldet (BetterSMP oder ReportPlus), bleiben **seine** Replays
+  der letzten 3 Tage bis zu 30 Tage ab dem Duell (`replay.gemeldet-tage`).
+  Das Team kann ein Replay auch von Hand behalten (`/replay behalten <ID>`).
+- **Speichergrenze:** alle Replays zusammen höchstens 3 GB (`replay.max-gb`).
+  Wird es enger, gehen zuerst die ältesten **ungemeldeten**. Ein 5-Minuten-Duell
+  braucht etwa 200 KB – 300 bis 400 Duelle belegen also nur rund 60–80 MB.
+- Aufgeräumt wird beim Start und alle 10 Minuten auf dem Duels-Server. Die
+  Dateien liegen in `plugins/DuelPlus/replays/`, die Übersicht in der Tabelle
+  `duelplus_replays` der gemeinsamen MariaDB.
+- Nach jedem Duell steht unter dem Ergebnis ein Hinweis mit
+  **[Unfair? Melden]** (schlägt `/report <Gegner>` vor).
+
+**Ansehen** (Team, Recht `duelplus.replay`): `/replay` listet die letzten
+Duelle mit Knopf **[▶]**, `/replay liste <Spieler>` die eines Spielers. Beim
+Ansehen vom SMP oder der Lobby aus kommt man kurz auf den Duels-Server: Das
+Duell wird in einer **freien Arena** mit echten Spielerfiguren (Skin, Rüstung,
+Waffe, Leben über dem Kopf) nachgespielt, man selbst schaut im
+Zuschauermodus zu. Steuerung per Klick im Chat oder per Befehl:
+
+```
+/replay pause              - Pause / weiter (am Ende: nochmal von vorn)
+/replay tempo <0.25-4>     - Geschwindigkeit
+/replay springen <±Sek.>   - vor/zurück, z.B. -10 oder 30; oder Zeitpunkt 1:30
+/replay stop               - beenden, zurück auf den eigenen Server
+```
+
+Die Arena wird danach genau so zurückgesetzt, wie sie war. Ist gerade keine
+Arena frei, kommt ein Hinweis – echte Duelle haben immer Vorrang.
+
 ## Befehle
 
 ```
 /duel <Spieler>          - herausfordern
-/duel <Spieler> accept   - annehmen
-/duel <Spieler> decline  - ablehnen
+/duel <Spieler> accept   - annehmen (auch: /duel accept [Spieler], /duel annehmen;
+                            ohne Namen wird die neueste Anfrage angenommen)
+/duel <Spieler> decline  - ablehnen (auch: /duel decline [Spieler], /duel ablehnen)
+/replay ...              - Replays (siehe oben, nur Team)
 /duel stats [Spieler]    - Sieg/Niederlage/Unentschieden-Statistik (ohne Angabe: die eigene;
                             das Ziel muss gerade ONLINE sein, egal auf welchem Server)
 /duel top [Anzahl]       - Rangliste nach Siegen absteigend (Standard 10, maximal 15)
@@ -312,6 +351,8 @@ nur der Weg dorthin unterscheidet sich.
   Duells nutzbar, fürs Team (Standard: nur OP)
 - `duelplus.admin` - `/duelplus reload`, außerdem sieht man die
   Meldungen der Treffer-Prüfung im Chat (Standard: nur OP)
+- `duelplus.replay` - `/replay`: Replays auflisten, ansehen, behalten
+  (Standard: nur OP)
 
 ## Treffer-Prüfung (Schläge ohne Schaden, z. B. bei Bedrock-Spielern)
 

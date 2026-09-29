@@ -4,7 +4,7 @@ main: de.lemonpvp.duelplus.DuelPlus
 api-version: '1.21'
 authors: [SMP]
 description: Duell-System mit echtem SMP-Loot ueber SMP, Lobby und den Duels-Server - Rollback-Arenen, Todeskamera, Loot-Shulker fuer den Gewinner.
-softdepend: [BetterSMP]
+softdepend: [BetterSMP, ReportPlus]
 
 # Treiber nur gebraucht, wenn dieses Plugin laeuft - eigene Deklaration
 # noetig, auch wenn BetterSMP denselben Treiber schon laedt: jedes
@@ -19,6 +19,11 @@ commands:
   draw:
     description: Schlaegt im laufenden Duell ein Unentschieden vor - wirkt erst, wenn beide zustimmen
     usage: "/draw"
+  replay:
+    description: Duell-Replays ansehen (Team)
+    usage: "/replay [liste [Spieler]|ansehen <ID>|stop|pause|tempo <x>|springen <s>|behalten <ID>|speicher]"
+    aliases: [replays]
+    permission: duelplus.replay
   duelplus:
     description: DuelPlus-Verwaltung
     usage: "/duelplus reload"
@@ -33,4 +38,7 @@ permissions:
     default: op
   duelplus.admin:
     description: /duelplus reload
+    default: op
+  duelplus.replay:
+    description: Duell-Replays auflisten, ansehen und aufbewahren
     default: op

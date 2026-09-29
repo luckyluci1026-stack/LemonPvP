@@ -33,5 +33,9 @@
             <groupId>de.lemonpvp</groupId>
             <artifactId>bettersmp</artifactId>
         </dependency>
+        <dependency>
+            <groupId>de.lemonpvp</groupId>
+            <artifactId>reportplus</artifactId>
+        </dependency>
     </dependencies>
 </project>

@@ -106,6 +106,7 @@ public final class ArenaGuardListener implements Listener {
             return;
         }
         event.setCancelled(true);
+        plugin.replays().treffer(spieler, event.getFinalDamage());
         plugin.sessionManager().niederlageAusloesen(spieler.getUniqueId(), true);
     }
 

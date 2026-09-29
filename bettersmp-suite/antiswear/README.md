@@ -1,98 +1,136 @@
 # AntiSwear
 
-Chat-Filter mit Umgehungsschutz, Punkte-Stufen mit eigener eingebauter
-Kurzzeit-Stummschaltung und optionalen Konsolenbefehlen für weitergehende
-Strafen. Eigenständig, ohne andere Plugins zu berühren oder zu benötigen.
+Chat- und Voice-Moderation für das ganze Netzwerk: starker Wortfilter mit
+Umgehungsschutz, Spam-, Werbungs- und Datenschutz-Filter, Punkte-Stufen mit
+Stummschaltung, Team-Hinweise, Protokoll – und Moderation für **Simple Voice
+Chat** mit `/vcrules`.
+
+**Auf jeden Server installieren** (SMP, Lobby, Duels). Dann gilt die Moderation
+überall, `/msg` wird über SMPProxy mitgeprüft, und Stummschaltungen gelten im
+ganzen Netzwerk.
+
+## Was geprüft wird
+
+| Wo | Was passiert |
+|---|---|
+| Chat | Wörter werden zensiert (oder die Nachricht blockiert, siehe `erkennung.modus`) |
+| `/msg`, `/r` | SMPProxy fragt AntiSwear auf dem Server des Absenders – gleiche Regeln wie im Chat |
+| Schilder | betroffene Zeilen werden zensiert, über mehrere Zeilen verteilte Wörter werden erkannt |
+| Bücher | das Buch wird nicht gespeichert (auch der Titel beim Signieren) |
+| Amboss | der Name wird nicht übernommen |
+| Voice-Gruppen | Gruppen mit anstößigem Namen werden nicht erstellt |
+
+Zusätzlich:
+
+- **Spam:** mehr als 5 Nachrichten in 8 Sekunden oder dieselbe Nachricht
+  innerhalb von 30 Sekunden wird blockiert.
+- **Werbung:** fremde Server-Adressen, IPs und Discord-Einladungen – auch mit
+  Tricks wie `server (dot) de` oder `1 . 2 . 3 . 4`. Erlaubte Seiten stehen in
+  `werbung.erlaubte-domains` (z. B. `bucksmp.de`, YouTube).
+- **Persönliche Daten:** Handynummern und E-Mail-Adressen werden nicht
+  verschickt – Schutz für die Schüler.
+- **Großschrift und Zeichenketten:** `HALLO WIE GEHTS` wird leise zu
+  `Hallo wie gehts`, `neeeeeeein!!!!!!!!` zu `neeeein!!!!` (keine Strafe).
 
 ## Umgehungsschutz
 
-Drei Tricks werden vor dem Abgleich automatisch rausgerechnet - einzeln
-abschaltbar in `config.yml` (`erkennung.*`):
+Vor dem Abgleich wird jeder Text auf ein „Skelett“ zurückgerechnet:
 
-| Trick | Beispiel | Einstellung |
+| Trick | Beispiel | wird zu |
 |---|---|---|
-| Leetspeak | `sch3iss3` | `leetspeak` |
-| Trennzeichen | `s.c.h.e.i.s.s.e`, `s c h e i s s e` | `trennzeichen` |
-| Buchstaben-Wiederholung | `scheeeiiisse` | `wiederholungen` |
+| Zahlen statt Buchstaben | `hur3ns0hn`, `1d10t`, `9eil`, `5ch31ss3` | `hurensohn`, `idiot`, `geil`, `scheisse` |
+| Sonderzeichen | `@rschl0ch`, `$chlampe`, `f!ck`, `|diot` | `arschloch`, `schlampe`, `fick`, `idiot` |
+| Trennzeichen | `h.u.r.e`, `h u r e n s o h n`, `huren sohn` | `hure`, `hurensohn` |
+| Wiederholungen | `scheeeiiiße` | `scheiße` |
+| Doppelgänger | kyrillisches `а`/`о`/`е`, griechische Buchstaben, Akzente, unsichtbare Zeichen, `vv` statt `w` | lateinische Buchstaben |
+| Farbcodes | `&churensohn` | `hurensohn` |
 
-Bei der Trennzeichen-Erkennung werden nur **aufeinanderfolgende
-Einzelbuchstaben** zusammengefasst, nicht die ganze Nachricht - sonst
-würden mehrere kurze, harmlose Wörter hintereinander ("ich sehe dich")
-leicht zu falschen Treffern führen.
-
-Wörter UND Chattext durchlaufen dieselbe Normalisierung: Ein Wort mit
-eigenem Doppelbuchstaben (z.B. "scheisse") wird beim Laden genauso
-zusammengestaucht wie ein gestreckter Chat-Text - beide landen bei
-"scheise" und passen wieder zueinander.
-
-## Modus
-
-`erkennung.modus` in `config.yml`:
-- **ERSETZEN** (Standard) - nur das/die Wort(e) werden zu Sternchen
-  zensiert, der Rest der Nachricht kommt an. Erkennt die Zensur beim
-  eigenen Nachprüfen einen nicht sauber erwischten Umgehungsversuch,
-  wird stattdessen die **ganze** Nachricht blockiert - lieber das als
-  etwas Anstößiges durchrutschen lassen.
-- **BLOCKIEREN** - die ganze Nachricht wird immer verschluckt.
+Harmlose Wörter, die ein Schimpfwort enthalten, stehen in `ausnahmen`
+(`woerter.yml`), z. B. *Arschbombe*, *Marsch*, *Schlamper*.
 
 ## Wortliste
 
-`woerter.yml` (im Plugin-Ordner): Wort → Punkte, je schwerer der
-Verstoß, desto mehr Punkte. Kommt mit einer kurzen Beispiel-Startliste -
-eigene Wörter nach Bedarf ergänzen, danach `/antiswear reload`.
+`woerter.yml`: Wort → Punkte, optional mit Modus:
+
+```yaml
+woerter:
+  scheis: 1
+  hurensohn: 3
+  behindert: { punkte: 2, modus: wort }   # nur als ganzes Wort
+  nigga: { punkte: 6, modus: teil }       # auch als Teil eines Wortes
+ausnahmen:
+  - arschbombe
+```
+
+Ohne Modus gilt: ab 6 Buchstaben auch als Teil eines Wortes, kürzere nur als
+ganzes Wort (mit üblichen Endungen wie *-e*, *-en*, *-s*). Nach Änderungen
+`/antiswear reload`.
 
 ## Punkte-Stufen
 
-Jeder Treffer zählt seine Punkte auf das Konto des Spielers. Ohne neuen
-Verstoß verfallen alle Punkte nach `strikes.verfall-minuten` (Standard
-60) wieder auf 0. Bei jedem Verstoß löst nur die **höchste neu
-überschrittene** Stufe aus, nicht alle gleichzeitig:
+Jeder Verstoß zählt seine Punkte (Wortwahl, Spam `spam.punkte`, Werbung
+`werbung.punkte`, Daten `daten.punkte`). Ohne neuen Verstoß verfallen alle
+Punkte nach `strikes.verfall-minuten`. Nur die höchste neu erreichte Stufe
+löst aus:
 
 ```yaml
 strikes:
   verfall-minuten: 60
   stufen:
-    3:
-      aktion: WARNEN
-    6:
-      aktion: STUMMSCHALTEN
-      dauer: "10m"
-    10:
-      aktion: BEFEHL
-      befehl: "mute %spieler% 1h Wiederholte Beleidigungen (AntiSwear)"
-    15:
-      aktion: BEFEHL
-      befehl: "ban %spieler% Wiederholte schwere Verstoesse (AntiSwear)"
+    3:  { aktion: WARNEN }
+    6:  { aktion: STUMMSCHALTEN, dauer: "10m" }
+    10: { aktion: STUMMSCHALTEN, dauer: "1h" }
+    15: { aktion: STUMMSCHALTEN, dauer: "1d" }
 ```
 
-- **WARNEN** - nur eine Nachricht an den Spieler.
-- **STUMMSCHALTEN** - AntiSwears eigene, eingebaute Kurzzeit-Sperre für
-  den Chat (`dauer` wie `30m 12h 7d 2w`). Braucht kein anderes Plugin.
-- **BEFEHL** - führt `befehl` über die Konsole aus, `%spieler%` wird
-  durch den Spielernamen ersetzt. Hier lässt sich ein Befehl von
-  **AdvancedBan** oder jedem anderen gerade installierten Plugin
-  eintragen - AntiSwear selbst kennt dessen API nicht, sondern ruft
-  einfach den konfigurierten Befehl auf.
+- **WARNEN** – Nachricht an den Spieler
+- **STUMMSCHALTEN** – stumm im ganzen Netzwerk (Chat und `/msg`), `dauer`
+  wie `30m 12h 7d 2w` oder `perm`
+- **BEFEHL** – führt `befehl` über die Konsole aus (`%spieler%` wird ersetzt)
 
-Punkte und die eingebaute Stummschaltung sind rein im Speicher - ein
-Serverneustart setzt beides zurück. Das ist bewusst kein Bann-Register,
-sondern ein Chat-Filter mit Gedächtnis für den laufenden Betrieb.
+Das Team (`antiswear.notify`) sieht jeden Treffer mit Ort, Grund, Punktestand
+und **Originaltext**. Jeder Verstoß landet außerdem in
+`plugins/AntiSwear/protokoll.log` (Datum, Server, Spieler, Ort, Grund,
+Punkte, Text).
+
+## Voice-Chat (Simple Voice Chat)
+
+Greift automatisch, sobald Simple Voice Chat auf dem Server läuft. Es wird
+**nichts aufgenommen** – moderiert wird über Regeln, Stummschaltungen und
+Gruppennamen.
+
+- **`/vcrules`** zeigt die Voice-Regeln mit einem Knopf zum Akzeptieren. Erst
+  danach kann man sprechen (zuhören geht immer). Beim ersten Verbinden mit dem
+  Voice-Chat kommen die Regeln automatisch, beim Sprechen ohne Zustimmung ein
+  Hinweis in der Actionbar. Regeln ändern: `voice.regeln` in `messages.yml`,
+  danach `voice.regeln-version` hochzählen – dann müssen alle neu zustimmen.
+- **`/vcmute <Spieler> <Dauer|perm> [Grund]`** schaltet im Voice-Chat stumm
+  (das Mikrofon wird serverseitig verworfen, der Spieler sieht die Restzeit),
+  **`/vcunmute <Spieler>`** hebt es auf, **`/vcmutes`** zeigt alle.
+- Namen neuer **Voice-Gruppen** laufen durch den Wortfilter.
+- Stummschaltungen und „Regeln akzeptiert“ gelten über SMPProxy im **ganzen
+  Netzwerk** (auch für Spieler, die gerade offline sind) und überstehen
+  Neustarts (`voice.yml`).
 
 ## Befehle
 
 ```
-/antiswear reload            - config.yml und woerter.yml neu einlesen
-/antiswear check <Text>      - testen, ob ein Text anschlagen würde
-/antiswear punkte <Spieler>  - aktuellen Punktestand ansehen
-/antiswear reset <Spieler>   - Punkte und Stummschaltung zurücksetzen
+/antiswear reload               config.yml, messages.yml und woerter.yml neu einlesen
+/antiswear check <Text>         testen, ob ein Text anschlagen würde
+/antiswear punkte <Spieler>     Punktestand und Stummschaltung ansehen
+/antiswear reset <Spieler>      Punkte und Stummschaltung zurücksetzen (netzwerkweit)
+/antiswear stumm <Spieler> <Dauer|perm>   von Hand stummschalten (netzwerkweit)
+/vcrules [akzeptieren]          Voice-Regeln (alle)
+/vcmute <Spieler> <Dauer|perm> [Grund]
+/vcunmute <Spieler>
+/vcmutes
 ```
 
 ## Rechte
 
-- `antiswear.bypass` - Chat wird bei dieser Person gar nicht erst
-  geprüft (Standard: nur OP)
-- `antiswear.notify` - sieht jeden Treffer unzensiert im Team-Hinweis,
-  inklusive Punktestand (Standard: nur OP)
-- `antiswear.admin` - `/antiswear` nutzen (Standard: nur OP)
+- `antiswear.bypass` – wird nicht geprüft (Standard: OP)
+- `antiswear.notify` – Team-Hinweise mit Originaltext (Standard: OP)
+- `antiswear.admin` – `/antiswear` (Standard: OP)
+- `antiswear.voice.mute` – `/vcmute`, `/vcunmute`, `/vcmutes` (Standard: OP)
 
-Keine Abhängigkeiten außer der Paper-API.
+Abhängigkeiten: nur die Paper-API. Simple Voice Chat ist optional.

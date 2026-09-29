@@ -4,11 +4,13 @@ import de.lemonpvp.duelplus.arena.ArenaManager;
 import de.lemonpvp.duelplus.arena.RollbackTracker;
 import de.lemonpvp.duelplus.command.DrawCommand;
 import de.lemonpvp.duelplus.command.DuelCommand;
+import de.lemonpvp.duelplus.command.ReplayCommand;
 import de.lemonpvp.duelplus.db.DuelDatabase;
 import de.lemonpvp.duelplus.item.DuelItemListener;
 import de.lemonpvp.duelplus.presence.InventarSperre;
 import de.lemonpvp.duelplus.presence.PresenceService;
 import de.lemonpvp.duelplus.presence.StammInventarService;
+import de.lemonpvp.duelplus.replay.ReplayManager;
 import de.lemonpvp.duelplus.request.AnfrageManager;
 import de.lemonpvp.duelplus.request.AnfragePollTask;
 import de.lemonpvp.duelplus.session.ArenaGuardListener;
@@ -48,6 +50,7 @@ public final class DuelPlus extends JavaPlugin {
     private InventarSperre inventarSperre;
     private ProxySperre proxySperre;
     private DuellChat duellChat;
+    private ReplayManager replays;
 
     private String serverName;
     private boolean istArenaServer;
@@ -80,6 +83,8 @@ public final class DuelPlus extends JavaPlugin {
         // Zweig, als Listener registriert - angewendet wird ein Zuschauer-
         // Status ohnehin nur dort, wo die Arena-Welten tatsaechlich existieren.
         this.zuschauer = new ZuschauerManager(this);
+        this.replays = new ReplayManager(this);
+        replays.meldungenAbhoeren();
 
         getServer().getPluginManager().registerEvents(new PresenceService(this), this);
         if (istLootQuelle) {
@@ -101,6 +106,7 @@ public final class DuelPlus extends JavaPlugin {
             this.duellChat = new DuellChat(this);
             getServer().getPluginManager().registerEvents(duellChat, this);
             getServer().getPluginManager().registerEvents(zuschauer, this);
+            replays.aufArenaServerStarten();
         } else {
             getServer().getPluginManager().registerEvents(new DuelItemListener(this), this);
         }
@@ -110,6 +116,12 @@ public final class DuelPlus extends JavaPlugin {
         if (duelCmd != null) {
             duelCmd.setExecutor(command);
             duelCmd.setTabCompleter(command);
+        }
+        var replayCmd = getCommand("replay");
+        if (replayCmd != null) {
+            ReplayCommand replayBefehl = new ReplayCommand(this);
+            replayCmd.setExecutor(replayBefehl);
+            replayCmd.setTabCompleter(replayBefehl);
         }
         var drawCmd = getCommand("draw");
         if (drawCmd != null) {
@@ -139,6 +151,9 @@ public final class DuelPlus extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (replays != null) {
+            replays.stoppen();
+        }
         if (db != null) {
             db.shutdown();
         }
@@ -210,5 +225,9 @@ public final class DuelPlus extends JavaPlugin {
 
     public DuellChat duellChat() {
         return duellChat;
+    }
+
+    public ReplayManager replays() {
+        return replays;
     }
 }

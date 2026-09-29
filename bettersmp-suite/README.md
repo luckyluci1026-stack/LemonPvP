@@ -16,8 +16,8 @@ den Server-Namen setzt du einmal über `brand` in der `config.yml`.
 | **SMPLobby** | **Lobby/Hub eines Netzwerks**: Schutz, Spawn, Server-Wähler, Spieler ausblenden, Anzeigetafel, Doppelsprung | `/spawn`, `/smplobby` |
 | **LobbyLock** | Eigenständige Zusatzsperre für die Lobby: Item-Drop, Inventar-Verschieben, Offhand-Tausch, Türen/Falltüren/Schilder - unabhängig von SMPLobby, kein Update daran nötig | `/lobbylock` |
 | **ReportPlus** | GUI-`/report` (überschreibt BetterSMPs Text-Version) + neues `/bugreport`, mit Warteschlangen-GUIs fürs Team | `/report`, `/bugreport`, `/reports`, `/bugreports` |
-| **AntiSwear** | Chat-Filter mit Umgehungsschutz (Leetspeak, Trennzeichen, Buchstaben-Wiederholung), Punkte-Stufen mit eigener Kurzzeit-Stummschaltung, optionale Konsolenbefehle für z.B. AdvancedBan | `/antiswear` |
-| **DuelPlus** | Duell-System mit echtem SMP-Loot über SMP, Lobby und einen dritten Duels-Server: Rollback-Arenen, Todeskamera, Loot-Shulker für den Gewinner - **eigene Anleitung**, braucht eine gemeinsame MariaDB | `/duel`, `/duelplus` |
+| **AntiSwear** | Chat- und Voice-Moderation: Wortfilter mit starkem Umgehungsschutz (1 = i, 9 = g, @ = a, Trennzeichen, Doppelgänger-Buchstaben), Spam-, Werbungs- und Datenschutz-Filter, Schilder/Bücher/Amboss/`/msg`, Punkte-Stufen mit netzwerkweiter Stummschaltung, Protokoll; Simple-Voice-Chat-Moderation mit `/vcrules` | `/antiswear`, `/vcrules`, `/vcmute`, `/vcunmute`, `/vcmutes` |
+| **DuelPlus** | Duell-System mit echtem SMP-Loot über SMP, Lobby und einen dritten Duels-Server: Rollback-Arenen, Todeskamera, Loot-Shulker für den Gewinner, **Replays** aller Duelle (3 Tage, gemeldet 30 Tage, max. 3 GB) - **eigene Anleitung**, braucht eine gemeinsame MariaDB | `/duel`, `/replay`, `/duelplus` |
 | **DBWipe** | Notfallwerkzeug: löscht nach drei Warnungen und Passwort ALLE Datenbank-Tabellen (nicht nur eines Plugins), vorher automatisches `.tar.gz`-Backup - **nur über die Serverkonsole** | `/dbwipe` |
 
 Die externen Begleit-Plugins (EssentialsX, LuckPerms, Vault, PlaceholderAPI, TAB
@@ -58,9 +58,13 @@ heruntergeladen und mit fertigen Configs eingerichtet.
 | Server | Jars aus `dist/` |
 |--------|------------------|
 | Proxy (Velocity) | `SMPProxy` |
-| SMP | `BetterSMP`, `BetterRTP`, `FastShop`, `DuelPlus` |
-| Lobby | `SMPLobby`, `LobbyLock`, `DuelPlus` |
-| Duels | `DuelPlus` |
+| SMP | `BetterSMP`, `BetterRTP`, `FastShop`, `DuelPlus`, `AntiSwear`, optional `ReportPlus` |
+| Lobby | `SMPLobby`, `LobbyLock`, `DuelPlus`, `AntiSwear` |
+| Duels | `DuelPlus`, `AntiSwear` |
+
+Simple Voice Chat (`voicechat`) auf jeden Server legen, auf dem gesprochen
+werden soll – AntiSwear erkennt es automatisch und moderiert den Voice-Chat
+mit. Ohne Simple Voice Chat läuft AntiSwear ganz normal weiter.
 
 Chat zwischen Lobby und SMP, `/msg` über alle Server, die einmaligen
 Beitritts-Nachrichten und die Sperren im Kampf laufen über SMPProxy - dafür

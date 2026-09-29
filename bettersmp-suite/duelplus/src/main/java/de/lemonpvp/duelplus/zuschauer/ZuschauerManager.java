@@ -92,8 +92,13 @@ public final class ZuschauerManager implements Listener {
     public void beimJoin(PlayerJoinEvent event) {
         Player spieler = event.getPlayer();
         plugin.db().zuschauerAnfrageHolenUndLoeschen(spieler.getUniqueId()).thenAccept(anfrageOpt ->
-                anfrageOpt.ifPresent(anfrage -> Bukkit.getScheduler().runTask(plugin, () ->
-                        zuschauenAnwenden(spieler, anfrage.arenaWelt(), anfrage.herkunftServer()))));
+                anfrageOpt.ifPresent(anfrage -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (plugin.replays().istReplayAnfrage(anfrage.arenaWelt())) {
+                        plugin.replays().nachAnkunft(spieler, anfrage.arenaWelt(), anfrage.herkunftServer());
+                    } else {
+                        zuschauenAnwenden(spieler, anfrage.arenaWelt(), anfrage.herkunftServer());
+                    }
+                })));
     }
 
     private void zuschauenAnwenden(Player spieler, String arenaWelt, String herkunftServer) {

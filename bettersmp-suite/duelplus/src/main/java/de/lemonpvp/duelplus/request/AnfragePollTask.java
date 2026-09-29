@@ -246,6 +246,10 @@ public final class AnfragePollTask {
         if (spieler.isOnline()) {
             String gegnerName = istA ? duell.spielerBName() : duell.spielerAName();
             plugin.msgs().send(spieler, ergebnisKey, "gegner", gegnerName);
+            if (plugin.getConfig().getBoolean("replay.aktiv", true)) {
+                plugin.msgs().send(spieler, "replay-hinweis", "gegner", gegnerName,
+                        "tage", String.valueOf(plugin.getConfig().getInt("replay.aufbewahren-tage", 3)));
+            }
         }
         plugin.db().snapshotLoeschen(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_ZURUECK);
         CompletableFuture<Void> markiert = istA ? plugin.db().markiereBearbeitetA(duell.id())

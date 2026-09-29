@@ -57,6 +57,8 @@ public final class ReportFlow {
         letzteMeldung.put(melder.getUniqueId(), System.currentTimeMillis());
         plugin.reports().anlegen(melder.getUniqueId(), melder.getName(), ziel.getUniqueId(), ziel.getName(), kategorieId);
         plugin.msgs().send(melder, "report.submitted", "spieler", ziel.getName());
+        Bukkit.getPluginManager().callEvent(new de.lemonpvp.reportplus.api.SpielerGemeldetEvent(
+                melder.getUniqueId(), melder.getName(), ziel.getUniqueId(), ziel.getName(), kategorieId));
 
         for (Player empfaenger : Bukkit.getOnlinePlayers()) {
             if (empfaenger.hasPermission("bettersmp.report.receive")) {

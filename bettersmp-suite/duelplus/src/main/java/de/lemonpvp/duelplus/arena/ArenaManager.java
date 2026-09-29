@@ -539,6 +539,21 @@ public final class ArenaManager {
         }
     }
 
+    public synchronized Optional<Arena> reservieren(String kennung, String bevorzugt) {
+        Arena gewuenscht = bevorzugt == null ? null : arenen.get(bevorzugt);
+        if (gewuenscht != null && !belegtVon.containsKey(gewuenscht.name())) {
+            belegtVon.put(gewuenscht.name(), kennung);
+            return Optional.of(gewuenscht);
+        }
+        for (Arena arena : arenen.values()) {
+            if (!belegtVon.containsKey(arena.name())) {
+                belegtVon.put(arena.name(), kennung);
+                return Optional.of(arena);
+            }
+        }
+        return Optional.empty();
+    }
+
     public synchronized String naechsterAusWarteschlange() {
         return warteschlange.poll();
     }

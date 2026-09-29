@@ -83,6 +83,12 @@
                 <version>${project.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>de.lemonpvp</groupId>
+                <artifactId>reportplus</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
