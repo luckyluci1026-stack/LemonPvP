@@ -67,7 +67,7 @@ public final class SafeLocationFinder {
 
         world.getChunkAtAsync(x >> 4, z >> 4, true).thenAccept(chunk -> {
             // Main-Thread: günstigen Snapshot ziehen
-            ChunkSnapshot snapshot = chunk.getChunkSnapshot(true, true, false);
+            ChunkSnapshot snapshot = chunk.getChunkSnapshot(true, !p.blacklistBiomes().isEmpty(), false);
             final int fx = x;
             final int fz = z;
             CompletableFuture.supplyAsync(() -> scan(snapshot, world, fx, fz, p))

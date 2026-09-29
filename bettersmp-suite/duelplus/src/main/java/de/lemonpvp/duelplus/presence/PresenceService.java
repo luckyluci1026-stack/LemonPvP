@@ -9,6 +9,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.ArrayDeque;
+import java.util.UUID;
+
 /**
  * Haelt duelplus_presence aktuell: welcher Spieler ist gerade auf
  * WELCHEM Server. Noetig, damit /duel <Name> auch serveruebergreifend
@@ -22,13 +25,15 @@ import org.bukkit.event.player.PlayerQuitEvent;
  */
 public final class PresenceService implements Listener {
 
-    private static final long HERZSCHLAG_TICKS = 30L * 20L;
+    private static final int HERZSCHLAG_SEKUNDEN = 30;
 
     private final DuelPlus plugin;
+    private final ArrayDeque<UUID> reihe = new ArrayDeque<>();
+    private int proSekunde = 1;
 
     public PresenceService(DuelPlus plugin) {
         this.plugin = plugin;
-        Bukkit.getScheduler().runTaskTimer(plugin, this::herzschlag, HERZSCHLAG_TICKS, HERZSCHLAG_TICKS);
+        Bukkit.getScheduler().runTaskTimer(plugin, this::herzschlag, 20L, 20L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -42,8 +47,17 @@ public final class PresenceService implements Listener {
     }
 
     private void herzschlag() {
-        for (Player spieler : Bukkit.getOnlinePlayers()) {
-            aktualisieren(spieler);
+        if (reihe.isEmpty()) {
+            for (Player spieler : Bukkit.getOnlinePlayers()) {
+                reihe.add(spieler.getUniqueId());
+            }
+            proSekunde = Math.max(1, (reihe.size() + HERZSCHLAG_SEKUNDEN - 1) / HERZSCHLAG_SEKUNDEN);
+        }
+        for (int i = 0; i < proSekunde && !reihe.isEmpty(); i++) {
+            Player spieler = Bukkit.getPlayer(reihe.poll());
+            if (spieler != null) {
+                aktualisieren(spieler);
+            }
         }
     }
 
