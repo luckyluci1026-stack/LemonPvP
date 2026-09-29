@@ -48,6 +48,10 @@ public final class Msgs {
         return MiniMessage.miniMessage().deserialize(text);
     }
 
+    public static String sicher(String text) {
+        return MiniMessage.miniMessage().escapeTags(text.replace("\\", "\\\\"));
+    }
+
     public void send(CommandSender to, String path, String... replacements) {
         to.sendMessage(format(path, replacements));
     }

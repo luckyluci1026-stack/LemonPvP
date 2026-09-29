@@ -45,6 +45,10 @@ public final class Text {
         return MM.deserialize(legacyToMini(input), resolvers);
     }
 
+    public static String sicher(String text) {
+        return MM.escapeTags(text.replace("\\", "\\\\"));
+    }
+
     public static String plain(Component component) {
         return PlainTextComponentSerializer.plainText().serialize(component);
     }

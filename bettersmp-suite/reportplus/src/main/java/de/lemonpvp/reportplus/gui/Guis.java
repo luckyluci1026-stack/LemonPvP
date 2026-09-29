@@ -5,6 +5,7 @@ import de.lemonpvp.reportplus.store.BugEntry;
 import de.lemonpvp.reportplus.store.ReportEntry;
 import de.lemonpvp.reportplus.util.GuiItem;
 import de.lemonpvp.reportplus.util.Kategorie;
+import de.lemonpvp.reportplus.util.Msgs;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -249,7 +250,7 @@ public final class Guis {
                             "<gray>Von: <white>" + eintrag.reporterName(),
                             "<gray>Vor: <white>" + vorZeit(eintrag.zeit()),
                             "",
-                            "<gray>" + kuerzen(eintrag.text()),
+                            "<gray>" + Msgs.sicher(kuerzen(eintrag.text())),
                             "",
                             "<yellow>Klick für Details")));
             holder.eintraege.put(i, eintrag.id());
@@ -290,7 +291,7 @@ public final class Guis {
         lore.add("<gray>Zeitpunkt: <white>" + vorZeit(eintrag.zeit()));
         lore.add("");
         for (String zeile : umbrechen(eintrag.text(), 30)) {
-            lore.add("<white>" + zeile);
+            lore.add("<white>" + Msgs.sicher(zeile));
         }
         inv.setItem(4, GuiItem.of(icon, "<white>#" + eintrag.id() + " <dark_gray>» " + eintrag.kategorie(), lore));
 

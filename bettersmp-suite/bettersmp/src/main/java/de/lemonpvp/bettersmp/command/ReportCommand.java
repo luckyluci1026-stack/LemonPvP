@@ -66,7 +66,8 @@ public final class ReportCommand implements TabExecutor {
         for (Player teammitglied : Bukkit.getOnlinePlayers()) {
             if (teammitglied.hasPermission("bettersmp.report.receive")) {
                 plugin.msgs().send(teammitglied, "report.received",
-                        "melder", melder.getName(), "spieler", gemeldet.getName(), "grund", grund);
+                        "melder", melder.getName(), "spieler", gemeldet.getName(),
+                        "grund", de.lemonpvp.bettersmp.util.Text.sicher(grund));
             }
         }
         return true;

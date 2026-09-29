@@ -3,6 +3,7 @@ package de.lemonpvp.reportplus.command;
 import de.lemonpvp.reportplus.ReportPlus;
 import de.lemonpvp.reportplus.gui.Guis;
 import de.lemonpvp.reportplus.util.Kategorie;
+import de.lemonpvp.reportplus.util.Msgs;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -62,7 +63,8 @@ public final class BugFlow {
         for (Player empfaenger : Bukkit.getOnlinePlayers()) {
             if (empfaenger.hasPermission("bettersmp.bugreport.receive")) {
                 plugin.msgs().send(empfaenger, "bugreport.received",
-                        "spieler", spieler.getName(), "kategorie", kategorieId, "text", text);
+                        "spieler", spieler.getName(), "kategorie", kategorieId,
+                        "text", Msgs.sicher(text));
             }
         }
     }
