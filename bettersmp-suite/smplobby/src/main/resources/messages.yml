@@ -29,12 +29,17 @@ verstecken-an: "%prefix%<gray>Die anderen sind jetzt <white>ausgeblendet</white>
 verstecken-aus: "%prefix%<gray>Die anderen sind wieder <white>sichtbar</white>.</gray>"
 
 # --- Regeln (das Buch in der Schnellleiste) -------------------
+# Laeuft die Lobby hinter SMPProxy, zeigt das Buch dieselben Regeln
+# wie /regeln (einstellbar in der config.yml des Proxys). Nur ohne
+# Proxy werden die Zeilen hier benutzt.
 regeln:
-  - "<gradient:#6C5CE7:#00D4FF><bold>Regeln</bold></gradient>"
-  - "<gray> 1. Sei freundlich.</gray>"
-  - "<gray> 2. Kein Griefing, kein Klauen.</gray>"
-  - "<gray> 3. Keine Cheats, keine Mods, die dir Vorteile geben.</gray>"
-  - "<gray> 4. Was in der Schule gilt, gilt auch hier.</gray>"
+  - "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP · Regeln</bold></gradient>"
+  - "<white>1. Respektvoller Umgang</white> <dark_gray>-</dark_gray> <gray>Beleidigungen, Hassrede, Rassismus und Diskriminierung jeder Art sind nicht erlaubt - im Chat, Voice und im WhatsApp Channel.</gray>"
+  - "<white>2. Kein Cheaten</white> <dark_gray>-</dark_gray> <gray>Hacks, X-Ray, Autoclicker, Exploits und Bugusing sind verboten. Unser Anti-Cheat läuft mit - Verstöße fliegen auf.</gray>"
+  - "<white>3. Kein Griefing & Diebstahl</white> <dark_gray>-</dark_gray> <gray>Fremde Bauten, Farmen und Truhen bleiben unangetastet, außer im ausdrücklich erlaubten PvP-/Duell-Kontext.</gray>"
+  - "<white>4. Kein Spam & keine Werbung</white> <dark_gray>-</dark_gray> <gray>Kein Werben für andere Server, keine Dauerwerbung eigener Projekte, kein Chat-Spam oder Caps-Flooding.</gray>"
+  - "<white>5. Ein Account pro Spieler</white> <dark_gray>-</dark_gray> <gray>Multi-Accounts zum Umgehen von Strafen oder zum Ausnutzen von Vorteilen sind nicht gestattet.</gray>"
+  - "<white>6. Anweisungen vom Team befolgen</white> <dark_gray>-</dark_gray> <gray>Team-Mitglieder moderieren im Sinne der Community - ihren Anweisungen ist Folge zu leisten.</gray>"
 
 # --- Schutz ---------------------------------------------------
 nicht-bauen: "%prefix%<red>Hier wird nicht gebaut.</red>"

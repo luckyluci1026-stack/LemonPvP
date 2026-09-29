@@ -53,6 +53,28 @@ public final class ProxyConfig {
             Map.entry("network-quit", "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> "
                     + "<gray>hat den Server verlassen.</gray>"));
 
+    private static final List<String> STANDARD_REGELN = List.of(
+            "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP · Regeln</bold></gradient>",
+            "<white>1. Respektvoller Umgang</white> <dark_gray>-</dark_gray> <gray>Beleidigungen, Hassrede, Rassismus und "
+                    + "Diskriminierung jeder Art sind nicht erlaubt - im Chat, Voice und im WhatsApp Channel.</gray>",
+            "<white>2. Kein Cheaten</white> <dark_gray>-</dark_gray> <gray>Hacks, X-Ray, Autoclicker, Exploits und Bugusing "
+                    + "sind verboten. Unser Anti-Cheat läuft mit - Verstöße fliegen auf.</gray>",
+            "<white>3. Kein Griefing & Diebstahl</white> <dark_gray>-</dark_gray> <gray>Fremde Bauten, Farmen und Truhen "
+                    + "bleiben unangetastet, außer im ausdrücklich erlaubten PvP-/Duell-Kontext.</gray>",
+            "<white>4. Kein Spam & keine Werbung</white> <dark_gray>-</dark_gray> <gray>Kein Werben für andere Server, keine "
+                    + "Dauerwerbung eigener Projekte, kein Chat-Spam oder Caps-Flooding.</gray>",
+            "<white>5. Ein Account pro Spieler</white> <dark_gray>-</dark_gray> <gray>Multi-Accounts zum Umgehen von Strafen "
+                    + "oder zum Ausnutzen von Vorteilen sind nicht gestattet.</gray>",
+            "<white>6. Anweisungen vom Team befolgen</white> <dark_gray>-</dark_gray> <gray>Team-Mitglieder moderieren im Sinne "
+                    + "der Community - ihren Anweisungen ist Folge zu leisten.</gray>",
+            "",
+            "<gray>Regelverstoß gesehen?</gray> <click:suggest_command:'/report '><hover:show_text:'<gray>Spieler melden'>"
+                    + "<#00D4FF>/report</#00D4FF></hover></click> <dark_gray>·</dark_gray> <gray>Voice-Chat:</gray> "
+                    + "<click:run_command:'/vcrules'><hover:show_text:'<gray>Regeln für den Voice-Chat'><#00D4FF>/vcrules</#00D4FF>"
+                    + "</hover></click>",
+            "<gray>Alles nachlesen:</gray> <click:open_url:'https://bucksmp.de/regeln/'><hover:show_text:'<gray>Im Browser öffnen'>"
+                    + "<#00D4FF><underlined>bucksmp.de/regeln</underlined></#00D4FF></hover></click>");
+
     private final Path folder;
     private final Logger log;
 
@@ -319,12 +341,36 @@ public final class ProxyConfig {
         return string("ah.redirect-server", "SMP");
     }
 
+    public boolean regelnEnabled() {
+        return bool("regeln.enabled", true);
+    }
+
+    public List<String> regelnAliases() {
+        List<String> namen = new ArrayList<>();
+        for (String name : strings("regeln.aliases", List.of("regeln", "rules"))) {
+            String klein = name.toLowerCase(Locale.ROOT).trim();
+            if (!klein.isEmpty() && !namen.contains(klein)) {
+                namen.add(klein);
+            }
+        }
+        return namen;
+    }
+
+    public List<String> regeln() {
+        Object value = get("regeln.zeilen");
+        if (value instanceof List<?> list && !list.isEmpty()) {
+            return list.stream().map(zeile -> zeile == null ? "" : String.valueOf(zeile)).toList();
+        }
+        return STANDARD_REGELN;
+    }
+
     // ------------------------------------------------------------------
     //  Nachrichten
     // ------------------------------------------------------------------
 
     public String prefix() {
-        return string("messages.prefix", "");
+        Object value = get("messages.prefix");
+        return value == null ? "" : String.valueOf(value).stripLeading();
     }
 
     public String message(String key) {

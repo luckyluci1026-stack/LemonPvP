@@ -37,6 +37,7 @@ public final class ProxyBridge implements PluginMessageListener {
 
     /** So heisst der Kanal - auch bei Velocity. */
     public static final String KANAL = "BungeeCord";
+    public static final String REGELN = "smpproxy:regeln";
 
     private final SMPLobby plugin;
 
@@ -55,11 +56,13 @@ public final class ProxyBridge implements PluginMessageListener {
 
     public void start() {
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, KANAL);
+        Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, REGELN);
         Bukkit.getMessenger().registerIncomingPluginChannel(plugin, KANAL, this);
     }
 
     public void stop() {
         Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, KANAL);
+        Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, REGELN);
         Bukkit.getMessenger().unregisterIncomingPluginChannel(plugin, KANAL, this);
     }
 
@@ -75,6 +78,14 @@ public final class ProxyBridge implements PluginMessageListener {
         aus.writeUTF("Connect");
         aus.writeUTF(server);
         return sende(spieler, aus.toByteArray());
+    }
+
+    public boolean regelnZeigen(Player spieler) {
+        if (spieler == null || !spieler.isOnline() || !spieler.getListeningPluginChannels().contains(REGELN)) {
+            return false;
+        }
+        spieler.sendPluginMessage(plugin, REGELN, new byte[0]);
+        return true;
     }
 
     /** Nach den Spielerzahlen fragen. Die Antwort kommt spaeter. */

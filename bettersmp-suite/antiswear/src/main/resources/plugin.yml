@@ -3,13 +3,30 @@ version: ${project.version}
 main: de.lemonpvp.antiswear.AntiSwear
 api-version: '1.21'
 authors: [SMP]
-description: Chat-Filter mit Umgehungsschutz, Punkte-Stufen mit eigener Kurzzeit-Stummschaltung und optionalen Konsolenbefehlen fuer weitergehende Strafen.
+description: Chat-Moderation mit starkem Umgehungsschutz, Spam-, Werbungs- und Datenschutz-Filter, Punkte-Stufen und Voice-Chat-Moderation.
+softdepend: [voicechat]
 
 commands:
   antiswear:
     description: AntiSwear-Verwaltung
-    usage: "/antiswear <reload|check|punkte|reset>"
+    usage: "/antiswear <reload|check|punkte|reset|stumm>"
     permission: antiswear.admin
+  vcrules:
+    description: Regeln fuer den Voice-Chat lesen und akzeptieren
+    usage: "/vcrules [akzeptieren]"
+    aliases: [vcregeln, voicerules, voiceregeln]
+  vcmute:
+    description: Spieler im Voice-Chat stummschalten
+    usage: "/vcmute <Spieler> <Dauer|perm> [Grund]"
+    permission: antiswear.voice.mute
+  vcunmute:
+    description: Voice-Stummschaltung aufheben
+    usage: "/vcunmute <Spieler>"
+    permission: antiswear.voice.mute
+  vcmutes:
+    description: Wer ist im Voice-Chat stumm?
+    usage: "/vcmutes"
+    permission: antiswear.voice.mute
 
 permissions:
   antiswear.bypass:
@@ -19,5 +36,8 @@ permissions:
     description: Sieht im Team-Chat jeden Treffer unzensiert, inklusive Punktestand
     default: op
   antiswear.admin:
-    description: /antiswear nutzen (reload, check, punkte, reset)
+    description: /antiswear nutzen (reload, check, punkte, reset, stumm)
+    default: op
+  antiswear.voice.mute:
+    description: /vcmute, /vcunmute und /vcmutes nutzen
     default: op

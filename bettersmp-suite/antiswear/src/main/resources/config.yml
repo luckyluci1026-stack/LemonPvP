@@ -1,46 +1,129 @@
 # ==========================================================
-#  AntiSwear - Chat-Filter
+#  AntiSwear - Chat-Moderation
 #
-#  Die Wortliste steht NICHT hier, sondern in woerter.yml (eigene
-#  Datei), damit sie bei einer langen Liste nicht diese config.yml
-#  zumuellt.
+#  Die Wortliste steht in woerter.yml (eigene Datei).
+#  Am besten auf JEDEM Server installieren (SMP, Lobby, Duels):
+#  Dann gilt die Moderation ueberall, und /msg wird ueber den Proxy
+#  (SMPProxy) auf dem Server des Absenders mitgeprueft.
 # ==========================================================
 
 # ----------------------------------------------------------
 #  Erkennung
 # ----------------------------------------------------------
 erkennung:
-  # ERSETZEN   = nur das/die Wort(e) werden zu Sternchen zensiert,
-  #              der Rest der Nachricht kommt trotzdem an.
+  # ERSETZEN   = nur die Woerter werden zu Sternchen, der Rest kommt an.
   # BLOCKIEREN = die ganze Nachricht wird verschluckt.
   modus: ERSETZEN
 
-  # Umgehungsversuche abfangen - alle drei zusammen fangen z.B.
-  # "sch3iss3", "s c h e i s s e" und "scheeeiiisse" gleichermassen ab:
-  leetspeak: true        # 3->e, 4->a, 1->i, 0->o, 5->s, 7->t, @->a, $->s
-  trennzeichen: true      # "s.c.h.e.i.s.s.e" bzw. "s c h e i s s e"
-  wiederholungen: true    # "scheeeiiisse" -> "scheisse"
+  # Umgehungsversuche abfangen:
+  leetspeak: true        # 1 = i/l, 3 = e, 4 = a, 0 = o, 5 = s, 7 = t, 9 = g, @ = a, $ = s ...
+  trennzeichen: true     # "s.c.h.e.i.s.s.e", "h u r e n s o h n", "huren sohn"
+  wiederholungen: true   # "scheeeiiisse"
+
+# ----------------------------------------------------------
+#  Spam
+#
+#  Mehr als max-nachrichten in zeitraum-sekunden = blockiert.
+#  Dieselbe Nachricht (ab 5 Zeichen) innerhalb von
+#  gleiche-nachricht-sekunden nochmal = blockiert.
+#  Jede blockierte Spam-Nachricht gibt "punkte" (siehe strikes).
+# ----------------------------------------------------------
+spam:
+  aktiv: true
+  max-nachrichten: 5
+  zeitraum-sekunden: 8
+  gleiche-nachricht-sekunden: 30
+  punkte: 1
+
+# ----------------------------------------------------------
+#  Werbung: fremde Server-Adressen, IPs, Discord-Einladungen.
+#  Auch mit Tricks wie "server (dot) de" oder "1 . 2 . 3 . 4".
+#  Links auf die Seiten unter erlaubte-domains sind in Ordnung.
+# ----------------------------------------------------------
+werbung:
+  aktiv: true
+  punkte: 2
+  erlaubte-domains:
+    - bucksmp.de
+    - youtube.com
+    - youtu.be
+    - minecraft.net
+    - minecraft.wiki
+    - wikipedia.org
+
+# ----------------------------------------------------------
+#  Persoenliche Daten: Handynummern und E-Mail-Adressen werden
+#  nicht verschickt - Schutz fuer die Schueler. Das Team sieht,
+#  dass es versucht wurde.
+# ----------------------------------------------------------
+daten:
+  aktiv: true
+  punkte: 0
+
+# ----------------------------------------------------------
+#  Grossschrift: Ab mindest-buchstaben Buchstaben und anteil-prozent
+#  Grossbuchstaben wird die Nachricht leise in normale Schrift
+#  umgewandelt (keine Strafe).
+# ----------------------------------------------------------
+caps:
+  aktiv: true
+  mindest-buchstaben: 8
+  anteil-prozent: 70
+
+# Mehr als so viele gleiche Zeichen hintereinander werden gekuerzt
+# ("neeeeeeein!!!!!!!!" -> "neeeein!!!!"). 0 = aus.
+zeichen-wiederholung:
+  maximal: 4
+
+# ----------------------------------------------------------
+#  Was ausser dem Chat noch geprueft wird
+# ----------------------------------------------------------
+pruefen:
+  schilder: true
+  buecher: true
+  amboss: true
+  # /msg und /r laufen ueber den Proxy; der fragt hier nach.
+  privatnachrichten: true
+
+# ----------------------------------------------------------
+#  Voice-Chat (Simple Voice Chat)
+#
+#  Greift nur, wenn Simple Voice Chat auf diesem Server laeuft.
+#  Es wird nichts aufgenommen - moderiert wird ueber Regeln,
+#  Stummschaltungen und Gruppennamen.
+#  /vcrules zeigt die Regeln (Text in messages.yml unter voice.regeln).
+#  /vcmute, /vcunmute und /vcmutes gelten ueber den Proxy im ganzen
+#  Netzwerk; auch "Regeln akzeptiert" merkt sich das Netzwerk.
+# ----------------------------------------------------------
+voice:
+  # Sprechen erst nach "/vcrules akzeptieren" (zuhoeren geht immer)
+  regeln-pflicht: true
+  # Hochzaehlen, wenn sich die Regeln aendern - dann muessen alle
+  # noch einmal zustimmen.
+  regeln-version: 1
+  # Namen neuer Voice-Gruppen durch den Wortfilter schicken
+  gruppennamen-pruefen: true
+
+# ----------------------------------------------------------
+#  Protokoll: jeder Verstoss landet in plugins/AntiSwear/protokoll.log
+#  server = Name, der in jeder Zeile steht (z.B. "SMP" oder "Lobby")
+# ----------------------------------------------------------
+protokoll:
+  server: ""
 
 # ----------------------------------------------------------
 #  Punkte-Stufen
 #
-#  Jeder Treffer aus woerter.yml zaehlt seine Punkte auf das Konto des
-#  Spielers. Ohne neuen Verstoss verfallen alle Punkte nach
-#  verfall-minuten wieder auf 0 - eine einzelne Entgleisung vor Wochen
-#  soll nicht ewig nachwirken.
-#
-#  Bei jedem Verstoss wird geprueft, ob eine neue Schwelle ueberschritten
-#  wurde - nur die HOECHSTE neu erreichte Stufe loest aus, nicht alle
-#  gleichzeitig.
+#  Jeder Verstoss zaehlt seine Punkte auf das Konto des Spielers.
+#  Ohne neuen Verstoss verfallen alle Punkte nach verfall-minuten.
+#  Nur die HOECHSTE neu erreichte Stufe loest aus.
 #
 #  aktion:
 #    WARNEN         - nur eine Nachricht an den Spieler
-#    STUMMSCHALTEN  - AntiSwears eigene, eingebaute Kurzzeit-Stummschaltung
-#                     (dauer: 30m 12h 7d 2w) - komplett ohne anderes Plugin
-#    BEFEHL         - fuehrt "befehl" ueber die Konsole aus, %spieler% wird
-#                     ersetzt. Hier kann z.B. ein Befehl von AdvancedBan
-#                     oder jedem anderen gerade installierten Plugin rein -
-#                     AntiSwear selbst muss dafuer nichts davon kennen.
+#    STUMMSCHALTEN  - stumm im ganzen Netzwerk (Chat und /msg),
+#                     dauer: 30m 12h 7d 2w oder perm
+#    BEFEHL         - fuehrt "befehl" ueber die Konsole aus,
+#                     %spieler% wird ersetzt
 # ----------------------------------------------------------
 strikes:
   verfall-minuten: 60
@@ -51,8 +134,8 @@ strikes:
       aktion: STUMMSCHALTEN
       dauer: "10m"
     10:
-      aktion: BEFEHL
-      befehl: "mute %spieler% 1h Wiederholte Beleidigungen (AntiSwear)"
+      aktion: STUMMSCHALTEN
+      dauer: "1h"
     15:
-      aktion: BEFEHL
-      befehl: "ban %spieler% Wiederholte schwere Verstoesse (AntiSwear)"
+      aktion: STUMMSCHALTEN
+      dauer: "1d"

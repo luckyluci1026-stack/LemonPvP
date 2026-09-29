@@ -54,6 +54,9 @@ public final class ItemListener implements Listener {
                 }
             }
             case LobbyItems.AKTION_REGELN -> {
+                if (plugin.proxy().regelnZeigen(spieler)) {
+                    return;
+                }
                 List<String> regeln = plugin.msgs().liste("regeln");
                 for (String zeile : regeln) {
                     spieler.sendMessage(de.lemonpvp.smplobby.util.Text.mm(zeile));

@@ -11,16 +11,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
-/** Laedt messages.yml, ersetzt Platzhalter-Paare (key, value, key, value ...) und %prefix%. */
 public final class Msgs {
 
     private final JavaPlugin plugin;
-    private final YamlConfiguration messages;
-    private final YamlConfiguration defaults;
+    private YamlConfiguration messages;
+    private YamlConfiguration defaults;
 
     public Msgs(JavaPlugin plugin) {
         this.plugin = plugin;
+        reload();
+    }
+
+    public void reload() {
         File file = new File(plugin.getDataFolder(), "messages.yml");
         if (!file.exists()) {
             plugin.saveResource("messages.yml", false);
@@ -39,12 +43,21 @@ public final class Msgs {
         return value == null ? path : value;
     }
 
+    public List<String> liste(String path) {
+        List<String> werte = messages.getStringList(path);
+        return werte.isEmpty() ? defaults.getStringList(path) : werte;
+    }
+
     public Component format(String path, String... replacements) {
-        String text = raw(path);
+        return text(raw(path), replacements);
+    }
+
+    public Component text(String vorlage, String... replacements) {
+        String text = vorlage.replace("%prefix%", raw("prefix"));
         for (int i = 0; i + 1 < replacements.length; i += 2) {
-            text = text.replace("%" + replacements[i] + "%", replacements[i + 1]);
+            String wert = replacements[i + 1] == null ? "" : MiniMessage.miniMessage().escapeTags(replacements[i + 1]);
+            text = text.replace("%" + replacements[i] + "%", wert);
         }
-        text = text.replace("%prefix%", raw("prefix"));
         return MiniMessage.miniMessage().deserialize(text);
     }
 

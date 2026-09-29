@@ -55,7 +55,9 @@ public final class ChatRelay {
         try (DataInputStream ein = new DataInputStream(new ByteArrayInputStream(event.getData()))) {
             if (stumm) {
                 UUID spieler = new UUID(ein.readLong(), ein.readLong());
-                plugin.stummListe().setzen(spieler, ein.readLong());
+                long rest = ein.readLong();
+                plugin.stummListe().setzen(spieler, rest);
+                plugin.moderation().stummPush(spieler, rest);
             } else {
                 chatVerarbeiten(verbindung, ein);
             }

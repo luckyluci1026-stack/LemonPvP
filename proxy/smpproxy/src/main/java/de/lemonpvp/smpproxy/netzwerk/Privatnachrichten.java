@@ -52,6 +52,16 @@ public final class Privatnachrichten {
             sender.sendMessage(plugin.chatRelay().stummHinweis(stummRest));
             return;
         }
+        plugin.moderation().pruefen(sender, text).thenAccept(pruefung -> {
+            if (pruefung.blockiert()) {
+                plugin.log().info("[MSG blockiert] {} -> {}: {}", sender.getUsername(), ziel.getUsername(), text);
+                return;
+            }
+            senden(sender, ziel, pruefung.text());
+        });
+    }
+
+    private void senden(Player sender, Player ziel, String text) {
         String prefix = plugin.config().prefix();
         sender.sendMessage(Texte.mitSpielertext(plugin.config().msgSentMessage(), prefix,
                 "%sender%", sender.getUsername(), "%target%", ziel.getUsername(), "%message%", text));

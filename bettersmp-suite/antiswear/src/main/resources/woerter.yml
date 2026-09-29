@@ -1,24 +1,158 @@
 # ----------------------------------------------------------
 #  Wortliste fuer AntiSwear: Wort -> Punkte (je schwerer, desto mehr).
 #
-#  Gross-/Kleinschreibung ist egal. Je nach Einstellung in config.yml
-#  werden Leetspeak (3 statt e), Trennzeichen (s.c.h.e.i.s.s.e) und
-#  wiederholte Buchstaben (scheeiisse) vorher automatisch entfernt -
-#  hier reicht die normale Schreibweise.
+#  Gross-/Kleinschreibung ist egal. Automatisch erkannt werden:
+#    - Zahlen und Zeichen statt Buchstaben: 1 = i/l, 3 = e, 4 = a, 0 = o,
+#      5 = s, 7 = t, 9 = g, 6 = g, 8 = b, 2 = z, @ = a, $ = s, ! = i ...
+#    - Buchstaben aus anderen Alphabeten, die gleich aussehen (kyrillisch,
+#      griechisch), Akzente, unsichtbare Zeichen, Farbcodes wie &c
+#    - Umlaute in jeder Schreibweise: ä = ae = a, ß = ss
+#    - Punkte, Striche oder Leerzeichen zwischen den Buchstaben
+#      (s.c.h.e.i.s.s.e, h u r e n s o h n, huren sohn)
+#    - wiederholte Buchstaben (scheeeiiisse)
 #
-#  Ein Treffer zaehlt auch als Teil eines laengeren Wortes (z.B. faengt
-#  "arschloch" auch "arschlochgesicht" ab).
+#  Einfach nur die Zahl = Punkte. Woerter ab 6 Buchstaben werden auch
+#  mitten in einem Wort gefunden ("arschloch" in "arschlochgesicht"),
+#  kuerzere nur als eigenes Wort (mit Endungen wie -e, -en, -er, -s).
+#  Wer das anders will, schreibt es ausfuehrlich:
+#      beispiel:
+#        punkte: 2
+#        modus: teil      # teil = auch mitten im Wort, wort = nur als Wort
 #
-#  Das hier ist bewusst nur eine kurze Startliste mit Beispielen -
-#  eigene Woerter je nach Bedarf auf dem eigenen Server ergaenzen,
-#  danach /antiswear reload.
+#  Punkte: 1 leicht, 2-3 Beleidigung, 4 schwer, 6 = sofort stumm
+#  (siehe strikes in config.yml). Nach Aenderungen: /antiswear reload
 # ----------------------------------------------------------
 woerter:
-  scheisse: 1
-  arschloch: 2
-  wichser: 3
-  hurensohn: 3
-  bastard: 2
-  idiot: 1
+  # --- leicht ---
+  scheis: 1
+  kacke: 1
+  arsch: 1
+  idiot:
+    punkte: 1
+    modus: teil
   trottel: 1
+  depp: 1
+  penner: 1
+  behindert:
+    punkte: 1
+    modus: wort
+  pimmel: 1
+  shit:
+    punkte: 1
+    modus: teil
+  stfu: 1
+  blyat: 1
+  blyad: 1
+
+  # --- Beleidigungen ---
+  fick: 2
+  gefickt: 2
+  bastard: 2
   spast: 2
+  verpiss: 2
+  haltdiefresse: 2
+  leckmich: 2
+  titten: 2
+  porno:
+    punkte: 2
+    modus: teil
+  wichs: 2
+  fuck:
+    punkte: 2
+    modus: teil
+  dumbass: 2
+  pussy: 2
+  cock: 2
+  amk: 2
+  kurwa:
+    punkte: 2
+    modus: teil
+  suka: 2
+  arschloch: 3
+  wichser: 3
+  wixer:
+    punkte: 3
+    modus: teil
+  hurensohn: 3
+  hurenkind: 3
+  hure: 3
+  nutte: 3
+  schlampe: 3
+  abschaum: 3
+  mongo: 3
+  kruppel: 3
+  tunte: 3
+  transe:
+    punkte: 3
+    modus: wort
+  zigeuner: 2
+  verreck: 3
+  krepier: 3
+  bitch:
+    punkte: 3
+    modus: teil
+  asshole: 3
+  whore:
+    punkte: 3
+    modus: teil
+  slut: 3
+  retard: 3
+  orospu: 3
+  siktir: 3
+  aminakoy: 3
+  yarak:
+    punkte: 3
+    modus: teil
+  kahbe:
+    punkte: 3
+    modus: teil
+  kahpe:
+    punkte: 3
+    modus: teil
+  sharmut: 3
+
+  # --- schwer ---
+  fotze: 4
+  missgeburt: 4
+  cunt: 4
+  rape: 4
+
+  # --- Hass, Nazi-Parolen, Aufforderung zur Selbstverletzung: sofort stumm ---
+  neger:
+    punkte: 6
+    modus: teil
+  nigger: 6
+  nigga:
+    punkte: 6
+    modus: teil
+  kanake: 6
+  schwuchtel: 6
+  faggot: 6
+  fag: 6
+  pidor:
+    punkte: 6
+    modus: teil
+  hitler: 3
+  hakenkreuz: 3
+  siegheil: 3
+  heilhitler: 6
+  vergasen: 6
+  gaskammer: 3
+  nazi: 2
+  kys: 6
+  killyourself: 6
+  haengdichauf: 6
+
+# ----------------------------------------------------------
+#  Ausnahmen: harmlose Woerter, in denen ein Wort von oben steckt.
+#  Hier Eingetragenes wird nie zensiert ("Arschbombe", "Marsch",
+#  "Schlampermaeppchen").
+# ----------------------------------------------------------
+ausnahmen:
+  - arschbombe
+  - barsch
+  - marsch
+  - harsch
+  - schlamper
+  - idiotensicher
+  - shiitake
