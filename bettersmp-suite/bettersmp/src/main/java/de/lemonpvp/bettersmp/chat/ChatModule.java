@@ -99,10 +99,12 @@ public final class ChatModule implements Listener {
                     .build());
         }
 
-        if (plugin.getConfig().getBoolean("chat.mentions.enabled", true)) {
+        if (raw.indexOf('@') >= 0 && plugin.getConfig().getBoolean("chat.mentions.enabled", true)) {
             String color = plugin.getConfig().getString("chat.mentions.color", "<#00D4FF>");
+            String klein = raw.toLowerCase(java.util.Locale.ROOT);
             for (Player online : Bukkit.getOnlinePlayers()) {
-                if (online.getUniqueId().equals(player.getUniqueId())) {
+                if (online.getUniqueId().equals(player.getUniqueId())
+                        || !klein.contains("@" + online.getName().toLowerCase(java.util.Locale.ROOT))) {
                     continue;
                 }
                 Pattern mention = Pattern.compile("(?i)@" + Pattern.quote(online.getName()));

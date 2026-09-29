@@ -25,11 +25,18 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
     `/msg` blockt.
 - **Datenbank**: MariaDB (wenn konfiguriert) oder automatisch SQLite. Speichert
   Stats, Bans und Mutes. JDBC-Treiber lädt Paper via `libraries:` zur Laufzeit.
+  SQLite läuft im WAL-Modus (schnelle Schreibzugriffe, neben `data.db` liegen
+  deshalb `data.db-wal` und `data.db-shm` – beim sauberen Stoppen werden sie
+  zusammengeführt). Beim Herunterfahren wird alles noch Ausstehende
+  geschrieben, bevor die Verbindung zugeht.
 - **Inventar-/Enderkisten-Backup** (`backup` in `config.yml`): sichert alle
   15 Sekunden (einstellbar) asynchron Inventar + Enderkiste jedes
   Online-Spielers in eine **komplett eigene** zweite Datenbank (eigene
   SQLite-Datei standardmäßig, optional eigene MariaDB) - unabhängig von der
   Haupt-Datenbank, damit ein Problem dort diese Sicherung nicht mitreißt.
+  Die Spieler werden über die 15 Sekunden verteilt statt alle im selben Tick,
+  unverändertes Inventar wird nicht neu geschrieben (spätestens alle 10
+  Minuten trotzdem), und beim Stoppen gibt es eine letzte Sicherung.
   Klappt die eigene Backup-MariaDB mal nicht (falsche Zugangsdaten, Server
   down), fällt auch dieses Backup automatisch auf die lokale SQLite-Datei
   zurück, statt komplett auszusetzen - dasselbe Prinzip wie bei der
@@ -41,9 +48,14 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   default – als LuckPerms-Gruppen mit MiniMessage-Gradient-Prefixen.
 - **Nametags**: Gradient-Prefix über dem Kopf + Tab, Name weiß. Liest den
   LuckPerms-Prefix live, **jeder neue LuckPerms-Rang wirkt sofort**. Auch für
-  Bedrock/Geyser sauber. TAB-Nametags werden dafür deaktiviert.
+  Bedrock/Geyser sauber. TAB-Nametags werden dafür deaktiviert. Es werden nur
+  echte Änderungen verschickt: bei 40 Spielern ein Takt ohne Rangwechsel
+  0 statt 4.800 Team-Pakete, ein neuer Prefix genau ein Paket pro Spieler.
 - **Scoreboard** (Sidebar) frei konfigurierbar in `scoreboard.yml`
   (Geld, Ping, Spieler, TPS, Kills, K/D, Spielzeit, PlaceholderAPI …).
+  Auch hier geht nur eine Zeile raus, deren Text sich wirklich geändert hat
+  (z. B. der eigene Ping), gleiche Zeilen werden nur einmal pro Takt
+  übersetzt.
 - **Auto-Installer** + fertige Configs für EssentialsX, LuckPerms, Vault,
   PlaceholderAPI und TAB (deutsche EssentialsX-Nachrichten, **ohne Kits**).
 - **/settings-GUI** zum Live-Umschalten der Module.

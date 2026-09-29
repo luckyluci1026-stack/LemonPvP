@@ -137,8 +137,18 @@ public final class ChatPruefung {
         return text;
     }
 
+    private record Wiederholung(int max, Pattern muster) {
+    }
+
+    private static volatile Wiederholung wiederholung;
+
     static String zeichenKuerzen(String text, int max) {
-        Matcher matcher = Pattern.compile("(.)\\1{" + max + ",}").matcher(text);
+        Wiederholung aktuell = wiederholung;
+        if (aktuell == null || aktuell.max() != max) {
+            aktuell = new Wiederholung(max, Pattern.compile("(.)\\1{" + max + ",}"));
+            wiederholung = aktuell;
+        }
+        Matcher matcher = aktuell.muster().matcher(text);
         StringBuilder ergebnis = new StringBuilder();
         while (matcher.find()) {
             matcher.appendReplacement(ergebnis, Matcher.quoteReplacement(matcher.group(1).repeat(max)));

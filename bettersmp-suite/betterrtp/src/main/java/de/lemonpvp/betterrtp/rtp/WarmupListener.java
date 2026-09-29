@@ -24,11 +24,9 @@ public final class WarmupListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
-        if (!plugin.getConfig().getBoolean("settings.cancel-on-move", true)) {
-            return;
-        }
         Player player = event.getPlayer();
-        if (!plugin.rtp().isTeleporting(player.getUniqueId())) {
+        if (!plugin.rtp().isTeleporting(player.getUniqueId())
+                || !plugin.getConfig().getBoolean("settings.cancel-on-move", true)) {
             return;
         }
         Location origin = plugin.rtp().warmupOrigin(player.getUniqueId());

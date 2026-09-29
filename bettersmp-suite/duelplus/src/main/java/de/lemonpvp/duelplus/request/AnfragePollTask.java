@@ -38,6 +38,7 @@ public final class AnfragePollTask {
     private final DuelPlus plugin;
     private final Set<String> inArbeit = ConcurrentHashMap.newKeySet();
     private final Set<String> kampfHinweis = ConcurrentHashMap.newKeySet();
+    private long letztesAufraeumen;
 
     public AnfragePollTask(DuelPlus plugin) {
         this.plugin = plugin;
@@ -62,7 +63,11 @@ public final class AnfragePollTask {
         verarbeiteAngenommen();
         benachrichtigeAbgeschlossen();
         verarbeiteBeendet();
-        plugin.db().aufraeumen(24);
+        long jetzt = System.currentTimeMillis();
+        if (jetzt - letztesAufraeumen >= 60_000L) {
+            letztesAufraeumen = jetzt;
+            plugin.db().aufraeumen(24);
+        }
     }
 
     // ------------------------------------------------------------ WARTEND anzeigen

@@ -4,6 +4,7 @@ import de.lemonpvp.smplobby.SMPLobby;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -78,7 +79,10 @@ public final class DoubleJump implements Listener {
      */
     @EventHandler
     public void beiBewegung(PlayerMoveEvent ereignis) {
-        if (!aktiv() || ereignis.getTo().getBlock().equals(ereignis.getFrom().getBlock())) {
+        Location von = ereignis.getFrom();
+        Location nach = ereignis.getTo();
+        if (von.getBlockX() == nach.getBlockX() && von.getBlockY() == nach.getBlockY()
+                && von.getBlockZ() == nach.getBlockZ() || !aktiv()) {
             return;
         }
         Player spieler = ereignis.getPlayer();

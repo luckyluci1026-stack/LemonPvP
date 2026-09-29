@@ -32,6 +32,14 @@ Herausforderung, die von einem ANDEREN Server aus angenommen wird
 Live-Inventar mitschicken, statt des echten SMP-Inventars. Auf allen
 anderen Servern muss diese Zeile `false` sein (Standard).
 
+Der Spiegel wird beim Betreten, Verlassen und beim Stoppen des Servers
+immer geschrieben, dazwischen alle 30 Sekunden – verteilt über die 30
+Sekunden und nur, wenn sich das Inventar geändert hat (spätestens alle
+5 Minuten trotzdem). Vorher ging beim Stoppen des SMP der letzte Stand
+verloren, weil Paper Plugins vor dem Rauswerfen der Spieler abschaltet:
+Wer kurz vor einem Neustart etwas abgebaut oder weggegeben hatte, bekam
+beim nächsten Betreten den älteren Stand zurück.
+
 Kein eigenes Velocity-Plugin nötig: Der Serverwechsel läuft über den
 Standard-`BungeeCord`-Kanal, den Velocity auch versteht (gleiches
 Vorbild wie SMPLobbys Server-Wähler) - es reicht ein Eintrag für

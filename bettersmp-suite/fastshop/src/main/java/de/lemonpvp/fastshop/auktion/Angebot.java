@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.Base64;
 import java.util.UUID;
 
 public final class Angebot {
@@ -24,6 +25,7 @@ public final class Angebot {
     private final long endet;
     private final String suchText;
     private Status status;
+    private String itemDaten;
 
     public Angebot(UUID id, UUID verkaeufer, String verkaeuferName, ItemStack item, double preis,
                    long erstellt, long endet, Status status) {
@@ -61,6 +63,13 @@ public final class Angebot {
 
     public ItemStack item() {
         return item.clone();
+    }
+
+    public String itemDaten() {
+        if (itemDaten == null) {
+            itemDaten = Base64.getEncoder().encodeToString(item.serializeAsBytes());
+        }
+        return itemDaten;
     }
 
     public Material typ() {

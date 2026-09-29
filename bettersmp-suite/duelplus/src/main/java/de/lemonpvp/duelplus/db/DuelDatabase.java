@@ -3,13 +3,17 @@ package de.lemonpvp.duelplus.db;
 import de.lemonpvp.duelplus.DuelPlus;
 import org.bukkit.inventory.ItemStack;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -48,6 +53,8 @@ public final class DuelDatabase {
     private String url;
     private Properties props;
     private Connection connection;
+    private final Map<UUID, byte[]> stammStand = new HashMap<>();
+    private final Map<UUID, Long> stammGeschrieben = new HashMap<>();
     private volatile boolean bereit = false;
 
     public DuelDatabase(DuelPlus plugin) {
@@ -139,10 +146,23 @@ public final class DuelDatabase {
         } catch (SQLException e) {
             plugin.getLogger().warning("DuelPlus: Spalte angenommen_um konnte nicht angelegt werden: " + e.getMessage());
         }
+        try (var st = conn().createStatement()) {
+            st.executeUpdate("CREATE INDEX IF NOT EXISTS duelplus_duelle_status ON duelplus_duelle (status, erstellt)");
+            st.executeUpdate("CREATE INDEX IF NOT EXISTS duelplus_replays_server ON duelplus_replays (server)");
+        } catch (SQLException e) {
+            plugin.getLogger().warning("DuelPlus: Index konnte nicht angelegt werden: " + e.getMessage());
+        }
     }
 
     public void shutdown() {
         executor.shutdown();
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                plugin.getLogger().warning("DuelPlus: Datenbank-Aufgaben nach 10 Sekunden nicht fertig - Verbindung wird trotzdem geschlossen.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
@@ -704,19 +724,40 @@ public final class DuelDatabase {
     }
 
     public CompletableFuture<Void> stammInventarSchreiben(UUID spieler, SpielerSnapshot snapshot) {
+        return stammInventarSchreiben(spieler, snapshot, true);
+    }
+
+    public CompletableFuture<Void> stammInventarSchreiben(UUID spieler, SpielerSnapshot snapshot, boolean erzwingen) {
         return run(() -> {
             try {
                 String daten = InventarCodec.kodieren(snapshot);
+                byte[] stand = MessageDigest.getInstance("SHA-256").digest(daten.getBytes(StandardCharsets.UTF_8));
+                long jetzt = System.currentTimeMillis();
+                Long zuletzt = stammGeschrieben.get(spieler);
+                if (!erzwingen && zuletzt != null && jetzt - zuletzt < TimeUnit.MINUTES.toMillis(5)
+                        && Arrays.equals(stand, stammStand.get(spieler))) {
+                    return;
+                }
                 try (PreparedStatement ps = conn().prepareStatement(
                         "REPLACE INTO duelplus_stamm_inventar(uuid,daten,aktualisiert) VALUES(?,?,?)")) {
                     ps.setString(1, spieler.toString());
                     ps.setString(2, daten);
-                    ps.setLong(3, System.currentTimeMillis());
+                    ps.setLong(3, jetzt);
                     ps.executeUpdate();
                 }
+                stammStand.put(spieler, stand);
+                stammGeschrieben.put(spieler, jetzt);
             } catch (Exception e) {
+                stammStand.remove(spieler);
                 plugin.getLogger().warning("DuelPlus: Stamm-Inventar konnte nicht gespeichert werden: " + e.getMessage());
             }
+        });
+    }
+
+    public void stammVergessen(UUID spieler) {
+        run(() -> {
+            stammStand.remove(spieler);
+            stammGeschrieben.remove(spieler);
         });
     }
 

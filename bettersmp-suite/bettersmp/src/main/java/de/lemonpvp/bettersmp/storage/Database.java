@@ -12,6 +12,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -108,13 +109,28 @@ public final class Database {
         if (connection == null) {
             throw new SQLException("Treiber akzeptierte die URL nicht: " + url);
         }
+        einstellen(connection);
     }
 
     private Connection conn() throws SQLException {
-        if (connection == null || !connection.isValid(2)) {
+        if (connection == null || (sqlite ? connection.isClosed() : !connection.isValid(2))) {
             connection = driver.connect(url, props);
+            einstellen(connection);
         }
         return connection;
+    }
+
+    private void einstellen(Connection verbindung) {
+        if (!sqlite || verbindung == null) {
+            return;
+        }
+        try (var st = verbindung.createStatement()) {
+            st.execute("PRAGMA journal_mode=WAL");
+            st.execute("PRAGMA synchronous=NORMAL");
+            st.execute("PRAGMA busy_timeout=5000");
+        } catch (SQLException e) {
+            plugin.getLogger().warning("SQLite-Einstellungen konnten nicht gesetzt werden: " + e.getMessage());
+        }
     }
 
     private void createTables() {
@@ -141,6 +157,13 @@ public final class Database {
 
     public void shutdown() {
         executor.shutdown();
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                plugin.getLogger().warning("Datenbank-Aufgaben nach 10 Sekunden nicht fertig - Verbindung wird trotzdem geschlossen.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();

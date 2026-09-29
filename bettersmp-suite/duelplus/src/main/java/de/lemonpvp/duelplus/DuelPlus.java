@@ -51,6 +51,7 @@ public final class DuelPlus extends JavaPlugin {
     private ProxySperre proxySperre;
     private DuellChat duellChat;
     private ReplayManager replays;
+    private StammInventarService stammInventar;
 
     private String serverName;
     private boolean istArenaServer;
@@ -89,7 +90,8 @@ public final class DuelPlus extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PresenceService(this), this);
         if (istLootQuelle) {
             getServer().getPluginManager().registerEvents(inventarSperre, this);
-            getServer().getPluginManager().registerEvents(new StammInventarService(this), this);
+            this.stammInventar = new StammInventarService(this);
+            getServer().getPluginManager().registerEvents(stammInventar, this);
         }
         new AnfragePollTask(this).starten();
 
@@ -153,6 +155,9 @@ public final class DuelPlus extends JavaPlugin {
     public void onDisable() {
         if (replays != null) {
             replays.stoppen();
+        }
+        if (stammInventar != null && db != null && db.bereit()) {
+            stammInventar.allesSichern();
         }
         if (db != null) {
             db.shutdown();

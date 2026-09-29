@@ -12,8 +12,10 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * NUR auf dem Server mit ist-loot-quelle: true (in der Praxis: SMP)
@@ -35,14 +37,16 @@ import java.util.List;
  */
 public final class StammInventarService implements Listener {
 
-    private static final long HERZSCHLAG_TICKS = 30L * 20L;
+    private static final int HERZSCHLAG_SEKUNDEN = 30;
     private static final long JOIN_SPERRE_MILLIS = 15_000L;
 
     private final DuelPlus plugin;
+    private final ArrayDeque<UUID> reihe = new ArrayDeque<>();
+    private int proSekunde = 1;
 
     public StammInventarService(DuelPlus plugin) {
         this.plugin = plugin;
-        Bukkit.getScheduler().runTaskTimer(plugin, this::herzschlag, HERZSCHLAG_TICKS, HERZSCHLAG_TICKS);
+        Bukkit.getScheduler().runTaskTimer(plugin, this::herzschlag, 20L, 20L);
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -85,9 +89,25 @@ public final class StammInventarService implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void beimVerlassen(PlayerQuitEvent event) {
         sichern(event.getPlayer());
+        plugin.db().stammVergessen(event.getPlayer().getUniqueId());
     }
 
     private void herzschlag() {
+        if (reihe.isEmpty()) {
+            for (Player spieler : Bukkit.getOnlinePlayers()) {
+                reihe.add(spieler.getUniqueId());
+            }
+            proSekunde = Math.max(1, (reihe.size() + HERZSCHLAG_SEKUNDEN - 1) / HERZSCHLAG_SEKUNDEN);
+        }
+        for (int i = 0; i < proSekunde && !reihe.isEmpty(); i++) {
+            Player spieler = Bukkit.getPlayer(reihe.poll());
+            if (spieler != null) {
+                plugin.db().stammInventarSchreiben(spieler.getUniqueId(), SpielerSnapshot.von(spieler.getInventory()), false);
+            }
+        }
+    }
+
+    public void allesSichern() {
         for (Player spieler : Bukkit.getOnlinePlayers()) {
             sichern(spieler);
         }

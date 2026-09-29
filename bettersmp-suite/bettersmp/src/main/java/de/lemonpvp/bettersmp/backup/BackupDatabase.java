@@ -3,17 +3,24 @@ package de.lemonpvp.bettersmp.backup;
 import de.lemonpvp.bettersmp.BetterSMP;
 import org.bukkit.inventory.ItemStack;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -45,6 +52,9 @@ public final class BackupDatabase {
     private boolean sqlite = true;
     private Connection connection;
     private volatile boolean bereit = false;
+    private final Map<UUID, byte[]> letzterStand = new HashMap<>();
+    private final Map<UUID, Long> geschrieben = new HashMap<>();
+    private final Map<UUID, Long> bestaetigt = new HashMap<>();
 
     public BackupDatabase(BetterSMP plugin) {
         this.plugin = plugin;
@@ -111,13 +121,28 @@ public final class BackupDatabase {
         if (connection == null) {
             throw new SQLException("Treiber akzeptierte die URL nicht: " + url);
         }
+        einstellen(connection);
     }
 
     private Connection conn() throws SQLException {
-        if (connection == null || !connection.isValid(2)) {
+        if (connection == null || (sqlite ? connection.isClosed() : !connection.isValid(2))) {
             connection = driver.connect(url, props);
+            einstellen(connection);
         }
         return connection;
+    }
+
+    private void einstellen(Connection verbindung) {
+        if (!sqlite || verbindung == null) {
+            return;
+        }
+        try (var st = verbindung.createStatement()) {
+            st.execute("PRAGMA journal_mode=WAL");
+            st.execute("PRAGMA synchronous=NORMAL");
+            st.execute("PRAGMA busy_timeout=5000");
+        } catch (SQLException e) {
+            plugin.getLogger().warning("SQLite-Einstellungen konnten nicht gesetzt werden: " + e.getMessage());
+        }
     }
 
     private void createTables() {
@@ -134,6 +159,13 @@ public final class BackupDatabase {
 
     public void shutdown() {
         executor.shutdown();
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                plugin.getLogger().warning("Backup-Datenbank-Aufgaben nach 10 Sekunden nicht fertig - Verbindung wird trotzdem geschlossen.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
@@ -167,6 +199,14 @@ public final class BackupDatabase {
                 String ruestungDaten = BackupCodec.kodiereArray(ruestung);
                 String offhandDaten = BackupCodec.kodiereEinzeln(offhand);
                 String enderkisteDaten = BackupCodec.kodiereArray(enderkiste);
+                byte[] stand = pruefsumme(name, inventarDaten, ruestungDaten, offhandDaten, enderkisteDaten);
+                long jetzt = System.currentTimeMillis();
+                Long zuletzt = geschrieben.get(uuid);
+                if (Arrays.equals(stand, letzterStand.get(uuid)) && zuletzt != null
+                        && jetzt - zuletzt < TimeUnit.MINUTES.toMillis(10)) {
+                    bestaetigt.put(uuid, jetzt);
+                    return;
+                }
                 String sql = (sqlite
                         ? "INSERT OR REPLACE INTO bsmp_backup_inventar"
                         : "REPLACE INTO bsmp_backup_inventar")
@@ -178,13 +218,29 @@ public final class BackupDatabase {
                     ps.setString(4, ruestungDaten);
                     ps.setString(5, offhandDaten);
                     ps.setString(6, enderkisteDaten);
-                    ps.setLong(7, System.currentTimeMillis());
+                    ps.setLong(7, jetzt);
                     ps.executeUpdate();
                 }
+                letzterStand.put(uuid, stand);
+                geschrieben.put(uuid, jetzt);
+                bestaetigt.put(uuid, jetzt);
             } catch (Exception e) {
+                letzterStand.remove(uuid);
                 warn("sichern", e);
             }
         });
+    }
+
+    private static byte[] pruefsumme(String... teile) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        for (String teil : teile) {
+            byte[] bytes = teil == null ? new byte[0] : teil.getBytes(StandardCharsets.UTF_8);
+            digest.update((byte) (teil == null ? 0 : 1));
+            digest.update(new byte[]{(byte) (bytes.length >>> 24), (byte) (bytes.length >>> 16),
+                    (byte) (bytes.length >>> 8), (byte) bytes.length});
+            digest.update(bytes);
+        }
+        return digest.digest();
     }
 
     public CompletableFuture<Optional<BackupSnapshot>> lesen(UUID uuid) {
@@ -202,7 +258,7 @@ public final class BackupDatabase {
                             BackupCodec.dekodiereArray(rs.getString("ruestung")),
                             BackupCodec.dekodiereEinzeln(rs.getString("offhand")),
                             BackupCodec.dekodiereArray(rs.getString("enderkiste")),
-                            rs.getLong("gespeichert")));
+                            Math.max(rs.getLong("gespeichert"), bestaetigt.getOrDefault(uuid, 0L))));
                 }
             } catch (Exception e) {
                 warn("lesen", e);

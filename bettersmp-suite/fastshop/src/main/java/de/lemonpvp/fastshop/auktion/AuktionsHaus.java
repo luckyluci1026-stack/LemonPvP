@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class AuktionsHaus {
 
@@ -64,6 +65,13 @@ public final class AuktionsHaus {
     public record Verkauf(String itemText, int menge, double preis, String kaeufer) {
     }
 
+    private record Zeile(UUID id, UUID verkaeufer, String name, double preis, long erstellt, long endet,
+                         String status, String item) {
+    }
+
+    private record Stand(List<Zeile> angebote, Map<UUID, List<Verkauf>> meldungen) {
+    }
+
     private final FastShop plugin;
     private final File datei;
     private final Map<UUID, Angebot> angebote = new LinkedHashMap<>();
@@ -73,6 +81,7 @@ public final class AuktionsHaus {
         thread.setDaemon(true);
         return thread;
     });
+    private final AtomicReference<Stand> ausstehend = new AtomicReference<>();
 
     public AuktionsHaus(FastShop plugin) {
         this.plugin = plugin;
@@ -347,19 +356,32 @@ public final class AuktionsHaus {
         return wert instanceof Number nummer ? nummer : 0;
     }
 
-    private String alsText() {
-        YamlConfiguration yml = new YamlConfiguration();
+    private Stand schnappschuss() {
+        List<Zeile> zeilen = new ArrayList<>(angebote.size());
         for (Angebot angebot : angebote.values()) {
+            zeilen.add(new Zeile(angebot.id(), angebot.verkaeufer(), angebot.verkaeuferName(), angebot.preis(),
+                    angebot.erstellt(), angebot.endet(), angebot.status().name(), angebot.itemDaten()));
+        }
+        Map<UUID, List<Verkauf>> meldungen = new LinkedHashMap<>();
+        for (Map.Entry<UUID, List<Verkauf>> eintrag : offeneMeldungen.entrySet()) {
+            meldungen.put(eintrag.getKey(), List.copyOf(eintrag.getValue()));
+        }
+        return new Stand(zeilen, meldungen);
+    }
+
+    private static String alsText(Stand stand) {
+        YamlConfiguration yml = new YamlConfiguration();
+        for (Zeile angebot : stand.angebote()) {
             String pfad = "angebote." + angebot.id();
             yml.set(pfad + ".verkaeufer", angebot.verkaeufer().toString());
-            yml.set(pfad + ".name", angebot.verkaeuferName());
+            yml.set(pfad + ".name", angebot.name());
             yml.set(pfad + ".preis", angebot.preis());
             yml.set(pfad + ".erstellt", angebot.erstellt());
             yml.set(pfad + ".endet", angebot.endet());
-            yml.set(pfad + ".status", angebot.status().name());
-            yml.set(pfad + ".item", Base64.getEncoder().encodeToString(angebot.item().serializeAsBytes()));
+            yml.set(pfad + ".status", angebot.status());
+            yml.set(pfad + ".item", angebot.item());
         }
-        for (Map.Entry<UUID, List<Verkauf>> eintrag : offeneMeldungen.entrySet()) {
+        for (Map.Entry<UUID, List<Verkauf>> eintrag : stand.meldungen().entrySet()) {
             List<Map<String, Object>> liste = new ArrayList<>();
             for (Verkauf verkauf : eintrag.getValue()) {
                 Map<String, Object> werte = new LinkedHashMap<>();
@@ -375,12 +397,19 @@ public final class AuktionsHaus {
     }
 
     private void speichern() {
-        String inhalt = alsText();
-        speicherer.execute(() -> schreiben(inhalt));
+        if (ausstehend.getAndSet(schnappschuss()) == null) {
+            speicherer.execute(() -> {
+                Stand stand = ausstehend.getAndSet(null);
+                if (stand != null) {
+                    schreiben(alsText(stand));
+                }
+            });
+        }
     }
 
     public void speichernSofort() {
-        String inhalt = alsText();
+        String inhalt = alsText(schnappschuss());
+        ausstehend.set(null);
         speicherer.shutdown();
         try {
             speicherer.awaitTermination(5, TimeUnit.SECONDS);

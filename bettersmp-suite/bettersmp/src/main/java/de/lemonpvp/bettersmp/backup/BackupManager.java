@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.ArrayDeque;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -25,6 +26,9 @@ public final class BackupManager {
     private final BetterSMP plugin;
     private final BackupDatabase db;
     private BukkitTask task;
+    private final ArrayDeque<UUID> reihe = new ArrayDeque<>();
+    private int sekunden = 15;
+    private int proSekunde = 1;
 
     public BackupManager(BetterSMP plugin) {
         this.plugin = plugin;
@@ -41,23 +45,38 @@ public final class BackupManager {
             plugin.getLogger().info("Inventar-Backup deaktiviert (backup.enabled: false).");
             return;
         }
-        long intervalTicks = Math.max(5, plugin.getConfig().getInt("backup.interval-seconds", 15)) * 20L;
-        task = Bukkit.getScheduler().runTaskTimer(plugin, this::sichereAlle, intervalTicks, intervalTicks);
+        sekunden = Math.max(5, plugin.getConfig().getInt("backup.interval-seconds", 15));
+        reihe.clear();
+        task = Bukkit.getScheduler().runTaskTimer(plugin, this::sichereTeil, 20L, 20L);
     }
 
     public void stop() {
         if (task != null) {
             task.cancel();
+            if (db.bereit()) {
+                for (Player spieler : Bukkit.getOnlinePlayers()) {
+                    sichereEinen(spieler);
+                }
+            }
         }
         db.shutdown();
     }
 
-    private void sichereAlle() {
+    private void sichereTeil() {
         if (!db.bereit()) {
             return;
         }
-        for (Player spieler : Bukkit.getOnlinePlayers()) {
-            sichereEinen(spieler);
+        if (reihe.isEmpty()) {
+            for (Player spieler : Bukkit.getOnlinePlayers()) {
+                reihe.add(spieler.getUniqueId());
+            }
+            proSekunde = Math.max(1, (reihe.size() + sekunden - 1) / sekunden);
+        }
+        for (int i = 0; i < proSekunde && !reihe.isEmpty(); i++) {
+            Player spieler = Bukkit.getPlayer(reihe.poll());
+            if (spieler != null) {
+                sichereEinen(spieler);
+            }
         }
     }
 
