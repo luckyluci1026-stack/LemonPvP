@@ -39,14 +39,61 @@ hintereinander), holt SMPProxy alle Spieler zurück, die wegen genau diesem
 Server im Warteraum sitzen. Wer über `smp2.lemon-servers.de` kam, landet auch
 wieder auf smp2.
 
+**5. Release-Countdown im Warteraum.** Steht in `release.zeit` ein Termin,
+warten bis dahin alle im Warteraum (Limbo) statt auf dem SMP:
+
+- Live-Countdown als Bossbar (in der letzten Stunde läuft sie ab), in der
+  letzten Minute die Sekunden in der Actionbar, in den letzten Sekunden große
+  Zahlen mit Ton, zum Release ein großer Titel mit Erfolgs-Sound.
+- Bis dahin sind die Server aus `release.gesperrte-server` zu – auch über
+  `/hub`, `/server`, `/ah`, `/rtp` und die Kurzbefehle. Wer neu reinkommt,
+  landet automatisch im Warteraum.
+- **Faire Wellen:** Zum Release geht es in Gruppen (`pro-welle`, alle
+  `wellen-abstand-sekunden`) auf den `ziel-server`. Wer zuerst im Warteraum
+  war, ist zuerst drin; jeder sieht in der Actionbar seinen Platz und die
+  ungefähre Wartezeit. Vordrängeln per `/server` geht nicht.
+- Läuft der Ziel-Server zur Release-Zeit noch nicht, wird gewartet, bis er
+  erreichbar ist – niemand wird in einen toten Server geschickt.
+- Klappt eine Verbindung nicht, kommt der Spieler in der nächsten Welle
+  wieder vorne dran (höchstens 3 Versuche, danach darf er selbst).
+- Ist der Warteraum selbst nicht erreichbar, sieht man beim Joinen einen
+  Bildschirm mit Termin und Restzeit statt einer Fehlermeldung.
+- Das Team (`smpproxy.release.bypass`) darf vorher schon überall hin.
+- Nach dem Release ist alles wieder normal – auch nach einem Proxy-Neustart
+  (`release.yml` merkt sich, dass der Release gelaufen ist).
+- `/testrelease [Sekunden]` spielt den kompletten Ablauf als Probe nur für
+  dich durch (Warteraum → Countdown → Titel → Welle → Ziel-Server). Der echte
+  Release und alle anderen Spieler bleiben unberührt.
+
+**6. Netzwerkweite Moderation.** `/regeln` und `/rules` zeigen überall dieselben
+Regeln (auch das Regelbuch in der Lobby). `/msg` wird von AntiSwear auf dem
+Server des Absenders geprüft, Stummschaltungen gelten im ganzen Netzwerk, und
+Voice-Chat-Stummschaltungen sowie „Voice-Regeln akzeptiert" werden zwischen
+allen Servern abgeglichen (`voice.yml`).
+
 ## Befehle & Rechte
 
 | Befehl | Was es tut | Recht |
 |---|---|---|
-| `/hub`, `/lobby`, `/limbo` | in den Warteraum | alle |
+| `/hub`, `/lobby`, `/spawn` | zur Lobby | alle |
 | `/smp1`, `/smp2`, … | direkt auf den Server (aus `domains` erzeugt) | alle |
+| `/msg`, `/r` | Privatnachricht über alle Server | alle |
+| `/ah`, `/rtp` | Auktionshaus / RTP von jedem Server aus | alle |
+| `/regeln`, `/rules` | Serverregeln | alle |
+| `/release` | Countdown bis zum Release anzeigen | alle |
+| `/release zeit <Datum> <Uhrzeit>` | Release-Termin setzen, z.B. `03.10.2026 18:00` | `smpproxy.release.admin` |
+| `/release jetzt [Sekunden]` | Release gleich starten (Standard 10 s Countdown) | `smpproxy.release.admin` |
+| `/release aus` | Countdown beenden, alles offen | `smpproxy.release.admin` |
+| `/testrelease [Sekunden]`, `/testrelease stop` | Probe-Release nur für dich | `smpproxy.release.test` |
+| – | vor dem Release schon überall hin dürfen | `smpproxy.release.bypass` |
+| `/netban`, `/netunban`, `/netbans`, `/netbaninfo` | Netzwerkbann | `smpproxy.ban` |
 | `/smpproxy status` | zeigt online/offline + Spielerzahl je Server | `smpproxy.admin` |
 | `/smpproxy reload` | `config.yml` neu einlesen | `smpproxy.admin` |
+
+Rechte auf dem Proxy vergibt LuckPerms-Velocity (z.B.
+`/lpv user <Name> permission set smpproxy.release.admin`). Aus der
+Proxy-Konsole gehen alle Befehle ohne Rechte, außer `/testrelease` (braucht
+einen Spieler).
 
 `/server` und `/send` bringt Velocity selbst mit.
 
@@ -75,6 +122,21 @@ commands:
 
 `confirmations: 3` verhindert, dass Spieler in einen gerade erst startenden
 Server laufen und sofort wieder rausfliegen.
+
+```yaml
+release:
+  zeit: "2026-10-03 18:00"     # leer = kein Release geplant
+  zeitzone: "Europe/Berlin"
+  ziel-server: "SMP"
+  gesperrte-server: ["SMP", "Lobby", "Duels"]
+  pro-welle: 5                 # Spieler je Welle
+  wellen-abstand-sekunden: 2
+  finale-sekunden: 10          # große Zahlen + Ton
+  erinnerung-minuten: 5        # Chat-Erinnerung im Warteraum, 0 = aus
+```
+
+Was per `/release` gesetzt wird, steht in `release.yml` und gilt vor
+`release.zeit` – bis in der `config.yml` ein neuer Termin eingetragen wird.
 
 ## Bauen
 

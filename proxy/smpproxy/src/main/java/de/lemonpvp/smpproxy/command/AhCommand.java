@@ -43,6 +43,9 @@ public final class AhCommand implements SimpleCommand {
             spieler.sendMessage(plugin.message("ah-not-configured"));
             return;
         }
+        if (plugin.release().abweisen(spieler, ziel)) {
+            return;
+        }
         spieler.sendMessage(plugin.message("ah-sending", "%server%", ziel));
         spieler.createConnectionRequest(zielServer.get()).connect().whenComplete((ergebnis, fehler) -> {
             if (fehler != null || ergebnis == null || !ergebnis.isSuccessful()) {

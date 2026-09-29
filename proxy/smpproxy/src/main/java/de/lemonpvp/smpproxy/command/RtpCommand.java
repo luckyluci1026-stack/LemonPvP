@@ -88,6 +88,9 @@ public final class RtpCommand implements SimpleCommand {
             return;
         }
 
+        if (plugin.release().abweisen(player, ziel)) {
+            return;
+        }
         player.sendMessage(plugin.message("rtp-sending", "%server%", ziel));
         player.createConnectionRequest(zielServer.get()).connect().whenComplete((result, error) -> {
             boolean ok = error == null && result != null && result.isSuccessful();

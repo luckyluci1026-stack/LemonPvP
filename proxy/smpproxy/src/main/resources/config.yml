@@ -159,6 +159,46 @@ ah:
   redirect-server: "SMP"
 
 # ----------------------------------------------------------
+#  Release-Countdown
+#
+#  Bis zum Release warten alle im Warteraum (limbo oben) und sehen
+#  einen Live-Countdown: Bossbar, in der letzten Minute die Sekunden
+#  in der Actionbar, in den letzten Sekunden grosse Zahlen mit Ton.
+#  Zur Release-Zeit geht es in fairen Wellen auf den ziel-server:
+#  wer zuerst im Warteraum war, ist zuerst drin. Laeuft der
+#  ziel-server noch nicht, wird gewartet, bis er da ist. Danach ist
+#  alles wieder ganz normal (auch nach einem Proxy-Neustart).
+#
+#  zeit: z.B. "2026-10-03 18:00" oder "03.10.2026 18:00"
+#        (Zeitzone siehe zeitzone). Leer = kein Release geplant.
+#
+#  Team mit dem Recht smpproxy.release.bypass darf vorher schon ueberall
+#  hin. Befehle:
+#    /release                     Countdown fuer alle anzeigen
+#    /release zeit <Datum> <Zeit> Termin setzen   (smpproxy.release.admin)
+#    /release jetzt [Sekunden]    gleich starten  (smpproxy.release.admin)
+#    /release aus                 Countdown beenden (smpproxy.release.admin)
+#    /testrelease [Sekunden]      Probe-Release nur fuer dich
+#                                 (smpproxy.release.test, stop = abbrechen)
+#  Was per /release gesetzt wird, steht in release.yml und gilt vor
+#  dem Wert hier.
+# ----------------------------------------------------------
+release:
+  zeit: ""
+  zeitzone: "Europe/Berlin"
+  ziel-server: "SMP"
+  # Bis zum Release gesperrt (der Warteraum ist nie gesperrt)
+  gesperrte-server: ["SMP", "Lobby", "Duels"]
+  # So viele Spieler je Welle, alle wellen-abstand-sekunden eine Welle -
+  # damit der Server nicht von allen gleichzeitig ueberrannt wird.
+  pro-welle: 5
+  wellen-abstand-sekunden: 2
+  # So viele letzte Sekunden mit grosser Zahl und Ton
+  finale-sekunden: 10
+  # Erinnerung im Chat des Warteraums alle X Minuten (0 = aus)
+  erinnerung-minuten: 5
+
+# ----------------------------------------------------------
 #  /regeln und /rules
 #
 #  Beide Befehle zeigen dasselbe - auf jedem Server im Netzwerk.

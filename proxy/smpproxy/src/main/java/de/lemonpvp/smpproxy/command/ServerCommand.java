@@ -32,6 +32,9 @@ public final class ServerCommand implements SimpleCommand {
             player.sendMessage(plugin.message("switch-already", "%server%", server));
             return;
         }
+        if (plugin.release().abweisen(player, server)) {
+            return;
+        }
         if (!plugin.watcher().isOnline(server)) {
             player.sendMessage(plugin.message("switch-offline", "%server%", server));
             return;

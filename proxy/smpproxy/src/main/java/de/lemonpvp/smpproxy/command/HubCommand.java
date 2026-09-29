@@ -32,6 +32,9 @@ public final class HubCommand implements SimpleCommand {
             player.spoofChatInput("/spawn");
             return;
         }
+        if (plugin.release().abweisen(player, ziel)) {
+            return;
+        }
         player.sendMessage(plugin.message("hub-sending"));
         plugin.connect(player, ziel, false);
     }

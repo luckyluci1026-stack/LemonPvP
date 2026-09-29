@@ -32,6 +32,9 @@ import de.lemonpvp.smpproxy.netzwerk.Moderation;
 import de.lemonpvp.smpproxy.netzwerk.Privatnachrichten;
 import de.lemonpvp.smpproxy.netzwerk.StummListe;
 import de.lemonpvp.smpproxy.netzwerk.VoiceAbgleich;
+import de.lemonpvp.smpproxy.release.ReleaseCommand;
+import de.lemonpvp.smpproxy.release.ReleaseManager;
+import de.lemonpvp.smpproxy.release.TestReleaseCommand;
 import de.lemonpvp.smpproxy.util.Msg;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
@@ -69,6 +72,7 @@ public final class SMPProxy {
     private final Moderation moderation;
     private final RegelnCommand regeln;
     private final VoiceAbgleich voice;
+    private final ReleaseManager release;
 
     private final List<ScheduledTask> tasks = new ArrayList<>();
 
@@ -85,6 +89,7 @@ public final class SMPProxy {
         this.moderation = new Moderation(this);
         this.regeln = new RegelnCommand(this);
         this.voice = new VoiceAbgleich(this, folder);
+        this.release = new ReleaseManager(this, folder);
     }
 
     @Subscribe
@@ -93,6 +98,7 @@ public final class SMPProxy {
         bans.ensureFiles();
         bans.load();
         voice.laden();
+        release.laden();
         proxy.getEventManager().register(this, new ConnectListener(this));
         proxy.getEventManager().register(this, banListener);
         proxy.getChannelRegistrar().register(KampfSperre.KANAL, ChatRelay.CHAT, ChatRelay.STUMM,
@@ -103,6 +109,8 @@ public final class SMPProxy {
         proxy.getEventManager().register(this, moderation);
         proxy.getEventManager().register(this, regeln);
         proxy.getEventManager().register(this, voice);
+        proxy.getEventManager().register(this, release);
+        release.starten();
         proxy.getEventManager().register(this, new JoinQuitNachrichten(this));
         startTasks();
         registerCommands();
@@ -154,7 +162,8 @@ public final class SMPProxy {
                 continue;
             }
             String home = tracker.home(player.getUniqueId());
-            if (home == null || home.equals(limbo) || !watcher.isStable(home)) {
+            if (home == null || home.equals(limbo) || !watcher.isStable(home) || release.blockiert(player, home)
+                    || release.probeLaeuft(player.getUniqueId())) {
                 continue;
             }
             if (!tracker.tryAttempt(player.getUniqueId(), config.returnCooldown() * 1000L)) {
@@ -213,6 +222,9 @@ public final class SMPProxy {
             registrieren(commands, config.regelnAliases(), regeln);
         }
 
+        commands.register(commands.metaBuilder("release").build(), new ReleaseCommand(this));
+        commands.register(commands.metaBuilder("testrelease").build(), new TestReleaseCommand(this));
+
         if (config.hubEnabled() && !config.limbo().isEmpty()) {
             List<String> aliases = config.hubAliases();
             if (!aliases.isEmpty()) {
@@ -261,6 +273,7 @@ public final class SMPProxy {
         config.load();
         bans.load();
         voice.laden();
+        release.laden();
         watcher.reset();
         tracker.clear();
         startTasks();
@@ -272,6 +285,9 @@ public final class SMPProxy {
 
     /** Verbindet einen Spieler und meldet zurück, ob es geklappt hat. */
     public void connect(Player player, String server, boolean quiet) {
+        if (release.abweisen(player, server)) {
+            return;
+        }
         Optional<RegisteredServer> target = proxy.getServer(server);
         if (target.isEmpty()) {
             player.sendMessage(message("unknown-server", "%server%", server));
@@ -332,6 +348,10 @@ public final class SMPProxy {
 
     public VoiceAbgleich voice() {
         return voice;
+    }
+
+    public ReleaseManager release() {
+        return release;
     }
 
     public BanListener banListener() {

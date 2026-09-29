@@ -41,6 +41,7 @@ public final class ProxyConfig {
             Map.entry("server-unreachable", "%prefix%<red><white>%server%</white> ist gerade nicht erreichbar.</red>"),
             Map.entry("switch-failed", "%prefix%<red>Verbindung zu <white>%server%</white> fehlgeschlagen.</red>"),
             Map.entry("player-only", "%prefix%<red>Das geht nur im Spiel.</red>"),
+            Map.entry("no-permission", "%prefix%<red>Dazu hast du keine Rechte.</red>"),
             Map.entry("ah-sending", "%prefix%<gray>Das Auktionshaus ist auf <white>%server%</white> - einen Moment ...</gray>"),
             Map.entry("ah-not-configured", "%prefix%<red>/ah ist nicht eingerichtet.</red><newline>"
                     + "<gray>In config.yml unter <white>ah.redirect-server</white> einen Server eintragen.</gray>"),
@@ -50,6 +51,42 @@ public final class ProxyConfig {
                     + "<gray>ist dem Server beigetreten.</gray>"),
             Map.entry("network-first-join", "<dark_gray>[<#00D4FF>★</#00D4FF>]</dark_gray> <#00D4FF>%player%</#00D4FF> "
                     + "<gray>ist zum <white>ersten Mal</white> hier! Willkommen!</gray>"),
+            Map.entry("release-gesperrt", "%prefix%<red>Noch nicht offen!</red> <gray>Release am <white>%datum%</white> (noch <white>%dauer%</white>).</gray>"),
+            Map.entry("release-bildschirm", "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP öffnet bald!</bold></gradient><newline><newline><gray>Release am</gray> <white>%datum%</white><newline><gray>Noch</gray> <white>%dauer%</white><newline><newline><gray>Bis gleich!</gray>"),
+            Map.entry("release-warten", "%prefix%<gray>Willkommen! BuckSMP öffnet am <white>%datum%</white> (noch <white>%dauer%</white>).</gray><newline><gray>Bleib einfach hier - wer früher da ist, ist beim Release früher drin.</gray>"),
+            Map.entry("release-laeuft-warten", "%prefix%<green>Der Release läuft!</green> <gray>Du bist in der Warteschlange und kommst gleich rein.</gray>"),
+            Map.entry("release-bossbar", "<gradient:#6C5CE7:#00D4FF><bold>Release</bold></gradient> <white>in %dauer%</white>"),
+            Map.entry("release-bossbar-probe", "<gradient:#6C5CE7:#00D4FF><bold>Probe-Release</bold></gradient> <white>in %dauer%</white>"),
+            Map.entry("release-bossbar-wellen", "<green><bold>Release läuft</bold></green> <white>- Welle %welle%</white> <gray>(%wartende% warten noch)</gray>"),
+            Map.entry("release-bossbar-server-startet", "<gold><bold>%server% startet gleich ...</bold></gold>"),
+            Map.entry("release-server-startet", "<gold>%server% startet noch - gleich geht's los!</gold>"),
+            Map.entry("release-actionbar", "<gray>Noch</gray> <white><bold>%sekunden%</bold></white> <gray>Sekunden bis zum Release</gray>"),
+            Map.entry("release-actionbar-probe", "<gray>Probe-Release in</gray> <white><bold>%sekunden%</bold></white> <gray>Sekunden</gray>"),
+            Map.entry("release-titel-zahl", "<gradient:#6C5CE7:#00D4FF><bold>%sekunden%</bold></gradient>"),
+            Map.entry("release-titel-zahl-unter", "<gray>bis zum Release</gray>"),
+            Map.entry("release-titel-los", "<gradient:#FFD166:#FF6B6B><bold>RELEASE!</bold></gradient>"),
+            Map.entry("release-titel-los-unter", "<white>Willkommen auf BuckSMP</white>"),
+            Map.entry("release-position", "<green>Du bist gleich dran!</green> <gray>Platz <white>%position%</white> - noch etwa <white>%sekunden%s</white></gray>"),
+            Map.entry("release-willkommen", "%prefix%<green>Viel Spaß auf BuckSMP!</green>"),
+            Map.entry("release-offen", "%prefix%<gold><bold>Release!</bold></gold> <gray>BuckSMP ist ab jetzt offen.</gray>"),
+            Map.entry("release-verbindung-fehlgeschlagen", "%prefix%<red>Die Verbindung zu <white>%server%</white> hat nicht geklappt.</red> <gray>Versuch es gleich nochmal mit /hub.</gray>"),
+            Map.entry("release-erinnerung", "%prefix%<gray>Release am <white>%datum%</white> - noch <white>%dauer%</white>. <white>%wartende%</white> warten schon hier.</gray>"),
+            Map.entry("release-neue-zeit", "%prefix%<gold>Neuer Release-Termin:</gold> <white>%datum%</white> <gray>(noch %dauer%)</gray>"),
+            Map.entry("release-abgesagt", "%prefix%<gray>Der Release-Countdown ist beendet - du kommst gleich auf den Server.</gray>"),
+            Map.entry("release-status", "%prefix%<gray>Release am <white>%datum%</white> (noch <white>%dauer%</white>) <dark_gray>·</dark_gray> <white>%wartende%</white> im Warteraum</gray>"),
+            Map.entry("release-status-laeuft", "%prefix%<green>Der Release läuft gerade</green> <gray>(<white>%wartende%</white> in der Warteschlange).</gray>"),
+            Map.entry("release-status-kein", "%prefix%<gray>Es ist gerade kein Release geplant.</gray>"),
+            Map.entry("release-status-offen", "%prefix%<gray>Der Release vom <white>%datum%</white> ist schon gelaufen.</gray>"),
+            Map.entry("release-hilfe", "%prefix%<gray>/release <white>zeit <Datum> <Uhrzeit></white> <dark_gray>|</dark_gray> <white>jetzt [Sekunden]</white> <dark_gray>|</dark_gray> <white>aus</white> <dark_gray>|</dark_gray> <white>status</white></gray>"),
+            Map.entry("release-zeit-ungueltig", "%prefix%<red>Das Datum verstehe ich nicht.</red> <gray>Beispiel: /release zeit 03.10.2026 18:00</gray>"),
+            Map.entry("release-zeit-vergangen", "%prefix%<red>Der Zeitpunkt liegt in der Vergangenheit.</red> <gray>Für sofort: /release jetzt</gray>"),
+            Map.entry("release-zeit-gesetzt", "%prefix%<green>Release am <white>%datum%</white> (noch %dauer%).</green>"),
+            Map.entry("release-aus", "%prefix%<green>Kein Release mehr geplant - alle Server sind normal erreichbar.</green>"),
+            Map.entry("testrelease-start", "%prefix%<gray>Probe-Release in <white>%sekunden%s</white> - nur für dich, der echte Release bleibt unberührt.</gray>"),
+            Map.entry("testrelease-laeuft", "%prefix%<gold>Dein Probe-Release läuft schon.</gold> <gray>/testrelease stop bricht ab.</gray>"),
+            Map.entry("testrelease-gestoppt", "%prefix%<gray>Probe-Release abgebrochen.</gray>"),
+            Map.entry("testrelease-keiner", "%prefix%<gray>Bei dir läuft gerade kein Probe-Release.</gray>"),
+            Map.entry("testrelease-fertig", "%prefix%<green>Probe-Release fertig</green> <gray>- genau so erleben es alle beim echten Release.</gray>"),
             Map.entry("network-quit", "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> "
                     + "<gray>hat den Server verlassen.</gray>"));
 
@@ -339,6 +376,38 @@ public final class ProxyConfig {
 
     public String ahRedirectServer() {
         return string("ah.redirect-server", "SMP");
+    }
+
+    public String releaseZeit() {
+        return string("release.zeit", "");
+    }
+
+    public String releaseZeitzone() {
+        return string("release.zeitzone", "Europe/Berlin");
+    }
+
+    public String releaseZielServer() {
+        return string("release.ziel-server", defaultServer().isEmpty() ? "SMP" : defaultServer());
+    }
+
+    public List<String> releaseGesperrteServer() {
+        return strings("release.gesperrte-server", List.of("SMP", "Lobby", "Duels"));
+    }
+
+    public int releaseProWelle() {
+        return Math.max(1, integer("release.pro-welle", 5));
+    }
+
+    public int releaseWellenAbstandSekunden() {
+        return Math.max(1, integer("release.wellen-abstand-sekunden", 2));
+    }
+
+    public int releaseFinaleSekunden() {
+        return Math.max(3, Math.min(60, integer("release.finale-sekunden", 10)));
+    }
+
+    public int releaseErinnerungMinuten() {
+        return Math.max(0, integer("release.erinnerung-minuten", 5));
     }
 
     public boolean regelnEnabled() {
