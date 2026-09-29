@@ -1,6 +1,7 @@
 package de.lemonpvp.smpproxy.command;
 
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.command.SimpleCommand;
@@ -103,14 +104,15 @@ public final class RtpCommand implements SimpleCommand {
     private void sendeRtpAuftrag(Player player, String[] args) {
         // Derselbe Lebendigkeits-Test wie in ConnectListener.notifyLater():
         // ohne aktuellen Server ist die Verbindung in der Zwischenzeit weg.
-        if (player.getCurrentServer().isEmpty()) {
+        Optional<ServerConnection> verbindung = player.getCurrentServer();
+        if (verbindung.isEmpty()) {
             return;
         }
         try {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             DataOutputStream aus = new DataOutputStream(bytes);
             aus.writeUTF(String.join(" ", args));
-            player.sendPluginMessage(RTP_CHANNEL, bytes.toByteArray());
+            verbindung.get().sendPluginMessage(RTP_CHANNEL, bytes.toByteArray());
         } catch (IOException fehler) {
             plugin.log().warn("RTP-Auftrag fuer {} liess sich nicht senden: {}",
                     player.getUsername(), fehler.getMessage());

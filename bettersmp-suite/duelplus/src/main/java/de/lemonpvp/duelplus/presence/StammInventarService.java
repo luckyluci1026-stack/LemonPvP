@@ -36,6 +36,7 @@ import java.util.List;
 public final class StammInventarService implements Listener {
 
     private static final long HERZSCHLAG_TICKS = 30L * 20L;
+    private static final long JOIN_SPERRE_MILLIS = 15_000L;
 
     private final DuelPlus plugin;
 
@@ -47,6 +48,7 @@ public final class StammInventarService implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public void beimJoin(PlayerJoinEvent event) {
         Player spieler = event.getPlayer();
+        plugin.inventarSperre().sperren(spieler.getUniqueId(), JOIN_SPERRE_MILLIS);
         plugin.db().stammInventarLesen(spieler.getUniqueId()).thenAccept(snapshotOpt ->
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (!spieler.isOnline()) {
@@ -58,6 +60,7 @@ public final class StammInventarService implements Listener {
                     snapshotOpt.ifPresent(snap -> snap.anwenden(spieler.getInventory()));
                     sichern(spieler);
                     nachlieferungZustellen(spieler);
+                    plugin.inventarSperre().freigebenWennNichtsOffen(spieler.getUniqueId());
                 }));
     }
 

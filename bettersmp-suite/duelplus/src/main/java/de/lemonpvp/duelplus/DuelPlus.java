@@ -6,6 +6,7 @@ import de.lemonpvp.duelplus.command.DrawCommand;
 import de.lemonpvp.duelplus.command.DuelCommand;
 import de.lemonpvp.duelplus.db.DuelDatabase;
 import de.lemonpvp.duelplus.item.DuelItemListener;
+import de.lemonpvp.duelplus.presence.InventarSperre;
 import de.lemonpvp.duelplus.presence.PresenceService;
 import de.lemonpvp.duelplus.presence.StammInventarService;
 import de.lemonpvp.duelplus.request.AnfrageManager;
@@ -13,8 +14,10 @@ import de.lemonpvp.duelplus.request.AnfragePollTask;
 import de.lemonpvp.duelplus.session.ArenaGuardListener;
 import de.lemonpvp.duelplus.session.DuellSessionManager;
 import de.lemonpvp.duelplus.session.TrefferWaechter;
+import de.lemonpvp.duelplus.util.KampfPruefung;
 import de.lemonpvp.duelplus.util.Msgs;
 import de.lemonpvp.duelplus.util.ProxyBridge;
+import de.lemonpvp.duelplus.util.ProxySperre;
 import de.lemonpvp.duelplus.zuschauer.ZuschauerManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -40,6 +43,9 @@ public final class DuelPlus extends JavaPlugin {
     private TrefferWaechter trefferWaechter;
     private RollbackTracker rollback;
     private ZuschauerManager zuschauer;
+    private final KampfPruefung kampf = new KampfPruefung();
+    private InventarSperre inventarSperre;
+    private ProxySperre proxySperre;
 
     private String serverName;
     private boolean istArenaServer;
@@ -63,6 +69,8 @@ public final class DuelPlus extends JavaPlugin {
         }
 
         this.bridge = new ProxyBridge(this);
+        this.proxySperre = new ProxySperre(this);
+        this.inventarSperre = new InventarSperre(this);
         this.anfragen = new AnfrageManager(this);
         // Auf JEDEM Server instanziiert (anfordern() muss serveruebergreifend
         // per DB funktionieren, siehe ZuschauerManager), aber ihr
@@ -73,6 +81,7 @@ public final class DuelPlus extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new PresenceService(this), this);
         if (istLootQuelle) {
+            getServer().getPluginManager().registerEvents(inventarSperre, this);
             getServer().getPluginManager().registerEvents(new StammInventarService(this), this);
         }
         new AnfragePollTask(this).starten();
@@ -181,5 +190,17 @@ public final class DuelPlus extends JavaPlugin {
 
     public boolean istLootQuelle() {
         return istLootQuelle;
+    }
+
+    public KampfPruefung kampf() {
+        return kampf;
+    }
+
+    public InventarSperre inventarSperre() {
+        return inventarSperre;
+    }
+
+    public ProxySperre proxySperre() {
+        return proxySperre;
     }
 }

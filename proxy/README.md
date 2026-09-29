@@ -327,6 +327,27 @@ unverändert durch, wie bisher.
 Voraussetzung: BetterRTP muss auf dem Zielserver installiert sein und aktuell
 genug, um den Kanal `betterrtp:run` zu kennen (siehe dessen README).
 
+## Im Kampf und im Duell gesperrt
+
+`/spawn`, `/hub`, `/lobby` und `/server` sind Befehle des Proxys. Der SMP
+bekommt sie gar nicht zu sehen, deshalb kann BetterSMP sie im Kampf nicht
+selbst sperren. Stattdessen meldet BetterSMP dem Proxy, wer gerade im Kampf
+ist, und DuelPlus meldet vom Duels-Server, wer gerade ein Duell spielt
+(inklusive Todeskamera und Loot-Zeit). Solange sind gesperrt:
+
+- `/server`
+- alle Namen aus `commands.hub-aliases` (z. B. `/spawn` und `/lobby`)
+- die Kurzbefehle `/smp1`, `/smp2` ...
+- alles, was zusätzlich unter `combat.blocked-commands` steht
+
+Nach einem Serverwechsel oder beim Verlassen des Netzwerks fällt die Sperre
+weg. Ausschalten: `combat.enabled: false`. Die Texte heißen `combat-blocked`
+und `duel-blocked`. Fehlen sie in einer älteren `config.yml`, nimmt der
+Proxy eingebaute Texte.
+
+Dafür müssen SMPProxy, BetterSMP (SMP) und DuelPlus (SMP, Lobby, Duels) in
+der neuen Version laufen.
+
 ## Testen
 
 | Test | Erwartung |

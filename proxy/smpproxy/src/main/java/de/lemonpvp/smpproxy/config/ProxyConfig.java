@@ -9,11 +9,13 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Liest die config.yml. Beim ersten Start wird die mitgelieferte Vorlage
@@ -209,6 +211,37 @@ public final class ProxyConfig {
 
     public boolean serverShortcuts() {
         return bool("commands.server-shortcuts", true);
+    }
+
+    public boolean combatEnabled() {
+        return bool("combat.enabled", true);
+    }
+
+    public Set<String> combatBlockedCommands() {
+        Set<String> befehle = new HashSet<>();
+        befehle.add("server");
+        if (hubEnabled()) {
+            befehle.addAll(hubAliases());
+        }
+        if (serverShortcuts()) {
+            befehle.addAll(domains.values());
+        }
+        befehle.addAll(strings("combat.blocked-commands", List.of()));
+        Set<String> klein = new HashSet<>();
+        for (String befehl : befehle) {
+            klein.add(befehl.toLowerCase(Locale.ROOT).trim());
+        }
+        return klein;
+    }
+
+    public String combatBlockedMessage() {
+        return string("messages.combat-blocked",
+                "%prefix%<red>Dieser Befehl ist im Kampf gesperrt! (<white>%seconds%s</white>)</red>");
+    }
+
+    public String duelBlockedMessage() {
+        return string("messages.duel-blocked",
+                "%prefix%<red>Das geht erst, wenn das Duell vorbei ist.</red>");
     }
 
     // ------------------------------------------------------------------

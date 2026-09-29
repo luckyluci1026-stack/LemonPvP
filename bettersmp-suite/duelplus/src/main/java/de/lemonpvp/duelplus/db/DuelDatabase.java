@@ -466,6 +466,39 @@ public final class DuelDatabase {
                 DuelRecord.BEENDET, server));
     }
 
+    public CompletableFuture<List<DuelRecord>> beendetOffenA() {
+        return supply(() -> liste(
+                "SELECT * FROM duelplus_duelle WHERE status=? AND a_bearbeitet=FALSE", DuelRecord.BEENDET));
+    }
+
+    public CompletableFuture<List<DuelRecord>> beendetOffenB() {
+        return supply(() -> liste(
+                "SELECT * FROM duelplus_duelle WHERE status=? AND b_bearbeitet=FALSE", DuelRecord.BEENDET));
+    }
+
+    public CompletableFuture<Boolean> offenesErgebnis(UUID spieler) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT COUNT(*) FROM duelplus_duelle WHERE erstellt>? AND (status=? AND (spieler_a=? OR spieler_b=?) "
+                            + "OR status=? AND (spieler_a=? AND a_bearbeitet=FALSE OR spieler_b=? AND b_bearbeitet=FALSE))")) {
+                String id = spieler.toString();
+                ps.setLong(1, System.currentTimeMillis() - 3_600_000L);
+                ps.setString(2, DuelRecord.AKTIV);
+                ps.setString(3, id);
+                ps.setString(4, id);
+                ps.setString(5, DuelRecord.BEENDET);
+                ps.setString(6, id);
+                ps.setString(7, id);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() && rs.getInt(1) > 0;
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("DuelPlus: offene Duell-Ergebnisse konnten nicht geprueft werden: " + e.getMessage());
+                return false;
+            }
+        });
+    }
+
     /** Alte, abgeschlossene Zeilen aufraeumen - reine Haushaltsfuehrung gegen unbegrenztes Wachstum. */
     public CompletableFuture<Void> aufraeumen(int maxAlterStunden) {
         return run(() -> {

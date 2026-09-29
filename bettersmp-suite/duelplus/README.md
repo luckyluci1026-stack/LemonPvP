@@ -201,9 +201,8 @@ Sekunden lang asynchron auf (siehe unten) - eine eigene Log-Zeile
    (zum Beispiel, weil sein Inventar voll war), sammelt DuelPlus am Ende
    ein. Es kommt in freie Plätze seines Inventars, der Rest wird auf dem
    SMP nachgeliefert (Inventar, sonst Enderkiste, sonst direkt vor ihm).
-   Verlässt der Gewinner die Arena vorher (Verbindungsabbruch, `/hub`
-   über den Proxy), wird sein Inventar samt Loot sofort in diesem Moment
-   gespeichert. Auf dem Herkunftsserver wird das Ergebnis erst gelöscht,
+   Verlässt der Gewinner die Arena vorher (Verbindungsabbruch), wird
+   sein Inventar samt Loot sofort in diesem Moment gespeichert. Auf dem Herkunftsserver wird das Ergebnis erst gelöscht,
    wenn es wirklich angewendet wurde - geht der Spieler genau dann
    offline, klappt es beim nächsten Mal. Kommt der Spieler in der Lobby
    zurück, landet die Nachlieferung in `duelplus_nachlieferung` und
@@ -240,6 +239,26 @@ abfangbares Event entsteht - Hieb-Geräusch/-Animation bleiben dabei
 client-seitig trotzdem sichtbar, es wirkt also wie "Treffer kommt an,
 aber 0 Schaden". Das Team wird beim Kampfende (Sieg/Niederlage/
 Unentschieden/Aufgabe) wieder verlassen.
+
+## Kampf und Serverwechsel
+
+- **Nicht mitten aus einem Kampf ins Duell:** Wer auf dem SMP im Kampf
+  ist (Kampfmarkierung von BetterSMP), kann kein Duell annehmen, niemanden
+  herausfordern und nicht zuschauen. Startet ein angenommenes Duell,
+  während man im Kampf ist, wartet der Wechsel zur Arena, bis der Kampf
+  vorbei ist. So kann sich niemand per Duell aus einem Kampf retten.
+- **Inventar ist beim Wechsel gesperrt:** Zwischen dem Speichern des
+  Inventars und dem Wechsel zur Arena kann man auf dem SMP nichts droppen,
+  verschieben, platzieren, benutzen oder per Befehl verkaufen, und man
+  nimmt keinen Schaden. Genauso beim Zurückkommen, bis das Duell-Ergebnis
+  angewendet ist (normalerweise unter einer Sekunde). Sonst ließen sich in
+  dieser kurzen Lücke Items verdoppeln. Die Sperre löst sich spätestens
+  nach 15 bis 20 Sekunden von selbst.
+- **Im Duell kein `/spawn`, `/hub`, `/lobby`, `/server`:** Während des
+  Duells, der Todeskamera und der Loot-Zeit meldet der Duels-Server das
+  jede Sekunde an SMPProxy, der diese Befehle dann blockt.
+- Geht man nach einem Lobby-Duell so schnell auf den SMP, dass die Lobby
+  das Ergebnis noch nicht übernommen hat, wendet der SMP es selbst an.
 
 ## Befehle
 

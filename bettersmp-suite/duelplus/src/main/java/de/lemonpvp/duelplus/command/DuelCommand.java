@@ -2,6 +2,7 @@ package de.lemonpvp.duelplus.command;
 
 import de.lemonpvp.duelplus.DuelPlus;
 import de.lemonpvp.duelplus.db.StatEintrag;
+import de.lemonpvp.duelplus.util.KampfPruefung;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -69,6 +70,9 @@ public final class DuelCommand implements TabExecutor {
                 plugin.msgs().send(spieler, "usage");
                 return true;
             }
+            if (imKampf(spieler)) {
+                return true;
+            }
             plugin.zuschauer().anfordern(spieler, args[1]);
             return true;
         }
@@ -83,7 +87,9 @@ public final class DuelCommand implements TabExecutor {
         if (args.length >= 2) {
             String zweitesArgument = args[1].toLowerCase(Locale.ROOT);
             if (zweitesArgument.equals("accept")) {
-                plugin.anfragen().annehmen(spieler, args[0]);
+                if (!imKampf(spieler)) {
+                    plugin.anfragen().annehmen(spieler, args[0]);
+                }
                 return true;
             }
             if (zweitesArgument.equals("decline")) {
@@ -91,7 +97,18 @@ public final class DuelCommand implements TabExecutor {
                 return true;
             }
         }
-        plugin.anfragen().anfordern(spieler, args[0]);
+        if (!imKampf(spieler)) {
+            plugin.anfragen().anfordern(spieler, args[0]);
+        }
+        return true;
+    }
+
+    private boolean imKampf(Player spieler) {
+        long rest = plugin.kampf().restMillis(spieler.getUniqueId());
+        if (rest <= 0) {
+            return false;
+        }
+        plugin.msgs().send(spieler, "in-combat", "sekunden", String.valueOf(KampfPruefung.sekunden(rest)));
         return true;
     }
 

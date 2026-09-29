@@ -4,6 +4,7 @@ main: de.lemonpvp.duelplus.DuelPlus
 api-version: '1.21'
 authors: [SMP]
 description: Duell-System mit echtem SMP-Loot ueber SMP, Lobby und den Duels-Server - Rollback-Arenen, Todeskamera, Loot-Shulker fuer den Gewinner.
+softdepend: [BetterSMP]
 
 # Treiber nur gebraucht, wenn dieses Plugin laeuft - eigene Deklaration
 # noetig, auch wenn BetterSMP denselben Treiber schon laedt: jedes

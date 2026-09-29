@@ -21,6 +21,9 @@ declined-confirm: "%prefix%<gray>Herausforderung von <white>%spieler%</white> ab
 expired-to-challenger: "%prefix%<gray><white>%spieler%</white> hat nicht rechtzeitig reagiert - Herausforderung abgelaufen.</gray>"
 
 teleporting: "%prefix%<gray>Du wirst zur Arena gebracht ...</gray>"
+in-combat: "%prefix%<red>Du bist gerade im Kampf. Das geht erst in <white>%sekunden%s</white> wieder.</red>"
+waits-for-combat: "%prefix%<gold>Du bist noch im Kampf - dein Duell startet, sobald der Kampf vorbei ist (noch <white>%sekunden%s</white>).</gold>"
+inventory-locked: "<gray>Dein Inventar wird gerade übertragen ...</gray>"
 countdown: "%prefix%<gold><bold>%sekunden%</bold></gold>"
 fight: "%prefix%<gradient:#FF6B6B:#C92A2A><bold>Kampf!</bold></gradient>"
 title-fight: "<gradient:#FF6B6B:#C92A2A><bold>KAMPF!</bold></gradient>"

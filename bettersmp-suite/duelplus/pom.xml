@@ -29,5 +29,9 @@
             <version>3.4.1</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>de.lemonpvp</groupId>
+            <artifactId>bettersmp</artifactId>
+        </dependency>
     </dependencies>
 </project>

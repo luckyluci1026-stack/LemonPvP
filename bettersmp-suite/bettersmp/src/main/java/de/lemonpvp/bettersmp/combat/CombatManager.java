@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Ein Tick-Task (1x pro Sekunde) aktualisiert Actionbar und lässt Tags auslaufen.
  */
 public final class CombatManager {
+
+    public static final String PROXY_KANAL = "bettersmp:combat";
 
     private record Tag(long until, UUID opponent) {
     }
@@ -27,6 +30,7 @@ public final class CombatManager {
     }
 
     public void start() {
+        Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, PROXY_KANAL);
         task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L);
     }
 
@@ -35,6 +39,7 @@ public final class CombatManager {
             task.cancel();
         }
         tags.clear();
+        Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, PROXY_KANAL);
     }
 
     private long tagMillis() {
@@ -47,6 +52,8 @@ public final class CombatManager {
         boolean bNew = !isTagged(b.getUniqueId());
         tags.put(a.getUniqueId(), new Tag(until, b.getUniqueId()));
         tags.put(b.getUniqueId(), new Tag(until, a.getUniqueId()));
+        proxyMelden(a, tagMillis());
+        proxyMelden(b, tagMillis());
         String seconds = String.valueOf(tagMillis() / 1000);
         if (aNew) {
             plugin.msgs().send(a, "combat.tagged", "opponent", b.getName(), "seconds", seconds);
@@ -76,13 +83,16 @@ public final class CombatManager {
 
     /** Tag entfernen, ohne "frei"-Nachricht. */
     public void untag(UUID uuid) {
-        tags.remove(uuid);
+        if (tags.remove(uuid) != null) {
+            proxyMelden(Bukkit.getPlayer(uuid), 0L);
+        }
     }
 
     /** Tag entfernen und dem Spieler (falls online) Bescheid geben. */
     public void release(UUID uuid) {
         if (tags.remove(uuid) != null) {
             Player player = Bukkit.getPlayer(uuid);
+            proxyMelden(player, 0L);
             if (player != null) {
                 plugin.msgs().send(player, "combat.expired");
             }
@@ -96,6 +106,7 @@ public final class CombatManager {
             Player player = Bukkit.getPlayer(entry.getKey());
             if (entry.getValue().until() <= now) {
                 tags.remove(entry.getKey());
+                proxyMelden(player, 0L);
                 if (player != null) {
                     plugin.msgs().send(player, "combat.expired");
                 }
@@ -107,5 +118,12 @@ public final class CombatManager {
                         "seconds", String.valueOf(seconds)));
             }
         }
+    }
+
+    private void proxyMelden(Player player, long restMillis) {
+        if (player == null || !player.isOnline() || !plugin.isEnabled()) {
+            return;
+        }
+        player.sendPluginMessage(plugin, PROXY_KANAL, ByteBuffer.allocate(Long.BYTES).putLong(restMillis).array());
     }
 }

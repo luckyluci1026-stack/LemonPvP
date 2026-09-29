@@ -9,6 +9,9 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
 - **NoChatReports**: Chat als System-Nachricht (nicht meldbar) + optionaler
   `server.properties`-Patch.
 - **AntiCombatLog** mit `PlayerCombatLogEvent`-API (für Lifesteal+).
+  Im Kampf sind auch `/spawn`, `/hub`, `/lobby` und `/server` gesperrt:
+  BetterSMP meldet den Kampf an SMPProxy (Kanal `bettersmp:combat`), der
+  diese Proxy-Befehle dann blockt.
 - **Ban-/Mute-System** mit eigenem, **bedrock-freundlichem Ban-Screen**:
   - `/gban <Spieler> <Grund>` – Gründe (feste Dauer + Screen) in `bans.yml`
   - `/gunban <Spieler>`

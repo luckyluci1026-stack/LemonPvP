@@ -21,6 +21,7 @@ import de.lemonpvp.smpproxy.health.HomeTracker;
 import de.lemonpvp.smpproxy.health.ServerWatcher;
 import de.lemonpvp.smpproxy.listener.BanListener;
 import de.lemonpvp.smpproxy.listener.ConnectListener;
+import de.lemonpvp.smpproxy.listener.KampfSperre;
 import de.lemonpvp.smpproxy.util.Msg;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
@@ -72,6 +73,8 @@ public final class SMPProxy {
         bans.load();
         proxy.getEventManager().register(this, new ConnectListener(this));
         proxy.getEventManager().register(this, banListener);
+        proxy.getChannelRegistrar().register(KampfSperre.KANAL);
+        proxy.getEventManager().register(this, new KampfSperre(this));
         startTasks();
         registerCommands();
         logRoutes();

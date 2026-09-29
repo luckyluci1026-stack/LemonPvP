@@ -47,6 +47,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class DuellSessionManager implements Listener {
 
+    private static final long PROXY_SPERRE_MILLIS = 3_000L;
+
     private final DuelPlus plugin;
     private final LootManager loot;
 
@@ -85,6 +87,7 @@ public final class DuellSessionManager implements Listener {
         // Arena-Warteschlange: alle paar Sekunden pruefen, ob inzwischen
         // wieder eine Arena frei ist und jemand wartet.
         Bukkit.getScheduler().runTaskTimer(plugin, this::warteschlangeVerarbeiten, 40L, 40L);
+        Bukkit.getScheduler().runTaskTimer(plugin, this::proxySperreErneuern, 20L, 20L);
         if (plugin.db().bereit()) {
             plugin.db().aktiveDuelleAbbrechen().thenAccept(anzahl -> {
                 if (anzahl > 0) {
@@ -97,6 +100,15 @@ public final class DuellSessionManager implements Listener {
 
     public LootManager loot() {
         return loot;
+    }
+
+    private void proxySperreErneuern() {
+        for (Player spieler : Bukkit.getOnlinePlayers()) {
+            UUID id = spieler.getUniqueId();
+            if (sessionNachSpieler.containsKey(id) || nachbereitung.contains(id)) {
+                plugin.proxySperre().duellSperre(spieler, PROXY_SPERRE_MILLIS);
+            }
+        }
     }
 
     public Optional<DuellSession> sessionVon(UUID spieler) {
@@ -194,6 +206,8 @@ public final class DuellSessionManager implements Listener {
                 duell.spielerB(), duell.spielerBName(), duell.spielerBServer());
         sessionNachSpieler.put(duell.spielerA(), session);
         sessionNachSpieler.put(duell.spielerB(), session);
+        plugin.proxySperre().duellSperre(a, PROXY_SPERRE_MILLIS);
+        plugin.proxySperre().duellSperre(b, PROXY_SPERRE_MILLIS);
 
         int countdown = Math.max(1, plugin.getConfig().getInt("kampf.countdown-sekunden", 5));
         new BukkitRunnable() {

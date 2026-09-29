@@ -5,6 +5,7 @@ import de.lemonpvp.duelplus.db.DuelDatabase;
 import de.lemonpvp.duelplus.db.DuelRecord;
 import de.lemonpvp.duelplus.db.SpielerSnapshot;
 import de.lemonpvp.duelplus.loot.Nachlieferung;
+import de.lemonpvp.duelplus.util.KampfPruefung;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -32,8 +33,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class AnfragePollTask {
 
+    private static final long UEBERGABE_SPERRE_MILLIS = 20_000L;
+
     private final DuelPlus plugin;
     private final Set<String> inArbeit = ConcurrentHashMap.newKeySet();
+    private final Set<String> kampfHinweis = ConcurrentHashMap.newKeySet();
 
     public AnfragePollTask(DuelPlus plugin) {
         this.plugin = plugin;
@@ -100,6 +104,19 @@ public final class AnfragePollTask {
                 if (spieler == null) {
                     continue;
                 }
+                String hinweisSchluessel = duell.id() + ":" + spielerUuid;
+                long kampfRest = plugin.kampf().restMillis(spielerUuid);
+                if (kampfRest > 0) {
+                    if (kampfHinweis.add(hinweisSchluessel)) {
+                        plugin.msgs().send(spieler, "waits-for-combat",
+                                "sekunden", String.valueOf(KampfPruefung.sekunden(kampfRest)));
+                    }
+                    continue;
+                }
+                kampfHinweis.remove(hinweisSchluessel);
+                if (plugin.istLootQuelle()) {
+                    plugin.inventarSperre().sperren(spielerUuid, UEBERGABE_SPERRE_MILLIS);
+                }
                 // Auf der Loot-Quelle selbst (in der Praxis: SMP) ist das
                 // Live-Inventar bereits das "echte". Ueberall sonst (z.B.
                 // Lobby) ist das lokale Live-Inventar NICHT, was auf dem
@@ -150,6 +167,11 @@ public final class AnfragePollTask {
     // ------------------------------------------------------------ BEENDET -> zurueck auf dem Herkunftsserver
 
     private void verarbeiteBeendet() {
+        if (plugin.istLootQuelle()) {
+            plugin.db().beendetOffenA().thenAccept(liste -> ergebnisAnwenden(liste, true));
+            plugin.db().beendetOffenB().thenAccept(liste -> ergebnisAnwenden(liste, false));
+            return;
+        }
         plugin.db().beendetFuerAServer(plugin.serverName()).thenAccept(liste -> ergebnisAnwenden(liste, true));
         plugin.db().beendetFuerBServer(plugin.serverName()).thenAccept(liste -> ergebnisAnwenden(liste, false));
     }
@@ -227,6 +249,11 @@ public final class AnfragePollTask {
         plugin.db().snapshotLoeschen(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_ZURUECK);
         CompletableFuture<Void> markiert = istA ? plugin.db().markiereBearbeitetA(duell.id())
                                                 : plugin.db().markiereBearbeitetB(duell.id());
-        markiert.whenComplete((unused, fehler) -> inArbeit.remove(schluessel));
+        markiert.whenComplete((unused, fehler) -> {
+            inArbeit.remove(schluessel);
+            if (plugin.istLootQuelle()) {
+                plugin.inventarSperre().freigebenWennNichtsOffen(spielerUuid);
+            }
+        });
     }
 }

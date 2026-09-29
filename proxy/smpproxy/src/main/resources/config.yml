@@ -76,6 +76,20 @@ commands:
   server-shortcuts: true
 
 # ----------------------------------------------------------
+#  Im Kampf gesperrt
+#
+#  BetterSMP meldet dem Proxy, wer gerade im Kampf ist, DuelPlus
+#  meldet, wer gerade ein Duell spielt. Solange sind /server, alle
+#  Namen von /hub (hub-aliases oben) und die Kurzbefehle /smp1,
+#  /smp2 ... gesperrt - sonst koennte man sich per /spawn oder
+#  /lobby aus dem Kampf retten.
+#  Weitere Proxy-Befehle kommen unter blocked-commands dazu.
+# ----------------------------------------------------------
+combat:
+  enabled: true
+  blocked-commands: []
+
+# ----------------------------------------------------------
 #  /rtp von überall im Netzwerk
 #
 #  Steht der Spieler schon auf einem Server aus passthrough-servers
@@ -121,6 +135,10 @@ messages:
   switch-already: "%prefix%<gold>Du bist bereits auf <white>%server%</white>.</gold>"
   switch-offline: "%prefix%<red><white>%server%</white> ist gerade offline.</red>"
   switch-failed: "%prefix%<red>Verbindung zu <white>%server%</white> fehlgeschlagen.</red>"
+
+  # Im Kampf gesperrt (siehe combat oben)
+  combat-blocked: "%prefix%<red>Dieser Befehl ist im Kampf gesperrt! (<white>%seconds%s</white>)</red>"
+  duel-blocked: "%prefix%<red>Das geht erst, wenn das Duell vorbei ist.</red>"
 
   # /smpproxy
   player-only: "%prefix%<red>Das geht nur im Spiel.</red>"
