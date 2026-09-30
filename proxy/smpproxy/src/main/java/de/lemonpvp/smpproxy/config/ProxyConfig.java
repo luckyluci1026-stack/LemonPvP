@@ -122,9 +122,10 @@ public final class ProxyConfig {
             "<gray>Regelverstoß gesehen?</gray> <click:suggest_command:'/report '><hover:show_text:'<gray>Spieler melden'>"
                     + "<#00D4FF>/report</#00D4FF></hover></click> <dark_gray>·</dark_gray> <gray>Voice-Chat:</gray> "
                     + "<click:run_command:'/vcrules'><hover:show_text:'<gray>Regeln für den Voice-Chat'><#00D4FF>/vcrules</#00D4FF>"
-                    + "</hover></click>",
-            "<gray>Alles nachlesen:</gray> <click:open_url:'https://bucksmp.de/regeln/'><hover:show_text:'<gray>Im Browser öffnen'>"
-                    + "<#00D4FF><underlined>bucksmp.de/regeln</underlined></#00D4FF></hover></click>");
+                    + "</hover></click>");
+
+    private static final String ALTE_WEBSEITEN_ZEILE = "<gray>Alles nachlesen:</gray> <click:open_url:'https://bucksmp.de/regeln/'>"
+            + "<hover:show_text:'<gray>Im Browser öffnen'><#00D4FF><underlined>bucksmp.de/regeln</underlined></#00D4FF></hover></click>";
 
     private final Path folder;
     private final Logger log;
@@ -351,6 +352,12 @@ public final class ProxyConfig {
                 "%prefix%<red>Das geht erst, wenn das Duell vorbei ist.</red>");
     }
 
+    public String duelEndBlockedMessage() {
+        return string("messages.duel-end-blocked",
+                "%prefix%<gray>Das geht erst, wenn du aus der Arena zurück bist -</gray> <white>/spawn</white> "
+                        + "<gray>bringt dich sofort hin.</gray>");
+    }
+
     // ------------------------------------------------------------------
     //  /rtp ueberall
     // ------------------------------------------------------------------
@@ -470,7 +477,8 @@ public final class ProxyConfig {
     public List<String> regeln() {
         Object value = get("regeln.zeilen");
         if (value instanceof List<?> list && !list.isEmpty()) {
-            return list.stream().map(zeile -> zeile == null ? "" : String.valueOf(zeile)).toList();
+            return list.stream().map(zeile -> zeile == null ? "" : String.valueOf(zeile))
+                    .filter(zeile -> !zeile.equals(ALTE_WEBSEITEN_ZEILE)).toList();
         }
         return STANDARD_REGELN;
     }

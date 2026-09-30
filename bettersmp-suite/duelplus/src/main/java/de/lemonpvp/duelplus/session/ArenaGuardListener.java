@@ -53,7 +53,8 @@ import java.util.Optional;
  *  - Befehle sind waehrend eines eigenen Duells UND direkt danach, bis
  *    zur tatsaechlichen Rueckreise (Todeskamera/Loot-Schutzfenster,
  *    siehe DuellSessionManager.nachbereitung), komplett gesperrt
- *    (duelplus.command.bypass umgeht das, fuers Team) - einfacher und
+ *    (duelplus.command.bypass umgeht das, fuers Team; /duel verlassen
+ *    bleibt nach dem Kampf frei, so kommt /spawn vom Proxy an) - einfacher und
  *    sicherer als einzelne Befehle wie /shop auf eine Sperrliste zu
  *    setzen. Ohne die zweite Haelfte koennte sich z.B. der Gewinner per
  *    /spawn selbst wegteleportieren, bevor sein gewonnenes Inventar
@@ -243,11 +244,26 @@ public final class ArenaGuardListener implements Listener {
         // (Todeskamera/Loot-Schutzfenster, siehe DuellSessionManager.
         // nachbereitung) - sonst koennte z.B. der Gewinner per /spawn
         // verschwinden, bevor sein Inventar ueberhaupt geschrieben wurde.
-        if (plugin.sessionManager().sessionVon(spieler.getUniqueId()).isPresent()
-                || plugin.sessionManager().inNachbereitung(spieler.getUniqueId())) {
+        boolean imDuell = plugin.sessionManager().sessionVon(spieler.getUniqueId()).isPresent();
+        if (!imDuell && plugin.sessionManager().inNachbereitung(spieler.getUniqueId()) && istArenaVerlassen(event.getMessage())) {
+            return;
+        }
+        if (imDuell || plugin.sessionManager().inNachbereitung(spieler.getUniqueId())) {
             event.setCancelled(true);
             plugin.msgs().send(spieler, "command-blocked");
         }
+    }
+
+    private boolean istArenaVerlassen(String nachricht) {
+        String[] teile = nachricht.trim().toLowerCase(java.util.Locale.ROOT).split("\\s+");
+        if (teile.length < 2) {
+            return false;
+        }
+        String befehl = teile[0].startsWith("/") ? teile[0].substring(1) : teile[0];
+        if (befehl.contains(":")) {
+            befehl = befehl.substring(befehl.indexOf(':') + 1);
+        }
+        return befehl.equals("duel") && (teile[1].equals("verlassen") || teile[1].equals("leave"));
     }
 
     private boolean istBefehlsName(String nachricht, String name) {

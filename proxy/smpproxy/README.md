@@ -75,7 +75,7 @@ allen Servern abgeglichen (`voice.yml`).
 
 | Befehl | Was es tut | Recht |
 |---|---|---|
-| `/hub`, `/lobby`, `/spawn` | zur Lobby | alle |
+| `/hub`, `/lobby`, `/spawn` | zur Lobby; nach einem Duell sofort aus der Arena zurück (siehe unten) | alle |
 | `/smp1`, `/smp2`, … | direkt auf den Server (aus `domains` erzeugt) | alle |
 | `/msg`, `/r` | Privatnachricht über alle Server | alle |
 | `/ah`, `/rtp` | Auktionshaus / RTP von jedem Server aus | alle |
@@ -97,6 +97,14 @@ Proxy-Konsole gehen alle Befehle ohne Rechte, außer `/testrelease` (braucht
 einen Spieler).
 
 `/server` und `/send` bringt Velocity selbst mit.
+
+**Im Kampf und im Duell** sind `/hub`, `/lobby`, `/spawn`, `/server` und
+die Kurzbefehle gesperrt (BetterSMP und DuelPlus melden das über den Kanal
+`bettersmp:combat`). Ist ein Duell vorbei (Todeskamera, Loot einsammeln),
+bringen genau diese Befehle einen sofort zurück: Der Proxy gibt sie dann als
+`/duel verlassen` an den Duels-Server weiter, DuelPlus speichert das
+Inventar samt liegengebliebenem Loot und schickt den Spieler auf seinen
+Herkunftsserver. `/ah` und `/rtp` warten, bis man zurück ist.
 
 ## Konfiguration
 

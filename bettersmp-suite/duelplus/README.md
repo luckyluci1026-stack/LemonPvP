@@ -201,12 +201,19 @@ Sekunden lang asynchron auf (siehe unten) - eine eigene Log-Zeile
    zusätzlich einen größeren Partikel-Ausbruch und einen eigenen Ton
    für den Gewinner.
 7. Der Verlierer geht kurz danach zurück auf seinen Herkunftsserver,
-   mit leerem Inventar. Der Gewinner bleibt bewusst **die volle
-   `loot.schutz-sekunden`-Zeit** in der Arena (in der Zeit unverwundbar
-   - kein nachträglicher Schaden mehr möglich) und erst DANN geht es
-   für ihn zurück, mit allem, was er bis dahin eingesammelt hat -
-   sonst wäre das exklusive Loot-Zeitfenster nutzlos, weil er längst
-   weg wäre, bevor er es überhaupt selbst aufheben könnte.
+   mit leerem Inventar. Der Gewinner hat **bis zu
+   `loot.schutz-sekunden`** Zeit in der Arena (in der Zeit unverwundbar
+   - kein nachträglicher Schaden mehr möglich) und geht dann mit allem
+   zurück, was er eingesammelt hat.
+   **Fertig früher? `/spawn`** (auch `/lobby`, `/hub`, `/server …` oder
+   `/duel verlassen`, oder der Knopf **[Zurück]** im Chat) bringt ihn
+   sofort zurück: DuelPlus speichert erst das Inventar samt allem, was
+   noch am Boden liegt, und schickt ihn dann auf seinen
+   Herkunftsserver. Der Verlierer kann so auch die Todeskamera
+   abkürzen. Dafür muss SMPProxy auf dem neuesten Stand sein: Der
+   Proxy weiß, ob das Duell noch läuft oder schon vorbei ist, und gibt
+   `/spawn` nach dem Duell als `/duel verlassen` an den Duels-Server
+   weiter.
 8. **Es geht kein Loot verloren:** Was der Gewinner nicht aufgehoben hat
    (zum Beispiel, weil sein Inventar voll war), sammelt DuelPlus am Ende
    ein. Es kommt in freie Plätze seines Inventars, der Rest wird auf dem
@@ -229,13 +236,11 @@ Abbrechen das eigene Inventar zu retten.
 
 Während eines Duells sind **Enderkisten deaktiviert** und **alle
 Befehle gesperrt** (`duelplus.command.bypass` fürs Team) - kein
-Ausweichen über `/shop` oder Ähnliches. Die Befehlssperre gilt auch
-noch direkt NACH dem Kampfende bis zur tatsächlichen Rückreise
-(Todeskamera beim Verlierer, volles `loot.schutz-sekunden`-Fenster
-beim Gewinner) - sonst könnte sich z.B. der Gewinner per `/spawn`
-selbst wegteleportieren, bevor sein gewonnenes Inventar überhaupt in
-die Datenbank geschrieben wurde (Loot wäre dann verloren, Arena/
-Worldborder blieben für diese Runde hängen).
+Ausweichen über `/shop` oder Ähnliches. Nach dem Kampfende bis zur
+Rückreise bleibt die Sperre bestehen, mit einer Ausnahme: `/spawn`
+bzw. `/duel verlassen` (siehe Punkt 7). Das läuft immer über DuelPlus,
+damit das gewonnene Inventar zuerst in der Datenbank steht und erst
+danach der Serverwechsel kommt.
 
 Für die Dauer des Kampfes steckt DuelPlus beide Duellanten zusätzlich
 in ein eigenes Scoreboard-Team `duelplus_kampf` mit **Friendly Fire

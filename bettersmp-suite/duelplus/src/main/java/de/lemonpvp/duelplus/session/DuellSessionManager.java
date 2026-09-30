@@ -76,7 +76,10 @@ public final class DuellSessionManager implements Listener {
      * verloren), UND Arena/Worldborder blieben fuer diese Runde haengen,
      * weil auch das erst am Ende dieses Fensters passiert (siehe unten).
      */
-    private final Set<UUID> nachbereitung = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Rueckreise> nachbereitung = new ConcurrentHashMap<>();
+
+    private record Rueckreise(DuellSession session, boolean gewinner) {
+    }
 
     private final Map<UUID, DuellSession> offeneGewinner = new ConcurrentHashMap<>();
 
@@ -109,9 +112,18 @@ public final class DuellSessionManager implements Listener {
     private void proxySperreErneuern() {
         for (Player spieler : Bukkit.getOnlinePlayers()) {
             UUID id = spieler.getUniqueId();
-            if (sessionNachSpieler.containsKey(id) || nachbereitung.contains(id)) {
+            if (sessionNachSpieler.containsKey(id)) {
                 plugin.proxySperre().duellSperre(spieler, PROXY_SPERRE_MILLIS);
+            } else if (nachbereitung.containsKey(id)) {
+                plugin.proxySperre().nachDuellSperre(spieler, PROXY_SPERRE_MILLIS);
             }
+        }
+    }
+
+    private void aufNachDuellUmstellen(Player spieler) {
+        if (spieler != null && spieler.isOnline()) {
+            plugin.proxySperre().duellSperre(spieler, 0L);
+            plugin.proxySperre().nachDuellSperre(spieler, PROXY_SPERRE_MILLIS);
         }
     }
 
@@ -121,7 +133,7 @@ public final class DuellSessionManager implements Listener {
 
     /** true zwischen Kampfende und der tatsaechlichen Rueckreise (Todeskamera/Loot-Schutzfenster) - siehe nachbereitung-Feld. */
     public boolean inNachbereitung(UUID spieler) {
-        return nachbereitung.contains(spieler);
+        return nachbereitung.containsKey(spieler);
     }
 
     // ================================================================
@@ -138,7 +150,7 @@ public final class DuellSessionManager implements Listener {
         // soll das nicht erst beim naechsten eigenen Duell auffallen. Waehrend
         // des legitimen Sieger-Schutzfensters (nachbereitung) NICHT anfassen -
         // da ist Unverwundbarkeit gerade beabsichtigt.
-        if (spieler.isInvulnerable() && !nachbereitung.contains(spieler.getUniqueId())) {
+        if (spieler.isInvulnerable() && !nachbereitung.containsKey(spieler.getUniqueId())) {
             spieler.setInvulnerable(false);
         }
         // Schon in einer laufenden Session (z.B. kurz die Verbindung
@@ -501,8 +513,10 @@ public final class DuellSessionManager implements Listener {
         // dieses zweite Set koennten beide sofort z.B. per /spawn selbst
         // verschwinden, bevor ihr jeweiliges Inventar ueberhaupt geschrieben
         // bzw. die Arena/Worldborder zurueckgesetzt wurde.
-        nachbereitung.add(verliererUuid);
-        nachbereitung.add(gewinner);
+        nachbereitung.put(verliererUuid, new Rueckreise(session, false));
+        if (Bukkit.getPlayer(gewinner) != null) {
+            nachbereitung.put(gewinner, new Rueckreise(session, true));
+        }
         kampfTeamEntfernen(session.eigenerName(verliererUuid), session.eigenerName(gewinner));
         bossBarVerstecken(session);
         plugin.db().siegHinzufuegen(gewinner, session.eigenerName(gewinner));
@@ -510,6 +524,8 @@ public final class DuellSessionManager implements Listener {
 
         Player verlierer = Bukkit.getPlayer(verliererUuid);
         Player gewinnerSpieler = Bukkit.getPlayer(gegnerUuid);
+        aufNachDuellUmstellen(verlierer);
+        aufNachDuellUmstellen(gewinnerSpieler);
 
         // Sofort, im Moment des Ausgangs selbst - nicht erst nach der
         // (teils viel spaeteren) Rueckreise auf den Herkunftsserver.
@@ -543,16 +559,10 @@ public final class DuellSessionManager implements Listener {
             // ein Sieg soll keinen nachtraeglichen Schaden mehr bedeuten.
             gewinnerSpieler.setInvulnerable(true);
             offeneGewinner.put(gewinner, session);
+            plugin.msgs().send(gewinnerSpieler, "leave-hint");
         }
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            nachbereitung.remove(verliererUuid);
-            if (verlierer != null && verlierer.isOnline()) {
-                zustandZuruecksetzen(verlierer);
-                verlierer.setGameMode(GameMode.SURVIVAL);
-                plugin.bridge().sende(verlierer, session.herkunftsServerVon(verliererUuid));
-            }
-        }, anzeigeSekunden * 20L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> zurueckNachNiederlage(verliererUuid), anzeigeSekunden * 20L);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             Player gewinnerJetzt = Bukkit.getPlayer(gewinner);
@@ -560,31 +570,77 @@ public final class DuellSessionManager implements Listener {
             // Erst JETZT, nach dem vollen Schutzfenster, das tatsaechliche
             // Inventar erfassen - damit auch selbst aufgehobenes Loot
             // wirklich mit zurueckreist.
-            CompletableFuture<Void> geschrieben = nochOffen
-                    ? gewinnerSnapshotSchreiben(session, gewinnerJetzt)
-                    : CompletableFuture.completedFuture(null);
+            if (nochOffen) {
+                gewinnerZurueckschicken(session, gewinnerJetzt);
+            } else if (gewinnerJetzt == null) {
+                nachbereitung.remove(gewinner);
+            }
             if (arena != null) {
                 plugin.rollback().zuruecksetzenUndStoppen(arena.world());
                 plugin.arenaManager().freigeben(arena.name());
                 plugin.zuschauer().arenaBeendet(arena.name());
             }
-            nachbereitung.remove(gewinner);
-            if (!nochOffen) {
+        }, lootSekunden * 20L);
+    }
+
+    private void zurueckNachNiederlage(UUID id) {
+        Rueckreise reise = nachbereitung.remove(id);
+        Player spieler = Bukkit.getPlayer(id);
+        if (reise == null || spieler == null || !spieler.isOnline()) {
+            return;
+        }
+        zustandZuruecksetzen(spieler);
+        spieler.setGameMode(GameMode.SURVIVAL);
+        plugin.bridge().sende(spieler, reise.session().herkunftsServerVon(id));
+    }
+
+    private void gewinnerZurueckschicken(DuellSession session, Player gewinner) {
+        UUID id = gewinner.getUniqueId();
+        // GameMode/Unverwundbarkeit bewusst ERST im Callback (NACH dem
+        // DB-Schreiben) umstellen, nicht schon hier - sonst waere der
+        // Gewinner fuer die Dauer des (asynchronen) Schreibens kurz in
+        // Survival, mitten in der Arena, und koennte dort noch Bloecke
+        // abbauen, die zu dem Zeitpunkt nichtmal mehr vom RollbackTracker
+        // erfasst wuerden.
+        gewinnerSnapshotSchreiben(session, gewinner).whenComplete((unused, fehler) -> Bukkit.getScheduler().runTask(plugin, () -> {
+            if (fehler != null && gewinner.isOnline()) {
+                plugin.getLogger().warning("DuelPlus: Inventar von " + gewinner.getName()
+                        + " konnte nach dem Sieg nicht gespeichert werden: " + fehler.getMessage());
+                offeneGewinner.put(id, session);
+                plugin.msgs().send(gewinner, "leave-failed");
                 return;
             }
-            // GameMode/Unverwundbarkeit bewusst ERST im Callback (NACH dem
-            // DB-Schreiben) umstellen, nicht schon hier - sonst waere der
-            // Gewinner fuer die Dauer des (asynchronen) Schreibens kurz in
-            // Survival, mitten in der Arena, und koennte dort noch Bloecke
-            // abbauen, die zu dem Zeitpunkt nichtmal mehr vom RollbackTracker
-            // erfasst wuerden (der ist ja schon oben gestoppt worden).
-            geschrieben.thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                if (gewinnerJetzt.isOnline()) {
-                    gewinnerJetzt.setGameMode(GameMode.SURVIVAL);
-                    plugin.bridge().sende(gewinnerJetzt, session.herkunftsServerVon(gewinner));
-                }
-            }));
-        }, lootSekunden * 20L);
+            nachbereitung.remove(id);
+            if (fehler == null && gewinner.isOnline()) {
+                gewinner.setGameMode(GameMode.SURVIVAL);
+                plugin.bridge().sende(gewinner, session.herkunftsServerVon(id));
+            }
+        }));
+    }
+
+    public void arenaVerlassen(Player spieler) {
+        UUID id = spieler.getUniqueId();
+        if (sessionNachSpieler.containsKey(id)) {
+            plugin.msgs().send(spieler, "leave-in-duel");
+            return;
+        }
+        DuellSession gewonnen = offeneGewinner.remove(id);
+        if (gewonnen != null) {
+            plugin.msgs().send(spieler, "leave-now", "server", gewonnen.herkunftsServerVon(id));
+            gewinnerZurueckschicken(gewonnen, spieler);
+            return;
+        }
+        Rueckreise reise = nachbereitung.get(id);
+        if (reise == null) {
+            plugin.msgs().send(spieler, "leave-not-in-duel");
+            return;
+        }
+        if (reise.gewinner()) {
+            plugin.msgs().send(spieler, "leave-soon");
+            return;
+        }
+        plugin.msgs().send(spieler, "leave-now", "server", reise.session().herkunftsServerVon(id));
+        zurueckNachNiederlage(id);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -594,6 +650,7 @@ public final class DuellSessionManager implements Listener {
         if (session == null) {
             return;
         }
+        nachbereitung.remove(spieler.getUniqueId());
         gewinnerSnapshotSchreiben(session, spieler);
         spieler.setGameMode(GameMode.SURVIVAL);
     }
@@ -868,7 +925,7 @@ public final class DuellSessionManager implements Listener {
 
             @Override
             public void run() {
-                if (ticks-- <= 0 || !verlierer.isOnline()) {
+                if (ticks-- <= 0 || !verlierer.isOnline() || !nachbereitung.containsKey(verlierer.getUniqueId())) {
                     cancel();
                     return;
                 }
@@ -945,7 +1002,7 @@ public final class DuellSessionManager implements Listener {
             }
             for (UUID uuid : new UUID[]{duell.spielerA(), duell.spielerB()}) {
                 Player spieler = Bukkit.getPlayer(uuid);
-                if (spieler == null || sessionNachSpieler.containsKey(uuid) || nachbereitung.contains(uuid)) {
+                if (spieler == null || sessionNachSpieler.containsKey(uuid) || nachbereitung.containsKey(uuid)) {
                     continue;
                 }
                 plugin.msgs().send(spieler, "opponent-missing");

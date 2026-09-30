@@ -84,7 +84,13 @@ watch-stopped: "%prefix%<gray>Zuschauen beendet.</gray>"
 
 loot-dropped: "%prefix%<gold>Das Loot liegt am Boden - <white>%sekunden%s</white> lang gehört es nur dir.</gold> <gray>Was du nicht aufhebst, bekommst du danach automatisch.</gray>"
 enderchest-disabled: "%prefix%<red>Enderkisten sind in der Arena deaktiviert.</red>"
-command-blocked: "%prefix%<red>Befehle sind während eines Duells sowie kurz danach (Todeskamera/Loot-Schutzfenster) gesperrt.</red>"
+command-blocked: "%prefix%<red>Befehle sind während eines Duells gesperrt.</red> <gray>Ist es vorbei, bringt dich</gray> <white>/spawn</white> <gray>sofort zurück.</gray>"
+leave-hint: "%prefix%<gray>Fertig?</gray> <white>/spawn</white> <gray>bringt dich sofort zurück - was noch am Boden liegt, nimmst du mit.</gray> <click:run_command:'/duel verlassen'><hover:show_text:'<gray>Jetzt zurück'><green>[Zurück]</green></hover></click>"
+leave-now: "%prefix%<gray>Du verlässt die Arena - zurück auf <white>%server%</white>.</gray>"
+leave-soon: "%prefix%<gray>Dein Inventar wird gerade gespeichert - gleich geht es zurück.</gray>"
+leave-in-duel: "%prefix%<red>Mitten im Duell geht das nicht.</red>"
+leave-not-in-duel: "%prefix%<gray>Du bist gerade nicht in einer Duell-Arena.</gray>"
+leave-failed: "%prefix%<red>Dein Inventar konnte gerade nicht gespeichert werden.</red> <gray>Versuch es gleich nochmal mit</gray> <white>/spawn</white><gray>.</gray>"
 
 arena-queue: "%prefix%<gray>Gerade sind alle Arenen belegt - du kommst automatisch dran, sobald eine frei wird.</gray>"
 

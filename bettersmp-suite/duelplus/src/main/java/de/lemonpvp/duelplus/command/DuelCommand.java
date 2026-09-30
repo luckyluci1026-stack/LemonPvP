@@ -21,6 +21,7 @@ public final class DuelCommand implements TabExecutor {
 
     private static final Set<String> ANNEHMEN = Set.of("accept", "annehmen", "ja");
     private static final Set<String> ABLEHNEN = Set.of("decline", "ablehnen", "deny", "nein");
+    private static final Set<String> VERLASSEN = Set.of("verlassen", "leave");
 
     private final DuelPlus plugin;
 
@@ -48,6 +49,14 @@ public final class DuelCommand implements TabExecutor {
             return true;
         }
         String erstesArgument = args[0].toLowerCase(Locale.ROOT);
+        if (VERLASSEN.contains(erstesArgument)) {
+            if (plugin.sessionManager() == null) {
+                plugin.msgs().send(spieler, "leave-not-in-duel");
+            } else {
+                plugin.sessionManager().arenaVerlassen(spieler);
+            }
+            return true;
+        }
         if (erstesArgument.equals("stats")) {
             Player ziel = args.length >= 2 ? Bukkit.getPlayer(args[1]) : spieler;
             if (ziel == null) {

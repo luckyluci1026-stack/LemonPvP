@@ -28,6 +28,8 @@ public final class KampfSperre {
     private static final byte ART_KAMPF = 0;
     private static final byte ART_DUELL = 1;
     private static final byte ART_FREEZE = 2;
+    private static final byte ART_DUELL_ENDE = 3;
+    private static final String ARENA_VERLASSEN = "duel verlassen";
 
     private record Sperre(long bis, byte art) {
     }
@@ -82,7 +84,12 @@ public final class KampfSperre {
             return;
         }
         String name = befehlsName(event.getCommand());
-        if (!plugin.config().combatBlockedCommands().contains(name) && !wechseltServer(spieler, name)) {
+        boolean gesperrt = plugin.config().combatBlockedCommands().contains(name);
+        if (!gesperrt && !wechseltServer(spieler, name)) {
+            return;
+        }
+        if (gesperrt && sperre.art() == ART_DUELL_ENDE) {
+            event.setResult(CommandExecuteEvent.CommandResult.forwardToServer(ARENA_VERLASSEN));
             return;
         }
         event.setResult(CommandExecuteEvent.CommandResult.denied());
@@ -90,6 +97,7 @@ public final class KampfSperre {
         String text = switch (sperre.art()) {
             case ART_DUELL -> plugin.config().duelBlockedMessage();
             case ART_FREEZE -> plugin.config().message("freeze-blocked");
+            case ART_DUELL_ENDE -> plugin.config().duelEndBlockedMessage();
             default -> plugin.config().combatBlockedMessage();
         };
         spieler.sendMessage(Msg.of(text, plugin.config().prefix(), "%seconds%", String.valueOf(Math.max(1, (rest + 999) / 1000))));
@@ -126,7 +134,7 @@ public final class KampfSperre {
         }
         long jetzt = System.currentTimeMillis();
         arten.values().removeIf(bis -> bis <= jetzt);
-        for (byte art : new byte[]{ART_DUELL, ART_FREEZE, ART_KAMPF}) {
+        for (byte art : new byte[]{ART_DUELL, ART_FREEZE, ART_KAMPF, ART_DUELL_ENDE}) {
             Long bis = arten.get(art);
             if (bis != null) {
                 return new Sperre(bis, art);

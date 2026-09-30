@@ -88,6 +88,9 @@ commands:
 #  Namen von /hub (hub-aliases oben) und die Kurzbefehle /smp1,
 #  /smp2 ... gesperrt - sonst koennte man sich per /spawn oder
 #  /lobby aus dem Kampf retten.
+#  Ist das Duell vorbei (Todeskamera, Loot einsammeln), bringen
+#  genau diese Befehle einen sofort aus der Arena zurueck: DuelPlus
+#  speichert vorher das Inventar samt liegengebliebenem Loot.
 #  Weitere Proxy-Befehle kommen unter blocked-commands dazu.
 # ----------------------------------------------------------
 combat:
@@ -253,7 +256,6 @@ regeln:
     - "<white>6. Anweisungen vom Team befolgen</white> <dark_gray>-</dark_gray> <gray>Team-Mitglieder moderieren im Sinne der Community - ihren Anweisungen ist Folge zu leisten.</gray>"
     - ""
     - "<gray>Regelverstoß gesehen?</gray> <click:suggest_command:'/report '><hover:show_text:'<gray>Spieler melden'><#00D4FF>/report</#00D4FF></hover></click> <dark_gray>·</dark_gray> <gray>Voice-Chat:</gray> <click:run_command:'/vcrules'><hover:show_text:'<gray>Regeln für den Voice-Chat'><#00D4FF>/vcrules</#00D4FF></hover></click>"
-    - "<gray>Alles nachlesen:</gray> <click:open_url:'https://bucksmp.de/regeln/'><hover:show_text:'<gray>Im Browser öffnen'><#00D4FF><underlined>bucksmp.de/regeln</underlined></#00D4FF></hover></click>"
 
 # ----------------------------------------------------------
 #  Nachrichten (MiniMessage - Gradients, Farben, alles erlaubt)
@@ -292,6 +294,7 @@ messages:
   # Im Kampf gesperrt (siehe combat oben)
   combat-blocked: "%prefix%<red>Dieser Befehl ist im Kampf gesperrt! (<white>%seconds%s</white>)</red>"
   duel-blocked: "%prefix%<red>Das geht erst, wenn das Duell vorbei ist.</red>"
+  duel-end-blocked: "%prefix%<gray>Das geht erst, wenn du aus der Arena zurück bist -</gray> <white>/spawn</white> <gray>bringt dich sofort hin.</gray>"
   freeze-blocked: "%prefix%<red>Du bist eingefroren und kannst den Server gerade nicht wechseln.</red>"
 
   # Beitreten/Verlassen (siehe join-quit oben)
