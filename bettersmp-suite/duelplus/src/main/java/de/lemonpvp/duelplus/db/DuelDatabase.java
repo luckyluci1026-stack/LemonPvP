@@ -141,16 +141,46 @@ public final class DuelDatabase {
         } catch (SQLException e) {
             plugin.getLogger().severe("DuelPlus: Tabellen konnten nicht angelegt werden: " + e.getMessage());
         }
-        try (var st = conn().createStatement()) {
-            st.executeUpdate("ALTER TABLE duelplus_duelle ADD COLUMN IF NOT EXISTS angenommen_um BIGINT");
+        try {
+            if (!vorhanden("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() "
+                    + "AND TABLE_NAME=? AND COLUMN_NAME=?", "duelplus_duelle", "angenommen_um")) {
+                aendern("ALTER TABLE duelplus_duelle ADD COLUMN angenommen_um BIGINT");
+            }
         } catch (SQLException e) {
             plugin.getLogger().warning("DuelPlus: Spalte angenommen_um konnte nicht angelegt werden: " + e.getMessage());
         }
-        try (var st = conn().createStatement()) {
-            st.executeUpdate("CREATE INDEX IF NOT EXISTS duelplus_duelle_status ON duelplus_duelle (status, erstellt)");
-            st.executeUpdate("CREATE INDEX IF NOT EXISTS duelplus_replays_server ON duelplus_replays (server)");
+        try {
+            indexAnlegen("duelplus_duelle", "duelplus_duelle_status", "status, erstellt");
+            indexAnlegen("duelplus_replays", "duelplus_replays_server", "server");
         } catch (SQLException e) {
             plugin.getLogger().warning("DuelPlus: Index konnte nicht angelegt werden: " + e.getMessage());
+        }
+    }
+
+    private boolean vorhanden(String sql, String tabelle, String name) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setString(1, tabelle);
+            ps.setString(2, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    private void indexAnlegen(String tabelle, String name, String spalten) throws SQLException {
+        if (!vorhanden("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() "
+                + "AND TABLE_NAME=? AND INDEX_NAME=?", tabelle, name)) {
+            aendern("CREATE INDEX " + name + " ON " + tabelle + " (" + spalten + ")");
+        }
+    }
+
+    private void aendern(String sql) throws SQLException {
+        try (var st = conn().createStatement()) {
+            st.executeUpdate(sql);
+        } catch (SQLException e) {
+            if (e.getErrorCode() != 1060 && e.getErrorCode() != 1061) {
+                throw e;
+            }
         }
     }
 

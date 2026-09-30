@@ -47,7 +47,9 @@ Vorbild wie SMPLobbys Server-Wähler) - es reicht ein Eintrag für
 
 ## Voraussetzung: gemeinsame MariaDB
 
-**Zwingend erforderlich.** DuelPlus muss Zustand (wer fordert wen
+**Zwingend erforderlich** – MariaDB oder MySQL (ab 5.7), beides geht. Neue
+Spalten und Indizes legt DuelPlus beim Start selbst an, auch in Tabellen aus
+älteren Versionen. DuelPlus muss Zustand (wer fordert wen
 heraus, wessen Inventar wohin unterwegs ist, wer gerade auf welchem
 Server ist) zwischen drei komplett getrennten Serverprozessen teilen -
 eine lokale Datei könnte das grundsätzlich nicht. Ohne Verbindung
