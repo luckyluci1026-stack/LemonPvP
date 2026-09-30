@@ -55,6 +55,7 @@ public final class BetterSMPCommand implements TabExecutor {
                 plugin.msgs().send(sender, "reloaded");
             }
             case "backup" -> backup(sender, args);
+            case "leistung" -> new de.lemonpvp.bettersmp.leistung.LeistungsCheck(plugin).melden(sender, plugin.sichtweite());
             default -> plugin.msgs().send(sender, "usage");
         }
         return true;

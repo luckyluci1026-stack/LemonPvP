@@ -134,4 +134,10 @@ backup:
   status: "%prefix%<gray>Letzte Sicherung von <white>%spieler%</white>: vor <white>%sekunden%s</white>.</gray>"
   restored: "%prefix%<green>Inventar + Enderkiste von <white>%spieler%</white> aus der letzten Sicherung wiederhergestellt.</green>"
 
-usage: "%prefix%<gray>Befehle: <white>/bettersmp status | install | update | ranks | deployconfigs | reload | backup</white></gray>"
+usage: "%prefix%<gray>Befehle: <white>/bettersmp status | install | update | ranks | deployconfigs | reload | backup | leistung</white></gray>"
+
+leistung:
+  kopf: "%prefix%<gray>Leistungs-Check - <white>%probleme%</white> Einstellung(en) mit Verbesserungspotenzial:</gray>"
+  ok: "<dark_gray> </dark_gray><green>✔</green> <gray>%wert%</gray>"
+  problem: "<dark_gray> </dark_gray><red>✘</red> <white>%wert%</white> <dark_gray>→</dark_gray> <gray>%empfehlung%</gray>"
+  sichtweite: "<dark_gray> </dark_gray><gray>Gerade: <white>%mspt%</white> ms/Tick · Sichtweite gesenkt um <white>%reduktion%</white> · Bedrock-Sichtweite <white>%bedrock%</white></gray>"

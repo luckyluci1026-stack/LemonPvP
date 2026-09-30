@@ -199,6 +199,41 @@ release:
   erinnerung-minuten: 5
 
 # ----------------------------------------------------------
+#  Einlass: nicht alle auf einmal
+#
+#  Wollen viele Spieler gleichzeitig auf einen dieser Server (Start
+#  nach einem Neustart, alle kommen aus dem Warteraum zurueck, alle
+#  klicken in der Lobby gleichzeitig auf SMP), kommen sie gestaffelt
+#  rein. Wer warten muss, sieht seinen Platz in der Actionbar und wird
+#  automatisch verbunden - neue Verbindungen warten dafuer im Limbo.
+#
+#  Die Server melden dem Proxy ihre Auslastung (Millisekunden pro Tick,
+#  50 = voll ausgelastet; BetterSMP und SMPLobby machen das von selbst).
+#  Ab "langsamer-ab-mspt" kommt nur noch die Haelfte rein, ab
+#  "pause-ab-mspt" niemand, bis es wieder besser ist. Das gilt auch fuer
+#  die Wellen beim Release.
+# ----------------------------------------------------------
+einlass:
+  aktiv: true
+  server: ["SMP"]
+  # So viele Spieler pro Sekunde (Kommazahlen gehen, z.B. 2.5)
+  pro-sekunde: 4
+  langsamer-ab-mspt: 35
+  pause-ab-mspt: 45
+  # Wer von diesen Servern kommt, wartet nie (Rueckkehr aus einem Duell)
+  ausnahmen-von: ["Duels"]
+
+# ----------------------------------------------------------
+#  Bedrock (Geyser auf diesem Proxy)
+#
+#  Prueft beim Start die Geyser-Config und stellt die Direktverbindung
+#  ohne doppelte Kompression ein - ein Bedrock-Spieler kostet dann kaum
+#  mehr als ein Java-Spieler. Wirkt nach dem naechsten Proxy-Neustart.
+# ----------------------------------------------------------
+bedrock:
+  geyser-optimieren: true
+
+# ----------------------------------------------------------
 #  /regeln und /rules
 #
 #  Beide Befehle zeigen dasselbe - auf jedem Server im Netzwerk.

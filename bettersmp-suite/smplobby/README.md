@@ -16,7 +16,8 @@ passiert hier.
 | **Schnellleiste** | Frei konfigurierbare Gegenstände: Server-Wähler, Spieler ausblenden, Regeln. |
 | **Server-Wähler** | Ein Fenster mit deinen Servern und ihren Spielerzahlen. Klick → der Proxy schickt dich hin. |
 | **Spieler ausblenden** | Ein Klick, und die anderen sind weg — nur für dich. |
-| **Anzeigetafel** | Sidebar mit Name, Spielern in der Lobby und im Netzwerk. Flackerfrei. |
+| **Anzeigetafel** | Sidebar mit Name, Spielern in der Lobby und im Netzwerk. Flackerfrei, es gehen nur geänderte Zeilen raus. |
+| **Lastmeldung** | Meldet SMPProxy alle 2 Sekunden die Auslastung der Lobby (für den Einlass bei Andrang). |
 | **Doppelsprung** | Zweimal Leertaste, und man fliegt ein Stück. |
 | **Chat** | Mit `chat.netzwerk: true` (Standard) geht der Lobby-Chat über SMPProxy auch an den SMP, und der SMP-Chat erscheint hier. Wer auf dem SMP stummgeschaltet ist, kann auch hier nicht schreiben. |
 

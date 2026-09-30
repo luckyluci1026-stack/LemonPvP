@@ -17,6 +17,9 @@ settings:
   cancel-on-damage: true
   # Sekunden Unverwundbarkeit direkt nach der Ankunft
   invulnerable-after-seconds: 3
+  # So viele Suchen laufen gleichzeitig - wer danach kommt, wartet kurz in
+  # einer Reihe. Schuetzt vor Lag, wenn beim Start alle auf einmal /rtp machen.
+  max-gleichzeitig: 3
   # Standardwelt, wenn keine angegeben wird (leer = aktuelle Welt des Spielers)
   default-world: "world"
 

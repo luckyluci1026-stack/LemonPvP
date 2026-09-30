@@ -52,6 +52,13 @@ public final class ProxyCommand implements SimpleCommand {
                 source.sendMessage(plugin.message("status-online",
                         "%server%", name,
                         "%spieler%", String.valueOf(server.getPlayersConnected().size())));
+                var last = plugin.einlass().last(name);
+                if (last.isPresent() || plugin.einlass().geschuetzt(name)) {
+                    source.sendMessage(plugin.screen("status-last",
+                            "%mspt%", last.map(l -> String.format(java.util.Locale.GERMANY, "%.1f", l.mspt())).orElse("?"),
+                            "%tps%", last.map(l -> String.format(java.util.Locale.GERMANY, "%.1f", Math.min(20.0, l.tps()))).orElse("?"),
+                            "%warten%", String.valueOf(plugin.einlass().wartende(name))));
+                }
             } else {
                 source.sendMessage(plugin.message("status-offline", "%server%", name));
             }

@@ -66,6 +66,10 @@ Simple Voice Chat (`voicechat`) auf jeden Server legen, auf dem gesprochen
 werden soll – AntiSwear erkennt es automatisch und moderiert den Voice-Chat
 mit. Ohne Simple Voice Chat läuft AntiSwear ganz normal weiter.
 
+Wie der Server auch bei vielen gleichzeitigen Spielern (Java und Bedrock)
+flüssig bleibt und welche Server-Einstellungen du setzen solltest, steht in
+`../LEISTUNG.md`.
+
 Chat zwischen Lobby und SMP, `/msg` über alle Server, die einmaligen
 Beitritts-Nachrichten und die Sperren im Kampf laufen über SMPProxy - dafür
 müssen Proxy und Server-Plugins aus derselben Version stammen. Details in

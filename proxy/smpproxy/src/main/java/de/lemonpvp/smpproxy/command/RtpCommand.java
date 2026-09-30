@@ -91,6 +91,10 @@ public final class RtpCommand implements SimpleCommand {
         if (plugin.release().abweisen(player, ziel)) {
             return;
         }
+        if (plugin.einlass().mussWarten(player, ziel)) {
+            plugin.einlass().anstellenUndMelden(player, ziel, angekommen -> nachDemWechsel(angekommen, args));
+            return;
+        }
         player.sendMessage(plugin.message("rtp-sending", "%server%", ziel));
         player.createConnectionRequest(zielServer.get()).connect().whenComplete((result, error) -> {
             boolean ok = error == null && result != null && result.isSuccessful();
@@ -98,10 +102,14 @@ public final class RtpCommand implements SimpleCommand {
                 player.sendMessage(plugin.message("switch-failed", "%server%", ziel));
                 return;
             }
-            plugin.proxy().getScheduler().buildTask(plugin, () -> sendeRtpAuftrag(player, args))
-                    .delay(NACHLAUF_MILLIS, TimeUnit.MILLISECONDS)
-                    .schedule();
+            nachDemWechsel(player, args);
         });
+    }
+
+    private void nachDemWechsel(Player player, String[] args) {
+        plugin.proxy().getScheduler().buildTask(plugin, () -> sendeRtpAuftrag(player, args))
+                .delay(NACHLAUF_MILLIS, TimeUnit.MILLISECONDS)
+                .schedule();
     }
 
     private void sendeRtpAuftrag(Player player, String[] args) {

@@ -6,6 +6,7 @@ import de.lemonpvp.smplobby.SMPLobby;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
@@ -38,6 +39,7 @@ public final class ProxyBridge implements PluginMessageListener {
     /** So heisst der Kanal - auch bei Velocity. */
     public static final String KANAL = "BungeeCord";
     public static final String REGELN = "smpproxy:regeln";
+    public static final String LAST = "smpproxy:last";
 
     private final SMPLobby plugin;
 
@@ -50,19 +52,40 @@ public final class ProxyBridge implements PluginMessageListener {
     /** Auf welchem Server der Proxy uns selbst fuehrt. */
     private String eigenerName = "";
 
+    private BukkitTask lastTakt;
+
     public ProxyBridge(SMPLobby plugin) {
         this.plugin = plugin;
+    }
+
+    public void lastMelden() {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online.getListeningPluginChannels().contains(LAST)) {
+                ByteArrayDataOutput aus = ByteStreams.newDataOutput();
+                aus.writeDouble(Bukkit.getAverageTickTime());
+                aus.writeDouble(Bukkit.getTPS()[0]);
+                online.sendPluginMessage(plugin, LAST, aus.toByteArray());
+                return;
+            }
+        }
     }
 
     public void start() {
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, KANAL);
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, REGELN);
+        Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, LAST);
         Bukkit.getMessenger().registerIncomingPluginChannel(plugin, KANAL, this);
+        lastTakt = Bukkit.getScheduler().runTaskTimer(plugin, this::lastMelden, 40L, 40L);
     }
 
     public void stop() {
+        if (lastTakt != null) {
+            lastTakt.cancel();
+            lastTakt = null;
+        }
         Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, KANAL);
         Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, REGELN);
+        Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, LAST);
         Bukkit.getMessenger().unregisterIncomingPluginChannel(plugin, KANAL, this);
     }
 

@@ -148,16 +148,19 @@ public final class BoardManager {
         sidebarLineCount.remove(player.getUniqueId());
         sidebarTexte.remove(player.getUniqueId());
         sidebarTitel.remove(player.getUniqueId());
-        player.setScoreboard(sb);
         if (scoreboardEnabled()) {
             updateSidebar(player);
         }
-        if (nametagsEnabled()) {
-            boolean kollidieren = kollisionAktuell();
-            Nametag eigenes = nametag(player);
+        boolean namen = nametagsEnabled();
+        boolean kollidieren = namen && kollisionAktuell();
+        Nametag eigenes = namen ? nametag(player) : null;
+        if (namen) {
             for (Player target : Bukkit.getOnlinePlayers()) {
                 applyNametag(player, target, target.equals(player) ? eigenes : nametag(target), kollidieren);
             }
+        }
+        player.setScoreboard(sb);
+        if (namen) {
             // Diesen neuen Spieler auch auf allen anderen Boards als Nametag zeigen
             for (Player viewer : Bukkit.getOnlinePlayers()) {
                 if (!viewer.equals(player)) {

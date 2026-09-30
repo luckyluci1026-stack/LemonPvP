@@ -55,7 +55,20 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   (Geld, Ping, Spieler, TPS, Kills, K/D, Spielzeit, PlaceholderAPI …).
   Auch hier geht nur eine Zeile raus, deren Text sich wirklich geändert hat
   (z. B. der eigene Ping), gleiche Zeilen werden nur einmal pro Takt
-  übersetzt.
+  übersetzt. Beim Beitreten wird die Tafel fertig gebaut und in einem Rutsch
+  geschickt (bei 40 Spielern 211 statt rund 350 Pakete).
+- **Leistung** (`leistung` in `config.yml`):
+  - **Bedrock-Sichtweite** (Standard 6): Bedrock-Spieler bekommen weniger
+    Chunks – weniger Arbeit für Handys, Konsolen und Geyser. `0` = wie Java.
+  - **Dynamische Sichtweite**: Liegt der Server über 45 ms pro Tick (z. B. wenn
+    beim Start viele gleichzeitig kommen), sinkt die Sichtweite für alle um je
+    einen Chunk (nie unter 5) und steigt wieder, sobald es 30 Sekunden lang
+    unter 30 ms bleibt. Die Welt-Einstellung selbst wird nicht angefasst.
+  - **Lastmeldung**: meldet SMPProxy alle 2 Sekunden die Auslastung, damit
+    der Einlass bei Andrang bremst.
+  - **`/bettersmp leistung`** prüft `server.properties`, die Paper-Configs und
+    den Startbefehl und sagt, was noch bremst (steht beim Start auch in der
+    Konsole). Die Empfehlungen im Detail: `../../LEISTUNG.md`.
 - **Auto-Installer** + fertige Configs für EssentialsX, LuckPerms, Vault,
   PlaceholderAPI und TAB (deutsche EssentialsX-Nachrichten, **ohne Kits**).
 - **/settings-GUI** zum Live-Umschalten der Module.

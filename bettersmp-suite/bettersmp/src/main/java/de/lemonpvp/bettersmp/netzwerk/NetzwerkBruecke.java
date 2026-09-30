@@ -9,6 +9,7 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.json.JSONOptions;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ public final class NetzwerkBruecke {
 
     public static final String CHAT = "bettersmp:chat";
     public static final String STUMM = "bettersmp:mute";
+    public static final String LAST = "smpproxy:last";
 
     private static final GsonComponentSerializer JSON = GsonComponentSerializer.builder()
             .options(JSONOptions.compatibility())
@@ -24,6 +26,7 @@ public final class NetzwerkBruecke {
     private static final byte ART_FREEZE = 2;
 
     private final BetterSMP plugin;
+    private BukkitTask lastTakt;
 
     public NetzwerkBruecke(BetterSMP plugin) {
         this.plugin = plugin;
@@ -32,11 +35,30 @@ public final class NetzwerkBruecke {
     public void start() {
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, CHAT);
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, STUMM);
+        Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, LAST);
+        lastTakt = Bukkit.getScheduler().runTaskTimer(plugin, this::lastMelden, 40L, 40L);
     }
 
     public void stop() {
+        if (lastTakt != null) {
+            lastTakt.cancel();
+            lastTakt = null;
+        }
         Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, CHAT);
         Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, STUMM);
+        Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, LAST);
+    }
+
+    public void lastMelden() {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (bereit(online, LAST)) {
+                ByteArrayDataOutput aus = ByteStreams.newDataOutput();
+                aus.writeDouble(Bukkit.getAverageTickTime());
+                aus.writeDouble(Bukkit.getTPS()[0]);
+                online.sendPluginMessage(plugin, LAST, aus.toByteArray());
+                return;
+            }
+        }
     }
 
     public void chatWeitergeben(Player sender, Component nachricht) {

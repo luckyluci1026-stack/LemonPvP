@@ -205,6 +205,25 @@ scoreboard:
   update-interval: 20
 
 # ----------------------------------------------------------
+# Leistung
+#
+# Bedrock-Spieler (Handy, Konsole) bekommen eine kleinere Sichtweite:
+# weniger Chunks fuer das Geraet und fuer Geyser auf dem Proxy.
+# 0 = wie Java-Spieler.
+#
+# Wird der Server langsam (z.B. wenn beim Start viele gleichzeitig
+# kommen), sinkt die Sichtweite fuer alle voruebergehend um je einen
+# Chunk (nie unter min-sichtweite) und steigt wieder, sobald es 30
+# Sekunden lang ruhig ist. Die Welt-Einstellung selbst bleibt unberuehrt.
+# ----------------------------------------------------------
+leistung:
+  bedrock-sichtweite: 6
+  dynamische-sichtweite: true
+  min-sichtweite: 5
+  senken-ab-mspt: 45
+  anheben-unter-mspt: 30
+
+# ----------------------------------------------------------
 # Ban/Mute-System - Gründe & Screens in bans.yml / mutes.yml
 # ----------------------------------------------------------
 punishments:

@@ -8,9 +8,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Steuert Ablauf, Cooldowns, Warmup und Economy für /rtp.
@@ -25,6 +28,11 @@ public final class RTPManager {
     private final Map<UUID, BukkitTask> warmups = new ConcurrentHashMap<>();
     private final Map<UUID, Location> warmupOrigin = new ConcurrentHashMap<>();
     private final Map<UUID, Long> schutzBis = new ConcurrentHashMap<>();
+    private final Deque<Auftrag> reihe = new ArrayDeque<>();
+    private int aktiv;
+
+    private record Auftrag(Player player, World world, Profile profile, boolean charge, double cost) {
+    }
 
     public RTPManager(BetterRTP plugin) {
         this.plugin = plugin;
@@ -123,6 +131,7 @@ public final class RTPManager {
 
     /** Von WarmupListener bei Bewegung/Schaden aufgerufen. */
     public void cancelWarmup(UUID uuid) {
+        reihe.removeIf(auftrag -> auftrag.player().getUniqueId().equals(uuid));
         BukkitTask task = warmups.remove(uuid);
         warmupOrigin.remove(uuid);
         if (task != null) {
@@ -154,36 +163,79 @@ public final class RTPManager {
         schutzBis.remove(uuid);
     }
 
+    private int maxGleichzeitig() {
+        return Math.max(1, cfg("max-gleichzeitig", 3));
+    }
+
+    public int aktiv() {
+        return aktiv;
+    }
+
+    public int wartende() {
+        return reihe.size();
+    }
+
     private void finishAndTeleport(Player player, World world, Profile profile,
                                    boolean charge, double cost) {
         UUID uuid = player.getUniqueId();
         // Als "in Arbeit" markieren, damit keine zweite Anfrage startet
         warmups.put(uuid, plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
         }, 1L));
+        if (aktiv >= maxGleichzeitig()) {
+            reihe.addLast(new Auftrag(player, world, profile, charge, cost));
+            plugin.msgs().send(player, "queued", "position", String.valueOf(reihe.size()));
+            return;
+        }
+        suchen(player, world, profile, charge, cost);
+    }
+
+    private void suchen(Player player, World world, Profile profile, boolean charge, double cost) {
+        UUID uuid = player.getUniqueId();
+        aktiv++;
         plugin.msgs().send(player, "searching");
 
-        finder.find(world, profile, cfg("max-attempts", 60)).thenAccept(location -> {
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
-                warmups.remove(uuid);
-                if (!player.isOnline()) {
-                    return;
-                }
-                if (location == null) {
-                    plugin.msgs().send(player, "failed");
-                    return;
-                }
-                if (charge && !economy.withdraw(player, cost)) {
-                    plugin.msgs().send(player, "not-enough-money", "cost", economy.format(cost));
-                    return;
-                }
-                setCooldown(uuid);
-                player.teleportAsync(location).thenAccept(success -> {
-                    if (Boolean.TRUE.equals(success)) {
-                        onArrive(player, location, charge, cost);
+        finder.find(world, profile, cfg("max-attempts", 60)).orTimeout(90, TimeUnit.SECONDS)
+                .whenComplete((location, fehler) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    warmups.remove(uuid);
+                    if (!player.isOnline()) {
+                        fertig();
+                        return;
                     }
-                });
-            });
-        });
+                    if (location == null) {
+                        plugin.msgs().send(player, "failed");
+                        fertig();
+                        return;
+                    }
+                    if (charge && !economy.withdraw(player, cost)) {
+                        plugin.msgs().send(player, "not-enough-money", "cost", economy.format(cost));
+                        fertig();
+                        return;
+                    }
+                    setCooldown(uuid);
+                    player.teleportAsync(location).completeOnTimeout(false, 30, TimeUnit.SECONDS)
+                            .whenComplete((success, teleportFehler) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                if (Boolean.TRUE.equals(success)) {
+                                    onArrive(player, location, charge, cost);
+                                }
+                                fertig();
+                            }));
+                }));
+    }
+
+    private void fertig() {
+        aktiv = Math.max(0, aktiv - 1);
+        while (aktiv < maxGleichzeitig() && !reihe.isEmpty()) {
+            Auftrag naechster = reihe.pollFirst();
+            if (!naechster.player().isOnline()) {
+                continue;
+            }
+            suchen(naechster.player(), naechster.world(), naechster.profile(), naechster.charge(), naechster.cost());
+        }
+        int platz = 0;
+        for (Auftrag wartet : reihe) {
+            platz++;
+            wartet.player().sendActionBar(plugin.msgs().format("queued-actionbar", "position", String.valueOf(platz)));
+        }
     }
 
     private void onArrive(Player player, Location location, boolean charged, double cost) {
@@ -219,6 +271,8 @@ public final class RTPManager {
     }
 
     public void shutdown() {
+        reihe.clear();
+        aktiv = 0;
         for (BukkitTask task : warmups.values()) {
             task.cancel();
         }

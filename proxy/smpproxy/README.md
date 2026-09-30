@@ -86,8 +86,9 @@ allen Servern abgeglichen (`voice.yml`).
 | `/release aus` | Countdown beenden, alles offen | `smpproxy.release.admin` |
 | `/testrelease [Sekunden]`, `/testrelease stop` | Probe-Release nur für dich | `smpproxy.release.test` |
 | – | vor dem Release schon überall hin dürfen | `smpproxy.release.bypass` |
+| – | nie in der Einlass-Warteschlange warten | `smpproxy.einlass.bypass` |
 | `/netban`, `/netunban`, `/netbans`, `/netbaninfo` | Netzwerkbann | `smpproxy.ban` |
-| `/smpproxy status` | zeigt online/offline + Spielerzahl je Server | `smpproxy.admin` |
+| `/smpproxy status` | zeigt online/offline, Spielerzahl, Auslastung (ms/Tick, TPS) und Warteschlange je Server | `smpproxy.admin` |
 | `/smpproxy reload` | `config.yml` neu einlesen | `smpproxy.admin` |
 
 Rechte auf dem Proxy vergibt LuckPerms-Velocity (z.B.
@@ -137,6 +138,37 @@ release:
 
 Was per `/release` gesetzt wird, steht in `release.yml` und gilt vor
 `release.zeit` – bis in der `config.yml` ein neuer Termin eingetragen wird.
+
+```yaml
+einlass:
+  aktiv: true
+  server: ["SMP"]          # diese Server bekommen neue Spieler nur gestaffelt
+  pro-sekunde: 4           # so viele pro Sekunde (Kommazahlen gehen)
+  langsamer-ab-mspt: 35    # ab hier nur noch die Hälfte
+  pause-ab-mspt: 45        # ab hier niemand, bis es besser ist
+  ausnahmen-von: ["Duels"] # wer von hier kommt, wartet nie
+```
+
+Der **Einlass** verhindert Lag, wenn viele gleichzeitig auf den SMP wollen:
+nach einem Neustart (alle kommen aus dem Warteraum zurück), direkt nach dem
+Proxy-Start oder wenn in der Lobby alle gleichzeitig auf SMP klicken. Wer
+warten muss, sieht in der Actionbar seinen Platz und die Wartezeit und wird
+automatisch verbunden – neue Verbindungen warten dafür im Warteraum. Die
+Server melden über den Kanal `smpproxy:last` alle 2 Sekunden ihre Auslastung
+(BetterSMP und SMPLobby machen das von selbst). Ist der SMP ausgelastet, kommt
+nur noch die Hälfte oder vorübergehend niemand rein – das gilt auch für die
+Release-Wellen. Rückkehrer aus einem Duell und das Team
+(`smpproxy.einlass.bypass`) warten nie.
+
+```yaml
+bedrock:
+  geyser-optimieren: true
+```
+
+Stellt beim Start in der Geyser-Config auf dem Proxy
+`use-direct-connection: true` und `disable-compression: true` ein (wirkt nach
+dem nächsten Neustart). Mehr zu Bedrock- und Java-Leistung steht in
+`../../LEISTUNG.md`.
 
 ## Bauen
 

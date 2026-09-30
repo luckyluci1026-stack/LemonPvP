@@ -88,7 +88,21 @@ public final class ProxyConfig {
             Map.entry("testrelease-keiner", "%prefix%<gray>Bei dir läuft gerade kein Probe-Release.</gray>"),
             Map.entry("testrelease-fertig", "%prefix%<green>Probe-Release fertig</green> <gray>- genau so erleben es alle beim echten Release.</gray>"),
             Map.entry("network-quit", "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> "
-                    + "<gray>hat den Server verlassen.</gray>"));
+                    + "<gray>hat den Server verlassen.</gray>"),
+            Map.entry("einlass-warteschlange", "%prefix%<gray>Gerade kommen viele gleichzeitig auf <white>%server%</white> - "
+                    + "du bist in der Warteschlange (Platz <white>%platz%</white>) und kommst automatisch rein.</gray>"),
+            Map.entry("einlass-warteraum", "%prefix%<gray>Gerade kommen viele gleichzeitig auf <white>%server%</white>. "
+                    + "Du wartest kurz hier (Platz <white>%platz%</white>) und kommst automatisch rein.</gray>"),
+            Map.entry("einlass-position", "<gray>Warteschlange <white>%server%</white>: Platz <white>%platz%</white> "
+                    + "<dark_gray>·</dark_gray> noch etwa <white>%sekunden%s</white></gray>"),
+            Map.entry("einlass-pause", "<gold>%server% ist gerade ausgelastet</gold> <gray>- Platz <white>%platz%</white>, "
+                    + "gleich geht's weiter</gray>"),
+            Map.entry("einlass-startet", "<gold>%server% startet gerade</gold> <gray>- Platz <white>%platz%</white>, "
+                    + "du kommst automatisch rein</gray>"),
+            Map.entry("release-bossbar-ausgelastet", "<gold><bold>%server% holt kurz Luft ...</bold></gold>"),
+            Map.entry("release-ausgelastet", "<gold>%server% ist gerade ausgelastet - die nächste Welle kommt gleich.</gold>"),
+            Map.entry("status-last", "<dark_gray>    ↳ </dark_gray><gray><white>%mspt%</white> ms/Tick <dark_gray>·</dark_gray> "
+                    + "<white>%tps%</white> TPS <dark_gray>·</dark_gray> <white>%warten%</white> in der Warteschlange</gray>"));
 
     private static final List<String> STANDARD_REGELN = List.of(
             "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP · Regeln</bold></gradient>",
@@ -410,6 +424,34 @@ public final class ProxyConfig {
         return Math.max(0, integer("release.erinnerung-minuten", 5));
     }
 
+    public boolean einlassAktiv() {
+        return bool("einlass.aktiv", true);
+    }
+
+    public List<String> einlassServer() {
+        return strings("einlass.server", List.of(defaultServer().isEmpty() ? "SMP" : defaultServer()));
+    }
+
+    public double einlassProSekunde() {
+        return Math.max(0.2, zahl("einlass.pro-sekunde", 4));
+    }
+
+    public double einlassLangsamerAbMspt() {
+        return Math.max(1, zahl("einlass.langsamer-ab-mspt", 35));
+    }
+
+    public double einlassPauseAbMspt() {
+        return Math.max(einlassLangsamerAbMspt(), zahl("einlass.pause-ab-mspt", 45));
+    }
+
+    public List<String> einlassAusnahmenVon() {
+        return strings("einlass.ausnahmen-von", List.of("Duels"));
+    }
+
+    public boolean geyserOptimieren() {
+        return bool("bedrock.geyser-optimieren", true);
+    }
+
     public boolean regelnEnabled() {
         return bool("regeln.enabled", true);
     }
@@ -534,6 +576,20 @@ public final class ProxyConfig {
                 return Integer.parseInt(String.valueOf(value).trim());
             } catch (NumberFormatException ignored) {
                 // Standardwert benutzen
+            }
+        }
+        return fallback;
+    }
+
+    private double zahl(String path, double fallback) {
+        Object value = get(path);
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        if (value != null) {
+            try {
+                return Double.parseDouble(String.valueOf(value).trim().replace(',', '.'));
+            } catch (NumberFormatException ignored) {
             }
         }
         return fallback;

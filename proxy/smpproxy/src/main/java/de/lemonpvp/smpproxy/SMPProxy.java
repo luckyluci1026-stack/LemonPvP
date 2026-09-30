@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import de.lemonpvp.smpproxy.ban.BanStore;
+import de.lemonpvp.smpproxy.bedrock.GeyserOptimierung;
 import de.lemonpvp.smpproxy.command.AhCommand;
 import de.lemonpvp.smpproxy.command.HubCommand;
 import de.lemonpvp.smpproxy.command.MsgCommand;
@@ -21,6 +22,7 @@ import de.lemonpvp.smpproxy.command.ProxyCommand;
 import de.lemonpvp.smpproxy.command.RegelnCommand;
 import de.lemonpvp.smpproxy.command.ServerCommand;
 import de.lemonpvp.smpproxy.config.ProxyConfig;
+import de.lemonpvp.smpproxy.einlass.Einlass;
 import de.lemonpvp.smpproxy.health.HomeTracker;
 import de.lemonpvp.smpproxy.health.ServerWatcher;
 import de.lemonpvp.smpproxy.listener.BanListener;
@@ -73,6 +75,8 @@ public final class SMPProxy {
     private final RegelnCommand regeln;
     private final VoiceAbgleich voice;
     private final ReleaseManager release;
+    private final Einlass einlass;
+    private final Path folder;
 
     private final List<ScheduledTask> tasks = new ArrayList<>();
 
@@ -90,6 +94,8 @@ public final class SMPProxy {
         this.regeln = new RegelnCommand(this);
         this.voice = new VoiceAbgleich(this, folder);
         this.release = new ReleaseManager(this, folder);
+        this.einlass = new Einlass(this);
+        this.folder = folder;
     }
 
     @Subscribe
@@ -102,7 +108,8 @@ public final class SMPProxy {
         proxy.getEventManager().register(this, new ConnectListener(this));
         proxy.getEventManager().register(this, banListener);
         proxy.getChannelRegistrar().register(KampfSperre.KANAL, ChatRelay.CHAT, ChatRelay.STUMM,
-                RtpCommand.RTP_CHANNEL, Moderation.MSG, Moderation.HALLO, Moderation.MUTE, RegelnCommand.KANAL, VoiceAbgleich.KANAL);
+                RtpCommand.RTP_CHANNEL, Moderation.MSG, Moderation.HALLO, Moderation.MUTE, RegelnCommand.KANAL, VoiceAbgleich.KANAL,
+                Einlass.KANAL);
         proxy.getEventManager().register(this, new KampfSperre(this));
         proxy.getEventManager().register(this, chatRelay);
         proxy.getEventManager().register(this, privatnachrichten);
@@ -111,6 +118,11 @@ public final class SMPProxy {
         proxy.getEventManager().register(this, voice);
         proxy.getEventManager().register(this, release);
         release.starten();
+        proxy.getEventManager().register(this, einlass);
+        einlass.starten();
+        if (config.geyserOptimieren() && folder.getParent() != null) {
+            new GeyserOptimierung(folder.getParent(), log).optimieren();
+        }
         proxy.getEventManager().register(this, new JoinQuitNachrichten(this));
         startTasks();
         registerCommands();
@@ -164,6 +176,18 @@ public final class SMPProxy {
             String home = tracker.home(player.getUniqueId());
             if (home == null || home.equals(limbo) || !watcher.isStable(home) || release.blockiert(player, home)
                     || release.probeLaeuft(player.getUniqueId())) {
+                continue;
+            }
+            if (einlass.geschuetzt(home)) {
+                if (einlass.wartetAuf(player.getUniqueId()).isEmpty()) {
+                    einlass.anstellen(player, home, zurueck -> {
+                        tracker.clearCooldown(zurueck.getUniqueId());
+                        zurueck.sendMessage(message("return-ok", "%server%", home));
+                    });
+                    if (config.returnNotice()) {
+                        player.sendMessage(message("return-soon", "%server%", home));
+                    }
+                }
                 continue;
             }
             if (!tracker.tryAttempt(player.getUniqueId(), config.returnCooldown() * 1000L)) {
@@ -293,6 +317,10 @@ public final class SMPProxy {
             player.sendMessage(message("unknown-server", "%server%", server));
             return;
         }
+        if (einlass.mussWarten(player, server)) {
+            einlass.anstellenUndMelden(player, server, null);
+            return;
+        }
         player.createConnectionRequest(target.get()).connect().whenComplete((result, error) -> {
             boolean ok = error == null && result != null && result.isSuccessful();
             if (!ok && !quiet) {
@@ -352,6 +380,10 @@ public final class SMPProxy {
 
     public ReleaseManager release() {
         return release;
+    }
+
+    public Einlass einlass() {
+        return einlass;
     }
 
     public BanListener banListener() {

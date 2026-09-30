@@ -22,6 +22,8 @@ import de.lemonpvp.bettersmp.join.JoinModule;
 import de.lemonpvp.bettersmp.netzwerk.NetzwerkBruecke;
 import de.lemonpvp.bettersmp.tutorial.Tutorial;
 import de.lemonpvp.bettersmp.killstreak.KillstreakListener;
+import de.lemonpvp.bettersmp.leistung.LeistungsCheck;
+import de.lemonpvp.bettersmp.leistung.Sichtweite;
 import de.lemonpvp.bettersmp.punish.FreezeListener;
 import de.lemonpvp.bettersmp.punish.FreezeManager;
 import de.lemonpvp.bettersmp.punish.PunishmentCommands;
@@ -69,6 +71,7 @@ public final class BetterSMP extends JavaPlugin {
     private PunishmentManager punishments;
     private StatsManager stats;
     private BoardManager board;
+    private Sichtweite sichtweite;
     private FreezeManager freeze;
     private ReportManager reports;
     private DailyRewardManager dailyReward;
@@ -117,6 +120,8 @@ public final class BetterSMP extends JavaPlugin {
         stats.start();
         board.start();
         freeze.start();
+        this.sichtweite = new Sichtweite(this);
+        sichtweite.start();
 
         // Listener
         var pm = Bukkit.getPluginManager();
@@ -131,6 +136,7 @@ public final class BetterSMP extends JavaPlugin {
         pm.registerEvents(new FreezeListener(this), this);
         pm.registerEvents(killstreaks, this);
         pm.registerEvents(tutorial, this);
+        pm.registerEvents(sichtweite, this);
 
         // Fuer die Tod-Umleitung - unabhaengig vom Schalter registriert,
         // damit ein spaeteres Einschalten per /bettersmp reload sofort
@@ -154,6 +160,7 @@ public final class BetterSMP extends JavaPlugin {
 
         logHooks();
         Bukkit.getScheduler().runTaskLater(this, this::firstRunSetup, 40L);
+        Bukkit.getScheduler().runTaskLater(this, () -> new LeistungsCheck(this).beimStart(), 100L);
         getLogger().info("BetterSMP aktiviert.");
     }
 
@@ -163,6 +170,7 @@ public final class BetterSMP extends JavaPlugin {
         if (netzwerk != null) netzwerk.stop();
         if (stats != null) stats.stop();
         if (board != null) board.stop();
+        if (sichtweite != null) sichtweite.stop();
         if (freeze != null) freeze.stop();
         if (backup != null) backup.stop();
         if (database != null) database.shutdown();
@@ -257,6 +265,10 @@ public final class BetterSMP extends JavaPlugin {
 
     public BoardManager board() {
         return board;
+    }
+
+    public Sichtweite sichtweite() {
+        return sichtweite;
     }
 
     public FreezeManager freeze() {

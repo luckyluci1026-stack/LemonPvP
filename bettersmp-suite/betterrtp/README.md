@@ -16,6 +16,10 @@ Vollständig asynchrones, sicheres Random-Teleport-Plugin (Paper 1.21.11).
   das im Spielstand gespeichert; BetterRTP repariert solche Spieler beim
   nächsten Beitreten selbst).
 - **Optionale Kosten** über Vault/EssentialsX-Economy.
+- **Reihe bei Andrang**: Höchstens `settings.max-gleichzeitig` (Standard 3)
+  Suchen laufen gleichzeitig. Wer danach kommt, sieht seinen Platz und ist
+  gleich dran – so erzeugt der Server beim Start nicht für alle gleichzeitig
+  neue Chunks.
 
 ## Befehle
 - `/rtp [Welt]` (Aliase `/wild`, `/randomtp`) – Permission `betterrtp.use` (Standard: alle)

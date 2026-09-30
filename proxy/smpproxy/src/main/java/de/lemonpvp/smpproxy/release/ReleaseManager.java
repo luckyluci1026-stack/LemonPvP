@@ -502,7 +502,15 @@ public final class ReleaseManager {
             imWarteraum().forEach(p -> p.sendActionBar(text));
             return;
         }
-        int proWelle = plugin.config().releaseProWelle();
+        double faktor = plugin.einlass().faktor(zielName);
+        if (faktor <= 0) {
+            leiste.name(plugin.screen("release-bossbar-ausgelastet", "%server%", zielName));
+            leiste.color(BossBar.Color.YELLOW);
+            Component text = plugin.screen("release-ausgelastet", "%server%", zielName);
+            imWarteraum().forEach(p -> p.sendActionBar(text));
+            return;
+        }
+        int proWelle = Math.max(1, (int) Math.round(plugin.config().releaseProWelle() * faktor));
         long abstand = plugin.config().releaseWellenAbstandSekunden() * 1000L;
         if (letzteWelle == 0 || jetzt - letzteWelle >= abstand) {
             letzteWelle = jetzt;
@@ -537,6 +545,7 @@ public final class ReleaseManager {
         UUID id = spieler.getUniqueId();
         freigegeben.add(id);
         unterwegs.add(id);
+        plugin.einlass().durchlassen(id);
         spieler.createConnectionRequest(ziel).connect().whenComplete((ergebnis, fehler) -> {
             unterwegs.remove(id);
             boolean ok = fehler == null && ergebnis != null && ergebnis.isSuccessful();
@@ -713,6 +722,7 @@ public final class ReleaseManager {
             spieler.sendMessage(plugin.message("testrelease-fertig", "%server%", zielName));
             return;
         }
+        plugin.einlass().durchlassen(spieler.getUniqueId());
         spieler.createConnectionRequest(ziel.get()).connect().whenComplete((ergebnis, fehler) -> {
             proben.remove(spieler.getUniqueId());
             spieler.hideBossBar(probe.leiste);

@@ -275,6 +275,23 @@ Mit Proxy gehört **Geyser auf den Proxy**, nicht auf die SMP-Server:
 Proxy ist es nicht nötig – nimm dort die Velocity-Versionen von Geyser und
 Floodgate von Hand. Die restlichen Plugins der Suite laufen unverändert weiter.
 
+SMPProxy stellt in der Geyser-Config beim Start die Direktverbindung ohne
+doppelte Kompression ein. Bedrock-Spieler bekommen auf dem SMP eine kleinere
+Sichtweite (BetterSMP, `leistung.bedrock-sichtweite`). Alles Weitere zur
+Leistung – auch die empfohlenen Server-Einstellungen und Startbefehle – steht
+in `../LEISTUNG.md`.
+
+---
+
+## Viele Spieler gleichzeitig: Einlass
+
+Wollen viele Spieler im selben Moment auf den SMP – nach einem Neustart, wenn
+der Proxy startet, beim Release –, lässt SMPProxy höchstens 4 pro Sekunde
+hinein. Wer warten muss, bleibt im Warteraum oder in der Lobby, sieht seinen
+Platz und wird automatisch verbunden. Meldet der SMP hohe Auslastung, wird der
+Einlass langsamer oder pausiert kurz. Einstellungen: `einlass` in
+`smpproxy/README.md`.
+
 ---
 
 ## Netzwerkbann: /netban
