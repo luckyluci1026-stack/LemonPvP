@@ -2,13 +2,16 @@ package de.lemonpvp.fastshop.shop;
 
 import de.lemonpvp.fastshop.FastShop;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.enchantments.Enchantment;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +42,7 @@ public final class ShopConfig {
         categories.clear();
         byMaterial.clear();
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        verzauberungenEntfernen(yaml);
         ConfigurationSection cats = yaml.getConfigurationSection("categories");
         if (cats == null) {
             return;
@@ -82,19 +86,102 @@ public final class ShopConfig {
                 lore.add(String.valueOf(line));
             }
         }
-        Map<Enchantment, Integer> enchants = new LinkedHashMap<>();
-        if (raw.get("enchants") instanceof Map<?, ?> enchMap) {
-            for (Map.Entry<?, ?> e : enchMap.entrySet()) {
-                String key = String.valueOf(e.getKey()).toLowerCase(Locale.ROOT);
-                Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(key));
-                if (enchantment == null) {
-                    plugin.getLogger().warning("Unbekannte Verzauberung '" + key + "' bei " + matName);
-                    continue;
+        return new ShopItem(material, buy, sell, name, lore);
+    }
+
+    private void verzauberungenEntfernen(YamlConfiguration yaml) {
+        ConfigurationSection cats = yaml.getConfigurationSection("categories");
+        if (cats == null) {
+            return;
+        }
+        YamlConfiguration standard = null;
+        int bereinigt = 0;
+        for (String id : cats.getKeys(false)) {
+            ConfigurationSection sec = cats.getConfigurationSection(id);
+            if (sec == null) {
+                continue;
+            }
+            List<Map<String, Object>> items = new ArrayList<>();
+            boolean geaendert = false;
+            for (Map<?, ?> raw : sec.getMapList("items")) {
+                Map<String, Object> eintrag = new LinkedHashMap<>();
+                raw.forEach((schluessel, wert) -> eintrag.put(String.valueOf(schluessel), wert));
+                if (eintrag.containsKey("enchants")) {
+                    eintrag.remove("enchants");
+                    eintrag.remove("name");
+                    eintrag.remove("lore");
+                    if (standard == null) {
+                        standard = standardKatalog();
+                    }
+                    Map<?, ?> vorlage = vorlage(standard, id, String.valueOf(eintrag.get("material")));
+                    if (vorlage != null && vorlage.get("buy") != null && vorlage.get("sell") != null) {
+                        eintrag.put("buy", vorlage.get("buy"));
+                        eintrag.put("sell", vorlage.get("sell"));
+                    }
+                    geaendert = true;
+                    bereinigt++;
                 }
-                enchants.put(enchantment, Math.max(1, (int) toDouble(e.getValue(), 1)));
+                items.add(eintrag);
+            }
+            if (geaendert) {
+                sec.set("items", items);
             }
         }
-        return new ShopItem(material, buy, sell, name, lore, enchants);
+        if (bereinigt == 0) {
+            return;
+        }
+        File vorher = new File(plugin.getDataFolder(), "shop-vorher.yml");
+        yaml.options().setHeader(standard.options().getHeader());
+        yaml.setComments("categories", standard.getComments("categories"));
+        try {
+            Files.copy(file.toPath(), vorher.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            yaml.save(file);
+            plugin.getLogger().info("shop.yml: " + bereinigt + " verzauberte Items sind jetzt unverzaubert "
+                    + "(die alte Datei liegt als shop-vorher.yml daneben).");
+        } catch (IOException e) {
+            plugin.getLogger().warning("shop.yml konnte nicht angepasst werden: " + e.getMessage());
+        }
+    }
+
+    private YamlConfiguration standardKatalog() {
+        try (InputStream ein = plugin.getResource("shop.yml")) {
+            if (ein == null) {
+                return new YamlConfiguration();
+            }
+            return YamlConfiguration.loadConfiguration(new InputStreamReader(ein, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            return new YamlConfiguration();
+        }
+    }
+
+    private Map<?, ?> vorlage(YamlConfiguration standard, String kategorie, String material) {
+        Map<?, ?> treffer = vorlageIn(standard.getConfigurationSection("categories." + kategorie), material);
+        if (treffer != null) {
+            return treffer;
+        }
+        ConfigurationSection alle = standard.getConfigurationSection("categories");
+        if (alle == null) {
+            return null;
+        }
+        for (String id : alle.getKeys(false)) {
+            treffer = vorlageIn(alle.getConfigurationSection(id), material);
+            if (treffer != null) {
+                return treffer;
+            }
+        }
+        return null;
+    }
+
+    private Map<?, ?> vorlageIn(ConfigurationSection sec, String material) {
+        if (sec == null) {
+            return null;
+        }
+        for (Map<?, ?> raw : sec.getMapList("items")) {
+            if (material.equalsIgnoreCase(String.valueOf(raw.get("material")))) {
+                return raw;
+            }
+        }
+        return null;
     }
 
     private double toDouble(Object value, double fallback) {

@@ -95,7 +95,7 @@ public final class AuktionsHaus {
     }
 
     public int maxAngebote() {
-        return Math.max(1, plugin.getConfig().getInt("auktionshaus.max-angebote", 10));
+        return Math.max(1, plugin.getConfig().getInt("auktionshaus.max-angebote", 50));
     }
 
     public double minPreis() {

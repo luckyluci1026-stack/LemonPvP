@@ -89,8 +89,15 @@ public final class AuktionsMenus {
     }
 
     public static final class Eigene extends Menue {
-        Eigene(Ansicht ansicht) {
+        private final int seite;
+
+        Eigene(Ansicht ansicht, int seite) {
             super(ansicht);
+            this.seite = seite;
+        }
+
+        public int seite() {
+            return seite;
         }
     }
 
@@ -206,13 +213,20 @@ public final class AuktionsMenus {
     }
 
     public void eigeneOeffnen(Player spieler, Ansicht zurueck) {
-        Eigene holder = new Eigene(zurueck);
+        eigeneOeffnen(spieler, zurueck, 0);
+    }
+
+    public void eigeneOeffnen(Player spieler, Ansicht zurueck, int seite) {
+        List<Angebot> liste = haus().vonSpieler(spieler.getUniqueId());
+        int seiten = Math.max(1, (liste.size() + PRO_SEITE - 1) / PRO_SEITE);
+        int aktuell = Math.max(0, Math.min(seiten - 1, seite));
+        Eigene holder = new Eigene(zurueck, aktuell);
         Inventory inv = Bukkit.createInventory(holder, 54, plugin.msgs().format("ah-title-own"));
         holder.inventory = inv;
         long jetzt = System.currentTimeMillis();
-        List<Angebot> liste = haus().vonSpieler(spieler.getUniqueId());
-        for (int i = 0; i < PRO_SEITE && i < liste.size(); i++) {
-            Angebot angebot = liste.get(i);
+        int start = aktuell * PRO_SEITE;
+        for (int i = 0; i < PRO_SEITE && start + i < liste.size(); i++) {
+            Angebot angebot = liste.get(start + i);
             List<String> hinweis = angebot.kaufbar(jetzt)
                     ? List.of("<green>Aktiv", "<yellow>Klick zum Zurücknehmen")
                     : List.of("<red>Abgelaufen", "<yellow>Klick zum Abholen");
@@ -223,9 +237,21 @@ public final class AuktionsMenus {
         for (int slot = 45; slot < 54; slot++) {
             inv.setItem(slot, rahmen);
         }
-        inv.setItem(48, GuiUtil.item(Material.BOOK, 1, "<light_purple><bold>Deine Angebote",
-                List.of("<gray>" + liste.size() + " von " + haus().maxAngebote() + " Plätzen belegt", "",
-                        "<gray>Abgelaufene Angebote zählen mit,", "<gray>bis du sie abholst.")));
+        if (aktuell > 0) {
+            inv.setItem(ZURUECK, GuiUtil.item(Material.ARROW, 1, "<yellow><bold>Vorherige Seite",
+                    List.of("<gray>Seite " + aktuell + " von " + seiten)));
+        }
+        if (aktuell < seiten - 1) {
+            inv.setItem(WEITER, GuiUtil.item(Material.ARROW, 1, "<yellow><bold>Nächste Seite",
+                    List.of("<gray>Seite " + (aktuell + 2) + " von " + seiten)));
+        }
+        List<String> buch = new ArrayList<>(List.of("<gray>" + liste.size() + " von " + haus().maxAngebote() + " Plätzen belegt", "",
+                "<gray>Abgelaufene Angebote zählen mit,", "<gray>bis du sie abholst."));
+        if (seiten > 1) {
+            buch.add("");
+            buch.add("<gray>Seite <white>" + (aktuell + 1) + "</white> von <white>" + seiten);
+        }
+        inv.setItem(48, GuiUtil.item(Material.BOOK, 1, "<light_purple><bold>Deine Angebote", buch));
         inv.setItem(EIGENE_ZURUECK, GuiUtil.item(Material.ARROW, 1, "<yellow><bold>Zurück zum Auktionshaus", List.of()));
         spieler.openInventory(inv);
     }

@@ -6,7 +6,6 @@ import de.lemonpvp.fastshop.shop.ShopItem;
 import de.lemonpvp.fastshop.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Baut die Shop-Menüs: Hauptmenü mit Kategorien, Kategorieseiten mit
@@ -86,13 +84,13 @@ public final class ShopMenus {
         }
 
         // Kopfzeile
-        inv.setItem(4, GuiUtil.glowing(Material.NETHER_STAR, 1,
+        inv.setItem(4, GuiUtil.ohneGlanz(GuiUtil.item(Material.NETHER_STAR, 1,
                 "<gradient:#6C5CE7:#00D4FF><bold>Shop</bold></gradient>",
                 List.of(
                         "<gray>Kaufe und verkaufe Items",
                         "<gray>mit deinem Guthaben.",
                         "",
-                        "<dark_gray>» <gray>Kategorie anklicken zum Öffnen")));
+                        "<dark_gray>» <gray>Kategorie anklicken zum Öffnen"))));
 
         // Fußzeile: Kontostand, Schnellverkauf, Schließen
         int foot = size - 9;
@@ -109,9 +107,9 @@ public final class ShopMenus {
         // Kategorien zuletzt - so gewinnt immer die Einstellung aus shop.yml
         for (Category category : plugin.shop().categories().values()) {
             int slot = Math.max(0, Math.min(size - 1, category.slot()));
-            inv.setItem(slot, GuiUtil.item(category.icon(), 1, category.name(),
+            inv.setItem(slot, GuiUtil.ohneGlanz(GuiUtil.item(category.icon(), 1, category.name(),
                     List.of("<gray>" + category.items().size() + " Artikel",
-                            "", "<yellow>Klick zum Öffnen")));
+                            "", "<yellow>Klick zum Öffnen"))));
         }
         player.openInventory(inv);
     }
@@ -180,8 +178,8 @@ public final class ShopMenus {
                     List.of("<gray>Seite " + (page + 2))));
         }
         inv.setItem(NAV_BALANCE, balanceItem(player));
-        inv.setItem(NAV_HOME, GuiUtil.item(Material.NETHER_STAR, 1,
-                "<gold>Zum Hauptmenü", List.of()));
+        inv.setItem(NAV_HOME, GuiUtil.ohneGlanz(GuiUtil.item(Material.NETHER_STAR, 1,
+                "<gold>Zum Hauptmenü", List.of())));
         inv.setItem(NAV_SELL, GuiUtil.item(Material.HOPPER, 1,
                 "<gold>Schnellverkauf",
                 List.of("<gray>Items ablegen und verkaufen")));
@@ -213,9 +211,7 @@ public final class ShopMenus {
         }
         lore.add("<dark_gray><st>               </st>");
         lore.add("<yellow>Klick <gray>öffnet Kaufen/Verkaufen");
-        ItemStack stack = GuiUtil.item(item.material(), 1, name, lore);
-        GuiUtil.applyEnchants(stack, item.enchants());
-        return stack;
+        return GuiUtil.ohneGlanz(GuiUtil.item(item.material(), 1, name, lore));
     }
 
     // ================= Aktionsmenü =================
@@ -259,10 +255,6 @@ public final class ShopMenus {
         int have = plugin.service().countSellable(player, item.material());
 
         List<String> info = new ArrayList<>();
-        if (!item.enchants().isEmpty()) {
-            info.add(enchantLine(item));
-            info.add("");
-        }
         if (item.buyable()) {
             info.add("<gray>Kaufen  <dark_gray>» <green>" + money(item.buy()));
         }
@@ -273,8 +265,8 @@ public final class ShopMenus {
         info.add("");
         info.add("<gray>Dein Guthaben: <green>" + money(balance));
         info.add("<gray>Im Inventar: <white>" + have + "x");
-        inv.setItem(ACT_INFO, GuiUtil.glowing(item.material(), 1,
-                item.name() != null ? item.name() : "<white>" + prettyName(item.material()), info));
+        inv.setItem(ACT_INFO, GuiUtil.ohneGlanz(GuiUtil.item(item.material(), 1,
+                item.name() != null ? item.name() : "<white>" + prettyName(item.material()), info)));
 
         if (item.buyable()) {
             inv.setItem(ACT_BUY_1, buyButton(item, 1, balance));
@@ -336,29 +328,6 @@ public final class ShopMenus {
         return sb.toString().trim();
     }
 
-    private static final String[] STUFEN =
-            {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
-
-    private static String roemisch(int level) {
-        return level >= 0 && level < STUFEN.length ? STUFEN[level] : String.valueOf(level);
-    }
-
-    /** "Verzaubert: Schärfe V, Unbreaking II" - für Items, deren GUI-Icon die
-     *  Verzauberung sonst verbirgt (glowing() setzt HIDE_ENCHANTS). */
-    private String enchantLine(ShopItem item) {
-        StringBuilder sb = new StringBuilder("<light_purple>Verzaubert: <white>");
-        boolean first = true;
-        for (Map.Entry<Enchantment, Integer> entry : item.enchants().entrySet()) {
-            if (!first) {
-                sb.append("<gray>, <white>");
-            }
-            sb.append(prettyKey(entry.getKey().getKey().getKey()))
-                    .append(' ').append(roemisch(entry.getValue()));
-            first = false;
-        }
-        return sb.toString();
-    }
-
     // ================= Verkaufsfenster =================
 
     /** Freie Ablagefläche im Verkaufsfenster: Slots 0 bis SELL_AREA-1. */
@@ -418,7 +387,7 @@ public final class ShopMenus {
 
         boolean any = count > 0;
         inv.setItem(SELL_CONFIRM, any
-                ? GuiUtil.glowing(Material.EMERALD, 1,
+                ? GuiUtil.item(Material.EMERALD, 1,
                     "<green><bold>Verkaufen</bold>",
                     List.of("<gray>Verkauft alles hier drin",
                             "<gray>für <gold>" + money(total),

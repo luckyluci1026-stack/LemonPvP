@@ -1,7 +1,6 @@
 package de.lemonpvp.fastshop.shop;
 
 import de.lemonpvp.fastshop.FastShop;
-import de.lemonpvp.fastshop.gui.GuiUtil;
 import de.lemonpvp.fastshop.gui.ShopMenus;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -61,7 +60,6 @@ public final class ShopService {
             return;
         }
         ItemStack purchased = new ItemStack(item.material(), amount);
-        GuiUtil.applyEnchants(purchased, item.enchants());
         Map<Integer, ItemStack> leftover = player.getInventory().addItem(purchased);
         int notAdded = leftover.values().stream().mapToInt(ItemStack::getAmount).sum();
         if (notAdded > 0) {

@@ -153,7 +153,7 @@ public final class AuktionsListener implements Listener {
                         "item", AuktionsHaus.itemText(vorschau), "price", plugin.economy().format(menue.preis()),
                         "hours", String.valueOf(haus().dauerStunden()));
                 ton(spieler, true);
-                menus().eigeneOeffnen(spieler, menue.ansicht());
+                menus().eigeneOeffnen(spieler, menue.ansicht(), Integer.MAX_VALUE);
                 return;
             }
             case VERAENDERT -> haus().senden(spieler, "ah-changed");
@@ -179,6 +179,10 @@ public final class AuktionsListener implements Listener {
             menus().uebersichtOeffnen(spieler, menue.ansicht());
             return;
         }
+        if (slot == AuktionsMenus.ZURUECK || slot == AuktionsMenus.WEITER) {
+            menus().eigeneOeffnen(spieler, menue.ansicht(), menue.seite() + (slot == AuktionsMenus.WEITER ? 1 : -1));
+            return;
+        }
         UUID id = menue.angebotAuf(slot);
         if (id == null) {
             return;
@@ -199,7 +203,7 @@ public final class AuktionsListener implements Listener {
                 ton(spieler, false);
             }
         }
-        menus().eigeneOeffnen(spieler, menue.ansicht());
+        menus().eigeneOeffnen(spieler, menue.ansicht(), menue.seite());
     }
 
     private void bestaetigungKlick(Player spieler, AuktionsMenus.Bestaetigung menue, int slot) {

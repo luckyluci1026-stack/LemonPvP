@@ -12,11 +12,15 @@ Einfaches, customizables Shop-/Verkaufssystem (Paper 1.21.11).
 - **EssentialsX-/Vault-Economy**: nutzt das vorhandene Economy-System.
 - **Voll konfigurierbar** über `shop.yml` (Kategorien, Items, Preise) – ein
   reichhaltiger Standard-Katalog ist bereits enthalten, inklusive `pvp`- und
-  `tools`-Kategorien mit fertig verzauberten Waffen/Rüstungen/Werkzeugen
-  (`enchants:` pro Item, rein config-gesteuert). Die Preise für Erze, Barren
-  und Netherit legt das Server-Team fest (Stand September 2026: Diamant
-  1.250, Netherit-Block 90.000, Netherit-Rüstung höchstens 15.000).
-  `sell-multiplier` global.
+  `tools`-Kategorien. Die Preise für Erze, Barren und Netherit legt das
+  Server-Team fest (Stand September 2026: Diamant 1.250, Netherit-Block
+  90.000, Netherit-Rüstung höchstens 15.000). `sell-multiplier` global.
+- **Alles unverzaubert**: Im Shop gibt es keine verzauberten Items, und in
+  den Menüs leuchtet nichts. Steht in einer älteren `shop.yml` noch
+  `enchants:`, entfernt FastShop das beim Start selbst, samt den Namen und
+  Beschreibungen dieser Items, und übernimmt deren Preise aus dem
+  Standard-Katalog (Bogen 80, Angel 60). Die alte Datei bleibt als
+  `shop-vorher.yml` liegen.
 - **Schutz**: Bulk-Verkauf ignoriert benannte/verzauberte/beschädigte Items
   (deine Ausrüstung wird nicht versehentlich verkauft).
 - `/fastshop additem <Kategorie> <Kaufpreis> <Verkaufspreis>`: Item aus der Hand
@@ -66,7 +70,7 @@ Spieler verkaufen Items an andere Spieler, wie auf DonutSMP. Jede Form von
 Einstellungen in `config.yml` unter `auktionshaus:` (fehlt der Abschnitt,
 gelten diese Werte):
 - `dauer-stunden: 48`
-- `max-angebote: 10` pro Spieler, abgelaufene zählen mit
+- `max-angebote: 50` pro Spieler, abgelaufene zählen mit (`/ah meine` blättert ab 46 Angeboten auf eine zweite Seite)
 - `min-preis: 1`, `max-preis: 1000000000`
 - `steuer-prozent: 0` Gebühr, die beim Verkauf einbehalten wird
 
