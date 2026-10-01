@@ -98,6 +98,14 @@ public final class AuktionsHaus {
         return Math.max(1, plugin.getConfig().getInt("auktionshaus.max-angebote", 50));
     }
 
+    public static boolean alteGrenzeAnheben(ConfigurationSection config) {
+        if (config.getInt("auktionshaus.max-angebote", 50) != 10) {
+            return false;
+        }
+        config.set("auktionshaus.max-angebote", 50);
+        return true;
+    }
+
     public double minPreis() {
         return Math.max(0.01, plugin.getConfig().getDouble("auktionshaus.min-preis", 1));
     }

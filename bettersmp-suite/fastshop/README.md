@@ -70,7 +70,8 @@ Spieler verkaufen Items an andere Spieler, wie auf DonutSMP. Jede Form von
 Einstellungen in `config.yml` unter `auktionshaus:` (fehlt der Abschnitt,
 gelten diese Werte):
 - `dauer-stunden: 48`
-- `max-angebote: 50` pro Spieler, abgelaufene zählen mit (`/ah meine` blättert ab 46 Angeboten auf eine zweite Seite)
+- `max-angebote: 50` pro Spieler, abgelaufene zählen mit (`/ah meine` blättert ab 46 Angeboten auf eine zweite Seite).
+  Steht in einer älteren `config.yml` noch der alte Standard `10`, stellt FastShop ihn beim Start selbst auf `50`.
 - `min-preis: 1`, `max-preis: 1000000000`
 - `steuer-prozent: 0` Gebühr, die beim Verkauf einbehalten wird
 

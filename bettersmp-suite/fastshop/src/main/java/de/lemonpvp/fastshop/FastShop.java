@@ -36,6 +36,10 @@ public final class FastShop extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        if (AuktionsHaus.alteGrenzeAnheben(getConfig())) {
+            saveConfig();
+            getLogger().info("Auktionshaus: max-angebote vom alten Standard 10 auf 50 angehoben.");
+        }
         this.msgs = new Msgs(this);
         this.economy = new EconomyHook();
         this.shop = new ShopConfig(this);
