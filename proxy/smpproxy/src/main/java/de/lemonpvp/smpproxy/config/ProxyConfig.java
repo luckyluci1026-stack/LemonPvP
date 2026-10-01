@@ -87,6 +87,11 @@ public final class ProxyConfig {
             Map.entry("testrelease-gestoppt", "%prefix%<gray>Probe-Release abgebrochen.</gray>"),
             Map.entry("testrelease-keiner", "%prefix%<gray>Bei dir läuft gerade kein Probe-Release.</gray>"),
             Map.entry("testrelease-fertig", "%prefix%<green>Probe-Release fertig</green> <gray>- genau so erleben es alle beim echten Release.</gray>"),
+            Map.entry("testrelease-fuer", "%prefix%<gray>Probe-Release für <white>%spieler%</white> in <white>%sekunden%s</white> gestartet.</gray>"),
+            Map.entry("testrelease-laeuft-fuer", "%prefix%<gold>Bei <white>%spieler%</white> läuft schon ein Probe-Release.</gold>"),
+            Map.entry("testrelease-gestoppt-fuer", "%prefix%<gray>Probe-Release von <white>%spieler%</white> abgebrochen.</gray>"),
+            Map.entry("testrelease-keiner-fuer", "%prefix%<gray>Bei <white>%spieler%</white> läuft gerade kein Probe-Release.</gray>"),
+            Map.entry("testrelease-konsole", "%prefix%<gray>Aus der Konsole: <white>/testrelease <Spieler> [Sekunden]</white> oder <white>/testrelease stop <Spieler></white></gray>"),
             Map.entry("network-quit", "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> "
                     + "<gray>hat den Server verlassen.</gray>"),
             Map.entry("einlass-warteschlange", "%prefix%<gray>Gerade kommen viele gleichzeitig auf <white>%server%</white> - "

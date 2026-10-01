@@ -84,7 +84,8 @@ allen Servern abgeglichen (`voice.yml`).
 | `/release zeit <Datum> <Uhrzeit>` | Release-Termin setzen, z.B. `03.10.2026 18:00` | `smpproxy.release.admin` |
 | `/release jetzt [Sekunden]` | Release gleich starten (Standard 10 s Countdown) | `smpproxy.release.admin` |
 | `/release aus` | Countdown beenden, alles offen | `smpproxy.release.admin` |
-| `/testrelease [Sekunden]`, `/testrelease stop` | Probe-Release nur für dich | `smpproxy.release.test` |
+| `/testrelease [Sekunden]`, `/testrelease stop` | Probe-Release nur für dich | `smpproxy.release.test` oder `smpproxy.release.admin` |
+| `/testrelease <Spieler> [Sekunden]`, `/testrelease stop <Spieler>` | Probe-Release für einen anderen Spieler | Konsole oder `smpproxy.release.admin` |
 | – | vor dem Release schon überall hin dürfen | `smpproxy.release.bypass` |
 | – | nie in der Einlass-Warteschlange warten | `smpproxy.einlass.bypass` |
 | `/netban`, `/netunban`, `/netbans`, `/netbaninfo` | Netzwerkbann | `smpproxy.ban` |
@@ -93,8 +94,13 @@ allen Servern abgeglichen (`voice.yml`).
 
 Rechte auf dem Proxy vergibt LuckPerms-Velocity (z.B.
 `/lpv user <Name> permission set smpproxy.release.admin`). Aus der
-Proxy-Konsole gehen alle Befehle ohne Rechte, außer `/testrelease` (braucht
-einen Spieler).
+Proxy-Konsole gehen alle Befehle ohne Rechte; `/testrelease` braucht dort
+einen Spielernamen (`/testrelease Name 30`).
+
+Wichtig: Velocity kennt kein OP. Ohne passendes Recht auf dem Proxy blendet
+Velocity `/testrelease` komplett aus – der Befehl landet dann beim Server und
+heißt dort „unbekannt". Einmal `/lpv user <Name> permission set
+smpproxy.release.test true` (oder `smpproxy.release.admin`) reicht.
 
 `/server` und `/send` bringt Velocity selbst mit.
 

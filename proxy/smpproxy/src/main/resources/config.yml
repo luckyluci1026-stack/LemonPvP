@@ -182,7 +182,11 @@ ah:
 #    /release jetzt [Sekunden]    gleich starten  (smpproxy.release.admin)
 #    /release aus                 Countdown beenden (smpproxy.release.admin)
 #    /testrelease [Sekunden]      Probe-Release nur fuer dich
-#                                 (smpproxy.release.test, stop = abbrechen)
+#                                 (smpproxy.release.test oder .admin,
+#                                 stop = abbrechen)
+#    /testrelease <Spieler> [Sekunden]
+#                                 Probe-Release fuer einen Spieler
+#                                 (Konsole oder smpproxy.release.admin)
 #  Was per /release gesetzt wird, steht in release.yml und gilt vor
 #  dem Wert hier.
 # ----------------------------------------------------------
