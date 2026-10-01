@@ -1,6 +1,7 @@
 package de.lemonpvp.bettersmp.api;
 
 import de.lemonpvp.bettersmp.combat.CombatManager;
+import de.lemonpvp.bettersmp.report.ReportManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -11,6 +12,7 @@ import java.util.UUID;
 public final class BetterSMPApi {
 
     private static CombatManager combat;
+    private static ReportManager reports;
 
     private BetterSMPApi() {
     }
@@ -18,6 +20,16 @@ public final class BetterSMPApi {
     /** Wird von BetterSMP beim Start gesetzt. */
     public static void init(CombatManager manager) {
         combat = manager;
+    }
+
+    public static void initReports(ReportManager manager) {
+        reports = manager;
+    }
+
+    public static void gegnerMerken(UUID spieler, UUID gegner, String gegnerName) {
+        if (reports != null) {
+            reports.letzteGegner().merken(spieler, gegner, gegnerName);
+        }
     }
 
     public static boolean isInCombat(UUID player) {

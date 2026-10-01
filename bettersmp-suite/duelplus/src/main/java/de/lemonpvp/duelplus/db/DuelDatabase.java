@@ -55,6 +55,10 @@ public final class DuelDatabase {
     private Connection connection;
     private final Map<UUID, byte[]> stammStand = new HashMap<>();
     private final Map<UUID, Long> stammGeschrieben = new HashMap<>();
+    private final Map<String, Long> letzteWarnung = new HashMap<>();
+    private static final long WARNUNG_ABSTAND_MILLIS = 60_000L;
+    private static final long NEUAUFBAU_ABSTAND_MILLIS = 10_000L;
+    private long letzterNeuaufbau;
     private volatile boolean bereit = false;
 
     public DuelDatabase(DuelPlus plugin) {
@@ -132,7 +136,9 @@ public final class DuelDatabase {
                 + "spieler_b VARCHAR(36), spieler_b_name VARCHAR(32), arena VARCHAR(64), start BIGINT, "
                 + "dauer BIGINT, groesse BIGINT, gewinner VARCHAR(36), ergebnis INT, "
                 + "gemeldet BOOLEAN DEFAULT FALSE, behalten_bis BIGINT, server VARCHAR(48), "
-                + "INDEX (spieler_a), INDEX (spieler_b), INDEX (start))"
+                + "INDEX (spieler_a), INDEX (spieler_b), INDEX (start))",
+            "CREATE TABLE IF NOT EXISTS duelplus_meldungen ("
+                + "uuid VARCHAR(36) PRIMARY KEY, zeit BIGINT)"
         };
         try (var st = conn().createStatement()) {
             for (String sql : ddl) {
@@ -213,7 +219,42 @@ public final class DuelDatabase {
     }
 
     private void warn(String where, SQLException e) {
-        plugin.getLogger().warning("DuelPlus DB-Fehler (" + where + "): " + e.getMessage());
+        melden("DuelPlus DB-Fehler (" + where + ")", e);
+    }
+
+    private void melden(String text, Exception e) {
+        if (tabelleFehlt(e)) {
+            tabellenNeuAnlegen();
+            return;
+        }
+        long jetzt = System.currentTimeMillis();
+        Long zuletzt = letzteWarnung.get(text);
+        if (zuletzt != null && jetzt - zuletzt < WARNUNG_ABSTAND_MILLIS) {
+            return;
+        }
+        letzteWarnung.put(text, jetzt);
+        plugin.getLogger().warning(text + ": " + e.getMessage());
+    }
+
+    static boolean tabelleFehlt(Throwable fehler) {
+        for (Throwable t = fehler; t != null; t = t.getCause()) {
+            if (t instanceof SQLException sql && (sql.getErrorCode() == 1146 || "42S02".equals(sql.getSQLState()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void tabellenNeuAnlegen() {
+        long jetzt = System.currentTimeMillis();
+        if (jetzt - letzterNeuaufbau < NEUAUFBAU_ABSTAND_MILLIS) {
+            return;
+        }
+        letzterNeuaufbau = jetzt;
+        createTables();
+        stammStand.clear();
+        stammGeschrieben.clear();
+        plugin.getLogger().warning("DuelPlus: Tabellen fehlten (z. B. nach /dbwipe) - sind neu angelegt.");
     }
 
     // ================================================================
@@ -355,6 +396,24 @@ public final class DuelDatabase {
                 }
             } catch (SQLException e) {
                 warn("istBeschaeftigt", e);
+                return false;
+            }
+        });
+    }
+
+    public CompletableFuture<Boolean> duellOffen(UUID spieler) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "SELECT 1 FROM duelplus_duelle WHERE (spieler_a=? OR spieler_b=?) AND status IN (?,?) LIMIT 1")) {
+                ps.setString(1, spieler.toString());
+                ps.setString(2, spieler.toString());
+                ps.setString(3, DuelRecord.ANGENOMMEN);
+                ps.setString(4, DuelRecord.AKTIV);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next();
+                }
+            } catch (SQLException e) {
+                warn("duellOffen", e);
                 return false;
             }
         });
@@ -595,7 +654,7 @@ public final class DuelDatabase {
                     return rs.next() && rs.getInt(1) > 0;
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("DuelPlus: offene Duell-Ergebnisse konnten nicht geprueft werden: " + e.getMessage());
+                melden("DuelPlus: offene Duell-Ergebnisse konnten nicht geprueft werden", e);
                 return false;
             }
         });
@@ -613,6 +672,12 @@ public final class DuelDatabase {
                 ps.executeUpdate();
             } catch (SQLException e) {
                 warn("aufraeumen", e);
+            }
+            try (PreparedStatement ps = conn().prepareStatement("DELETE FROM duelplus_meldungen WHERE zeit<?")) {
+                ps.setLong(1, System.currentTimeMillis() - maxAlterStunden * 3_600_000L);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                warn("aufraeumen meldungen", e);
             }
         });
     }
@@ -638,7 +703,7 @@ public final class DuelDatabase {
                     ps.executeUpdate();
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("DuelPlus: Inventar-Snapshot konnte nicht gespeichert werden: " + e.getMessage());
+                melden("DuelPlus: Inventar-Snapshot konnte nicht gespeichert werden", e);
             }
         });
     }
@@ -666,7 +731,7 @@ public final class DuelDatabase {
                     return Optional.of(snapshot);
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("DuelPlus: Inventar-Snapshot konnte nicht gelesen werden: " + e.getMessage());
+                melden("DuelPlus: Inventar-Snapshot konnte nicht gelesen werden", e);
                 return Optional.empty();
             }
         });
@@ -689,7 +754,7 @@ public final class DuelDatabase {
                     return rs.next() ? Optional.of(InventarCodec.dekodieren(rs.getString("daten"))) : Optional.empty();
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("DuelPlus: Inventar-Snapshot konnte nicht gelesen werden: " + e.getMessage());
+                melden("DuelPlus: Inventar-Snapshot konnte nicht gelesen werden", e);
                 return Optional.empty();
             }
         });
@@ -715,7 +780,7 @@ public final class DuelDatabase {
                     ps.executeUpdate();
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("DuelPlus: Nachlieferung konnte nicht gespeichert werden: " + e.getMessage());
+                melden("DuelPlus: Nachlieferung konnte nicht gespeichert werden", e);
             }
         });
     }
@@ -732,7 +797,7 @@ public final class DuelDatabase {
                     }
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("DuelPlus: Nachlieferung konnte nicht gelesen werden: " + e.getMessage());
+                melden("DuelPlus: Nachlieferung konnte nicht gelesen werden", e);
                 return Map.of();
             }
             return eintraege;
@@ -779,7 +844,7 @@ public final class DuelDatabase {
                 stammGeschrieben.put(spieler, jetzt);
             } catch (Exception e) {
                 stammStand.remove(spieler);
-                plugin.getLogger().warning("DuelPlus: Stamm-Inventar konnte nicht gespeichert werden: " + e.getMessage());
+                melden("DuelPlus: Stamm-Inventar konnte nicht gespeichert werden", e);
             }
         });
     }
@@ -803,7 +868,7 @@ public final class DuelDatabase {
                     return Optional.of(InventarCodec.dekodieren(rs.getString("daten")));
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("DuelPlus: Stamm-Inventar konnte nicht gelesen werden: " + e.getMessage());
+                melden("DuelPlus: Stamm-Inventar konnte nicht gelesen werden", e);
                 return Optional.empty();
             }
         });
@@ -927,13 +992,14 @@ public final class DuelDatabase {
     public CompletableFuture<Optional<ZuschauerAnfrage>> zuschauerAnfrageHolenUndLoeschen(UUID spieler) {
         return supply(() -> {
             try (PreparedStatement ps = conn().prepareStatement(
-                    "SELECT arena_welt, herkunft_server FROM duelplus_zuschauer_anfrage WHERE spieler=?")) {
+                    "SELECT arena_welt, herkunft_server, erstellt FROM duelplus_zuschauer_anfrage WHERE spieler=?")) {
                 ps.setString(1, spieler.toString());
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
                         return Optional.empty();
                     }
-                    ZuschauerAnfrage anfrage = new ZuschauerAnfrage(rs.getString("arena_welt"), rs.getString("herkunft_server"));
+                    ZuschauerAnfrage anfrage = new ZuschauerAnfrage(rs.getString("arena_welt"), rs.getString("herkunft_server"),
+                            rs.getLong("erstellt"));
                     try (PreparedStatement del = conn().prepareStatement(
                             "DELETE FROM duelplus_zuschauer_anfrage WHERE spieler=?")) {
                         del.setString(1, spieler.toString());
@@ -948,9 +1014,74 @@ public final class DuelDatabase {
         });
     }
 
+    public CompletableFuture<Void> zuschauerAnfrageLoeschen(UUID spieler) {
+        return run(() -> {
+            try (PreparedStatement ps = conn().prepareStatement("DELETE FROM duelplus_zuschauer_anfrage WHERE spieler=?")) {
+                ps.setString(1, spieler.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                warn("zuschauerAnfrageLoeschen", e);
+            }
+        });
+    }
+
     // ================================================================
     //  Replays (siehe replay/ReplayManager)
     // ================================================================
+
+    public CompletableFuture<Void> meldungMerken(UUID spieler) {
+        return run(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "REPLACE INTO duelplus_meldungen(uuid,zeit) VALUES(?,?)")) {
+                ps.setString(1, spieler.toString());
+                ps.setLong(2, System.currentTimeMillis());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                warn("meldungMerken", e);
+            }
+        });
+    }
+
+    public CompletableFuture<Boolean> replayNachMeldungPruefen(ReplayEintrag eintrag, long aufbewahrenMillis) {
+        return supply(() -> {
+            try (PreparedStatement ps = conn().prepareStatement(
+                    "UPDATE duelplus_replays SET gemeldet=TRUE, behalten_bis=GREATEST(behalten_bis, start + ?) WHERE id=? "
+                            + "AND EXISTS (SELECT 1 FROM duelplus_meldungen WHERE uuid IN (?,?) AND zeit>=?)")) {
+                ps.setLong(1, aufbewahrenMillis);
+                ps.setString(2, eintrag.id());
+                ps.setString(3, eintrag.spielerA().toString());
+                ps.setString(4, eintrag.spielerB().toString());
+                ps.setLong(5, eintrag.start());
+                return ps.executeUpdate() > 0;
+            } catch (SQLException e) {
+                warn("replayNachMeldungPruefen", e);
+                return false;
+            }
+        });
+    }
+
+    public CompletableFuture<Integer> replaysUebernehmen(Collection<String> ids, String server) {
+        List<String> kopie = new ArrayList<>(ids);
+        return supply(() -> {
+            int anzahl = 0;
+            for (int i = 0; i < kopie.size(); i += 100) {
+                List<String> teil = kopie.subList(i, Math.min(kopie.size(), i + 100));
+                String platzhalter = String.join(",", java.util.Collections.nCopies(teil.size(), "?"));
+                try (PreparedStatement ps = conn().prepareStatement(
+                        "UPDATE duelplus_replays SET server=? WHERE (server IS NULL OR server<>?) AND id IN (" + platzhalter + ")")) {
+                    ps.setString(1, server);
+                    ps.setString(2, server);
+                    for (int k = 0; k < teil.size(); k++) {
+                        ps.setString(3 + k, teil.get(k));
+                    }
+                    anzahl += ps.executeUpdate();
+                } catch (SQLException e) {
+                    warn("replaysUebernehmen", e);
+                }
+            }
+            return anzahl;
+        });
+    }
 
     public CompletableFuture<Void> replayEintragen(ReplayEintrag eintrag) {
         return run(() -> {

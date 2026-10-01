@@ -6,6 +6,7 @@ import de.lemonpvp.reportplus.command.ReportCommand;
 import de.lemonpvp.reportplus.command.ReportFlow;
 import de.lemonpvp.reportplus.command.StaffCommands;
 import de.lemonpvp.reportplus.gui.GuiListener;
+import de.lemonpvp.reportplus.kontakt.Kontakte;
 import de.lemonpvp.reportplus.listener.ChatCaptureListener;
 import de.lemonpvp.reportplus.store.BugStore;
 import de.lemonpvp.reportplus.store.ReportStore;
@@ -32,6 +33,7 @@ public final class ReportPlus extends JavaPlugin implements CommandExecutor {
     private BugStore bugs;
     private ReportFlow reportFlow;
     private BugFlow bugFlow;
+    private final Kontakte kontakte = new Kontakte();
 
     @Override
     public void onEnable() {
@@ -84,5 +86,9 @@ public final class ReportPlus extends JavaPlugin implements CommandExecutor {
 
     public BugFlow bugFlow() {
         return bugFlow;
+    }
+
+    public Kontakte kontakte() {
+        return kontakte;
     }
 }

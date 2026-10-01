@@ -80,6 +80,7 @@ freeze:
 report:
   usage: "%prefix%<gray>/report <Spieler> <Grund></gray>"
   not-online: "%prefix%<red><white>%spieler%</white> ist nicht online.</red>"
+  unknown: "%prefix%<red>Einen Spieler <white>%spieler%</white> kennt der Server nicht.</red> <gray>Schreib den Namen genau so wie im Spiel.</gray>"
   not-yourself: "%prefix%<red>Dich selbst kannst du nicht melden.</red>"
   cooldown: "%prefix%<gold>Warte noch <white>%sekunden%</white> Sekunden, bevor du erneut meldest.</gold>"
   sent: "%prefix%<green>Meldung zu <white>%spieler%</white> ist raus - das Team schaut sich das an.</green>"

@@ -1,6 +1,7 @@
 package de.lemonpvp.reportplus.gui;
 
 import de.lemonpvp.reportplus.ReportPlus;
+import de.lemonpvp.reportplus.util.Ziel;
 import de.lemonpvp.reportplus.store.BugEntry;
 import de.lemonpvp.reportplus.store.ReportEntry;
 import org.bukkit.Bukkit;
@@ -33,7 +34,7 @@ public final class GuiListener implements Listener {
 
         if (holder instanceof Guis.PlayerPickerHolder h) {
             event.setCancelled(true);
-            UUID ziel = h.ziele.get(event.getSlot());
+            Ziel ziel = h.ziele.get(event.getSlot());
             if (ziel != null) {
                 plugin.reportFlow().starteMitZiel(spieler, ziel);
             }

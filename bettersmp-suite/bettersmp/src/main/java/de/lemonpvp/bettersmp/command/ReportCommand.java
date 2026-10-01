@@ -1,6 +1,8 @@
 package de.lemonpvp.bettersmp.command;
 
 import de.lemonpvp.bettersmp.BetterSMP;
+import de.lemonpvp.bettersmp.report.Ziel;
+import de.lemonpvp.bettersmp.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -9,7 +11,10 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * /report <Spieler> <Grund> - fuer alle, nicht nur fuers Team.
@@ -42,12 +47,12 @@ public final class ReportCommand implements TabExecutor {
             plugin.msgs().send(melder, "report.usage");
             return true;
         }
-        Player gemeldet = Bukkit.getPlayerExact(args[0]);
+        Ziel gemeldet = plugin.reports().finde(melder, args[0]).orElse(null);
         if (gemeldet == null) {
-            plugin.msgs().send(melder, "report.not-online", "spieler", args[0]);
+            plugin.msgs().send(melder, "report.unknown", "spieler", Text.sicher(args[0]));
             return true;
         }
-        if (gemeldet.equals(melder)) {
+        if (gemeldet.id().equals(melder.getUniqueId())) {
             plugin.msgs().send(melder, "report.not-yourself");
             return true;
         }
@@ -59,15 +64,15 @@ public final class ReportCommand implements TabExecutor {
 
         String grund = String.join(" ", java.util.Arrays.asList(args).subList(1, args.length));
         plugin.reports().vermerken(melder, gemeldet, grund);
-        plugin.msgs().send(melder, "report.sent", "spieler", gemeldet.getName());
+        plugin.msgs().send(melder, "report.sent", "spieler", gemeldet.name());
         Bukkit.getPluginManager().callEvent(new de.lemonpvp.bettersmp.api.SpielerGemeldetEvent(
-                melder.getUniqueId(), melder.getName(), gemeldet.getUniqueId(), gemeldet.getName(), grund));
+                melder.getUniqueId(), melder.getName(), gemeldet.id(), gemeldet.name(), grund));
 
         for (Player teammitglied : Bukkit.getOnlinePlayers()) {
             if (teammitglied.hasPermission("bettersmp.report.receive")) {
                 plugin.msgs().send(teammitglied, "report.received",
-                        "melder", melder.getName(), "spieler", gemeldet.getName(),
-                        "grund", de.lemonpvp.bettersmp.util.Text.sicher(grund));
+                        "melder", melder.getName(), "spieler", gemeldet.name(),
+                        "grund", Text.sicher(grund));
             }
         }
         return true;
@@ -79,12 +84,24 @@ public final class ReportCommand implements TabExecutor {
         if (args.length != 1) {
             return List.of();
         }
-        List<String> namen = new ArrayList<>();
+        String anfang = args[0].toLowerCase(Locale.ROOT);
+        Set<String> namen = new LinkedHashSet<>();
+        if (sender instanceof Player melder) {
+            for (Ziel ziel : plugin.reports().letzteGegner().letzte(melder.getUniqueId())) {
+                namen.add(ziel.name());
+            }
+        }
         for (Player spieler : Bukkit.getOnlinePlayers()) {
             if (!spieler.equals(sender)) {
                 namen.add(spieler.getName());
             }
         }
-        return namen;
+        List<String> passend = new ArrayList<>();
+        for (String name : namen) {
+            if (name.toLowerCase(Locale.ROOT).startsWith(anfang)) {
+                passend.add(name);
+            }
+        }
+        return passend;
     }
 }

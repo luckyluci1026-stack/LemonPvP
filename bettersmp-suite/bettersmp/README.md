@@ -28,7 +28,10 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   SQLite läuft im WAL-Modus (schnelle Schreibzugriffe, neben `data.db` liegen
   deshalb `data.db-wal` und `data.db-shm` – beim sauberen Stoppen werden sie
   zusammengeführt). Beim Herunterfahren wird alles noch Ausstehende
-  geschrieben, bevor die Verbindung zugeht.
+  geschrieben, bevor die Verbindung zugeht. Fehlen die Tabellen (z. B. nach
+  `/dbwipe`), legt BetterSMP sie beim nächsten Zugriff selbst neu an und
+  wiederholt den Vorgang - ein Ban direkt nach dem Wipe geht nicht verloren.
+  Das gilt auch für die Backup-Datenbank.
 - **Inventar-/Enderkisten-Backup** (`backup` in `config.yml`): sichert alle
   15 Sekunden (einstellbar) asynchron Inventar + Enderkiste jedes
   Online-Spielers in eine **komplett eigene** zweite Datenbank (eigene
@@ -92,7 +95,11 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   nicht bei jedem Wechsel zwischen Lobby, SMP und Duels. Mit `false` gelten
   wieder die eigenen Texte unter `join-quit`.
 - **/report <Spieler> <Grund>**: für alle, mit Cooldown. Landet live bei
-  jedem mit `bettersmp.report.receive` und in `reports.log`.
+  jedem mit `bettersmp.report.receive` und in `reports.log`. Der Spieler
+  muss nicht auf diesem Server sein: letzte Duell-Gegner (von DuelPlus,
+  2 Stunden) und alle, die schon einmal hier waren, lassen sich auch auf
+  einem anderen Server oder offline melden. Bedrock-Namen gehen mit und
+  ohne Punkt.
 - **Serien-Ansagen im PvP**: Meilensteine (3, 5, 10 ...) und "Serie beendet"
   - reine Stimmung, keine Belohnung, nichts überlebt einen Neustart. Die
   laufende Serie steht auch auf dem Scoreboard (`%streak%`).

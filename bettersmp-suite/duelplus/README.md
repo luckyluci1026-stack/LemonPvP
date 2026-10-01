@@ -40,6 +40,16 @@ verloren, weil Paper Plugins vor dem Rauswerfen der Spieler abschaltet:
 Wer kurz vor einem Neustart etwas abgebaut oder weggegeben hatte, bekam
 beim nächsten Betreten den älteren Stand zurück.
 
+**Lobby-Duelle brauchen den Spiegel.** Fehlt er (z. B. direkt nach
+`/dbwipe` oder bei jemandem, der noch nie auf dem SMP war), wird das
+Duell abgesagt und der Spieler bekommt den Hinweis, einmal kurz auf den
+SMP zu gehen. Vorher hätte er mit leerem Inventar gekämpft und das
+Ergebnis hätte danach sein echtes SMP-Inventar überschrieben.
+
+`server-name` muss genau so heißen wie der Server in der `velocity.toml`.
+Auf dem Duels-Server gilt außerdem `server-name` = `arena-server-name`
+(Standard `Duels`) - sonst steht beim Start eine Warnung in der Konsole.
+
 Kein eigenes Velocity-Plugin nötig: Der Serverwechsel läuft über den
 Standard-`BungeeCord`-Kanal, den Velocity auch versteht (gleiches
 Vorbild wie SMPLobbys Server-Wähler) - es reicht ein Eintrag für
@@ -62,6 +72,11 @@ drei `config.yml` eintragen - DuelPlus legt eigene Tabellen an
 (`duelplus_*`), ohne BetterSMPs eigene zu berühren. Die Datenbank
 selbst muss vorher existieren und von allen drei Servern aus
 erreichbar sein (Netzwerk/Firewall).
+
+**Nach `/dbwipe`** (oder wenn die Tabellen sonst verschwinden) legt
+DuelPlus sie beim nächsten Zugriff selbst neu an und schreibt genau eine
+Zeile ins Log - kein Neustart, kein Fehler-Spam jede Sekunde. Andere
+Fehler stehen höchstens einmal pro Minute in der Konsole.
 
 ## Wichtig nach einem Update von einer älteren DuelPlus-Version
 
@@ -274,6 +289,15 @@ Unentschieden/Aufgabe) wieder verlassen.
   jede Sekunde an SMPProxy, der diese Befehle dann blockt.
 - Geht man nach einem Lobby-Duell so schnell auf den SMP, dass die Lobby
   das Ergebnis noch nicht übernommen hat, wendet der SMP es selbst an.
+- **Inventar kommt nicht an:** Fehlt auf dem Duels-Server das mitgeschickte
+  Inventar eines Spielers, wird das Duell abgesagt und beide kommen zurück
+  auf ihren Server - niemand kämpft mit einem alten Inventar vom
+  Duels-Server. Wird das Duell auf der anderen Seite abgesagt, merkt der
+  schon wartende Spieler das nach spätestens 5 Sekunden (statt erst nach
+  90 Sekunden).
+- **Alte Zuschauer-/Replay-Anfragen** gelten nur 1 Minute und werden beim
+  Wechsel zu einem Duell gelöscht. So kann ein liegengebliebenes
+  `/replay ansehen` kein späteres Duell mehr kapern.
 - **Absturz des Duels-Servers:** SMPProxy schickt beide sofort dorthin
   zurück, wo sie vor dem Duell waren (`auto-return.skip-servers` in der
   Proxy-Config). Das Duell zählt dann nicht, beim nächsten Start bricht der
@@ -297,8 +321,14 @@ die schrumpfende Grenze und der Duell-Chat. Kein Ton, keine Sprache.
 
 - **Aufbewahrung:** 3 Tage (`replay.aufbewahren-tage`). Wird einer der beiden
   per `/report` gemeldet (BetterSMP oder ReportPlus), bleiben **seine** Replays
-  der letzten 3 Tage bis zu 30 Tage ab dem Duell (`replay.gemeldet-tage`).
+  der letzten 3 Tage bis zu 30 Tage ab dem Duell (`replay.gemeldet-tage`) -
+  auch das Replay des Duells, das gerade noch gespeichert wird.
   Das Team kann ein Replay auch von Hand behalten (`/replay behalten <ID>`).
+- **Melden nach dem Duell:** Der Gegner lässt sich mit `/report` melden, auch
+  wenn er schon auf einem anderen Server oder offline ist - DuelPlus merkt
+  ReportPlus und BetterSMP die letzten Gegner (2 Stunden). Wo es kein
+  `/report` gibt (z. B. Lobby), steht unter dem Ergebnis „Auf dem SMP:
+  /report <Gegner>“.
 - **Speichergrenze:** alle Replays zusammen höchstens 3 GB (`replay.max-gb`).
   Wird es enger, gehen zuerst die ältesten **ungemeldeten**. Ein 5-Minuten-Duell
   braucht etwa 200 KB – 300 bis 400 Duelle belegen also nur rund 60–80 MB.
@@ -324,6 +354,14 @@ Zuschauermodus zu. Steuerung per Klick im Chat oder per Befehl:
 
 Die Arena wird danach genau so zurückgesetzt, wie sie war. Ist gerade keine
 Arena frei, kommt ein Hinweis – echte Duelle haben immer Vorrang.
+
+Vom SMP oder der Lobby aus geht es immer auf den Duels-Server
+(`arena-server-name`), egal welcher Server in der Replay-Tabelle steht -
+vorher gab es dort „You are already connected to this server“, wenn der
+Duels-Server mit falschem `server-name` lief. Replay-Dateien, die mit
+falschem Server-Namen eingetragen sind, übernimmt der Duels-Server beim
+Aufräumen automatisch. Wer gerade in einem Duell steckt (oder auf eins
+wartet), kann kein Replay starten.
 
 ## Befehle
 

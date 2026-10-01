@@ -100,10 +100,12 @@ public final class ReplaySpeicher {
         if (!plugin.db().bereit()) {
             return;
         }
-        plugin.db().replayEintragen(new ReplayEintrag(fertig.id(), fertig.spielerA(), fertig.spielerAName(),
+        ReplayEintrag eintrag = new ReplayEintrag(fertig.id(), fertig.spielerA(), fertig.spielerAName(),
                 fertig.spielerB(), fertig.spielerBName(), fertig.arena(), fertig.start(), fertig.dauer(),
                 fertig.daten().length, fertig.gewinner(), fertig.ergebnis(), false,
-                fertig.start() + aufbewahrenMillis(), plugin.serverName())).join();
+                fertig.start() + aufbewahrenMillis(), plugin.serverName());
+        plugin.db().replayEintragen(eintrag).join();
+        plugin.db().replayNachMeldungPruefen(eintrag, gemeldetMillis()).join();
     }
 
     public CompletableFuture<ReplayDaten.Replay> laden(String id) {
@@ -134,6 +136,18 @@ public final class ReplaySpeicher {
         }
         long jetzt = uhr.getAsLong();
         Map<String, Long> dateien = dateien();
+        Set<String> eigene = new HashSet<>();
+        for (ReplayEintrag eintrag : eintraege) {
+            eigene.add(eintrag.id());
+        }
+        Set<String> fremd = new HashSet<>(dateien.keySet());
+        fremd.removeAll(eigene);
+        if (!fremd.isEmpty() && plugin.db().replaysUebernehmen(fremd, plugin.serverName()).join() > 0) {
+            eintraege = plugin.db().replaysAufServer(plugin.serverName()).join();
+            if (eintraege == null) {
+                return new Bilanz(0, 0, 0, belegt());
+            }
+        }
         int abgelaufen = 0;
         int platz = 0;
         int waisen = 0;

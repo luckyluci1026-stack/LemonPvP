@@ -8,5 +8,5 @@ package de.lemonpvp.duelplus.db;
  * Inventar-Transport bei einem echten Duell (siehe DuelDatabase.
  * snapshotHolenUndLoeschen).
  */
-public record ZuschauerAnfrage(String arenaWelt, String herkunftServer) {
+public record ZuschauerAnfrage(String arenaWelt, String herkunftServer, long erstellt) {
 }

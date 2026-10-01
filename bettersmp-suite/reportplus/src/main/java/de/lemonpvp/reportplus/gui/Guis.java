@@ -6,6 +6,7 @@ import de.lemonpvp.reportplus.store.ReportEntry;
 import de.lemonpvp.reportplus.util.GuiItem;
 import de.lemonpvp.reportplus.util.Kategorie;
 import de.lemonpvp.reportplus.util.Msgs;
+import de.lemonpvp.reportplus.util.Ziel;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -39,7 +40,7 @@ public final class Guis {
 
     public static final class PlayerPickerHolder implements InventoryHolder {
         private Inventory inventory;
-        public final Map<Integer, UUID> ziele = new HashMap<>();
+        public final Map<Integer, Ziel> ziele = new HashMap<>();
 
         @Override
         public @NotNull Inventory getInventory() {
@@ -48,26 +49,42 @@ public final class Guis {
     }
 
     public static void oeffnePlayerPicker(ReportPlus plugin, Player spieler, String titel) {
+        List<Ziel> gegner = new ArrayList<>();
+        for (Ziel ziel : plugin.kontakte().letzte(spieler.getUniqueId())) {
+            if (Bukkit.getPlayer(ziel.id()) == null) {
+                gegner.add(ziel);
+            }
+        }
         List<Player> andere = new ArrayList<>(Bukkit.getOnlinePlayers());
         andere.remove(spieler);
-        if (andere.isEmpty()) {
+        if (andere.isEmpty() && gegner.isEmpty()) {
             plugin.msgs().send(spieler, "report.picker-empty");
             return;
         }
 
         PlayerPickerHolder holder = new PlayerPickerHolder();
-        int groesse = Math.max(9, Math.min(54, ((andere.size() + 8) / 9) * 9));
+        int anzahl = gegner.size() + andere.size();
+        int groesse = Math.max(9, Math.min(54, ((anzahl + 8) / 9) * 9));
         Inventory inv = Bukkit.createInventory(holder, groesse, GuiItem.mm(titel));
         holder.inventory = inv;
 
         int slot = 0;
+        for (Ziel ziel : gegner) {
+            if (slot >= groesse) {
+                break;
+            }
+            inv.setItem(slot, GuiItem.head(Bukkit.getOfflinePlayer(ziel.id()), "<white>" + ziel.name(),
+                    List.of(plugin.msgs().raw("report.picker-recent"), "<yellow>Klick zum Melden")));
+            holder.ziele.put(slot, ziel);
+            slot++;
+        }
         for (Player ziel : andere) {
             if (slot >= groesse) {
                 break;
             }
             inv.setItem(slot, GuiItem.head(ziel, "<white>" + ziel.getName(),
                     List.of("<yellow>Klick zum Melden")));
-            holder.ziele.put(slot, ziel.getUniqueId());
+            holder.ziele.put(slot, new Ziel(ziel.getUniqueId(), ziel.getName()));
             slot++;
         }
         spieler.openInventory(inv);

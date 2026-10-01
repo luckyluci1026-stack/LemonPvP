@@ -36,6 +36,16 @@ bleibt nachvollziehbar, wann und ob DBWipe benutzt wurde.
    mit kurzzeitig deaktivierten Fremdschlüssel-Prüfungen, falls
    welche existieren).
 
+## Nach dem Löschen
+
+- **DuelPlus und BetterSMP** merken beim nächsten Datenbankzugriff,
+  dass ihre Tabellen fehlen, legen sie selbst neu an und schreiben
+  eine einzige Zeile ins Log - kein Neustart nötig, kein
+  Fehler-Spam jede Sekunde.
+- **Andere Plugins** mit Tabellen in derselben Datenbank (z. B.
+  LuckPerms) brauchen einen Server-Neustart. Ihre alten Daten
+  stecken im Backup und lassen sich von dort zurückspielen.
+
 Das TAR-Format wird ohne zusätzliche Bibliothek selbst geschrieben
 (einfaches USTAR-Format) - vor dem Einbau gegen eine echte
 Rundreise-Extraktion getestet, damit das Backup im Ernstfall auch

@@ -116,6 +116,7 @@ public final class BetterSMP extends JavaPlugin {
         netzwerk.start();
         this.tutorial = new Tutorial(this);
         BetterSMPApi.init(combat);
+        BetterSMPApi.initReports(reports);
         combat.start();
         stats.start();
         board.start();

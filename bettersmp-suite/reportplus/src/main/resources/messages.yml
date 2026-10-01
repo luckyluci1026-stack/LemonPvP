@@ -7,6 +7,8 @@ reloaded: "%prefix%<green>Konfiguration neu geladen.</green>"
 
 report:
   not-online: "%prefix%<red><white>%spieler%</white> ist nicht online.</red>"
+  unknown: "%prefix%<red>Einen Spieler <white>%spieler%</white> kennt der Server nicht.</red> <gray>Schreib den Namen genau so wie im Spiel.</gray>"
+  picker-recent: "<gold>Zuletzt gegen dich im Duell"
   not-yourself: "%prefix%<red>Dich selbst kannst du nicht melden.</red>"
   cooldown: "%prefix%<gold>Warte noch <white>%sekunden%</white>s, bevor du erneut meldest.</gold>"
   picker-title: "<dark_gray>Wen möchtest du melden?"

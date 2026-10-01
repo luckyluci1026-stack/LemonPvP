@@ -10,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -119,6 +120,9 @@ public final class AnfragePollTask {
                     continue;
                 }
                 kampfHinweis.remove(hinweisSchluessel);
+                if (!inArbeit.add(hinweisSchluessel)) {
+                    continue;
+                }
                 if (plugin.istLootQuelle()) {
                     spieler.closeInventory();
                     plugin.inventarSperre().sperren(spielerUuid, UEBERGABE_SPERRE_MILLIS);
@@ -129,24 +133,47 @@ public final class AnfragePollTask {
                 // Spiel steht - dort stattdessen der staendig aktuelle
                 // Spiegel aus duelplus_stamm_inventar (siehe
                 // StammInventarService, nur auf der Loot-Quelle aktiv).
-                CompletableFuture<SpielerSnapshot> quelle = plugin.istLootQuelle()
-                        ? CompletableFuture.completedFuture(SpielerSnapshot.von(spieler.getInventory()))
-                        : plugin.db().stammInventarLesen(spielerUuid).thenApply(opt -> opt.orElseGet(SpielerSnapshot::leer));
-                // Erst den Schnappschuss sicher in der DB haben, dann erst
-                // schicken - sonst koennte der Spieler auf der Arena ankommen,
-                // bevor sein Inventar dort ueberhaupt abholbereit ist.
-                quelle.thenCompose(snapshot ->
-                                plugin.db().snapshotSchreiben(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_HIN, snapshot))
-                        .thenCompose(unused -> istA ? plugin.db().markiereBearbeitetA(duell.id())
-                                                     : plugin.db().markiereBearbeitetB(duell.id()))
-                        .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                            if (spieler.isOnline()) {
-                                plugin.msgs().send(spieler, "teleporting");
-                                plugin.bridge().sende(spieler, plugin.arenaServerName());
-                            }
-                        }));
+                CompletableFuture<Optional<SpielerSnapshot>> quelle = plugin.istLootQuelle()
+                        ? CompletableFuture.completedFuture(Optional.of(SpielerSnapshot.von(spieler.getInventory())))
+                        : plugin.db().stammInventarLesen(spielerUuid);
+                quelle.thenAccept(snapshotOpt -> {
+                    if (snapshotOpt.isEmpty()) {
+                        ohneSpiegelAbsagen(duell, spieler, hinweisSchluessel);
+                        return;
+                    }
+                    rueberschicken(duell, istA, spieler, snapshotOpt.get(), hinweisSchluessel);
+                });
             }
         });
+    }
+
+    private void ohneSpiegelAbsagen(DuelRecord duell, Player spieler, String schluessel) {
+        plugin.db().statusWechseln(duell.id(), DuelRecord.ANGENOMMEN, DuelRecord.ABGELAUFEN).thenAccept(geaendert ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    inArbeit.remove(schluessel);
+                    if (geaendert && spieler.isOnline()) {
+                        plugin.msgs().send(spieler, "duel-no-mirror");
+                    }
+                }));
+    }
+
+    private void rueberschicken(DuelRecord duell, boolean istA, Player spieler, SpielerSnapshot snapshot, String schluessel) {
+        UUID spielerUuid = spieler.getUniqueId();
+        // Erst den Schnappschuss sicher in der DB haben, dann erst
+        // schicken - sonst koennte der Spieler auf der Arena ankommen,
+        // bevor sein Inventar dort ueberhaupt abholbereit ist.
+        plugin.db().zuschauerAnfrageLoeschen(spielerUuid)
+                .thenCompose(unused ->
+                        plugin.db().snapshotSchreiben(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_HIN, snapshot))
+                .thenCompose(unused -> istA ? plugin.db().markiereBearbeitetA(duell.id())
+                                             : plugin.db().markiereBearbeitetB(duell.id()))
+                .whenComplete((unused, fehler) -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    inArbeit.remove(schluessel);
+                    if (fehler == null && spieler.isOnline()) {
+                        plugin.msgs().send(spieler, "teleporting");
+                        plugin.bridge().sende(spieler, plugin.arenaServerName());
+                    }
+                }));
     }
 
     // ------------------------------------------------------------ ABGELEHNT/ABGELAUFEN
@@ -250,10 +277,12 @@ public final class AnfragePollTask {
         UUID spielerUuid = istA ? duell.spielerA() : duell.spielerB();
         if (spieler.isOnline()) {
             String gegnerName = istA ? duell.spielerBName() : duell.spielerAName();
+            UUID gegnerUuid = istA ? duell.spielerB() : duell.spielerA();
+            plugin.gegnerMerken(spielerUuid, gegnerUuid, gegnerName);
             plugin.msgs().send(spieler, ergebnisKey, "gegner", gegnerName);
             if (plugin.getConfig().getBoolean("replay.aktiv", true)) {
-                plugin.msgs().send(spieler, "replay-hinweis", "gegner", gegnerName,
-                        "tage", String.valueOf(plugin.getConfig().getInt("replay.aufbewahren-tage", 3)));
+                plugin.msgs().send(spieler, Bukkit.getPluginCommand("report") != null ? "replay-hinweis" : "replay-hinweis-smp",
+                        "gegner", gegnerName, "tage", String.valueOf(plugin.getConfig().getInt("replay.aufbewahren-tage", 3)));
             }
         }
         plugin.db().snapshotLoeschen(duell.id(), spielerUuid, DuelDatabase.RICHTUNG_ZURUECK);

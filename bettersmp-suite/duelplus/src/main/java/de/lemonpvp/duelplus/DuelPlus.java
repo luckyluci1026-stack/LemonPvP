@@ -51,6 +51,8 @@ public final class DuelPlus extends JavaPlugin {
     private ProxySperre proxySperre;
     private DuellChat duellChat;
     private ReplayManager replays;
+    private boolean reportPlusKontakte;
+    private boolean betterSmpKontakte;
     private StammInventarService stammInventar;
 
     private String serverName;
@@ -144,6 +146,12 @@ public final class DuelPlus extends JavaPlugin {
             });
         }
 
+        reportPlusKontakte = getServer().getPluginManager().getPlugin("ReportPlus") != null;
+        betterSmpKontakte = getServer().getPluginManager().getPlugin("BetterSMP") != null;
+        if (istArenaServer && !serverName.equalsIgnoreCase(arenaServerName)) {
+            getLogger().warning("DuelPlus: server-name ist \"" + serverName + "\", arena-server-name \"" + arenaServerName
+                    + "\" - auf dem Duels-Server muessen beide gleich sein (so, wie der Server in der velocity.toml heisst).");
+        }
         getLogger().info("DuelPlus aktiviert (Server: " + serverName
                 + ", Rolle: " + (istArenaServer ? "Arena" : "Herkunft")
                 + (istArenaServer ? "" : ", Loot-Quelle: " + (istLootQuelle ? "JA" : "nein"))
@@ -234,5 +242,24 @@ public final class DuelPlus extends JavaPlugin {
 
     public ReplayManager replays() {
         return replays;
+    }
+
+    public void gegnerMerken(java.util.UUID spieler, java.util.UUID gegner, String gegnerName) {
+        if (reportPlusKontakte) {
+            try {
+                de.lemonpvp.duelplus.util.ReportPlusKontakt.merken(spieler, gegner, gegnerName);
+            } catch (LinkageError | RuntimeException fehler) {
+                reportPlusKontakte = false;
+                getLogger().warning("ReportPlus ist zu alt fuer 'letzte Duell-Gegner' - bitte die aktuelle ReportPlus-Jar einspielen.");
+            }
+        }
+        if (betterSmpKontakte) {
+            try {
+                de.lemonpvp.duelplus.util.BetterSmpKontakt.merken(spieler, gegner, gegnerName);
+            } catch (LinkageError | RuntimeException fehler) {
+                betterSmpKontakte = false;
+                getLogger().warning("BetterSMP ist zu alt fuer 'letzte Duell-Gegner' - bitte die aktuelle BetterSMP-Jar einspielen.");
+            }
+        }
     }
 }

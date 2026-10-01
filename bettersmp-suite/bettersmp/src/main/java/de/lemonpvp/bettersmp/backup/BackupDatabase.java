@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +52,9 @@ public final class BackupDatabase {
     private Properties props = new Properties();
     private boolean sqlite = true;
     private Connection connection;
+    private final Map<String, Long> letzteWarnung = new ConcurrentHashMap<>();
+    private volatile long letzterNeuaufbau;
+    private boolean nochmal;
     private volatile boolean bereit = false;
     private final Map<UUID, byte[]> letzterStand = new HashMap<>();
     private final Map<UUID, Long> geschrieben = new HashMap<>();
@@ -178,15 +182,67 @@ public final class BackupDatabase {
     // ---------------- Ausfuehrungs-Helfer ----------------
 
     private CompletableFuture<Void> run(Runnable action) {
-        return CompletableFuture.runAsync(action, executor);
+        return CompletableFuture.runAsync(() -> {
+            nochmal = false;
+            action.run();
+            if (nochmal) {
+                nochmal = false;
+                action.run();
+            }
+        }, executor);
     }
 
     private <T> CompletableFuture<T> supply(Supplier<T> action) {
-        return CompletableFuture.supplyAsync(action, executor);
+        return CompletableFuture.supplyAsync(() -> {
+            nochmal = false;
+            T wert = action.get();
+            if (nochmal) {
+                nochmal = false;
+                wert = action.get();
+            }
+            return wert;
+        }, executor);
     }
 
     private void warn(String where, Exception e) {
-        plugin.getLogger().warning("Backup-DB-Fehler (" + where + "): " + e.getMessage());
+        melden("Backup-DB-Fehler (" + where + ")", e);
+    }
+
+    private void melden(String text, Exception e) {
+        if (tabelleFehlt(e)) {
+            tabellenNeuAnlegen();
+            return;
+        }
+        long jetzt = System.currentTimeMillis();
+        Long zuletzt = letzteWarnung.get(text);
+        if (zuletzt != null && jetzt - zuletzt < 60_000L) {
+            return;
+        }
+        letzteWarnung.put(text, jetzt);
+        plugin.getLogger().warning(text + ": " + e.getMessage());
+    }
+
+    static boolean tabelleFehlt(Throwable fehler) {
+        for (Throwable t = fehler; t != null; t = t.getCause()) {
+            if (t instanceof SQLException sql && (sql.getErrorCode() == 1146 || "42S02".equals(sql.getSQLState())
+                    || (sql.getMessage() != null && sql.getMessage().contains("no such table")))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void tabellenNeuAnlegen() {
+        long jetzt = System.currentTimeMillis();
+        if (jetzt - letzterNeuaufbau < 10_000L) {
+            return;
+        }
+        letzterNeuaufbau = jetzt;
+        createTables();
+        letzterStand.clear();
+        geschrieben.clear();
+        nochmal = true;
+        plugin.getLogger().warning("Backup-Tabelle fehlte (z. B. nach /dbwipe) - ist neu angelegt.");
     }
 
     // ---------------- Sichern / Lesen ----------------

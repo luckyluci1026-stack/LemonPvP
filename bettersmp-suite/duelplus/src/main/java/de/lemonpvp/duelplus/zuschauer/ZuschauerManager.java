@@ -3,6 +3,7 @@ package de.lemonpvp.duelplus.zuschauer;
 import de.lemonpvp.duelplus.DuelPlus;
 import de.lemonpvp.duelplus.arena.Arena;
 import de.lemonpvp.duelplus.db.DuelRecord;
+import de.lemonpvp.duelplus.db.ZuschauerAnfrage;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -39,6 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Aufheben von Items).
  */
 public final class ZuschauerManager implements Listener {
+
+    private static final long ANFRAGE_GUELTIG_MILLIS = 60_000L;
 
     private final DuelPlus plugin;
 
@@ -91,14 +94,25 @@ public final class ZuschauerManager implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void beimJoin(PlayerJoinEvent event) {
         Player spieler = event.getPlayer();
-        plugin.db().zuschauerAnfrageHolenUndLoeschen(spieler.getUniqueId()).thenAccept(anfrageOpt ->
-                anfrageOpt.ifPresent(anfrage -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (plugin.replays().istReplayAnfrage(anfrage.arenaWelt())) {
-                        plugin.replays().nachAnkunft(spieler, anfrage.arenaWelt(), anfrage.herkunftServer());
-                    } else {
-                        zuschauenAnwenden(spieler, anfrage.arenaWelt(), anfrage.herkunftServer());
-                    }
-                })));
+        UUID id = spieler.getUniqueId();
+        plugin.db().zuschauerAnfrageHolenUndLoeschen(id).thenCombine(plugin.db().duellOffen(id), (anfrageOpt, imDuell) -> {
+            if (anfrageOpt.isEmpty() || imDuell
+                    || System.currentTimeMillis() - anfrageOpt.get().erstellt() > ANFRAGE_GUELTIG_MILLIS) {
+                return null;
+            }
+            ZuschauerAnfrage anfrage = anfrageOpt.get();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!spieler.isOnline() || plugin.sessionManager().beschaeftigt(id)) {
+                    return;
+                }
+                if (plugin.replays().istReplayAnfrage(anfrage.arenaWelt())) {
+                    plugin.replays().nachAnkunft(spieler, anfrage.arenaWelt(), anfrage.herkunftServer());
+                } else {
+                    zuschauenAnwenden(spieler, anfrage.arenaWelt(), anfrage.herkunftServer());
+                }
+            });
+            return null;
+        });
     }
 
     private void zuschauenAnwenden(Player spieler, String arenaWelt, String herkunftServer) {

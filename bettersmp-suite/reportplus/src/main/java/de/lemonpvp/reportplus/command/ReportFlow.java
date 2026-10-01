@@ -3,11 +3,14 @@ package de.lemonpvp.reportplus.command;
 import de.lemonpvp.reportplus.ReportPlus;
 import de.lemonpvp.reportplus.gui.Guis;
 import de.lemonpvp.reportplus.util.Kategorie;
+import de.lemonpvp.reportplus.util.Ziel;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,17 +27,39 @@ public final class ReportFlow {
         this.plugin = plugin;
     }
 
-    public void starteMitZiel(Player melder, UUID zielId) {
-        Player ziel = Bukkit.getPlayer(zielId);
-        if (ziel == null) {
-            plugin.msgs().send(melder, "report.not-online", "spieler", zielId.toString());
-            return;
+    public Optional<Ziel> finde(Player melder, String eingabe) {
+        String name = eingabe == null ? "" : eingabe.trim();
+        if (name.isEmpty()) {
+            return Optional.empty();
         }
-        starteMitZiel(melder, ziel);
+        Player online = Bukkit.getPlayerExact(name);
+        if (online == null && !name.startsWith(".")) {
+            online = Bukkit.getPlayerExact("." + name);
+        }
+        if (online != null) {
+            return Optional.of(new Ziel(online.getUniqueId(), online.getName()));
+        }
+        for (Ziel ziel : plugin.kontakte().letzte(melder.getUniqueId())) {
+            if (ziel.heisst(name)) {
+                return Optional.of(ziel);
+            }
+        }
+        Optional<Ziel> gegner = plugin.kontakte().finde(name);
+        if (gegner.isPresent()) {
+            return gegner;
+        }
+        OfflinePlayer bekannt = Bukkit.getOfflinePlayerIfCached(name);
+        if (bekannt == null && !name.startsWith(".")) {
+            bekannt = Bukkit.getOfflinePlayerIfCached("." + name);
+        }
+        if (bekannt == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new Ziel(bekannt.getUniqueId(), bekannt.getName() == null ? name : bekannt.getName()));
     }
 
-    public void starteMitZiel(Player melder, Player ziel) {
-        if (melder.getUniqueId().equals(ziel.getUniqueId())) {
+    public void starteMitZiel(Player melder, Ziel ziel) {
+        if (melder.getUniqueId().equals(ziel.id())) {
             plugin.msgs().send(melder, "report.not-yourself");
             return;
         }
@@ -48,22 +73,22 @@ public final class ReportFlow {
 
         List<Kategorie> kategorien = Kategorie.laden(plugin, "report.categories");
         Guis.oeffneKategoriePicker(melder,
-                plugin.msgs().raw("report.reason-title").replace("%spieler%", ziel.getName()),
+                plugin.msgs().raw("report.reason-title").replace("%spieler%", ziel.name()),
                 kategorien,
                 kategorieId -> abschliessen(melder, ziel, kategorieId));
     }
 
-    private void abschliessen(Player melder, Player ziel, String kategorieId) {
+    private void abschliessen(Player melder, Ziel ziel, String kategorieId) {
         letzteMeldung.put(melder.getUniqueId(), System.currentTimeMillis());
-        plugin.reports().anlegen(melder.getUniqueId(), melder.getName(), ziel.getUniqueId(), ziel.getName(), kategorieId);
-        plugin.msgs().send(melder, "report.submitted", "spieler", ziel.getName());
+        plugin.reports().anlegen(melder.getUniqueId(), melder.getName(), ziel.id(), ziel.name(), kategorieId);
+        plugin.msgs().send(melder, "report.submitted", "spieler", ziel.name());
         Bukkit.getPluginManager().callEvent(new de.lemonpvp.reportplus.api.SpielerGemeldetEvent(
-                melder.getUniqueId(), melder.getName(), ziel.getUniqueId(), ziel.getName(), kategorieId));
+                melder.getUniqueId(), melder.getName(), ziel.id(), ziel.name(), kategorieId));
 
         for (Player empfaenger : Bukkit.getOnlinePlayers()) {
             if (empfaenger.hasPermission("bettersmp.report.receive")) {
                 plugin.msgs().send(empfaenger, "report.received",
-                        "melder", melder.getName(), "spieler", ziel.getName(), "grund", kategorieId);
+                        "melder", melder.getName(), "spieler", ziel.name(), "grund", kategorieId);
             }
         }
     }

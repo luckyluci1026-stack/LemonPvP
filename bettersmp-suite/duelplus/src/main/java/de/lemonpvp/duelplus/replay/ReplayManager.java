@@ -127,6 +127,7 @@ public final class ReplayManager implements Listener {
         if (!plugin.db().bereit() || !plugin.getConfig().getBoolean("replay.aktiv", true)) {
             return;
         }
+        plugin.db().meldungMerken(gemeldet);
         long seit = System.currentTimeMillis() - speicher.aufbewahrenMillis();
         plugin.db().replaysMelden(gemeldet, seit, speicher.gemeldetMillis()).thenAccept(anzahl -> {
             if (anzahl > 0) {
@@ -153,23 +154,33 @@ public final class ReplayManager implements Listener {
             plugin.msgs().send(spieler, "replay-laeuft-schon");
             return;
         }
-        plugin.db().replayHolen(id).thenAccept(eintragOpt -> Bukkit.getScheduler().runTask(plugin, () -> {
-            if (eintragOpt.isEmpty()) {
-                plugin.msgs().send(spieler, "replay-nicht-gefunden", "id", id);
-                return;
-            }
-            ReplayEintrag eintrag = eintragOpt.get();
-            if (plugin.istArenaServer()) {
-                starten(spieler, eintrag, plugin.serverName());
-                return;
-            }
-            String ziel = eintrag.server() == null || eintrag.server().isBlank() ? plugin.arenaServerName() : eintrag.server();
-            plugin.db().zuschauerAnfrageSchreiben(spieler.getUniqueId(), PRAEFIX + eintrag.id(), plugin.serverName())
-                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                        plugin.msgs().send(spieler, "replay-teleport", "server", ziel);
-                        plugin.bridge().sende(spieler, ziel);
-                    }));
-        }));
+        plugin.db().replayHolen(id).thenCombine(plugin.db().istBeschaeftigt(spieler.getUniqueId()), (eintragOpt, beschaeftigt) -> {
+            Bukkit.getScheduler().runTask(plugin, () -> ansehenWeiter(spieler, id, eintragOpt, beschaeftigt));
+            return null;
+        });
+    }
+
+    private void ansehenWeiter(Player spieler, String id, Optional<ReplayEintrag> eintragOpt, boolean beschaeftigt) {
+        if (eintragOpt.isEmpty()) {
+            plugin.msgs().send(spieler, "replay-nicht-gefunden", "id", id);
+            return;
+        }
+        if (beschaeftigt || (plugin.istArenaServer() && plugin.sessionManager() != null
+                && plugin.sessionManager().beschaeftigt(spieler.getUniqueId()))) {
+            plugin.msgs().send(spieler, "replay-busy");
+            return;
+        }
+        ReplayEintrag eintrag = eintragOpt.get();
+        if (plugin.istArenaServer()) {
+            starten(spieler, eintrag, plugin.serverName());
+            return;
+        }
+        String ziel = plugin.arenaServerName();
+        plugin.db().zuschauerAnfrageSchreiben(spieler.getUniqueId(), PRAEFIX + eintrag.id(), plugin.serverName())
+                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    plugin.msgs().send(spieler, "replay-teleport", "server", ziel);
+                    plugin.bridge().sende(spieler, ziel);
+                }));
     }
 
     public void nachAnkunft(Player spieler, String anfrage, String herkunft) {

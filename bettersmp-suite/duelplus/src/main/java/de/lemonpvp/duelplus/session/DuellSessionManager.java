@@ -56,6 +56,8 @@ public final class DuellSessionManager implements Listener {
     /** Wer fuer ein noch nicht gestartetes Duell schon angekommen ist (Ankunft + Inventar angewendet, wartet auf den Gegner). */
     private final Map<String, Set<UUID>> wartendAufAnkunft = new ConcurrentHashMap<>();
     private final Map<String, Long> wartetSeit = new ConcurrentHashMap<>();
+    private final Map<String, Long> statusGeprueft = new ConcurrentHashMap<>();
+    private static final long STATUS_PRUEFEN_MILLIS = 5_000L;
     private final Set<String> ankunftPruefung = ConcurrentHashMap.newKeySet();
     private long letzteAuffrischung;
     private final Map<UUID, DuellSession> sessionNachSpieler = new ConcurrentHashMap<>();
@@ -136,6 +138,18 @@ public final class DuellSessionManager implements Listener {
         return nachbereitung.containsKey(spieler);
     }
 
+    public boolean beschaeftigt(UUID spieler) {
+        if (sessionNachSpieler.containsKey(spieler) || nachbereitung.containsKey(spieler)) {
+            return true;
+        }
+        for (Set<UUID> wartend : wartendAufAnkunft.values()) {
+            if (wartend.contains(spieler)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ================================================================
     //  Ankunft
     // ================================================================
@@ -173,6 +187,11 @@ public final class DuellSessionManager implements Listener {
         plugin.duellChat().partnerSetzen(duell.spielerA(), duell.spielerB());
         plugin.db().snapshotHolenUndLoeschen(duell.id(), spieler.getUniqueId(), DuelDatabase.RICHTUNG_HIN)
                 .thenAccept(snapshotOpt -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    Set<UUID> schonDa = wartendAufAnkunft.get(duell.id());
+                    if (snapshotOpt.isEmpty() && (schonDa == null || !schonDa.contains(spieler.getUniqueId()))) {
+                        ohneInventarAbsagen(spieler, duell);
+                        return;
+                    }
                     snapshotOpt.ifPresent(snap -> snap.anwenden(spieler.getInventory()));
                     Set<UUID> wartend = wartendAufAnkunft.computeIfAbsent(duell.id(), k -> ConcurrentHashMap.newKeySet());
                     wartetSeit.putIfAbsent(duell.id(), System.currentTimeMillis());
@@ -183,6 +202,29 @@ public final class DuellSessionManager implements Listener {
                         duellStarten(duell);
                     }
                 }));
+    }
+
+    private void ohneInventarAbsagen(Player spieler, DuelRecord duell) {
+        plugin.db().statusWechseln(duell.id(), DuelRecord.ANGENOMMEN, DuelRecord.ABGELAUFEN);
+        Set<UUID> betroffen = new java.util.LinkedHashSet<>();
+        betroffen.add(spieler.getUniqueId());
+        Set<UUID> wartend = wartendAufAnkunft.remove(duell.id());
+        if (wartend != null) {
+            betroffen.addAll(wartend);
+        }
+        wartetSeit.remove(duell.id());
+        statusGeprueft.remove(duell.id());
+        for (UUID uuid : betroffen) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p == null) {
+                continue;
+            }
+            plugin.msgs().send(p, "duel-no-inventory");
+            String zurueck = uuid.equals(duell.spielerA()) ? duell.spielerAServer() : duell.spielerBServer();
+            if (zurueck != null && !zurueck.equals(plugin.serverName())) {
+                plugin.bridge().sende(p, zurueck);
+            }
+        }
     }
 
     private void duellStarten(DuelRecord duell) {
@@ -949,21 +991,30 @@ public final class DuellSessionManager implements Listener {
         long grenze = Math.max(30, plugin.getConfig().getInt("anfrage.ankunft-warten-sekunden", 90)) * 1000L;
         for (Map.Entry<String, Long> eintrag : wartetSeit.entrySet()) {
             String duellId = eintrag.getKey();
-            if (jetzt - eintrag.getValue() < grenze || !ankunftPruefung.add(duellId)) {
+            boolean zuLange = jetzt - eintrag.getValue() >= grenze;
+            long zuletztGeprueft = statusGeprueft.getOrDefault(duellId, eintrag.getValue());
+            if ((!zuLange && jetzt - zuletztGeprueft < STATUS_PRUEFEN_MILLIS) || !ankunftPruefung.add(duellId)) {
                 continue;
             }
+            statusGeprueft.put(duellId, jetzt);
             plugin.db().holeById(duellId).thenAccept(duellOpt -> Bukkit.getScheduler().runTask(plugin, () -> {
                 ankunftPruefung.remove(duellId);
                 Set<UUID> wartend = wartendAufAnkunft.get(duellId);
                 if (wartend == null) {
                     wartetSeit.remove(duellId);
+                    statusGeprueft.remove(duellId);
                     return;
                 }
-                if (duellOpt.isPresent() && DuelRecord.ANGENOMMEN.equals(duellOpt.get().status())) {
+                boolean nochOffen = duellOpt.isPresent() && DuelRecord.ANGENOMMEN.equals(duellOpt.get().status());
+                if (nochOffen && !zuLange) {
+                    return;
+                }
+                if (nochOffen) {
                     plugin.db().statusWechseln(duellId, DuelRecord.ANGENOMMEN, DuelRecord.ABGELAUFEN);
                 }
                 wartendAufAnkunft.remove(duellId);
                 wartetSeit.remove(duellId);
+                statusGeprueft.remove(duellId);
                 for (UUID uuid : wartend) {
                     Player spieler = Bukkit.getPlayer(uuid);
                     if (spieler == null || sessionNachSpieler.containsKey(uuid)) {

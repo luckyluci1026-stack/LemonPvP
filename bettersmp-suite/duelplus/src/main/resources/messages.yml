@@ -93,6 +93,8 @@ leave-not-in-duel: "%prefix%<gray>Du bist gerade nicht in einer Duell-Arena.</gr
 leave-failed: "%prefix%<red>Dein Inventar konnte gerade nicht gespeichert werden.</red> <gray>Versuch es gleich nochmal mit</gray> <white>/spawn</white><gray>.</gray>"
 
 arena-queue: "%prefix%<gray>Gerade sind alle Arenen belegt - du kommst automatisch dran, sobald eine frei wird.</gray>"
+duel-no-mirror: "%prefix%<gold>Das Duell ist abgesagt: Dein SMP-Inventar ist hier gerade nicht bekannt.</gold> <gray>Geh einmal kurz auf den SMP, danach klappt das Duell auch von hier.</gray>"
+duel-no-inventory: "%prefix%<gold>Das Duell ist abgesagt - ein Inventar ist nicht angekommen.</gold> <gray>Dir geht nichts verloren.</gray>"
 
 item-received: "%prefix%<gray>Rechtsklick mit dem Schwert in Slot %slot% fordert jemanden heraus.</gray>"
 gui-title: "<dark_gray>» <gradient:#FF6B6B:#C92A2A>Wen herausfordern?</gradient>"
@@ -103,6 +105,8 @@ loot-delivered-dropped: "%prefix%<gold>Inventar und Enderkiste waren voll - <whi
 
 # --- Replays (siehe replay in der config.yml) ------------------
 replay-hinweis: "<dark_gray>Das Duell wurde aufgezeichnet (%tage% Tage).</dark_gray> <click:suggest_command:'/report %gegner% '><hover:show_text:'<gray>Den Gegner melden - das Team kann sich das Duell dann ansehen'><gray>[Unfair? Melden]</gray></hover></click>"
+replay-hinweis-smp: "<dark_gray>Das Duell wurde aufgezeichnet (%tage% Tage).</dark_gray> <gray>Unfair? Auf dem SMP:</gray> <white>/report %gegner%</white>"
+replay-busy: "%prefix%<gold>Erst dein Duell zu Ende bringen - dann geht das Replay.</gold>"
 replay-hilfe: "%prefix%<gray>/replay <white>liste [Spieler]</white> <dark_gray>|</dark_gray> <white>ansehen <ID></white> <dark_gray>|</dark_gray> <white>behalten <ID></white> <dark_gray>|</dark_gray> <white>speicher</white></gray>"
 replay-liste-kopf: "%prefix%<gray>Letzte Replays%fuer%:</gray>"
 replay-liste-leer: "%prefix%<gray>Keine Replays gefunden.</gray>"

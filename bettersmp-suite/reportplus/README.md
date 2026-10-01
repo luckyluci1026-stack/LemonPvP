@@ -8,7 +8,16 @@ kein Neubau von BetterSMP nötig, siehe `loadbefore` in `plugin.yml`.
 
 ### `/report [Spieler]`
 - Ohne Namen: GUI mit allen Online-Spielern (Kopf anklicken statt Namen tippen).
-- Mit Namen: direkt weiter zur Grund-Auswahl.
+  Ganz vorne stehen deine letzten Duell-Gegner (2 Stunden lang), auch wenn
+  sie gerade auf einem anderen Server oder offline sind.
+- Mit Namen: direkt weiter zur Grund-Auswahl. Der Spieler muss nicht auf
+  diesem Server online sein: Wer auf einem anderen Server ist, gerade
+  offline gegangen ist oder zuletzt gegen dich gekämpft hat, lässt sich
+  genauso melden. Wegloggen oder Serverwechsel schützen also niemanden vor
+  einer Meldung. Bedrock-Namen gehen mit und ohne Punkt davor.
+- Mit DuelPlus bleiben die Duell-Replays des Gemeldeten 30 Tage statt 3
+  Tage (einstellbar in DuelPlus unter `replay.gemeldet-tage`), auch das
+  Duell, das gerade noch läuft.
 - Grund per GUI (Cheaten, Griefing, Beleidigung, Werbung, Sonstiges - frei
   in `config.yml` anpassbar).
 - Cooldown pro Melder, landet in `reports.yml`, Broadcast an alle mit

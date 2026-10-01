@@ -127,6 +127,9 @@ public final class WipeCommand implements CommandExecutor {
                 int anzahl = dumper.alleTabellenLoeschen();
                 plugin.getLogger().warning("DBWipe: fertig - " + anzahl + " Tabelle(n) geloescht. "
                         + "Backup liegt unter " + backup.getAbsolutePath());
+                plugin.getLogger().warning("DBWipe: DuelPlus und BetterSMP legen ihre Tabellen beim naechsten Zugriff "
+                        + "selbst neu an. Andere Plugins mit Tabellen in dieser Datenbank (z. B. LuckPerms) "
+                        + "brauchen einen Server-Neustart - ihre alten Daten stecken im Backup.");
             } catch (Exception e) {
                 plugin.getLogger().severe("DBWipe: Loeschen fehlgeschlagen (" + e.getMessage()
                         + ") - das Backup unter " + backup.getAbsolutePath() + " existiert trotzdem bereits.");
