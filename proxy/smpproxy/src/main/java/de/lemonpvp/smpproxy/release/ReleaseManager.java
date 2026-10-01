@@ -245,7 +245,10 @@ public final class ReleaseManager {
 
     public boolean blockiert(Player spieler, String ziel) {
         UUID id = spieler.getUniqueId();
-        if (freigegeben.contains(id) || probeDarf(id, ziel)) {
+        if (proben.containsKey(id)) {
+            return !probeDarf(id, ziel) && gesperrterServer(ziel);
+        }
+        if (freigegeben.contains(id)) {
             return false;
         }
         return haeltFest(spieler) && gesperrterServer(ziel);
@@ -255,8 +258,16 @@ public final class ReleaseManager {
         if (!blockiert(spieler, ziel)) {
             return false;
         }
-        spieler.sendMessage(plugin.message("release-gesperrt", "%dauer%", restText(), "%datum%", datumText()));
+        spieler.sendMessage(sperrHinweis(spieler));
         return true;
+    }
+
+    private Component sperrHinweis(Player spieler) {
+        ProbeRelease probe = proben.get(spieler.getUniqueId());
+        if (probe != null) {
+            return plugin.message("testrelease-gesperrt", "%dauer%", dauerText(Math.max(0, probe.ende - uhr.getAsLong())));
+        }
+        return plugin.message("release-gesperrt", "%dauer%", restText(), "%datum%", datumText());
     }
 
     private boolean probeDarf(UUID id, String ziel) {
@@ -316,7 +327,7 @@ public final class ReleaseManager {
             }
         }
         event.setResult(ServerPreConnectEvent.ServerResult.denied());
-        spieler.sendMessage(plugin.message("release-gesperrt", "%dauer%", restText(), "%datum%", datumText()));
+        spieler.sendMessage(sperrHinweis(spieler));
     }
 
     @Subscribe

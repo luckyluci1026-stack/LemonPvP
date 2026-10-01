@@ -63,7 +63,11 @@ warten bis dahin alle im Warteraum (Limbo) statt auf dem SMP:
   (`release.yml` merkt sich, dass der Release gelaufen ist).
 - `/testrelease [Sekunden]` spielt den kompletten Ablauf als Probe nur für
   dich durch (Warteraum → Countdown → Titel → Welle → Ziel-Server). Der echte
-  Release und alle anderen Spieler bleiben unberührt.
+  Release und alle anderen Spieler bleiben unberührt. Während der Probe wirst
+  du genau wie alle festgehalten – auch mit Team-Rechten und auch, wenn gar
+  kein echter Release geplant ist: `/spawn`, `/lobby`, `/server`, `/ah`,
+  `/rtp` und das Server-Menü sind gesperrt, bis die Probe dich auf den
+  Ziel-Server schickt. `/testrelease stop` bricht jederzeit ab.
 
 **6. Netzwerkweite Moderation.** `/regeln` und `/rules` zeigen überall dieselben
 Regeln (auch das Regelbuch in der Lobby). `/msg` wird von AntiSwear auf dem
