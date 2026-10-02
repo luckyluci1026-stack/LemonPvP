@@ -92,6 +92,7 @@ leave-in-duel: "%prefix%<red>Mitten im Duell geht das nicht.</red>"
 leave-not-in-duel: "%prefix%<gray>Du bist gerade nicht in einer Duell-Arena.</gray>"
 leave-failed: "%prefix%<red>Dein Inventar konnte gerade nicht gespeichert werden.</red> <gray>Versuch es gleich nochmal mit</gray> <white>/spawn</white><gray>.</gray>"
 
+portal-blocked: "%prefix%<gray>Netherportale gehen auf dem Duell-Server nicht.</gray>"
 arena-queue: "%prefix%<gray>Gerade sind alle Arenen belegt - du kommst automatisch dran, sobald eine frei wird.</gray>"
 duel-no-mirror: "%prefix%<gold>Das Duell ist abgesagt: Dein SMP-Inventar ist hier gerade nicht bekannt.</gold> <gray>Geh einmal kurz auf den SMP, danach klappt das Duell auch von hier.</gray>"
 duel-no-inventory: "%prefix%<gold>Das Duell ist abgesagt - ein Inventar ist nicht angekommen.</gold> <gray>Dir geht nichts verloren.</gray>"

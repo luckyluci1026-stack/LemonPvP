@@ -303,6 +303,13 @@ Unentschieden/Aufgabe) wieder verlassen.
   Proxy-Config). Das Duell zählt dann nicht, beim nächsten Start bricht der
   Duels-Server es ab.
 
+## Keine Netherportale auf dem Duels-Server
+
+Auf dem Duels-Server lässt sich kein Netherportal anzünden (kurzer Hinweis
+im Chat), und durch ein trotzdem vorhandenes Portal kommen weder Spieler
+noch Items, Mobs oder Pfeile. So kann niemand aus einer Arena in den Nether
+entkommen.
+
 ## Chat auf dem Duels-Server
 
 Auf dem Duels-Server sieht nur der eigene Gegner, was man schreibt - kein

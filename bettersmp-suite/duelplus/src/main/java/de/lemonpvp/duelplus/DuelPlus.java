@@ -14,6 +14,7 @@ import de.lemonpvp.duelplus.replay.ReplayManager;
 import de.lemonpvp.duelplus.request.AnfrageManager;
 import de.lemonpvp.duelplus.request.AnfragePollTask;
 import de.lemonpvp.duelplus.session.ArenaGuardListener;
+import de.lemonpvp.duelplus.session.PortalSperre;
 import de.lemonpvp.duelplus.session.DuellChat;
 import de.lemonpvp.duelplus.session.DuellSessionManager;
 import de.lemonpvp.duelplus.session.TrefferWaechter;
@@ -107,6 +108,7 @@ public final class DuelPlus extends JavaPlugin {
             this.sessionManager = new DuellSessionManager(this);
             sessionManager.starten();
             getServer().getPluginManager().registerEvents(new ArenaGuardListener(this), this);
+            getServer().getPluginManager().registerEvents(new PortalSperre(this), this);
             this.duellChat = new DuellChat(this);
             getServer().getPluginManager().registerEvents(duellChat, this);
             getServer().getPluginManager().registerEvents(zuschauer, this);
