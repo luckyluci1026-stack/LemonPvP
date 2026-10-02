@@ -46,13 +46,7 @@ public final class JoinModule implements Listener {
         }
         Player player = event.getPlayer();
         boolean first = !player.hasPlayedBefore();
-        if (first) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (player.isOnline()) {
-                    plugin.tutorial().ersterJoin(player);
-                }
-            }, 80L);
-        }
+        plugin.tutorial().beimJoin(player, first);
         if (!enabled()) {
             return;
         }

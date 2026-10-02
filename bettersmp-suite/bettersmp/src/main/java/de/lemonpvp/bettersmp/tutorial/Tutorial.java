@@ -7,6 +7,7 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -18,6 +19,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -41,6 +44,8 @@ public final class Tutorial implements Listener, CommandExecutor {
             return inventory;
         }
     }
+
+    private static final NamespacedKey HINWEISE = new NamespacedKey("bettersmp", "tutorial_hinweise");
 
     private final BetterSMP plugin;
     private YamlConfiguration daten = new YamlConfiguration();
@@ -113,14 +118,35 @@ public final class Tutorial implements Listener, CommandExecutor {
         spieler.playSound(Sound.sound(Key.key("minecraft:item.book.page_turn"), Sound.Source.MASTER, 1f, 1f));
     }
 
-    public void ersterJoin(Player spieler) {
-        String hinweis = daten.getString("erster-join-hinweis", "");
-        if (!hinweis.isEmpty()) {
-            spieler.sendMessage(Text.mm(hinweis));
+    public void beimJoin(Player spieler, boolean erster) {
+        boolean hinweis = hinweisZaehlen(spieler);
+        boolean menue = erster && daten.getBoolean("beim-ersten-join-oeffnen", true);
+        if (!hinweis && !menue) {
+            return;
         }
-        if (daten.getBoolean("beim-ersten-join-oeffnen", true)) {
-            oeffnen(spieler);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!spieler.isOnline()) {
+                return;
+            }
+            String text = daten.getString("erster-join-hinweis", "");
+            if (hinweis && !text.isEmpty()) {
+                spieler.sendMessage(Text.mm(text));
+            }
+            if (menue) {
+                oeffnen(spieler);
+            }
+        }, 80L);
+    }
+
+    private boolean hinweisZaehlen(Player spieler) {
+        int anzahl = Math.max(0, daten.getInt("join-hinweis-anzahl", 3));
+        PersistentDataContainer speicher = spieler.getPersistentDataContainer();
+        int bisher = speicher.getOrDefault(HINWEISE, PersistentDataType.INTEGER, 0);
+        if (bisher >= anzahl) {
+            return false;
         }
+        speicher.set(HINWEISE, PersistentDataType.INTEGER, bisher + 1);
+        return true;
     }
 
     @Override

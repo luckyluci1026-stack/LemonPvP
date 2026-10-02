@@ -16,6 +16,8 @@ plaetze: 27
 # Beim allerersten Beitreten nach ein paar Sekunden automatisch oeffnen
 beim-ersten-join-oeffnen: true
 erster-join-hinweis: "<gray>Neu hier? Mit <white>/tutorial</white> lernst du alles Wichtige in zwei Minuten.</gray>"
+# Bei so vielen ersten Joins auf diesem Server kommt der Hinweis oben (0 = nie)
+join-hinweis-anzahl: 3
 kopfzeile: "<dark_gray><st>                                        </st>"
 fusszeile: "<gray>Alle Themen: <white>/tutorial</white></gray>"
 unbekannt: "<red>Das Thema gibt es nicht. Tippe <white>/tutorial</white>.</red>"

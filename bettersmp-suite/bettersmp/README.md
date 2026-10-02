@@ -87,7 +87,9 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   neue Spieler - Erste Schritte, Geld & Shop, Auktionshaus, Teleportieren,
   Duelle, Kämpfen, Chat, Regeln. Klick auf ein Thema schreibt die Erklärung
   in den Chat, `/tutorial 3` zeigt Thema 3 direkt. Beim allerersten Beitreten
-  öffnet es sich nach ein paar Sekunden von selbst. Alles steht in
+  öffnet es sich nach ein paar Sekunden von selbst. Bei den ersten 3 Joins auf
+  dem SMP steht im Chat der Hinweis auf `/tutorial` (`join-hinweis-anzahl` in
+  `tutorial.yml`, gezählt in den Spielerdaten des SMP). Alles steht in
   `tutorial.yml`; ein Thema mit `befehl: ah` erscheint nur, wenn es `/ah` auf
   dem Server gibt.
 - **Beitreten/Verlassen**: Mit `join-quit.netzwerk: true` (Standard) kommt
