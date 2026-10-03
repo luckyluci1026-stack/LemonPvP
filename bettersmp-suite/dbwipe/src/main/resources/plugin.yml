@@ -1,0 +1,22 @@
+name: DBWipe
+version: ${project.version}
+main: de.lemonpvp.dbwipe.DBWipe
+api-version: '1.21'
+authors: [SMP]
+description: Notfallwerkzeug - loescht nach drei Warnungen und einem Passwort ALLE Tabellen der Datenbank, mit vorherigem vollstaendigem .tar.gz-Backup. Nur ueber die Serverkonsole nutzbar.
+
+# Nur gebraucht, wenn /dbwipe tatsaechlich benutzt wird - eigene
+# Deklaration noetig, auch wenn BetterSMP denselben Treiber schon
+# laedt: jedes Plugin hat bei Paper seinen eigenen Classloader.
+libraries:
+  - org.mariadb.jdbc:mariadb-java-client:3.4.1
+
+commands:
+  dbwipe:
+    description: Loescht nach drei Warnungen und Passwort ALLE Tabellen der Datenbank (Backup zuerst)
+    usage: "/dbwipe [Passwort|cancel]"
+    # Absichtlich KEIN "permission:" hier - Konsole hat ohnehin jede
+    # Rechtigung automatisch, das waere reine Dekoration. Der echte
+    # Schutz ist die "nur Konsole"-Pruefung direkt im Code (siehe
+    # WipeCommand) - eine Berechtigung wuerde einen OP-Spieler nicht
+    # aussperren, der Code-Check schon.

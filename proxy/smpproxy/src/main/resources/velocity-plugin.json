@@ -1,0 +1,9 @@
+{
+  "id": "smpproxy",
+  "name": "SMPProxy",
+  "version": "${project.version}",
+  "description": "Domain-Routing und Limbo-Ausweichserver",
+  "authors": ["SMPProxy"],
+  "dependencies": [],
+  "main": "de.lemonpvp.smpproxy.SMPProxy"
+}

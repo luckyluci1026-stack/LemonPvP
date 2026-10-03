@@ -1,0 +1,455 @@
+# DuelPlus
+
+Duell-System mit echtem SMP-Loot, wie auf den großen Servern: **`/duel
+<Spieler>`** (auf jedem Herkunftsserver nutzbar) oder - standardmäßig
+nur in der Lobby - der Duell-Gegenstand am Spawn, dann kämpfen beide
+mit ihrem echten SMP-Inventar auf einem eigenen, dritten Server -
+**Duels**.
+
+## Aufbau
+
+**Ein** Plugin, installiert auf **drei** Servern - `server-name`,
+`ist-arena-server` und `ist-loot-quelle` in der `config.yml` stellen
+pro Server ein, wie es sich verhält:
+
+| Server | `server-name` | `ist-arena-server` | `ist-loot-quelle` | `gegenstand.aktiv` | Rolle |
+|---|---|---|---|---|---|
+| SMP | `SMP` | `false` | `true` | `false` (Standard) | `/duel`, Herausforderungen, **echtes Loot** |
+| Lobby | `Lobby` | `false` | `false` | `true` (dort umstellen) | `/duel`, Gegenstand, Herausforderungen |
+| Duels | `Duels` | `true` | `false` (ohne Wirkung) | - (ohne Wirkung) | Arenen, Kämpfe, Loot |
+
+`gegenstand.aktiv` ist standardmäßig **aus** - der Gegenstand ist nur
+eine Zusatz-Option, `/duel <Spieler>` funktioniert unabhängig davon
+überall. Empfehlung: nur in der Lobby auf `true` stellen (thematisch
+passend, genau wie SMPLobbys eigene Menü-Gegenstände) - auf dem
+SMP-Server wirkt ein zusätzliches Schwert im Inventar eher störend.
+
+`ist-loot-quelle: true` gehört auf **genau einen** Server - den mit
+dem "echten" Loot (in den meisten Setups: SMP). Nur dort wird das
+Inventar laufend in die Datenbank gespiegelt. Ohne das würde eine
+Herausforderung, die von einem ANDEREN Server aus angenommen wird
+(z.B. in der Lobby), fälschlich das dortige, meist leere/andere
+Live-Inventar mitschicken, statt des echten SMP-Inventars. Auf allen
+anderen Servern muss diese Zeile `false` sein (Standard).
+
+Der Spiegel wird beim Betreten, Verlassen und beim Stoppen des Servers
+immer geschrieben, dazwischen alle 30 Sekunden – verteilt über die 30
+Sekunden und nur, wenn sich das Inventar geändert hat (spätestens alle
+5 Minuten trotzdem). Vorher ging beim Stoppen des SMP der letzte Stand
+verloren, weil Paper Plugins vor dem Rauswerfen der Spieler abschaltet:
+Wer kurz vor einem Neustart etwas abgebaut oder weggegeben hatte, bekam
+beim nächsten Betreten den älteren Stand zurück.
+
+**Lobby-Duelle brauchen den Spiegel.** Fehlt er (z. B. direkt nach
+`/dbwipe` oder bei jemandem, der noch nie auf dem SMP war), wird das
+Duell abgesagt und der Spieler bekommt den Hinweis, einmal kurz auf den
+SMP zu gehen. Vorher hätte er mit leerem Inventar gekämpft und das
+Ergebnis hätte danach sein echtes SMP-Inventar überschrieben.
+
+`server-name` muss genau so heißen wie der Server in der `velocity.toml`.
+Auf dem Duels-Server gilt außerdem `server-name` = `arena-server-name`
+(Standard `Duels`) - sonst steht beim Start eine Warnung in der Konsole.
+
+Kein eigenes Velocity-Plugin nötig: Der Serverwechsel läuft über den
+Standard-`BungeeCord`-Kanal, den Velocity auch versteht (gleiches
+Vorbild wie SMPLobbys Server-Wähler) - es reicht ein Eintrag für
+**Duels** in der `velocity.toml` unter `[servers]`.
+
+## Voraussetzung: gemeinsame MariaDB
+
+**Zwingend erforderlich** – MariaDB oder MySQL (ab 5.7), beides geht. Neue
+Spalten und Indizes legt DuelPlus beim Start selbst an, auch in Tabellen aus
+älteren Versionen. DuelPlus muss Zustand (wer fordert wen
+heraus, wessen Inventar wohin unterwegs ist, wer gerade auf welchem
+Server ist) zwischen drei komplett getrennten Serverprozessen teilen -
+eine lokale Datei könnte das grundsätzlich nicht. Ohne Verbindung
+bleibt DuelPlus auf dem betroffenen Server wirkungslos (Meldung in der
+Konsole, `/duelplus reload` versucht es erneut).
+
+Läuft bereits eine MariaDB für BetterSMP (dessen `config.yml`,
+`database.mariadb`), einfach dieselben Zugangsdaten in **jeder** der
+drei `config.yml` eintragen - DuelPlus legt eigene Tabellen an
+(`duelplus_*`), ohne BetterSMPs eigene zu berühren. Die Datenbank
+selbst muss vorher existieren und von allen drei Servern aus
+erreichbar sein (Netzwerk/Firewall).
+
+**Nach `/dbwipe`** (oder wenn die Tabellen sonst verschwinden) legt
+DuelPlus sie beim nächsten Zugriff selbst neu an und schreibt genau eine
+Zeile ins Log - kein Neustart, kein Fehler-Spam jede Sekunde. Andere
+Fehler stehen höchstens einmal pro Minute in der Konsole.
+
+## Wichtig nach einem Update von einer älteren DuelPlus-Version
+
+Die Arena-Welten werden nur **beim allerersten Erzeugen** aufgebaut -
+eine ältere Version hat dafür noch echtes Vanilla-Gelände verwendet
+(daher konnte man am Rand der Plattform in die "echte" Welt
+darunter/darum schauen), eine etwas neuere Version noch ohne die
+unsichtbare Barriere-Box gegen Enderperlen-Fluchten, eine dritte
+Version noch mit reinem Luft-Void unter der Plattform statt eines
+richtigen Bodens mit Bedrock, eine vierte Version noch mit einer sehr
+hoch gelegenen Plattform (Sturz bis zum Boden weit über 100 Blöcke)
+statt der aktuellen, viel niedrigeren, eine fünfte Version noch mit
+kleinerer Worldborder-Größe, eine sechste Version noch mit mehreren
+strukturell verschiedenen Boden-Themes (Lavagraben, Eis, Wasserring)
+UND einer sichtbaren Randmauer, auf der man stehen/von der man
+abrutschen konnte - beides durch Live-Tests als Fehlerquelle
+identifiziert und wieder entfernt -, und eine siebte Version noch mit
+der Plattform nur 1 Block über nacktem Bedrock (kein echtes Terrain
+darunter) statt des aktuellen, mehrere Blöcke tiefen Erde/Stein/
+Tiefenschiefer-Aufbaus (siehe unten). Damit Arenen stattdessen mit dem
+aktuellen Aufbau entstehen (siehe unten), müssen auf
+dem **Duels-Server** einmalig die alten Weltordner gelöscht werden -
+Standard-Namen `duell_arena_1` bis `duell_arena_4` (siehe
+`arenen.welt-praefix` / `arenen.anzahl`), bei gestopptem Server. Beim
+nächsten Start entstehen sie automatisch neu. Das gilt auch für jedes
+künftige Arena-Update dieser Art - nur ein Löschen der Weltordner
+erzeugt sie wirklich neu, ein reines Plugin-Update oder
+`/duelplus reload` reicht dafür nicht.
+
+**Woran erkenne ich, ob es geklappt hat?** Im Server-Log beim Start
+steht pro Arena entweder `NEU gebaut` (Weltordner war weg, Arena wurde
+mit dem aktuellen Aufbau + der aktuellen `config.yml` neu erzeugt) oder
+`aus vorhandener Welt geladen` (Weltordner war noch da - keine
+Struktur-Änderung übernommen). Radius und Plattform-Höhe, mit denen
+eine Arena tatsächlich gebaut wurde, merkt sich das Plugin zusätzlich
+dauerhaft in `plugins/DuelPlus/arena-meta.yml` - **unabhängig davon**,
+was später in der `config.yml` steht. Ändert man `worldborder-groesse`
+oder die Terrain-Tiefen (`boden-tiefe`/`stein-tiefe`/`deepslate-tiefe`),
+ohne den zugehörigen Weltordner zu löschen, bleibt die Arena also exakt
+bei ihren ursprünglichen Werten (Plattform-Höhe, Worldborder-Größe,
+Barriere-Box - alles bleibt zueinander konsistent), statt durch einen
+live berechneten, nicht mehr passenden Wert kaputtzugehen. Nach `NEU
+gebaut` füllt sich das Terrain unter der Plattform noch ein paar
+Sekunden lang asynchron auf (siehe unten) - eine eigene Log-Zeile
+`Terrain ... fertig aufgefuellt` meldet, wann das fertig ist.
+
+## Ablauf eines Duells
+
+1. **Herausfordern**: `/duel <Spieler>` (überall) oder Rechtsklick auf
+   den Duell-Gegenstand, wo aktiviert (öffnet eine Spieler-Auswahl) -
+   funktioniert auch serverübergreifend (Herausforderer auf dem SMP,
+   Ziel in der Lobby).
+2. Das Ziel bekommt eine klickbare Nachricht (`Annehmen` / `Ablehnen`),
+   läuft nach `anfrage.timeout-sekunden` (Standard 60) von selbst ab.
+3. Bei Annahme: **beide** Inventare (Hotbar, Rucksack, Rüstung,
+   Offhand - **ohne** Enderkiste) werden geschnappschossen, beide
+   Spieler zum Duels-Server geschickt.
+4. Auf **Duels** angekommen: Inventar wird angewendet, sobald beide da
+   sind, startet ein Countdown (`kampf.countdown-sekunden`, während
+   dessen unverwundbar), dann beginnt der Kampf.
+5. **Arena**: eine von mehreren automatisch erzeugten Welten **ohne
+   echte Vanilla-Terraingenerierung** (man soll am Rand nicht in "die
+   echte Welt" schauen können). Unter der begehbaren Steinplattform
+   folgt luecken-los **echtes, grabbares Terrain** bis zum
+   unzerstörbaren Bedrock hinunter: standardmäßig 7 Blöcke Erde, dann
+   35 Blöcke Stein, dann 15 Blöcke Tiefenschiefer (`arenen.boden-tiefe`
+   / `stein-tiefe` / `deepslate-tiefe`) - reißt eine Explosion
+   (Endkristall/Anker) den Boden weg, fällt man in dieses Terrain
+   statt in einen leeren Abgrund. Der Boden ist ein aufwendiges Muster
+   aus **zwei konzentrischen Ringen** plus einer feinen Schachbrett-
+   Textur dazwischen, überlagert von acht Speichen durch die Mitte (zu
+   Spawnpunkten, Deckungspfeilern, Eck-Türmen) - alles aus
+   gewöhnlichen, robusten Blöcken (keine Gefahren-Materialien wie
+   Lava/Wasser/Eis). Reihum zwei verschiedene Materialpaletten (Stein,
+   Tiefenschiefer), gleicher Aufbau. Dazu vier hohe **Eck-Türme** (mit
+   Zinnenkranz und Licht auf der Spitze) und zwei Deckungspfeiler in
+   der Mitte.
+
+   Bewusst **keine sichtbare Randmauer** mehr: der äußere Abschluss ist
+   ausschließlich eine unsichtbare, unzerstörbare **Barriere-Box**
+   (vier Wände + Decke, bis exakt auf Bedrock-Niveau hinunter, kein
+   Spalt) in der vollen Start-Größe der Arena - die Worldborder allein
+   reicht nicht, weil eine Enderperle ihre sanfte Zurückdräng-Kollision
+   instant überspringt (bekannter Vanilla-Kniff); die Barriere-Box
+   stoppt das unabhängig vom aktuellen Border-Stand zuverlässig, ohne
+   eine begehbare Kante zu bieten, auf der man stehen oder von der man
+   unerwartet abrutschen/durchfallen könnte, UND verhindert, dass sich
+   jemand seitlich durch das jetzt echte Terrain aus der Arena
+   heraus gräbt.
+   Bauen/Abbauen ist während des Duells erlaubt - danach wird die
+   Arena **komplett zurückgerollt** (jede Blockänderung: Abbauen,
+   Platzieren, Explosionen, Eimer, Flüssigkeiten, Feuer), damit sie
+   für das nächste Duell wieder genau so aussieht wie vorher.
+   Während des Kampfes steigen zusätzlich laufend Seelen-Partikel nahe
+   am Rand auf.
+   Während des Countdowns (siehe Punkt 4) stehen beide fest an ihrem
+   Platz und sehen sich an, bei jeder verbleibenden Sekunde ein kurzer
+   Ton - sobald der Kampf beginnt, schlägt sichtbar/hörbar ein
+   **Blitz** am Arena-Zentrum ein (nur Effekt, macht keinen Schaden und
+   zündet nichts an) und beide sehen "KAMPF!" groß auf dem Bildschirm.
+   Ab da läuft für beide eine **Boss-Bar**, die laufend zeigt, wie weit
+   die Worldborder (`kampf.worldborder-schrumpfen`) noch bis
+   `ziel-groesse` (Standard 10 Blöcke) schrumpft. Das Tempo passt sich
+   laufend an: Solange getroffen wird, läuft es im normalen, langsamen
+   Tempo (`dauer-sekunden`, Standard 270s, Boss-Bar blau) - fällt
+   länger als `camping-nach-sekunden` (Standard 15s) kein Treffer,
+   schaltet es auf das deutlich schnellere Camping-Tempo
+   (`camping-dauer-sekunden`, Standard 60s, Boss-Bar gelb) um. Aktiver
+   Kampf wird also nicht bestraft, reines Ausweichen/Verstecken schon.
+   Erreicht die Grenze zum ersten Mal ihr Minimum, schlägt das Spiel
+   einmalig in einen **"Plötzlicher Tod"**-Moment um: Boss-Bar wird rot
+   und bleibt es, beide bekommen einen Warn-Titel samt Ton, und für die
+   Dauer wird zusätzlich die eigentliche Boss-Musik eingespielt.
+
+   Zusätzliche Absicherung gegen (auch unfreiwillige, z.B. AFK) totale
+   Untätigkeit: Fällt `kampf.aufgabe-bei-inaktivitaet.warnung-nach-minuten`
+   (Standard 10) lang **gar kein** Treffer, warnt eine Chat-Nachricht
+   beide. Fällt danach nochmal `frist-danach-minuten` (Standard 5) lang
+   keiner, wird die Runde automatisch aufgegeben - **ohne Sieger**,
+   aber beide verlieren `inventar-verlust-anteil` (Standard 1/5) ihres
+   Inventars (zufällig ausgewählte, belegte Fächer, ersatzlos - kein
+   Loot für den jeweils anderen). Jeder einzelne Treffer setzt diese
+   Uhr komplett zurück, ganz gleich wie weit sie schon gelaufen war -
+   ein normal geführter Kampf ist davon nie betroffen. Lässt sich mit
+   `aktiv: false` komplett abschalten.
+6. **Ein tödlicher Treffer wird abgefangen statt eines echten Todes** -
+   der Verlierer sieht stattdessen eine **Todeskamera** (ein paar
+   Sekunden Orbit um die Stelle), sein komplettes mitgebrachtes
+   Inventar wird in **Shulker-Kisten verpackt und dort abgeworfen** -
+   `loot.schutz-sekunden` (Standard 60) lang gehören sie exklusiv dem
+   Gewinner. Eigene Shulker-Kisten des Verlierers werden einzeln
+   abgeworfen statt in eine neue Kiste gesteckt (keine Kisten in
+   Kisten). Ein **Totem der Unsterblichkeit**
+   in Haupt- oder Nebenhand rettet ganz normal wie in Vanilla. Jeder
+   Treffer bekommt zusätzliches Partikel-Feedback am Opfer plus einen
+   Bestätigungs-Ton für den Angreifer - der entscheidende Treffer
+   zusätzlich einen größeren Partikel-Ausbruch und einen eigenen Ton
+   für den Gewinner.
+7. Der Verlierer geht kurz danach zurück auf seinen Herkunftsserver,
+   mit leerem Inventar. Der Gewinner hat **bis zu
+   `loot.schutz-sekunden`** Zeit in der Arena (in der Zeit unverwundbar
+   - kein nachträglicher Schaden mehr möglich) und geht dann mit allem
+   zurück, was er eingesammelt hat.
+   **Fertig früher? `/spawn`** (auch `/lobby`, `/hub`, `/server …` oder
+   `/duel verlassen`, oder der Knopf **[Zurück]** im Chat) bringt ihn
+   sofort zurück: DuelPlus speichert erst das Inventar samt allem, was
+   noch am Boden liegt, und schickt ihn dann auf seinen
+   Herkunftsserver. Der Verlierer kann so auch die Todeskamera
+   abkürzen. Dafür muss SMPProxy auf dem neuesten Stand sein: Der
+   Proxy weiß, ob das Duell noch läuft oder schon vorbei ist, und gibt
+   `/spawn` nach dem Duell als `/duel verlassen` an den Duels-Server
+   weiter.
+8. **Es geht kein Loot verloren:** Was der Gewinner nicht aufgehoben hat
+   (zum Beispiel, weil sein Inventar voll war), sammelt DuelPlus am Ende
+   ein. Es kommt in freie Plätze seines Inventars, der Rest wird auf dem
+   SMP nachgeliefert (Inventar, sonst Enderkiste, sonst direkt vor ihm).
+   Verlässt der Gewinner die Arena vorher (Verbindungsabbruch), wird
+   sein Inventar samt Loot sofort in diesem Moment gespeichert. Auf dem Herkunftsserver wird das Ergebnis erst gelöscht,
+   wenn es wirklich angewendet wurde - geht der Spieler genau dann
+   offline, klappt es beim nächsten Mal. Kommt der Spieler in der Lobby
+   zurück, landet die Nachlieferung in `duelplus_nachlieferung` und
+   wird beim nächsten SMP-Beitritt zugestellt.
+
+Sieg, Niederlage und Unentschieden werden zusätzlich zur Chat-Nachricht
+**groß auf dem Bildschirm** angezeigt (Title/Subtitle) - und zwar
+**sofort im Moment des Ausgangs**, nicht erst nach der (beim Gewinner
+teils viel späteren) Rückreise.
+
+**Verbindung während des eigenen Duells getrennt = automatische
+Niederlage** (inklusive Loot-Verlust) - verhindert, sich durch
+Abbrechen das eigene Inventar zu retten.
+
+Während eines Duells sind **Enderkisten deaktiviert** und **alle
+Befehle gesperrt** (`duelplus.command.bypass` fürs Team) - kein
+Ausweichen über `/shop` oder Ähnliches. Nach dem Kampfende bis zur
+Rückreise bleibt die Sperre bestehen, mit einer Ausnahme: `/spawn`
+bzw. `/duel verlassen` (siehe Punkt 7). Das läuft immer über DuelPlus,
+damit das gewonnene Inventar zuerst in der Datenbank steht und erst
+danach der Serverwechsel kommt.
+
+Für die Dauer des Kampfes steckt DuelPlus beide Duellanten zusätzlich
+in ein eigenes Scoreboard-Team `duelplus_kampf` mit **Friendly Fire
+erzwungen an** (jede Sekunde neu durchgesetzt, nicht nur einmal beim
+Start). Grund: ein Spieler ist pro Scoreboard immer nur in höchstens
+einem Team - packt ein anderes Plugin (z.B. TAB anhand der
+LuckPerms-Gruppe fürs Tabliste-/Namensschild-Einfärben) beide
+Duellanten schon in ein gemeinsames Team OHNE Friendly Fire, blockt
+die Server-Engine Schaden zwischen ihnen komplett, BEVOR überhaupt ein
+abfangbares Event entsteht - Hieb-Geräusch/-Animation bleiben dabei
+client-seitig trotzdem sichtbar, es wirkt also wie "Treffer kommt an,
+aber 0 Schaden". Das Team wird beim Kampfende (Sieg/Niederlage/
+Unentschieden/Aufgabe) wieder verlassen.
+
+## Kampf und Serverwechsel
+
+- **Nicht mitten aus einem Kampf ins Duell:** Wer auf dem SMP im Kampf
+  ist (Kampfmarkierung von BetterSMP), kann kein Duell annehmen, niemanden
+  herausfordern und nicht zuschauen. Startet ein angenommenes Duell,
+  während man im Kampf ist, wartet der Wechsel zur Arena, bis der Kampf
+  vorbei ist. So kann sich niemand per Duell aus einem Kampf retten.
+- **Inventar ist beim Wechsel gesperrt:** Zwischen dem Speichern des
+  Inventars und dem Wechsel zur Arena kann man auf dem SMP nichts droppen,
+  verschieben, platzieren, benutzen oder per Befehl verkaufen, und man
+  nimmt keinen Schaden. Genauso beim Zurückkommen, bis das Duell-Ergebnis
+  angewendet ist (normalerweise unter einer Sekunde). Sonst ließen sich in
+  dieser kurzen Lücke Items verdoppeln. Die Sperre löst sich spätestens
+  nach 15 bis 20 Sekunden von selbst.
+- **Im Duell kein `/spawn`, `/hub`, `/lobby`, `/server`:** Während des
+  Duells, der Todeskamera und der Loot-Zeit meldet der Duels-Server das
+  jede Sekunde an SMPProxy, der diese Befehle dann blockt.
+- Geht man nach einem Lobby-Duell so schnell auf den SMP, dass die Lobby
+  das Ergebnis noch nicht übernommen hat, wendet der SMP es selbst an.
+- **Inventar kommt nicht an:** Fehlt auf dem Duels-Server das mitgeschickte
+  Inventar eines Spielers, wird das Duell abgesagt und beide kommen zurück
+  auf ihren Server - niemand kämpft mit einem alten Inventar vom
+  Duels-Server. Wird das Duell auf der anderen Seite abgesagt, merkt der
+  schon wartende Spieler das nach spätestens 5 Sekunden (statt erst nach
+  90 Sekunden).
+- **Alte Zuschauer-/Replay-Anfragen** gelten nur 1 Minute und werden beim
+  Wechsel zu einem Duell gelöscht. So kann ein liegengebliebenes
+  `/replay ansehen` kein späteres Duell mehr kapern.
+- **Absturz des Duels-Servers:** SMPProxy schickt beide sofort dorthin
+  zurück, wo sie vor dem Duell waren (`auto-return.skip-servers` in der
+  Proxy-Config). Das Duell zählt dann nicht, beim nächsten Start bricht der
+  Duels-Server es ab.
+
+## Keine Netherportale auf dem Duels-Server
+
+Auf dem Duels-Server lässt sich kein Netherportal anzünden (kurzer Hinweis
+im Chat), und durch ein trotzdem vorhandenes Portal kommen weder Spieler
+noch Items, Mobs oder Pfeile. So kann niemand aus einer Arena in den Nether
+entkommen.
+
+## Chat auf dem Duels-Server
+
+Auf dem Duels-Server sieht nur der eigene Gegner, was man schreibt - kein
+anderes Duell, keine Zuschauer, nicht der Rest des Netzwerks. Wer dort
+gerade kein Duell hat (z. B. als Zuschauer), schreibt nur für sich selbst
+und bekommt einen kurzen Hinweis (`chat-only-opponent` in `messages.yml`).
+Die Nachricht läuft über SMPProxy, der auch Stummschaltungen vom SMP
+beachtet. Ohne SMPProxy filtert DuelPlus die Empfänger selbst.
+
+## Replays
+
+Jedes Duell auf dem Duels-Server wird aufgezeichnet: Bewegungen, Blickrichtung,
+Schleichen/Sprinten/Gleiten, Leben, Schläge und Treffer, Rüstung und Waffen,
+platzierte und zerstörte Blöcke, Pfeile/Perlen/Tränke/Kristalle, Explosionen,
+die schrumpfende Grenze und der Duell-Chat. Kein Ton, keine Sprache.
+
+- **Aufbewahrung:** 3 Tage (`replay.aufbewahren-tage`). Wird einer der beiden
+  per `/report` gemeldet (BetterSMP oder ReportPlus), bleiben **seine** Replays
+  der letzten 3 Tage bis zu 30 Tage ab dem Duell (`replay.gemeldet-tage`) -
+  auch das Replay des Duells, das gerade noch gespeichert wird.
+  Das Team kann ein Replay auch von Hand behalten (`/replay behalten <ID>`).
+- **Melden nach dem Duell:** Der Gegner lässt sich mit `/report` melden, auch
+  wenn er schon auf einem anderen Server oder offline ist - DuelPlus merkt
+  ReportPlus und BetterSMP die letzten Gegner (2 Stunden). Wo es kein
+  `/report` gibt (z. B. Lobby), steht unter dem Ergebnis „Auf dem SMP:
+  /report <Gegner>“.
+- **Speichergrenze:** alle Replays zusammen höchstens 3 GB (`replay.max-gb`).
+  Wird es enger, gehen zuerst die ältesten **ungemeldeten**. Ein 5-Minuten-Duell
+  braucht etwa 200 KB – 300 bis 400 Duelle belegen also nur rund 60–80 MB.
+- Aufgeräumt wird beim Start und alle 10 Minuten auf dem Duels-Server. Die
+  Dateien liegen in `plugins/DuelPlus/replays/`, die Übersicht in der Tabelle
+  `duelplus_replays` der gemeinsamen MariaDB.
+- Nach jedem Duell steht unter dem Ergebnis ein Hinweis mit
+  **[Unfair? Melden]** (schlägt `/report <Gegner>` vor).
+
+**Ansehen** (Team, Recht `duelplus.replay`): `/replay` listet die letzten
+Duelle mit Knopf **[▶]**, `/replay liste <Spieler>` die eines Spielers. Beim
+Ansehen vom SMP oder der Lobby aus kommt man kurz auf den Duels-Server: Das
+Duell wird in einer **freien Arena** mit echten Spielerfiguren (Skin, Rüstung,
+Waffe, Leben über dem Kopf) nachgespielt, man selbst schaut im
+Zuschauermodus zu. Steuerung per Klick im Chat oder per Befehl:
+
+```
+/replay pause              - Pause / weiter (am Ende: nochmal von vorn)
+/replay tempo <0.25-4>     - Geschwindigkeit
+/replay springen <±Sek.>   - vor/zurück, z.B. -10 oder 30; oder Zeitpunkt 1:30
+/replay stop               - beenden, zurück auf den eigenen Server
+```
+
+Die Arena wird danach genau so zurückgesetzt, wie sie war. Ist gerade keine
+Arena frei, kommt ein Hinweis – echte Duelle haben immer Vorrang.
+
+Vom SMP oder der Lobby aus geht es immer auf den Duels-Server
+(`arena-server-name`), egal welcher Server in der Replay-Tabelle steht -
+vorher gab es dort „You are already connected to this server“, wenn der
+Duels-Server mit falschem `server-name` lief. Replay-Dateien, die mit
+falschem Server-Namen eingetragen sind, übernimmt der Duels-Server beim
+Aufräumen automatisch. Wer gerade in einem Duell steckt (oder auf eins
+wartet), kann kein Replay starten.
+
+## Befehle
+
+```
+/duel <Spieler>          - herausfordern
+/duel <Spieler> accept   - annehmen (auch: /duel accept [Spieler], /duel annehmen;
+                            ohne Namen wird die neueste Anfrage angenommen)
+/duel <Spieler> decline  - ablehnen (auch: /duel decline [Spieler], /duel ablehnen)
+/replay ...              - Replays (siehe oben, nur Team)
+/duel stats [Spieler]    - Sieg/Niederlage/Unentschieden-Statistik (ohne Angabe: die eigene;
+                            das Ziel muss gerade ONLINE sein, egal auf welchem Server)
+/duel top [Anzahl]       - Rangliste nach Siegen absteigend (Standard 10, maximal 15)
+/duel watch <Spieler>    - einem laufenden Duell als Zuschauer beiwohnen (SPECTATOR-Modus) -
+                            funktioniert von JEDEM Server aus, auch wenn das Duell auf dem
+                            Duels-Server laeuft; das Ziel muss gerade ONLINE und in einem
+                            AKTIVEN Duell sein
+/duel unwatch            - Zuschauen beenden, zurueck auf den Herkunftsserver
+/draw                    - Unentschieden vorschlagen (nur waehrend des eigenen Duells,
+                            wirkt erst, wenn BEIDE es benutzen - keiner gewinnt/verliert,
+                            jeder bekommt sein eigenes Inventar unveraendert zurueck)
+/duelplus reload         - config.yml neu einlesen, DB-Verbindung neu aufbauen
+```
+
+Ein Zuschauer wird NIE in die eigentliche Duell-Session aufgenommen
+(SPECTATOR-Modus uebernimmt Kollision/Schaden/Interaktion ohnehin
+komplett) und landet automatisch wieder auf seinem Herkunftsserver,
+sobald das beobachtete Duell endet.
+
+Die Statistik zaehlt jeden Duell-Ausgang serverübergreifend (gemeinsame
+MariaDB, siehe unten): ein normaler Sieg/eine Niederlage erhöht
+`siege`/`niederlagen` des jeweiligen Spielers, ein `/draw` UND eine
+automatische Aufgabe bei Inaktivitaet (siehe unten) zaehlen beide als
+`unentschieden` fuer beide Beteiligten - beides endet ja ohne Sieger,
+nur der Weg dorthin unterscheidet sich.
+
+## Rechte
+
+- `duelplus.use` - `/duel` und der Gegenstand nutzen (Standard: an)
+- `duelplus.command.bypass` - Befehle bleiben während eines eigenen
+  Duells nutzbar, fürs Team (Standard: nur OP)
+- `duelplus.admin` - `/duelplus reload`, außerdem sieht man die
+  Meldungen der Treffer-Prüfung im Chat (Standard: nur OP)
+- `duelplus.replay` - `/replay`: Replays auflisten, ansehen, behalten
+  (Standard: nur OP)
+
+## Treffer-Prüfung (Schläge ohne Schaden, z. B. bei Bedrock-Spielern)
+
+Auf dem Duels-Server prüft DuelPlus jeden Schlag zwischen den beiden
+Duellanten (`kampf.treffer-pruefung`, Standard: an).
+
+- **Beim Kampfstart und danach jede Sekunde** wird für beide sichergestellt:
+  nicht unverwundbar, Survival, PvP in der Arena-Welt an, gemeinsames
+  Friendly-Fire-Team (auch auf einem eigenen Scoreboard, falls ein anderes
+  Plugin eins vergibt), Weltwechsel abgeschlossen und Welt als geladen
+  markiert. War etwas davon kaputt, steht in der Konsole
+  `Treffer-Pruefung: <Name> war nicht kampfbereit und wurde repariert: ...`.
+- **Kommt ein Schlag ohne Schaden an**, obwohl er zählen müsste (also nicht
+  in der kurzen Schutzzeit direkt nach einem Treffer und nicht mit einem
+  Schild geblockt), repariert DuelPlus den Zustand sofort. Den genauen
+  Grund schreibt es in die Konsole und schickt ihn Duellanten mit
+  `duelplus.admin` in den Chat: z. B. unverwundbar markiert, falscher
+  Spielmodus, Team ohne Friendly Fire, ein anderes Plugin hat den Schaden
+  abgebrochen (mit Namen), oder Schläge kommen gar nicht erst beim Server an
+  (dann blockiert sie ein Anticheat oder Paket-Plugin schon vorher).
+- Jede Meldung kommt höchstens alle 5 Sekunden pro Spielerpaar, damit die
+  Konsole nicht vollläuft.
+
+## Bekannte Grenzen
+
+- Fallende Blöcke (Sand/Kies) durch Schwerkraft werden vom Rollback
+  nicht erfasst - eher kosmetisch, kein Stakes-Thema.
+- Reißt eine Explosion (z.B. Endkristall/Anker) den Boden unter
+  jemandem weg, fällt man in das echte Terrain darunter (Erde/Stein/
+  Tiefenschiefer) statt in einen leeren Abgrund - genau wie in
+  typischem Kristall-PvP, nur ohne den sofortigen K.o. eines reinen
+  Luft-Void-Designs. Automatische Niederlage gibt es erst bei einem
+  Sturz bis `arenen.todeslinie-y` (Standard Y=-100, 36 Blöcke unter dem
+  unzerstörbaren Bedrock bei Y=-64) - im Normalfall völlig
+  unerreichbar (`ArenaGuardListener.beimAbsturzUnterDieArena`). Die
+  Arena steckt seitlich in einer unsichtbaren Barriere-Box bis auf
+  Bedrock-Niveau (kein Spalt) - ein echtes Entkommen, seitlich oder
+  nach unten, kommt gar nicht erst vor, die Todeslinie ist reines
+  Sicherheitsnetz für den unwahrscheinlichen Fall, dass doch mal eine
+  Lücke auftritt.

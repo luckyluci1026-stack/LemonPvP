@@ -1,0 +1,415 @@
+package de.lemonpvp.smpproxy;
+
+import com.google.inject.Inject;
+import com.velocitypowered.api.command.CommandManager;
+import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.scheduler.ScheduledTask;
+import de.lemonpvp.smpproxy.ban.BanStore;
+import de.lemonpvp.smpproxy.bedrock.GeyserOptimierung;
+import de.lemonpvp.smpproxy.command.AhCommand;
+import de.lemonpvp.smpproxy.command.ChatLogCommand;
+import de.lemonpvp.smpproxy.command.HubCommand;
+import de.lemonpvp.smpproxy.command.MsgCommand;
+import de.lemonpvp.smpproxy.command.NetworkBanCommand;
+import de.lemonpvp.smpproxy.command.RtpCommand;
+import de.lemonpvp.smpproxy.command.ProxyCommand;
+import de.lemonpvp.smpproxy.command.RegelnCommand;
+import de.lemonpvp.smpproxy.command.ServerCommand;
+import de.lemonpvp.smpproxy.config.ProxyConfig;
+import de.lemonpvp.smpproxy.einlass.Einlass;
+import de.lemonpvp.smpproxy.health.HomeTracker;
+import de.lemonpvp.smpproxy.health.ServerWatcher;
+import de.lemonpvp.smpproxy.listener.BanListener;
+import de.lemonpvp.smpproxy.listener.ConnectListener;
+import de.lemonpvp.smpproxy.listener.KampfSperre;
+import de.lemonpvp.smpproxy.netzwerk.ChatLog;
+import de.lemonpvp.smpproxy.netzwerk.ChatRelay;
+import de.lemonpvp.smpproxy.netzwerk.JoinQuitNachrichten;
+import de.lemonpvp.smpproxy.netzwerk.Moderation;
+import de.lemonpvp.smpproxy.netzwerk.Privatnachrichten;
+import de.lemonpvp.smpproxy.netzwerk.StummListe;
+import de.lemonpvp.smpproxy.netzwerk.VoiceAbgleich;
+import de.lemonpvp.smpproxy.release.ReleaseCommand;
+import de.lemonpvp.smpproxy.release.ReleaseManager;
+import de.lemonpvp.smpproxy.release.TestReleaseCommand;
+import de.lemonpvp.smpproxy.util.Msg;
+import net.kyori.adventure.text.Component;
+import org.slf4j.Logger;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * SMPProxy - schickt Spieler anhand der benutzten Domain direkt auf den
+ * richtigen Server und fängt Abstürze mit einem Limbo-Server ab.
+ */
+@Plugin(
+        id = "smpproxy",
+        name = "SMPProxy",
+        version = "1.0.0",
+        description = "Domain-Routing und Limbo-Ausweichserver",
+        authors = {"SMPProxy"}
+)
+public final class SMPProxy {
+
+    private final ProxyServer proxy;
+    private final Logger log;
+
+    private final ProxyConfig config;
+    private final ServerWatcher watcher;
+    private final HomeTracker tracker = new HomeTracker();
+    private final BanStore bans;
+    private final BanListener banListener;
+    private final StummListe stummListe = new StummListe();
+    private final ChatRelay chatRelay;
+    private final ChatLog chatLog;
+    private final Privatnachrichten privatnachrichten;
+    private final Moderation moderation;
+    private final RegelnCommand regeln;
+    private final VoiceAbgleich voice;
+    private final ReleaseManager release;
+    private final Einlass einlass;
+    private final Path folder;
+
+    private final List<ScheduledTask> tasks = new ArrayList<>();
+
+    @Inject
+    public SMPProxy(ProxyServer proxy, Logger log, @DataDirectory Path folder) {
+        this.proxy = proxy;
+        this.log = log;
+        this.config = new ProxyConfig(folder, log);
+        this.watcher = new ServerWatcher(proxy, config, log);
+        this.bans = new BanStore(folder, log);
+        this.banListener = new BanListener(this);
+        this.chatRelay = new ChatRelay(this);
+        this.chatLog = new ChatLog(this, folder.resolve("chatlogs"));
+        this.privatnachrichten = new Privatnachrichten(this);
+        this.moderation = new Moderation(this);
+        this.regeln = new RegelnCommand(this);
+        this.voice = new VoiceAbgleich(this, folder);
+        this.release = new ReleaseManager(this, folder);
+        this.einlass = new Einlass(this);
+        this.folder = folder;
+    }
+
+    @Subscribe
+    public void onInit(ProxyInitializeEvent event) {
+        config.load();
+        bans.ensureFiles();
+        bans.load();
+        voice.laden();
+        release.laden();
+        proxy.getEventManager().register(this, new ConnectListener(this));
+        proxy.getEventManager().register(this, banListener);
+        proxy.getChannelRegistrar().register(KampfSperre.KANAL, ChatRelay.CHAT, ChatRelay.STUMM,
+                RtpCommand.RTP_CHANNEL, Moderation.MSG, Moderation.HALLO, Moderation.MUTE, RegelnCommand.KANAL, VoiceAbgleich.KANAL,
+                Einlass.KANAL);
+        proxy.getEventManager().register(this, new KampfSperre(this));
+        proxy.getEventManager().register(this, chatRelay);
+        proxy.getEventManager().register(this, chatLog);
+        proxy.getEventManager().register(this, privatnachrichten);
+        proxy.getEventManager().register(this, moderation);
+        proxy.getEventManager().register(this, regeln);
+        proxy.getEventManager().register(this, voice);
+        proxy.getEventManager().register(this, release);
+        release.starten();
+        proxy.getEventManager().register(this, einlass);
+        einlass.starten();
+        if (config.geyserOptimieren() && folder.getParent() != null) {
+            new GeyserOptimierung(folder.getParent(), log).optimieren();
+        }
+        proxy.getEventManager().register(this, new JoinQuitNachrichten(this));
+        startTasks();
+        registerCommands();
+        logRoutes();
+    }
+
+    // ------------------------------------------------------------------
+    //  Aufgaben
+    // ------------------------------------------------------------------
+
+    private void startTasks() {
+        cancelTasks();
+
+        if (config.pingOnStart()) {
+            watcher.tick();
+        }
+        tasks.add(proxy.getScheduler()
+                .buildTask(this, watcher::tick)
+                .delay(config.pingInterval(), TimeUnit.SECONDS)
+                .repeat(config.pingInterval(), TimeUnit.SECONDS)
+                .schedule());
+
+        if (config.autoReturn()) {
+            tasks.add(proxy.getScheduler()
+                    .buildTask(this, this::bringPlayersHome)
+                    .delay(config.pingInterval(), TimeUnit.SECONDS)
+                    .repeat(config.pingInterval(), TimeUnit.SECONDS)
+                    .schedule());
+        }
+
+        tasks.add(proxy.getScheduler()
+                .buildTask(this, chatLog::aufraeumen)
+                .delay(1, TimeUnit.MINUTES)
+                .repeat(6, TimeUnit.HOURS)
+                .schedule());
+    }
+
+    private void cancelTasks() {
+        for (ScheduledTask task : tasks) {
+            task.cancel();
+        }
+        tasks.clear();
+    }
+
+    /** Holt Spieler aus dem Limbo zurück, sobald ihr Server wieder stabil läuft. */
+    private void bringPlayersHome() {
+        String limbo = config.limbo();
+        if (limbo.isEmpty()) {
+            return;
+        }
+        for (Player player : proxy.getAllPlayers()) {
+            Optional<RegisteredServer> current = player.getCurrentServer()
+                    .map(connection -> connection.getServer());
+            if (current.isEmpty() || !current.get().getServerInfo().getName().equals(limbo)) {
+                continue;
+            }
+            String home = tracker.home(player.getUniqueId());
+            if (home == null || home.equals(limbo) || !watcher.isStable(home) || release.blockiert(player, home)
+                    || release.probeLaeuft(player.getUniqueId())) {
+                continue;
+            }
+            if (einlass.geschuetzt(home)) {
+                if (einlass.wartetAuf(player.getUniqueId()).isEmpty()) {
+                    einlass.anstellen(player, home, zurueck -> {
+                        tracker.clearCooldown(zurueck.getUniqueId());
+                        zurueck.sendMessage(message("return-ok", "%server%", home));
+                    });
+                    if (config.returnNotice()) {
+                        player.sendMessage(message("return-soon", "%server%", home));
+                    }
+                }
+                continue;
+            }
+            if (!tracker.tryAttempt(player.getUniqueId(), config.returnCooldown() * 1000L)) {
+                continue;
+            }
+            if (config.returnNotice()) {
+                player.sendMessage(message("return-soon", "%server%", home));
+            }
+            sendHome(player, home);
+        }
+    }
+
+    private void sendHome(Player player, String home) {
+        Optional<RegisteredServer> target = proxy.getServer(home);
+        if (target.isEmpty()) {
+            return;
+        }
+        player.createConnectionRequest(target.get()).connect().whenComplete((result, error) -> {
+            if (error == null && result != null && result.isSuccessful()) {
+                tracker.clearCooldown(player.getUniqueId());
+                player.sendMessage(message("return-ok", "%server%", home));
+            } else if (config.returnNotice()) {
+                player.sendMessage(message("return-failed", "%server%", home));
+            }
+        });
+    }
+
+    // ------------------------------------------------------------------
+    //  Befehle
+    // ------------------------------------------------------------------
+
+    private void registerCommands() {
+        CommandManager commands = proxy.getCommandManager();
+
+        commands.register(commands.metaBuilder("smpproxy").aliases("proxy").build(),
+                new ProxyCommand(this));
+
+        commands.register(commands.metaBuilder("netban").build(),
+                new NetworkBanCommand(this, NetworkBanCommand.Modus.BAN));
+        commands.register(commands.metaBuilder("netunban").build(),
+                new NetworkBanCommand(this, NetworkBanCommand.Modus.UNBAN));
+        commands.register(commands.metaBuilder("netbans").aliases("netbanlist").build(),
+                new NetworkBanCommand(this, NetworkBanCommand.Modus.LIST));
+        commands.register(commands.metaBuilder("netbaninfo").build(),
+                new NetworkBanCommand(this, NetworkBanCommand.Modus.INFO));
+
+        if (config.rtpEnabled() && !config.rtpRedirectServer().isEmpty()) {
+            commands.register(commands.metaBuilder("rtp").build(), new RtpCommand(this));
+        }
+
+        if (config.ahEnabled()) {
+            registrieren(commands, config.ahAliases(), new AhCommand(this));
+        }
+
+        if (config.regelnEnabled()) {
+            registrieren(commands, config.regelnAliases(), regeln);
+        }
+
+        commands.register(commands.metaBuilder("release").build(), new ReleaseCommand(this));
+        commands.register(commands.metaBuilder("testrelease").build(), new TestReleaseCommand(this));
+
+        if (config.hubEnabled() && !config.limbo().isEmpty()) {
+            List<String> aliases = config.hubAliases();
+            if (!aliases.isEmpty()) {
+                String main = aliases.get(0);
+                String[] rest = aliases.subList(1, aliases.size()).toArray(new String[0]);
+                commands.register(commands.metaBuilder(main).aliases(rest).build(),
+                        new HubCommand(this));
+            }
+        }
+
+        if (config.chatlogEnabled()) {
+            registrieren(commands, config.chatlogAliases(), new ChatLogCommand(this));
+        }
+
+        if (config.msgEnabled()) {
+            registrieren(commands, config.msgAliases(), new MsgCommand(this, false));
+            registrieren(commands, config.replyAliases(), new MsgCommand(this, true));
+        }
+
+        if (config.serverShortcuts()) {
+            for (String server : config.domains().values().stream().distinct().toList()) {
+                if (server.equals(config.limbo())) {
+                    continue;
+                }
+                commands.register(commands.metaBuilder(server).build(), new ServerCommand(this, server));
+            }
+        }
+    }
+
+    private void registrieren(CommandManager commands, List<String> namen, SimpleCommand befehl) {
+        if (namen.isEmpty()) {
+            return;
+        }
+        String[] weitere = namen.subList(1, namen.size()).toArray(new String[0]);
+        commands.register(commands.metaBuilder(namen.get(0)).aliases(weitere).build(), befehl);
+    }
+
+    private void logRoutes() {
+        log.info("SMPProxy läuft.");
+        config.domains().forEach((host, server) -> log.info("  {} -> {}", host, server));
+        if (config.limbo().isEmpty()) {
+            log.warn("  Kein Limbo eingetragen - bei einem Absturz werden Spieler getrennt.");
+        } else {
+            log.info("  Ausweichserver: {}", config.limbo());
+        }
+    }
+
+    /** Von /smpproxy reload aufgerufen. Befehle bleiben registriert. */
+    public void reload() {
+        config.load();
+        bans.load();
+        voice.laden();
+        release.laden();
+        watcher.reset();
+        tracker.clear();
+        startTasks();
+    }
+
+    // ------------------------------------------------------------------
+    //  Gemeinsam genutzt
+    // ------------------------------------------------------------------
+
+    /** Verbindet einen Spieler und meldet zurück, ob es geklappt hat. */
+    public void connect(Player player, String server, boolean quiet) {
+        if (release.abweisen(player, server)) {
+            return;
+        }
+        Optional<RegisteredServer> target = proxy.getServer(server);
+        if (target.isEmpty()) {
+            player.sendMessage(message("unknown-server", "%server%", server));
+            return;
+        }
+        if (einlass.mussWarten(player, server)) {
+            einlass.anstellenUndMelden(player, server, null);
+            return;
+        }
+        player.createConnectionRequest(target.get()).connect().whenComplete((result, error) -> {
+            boolean ok = error == null && result != null && result.isSuccessful();
+            if (!ok && !quiet) {
+                player.sendMessage(message("switch-failed", "%server%", server));
+            }
+        });
+    }
+
+    public Component message(String key, String... placeholders) {
+        return Msg.of(config.message(key), config.prefix(), placeholders);
+    }
+
+    /** Nachricht ohne Prefix - für Trenn-Bildschirme. */
+    public Component screen(String key, String... placeholders) {
+        return Msg.of(config.message(key), "", placeholders);
+    }
+
+    public ProxyServer proxy() {
+        return proxy;
+    }
+
+    public ProxyConfig config() {
+        return config;
+    }
+
+    public ServerWatcher watcher() {
+        return watcher;
+    }
+
+    public HomeTracker tracker() {
+        return tracker;
+    }
+
+    public BanStore bans() {
+        return bans;
+    }
+
+    public StummListe stummListe() {
+        return stummListe;
+    }
+
+    public ChatRelay chatRelay() {
+        return chatRelay;
+    }
+
+    public ChatLog chatLog() {
+        return chatLog;
+    }
+
+    public Privatnachrichten privatnachrichten() {
+        return privatnachrichten;
+    }
+
+    public Moderation moderation() {
+        return moderation;
+    }
+
+    public VoiceAbgleich voice() {
+        return voice;
+    }
+
+    public ReleaseManager release() {
+        return release;
+    }
+
+    public Einlass einlass() {
+        return einlass;
+    }
+
+    public BanListener banListener() {
+        return banListener;
+    }
+
+    public Logger log() {
+        return log;
+    }
+}

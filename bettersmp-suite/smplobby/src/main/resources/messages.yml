@@ -1,0 +1,52 @@
+# ==========================================================
+#  Alle Texte von SMPLobby.
+#
+#  MiniMessage: <gradient:#A:#B>, <gray>, <bold>, <newline>.
+#  Die alten &-Codes gehen auch, beides darf gemischt werden.
+# ==========================================================
+
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient> <dark_gray>»</dark_gray> "
+
+# --- Ankommen -------------------------------------------------
+ankunft-titel: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient>"
+ankunft-untertitel: "<gray>Schön, dass du da bist</gray>"
+ankunft-chat: "%prefix%<gray>Willkommen in der Lobby, <white>%spieler%</white>.</gray>"
+ankunft-melden: "<dark_gray>[<green>+</green>]</dark_gray> <gray>%spieler%</gray>"
+abgang-melden: "<dark_gray>[<red>-</red>]</dark_gray> <gray>%spieler%</gray>"
+
+# --- Spawn ----------------------------------------------------
+spawn-gesetzt: "%prefix%<green>Spawn gesetzt.</green>"
+spawn-fehlt: "%prefix%<red>Es ist noch kein Spawn gesetzt.</red><newline><gray>Stell dich hin und tipp <white>/setspawn</white>.</gray>"
+spawn-da: "%prefix%<gray>Du bist am Spawn.</gray>"
+
+# --- Server-Auswahl -------------------------------------------
+waehler-verbinde: "%prefix%<gray>Verbinde dich mit <white>%server%</white> ...</gray>"
+waehler-schon-da: "%prefix%<gold>Da bist du schon.</gold>"
+waehler-kein-proxy: "%prefix%<red>Der Proxy antwortet nicht.</red><newline><gray>Läuft die Lobby wirklich hinter dem Proxy?</gray>"
+
+# --- Spieler verstecken ---------------------------------------
+verstecken-an: "%prefix%<gray>Die anderen sind jetzt <white>ausgeblendet</white>.</gray>"
+verstecken-aus: "%prefix%<gray>Die anderen sind wieder <white>sichtbar</white>.</gray>"
+
+# --- Regeln (das Buch in der Schnellleiste) -------------------
+# Laeuft die Lobby hinter SMPProxy, zeigt das Buch dieselben Regeln
+# wie /regeln (einstellbar in der config.yml des Proxys). Nur ohne
+# Proxy werden die Zeilen hier benutzt.
+regeln:
+  - "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP · Regeln</bold></gradient>"
+  - "<white>1. Respektvoller Umgang</white> <dark_gray>-</dark_gray> <gray>Beleidigungen, Hassrede, Rassismus und Diskriminierung jeder Art sind nicht erlaubt - im Chat, Voice und im WhatsApp Channel.</gray>"
+  - "<white>2. Kein Cheaten</white> <dark_gray>-</dark_gray> <gray>Hacks, X-Ray, Autoclicker, Exploits und Bugusing sind verboten. Unser Anti-Cheat läuft mit - Verstöße fliegen auf.</gray>"
+  - "<white>3. Kein Griefing & Diebstahl</white> <dark_gray>-</dark_gray> <gray>Fremde Bauten, Farmen und Truhen bleiben unangetastet, außer im ausdrücklich erlaubten PvP-/Duell-Kontext.</gray>"
+  - "<white>4. Kein Spam & keine Werbung</white> <dark_gray>-</dark_gray> <gray>Kein Werben für andere Server, keine Dauerwerbung eigener Projekte, kein Chat-Spam oder Caps-Flooding.</gray>"
+  - "<white>5. Ein Account pro Spieler</white> <dark_gray>-</dark_gray> <gray>Multi-Accounts zum Umgehen von Strafen oder zum Ausnutzen von Vorteilen sind nicht gestattet.</gray>"
+  - "<white>6. Anweisungen vom Team befolgen</white> <dark_gray>-</dark_gray> <gray>Team-Mitglieder moderieren im Sinne der Community - ihren Anweisungen ist Folge zu leisten.</gray>"
+
+# --- Schutz ---------------------------------------------------
+nicht-bauen: "%prefix%<red>Hier wird nicht gebaut.</red>"
+
+# --- Befehle --------------------------------------------------
+nur-im-spiel: "%prefix%<red>Das geht nur im Spiel.</red>"
+keine-rechte: "%prefix%<red>Dazu hast du keine Rechte.</red>"
+neu-geladen: "%prefix%<green>Konfiguration neu geladen.</green>"
+hilfe: "%prefix%<gray>/smplobby <white>reload</white> <dark_gray>|</dark_gray> <white>setspawn</white> <dark_gray>|</dark_gray> <white>items</white></gray>"
+items-gegeben: "%prefix%<green>Gegenstände neu in die Schnellleiste gelegt.</green>"

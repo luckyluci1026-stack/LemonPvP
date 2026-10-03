@@ -1,0 +1,376 @@
+# ==========================================================
+#  BetterSMP - Konfiguration
+#  Chat, NoChatReports, AntiCombatLog, Ban/Mute, Stats,
+#  Ränge, Nametags und Scoreboard - alles in einem Plugin.
+#
+#  Farben: MiniMessage (<gray>, <#00D4FF>, <gradient:...>)
+#  UND Legacy-Codes (&7, &#FFD75A) werden überall verstanden.
+# ==========================================================
+
+# Dein Server-Name. Wird überall als %brand% eingesetzt
+# (MOTD, Scoreboard-Titel, Willkommen ...). Einmal hier ändern - fertig.
+brand: "BuckSMP"
+
+# ----------------------------------------------------------
+# Datenbank
+# Wird MariaDB aktiviert, landen Stats/Bans/Mutes dort - sonst
+# automatisch in einer lokalen SQLite-Datei (plugins/BetterSMP/data.db).
+# ----------------------------------------------------------
+database:
+  # auto = MariaDB wenn unten aktiviert, sonst SQLite
+  type: auto
+  mariadb:
+    enabled: false
+    host: "127.0.0.1"
+    port: 3306
+    database: "bettersmp"
+    user: "root"
+    password: ""
+    # Zusätzliche JDBC-Parameter
+    properties: "useUnicode=true&characterEncoding=utf8"
+
+# ----------------------------------------------------------
+# Inventar-/Enderkisten-Backup
+# VOELLIG UNABHAENGIG von der Datenbank oben - eigene Verbindung, eigene
+# Datei/Datenbank. Der Sinn ist gerade, dass ein Problem mit der
+# Haupt-Datenbank (oder der Spielerdatei) diese Sicherung nicht
+# mitreisst. Sichert alle X Sekunden asynchron Inventar + Enderkiste
+# JEDES Online-Spielers - immer nur der LETZTE Stand (kein Verlauf).
+# Wiederherstellen: /bettersmp backup restore <Spieler> (Ziel muss
+# online sein). Status pruefen: /bettersmp backup status <Spieler>.
+# ----------------------------------------------------------
+backup:
+  enabled: true
+  interval-seconds: 15
+  # Standardmaessig eine eigene lokale SQLite-Datei (plugins/BetterSMP/
+  # backup.db, sofort einsatzbereit). Fuer echte Redundanz optional eine
+  # EIGENE MariaDB - am besten eine andere Datenbank/Instanz als oben,
+  # sonst waere die Trennung nur auf Tabellenebene, nicht auf
+  # Verbindungsebene.
+  mariadb:
+    enabled: false
+    host: "127.0.0.1"
+    port: 3306
+    database: "bettersmp_backup"
+    user: "root"
+    password: ""
+    properties: "useUnicode=true&characterEncoding=utf8"
+
+# ----------------------------------------------------------
+# Chat im MiniMessage-Stil
+# Platzhalter: %prefix% %suffix% %player% %displayname% %message%
+# + alle PlaceholderAPI-Platzhalter (falls installiert)
+# ----------------------------------------------------------
+chat:
+  enabled: true
+  # Chat als System-Nachricht senden -> nicht über Chat-Reports meldbar
+  no-chat-reports: true
+  formats:
+    default: "%prefix%<hover:show_text:'<#00D4FF>Nachricht an %player% senden'><click:suggest_command:'/msg %player% '><white>%player%</white></click></hover> <dark_gray>»</dark_gray> <message>"
+  mentions:
+    enabled: true
+    color: "<#00D4FF>"
+    sound: "minecraft:block.note_block.pling"
+  clickable-links: true
+
+# NoChatReports: enforce-secure-profile=false setzen (aktiv nach Neustart)
+patch-server-properties: true
+
+# ----------------------------------------------------------
+# AntiCombatLog
+# ----------------------------------------------------------
+combat:
+  enabled: true
+  tag-seconds: 15
+  punishment: KILL
+  untag-opponent-on-log: true
+  blocked-commands: [tpa, tpahere, tpaccept, home, homes, spawn, warp, warps, back, rtp, wild, enderchest, ec, vanish, fly]
+  block-elytra: true
+  # Im Kampf keine Teleports per Befehl (z.B. ein angenommenes /tpa,
+  # /home, /spawn) - Enderperlen gehen weiter.
+  block-teleport: true
+  actionbar: true
+
+# ----------------------------------------------------------
+# Join/Quit-Nachrichten + Willkommen
+# ----------------------------------------------------------
+join-quit:
+  enabled: true
+  # true: "X ist dem Server beigetreten" kommt vom Proxy (SMPProxy) und nur,
+  # wenn jemand das Netzwerk betritt oder verlaesst - nicht bei jedem Wechsel
+  # zwischen SMP, Lobby und Duels. Die drei Texte hier gelten dann nicht.
+  netzwerk: true
+  join: "<dark_gray>[<green>+</green>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist dem Server beigetreten.</gray>"
+  quit: "<dark_gray>[<red>-</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>hat den Server verlassen.</gray>"
+  first-join: "<dark_gray>[<#00D4FF>★</#00D4FF>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>ist zum <white>ersten Mal</white> hier! Willkommen!</gray>"
+  first-join-title:
+    enabled: true
+    title: "<gradient:#6C5CE7:#00D4FF>Willkommen!</gradient>"
+    subtitle: "<gray>Viel Spaß auf %brand%</gray>"
+  motd:
+    enabled: true
+    delay-ticks: 15
+    lines:
+      - ""
+      - "  <gradient:#6C5CE7:#00D4FF><bold>%brand%</bold></gradient>"
+      - "  <gray>Willkommen zurück, <white>%player%</white>!</gray>"
+      - "  <gray>Shop: <#00D4FF>/shop</#00D4FF>  Stats: <#00D4FF>/stats</#00D4FF></gray>"
+      - ""
+
+# ----------------------------------------------------------
+# Einfrieren (/freeze)
+#
+# Bewegungsbefehle, die waehrend des Einfrierens gesperrt sind - dieselbe
+# Idee wie combat.blocked-commands oben, nur eine eigene, kuerzere Liste.
+# ----------------------------------------------------------
+freeze:
+  blocked-commands: [tpa, tpahere, tpaccept, home, homes, warp, warps, back, rtp, wild, spawn]
+  # Erinnerung per Actionbar, 1x pro Sekunde, solange jemand eingefroren ist -
+  # sonst ist "warum passiert nichts" die einzige Rueckmeldung beim Versuch,
+  # sich zu bewegen oder zu bauen.
+  actionbar: true
+
+# ----------------------------------------------------------
+# Meldungen (/report)
+# ----------------------------------------------------------
+report:
+  # So lange muss dieselbe Person zwischen zwei Meldungen warten.
+  cooldown-seconds: 60
+
+# ----------------------------------------------------------
+# Tägliche Kleinigkeit (/daily)
+#
+# money-per-streak-day zählt die Serie mit, money-streak-cap deckelt sie
+# nach oben - sonst waechst die Belohnung nach einem Jahr Serie absurd.
+# Ohne Vault/Economy wird der Geld-Teil einfach uebersprungen.
+# ----------------------------------------------------------
+daily-reward:
+  items:
+    - material: BREAD
+      amount: 8
+    - material: EXPERIENCE_BOTTLE
+      amount: 3
+  money-base: 50
+  money-per-streak-day: 5
+  money-streak-cap: 30
+  # Dezenter Hinweis beim Join, wenn heute noch nicht abgeholt wurde.
+  join-reminder: true
+
+# ----------------------------------------------------------
+# Serien-Ansagen im PvP (reine Stimmung, keine Belohnung)
+# ----------------------------------------------------------
+killstreak:
+  enabled: true
+  milestones: [3, 5, 10, 15, 20, 30, 50]
+  # Ab dieser Serienlaenge wird auch ihr Ende angesagt ("X hat Ys Serie beendet").
+  end-announce-threshold: 5
+
+# ----------------------------------------------------------
+# Nach dem Tod in die Lobby
+#
+# AUS heißt: kein Serverwechsel beim Respawn. Ist unten unter "spawn"
+# ein eigener Serverspawn gesetzt (/setspawn), landet man dort - ohne
+# einen gesetzten Spawn bleibt es beim gewohnten Bett/Weltspawn.
+#
+# AN heißt: Nach dem Respawnen geht es kurz darauf automatisch auf den
+# unten eingetragenen Lobby-Server. Braucht einen Proxy (SMPProxy) mit
+# genau diesem Servernamen und den Kanal "BungeeCord" (steht bei
+# Velocity standardmaessig an). Wer testen will, ohne selbst zu sterben:
+# bettersmp.deathredirect.bypass ueberspringt das.
+# ----------------------------------------------------------
+death-redirect:
+  enabled: true
+  server: "Lobby"
+  # Wartezeit nach dem Respawn, bevor es losgeht (in Ticks, 20 = 1 Sekunde).
+  # Nicht 0: Der Server braucht selbst einen Moment, um den Spieler nach
+  # dem Tod fertig einzurichten (Inventar, Erfahrungspunkte, Welt).
+  delay-ticks: 40
+
+# ----------------------------------------------------------
+# Nametags (über dem Kopf + Tab)
+# Liest den LuckPerms-Prefix (auch Gradienten!) und zeigt ihn an;
+# der Spielername bleibt weiß. Funktioniert automatisch für JEDE
+# neue LuckPerms-Gruppe - kein Eintrag pro Rang nötig.
+# Auch für Bedrock/Geyser-Spieler sauber sichtbar.
+# ----------------------------------------------------------
+nametags:
+  enabled: true
+  # Aktualisierungsintervall in Ticks (20 = 1s)
+  update-interval: 40
+  # Kollision zwischen Spielern (Anschieben) erlauben?
+  collision: true
+
+# ----------------------------------------------------------
+# Scoreboard (Sidebar) - Details in scoreboard.yml
+# ----------------------------------------------------------
+scoreboard:
+  enabled: true
+  update-interval: 20
+
+# ----------------------------------------------------------
+# Leistung
+#
+# Bedrock-Spieler (Handy, Konsole) bekommen eine kleinere Sichtweite:
+# weniger Chunks fuer das Geraet und fuer Geyser auf dem Proxy.
+# 0 = wie Java-Spieler.
+#
+# Wird der Server langsam (z.B. wenn beim Start viele gleichzeitig
+# kommen), sinkt die Sichtweite fuer alle voruebergehend um je einen
+# Chunk (nie unter min-sichtweite) und steigt wieder, sobald es 30
+# Sekunden lang ruhig ist. Die Welt-Einstellung selbst bleibt unberuehrt.
+# ----------------------------------------------------------
+leistung:
+  bedrock-sichtweite: 6
+  dynamische-sichtweite: true
+  min-sichtweite: 5
+  senken-ab-mspt: 45
+  anheben-unter-mspt: 30
+
+# ----------------------------------------------------------
+# Ban/Mute-System - Gründe & Screens in bans.yml / mutes.yml
+# ----------------------------------------------------------
+punishments:
+  enabled: true
+  # Broadcast bei Ban/Mute
+  broadcast: true
+
+# ----------------------------------------------------------
+# Statistiken
+# ----------------------------------------------------------
+stats:
+  enabled: true
+  # Spielzeit alle X Sekunden in die DB schreiben
+  flush-interval-seconds: 60
+
+# ----------------------------------------------------------
+# Auto-Installer
+# ----------------------------------------------------------
+installer:
+  enabled: true
+  auto-install-on-start: true
+  deploy-configs: true
+  auto-restart: false
+  timeout-seconds: 30
+  plugins:
+    EssentialsX:
+      enabled: true
+      source: github
+      repo: EssentialsX/Essentials
+      assets: ["EssentialsX-{version}.jar", "EssentialsXSpawn-{version}.jar"]
+    LuckPerms:
+      enabled: true
+      source: luckperms
+    Vault:
+      enabled: true
+      source: github
+      repo: MilkBowl/Vault
+      assets: ["Vault.jar"]
+    PlaceholderAPI:
+      enabled: true
+      source: github
+      repo: PlaceholderAPI/PlaceholderAPI
+      assets: ["PlaceholderAPI-{version}.jar"]
+    # TAB wird weiterhin installiert (Tablist-Header/Footer), seine
+    # Nametags werden aber deaktiviert - BetterSMP macht die Nametags.
+    TAB:
+      enabled: true
+      source: github
+      repo: NEZNAMY/TAB
+      assets: ["TAB.v{version}.jar"]
+
+# ----------------------------------------------------------
+# Homes (/home, /sethome, /delhome) - ersetzen die Essentials-Homes.
+# Ein altes Essentials-Home wird beim ersten Join automatisch zu Home 1.
+# ----------------------------------------------------------
+homes:
+  enabled: true
+  # So viele Homes hat jeder (1 bis 7)
+  anzahl: 3
+  # So lange stillhalten vor dem Teleport (0 = sofort). Wer
+  # bettersmp.homes.sofort hat, teleportiert immer sofort.
+  aufwaermen-sekunden: 3
+
+# ----------------------------------------------------------
+# Standard-Rechte: BetterSMP traegt sie beim Start selbst in die
+# LuckPerms-Gruppe ein. Fehlende kommen dazu, nichts wird geloescht.
+# Steht ein Recht dort ausdruecklich auf false, bleibt es so (Hinweis
+# in der Konsole). "verbieten" schaltet die alten Essentials-Homes ab
+# und Essentials-/msg (das /msg vom Proxy prueft Filter und Mutes).
+# Die Gruppen unter "erben" erben alles von der Gruppe (falls es sie gibt).
+# ----------------------------------------------------------
+standard-rechte:
+  enabled: true
+  gruppe: default
+  erlauben:
+    - voicechat.listen
+    - voicechat.speak
+    - voicechat.groups
+    - bettersmp.homes
+    - bettersmp.stats
+    - bettersmp.report
+    - bettersmp.bugreport
+    - bettersmp.tutorial
+    - bettersmp.daily
+    - bettersmp.spawn
+    - betterrtp.use
+    - fastshop.use
+    - fastshop.sell
+    - fastshop.worth
+    - fastshop.ah
+    - duelplus.use
+    - smplobby.spawn
+    - essentials.spawn
+    - essentials.help
+    - essentials.list
+    - essentials.tpa
+    - essentials.tpahere
+    - essentials.tpaccept
+    - essentials.tpdeny
+    - essentials.tpacancel
+    - essentials.balance
+    - essentials.balance.others
+    - essentials.baltop
+    - essentials.pay
+  verbieten:
+    - essentials.home
+    - essentials.sethome
+    - essentials.delhome
+    - essentials.msg
+  erben: [sup, mod, admin, owner1, owner2, owner3, owner4, owner5]
+  # Diese Rechte bekommen die Team-Gruppen aus 'erben' zusaetzlich
+  team: [bettersmp.xray, bettersmp.xray.alarm]
+
+# ----------------------------------------------------------
+# Anti-Xray
+# Paper hat ein sehr gutes Anti-Xray eingebaut: Erze, die man nicht
+# sehen kann, schickt der Server gar nicht erst an den Client. BetterSMP
+# schaltet es beim Start einmal fuer jede Oberwelt und jeden Nether ein
+# (in deren paper-world.yml, mit Sicherung .vor-anti-xray). Hast du dort
+# selbst schon etwas eingestellt, bleibt das so.
+# Wirkt erst nach dem naechsten Neustart des Servers.
+# ----------------------------------------------------------
+anti-xray:
+  paper-einrichten: true
+  # 1 = Erze verstecken, 2 = ueberall falsche Erze,
+  # 3 = falsche Erze in Schichten (gleich sicher wie 2, weniger Daten - empfohlen)
+  modus: 3
+  # Erze in NEUEN Chunks lassen sich nicht mehr aus dem Welt-Seed berechnen
+  # (gegen Erz-Finder-Mods). Setzt in config/paper-world-defaults.yml
+  # feature-seeds.generate-random-seeds-for-all auf true.
+  seed-schutz: true
+  # Meldet dem Team (bettersmp.xray.alarm), wer verdaechtig viele
+  # versteckte Erze freilegt. Zaehlt nur Erze, zu denen sich der Spieler
+  # selbst hingegraben hat - nicht Hoehlen, nicht TNT, nicht was ein
+  # Freund freigelegt hat. Eine ganze Ader zaehlt einmal. /xray zeigt Details.
+  alarm:
+    enabled: true
+    erze: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, ANCIENT_DEBRIS]
+    # Alarm, wenn jemand in so vielen Minuten ...
+    fenster-minuten: 20
+    # ... mindestens so viele versteckte Erze freilegt ...
+    min-funde: 4
+    # ... und dabei im Schnitt hoechstens so viele Bloecke pro Fund abbaut
+    # (normales Abbauen: 150 und mehr)
+    max-bloecke-pro-fund: 40
+    # Fruehestens nach so vielen Minuten wieder Alarm fuer denselben Spieler
+    pause-minuten: 10

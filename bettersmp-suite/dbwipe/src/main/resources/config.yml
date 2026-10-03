@@ -1,0 +1,29 @@
+# ==========================================================
+#  DBWipe - Notfallwerkzeug, NUR ueber die Serverkonsole nutzbar
+#
+#  /dbwipe dreimal eingeben (drei Warnungen), dann
+#  /dbwipe <passwort unten>  innerhalb von 60 Sekunden nach der
+#  dritten Warnung fuehrt es WIRKLICH aus: erst ein vollstaendiges
+#  .tar.gz-Backup ALLER Tabellen (jedes installierten Plugins, nicht
+#  nur eines einzelnen), DANACH werden alle Tabellen geloescht.
+#  /dbwipe cancel bricht jederzeit ab.
+# ==========================================================
+
+# Wird direkt als Befehlsargument eingegeben (/dbwipe DeinPasswort) -
+# steht deshalb zwangslaeufig auch im Server-Log/der Konsolen-Historie.
+# Passwort regelmaessig wechseln, wie bei jedem anderen Zugang auch.
+passwort: "DelDB26!"
+
+# ----------------------------------------------------------
+#  Datenbank - dieselbe wie der Rest der Suite (z.B. BetterSMPs
+#  config.yml, database.mariadb) - DBWipe hat keine eigenen Tabellen,
+#  sichert/loescht aber ALLE Tabellen, die es in dieser einen
+#  Datenbank findet.
+# ----------------------------------------------------------
+database:
+  host: "127.0.0.1"
+  port: 3306
+  database: "bettersmp"
+  user: "root"
+  password: ""
+  properties: "useUnicode=true&characterEncoding=utf8"

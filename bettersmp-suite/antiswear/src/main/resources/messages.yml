@@ -1,0 +1,83 @@
+prefix: "<gradient:#6C5CE7:#00D4FF><bold>BuckSMP</bold></gradient> <dark_gray>»</dark_gray> "
+
+reloaded: "%prefix%<green>Konfiguration und Wortliste neu geladen.</green>"
+
+hilfe: "%prefix%<gray>/antiswear <white>reload</white> <dark_gray>|</dark_gray> <white>check <Text></white> <dark_gray>|</dark_gray> <white>punkte <Spieler></white> <dark_gray>|</dark_gray> <white>reset <Spieler></white> <dark_gray>|</dark_gray> <white>stumm <Spieler> <Dauer></white></gray>"
+
+blockiert: "%prefix%<red>Deine Nachricht wurde blockiert.</red>"
+stummgeschaltet: "%prefix%<red>Du bist stummgeschaltet.</red> <gray>Noch <white>%rest%</white>.</gray>"
+unbegrenzt: "unbegrenzt"
+
+spam-schnell: "%prefix%<red>Nicht so schnell!</red> <gray>Warte kurz, bevor du wieder schreibst.</gray>"
+spam-wiederholung: "%prefix%<red>Bitte schreib nicht dasselbe mehrmals.</red>"
+werbung: "%prefix%<red>Werbung für andere Server oder fremde Links ist hier nicht erlaubt.</red>"
+daten: "%prefix%<red>Teile keine Handynummern oder E-Mail-Adressen im Chat.</red> <gray>Das schützt dich und andere.</gray>"
+schild-geaendert: "%prefix%<red>Dein Schild wurde geändert, weil der Text gegen die Regeln verstößt.</red>"
+buch-blockiert: "%prefix%<red>Das Buch wurde nicht gespeichert, weil der Text gegen die Regeln verstößt.</red>"
+amboss-blockiert: "<red>Dieser Name ist nicht erlaubt.</red>"
+
+stufe-warnen: "%prefix%<gold>Bitte achte auf deine Wortwahl - beim nächsten Mal folgt eine Stummschaltung.</gold>"
+stufe-stummschalten: "%prefix%<red>Du wurdest für <white>%dauer%</white> stummgeschaltet.</red> <gray>(Wiederholte Verstöße)</gray>"
+
+team-hinweis: "<dark_gray>[<gradient:#6C5CE7:#00D4FF>AntiSwear</gradient><dark_gray>]</dark_gray> <white>%spieler%</white> <gray>(<white>%punkte%</white> Pkt.) · %ort% ·</gray> <yellow>%woerter%</yellow><newline><dark_gray> ▪ </dark_gray><gray><italic>%text%</italic></gray>"
+
+kategorie:
+  wort: "Wortwahl"
+  spam: "Spam"
+  werbung: "Werbung"
+  daten: "Persönliche Daten"
+
+ort:
+  chat: "Chat"
+  privat: "Privatnachricht"
+  schild: "Schild"
+  buch: "Buch"
+  voice-gruppe: "Voice-Gruppe"
+
+check-usage: "%prefix%<gray>/antiswear check <Text></gray>"
+check-sauber: "%prefix%<green>Kein Treffer - dieser Text würde durchgehen:</green> <white>%text%</white>"
+check-treffer: "%prefix%<red>Treffer:</red> <white>%woerter%</white> <gray>(<white>%punkte%</white> Pkt.)</gray><newline><gray>Ergebnis:</gray> <white>%zensiert%</white>"
+check-blockiert: "komplett blockiert"
+
+punkte-usage: "%prefix%<gray>/antiswear punkte <Spieler></gray>"
+punkte-anzeige: "%prefix%<white>%spieler%</white><gray> steht bei </gray><white>%punkte%</white><gray> Punkten. Stumm: </gray><white>%stumm%</white>"
+
+reset-usage: "%prefix%<gray>/antiswear reset <Spieler></gray>"
+reset-ok: "%prefix%<green>Punkte und Stummschaltung von <white>%spieler%</white> wurden zurückgesetzt.</green>"
+
+stumm-usage: "%prefix%<gray>/antiswear stumm <Spieler> <Dauer></gray> <dark_gray>(z.B. 10m, 1h, 1d, perm)</dark_gray>"
+stumm-ok: "%prefix%<green><white>%spieler%</white> ist jetzt für <white>%dauer%</white> stumm (im ganzen Netzwerk).</green>"
+nicht-online: "%prefix%<red><white>%spieler%</white> ist auf diesem Server nicht online.</red>"
+
+voice:
+  regeln:
+    - "<gradient:#6C5CE7:#00D4FF><bold>Voice-Chat · Regeln</bold></gradient>"
+    - "<white>1.</white> <gray>Respekt: keine Beleidigungen, kein Anschreien, keine Diskriminierung.</gray>"
+    - "<white>2.</white> <gray>Keine Musik, Soundboards oder Stimmverzerrer, die andere stören.</gray>"
+    - "<white>3.</white> <gray>Keine Dauergeräusche, kein Pfeifen, kein Mikro-Spam.</gray>"
+    - "<white>4.</white> <gray>Keine persönlichen Daten wie Adresse, Handynummer oder Passwörter.</gray>"
+    - "<white>5.</white> <gray>Nichts aufnehmen oder weitergeben, wenn nicht alle zugestimmt haben.</gray>"
+    - "<white>6.</white> <gray>Wer nicht reden will, wird in Ruhe gelassen.</gray>"
+    - "<white>7.</white> <gray>Alle Serverregeln gelten auch hier:</gray> <click:run_command:'/regeln'><hover:show_text:'<gray>Serverregeln anzeigen'><#00D4FF>/regeln</#00D4FF></hover></click>"
+    - "<gray>Verstöße bitte mit</gray> <white>/report</white> <gray>melden. Das Team kann dich im Voice-Chat stummschalten.</gray>"
+  akzeptieren-knopf: "<click:run_command:'/vcrules akzeptieren'><hover:show_text:'<green>Klicken, um die Regeln zu akzeptieren'><green><bold>[✔ Ich akzeptiere die Voice-Chat-Regeln]</bold></green></hover></click>"
+  akzeptiert: "%prefix%<green>Danke! Du kannst jetzt im Voice-Chat sprechen.</green>"
+  schon-akzeptiert: "<green>✔ Du hast die Voice-Chat-Regeln akzeptiert.</green>"
+  nur-spieler: "%prefix%<red>Das geht nur im Spiel.</red>"
+  hinweis-regeln: "<gold>🎙 Lies erst /vcrules und akzeptiere die Regeln - dann kannst du sprechen.</gold>"
+  hinweis-stumm: "<red>🔇 Du bist im Voice-Chat stummgeschaltet</red> <gray>(noch %rest%)</gray>"
+  gruppe-verboten: "%prefix%<red>Dieser Gruppenname ist nicht erlaubt.</red>"
+  stumm-usage: "%prefix%<gray>/vcmute <Spieler> <Dauer> [Grund]</gray> <dark_gray>(z.B. 30m, 1h, 1d, perm)</dark_gray>"
+  stumm-ok: "%prefix%<green><white>%spieler%</white> ist jetzt im Voice-Chat stumm (<white>%dauer%</white>, im ganzen Netzwerk).</green>"
+  stumm-du: "%prefix%<red>Du wurdest im Voice-Chat stummgeschaltet</red> <gray>(<white>%dauer%</white>). Grund: <white>%grund%</white></gray>"
+  entstummt-usage: "%prefix%<gray>/vcunmute <Spieler></gray>"
+  entstummt-ok: "%prefix%<green><white>%spieler%</white> darf wieder im Voice-Chat sprechen.</green>"
+  entstummt-du: "%prefix%<green>Du darfst wieder im Voice-Chat sprechen.</green>"
+  nicht-stumm: "%prefix%<gold><white>%spieler%</white> ist im Voice-Chat nicht stummgeschaltet.</gold>"
+  unbekannt: "%prefix%<red><white>%spieler%</white> war noch nie auf diesem Server.</red>"
+  kein-grund: "Kein Grund angegeben"
+  liste-leer: "%prefix%<gray>Im Voice-Chat ist gerade niemand stummgeschaltet.</gray>"
+  liste-kopf: "%prefix%<gray>Im Voice-Chat stumm (<white>%anzahl%</white>):</gray>"
+  liste-eintrag: "<dark_gray> ▪ </dark_gray><white>%spieler%</white> <dark_gray>-</dark_gray> <gray>noch %rest%, von %von%: %grund%</gray>"
+  team-stumm: "<dark_gray>[<gradient:#6C5CE7:#00D4FF>Voice</gradient><dark_gray>]</dark_gray> <white>%von%</white> <gray>hat</gray> <white>%spieler%</white> <gray>stummgeschaltet (%dauer%):</gray> <yellow>%grund%</yellow>"
+  team-entstummt: "<dark_gray>[<gradient:#6C5CE7:#00D4FF>Voice</gradient><dark_gray>]</dark_gray> <white>%von%</white> <gray>hat die Stummschaltung von</gray> <white>%spieler%</white> <gray>aufgehoben.</gray>"
