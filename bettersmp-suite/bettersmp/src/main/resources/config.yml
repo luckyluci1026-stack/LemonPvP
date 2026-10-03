@@ -337,3 +337,40 @@ standard-rechte:
     - essentials.delhome
     - essentials.msg
   erben: [sup, mod, admin, owner1, owner2, owner3, owner4, owner5]
+  # Diese Rechte bekommen die Team-Gruppen aus 'erben' zusaetzlich
+  team: [bettersmp.xray, bettersmp.xray.alarm]
+
+# ----------------------------------------------------------
+# Anti-Xray
+# Paper hat ein sehr gutes Anti-Xray eingebaut: Erze, die man nicht
+# sehen kann, schickt der Server gar nicht erst an den Client. BetterSMP
+# schaltet es beim Start einmal fuer jede Oberwelt und jeden Nether ein
+# (in deren paper-world.yml, mit Sicherung .vor-anti-xray). Hast du dort
+# selbst schon etwas eingestellt, bleibt das so.
+# Wirkt erst nach dem naechsten Neustart des Servers.
+# ----------------------------------------------------------
+anti-xray:
+  paper-einrichten: true
+  # 1 = Erze verstecken, 2 = ueberall falsche Erze,
+  # 3 = falsche Erze in Schichten (gleich sicher wie 2, weniger Daten - empfohlen)
+  modus: 3
+  # Erze in NEUEN Chunks lassen sich nicht mehr aus dem Welt-Seed berechnen
+  # (gegen Erz-Finder-Mods). Setzt in config/paper-world-defaults.yml
+  # feature-seeds.generate-random-seeds-for-all auf true.
+  seed-schutz: true
+  # Meldet dem Team (bettersmp.xray.alarm), wer verdaechtig viele
+  # versteckte Erze freilegt. Zaehlt nur Erze, zu denen sich der Spieler
+  # selbst hingegraben hat - nicht Hoehlen, nicht TNT, nicht was ein
+  # Freund freigelegt hat. Eine ganze Ader zaehlt einmal. /xray zeigt Details.
+  alarm:
+    enabled: true
+    erze: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, ANCIENT_DEBRIS]
+    # Alarm, wenn jemand in so vielen Minuten ...
+    fenster-minuten: 20
+    # ... mindestens so viele versteckte Erze freilegt ...
+    min-funde: 4
+    # ... und dabei im Schnitt hoechstens so viele Bloecke pro Fund abbaut
+    # (normales Abbauen: 150 und mehr)
+    max-bloecke-pro-fund: 40
+    # Fruehestens nach so vielen Minuten wieder Alarm fuer denselben Spieler
+    pause-minuten: 10

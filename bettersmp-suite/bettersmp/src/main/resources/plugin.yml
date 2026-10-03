@@ -82,7 +82,18 @@ commands:
     aliases: [deletehome]
     permission: bettersmp.homes
 
+  xray:
+    description: Zeigt, wer auffällig viele versteckte Erze freilegt
+    usage: "/xray [Spieler]"
+    permission: bettersmp.xray
+
 permissions:
+  bettersmp.xray:
+    description: Darf /xray benutzen
+    default: op
+  bettersmp.xray.alarm:
+    description: Bekommt den X-Ray-Alarm
+    default: op
   bettersmp.homes:
     description: Darf Homes benutzen (/home, /sethome, /delhome)
     default: true

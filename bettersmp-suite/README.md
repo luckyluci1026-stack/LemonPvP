@@ -7,7 +7,7 @@ den Server-Namen setzt du einmal über `brand` in der `config.yml`.
 
 | Plugin | Zweck | Befehle |
 |--------|-------|---------|
-| **BetterSMP** | SMP-Kern: MiniMessage-Chat, NoChatReports, AntiCombatLog, **Ban/Mute-System mit Screen**, **/stats** (MariaDB/SQLite), **Ränge mit Gradient-Prefixen**, **Nametags**, **Scoreboard**, **/settings-GUI**, **3 Homes mit Menü**, Standard-Rechte automatisch + Auto-Installer | `/bettersmp`, `/settings`, `/stats`, `/home`, `/sethome`, `/delhome`, `/gban`, `/gunban`, `/gmute`, `/gunmute` |
+| **BetterSMP** | SMP-Kern: MiniMessage-Chat, NoChatReports, AntiCombatLog, **Ban/Mute-System mit Screen**, **/stats** (MariaDB/SQLite), **Ränge mit Gradient-Prefixen**, **Nametags**, **Scoreboard**, **/settings-GUI**, **3 Homes mit Menü**, **Anti-Xray + X-Ray-Alarm**, Standard-Rechte automatisch + Auto-Installer | `/bettersmp`, `/settings`, `/stats`, `/home`, `/sethome`, `/delhome`, `/xray`, `/gban`, `/gunban`, `/gmute`, `/gunmute` |
 | **BetterRTP** | Vollständig asynchrones Random-Teleport-Plugin | `/rtp` (`/wild`), `/betterrtp` |
 | **Lifesteal+** | Lifesteal mit Herzverlust, Elimination/Revive, BetterSMP-CombatLog | `/hearts`, `/withdraw`, `/revive`, `/lifesteal` |
 | **EasyBedrock** | Bedrock-Crossplay (Geyser + Floodgate), Bedrock-Spieler ≈ Java-Spieler an Ressourcen | `/easybedrock` |

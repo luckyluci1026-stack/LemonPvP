@@ -34,6 +34,9 @@ import de.lemonpvp.bettersmp.report.ReportManager;
 import de.lemonpvp.bettersmp.respawn.DeathRedirectListener;
 import de.lemonpvp.bettersmp.reward.DailyRewardManager;
 import de.lemonpvp.bettersmp.setup.ConfigDeployer;
+import de.lemonpvp.bettersmp.xray.AntiXrayEinrichtung;
+import de.lemonpvp.bettersmp.xray.XrayAlarm;
+import de.lemonpvp.bettersmp.xray.XrayBefehl;
 import de.lemonpvp.bettersmp.setup.Installer;
 import de.lemonpvp.bettersmp.setup.RankSetup;
 import de.lemonpvp.bettersmp.setup.StandardRechte;
@@ -75,6 +78,8 @@ public final class BetterSMP extends JavaPlugin {
     private HomeTeleport homeTeleport;
     private HomeMenue homeMenue;
     private HomeBefehle homeBefehle;
+    private AntiXrayEinrichtung antiXray;
+    private XrayAlarm xrayAlarm;
 
     private Database database;
     private PunishmentConfig punishConfig;
@@ -130,6 +135,8 @@ public final class BetterSMP extends JavaPlugin {
         this.homeTeleport = new HomeTeleport(this);
         this.homeMenue = new HomeMenue(this, homeSpeicher, homeTeleport);
         this.homeBefehle = new HomeBefehle(this, homeSpeicher, homeTeleport, homeMenue);
+        this.antiXray = new AntiXrayEinrichtung(this);
+        this.xrayAlarm = new XrayAlarm(this);
         BetterSMPApi.init(combat);
         BetterSMPApi.initReports(reports);
         combat.start();
@@ -156,6 +163,8 @@ public final class BetterSMP extends JavaPlugin {
         pm.registerEvents(homeTeleport, this);
         pm.registerEvents(homeMenue, this);
         pm.registerEvents(homeBefehle, this);
+        pm.registerEvents(antiXray, this);
+        pm.registerEvents(xrayAlarm, this);
 
         // Fuer die Tod-Umleitung - unabhaengig vom Schalter registriert,
         // damit ein spaeteres Einschalten per /bettersmp reload sofort
@@ -180,6 +189,9 @@ public final class BetterSMP extends JavaPlugin {
             getCommand(cmd).setExecutor(homeBefehle);
             getCommand(cmd).setTabCompleter(homeBefehle);
         }
+        XrayBefehl xrayBefehl = new XrayBefehl(this, xrayAlarm);
+        getCommand("xray").setExecutor(xrayBefehl);
+        getCommand("xray").setTabCompleter(xrayBefehl);
 
         logHooks();
         Bukkit.getScheduler().runTaskLater(this, this::firstRunSetup, 40L);
@@ -209,6 +221,7 @@ public final class BetterSMP extends JavaPlugin {
 
     private void firstRunSetup() {
         CommandSender console = Bukkit.getConsoleSender();
+        antiXray.beimStart();
         if (getConfig().getBoolean("patch-server-properties", true)) {
             configDeployer.patchServerProperties(console);
         }

@@ -146,6 +146,29 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   Lobby-Server, statt am Bett/Weltspawn weiterzuspielen. Braucht einen Proxy
   mit Kanal `BungeeCord` (bei Velocity Standard).
 
+- **Anti-Xray** (`anti-xray` in `config.yml`): Paper hat ein sehr gutes,
+  kostenloses Anti-Xray schon eingebaut, es ist nur aus. BetterSMP schaltet
+  es beim Start einmal für jede Oberwelt und jeden Nether ein (in deren
+  `paper-world.yml`, Sicherung als `.vor-anti-xray`). Modus 3: Erze, die man
+  nicht sehen kann, schickt der Server gar nicht an den Client, stattdessen
+  falsche Erze in Schichten. Mit X-Ray sieht man nur Unsinn, und es kostet
+  weniger Daten als Modus 2. Dazu kommt der Seed-Schutz: In neuen Chunks
+  lassen sich Erze nicht mehr aus dem Welt-Seed berechnen (gegen
+  Erz-Finder-Mods). **Wirkt erst nach dem nächsten Neustart.** Eigene
+  Einstellungen in den Paper-Dateien bleiben unangetastet, eingerichtet wird
+  pro Welt nur einmal (gemerkt in `anti-xray.yml`).
+- **X-Ray-Alarm**: Wer sich in 20 Minuten zu 4 versteckten Diamant-Adern
+  oder Antikem Schrott gräbt und dabei im Schnitt höchstens 40 Blöcke pro
+  Fund abbaut, wird dem Team gemeldet (`bettersmp.xray.alarm`, mit `[Hin]`
+  und `[Details]` zum Anklicken, dazu Konsole und `xray-alarme.log`). Es
+  zählt nur, wozu sich der Spieler selbst hingegraben hat. Erze in Höhlen,
+  von TNT/Betten freigesprengter Schrott und was ein Freund freigelegt hat,
+  zählen nicht. Eine ganze Ader zählt einmal. Normales Abbauen liegt bei 150
+  Blöcken und mehr pro Fund. `/xray` listet die auffälligsten Miner seit dem
+  Serverstart, auch langsame ohne Alarm. `/xray <Spieler>` zeigt Details.
+  Die Team-Gruppen (`standard-rechte.erben`) bekommen beide Rechte
+  automatisch.
+
 ## Wichtige Configs
 - `config.yml` – `brand`, Datenbank, Inventar-/Enderkisten-Backup, Chat, Combat, Join/Quit, Nametags, Scoreboard, Installer
 - `bans.yml` / `mutes.yml` – Gründe, Dauern, Ban-Screen
@@ -158,7 +181,8 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
 `bettersmp.ban`, `bettersmp.mute`, `bettersmp.stats`, `bettersmp.settings`,
 `bettersmp.ban.exempt`, `bettersmp.mute.exempt`, `bettersmp.chat.format`,
 `bettersmp.tutorial` (Standard: alle), `bettersmp.homes` (Standard: alle),
-`bettersmp.homes.sofort` (Standard: OP).
+`bettersmp.homes.sofort` (Standard: OP), `bettersmp.xray` und
+`bettersmp.xray.alarm` (Standard: OP und die Team-Gruppen).
 
 `bettersmp.chat.format` erlaubt Farben, Verläufe und Fett/Kursiv im Chat,
 aber keine Klick-, Hover- oder sonstigen Sonder-Tags und keinen

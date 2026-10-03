@@ -33,6 +33,8 @@ public final class StandardRechte {
 
     static final List<String> ERBEN = List.of("sup", "mod", "admin", "owner1", "owner2", "owner3", "owner4", "owner5");
 
+    static final List<String> TEAM = List.of("bettersmp.xray", "bettersmp.xray.alarm");
+
     private final BetterSMP plugin;
 
     public StandardRechte(BetterSMP plugin) {
@@ -53,7 +55,8 @@ public final class StandardRechte {
         String gruppe = config.getString("standard-rechte.gruppe", "default");
         try {
             Bridge.anwenden(plugin, rueckmeldung, gruppe, liste(config, "standard-rechte.erlauben", ERLAUBEN),
-                    liste(config, "standard-rechte.verbieten", VERBIETEN), liste(config, "standard-rechte.erben", ERBEN));
+                    liste(config, "standard-rechte.verbieten", VERBIETEN), liste(config, "standard-rechte.erben", ERBEN),
+                    liste(config, "standard-rechte.team", TEAM));
         } catch (LinkageError | RuntimeException fehler) {
             plugin.getLogger().warning("Standard-Rechte konnten nicht gesetzt werden: " + fehler.getMessage());
         }
@@ -69,7 +72,7 @@ public final class StandardRechte {
         }
 
         static void anwenden(BetterSMP plugin, CommandSender rueckmeldung, String gruppe,
-                             List<String> erlauben, List<String> verbieten, List<String> erben) {
+                             List<String> erlauben, List<String> verbieten, List<String> erben, List<String> team) {
             LuckPerms luckPerms = LuckPermsProvider.get();
             GroupManager gruppen = luckPerms.getGroupManager();
             AtomicInteger geaendert = new AtomicInteger();
@@ -111,12 +114,29 @@ public final class StandardRechte {
                     continue;
                 }
                 gruppen.loadGroup(name).thenAccept(gefunden -> gefunden.ifPresent(g -> {
-                    if (erbtSchon(g, gruppe)) {
+                    boolean erbt = !erbtSchon(g, gruppe);
+                    if (erbt) {
+                        g.data().add(InheritanceNode.builder(gruppe).build());
+                    }
+                    List<String> teamRespektiert = new ArrayList<>();
+                    int teamRechte = 0;
+                    for (String recht : team) {
+                        if (setzen(g, recht, true, teamRespektiert)) {
+                            teamRechte++;
+                        }
+                    }
+                    if (!erbt && teamRechte == 0) {
                         return;
                     }
-                    g.data().add(InheritanceNode.builder(gruppe).build());
-                    gruppen.saveGroup(g).thenRun(() ->
-                            plugin.getLogger().info("Gruppe '" + name + "' erbt jetzt alle Rechte von '" + gruppe + "'."));
+                    int neu = teamRechte;
+                    gruppen.saveGroup(g).thenRun(() -> {
+                        if (erbt) {
+                            plugin.getLogger().info("Gruppe '" + name + "' erbt jetzt alle Rechte von '" + gruppe + "'.");
+                        }
+                        if (neu > 0) {
+                            plugin.getLogger().info("Gruppe '" + name + "': " + neu + " Team-Rechte ergaenzt (" + String.join(", ", team) + ").");
+                        }
+                    });
                 }));
             }
         }
