@@ -3,6 +3,7 @@ package de.lemonpvp.fastshop.gui;
 import de.lemonpvp.fastshop.FastShop;
 import de.lemonpvp.fastshop.shop.Category;
 import de.lemonpvp.fastshop.shop.ShopItem;
+import de.lemonpvp.fastshop.shop.ShopService;
 import de.lemonpvp.fastshop.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -48,7 +49,7 @@ public final class ShopMenus {
     }
 
     private String money(double amount) {
-        return plugin.economy().format(amount);
+        return plugin.economy().format(ShopService.cent(amount));
     }
 
     private Material material(String path, Material fallback) {

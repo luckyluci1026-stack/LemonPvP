@@ -49,10 +49,12 @@ public final class Privatnachrichten {
         }
         long stummRest = plugin.stummListe().restMillis(sender.getUniqueId());
         if (stummRest != 0) {
+            plugin.chatLog().privatStumm(sender, ziel.getUsername(), text);
             sender.sendMessage(plugin.chatRelay().stummHinweis(stummRest));
             return;
         }
         plugin.moderation().pruefen(sender, text).thenAccept(pruefung -> {
+            plugin.chatLog().privat(sender, ziel, text, pruefung.blockiert());
             if (pruefung.blockiert()) {
                 plugin.log().info("[MSG blockiert] {} -> {}: {}", sender.getUsername(), ziel.getUsername(), text);
                 return;

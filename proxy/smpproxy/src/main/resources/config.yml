@@ -131,6 +131,24 @@ msg:
   reply-aliases: ["r", "reply"]
 
 # ----------------------------------------------------------
+#  Chat-Log: /clog <Spieler> [Seite]
+#
+#  Alles, was jemand auf einem Server in den Chat tippt (SMP, Lobby,
+#  Duels, Warteraum), und jede /msg landen pro Spieler in
+#  plugins/smpproxy/chatlogs/. Auch Nachrichten, die nicht ankamen
+#  (stumm, vom Filter geblockt), stehen drin und sind rot markiert.
+#  Sehen darf das, wer smpproxy.chatlog oder smpproxy.admin hat,
+#  und die Konsole. Seite 1 zeigt die neuesten Nachrichten.
+# ----------------------------------------------------------
+chatlog:
+  enabled: true
+  aliases: ["clog", "chatlog"]
+  # So viele Tage bleiben Nachrichten gespeichert (passt zur
+  # Datenschutzerklaerung: Chat-Protokolle hoechstens 30 Tage)
+  tage: 30
+  zeilen-pro-seite: 10
+
+# ----------------------------------------------------------
 #  /rtp von überall im Netzwerk
 #
 #  Steht der Spieler schon auf einem Server aus passthrough-servers

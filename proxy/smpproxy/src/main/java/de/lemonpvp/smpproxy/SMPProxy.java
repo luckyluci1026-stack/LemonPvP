@@ -14,6 +14,7 @@ import com.velocitypowered.api.scheduler.ScheduledTask;
 import de.lemonpvp.smpproxy.ban.BanStore;
 import de.lemonpvp.smpproxy.bedrock.GeyserOptimierung;
 import de.lemonpvp.smpproxy.command.AhCommand;
+import de.lemonpvp.smpproxy.command.ChatLogCommand;
 import de.lemonpvp.smpproxy.command.HubCommand;
 import de.lemonpvp.smpproxy.command.MsgCommand;
 import de.lemonpvp.smpproxy.command.NetworkBanCommand;
@@ -28,6 +29,7 @@ import de.lemonpvp.smpproxy.health.ServerWatcher;
 import de.lemonpvp.smpproxy.listener.BanListener;
 import de.lemonpvp.smpproxy.listener.ConnectListener;
 import de.lemonpvp.smpproxy.listener.KampfSperre;
+import de.lemonpvp.smpproxy.netzwerk.ChatLog;
 import de.lemonpvp.smpproxy.netzwerk.ChatRelay;
 import de.lemonpvp.smpproxy.netzwerk.JoinQuitNachrichten;
 import de.lemonpvp.smpproxy.netzwerk.Moderation;
@@ -70,6 +72,7 @@ public final class SMPProxy {
     private final BanListener banListener;
     private final StummListe stummListe = new StummListe();
     private final ChatRelay chatRelay;
+    private final ChatLog chatLog;
     private final Privatnachrichten privatnachrichten;
     private final Moderation moderation;
     private final RegelnCommand regeln;
@@ -89,6 +92,7 @@ public final class SMPProxy {
         this.bans = new BanStore(folder, log);
         this.banListener = new BanListener(this);
         this.chatRelay = new ChatRelay(this);
+        this.chatLog = new ChatLog(this, folder.resolve("chatlogs"));
         this.privatnachrichten = new Privatnachrichten(this);
         this.moderation = new Moderation(this);
         this.regeln = new RegelnCommand(this);
@@ -112,6 +116,7 @@ public final class SMPProxy {
                 Einlass.KANAL);
         proxy.getEventManager().register(this, new KampfSperre(this));
         proxy.getEventManager().register(this, chatRelay);
+        proxy.getEventManager().register(this, chatLog);
         proxy.getEventManager().register(this, privatnachrichten);
         proxy.getEventManager().register(this, moderation);
         proxy.getEventManager().register(this, regeln);
@@ -152,6 +157,12 @@ public final class SMPProxy {
                     .repeat(config.pingInterval(), TimeUnit.SECONDS)
                     .schedule());
         }
+
+        tasks.add(proxy.getScheduler()
+                .buildTask(this, chatLog::aufraeumen)
+                .delay(1, TimeUnit.MINUTES)
+                .repeat(6, TimeUnit.HOURS)
+                .schedule());
     }
 
     private void cancelTasks() {
@@ -259,6 +270,10 @@ public final class SMPProxy {
             }
         }
 
+        if (config.chatlogEnabled()) {
+            registrieren(commands, config.chatlogAliases(), new ChatLogCommand(this));
+        }
+
         if (config.msgEnabled()) {
             registrieren(commands, config.msgAliases(), new MsgCommand(this, false));
             registrieren(commands, config.replyAliases(), new MsgCommand(this, true));
@@ -364,6 +379,10 @@ public final class SMPProxy {
 
     public ChatRelay chatRelay() {
         return chatRelay;
+    }
+
+    public ChatLog chatLog() {
+        return chatLog;
     }
 
     public Privatnachrichten privatnachrichten() {

@@ -93,6 +93,7 @@ allen Servern abgeglichen (`voice.yml`).
 | – | vor dem Release schon überall hin dürfen | `smpproxy.release.bypass` |
 | – | nie in der Einlass-Warteschlange warten | `smpproxy.einlass.bypass` |
 | `/netban`, `/netunban`, `/netbans`, `/netbaninfo` | Netzwerkbann | `smpproxy.ban` |
+| `/clog <Spieler> [Seite]` (auch `/chatlog`) | Chat-Log eines Spielers über alle Server, auch offline (siehe unten) | `smpproxy.chatlog` oder `smpproxy.admin` |
 | `/smpproxy status` | zeigt online/offline, Spielerzahl, Auslastung (ms/Tick, TPS) und Warteschlange je Server | `smpproxy.admin` |
 | `/smpproxy reload` | `config.yml` neu einlesen | `smpproxy.admin` |
 
@@ -107,6 +108,18 @@ heißt dort „unbekannt". Einmal `/lpv user <Name> permission set
 smpproxy.release.test true` (oder `smpproxy.release.admin`) reicht.
 
 `/server` und `/send` bringt Velocity selbst mit.
+
+**Chat-Log (`/clog`)**: Der Proxy schreibt alles mit, was jemand in den
+Chat tippt, egal auf welchem Server (SMP, Lobby, Duels, Warteraum), dazu
+jede `/msg` und `/r`. Die Backend-Plugins müssen dafür nicht neu.
+`/clog Max` zeigt die neuesten 10 Nachrichten (Uhrzeit, Server, Text;
+Maus drauf zeigt Datum und Sekunde), `[Ältere »]` blättert weiter.
+Nachrichten, die nicht ankamen (stumm, vom Filter geblockt), stehen rot mit
+✕ drin. Was Spieler geschrieben haben, wird nur angezeigt, nie als Farbe
+oder Klick ausgeführt. Gespeichert wird pro Spieler in
+`plugins/smpproxy/chatlogs/<UUID>.log`, nach 30 Tagen (`chatlog.tage`)
+löscht der Proxy alte Nachrichten selbst, höchstens 20.000 pro Spieler.
+Team-Recht vergeben: `lpv group mod permission set smpproxy.chatlog true`.
 
 **Im Kampf und im Duell** sind `/hub`, `/lobby`, `/spawn`, `/server` und
 die Kurzbefehle gesperrt (BetterSMP und DuelPlus melden das über den Kanal

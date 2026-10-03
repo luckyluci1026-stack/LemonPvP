@@ -44,7 +44,7 @@ public final class ShopService {
             return;
         }
         amount = Math.max(1, Math.min(64 * 9, amount));
-        double cost = item.buy() * amount;
+        double cost = cent(item.buy() * amount);
         if (!plugin.economy().has(player, cost)) {
             plugin.msgs().send(player, "not-enough-money",
                     "price", plugin.economy().format(cost),
@@ -64,7 +64,7 @@ public final class ShopService {
         int notAdded = leftover.values().stream().mapToInt(ItemStack::getAmount).sum();
         if (notAdded > 0) {
             // Nicht passende Menge zurückerstatten
-            plugin.economy().deposit(player, item.buy() * notAdded);
+            plugin.economy().deposit(player, cent(item.buy() * notAdded));
             if (notAdded == amount) {
                 plugin.msgs().send(player, "inventory-full");
             soundFail(player);
@@ -76,7 +76,7 @@ public final class ShopService {
         plugin.msgs().send(player, "bought",
                 "amount", String.valueOf(given),
                 "item", display(item.material()),
-                "price", plugin.economy().format(item.buy() * given));
+                "price", plugin.economy().format(cent(item.buy() * given)));
     }
 
     // ---------------- Verkaufen ----------------
@@ -99,7 +99,7 @@ public final class ShopService {
             return;
         }
         int amount = hand.getAmount();
-        double price = item.sell() * plugin.shop().sellMultiplier() * amount;
+        double price = cent(item.sell() * plugin.shop().sellMultiplier() * amount);
         player.getInventory().setItemInMainHand(null);
         plugin.economy().deposit(player, price);
         soundSell(player);
@@ -135,6 +135,7 @@ public final class ShopService {
             return;
         }
         player.getInventory().setStorageContents(contents);
+        total = cent(total);
         plugin.economy().deposit(player, total);
         soundSell(player);
         plugin.msgs().send(player, "sold-multi",
@@ -160,7 +161,7 @@ public final class ShopService {
         }
         int amount = wanted <= 0 ? available : Math.min(wanted, available);
         removePlain(player, material, amount);
-        double price = item.sell() * plugin.shop().sellMultiplier() * amount;
+        double price = cent(item.sell() * plugin.shop().sellMultiplier() * amount);
         plugin.economy().deposit(player, price);
         soundSell(player);
         plugin.msgs().send(player, "sold",
@@ -190,6 +191,7 @@ public final class ShopService {
         // Rest (nicht verkauft) zurück ins Spielerinventar bzw. droppen
         returnContents(player, inv, limit);
         if (count > 0) {
+            total = cent(total);
             plugin.economy().deposit(player, total);
             soundSell(player);
         plugin.msgs().send(player, "sold-multi",
@@ -247,6 +249,10 @@ public final class ShopService {
 
     private void soundFail(Player player) {
         sound(player, "minecraft:block.note_block.bass", 0.8f);
+    }
+
+    public static double cent(double betrag) {
+        return Math.round(betrag * 100.0) / 100.0;
     }
 
     private boolean isPlain(ItemStack stack) {

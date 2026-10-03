@@ -12,14 +12,28 @@ Einfaches, customizables Shop-/Verkaufssystem (Paper 1.21.11).
 - **EssentialsX-/Vault-Economy**: nutzt das vorhandene Economy-System.
 - **Voll konfigurierbar** über `shop.yml` (Kategorien, Items, Preise) – ein
   reichhaltiger Standard-Katalog ist bereits enthalten, inklusive `pvp`- und
-  `tools`-Kategorien. Die Preise für Erze, Barren und Netherit legt das
-  Server-Team fest (Stand September 2026: Diamant 1.250, Netherit-Block
-  90.000, Netherit-Rüstung höchstens 15.000). `sell-multiplier` global.
+  `tools`-Kategorien. `sell-multiplier` global.
+- **Preise stark generft (Stand Oktober 2026)**: Kaufen kostet rund 50 %
+  mehr, Verkaufen bringt pro Item im Schnitt 84 % weniger. Am stärksten
+  trifft es alles, was man farmen kann (Eisen 45 → 5, Gold 85 → 6,
+  Smaragd 150 → 10, Weizen 2 → 0,25). Diamant 1.900/150, Antiker Schrott
+  2.600/150, Netherit-Block 135.000/5.400, Netherit-Brustplatte 22.500.
+  Nirgends bringt Verkaufen so viel, wie Kaufen kostet. Beträge werden auf
+  den Cent gerundet.
+- **Bestehende `shop.yml` wird einmal umgestellt**: Fehlt oben
+  `preis-stand: 2`, setzt FastShop beim Start jedes bekannte Item auf den
+  neuen Preis, auch Ausreißer wie Antiker Schrott für 390.000. Eigene Items
+  (per `/fastshop additem`) werden pauschal angepasst: Kaufen ×1,5,
+  Verkaufen ×0,25, jedes steht in der Konsole. Nicht kaufbare oder nicht
+  verkaufbare eigene Items bleiben das. Die alte Datei bleibt als
+  `shop-vor-nerf.yml` liegen. Wer die alten Preise zurück will, kopiert sie
+  nach `shop.yml`, trägt oben `preis-stand: 2` ein und tippt
+  `/fastshop reload`.
 - **Alles unverzaubert**: Im Shop gibt es keine verzauberten Items, und in
   den Menüs leuchtet nichts. Steht in einer älteren `shop.yml` noch
   `enchants:`, entfernt FastShop das beim Start selbst, samt den Namen und
   Beschreibungen dieser Items, und übernimmt deren Preise aus dem
-  Standard-Katalog (Bogen 80, Angel 60). Die alte Datei bleibt als
+  Standard-Katalog (Bogen 120, Angel 90). Die alte Datei bleibt als
   `shop-vorher.yml` liegen.
 - **Schutz**: Bulk-Verkauf ignoriert benannte/verzauberte/beschädigte Items
   (deine Ausrüstung wird nicht versehentlich verkauft).

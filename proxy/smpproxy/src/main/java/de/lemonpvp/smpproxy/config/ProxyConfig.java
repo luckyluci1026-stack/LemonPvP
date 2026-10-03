@@ -107,6 +107,22 @@ public final class ProxyConfig {
                     + "du kommst automatisch rein</gray>"),
             Map.entry("release-bossbar-ausgelastet", "<gold><bold>%server% holt kurz Luft ...</bold></gold>"),
             Map.entry("release-ausgelastet", "<gold>%server% ist gerade ausgelastet - die nächste Welle kommt gleich.</gold>"),
+            Map.entry("chatlog-usage", "%prefix%<gray>/%befehl% <Spieler> [Seite]</gray>"),
+            Map.entry("chatlog-unbekannt", "%prefix%<red><white>%target%</white> war noch nie auf dem Server.</red>"),
+            Map.entry("chatlog-leer", "%prefix%<gray>Von <white>%spieler%</white> gibt es keine Nachrichten aus den letzten %tage% Tagen.</gray>"),
+            Map.entry("chatlog-kopf", "<gradient:#6C5CE7:#00D4FF><bold>Chat-Log</bold></gradient> <white>%spieler%</white> "
+                    + "<dark_gray>·</dark_gray> <gray>%anzahl% Nachrichten aus den letzten %tage% Tagen</gray>"),
+            Map.entry("chatlog-zeile", "<hover:show_text:'<gray>%datum%'><dark_gray>%zeit%</dark_gray></hover> "
+                    + "<gray>%ort%</gray> <dark_gray>»</dark_gray> <white>%text%</white>"),
+            Map.entry("chatlog-zeile-msg", "<hover:show_text:'<gray>%datum%'><dark_gray>%zeit%</dark_gray></hover> "
+                    + "<#00D4FF>/msg → %ort%</#00D4FF> <dark_gray>»</dark_gray> <white>%text%</white>"),
+            Map.entry("chatlog-zeile-gesperrt", "<hover:show_text:'<gray>%datum%<newline><red>Kam nicht an'><dark_gray>%zeit%</dark_gray></hover> "
+                    + "<red>✕ %ort%</red> <dark_gray>»</dark_gray> <gray>%text%</gray>"),
+            Map.entry("chatlog-fuss", "<gray>Seite <white>%seite%</white> von <white>%seiten%</white></gray> %neuer% %aelter%"),
+            Map.entry("chatlog-neuer", "<click:run_command:'/%befehl% %spieler% %seite%'><hover:show_text:'<gray>Seite %seite%'>"
+                    + "<#00D4FF>[« Neuere]</#00D4FF></hover></click>"),
+            Map.entry("chatlog-aelter", "<click:run_command:'/%befehl% %spieler% %seite%'><hover:show_text:'<gray>Seite %seite%'>"
+                    + "<#00D4FF>[Ältere »]</#00D4FF></hover></click>"),
             Map.entry("status-last", "<dark_gray>    ↳ </dark_gray><gray><white>%mspt%</white> ms/Tick <dark_gray>·</dark_gray> "
                     + "<white>%tps%</white> TPS <dark_gray>·</dark_gray> <white>%warten%</white> in der Warteschlange</gray>"));
 
@@ -529,6 +545,22 @@ public final class ProxyConfig {
 
     public List<String> replyAliases() {
         return strings("msg.reply-aliases", List.of("r", "reply"));
+    }
+
+    public boolean chatlogEnabled() {
+        return bool("chatlog.enabled", true);
+    }
+
+    public List<String> chatlogAliases() {
+        return strings("chatlog.aliases", List.of("clog", "chatlog"));
+    }
+
+    public int chatlogTage() {
+        return Math.max(1, Math.min(365, integer("chatlog.tage", 30)));
+    }
+
+    public int chatlogZeilenProSeite() {
+        return Math.max(3, Math.min(50, integer("chatlog.zeilen-pro-seite", 10)));
     }
 
     public String joinMessage() {

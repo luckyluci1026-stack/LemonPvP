@@ -440,7 +440,34 @@ msg:
 
 Weil der Proxy diese Befehle übernimmt, sieht das `/socialspy` von
 EssentialsX sie nicht mehr. Stattdessen steht jede private Nachricht in der
-Proxy-Konsole (`[MSG] Max -> Tom: ...`).
+Proxy-Konsole (`[MSG] Max -> Tom: ...`) und im Chat-Log (`/clog`).
+
+## Chat-Log: /clog
+
+`/clog <Spieler> [Seite]` zeigt, was jemand geschrieben hat: Chat auf SMP,
+Lobby, Duels und im Warteraum, dazu jede `/msg` und `/r`. Seite 1 sind die
+neuesten 10 Nachrichten, `[Ältere »]` blättert zurück. Rot mit ✕ steht da,
+was nicht ankam (stummgeschaltet, vom Filter geblockt). Geht auch, wenn der
+Spieler offline ist.
+
+Recht: `smpproxy.chatlog` (oder `smpproxy.admin`), die Konsole darf immer.
+Fürs Team zum Beispiel:
+
+```
+lpv group mod permission set smpproxy.chatlog true
+```
+
+```yaml
+chatlog:
+  enabled: true
+  aliases: ["clog", "chatlog"]
+  tage: 30
+  zeilen-pro-seite: 10
+```
+
+Die Nachrichten liegen pro Spieler in `plugins/smpproxy/chatlogs/`. Nach
+`tage` (Standard 30, so steht es auch in der Datenschutzerklärung) löscht
+der Proxy sie selbst.
 
 ## Beitritts-Nachrichten nur einmal
 
