@@ -105,6 +105,16 @@ voice:
   gruppennamen-pruefen: true
 
 # ----------------------------------------------------------
+#  Standard-Rechte: AntiSwear traegt die Voice-Chat-Rechte beim Start
+#  selbst in die LuckPerms-Gruppe ein (auf jedem Server, wo AntiSwear
+#  laeuft). Fehlende kommen dazu, nichts wird geloescht.
+# ----------------------------------------------------------
+standard-rechte:
+  enabled: true
+  gruppe: default
+  erlauben: [voicechat.listen, voicechat.speak, voicechat.groups]
+
+# ----------------------------------------------------------
 #  Protokoll: jeder Verstoss landet in plugins/AntiSwear/protokoll.log
 #  server = Name, der in jeder Zeile steht (z.B. "SMP" oder "Lobby")
 # ----------------------------------------------------------

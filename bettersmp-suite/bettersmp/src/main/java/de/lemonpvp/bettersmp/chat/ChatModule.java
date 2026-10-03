@@ -86,7 +86,7 @@ public final class ChatModule implements Listener {
 
     private Component buildMessage(Player player, String raw, List<Player> mentioned) {
         Component message = player.hasPermission("bettersmp.chat.format")
-                ? Text.mm(raw)
+                ? Text.spielerFormat(raw)
                 : Component.text(raw);
 
         if (plugin.getConfig().getBoolean("chat.clickable-links", true)) {

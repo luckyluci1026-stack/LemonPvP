@@ -11,6 +11,7 @@ combat:
   expired: "%prefix%<green>Du bist nicht mehr im Kampf.</green>"
   actionbar: "<red>⚔ Im Kampf: <white>%seconds%s</white> ⚔</red>"
   command-blocked: "%prefix%<red>Dieser Befehl ist im Kampf gesperrt! (<white>%seconds%s</white>)</red>"
+  teleport-blocked: "%prefix%<red>Im Kampf wirst du nicht wegteleportiert! (<white>%seconds%s</white>)</red>"
   logged-broadcast: "<dark_gray>[<red>⚔</red>]</dark_gray> <#00D4FF>%player%</#00D4FF> <gray>hat im Kampf ausgeloggt und wurde bestraft!</gray>"
   opponent-logged: "%prefix%<green>Dein Gegner <white>%player%</white> hat ausgeloggt - du bist wieder frei.</green>"
 
@@ -86,6 +87,27 @@ report:
   sent: "%prefix%<green>Meldung zu <white>%spieler%</white> ist raus - das Team schaut sich das an.</green>"
   received: "%prefix%<gold><bold>Meldung</bold></gold> <dark_gray>-</dark_gray> <white>%melder%</white> <gray>meldet</gray> <white>%spieler%</white><newline><gray>Grund: <white>%grund%</white></gray>"
 
+# ---------------- Homes ----------------
+homes:
+  gesetzt: "%prefix%<green><white>%name%</white> gesetzt.</green> <gray>(%belegt%/%anzahl% belegt · alle unter <white>/home</white>)</gray>"
+  neu-gesetzt: "%prefix%<green><white>%name%</white> ist jetzt hier.</green>"
+  geloescht: "%prefix%<gray><white>%name%</white> gelöscht.</gray>"
+  alle-belegt: "%prefix%<red>Alle %anzahl% Homes sind belegt.</red> <gray>Lösch eins mit <white>/delhome <Name></white> oder im Menü.</gray>"
+  unbekannt: "%prefix%<red>Ein Home <white>%name%</white> hast du nicht.</red> <gray>Alle Homes: <white>/home</white></gray>"
+  ungueltig: "%prefix%<red>Home-Namen: 1-16 Zeichen, nur Buchstaben, Zahlen, _ und -.</red>"
+  platz-ungueltig: "%prefix%<red>Es gibt nur die Plätze 1 bis %anzahl%.</red>"
+  warten: "%prefix%<gray>Teleport zu <white>%name%</white> in <white>%sekunden%</white> Sekunden - nicht bewegen!</gray>"
+  countdown: "<gold>Teleport in <white>%sekunden%</white> ... nicht bewegen</gold>"
+  abgebrochen: "%prefix%<red>Teleport abgebrochen - du hast dich bewegt.</red>"
+  abgebrochen-schaden: "%prefix%<red>Teleport abgebrochen - du hast Schaden bekommen.</red>"
+  im-kampf: "%prefix%<red>Im Kampf geht kein Teleport.</red> <gray>(noch <white>%sekunden%</white>s)</gray>"
+  welt-fehlt: "%prefix%<red>Die Welt von <white>%name%</white> gibt es gerade nicht.</red>"
+  unsicher: "%prefix%<red><white>%name%</white> ist gerade nicht sicher (zugebaut oder Lava).</red> <gray>Setz es neu oder lösch es.</gray>"
+  angekommen: "%prefix%<green>Willkommen bei <white>%name%</white>.</green>"
+  uebernommen: "%prefix%<green>Dein altes Home ist jetzt <white>%name%</white>.</green> <gray>Du hast jetzt <white>%anzahl%</white> Home-Plätze - alles unter <white>/home</white>.</gray>"
+  uebernommen-mehrere: "%prefix%<green>Deine <white>%zahl%</white> alten Homes sind übernommen.</green> <gray>Du hast jetzt <white>%anzahl%</white> Home-Plätze - alles unter <white>/home</white>.</gray>"
+  aus: "%prefix%<gray>Homes sind auf diesem Server ausgeschaltet.</gray>"
+
 # ---------------- Tägliche Kleinigkeit ----------------
 daily:
   already-claimed: "%prefix%<gold>Heute schon abgeholt - versuch es in <white>%stunden%</white> Stunden wieder.</gold>"
@@ -119,6 +141,7 @@ ranks:
   started: "%prefix%<gray>Erstelle LuckPerms-Standard-Ränge ...</gray>"
   done: "%prefix%<green>Ränge eingerichtet! Vergabe z.B.: <white>/lp user <Name> parent set owner1</white></green>"
   no-luckperms: "%prefix%<red>LuckPerms ist nicht geladen. Erst installieren (/bettersmp install) und neu starten.</red>"
+  rechte: "%prefix%<green>Standard-Rechte: <white>%anzahl%</white> ergänzt für Gruppe <white>%gruppe%</white>.</green>"
 
 status:
   header: "%prefix%<white>Status</white>"

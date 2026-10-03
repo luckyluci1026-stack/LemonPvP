@@ -1,6 +1,7 @@
 package de.lemonpvp.bettersmp.punish;
 
 import de.lemonpvp.bettersmp.BetterSMP;
+import de.lemonpvp.bettersmp.util.Befehle;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -15,7 +16,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Setzt das Einfrieren durch: kein Laufen, kein Bauen, kein Abbauen,
@@ -90,13 +90,8 @@ public final class FreezeListener implements Listener {
         if (!eingefroren(spieler)) {
             return;
         }
-        String wort = event.getMessage().substring(1).split(" ", 2)[0].toLowerCase(Locale.ROOT);
-        int doppelpunkt = wort.indexOf(':');
-        if (doppelpunkt >= 0) {
-            wort = wort.substring(doppelpunkt + 1);
-        }
         List<String> gesperrt = plugin.getConfig().getStringList("freeze.blocked-commands");
-        if (gesperrt.stream().anyMatch(wort::equalsIgnoreCase)) {
+        if (Befehle.gesperrt(event.getMessage(), gesperrt)) {
             event.setCancelled(true);
             plugin.msgs().send(spieler, "freeze.command-blocked");
         }

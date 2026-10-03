@@ -2,6 +2,7 @@ package de.lemonpvp.bettersmp.combat;
 
 import de.lemonpvp.bettersmp.BetterSMP;
 import de.lemonpvp.bettersmp.api.PlayerCombatLogEvent;
+import de.lemonpvp.bettersmp.util.Befehle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.AreaEffectCloud;
 import org.bukkit.entity.Player;
@@ -15,6 +16,7 @@ import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.List;
 import java.util.Locale;
@@ -120,18 +122,28 @@ public final class CombatListener implements Listener {
         if (!enabled() || !combat.isTagged(event.getPlayer().getUniqueId())) {
             return;
         }
-        String root = event.getMessage().substring(1).split(" ", 2)[0].toLowerCase(Locale.ROOT);
-        int colon = root.indexOf(':');
-        if (colon >= 0) {
-            root = root.substring(colon + 1);
-        }
         List<String> blocked = plugin.getConfig().getStringList("combat.blocked-commands");
-        if (blocked.stream().anyMatch(root::equalsIgnoreCase)) {
+        if (Befehle.gesperrt(event.getMessage(), blocked)) {
             event.setCancelled(true);
             long seconds = (combat.remainingMillis(event.getPlayer().getUniqueId()) + 999) / 1000;
             plugin.msgs().send(event.getPlayer(), "combat.command-blocked",
                     "seconds", String.valueOf(seconds));
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onTeleport(PlayerTeleportEvent event) {
+        if (!enabled() || event.getCause() != PlayerTeleportEvent.TeleportCause.COMMAND
+                || !plugin.getConfig().getBoolean("combat.block-teleport", true)) {
+            return;
+        }
+        Player player = event.getPlayer();
+        if (!combat.isTagged(player.getUniqueId()) || player.hasPermission("bettersmp.combat.bypass")) {
+            return;
+        }
+        event.setCancelled(true);
+        long seconds = (combat.remainingMillis(player.getUniqueId()) + 999) / 1000;
+        plugin.msgs().send(player, "combat.teleport-blocked", "seconds", String.valueOf(seconds));
     }
 
     @EventHandler(ignoreCancelled = true)

@@ -58,14 +58,7 @@ public final class RankSetup {
                         + " meta setprefix " + rank.weight() + " \"" + rank.prefix() + "\"");
             }
         }
-        // Grundrechte für default
-        for (String perm : List.of("essentials.spawn", "essentials.help", "essentials.msg",
-                "essentials.tpa", "essentials.tpaccept", "essentials.tpdeny",
-                "essentials.sethome", "essentials.home", "essentials.balance",
-                "essentials.pay", "betterrtp.use", "fastshop.use", "fastshop.sell",
-                "bettersmp.chat.format", "bettersmp.stats")) {
-            Bukkit.dispatchCommand(console, "lp group default permission set " + perm + " true");
-        }
+        plugin.standardRechte().anwenden(feedback);
         plugin.msgs().send(feedback, "ranks.done");
     }
 }

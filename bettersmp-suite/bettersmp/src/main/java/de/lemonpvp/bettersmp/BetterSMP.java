@@ -36,6 +36,11 @@ import de.lemonpvp.bettersmp.reward.DailyRewardManager;
 import de.lemonpvp.bettersmp.setup.ConfigDeployer;
 import de.lemonpvp.bettersmp.setup.Installer;
 import de.lemonpvp.bettersmp.setup.RankSetup;
+import de.lemonpvp.bettersmp.setup.StandardRechte;
+import de.lemonpvp.bettersmp.home.HomeBefehle;
+import de.lemonpvp.bettersmp.home.HomeMenue;
+import de.lemonpvp.bettersmp.home.HomeSpeicher;
+import de.lemonpvp.bettersmp.home.HomeTeleport;
 import de.lemonpvp.bettersmp.spawn.SpawnManager;
 import de.lemonpvp.bettersmp.stats.StatsCommand;
 import de.lemonpvp.bettersmp.stats.StatsListener;
@@ -65,6 +70,11 @@ public final class BetterSMP extends JavaPlugin {
     private Installer installer;
     private ConfigDeployer configDeployer;
     private RankSetup rankSetup;
+    private StandardRechte standardRechte;
+    private HomeSpeicher homeSpeicher;
+    private HomeTeleport homeTeleport;
+    private HomeMenue homeMenue;
+    private HomeBefehle homeBefehle;
 
     private Database database;
     private PunishmentConfig punishConfig;
@@ -90,6 +100,7 @@ public final class BetterSMP extends JavaPlugin {
         this.installer = new Installer(this);
         this.configDeployer = new ConfigDeployer(this);
         this.rankSetup = new RankSetup(this);
+        this.standardRechte = new StandardRechte(this);
 
         // Datenbank + darauf aufbauende Systeme
         this.database = new Database(this);
@@ -115,6 +126,10 @@ public final class BetterSMP extends JavaPlugin {
         this.netzwerk = new NetzwerkBruecke(this);
         netzwerk.start();
         this.tutorial = new Tutorial(this);
+        this.homeSpeicher = new HomeSpeicher(this);
+        this.homeTeleport = new HomeTeleport(this);
+        this.homeMenue = new HomeMenue(this, homeSpeicher, homeTeleport);
+        this.homeBefehle = new HomeBefehle(this, homeSpeicher, homeTeleport, homeMenue);
         BetterSMPApi.init(combat);
         BetterSMPApi.initReports(reports);
         combat.start();
@@ -138,6 +153,9 @@ public final class BetterSMP extends JavaPlugin {
         pm.registerEvents(killstreaks, this);
         pm.registerEvents(tutorial, this);
         pm.registerEvents(sichtweite, this);
+        pm.registerEvents(homeTeleport, this);
+        pm.registerEvents(homeMenue, this);
+        pm.registerEvents(homeBefehle, this);
 
         // Fuer die Tod-Umleitung - unabhaengig vom Schalter registriert,
         // damit ein spaeteres Einschalten per /bettersmp reload sofort
@@ -158,10 +176,15 @@ public final class BetterSMP extends JavaPlugin {
         getCommand("spawn").setExecutor(new SpawnCommand(this));
         getCommand("setspawn").setExecutor(new SetSpawnCommand(this));
         getCommand("tutorial").setExecutor(tutorial);
+        for (String cmd : new String[]{"home", "sethome", "delhome"}) {
+            getCommand(cmd).setExecutor(homeBefehle);
+            getCommand(cmd).setTabCompleter(homeBefehle);
+        }
 
         logHooks();
         Bukkit.getScheduler().runTaskLater(this, this::firstRunSetup, 40L);
         Bukkit.getScheduler().runTaskLater(this, () -> new LeistungsCheck(this).beimStart(), 100L);
+        Bukkit.getScheduler().runTaskLater(this, () -> standardRechte.anwenden(null), 100L);
         getLogger().info("BetterSMP aktiviert.");
     }
 
@@ -174,6 +197,7 @@ public final class BetterSMP extends JavaPlugin {
         if (sichtweite != null) sichtweite.stop();
         if (freeze != null) freeze.stop();
         if (backup != null) backup.stop();
+        if (homeSpeicher != null) homeSpeicher.stoppen();
         if (database != null) database.shutdown();
     }
 
@@ -201,6 +225,18 @@ public final class BetterSMP extends JavaPlugin {
         punishConfig.reload();
         board.loadBoardConfig();
         tutorial.laden();
+    }
+
+    public StandardRechte standardRechte() {
+        return standardRechte;
+    }
+
+    public HomeBefehle homeBefehle() {
+        return homeBefehle;
+    }
+
+    public HomeSpeicher homes() {
+        return homeSpeicher;
     }
 
     public void setupRanks(CommandSender feedback) {

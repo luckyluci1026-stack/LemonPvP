@@ -111,6 +111,12 @@ Gruppennamen.
 - Stummschaltungen und „Regeln akzeptiert“ gelten über SMPProxy im **ganzen
   Netzwerk** (auch für Spieler, die gerade offline sind) und überstehen
   Neustarts (`voice.yml`).
+- **Voice-Chat-Rechte automatisch:** Beim Start trägt AntiSwear
+  `voicechat.listen`, `voicechat.speak` und `voicechat.groups` in die
+  LuckPerms-Gruppe `default` ein, auf jedem Server, wo AntiSwear läuft
+  (`standard-rechte` in der `config.yml`). Fehlendes kommt dazu, nichts wird
+  gelöscht. Ein ausdrücklich auf `false` gesetztes Recht bleibt so, mit
+  Hinweis in der Konsole.
 
 ## Befehle
 

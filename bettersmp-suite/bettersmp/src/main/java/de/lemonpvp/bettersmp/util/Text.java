@@ -2,6 +2,8 @@ package de.lemonpvp.bettersmp.util;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
@@ -16,6 +18,14 @@ import java.util.regex.Pattern;
 public final class Text {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
+
+    private static final MiniMessage SPIELER = MiniMessage.builder()
+            .tags(TagResolver.resolver(StandardTags.color(), StandardTags.gradient(), StandardTags.rainbow(), StandardTags.reset(),
+                    StandardTags.decorations(TextDecoration.BOLD), StandardTags.decorations(TextDecoration.ITALIC),
+                    StandardTags.decorations(TextDecoration.UNDERLINED), StandardTags.decorations(TextDecoration.STRIKETHROUGH)))
+            .build();
+
+    private static final Pattern VERWIRRT = Pattern.compile("(?i)[&§]k");
 
     private static final Pattern HEX = Pattern.compile("[&§]#([0-9a-fA-F]{6})");
     private static final Pattern HEX_X = Pattern.compile(
@@ -43,6 +53,10 @@ public final class Text {
 
     public static Component mm(String input, TagResolver... resolvers) {
         return MM.deserialize(legacyToMini(input), resolvers);
+    }
+
+    public static Component spielerFormat(String input) {
+        return SPIELER.deserialize(legacyToMini(VERWIRRT.matcher(input).replaceAll("")));
     }
 
     public static String sicher(String text) {

@@ -4,7 +4,7 @@ main: de.lemonpvp.antiswear.AntiSwear
 api-version: '1.21'
 authors: [SMP]
 description: Chat-Moderation mit starkem Umgehungsschutz, Spam-, Werbungs- und Datenschutz-Filter, Punkte-Stufen und Voice-Chat-Moderation.
-softdepend: [voicechat]
+softdepend: [voicechat, LuckPerms]
 
 commands:
   antiswear:

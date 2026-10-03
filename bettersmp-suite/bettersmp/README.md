@@ -13,7 +13,37 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
 - **AntiCombatLog** mit `PlayerCombatLogEvent`-API (für Lifesteal+).
   Im Kampf sind auch `/spawn`, `/hub`, `/lobby` und `/server` gesperrt:
   BetterSMP meldet den Kampf an SMPProxy (Kanal `bettersmp:combat`), der
-  diese Proxy-Befehle dann blockt.
+  diese Proxy-Befehle dann blockt. Gesperrte Befehle werden über ihren echten
+  Namen erkannt, also auch Kurzformen wie `/espawn`, `/call`, `/tpyes` oder
+  `/essentials:tpa` (gilt genauso fürs Einfrieren). Im Kampf teleportiert
+  auch kein Befehl mehr weg, z. B. eine vorher geschickte und jetzt
+  angenommene `/tpa` (`combat.block-teleport`). Enderperlen gehen weiter.
+- **Homes** (`/home`, `/sethome`, `/delhome`): 3 Plätze pro Spieler
+  (`homes.anzahl`, 1 bis 7) mit Menü. `/home` öffnet das Menü: Bett anklicken
+  teleportiert, Rechtsklick verschiebt das Home an die eigene Position, darunter
+  „Löschen“ mit Rückfrage, freie Plätze setzt ein Klick. `/home <Nummer|Name>`
+  teleportiert direkt, `/sethome [Nummer|Name]` setzt (ohne Angabe den ersten
+  freien Platz), `/delhome <Nummer|Name>` löscht. Vor dem Teleport 3 Sekunden
+  stillhalten (`homes.aufwaermen-sekunden`, Team mit `bettersmp.homes.sofort`
+  sofort). Bewegen oder Schaden bricht ab, im Kampf und eingefroren geht es
+  nicht, und ist das Home zugebaut oder steht über Lava, sucht BetterSMP den
+  nächsten sicheren Platz darüber oder darunter. Gespeichert wird pro Spieler
+  in `plugins/BetterSMP/homes/<UUID>.yml`.
+  **Umstieg von Essentials:** Beim ersten Join übernimmt BetterSMP das alte
+  Essentials-Home automatisch als Home 1 (bis zu 3 alte Homes, Namen bleiben),
+  der Spieler bekommt dazu einen kurzen Hinweis. `/home`, `/homes`, `/sethome`
+  und `/delhome` landen dabei immer bei BetterSMP, nicht bei Essentials.
+  Mit `homes.enabled: false` übernimmt wieder Essentials.
+- **Standard-Rechte**: Beim Start trägt BetterSMP alles, was normale Spieler
+  brauchen, selbst in die LuckPerms-Gruppe `default` ein (Voice-Chat, Homes,
+  `/tpa` & Co., Geld, Shop, Auktionshaus, `/rtp`, Duelle, `/report` …, Liste
+  unter `standard-rechte` in der `config.yml`). Fehlendes kommt dazu, nichts
+  wird gelöscht. Steht ein Recht dort ausdrücklich auf `false`, bleibt es so,
+  und in der Konsole steht ein Hinweis. Abgeschaltet werden die alten
+  Essentials-Homes und Essentials-`/msg` (das `/msg` vom Proxy prüft Filter
+  und Mutes). Die Team-Gruppen (`sup`, `mod`, `admin`, `owner1`–`owner5`)
+  erben automatisch alles von `default`. `/bettersmp ranks` macht dasselbe
+  sofort.
 - **Ban-/Mute-System** mit eigenem, **bedrock-freundlichem Ban-Screen**:
   - `/gban <Spieler> <Grund>` – Gründe (feste Dauer + Screen) in `bans.yml`
   - `/gunban <Spieler>`
@@ -127,4 +157,9 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
 ## Rechte (Auszug)
 `bettersmp.ban`, `bettersmp.mute`, `bettersmp.stats`, `bettersmp.settings`,
 `bettersmp.ban.exempt`, `bettersmp.mute.exempt`, `bettersmp.chat.format`,
-`bettersmp.tutorial` (Standard: alle).
+`bettersmp.tutorial` (Standard: alle), `bettersmp.homes` (Standard: alle),
+`bettersmp.homes.sofort` (Standard: OP).
+
+`bettersmp.chat.format` erlaubt Farben, Verläufe und Fett/Kursiv im Chat,
+aber keine Klick-, Hover- oder sonstigen Sonder-Tags und keinen
+Verwirrt-Text (`&k`). So kann niemand Befehle in Chatnachrichten verstecken.

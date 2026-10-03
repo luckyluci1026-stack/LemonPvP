@@ -31,8 +31,8 @@ themen:
     text:
       - "<green><bold>Erste Schritte</bold></green>"
       - "<gray>Mit <white>/rtp</white> landest du an einem zufälligen Ort in der Wildnis.</gray>"
-      - "<gray>Bau dir ein Zuhause und speichere es mit <white>/sethome</white>.</gray>"
-      - "<gray>Mit <white>/home</white> kommst du jederzeit dorthin zurück.</gray>"
+      - "<gray>Bau dir ein Zuhause und speichere es mit <white>/sethome</white> - du hast 3 Plätze.</gray>"
+      - "<gray>Mit <white>/home</white> öffnest du deine Homes und kommst mit einem Klick zurück.</gray>"
       - "<gray>Hol dir jeden Tag deine Belohnung mit <white>/daily</white>.</gray>"
 
   - platz: 11

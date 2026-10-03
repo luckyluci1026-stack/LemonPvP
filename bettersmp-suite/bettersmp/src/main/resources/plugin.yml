@@ -67,8 +67,28 @@ commands:
     description: Setzt den Serverspawn auf deine Position
     usage: "/setspawn"
     permission: bettersmp.setspawn
+  home:
+    description: Deine Homes im Menue oder direkt zu einem Home
+    usage: "/home [Nummer|Name]"
+    aliases: [homes]
+    permission: bettersmp.homes
+  sethome:
+    description: Setzt ein Home auf deine Position
+    usage: "/sethome [Nummer|Name]"
+    permission: bettersmp.homes
+  delhome:
+    description: Loescht ein Home
+    usage: "/delhome <Nummer|Name>"
+    aliases: [deletehome]
+    permission: bettersmp.homes
 
 permissions:
+  bettersmp.homes:
+    description: Darf Homes benutzen (/home, /sethome, /delhome)
+    default: true
+  bettersmp.homes.sofort:
+    description: Teleportiert ohne Wartezeit zu Homes
+    default: op
   bettersmp.admin:
     description: Zugriff auf /bettersmp und /settings
     default: op

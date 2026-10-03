@@ -86,6 +86,9 @@ combat:
   untag-opponent-on-log: true
   blocked-commands: [tpa, tpahere, tpaccept, home, homes, spawn, warp, warps, back, rtp, wild, enderchest, ec, vanish, fly]
   block-elytra: true
+  # Im Kampf keine Teleports per Befehl (z.B. ein angenommenes /tpa,
+  # /home, /spawn) - Enderperlen gehen weiter.
+  block-teleport: true
   actionbar: true
 
 # ----------------------------------------------------------
@@ -274,3 +277,63 @@ installer:
       source: github
       repo: NEZNAMY/TAB
       assets: ["TAB.v{version}.jar"]
+
+# ----------------------------------------------------------
+# Homes (/home, /sethome, /delhome) - ersetzen die Essentials-Homes.
+# Ein altes Essentials-Home wird beim ersten Join automatisch zu Home 1.
+# ----------------------------------------------------------
+homes:
+  enabled: true
+  # So viele Homes hat jeder (1 bis 7)
+  anzahl: 3
+  # So lange stillhalten vor dem Teleport (0 = sofort). Wer
+  # bettersmp.homes.sofort hat, teleportiert immer sofort.
+  aufwaermen-sekunden: 3
+
+# ----------------------------------------------------------
+# Standard-Rechte: BetterSMP traegt sie beim Start selbst in die
+# LuckPerms-Gruppe ein. Fehlende kommen dazu, nichts wird geloescht.
+# Steht ein Recht dort ausdruecklich auf false, bleibt es so (Hinweis
+# in der Konsole). "verbieten" schaltet die alten Essentials-Homes ab
+# und Essentials-/msg (das /msg vom Proxy prueft Filter und Mutes).
+# Die Gruppen unter "erben" erben alles von der Gruppe (falls es sie gibt).
+# ----------------------------------------------------------
+standard-rechte:
+  enabled: true
+  gruppe: default
+  erlauben:
+    - voicechat.listen
+    - voicechat.speak
+    - voicechat.groups
+    - bettersmp.homes
+    - bettersmp.stats
+    - bettersmp.report
+    - bettersmp.bugreport
+    - bettersmp.tutorial
+    - bettersmp.daily
+    - bettersmp.spawn
+    - betterrtp.use
+    - fastshop.use
+    - fastshop.sell
+    - fastshop.worth
+    - fastshop.ah
+    - duelplus.use
+    - smplobby.spawn
+    - essentials.spawn
+    - essentials.help
+    - essentials.list
+    - essentials.tpa
+    - essentials.tpahere
+    - essentials.tpaccept
+    - essentials.tpdeny
+    - essentials.tpacancel
+    - essentials.balance
+    - essentials.balance.others
+    - essentials.baltop
+    - essentials.pay
+  verbieten:
+    - essentials.home
+    - essentials.sethome
+    - essentials.delhome
+    - essentials.msg
+  erben: [sup, mod, admin, owner1, owner2, owner3, owner4, owner5]

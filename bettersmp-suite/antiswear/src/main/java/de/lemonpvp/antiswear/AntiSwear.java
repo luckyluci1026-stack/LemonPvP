@@ -10,6 +10,7 @@ import de.lemonpvp.antiswear.listener.ChatFilterListener;
 import de.lemonpvp.antiswear.listener.InhaltListener;
 import de.lemonpvp.antiswear.listener.Moderator;
 import de.lemonpvp.antiswear.netz.NetzwerkBruecke;
+import de.lemonpvp.antiswear.rechte.StandardRechte;
 import de.lemonpvp.antiswear.strikes.Stufe;
 import de.lemonpvp.antiswear.strikes.StrikeManager;
 import de.lemonpvp.antiswear.util.Durations;
@@ -81,6 +82,7 @@ public final class AntiSwear extends JavaPlugin {
             }
         }
         voiceAnbinden();
+        getServer().getScheduler().runTaskLater(this, () -> StandardRechte.anwenden(this), 100L);
         getLogger().info("AntiSwear aktiviert (" + filter.woerter().size() + " Woerter, "
                 + filter.anzahlAusnahmen() + " Ausnahmen, Modus " + modus + ").");
     }
