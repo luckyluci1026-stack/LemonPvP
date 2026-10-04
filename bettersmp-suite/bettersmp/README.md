@@ -41,8 +41,8 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   wird gelöscht. Steht ein Recht dort ausdrücklich auf `false`, bleibt es so,
   und in der Konsole steht ein Hinweis. Abgeschaltet werden die alten
   Essentials-Homes, Essentials-`/msg` (das `/msg` vom Proxy prüft Filter
-  und Mutes) und Essentials-`/sell` (`/esell` würde sonst mit den alten,
-  ungenerften Essentials-Preisen verkaufen, verkauft wird nur über FastShop).
+  und Mutes) und Essentials-`/sell` (`/esell` würde sonst mit den eigenen
+  Essentials-Preisen am Shop vorbei verkaufen, verkauft wird nur über FastShop).
   Die Team-Gruppen (`sup`, `mod`, `admin`, `owner1`–`owner5`)
   erben automatisch alles von `default`. `/bettersmp ranks` macht dasselbe
   sofort.

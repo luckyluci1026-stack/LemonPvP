@@ -43,6 +43,11 @@ public final class FastShop extends JavaPlugin {
         this.msgs = new Msgs(this);
         this.economy = new EconomyHook();
         this.shop = new ShopConfig(this);
+        if (shop.katalogUmgestellt() && getConfig().getInt("settings.menu-rows", 5) == 5) {
+            getConfig().set("settings.menu-rows", 3);
+            saveConfig();
+            getLogger().info("Shop-Hauptmenü auf 3 Reihen verkleinert (wie auf DonutSMP).");
+        }
         this.service = new ShopService(this);
         this.menus = new ShopMenus(this);
         this.auktionen = new AuktionsHaus(this);

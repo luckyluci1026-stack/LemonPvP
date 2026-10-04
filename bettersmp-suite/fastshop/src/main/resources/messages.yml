@@ -15,10 +15,11 @@ inventory-full: "%prefix%<red>Dein Inventar ist voll.</red>"
 not-buyable: "%prefix%<red>Dieses Item kann man nicht kaufen.</red>"
 not-sellable: "%prefix%<red>Dieses Item kann man nicht verkaufen.</red>"
 nothing-in-hand: "%prefix%<red>Du hältst nichts in der Hand.</red>"
-nothing-sold: "%prefix%<gray>Nichts Verkaufbares gefunden.</gray>"
+nothing-sold: "%prefix%<gray>Nichts aus der Verkaufsliste gefunden. Alles andere legst du ins Verkaufsfenster: <white>/sell</white></gray>"
 
 worth: "%prefix%<gray><white>%item%</white> <dark_gray>│</dark_gray> Verkauf <gold>%sell%</gold> <dark_gray>│</dark_gray> Kauf <green>%buy%</green></gray>"
-worth-none: "%prefix%<gray>Dieses Item hat keinen Wert im Shop.</gray>"
+worth-none: "%prefix%<gray>Dieses Item kann man nicht verkaufen.</gray>"
+worth-auto: " <dark_gray>(aus den Zutaten berechnet)</dark_gray>"
 
 sell-gui-title: "<gradient:#F1C40F:#E67E22>Zum Verkaufen ablegen</gradient>"
 sell-gui-hint: "%prefix%<gray>Lege Items hinein und schließe das Fenster zum Verkaufen.</gray>"

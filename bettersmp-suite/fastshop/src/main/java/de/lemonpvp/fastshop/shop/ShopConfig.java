@@ -13,11 +13,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
 
 /**
  * Lädt shop.yml in Kategorien/Items und bietet Nachschlagewerte für Preise.
@@ -25,15 +27,20 @@ import java.util.TreeMap;
 public final class ShopConfig {
 
     private static final String PREIS_STAND_SCHLUESSEL = "preis-stand";
-    private static final int PREIS_STAND = 2;
-    private static final double KAUF_FAKTOR = 1.5;
-    private static final double VERKAUF_FAKTOR = 0.25;
+    private static final int PREIS_STAND = 3;
+    private static final Set<String> NIE_VERKAUFBAR = Set.of("DRAGON_EGG", "ENCHANTED_BOOK", "WRITTEN_BOOK", "FILLED_MAP",
+            "KNOWLEDGE_BOOK", "DEBUG_STICK", "BEDROCK", "BARRIER", "LIGHT", "STRUCTURE_BLOCK", "STRUCTURE_VOID", "JIGSAW",
+            "COMMAND_BLOCK", "CHAIN_COMMAND_BLOCK", "REPEATING_COMMAND_BLOCK", "COMMAND_BLOCK_MINECART", "END_PORTAL_FRAME",
+            "REINFORCED_DEEPSLATE", "PETRIFIED_OAK_SLAB", "BUDDING_AMETHYST", "SPAWNER", "TRIAL_SPAWNER", "VAULT",
+            "PLAYER_HEAD", "TEST_BLOCK", "TEST_INSTANCE_BLOCK", "FROGSPAWN", "FARMLAND", "DIRT_PATH");
 
     private final FastShop plugin;
     private final File file;
 
     private final Map<String, Category> categories = new LinkedHashMap<>();
     private final Map<Material, ShopItem> byMaterial = new LinkedHashMap<>();
+    private Map<Material, WertRechner.Wert> autoWerte = Map.of();
+    private boolean katalogUmgestellt;
 
     public ShopConfig(FastShop plugin) {
         this.plugin = plugin;
@@ -48,10 +55,13 @@ public final class ShopConfig {
         categories.clear();
         byMaterial.clear();
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        if (katalogUmstellen(yaml)) {
+            yaml = YamlConfiguration.loadConfiguration(file);
+        }
         verzauberungenEntfernen(yaml);
-        preiseUmstellen(yaml);
         ConfigurationSection cats = yaml.getConfigurationSection("categories");
         if (cats == null) {
+            werteBerechnen();
             return;
         }
         for (String id : cats.getKeys(false)) {
@@ -70,8 +80,9 @@ public final class ShopConfig {
                     byMaterial.putIfAbsent(item.material(), item);
                 }
             }
-            categories.put(id.toLowerCase(Locale.ROOT), new Category(id, icon, name, slot, items));
+            categories.put(id.toLowerCase(Locale.ROOT), new Category(id, icon, name, slot, items, sec.getBoolean("im-menue", true)));
         }
+        werteBerechnen();
     }
 
     private ShopItem parseItem(Map<?, ?> raw) {
@@ -150,121 +161,77 @@ public final class ShopConfig {
         }
     }
 
-    private void preiseUmstellen(YamlConfiguration yaml) {
-        ConfigurationSection cats = yaml.getConfigurationSection("categories");
-        if (cats == null || yaml.getInt(PREIS_STAND_SCHLUESSEL, 1) >= PREIS_STAND) {
-            return;
+    private boolean katalogUmstellen(YamlConfiguration yaml) {
+        if (yaml.getConfigurationSection("categories") == null || yaml.getInt(PREIS_STAND_SCHLUESSEL, 1) >= PREIS_STAND) {
+            return false;
         }
         YamlConfiguration standard = standardKatalog();
         if (standard.getConfigurationSection("categories") == null) {
-            return;
+            return false;
         }
-        List<String> eigene = new ArrayList<>();
-        int bekannt = 0;
-        for (String id : cats.getKeys(false)) {
-            ConfigurationSection sec = cats.getConfigurationSection(id);
-            if (sec == null) {
-                continue;
+        File sicherung = new File(plugin.getDataFolder(), "shop-vor-donut.yml");
+        try (InputStream ein = plugin.getResource("shop.yml")) {
+            if (ein == null) {
+                return false;
             }
-            List<Map<String, Object>> items = new ArrayList<>();
-            for (Map<?, ?> raw : sec.getMapList("items")) {
-                Map<String, Object> eintrag = new LinkedHashMap<>();
-                raw.forEach((schluessel, wert) -> eintrag.put(String.valueOf(schluessel), wert));
-                String material = String.valueOf(eintrag.get("material"));
-                Map<?, ?> vorlage = vorlage(standard, id, material);
-                if (vorlage != null && vorlage.get("buy") != null && vorlage.get("sell") != null) {
-                    eintrag.put("buy", vorlage.get("buy"));
-                    eintrag.put("sell", vorlage.get("sell"));
-                    bekannt++;
-                } else {
-                    String vorher = eintrag.get("buy") + "/" + eintrag.get("sell");
-                    pauschalAnpassen(eintrag, "buy", KAUF_FAKTOR);
-                    pauschalAnpassen(eintrag, "sell", VERKAUF_FAKTOR);
-                    eigene.add(material + " " + vorher + " -> " + eintrag.get("buy") + "/" + eintrag.get("sell"));
-                }
-                items.add(eintrag);
-            }
-            sec.set("items", items);
-        }
-        yaml.set(PREIS_STAND_SCHLUESSEL, PREIS_STAND);
-        File sicherung = new File(plugin.getDataFolder(), "shop-vor-nerf.yml");
-        try {
             if (!sicherung.exists()) {
                 Files.copy(file.toPath(), sicherung.toPath());
             }
-            if (wieStandard(yaml, standard)) {
-                try (InputStream ein = plugin.getResource("shop.yml")) {
-                    Files.copy(ein, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                }
-            } else {
-                yaml.options().setHeader(standard.options().getHeader());
-                yaml.setComments("categories", standard.getComments("categories"));
-                yaml.setComments(PREIS_STAND_SCHLUESSEL, standard.getComments(PREIS_STAND_SCHLUESSEL));
-                yaml.save(file);
-            }
-            plugin.getLogger().info("shop.yml: Preise generft (" + bekannt + " Items auf die neuen Preise, "
-                    + eigene.size() + " eigene Items pauschal: Kaufen x" + KAUF_FAKTOR + ", Verkaufen x"
-                    + VERKAUF_FAKTOR + "). Die alte Datei liegt als shop-vor-nerf.yml daneben.");
-            for (String zeile : eigene) {
-                plugin.getLogger().info("shop.yml: eigenes Item " + zeile);
-            }
+            Files.copy(ein, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            katalogUmgestellt = true;
+            plugin.getLogger().info("shop.yml: neuer Shop wie auf DonutSMP (End, Nether, Gear, Essen) mit den alten Preisen. "
+                    + "Verkaufen geht mit jedem Item. Die alte Datei liegt als shop-vor-donut.yml daneben.");
+            return true;
         } catch (IOException e) {
             plugin.getLogger().warning("shop.yml konnte nicht umgestellt werden: " + e.getMessage());
-        }
-    }
-
-    private void pauschalAnpassen(Map<String, Object> eintrag, String feld, double faktor) {
-        double alt = toDouble(eintrag.get(feld), -1);
-        if (alt > 0) {
-            eintrag.put(feld, gerundet(alt * faktor));
-        }
-    }
-
-    private static Number gerundet(double wert) {
-        if (wert >= 10) {
-            return Math.round(wert);
-        }
-        double cent = Math.max(0.01, Math.round(wert * 100) / 100.0);
-        return cent == Math.rint(cent) ? (Number) Math.round(cent) : (Number) cent;
-    }
-
-    private boolean wieStandard(YamlConfiguration yaml, YamlConfiguration standard) {
-        ConfigurationSection eigene = yaml.getConfigurationSection("categories");
-        ConfigurationSection vorgabe = standard.getConfigurationSection("categories");
-        if (eigene == null || vorgabe == null || !yaml.getKeys(false).equals(standard.getKeys(false))
-                || !eigene.getKeys(false).equals(vorgabe.getKeys(false))) {
             return false;
         }
-        for (String id : vorgabe.getKeys(false)) {
-            ConfigurationSection a = eigene.getConfigurationSection(id);
-            ConfigurationSection b = vorgabe.getConfigurationSection(id);
-            if (a == null || b == null || !a.getKeys(false).equals(b.getKeys(false))) {
-                return false;
-            }
-            for (String schluessel : b.getKeys(false)) {
-                if (!schluessel.equals("items") && !String.valueOf(a.get(schluessel)).equals(String.valueOf(b.get(schluessel)))) {
-                    return false;
-                }
-            }
-            if (!eintraege(a).equals(eintraege(b))) {
-                return false;
-            }
-        }
-        return true;
     }
 
-    private List<Map<String, String>> eintraege(ConfigurationSection sec) {
-        List<Map<String, String>> liste = new ArrayList<>();
-        for (Map<?, ?> raw : sec.getMapList("items")) {
-            Map<String, String> eintrag = new TreeMap<>();
-            raw.forEach((schluessel, wert) -> {
-                String name = String.valueOf(schluessel);
-                boolean preis = name.equals("buy") || name.equals("sell");
-                eintrag.put(name, preis ? String.valueOf(toDouble(wert, -1)) : String.valueOf(wert));
-            });
-            liste.add(eintrag);
+    private void werteBerechnen() {
+        Map<Material, Double> fest = new HashMap<>();
+        Set<Material> gesperrt = EnumSet.noneOf(Material.class);
+        for (Category kategorie : categories.values()) {
+            for (ShopItem item : kategorie.items()) {
+                Material material = item.material();
+                if (fest.containsKey(material) || gesperrt.contains(material)) {
+                    continue;
+                }
+                if (item.sellable()) {
+                    fest.put(material, item.sell());
+                } else {
+                    gesperrt.add(material);
+                }
+            }
         }
-        return liste;
+        List<Material> alle = new ArrayList<>();
+        for (Material material : Material.values()) {
+            if (material.isLegacy() || material.name().endsWith("AIR")) {
+                continue;
+            }
+            if (nieVerkaufbar(material)) {
+                gesperrt.add(material);
+            }
+            if (istItem(material)) {
+                alle.add(material);
+            }
+        }
+        double standard = Math.max(0, plugin.getConfig().getDouble("settings.standard-wert", 0.1));
+        double faktor = Math.max(0.1, Math.min(1.0, plugin.getConfig().getDouble("settings.rezept-faktor", 0.9)));
+        autoWerte = WertRechner.berechnen(fest, gesperrt, Rezepte.ausDemServer(), alle, standard, faktor);
+    }
+
+    private static boolean istItem(Material material) {
+        try {
+            return material.isItem();
+        } catch (RuntimeException unbekannt) {
+            return false;
+        }
+    }
+
+    public static boolean nieVerkaufbar(Material material) {
+        String name = material.name();
+        return NIE_VERKAUFBAR.contains(name) || name.endsWith("_SPAWN_EGG");
     }
 
     private YamlConfiguration standardKatalog() {
@@ -341,6 +308,31 @@ public final class ShopConfig {
 
     public ShopItem item(Material material) {
         return byMaterial.get(material);
+    }
+
+    public double verkaufswert(Material material) {
+        ShopItem item = byMaterial.get(material);
+        if (item != null) {
+            return item.sellable() ? item.sell() : -1;
+        }
+        if (!plugin.getConfig().getBoolean("settings.alles-verkaufen", true)) {
+            return -1;
+        }
+        WertRechner.Wert wert = autoWerte.get(material);
+        return wert == null || wert.wert() <= 0 ? -1 : wert.wert();
+    }
+
+    public boolean automatisch(Material material) {
+        return byMaterial.get(material) == null && verkaufswert(material) >= 0;
+    }
+
+    public boolean inVerkaufsliste(Material material) {
+        ShopItem item = byMaterial.get(material);
+        return item != null && item.sellable();
+    }
+
+    public boolean katalogUmgestellt() {
+        return katalogUmgestellt;
     }
 
     /** Setzt Kauf-/Verkaufspreis eines Items in einer Kategorie. field = "buy" oder "sell". */

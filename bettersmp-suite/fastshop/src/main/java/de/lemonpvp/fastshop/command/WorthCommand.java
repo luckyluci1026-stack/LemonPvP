@@ -3,6 +3,7 @@ package de.lemonpvp.fastshop.command;
 import de.lemonpvp.fastshop.FastShop;
 import de.lemonpvp.fastshop.gui.ShopMenus;
 import de.lemonpvp.fastshop.shop.ShopItem;
+import de.lemonpvp.fastshop.shop.ShopService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -34,14 +35,16 @@ public final class WorthCommand implements CommandExecutor {
             return true;
         }
         ShopItem item = plugin.shop().item(hand.getType());
-        if (item == null) {
+        double wert = plugin.shop().verkaufswert(hand.getType());
+        if (wert < 0 && (item == null || !item.buyable())) {
             plugin.msgs().send(player, "worth-none");
             return true;
         }
-        String sell = item.sellable()
-                ? plugin.economy().format(item.sell() * plugin.shop().sellMultiplier())
+        String sell = wert >= 0
+                ? plugin.economy().format(ShopService.cent(wert * plugin.shop().sellMultiplier()))
+                + (plugin.shop().automatisch(hand.getType()) ? plugin.msgs().raw("worth-auto") : "")
                 : "-";
-        String buy = item.buyable() ? plugin.economy().format(item.buy()) : "-";
+        String buy = item != null && item.buyable() ? plugin.economy().format(item.buy()) : "-";
         plugin.msgs().send(player, "worth",
                 "item", ShopMenus.prettyName(hand.getType()), "sell", sell, "buy", buy);
         return true;

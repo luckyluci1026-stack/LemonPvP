@@ -3,9 +3,13 @@ package de.lemonpvp.fastshop.shop;
 import de.lemonpvp.fastshop.FastShop;
 import de.lemonpvp.fastshop.gui.ShopMenus;
 import org.bukkit.Material;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.BundleMeta;
 import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Map;
 
@@ -92,19 +96,19 @@ public final class ShopService {
             soundFail(player);
             return;
         }
-        ShopItem item = plugin.shop().item(hand.getType());
-        if (item == null || !item.sellable()) {
+        double wert = plugin.shop().verkaufswert(hand.getType());
+        if (wert < 0 || !isPlain(hand)) {
             plugin.msgs().send(player, "not-sellable");
             soundFail(player);
             return;
         }
         int amount = hand.getAmount();
-        double price = cent(item.sell() * plugin.shop().sellMultiplier() * amount);
+        double price = cent(wert * plugin.shop().sellMultiplier() * amount);
         player.getInventory().setItemInMainHand(null);
         plugin.economy().deposit(player, price);
         soundSell(player);
         plugin.msgs().send(player, "sold",
-                "amount", String.valueOf(amount), "item", display(item.material()),
+                "amount", String.valueOf(amount), "item", display(hand.getType()),
                 "price", plugin.economy().format(price));
     }
 
@@ -121,11 +125,10 @@ public final class ShopService {
             if (!isPlain(stack)) {
                 continue;
             }
-            ShopItem item = plugin.shop().item(stack.getType());
-            if (item == null || !item.sellable()) {
+            if (!plugin.shop().inVerkaufsliste(stack.getType())) {
                 continue;
             }
-            total += item.sell() * plugin.shop().sellMultiplier() * stack.getAmount();
+            total += plugin.shop().verkaufswert(stack.getType()) * plugin.shop().sellMultiplier() * stack.getAmount();
             count += stack.getAmount();
             contents[i] = null;
         }
@@ -147,8 +150,8 @@ public final class ShopService {
         if (noEconomy(player)) {
             return;
         }
-        ShopItem item = plugin.shop().item(material);
-        if (item == null || !item.sellable()) {
+        double wert = plugin.shop().verkaufswert(material);
+        if (wert < 0) {
             plugin.msgs().send(player, "not-sellable");
             soundFail(player);
             return;
@@ -161,7 +164,7 @@ public final class ShopService {
         }
         int amount = wanted <= 0 ? available : Math.min(wanted, available);
         removePlain(player, material, amount);
-        double price = cent(item.sell() * plugin.shop().sellMultiplier() * amount);
+        double price = cent(wert * plugin.shop().sellMultiplier() * amount);
         plugin.economy().deposit(player, price);
         soundSell(player);
         plugin.msgs().send(player, "sold",
@@ -180,9 +183,9 @@ public final class ShopService {
             if (stack == null || stack.getType().isAir()) {
                 continue;
             }
-            ShopItem item = isPlain(stack) ? plugin.shop().item(stack.getType()) : null;
-            if (item != null && item.sellable()) {
-                total += item.sell() * plugin.shop().sellMultiplier() * stack.getAmount();
+            double wert = isPlain(stack) ? plugin.shop().verkaufswert(stack.getType()) : -1;
+            if (wert >= 0) {
+                total += wert * plugin.shop().sellMultiplier() * stack.getAmount();
                 count += stack.getAmount();
                 contents[i] = null;
             }
@@ -267,7 +270,22 @@ public final class ShopService {
                 || (meta instanceof Damageable dmg && dmg.hasDamage())) {
             return false;
         }
-        return true;
+        return !hatInhalt(meta);
+    }
+
+    static boolean hatInhalt(ItemMeta meta) {
+        if (meta instanceof BundleMeta beutel && beutel.hasItems()) {
+            return true;
+        }
+        if (meta instanceof BlockStateMeta block && block.hasBlockState()
+                && block.getBlockState() instanceof Container behaelter) {
+            for (ItemStack drin : behaelter.getSnapshotInventory().getContents()) {
+                if (drin != null && !drin.getType().isAir()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private int countPlain(Player player, Material material) {

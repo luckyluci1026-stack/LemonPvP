@@ -80,7 +80,7 @@ public final class ShopListener implements org.bukkit.event.Listener {
             return;
         }
         for (Category category : plugin.shop().categories().values()) {
-            if (category.slot() == event.getSlot()) {
+            if (category.imMenue() && category.slot() == event.getSlot()) {
                 plugin.menus().openCategory(player, category.id(), 0);
                 return;
             }
@@ -102,36 +102,44 @@ public final class ShopListener implements org.bukkit.event.Listener {
             return;
         }
         int slot = event.getSlot();
-        switch (slot) {
-            case ShopMenus.NAV_PREV -> {
-                plugin.menus().openCategory(player, holder.categoryId, holder.page - 1);
-                return;
-            }
-            case ShopMenus.NAV_NEXT -> {
-                plugin.menus().openCategory(player, holder.categoryId, holder.page + 1);
-                return;
-            }
-            case ShopMenus.NAV_HOME -> {
+        if (holder.kompakt()) {
+            if (slot == ShopMenus.KOMPAKT_HOME) {
                 plugin.menus().openMain(player);
                 return;
             }
-            case ShopMenus.NAV_SELL -> {
+            if (slot == ShopMenus.KOMPAKT_SELL) {
                 plugin.menus().openSell(player);
                 return;
             }
-            default -> {
-                // normaler Item-Slot - unten weiter
+        } else {
+            switch (slot) {
+                case ShopMenus.NAV_PREV -> {
+                    plugin.menus().openCategory(player, holder.categoryId, holder.page - 1);
+                    return;
+                }
+                case ShopMenus.NAV_NEXT -> {
+                    plugin.menus().openCategory(player, holder.categoryId, holder.page + 1);
+                    return;
+                }
+                case ShopMenus.NAV_HOME -> {
+                    plugin.menus().openMain(player);
+                    return;
+                }
+                case ShopMenus.NAV_SELL -> {
+                    plugin.menus().openSell(player);
+                    return;
+                }
+                default -> {
+                    // normaler Item-Slot - unten weiter
+                }
             }
-        }
-        if (slot >= ShopMenus.ITEMS_PER_PAGE) {
-            return;
         }
         Category category = plugin.shop().category(holder.categoryId);
         if (category == null) {
             return;
         }
         List<ShopItem> items = category.items();
-        int index = holder.page * ShopMenus.ITEMS_PER_PAGE + slot;
+        int index = holder.index(slot);
         if (index < 0 || index >= items.size()) {
             return;
         }

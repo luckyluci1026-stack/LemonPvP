@@ -2,7 +2,6 @@ package de.lemonpvp.fastshop.auktion;
 
 import de.lemonpvp.fastshop.FastShop;
 import de.lemonpvp.fastshop.gui.GuiUtil;
-import de.lemonpvp.fastshop.shop.ShopItem;
 import de.lemonpvp.fastshop.util.Text;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -323,11 +322,11 @@ public final class AuktionsMenus {
         if (item == null) {
             return 0;
         }
-        ShopItem eintrag = plugin.shop().item(item.getType());
-        if (eintrag == null || !eintrag.sellable()) {
+        double wert = plugin.shop().verkaufswert(item.getType());
+        if (wert < 0) {
             return 0;
         }
-        return eintrag.sell() * plugin.shop().sellMultiplier() * item.getAmount();
+        return wert * plugin.shop().sellMultiplier() * item.getAmount();
     }
 
     private void waehlen(Player spieler, Verkaufen holder, int slot) {

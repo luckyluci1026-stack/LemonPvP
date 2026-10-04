@@ -1,6 +1,7 @@
 package de.lemonpvp.fastshop.command;
 
 import de.lemonpvp.fastshop.FastShop;
+import de.lemonpvp.fastshop.shop.Category;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -33,7 +34,8 @@ public final class ShopCommand implements TabExecutor {
             plugin.msgs().send(player, "no-permission");
             return true;
         }
-        if (args.length >= 1 && plugin.shop().category(args[0]) != null) {
+        Category kategorie = args.length >= 1 ? plugin.shop().category(args[0]) : null;
+        if (kategorie != null && kategorie.imMenue()) {
             plugin.menus().openCategory(player, args[0], 0);
         } else {
             plugin.menus().openMain(player);
@@ -47,11 +49,11 @@ public final class ShopCommand implements TabExecutor {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
             String prefix = args[0].toLowerCase(Locale.ROOT);
-            for (String id : plugin.shop().categories().keySet()) {
-                if (id.startsWith(prefix)) {
+            plugin.shop().categories().forEach((id, kategorie) -> {
+                if (kategorie.imMenue() && id.startsWith(prefix)) {
                     out.add(id);
                 }
-            }
+            });
         }
         return out;
     }

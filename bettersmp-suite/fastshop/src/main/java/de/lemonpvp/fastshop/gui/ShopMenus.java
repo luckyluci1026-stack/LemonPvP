@@ -24,6 +24,12 @@ import java.util.List;
 public final class ShopMenus {
 
     public static final int ITEMS_PER_PAGE = 45;
+    public static final int KOMPAKT_MAX = 7;
+    public static final int KOMPAKT_BALANCE = 18;
+    public static final int KOMPAKT_HOME = 22;
+    public static final int KOMPAKT_SELL = 26;
+    private static final int[][] KOMPAKT_PLAETZE = {{}, {13}, {12, 14}, {11, 13, 15}, {10, 12, 14, 16},
+            {11, 12, 13, 14, 15}, {10, 11, 12, 14, 15, 16}, {10, 11, 12, 13, 14, 15, 16}};
 
     // Navigationsplätze der Kategorieseite (unterste Zeile)
     public static final int NAV_PREV = 45;
@@ -107,6 +113,9 @@ public final class ShopMenus {
 
         // Kategorien zuletzt - so gewinnt immer die Einstellung aus shop.yml
         for (Category category : plugin.shop().categories().values()) {
+            if (!category.imMenue()) {
+                continue;
+            }
             int slot = Math.max(0, Math.min(size - 1, category.slot()));
             inv.setItem(slot, GuiUtil.ohneGlanz(GuiUtil.item(category.icon(), 1, category.name(),
                     List.of("<gray>" + category.items().size() + " Artikel",
@@ -129,10 +138,32 @@ public final class ShopMenus {
         private Inventory inventory;
         public final String categoryId;
         public final int page;
+        private final int[] plaetze;
 
         CategoryHolder(String categoryId, int page) {
+            this(categoryId, page, null);
+        }
+
+        CategoryHolder(String categoryId, int page, int[] plaetze) {
             this.categoryId = categoryId;
             this.page = page;
+            this.plaetze = plaetze;
+        }
+
+        public boolean kompakt() {
+            return plaetze != null;
+        }
+
+        public int index(int slot) {
+            if (plaetze == null) {
+                return slot >= 0 && slot < ITEMS_PER_PAGE ? page * ITEMS_PER_PAGE + slot : -1;
+            }
+            for (int i = 0; i < plaetze.length; i++) {
+                if (plaetze[i] == slot) {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         @Override
@@ -148,6 +179,10 @@ public final class ShopMenus {
             return;
         }
         List<ShopItem> items = category.items();
+        if (items.size() <= KOMPAKT_MAX) {
+            openKompakt(player, category);
+            return;
+        }
         int totalPages = Math.max(1, (items.size() + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE);
         page = Math.max(0, Math.min(totalPages - 1, page));
 
@@ -185,6 +220,29 @@ public final class ShopMenus {
                 "<gold>Schnellverkauf",
                 List.of("<gray>Items ablegen und verkaufen")));
 
+        player.openInventory(inv);
+    }
+
+    private void openKompakt(Player player, Category category) {
+        List<ShopItem> items = category.items();
+        int[] plaetze = KOMPAKT_PLAETZE[items.size()];
+        CategoryHolder holder = new CategoryHolder(category.id(), 0, plaetze);
+        Inventory inv = Bukkit.createInventory(holder, 27, Text.mm(category.name()));
+        holder.inventory = inv;
+        ItemStack border = GuiUtil.filler(
+                material("settings.category-border-material", Material.GRAY_STAINED_GLASS_PANE));
+        for (int i = 0; i < 27; i++) {
+            inv.setItem(i, border);
+        }
+        for (int i = 0; i < plaetze.length; i++) {
+            inv.setItem(plaetze[i], displayItem(player, items.get(i)));
+        }
+        inv.setItem(KOMPAKT_BALANCE, balanceItem(player));
+        inv.setItem(KOMPAKT_HOME, GuiUtil.ohneGlanz(GuiUtil.item(Material.NETHER_STAR, 1,
+                "<gold>Zum Hauptmenü", List.of())));
+        inv.setItem(KOMPAKT_SELL, GuiUtil.item(Material.HOPPER, 1,
+                "<gold>Schnellverkauf",
+                List.of("<gray>Items ablegen und verkaufen")));
         player.openInventory(inv);
     }
 
@@ -371,9 +429,9 @@ public final class ShopMenus {
             if (stack == null || stack.getType().isAir()) {
                 continue;
             }
-            ShopItem item = plugin.shop().item(stack.getType());
-            if (item != null && item.sellable() && plugin.service().isSellable(stack)) {
-                total += item.sell() * plugin.shop().sellMultiplier() * stack.getAmount();
+            double wert = plugin.service().isSellable(stack) ? plugin.shop().verkaufswert(stack.getType()) : -1;
+            if (wert >= 0) {
+                total += wert * plugin.shop().sellMultiplier() * stack.getAmount();
                 count += stack.getAmount();
             }
         }
