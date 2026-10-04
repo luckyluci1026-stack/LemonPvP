@@ -40,8 +40,10 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   unter `standard-rechte` in der `config.yml`). Fehlendes kommt dazu, nichts
   wird gelöscht. Steht ein Recht dort ausdrücklich auf `false`, bleibt es so,
   und in der Konsole steht ein Hinweis. Abgeschaltet werden die alten
-  Essentials-Homes und Essentials-`/msg` (das `/msg` vom Proxy prüft Filter
-  und Mutes). Die Team-Gruppen (`sup`, `mod`, `admin`, `owner1`–`owner5`)
+  Essentials-Homes, Essentials-`/msg` (das `/msg` vom Proxy prüft Filter
+  und Mutes) und Essentials-`/sell` (`/esell` würde sonst mit den alten,
+  ungenerften Essentials-Preisen verkaufen, verkauft wird nur über FastShop).
+  Die Team-Gruppen (`sup`, `mod`, `admin`, `owner1`–`owner5`)
   erben automatisch alles von `default`. `/bettersmp ranks` macht dasselbe
   sofort.
 - **Ban-/Mute-System** mit eigenem, **bedrock-freundlichem Ban-Screen**:
@@ -154,7 +156,10 @@ einmal über `brand` in der `config.yml`, er erscheint überall als `%brand%`.
   falsche Erze in Schichten. Mit X-Ray sieht man nur Unsinn, und es kostet
   weniger Daten als Modus 2. Dazu kommt der Seed-Schutz: In neuen Chunks
   lassen sich Erze nicht mehr aus dem Welt-Seed berechnen (gegen
-  Erz-Finder-Mods). **Wirkt erst nach dem nächsten Neustart.** Eigene
+  Erz-Finder-Mods). BetterSMP richtet das schon beim Laden ein, bevor Paper
+  die Welten lädt: **Es wirkt ab dem ersten Start mit der neuen Version**, ein
+  zweiter Neustart ist nicht nötig. Nur Welten, die erst später dazukommen,
+  brauchen einen Neustart (Admins bekommen dann einen Hinweis). Eigene
   Einstellungen in den Paper-Dateien bleiben unangetastet, eingerichtet wird
   pro Welt nur einmal (gemerkt in `anti-xray.yml`).
 - **X-Ray-Alarm**: Wer sich in 20 Minuten zu 4 versteckten Diamant-Adern

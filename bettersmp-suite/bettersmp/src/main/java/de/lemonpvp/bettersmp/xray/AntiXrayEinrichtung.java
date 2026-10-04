@@ -12,9 +12,12 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public final class AntiXrayEinrichtung implements Listener {
 
@@ -70,15 +73,47 @@ public final class AntiXrayEinrichtung implements Listener {
         return oben != null ? oben : new File(".").getAbsoluteFile();
     }
 
+    public void vorDemStart() {
+        if (!Bukkit.getWorlds().isEmpty()) {
+            return;
+        }
+        File container = Bukkit.getWorldContainer();
+        String name = levelName();
+        List<Welt> welten = new ArrayList<>();
+        File oberwelt = new File(container, name);
+        if (oberwelt.isDirectory()) {
+            welten.add(new Welt(name, World.Environment.NORMAL, oberwelt));
+        }
+        File nether = new File(container, name + "_nether");
+        if (nether.isDirectory()) {
+            welten.add(new Welt(name + "_nether", World.Environment.NETHER, nether));
+        }
+        einrichten(welten, true);
+    }
+
     public void beimStart() {
         List<Welt> welten = new ArrayList<>();
         for (World welt : Bukkit.getWorlds()) {
             welten.add(new Welt(welt.getName(), welt.getEnvironment(), welt.getWorldFolder()));
         }
-        einrichten(welten);
+        einrichten(welten, false);
     }
 
-    public Ergebnis einrichten(List<Welt> welten) {
+    private String levelName() {
+        Properties werte = new Properties();
+        File datei = new File(serverOrdner, "server.properties");
+        if (datei.isFile()) {
+            try (Reader leser = Files.newBufferedReader(datei.toPath(), StandardCharsets.UTF_8)) {
+                werte.load(leser);
+            } catch (IOException | IllegalArgumentException fehler) {
+                plugin.getLogger().warning("Anti-Xray: server.properties nicht lesbar: " + fehler.getMessage());
+            }
+        }
+        String name = werte.getProperty("level-name", "world").trim();
+        return name.isEmpty() ? "world" : name;
+    }
+
+    public Ergebnis einrichten(List<Welt> welten, boolean sofort) {
         FileConfiguration config = plugin.getConfig();
         List<String> eingerichtet = new ArrayList<>();
         List<String> uebersprungen = new ArrayList<>();
@@ -137,23 +172,24 @@ public final class AntiXrayEinrichtung implements Listener {
             plugin.getLogger().warning("Anti-Xray: anti-xray.yml konnte nicht gespeichert werden: " + fehler.getMessage());
         }
         Ergebnis ergebnis = new Ergebnis(eingerichtet, seedSchutz, uebersprungen);
-        melden(ergebnis, modus);
+        melden(ergebnis, modus, sofort);
         return ergebnis;
     }
 
-    private void melden(Ergebnis ergebnis, int modus) {
+    private void melden(Ergebnis ergebnis, int modus, boolean sofort) {
+        String wann = sofort ? "Wirkt ab sofort." : "Wirkt nach dem nächsten Neustart des Servers.";
         if (!ergebnis.welten().isEmpty()) {
             plugin.getLogger().warning("Anti-Xray von Paper eingeschaltet für " + String.join(", ", ergebnis.welten())
-                    + " (Modus " + modus + "). Wirkt nach dem nächsten Neustart des Servers.");
+                    + " (Modus " + modus + "). " + wann);
         }
         if (ergebnis.seedSchutz()) {
             plugin.getLogger().warning("Seed-Schutz eingeschaltet: Erze in neuen Chunks lassen sich nicht mehr aus dem Seed "
-                    + "berechnen. Wirkt nach dem nächsten Neustart des Servers.");
+                    + "berechnen. " + wann);
         }
         for (String welt : ergebnis.uebersprungen()) {
             plugin.getLogger().info("Anti-Xray: " + welt);
         }
-        if (ergebnis.neustartNoetig()) {
+        if (!sofort && ergebnis.neustartNoetig()) {
             neustartNoetig = true;
         }
     }

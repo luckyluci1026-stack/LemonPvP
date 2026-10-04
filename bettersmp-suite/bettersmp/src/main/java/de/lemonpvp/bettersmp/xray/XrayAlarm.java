@@ -79,6 +79,8 @@ public final class XrayAlarm implements Listener {
 
     private final BetterSMP plugin;
     private final Map<UUID, Verlauf> verlaeufe = new HashMap<>();
+    private List<String> erzNamen;
+    private Set<Material> erzListe = STANDARD_ERZE;
 
     public XrayAlarm(BetterSMP plugin) {
         this.plugin = plugin;
@@ -260,8 +262,8 @@ public final class XrayAlarm implements Listener {
 
     Set<Material> erze() {
         List<String> namen = plugin.getConfig().getStringList("anti-xray.alarm.erze");
-        if (namen.isEmpty()) {
-            return STANDARD_ERZE;
+        if (namen.equals(erzNamen)) {
+            return erzListe;
         }
         Set<Material> erze = EnumSet.noneOf(Material.class);
         for (String name : namen) {
@@ -270,7 +272,9 @@ public final class XrayAlarm implements Listener {
                 erze.add(material);
             }
         }
-        return erze.isEmpty() ? STANDARD_ERZE : erze;
+        erzNamen = namen;
+        erzListe = erze.isEmpty() ? STANDARD_ERZE : erze;
+        return erzListe;
     }
 
     static String artName(Material art) {

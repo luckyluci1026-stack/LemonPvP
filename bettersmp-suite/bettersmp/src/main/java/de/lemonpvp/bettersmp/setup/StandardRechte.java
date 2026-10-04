@@ -29,7 +29,8 @@ public final class StandardRechte {
             "essentials.tpa", "essentials.tpahere", "essentials.tpaccept", "essentials.tpdeny", "essentials.tpacancel",
             "essentials.balance", "essentials.balance.others", "essentials.baltop", "essentials.pay");
 
-    static final List<String> VERBIETEN = List.of("essentials.home", "essentials.sethome", "essentials.delhome", "essentials.msg");
+    static final List<String> VERBIETEN = List.of("essentials.home", "essentials.sethome", "essentials.delhome", "essentials.msg",
+            "essentials.sell");
 
     static final List<String> ERBEN = List.of("sup", "mod", "admin", "owner1", "owner2", "owner3", "owner4", "owner5");
 

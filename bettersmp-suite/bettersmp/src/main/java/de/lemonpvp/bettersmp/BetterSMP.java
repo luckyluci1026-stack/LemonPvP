@@ -95,6 +95,16 @@ public final class BetterSMP extends JavaPlugin {
     private BackupManager backup;
 
     @Override
+    public void onLoad() {
+        try {
+            this.antiXray = new AntiXrayEinrichtung(this);
+            antiXray.vorDemStart();
+        } catch (RuntimeException fehler) {
+            getLogger().warning("Anti-Xray konnte beim Laden nicht eingerichtet werden: " + fehler.getMessage());
+        }
+    }
+
+    @Override
     public void onEnable() {
         saveDefaultConfig();
         this.msgs = new Msgs(this);
@@ -135,7 +145,9 @@ public final class BetterSMP extends JavaPlugin {
         this.homeTeleport = new HomeTeleport(this);
         this.homeMenue = new HomeMenue(this, homeSpeicher, homeTeleport);
         this.homeBefehle = new HomeBefehle(this, homeSpeicher, homeTeleport, homeMenue);
-        this.antiXray = new AntiXrayEinrichtung(this);
+        if (antiXray == null) {
+            this.antiXray = new AntiXrayEinrichtung(this);
+        }
         this.xrayAlarm = new XrayAlarm(this);
         BetterSMPApi.init(combat);
         BetterSMPApi.initReports(reports);

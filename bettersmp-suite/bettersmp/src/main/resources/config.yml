@@ -336,6 +336,7 @@ standard-rechte:
     - essentials.sethome
     - essentials.delhome
     - essentials.msg
+    - essentials.sell
   erben: [sup, mod, admin, owner1, owner2, owner3, owner4, owner5]
   # Diese Rechte bekommen die Team-Gruppen aus 'erben' zusaetzlich
   team: [bettersmp.xray, bettersmp.xray.alarm]
@@ -347,7 +348,8 @@ standard-rechte:
 # schaltet es beim Start einmal fuer jede Oberwelt und jeden Nether ein
 # (in deren paper-world.yml, mit Sicherung .vor-anti-xray). Hast du dort
 # selbst schon etwas eingestellt, bleibt das so.
-# Wirkt erst nach dem naechsten Neustart des Servers.
+# Wirkt ab dem Start, bei dem die neue BetterSMP-Version zum ersten Mal
+# laeuft. Welten, die erst spaeter dazukommen: nach dem naechsten Neustart.
 # ----------------------------------------------------------
 anti-xray:
   paper-einrichten: true
