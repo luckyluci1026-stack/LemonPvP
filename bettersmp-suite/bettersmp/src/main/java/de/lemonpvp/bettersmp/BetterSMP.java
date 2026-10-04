@@ -1,0 +1,355 @@
+package de.lemonpvp.bettersmp;
+
+import de.lemonpvp.bettersmp.api.BetterSMPApi;
+import de.lemonpvp.bettersmp.backup.BackupManager;
+import de.lemonpvp.bettersmp.board.BoardListener;
+import de.lemonpvp.bettersmp.board.BoardManager;
+import de.lemonpvp.bettersmp.chat.ChatModule;
+import de.lemonpvp.bettersmp.combat.CombatListener;
+import de.lemonpvp.bettersmp.combat.CombatManager;
+import de.lemonpvp.bettersmp.command.BetterSMPCommand;
+import de.lemonpvp.bettersmp.command.DailyCommand;
+import de.lemonpvp.bettersmp.command.FreezeCommand;
+import de.lemonpvp.bettersmp.command.ReportCommand;
+import de.lemonpvp.bettersmp.command.SetSpawnCommand;
+import de.lemonpvp.bettersmp.command.SettingsCommand;
+import de.lemonpvp.bettersmp.command.SpawnCommand;
+import de.lemonpvp.bettersmp.gui.SettingsListener;
+import de.lemonpvp.bettersmp.hook.EconomyHook;
+import de.lemonpvp.bettersmp.hook.LuckPermsHook;
+import de.lemonpvp.bettersmp.hook.PapiHook;
+import de.lemonpvp.bettersmp.join.JoinModule;
+import de.lemonpvp.bettersmp.netzwerk.NetzwerkBruecke;
+import de.lemonpvp.bettersmp.tutorial.Tutorial;
+import de.lemonpvp.bettersmp.killstreak.KillstreakListener;
+import de.lemonpvp.bettersmp.leistung.LeistungsCheck;
+import de.lemonpvp.bettersmp.leistung.Sichtweite;
+import de.lemonpvp.bettersmp.punish.FreezeListener;
+import de.lemonpvp.bettersmp.punish.FreezeManager;
+import de.lemonpvp.bettersmp.punish.PunishmentCommands;
+import de.lemonpvp.bettersmp.punish.PunishmentConfig;
+import de.lemonpvp.bettersmp.punish.PunishmentListener;
+import de.lemonpvp.bettersmp.punish.PunishmentManager;
+import de.lemonpvp.bettersmp.report.ReportManager;
+import de.lemonpvp.bettersmp.respawn.DeathRedirectListener;
+import de.lemonpvp.bettersmp.reward.DailyRewardManager;
+import de.lemonpvp.bettersmp.setup.ConfigDeployer;
+import de.lemonpvp.bettersmp.xray.AntiXrayEinrichtung;
+import de.lemonpvp.bettersmp.xray.XrayAlarm;
+import de.lemonpvp.bettersmp.xray.XrayBefehl;
+import de.lemonpvp.bettersmp.setup.Installer;
+import de.lemonpvp.bettersmp.setup.RankSetup;
+import de.lemonpvp.bettersmp.setup.StandardRechte;
+import de.lemonpvp.bettersmp.home.HomeBefehle;
+import de.lemonpvp.bettersmp.home.HomeMenue;
+import de.lemonpvp.bettersmp.home.HomeSpeicher;
+import de.lemonpvp.bettersmp.home.HomeTeleport;
+import de.lemonpvp.bettersmp.spawn.SpawnManager;
+import de.lemonpvp.bettersmp.stats.StatsCommand;
+import de.lemonpvp.bettersmp.stats.StatsListener;
+import de.lemonpvp.bettersmp.stats.StatsManager;
+import de.lemonpvp.bettersmp.storage.Database;
+import de.lemonpvp.bettersmp.util.Msgs;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.java.JavaPlugin;
+
+/**
+ * BetterSMP - SMP-Kernplugin.
+ *
+ * Chat, NoChatReports, AntiCombatLog, Ban/Mute-System mit Screen, Stats
+ * (MariaDB/SQLite), Ränge mit Gradient-Prefixen, Nametags und Scoreboard -
+ * plus Auto-Installer für die Begleit-Plugins.
+ */
+public final class BetterSMP extends JavaPlugin {
+
+    private Msgs msgs;
+    private LuckPermsHook luckPerms;
+    private PapiHook papi;
+    private EconomyHook economy;
+    private CombatManager combat;
+    private NetzwerkBruecke netzwerk;
+    private Tutorial tutorial;
+    private Installer installer;
+    private ConfigDeployer configDeployer;
+    private RankSetup rankSetup;
+    private StandardRechte standardRechte;
+    private HomeSpeicher homeSpeicher;
+    private HomeTeleport homeTeleport;
+    private HomeMenue homeMenue;
+    private HomeBefehle homeBefehle;
+    private AntiXrayEinrichtung antiXray;
+    private XrayAlarm xrayAlarm;
+
+    private Database database;
+    private PunishmentConfig punishConfig;
+    private PunishmentManager punishments;
+    private StatsManager stats;
+    private BoardManager board;
+    private Sichtweite sichtweite;
+    private FreezeManager freeze;
+    private ReportManager reports;
+    private DailyRewardManager dailyReward;
+    private SpawnManager spawn;
+    private KillstreakListener killstreaks;
+    private BackupManager backup;
+
+    @Override
+    public void onLoad() {
+        try {
+            this.antiXray = new AntiXrayEinrichtung(this);
+            antiXray.vorDemStart();
+        } catch (RuntimeException fehler) {
+            getLogger().warning("Anti-Xray konnte beim Laden nicht eingerichtet werden: " + fehler.getMessage());
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        this.msgs = new Msgs(this);
+        this.luckPerms = new LuckPermsHook();
+        this.papi = new PapiHook();
+        this.economy = new EconomyHook();
+        this.combat = new CombatManager(this);
+        this.installer = new Installer(this);
+        this.configDeployer = new ConfigDeployer(this);
+        this.rankSetup = new RankSetup(this);
+        this.standardRechte = new StandardRechte(this);
+
+        // Datenbank + darauf aufbauende Systeme
+        this.database = new Database(this);
+        database.init();
+        // Bewusst eine KOMPLETT EIGENE Verbindung (nicht dieselbe wie oben) -
+        // siehe BackupDatabase-Kommentar: der Sinn ist, dass ein Problem mit
+        // der einen die andere nicht mitreisst.
+        this.backup = new BackupManager(this);
+        backup.start();
+        this.punishConfig = new PunishmentConfig(this);
+        this.punishments = new PunishmentManager(this, punishConfig);
+        this.stats = new StatsManager(this);
+        this.board = new BoardManager(this);
+        this.freeze = new FreezeManager(this);
+        this.reports = new ReportManager(this);
+        this.dailyReward = new DailyRewardManager(this);
+        dailyReward.load();
+        this.spawn = new SpawnManager(this);
+        // Vor board.start(): das baut fuer bereits online Spieler (z.B. bei
+        // /reload) sofort das Scoreboard auf, das killstreaks() schon liest.
+        this.killstreaks = new KillstreakListener(this);
+
+        this.netzwerk = new NetzwerkBruecke(this);
+        netzwerk.start();
+        this.tutorial = new Tutorial(this);
+        this.homeSpeicher = new HomeSpeicher(this);
+        this.homeTeleport = new HomeTeleport(this);
+        this.homeMenue = new HomeMenue(this, homeSpeicher, homeTeleport);
+        this.homeBefehle = new HomeBefehle(this, homeSpeicher, homeTeleport, homeMenue);
+        if (antiXray == null) {
+            this.antiXray = new AntiXrayEinrichtung(this);
+        }
+        this.xrayAlarm = new XrayAlarm(this);
+        BetterSMPApi.init(combat);
+        BetterSMPApi.initReports(reports);
+        combat.start();
+        stats.start();
+        board.start();
+        freeze.start();
+        this.sichtweite = new Sichtweite(this);
+        sichtweite.start();
+
+        // Listener
+        var pm = Bukkit.getPluginManager();
+        pm.registerEvents(new ChatModule(this), this);
+        pm.registerEvents(new CombatListener(this, combat), this);
+        pm.registerEvents(new JoinModule(this), this);
+        pm.registerEvents(new SettingsListener(this), this);
+        pm.registerEvents(new PunishmentListener(this), this);
+        pm.registerEvents(new StatsListener(this), this);
+        pm.registerEvents(new BoardListener(this), this);
+        pm.registerEvents(new DeathRedirectListener(this), this);
+        pm.registerEvents(new FreezeListener(this), this);
+        pm.registerEvents(killstreaks, this);
+        pm.registerEvents(tutorial, this);
+        pm.registerEvents(sichtweite, this);
+        pm.registerEvents(homeTeleport, this);
+        pm.registerEvents(homeMenue, this);
+        pm.registerEvents(homeBefehle, this);
+        pm.registerEvents(antiXray, this);
+        pm.registerEvents(xrayAlarm, this);
+
+        // Fuer die Tod-Umleitung - unabhaengig vom Schalter registriert,
+        // damit ein spaeteres Einschalten per /bettersmp reload sofort
+        // funktioniert und nicht erst nach einem vollen Serverneustart.
+        Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+
+        // Befehle
+        getCommand("bettersmp").setExecutor(new BetterSMPCommand(this));
+        getCommand("settings").setExecutor(new SettingsCommand(this));
+        getCommand("stats").setExecutor(new StatsCommand(this));
+        PunishmentCommands punishmentCommands = new PunishmentCommands(this);
+        for (String cmd : new String[]{"gban", "gunban", "gmute", "gunmute"}) {
+            getCommand(cmd).setExecutor(punishmentCommands);
+        }
+        getCommand("freeze").setExecutor(new FreezeCommand(this));
+        getCommand("report").setExecutor(new ReportCommand(this));
+        getCommand("daily").setExecutor(new DailyCommand(this));
+        getCommand("spawn").setExecutor(new SpawnCommand(this));
+        getCommand("setspawn").setExecutor(new SetSpawnCommand(this));
+        getCommand("tutorial").setExecutor(tutorial);
+        for (String cmd : new String[]{"home", "sethome", "delhome"}) {
+            getCommand(cmd).setExecutor(homeBefehle);
+            getCommand(cmd).setTabCompleter(homeBefehle);
+        }
+        XrayBefehl xrayBefehl = new XrayBefehl(this, xrayAlarm);
+        getCommand("xray").setExecutor(xrayBefehl);
+        getCommand("xray").setTabCompleter(xrayBefehl);
+
+        logHooks();
+        Bukkit.getScheduler().runTaskLater(this, this::firstRunSetup, 40L);
+        Bukkit.getScheduler().runTaskLater(this, () -> new LeistungsCheck(this).beimStart(), 100L);
+        Bukkit.getScheduler().runTaskLater(this, () -> standardRechte.anwenden(null), 100L);
+        getLogger().info("BetterSMP aktiviert.");
+    }
+
+    @Override
+    public void onDisable() {
+        if (combat != null) combat.stop();
+        if (netzwerk != null) netzwerk.stop();
+        if (stats != null) stats.stop();
+        if (board != null) board.stop();
+        if (sichtweite != null) sichtweite.stop();
+        if (freeze != null) freeze.stop();
+        if (backup != null) backup.stop();
+        if (homeSpeicher != null) homeSpeicher.stoppen();
+        if (database != null) database.shutdown();
+    }
+
+    private void logHooks() {
+        getLogger().info("LuckPerms: " + (luckPerms.isAvailable() ? "verbunden" : "nicht gefunden"));
+        getLogger().info("PlaceholderAPI: " + (papi.isAvailable() ? "verbunden" : "nicht gefunden"));
+        getLogger().info("Vault-Economy: " + (economy.isEnabled() ? "verbunden" : "nicht gefunden"));
+    }
+
+    private void firstRunSetup() {
+        CommandSender console = Bukkit.getConsoleSender();
+        antiXray.beimStart();
+        if (getConfig().getBoolean("patch-server-properties", true)) {
+            configDeployer.patchServerProperties(console);
+        }
+        if (getConfig().getBoolean("installer.deploy-configs", true)) {
+            configDeployer.deployAll(console);
+        }
+        if (getConfig().getBoolean("installer.enabled", true)
+                && getConfig().getBoolean("installer.auto-install-on-start", true)) {
+            installer.installAsync(console);
+        }
+    }
+
+    public void reloadModules() {
+        punishConfig.reload();
+        board.loadBoardConfig();
+        tutorial.laden();
+    }
+
+    public StandardRechte standardRechte() {
+        return standardRechte;
+    }
+
+    public HomeBefehle homeBefehle() {
+        return homeBefehle;
+    }
+
+    public HomeSpeicher homes() {
+        return homeSpeicher;
+    }
+
+    public void setupRanks(CommandSender feedback) {
+        rankSetup.run(feedback);
+    }
+
+    /** Server-Name aus der Config (Platzhalter %brand%). */
+    public String brand() {
+        return getConfig().getString("brand", "SMP");
+    }
+
+    public Msgs msgs() {
+        return msgs;
+    }
+
+    public LuckPermsHook luckPerms() {
+        return luckPerms;
+    }
+
+    public PapiHook papi() {
+        return papi;
+    }
+
+    public EconomyHook economy() {
+        return economy;
+    }
+
+    public Tutorial tutorial() {
+        return tutorial;
+    }
+
+    public NetzwerkBruecke netzwerk() {
+        return netzwerk;
+    }
+
+    public CombatManager combat() {
+        return combat;
+    }
+
+    public Installer installer() {
+        return installer;
+    }
+
+    public ConfigDeployer configDeployer() {
+        return configDeployer;
+    }
+
+    public Database database() {
+        return database;
+    }
+
+    public BackupManager backup() {
+        return backup;
+    }
+
+    public PunishmentManager punishments() {
+        return punishments;
+    }
+
+    public StatsManager stats() {
+        return stats;
+    }
+
+    public BoardManager board() {
+        return board;
+    }
+
+    public Sichtweite sichtweite() {
+        return sichtweite;
+    }
+
+    public FreezeManager freeze() {
+        return freeze;
+    }
+
+    public ReportManager reports() {
+        return reports;
+    }
+
+    public DailyRewardManager dailyReward() {
+        return dailyReward;
+    }
+
+    public KillstreakListener killstreaks() {
+        return killstreaks;
+    }
+
+    public SpawnManager spawn() {
+        return spawn;
+    }
+}

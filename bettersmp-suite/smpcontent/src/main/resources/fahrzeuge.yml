@@ -1,0 +1,1144 @@
+# ==========================================================
+#  Fahrzeuge - Autos, Jets und Züge
+#
+#  So funktioniert es im Spiel:
+#    Rechtsklick mit dem Fahrzeug-Item auf den Boden  ->  hinstellen
+#    Rechtsklick auf das Fahrzeug                     ->  einsteigen
+#    Schleichen + Rechtsklick mit leerer Hand         ->  wieder einpacken
+#    Schleichen im Fahrzeug                           ->  aussteigen
+#
+#  Gefahren wird mit den ganz normalen Bewegungstasten:
+#    Auto   W Gas, S Bremse/rückwärts, A und D lenken
+#    Jet    W Schub, Leertaste steigen, Schleichen sinken
+#    Zug    W fährt los - der Rest macht die Schiene
+#
+#  "item" ist die Id aus deiner config.yml, mit der man das
+#  Fahrzeug hinstellt. "model" ist die Id, deren Modell als
+#  Karosserie gezeigt wird - meistens dasselbe Item.
+#
+#  Werte:
+#    art     auto | jet | zug | boot
+#    speed   Höchstgeschwindigkeit in Blöcken pro Tick
+#            (0.55 ist ungefähr Sprinttempo mal zwei)
+#    power   wie schnell es beschleunigt
+#    turn    Grad pro Tick beim Lenken
+#    seats   wie viele mitfahren (Fahrer eingerechnet)
+#    scale   Größe des Modells
+#    fuel    Item, das als Sprit verbraucht wird (leer = keins)
+#    range   wie viele Ticks ein Stück Sprit reicht
+#
+#  Schleudersitz und Absturz
+#
+#  eject:  zweimal schnell schleichen -> es schiesst dich raus,
+#          darueber geht der Fallschirm auf. Im Flug kann man
+#          nicht mehr einfach aussteigen, sonst waere der erste
+#          Schleicher schon der Absprung.
+#    window       wie schnell die zwei Schleicher kommen muessen (Sekunden)
+#    power        wie hoch es dich schleudert
+#    forward      wieviel davon nach vorne geht
+#    parachute    Id deines Fallschirm-Items (leer = kein Schirm)
+#    open-after   Ticks, bis der Schirm aufgeht
+#    fall-speed   wie schnell man am Schirm sinkt
+#    drift        wie gut man am Schirm lenken kann
+#
+#  crash:  gegen eine Wand fahren tut weh
+#    min-speed    ab welchem Tempo es kracht
+#    damage       Schaden fuer alle Insassen
+#    explosion    Staerke (0 = keine)
+#    break-blocks ob die Explosion Bloecke zerstoert
+#    destroy      ob das Fahrzeug dabei kaputtgeht
+#    ram          Schaden fuer den, den du umfaehrst (0 = niemand)
+#    hard-landing ab welcher Sinkgeschwindigkeit ein Flieger beim
+#                 Aufsetzen zu Bruch geht (0 = nie)
+#
+#  horn: <Ton>  hupt auf der Leertaste (nicht bei Fliegern)
+#
+#  rotor: 1.3 haengt ein drehendes Rotorblatt darueber
+#             (Hubschrauber). 0 = keins.
+#
+#  hud: true  zeigt Tempo, Hoehe und Sprit ueber der Hotbar. Angezeigt
+#             wird die WIRKLICH gefahrene Strecke, nicht der
+#             eingestellte Wert - so siehst du beim Einstellen sofort,
+#             ob eine Zahl haelt, was sie verspricht.
+#
+# ==========================================================
+
+vehicles:
+
+  # ------------------------------------------------------------------
+  #  Sportwagen
+  #
+  #  Alle fahren gleich, sie fühlen sich nur anders an. Die drei Werte,
+  #  die den Charakter machen:
+  #
+  #    speed   wie schnell es höchstens wird
+  #    power   wie schnell es dahin kommt (Antritt)
+  #    turn    wie eng es lenkt - viel Tempo und viel turn zusammen
+  #            fühlt sich nervös an, wenig turn wie ein schwerer Wagen
+  # ------------------------------------------------------------------
+
+  sportwagen:
+    art: auto
+    item: auto_sport
+    model: auto_sport
+    speed: 0.85            # der Allrounder
+    power: 0.05
+    turn: 5.0
+    seats: 2
+    scale: 1.0
+    width: 1.8
+    height: 1.3
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 600
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 7.0
+      explosion: 1.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  roadster:
+    art: auto
+    item: auto_roadster
+    model: auto_roadster
+    speed: 0.80            # leicht und wendig, dreht auf dem Teller
+    power: 0.07
+    turn: 7.5
+    seats: 2
+    scale: 0.95
+    width: 1.7
+    height: 1.1
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 500
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 7.0
+      explosion: 1.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  muscle_car:
+    art: auto
+    item: auto_muscle
+    model: auto_muscle
+    speed: 1.00            # brutal geradeaus, träge in der Kurve
+    power: 0.09
+    turn: 3.0
+    seats: 2
+    scale: 1.1
+    width: 2.0
+    height: 1.4
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 450
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 8.0
+      explosion: 1.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  rennwagen:
+    art: auto
+    item: auto_renn
+    model: auto_renn
+    speed: 1.25            # Rennstrecke: sehr schnell, sehr direkt
+    power: 0.12
+    turn: 6.5
+    seats: 1
+    scale: 0.9
+    width: 1.9
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 350
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 10.0
+      explosion: 2.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  hypercar:
+    art: auto
+    item: auto_hyper
+    model: auto_hyper
+    speed: 1.60            # Höchstgeschwindigkeit, will lange Geraden
+    power: 0.10
+    turn: 4.0
+    seats: 2
+    scale: 1.0
+    width: 2.0
+    height: 1.2
+    sound: entity.minecart.riding
+    horn: block.note_block.pling
+    fuel: ""
+    range: 300
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 10.0
+      explosion: 2.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  # Der Schreihals: Mittelmotor, giftiger Antritt, sehr direkt.
+  # (Heisst absichtlich nicht wie die echte Marke - siehe README.
+  #  Umbenennen ist eine Zeile in der config.yml.)
+  stier:
+    art: auto
+    item: auto_stier
+    model: auto_stier
+    speed: 1.75            # brutal schnell und sehr direkt
+    power: 0.15
+    turn: 5.5
+    seats: 2
+    scale: 1.0
+    width: 2.0
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 260
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 12.0
+      explosion: 2.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 8.0
+
+  # Der Geradeauslaeufer: hoechste Endgeschwindigkeit im ganzen Stall,
+  # dafuer schwerfaellig in der Kurve. Will lange Strecken.
+  veloce:
+    art: auto
+    item: auto_veloce
+    model: auto_veloce
+    speed: 2.30            # das schnellste Fahrzeug ueberhaupt
+    power: 0.11
+    turn: 2.6
+    seats: 2
+    scale: 1.05
+    width: 2.1
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.pling
+    fuel: ""
+    range: 220
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 14.0
+      explosion: 3.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 9.0
+
+  # ==========================================================
+  #  Die drei Supersportwagen-Familien
+  #
+  #  Jede fährt sich anders - das ist der ganze Witz daran,
+  #  fünfzehn Stück zu haben:
+  #
+  #    Keil       Mittelmotor. Giftiger Antritt, sehr direkte
+  #               Lenkung, bricht bei zu viel Gas hinten aus.
+  #    Rundheck   Heckmotor, kurzer Radstand. Die besten
+  #               Kurvenwerte im ganzen Spiel, dafür oben herum
+  #               nicht der schnellste.
+  #    Breitbau   Sehr lang und schwer. Höchstgeschwindigkeit
+  #               ohne Ende, lenkt aber wie ein Schiff. Will
+  #               lange Geraden, keine Ortsdurchfahrt.
+  #
+  #  Alle Werte hier kannst du ändern - speed, power und turn
+  #  sind genau die drei Zahlen, die den Charakter machen.
+  # ==========================================================
+
+  # ---- Keil ----
+
+  aventador:
+    art: auto
+    item: auto_aventador
+    model: auto_aventador
+    speed: 1.80
+    power: 0.16
+    turn: 5.2
+    seats: 2
+    scale: 1.0
+    width: 2.0
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 250
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 12.0
+      explosion: 2.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 8.0
+
+  # Kürzer als der Aventador, darum handlicher.
+  huracan:
+    art: auto
+    item: auto_huracan
+    model: auto_huracan
+    speed: 1.65
+    power: 0.18
+    turn: 6.0
+    seats: 2
+    scale: 0.95
+    width: 1.9
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 260
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 11.0
+      explosion: 2.2
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 7.0
+
+  # Hybrid: der stärkste Antritt der Keil-Familie.
+  revuelto:
+    art: auto
+    item: auto_revuelto
+    model: auto_revuelto
+    speed: 1.95
+    power: 0.17
+    turn: 5.0
+    seats: 2
+    scale: 1.0
+    width: 2.0
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 300
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 13.0
+      explosion: 2.6
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 8.0
+
+  # Der Älteste: langsamer, aber genügsam und leicht zu fahren.
+  countach:
+    art: auto
+    item: auto_countach
+    model: auto_countach
+    speed: 1.40
+    power: 0.12
+    turn: 4.6
+    seats: 2
+    scale: 1.0
+    width: 2.0
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.didgeridoo
+    fuel: ""
+    range: 320
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 10.0
+      explosion: 2.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  # Breit und ungezogen - viel Kraft, wenig Geduld.
+  diablo:
+    art: auto
+    item: auto_diablo
+    model: auto_diablo
+    speed: 1.72
+    power: 0.15
+    turn: 5.6
+    seats: 2
+    scale: 1.05
+    width: 2.1
+    height: 1.0
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 240
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 12.0
+      explosion: 2.4
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 8.0
+
+  # ---- Rundheck ----
+
+  carrera:
+    art: auto
+    item: auto_carrera
+    model: auto_carrera
+    speed: 1.35
+    power: 0.14
+    turn: 6.5
+    seats: 2
+    scale: 0.95
+    width: 1.8
+    height: 1.1
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 340
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 9.0
+      explosion: 1.8
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  # Allrad und zwei Turbos: der beste Antritt der Familie.
+  turbo_s:
+    art: auto
+    item: auto_turbo_s
+    model: auto_turbo_s
+    speed: 1.60
+    power: 0.19
+    turn: 6.2
+    seats: 2
+    scale: 0.95
+    width: 1.8
+    height: 1.1
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 300
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 10.0
+      explosion: 2.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 7.0
+
+  # Rennstrecke: die beste Lenkung im ganzen Spiel.
+  gt3:
+    art: auto
+    item: auto_gt3
+    model: auto_gt3
+    speed: 1.55
+    power: 0.16
+    turn: 7.2
+    seats: 1
+    scale: 0.95
+    width: 1.8
+    height: 1.1
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 280
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 10.0
+      explosion: 2.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 7.0
+
+  # Elektrisch: kein Motorgeräusch, dafür sofort volle Kraft.
+  taycan:
+    art: auto
+    item: auto_taycan
+    model: auto_taycan
+    speed: 1.45
+    power: 0.22
+    turn: 6.0
+    seats: 4
+    scale: 1.0
+    width: 1.9
+    height: 1.1
+    sound: block.beacon.ambient
+    horn: block.note_block.chime
+    fuel: ""
+    range: 400
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 9.0
+      explosion: 1.6
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  # Der Rennwagen von 1970: schnell, leicht, ohne Netz.
+  neunelf:
+    art: auto
+    item: auto_neunelf
+    model: auto_neunelf
+    speed: 1.70
+    power: 0.15
+    turn: 5.8
+    seats: 1
+    scale: 0.95
+    width: 1.8
+    height: 0.9
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 260
+    crash:
+      enabled: true
+      min-speed: 0.4
+      damage: 14.0
+      explosion: 2.2
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 7.0
+
+  # ---- Breitbau ----
+
+  chiron:
+    art: auto
+    item: auto_chiron
+    model: auto_chiron
+    speed: 2.45
+    power: 0.10
+    turn: 2.4
+    seats: 2
+    scale: 1.1
+    width: 2.2
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.pling
+    fuel: ""
+    range: 200
+    crash:
+      enabled: true
+      min-speed: 0.55
+      damage: 15.0
+      explosion: 3.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 9.0
+
+  veyron:
+    art: auto
+    item: auto_veyron
+    model: auto_veyron
+    speed: 2.20
+    power: 0.11
+    turn: 2.8
+    seats: 2
+    scale: 1.1
+    width: 2.2
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.pling
+    fuel: ""
+    range: 220
+    crash:
+      enabled: true
+      min-speed: 0.55
+      damage: 14.0
+      explosion: 2.8
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 9.0
+
+  # Weniger Endgeschwindigkeit, dafür der handlichste Breitbau.
+  divo:
+    art: auto
+    item: auto_divo
+    model: auto_divo
+    speed: 2.15
+    power: 0.12
+    turn: 3.4
+    seats: 2
+    scale: 1.1
+    width: 2.2
+    height: 1.0
+    sound: entity.minecart.riding
+    horn: block.note_block.pling
+    fuel: ""
+    range: 230
+    crash:
+      enabled: true
+      min-speed: 0.55
+      damage: 14.0
+      explosion: 2.8
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 9.0
+
+  # Rennwagen ohne Strassenzulassung: leicht, laut, kurz angebunden.
+  bolide:
+    art: auto
+    item: auto_bolide
+    model: auto_bolide
+    speed: 2.35
+    power: 0.15
+    turn: 4.0
+    seats: 1
+    scale: 1.05
+    width: 2.1
+    height: 0.9
+    sound: entity.ravager.step
+    horn: entity.ravager.roar
+    fuel: ""
+    range: 180
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 16.0
+      explosion: 3.2
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 10.0
+
+  # Das schnellste Fahrzeug im ganzen Plugin - und das trägste.
+  tourbillon:
+    art: auto
+    item: auto_tourbillon
+    model: auto_tourbillon
+    speed: 2.60
+    power: 0.13
+    turn: 2.6
+    seats: 2
+    scale: 1.1
+    width: 2.2
+    height: 1.0
+    sound: block.beacon.ambient
+    horn: block.note_block.chime
+    fuel: ""
+    range: 260
+    crash:
+      enabled: true
+      min-speed: 0.6
+      damage: 16.0
+      explosion: 3.2
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 10.0
+
+  oldtimer:
+    art: auto
+    item: auto_oldtimer
+    model: auto_oldtimer
+    speed: 0.45            # gemütlich, fuer Spazierfahrten
+    power: 0.03
+    turn: 4.5
+    seats: 4
+    scale: 1.05
+    width: 1.9
+    height: 1.6
+    sound: entity.minecart.riding
+    horn: entity.villager.yes
+    fuel: ""
+    range: 900
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 4.0
+      explosion: 0.0
+      break-blocks: false
+      destroy: false
+      sound: entity.generic.explode
+      ram: 6.0
+
+  streifenwagen:
+    art: auto
+    item: auto_polizei
+    model: auto_polizei
+    speed: 1.05            # schnell genug, um jemanden einzuholen
+    power: 0.08
+    turn: 5.5
+    seats: 4
+    scale: 1.05
+    width: 1.9
+    height: 1.4
+    sound: block.note_block.pling
+    horn: block.note_block.pling
+    fuel: ""
+    range: 700
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 7.0
+      explosion: 1.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  gelaendewagen:
+    art: auto
+    item: auto_gelaende
+    model: auto_gelaende
+    speed: 0.55
+    power: 0.04
+    turn: 4.0
+    seats: 4
+    scale: 1.1
+    width: 2.0
+    height: 1.6
+    sound: entity.minecart.riding
+    horn: block.note_block.bit
+    fuel: ""
+    range: 600
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 5.0
+      explosion: 0.0
+      break-blocks: false
+      destroy: false
+      sound: entity.generic.explode
+      ram: 6.0
+
+  # ------------------------------------------------------------------
+  #  Flugzeuge und Jets
+  #
+  #  Gesteuert wird mit dem Kopf: Wohin du schaust, da geht die Nase hin.
+  #  Nach oben ziehen steigt, nach unten druecken ist Sturzflug - wie
+  #  stark, haengt vom Schub ab. Leertaste und Schleichen heben und
+  #  senken zusaetzlich gerade, das brauchst du zum Landen.
+  #
+  #    hover: false   sackt ohne Schub langsam durch  (Flugzeug)
+  #    hover: true    bleibt ohne Schub stehen        (Hubschrauber)
+  # ------------------------------------------------------------------
+
+  rennjet:
+    art: jet
+    item: jet_renn
+    model: jet_renn
+    speed: 1.40            # der Allrounder am Himmel
+    power: 0.06
+    turn: 3.0
+    seats: 1
+    scale: 1.2
+    width: 2.4
+    height: 1.4
+    sound: entity.phantom.flap
+    fuel: ""
+    range: 900
+    eject:
+      enabled: true
+      window: 1.0          # zweimal schleichen in einer Sekunde
+      power: 1.5
+      forward: 0.3
+      sound: entity.firework_rocket.launch
+      parachute: fallschirm
+      open-after: 8        # kurz fliegen, dann geht er auf
+      fall-speed: 0.18
+      drift: 0.09
+    crash:
+      enabled: true
+      min-speed: 0.35
+      damage: 12.0
+      explosion: 3.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
+
+  kampfjet:
+    art: jet
+    item: jet_kampf
+    model: jet_kampf
+    speed: 2.20            # schnellstes Stueck im Stall
+    power: 0.14
+    turn: 4.5
+    seats: 1
+    scale: 1.3
+    width: 2.6
+    height: 1.3
+    sound: entity.blaze.ambient
+    fuel: ""
+    range: 500
+    eject:
+      enabled: true
+      window: 1.0          # zweimal schleichen in einer Sekunde
+      power: 1.5
+      forward: 0.3
+      sound: entity.firework_rocket.launch
+      parachute: fallschirm
+      open-after: 8        # kurz fliegen, dann geht er auf
+      fall-speed: 0.18
+      drift: 0.09
+    crash:
+      enabled: true
+      min-speed: 0.35
+      damage: 14.0
+      explosion: 4.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
+
+  passagierjet:
+    art: jet
+    item: jet_passagier
+    model: jet_passagier
+    speed: 1.60            # gross und traege, nimmt sechs mit
+    power: 0.04
+    turn: 1.2
+    seats: 6
+    scale: 2.0
+    width: 4.5
+    height: 2.5
+    sound: entity.phantom.flap
+    fuel: ""
+    range: 2000
+    eject:
+      enabled: true
+      window: 1.0          # zweimal schleichen in einer Sekunde
+      power: 1.5
+      forward: 0.3
+      sound: entity.firework_rocket.launch
+      parachute: fallschirm
+      open-after: 8        # kurz fliegen, dann geht er auf
+      fall-speed: 0.18
+      drift: 0.09
+    crash:
+      enabled: true
+      min-speed: 0.35
+      damage: 16.0
+      explosion: 5.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
+
+  propellermaschine:
+    art: jet
+    item: flugzeug_propeller
+    model: flugzeug_propeller
+    speed: 0.90            # langsam und gutmuetig, gut zum Ueben
+    power: 0.05
+    turn: 3.5
+    seats: 2
+    scale: 1.2
+    width: 2.6
+    height: 1.6
+    sound: block.piston.contract
+    fuel: ""
+    range: 1200
+    eject:
+      enabled: true
+      window: 1.0          # zweimal schleichen in einer Sekunde
+      power: 1.5
+      forward: 0.3
+      sound: entity.firework_rocket.launch
+      parachute: fallschirm
+      open-after: 8        # kurz fliegen, dann geht er auf
+      fall-speed: 0.18
+      drift: 0.09
+    crash:
+      enabled: true
+      min-speed: 0.35
+      damage: 8.0
+      explosion: 1.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
+
+  doppeldecker:
+    art: jet
+    item: flugzeug_doppeldecker
+    model: flugzeug_doppeldecker
+    speed: 0.75            # wendig, aber kein Renner
+    power: 0.06
+    turn: 5.5
+    seats: 2
+    scale: 1.15
+    width: 2.4
+    height: 1.8
+    sound: block.piston.contract
+    fuel: ""
+    range: 1000
+    eject:
+      enabled: true
+      window: 1.0          # zweimal schleichen in einer Sekunde
+      power: 1.5
+      forward: 0.3
+      sound: entity.firework_rocket.launch
+      parachute: fallschirm
+      open-after: 8        # kurz fliegen, dann geht er auf
+      fall-speed: 0.18
+      drift: 0.09
+    crash:
+      enabled: true
+      min-speed: 0.35
+      damage: 8.0
+      explosion: 1.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
+
+  frachtflugzeug:
+    art: jet
+    item: flugzeug_fracht
+    model: flugzeug_fracht
+    speed: 1.10            # schwer, acht Plaetze, dreht wie ein Schiff
+    power: 0.03
+    turn: 1.0
+    seats: 8
+    scale: 2.2
+    width: 5.0
+    height: 3.0
+    sound: entity.phantom.flap
+    fuel: ""
+    range: 2500
+    eject:
+      enabled: true
+      window: 1.0          # zweimal schleichen in einer Sekunde
+      power: 1.5
+      forward: 0.3
+      sound: entity.firework_rocket.launch
+      parachute: fallschirm
+      open-after: 8        # kurz fliegen, dann geht er auf
+      fall-speed: 0.18
+      drift: 0.09
+    crash:
+      enabled: true
+      min-speed: 0.35
+      damage: 16.0
+      explosion: 5.0
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
+
+  hubschrauber:
+    art: jet
+    item: heli_leicht
+    model: heli_leicht
+    speed: 0.70            # bleibt in der Luft stehen
+    power: 0.05
+    turn: 6.0
+    seats: 4
+    scale: 1.3
+    width: 3.0
+    height: 2.2
+    sound: block.piston.extend
+    hover: true
+    rotor: 1.3          # drehendes Rotorblatt darüber
+    fuel: ""
+    range: 1500
+    eject:
+      enabled: true
+      window: 1.0          # zweimal schleichen in einer Sekunde
+      power: 1.5
+      forward: 0.3
+      sound: entity.firework_rocket.launch
+      parachute: fallschirm
+      open-after: 8        # kurz fliegen, dann geht er auf
+      fall-speed: 0.18
+      drift: 0.09
+    crash:
+      enabled: true
+      min-speed: 0.35
+      damage: 10.0
+      explosion: 2.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
+
+  rettungshubschrauber:
+    art: jet
+    item: heli_rettung
+    model: heli_rettung
+    speed: 0.85
+    power: 0.06
+    turn: 5.0
+    seats: 6
+    scale: 1.4
+    width: 3.2
+    height: 2.4
+    sound: block.piston.extend
+    hover: true
+    rotor: 1.4          # drehendes Rotorblatt darüber
+    fuel: ""
+    range: 1800
+    eject:
+      enabled: true
+      window: 1.0          # zweimal schleichen in einer Sekunde
+      power: 1.5
+      forward: 0.3
+      sound: entity.firework_rocket.launch
+      parachute: fallschirm
+      open-after: 8        # kurz fliegen, dann geht er auf
+      fall-speed: 0.18
+      drift: 0.09
+    crash:
+      enabled: true
+      min-speed: 0.35
+      damage: 10.0
+      explosion: 2.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 3.0
+      hard-landing: 0.9      # sanft aufsetzen ist eine Landung
+
+  dampflok:
+    art: zug
+    item: zug_lok
+    model: zug_lok
+    speed: 0.45
+    power: 0.02
+    turn: 0.0
+    seats: 2
+    scale: 1.2
+    width: 1.6
+    height: 2.0
+    sound: entity.minecart.riding
+    horn: entity.ghast.warn
+    fuel: ""
+    range: 1200
+    crash:
+      enabled: true
+      min-speed: 0.45
+      damage: 12.0
+      explosion: 3.0
+      break-blocks: false
+      destroy: false
+      sound: entity.generic.explode
+      ram: 6.0
+
+  # ------------------------------------------------------------------
+  #  Boote - schwimmen oben auf, an Land kommen sie kaum vorwaerts
+  # ------------------------------------------------------------------
+
+  ruderboot:
+    art: boot
+    item: boot_ruder
+    model: boot_ruder
+    speed: 0.35
+    power: 0.03
+    turn: 5.0
+    seats: 2
+    scale: 1.1
+    width: 2.0
+    height: 1.0
+    sound: entity.boat.paddle_water
+    horn: entity.villager.yes
+    fuel: ""
+    range: 900
+    crash:
+      enabled: true
+      min-speed: 0.3
+      damage: 3.0
+      explosion: 0.0
+      break-blocks: false
+      destroy: false
+      sound: entity.boat.paddle_land
+      ram: 2.0
+
+  motorboot:
+    art: boot
+    item: boot_motor
+    model: boot_motor
+    speed: 0.95
+    power: 0.07
+    turn: 4.5
+    seats: 4
+    scale: 1.2
+    width: 2.4
+    height: 1.2
+    sound: entity.boat.paddle_water
+    horn: block.note_block.bit
+    fuel: ""
+    range: 700
+    crash:
+      enabled: true
+      min-speed: 0.5
+      damage: 7.0
+      explosion: 1.5
+      break-blocks: false
+      destroy: true
+      sound: entity.generic.explode
+      ram: 6.0
+
+  yacht:
+    art: boot
+    item: boot_yacht
+    model: boot_yacht
+    speed: 0.70
+    power: 0.04
+    turn: 2.5
+    seats: 8
+    scale: 1.8
+    width: 4.0
+    height: 2.0
+    sound: entity.boat.paddle_water
+    horn: entity.ghast.warn
+    fuel: ""
+    range: 2000
+    crash:
+      enabled: true
+      min-speed: 0.4
+      damage: 6.0
+      explosion: 0.0
+      break-blocks: false
+      destroy: false
+      sound: entity.generic.explode
+      ram: 5.0

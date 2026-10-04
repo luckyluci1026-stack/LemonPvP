@@ -1,0 +1,278 @@
+# ==========================================================
+#  FastShop - Katalog
+#  /shop zum Kaufen ist klein wie auf DonutSMP: End, Nether, Gear,
+#  Essen. Verkaufen (/sell) geht mit jedem Item: Was hier steht, hat
+#  seinen festen Preis. Alles andere bewertet FastShop selbst aus den
+#  Rezepten (was die Zutaten wert sind), so kann niemand durch Craften
+#  Geld vermehren. Preise in der EssentialsX-Währung.
+#  buy: -1 = nicht kaufbar, sell: -1 = nie verkaufbar.
+#  im-menue: false = Kategorie erscheint nicht im /shop (nur Preise).
+#  icon/name/slot pro Kategorie; pro Item optional 'name' & 'lore'.
+#  Alles im Shop ist unverzaubert. Steht bei einem Item noch 'enchants:',
+#  entfernt FastShop das beim Start.
+# ==========================================================
+
+# Stand des Katalogs, bitte nicht ändern. Eine ältere shop.yml ohne
+# diesen Stand stellt FastShop beim Start einmal auf diesen Katalog um.
+preis-stand: 3
+
+categories:
+
+  end:
+    icon: END_STONE
+    name: "&5&lEnd"
+    slot: 10
+    items:
+      - { material: ENDER_CHEST,   buy: 2500,  sell: 150 }
+      - { material: ENDER_PEARL,   buy: 60,    sell: 15 }
+      - { material: END_STONE,     buy: 8,     sell: 2 }
+      - { material: DRAGON_BREATH, buy: 1000,  sell: 250 }
+      - { material: CHORUS_FRUIT,  buy: 7,     sell: 2 }
+      - { material: SHULKER_SHELL, buy: 350,   sell: 90 }
+
+  nether:
+    icon: NETHERRACK
+    name: "&c&lNether"
+    slot: 12
+    items:
+      - { material: BLAZE_ROD,      buy: 40,    sell: 12 }
+      - { material: NETHER_WART,    buy: 6,     sell: 2 }
+      - { material: GLOWSTONE_DUST, buy: 10,    sell: 3 }
+      - { material: MAGMA_CREAM,    buy: 6,     sell: 2 }
+      - { material: GHAST_TEAR,     buy: 350,   sell: 90 }
+      - { material: QUARTZ,         buy: 30,    sell: 9 }
+
+  gear:
+    icon: TOTEM_OF_UNDYING
+    name: "&b&lGear"
+    slot: 14
+    items:
+      - { material: OBSIDIAN,         buy: 80,    sell: 20 }
+      - { material: RESPAWN_ANCHOR,   buy: 750,   sell: 80 }
+      - { material: TOTEM_OF_UNDYING, buy: 1500,  sell: 400 }
+      - { material: GOLDEN_APPLE,     buy: 375,   sell: 80 }
+      - { material: ARROW,            buy: 4,     sell: 1 }
+
+  food:
+    icon: COOKED_BEEF
+    name: "&6&lEssen"
+    slot: 16
+    items:
+      - { material: POTATO,         buy: 5,     sell: 1 }
+      - { material: SWEET_BERRIES,  buy: 5,     sell: 1 }
+      - { material: CARROT,         buy: 5,     sell: 1 }
+      - { material: APPLE,          buy: 8,     sell: 2 }
+      - { material: COOKED_CHICKEN, buy: 12,    sell: 4 }
+      - { material: COOKED_BEEF,    buy: 15,    sell: 5 }
+      - { material: GOLDEN_CARROT,  buy: 8,     sell: 2 }
+
+  verkauf:
+    im-menue: false
+    icon: CHEST
+    name: "&7Verkaufsliste"
+    slot: 0
+    items:
+      # ---- Alte Verkaufspreise (wie vorher im Shop). Werkzeuge, Rüstung und
+      # Redstone-Teile rechnet FastShop aus den Zutaten aus. ----
+      - { material: STONE,             buy: -1, sell: 1 }
+      - { material: COBBLESTONE,       buy: -1, sell: 1 }
+      - { material: OAK_LOG,           buy: -1, sell: 4 }
+      - { material: OAK_PLANKS,        buy: -1, sell: 1 }
+      - { material: DIRT,              buy: -1, sell: 1 }
+      - { material: SAND,              buy: -1, sell: 1 }
+      - { material: GRAVEL,            buy: -1, sell: 1 }
+      - { material: GLASS,             buy: -1, sell: 2 }
+      - { material: SANDSTONE,         buy: -1, sell: 2 }
+      - { material: SPRUCE_LOG,        buy: -1, sell: 4 }
+      - { material: BIRCH_LOG,         buy: -1, sell: 4 }
+      - { material: STONE_BRICKS,      buy: -1, sell: 2 }
+      - { material: SMOOTH_STONE,      buy: -1, sell: 2 }
+      - { material: COBBLED_DEEPSLATE, buy: -1, sell: 1 }
+      - { material: BRICKS,            buy: -1, sell: 5 }
+      - { material: TERRACOTTA,        buy: -1, sell: 3 }
+      - { material: WHITE_WOOL,        buy: -1, sell: 3 }
+      - { material: WHITE_CONCRETE,    buy: -1, sell: 3 }
+      - { material: QUARTZ_BLOCK,      buy: -1, sell: 36 }
+      - { material: COAL,              buy: -1, sell: 7 }
+      - { material: IRON_INGOT,        buy: -1, sell: 45 }
+      - { material: GOLD_INGOT,        buy: -1, sell: 85 }
+      - { material: DIAMOND,           buy: -1, sell: 400 }
+      - { material: EMERALD,           buy: -1, sell: 150 }
+      - { material: REDSTONE,          buy: -1, sell: 6 }
+      - { material: LAPIS_LAZULI,      buy: -1, sell: 6 }
+      - { material: COPPER_INGOT,      buy: -1, sell: 15 }
+      - { material: ANCIENT_DEBRIS,    buy: -1, sell: 400 }
+      - { material: NETHERITE_SCRAP,   buy: -1, sell: 450 }
+      - { material: NETHERITE_INGOT,   buy: -1, sell: 1650 }
+      - { material: NETHERITE_BLOCK,   buy: -1, sell: 15000 }
+      - { material: WHEAT,             buy: -1, sell: 2 }
+      - { material: BREAD,             buy: -1, sell: 3 }
+      - { material: SUGAR_CANE,        buy: -1, sell: 2 }
+      - { material: MELON_SLICE,       buy: -1, sell: 1 }
+      - { material: WHEAT_SEEDS,       buy: -1, sell: 1 }
+      - { material: OAK_SAPLING,       buy: -1, sell: 2 }
+      - { material: BONE_MEAL,         buy: -1, sell: 1 }
+      - { material: PUMPKIN,           buy: -1, sell: 3 }
+      - { material: SUGAR,             buy: -1, sell: 1 }
+      - { material: EGG,               buy: -1, sell: 1 }
+      - { material: LEATHER,           buy: -1, sell: 6 }
+      - { material: STRING,            buy: -1, sell: 2 }
+      - { material: FEATHER,           buy: -1, sell: 2 }
+      - { material: SLIME_BALL,        buy: -1, sell: 8 }
+      - { material: NAME_TAG,          buy: -1, sell: 20 }
+      - { material: SADDLE,            buy: -1, sell: 30 }
+      - { material: BOOK,              buy: -1, sell: 4 }
+      - { material: PAPER,             buy: -1, sell: 1 }
+      - { material: FLINT,             buy: -1, sell: 2 }
+      - { material: GUNPOWDER,         buy: -1, sell: 6 }
+
+      # ---- Holz: alle Stämme wie Eiche, auch entrindet ----
+      - { material: JUNGLE_LOG,   buy: -1, sell: 4 }
+      - { material: ACACIA_LOG,   buy: -1, sell: 4 }
+      - { material: DARK_OAK_LOG, buy: -1, sell: 4 }
+      - { material: MANGROVE_LOG, buy: -1, sell: 4 }
+      - { material: CHERRY_LOG,   buy: -1, sell: 4 }
+      - { material: PALE_OAK_LOG, buy: -1, sell: 4 }
+      - { material: CRIMSON_STEM, buy: -1, sell: 4 }
+      - { material: WARPED_STEM,  buy: -1, sell: 4 }
+      - { material: STRIPPED_OAK_LOG, buy: -1, sell: 4 }
+      - { material: STRIPPED_SPRUCE_LOG, buy: -1, sell: 4 }
+      - { material: STRIPPED_BIRCH_LOG, buy: -1, sell: 4 }
+      - { material: STRIPPED_JUNGLE_LOG, buy: -1, sell: 4 }
+      - { material: STRIPPED_ACACIA_LOG, buy: -1, sell: 4 }
+      - { material: STRIPPED_DARK_OAK_LOG, buy: -1, sell: 4 }
+      - { material: STRIPPED_MANGROVE_LOG, buy: -1, sell: 4 }
+      - { material: STRIPPED_CHERRY_LOG, buy: -1, sell: 4 }
+      - { material: STRIPPED_PALE_OAK_LOG, buy: -1, sell: 4 }
+      - { material: STRIPPED_CRIMSON_STEM, buy: -1, sell: 4 }
+      - { material: STRIPPED_WARPED_STEM, buy: -1, sell: 4 }
+
+      # ---- Steine, die man auch craften kann ----
+      - { material: GRANITE,  buy: -1, sell: 1 }
+      - { material: DIORITE,  buy: -1, sell: 1 }
+      - { material: ANDESITE, buy: -1, sell: 1 }
+
+      # ---- Rohes Erz und Erzblöcke (mit Behutsamkeit abgebaut) ----
+      - { material: RAW_IRON,               buy: -1, sell: 30 }
+      - { material: RAW_GOLD,               buy: -1, sell: 60 }
+      - { material: RAW_COPPER,             buy: -1, sell: 10 }
+      - { material: COAL_ORE,               buy: -1, sell: 7 }
+      - { material: DEEPSLATE_COAL_ORE,     buy: -1, sell: 7 }
+      - { material: IRON_ORE,               buy: -1, sell: 30 }
+      - { material: DEEPSLATE_IRON_ORE,     buy: -1, sell: 30 }
+      - { material: COPPER_ORE,             buy: -1, sell: 10 }
+      - { material: DEEPSLATE_COPPER_ORE,   buy: -1, sell: 10 }
+      - { material: GOLD_ORE,               buy: -1, sell: 60 }
+      - { material: DEEPSLATE_GOLD_ORE,     buy: -1, sell: 60 }
+      - { material: NETHER_GOLD_ORE,        buy: -1, sell: 10 }
+      - { material: REDSTONE_ORE,           buy: -1, sell: 24 }
+      - { material: DEEPSLATE_REDSTONE_ORE, buy: -1, sell: 24 }
+      - { material: LAPIS_ORE,              buy: -1, sell: 24 }
+      - { material: DEEPSLATE_LAPIS_ORE,    buy: -1, sell: 24 }
+      - { material: DIAMOND_ORE,            buy: -1, sell: 400 }
+      - { material: DEEPSLATE_DIAMOND_ORE,  buy: -1, sell: 400 }
+      - { material: EMERALD_ORE,            buy: -1, sell: 150 }
+      - { material: DEEPSLATE_EMERALD_ORE,  buy: -1, sell: 150 }
+      - { material: NETHER_QUARTZ_ORE,      buy: -1, sell: 9 }
+      - { material: CRYING_OBSIDIAN,        buy: -1, sell: 10 }
+
+      # ---- Fleisch, Fisch und Ernte ----
+      - { material: BEEF,            buy: -1, sell: 1 }
+      - { material: PORKCHOP,        buy: -1, sell: 1 }
+      - { material: CHICKEN,         buy: -1, sell: 1 }
+      - { material: MUTTON,          buy: -1, sell: 1 }
+      - { material: RABBIT,          buy: -1, sell: 1 }
+      - { material: COD,             buy: -1, sell: 1 }
+      - { material: SALMON,          buy: -1, sell: 1 }
+      - { material: COOKED_PORKCHOP, buy: -1, sell: 5 }
+      - { material: COOKED_MUTTON,   buy: -1, sell: 4 }
+      - { material: COOKED_RABBIT,   buy: -1, sell: 4 }
+      - { material: COOKED_COD,      buy: -1, sell: 3 }
+      - { material: COOKED_SALMON,   buy: -1, sell: 4 }
+      - { material: BEETROOT,        buy: -1, sell: 1 }
+      - { material: BEETROOT_SEEDS,  buy: -1, sell: 1 }
+      - { material: COCOA_BEANS,     buy: -1, sell: 1 }
+      - { material: GLOW_BERRIES,    buy: -1, sell: 1 }
+      - { material: CACTUS,          buy: -1, sell: 1 }
+      - { material: HONEYCOMB,       buy: -1, sell: 2 }
+      - { material: HONEY_BOTTLE,    buy: -1, sell: 3 }
+
+      # ---- Mob-Drops ----
+      - { material: BONE,                buy: -1, sell: 3 }
+      - { material: SPIDER_EYE,          buy: -1, sell: 1 }
+      - { material: RABBIT_HIDE,         buy: -1, sell: 1.5 }
+      - { material: INK_SAC,             buy: -1, sell: 1 }
+      - { material: GLOW_INK_SAC,        buy: -1, sell: 5 }
+      - { material: PHANTOM_MEMBRANE,    buy: -1, sell: 10 }
+      - { material: RABBIT_FOOT,         buy: -1, sell: 15 }
+      - { material: PRISMARINE_SHARD,    buy: -1, sell: 2 }
+      - { material: PRISMARINE_CRYSTALS, buy: -1, sell: 3 }
+      - { material: NAUTILUS_SHELL,      buy: -1, sell: 50 }
+      - { material: TURTLE_SCUTE,        buy: -1, sell: 20 }
+      - { material: ARMADILLO_SCUTE,     buy: -1, sell: 10 }
+      - { material: BREEZE_ROD,          buy: -1, sell: 30 }
+      - { material: ECHO_SHARD,          buy: -1, sell: 50 }
+      - { material: GOAT_HORN,           buy: -1, sell: 50 }
+      - { material: EXPERIENCE_BOTTLE,   buy: -1, sell: 10 }
+
+      # ---- Wertvolles ----
+      - { material: NETHER_STAR,                         buy: -1, sell: 2000 }
+      - { material: ELYTRA,                              buy: -1, sell: 2500 }
+      - { material: HEART_OF_THE_SEA,                    buy: -1, sell: 500 }
+      - { material: TRIDENT,                             buy: -1, sell: 1000 }
+      - { material: ENCHANTED_GOLDEN_APPLE,              buy: -1, sell: 1500 }
+      - { material: WITHER_SKELETON_SKULL,               buy: -1, sell: 200 }
+      - { material: DRAGON_HEAD,                         buy: -1, sell: 500 }
+      - { material: SKELETON_SKULL,                      buy: -1, sell: 25 }
+      - { material: ZOMBIE_HEAD,                         buy: -1, sell: 25 }
+      - { material: CREEPER_HEAD,                        buy: -1, sell: 25 }
+      - { material: PIGLIN_HEAD,                         buy: -1, sell: 25 }
+      - { material: HEAVY_CORE,                          buy: -1, sell: 1000 }
+      - { material: SNIFFER_EGG,                         buy: -1, sell: 200 }
+      - { material: TRIAL_KEY,                           buy: -1, sell: 10 }
+      - { material: OMINOUS_TRIAL_KEY,                   buy: -1, sell: 50 }
+      - { material: NETHERITE_UPGRADE_SMITHING_TEMPLATE, buy: -1, sell: 1000 }
+      - { material: DISC_FRAGMENT_5,                     buy: -1, sell: 3 }
+
+      # ---- Rüstungsbesatz-Vorlagen ----
+      - { material: BOLT_ARMOR_TRIM_SMITHING_TEMPLATE,      buy: -1, sell: 100 }
+      - { material: COAST_ARMOR_TRIM_SMITHING_TEMPLATE,     buy: -1, sell: 100 }
+      - { material: DUNE_ARMOR_TRIM_SMITHING_TEMPLATE,      buy: -1, sell: 100 }
+      - { material: EYE_ARMOR_TRIM_SMITHING_TEMPLATE,       buy: -1, sell: 100 }
+      - { material: FLOW_ARMOR_TRIM_SMITHING_TEMPLATE,      buy: -1, sell: 100 }
+      - { material: HOST_ARMOR_TRIM_SMITHING_TEMPLATE,      buy: -1, sell: 100 }
+      - { material: RAISER_ARMOR_TRIM_SMITHING_TEMPLATE,    buy: -1, sell: 100 }
+      - { material: RIB_ARMOR_TRIM_SMITHING_TEMPLATE,       buy: -1, sell: 100 }
+      - { material: SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE,    buy: -1, sell: 100 }
+      - { material: SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE,    buy: -1, sell: 100 }
+      - { material: SILENCE_ARMOR_TRIM_SMITHING_TEMPLATE,   buy: -1, sell: 100 }
+      - { material: SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE,     buy: -1, sell: 100 }
+      - { material: SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE,     buy: -1, sell: 100 }
+      - { material: TIDE_ARMOR_TRIM_SMITHING_TEMPLATE,      buy: -1, sell: 100 }
+      - { material: VEX_ARMOR_TRIM_SMITHING_TEMPLATE,       buy: -1, sell: 100 }
+      - { material: WARD_ARMOR_TRIM_SMITHING_TEMPLATE,      buy: -1, sell: 100 }
+      - { material: WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE, buy: -1, sell: 100 }
+      - { material: WILD_ARMOR_TRIM_SMITHING_TEMPLATE,      buy: -1, sell: 100 }
+
+      # ---- Schallplatten ----
+      - { material: MUSIC_DISC_11,                buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_13,                buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_5,                 buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_BLOCKS,            buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_CAT,               buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_CHIRP,             buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_CREATOR,           buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_CREATOR_MUSIC_BOX, buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_FAR,               buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_LAVA_CHICKEN,      buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_MALL,              buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_MELLOHI,           buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_OTHERSIDE,         buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_PIGSTEP,           buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_PRECIPICE,         buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_RELIC,             buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_STAL,              buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_STRAD,             buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_TEARS,             buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_WAIT,              buy: -1, sell: 25 }
+      - { material: MUSIC_DISC_WARD,              buy: -1, sell: 25 }

@@ -1,0 +1,38 @@
+# SMP Pack - Glyphen-Uebersicht
+# Diese Zeichen kannst du direkt in Configs/Nachrichten einfügen.
+
+coin             U+E100   
+heart            U+E101   
+star             U+E102   
+crown            U+E103   
+cart             U+E104   
+check            U+E105   
+cross            U+E106   
+warning          U+E107   
+arrow_right      U+E108   
+arrow_left       U+E109   
+gem              U+E10A   
+clock            U+E10B   
+lock             U+E10C   
+bag              U+E10D   
+sword            U+E10E   
+pickaxe          U+E10F   
+rank_owner1      U+E110   
+rank_owner2      U+E111   
+rank_owner3      U+E112   
+rank_owner4      U+E113   
+rank_owner5      U+E114   
+rank_admin       U+E115   
+rank_mod         U+E116   
+rank_sup         U+E117   
+rank_member      U+E118   
+buy              U+E120   
+sell             U+E121   
+shield           U+E122   
+potion           U+E123   
+trophy           U+E124   
+gift             U+E125   
+ticket           U+E126   
+skull            U+E127   
+fire             U+E128   
+leaf             U+E129   

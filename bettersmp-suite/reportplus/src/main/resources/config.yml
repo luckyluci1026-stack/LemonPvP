@@ -1,0 +1,25 @@
+# ==========================================================
+#  ReportPlus
+#  Ersetzt BetterSMPs Text-/report durch eine GUI-Version (Spieler
+#  anklicken statt Namen tippen muessen) und bringt zusaetzlich /bugreport.
+# ==========================================================
+
+report:
+  # Wartezeit zwischen zwei Meldungen derselben Person, in Sekunden.
+  cooldown-seconds: 60
+  # Kategorien im Grund-Auswahl-GUI. icon = Anzeige-Item, name = Beschriftung.
+  categories:
+    - { id: CHEATEN,    icon: DIAMOND_SWORD,  name: "<red>Cheaten / Hacks</red>" }
+    - { id: GRIEFING,   icon: TNT,            name: "<gold>Griefing</gold>" }
+    - { id: BELEIDIGUNG, icon: PAPER,         name: "<yellow>Beleidigung / Chat</yellow>" }
+    - { id: WERBUNG,    icon: BOOK,           name: "<light_purple>Werbung / Spam</light_purple>" }
+    - { id: SONSTIGES,  icon: BARRIER,        name: "<gray>Sonstiges</gray>" }
+
+bugreport:
+  cooldown-seconds: 30
+  categories:
+    - { id: SHOP,      icon: EMERALD,        name: "<green>Shop / FastShop</green>" }
+    - { id: PVP,       icon: IRON_SWORD,     name: "<red>PvP / Kampf</red>" }
+    - { id: LOBBY,     icon: ENDER_PEARL,    name: "<aqua>Lobby</aqua>" }
+    - { id: PERFORMANCE, icon: REDSTONE,     name: "<gold>Lag / Performance</gold>" }
+    - { id: SONSTIGES, icon: BARRIER,        name: "<gray>Sonstiges</gray>" }

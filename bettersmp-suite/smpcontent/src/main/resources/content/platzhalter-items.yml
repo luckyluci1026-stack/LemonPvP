@@ -1,0 +1,923 @@
+# ==========================================================
+#  150 Platzhalter-Items - noch ohne Textur
+#
+#  Jedes Item gibt es sofort: /smpcontent give <Spieler> custom_item_001
+#  Ohne Textur sieht es aus wie sein "material" (hier Papier).
+#
+#  So machst du eines davon zu deinem Item:
+#    1. material auf das passende Basis-Item setzen
+#       (IRON_SWORD für Waffen, IRON_PICKAXE für Werkzeuge,
+#        PAPER/STICK/... für alles andere)
+#    2. name/lore anpassen (Id gerne umbenennen)
+#    3. Textur nach plugins/SMPContent/textures/item/<id>.png
+#       (optional Blockbench-Modell nach models/item/<id>.json)
+#    4. /smpcontent reload   und   /smpcontent pack
+#
+#  model-data muss eindeutig bleiben - die Zahlen hier sind frei.
+#
+#  Werte und Fähigkeiten wie bei den Laserschwertern:
+#    attributes:, durability:, enchants:, glow:, abilities:
+#  Alle Möglichkeiten stehen in FAEHIGKEITEN.txt.
+# ==========================================================
+
+items:
+
+  custom_item_001:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 1</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8200
+
+  custom_item_002:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 2</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8201
+
+  custom_item_003:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 3</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8202
+
+  custom_item_004:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 4</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8203
+
+  custom_item_005:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 5</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8204
+
+  custom_item_006:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 6</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8205
+
+  custom_item_007:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 7</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8206
+
+  custom_item_008:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 8</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8207
+
+  custom_item_009:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 9</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8208
+
+  custom_item_010:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 10</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8209
+
+  custom_item_011:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 11</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8210
+
+  custom_item_012:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 12</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8211
+
+  custom_item_013:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 13</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8212
+
+  custom_item_014:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 14</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8213
+
+  custom_item_015:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 15</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8214
+
+  custom_item_016:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 16</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8215
+
+  custom_item_017:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 17</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8216
+
+  custom_item_018:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 18</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8217
+
+  custom_item_019:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 19</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8218
+
+  custom_item_020:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 20</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8219
+
+  custom_item_021:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 21</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8220
+
+  custom_item_022:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 22</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8221
+
+  custom_item_023:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 23</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8222
+
+  custom_item_024:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 24</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8223
+
+  custom_item_025:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 25</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8224
+
+  custom_item_026:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 26</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8225
+
+  custom_item_027:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 27</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8226
+
+  custom_item_028:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 28</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8227
+
+  custom_item_029:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 29</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8228
+
+  custom_item_030:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 30</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8229
+
+  custom_item_031:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 31</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8230
+
+  custom_item_032:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 32</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8231
+
+  custom_item_033:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 33</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8232
+
+  custom_item_034:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 34</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8233
+
+  custom_item_035:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 35</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8234
+
+  custom_item_036:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 36</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8235
+
+  custom_item_037:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 37</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8236
+
+  custom_item_038:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 38</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8237
+
+  custom_item_039:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 39</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8238
+
+  custom_item_040:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 40</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8239
+
+  custom_item_041:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 41</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8240
+
+  custom_item_042:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 42</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8241
+
+  custom_item_043:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 43</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8242
+
+  custom_item_044:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 44</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8243
+
+  custom_item_045:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 45</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8244
+
+  custom_item_046:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 46</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8245
+
+  custom_item_047:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 47</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8246
+
+  custom_item_048:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 48</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8247
+
+  custom_item_049:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 49</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8248
+
+  custom_item_050:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 50</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8249
+
+  custom_item_051:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 51</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8250
+
+  custom_item_052:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 52</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8251
+
+  custom_item_053:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 53</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8252
+
+  custom_item_054:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 54</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8253
+
+  custom_item_055:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 55</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8254
+
+  custom_item_056:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 56</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8255
+
+  custom_item_057:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 57</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8256
+
+  custom_item_058:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 58</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8257
+
+  custom_item_059:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 59</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8258
+
+  custom_item_060:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 60</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8259
+
+  custom_item_061:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 61</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8260
+
+  custom_item_062:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 62</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8261
+
+  custom_item_063:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 63</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8262
+
+  custom_item_064:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 64</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8263
+
+  custom_item_065:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 65</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8264
+
+  custom_item_066:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 66</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8265
+
+  custom_item_067:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 67</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8266
+
+  custom_item_068:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 68</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8267
+
+  custom_item_069:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 69</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8268
+
+  custom_item_070:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 70</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8269
+
+  custom_item_071:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 71</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8270
+
+  custom_item_072:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 72</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8271
+
+  custom_item_073:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 73</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8272
+
+  custom_item_074:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 74</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8273
+
+  custom_item_075:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 75</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8274
+
+  custom_item_076:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 76</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8275
+
+  custom_item_077:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 77</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8276
+
+  custom_item_078:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 78</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8277
+
+  custom_item_079:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 79</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8278
+
+  custom_item_080:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 80</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8279
+
+  custom_item_081:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 81</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8280
+
+  custom_item_082:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 82</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8281
+
+  custom_item_083:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 83</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8282
+
+  custom_item_084:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 84</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8283
+
+  custom_item_085:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 85</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8284
+
+  custom_item_086:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 86</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8285
+
+  custom_item_087:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 87</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8286
+
+  custom_item_088:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 88</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8287
+
+  custom_item_089:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 89</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8288
+
+  custom_item_090:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 90</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8289
+
+  custom_item_091:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 91</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8290
+
+  custom_item_092:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 92</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8291
+
+  custom_item_093:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 93</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8292
+
+  custom_item_094:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 94</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8293
+
+  custom_item_095:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 95</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8294
+
+  custom_item_096:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 96</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8295
+
+  custom_item_097:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 97</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8296
+
+  custom_item_098:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 98</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8297
+
+  custom_item_099:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 99</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8298
+
+  custom_item_100:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 100</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8299
+
+  custom_item_101:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 101</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8300
+
+  custom_item_102:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 102</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8301
+
+  custom_item_103:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 103</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8302
+
+  custom_item_104:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 104</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8303
+
+  custom_item_105:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 105</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8304
+
+  custom_item_106:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 106</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8305
+
+  custom_item_107:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 107</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8306
+
+  custom_item_108:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 108</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8307
+
+  custom_item_109:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 109</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8308
+
+  custom_item_110:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 110</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8309
+
+  custom_item_111:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 111</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8310
+
+  custom_item_112:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 112</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8311
+
+  custom_item_113:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 113</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8312
+
+  custom_item_114:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 114</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8313
+
+  custom_item_115:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 115</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8314
+
+  custom_item_116:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 116</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8315
+
+  custom_item_117:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 117</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8316
+
+  custom_item_118:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 118</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8317
+
+  custom_item_119:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 119</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8318
+
+  custom_item_120:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 120</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8319
+
+  custom_item_121:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 121</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8320
+
+  custom_item_122:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 122</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8321
+
+  custom_item_123:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 123</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8322
+
+  custom_item_124:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 124</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8323
+
+  custom_item_125:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 125</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8324
+
+  custom_item_126:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 126</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8325
+
+  custom_item_127:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 127</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8326
+
+  custom_item_128:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 128</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8327
+
+  custom_item_129:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 129</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8328
+
+  custom_item_130:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 130</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8329
+
+  custom_item_131:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 131</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8330
+
+  custom_item_132:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 132</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8331
+
+  custom_item_133:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 133</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8332
+
+  custom_item_134:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 134</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8333
+
+  custom_item_135:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 135</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8334
+
+  custom_item_136:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 136</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8335
+
+  custom_item_137:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 137</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8336
+
+  custom_item_138:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 138</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8337
+
+  custom_item_139:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 139</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8338
+
+  custom_item_140:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 140</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8339
+
+  custom_item_141:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 141</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8340
+
+  custom_item_142:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 142</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8341
+
+  custom_item_143:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 143</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8342
+
+  custom_item_144:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 144</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8343
+
+  custom_item_145:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 145</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8344
+
+  custom_item_146:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 146</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8345
+
+  custom_item_147:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 147</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8346
+
+  custom_item_148:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 148</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8347
+
+  custom_item_149:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 149</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8348
+
+  custom_item_150:
+    material: PAPER
+    name: "<gray>Platzhalter-Item 150</gray>"
+    lore: ["<dark_gray>Noch ohne Textur"]
+    model-data: 8349

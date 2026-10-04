@@ -1,0 +1,39 @@
+# ==========================================================
+#  FastShop - Einstellungen
+# ==========================================================
+settings:
+  # Globaler Multiplikator auf alle Verkaufspreise (z.B. 0.9 = 10% weniger)
+  sell-multiplier: 1.0
+  # Titel des Hauptmenüs (MiniMessage)
+  menu-title: "<gradient:#6C5CE7:#00D4FF><bold>Shop</bold></gradient>"
+  # Zeilen des Hauptmenüs (3-6). 3 wie auf DonutSMP: Kopf, Kategorien, Fußzeile.
+  menu-rows: 3
+  # Rahmenfarbe des Hauptmenüs (Material eines Glasfensters o.ä.)
+  border-material: BLACK_STAINED_GLASS_PANE
+  # Rahmenfarbe der Kategorieseiten
+  category-border-material: GRAY_STAINED_GLASS_PANE
+  # Sounds bei Kauf/Verkauf/Fehler
+  sounds: true
+  # Jedes Item lässt sich verkaufen (Verkaufsfenster und /sell hand).
+  # Was nicht in shop.yml steht, bewertet FastShop aus den Rezepten.
+  # /sell all verkauft trotzdem nur, was in shop.yml steht - so landet
+  # kein Werkzeug aus Versehen im Verkauf.
+  alles-verkaufen: true
+  # So viel bringt ein Item, das man nicht craften kann und das nicht in
+  # shop.yml steht (z.B. Blumen, Netherrack, Verrottetes Fleisch)
+  standard-wert: 0.1
+  # Gecraftete Items bringen diesen Anteil vom Wert ihrer Zutaten
+  rezept-faktor: 0.9
+
+# ==========================================================
+#  Auktionshaus (/ah)
+# ==========================================================
+auktionshaus:
+  # So lange bleibt ein Angebot drin, danach kann man es unter /ah meine abholen
+  dauer-stunden: 48
+  # Höchstens so viele Angebote pro Spieler (abgelaufene zählen mit, bis man sie abholt)
+  max-angebote: 50
+  min-preis: 1
+  max-preis: 1000000000
+  # Anteil in Prozent, den der Server beim Verkauf einbehält (0 = keine Gebühr)
+  steuer-prozent: 0
