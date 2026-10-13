@@ -43,7 +43,7 @@ Es gibt drei Testebenen:
 
 ```
 cd runtime && ./gradlew :runtime-core:test        # JDK 21.0.12, Linux
-runtime-core: 52 tests, 0 failures, 0 errors, 0 skipped
+runtime-core: 53 tests, 0 failures, 0 errors, 0 skipped
 ```
 
 Paper-Builds und Server-Tests konnten lokal nicht ausgeführt werden (Netzwerk, siehe

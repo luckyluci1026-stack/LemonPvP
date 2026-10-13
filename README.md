@@ -62,8 +62,8 @@ Voraussetzungen und Netzwerkzugriffe: [`docs/BUILDING.md`](docs/BUILDING.md).
    fork module disable example-greeter
    ```
 
-Ändernde Befehle sind standardmäßig **nur in der Konsole** erlaubt
-(`lemon.runtime.module.manage` hat den Default `false`).
+Ändernde Befehle sind standardmäßig **nur in der Serverkonsole** erlaubt
+(`lemon.runtime.module.manage` hat den Default `false`; RCON zählt nicht als Konsole).
 
 ## Dokumentation
 

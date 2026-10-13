@@ -54,9 +54,14 @@ final class ForkCommand extends Command {
             return this.sender instanceof ConsoleCommandSender ? "console" : this.sender.getName();
         }
 
+        /**
+         * The server console may use every subcommand, including those whose permission
+         * defaults to {@code FALSE} (nobody else unless granted explicitly). RCON is not
+         * the console and goes through the normal permission check.
+         */
         @Override
         public boolean hasPermission(String node) {
-            return this.sender.hasPermission(node);
+            return this.sender instanceof ConsoleCommandSender || this.sender.hasPermission(node);
         }
 
         @Override

@@ -25,7 +25,7 @@ Netzwerk, Spielerdaten, Datenbank-Zugangsdaten, Reflection auf alle Objekte).
 |---|---|---|
 | Unbeabsichtigte Aktivierung | Runtime standardmäßig aus (`enabled: false`); Laufzeit-Deployment zusätzlich aus (`allow-runtime-deploy: false`); JAR im Ordner wird nie automatisch aktiviert | `RuntimeConfig`, `ModuleManager.guarded` |
 | Ungültige Konfiguration aktiviert etwas | Fehlerhafte `lemon-runtime.yml` ⇒ Runtime bleibt aus; `/fork reload` mit Fehlern ⇒ alte Konfiguration bleibt | `LemonRuntime.bootstrap`, `reloadConfig` |
-| Unberechtigte Bedienung | Ändernde Befehle brauchen `lemon.runtime.module.manage` (Standard: **niemand**, nur Konsole); Konfig-Reload `lemon.runtime.command.reload` (Standard: niemand) | `PaperRuntime`, `AdminCommand` |
+| Unberechtigte Bedienung | Ändernde Befehle brauchen `lemon.runtime.module.manage` (Standard: **niemand**, nur Konsole); Konfig-Reload `lemon.runtime.command.reload` (Standard: niemand). Die Serverkonsole (`ConsoleCommandSender`) darf alle `/fork`-Befehle; RCON zählt **nicht** als Konsole | `PaperRuntime`, `ForkCommand`, `AdminCommand` |
 | Path Traversal über Befehle | Befehle akzeptieren nur Modul-IDs (`[a-z][a-z0-9_-]{1,47}`), nie Pfade | `ModuleIds`, `AdminCommand` |
 | Path Traversal über Deskriptoren (Zip-Slip) | `resources` nur als sichere relative Pfade; Auflösung mit `PathGuard.resolveInside` inkl. Symlink-Prüfung; Größenlimit beim Kopieren | `DescriptorParser`, `ModulePreparer`, `PathGuard` |
 | Manipulierte Dateinamen / Symlinks im Modulordner | nur sichere Dateinamen, keine Symlinks, Datei muss im Modulordner liegen | `ModuleScanner`, `PathGuard` |

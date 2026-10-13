@@ -11,9 +11,44 @@ import dev.lemonpvp.runtime.api.ModuleState;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import org.junit.jupiter.api.Test;
 
 class LifecycleUnitTest {
+
+    @Test
+    void moduleLoggerPrefixesMessagesAndCarriesTheNearestParentName() {
+        Logger server = Logger.getLogger("lemon-test-server");
+        List<LogRecord> records = new ArrayList<>();
+        Handler capture = new Handler() {
+            @Override
+            public void publish(LogRecord r) {
+                records.add(r);
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        server.setUseParentHandlers(false);
+        server.addHandler(capture);
+        try {
+            Logger runtime = Logger.getAnonymousLogger();
+            runtime.setParent(server);
+            new ModuleLogger("demo", runtime).info("hello");
+            assertEquals(1, records.size());
+            assertEquals("[demo] hello", records.get(0).getMessage());
+            assertEquals("lemon-test-server", records.get(0).getLoggerName(), "never null (Paper would print [null])");
+        } finally {
+            server.removeHandler(capture);
+        }
+    }
 
     @Test
     void onlyDocumentedTransitionsAreAllowed() {
