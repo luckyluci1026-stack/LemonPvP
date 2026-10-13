@@ -69,6 +69,15 @@
      options.use()
      options.isDocFilesSubDirs = true
      options.links(
+@@ -213,7 +212,7 @@
+         "https://logging.apache.org/log4j/2.x/javadoc/log4j-api/",
+         "https://www.javadocs.dev/org.apache.maven.resolver/maven-resolver-api/1.7.3",
+     )
+-    options.tags(projectCustomJavadocTags.map { it.toOptionString() })
++    options.tags("apiNote:a:API Note:")
+ 
+     inputs.files(javadocSourcepath).ignoreEmptyDirectories().withPropertyName(javadocSourcepath.name + "-configuration")
+     val javadocSourcepathElements = javadocSourcepath.elements
 @@ -225,11 +224,11 @@
      }
  

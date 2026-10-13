@@ -152,6 +152,17 @@ def remove_checkstyle(text: str) -> str:
         return text
     text = replace_once(text, "import io.papermc.paperweight.checkstyle.JavadocTag\n", "", "checkstyle import")
     text = replace_once(text, '    id("io.papermc.paperweight.paper-checkstyle")\n', "", "checkstyle plugin")
+    # The custom javadoc tag set is shared with the javadoc task; keep the tag, but as a
+    # plain javadoc option ("name:locations:header") so no checkstyle class is needed.
+    tags_decl = 'val projectCustomJavadocTags = setOf(\n    JavadocTag("apiNote", "a", "API Note:"),\n)\n'
+    if tags_decl not in text:
+        raise PatchError("unexpected javadoc tag declaration; port remove_checkstyle() manually")
+    text = replace_once(
+        text,
+        "options.tags(projectCustomJavadocTags.map { it.toOptionString() })",
+        'options.tags("apiNote:a:API Note:")',
+        "javadoc custom tags",
+    )
     start = text.find("val projectCustomJavadocTags = setOf(")
     end = text.find("}\n", text.find("paperCheckstyle {"))
     if start < 0 or end < 0:

@@ -59,11 +59,11 @@ jobs:
       - name: List relevant paperweight tasks
         run: ./gradlew tasks --all --console=plain | grep -iE 'patch|paperclip|bundler|rundev|fixup' || true
       - name: Apply patches
-        run: ./gradlew applyAllPatches --stacktrace --console=plain
+        run: set -o pipefail; ./gradlew applyAllPatches --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
       - name: Build and test (includes Paper's own test suite)
-        run: ./gradlew build --stacktrace --console=plain
+        run: set -o pipefail; ./gradlew build --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
       - name: Create paperclip jar
-        run: ./gradlew ${{ matrix.paperclip-task }} --stacktrace --console=plain
+        run: set -o pipefail; ./gradlew ${{ matrix.paperclip-task }} --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
       - name: Locate artifact
         id: jar
         run: |
@@ -82,6 +82,9 @@ jobs:
           name: lemon-${{ matrix.mc }}
           path: dist/
           if-no-files-found: error
+      - name: Summarize Gradle failure
+        if: failure()
+        run: grep -n -A25 -E "What went wrong|FAILED|error:" "$RUNNER_TEMP/gradle.log" | head -n 150 || true
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v4
