@@ -1,0 +1,91 @@
+name: Lemon CI
+
+on:
+  push:
+    paths-ignore:
+      - 'index.html'
+      - 'index.zip'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lemon-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # One independent paperweight fork build per supported Minecraft version.
+  # Each version uses the JDK and paperweight version of its Paper upstream branch.
+  fork:
+    name: Fork ${{ matrix.mc }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mc: '1.21.11'
+            java: '21'
+            paperclip-task: createMojmapPaperclipJar
+          - mc: '26.1.2'
+            java: '25'
+            paperclip-task: createPaperclipJar
+          - mc: '26.2'
+            java: '25'
+            paperclip-task: createPaperclipJar
+          - mc: '26.3'
+            java: '25'
+            paperclip-task: createPaperclipJar
+    defaults:
+      run:
+        working-directory: versions/${{ matrix.mc }}
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Configure Git user
+        run: git config --global user.email "actions@github.com" && git config --global user.name "GitHub Actions"
+      - name: List relevant paperweight tasks
+        run: ./gradlew tasks --all --console=plain | grep -iE 'patch|paperclip|bundler|rundev|fixup' || true
+      - name: Apply patches
+        run: ./gradlew applyAllPatches --stacktrace --console=plain
+      - name: Build and test (includes Paper's own test suite)
+        run: ./gradlew build --stacktrace --console=plain
+      - name: Create paperclip jar
+        run: ./gradlew ${{ matrix.paperclip-task }} --stacktrace --console=plain
+      - name: Locate artifact
+        id: jar
+        run: |
+          jar=$(find lemon-server/build/libs -maxdepth 1 -name '*paperclip*.jar' | head -n 1)
+          if [ -z "$jar" ]; then echo "::error::no paperclip jar produced"; ls -la lemon-server/build/libs || true; exit 1; fi
+          short=$(git rev-parse --short=8 HEAD)
+          name="lemon-${{ matrix.mc }}-build.${{ github.run_number }}-${short}.jar"
+          mkdir -p ../../dist && cp "$jar" "../../dist/$name"
+          (cd ../../dist && sha256sum "$name" > "$name.sha256")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Server smoke test (start and stop)
+        run: ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/smoke-${{ matrix.mc }}"
+      - name: Upload server jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: lemon-${{ matrix.mc }}
+          path: dist/
+          if-no-files-found: error
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.mc }}
+          path: versions/${{ matrix.mc }}/**/build/reports/
+          if-no-files-found: ignore
