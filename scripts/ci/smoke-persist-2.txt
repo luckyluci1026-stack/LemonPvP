@@ -2,5 +2,15 @@
 @sleep 5
 fork module list
 @sleep 3
+# Paper /reload: the runtime must stop before Paper clears commands/listeners and start again afterwards.
+bukkit:reload confirm
+@sleep 15
+fork module list
+@sleep 3
 @expect Startup modules: 1 of 1 activated
 @expect example-greeter 1.0.0 - ENABLED
+@count 2 Startup modules: 1 of 1 activated
+@count 2 example-greeter 1.0.0 - ENABLED
+@expect Example greeter disabled
+@reject Unhandled exception in
+@reject runtime failed to start

@@ -30,7 +30,7 @@ Die CI benennt Artefakte eindeutig: `lemon-<mc>-build.<run>-<commit>.jar` + `.sh
 
 ```bash
 cd runtime
-./gradlew build                                            # runtime-api + runtime-core + 49 Tests
+./gradlew build                                            # runtime-api + runtime-core inkl. aller Runtime-Tests
 ./gradlew :runtime-paper:compileJava :example-module:assemble \
           -PpaperApiVersion=26.2.build.+ -PjavaRelease=25   # Adapter + Beispielmodul gegen Paper-API
 ```

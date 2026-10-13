@@ -81,7 +81,7 @@ jobs:
           ./gradlew :runtime-paper:compileJava :example-module:assemble --console=plain
           -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
       - name: Show resolved Paper API version
-        run: ./gradlew :runtime-paper:dependencies --configuration compileClasspath -PpaperApiVersion='${{ matrix.paper-api }}' --console=plain | grep -m1 "paper-api" || true
+        run: ./gradlew :runtime-paper:dependencies --configuration compileClasspath -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }} --console=plain | grep -m1 "paper-api" || true
       - uses: actions/upload-artifact@v4
         with:
           name: example-module-${{ matrix.mc }}

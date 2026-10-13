@@ -7,7 +7,9 @@
 #   command-file: optional file with one console command per line. Lines of the
 #                 form "@expect <regex>" assert that the log matches <regex>
 #                 (checked after all commands were executed); "@reject <regex>"
-#                 asserts that it does NOT match; "@sleep <seconds>" pauses.
+#                 asserts that it does NOT match; "@count <n> <regex>" asserts
+#                 exactly n matching lines; "@sleep <seconds>" pauses;
+#                 "@shell <command>" runs a shell command in the work directory.
 #
 # Exit code is non-zero if the server does not start within STARTUP_TIMEOUT
 # seconds, does not stop within STOP_TIMEOUT seconds, or an assertion fails.
@@ -64,14 +66,16 @@ READY_NS=$(date +%s%N)
 echo "startup wall time: $(( (READY_NS - START_NS) / 1000000 )) ms (process start until 'Done' line, 0.2 s polling)"
 grep -E 'Done \(' server.log | tail -n 1
 
-declare -a EXPECT=() REJECT=()
+declare -a EXPECT=() REJECT=() COUNT=()
 if [ -n "$COMMANDS" ]; then
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
       ''|'#'*) ;;
       '@expect '*) EXPECT+=("${line#@expect }") ;;
       '@reject '*) REJECT+=("${line#@reject }") ;;
+      '@count '*) COUNT+=("${line#@count }") ;;
       '@sleep '*) sleep "${line#@sleep }" ;;
+      '@shell '*) echo "$ ${line#@shell }"; bash -c "${line#@shell }" ;;
       *) echo "> $line"; send "$line"; sleep 1 ;;
     esac
   done < "$COMMANDS"
@@ -94,6 +98,11 @@ for re in "${EXPECT[@]+"${EXPECT[@]}"}"; do
 done
 for re in "${REJECT[@]+"${REJECT[@]}"}"; do
   if grep -qE -- "$re" server.log; then echo "::error::unexpected log line: $re"; grep -nE -- "$re" server.log | head -n 20; status=1; else echo "ok   reject: $re"; fi
+done
+for spec in "${COUNT[@]+"${COUNT[@]}"}"; do
+  want="${spec%% *}"; re="${spec#* }"
+  got=$(grep -cE -- "$re" server.log || true)
+  if [ "$got" -eq "$want" ]; then echo "ok   count $want: $re"; else echo "::error::expected $want lines matching '$re' but found $got"; status=1; fi
 done
 if [ "$status" -ne 0 ]; then tail -n 300 server.log; fi
 exit "$status"

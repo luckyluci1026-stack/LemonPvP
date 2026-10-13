@@ -13,3 +13,5 @@ verify-integrity: true
 YAML
 cp "$MODULE_DIR/example-greeter.jar" "$MODULE_DIR/example-greeter.jar.sha256" "$WORK/lemon/modules/"
 (cd "$WORK/lemon/modules" && sha256sum -c example-greeter.jar.sha256)
+# Second build of the same module with a different version for the hot-swap test.
+python3 "$(dirname "$0")/make-module-variant.py" "$MODULE_DIR/example-greeter.jar" "$WORK/variant/example-greeter.jar" 1.0.1

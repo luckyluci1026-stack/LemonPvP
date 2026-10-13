@@ -14,6 +14,12 @@ fork module config example-greeter
 fork module reload example-greeter
 @sleep 5
 greet
+# Hot swap to a new version of the module while the server runs.
+@shell cp variant/example-greeter.jar variant/example-greeter.jar.sha256 lemon/modules/
+fork module reload example-greeter
+@sleep 5
+fork module list
+@sleep 3
 fork module disable example-greeter
 @sleep 3
 greet
@@ -27,9 +33,13 @@ fork status
 @expect OK validate example-greeter
 @expect OK enable example-greeter
 @expect Example greeter enabled
-@expect Hello CONSOLE!
+@expect Hello.{0,24}CONSOLE
+# /greet answered after enable and after the first reload, but not after disable (command removed)
+@count 2 Hello.{0,24}CONSOLE
 @expect OK config example-greeter: configuration applied
-@expect OK reload example-greeter
+@expect OK reload example-greeter: switched example-greeter@1.0.0 -> example-greeter@1.0.0
+@expect OK reload example-greeter: switched example-greeter@1.0.0 -> example-greeter@1.0.1
+@expect example-greeter 1.0.1 - ENABLED
 @expect OK disable example-greeter
 @expect Example greeter disabled
 @expect OK unload example-greeter
