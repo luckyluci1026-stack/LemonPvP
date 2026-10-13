@@ -144,7 +144,27 @@ def server_build_edits(text: str, baseline: bool) -> str:
 # --------------------------------------------------------------------------- #
 # paper-api/build.gradle.kts
 # --------------------------------------------------------------------------- #
+def remove_checkstyle(text: str) -> str:
+    """Paper >= 26.2 lints its API with a checkstyle setup that lives in the separate
+    ':paper-checkstyle' project, which does not exist inside a fork. The fork does not
+    change Paper's API sources, so the upstream lint is dropped from the fork API build."""
+    if "checkstyle" not in text.lower():
+        return text
+    text = replace_once(text, "import io.papermc.paperweight.checkstyle.JavadocTag\n", "", "checkstyle import")
+    text = replace_once(text, '    id("io.papermc.paperweight.paper-checkstyle")\n', "", "checkstyle plugin")
+    start = text.find("val projectCustomJavadocTags = setOf(")
+    end = text.find("}\n", text.find("paperCheckstyle {"))
+    if start < 0 or end < 0:
+        raise PatchError("checkstyle configuration block not found")
+    text = text[:start] + text[end + 2:].lstrip("\n")
+    text = replace_once(text, '\n    // checkstyle\n    checkstyle(project(":paper-checkstyle"))\n', "\n", "checkstyle dependency")
+    if "checkstyle" in text.lower():
+        raise PatchError("unhandled checkstyle reference left in paper-api/build.gradle.kts")
+    return text
+
+
 def api_build_edits(text: str) -> str:
+    text = remove_checkstyle(text)
     text = replace_once(
         text,
         'val generatedDir: java.nio.file.Path = layout.projectDirectory.dir("src/generated/java").asFile.toPath()',
