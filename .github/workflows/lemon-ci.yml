@@ -16,6 +16,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Platform-neutral runtime (API + core) incl. lifecycle integration tests.
+  runtime:
+    name: Runtime core (JDK 21)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and test
+        run: ./gradlew build --console=plain
+      - name: Upload runtime test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-test-reports
+          path: runtime/**/build/test-results/test/*.xml
+          if-no-files-found: ignore
+
   # One independent paperweight fork build per supported Minecraft version.
   # Each version uses the JDK and paperweight version of its Paper upstream branch.
   fork:

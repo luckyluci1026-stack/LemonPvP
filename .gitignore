@@ -1,0 +1,11 @@
+# Gradle / build output
+.gradle/
+build/
+runtime/**/build/
+/dist/
+# IDEs
+.idea/
+*.iml
+.vscode/
+# Local test servers
+/run/
