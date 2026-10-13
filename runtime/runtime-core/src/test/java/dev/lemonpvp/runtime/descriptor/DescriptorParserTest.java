@@ -60,6 +60,16 @@ class DescriptorParserTest {
     }
 
     @Test
+    void exampleModuleDescriptorIsValid() throws Exception {
+        java.nio.file.Path file = java.nio.file.Path.of("../example-module/src/main/resources/lemon-module.yml");
+        try (java.io.InputStream in = java.nio.file.Files.newInputStream(file)) {
+            ModuleDescriptor d = DescriptorParser.parse(in, file.toString());
+            assertEquals("example-greeter", d.id());
+            assertTrue(d.has(Capability.COMMANDS));
+        }
+    }
+
+    @Test
     void reportsAllProblemsAtOnce() {
         DescriptorException e = fail("""
                 id: Bad Id

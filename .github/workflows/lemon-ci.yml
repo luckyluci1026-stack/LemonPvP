@@ -41,10 +41,58 @@ jobs:
           path: runtime/**/build/test-results/test/*.xml
           if-no-files-found: ignore
 
+  # Compiles the Paper adapter and the example module against the public Paper API of
+  # each version and packages the example module (jar + sha256) for the server tests.
+  paper-modules:
+    name: Paper adapter + example module ${{ matrix.mc }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mc: '1.21.11'
+            java: '21'
+            paper-api: '1.21.11-R0.1-SNAPSHOT'
+          - mc: '26.1.2'
+            java: '25'
+            paper-api: '26.1.2.build.+'
+          - mc: '26.2'
+            java: '25'
+            paper-api: '26.2.build.+'
+          - mc: '26.3'
+            java: '25'
+            paper-api: '26.3.build.+'
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compile adapter and build example module
+        run: >
+          ./gradlew :runtime-paper:compileJava :example-module:assemble --console=plain
+          -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
+      - name: Show resolved Paper API version
+        run: ./gradlew :runtime-paper:dependencies --configuration compileClasspath -PpaperApiVersion='${{ matrix.paper-api }}' --console=plain | grep -m1 "paper-api" || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: example-module-${{ matrix.mc }}
+          path: |
+            runtime/example-module/build/libs/example-greeter.jar
+            runtime/example-module/build/libs/example-greeter.jar.sha256
+          if-no-files-found: error
+
   # One independent paperweight fork build per supported Minecraft version.
   # Each version uses the JDK and paperweight version of its Paper upstream branch.
   fork:
     name: Fork ${{ matrix.mc }}
+    needs: paper-modules
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
@@ -99,8 +147,38 @@ jobs:
           mkdir -p ../../dist && cp "$jar" "../../dist/$name"
           (cd ../../dist && sha256sum "$name" > "$name.sha256")
           echo "name=$name" >> "$GITHUB_OUTPUT"
-      - name: Server smoke test (start and stop)
-        run: ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/smoke-${{ matrix.mc }}"
+      - name: "Server test 1: hot deployment disabled (default)"
+        run: ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/disabled" ../../scripts/ci/smoke-disabled.txt
+      - name: Download example module
+        id: module
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: example-module-${{ matrix.mc }}
+          path: ${{ runner.temp }}/example-module
+      - name: Require example module
+        if: steps.module.outcome != 'success'
+        run: echo "::error::example module for ${{ matrix.mc }} is missing (paper-modules job failed)" && exit 1
+      - name: "Server test 2: hot deployment enabled, full module lifecycle"
+        run: |
+          ../../scripts/ci/prepare-runtime-server.sh "$RUNNER_TEMP/enabled" "$RUNNER_TEMP/example-module"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/enabled" ../../scripts/ci/smoke-runtime.txt
+      - name: "Server test 3: runtime activation survives a restart"
+        run: |
+          ../../scripts/ci/prepare-runtime-server.sh "$RUNNER_TEMP/persist" "$RUNNER_TEMP/example-module"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/persist" ../../scripts/ci/smoke-persist-1.txt
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/persist" ../../scripts/ci/smoke-persist-2.txt
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs-${{ matrix.mc }}
+          path: |
+            ${{ runner.temp }}/disabled/server.log
+            ${{ runner.temp }}/enabled/server.log
+            ${{ runner.temp }}/enabled/lemon/logs/audit.log
+            ${{ runner.temp }}/persist/server.log
+          if-no-files-found: ignore
       - name: Upload server jar
         uses: actions/upload-artifact@v4
         with:

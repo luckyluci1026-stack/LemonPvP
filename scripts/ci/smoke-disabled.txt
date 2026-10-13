@@ -1,0 +1,7 @@
+# Hot deployment disabled (default configuration): the server must behave like Paper.
+fork status
+@sleep 2
+@expect Hot deployment is disabled
+@reject Lemon runtime status
+@reject Hot deployment is ENABLED
+@reject Lemon-Runtime-Worker

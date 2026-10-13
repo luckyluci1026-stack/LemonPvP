@@ -1,0 +1,6 @@
+# Part 2: after a restart the runtime activation is restored (same jar digest).
+@sleep 5
+fork module list
+@sleep 3
+@expect Startup modules: 1 of 1 activated
+@expect example-greeter 1.0.0 - ENABLED

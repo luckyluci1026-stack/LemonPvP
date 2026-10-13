@@ -18,7 +18,7 @@
  
      updatingMinecraft {
          // oldPaperCommit = "d4fe85375af18bfa88f44d7c1e6a61904ae550cc"
-@@ -86,7 +97,20 @@
+@@ -86,7 +97,26 @@
      }
  }
  
@@ -27,6 +27,12 @@
 +    main {
 +        java { srcDir("../paper-server/src/main/java") }
 +        resources { srcDir("../paper-server/src/main/resources") }
++        // Lemon start - hot deployment runtime (shared sources, see docs/HOT-DEPLOYMENT.md)
++        java { srcDir("../../../runtime/runtime-api/src/main/java") }
++        java { srcDir("../../../runtime/runtime-core/src/main/java") }
++        java { srcDir("../../../runtime/runtime-paper-api/src/main/java") }
++        java { srcDir("../../../runtime/runtime-paper/src/main/java") }
++        // Lemon end - hot deployment runtime
 +    }
 +    test {
 +        java { srcDir("../paper-server/src/test/java") }
@@ -40,7 +46,7 @@
  configurations.named(log4jPlugins.compileClasspathConfigurationName) {
      extendsFrom(configurations.compileClasspath.get())
  }
-@@ -109,7 +133,7 @@
+@@ -109,7 +139,7 @@
  }
  
  dependencies {
@@ -49,7 +55,7 @@
      implementation("ca.spottedleaf:leafpile:1.2.0")
      implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
      implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21
-@@ -177,8 +201,8 @@
+@@ -177,8 +207,8 @@
              "Specification-Title" to "Paper",
              "Specification-Version" to project.version,
              "Specification-Vendor" to "Paper Team",
@@ -60,7 +66,7 @@
              "Build-Number" to (build ?: ""),
              "Build-Time" to buildTime.toString(),
              "Git-Branch" to gitBranch,
-@@ -246,7 +270,7 @@
+@@ -246,7 +276,7 @@
      jvmArgumentProviders.add(provider)
  }
  

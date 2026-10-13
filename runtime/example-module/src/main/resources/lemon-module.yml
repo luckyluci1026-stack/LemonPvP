@@ -1,0 +1,15 @@
+id: example-greeter
+version: 1.0.0
+name: Example Greeter
+description: Greets joining players and provides /greet. Demonstrates events, commands, tasks and config reload.
+authors: [Lemon contributors]
+main: dev.lemonpvp.example.greeter.GreeterModule
+api-version: 1
+minecraft-versions: ["1.21.11", "26.*"]
+capabilities: [events, commands, scheduler]
+permissions:
+  example-greeter.use:
+    description: Use /greet
+    default: true
+load-order: 0
+resources: [config.yml]
