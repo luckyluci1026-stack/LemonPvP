@@ -33,6 +33,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build and test
         run: ./gradlew build --console=plain
+      - name: Test summary
+        if: always()
+        run: python3 ../scripts/ci/junit-summary.py .
       - name: Upload runtime test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -133,8 +136,13 @@ jobs:
         run: ./gradlew tasks --all --console=plain | grep -iE 'patch|paperclip|bundler|rundev|fixup' || true
       - name: Apply patches
         run: set -o pipefail; ./gradlew applyAllPatches --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+      - name: List server patch tasks
+        run: ./gradlew :lemon-server:tasks --all --console=plain | grep -iE 'patch|paperclip|bundler|rundev|fixup' || true
       - name: Build and test (includes Paper's own test suite)
         run: set -o pipefail; ./gradlew build --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+      - name: Paper test summary
+        if: always()
+        run: python3 ../../scripts/ci/junit-summary.py .
       - name: Create paperclip jar
         run: set -o pipefail; ./gradlew ${{ matrix.paperclip-task }} --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
       - name: Locate artifact

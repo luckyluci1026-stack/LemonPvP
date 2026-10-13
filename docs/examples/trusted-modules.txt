@@ -1,0 +1,4 @@
+# Allow-List für trusted-hashes-file: ein SHA-256 je Zeile, optional gefolgt von einem Kommentar.
+# Nur JARs mit hier gelisteten Digests werden geladen. Erzeugen: sha256sum <jar>
+# Die folgende Zeile ist ein Platzhalter und entspricht keinem echten Modul:
+0000000000000000000000000000000000000000000000000000000000000000 placeholder 0.0.0

@@ -70,6 +70,16 @@ class DescriptorParserTest {
     }
 
     @Test
+    void documentationExampleDescriptorIsValid() throws Exception {
+        java.nio.file.Path file = java.nio.file.Path.of("../../docs/examples/lemon-module.yml");
+        try (java.io.InputStream in = java.nio.file.Files.newInputStream(file)) {
+            ModuleDescriptor d = DescriptorParser.parse(in, file.toString());
+            assertEquals("lobby-tools", d.id());
+            assertTrue(d.dependencies().getFirst().optional());
+        }
+    }
+
+    @Test
     void reportsAllProblemsAtOnce() {
         DescriptorException e = fail("""
                 id: Bad Id

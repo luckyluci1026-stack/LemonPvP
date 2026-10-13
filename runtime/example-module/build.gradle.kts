@@ -1,3 +1,5 @@
+import java.security.MessageDigest
+
 // Example runtime module. Build: ./gradlew :example-module:jar -PpaperApiVersion=<version>
 // The resulting jar goes into <server>/lemon/modules/ together with a .sha256 file
 // (task :example-module:sha256).
@@ -23,8 +25,8 @@ val sha256 by tasks.registering {
     outputs.file(out)
     doLast {
         val file = jarFile.get().asFile
-        val digest = java.security.MessageDigest.getInstance("SHA-256").digest(file.readBytes())
-        val hex = digest.joinToString("") { "%02x".format(it) }
+        val digest = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
+        val hex = digest.joinToString("") { b -> "%02x".format(b) }
         out.get().asFile.writeText("$hex  ${file.name}\n")
     }
 }

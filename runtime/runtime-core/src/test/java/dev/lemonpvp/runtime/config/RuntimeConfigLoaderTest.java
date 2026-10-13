@@ -31,6 +31,14 @@ class RuntimeConfigLoaderTest {
     }
 
     @Test
+    void documentationExampleConfigIsValid() {
+        RuntimeConfigLoader.Result r = RuntimeConfigLoader.load(Path.of("../../docs/examples/lemon-runtime.yml"));
+        assertTrue(r.valid(), r.errors().toString());
+        assertTrue(r.warnings().isEmpty(), r.warnings().toString());
+        assertTrue(r.config().enabled());
+    }
+
+    @Test
     void missingFileIsCreatedWithDefaults() throws Exception {
         Path file = this.dir.resolve("config/lemon-runtime.yml");
         RuntimeConfigLoader.Result r = RuntimeConfigLoader.loadOrCreate(file);

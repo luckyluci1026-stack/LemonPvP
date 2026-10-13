@@ -16,6 +16,7 @@ set -euo pipefail
 JAR="$(realpath "$1")"
 WORK="$2"
 COMMANDS="${3:-}"
+if [ -n "$COMMANDS" ]; then COMMANDS="$(realpath "$COMMANDS")"; fi
 STARTUP_TIMEOUT="${STARTUP_TIMEOUT:-600}"
 STOP_TIMEOUT="${STOP_TIMEOUT:-180}"
 JAVA_BIN="${JAVA_BIN:-java}"
@@ -49,18 +50,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
-waited=0
+DEADLINE=$((SECONDS + STARTUP_TIMEOUT))
 until grep -qE 'Done \([0-9.,]+s\)!' server.log; do
   if ! kill -0 "$PID" 2>/dev/null; then
     echo "::error::server process exited during startup"; tail -n 200 server.log; exit 1
   fi
-  if [ "$waited" -ge "$STARTUP_TIMEOUT" ]; then
+  if [ "$SECONDS" -ge "$DEADLINE" ]; then
     echo "::error::server did not start within ${STARTUP_TIMEOUT}s"; tail -n 200 server.log; exit 1
   fi
-  sleep 2; waited=$((waited + 2))
+  sleep 0.2
 done
 READY_NS=$(date +%s%N)
-echo "startup wall time: $(( (READY_NS - START_NS) / 1000000 )) ms (process start until 'Done' line)"
+echo "startup wall time: $(( (READY_NS - START_NS) / 1000000 )) ms (process start until 'Done' line, 0.2 s polling)"
 grep -E 'Done \(' server.log | tail -n 1
 
 declare -a EXPECT=() REJECT=()

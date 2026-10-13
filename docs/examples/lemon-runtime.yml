@@ -1,0 +1,16 @@
+# Beispiel: Testserver mit Hot-Deployment.
+# Für Produktion: allow-runtime-deploy: false und Module über startup-modules aktivieren,
+# trusted-hashes-file verwenden. Alle Optionen: docs/HOT-DEPLOYMENT.md, Abschnitt 7.
+config-version: 1
+enabled: true
+module-directory: lemon/modules
+allow-runtime-deploy: true
+startup-modules: [example-greeter]
+persist-runtime-state: true
+verify-integrity: true
+trusted-hashes-file: lemon/trusted-modules.txt
+log-module-lifecycle: true
+max-module-count: 32
+operation-timeout-seconds: 30
+allowed-api-versions: [1]
+allow-server-internals: false

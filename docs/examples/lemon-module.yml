@@ -1,0 +1,24 @@
+# Beispiel-Deskriptor (liegt als lemon-module.yml im Wurzelverzeichnis der Modul-JAR).
+# Vollständige Feldbeschreibung: docs/MODULE-FORMAT.md
+id: lobby-tools
+version: 2.1.0
+name: Lobby Tools
+description: Lobby-Funktionen (Begrüßung, Spawn-Regeln); optional mit Proxy-Adapter.
+authors: [Network Team]
+main: org.example.lobby.LobbyTools
+api-version: 1
+minecraft-versions: ["1.21.11", "26.*"]
+capabilities: [events, commands, scheduler]
+permissions:
+  lobby-tools.admin:
+    description: Lobby-Einstellungen ändern
+    default: op
+  lobby-tools.spawn:
+    description: /spawn verwenden
+    default: true
+dependencies:
+  - id: proxy-adapter          # Netzwerkfunktion als optionaler Adapter
+    version: "^1.0.0"
+    optional: true
+load-order: 10
+resources: [config.yml, messages.yml]

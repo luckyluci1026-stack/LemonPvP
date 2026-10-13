@@ -1,0 +1,18 @@
+# Beispiel: lemon/module-data/lobby-tools/config.yml
+# Änderungen ohne Neustart übernehmen: /fork module config lobby-tools
+# Ungültige Werte werden abgelehnt; die letzte gültige Konfiguration bleibt aktiv.
+features:
+  double-jump: true          # Feature-Flag
+  scoreboard: false
+spawn:
+  world: world
+  x: 0.5
+  y: 64
+  z: 0.5
+schedule:
+  # zeitgesteuerte Aktivierung, vom laufenden Modul ausgewertet
+  event-start: "2026-12-24T18:00:00Z"
+  event-end: "2026-12-26T23:59:59Z"
+messages:
+  join: "<green>Willkommen, <player>!</green>"
+  event-active: "<gold>Das Winter-Event läuft!</gold>"
