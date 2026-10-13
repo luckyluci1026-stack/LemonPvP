@@ -14,3 +14,5 @@ fork module list
 @expect Example greeter disabled
 @reject Unhandled exception in
 @reject runtime failed to start
+# runtime and module loggers must not show up as "[null]" in Paper's log layout
+@reject \[null\]

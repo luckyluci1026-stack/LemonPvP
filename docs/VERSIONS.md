@@ -14,7 +14,7 @@ Stand: 2026-10-13. Quellen und Herleitung: [`ANALYSIS.md`](ANALYSIS.md), Abschni
 | Paperclip-Task | `createMojmapPaperclipJar` | `createPaperclipJar` | `createPaperclipJar` | `createPaperclipJar` |
 | Adventure im Server | 4.26.1 | 4.26.1 | 5.2.0 | 5.2.0 |
 | Status | **unterstützt** | **unterstützt** | **unterstützt** | **in Arbeit** (baut und läuft, aber Upstream ohne Release-Tag) |
-| Tests | siehe unten | siehe unten | siehe unten | siehe unten |
+| Tests (CI-Lauf #7) | Paper-Suite 9436/0 Fehler; Server-Tests 1–3 ✔ | Paper-Suite 9512/0 Fehler; Server-Tests 1–3 ✔ | Lauf #6: Paper-Suite + Server-Test 1 ✔; Lauf #7: paperweight-Fehler vor dem Build (siehe TESTING.md) | Paper-Suite 10548/0 Fehler; Server-Tests 1–3 ✔ |
 
 Eine Paper-Version „26.1“ ohne Patch-Suffix gibt es upstream nicht als eigenen Branch/Tag;
 Lemon unterstützt deshalb 26.1.2. Server-JARs sind je Version getrennt; eine JAR für
@@ -22,4 +22,4 @@ mehrere Minecraft-Versionen gibt es nicht und ist nicht vorgesehen.
 
 ## Testergebnisse je Version
 
-Siehe unten „CI-Nachweise“ (wird mit konkreter Lauf-ID gepflegt).
+Details, Lauf-IDs und Startzeiten: [`TESTING.md`](TESTING.md), Abschnitt „Ergebnisse aus GitHub Actions“.

@@ -47,3 +47,5 @@ fork status
 @reject FAILED (enable|reload|disable|unload|config|validate)
 @reject Unhandled exception in
 @reject restart is recommended
+# runtime and module loggers must not show up as "[null]" in Paper's log layout
+@reject \[null\]

@@ -53,6 +53,7 @@
 | `generate_patches.py`: „anchor for … found 0 times“ | Upstream hat sich geändert → `docs/UPSTREAM-SYNC.md` |
 | `Project with path ':paper-checkstyle' could not be found` | Patches mit aktuellem Generator neu erzeugen (26.2+) |
 | `Unsupported class file major version` | falsches JDK: 1.21.11 → 21, 26.x → 25 |
+| `NoSuchFileException …/.git/objects/xx` in `run<Fork>Setup` | Git hat während des Kopierens im Hintergrund `gc --auto` ausgeführt; Befehl wiederholen. Die CI setzt dafür `gc.auto 0` und `maintenance.auto false` |
 
 Logs und Audit: Server-Log (Präfix `[Lemon]`), `lemon/logs/audit.log`,
 `/fork module diagnostics <id>`.

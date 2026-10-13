@@ -21,7 +21,9 @@ geteilte VM, Temurin-JDK der jeweiligen Version, `-Xms1G -Xmx2G`, frische Welt,
 Runnern normal; die Zahlen eignen sich nur für eine grobe Einordnung, **nicht** als Benchmark.
 
 Die konkreten Werte stehen – mit Lauf-ID und Version – in [`docs/TESTING.md`](TESTING.md),
-Abschnitt „Server-Starttests“, weil sie aus denselben CI-Läufen stammen.
+Abschnitt „Server-Starttests“, weil sie aus denselben CI-Läufen stammen. Kurzfassung: Mit
+Einzelmessungen auf geteilten Runnern ist kein Startzeit-Unterschied zwischen deaktivierter und
+aktivierter Runtime erkennbar; nachgewiesen ist er damit weder in die eine noch in die andere Richtung.
 
 Nicht gemessen wurden: Tick-Zeiten (MSPT) unter Last, Speicherverbrauch über längere Zeit
 und die Kosten vieler gleichzeitiger Module. Dafür wären reproduzierbare Lastszenarien

@@ -51,15 +51,51 @@ Paper-Builds und Server-Tests konnten lokal nicht ausgeführt werden (Netzwerk, 
 
 ## Ergebnisse aus GitHub Actions
 
-Siehe Abschnitt am Ende dieser Datei (wird mit Lauf-ID gepflegt).
+Lauf **#7** (Run-ID `38410473981`, Commit `b635b6b`), Runner `ubuntu-latest`. Werte sind aus den
+Job-Logs abgelesen, nicht geschätzt.
+
+| Prüfung | 1.21.11 | 26.1.2 | 26.2 | 26.3 |
+|---|---|---|---|---|
+| Runtime-Kern (JDK 21) | 53 Tests, 0 Fehler (versionsunabhängig) | ← | ← | ← |
+| Adapter + Beispielmodul gegen Paper-API kompiliert | ✔ | ✔ | ✔ | ✔ |
+| `applyAllPatches` | ✔ | ✔ | ✘ ¹ | ✔ |
+| `build` inkl. Paper-Testsuite (API + Server) | 9436 Tests, 0 Fehler, 24 übersprungen | 9512 Tests, 0 Fehler, 24 übersprungen | – ¹ | 10548 Tests, 0 Fehler, 88 übersprungen |
+| Paperclip-JAR | ✔ (`createMojmapPaperclipJar`) | ✔ | – ¹ | ✔ |
+| Server-Test 1 (Runtime aus) | ✔ | ✔ | – ¹ | ✔ |
+| Server-Test 2 (Lebenszyklus, Hot-Swap 1.0.0 → 1.0.1, Befehl nach `disable` entfernt) | ✔ | ✔ | – ¹ | ✔ |
+| Server-Test 3 (Neustart-Persistenz, Paper-`/reload` mit aktivem Modul) | ✔ | ✔ | – ¹ | ✔ |
+
+¹ 26.2 scheiterte in Lauf #7 innerhalb von paperweight (`runLemonSetup`:
+`NoSuchFileException …/.git/objects/18`), bevor Lemon-Code gebaut wurde; die Dateien unter
+`versions/26.2` waren gegenüber Lauf #6 unverändert, in dem derselbe Schritt, der Build mit
+Paper-Testsuite, die Paperclip-JAR und Server-Test 1 erfolgreich waren. Ursache vermutlich ein
+Hintergrund-`git gc`; die CI deaktiviert das seitdem. Bestätigung steht im nächsten Lauf aus.
+
+Lauf #6 (Run-ID `38408355569`, Commit `282b208`) hatte für **alle vier** Versionen Patches,
+Build mit Paper-Testsuite, Paperclip und Server-Test 1 erfolgreich; Server-Test 2 schlug dort
+überall fehl, weil die Konsole `lemon.runtime.module.manage` nicht hatte (behoben in `b635b6b`).
+
+### Server-Starttests (Lauf #7)
+
+Wanduhrzeit = Prozessstart bis `Done`-Zeile (0,2 s Abfrageintervall); `Done (…)` = Papers eigene
+Angabe. Jeweils **eine** Messung auf einer geteilten CI-VM, frische Welt außer beim Neustart.
+
+| Version | Runtime aus (Test 1) | Runtime an, 1 Modul installiert (Test 2) | Neustart mit wiederhergestelltem Modul (Test 3, Teil 2, Welt vorhanden) |
+|---|---|---|---|
+| 1.21.11 | 21074 ms / `Done (17.978s)` | 19462 ms / `Done (16.521s)` | 9195 ms / `Done (8.831s)` |
+| 26.1.2 | 18330 ms / `Done (15.445s)` | 17725 ms / `Done (14.944s)` | 7773 ms / `Done (7.321s)` |
+| 26.3 | 20669 ms / `Done (16.706s)` | 17604 ms / `Done (13.925s)` | 10288 ms / `Done (9.661s)` |
+
+Die Unterschiede zwischen „aus“ und „an“ liegen innerhalb der Streuung (Test 2 startete jeweils
+nach Test 1 auf demselben Runner, mit warmem Dateisystem-Cache). Ein Startzeit-Overhead der
+Runtime ist mit diesen Einzelmessungen **weder nachgewiesen noch ausgeschlossen**.
 
 ## Noch nicht automatisiert
 
 | Test | Grund |
 |---|---|
 | Echte Spieler-Events (Join-Nachricht des Beispielmoduls, Inventar-GUIs) auf dem Server | erfordert einen Test-Client/Bot; derzeit nur mit simuliertem Event-Bus (`TestPlatform`) getestet |
-| `/reload` von Paper mit aktiven Modulen | nicht in den Server-Tests enthalten |
-| Hot-Swap und Rollback auf dem echten Server mit fehlerhafter zweiter Version | nur in Ebene 1 getestet; Server-Test 2 testet `reload` mit derselben Version |
+| Rollback auf dem echten Server mit fehlerhafter zweiter Version | nur in Ebene 1 getestet; Server-Test 2 testet den erfolgreichen Wechsel 1.0.0 → 1.0.1 |
 | Lasttests / MSPT, Langzeit-Speicherverhalten | keine reproduzierbare Lastumgebung |
 | Kombination mit Velocity/BungeeCord, ViaVersion, Geyser/Floodgate, LuckPerms | nicht getestet (`docs/COMPATIBILITY.md`) |
 | Windows/macOS | CI läuft nur auf Linux |

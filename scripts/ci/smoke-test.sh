@@ -104,5 +104,10 @@ for spec in "${COUNT[@]+"${COUNT[@]}"}"; do
   got=$(grep -cE -- "$re" server.log || true)
   if [ "$got" -eq "$want" ]; then echo "ok   count $want: $re"; else echo "::error::expected $want lines matching '$re' but found $got"; status=1; fi
 done
-if [ "$status" -ne 0 ]; then tail -n 300 server.log; fi
+if [ "$status" -ne 0 ]; then
+  tail -n 300 server.log
+else
+  echo "--- server log after startup (max. 400 lines) ---"
+  sed -n '/Done (/,$p' server.log | head -n 400
+fi
 exit "$status"
