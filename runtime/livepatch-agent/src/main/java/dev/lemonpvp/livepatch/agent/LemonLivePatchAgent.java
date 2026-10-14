@@ -8,7 +8,7 @@ import java.lang.instrument.Instrumentation;
  *
  * <p>Start the server with {@code -javaagent:lemon-livepatch-agent.jar}. The agent
  * registers no class file transformer, changes no class and starts no thread; without an
- * explicit {@code /fork patch apply ... confirm} nothing is redefined. The jar declares
+ * explicit {@code /fork live update <patch> confirm} nothing is redefined. The jar declares
  * {@code Can-Redefine-Classes: true} and nothing else.</p>
  *
  * <p>Security: any code running in the server process (plugins, modules) can look this
@@ -43,7 +43,7 @@ public final class LemonLivePatchAgent {
         instrumentation = inst;
         loadedBy = how;
         System.err.println("[Lemon] live-patch agent " + VERSION + " loaded (" + how + "); class redefinition is"
-                + (inst.isRedefineClassesSupported() ? " available to /fork patch" : " NOT supported by this JVM"));
+                + (inst.isRedefineClassesSupported() ? " available to /fork live" : " NOT supported by this JVM"));
     }
 
     /** @return the instrumentation instance, or {@code null} if the agent was not started by the JVM */

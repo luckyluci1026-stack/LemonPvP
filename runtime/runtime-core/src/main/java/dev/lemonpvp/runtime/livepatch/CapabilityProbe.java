@@ -15,7 +15,7 @@ import java.util.Map;
  * briefly). On JVMs with enhanced redefinition (e.g. JetBrains Runtime with
  * {@code -XX:+AllowEnhancedClassRedefinition}) a structural redefinition can take longer
  * because the JVM updates existing objects. Probes run only on explicit request
- * ({@code /fork patch capabilities probe}) or when a patch needs a capability that has not
+ * ({@code /fork live patch probe}) or when a patch needs a capability that has not
  * been probed yet.</p>
  */
 public final class CapabilityProbe {

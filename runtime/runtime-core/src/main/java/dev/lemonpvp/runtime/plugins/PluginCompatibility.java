@@ -49,13 +49,15 @@ public final class PluginCompatibility {
     }
 
     /**
-     * @param candidate inspected jar
-     * @param installed currently installed plugin with the same name, if any
-     * @param all       every installed plugin
-     * @param host      server facts
+     * @param candidate    inspected jar
+     * @param installed    currently installed plugin with the same name, if any
+     * @param installedJar inspection of the installed plugin's jar, if found
+     * @param all          every installed plugin
+     * @param host         server facts
      * @return the verdict
      */
-    public static Verdict evaluate(PluginJar candidate, Optional<InstalledPlugin> installed, List<InstalledPlugin> all, Host host) {
+    public static Verdict evaluate(PluginJar candidate, Optional<InstalledPlugin> installed, Optional<PluginJar> installedJar,
+                                   List<InstalledPlugin> all, Host host) {
         List<String> incompatible = new ArrayList<>(candidate.problems());
         List<String> restart = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
@@ -109,6 +111,10 @@ public final class PluginCompatibility {
             }
             if (!dependents.isEmpty()) {
                 restart.add("enabled plugins depend on " + old.name() + " and may hold references to its classes: " + dependents);
+            }
+            if (installedJar.isPresent() && !installedJar.get().lifecycleApiClasses().isEmpty()) {
+                restart.add("the installed version used Paper's lifecycle API (e.g. Brigadier commands registered at start) in "
+                        + installedJar.get().lifecycleApiClasses() + "; those registrations cannot be removed while the server runs");
             }
             if (host.unloadProblem() != null) {
                 restart.add("this server cannot unload plugins: " + host.unloadProblem());

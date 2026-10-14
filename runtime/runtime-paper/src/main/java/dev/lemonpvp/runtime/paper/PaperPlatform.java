@@ -91,6 +91,16 @@ final class PaperPlatform implements RuntimePlatform {
     }
 
     @Override
+    public java.util.Optional<dev.lemonpvp.runtime.plugins.PluginHost> pluginHost() {
+        return java.util.Optional.of(new PaperPluginHost(this.server));
+    }
+
+    @Override
+    public String serverBuildId() {
+        return dev.lemonpvp.runtime.livepatch.BuildIdentity.ofCodeSource(this.server.getClass());
+    }
+
+    @Override
     public void commandsChanged() {
         for (Player player : this.server.getOnlinePlayers()) {
             player.updateCommands();

@@ -118,7 +118,7 @@ public final class LivePatchService {
     }
 
     /**
-     * Snapshot for {@code /fork patch status}.
+     * Snapshot for {@code /fork live patch status}.
      *
      * @param enabled          live-patching.enabled
      * @param profile          effective profile
@@ -312,7 +312,7 @@ public final class LivePatchService {
             if (p == null || p.expires().isBefore(Instant.now())) {
                 this.busy.set(false);
                 return CompletableFuture.completedFuture(rejected(null, "no plan of " + id + " is waiting for confirmation by "
-                        + actor + " (it expired or was never created); run '/fork patch apply " + id + "' first"));
+                        + actor + " (it expired or was never created); run '/fork live update " + id + "' first"));
             }
             result = onWorker(() -> prepare(id, inst, p.archiveSha256())).thenApplyAsync(prepared -> {
                 if (prepared.rejection != null) {
@@ -363,7 +363,7 @@ public final class LivePatchService {
         Path dir = this.paths.patchBackups().resolve(id).resolve(BACKUP_TIME.format(Instant.now()));
         Files.createDirectories(dir);
         StringBuilder index = new StringBuilder("# Class files that were running before live patch " + id + " (archive "
-                + archive.sha256() + ") was applied.\n# Restoring them requires '/fork patch rollback " + id
+                + archive.sha256() + ") was applied.\n# Restoring them requires '/fork live rollback " + id
                 + "' (same JVM) or a server restart (back to the jar).\n");
         for (Map.Entry<String, byte[]> e : previous.entrySet()) {
             Path file = PathGuard.resolveInside(dir, e.getKey().replace('.', '/') + ".class");
@@ -502,7 +502,7 @@ public final class LivePatchService {
             Pending p = this.pending.remove(key);
             if (p == null || p.expires().isBefore(Instant.now()) || !p.archiveSha256().equals(record.get().archiveSha256())) {
                 return rejected(null, "no rollback of " + id + " is waiting for confirmation by " + actor
-                        + "; run '/fork patch rollback " + id + "' first");
+                        + "; run '/fork live rollback " + id + "' first");
             }
             if (this.registry.version() != version) {
                 return rejected(null, "another patch was applied or rolled back meanwhile; try again");

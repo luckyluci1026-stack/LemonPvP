@@ -28,8 +28,16 @@ public final class RuntimeFixture implements AutoCloseable {
      * @param configLines extra lines for lemon-runtime.yml
      */
     public static RuntimeFixture start(Path serverDir, String... configLines) throws Exception {
+        return start(serverDir, p -> { }, configLines);
+    }
+
+    /** Like {@link #start(Path, String...)}, but lets the test configure the platform before the runtime starts. */
+    public static RuntimeFixture start(Path serverDir, java.util.function.Consumer<TestPlatform> setup, String... configLines)
+            throws Exception {
         writeConfig(serverDir, configLines);
-        RuntimeFixture f = new RuntimeFixture(serverDir, new TestPlatform());
+        TestPlatform platform = new TestPlatform();
+        setup.accept(platform);
+        RuntimeFixture f = new RuntimeFixture(serverDir, platform);
         f.runtime = LemonRuntime.bootstrap(f.platform, serverDir).orElseThrow();
         return f;
     }

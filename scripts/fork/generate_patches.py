@@ -95,6 +95,12 @@ FORK_REGISTRATION = """    gitFilePatches = false
 """
 
 
+LIVEPATCH_APPLY = """// Lemon start - core live patch tasks, see docs/LIVE-UPDATES.md
+apply(from = rootProject.file("../../scripts/livepatch/lemon-livepatch.gradle.kts"))
+// Lemon end - core live patch tasks
+"""
+
+
 def server_build_edits(text: str, baseline: bool) -> str:
     text = replace_once(text, "    gitFilePatches = false\n", FORK_REGISTRATION, "fork registration")
 
@@ -132,6 +138,9 @@ def server_build_edits(text: str, baseline: bool) -> str:
     # Honest branding: the fork must not identify itself as Paper.
     text = replace_once(text, '"Brand-Id" to "papermc:paper",', '"Brand-Id" to "lemonpvp:lemon",', "brand id")
     text = replace_once(text, '"Brand-Name" to "Paper",', '"Brand-Name" to "Lemon",', "brand name")
+    if not baseline:
+        # Gradle tasks for core live patches (livePatchBaseline, createLivePatch).
+        text = text.rstrip("\n") + "\n\n" + LIVEPATCH_APPLY
     text = replace_once(
         text,
         'val generatedDir: java.nio.file.Path = layout.projectDirectory.dir("src/generated/java").asFile.toPath()',

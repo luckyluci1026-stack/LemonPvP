@@ -75,3 +75,11 @@
  idea {
      module {
          generatedSourceDirs.add(generatedDir.toFile())
+@@ -342,3 +372,7 @@
+         }
+     }
+ }
++
++// Lemon start - core live patch tasks, see docs/LIVE-UPDATES.md
++apply(from = rootProject.file("../../scripts/livepatch/lemon-livepatch.gradle.kts"))
++// Lemon end - core live patch tasks

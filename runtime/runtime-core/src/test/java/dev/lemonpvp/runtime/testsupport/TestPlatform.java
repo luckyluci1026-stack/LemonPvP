@@ -35,6 +35,9 @@ public final class TestPlatform implements RuntimePlatform {
     private final Logger logger;
     private final List<String> logLines = new CopyOnWriteArrayList<>();
     private volatile String minecraftVersion = "26.2";
+    private volatile ClassLoader serverLoader = TestPlatform.class.getClassLoader();
+    private volatile String buildId = "unknown";
+    private volatile dev.lemonpvp.runtime.plugins.PluginHost pluginHost;
     private final Map<String, ClassLoader> plugins = new ConcurrentHashMap<>();
     private final AtomicInteger commandSyncs = new AtomicInteger();
 
@@ -78,6 +81,29 @@ public final class TestPlatform implements RuntimePlatform {
             public void close() {
             }
         });
+    }
+
+    /** Class loader that plays the role of the server class loader (target of core patches). */
+    public void serverClassLoader(ClassLoader loader) {
+        this.serverLoader = loader;
+    }
+
+    public void buildId(String id) {
+        this.buildId = id;
+    }
+
+    public void pluginHost(dev.lemonpvp.runtime.plugins.PluginHost host) {
+        this.pluginHost = host;
+    }
+
+    @Override
+    public String serverBuildId() {
+        return this.buildId;
+    }
+
+    @Override
+    public java.util.Optional<dev.lemonpvp.runtime.plugins.PluginHost> pluginHost() {
+        return java.util.Optional.ofNullable(this.pluginHost);
     }
 
     public void minecraftVersion(String v) {
@@ -172,7 +198,7 @@ public final class TestPlatform implements RuntimePlatform {
 
     @Override
     public ClassLoader serverClassLoader() {
-        return TestPlatform.class.getClassLoader();
+        return this.serverLoader;
     }
 
     @Override

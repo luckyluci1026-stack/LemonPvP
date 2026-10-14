@@ -6,7 +6,7 @@ import java.util.Locale;
  * Settings of core live patching ({@code live-patching:} section of
  * {@code lemon-runtime.yml}). Separate from module hot deployment.
  *
- * @param enabled               allow {@code /fork patch apply|rollback} (inspection works regardless)
+ * @param enabled               allow {@code /fork live update|rollback <patch>} (status works regardless)
  * @param profile               production or development rules
  * @param patchDirectory        directory with uploaded patch archives, relative to the server directory
  * @param trustedHashesFile     allow-list of approved archive digests (required in production)

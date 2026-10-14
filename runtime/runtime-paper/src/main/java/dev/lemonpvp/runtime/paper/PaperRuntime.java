@@ -23,6 +23,9 @@ final class PaperRuntime {
             new Permission(RuntimePermissions.MODULE_VIEW, "List and inspect runtime modules", PermissionDefault.OP),
             new Permission(RuntimePermissions.RELOAD, "Reload lemon-runtime.yml", PermissionDefault.FALSE),
             new Permission(RuntimePermissions.MODULE_MANAGE, "Load, enable, disable, reload and unload modules (executes code)",
+                    PermissionDefault.FALSE),
+            new Permission(RuntimePermissions.LIVE_VIEW, "Show live update status, scan and compatibility checks", PermissionDefault.OP),
+            new Permission(RuntimePermissions.LIVE_UPDATE, "Live-update plugins and modules, apply core patches (changes running code)",
                     PermissionDefault.FALSE));
 
     private final Server server;

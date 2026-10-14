@@ -172,7 +172,9 @@ public final class PluginUpdateManager {
         Optional<InstalledPlugin> installed = inspected.info() == null ? Optional.empty()
                 : all.stream().filter(p -> p.name().equalsIgnoreCase(inspected.info().name())).findFirst();
         Optional<Path> installedFile = installed.isEmpty() ? Optional.empty() : findInstalledFile(installed.get().name());
-        PluginCompatibility.Verdict verdict = PluginCompatibility.evaluate(inspected, installed, all,
+        Optional<PluginJar> installedJar = installedFile.isEmpty() || installedFile.get().equals(jar) ? Optional.empty()
+                : Optional.of(PluginJarInspector.inspect(installedFile.get(), Runtime.version().feature(), Optional.empty()));
+        PluginCompatibility.Verdict verdict = PluginCompatibility.evaluate(inspected, installed, installedJar, all,
                 new PluginCompatibility.Host(this.platform.minecraftVersion(), Runtime.version().feature(), this.host.unloadProblem()));
         if (installed.isPresent() && installedFile.isEmpty() && verdict.status() == PluginCompatibility.Status.LIVE) {
             verdict = new PluginCompatibility.Verdict(PluginCompatibility.Status.RESTART_REQUIRED,
@@ -258,10 +260,13 @@ public final class PluginUpdateManager {
         }
         String key = actor + "\u0000rollback\u0000" + name.toLowerCase(java.util.Locale.ROOT);
         CompletableFuture<Result> f = onMain(this.host::installed).thenCompose(all -> onWorker(() -> {
-            Path jar = latestBackup(name).orElseThrow(() -> new PluginUpdateException("no backup of plugin '"
-                    + PathGuard.sanitize(name) + "' in lemon/plugin-backups/ (nothing to roll back to)"));
-            return evaluate(jar, all);
+            Optional<Path> jar = latestBackup(name);
+            return jar.isEmpty() ? null : evaluate(jar.get(), all);
         })).thenCompose(c -> {
+            if (c == null) {
+                return CompletableFuture.completedFuture(rejected("no backup of plugin '" + PathGuard.sanitize(name)
+                        + "' in lemon/plugin-backups/ (nothing to roll back to; failed updates are not rollback targets)", null));
+            }
             if (c.verdict().status() != PluginCompatibility.Status.LIVE) {
                 return CompletableFuture.completedFuture(new Result(Result.Kind.REJECTED, "rollback of " + name + ": " + verdictLine(c),
                         c.verdict().reasons(), c));
@@ -298,6 +303,9 @@ public final class PluginUpdateManager {
                 stamps = s.filter(Files::isDirectory).sorted(Comparator.reverseOrder()).toList();
             }
             for (Path stamp : stamps) {
+                if (Files.exists(stamp.resolve(FAILED_MARKER))) {
+                    continue;
+                }
                 for (Path jar : jars(stamp)) {
                     if (!jar.getFileName().toString().startsWith("failed-")) {
                         return Optional.of(jar);
@@ -381,10 +389,18 @@ public final class PluginUpdateManager {
         return recover(actor, c, action, action + " of " + name + " to " + to + " failed: " + reason, true, target, backupDir, details);
     }
 
+    /** Marker in a backup directory whose update failed; rollback ignores such directories. */
+    static final String FAILED_MARKER = "UPDATE-FAILED.txt";
+
     /** Main thread: puts the previous jar back and loads it. */
     private Result recover(String actor, Candidate c, String action, String message, boolean newJarPlaced, Path newJar,
                            Path backupDir, List<String> details) {
         String name = c.jar().info().name();
+        try {
+            Files.writeString(backupDir.resolve(FAILED_MARKER), message + System.lineSeparator());
+        } catch (IOException e) {
+            details.add("could not mark the backup directory as failed: " + e.getMessage());
+        }
         try {
             if (newJarPlaced && Files.exists(newJar)) {
                 Files.move(newJar, backupDir.resolve("failed-" + newJar.getFileName()), StandardCopyOption.REPLACE_EXISTING);

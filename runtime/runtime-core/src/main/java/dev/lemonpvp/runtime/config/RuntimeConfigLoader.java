@@ -102,7 +102,7 @@ public final class RuntimeConfigLoader {
             # 'enabled: true' above. Standard JVMs only accept changed method bodies.
             # Documentation: docs/LIVE-UPDATES.md
             live-patching:
-              # Allow /fork patch apply and rollback. Listing and inspecting patches is always possible.
+              # Allow '/fork live update|rollback <patch>'. Status and capability probes work regardless.
               enabled: false
               # production:  patches must be listed in trusted-hashes-file (explicit approval).
               # development: allow-list optional, more diagnostics. Only honoured if the JVM was
@@ -112,7 +112,7 @@ public final class RuntimeConfigLoader {
               patch-directory: lemon/patches/inbox
               # Allow-list (one SHA-256 per line) of approved patch archives. Required in production.
               trusted-hashes-file: ""
-              # How long a '/fork patch apply <id>' plan waits for '/fork patch apply <id> confirm'.
+              # How long '/fork live update <patch>' waits for '/fork live update <patch> confirm'.
               confirm-timeout-seconds: 120
             """;
 
