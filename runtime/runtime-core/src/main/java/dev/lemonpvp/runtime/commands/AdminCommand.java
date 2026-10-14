@@ -20,9 +20,10 @@ import java.util.function.BiFunction;
  *
  * <pre>
  * /fork info | version | status | reload
+ * /fork live ...                      (see {@link LiveCommands}: modules, plugins, core patches)
  * /fork module list
  * /fork module info|validate|diagnostics &lt;id&gt;
- * /fork module load|enable|disable|reload|unload|config &lt;id&gt;
+ * /fork module load|enable|disable|reload|unload|config|remove &lt;id&gt;
  * </pre>
  *
  * <p>Every argument is validated before use; module ids must match
@@ -31,17 +32,19 @@ import java.util.function.BiFunction;
  */
 public final class AdminCommand {
 
-    private static final List<String> TOP = List.of("info", "version", "status", "reload", "module");
+    private static final List<String> TOP = List.of("info", "version", "status", "reload", "live", "module");
     private static final List<String> MODULE_VIEW = List.of("list", "info", "validate", "diagnostics");
-    private static final List<String> MODULE_MANAGE = List.of("load", "enable", "disable", "reload", "unload", "config");
+    private static final List<String> MODULE_MANAGE = List.of("load", "enable", "disable", "reload", "unload", "config", "remove");
 
     private final LemonRuntime runtime;
     private final Reports reports;
+    private final LiveCommands live;
 
     /** @param runtime running runtime */
     public AdminCommand(LemonRuntime runtime) {
         this.runtime = runtime;
         this.reports = new Reports(runtime);
+        this.live = new LiveCommands(runtime, this.reports);
     }
 
     /**
@@ -65,6 +68,7 @@ public final class AdminCommand {
             case "version" -> this.reports.version(actor);
             case "status" -> this.reports.status(actor);
             case "reload" -> reloadRuntimeConfig(actor);
+            case "live" -> this.live.execute(actor, args);
             case "module" -> module(actor, args);
             default -> usage(actor);
         }
@@ -121,6 +125,7 @@ public final class AdminCommand {
             case "reload" -> result(actor, this.runtime.modules().reload(who, id));
             case "unload" -> result(actor, this.runtime.modules().unload(who, id));
             case "config" -> result(actor, this.runtime.modules().reloadConfig(who, id));
+            case "remove" -> result(actor, this.runtime.modules().remove(who, id));
             default -> usage(actor);
         }
     }
@@ -183,6 +188,9 @@ public final class AdminCommand {
     private void usage(CommandActor actor) {
         actor.send(MessageLevel.HEADER, "Lemon runtime commands");
         actor.send(MessageLevel.DETAIL, "/fork info | version | status");
+        if (actor.hasPermission(RuntimePermissions.LIVE_VIEW)) {
+            actor.send(MessageLevel.DETAIL, "/fork live ...  - live updates of modules, plugins and core patches (/fork live for help)");
+        }
         if (actor.hasPermission(RuntimePermissions.RELOAD)) {
             actor.send(MessageLevel.DETAIL, "/fork reload  - reload lemon-runtime.yml");
         }
@@ -190,7 +198,7 @@ public final class AdminCommand {
             actor.send(MessageLevel.DETAIL, "/fork module list | info <id> | validate <id> | diagnostics <id>");
         }
         if (actor.hasPermission(RuntimePermissions.MODULE_MANAGE)) {
-            actor.send(MessageLevel.DETAIL, "/fork module load | enable | disable | reload | unload | config <id>");
+            actor.send(MessageLevel.DETAIL, "/fork module load | enable | disable | reload | unload | config | remove <id>");
         }
     }
 
@@ -207,6 +215,9 @@ public final class AdminCommand {
         }
         if (args.length <= 1) {
             return filter(TOP, args.length == 0 ? "" : args[0]);
+        }
+        if (args[0].equalsIgnoreCase("live")) {
+            return actor.hasPermission(RuntimePermissions.LIVE_VIEW) ? this.live.complete(actor, args) : List.of();
         }
         if (!args[0].equalsIgnoreCase("module")) {
             return List.of();
@@ -237,7 +248,7 @@ public final class AdminCommand {
         return List.of();
     }
 
-    private static List<String> filter(List<String> options, String prefix) {
+    static List<String> filter(List<String> options, String prefix) {
         String p = prefix.toLowerCase(Locale.ROOT);
         return options.stream().filter(o -> o.startsWith(p)).toList();
     }

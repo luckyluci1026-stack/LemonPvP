@@ -5,6 +5,7 @@ import dev.lemonpvp.runtime.api.ModuleDependency;
 import dev.lemonpvp.runtime.api.ModuleDescriptor;
 import dev.lemonpvp.runtime.api.PermissionDeclaration;
 import dev.lemonpvp.runtime.api.PermissionDeclaration.PermissionDefault;
+import dev.lemonpvp.runtime.api.RuntimeApi;
 import dev.lemonpvp.runtime.config.YamlSupport;
 import dev.lemonpvp.runtime.security.PathGuard;
 import java.io.InputStream;
@@ -102,14 +103,15 @@ public final class DescriptorParser {
             }
         }
 
-        int apiVersion = integer(raw, "api-version", problems, true, -1);
+        // Optional with defaults, so a minimal descriptor only needs id, version and main.
+        int apiVersion = integer(raw, "api-version", problems, false, RuntimeApi.API_VERSION);
         if (raw.containsKey("api-version") && apiVersion < 1) {
             problems.add("api-version must be >= 1");
         }
 
-        List<String> mcVersions = stringList(raw, "minecraft-versions", problems);
+        List<String> mcVersions = raw.containsKey("minecraft-versions") ? stringList(raw, "minecraft-versions", problems) : List.of("*");
         if (mcVersions.isEmpty()) {
-            problems.add("minecraft-versions must list at least one pattern (use \"*\" to accept every version)");
+            problems.add("minecraft-versions must list at least one pattern (or be omitted to accept every version)");
         }
         for (String p : mcVersions) {
             if (!MinecraftVersionMatcher.isValidPattern(p)) {
@@ -117,7 +119,8 @@ public final class DescriptorParser {
             }
         }
 
-        Set<Capability> capabilities = EnumSet.noneOf(Capability.class);
+        // Omitted: every capability. A listed set restricts the module to those capabilities.
+        Set<Capability> capabilities = raw.containsKey("capabilities") ? EnumSet.noneOf(Capability.class) : EnumSet.allOf(Capability.class);
         for (String c : stringList(raw, "capabilities", problems)) {
             Capability.byKey(c.toLowerCase(Locale.ROOT)).ifPresentOrElse(capabilities::add,
                     () -> problems.add("unknown capability '" + PathGuard.sanitize(c) + "'"));

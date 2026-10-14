@@ -124,7 +124,7 @@ class ModuleLifecycleIntegrationTest {
 
             var scan = f.runtime.modules().scan().get();
             assertEquals(1, scan.artifacts().size(), "only the syntactically valid module is discovered");
-            assertTrue(scan.problems().stream().anyMatch(p -> p.message().contains("missing lemon-module.yml")));
+            assertTrue(scan.problems().stream().anyMatch(p -> p.message().contains("missing module.yml (or lemon-module.yml)")));
             assertTrue(scan.problems().stream().anyMatch(p -> p.file().equals("garbage.jar")));
             assertTrue(scan.problems().stream().anyMatch(p -> p.message().contains("not a semantic version")));
 

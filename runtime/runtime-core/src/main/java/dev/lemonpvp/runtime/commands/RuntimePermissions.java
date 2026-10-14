@@ -2,8 +2,9 @@ package dev.lemonpvp.runtime.commands;
 
 /**
  * Permission nodes of the {@code /fork} command. The platform registers them with these
- * defaults: {@link #BASE} and {@link #MODULE_VIEW} for operators, {@link #RELOAD} and
- * {@link #MODULE_MANAGE} for nobody (console only unless granted explicitly).
+ * defaults: {@link #BASE}, {@link #MODULE_VIEW} and {@link #LIVE_VIEW} for operators;
+ * {@link #RELOAD}, {@link #MODULE_MANAGE} and {@link #LIVE_UPDATE} for nobody (server
+ * console only unless granted explicitly).
  */
 public final class RuntimePermissions {
 
@@ -15,6 +16,10 @@ public final class RuntimePermissions {
     public static final String MODULE_VIEW = "lemon.runtime.module.view";
     /** {@code module load|enable|disable|reload|unload|config} - executes code. */
     public static final String MODULE_MANAGE = "lemon.runtime.module.manage";
+    /** {@code live status|scan|plugins|modules|check|history} and {@code live patch status}. */
+    public static final String LIVE_VIEW = "lemon.runtime.live.view";
+    /** {@code live update|rollback} and {@code live patch probe} - change running code. */
+    public static final String LIVE_UPDATE = "lemon.runtime.live.update";
 
     private RuntimePermissions() {
     }

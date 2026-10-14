@@ -2,14 +2,19 @@ package dev.lemonpvp.runtime;
 
 import dev.lemonpvp.runtime.api.RuntimeApi;
 import dev.lemonpvp.runtime.api.RuntimeInfo;
+import dev.lemonpvp.runtime.config.LivePatchConfig;
 import dev.lemonpvp.runtime.config.RuntimeConfig;
 import dev.lemonpvp.runtime.config.RuntimeConfigLoader;
 import dev.lemonpvp.runtime.lifecycle.ModuleManager;
 import dev.lemonpvp.runtime.lifecycle.RuntimeEnvironment;
+import dev.lemonpvp.runtime.livepatch.InstrumentationAccess;
+import dev.lemonpvp.runtime.livepatch.LivePatchRegistry;
+import dev.lemonpvp.runtime.livepatch.LivePatchService;
 import dev.lemonpvp.runtime.metrics.LeakDetector;
 import dev.lemonpvp.runtime.metrics.RuntimeHealth;
 import dev.lemonpvp.runtime.metrics.RuntimeMetrics;
 import dev.lemonpvp.runtime.platform.RuntimePlatform;
+import dev.lemonpvp.runtime.plugins.PluginUpdateManager;
 import dev.lemonpvp.runtime.security.AuditLog;
 import dev.lemonpvp.runtime.services.ServiceHub;
 import dev.lemonpvp.runtime.state.RuntimeStateStore;
@@ -42,6 +47,8 @@ public final class LemonRuntime {
     private final RuntimePaths paths;
     private final AtomicReference<RuntimeConfig> config;
     private final ModuleManager modules;
+    private final LivePatchService livePatches;
+    private final PluginUpdateManager pluginUpdates;
     private final RuntimeEnvironment env;
     private final Instant startedAt = Instant.now();
 
@@ -62,6 +69,10 @@ public final class LemonRuntime {
                 new AuditLog(paths.auditLog(), worker, platform.logger()), new RuntimeStateStore(paths.stateFile()),
                 new RuntimeMetrics(), new RuntimeHealth(), new LeakDetector(), new ServiceHub(), info);
         this.modules = new ModuleManager(this.env);
+        this.livePatches = new LivePatchService(this.config::get, paths, platform, worker, this.env.audit(),
+                LivePatchRegistry.INSTANCE, InstrumentationAccess.find());
+        this.pluginUpdates = platform.pluginHost().map(h -> new PluginUpdateManager(this.config::get, paths, platform, worker,
+                this.env.audit(), h)).orElse(null);
     }
 
     /**
@@ -105,7 +116,13 @@ public final class LemonRuntime {
         }
         LemonRuntime runtime = new LemonRuntime(platform, paths, config);
         platform.logger().warning("Hot deployment is ENABLED. Modules run with full server privileges; see docs/SECURITY.md."
-                + " allow-runtime-deploy=" + config.allowRuntimeDeploy() + ", verify-integrity=" + config.verifyIntegrity());
+                + " allow-runtime-deploy=" + config.allowRuntimeDeploy() + ", verify-integrity=" + config.verifyIntegrity()
+                + ", plugin-updates=" + config.pluginUpdates().enabled() + ", live-patching=" + config.livePatching().enabled());
+        if (config.livePatching().enabled()) {
+            platform.logger().info("Core live patching: " + runtime.livePatches.status().agentDetail() + "; profile "
+                    + runtime.livePatches.profile().yamlName() + (runtime.livePatches.profileNote() == null ? ""
+                    : " (" + runtime.livePatches.profileNote() + ")"));
+        }
         runtime.env.audit().record("server", "start", "*", true, "runtime " + RuntimeVersion.VERSION + " started on "
                 + platform.serverBrand() + " " + platform.minecraftVersion());
         return runtime;
@@ -136,6 +153,16 @@ public final class LemonRuntime {
     /** @return module manager */
     public ModuleManager modules() {
         return this.modules;
+    }
+
+    /** @return core live patching (always present; operations check live-patching.enabled) */
+    public LivePatchService livePatches() {
+        return this.livePatches;
+    }
+
+    /** @return live plugin updates, if the platform supports them */
+    public Optional<PluginUpdateManager> pluginUpdates() {
+        return Optional.ofNullable(this.pluginUpdates);
     }
 
     /** @return current configuration */
@@ -211,7 +238,11 @@ public final class LemonRuntime {
                     RuntimeConfig merged = new RuntimeConfig(current.enabled(), current.moduleDirectory(),
                             next.allowRuntimeDeploy(), current.startupModules(), next.persistRuntimeState(),
                             next.verifyIntegrity(), next.trustedHashesFile(), next.logModuleLifecycle(), next.maxModuleCount(),
-                            next.operationTimeout(), next.allowedApiVersions(), next.allowServerInternals());
+                            next.operationTimeout(), next.allowedApiVersions(), next.allowServerInternals(),
+                            new LivePatchConfig(current.livePatching().enabled(), current.livePatching().profile(),
+                                    current.livePatching().patchDirectory(), next.livePatching().trustedHashesFile(),
+                                    next.livePatching().confirmTimeoutSeconds()),
+                            next.pluginUpdates());
                     this.config.set(merged);
                     List<String> warnings = new ArrayList<>(result.warnings());
                     if (current.allowServerInternals() != next.allowServerInternals()) {

@@ -112,15 +112,22 @@ public final class ModuleScanner {
         }
         ModuleDescriptor descriptor;
         try (JarFile jar = new JarFile(file.toFile(), false)) {
-            ZipEntry entry = jar.getEntry(RuntimeApi.DESCRIPTOR_FILE);
+            ZipEntry full = jar.getEntry(RuntimeApi.DESCRIPTOR_FILE);
+            ZipEntry shortName = jar.getEntry(RuntimeApi.DESCRIPTOR_FILE_SHORT);
+            if (full != null && shortName != null) {
+                throw new DescriptorException("contains both " + RuntimeApi.DESCRIPTOR_FILE + " and " + RuntimeApi.DESCRIPTOR_FILE_SHORT
+                        + "; keep only one");
+            }
+            ZipEntry entry = full != null ? full : shortName;
             if (entry == null || entry.isDirectory()) {
-                throw new DescriptorException("missing " + RuntimeApi.DESCRIPTOR_FILE);
+                throw new DescriptorException("missing " + RuntimeApi.DESCRIPTOR_FILE_SHORT + " (or " + RuntimeApi.DESCRIPTOR_FILE
+                        + "); is this a module jar? Bukkit plugins belong in plugins/");
             }
             if (entry.getSize() > MAX_DESCRIPTOR_SIZE) {
-                throw new DescriptorException(RuntimeApi.DESCRIPTOR_FILE + " is larger than " + MAX_DESCRIPTOR_SIZE + " bytes");
+                throw new DescriptorException(entry.getName() + " is larger than " + MAX_DESCRIPTOR_SIZE + " bytes");
             }
             try (InputStream in = new LimitedInputStream(jar.getInputStream(entry), MAX_DESCRIPTOR_SIZE)) {
-                descriptor = DescriptorParser.parse(in, RuntimeApi.DESCRIPTOR_FILE);
+                descriptor = DescriptorParser.parse(in, entry.getName());
             }
         } catch (ZipException e) {
             throw new IOException("not a valid jar: " + e.getMessage(), e);

@@ -59,7 +59,21 @@ public final class IntegrityVerifier {
      * @throws IOException        if files cannot be read
      */
     public Verified verify(Path jar) throws IntegrityException, IOException {
-        String actual = Hashing.sha256(jar);
+        return verifyDigest(jar, Hashing.sha256(jar));
+    }
+
+    /**
+     * Applies the sidecar and allow-list checks to a digest that the caller computed itself,
+     * e.g. over bytes it already read into memory (so the checked bytes are exactly the
+     * bytes that are used afterwards). Performs file I/O; never call on the main thread.
+     *
+     * @param jar    file the digest belongs to (its {@code .sha256} sidecar is read)
+     * @param actual SHA-256 of the file content
+     * @return the verification result
+     * @throws IntegrityException if a check fails
+     * @throws IOException        if files cannot be read
+     */
+    public Verified verifyDigest(Path jar, String actual) throws IntegrityException, IOException {
         List<String> checks = new java.util.ArrayList<>();
         checks.add("sha256=" + actual);
         if (this.requireSidecar) {
@@ -74,7 +88,7 @@ public final class IntegrityVerifier {
             String expected = parseSidecar(Files.readString(sidecar, StandardCharsets.UTF_8), jar.getFileName().toString());
             if (!expected.equals(actual)) {
                 throw new IntegrityException("SHA-256 mismatch: " + sidecar.getFileName() + " expects " + expected
-                        + " but the jar has " + actual);
+                        + " but " + jar.getFileName() + " has " + actual);
             }
             checks.add("sidecar " + sidecar.getFileName() + " matches");
         }

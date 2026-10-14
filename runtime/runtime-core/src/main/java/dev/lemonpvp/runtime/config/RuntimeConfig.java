@@ -20,6 +20,8 @@ import java.util.Set;
  * @param operationTimeout     timeout for asynchronous phases; threshold for slow-callback warnings
  * @param allowedApiVersions   module API versions accepted by this server
  * @param allowServerInternals let module class loaders see {@code net.minecraft} / CraftBukkit internals
+ * @param livePatching         core live patching settings (separate feature, see {@code docs/LIVE-UPDATES.md})
+ * @param pluginUpdates        live plugin update settings
  */
 public record RuntimeConfig(
         boolean enabled,
@@ -33,24 +35,29 @@ public record RuntimeConfig(
         int maxModuleCount,
         Duration operationTimeout,
         Set<Integer> allowedApiVersions,
-        boolean allowServerInternals
+        boolean allowServerInternals,
+        LivePatchConfig livePatching,
+        PluginUpdateConfig pluginUpdates
 ) {
     public RuntimeConfig {
         startupModules = List.copyOf(startupModules);
         allowedApiVersions = Set.copyOf(allowedApiVersions);
         trustedHashesFile = trustedHashesFile == null ? "" : trustedHashesFile;
+        livePatching = livePatching == null ? LivePatchConfig.defaults() : livePatching;
+        pluginUpdates = pluginUpdates == null ? PluginUpdateConfig.defaults() : pluginUpdates;
     }
 
     /** @return the documented defaults (runtime disabled) */
     public static RuntimeConfig defaults() {
         return new RuntimeConfig(false, "lemon/modules", false, List.of(), true, true, "", true, 32,
-                Duration.ofSeconds(30), Set.of(1), false);
+                Duration.ofSeconds(30), Set.of(1), false, LivePatchConfig.defaults(), PluginUpdateConfig.defaults());
     }
 
     /** @return a copy with {@code enabled} changed (used by tests and tooling) */
     public RuntimeConfig withEnabled(boolean value) {
         return new RuntimeConfig(value, this.moduleDirectory, this.allowRuntimeDeploy, this.startupModules,
                 this.persistRuntimeState, this.verifyIntegrity, this.trustedHashesFile, this.logModuleLifecycle,
-                this.maxModuleCount, this.operationTimeout, this.allowedApiVersions, this.allowServerInternals);
+                this.maxModuleCount, this.operationTimeout, this.allowedApiVersions, this.allowServerInternals, this.livePatching,
+                this.pluginUpdates);
     }
 }

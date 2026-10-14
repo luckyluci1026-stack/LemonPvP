@@ -23,7 +23,13 @@ public final class RuntimeConfigLoader {
     private static final Set<String> KNOWN_KEYS = Set.of(
             "config-version", "enabled", "module-directory", "allow-runtime-deploy", "startup-modules",
             "persist-runtime-state", "verify-integrity", "trusted-hashes-file", "log-module-lifecycle",
-            "max-module-count", "operation-timeout-seconds", "allowed-api-versions", "allow-server-internals");
+            "max-module-count", "operation-timeout-seconds", "allowed-api-versions", "allow-server-internals", "live-patching",
+            "plugin-updates");
+
+    private static final Set<String> PLUGIN_UPDATE_KEYS = Set.of("enabled", "trusted-hashes-file");
+
+    private static final Set<String> LIVE_PATCH_KEYS = Set.of(
+            "enabled", "profile", "patch-directory", "trusted-hashes-file", "confirm-timeout-seconds");
 
     /** Default file content. Kept in sync with {@link RuntimeConfig#defaults()} by a unit test. */
     public static final String DEFAULT_FILE = """
@@ -79,6 +85,35 @@ public final class RuntimeConfigLoader {
             # classes. Such modules break on every Minecraft update. This is NOT a security
             # boundary: reflection can always reach server internals.
             allow-server-internals: false
+
+            # Live updates of normal Paper/Bukkit plugins. Put the new jar into plugins/update/,
+            # then '/fork live check <plugin>' and '/fork live update <plugin>'. Plugins that
+            # cannot be swapped safely (dependents, Paper plugins, lifecycle API, ...) are
+            # reported as "restart required"; Paper applies plugins/update/ on the next start.
+            plugin-updates:
+              # Allow /fork live update|rollback for plugins. Checking is always possible.
+              enabled: false
+              # Optional allow-list (one SHA-256 per line) of plugin jars that may be installed.
+              trusted-hashes-file: ""
+
+            # Core live patching: redefine classes of the RUNNING server (Paper, Minecraft,
+            # Lemon) with the JVM's class redefinition. This is a separate feature from module
+            # hot deployment. It needs the JVM option -javaagent:lemon-livepatch-agent.jar and
+            # 'enabled: true' above. Standard JVMs only accept changed method bodies.
+            # Documentation: docs/LIVE-UPDATES.md
+            live-patching:
+              # Allow /fork patch apply and rollback. Listing and inspecting patches is always possible.
+              enabled: false
+              # production:  patches must be listed in trusted-hashes-file (explicit approval).
+              # development: allow-list optional, more diagnostics. Only honoured if the JVM was
+              #              started with -Dlemon.livepatch.development=true; otherwise production.
+              profile: production
+              # Directory with uploaded patches: <id>.lemonpatch + <id>.lemonpatch.sha256
+              patch-directory: lemon/patches/inbox
+              # Allow-list (one SHA-256 per line) of approved patch archives. Required in production.
+              trusted-hashes-file: ""
+              # How long a '/fork patch apply <id>' plan waits for '/fork patch apply <id> confirm'.
+              confirm-timeout-seconds: 120
             """;
 
     private RuntimeConfigLoader() {
@@ -209,12 +244,84 @@ public final class RuntimeConfigLoader {
             errors.add("allowed-api-versions must be a list");
         }
         boolean internals = bool(raw, "allow-server-internals", d.allowServerInternals(), errors);
+        LivePatchConfig livePatching = livePatching(raw.get("live-patching"), d.livePatching(), errors, warnings);
+        PluginUpdateConfig pluginUpdates = pluginUpdates(raw.get("plugin-updates"), d.pluginUpdates(), errors, warnings);
 
         if (!errors.isEmpty()) {
             return new Result(d, errors, warnings, false);
         }
         return new Result(new RuntimeConfig(enabled, moduleDirectory, allowRuntimeDeploy, startup, persist, verify,
-                trusted, logLifecycle, max, Duration.ofSeconds(timeout), apiVersions, internals), errors, warnings, false);
+                trusted, logLifecycle, max, Duration.ofSeconds(timeout), apiVersions, internals, livePatching, pluginUpdates),
+                errors, warnings, false);
+    }
+
+    private static PluginUpdateConfig pluginUpdates(Object value, PluginUpdateConfig d, List<String> errors, List<String> warnings) {
+        if (value == null) {
+            return d;
+        }
+        if (!(value instanceof Map<?, ?> map)) {
+            errors.add("plugin-updates must be a section (map)");
+            return d;
+        }
+        Map<String, Object> raw = new java.util.LinkedHashMap<>();
+        map.forEach((k, v) -> raw.put(String.valueOf(k), v));
+        for (String key : raw.keySet()) {
+            if (!PLUGIN_UPDATE_KEYS.contains(key)) {
+                warnings.add("unknown key 'plugin-updates." + PathGuard.sanitize(key) + "' is ignored");
+            }
+        }
+        List<String> sectionErrors = new ArrayList<>();
+        boolean enabled = bool(raw, "enabled", d.enabled(), sectionErrors);
+        String trusted = str(raw, "trusted-hashes-file", d.trustedHashesFile(), sectionErrors);
+        if (!trusted.isEmpty() && !PathGuard.isSafeRelativePath(trusted)) {
+            sectionErrors.add("trusted-hashes-file must be empty or a safe relative path");
+        }
+        sectionErrors.forEach(e -> errors.add("plugin-updates." + e));
+        return new PluginUpdateConfig(enabled, trusted);
+    }
+
+    private static LivePatchConfig livePatching(Object value, LivePatchConfig d, List<String> errors, List<String> warnings) {
+        if (value == null) {
+            return d;
+        }
+        if (!(value instanceof Map<?, ?> map)) {
+            errors.add("live-patching must be a section (map)");
+            return d;
+        }
+        Map<String, Object> raw = new java.util.LinkedHashMap<>();
+        map.forEach((k, v) -> raw.put(String.valueOf(k), v));
+        for (String key : raw.keySet()) {
+            if (!LIVE_PATCH_KEYS.contains(key)) {
+                warnings.add("unknown key 'live-patching." + PathGuard.sanitize(key) + "' is ignored");
+            }
+        }
+        List<String> sectionErrors = new ArrayList<>();
+        boolean enabled = bool(raw, "enabled", d.enabled(), sectionErrors);
+        String profileText = str(raw, "profile", d.profile().yamlName(), sectionErrors);
+        LivePatchConfig.Profile profile = d.profile();
+        switch (profileText) {
+            case "production" -> profile = LivePatchConfig.Profile.PRODUCTION;
+            case "development" -> profile = LivePatchConfig.Profile.DEVELOPMENT;
+            default -> sectionErrors.add("profile must be 'production' or 'development'");
+        }
+        String dir = str(raw, "patch-directory", d.patchDirectory(), sectionErrors);
+        if (!PathGuard.isSafeRelativePath(dir)) {
+            sectionErrors.add("patch-directory must be a safe relative path inside the server directory");
+        }
+        String trusted = str(raw, "trusted-hashes-file", d.trustedHashesFile(), sectionErrors);
+        if (!trusted.isEmpty() && !PathGuard.isSafeRelativePath(trusted)) {
+            sectionErrors.add("trusted-hashes-file must be empty or a safe relative path");
+        }
+        int confirm = integer(raw, "confirm-timeout-seconds", d.confirmTimeoutSeconds(), sectionErrors);
+        if (confirm < 10 || confirm > 3600) {
+            sectionErrors.add("confirm-timeout-seconds must be between 10 and 3600");
+        }
+        sectionErrors.forEach(e -> errors.add("live-patching." + e));
+        if (enabled && profile == LivePatchConfig.Profile.PRODUCTION && trusted.isEmpty()) {
+            warnings.add("live-patching: the production profile applies only patches listed in trusted-hashes-file,"
+                    + " which is not set - every apply will be refused");
+        }
+        return new LivePatchConfig(enabled, profile, dir, trusted, confirm);
     }
 
     private static boolean bool(Map<String, Object> raw, String key, boolean def, List<String> errors) {
@@ -290,6 +397,15 @@ public final class RuntimeConfigLoader {
         }
         if (!current.startupModules().equals(next.startupModules())) {
             out.add("startup-modules");
+        }
+        if (current.livePatching().enabled() != next.livePatching().enabled()) {
+            out.add("live-patching.enabled");
+        }
+        if (current.livePatching().profile() != next.livePatching().profile()) {
+            out.add("live-patching.profile");
+        }
+        if (!current.livePatching().patchDirectory().equals(next.livePatching().patchDirectory())) {
+            out.add("live-patching.patch-directory");
         }
         return out;
     }

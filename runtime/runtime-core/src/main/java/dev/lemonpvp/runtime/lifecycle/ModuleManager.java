@@ -8,7 +8,9 @@ import dev.lemonpvp.runtime.api.ModuleState;
 import dev.lemonpvp.runtime.api.RuntimeModule;
 import dev.lemonpvp.runtime.config.ModuleConfigHolder;
 import dev.lemonpvp.runtime.descriptor.ModuleIds;
+import dev.lemonpvp.runtime.live.LiveHistory;
 import dev.lemonpvp.runtime.loader.ArtifactStager;
+import dev.lemonpvp.runtime.loader.ModuleArtifact;
 import dev.lemonpvp.runtime.loader.ModuleClassLoader;
 import dev.lemonpvp.runtime.loader.ScanReport;
 import dev.lemonpvp.runtime.metrics.LeakDetector;
@@ -18,7 +20,10 @@ import dev.lemonpvp.runtime.resources.ResourceTracker;
 import dev.lemonpvp.runtime.security.PathGuard;
 import dev.lemonpvp.runtime.state.RuntimeStateStore;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -293,6 +298,66 @@ public final class ModuleManager {
                     .thenApply(v -> OperationResult.ok("unload", id, inst.descriptor().coordinates()
                             + " unloaded (class loader closed; classes are freed once nothing references them)", details, start)));
         });
+    }
+
+    /**
+     * Removes a module: disables and unloads it if necessary and moves its jar (and
+     * {@code .sha256} file) out of the module directory into {@code lemon/modules-removed/}.
+     * Nothing is deleted; moving the files back re-installs the module.
+     *
+     * @param actor who requested it
+     * @param id    module id
+     * @return the result
+     */
+    public CompletableFuture<OperationResult> remove(String actor, String id) {
+        return guarded(actor, "remove", id, true, start -> {
+            List<String> details = Collections.synchronizedList(new ArrayList<>());
+            return onMain(() -> {
+                ModuleInstance inst = this.instances.get(id);
+                if (inst == null) {
+                    return Optional.<ModuleInstance>empty();
+                }
+                List<String> dependents = DependencyResolver.dependents(id, this.instances.values(), false);
+                if (!dependents.isEmpty()) {
+                    throw new LifecycleException("cannot remove '" + id + "': loaded modules depend on it: " + dependents);
+                }
+                if (inst.state() == ModuleState.ENABLED) {
+                    details.addAll(this.lifecycle.disable(inst));
+                }
+                details.addAll(this.lifecycle.unload(inst));
+                this.instances.remove(id, inst);
+                details.add("unloaded " + inst.descriptor().coordinates());
+                return Optional.of(inst);
+            }).thenCompose(inst -> inst.isEmpty() ? CompletableFuture.<Void>completedFuture(null)
+                    : deleteStaged(inst.get().stagedJar()).thenCompose(v -> persist(actor, inst.get(), false, details)))
+                    .thenCompose(v -> onWorker(() -> moveToRemoved(id, details)))
+                    .thenApply(target -> OperationResult.ok("remove", id, "removed; files moved to "
+                            + this.env.paths().serverDirectory().relativize(target), details, start));
+        });
+    }
+
+    private Path moveToRemoved(String id, List<String> details) throws IOException, LifecycleException {
+        ScanReport report = this.preparer.scan();
+        List<ModuleArtifact> files = report.artifacts().stream().filter(a -> a.id().equals(id)).toList();
+        if (files.isEmpty()) {
+            throw new LifecycleException("no jar of module '" + id + "' found in " + this.env.config().get().moduleDirectory());
+        }
+        Path target = this.env.paths().root().resolve("modules-removed")
+                .resolve(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(java.time.ZoneOffset.UTC)
+                        .format(java.time.Instant.now()));
+        Files.createDirectories(target);
+        for (ModuleArtifact a : files) {
+            Path jar = a.file();
+            Files.move(jar, target.resolve(jar.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+            details.add("moved " + jar.getFileName());
+            Path sidecar = jar.resolveSibling(jar.getFileName() + ".sha256");
+            if (Files.isRegularFile(sidecar, LinkOption.NOFOLLOW_LINKS)) {
+                Files.move(sidecar, target.resolve(sidecar.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                details.add("moved " + sidecar.getFileName());
+            }
+        }
+        this.lastScan = null;
+        return target;
     }
 
     /**
@@ -757,6 +822,10 @@ public final class ModuleManager {
 
     private void finish(String actor, OperationResult result) {
         this.env.audit().record(actor, result.action(), result.moduleId(), result.success(), result.message());
+        if (!result.action().equals("validate")) {
+            LiveHistory.INSTANCE.record(LiveHistory.Kind.MODULE, result.moduleId(), result.action(), actor, result.success(),
+                    result.message());
+        }
         this.env.metrics().record(result.action(), result.success());
         if (!result.action().equals("validate")) {
             if (result.success()) {

@@ -1,0 +1,239 @@
+package dev.lemonpvp.runtime.livepatch;
+
+import dev.lemonpvp.runtime.livepatch.classfile.ClassFileReader;
+import dev.lemonpvp.runtime.livepatch.classfile.ClassFormatException;
+import dev.lemonpvp.runtime.livepatch.classfile.ClassInfo;
+import dev.lemonpvp.runtime.security.Hashing;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.instrument.Instrumentation;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * Turns a verified {@link PatchArchive} into a {@link PatchPlan} without changing anything.
+ *
+ * <p>Checks, in this order: target build and Minecraft version; for every existing class
+ * that it is loaded (or loadable) by the server class loader, modifiable, and that its
+ * running bytecode has the digest the patch was built against; the kind of every change;
+ * whether this JVM supports all of them (probed, see {@link CapabilityProbe}). Any failed
+ * check rejects the whole patch: a patch is applied completely or not at all.</p>
+ *
+ * <p>Side effect: target classes that were not loaded yet are loaded (not initialized) by
+ * the server class loader. Runs on the worker thread.</p>
+ */
+public final class PatchPlanner {
+
+    /**
+     * Everything the planner needs from the running server.
+     *
+     * @param buildId          build id of the running server ({@link BuildIdentity})
+     * @param minecraftVersion running Minecraft version
+     * @param loader           server class loader (the only loader whose classes are patched)
+     * @param instrumentation  instrumentation of this JVM
+     * @param registry         record of earlier patches
+     * @param allowUnknownBuild accept a server whose build id is {@link BuildIdentity#UNKNOWN} (development only)
+     */
+    public record Context(String buildId, String minecraftVersion, ClassLoader loader, Instrumentation instrumentation,
+                          LivePatchRegistry registry, boolean allowUnknownBuild) {
+    }
+
+    private PatchPlanner() {
+    }
+
+    /**
+     * @param archive verified archive
+     * @param ctx     server context
+     * @return the plan
+     */
+    public static PatchPlan plan(PatchArchive archive, Context ctx) {
+        long registryVersion = ctx.registry().version();
+        PatchManifest m = archive.manifest();
+        List<String> errors = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        if (!m.targetMinecraft().equals(ctx.minecraftVersion())) {
+            errors.add("patch targets Minecraft " + m.targetMinecraft() + " but the server runs " + ctx.minecraftVersion());
+        }
+        if (BuildIdentity.UNKNOWN.equals(ctx.buildId())) {
+            if (ctx.allowUnknownBuild()) {
+                warnings.add("the server's build id is unknown (no build manifest); only the per-class digests are checked");
+            } else {
+                errors.add("the server's build id is unknown (no build manifest), so the patch cannot be matched to this build");
+            }
+        } else if (!m.targetBuildId().equals(ctx.buildId())) {
+            errors.add("patch was built for " + m.targetBuildId() + " but the server is " + ctx.buildId()
+                    + " (wrong build id; create the patch against the jar that runs on this server)");
+        }
+
+        List<PatchPlan.Entry> entries = new ArrayList<>();
+        Set<Capability> needed = EnumSet.noneOf(Capability.class);
+        Set<ChangeKind> kinds = new LinkedHashSet<>();
+        for (PatchManifest.Entry e : m.classes()) {
+            PatchPlan.Entry entry = e.isNew() ? planNew(archive, e, ctx) : planExisting(archive, e, ctx);
+            entries.add(entry);
+            for (ClassChange c : entry.changes()) {
+                kinds.add(c.kind());
+                needed.addAll(c.kind().required());
+            }
+        }
+
+        Map<Capability, CapabilityProbe.Result> caps = needed.isEmpty() ? Map.of()
+                : JvmCapabilities.ensure(ctx.instrumentation(), needed);
+        List<PatchPlan.Entry> checked = new ArrayList<>(entries.size());
+        for (PatchPlan.Entry entry : entries) {
+            checked.add(checkCapabilities(entry, caps));
+        }
+        for (PatchPlan.Entry entry : checked) {
+            if (entry.action() == PatchPlan.Action.REJECT) {
+                errors.add(entry.className() + ": " + entry.problem());
+            }
+        }
+        if (errors.isEmpty() && checked.stream().noneMatch(x -> x.action() == PatchPlan.Action.REDEFINE
+                || x.action() == PatchPlan.Action.DEFINE)) {
+            errors.add("every class of the patch is identical to the running version; nothing to do");
+        }
+        for (ChangeKind k : kinds) {
+            if (k.note() != null) {
+                warnings.add(k.description() + ": " + k.note());
+            }
+        }
+        warnings.add("Lemon checks bytecode compatibility, not behaviour: the patch is technically applied but not"
+                + " semantically validated. Existing objects, static fields and caches keep their state.");
+        return new PatchPlan(m.id(), archive.sha256(), m.description(), checked, errors, warnings, caps, registryVersion);
+    }
+
+    private static PatchPlan.Entry reject(PatchManifest.Entry e, String runningSha, List<ClassChange> changes, String problem) {
+        return new PatchPlan.Entry(e.name(), PatchPlan.Action.REJECT, changes, runningSha, e.sha256(), null, null, problem);
+    }
+
+    private static PatchPlan.Entry planExisting(PatchArchive archive, PatchManifest.Entry e, Context ctx) {
+        Class<?> cls;
+        try {
+            cls = Class.forName(e.name(), false, ctx.loader());
+        } catch (ClassNotFoundException | LinkageError ex) {
+            return reject(e, null, List.of(), "class does not exist in this server (" + ex.getClass().getSimpleName()
+                    + "); mark it as 'new' if the patch adds it");
+        }
+        if (cls.getClassLoader() != ctx.loader()) {
+            return reject(e, null, List.of(), "class is loaded by " + cls.getClassLoader()
+                    + ", not by the server class loader; only server classes can be live-patched");
+        }
+        if (!ctx.instrumentation().isModifiableClass(cls)) {
+            return reject(e, null, List.of(), "the JVM reports this class as not modifiable");
+        }
+        Optional<LivePatchRegistry.ClassVersion> patched = ctx.registry().current(e.name());
+        byte[] running;
+        if (patched.isPresent()) {
+            running = patched.get().bytes();
+        } else {
+            try {
+                running = readResource(ctx.loader(), e.name());
+            } catch (IOException ex) {
+                return reject(e, null, List.of(), "cannot read the running class file: " + ex.getMessage());
+            }
+        }
+        String runningSha = Hashing.sha256(running);
+        String replaces = null;
+        if (!runningSha.equals(e.baseSha256())) {
+            Optional<String> original = ctx.registry().originalSha(e.name());
+            if (patched.isPresent() && original.isPresent() && original.get().equals(e.baseSha256())) {
+                replaces = patched.get().installedBy();
+            } else {
+                return reject(e, runningSha, List.of(), "patch was built against " + shortSha(e.baseSha256())
+                        + " but the server runs " + shortSha(runningSha) + " (different source or build; rebuild the patch"
+                        + " against the deployed server jar)");
+            }
+        }
+        if (runningSha.equals(e.sha256())) {
+            return new PatchPlan.Entry(e.name(), PatchPlan.Action.UNCHANGED, List.of(), runningSha, e.sha256(), null, null, null);
+        }
+        ClassInfo before;
+        try {
+            before = ClassFileReader.read(running);
+        } catch (ClassFormatException ex) {
+            return reject(e, runningSha, List.of(), "cannot parse the running class file: " + ex.getMessage());
+        }
+        List<ClassChange> changes = new ArrayList<>(ClassDiff.compare(before, archive.infos().get(e.name())));
+        if (changes.isEmpty()) {
+            changes.add(new ClassChange(ChangeKind.ATTRIBUTES_ONLY, ""));
+        }
+        return new PatchPlan.Entry(e.name(), PatchPlan.Action.REDEFINE, changes, runningSha, e.sha256(), replaces, null, null);
+    }
+
+    private static PatchPlan.Entry planNew(PatchArchive archive, PatchManifest.Entry e, Context ctx) {
+        try {
+            Class.forName(e.name(), false, ctx.loader());
+            return reject(e, null, List.of(), "class already exists in the server; a patch cannot define it again");
+        } catch (ClassNotFoundException ex) {
+            // expected
+        } catch (LinkageError ex) {
+            return reject(e, null, List.of(), "class name is already in use (" + ex + ")");
+        }
+        String pkg = archive.infos().get(e.name()).packageName().replace('/', '.');
+        String host = null;
+        for (Class<?> c : ctx.instrumentation().getAllLoadedClasses()) {
+            if (c.getClassLoader() == ctx.loader() && !c.isHidden() && !c.isArray() && pkg.equals(c.getPackageName())) {
+                host = c.getName();
+                break;
+            }
+        }
+        List<ClassChange> changes = List.of(new ClassChange(ChangeKind.NEW_CLASS, e.name()));
+        if (host == null) {
+            return reject(e, null, changes, "no class of package " + (pkg.isEmpty() ? "<unnamed>" : pkg)
+                    + " is loaded by the server; new classes can only be added to packages that already exist");
+        }
+        return new PatchPlan.Entry(e.name(), PatchPlan.Action.DEFINE, changes, null, e.sha256(), null, host, null);
+    }
+
+    private static PatchPlan.Entry checkCapabilities(PatchPlan.Entry entry, Map<Capability, CapabilityProbe.Result> caps) {
+        if (entry.action() == PatchPlan.Action.REJECT || entry.action() == PatchPlan.Action.UNCHANGED) {
+            return entry;
+        }
+        List<String> unsupported = new ArrayList<>();
+        for (ClassChange c : entry.changes()) {
+            Set<Capability> required = c.kind().required();
+            if (required.isEmpty()) {
+                unsupported.add(c + " (never applied by Lemon)");
+                continue;
+            }
+            for (Capability cap : required) {
+                CapabilityProbe.Result r = caps.get(cap);
+                if (r == null || !r.supported()) {
+                    unsupported.add(c + " (this JVM cannot " + cap.description()
+                            + (r == null ? "" : ": " + r.detail()) + ")");
+                    break;
+                }
+            }
+        }
+        if (unsupported.isEmpty()) {
+            return entry;
+        }
+        return new PatchPlan.Entry(entry.className(), PatchPlan.Action.REJECT, entry.changes(), entry.runningSha256(),
+                entry.newSha256(), entry.replaces(), entry.hostClass(),
+                "unsupported change(s): " + String.join("; ", unsupported) + ". A restart with a new server jar is required.");
+    }
+
+    private static byte[] readResource(ClassLoader loader, String className) throws IOException {
+        String path = className.replace('.', '/') + ".class";
+        try (InputStream in = loader.getResourceAsStream(path)) {
+            if (in == null) {
+                throw new IOException(path + " not found by the server class loader");
+            }
+            byte[] data = in.readNBytes(PatchArchive.MAX_CLASS_BYTES + 1);
+            if (data.length > PatchArchive.MAX_CLASS_BYTES) {
+                throw new IOException(path + " is larger than " + PatchArchive.MAX_CLASS_BYTES + " bytes");
+            }
+            return data;
+        }
+    }
+
+    /** @param sha digest @return first 12 characters, for messages */
+    static String shortSha(String sha) {
+        return sha == null ? "-" : sha.substring(0, Math.min(12, sha.length()));
+    }
+}

@@ -55,6 +55,26 @@ public interface RuntimePlatform {
     PlatformBinding bind(ModuleHandle handle);
 
     /**
+     * Access to the server's plugin manager for live plugin updates. Default: none (the
+     * platform does not support plugin updates).
+     *
+     * @return the plugin host, if supported
+     */
+    default java.util.Optional<dev.lemonpvp.runtime.plugins.PluginHost> pluginHost() {
+        return java.util.Optional.empty();
+    }
+
+    /**
+     * Identity of the running server build, used to match live patches to the build they
+     * were made for. Default: unknown (live patches then need the development profile).
+     *
+     * @return build id, see {@code dev.lemonpvp.runtime.livepatch.BuildIdentity}
+     */
+    default String serverBuildId() {
+        return "unknown";
+    }
+
+    /**
      * Called on the main thread after module commands were added or removed, so the
      * platform can refresh client-side command trees. Default: no-op.
      */

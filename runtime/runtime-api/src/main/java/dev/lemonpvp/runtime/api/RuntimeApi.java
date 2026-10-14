@@ -12,6 +12,9 @@ public final class RuntimeApi {
     /** Name of the descriptor file at the root of every module jar. */
     public static final String DESCRIPTOR_FILE = "lemon-module.yml";
 
+    /** Short alternative name of the descriptor (a jar must contain only one of the two). */
+    public static final String DESCRIPTOR_FILE_SHORT = "module.yml";
+
     private RuntimeApi() {
     }
 }
