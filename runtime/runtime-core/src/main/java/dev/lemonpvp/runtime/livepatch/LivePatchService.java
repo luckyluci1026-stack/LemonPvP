@@ -403,8 +403,11 @@ public final class LivePatchService {
         for (PatchPlan.Entry e : plan.definitions()) {
             try {
                 Class<?> host = Class.forName(e.hostClass(), false, loader);
-                MethodHandles.privateLookupIn(host, MethodHandles.lookup()).defineClass(prepared.archive().classes().get(e.className()));
+                Class<?> added = MethodHandles.privateLookupIn(host, MethodHandles.lookup())
+                        .defineClass(prepared.archive().classes().get(e.className()));
                 defined.add(e.className());
+                // Link (and thereby verify) now, so invalid bytecode fails here and not on first use.
+                added.getDeclaredMethods();
             } catch (ReflectiveOperationException | LinkageError | RuntimeException ex) {
                 return fail(actor, plan, defined, "defining new class " + e.className() + " failed: " + ex
                         + "; no existing class was redefined", prepared);

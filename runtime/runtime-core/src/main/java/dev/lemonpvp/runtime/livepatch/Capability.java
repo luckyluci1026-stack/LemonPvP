@@ -23,7 +23,13 @@ public enum Capability {
     /** Change the super class. */
     CHANGE_SUPERCLASS("change the super class"),
     /** Define a class that does not exist yet, in the package of an existing class. */
-    DEFINE_NEW_CLASS("define new classes in existing packages");
+    DEFINE_NEW_CLASS("define new classes in existing packages"),
+    /**
+     * The JVM runs its bytecode verifier on redefined classes and rejects invalid ones.
+     * Standard HotSpot does; JetBrains Runtime with enhanced redefinition did not in Lemon's
+     * CI. Where it does not, Lemon verifies patch classes itself before applying them.
+     */
+    VERIFY_REDEFINED_CLASSES("reject invalid bytecode when redefining (JVM verifier)");
 
     private final String description;
 

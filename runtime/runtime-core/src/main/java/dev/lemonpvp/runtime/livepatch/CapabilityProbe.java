@@ -94,6 +94,7 @@ public final class CapabilityProbe {
                         new ProbeClassWriter(PROBE, BASE).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1),
                         new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1), false);
                 case DEFINE_NEW_CLASS -> defineNewClass();
+                case VERIFY_REDEFINED_CLASSES -> verifiesRedefinedClasses(instrumentation);
             };
         } catch (Throwable t) {
             if (t instanceof VirtualMachineError vme && !(vme instanceof StackOverflowError)) {
@@ -124,6 +125,31 @@ public final class CapabilityProbe {
             return new Result(true, "redefinition accepted; the new method body executed (1 -> 2)");
         }
         return new Result(false, "redefinition returned but the method still returns " + afterValue);
+    }
+
+    /**
+     * Redefines a probe class with a method whose max_stack is too small. A verifying JVM
+     * throws {@link VerifyError}; a JVM that accepts it does not verify redefined classes.
+     * The invalid method is never called, and the probe class becomes garbage afterwards.
+     */
+    private static Result verifiesRedefinedClasses(Instrumentation inst) throws ReflectiveOperationException {
+        ProbeLoader loader = new ProbeLoader();
+        Class<?> probe = loader.define(PROBE, new ProbeClassWriter(PROBE, OBJECT)
+                .staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1).toBytes());
+        if ((int) probe.getMethod("value").invoke(null) != 1) {
+            return new Result(false, "probe class did not run");
+        }
+        try {
+            inst.redefineClasses(new ClassDefinition(probe, new ProbeClassWriter(PROBE, OBJECT)
+                    .staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 2).invalidStack().toBytes()));
+        } catch (VerifyError e) {
+            return new Result(true, "the JVM verifier rejected invalid bytecode (" + e.getClass().getSimpleName() + ")");
+        } catch (ClassFormatError | java.lang.instrument.UnmodifiableClassException | ClassNotFoundException
+                 | UnsupportedOperationException e) {
+            return new Result(false, "unexpected JVM error: " + e);
+        }
+        return new Result(false, "the JVM accepted bytecode that fails verification; Lemon verifies patch classes itself"
+                + " before applying them");
     }
 
     private static Result defineNewClass() throws ReflectiveOperationException {

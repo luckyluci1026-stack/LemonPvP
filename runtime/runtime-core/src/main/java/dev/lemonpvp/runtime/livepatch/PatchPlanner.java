@@ -21,8 +21,10 @@ import java.util.Set;
  * <p>Checks, in this order: target build and Minecraft version; for every existing class
  * that it is loaded (or loadable) by the server class loader, modifiable, and that its
  * running bytecode has the digest the patch was built against; the kind of every change;
- * whether this JVM supports all of them (probed, see {@link CapabilityProbe}). Any failed
- * check rejects the whole patch: a patch is applied completely or not at all.</p>
+ * whether this JVM supports all of them (probed, see {@link CapabilityProbe}); and, if this
+ * JVM does not verify redefined classes itself, the bytecode verifier on every class
+ * ({@link PreVerifier}). Any failed check rejects the whole patch: a patch is applied
+ * completely or not at all.</p>
  *
  * <p>Side effect: target classes that were not loaded yet are loaded (not initialized) by
  * the server class loader. Runs on the worker thread.</p>
@@ -37,10 +39,11 @@ public final class PatchPlanner {
      * @param loader           server class loader (the only loader whose classes are patched)
      * @param instrumentation  instrumentation of this JVM
      * @param registry         record of earlier patches
-     * @param allowUnknownBuild accept a server whose build id is {@link BuildIdentity#UNKNOWN} (development only)
+     * @param development      development profile: an unknown build id and classes that cannot be pre-verified
+     *                         are warnings instead of errors
      */
     public record Context(String buildId, String minecraftVersion, ClassLoader loader, Instrumentation instrumentation,
-                          LivePatchRegistry registry, boolean allowUnknownBuild) {
+                          LivePatchRegistry registry, boolean development) {
     }
 
     private PatchPlanner() {
@@ -60,7 +63,7 @@ public final class PatchPlanner {
             errors.add("patch targets Minecraft " + m.targetMinecraft() + " but the server runs " + ctx.minecraftVersion());
         }
         if (BuildIdentity.UNKNOWN.equals(ctx.buildId())) {
-            if (ctx.allowUnknownBuild()) {
+            if (ctx.development()) {
                 warnings.add("the server's build id is unknown (no build manifest); only the per-class digests are checked");
             } else {
                 errors.add("the server's build id is unknown (no build manifest), so the patch cannot be matched to this build");
@@ -82,11 +85,18 @@ public final class PatchPlanner {
             }
         }
 
+        if (entries.stream().anyMatch(e -> e.action() == PatchPlan.Action.REDEFINE || e.action() == PatchPlan.Action.DEFINE)) {
+            needed.add(Capability.VERIFY_REDEFINED_CLASSES);
+        }
         Map<Capability, CapabilityProbe.Result> caps = needed.isEmpty() ? Map.of()
                 : JvmCapabilities.ensure(ctx.instrumentation(), needed);
         List<PatchPlan.Entry> checked = new ArrayList<>(entries.size());
         for (PatchPlan.Entry entry : entries) {
             checked.add(checkCapabilities(entry, caps));
+        }
+        CapabilityProbe.Result verifies = caps.get(Capability.VERIFY_REDEFINED_CLASSES);
+        if (verifies != null && !verifies.supported()) {
+            checked = preVerify(archive, checked, ctx, warnings);
         }
         for (PatchPlan.Entry entry : checked) {
             if (entry.action() == PatchPlan.Action.REJECT) {
@@ -188,6 +198,46 @@ public final class PatchPlanner {
                     + " is loaded by the server; new classes can only be added to packages that already exist");
         }
         return new PatchPlan.Entry(e.name(), PatchPlan.Action.DEFINE, changes, null, e.sha256(), null, host, null);
+    }
+
+    /**
+     * This JVM applies redefined classes without running the bytecode verifier (probed), so
+     * invalid bytecode could reach the running server. Every class is verified in a
+     * throw-away class loader first.
+     */
+    private static List<PatchPlan.Entry> preVerify(PatchArchive archive, List<PatchPlan.Entry> entries, Context ctx,
+                                                   List<String> warnings) {
+        Map<String, byte[]> classes = new java.util.LinkedHashMap<>();
+        for (PatchPlan.Entry e : entries) {
+            if (e.action() == PatchPlan.Action.REDEFINE || e.action() == PatchPlan.Action.DEFINE) {
+                classes.put(e.className(), archive.classes().get(e.className()));
+            }
+        }
+        if (classes.isEmpty()) {
+            return entries;
+        }
+        Map<String, PreVerifier.Outcome> outcomes = PreVerifier.verify(classes, ctx.loader());
+        warnings.add("this JVM does not verify redefined classes (probed); Lemon ran the JVM verifier on "
+                + classes.size() + " class(es) of the patch in a throw-away class loader first");
+        List<PatchPlan.Entry> out = new ArrayList<>(entries.size());
+        for (PatchPlan.Entry e : entries) {
+            PreVerifier.Outcome o = outcomes.get(e.className());
+            String problem = null;
+            if (o != null && o.kind() == PreVerifier.Outcome.Kind.INVALID) {
+                problem = "the class file fails bytecode verification (" + o.detail() + ")";
+            } else if (o != null && o.kind() == PreVerifier.Outcome.Kind.UNVERIFIABLE) {
+                if (ctx.development()) {
+                    warnings.add(e.className() + " could not be verified before the redefinition (" + o.detail()
+                            + "); the development profile applies it unverified");
+                } else {
+                    problem = "the class could not be verified before the redefinition (" + o.detail() + ") and this JVM"
+                            + " does not verify redefined classes; the production profile does not apply unverified bytecode";
+                }
+            }
+            out.add(problem == null ? e : new PatchPlan.Entry(e.className(), PatchPlan.Action.REJECT, e.changes(),
+                    e.runningSha256(), e.newSha256(), e.replaces(), e.hostClass(), problem));
+        }
+        return out;
     }
 
     private static PatchPlan.Entry checkCapabilities(PatchPlan.Entry entry, Map<Capability, CapabilityProbe.Result> caps) {

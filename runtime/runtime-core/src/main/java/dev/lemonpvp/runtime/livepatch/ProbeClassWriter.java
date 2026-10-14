@@ -25,6 +25,7 @@ final class ProbeClassWriter {
     private final List<String> interfaces = new ArrayList<>();
     private final List<String[]> fields = new ArrayList<>(); // name, descriptor, access
     private final Map<String, int[]> methods = new LinkedHashMap<>(); // name -> {access, returnValue}
+    private boolean invalidStack;
 
     /**
      * @param name      internal class name
@@ -37,6 +38,12 @@ final class ProbeClassWriter {
 
     ProbeClassWriter implement(String iface) {
         this.interfaces.add(iface);
+        return this;
+    }
+
+    /** Writes every int method with max_stack 0, which the bytecode verifier must reject. */
+    ProbeClassWriter invalidStack() {
+        this.invalidStack = true;
         return this;
     }
 
@@ -116,7 +123,7 @@ final class ProbeClassWriter {
                 out.writeShort(1);
                 out.writeShort(codeAttr);
                 out.writeInt(12 + 2);
-                out.writeShort(1);
+                out.writeShort(this.invalidStack ? 0 : 1); // max_stack
                 out.writeShort(0);
                 out.writeInt(2);
                 out.writeByte(0x03 + m.getValue()[1]); // iconst_<n>

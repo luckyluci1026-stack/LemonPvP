@@ -300,6 +300,7 @@ class ModuleLifecycleIntegrationTest {
                             }
                             """).writeTo(f.modules, "worker.jar");
             assertTrue(f.await(f.runtime.modules().enable(A, "worker")).success());
+            assertTrue(Gate.awaitEntered(), "the async task started");
             OperationResult disable = f.await(f.runtime.modules().disable(A, "worker"));
             assertTrue(disable.success(), disable.toString());
             assertTrue(disable.details().stream().anyMatch(d -> d.contains("still running")), disable.toString());

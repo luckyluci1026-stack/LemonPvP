@@ -14,6 +14,7 @@ import dev.lemonpvp.runtime.testsupport.RuntimeFixture;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.instrument.Instrumentation;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -224,14 +225,29 @@ class LivePatchIntegrationTest {
             Class<?> bc = Class.forName("lpc.B", true, f.platform.serverClassLoader());
             tool(server, classes, inbox(f), "two-classes");
             LivePatchService s = f.runtime.livePatches();
-            assertTrue(await(s.inspect("two-classes")).applicable(), "Lemon's checks pass; only the JVM verifier can see the defect");
-            LivePatchService.Result r = applyConfirmed(s, "two-classes");
-            assertEquals(Kind.FAILED, r.kind(), r.message());
-            assertTrue(r.message().contains("the JVM rejected the redefinition"), r.message());
-            assertTrue(r.message().contains("VerifyError"), r.message());
+            Instrumentation inst = InstrumentationAccess.find().instrumentation().orElseThrow();
+            boolean jvmVerifies = JvmCapabilities.ensure(inst, EnumSet.of(Capability.VERIFY_REDEFINED_CLASSES))
+                    .get(Capability.VERIFY_REDEFINED_CLASSES).supported();
+            PatchPlan plan = await(s.inspect("two-classes"));
+            if (jvmVerifies) {
+                // Standard HotSpot: Lemon's checks pass; the JVM verifier rejects B inside redefineClasses.
+                assertTrue(plan.applicable(), "only the JVM verifier can see the defect: " + plan.errors());
+                LivePatchService.Result r = applyConfirmed(s, "two-classes");
+                assertEquals(Kind.FAILED, r.kind(), r.message());
+                assertTrue(r.message().contains("the JVM rejected the redefinition"), r.message());
+                assertTrue(r.message().contains("VerifyError"), r.message());
+                assertEquals(LivePatchRegistry.Status.FAILED, LivePatchRegistry.INSTANCE.latest("two-classes").orElseThrow().status());
+            } else {
+                // JVMs whose redefinition does not verify (seen on JetBrains Runtime with enhanced
+                // redefinition): Lemon's own pre-verification must reject the patch before applying it.
+                assertFalse(plan.applicable(), "invalid bytecode must never reach redefineClasses");
+                assertTrue(plan.errors().stream().anyMatch(e -> e.startsWith("lpc.B") && e.contains("fails bytecode verification")),
+                        plan.errors().toString());
+                LivePatchService.Result r = applyConfirmed(s, "two-classes");
+                assertEquals(Kind.REJECTED, r.kind(), r.message());
+            }
             assertEquals("v1", call(a, "text"), "A was not redefined although it was valid: all or nothing");
             assertEquals("v1", call(bc, "text"));
-            assertEquals(LivePatchRegistry.Status.FAILED, LivePatchRegistry.INSTANCE.latest("two-classes").orElseThrow().status());
             assertEquals(0, LivePatchRegistry.INSTANCE.activeCount());
         }
     }

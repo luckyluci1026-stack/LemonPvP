@@ -2,7 +2,6 @@
 //
 //   ./gradlew :lemon-server:livePatchBaseline              after building the jar you deploy
 //   ./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps [-PpatchDescription="..."]
-//   ./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps --continuous   (rebuild on every save)
 //
 // createLivePatch compiles the server sources and packs every class whose bytecode differs
 // from the baseline jar into build/livepatch/<id>.lemonpatch (+ .sha256). The tool runs from
