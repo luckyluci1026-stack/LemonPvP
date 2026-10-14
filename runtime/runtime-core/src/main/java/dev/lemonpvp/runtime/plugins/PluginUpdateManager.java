@@ -42,7 +42,7 @@ import java.util.stream.Stream;
  */
 public final class PluginUpdateManager {
 
-    private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSS").withZone(ZoneOffset.UTC);
 
     private final Supplier<RuntimeConfig> config;
     private final RuntimePaths paths;
@@ -180,7 +180,32 @@ public final class PluginUpdateManager {
             verdict = new PluginCompatibility.Verdict(PluginCompatibility.Status.RESTART_REQUIRED,
                     List.of("the jar of the installed plugin was not found in plugins/"), verdict.warnings());
         }
+        List<String> clashes = inspected.info() == null ? List.of() : updateFolderJarsFor(inspected.info().name(), jar);
+        if (!clashes.isEmpty()) {
+            // Paper's plugin loader silently replaces a jar it loads with a jar from the update
+            // folder that declares the same plugin name, so such a file would be loaded instead.
+            List<String> reasons = new ArrayList<>(verdict.reasons());
+            reasons.add("the update folder holds " + (clashes.size() == 1 ? "another jar" : "other jars") + " of plugin "
+                    + inspected.info().name() + " (" + String.join(", ", clashes) + "); Paper would load that instead."
+                    + " Keep exactly one jar per plugin in the update folder");
+            verdict = new PluginCompatibility.Verdict(PluginCompatibility.Status.INCOMPATIBLE, reasons, verdict.warnings());
+        }
         return new Candidate(inspected, installed, installedFile, verdict);
+    }
+
+    /** @return names of jars in the update folder, other than {@code except}, that declare plugin {@code name} */
+    private List<String> updateFolderJarsFor(String name, Path except) throws IOException {
+        List<String> out = new ArrayList<>();
+        for (Path p : jars(this.host.updateDirectory())) {
+            if (p.toAbsolutePath().normalize().equals(except.toAbsolutePath().normalize())) {
+                continue;
+            }
+            Optional<PluginInfo> info = PluginJarInspector.readInfo(p);
+            if (info.isPresent() && info.get().name().equalsIgnoreCase(name)) {
+                out.add(p.getFileName().toString());
+            }
+        }
+        return out;
     }
 
     private Optional<Path> findInstalledFile(String name) throws IOException {
@@ -322,8 +347,14 @@ public final class PluginUpdateManager {
         if (!PathGuard.isSafeFileName(name)) {
             throw new IOException("plugin name '" + PathGuard.sanitize(name) + "' cannot be used as a directory name");
         }
-        Path dir = this.paths.pluginBackups().resolve(name).resolve(STAMP.format(Instant.now()));
-        Files.createDirectories(dir);
+        Path parent = this.paths.pluginBackups().resolve(name);
+        Files.createDirectories(parent);
+        // A fresh directory per operation: a failed update marks its own directory only.
+        Path dir = parent.resolve(STAMP.format(Instant.now()));
+        for (int i = 1; Files.exists(dir, LinkOption.NOFOLLOW_LINKS); i++) {
+            dir = parent.resolve(STAMP.format(Instant.now()) + "-" + i);
+        }
+        Files.createDirectory(dir);
         if (c.installedFile().isPresent()) {
             Path old = c.installedFile().get();
             Files.copy(old, dir.resolve(old.getFileName()), StandardCopyOption.REPLACE_EXISTING);
@@ -366,7 +397,7 @@ public final class PluginUpdateManager {
             return recover(actor, c, action, message, placed, target, backupDir, details);
         }
         PluginHost.LoadResult loaded = this.host.load(target);
-        if (loaded.enabled() && name.equalsIgnoreCase(loaded.name())) {
+        if (loaded.enabled() && name.equalsIgnoreCase(loaded.name()) && to.equals(loaded.version())) {
             this.host.commandsChanged();
             details.add("loaded and enabled " + loaded.name() + " " + to + " from plugins/" + target.getFileName());
             details.add("backup of the previous jar: " + this.paths.serverDirectory().relativize(backupDir));
@@ -378,6 +409,8 @@ public final class PluginUpdateManager {
             return new Result(Result.Kind.UPDATED, action + " of " + name + " done: " + from + " -> " + to, details, c);
         }
         String reason = loaded.error() != null ? loaded.error() : loaded.name() == null ? "the jar did not load"
+                : !name.equalsIgnoreCase(loaded.name()) || !to.equals(loaded.version())
+                ? "the server loaded " + loaded.name() + " " + loaded.version() + " instead of " + name + " " + to
                 : "the plugin did not enable (see the server log for its exception)";
         if (loaded.name() != null) {
             try {
@@ -429,20 +462,23 @@ public final class PluginUpdateManager {
             return new Result(Result.Kind.FAILED, m, details, c);
         }
         Optional<InstalledPlugin> still = this.host.installed().stream().filter(p -> p.name().equalsIgnoreCase(name)).findFirst();
+        String oldVersion = c.installed().get().info().version();
         PluginHost.LoadResult restored = still.isPresent()
-                ? new PluginHost.LoadResult(name, still.get().enabled(), still.get().enabled() ? null : "the old version is still"
-                + " registered but disabled")
+                ? new PluginHost.LoadResult(name, still.get().info().version(), still.get().enabled(), still.get().enabled() ? null
+                : "the old version is still registered but disabled")
                 : this.host.load(oldFile);
         this.host.commandsChanged();
-        if (restored.enabled()) {
+        if (restored.enabled() && oldVersion.equals(restored.version())) {
             String m = message + "; the previous version " + c.installed().get().info().version() + " was restored and is enabled";
             this.audit.record(actor, "plugin-" + action, name, false, m);
             LiveHistory.INSTANCE.record(LiveHistory.Kind.PLUGIN, name, action, actor, false, m);
             this.platform.logger().warning("Plugin " + action + " FAILED: " + m);
             return new Result(Result.Kind.RESTORED, m, details, c);
         }
-        String m = message + "; restoring the previous version also failed (" + (restored.error() == null ? "not enabled"
-                : restored.error()) + "). The previous jar is back in plugins/; restart the server";
+        String why = restored.error() != null ? restored.error() : !restored.enabled() ? "not enabled"
+                : "the server runs " + restored.name() + " " + restored.version() + " instead of " + oldVersion;
+        String m = message + "; restoring the previous version also failed (" + why + "). The previous jar is back in plugins/;"
+                + " restart the server";
         this.audit.record(actor, "plugin-" + action, name, false, m);
         LiveHistory.INSTANCE.record(LiveHistory.Kind.PLUGIN, name, action, actor, false, m);
         this.platform.logger().severe("Plugin " + action + " FAILED: " + m);

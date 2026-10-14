@@ -4,6 +4,9 @@
 #
 # Usage: scripts/ci/smoke-test.sh <server-jar> <work-dir> [command-file]
 #
+# Environment: JAVA_BIN (default java), EXTRA_JVM_ARGS (e.g. -javaagent:...; split on spaces),
+#              STARTUP_TIMEOUT, STOP_TIMEOUT.
+#
 #   command-file: optional file with one console command per line. Lines of the
 #                 form "@expect <regex>" assert that the log matches <regex>
 #                 (checked after all commands were executed); "@reject <regex>"
@@ -22,6 +25,7 @@ if [ -n "$COMMANDS" ]; then COMMANDS="$(realpath "$COMMANDS")"; fi
 STARTUP_TIMEOUT="${STARTUP_TIMEOUT:-600}"
 STOP_TIMEOUT="${STOP_TIMEOUT:-180}"
 JAVA_BIN="${JAVA_BIN:-java}"
+read -r -a EXTRA <<< "${EXTRA_JVM_ARGS:-}"
 
 mkdir -p "$WORK"
 cd "$WORK"
@@ -40,9 +44,9 @@ mkfifo "$FIFO"
 exec 3<>"$FIFO"
 
 START_NS=$(date +%s%N)
-"$JAVA_BIN" -Xms1G -Xmx2G -jar "$JAR" --nogui <&3 > server.log 2>&1 &
+"$JAVA_BIN" -Xms1G -Xmx2G "${EXTRA[@]+"${EXTRA[@]}"}" -jar "$JAR" --nogui <&3 > server.log 2>&1 &
 PID=$!
-echo "server pid $PID"
+echo "server pid $PID: $JAVA_BIN -Xms1G -Xmx2G ${EXTRA_JVM_ARGS:-} -jar $(basename "$JAR") --nogui"
 
 send() { echo "$1" >&3; }
 

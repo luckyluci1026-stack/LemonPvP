@@ -9,3 +9,7 @@ runtime/**/build/
 .vscode/
 # Local test servers
 /run/
+
+# Python byte code (CI helper scripts)
+__pycache__/
+*.pyc

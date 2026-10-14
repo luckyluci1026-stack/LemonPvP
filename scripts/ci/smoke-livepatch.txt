@@ -1,0 +1,96 @@
+# Core live patching on a real server (standard JVM, -javaagent, production profile).
+# Patches were built in CI from changed Paper sources (org.spigotmc.TicksPerSecondCommand).
+fork live patch status
+fork live patch probe
+@sleep 5
+tps
+fork live scan
+@sleep 5
+fork live check tps-text
+@sleep 4
+# Structural change (added method): detected and refused on a standard JVM.
+fork live check tps-structural
+@sleep 4
+fork live update tps-structural
+@sleep 4
+# Wrong build id, wrong checksum, invalid class file.
+fork live update tps-wrong-build
+@sleep 3
+fork live update tps-bad-checksum
+@sleep 3
+fork live update tps-garbage
+@sleep 3
+# Two classes, one does not match the running build: nothing is applied.
+fork live update tps-mixed
+@sleep 3
+# Two classes, the JVM verifier rejects one during the redefinition: nothing is applied.
+fork live update tps-atomic
+@sleep 4
+fork live update tps-atomic confirm
+@sleep 4
+tps
+# Method body change of a loaded Paper class; /tps must run the new code.
+fork live update tps-text
+@sleep 4
+fork live update tps-text confirm
+@sleep 4
+tps
+# The server keeps answering on the network and keeps ticking after the patch.
+@shell python3 slp.py 25599
+@sleep 3
+tps
+fork live patch status
+fork live history
+@sleep 2
+# The backup holds exactly the class file that ran before the patch.
+@shell grep -F "$(cat expected-tps-base.txt)  org.spigotmc.TicksPerSecondCommand" lemon/patches/backups/tps-text/*/backup.txt
+fork live rollback tps-text
+@sleep 3
+fork live rollback tps-text confirm
+@sleep 3
+tps
+fork live patch status
+@sleep 3
+@shell grep -F "| patch-apply | tps-text | OK |" lemon/logs/audit.log
+@shell grep -F "| patch-apply | tps-atomic | FAILED |" lemon/logs/audit.log
+@shell grep -F "| patch-rollback | tps-text | OK |" lemon/logs/audit.log
+@expect live-patch agent 1 loaded \(-javaagent\)
+@expect Agent: agent 1 loaded via
+@expect live-patching.enabled: true, profile: production
+@expect patches must be listed in lemon/patches/approved.sha256
+@expect Build id: lemonpvp:lemon/
+@expect yes change existing method bodies
+@expect no  add methods/constructors
+@expect patch tps-text: 1 class\(es\)
+@expect redefine org\.spigotmc\.TicksPerSecondCommand
+@expect Applicable live without restart
+@expect reject org\.spigotmc\.TicksPerSecondCommand
+@expect this JVM cannot add methods/constructors
+@expect Cannot be applied live
+@expect NOT DONE patch tps-structural cannot be applied
+@expect wrong build id
+@expect NOT DONE patch tps-wrong-build cannot be applied
+@expect NOT DONE: integrity check failed: SHA-256 mismatch
+@expect NOT DONE: class org\.spigotmc\.TicksPerSecondCommand is not a valid class file
+@expect org\.spigotmc\.[A-Za-z]+: patch was built against
+@expect NOT DONE patch tps-mixed cannot be applied
+@expect plan for tps-atomic is ready
+@expect FAILED the JVM rejected the redefinition: java\.lang\.VerifyError
+@expect plan for tps-text is ready
+@expect OK patch tps-text applied
+@expect status: technically applied; behaviour NOT validated
+@expect patch tps-text apply OK
+@expect patch tps-atomic apply FAILED
+@expect rollback of tps-text is ready
+@expect only bytecode is restored
+@expect OK patch tps-text rolled back
+@count 1 Active patches: 1
+@count 2 Active patches: 0
+# /tps: original text before, after the failed attempts and after the rollback; patched text twice
+@count 3 TPS from last 1m, 5m, 15m
+@count 2 TPS \(live patch\) from last 1m, 5m, 15m
+@reject TPS \(structural\)
+@reject patch tps-(structural|wrong-build|bad-checksum|garbage|mixed|atomic) applied
+@reject Build id: unknown
+@reject Unhandled exception
+@reject \[null\]

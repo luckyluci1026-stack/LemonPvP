@@ -1,0 +1,86 @@
+# Live updates of a normal Bukkit plugin (LemonTestPlugin) on a real server.
+fork live plugins
+lemontest
+@sleep 2
+# A jar that is not a plugin and a version for a newer API: reported, never loaded.
+@shell cp variants/NotAPlugin.jar variants/future/LemonTestPlugin.jar plugins/update/
+fork live scan
+@sleep 5
+fork live check LemonTestPlugin
+@sleep 3
+fork live update LemonTestPlugin
+@sleep 3
+@shell rm plugins/update/NotAPlugin.jar plugins/update/LemonTestPlugin.jar
+# Update 1.0.0 -> 1.0.1 while the server runs.
+@shell cp variants/1.0.1/LemonTestPlugin.jar plugins/update/
+fork live check LemonTestPlugin
+@sleep 3
+fork live update LemonTestPlugin
+@sleep 3
+fork live update LemonTestPlugin confirm
+@sleep 5
+lemontest
+@sleep 2
+# A version that throws in onEnable: the previous version must come back.
+@shell cp variants/broken/LemonTestPlugin.jar plugins/update/
+fork live update LemonTestPlugin
+@sleep 3
+fork live update LemonTestPlugin confirm
+@sleep 5
+lemontest
+@shell ls plugins/update/ plugins/
+@sleep 2
+# Back to the version before the last successful update.
+fork live rollback LemonTestPlugin
+@sleep 3
+fork live rollback LemonTestPlugin confirm
+@sleep 5
+lemontest
+@sleep 2
+# Install a new plugin that depends on LemonTestPlugin; afterwards LemonTestPlugin needs a restart.
+@shell cp variants/addon/LemonTestAddon.jar plugins/update/
+fork live update LemonTestAddon
+@sleep 3
+fork live update LemonTestAddon confirm
+@sleep 5
+fork live plugins
+@shell cp variants/1.0.1/LemonTestPlugin.jar plugins/update/
+fork live check LemonTestPlugin
+@sleep 3
+fork live update LemonTestPlugin
+@sleep 3
+fork live history
+@sleep 3
+@shell grep -F "| plugin-update | LemonTestPlugin | OK |" lemon/logs/audit.log
+@shell grep -F "| plugin-update | LemonTestPlugin | FAILED |" lemon/logs/audit.log
+@shell grep -F "| plugin-rollback | LemonTestPlugin | OK |" lemon/logs/audit.log
+@shell grep -F "| plugin-install | LemonTestAddon | OK |" lemon/logs/audit.log
+@shell ls -R lemon/plugin-backups
+@expect LemonTestPlugin 1.0.0 - enabled - live update possible
+@expect LemonTestPlugin 1.0.0 active: 1 scheduled task\(s\) owned by LemonTestPlugin, 1 listener\(s\)
+@expect NotAPlugin\.jar: incompatible
+@expect plugin needs api-version 99\.0
+@expect NOT DONE LemonTestPlugin 1\.0\.0 -> 1\.0\.0: incompatible
+@expect LemonTestPlugin 1\.0\.0 -> 1\.0\.1: can be updated live
+@expect Run /fork live update LemonTestPlugin confirm within 120 s
+@expect LemonTestPlugin 1\.0\.0 disabled
+@expect LemonTestPlugin 1\.0\.1 enabled
+@expect OK update of LemonTestPlugin done: 1\.0\.0 -> 1\.0\.1
+@expect LemonTestPlugin 1\.0\.1 active: 1 scheduled task\(s\) owned by LemonTestPlugin, 1 listener\(s\)
+@expect simulated failure in onEnable
+@expect FAILED update of LemonTestPlugin to 1\.0\.2-broken failed: .*the previous version 1\.0\.1 was restored and is enabled
+@expect OK rollback of LemonTestPlugin done: 1\.0\.1 -> 1\.0\.0
+@expect OK install of LemonTestAddon done: - -> 1\.0\.0
+@expect LemonTestAddon 1\.0\.0 enabled \(uses LemonTestPlugin 1\.0\.0\)
+@expect LemonTestPlugin 1\.0\.0 - enabled - restart only \(used by \[LemonTestAddon\]\)
+@expect enabled plugins depend on LemonTestPlugin
+@expect needs a server restart
+@expect plugin LemonTestPlugin update OK
+@expect plugin LemonTestPlugin update FAILED
+# /lemontest answered by 1.0.0, 1.0.1, 1.0.1 (after the failed update), 1.0.0 (after the rollback)
+@count 2 LemonTestPlugin 1\.0\.0 active: 1 scheduled task
+@count 2 LemonTestPlugin 1\.0\.1 active: 1 scheduled task
+@reject LemonTestPlugin 1\.0\.2-broken active
+@reject Unknown (or incomplete )?command
+@reject Unhandled exception
+@reject \[null\]

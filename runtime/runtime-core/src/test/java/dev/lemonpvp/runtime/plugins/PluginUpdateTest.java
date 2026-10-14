@@ -20,8 +20,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Plugin update flows against a fake plugin host. The host simulates Paper: versions that
- * contain {@code fail-load} do not load, {@code fail-enable} load but stay disabled. What
- * Paper does with a real plugin is tested by the CI server test.
+ * contain {@code fail-load} do not load, {@code fail-enable} load but stay disabled, and a
+ * jar in the update folder with the same plugin name replaces the jar being loaded (Paper's
+ * FileProviderSource does that). What Paper does with a real plugin is tested by the CI
+ * server test.
  */
 class PluginUpdateTest {
 
@@ -78,12 +80,24 @@ class PluginUpdateTest {
         public LoadResult load(Path jar) {
             this.calls.add("load " + jar.getFileName());
             PluginInfo info = PluginJarInspector.readInfo(jar).orElse(null);
+            if (info != null) {
+                try (Stream<Path> s = Files.list(this.update)) {
+                    for (Path u : s.filter(p -> p.toString().endsWith(".jar")).toList()) {
+                        if (PluginJarInspector.readInfo(u).map(i -> i.name().equalsIgnoreCase(info.name())).orElse(false)) {
+                            Files.move(u, jar, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                            return load(jar);
+                        }
+                    }
+                } catch (java.io.IOException e) {
+                    throw new java.io.UncheckedIOException(e);
+                }
+            }
             if (info == null || info.version().contains("fail-load")) {
-                return new LoadResult(null, false, "simulated load failure");
+                return new LoadResult(null, null, false, "simulated load failure");
             }
             boolean enabled = !info.version().contains("fail-enable");
             this.loaded.put(info.name().toLowerCase(), new InstalledPlugin(info, enabled));
-            return new LoadResult(info.name(), enabled, enabled ? null : "simulated onEnable failure");
+            return new LoadResult(info.name(), info.version(), enabled, enabled ? null : "simulated onEnable failure");
         }
 
         @Override
@@ -162,6 +176,34 @@ class PluginUpdateTest {
             assertEquals("1.0", host.loaded.get("testplugin").info().version());
             assertEquals(List.of("TestPlugin-1.0.jar"), names(host.plugins));
             assertTrue(Files.readString(f.serverDir.resolve("lemon/logs/audit.log")).contains("plugin-update | TestPlugin | OK"));
+        }
+    }
+
+    @Test
+    void anotherJarOfThePluginInTheUpdateFolderBlocksUpdateAndRollback() throws Exception {
+        FakeHost[] h = new FakeHost[1];
+        try (RuntimeFixture f = start(h, true)) {
+            FakeHost host = h[0];
+            host.install(pluginJar(host.plugins, "TestPlugin.jar", yml("TestPlugin", "1.0")));
+            PluginUpdateManager m = f.runtime.pluginUpdates().orElseThrow();
+            pluginJar(host.update, "TestPlugin-1.1.jar", yml("TestPlugin", "1.1"));
+            pluginJar(host.update, "TestPlugin-1.2.jar", yml("TestPlugin", "1.2"));
+
+            PluginUpdateManager.Result r = await(m.update("console", "TestPlugin", false));
+            assertEquals(Kind.REJECTED, r.kind(), r.message());
+            assertTrue(r.details().stream().anyMatch(d -> d.contains("Paper would load that instead")), r.details().toString());
+            assertTrue(host.calls.isEmpty(), "nothing was unloaded");
+
+            Files.delete(host.update.resolve("TestPlugin-1.2.jar"));
+            assertEquals(Kind.UPDATED, updateConfirmed(m, "TestPlugin").kind());
+            assertEquals("1.1", host.loaded.get("testplugin").info().version());
+
+            // A pending jar of the same plugin would be loaded by Paper instead of the backup.
+            pluginJar(host.update, "TestPlugin-1.3.jar", yml("TestPlugin", "1.3"));
+            PluginUpdateManager.Result rb = await(m.rollback("console", "TestPlugin", false));
+            assertEquals(Kind.REJECTED, rb.kind(), rb.message());
+            assertTrue(rb.details().stream().anyMatch(d -> d.contains("TestPlugin-1.3.jar")), rb.details().toString());
+            assertEquals("1.1", host.loaded.get("testplugin").info().version(), "nothing changed");
         }
     }
 

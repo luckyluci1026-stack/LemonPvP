@@ -32,7 +32,8 @@ public interface PluginHost {
     void unload(String name);
 
     /**
-     * Loads and enables a plugin jar.
+     * Loads and enables a plugin jar. Note: Paper replaces the jar with a jar from the update
+     * folder that declares the same plugin name, so callers make sure there is none.
      *
      * @param jar jar inside the plugin directory
      * @return outcome
@@ -46,9 +47,10 @@ public interface PluginHost {
      * Outcome of {@link #load(Path)}.
      *
      * @param name    name of the loaded plugin, or {@code null} if it did not load
+     * @param version version of the loaded plugin, or {@code null} if it did not load
      * @param enabled whether it is enabled
      * @param error   error message, or {@code null}
      */
-    record LoadResult(String name, boolean enabled, String error) {
+    record LoadResult(String name, String version, boolean enabled, String error) {
     }
 }

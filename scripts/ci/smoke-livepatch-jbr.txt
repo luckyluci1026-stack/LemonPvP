@@ -1,0 +1,29 @@
+# Core live patching on JetBrains Runtime with -XX:+AllowEnhancedClassRedefinition:
+# the structural patch (added method) that a standard JVM refuses.
+fork live patch status
+fork live patch probe
+@sleep 5
+tps
+fork live check tps-structural
+@sleep 4
+fork live update tps-structural
+@sleep 4
+fork live update tps-structural confirm
+@sleep 4
+tps
+@shell python3 slp.py 25599
+@sleep 2
+fork live rollback tps-structural
+@sleep 3
+fork live rollback tps-structural confirm
+@sleep 3
+tps
+@expect AllowEnhancedClassRedefinition: true
+@expect yes add methods/constructors
+@expect redefine org\.spigotmc\.TicksPerSecondCommand
+@expect OK patch tps-structural applied
+@expect OK patch tps-structural rolled back
+@count 1 TPS \(structural\) from last 1m, 5m, 15m
+@count 2 TPS from last 1m, 5m, 15m
+@reject Unhandled exception
+@reject \[null\]

@@ -1,0 +1,8 @@
+name: LemonTestPlugin
+version: "1.0.0"
+main: dev.lemonpvp.example.plugin.LemonTestPlugin
+api-version: "1.21"
+description: Normal Bukkit plugin used to test Lemon's live plugin updates
+commands:
+  lemontest:
+    description: Shows which version of LemonTestPlugin runs and what it has registered

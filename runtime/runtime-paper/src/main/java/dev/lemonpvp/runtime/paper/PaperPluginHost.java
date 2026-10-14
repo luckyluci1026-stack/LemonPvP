@@ -121,17 +121,24 @@ final class PaperPluginHost implements PluginHost {
         try {
             plugin = pm.loadPlugin(jar.toFile());
         } catch (Exception | LinkageError e) {
-            return new LoadResult(null, false, "loading failed: " + e);
+            return new LoadResult(null, null, false, "loading failed: " + e);
         }
         if (plugin == null) {
-            return new LoadResult(null, false, "Paper did not recognise " + jar.getFileName() + " as a plugin");
+            return new LoadResult(null, null, false, "Paper did not recognise " + jar.getFileName() + " as a plugin");
         }
         try {
+            // At startup the server registers the descriptor's permissions right before enabling
+            // a plugin; PluginManager#enablePlugin alone does not.
+            for (Permission perm : plugin.getPluginMeta().getPermissions()) {
+                if (pm.getPermission(perm.getName()) == null) {
+                    pm.addPermission(perm);
+                }
+            }
             pm.enablePlugin(plugin);
         } catch (RuntimeException | LinkageError e) {
-            return new LoadResult(plugin.getName(), plugin.isEnabled(), "enabling failed: " + e);
+            return new LoadResult(plugin.getName(), plugin.getPluginMeta().getVersion(), plugin.isEnabled(), "enabling failed: " + e);
         }
-        return new LoadResult(plugin.getName(), plugin.isEnabled(), plugin.isEnabled() ? null
+        return new LoadResult(plugin.getName(), plugin.getPluginMeta().getVersion(), plugin.isEnabled(), plugin.isEnabled() ? null
                 : "the plugin is disabled after onEnable (see its error in the server log)");
     }
 

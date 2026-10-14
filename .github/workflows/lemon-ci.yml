@@ -31,7 +31,15 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build and test
+      # Built and uploaded before the tests so the server tests get the agent even if a unit test fails.
+      - name: Build live-patch agent
+        run: ./gradlew :livepatch-agent:jar --console=plain
+      - uses: actions/upload-artifact@v4
+        with:
+          name: livepatch-agent
+          path: runtime/livepatch-agent/build/libs/lemon-livepatch-agent.jar
+          if-no-files-found: error
+      - name: Build and test (unit tests run with -javaagent, like a server)
         run: ./gradlew build --console=plain
       - name: Test summary
         if: always()
@@ -44,8 +52,47 @@ jobs:
           path: runtime/**/build/test-results/test/*.xml
           if-no-files-found: ignore
 
-  # Compiles the Paper adapter and the example module against the public Paper API of
-  # each version and packages the example module (jar + sha256) for the server tests.
+  # The same unit tests on JetBrains Runtime with enhanced class redefinition, where
+  # structural changes (added methods/fields) must be detected as supported and work.
+  runtime-jbr:
+    name: Runtime core on JetBrains Runtime ${{ matrix.jbr }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        jbr: ['21', '25']
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Download JetBrains Runtime ${{ matrix.jbr }}
+        id: jbr
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 ../scripts/ci/fetch-jbr.py ${{ matrix.jbr }} "$RUNNER_TEMP/jbr"
+      - name: Show JVM and redefinition flag
+        if: steps.jbr.outputs.java != ''
+        run: |
+          "${{ steps.jbr.outputs.java }}" -version
+          "${{ steps.jbr.outputs.java }}" -XX:+AllowEnhancedClassRedefinition -XX:+PrintFlagsFinal -version | grep -E 'AllowEnhancedClassRedefinition'
+      - name: Unit tests on JBR with -XX:+AllowEnhancedClassRedefinition
+        if: steps.jbr.outputs.java != ''
+        run: >
+          ./gradlew :runtime-core:test --console=plain
+          -PtestJava='${{ steps.jbr.outputs.java }}' -PtestJvmArgs=-XX:+AllowEnhancedClassRedefinition
+      - name: Test summary
+        if: always()
+        run: python3 ../scripts/ci/junit-summary.py .
+
+  # Compiles the Paper adapter, the example module and the test plugin against the public
+  # Paper API of each version and packages them for the server tests.
   paper-modules:
     name: Paper adapter + example module ${{ matrix.mc }}
     runs-on: ubuntu-latest
@@ -76,9 +123,9 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
       - uses: gradle/actions/setup-gradle@v4
-      - name: Compile adapter and build example module
+      - name: Compile adapter, build example module and test plugin
         run: >
-          ./gradlew :runtime-paper:compileJava :example-module:assemble --console=plain
+          ./gradlew :runtime-paper:compileJava :example-module:assemble :example-plugin:jar --console=plain
           -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
       - name: Show resolved Paper API version
         run: ./gradlew :runtime-paper:dependencies --configuration compileClasspath -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }} --console=plain | grep -m1 "paper-api" || true
@@ -89,12 +136,17 @@ jobs:
             runtime/example-module/build/libs/example-greeter.jar
             runtime/example-module/build/libs/example-greeter.jar.sha256
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: example-plugin-${{ matrix.mc }}
+          path: runtime/example-plugin/build/libs/LemonTestPlugin.jar
+          if-no-files-found: error
 
   # One independent paperweight fork build per supported Minecraft version.
   # Each version uses the JDK and paperweight version of its Paper upstream branch.
   fork:
     name: Fork ${{ matrix.mc }}
-    needs: paper-modules
+    needs: [runtime, paper-modules]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -183,6 +235,80 @@ jobs:
           ../../scripts/ci/prepare-runtime-server.sh "$RUNNER_TEMP/persist" "$RUNNER_TEMP/example-module"
           ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/persist" ../../scripts/ci/smoke-persist-1.txt
           ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/persist" ../../scripts/ci/smoke-persist-2.txt
+      - name: Download live-patch agent
+        id: agent
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: livepatch-agent
+          path: ${{ runner.temp }}/agent
+      - name: Require live-patch agent
+        if: steps.agent.outcome != 'success'
+        run: echo "::error::live-patch agent is missing (runtime job failed)" && exit 1
+      - name: Add live-patch agent to the distribution
+        run: |
+          cp "$RUNNER_TEMP/agent/lemon-livepatch-agent.jar" ../../dist/
+          (cd ../../dist && sha256sum lemon-livepatch-agent.jar > lemon-livepatch-agent.jar.sha256 && cat lemon-livepatch-agent.jar.sha256)
+      # Core live patches built the way a developer builds them: baseline = the jar that was just
+      # packaged into the paperclip jar, then a changed Paper source file, then createLivePatch.
+      - name: Build core live patches from changed Paper sources
+        run: |
+          set -euo pipefail
+          ./gradlew :lemon-server:livePatchBaseline --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          src=paper-server/src/main/java/org/spigotmc/TicksPerSecondCommand.java
+          cp "$src" "$RUNNER_TEMP/TicksPerSecondCommand.java.orig"
+          python3 ../../scripts/ci/edit-tps-source.py "$src" text
+          ./gradlew :lemon-server:createLivePatch -PpatchId=tps-text -PpatchDescription="CI: /tps text changed" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          cp "$RUNNER_TEMP/TicksPerSecondCommand.java.orig" "$src"
+          python3 ../../scripts/ci/edit-tps-source.py "$src" structural
+          ./gradlew :lemon-server:createLivePatch -PpatchId=tps-structural -PpatchDescription="CI: /tps label from a new method" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          cp "$RUNNER_TEMP/TicksPerSecondCommand.java.orig" "$src"
+          out="$RUNNER_TEMP/patches"
+          mkdir -p "$out"
+          cp lemon-server/build/livepatch/tps-*.lemonpatch lemon-server/build/livepatch/tps-*.lemonpatch.sha256 "$out/"
+          base=lemon-server/build/livepatch/baseline/baseline.jar
+          P=../../scripts/ci/lemonpatch.py
+          python3 "$P" show "$out/tps-text.lemonpatch" --expect-classes org.spigotmc.TicksPerSecondCommand
+          python3 "$P" show "$out/tps-structural.lemonpatch" --expect-classes org.spigotmc.TicksPerSecondCommand
+          # Deliberately bad variants: the server must refuse every one of them.
+          python3 "$P" variant "$out/tps-text.lemonpatch" "$out" --id tps-wrong-build --target-build "lemonpvp:lemon/0.0-WRONG/-"
+          python3 "$P" variant "$out/tps-text.lemonpatch" "$out" --id tps-bad-checksum --bad-sidecar
+          python3 "$P" variant "$out/tps-text.lemonpatch" "$out" --id tps-garbage --garbage-class org.spigotmc.TicksPerSecondCommand
+          second=org.spigotmc.RestartCommand,org.spigotmc.SpigotCommand,org.spigotmc.WatchdogThread
+          python3 "$P" variant "$out/tps-text.lemonpatch" "$out" --id tps-mixed --add-wrong-base "$second" --base-jar "$base"
+          python3 "$P" variant "$out/tps-text.lemonpatch" "$out" --id tps-atomic --add-corrupt-class "$second" --base-jar "$base"
+          ls -la "$out"
+      - name: "Server test 4: core live patch (standard JVM, -javaagent)"
+        run: |
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch" "$RUNNER_TEMP/patches" lemon-server/build/livepatch/baseline/baseline.jar
+          EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/lemon-livepatch-agent.jar" \
+            ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/livepatch" ../../scripts/ci/smoke-livepatch.txt
+      - name: Download test plugin
+        id: plugin
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: example-plugin-${{ matrix.mc }}
+          path: ${{ runner.temp }}/example-plugin
+      - name: Require test plugin
+        if: steps.plugin.outcome != 'success'
+        run: echo "::error::test plugin for ${{ matrix.mc }} is missing (paper-modules job failed)" && exit 1
+      - name: "Server test 5: live plugin updates"
+        run: |
+          ../../scripts/ci/prepare-plugin-server.sh "$RUNNER_TEMP/plugins" "$RUNNER_TEMP/example-plugin"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/plugins" ../../scripts/ci/smoke-plugins.txt
+      - name: Download JetBrains Runtime ${{ matrix.java }}
+        id: jbr
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 ../../scripts/ci/fetch-jbr.py ${{ matrix.java }} "$RUNNER_TEMP/jbr"
+      - name: "Server test 6: structural core patch on JetBrains Runtime"
+        if: steps.jbr.outputs.java != ''
+        run: |
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch-jbr" "$RUNNER_TEMP/patches" lemon-server/build/livepatch/baseline/baseline.jar
+          JAVA_BIN="${{ steps.jbr.outputs.java }}" \
+          EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/lemon-livepatch-agent.jar -XX:+AllowEnhancedClassRedefinition" \
+            ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/livepatch-jbr" ../../scripts/ci/smoke-livepatch-jbr.txt
       - name: Upload server logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -193,6 +319,11 @@ jobs:
             ${{ runner.temp }}/enabled/server.log
             ${{ runner.temp }}/enabled/lemon/logs/audit.log
             ${{ runner.temp }}/persist/server.log
+            ${{ runner.temp }}/livepatch/server.log
+            ${{ runner.temp }}/livepatch/lemon/logs/audit.log
+            ${{ runner.temp }}/plugins/server.log
+            ${{ runner.temp }}/plugins/lemon/logs/audit.log
+            ${{ runner.temp }}/livepatch-jbr/server.log
           if-no-files-found: ignore
       - name: Upload server jar
         uses: actions/upload-artifact@v4

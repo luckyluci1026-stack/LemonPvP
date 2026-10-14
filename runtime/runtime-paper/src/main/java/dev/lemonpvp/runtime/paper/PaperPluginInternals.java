@@ -52,6 +52,8 @@ final class PaperPluginInternals {
             names = (Map<String, Plugin>) namesField.get(im);
             tree = treeField.get(im);
             remove = tree.getClass().getMethod("remove", PluginMeta.class);
+            // the tree's implementation class need not be public
+            remove.setAccessible(true);
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             why = "Paper's plugin manager internals are not as expected (" + e + ")";
             im = null;
