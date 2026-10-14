@@ -255,6 +255,9 @@ jobs:
         run: |
           set -euo pipefail
           ./gradlew :lemon-server:livePatchBaseline --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          # Diagnostic: is the baseline the server jar that the paperclip jar runs?
+          python3 ../../scripts/ci/lemonpatch.py compare-base "../../dist/${{ steps.jar.outputs.name }}" \
+            lemon-server/build/livepatch/baseline/baseline.jar org.spigotmc.TicksPerSecondCommand
           src=paper-server/src/main/java/org/spigotmc/TicksPerSecondCommand.java
           cp "$src" "$RUNNER_TEMP/TicksPerSecondCommand.java.orig"
           python3 ../../scripts/ci/edit-tps-source.py "$src" text

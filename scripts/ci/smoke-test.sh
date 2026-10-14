@@ -12,7 +12,8 @@
 #                 (checked after all commands were executed); "@reject <regex>"
 #                 asserts that it does NOT match; "@count <n> <regex>" asserts
 #                 exactly n matching lines; "@sleep <seconds>" pauses;
-#                 "@shell <command>" runs a shell command in the work directory.
+#                 "@shell <command>" runs a shell command in the work directory
+#                 (a non-zero exit counts as a failed assertion; the test goes on).
 #
 # Exit code is non-zero if the server does not start within STARTUP_TIMEOUT
 # seconds, does not stop within STOP_TIMEOUT seconds, or an assertion fails.
@@ -70,7 +71,7 @@ READY_NS=$(date +%s%N)
 echo "startup wall time: $(( (READY_NS - START_NS) / 1000000 )) ms (process start until 'Done' line, 0.2 s polling)"
 grep -E 'Done \(' server.log | tail -n 1
 
-declare -a EXPECT=() REJECT=() COUNT=()
+declare -a EXPECT=() REJECT=() COUNT=() SHELL_FAILED=()
 if [ -n "$COMMANDS" ]; then
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
@@ -79,7 +80,7 @@ if [ -n "$COMMANDS" ]; then
       '@reject '*) REJECT+=("${line#@reject }") ;;
       '@count '*) COUNT+=("${line#@count }") ;;
       '@sleep '*) sleep "${line#@sleep }" ;;
-      '@shell '*) echo "$ ${line#@shell }"; bash -c "${line#@shell }" ;;
+      '@shell '*) echo "$ ${line#@shell }"; bash -c "${line#@shell }" || SHELL_FAILED+=("${line#@shell }") ;;
       *) echo "> $line"; send "$line"; sleep 1 ;;
     esac
   done < "$COMMANDS"
@@ -97,6 +98,9 @@ done
 wait "$PID" || true
 
 status=0
+for cmd in "${SHELL_FAILED[@]+"${SHELL_FAILED[@]}"}"; do
+  echo "::error::shell check failed: $cmd"; status=1
+done
 for re in "${EXPECT[@]+"${EXPECT[@]}"}"; do
   if grep -qE -- "$re" server.log; then echo "ok   expect: $re"; else echo "::error::missing expected log line: $re"; status=1; fi
 done

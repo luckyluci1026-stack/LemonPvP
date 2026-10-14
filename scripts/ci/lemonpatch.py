@@ -4,6 +4,10 @@
   lemonpatch.py show <patch> [--expect-classes a,b]
       Prints id, target and classes; fails if the class list differs from --expect-classes.
 
+  lemonpatch.py compare-base <paperclip.jar> <baseline.jar> <class>
+      Diagnostic: compares the server jar embedded in a paperclip jar with the baseline jar
+      (build manifest and the digest of one class). Always exits 0.
+
   lemonpatch.py variant <patch> <out-dir> --id <new-id> [options]
       Writes <out-dir>/<new-id>.lemonpatch (+ .sha256) derived from <patch>, to test that the
       server rejects bad patches. Options:
@@ -154,9 +158,50 @@ def base_class(base_jar: str, candidates: str):
     sys.exit(f"none of {candidates} is in {base_jar}")
 
 
+def build_attributes(jar: zipfile.ZipFile) -> str:
+    try:
+        text = jar.read("META-INF/MANIFEST.MF").decode("utf-8", "replace")
+    except KeyError:
+        return "(no manifest)"
+    keys = ("Brand-Id", "Implementation-Version", "Build-Time")
+    values = {}
+    for line in text.splitlines():
+        for k in keys:
+            if line.startswith(k + ": "):
+                values[k] = line[len(k) + 2:].strip()
+    return "/".join(values.get(k, "-") for k in keys)
+
+
+def compare_base(paperclip: str, baseline: str, class_name: str):
+    entry = class_name.replace(".", "/") + ".class"
+    with zipfile.ZipFile(baseline) as b:
+        base_class = b.read(entry)
+        print(f"baseline  {baseline}: build {build_attributes(b)}, {class_name} {sha256(base_class)}")
+    with zipfile.ZipFile(paperclip) as p:
+        nested = [n for n in p.namelist() if n.startswith("META-INF/versions/") and n.endswith(".jar")]
+        if not nested:
+            print(f"paperclip {paperclip}: no META-INF/versions/*.jar")
+            return
+        for name in nested:
+            data = p.read(name)
+            with zipfile.ZipFile(io.BytesIO(data)) as server:
+                try:
+                    cls = server.read(entry)
+                    digest = sha256(cls)
+                except KeyError:
+                    digest = "(class missing)"
+                same = "MATCH" if digest == sha256(base_class) else "DIFFERENT"
+                print(f"embedded  {name}: jar {sha256(data)}, build {build_attributes(server)}, {class_name} {digest} -> {same}")
+    print(f"baseline jar sha256 {sha256(open(baseline, 'rb').read())}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
+    cmp_ = sub.add_parser("compare-base")
+    cmp_.add_argument("paperclip")
+    cmp_.add_argument("baseline")
+    cmp_.add_argument("class_name")
     show = sub.add_parser("show")
     show.add_argument("patch")
     show.add_argument("--expect-classes")
@@ -172,6 +217,9 @@ def main():
     var.add_argument("--bad-sidecar", action="store_true")
     args = parser.parse_args()
 
+    if args.cmd == "compare-base":
+        compare_base(args.paperclip, args.baseline, args.class_name)
+        return
     manifest, classes = read_patch(args.patch)
     if args.cmd == "show":
         print(manifest)
