@@ -34,13 +34,25 @@ Legende:
 | Neues Modul hinzufügen / Modul entfernen | B | `enable` / `unload` |
 | Modul, von dem andere abhängen | C1 | Abhängige entladen, Modul neu laden, Abhängige wieder aktivieren |
 
+## Kategorie B' – Live-Updates von Plugins und Core-Patches
+
+Details und Prüfregeln: [`LIVE-UPDATES.md`](LIVE-UPDATES.md).
+
+| Änderung | Einstufung | Bedingungen |
+|---|---|---|
+| Bukkit-Plugin (`plugin.yml`) installieren | B' | `fork live check` ergibt „live“: Abhängigkeiten aktiv, API-Version passt, keine Paper-Lifecycle-API |
+| Bukkit-Plugin aktualisieren / auf vorherige JAR zurück | B' | zusätzlich: kein anderes aktives Plugin hängt davon ab; automatische Wiederherstellung bei Fehlschlag |
+| Methodenrumpf einer Server-Klasse (Paper, Minecraft, Lemon) | B' | `live-patching.enabled`, `-javaagent`, Patch passt zu Build und laufendem Bytecode; Zustand wird nicht migriert |
+| Methoden/Felder hinzufügen oder entfernen, Signaturen, Vererbung | B' nur auf JetBrains Runtime mit `-XX:+AllowEnhancedClassRedefinition`, sonst C2 | per Probe festgestellt |
+
 ## Kategorie C – Neustart erforderlich
 
 | Änderung | Einstufung | Grund |
 |---|---|---|
-| Minecraft-Kern, Paper-/CraftBukkit-Code, Lemon-Runtime selbst | C2 | im Server-JAR; keine sichere Laufzeit-Neudefinition |
-| Bukkit-/Paper-Plugins | C2 (Plugin-Neuladen ist nicht Teil von Lemon) | Paper rät von `/reload` ab |
-| Änderungen an bereits geladenen Klassen (Signaturen, Felder) ohne neue Modulinstanz | C1 (Modul-Reload) bzw. C2 (Serverklassen) | JVM-Redefinition nur eingeschränkt; Lemon nutzt sie nicht |
+| Minecraft-Kern, Paper-/CraftBukkit-Code, Lemon-Runtime: strukturelle Änderungen auf Standard-JVM, statische Initialisierer, Konstanten mit Wirkung auf bestehenden Zustand | C2 | Standard-HotSpot redefiniert nur Methodenrümpfe; `<clinit>` läuft nie erneut |
+| Dauerhafte Übernahme eines Core-Patches | C2 (neue Server-JAR) | Patches gelten nur für den laufenden Prozess |
+| Paper-Plugins (`paper-plugin.yml`), Plugins mit Paper-Lifecycle-API, Plugins mit aktiven Abhängigen | C2 | Bootstrap/Lifecycle-Handler laufen nur beim Start; Abhängige halten Klassenreferenzen |
+| Änderungen an bereits geladenen Modulklassen ohne neue Modulinstanz | C1 (Modul-Reload) | Module werden über neue Instanzen ausgetauscht, nicht per Redefinition |
 | Registries (Blöcke, Items, Biome, Datapack-Registries) | C2 | Paper friert Registries beim Start ein |
 | Weltformat, Weltgenerierung, Dimensionen | C2 | Welt- und Chunkzustand |
 | Netzwerkprotokoll, Packet-Handling | C2 | laufende Spieler-Sessions |

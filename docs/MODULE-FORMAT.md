@@ -1,14 +1,24 @@
 # Modulformat und Modulentwicklung
 
-Ein Lemon-Modul ist eine **JAR-Datei** mit einer Datei `lemon-module.yml` im Wurzel-
-verzeichnis und einer Hauptklasse, die `dev.lemonpvp.runtime.api.RuntimeModule`
-implementiert. Neben der JAR liegt eine `<jar>.sha256`-Datei (Integrität).
+Ein Lemon-Modul ist eine **JAR-Datei** mit einer Datei `module.yml` (gleichwertig:
+`lemon-module.yml`; nur eine von beiden) im Wurzelverzeichnis und einer Hauptklasse, die
+`dev.lemonpvp.runtime.api.RuntimeModule` implementiert. Neben der JAR liegt eine
+`<jar>.sha256`-Datei (Integrität). Das kürzeste gültige Modul braucht drei Zeilen:
+
+```yaml
+id: my-module
+version: 1.0.0
+main: org.example.mymodule.Main
+```
+
+Ohne Angabe gelten: `api-version` = API-Version der Runtime, `minecraft-versions: ["*"]`
+(jede Version), alle `capabilities`. Kern-Änderungen sind für neue Module nie nötig.
 
 Ein Modul wird **nie** automatisch aktiviert, nur weil seine JAR im Modulverzeichnis
 liegt. Aktivierung erfolgt ausschließlich über `/fork module enable <id>` (wenn
 `allow-runtime-deploy: true`) oder `startup-modules` in `lemon-runtime.yml`.
 
-## 1. `lemon-module.yml`
+## 1. `module.yml` / `lemon-module.yml`
 
 ```yaml
 id: event-tools                 # Pflicht. [a-z][a-z0-9_-]{1,47}, eindeutig, nicht reserviert
@@ -17,9 +27,9 @@ name: Event Tools               # optional, Standard = id (max. 64 Zeichen)
 description: Werkzeuge für Events   # optional (max. 512 Zeichen)
 authors: [Alice, Bob]           # optional (Entwicklerangabe)
 main: org.example.events.EventTools  # Pflicht. Voll qualifiziert, in einem eigenen Paket
-api-version: 1                  # Pflicht. Modul-API-Version (Runtime: 1)
-minecraft-versions: ["1.21.11", "26.*"]   # Pflicht. Exakt, Präfix ".*" oder "*"
-capabilities: [events, commands, scheduler, services]  # benötigte Laufzeit-Fähigkeiten
+api-version: 1                  # optional, Standard = API-Version der Runtime (1)
+minecraft-versions: ["1.21.11", "26.*"]   # optional, Standard ["*"]. Exakt, Präfix ".*" oder "*"
+capabilities: [events, commands, scheduler, services]  # optional; ohne Angabe: alle, mit Angabe: nur diese
 permissions:                    # deklarierte Berechtigungen, Präfix muss "<id>." sein
   event-tools.start:
     description: Startet ein Event
@@ -39,9 +49,9 @@ resources: [config.yml, lang/en.yml]  # beim ersten Laden ins Datenverzeichnis k
 | `id` | ja | Muster, reservierte IDs (`minecraft`, `bukkit`, `spigot`, `paper`, `papermc`, `craftbukkit`, `lemon`, `runtime`, `fork`) |
 | `version` | ja | SemVer |
 | `main` | ja | voll qualifizierter Klassenname; nicht in `java.*`, `javax.*`, `jdk.*`, `sun.*`, `dev.lemonpvp.runtime.*`, `org.bukkit.*`, `io.papermc.*`, `net.minecraft.*` |
-| `api-version` | ja | ≤ Runtime-API und in `allowed-api-versions` |
-| `minecraft-versions` | ja | muss die laufende Version treffen |
-| `capabilities` | nein | nur `events`, `commands`, `scheduler`, `services`; ohne Deklaration verweigert die Fassade den Zugriff |
+| `api-version` | nein (Standard: Runtime-API) | ≥ 1, ≤ Runtime-API und in `allowed-api-versions` |
+| `minecraft-versions` | nein (Standard: `["*"]`) | muss die laufende Version treffen; eine leere Liste ist ein Fehler |
+| `capabilities` | nein (Standard: alle) | nur `events`, `commands`, `scheduler`, `services`; ist die Liste angegeben, verweigert die Fassade alles andere |
 | `permissions` | nein | Knoten müssen mit `<id>.` beginnen; bereits existierende Knoten werden nicht überschrieben |
 | `dependencies` | nein | gültige IDs/Bereiche, keine Selbstabhängigkeit, keine Duplikate; Zyklen werden beim Start erkannt |
 | `resources` | nein | sichere relative Pfade (kein `..`, kein absoluter Pfad, kein `\`), max. 1 MiB je Datei |

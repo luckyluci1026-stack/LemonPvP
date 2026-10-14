@@ -35,6 +35,29 @@ cd runtime
           -PpaperApiVersion=26.2.build.+ -PjavaRelease=25   # Adapter + Beispielmodul gegen Paper-API
 ```
 
+Live-Patch-Agent und Test-Plugin:
+
+```bash
+./gradlew :livepatch-agent:jar        # → livepatch-agent/build/libs/lemon-livepatch-agent.jar
+./gradlew :example-plugin:jar -PpaperApiVersion=26.2.build.+ -PjavaRelease=25   # → LemonTestPlugin.jar (CI-Tests)
+```
+
+Unit-Tests der Runtime laufen mit `-javaagent` (wie ein Server). Auf einer anderen JVM,
+z. B. JetBrains Runtime mit erweiterter Redefinition:
+`./gradlew :runtime-core:test -PtestJava=/pfad/jbr/bin/java -PtestJvmArgs=-XX:+AllowEnhancedClassRedefinition`.
+
+## Core-Patches bauen
+
+```bash
+cd versions/26.2
+./gradlew :lemon-server:livePatchBaseline                    # direkt nach dem Bauen der deployten JAR
+# … Quellen ändern (paper-server/src/main/java, lemon-server/src/minecraft/java) …
+./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…"
+# → lemon-server/build/livepatch/fix-tps.lemonpatch + .sha256
+```
+
+Ablauf und Prüfungen auf dem Server: [`LIVE-UPDATES.md`](LIVE-UPDATES.md).
+
 `runtime-paper` wird im Fork **nicht** über diesen Build eingebunden, sondern per
 `srcDir` direkt in den Server kompiliert; der separate Build prüft nur die Kompilierbarkeit
 gegen die öffentliche Paper-API und erzeugt das Beispielmodul

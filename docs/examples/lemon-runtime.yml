@@ -14,3 +14,17 @@ max-module-count: 32
 operation-timeout-seconds: 30
 allowed-api-versions: [1]
 allow-server-internals: false
+
+# Live-Updates normaler Plugins (docs/LIVE-UPDATES.md). Prüfen geht immer; ändern nur mit enabled: true.
+plugin-updates:
+  enabled: true
+  trusted-hashes-file: ""
+
+# Core-Patches (JVM-Redefinition von Serverklassen). Braucht zusätzlich die JVM-Option
+# -javaagent:lemon-livepatch-agent.jar. Im Produktionsprofil nur Patches aus der Freigabeliste.
+live-patching:
+  enabled: true
+  profile: production
+  patch-directory: lemon/patches/inbox
+  trusted-hashes-file: lemon/patches/approved.sha256
+  confirm-timeout-seconds: 120

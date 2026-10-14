@@ -1,9 +1,15 @@
-# Lemon – Paper-Fork mit optionalem, kontrolliertem Hot-Deployment
+# Lemon – Paper-Fork mit optionalen, kontrollierten Live-Updates
 
 Lemon ist eine Paper-basierte Server-Software für Minecraft: Java Edition. Sie verhält sich
 standardmäßig wie die jeweilige Paper-Version und bringt zusätzlich eine **optionale,
-standardmäßig deaktivierte Runtime** mit, die eigene Erweiterungen (**Module**) zur Laufzeit
-kontrolliert laden, aktivieren, deaktivieren und ersetzen kann.
+standardmäßig deaktivierte Runtime** mit. Sie kann einen laufenden Server auf drei klar
+getrennten Wegen ändern (Details: [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md)):
+
+| | Was | Wie |
+|---|---|---|
+| **Module** | eigene Erweiterungen mit Lemon-API | laden, aktivieren, ersetzen (Hot-Swap mit Rollback), entfernen |
+| **Plugins** | normale Paper/Bukkit-Plugins | Kompatibilitätsprüfung; Live-Update nur, wenn sicher möglich, sonst „Neustart nötig“ |
+| **Core-Patches** | Code von Paper/Minecraft/Lemon im laufenden Prozess | JVM-Klassen-Redefinition über einen Java-Agenten; Standard-JVM: nur Methodenrümpfe |
 
 > Lemon ist **kein offizielles Paper-Projekt** und steht in keiner Verbindung zu PaperMC,
 > Mojang oder Microsoft. Lizenz: GPL-3.0 – siehe [`NOTICE.md`](NOTICE.md) und [`LICENSE`](LICENSE).
@@ -25,7 +31,10 @@ Jede Version ist ein eigenes Build-Artefakt – es gibt keine „Universal-JAR�
 * drei einzeilige Hooks in `CraftServer` (nach dem Aktivieren der Plugins, vor dem
   Deaktivieren, vor `/reload`), die bei deaktivierter Runtime nur eine Konfigurationsdatei lesen;
 * die Runtime-Klassen im Server-JAR (`dev.lemonpvp.runtime.*`);
-* die Server-Marke (`Lemon` statt `Paper`).
+* die Server-Marke (`Lemon` statt `Paper`);
+* im Build zwei Gradle-Tasks für Core-Patches (`livePatchBaseline`, `createLivePatch`).
+  Der Java-Agent `lemon-livepatch-agent.jar` ist eine separate Datei und nur aktiv, wenn
+  der Server mit `-javaagent:` gestartet wird.
 
 Keine Änderungen am Minecraft-Code, am Tick-Ablauf, am Netzwerk oder an Paper-Befehlen.
 
@@ -65,6 +74,22 @@ Voraussetzungen und Netzwerkzugriffe: [`docs/BUILDING.md`](docs/BUILDING.md).
 Ändernde Befehle sind standardmäßig **nur in der Serverkonsole** erlaubt
 (`lemon.runtime.module.manage` hat den Default `false`; RCON zählt nicht als Konsole).
 
+## Schnellstart Live-Updates (Plugins, Module, Core-Patches)
+
+```
+fork live status                     # was ist erlaubt, was ist aktiv
+fork live scan                       # was liegt bereit (lemon/modules, plugins/update, lemon/patches/inbox)
+fork live check <name>               # live möglich? (ohne Änderung)
+fork live update <name>              # Plan anzeigen …
+fork live update <name> confirm      # … und ausführen
+fork live rollback <name> [confirm]  # vorherige Plugin-JAR / Bytecode vor dem Patch
+fork live history
+```
+
+Voraussetzungen (`plugin-updates.enabled`, `live-patching.enabled`, JVM-Option
+`-javaagent:lemon-livepatch-agent.jar`), Schritt-für-Schritt-Anleitungen, was live geht
+und was einen Neustart braucht: [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md).
+
 ## Dokumentation
 
 | Thema | Datei |
@@ -73,6 +98,7 @@ Voraussetzungen und Netzwerkzugriffe: [`docs/BUILDING.md`](docs/BUILDING.md).
 | Versionsmatrix und Teststatus | [`docs/VERSIONS.md`](docs/VERSIONS.md) |
 | Fork bauen | [`docs/BUILDING.md`](docs/BUILDING.md) |
 | Upstream-Synchronisierung, neue Versionen | [`docs/UPSTREAM-SYNC.md`](docs/UPSTREAM-SYNC.md) |
+| **Live-Updates: Module, Plugins, Core-Patches – Anleitung, Grenzen, Workflow IntelliJ → Server** | [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md) |
 | Hot-Deployment: Architektur, Abläufe, Konfiguration, Befehle | [`docs/HOT-DEPLOYMENT.md`](docs/HOT-DEPLOYMENT.md) |
 | Modulformat und Modulentwicklung | [`docs/MODULE-FORMAT.md`](docs/MODULE-FORMAT.md) |
 | Capability-Matrix / Neustartanforderungen | [`docs/RESTART-REQUIREMENTS.md`](docs/RESTART-REQUIREMENTS.md) |
@@ -88,10 +114,11 @@ Voraussetzungen und Netzwerkzugriffe: [`docs/BUILDING.md`](docs/BUILDING.md).
 ## Repository-Struktur
 
 ```
-runtime/          Hot-Deployment-Runtime (API, Kern, Paper-Adapter, Beispielmodul) – eine Codebasis für alle Versionen
+runtime/          Runtime (API, Kern, Paper-Adapter, Live-Patch-Agent, Beispielmodul, Test-Plugin) – eine Codebasis für alle Versionen
 versions/<mc>/    Paperweight-Fork je Minecraft-Version (gepinnter Paper-Commit + Lemon-Patches)
 scripts/fork/     Generatoren für Versionsprojekte und Patches
-scripts/ci/       Server-Starttests
+scripts/livepatch/ Gradle-Tasks für Core-Patches (in jede Server-Build-Datei eingebunden)
+scripts/ci/       Server-Tests der CI (Module, Plugins, Core-Patches)
 docs/             Dokumentation
 index.html, index.zip   bereits vorhandene Website-Dateien (nicht Teil der Fork)
 ```

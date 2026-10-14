@@ -41,6 +41,13 @@ Netzwerk, Spielerdaten, Datenbank-Zugangsdaten, Reflection auf alle Objekte).
 | Log-Injection / gefälschte Audit-Einträge | Steuerzeichen und `|` in Feldern werden ersetzt | `AuditLog`, `PathGuard.sanitize` |
 | Fehler eines Moduls bringt Server zum Absturz | jeder Aufruf in Modulcode ist gekapselt; Hooks fangen alle Exceptions | `CallbackGuard`, `ModuleLifecycle`, `LemonRuntimeHooks` |
 | Heruntergeladener Code aus unsicheren Quellen | Die Runtime lädt **nichts** aus dem Netz; sie liest nur lokale Dateien | – |
+| Live-Updates ohne Freigabe | Plugin-Updates und Core-Patches standardmäßig aus; jede Änderung braucht `update` + `confirm` an der Konsole; bestätigt wird nur der geprüfte SHA-256-Stand | `LiveCommands`, `PluginUpdateManager`, `LivePatchService` |
+| Untergeschobene Core-Patches | Produktionsprofil: nur Archive aus der Freigabeliste; immer `.sha256`; Prüfung der Build-ID und des laufenden Bytecodes je Klasse; keine Klassen aus `java.*`/`jdk.*`/… und nicht der Live-Patch-Code selbst; Größen-/Eintragslimits, kein Zip-Slip | `PatchArchive`, `PatchPlanner`, `LivePatchService` |
+| Ungültiger Bytecode im laufenden Server | Standard-JVM: Verifier der JVM; JVMs ohne Verifikation bei Redefinition (per Probe erkannt, z. B. JBR): Lemon verifiziert vorher selbst | `CapabilityProbe`, `PreVerifier` |
+| Entwicklungsprofil versehentlich in Produktion | gilt nur mit JVM-Option `-Dlemon.livepatch.development=true`; sonst Produktionsregeln | `LivePatchService` |
+| Agent als Angriffsfläche | Agent nur per `-javaagent` (kein dynamisches Anhängen, keine Transformer, kein Netzwerk); er stellt nur die `Instrumentation`-Instanz bereit | `LemonLivePatchAgent` |
+| Fremde Plugin-JARs | Prüfung vor dem Laden (Deskriptor, Hauptklasse, Klassenversionen, Abhängigkeiten); optionale Allow-List; keine automatische Aktivierung aus `plugins/update/` durch Lemon | `PluginJarInspector`, `PluginCompatibility` |
+| Remote-Debugging | Lemon öffnet **keinen** JDWP- oder sonstigen Port. JDWP (IntelliJ-HotSwap) hat keine Authentifizierung: nur auf Entwicklungsservern, an `127.0.0.1`/Container-Adresse gebunden, Zugriff per SSH-Tunnel, Port nie veröffentlichen | `LIVE-UPDATES.md` §5 |
 | Eingebettete Geheimnisse | keine Schlüssel, Passwörter oder Tokens im Code oder in der CI | – |
 
 ## Empfehlungen für den Betrieb
@@ -49,8 +56,12 @@ Netzwerk, Spielerdaten, Datenbank-Zugangsdaten, Reflection auf alle Objekte).
   Produktion `startup-modules` + Neustart bevorzugen oder nur kurzzeitig freischalten.
 * `trusted-hashes-file` in Produktion verwenden und den Freigabeprozess (Build in CI,
   Review, Hash in die Allow-List) von den Personen trennen, die Dateien hochladen.
-* `lemon.runtime.module.manage` niemals an Spielergruppen vergeben. Aktionen über die
-  Konsole oder ein abgesichertes Admin-Konto ausführen.
+* `lemon.runtime.module.manage` und `lemon.runtime.live.update` niemals an Spielergruppen
+  vergeben. Aktionen über die Konsole oder ein abgesichertes Admin-Konto ausführen.
+* Core-Patches in Produktion nur über die Freigabeliste; die Person, die freigibt, sollte
+  nicht dieselbe sein, die hochlädt. Nach einem Patch zeitnah eine neu gebaute JAR
+  deployen und neu starten.
+* `-javaagent:lemon-livepatch-agent.jar` nur setzen, wenn Core-Patches gebraucht werden.
 * `lemon/logs/audit.log` sichern und überwachen.
 * Dateirechte: der Serverbenutzer braucht Schreibrechte für `lemon/`, Uploads sollten von
   einem anderen Benutzer kommen, der `config/` nicht schreiben kann.

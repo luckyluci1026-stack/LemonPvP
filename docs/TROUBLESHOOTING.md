@@ -17,7 +17,8 @@
 
 | Meldung | Lösung |
 |---|---|
-| `missing lemon-module.yml` | Deskriptor im JAR-Wurzelverzeichnis ablegen |
+| `missing module.yml (or lemon-module.yml)` | Deskriptor im JAR-Wurzelverzeichnis ablegen; ist es ein Bukkit-Plugin, gehört es nach `plugins/` |
+| `contains both lemon-module.yml and module.yml; keep only one` | nur einen Deskriptor behalten |
 | `invalid descriptor: …` | Feldliste in `docs/MODULE-FORMAT.md` prüfen; alle Fehler werden auf einmal gemeldet |
 | `duplicate module id 'x' in 2 files` | alte JAR entfernen – bei Duplikaten werden **alle** Kandidaten abgelehnt |
 | `unsafe file name` / `symbolic links are not accepted` / `path escapes its base directory` | JAR mit einfachem Namen direkt (ohne Symlink) in `lemon/modules/` ablegen |
@@ -57,3 +58,25 @@
 
 Logs und Audit: Server-Log (Präfix `[Lemon]`), `lemon/logs/audit.log`,
 `/fork module diagnostics <id>`.
+
+## Live-Updates (`/fork live`)
+
+| Meldung | Ursache | Lösung |
+|---|---|---|
+| `Agent: live-patch agent not loaded: start the JVM with -javaagent:lemon-livepatch-agent.jar` | Server ohne Agent gestartet | JVM-Option vor `-jar` ergänzen (Pterodactyl: Startbefehl), Neustart |
+| `agent class is on the class path but was not started by the JVM` | Agent-JAR per `-cp` statt `-javaagent` | `-javaagent:` verwenden |
+| `live patching is disabled (live-patching.enabled: false …)` | Core-Patches aus | `live-patching.enabled: true`, Neustart |
+| `the production profile only applies patches listed in live-patching.trusted-hashes-file, which is not configured` | Produktionsprofil ohne Freigabeliste | Freigabeliste konfigurieren und Digest eintragen |
+| `integrity check failed: SHA-256 mismatch` / `… is not listed in …` | `.sha256` passt nicht / Patch nicht freigegeben | Datei vollständig übertragen; Digest freigeben |
+| `patch was built for … but the server is … (wrong build id …)` | Patch gegen eine andere Server-JAR gebaut | Basis = exakt die deployte JAR (`livePatchBaseline` direkt nach dem Bauen bzw. entpackte JAR vom Server holen) |
+| `patch was built against … but the server runs …` | laufender Bytecode einer Klasse weicht ab | Patch gegen die deployte JAR neu bauen |
+| `unsupported change(s): method added … (this JVM cannot add methods/constructors …)` | strukturelle Änderung auf Standard-JVM | Änderung auf Methodenrümpfe beschränken oder Neustart mit neuer JAR (oder JBR mit `-XX:+AllowEnhancedClassRedefinition`) |
+| `the class file fails bytecode verification (…)` | ungültiger Bytecode (nur auf JVMs ohne eigene Verifikation geprüft) | Klassendateien neu kompilieren; kein Nachbearbeiten von Bytecode |
+| `the class could not be verified before the redefinition …` | Klasse lässt sich außerhalb ihres Laufzeitpakets nicht verifizieren (JBR) | Neustart mit neuer JAR; auf Entwicklungsservern Entwicklungsprofil |
+| `FAILED the JVM rejected the redefinition: …` | JVM hat abgelehnt; laut JVMTI wurde keine Klasse geändert | Meldung im Server-Log lesen; nichts zurückzurollen |
+| `no plan of x is waiting for confirmation …` | `confirm` ohne vorherigen Plan, abgelaufen, oder anderer Akteur | zuerst `fork live update x` |
+| Plugin: `needs a server restart` | Abhängige Plugins, Paper-Plugin, Lifecycle-API … (Gründe werden gelistet) | Neustart; Paper installiert die JAR aus `plugins/update/` beim Start |
+| Plugin: `the update folder holds another jar of plugin X` | mehrere JARs desselben Plugins in `plugins/update/` | nur eine behalten |
+| Plugin: `FAILED … the previous version … was restored and is enabled` | neue Version startete nicht (Fehler im Server-Log) | Plugin korrigieren; alte Version läuft weiter |
+| Plugin: `restoring the previous version also failed … restart the server` | auch die alte Version startete nicht | alte JAR liegt wieder in `plugins/`; Server neu starten |
+| `'x' is ambiguous ([MODULE, PLUGIN]); use a prefix` | gleicher Name in mehreren Bereichen | `plugin:x`, `module:x` oder `patch:x` |

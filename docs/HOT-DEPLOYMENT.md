@@ -4,11 +4,13 @@ Die Lemon-Runtime lädt, aktiviert, deaktiviert und ersetzt **ausgewählte Erwei
 (Module)** kontrolliert zur Laufzeit. Sie ist **standardmäßig deaktiviert**. Dieses
 Dokument beschreibt Architektur, Abläufe, Threading, Konfiguration und Befehle.
 
-> Begriffsklärung: Lemon macht **kein JVM-Hot-Swap** von beliebigem Code. Es lädt ein
-> Modul in einen eigenen Class-Loader, aktiviert es, und beim Austausch wird die alte
-> Instanz deaktiviert und ihr Class-Loader geschlossen. Alte Klassen verschwinden erst aus
-> der JVM, wenn der Garbage Collector sie freigeben kann. Der Minecraft-Kern, Paper selbst
-> und Bukkit-Plugins sind **nicht** hot-reloadbar.
+> Begriffsklärung: Modul-Hot-Deployment ist **kein JVM-Hot-Swap**. Lemon lädt ein Modul in
+> einen eigenen Class-Loader, aktiviert es, und beim Austausch wird die alte Instanz
+> deaktiviert und ihr Class-Loader geschlossen. Alte Klassen verschwinden erst aus der JVM,
+> wenn der Garbage Collector sie freigeben kann. Getrennt davon gibt es Live-Updates
+> normaler Plugins (mit Kompatibilitätsprüfung) und Core-Patches (echte JVM-Redefinition
+> von Serverklassen, nur Methodenrümpfe auf Standard-JVMs) – beides beschreibt
+> [`LIVE-UPDATES.md`](LIVE-UPDATES.md).
 
 ## 1. Architektur
 
@@ -225,8 +227,15 @@ Alle Optionen werden ausgewertet (getestet in `RuntimeConfigLoaderTest`). Ungül
 | `operation-timeout-seconds` | 30 | Timeout asynchroner Phasen / Schwelle für „langsam“ | sofort |
 | `allowed-api-versions` | `[1]` | akzeptierte Modul-API-Versionen | sofort |
 | `allow-server-internals` | `false` | `net.minecraft`/CraftBukkit für Module sichtbar | für danach geladene Module |
+| `plugin-updates.enabled` | `false` | erlaubt `/fork live update\|rollback` für Plugins (Prüfen geht immer) | sofort |
+| `plugin-updates.trusted-hashes-file` | `""` | Allow-List erlaubter Plugin-JARs | sofort |
+| `live-patching.enabled` | `false` | erlaubt Core-Patches (braucht zusätzlich `-javaagent:lemon-livepatch-agent.jar`) | Neustart |
+| `live-patching.profile` | `production` | `production` \| `development` (Letzteres nur mit `-Dlemon.livepatch.development=true`) | Neustart |
+| `live-patching.patch-directory` | `lemon/patches/inbox` | Ablage für `<id>.lemonpatch` + `.sha256` | Neustart |
+| `live-patching.trusted-hashes-file` | `""` | Freigabeliste der Patch-Archive (in Produktion Pflicht) | sofort |
+| `live-patching.confirm-timeout-seconds` | 120 | Zeit zwischen `update` und `update … confirm` | sofort |
 
-Beispiel: `docs/examples/lemon-runtime.yml`.
+Beispiel: `docs/examples/lemon-runtime.yml`. Live-Updates: [`LIVE-UPDATES.md`](LIVE-UPDATES.md).
 
 ## 8. Dateistruktur
 
@@ -237,6 +246,8 @@ lemon/module-data/<id>/                 Modulkonfiguration (config.yml) und -dat
 lemon/staging/                          geprüfte private JAR-Kopien (temporär; beim Stopp geleert)
 lemon/logs/audit.log                    Audit-Log
 lemon/state/runtime-state.properties    zur Laufzeit aktivierte Module (+ SHA-256)
+lemon/modules-removed/<Zeit>/           mit /fork module remove entfernte Module
+lemon/patches/…, lemon/plugin-backups/… Core-Patches und Plugin-Sicherungen (siehe LIVE-UPDATES.md)
 ```
 
 Versionsspezifische Dateien entstehen nicht; Module deklarieren ihre unterstützten
@@ -253,7 +264,9 @@ und überschreibt keinen bestehenden Befehl.
 | `/fork reload` | `lemon.runtime.command.reload` (**niemand**, nur Konsole/explizit) | `lemon-runtime.yml` neu laden |
 | `/fork module list` | `lemon.runtime.module.view` (OP) | Verzeichnis scannen + Status |
 | `/fork module info\|validate\|diagnostics <id>` | `lemon.runtime.module.view` (OP) | Anzeige / Prüfung ohne Klassen zu laden |
-| `/fork module load\|enable\|disable\|reload\|unload\|config <id>` | `lemon.runtime.module.manage` (**niemand**, nur Konsole/explizit) | ändert ausgeführten Code |
+| `/fork module load\|enable\|disable\|reload\|unload\|config\|remove <id>` | `lemon.runtime.module.manage` (**niemand**, nur Konsole/explizit) | ändert ausgeführten Code; `remove` entlädt und verschiebt die JAR nach `lemon/modules-removed/` |
+| `/fork live status\|scan\|plugins\|modules\|history\|check <name>`, `/fork live patch status` | `lemon.runtime.live.view` (OP) | Anzeige / Prüfung (siehe `LIVE-UPDATES.md`) |
+| `/fork live update\|rollback <name> [confirm]`, `/fork live patch probe` | `lemon.runtime.live.update` (**niemand**, nur Konsole/explizit) | Plugins, Module, Core-Patches ändern |
 
 Argumente werden validiert (Modul-IDs nur `[a-z][a-z0-9_-]{1,47}`, keine Pfade).
 Ausgaben nutzen feste MiniMessage-Vorlagen; dynamischer Text wird mit
