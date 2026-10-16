@@ -171,6 +171,8 @@ public final class LivePatchTool {
         }
 
         List<PatchManifest.Entry> entries = new ArrayList<>();
+        Map<String, byte[]> included = new LinkedHashMap<>();
+        List<String> skipped = new ArrayList<>();
         boolean structural = false;
         out.println("patch " + id + " for " + buildId + " (Minecraft " + minecraft + ")");
         if (!reference.equals(base)) {
@@ -195,39 +197,55 @@ public final class LivePatchTool {
             if (isNew && referenceSha.containsKey(name)) {
                 throw new ToolException(name + " is in --reference but not in --base; they are not the same build");
             }
-            entries.add(new PatchManifest.Entry(name, Hashing.sha256(e.getValue()), isNew ? null : baseSha.get(name), isNew));
             if (isNew) {
+                entries.add(new PatchManifest.Entry(name, Hashing.sha256(e.getValue()), null, true));
+                included.put(name, e.getValue());
                 out.println("  new      " + name);
                 continue;
             }
             List<ClassChange> changes;
             try {
                 ClassInfo running = ClassFileReader.read(readEntry(base, name));
+                changes = ClassDiff.compare(running, next);
+                if (changes.isEmpty()) {
+                    // Same bytecode, only debug information, annotations or the class file layout differ
+                    // (e.g. line numbers of an inner class whose outer source file changed): nothing to redefine.
+                    skipped.add(name);
+                    continue;
+                }
                 if (!reference.equals(base) && referenceSha.containsKey(name)
                         && !baseSha.get(name).equals(referenceSha.get(name))) {
-                    List<ClassChange> drift = ClassDiff.compare(running, ClassFileReader.read(readEntry(reference, name)));
+                    byte[] referenceBytes = readEntry(reference, name);
+                    List<ClassChange> drift = ClassDiff.compare(running, ClassFileReader.read(referenceBytes));
                     if (!drift.isEmpty()) {
+                        printDrift(out, name, readEntry(base, name), referenceBytes);
                         throw new ToolException(name + " differs between --base and --reference beyond the class file layout ("
                                 + drift.get(0) + "); --reference is not the build that runs on the server");
                     }
                 }
-                changes = ClassDiff.compare(running, next);
             } catch (ClassFormatException ex) {
                 throw new ToolException("base class " + name + ": " + ex.getMessage());
             }
+            entries.add(new PatchManifest.Entry(name, Hashing.sha256(e.getValue()), baseSha.get(name), false));
+            included.put(name, e.getValue());
             out.println("  changed  " + name);
             for (ClassChange c : changes) {
                 boolean body = c.kind().bodyOnly();
                 structural |= !body;
                 out.println("           " + (body ? "" : "[structural] ") + c);
             }
-            if (changes.isEmpty()) {
-                out.println("           " + ChangeKind.ATTRIBUTES_ONLY.description());
-            }
+        }
+        if (!skipped.isEmpty()) {
+            out.println("  skipped " + skipped.size() + " class(es) without a bytecode change (debug information, annotations or"
+                    + " class file layout only): " + (skipped.size() <= 10 ? skipped : skipped.subList(0, 10) + " ..."));
+        }
+        if (included.isEmpty()) {
+            out.println("no class has a bytecode change - nothing to patch");
+            return 2;
         }
         PatchManifest manifest = new PatchManifest(id, opts.getOrDefault("description", ""), Instant.now().toString(), VERSION,
                 buildId, minecraft, entries);
-        byte[] archive = PatchArchive.write(manifest, changed);
+        byte[] archive = PatchArchive.write(manifest, included);
         Files.createDirectories(outDir);
         Path file = outDir.resolve(id + PatchIds.SUFFIX);
         Path tmp = outDir.resolve(id + PatchIds.SUFFIX + ".tmp");
@@ -347,6 +365,35 @@ public final class LivePatchTool {
         }
         out.println("APPLICABLE on a standard JVM (method bodies only). The server checks everything again before applying.");
         return 0;
+    }
+
+    /** Prints where the bytecode of --base and --reference differs, method by method (diagnostics). */
+    private static void printDrift(PrintStream out, String name, byte[] base, byte[] reference) {
+        try {
+            ClassInfo b = ClassFileReader.read(base);
+            ClassInfo r = ClassFileReader.read(reference);
+            for (ClassInfo.MethodInfo m : b.methods()) {
+                ClassInfo.MethodInfo other = r.method(m.name(), m.descriptor()).orElse(null);
+                if (other == null || java.util.Objects.equals(m.codeDigest(), other.codeDigest())) {
+                    continue;
+                }
+                List<String> lb = ClassFileReader.codeListing(base, m.name(), m.descriptor());
+                List<String> lr = ClassFileReader.codeListing(reference, m.name(), m.descriptor());
+                int first = 0;
+                while (first < lb.size() && first < lr.size() && lb.get(first).equals(lr.get(first))) {
+                    first++;
+                }
+                out.println("  " + name + "." + m.name() + m.descriptor() + ": " + lb.size() + " lines in --base, " + lr.size()
+                        + " in --reference, first difference at line " + first);
+                for (int i = Math.max(0, first - 3); i < Math.min(Math.max(lb.size(), lr.size()), first + 12); i++) {
+                    String x = i < lb.size() ? lb.get(i) : "";
+                    String y = i < lr.size() ? lr.get(i) : "";
+                    out.println((x.equals(y) ? "      = " : "      base: ") + x + (x.equals(y) ? "" : "\n      ref:  " + y));
+                }
+            }
+        } catch (ClassFormatException | RuntimeException e) {
+            out.println("  (no listing: " + e + ")");
+        }
     }
 
     private static Map<String, String> classDigests(Path jarFile) throws IOException {

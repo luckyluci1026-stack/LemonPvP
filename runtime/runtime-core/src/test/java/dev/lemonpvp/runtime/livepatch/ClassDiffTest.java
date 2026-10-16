@@ -91,6 +91,26 @@ class ClassDiffTest {
     }
 
     @Test
+    void codeListingResolvesConstantsAndNumbersJumpTargets() throws Exception {
+        Path jar = ModuleJarBuilder.create().noDescriptor().source("cd.Subject", """
+                package cd;
+                public class Subject {
+                    public static String pick(int i) { return i > 3 ? "big" : "small"; }
+                }
+                """).writeTo(this.dir, "listing.jar", false);
+        byte[] bytes;
+        try (JarFile f = new JarFile(jar.toFile()); InputStream in = f.getInputStream(f.getEntry("cd/Subject.class"))) {
+            bytes = in.readAllBytes();
+        }
+        List<String> listing = ClassFileReader.codeListing(bytes, "pick", "(I)Ljava/lang/String;");
+        assertTrue(listing.get(0).startsWith("max_stack "), listing.toString());
+        assertTrue(listing.contains("#0 iload_0"), listing.toString());
+        assertTrue(listing.stream().anyMatch(l -> l.matches("#\\d+ if_icmple #\\d+")), listing.toString());
+        assertTrue(listing.stream().anyMatch(l -> l.endsWith("ldc s:big")), listing.toString());
+        assertEquals(List.of(), ClassFileReader.codeListing(bytes, "missing", "()V"));
+    }
+
+    @Test
     void readerRejectsGarbage() {
         for (byte[] bad : List.of(new byte[0], new byte[] {(byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE, 0, 0, 0, 65, 0, 0},
                 "not a class file at all".getBytes())) {

@@ -232,9 +232,11 @@ class LivePatchIntegrationTest {
             assertFalse(wrong.applicable());
             assertTrue(wrong.errors().stream().anyMatch(e -> e.contains("patch was built against")), wrong.errors().toString());
 
-            // Built against the running jar only: every rewritten class looks changed.
+            // Built against the running jar only: every rewritten class differs byte-wise; classes
+            // without a bytecode change are left out of the patch.
             String noRef = tool(running, classes, inbox(f), "no-reference");
-            assertTrue(noRef.contains("changed  lpr.A") && noRef.contains("changed  lpr.B"), noRef);
+            assertTrue(noRef.contains("changed  lpr.A") && !noRef.contains("changed  lpr.B"), noRef);
+            assertTrue(noRef.contains("skipped 1 class(es) without a bytecode change") && noRef.contains("[lpr.B]"), noRef);
 
             // Running jar as base, Gradle jar as reference: only the real change, and it applies.
             String withRef = tool(running, classes, inbox(f), "with-reference", "--reference", reference.toString());

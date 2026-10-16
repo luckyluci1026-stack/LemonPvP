@@ -391,6 +391,19 @@ public final class ClassFileReader {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 is not available", e);
         }
+        for (String line : codeLines(offset, length, methodName)) {
+            update(md, line);
+        }
+        return HexFormat.of().formatHex(md.digest());
+    }
+
+    /**
+     * Normalized listing of a {@code Code} attribute: one line for the stack/locals sizes,
+     * one per instruction (constant-pool operands resolved, jump targets as instruction
+     * numbers, {@code ldc_w}/{@code goto_w}/{@code jsr_w} as their short forms) and one per
+     * exception handler. The method digest is computed from exactly these lines.
+     */
+    private List<String> codeLines(int offset, int length, String methodName) throws ClassFormatException {
         int end = checkedEnd(offset, length);
         int p = offset;
         int maxStack = u2(p);
@@ -401,7 +414,7 @@ public final class ClassFileReader {
             throw new ClassFormatException("method " + methodName + ": invalid code length " + codeLength);
         }
         int codeEnd = codeStart + (int) codeLength;
-        // Pass 1: instruction boundaries. Jump targets and exception ranges are hashed as
+        // Pass 1: instruction boundaries. Jump targets and exception ranges are listed as
         // instruction numbers, not byte offsets, so the digest does not change when the JVM
         // widens an instruction (ldc -> ldc_w after merging constant pools on redefinition).
         int[] number = new int[(int) codeLength + 1];
@@ -416,60 +429,54 @@ public final class ClassFileReader {
             throw new ClassFormatException("method " + methodName + ": last instruction exceeds the code array");
         }
         number[(int) codeLength] = count;
-        // Pass 2: digest.
-        update(md, "ms" + maxStack + "ml" + maxLocals + ";");
+        // Pass 2: listing.
+        List<String> out = new ArrayList<>(count + 2);
+        out.add("max_stack " + maxStack + ", max_locals " + maxLocals);
         pc = codeStart;
+        int index = 0;
         while (pc < codeEnd) {
             int op = this.b[pc] & 0xFF;
             int rel = pc - codeStart;
             int len = instructionLength(pc, codeStart, methodName);
-            switch (op) {
-                case 0x12, 0x13 -> { // ldc, ldc_w: same instruction with a narrow or wide index
-                    md.update((byte) 0x12);
-                    update(md, describe(op == 0x12 ? this.b[pc + 1] & 0xFF : u2(pc + 1), 0));
-                }
-                case 0x14, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xbb, 0xbd, 0xc0, 0xc1, 0xba -> {
-                    md.update((byte) op);
-                    update(md, describe(u2(pc + 1), 0));
-                }
-                case 0xb9, 0xc5 -> { // invokeinterface (count), multianewarray (dimensions)
-                    md.update((byte) op);
-                    update(md, describe(u2(pc + 1), 0));
-                    md.update(this.b, pc + 3, 1);
-                }
-                case 0xaa -> { // tableswitch: padding skipped, targets as instruction numbers
-                    md.update((byte) op);
+            String text = switch (op) {
+                case 0x12, 0x13 -> "ldc " + describe(op == 0x12 ? this.b[pc + 1] & 0xFF : u2(pc + 1), 0);
+                case 0x14, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xbb, 0xbd, 0xc0, 0xc1, 0xba -> mnemonic(op) + " "
+                        + describe(u2(pc + 1), 0);
+                case 0xb9, 0xc5 -> mnemonic(op) + " " + describe(u2(pc + 1), 0) + " " + (this.b[pc + 3] & 0xFF);
+                case 0xaa -> {
                     int base = pc + 1 + ((4 - ((rel + 1) % 4)) % 4);
                     int low = (int) u4(base + 4);
                     int high = (int) u4(base + 8);
-                    update(md, "d" + target(number, rel, (int) u4(base), methodName) + "l" + low + "h" + high);
+                    StringBuilder sb = new StringBuilder("tableswitch " + low + ".." + high + " default #"
+                            + target(number, rel, (int) u4(base), methodName));
                     for (int i = 0; i <= high - low; i++) {
-                        update(md, "t" + target(number, rel, (int) u4(base + 12 + i * 4), methodName));
+                        sb.append(" #").append(target(number, rel, (int) u4(base + 12 + i * 4), methodName));
                     }
+                    yield sb.toString();
                 }
-                case 0xab -> { // lookupswitch
-                    md.update((byte) op);
+                case 0xab -> {
                     int base = pc + 1 + ((4 - ((rel + 1) % 4)) % 4);
                     int pairs = (int) u4(base + 4);
-                    update(md, "d" + target(number, rel, (int) u4(base), methodName) + "n" + pairs);
+                    StringBuilder sb = new StringBuilder("lookupswitch default #" + target(number, rel, (int) u4(base), methodName));
                     for (int i = 0; i < pairs; i++) {
                         int at = base + 8 + i * 8;
-                        update(md, "k" + (int) u4(at) + "t" + target(number, rel, (int) u4(at + 4), methodName));
+                        sb.append(' ').append((int) u4(at)).append(":#").append(target(number, rel, (int) u4(at + 4), methodName));
                     }
+                    yield sb.toString();
                 }
-                case 0xc8, 0xc9 -> { // goto_w, jsr_w: same as goto, jsr
-                    md.update((byte) (op == 0xc8 ? 0xa7 : 0xa8));
-                    update(md, "t" + target(number, rel, (int) u4(pc + 1), methodName));
-                }
+                case 0xc8, 0xc9 -> (op == 0xc8 ? "goto" : "jsr") + " #" + target(number, rel, (int) u4(pc + 1), methodName);
                 default -> {
-                    md.update((byte) op);
                     if ((op >= 0x99 && op <= 0xa8) || op == 0xc6 || op == 0xc7) { // branches
-                        update(md, "t" + target(number, rel, (short) u2(pc + 1), methodName));
-                    } else if (len > 1) {
-                        md.update(this.b, pc + 1, len - 1);
+                        yield mnemonic(op) + " #" + target(number, rel, (short) u2(pc + 1), methodName);
                     }
+                    StringBuilder sb = new StringBuilder(mnemonic(op));
+                    for (int i = 1; i < len; i++) {
+                        sb.append(' ').append(this.b[pc + i] & 0xFF);
+                    }
+                    yield sb.toString();
                 }
-            }
+            };
+            out.add("#" + index++ + " " + text);
             pc += len;
         }
         int q = codeEnd;
@@ -479,13 +486,59 @@ public final class ClassFileReader {
             throw new ClassFormatException("method " + methodName + ": exception table exceeds the Code attribute");
         }
         for (int i = 0; i < handlers; i++) {
-            update(md, "x" + boundary(number, u2(q), methodName) + "-" + boundary(number, u2(q + 2), methodName) + ">"
-                    + boundary(number, u2(q + 4), methodName));
             int catchType = u2(q + 6);
-            update(md, catchType == 0 ? "any" : describe(catchType, 0));
+            out.add("try #" + boundary(number, u2(q), methodName) + "-#" + boundary(number, u2(q + 2), methodName) + " -> #"
+                    + boundary(number, u2(q + 4), methodName) + " " + (catchType == 0 ? "any" : describe(catchType, 0)));
             q += 8;
         }
-        return HexFormat.of().formatHex(md.digest());
+        return out;
+    }
+
+    /**
+     * Normalized listing of one method's bytecode (see the class comment), for diagnostics.
+     *
+     * @param classFile  class file
+     * @param methodName method name
+     * @param descriptor method descriptor
+     * @return the listing, or an empty list if the method does not exist or has no code
+     * @throws ClassFormatException if the class file is invalid
+     */
+    public static List<String> codeListing(byte[] classFile, String methodName, String descriptor) throws ClassFormatException {
+        try {
+            ClassFileReader reader = new ClassFileReader(classFile);
+            ClassInfo info = reader.parse();
+            for (ClassInfo.MethodInfo m : info.methods()) {
+                if (m.name().equals(methodName) && m.descriptor().equals(descriptor) && m.codeOffset() >= 0) {
+                    return reader.codeLines(m.codeOffset(), (int) (u4Static(classFile, m.codeOffset() - 4)), methodName);
+                }
+            }
+            return List.of();
+        } catch (IndexOutOfBoundsException | NegativeArraySizeException e) {
+            throw new ClassFormatException("truncated or corrupt class file (" + e.getMessage() + ")");
+        }
+    }
+
+    private static long u4Static(byte[] b, int at) {
+        return ((long) (b[at] & 0xFF) << 24) | ((b[at + 1] & 0xFF) << 16) | ((b[at + 2] & 0xFF) << 8) | (b[at + 3] & 0xFF);
+    }
+
+    private static final String[] MNEMONICS = ("nop aconst_null iconst_m1 iconst_0 iconst_1 iconst_2 iconst_3 iconst_4 iconst_5"
+            + " lconst_0 lconst_1 fconst_0 fconst_1 fconst_2 dconst_0 dconst_1 bipush sipush ldc ldc_w ldc2_w iload lload fload"
+            + " dload aload iload_0 iload_1 iload_2 iload_3 lload_0 lload_1 lload_2 lload_3 fload_0 fload_1 fload_2 fload_3"
+            + " dload_0 dload_1 dload_2 dload_3 aload_0 aload_1 aload_2 aload_3 iaload laload faload daload aaload baload"
+            + " caload saload istore lstore fstore dstore astore istore_0 istore_1 istore_2 istore_3 lstore_0 lstore_1"
+            + " lstore_2 lstore_3 fstore_0 fstore_1 fstore_2 fstore_3 dstore_0 dstore_1 dstore_2 dstore_3 astore_0 astore_1"
+            + " astore_2 astore_3 iastore lastore fastore dastore aastore bastore castore sastore pop pop2 dup dup_x1 dup_x2"
+            + " dup2 dup2_x1 dup2_x2 swap iadd ladd fadd dadd isub lsub fsub dsub imul lmul fmul dmul idiv ldiv fdiv ddiv"
+            + " irem lrem frem drem ineg lneg fneg dneg ishl lshl ishr lshr iushr lushr iand land ior lor ixor lxor iinc i2l"
+            + " i2f i2d l2i l2f l2d f2i f2l f2d d2i d2l d2f i2b i2c i2s lcmp fcmpl fcmpg dcmpl dcmpg ifeq ifne iflt ifge ifgt"
+            + " ifle if_icmpeq if_icmpne if_icmplt if_icmpge if_icmpgt if_icmple if_acmpeq if_acmpne goto jsr ret tableswitch"
+            + " lookupswitch ireturn lreturn freturn dreturn areturn return getstatic putstatic getfield putfield"
+            + " invokevirtual invokespecial invokestatic invokeinterface invokedynamic new newarray anewarray arraylength"
+            + " athrow checkcast instanceof monitorenter monitorexit wide multianewarray ifnull ifnonnull goto_w jsr_w").split(" ");
+
+    private static String mnemonic(int op) {
+        return op < MNEMONICS.length ? MNEMONICS[op] : "op" + op;
     }
 
     /** @return length of the instruction at {@code pc}, validated against the class file */
