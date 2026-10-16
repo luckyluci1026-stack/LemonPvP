@@ -175,6 +175,77 @@ class LivePatchIntegrationTest {
         }
     }
 
+    /**
+     * Copies a jar and changes every class file without changing its meaning (the SourceFile
+     * name keeps its length), like the 1.21.11 paperclip, whose server jar has the same classes
+     * as the Gradle jar but a different class file layout.
+     */
+    static Path rewritten(Path jar, Path target) throws Exception {
+        Files.createDirectories(target.getParent());
+        try (JarFile in = new JarFile(jar.toFile());
+             java.util.zip.ZipOutputStream out = new java.util.zip.ZipOutputStream(Files.newOutputStream(target))) {
+            for (var e : java.util.Collections.list(in.entries())) {
+                byte[] data;
+                try (InputStream is = in.getInputStream(e)) {
+                    data = is.readAllBytes();
+                }
+                if (e.getName().endsWith(".class")) {
+                    String simple = e.getName().substring(e.getName().lastIndexOf('/') + 1).replace(".class", "");
+                    String text = new String(data, StandardCharsets.ISO_8859_1);
+                    String from = simple + ".java";
+                    assertEquals(text.indexOf(from), text.lastIndexOf(from), "SourceFile name occurs once in " + e.getName());
+                    data = text.replace(from, simple + ".jxva").getBytes(StandardCharsets.ISO_8859_1);
+                }
+                out.putNextEntry(new java.util.zip.ZipEntry(e.getName()));
+                out.write(data);
+                out.closeEntry();
+            }
+        }
+        return target;
+    }
+
+    @Test
+    void rewrittenServerJarsArePatchedWithTheGradleJarAsReference() throws Exception {
+        Map<String, String> v1 = Map.of("lpr.A", greeter("lpr", "v1").replace("Greeter", "A"),
+                "lpr.B", greeter("lpr", "v1").replace("Greeter", "B"));
+        Map<String, String> v2 = Map.of("lpr.A", greeter("lpr", "v2").replace("Greeter", "A"),
+                "lpr.B", greeter("lpr", "v1").replace("Greeter", "B"));
+        Path reference = jar(this.dir.resolve("ref"), "reference.jar", v1);
+        Path running = rewritten(reference, this.dir.resolve("run/server.jar"));
+        Path classes = unzipClasses(jar(this.dir.resolve("v2"), "classes.jar", v2), this.dir.resolve("v2classes"));
+        try (RuntimeFixture f = fixture(this.dir, running)) {
+            Class<?> a = Class.forName("lpr.A", true, f.platform.serverClassLoader());
+            LivePatchService s = f.runtime.livePatches();
+
+            // Built against the Gradle jar only: the server refuses, its bytecode differs.
+            tool(reference, classes, inbox(f), "gradle-base");
+            PatchPlan wrong = await(s.inspect("gradle-base"));
+            assertFalse(wrong.applicable());
+            assertTrue(wrong.errors().stream().anyMatch(e -> e.contains("patch was built against")), wrong.errors().toString());
+
+            // Built against the running jar only: every rewritten class looks changed.
+            String noRef = tool(running, classes, inbox(f), "no-reference");
+            assertTrue(noRef.contains("changed  lpr.A") && noRef.contains("changed  lpr.B"), noRef);
+
+            // Running jar as base, Gradle jar as reference: only the real change, and it applies.
+            String withRef = tool(running, classes, inbox(f), "with-reference", "--reference", reference.toString());
+            assertTrue(withRef.contains("changed  lpr.A") && !withRef.contains("lpr.B"), withRef);
+            LivePatchService.Result r = applyConfirmed(s, "with-reference");
+            assertEquals(Kind.APPLIED, r.kind(), r.message() + " " + r.details());
+            assertEquals("v2", call(a, "text"));
+        }
+
+        // A reference from other sources is detected instead of producing a wrong patch.
+        Path other = jar(this.dir.resolve("other"), "other.jar", Map.of("lpr.A", greeter("lpr", "v0").replace("Greeter", "A"),
+                "lpr.B", greeter("lpr", "v1").replace("Greeter", "B")));
+        dev.lemonpvp.runtime.livepatch.tool.LivePatchTool.ToolException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                dev.lemonpvp.runtime.livepatch.tool.LivePatchTool.ToolException.class,
+                () -> dev.lemonpvp.runtime.livepatch.tool.LivePatchTool.run(new String[] {"create", "--base", running.toString(),
+                        "--classes", classes.toString(), "--reference", other.toString(), "--out", this.dir.resolve("o").toString(),
+                        "--id", "drift"}, new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8)));
+        assertTrue(ex.getMessage().contains("not the build that runs on the server"), ex.getMessage());
+    }
+
     @Test
     void structuralChangeIsRejectedUnlessTheJvmProvablySupportsIt() throws Exception {
         Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("lpb.Greeter", greeter("lpb", "v1")));

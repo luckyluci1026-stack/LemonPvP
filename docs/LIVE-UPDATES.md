@@ -149,23 +149,30 @@ sie beim nächsten Start.
 
 ### 4.3 Core-Patch (Änderung an Paper/Minecraft/Lemon-Code)
 
-1. **Basis festhalten:** direkt nach dem Bauen der Server-JAR, die deployt wird:
-   `./gradlew :lemon-server:livePatchBaseline` (kopiert genau diese JAR nach
-   `lemon-server/build/livepatch/baseline/baseline.jar`). Wurde der Server schon vorher
-   deployt: die von Paperclip entpackte Server-JAR (unter `versions/<mc>/` im
-   Serververzeichnis) per SFTP holen und als `baseline.jar` ablegen.
-2. **Code ändern und Patch bauen** (IntelliJ oder Konsole):
-   `./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…"`.
-   Das Werkzeug vergleicht jede kompilierte Klasse mit der Basis, zeigt pro Klasse die
-   Änderungen (strukturelle mit `[structural]`) und schreibt
-   `lemon-server/build/livepatch/fix-tps.lemonpatch` + `.sha256`.
-3. **Übertragen:** beide Dateien per SFTP nach `lemon/patches/inbox/`. In Produktion
+1. **Basis festhalten:** direkt nach dem Bauen der Server-JAR, die deployt wird (gleicher
+   Quellstand, noch keine Änderungen): `./gradlew :lemon-server:livePatchBaseline` (kopiert
+   die Gradle-JAR nach `lemon-server/build/livepatch/baseline/baseline.jar`).
+2. **Laufende Server-JAR holen:** Paperclip schreibt beim ersten Start die Server-JAR, die
+   wirklich läuft, nach `versions/<mc>/lemon-<mc>.jar` im Serververzeichnis. Diese Datei per
+   SFTP holen (z. B. nach `C:\lemon\lemon-<mc>.jar`). **Bei 1.21.11 ist das Pflicht:** die
+   1.21.11-Paperclip erzeugt diese JAR aus Vanilla-JAR + Binär-Patches, und dabei sind die
+   Klassendateien anders angeordnet als in der Gradle-JAR (CI-Lauf #12: 9962 von 10183
+   Klassen byte-verschieden bei gleichem Inhalt). Bei 26.1.2/26.2/26.3 ist sie
+   byte-identisch zur Gradle-JAR (26.2: 10554/10554), `-PserverJar` schadet dort nicht.
+3. **Code ändern und Patch bauen** (IntelliJ oder Konsole):
+   `./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…" -PserverJar=C:\lemon\lemon-<mc>.jar`.
+   Das Werkzeug erkennt Änderungen byte-genau gegen `baseline.jar`, übernimmt die
+   Prüfsummen aus der laufenden JAR und prüft, dass beide für jede Patch-Klasse
+   inhaltlich gleich sind (sonst Abbruch: „--reference is not the build that runs on the
+   server“). Es zeigt pro Klasse die Änderungen (strukturelle mit `[structural]`) und
+   schreibt `lemon-server/build/livepatch/fix-tps.lemonpatch` + `.sha256`.
+4. **Übertragen:** beide Dateien per SFTP nach `lemon/patches/inbox/`. In Produktion
    trägt die freigebende Person den SHA-256 in die Freigabeliste ein
    (`sha256sum fix-tps.lemonpatch >> lemon/patches/approved.sha256`).
-4. **Prüfen und anwenden:** `fork live check fix-tps` zeigt den Plan
+5. **Prüfen und anwenden:** `fork live check fix-tps` zeigt den Plan
    (redefine/define/reject je Klasse, Änderungsarten, ob die JVM sie kann);
    `fork live update fix-tps` → `fork live update fix-tps confirm`.
-5. **Ergebnis prüfen:** Meldung `OK patch fix-tps applied` + `status: technically applied;
+6. **Ergebnis prüfen:** Meldung `OK patch fix-tps applied` + `status: technically applied;
    behaviour NOT validated by Lemon` – den geänderten Codepfad jetzt testen.
    `fork live patch status`, `fork live history`. Rückgängig: `fork live rollback fix-tps`
    → `… confirm`. **Dauerhaft** wird eine Änderung erst mit einer neu gebauten Server-JAR
@@ -211,9 +218,11 @@ IntelliJ (Windows)                         Testserver (Ubuntu, Pterodactyl)
 1 versions/<mc>: applyAllPatches, build,
   create(Mojmap)PaperclipJar               ──SFTP──► server.jar (+ lemon-livepatch-agent.jar)
 2 :lemon-server:livePatchBaseline                   Start mit -javaagent:lemon-livepatch-agent.jar
+  laufende JAR holen                      ◄──SFTP── versions/<mc>/lemon-<mc>.jar (von Paperclip geschrieben)
 3 Code ändern (paper-server/src/main/java,
   lemon-server/src/minecraft/java)
-4 :lemon-server:createLivePatch -PpatchId=x ──SFTP──► lemon/patches/inbox/x.lemonpatch + .sha256
+4 :lemon-server:createLivePatch -PpatchId=x
+    -PserverJar=<geholte JAR>             ──SFTP──► lemon/patches/inbox/x.lemonpatch + .sha256
                                                     (Produktion: Digest in approved.sha256)
                                                     Konsole: fork live check x
                                                              fork live update x
@@ -332,7 +341,8 @@ Das Werkzeug ist auch ohne Gradle nutzbar (nur JDK, liegt in der Server-JAR):
 
 ```
 java -cp <server-jar oder kompilierte Klassen> dev.lemonpvp.runtime.livepatch.tool.LivePatchTool create \
-     --base <deployte Server-JAR> --classes <Klassenverzeichnis> --id fix-tps [--description …] [--out …]
+     --base <laufende Server-JAR> --classes <Klassenverzeichnis> [--reference <Gradle-JAR desselben Builds>] \
+     --id fix-tps [--description …] [--out …]
 ```
 
 ## 8. Teststand

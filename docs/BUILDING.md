@@ -52,7 +52,8 @@ z. B. JetBrains Runtime mit erweiterter Redefinition:
 cd versions/26.2
 ./gradlew :lemon-server:livePatchBaseline                    # direkt nach dem Bauen der deployten JAR
 # … Quellen ändern (paper-server/src/main/java, lemon-server/src/minecraft/java) …
-./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…"
+./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…" \
+          -PserverJar=/pfad/zu/versions/26.2/lemon-26.2.jar  # die JAR, die Paperclip auf dem Server schrieb (1.21.11: Pflicht)
 # → lemon-server/build/livepatch/fix-tps.lemonpatch + .sha256
 ```
 

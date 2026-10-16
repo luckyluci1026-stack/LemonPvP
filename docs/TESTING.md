@@ -42,9 +42,11 @@ Es gibt drei Testebenen:
 ## Lokal ausgeführt (diese Arbeitssitzung)
 
 ```
-cd runtime && ./gradlew :runtime-core:test        # JDK 21.0.12, Linux
-runtime-core: 53 tests, 0 failures, 0 errors, 0 skipped
+cd runtime && ./gradlew :runtime-core:test        # OpenJDK 21.0.12 (Ubuntu), Linux, Tests mit -javaagent
+runtime-core: 93 tests, 0 failures, 0 errors, 0 skipped
 ```
+
+(Stand nach den Live-Update-Arbeiten; der Referenzlauf #8 unten zählte noch 53 Tests.)
 
 Paper-Builds und Server-Tests konnten lokal nicht ausgeführt werden (Netzwerk, siehe
 `docs/ANALYSIS.md`); ihre Ergebnisse stammen aus GitHub Actions (unten).
@@ -112,6 +114,78 @@ nachgewiesen noch ausgeschlossen**. Gemessene Laufzeiten einzelner Operationen a
 (26.2): `enable` 164 ms, `reload` (Hot-Swap) 154 ms, `disable` 51 ms, `unload` 51 ms – jeweils
 inklusive Worker-Phase (I/O, Hash, Klassendefinition). Davon lief auf dem Hauptthread laut
 `/fork module diagnostics` der Enable-Schritt (Plattform-Bindung + `onEnable`) mit 9 ms.
+
+## Live-Updates: Core-Patches, Plugins, Module (CI-Lauf #11)
+
+Referenz: Lauf **#11** (Run-ID `38581855422`, Commit `4dcd97f`). Werte aus den Job-Logs
+abgelesen. Ebenen: (1) Unit-/Integrationstests mit echtem Agent (`-javaagent`, echte
+`redefineClasses`-Aufrufe), (3) Server-Tests 4–6 auf dem gebauten Paperclip-Server.
+
+**Kein Test lief auf dem Ubuntu-24.04-/Pterodactyl-Server des Nutzers** – dazu gab es in
+dieser Arbeit keinen Zugang. Ein Spieler-Login (echter Client) wurde nirgends getestet.
+
+| Prüfung | 1.21.11 | 26.1.2 | 26.2 | 26.3 |
+|---|---|---|---|---|
+| Unit-Tests `runtime-core`, Temurin 21.0.12 | 93/93 ✔ | ← | ← | ← |
+| Unit-Tests auf JBR 21.0.11 (b1163.116) und 25.0.4.1 (b635.72) mit `-XX:+AllowEnhancedClassRedefinition` | 93/93 ✔ (beide) | ← | ← | ← |
+| Test-Plugin + Paper-Adapter gegen Paper-API kompiliert | ✔ | ✔ | ✔ | ✔ |
+| Patch aus geänderter Paper-Quelle gebaut (`livePatchBaseline` + `createLivePatch`, genau 1 Klasse) | ✔ | ✔ | ✔ | ✔ |
+| Server-Test 4: Core-Patch, Temurin, Produktionsprofil | **✘ siehe unten** | ✔ | ✔ | ✔ |
+| Server-Test 5: Plugin-Updates | nicht ausgeführt (nach Test 4 übersprungen) | ✔ | ✔ | ✔ |
+| Server-Test 6: struktureller Patch auf JBR 25 bzw. 21 | nicht ausgeführt | ✔ (JBR 25) | ✔ (JBR 25) | ✔ (JBR 25) |
+| Hauptthread-Dauer `redefineClasses`, 1 Klasse, Temurin (Anwenden / Rollback) | – | 48,8 / 51,8 ms | 64,2 / 62,5 ms | 52,0 / 52,4 ms |
+| dasselbe, struktureller Patch auf JBR 25 | – | 277,9 / 268,6 ms | 321,4 / 290,7 ms | 436,1 / 414,5 ms |
+
+**1.21.11, Server-Test 4:** Lemon lehnte jeden Patch korrekt ab, bevor etwas geändert wurde
+(„patch was built against 06a44802b59c but the server runs e0a076b9c2e0“): Die
+1.21.11-Paperclip-JAR baut die Server-JAR beim ersten Start aus der Vanilla-JAR und
+Binär-Patches; deren `TicksPerSecondCommand` hat nicht denselben Bytecode wie die
+Gradle-`jar`-Ausgabe, die `livePatchBaseline` kopiert. Für 1.21.11 ist der dokumentierte
+Gradle-Weg damit **nicht** funktionsfähig; Ursache und Abhilfe: siehe Abschnitt unten,
+sobald die Diagnose (Lauf #12) ausgewertet ist.
+
+### Pflichttests Core-Patches
+
+Server = Server-Test 4/6 (`scripts/ci/smoke-livepatch*.txt`), Unit =
+`LivePatchIntegrationTest`/`PreVerifierTest`/`ClassDiffTest`/`PatchArchiveTest`.
+„Neustart nötig“ bezieht sich auf das Testergebnis.
+
+| # | Test | Vorbedingungen | Schritte | Erwartet | Tatsächlich | Neustart nötig | Grenzen |
+|---|---|---|---|---|---|---|---|
+| 1 | Methodenrumpf ändern | Agent, `live-patching.enabled`, Freigabeliste | Literal in `TicksPerSecondCommand.execute` geändert → `createLivePatch` → `update` + `confirm` | `OK patch tps-text applied` | Server (26.x): angewendet, 1 Klasse, 49–64 ms; Unit: ✔ | nein | Verhalten wird nicht validiert |
+| 2 | bereits geladene Paper-Klasse | wie 1 | `/tps` vor dem Patch ausgeführt (Klasse geladen und initialisiert) | Redefinition einer geladenen Klasse | Server (26.x): ✔ | nein | – |
+| 3 | Methode hinzufügen, Standard-JVM | Temurin 21/25 | `tps-structural`: `check`, `update` | Ablehnung vor jeder Änderung | Server (26.x): `reject …`, „this JVM cannot add methods/constructors“, `NOT DONE`; 1.21.11: ebenfalls abgelehnt, dort aber wegen der Bytecode-Abweichung (s. o.); Probe „no add methods“ in allen 4 Versionen | ja (neue JAR) | – |
+| 4 | dasselbe mit erweiterter JVM | JBR 25.0.4.1 + Flag | `tps-structural` anwenden, `/tps`, Rollback | angewendet, neuer Code läuft | Server (26.x, JBR 25): `TPS (structural) …` einmal, Rollback ✔; Unit auf JBR 21+25 ✔. Probe: Oberklassenwechsel auch auf JBR **nicht** möglich | nein | 270–440 ms Pause; JBR 21 nur in Unit-Tests |
+| 5 | ungültige Klassendatei | – | `tps-garbage` (Klasse durch Text ersetzt, Manifest-Digest passend) | Ablehnung | Server (alle 4): `NOT DONE: class … is not a valid class file: not a class file (bad magic number)`; Unit ✔ | – | – |
+| 6 | falsche Prüfsumme / Build-ID | – | `tps-bad-checksum` (falsche `.sha256`), `tps-wrong-build` | Ablehnung | Server (alle 4): `SHA-256 mismatch`, `wrong build id`; Unit ✔ | – | – |
+| 7 | Multi-Klassen-Patch, eine Klasse nicht passend | – | `tps-mixed`: TPS + `RestartCommand` mit falschem Basis-Digest | ganzer Patch abgelehnt | Server (alle 4): `NOT DONE patch tps-mixed cannot be applied`, `/tps` unverändert | – | – |
+| 8 | Fehler während der Anwendung + Diagnose | Standard-JVM | `tps-atomic`: TPS + `RestartCommand` mit `max_stack 0` → `confirm` | JVM lehnt ab, keine Klasse geändert, Meldung + Audit | Server (26.x): `FAILED the JVM rejected the redefinition: java.lang.VerifyError …`, `/tps` danach unverändert, Audit `FAILED`, Historie `apply FAILED`. Auf JBR lehnt Lemons Vorab-Verifikation schon im Plan ab (Unit auf JBR ✔) | nein | – |
+| 9 | Serverprozess / Spielerverbindung bleiben | – | nach dem Patch Server-List-Ping (`scripts/ci/slp.py`), weitere Befehle, sauberer Stopp | Server antwortet | Server (26.x): `SLP ok … ping 0.7–1.9 ms`, Stopp normal | – | **kein Spieler-Login getestet** |
+| 10 | geänderte Methode führt neuen Code aus | wie 1 | `/tps` nach dem Patch | neuer Text | Server (26.x): `TPS (live patch) from last …` zweimal, danach Rollback | – | – |
+| 11 | Logs, Tick, Tasks, Befehle, Speicher | wie 1 | `/tps` (Tick-Rate), `patch status` (Heap), weitere `/fork`-Befehle über den Scheduler | normal | Server (26.x): TPS 20.0 nach dem Patch, Befehle/Scheduler funktionieren, Heap angezeigt, keine `Unhandled exception` | – | keine Lastmessung, kein Langzeittest |
+| 12 | vorherigen Bytecode wiederherstellen | Patch aktiv | Sicherung geprüft (`backup.txt` enthält den SHA-256 der Basis-Klasse), `rollback` + `confirm`, `/tps` | Originaltext | Server (26.x): Sicherung passt, `OK patch tps-text rolled back`, Originaltext, `Active patches: 0` | nein | nur Bytecode; Spielzustand nicht |
+
+### Plugin-Live-Updates (Server-Test 5, `scripts/ci/smoke-plugins.txt`, 26.1.2/26.2/26.3 ✔)
+
+| Fall | Erwartet | Tatsächlich (26.2, gleichlautend in 26.1.2 und 26.3) |
+|---|---|---|
+| Keine Plugin-JAR (`NotAPlugin.jar`) | „incompatible“ | `plugin NotAPlugin.jar: incompatible` |
+| Neuere API (`api-version 99.0`) | „incompatible“, kein Laden | `plugin needs api-version 99.0 but the server runs 26.2`, `NOT DONE …` |
+| Update 1.0.0 → 1.0.1 | live, Task/Listener sauber übergeben | `OK update of LemonTestPlugin done: 1.0.0 -> 1.0.1`; `/lemontest`: 1 Task, 1 Listener |
+| Update auf Version, die in `onEnable` wirft | alte Version zurück | `FAILED … the previous version 1.0.1 was restored and is enabled`; `/lemontest` antwortet von 1.0.1 |
+| Rollback | vorherige JAR (fehlgeschlagene Versuche ausgenommen) | `OK rollback of LemonTestPlugin done: 1.0.1 -> 1.0.0` |
+| Neues Plugin mit `depend` | live installiert | `OK install of LemonTestAddon done: - -> 1.0.0` |
+| Update eines Plugins mit aktivem Abhängigen | Neustart nötig | `restart only (used by [LemonTestAddon])`, „enabled plugins depend on LemonTestPlugin“ |
+| Audit/Historie | Einträge | `plugin-update … OK`, `… FAILED`, `plugin-rollback … OK`, `plugin-install … OK` |
+
+Nicht getestet: Plugins mit eigenen Threads/Datenbankverbindungen, Paper-Plugins (nur die
+Ablehnungsregel ist unit-getestet), Spieler mit offenen Plugin-Inventaren, 1.21.11.
+
+### Module (Task „Live-Update-System“)
+
+Lebenszyklus, Hot-Swap und Neustart-Persistenz: Server-Tests 2 und 3 in allen vier
+Versionen ✔ (Lauf #11); `module.yml` mit Standardwerten und `fork module remove`:
+Unit-Tests (`ModuleSimplicityTest`).
 
 ## Noch nicht automatisiert
 

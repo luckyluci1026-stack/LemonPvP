@@ -2,11 +2,14 @@
 //
 //   ./gradlew :lemon-server:livePatchBaseline              after building the jar you deploy
 //   ./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps [-PpatchDescription="..."]
+//             [-PserverJar=<server jar from the server's versions/<mc>/ directory>]
 //
 // createLivePatch compiles the server sources and packs every class whose bytecode differs
 // from the baseline jar into build/livepatch/<id>.lemonpatch (+ .sha256). The tool runs from
 // the server's own compiled classes (dev.lemonpvp.runtime.livepatch.tool.LivePatchTool).
-// See docs/LIVE-UPDATES.md.
+// -PserverJar: the jar that really runs (paperclip writes it to versions/<mc>/ in the server
+// directory). Required for 1.21.11, whose paperclip rewrites the class files; the baseline
+// jar is then only used to detect what changed. See docs/LIVE-UPDATES.md.
 
 val livePatchDir = layout.buildDirectory.dir("livepatch")
 val mainOutput = the<SourceSetContainer>().named("main")
@@ -28,20 +31,28 @@ tasks.register<JavaExec>("createLivePatch") {
     classpath = files(mainOutput.map { it.runtimeClasspath })
     mainClass.set("dev.lemonpvp.runtime.livepatch.tool.LivePatchTool")
     val patchId = providers.gradleProperty("patchId")
+    // Resolved without capturing the project (the build uses the configuration cache).
+    val projectDir = layout.projectDirectory.asFile
+    val serverJar = providers.gradleProperty("serverJar").map { p -> java.io.File(p).let { if (it.isAbsolute) it else java.io.File(projectDir, p) } }
     val patchDescription = providers.gradleProperty("patchDescription").orElse("")
     val outDir = livePatchDir.map { it.asFile.absolutePath }
     argumentProviders.add(CommandLineArgumentProvider {
         val base = baseline.get().asFile
         require(base.isFile) { "no baseline jar at $base - run :lemon-server:livePatchBaseline for the jar you deployed" }
+        val running = serverJar.orNull
+        require(running == null || running.isFile) { "-PserverJar=$running does not exist" }
         val args = mutableListOf(
             "create",
-            "--base", base.absolutePath,
+            "--base", (running ?: base).absolutePath,
             "--classes", classesDirs.get().files.first { it.path.replace('\\', '/').endsWith("/java/main") }.absolutePath,
             "--out", outDir.get(),
             "--description", patchDescription.get(),
         )
         if (patchId.isPresent) {
             args += listOf("--id", patchId.get())
+        }
+        if (running != null) {
+            args += listOf("--reference", base.absolutePath)
         }
         args
     })

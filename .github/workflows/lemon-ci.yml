@@ -259,30 +259,26 @@ jobs:
           # Diagnostic: is the baseline the server jar that the paperclip jar runs?
           python3 ../../scripts/ci/lemonpatch.py compare-base "../../dist/${{ steps.jar.outputs.name }}" \
             lemon-server/build/livepatch/baseline/baseline.jar org.spigotmc.TicksPerSecondCommand
-          # Diagnostic: the server jar paperclip actually created on disk in server test 1.
-          srv=$(find "$RUNNER_TEMP/disabled/versions" -name '*.jar' | head -n 1 || true)
-          if [ -n "$srv" ]; then
-            echo "server jar created by paperclip: $srv"
-            python3 ../../scripts/ci/lemonpatch.py compare-jars "$srv" lemon-server/build/livepatch/baseline/baseline.jar
-            base="$PWD/lemon-server/build/livepatch/baseline/baseline.jar"
-            for side in running:"$srv" baseline:"$base"; do
-              d="$RUNNER_TEMP/tpsdiff/${side%%:*}"; mkdir -p "$d"
-              (cd "$d" && unzip -q -o "${side#*:}" org/spigotmc/TicksPerSecondCommand.class && javap -c -p -v org/spigotmc/TicksPerSecondCommand.class > tps.txt) || true
-            done
-            diff "$RUNNER_TEMP/tpsdiff/running/tps.txt" "$RUNNER_TEMP/tpsdiff/baseline/tps.txt" | head -n 60 || true
-          fi
+          # The server jar paperclip wrote on disk in server test 1 (what really runs). 1.21.11's
+          # paperclip rewrites the class files, so patches use it as base and baseline.jar only as
+          # reference for change detection (-PserverJar), exactly as documented for users.
+          srv=$(find "$RUNNER_TEMP/disabled/versions" -name '*.jar' | head -n 1)
+          test -n "$srv"
+          echo "server jar created by paperclip: $srv"
+          cp "$srv" "$RUNNER_TEMP/server-jar.jar"
+          python3 ../../scripts/ci/lemonpatch.py compare-jars "$srv" lemon-server/build/livepatch/baseline/baseline.jar
           src=paper-server/src/main/java/org/spigotmc/TicksPerSecondCommand.java
           cp "$src" "$RUNNER_TEMP/TicksPerSecondCommand.java.orig"
           python3 ../../scripts/ci/edit-tps-source.py "$src" text
-          ./gradlew :lemon-server:createLivePatch -PpatchId=tps-text -PpatchDescription="CI: /tps text changed" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          ./gradlew :lemon-server:createLivePatch -PpatchId=tps-text -PpatchDescription="CI: /tps text changed" -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
           cp "$RUNNER_TEMP/TicksPerSecondCommand.java.orig" "$src"
           python3 ../../scripts/ci/edit-tps-source.py "$src" structural
-          ./gradlew :lemon-server:createLivePatch -PpatchId=tps-structural -PpatchDescription="CI: /tps label from a new method" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          ./gradlew :lemon-server:createLivePatch -PpatchId=tps-structural -PpatchDescription="CI: /tps label from a new method" -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
           cp "$RUNNER_TEMP/TicksPerSecondCommand.java.orig" "$src"
           out="$RUNNER_TEMP/patches"
           mkdir -p "$out"
           cp lemon-server/build/livepatch/tps-*.lemonpatch lemon-server/build/livepatch/tps-*.lemonpatch.sha256 "$out/"
-          base=lemon-server/build/livepatch/baseline/baseline.jar
+          base="$RUNNER_TEMP/server-jar.jar"
           P=../../scripts/ci/lemonpatch.py
           python3 "$P" show "$out/tps-text.lemonpatch" --expect-classes org.spigotmc.TicksPerSecondCommand
           python3 "$P" show "$out/tps-structural.lemonpatch" --expect-classes org.spigotmc.TicksPerSecondCommand
@@ -296,7 +292,7 @@ jobs:
           ls -la "$out"
       - name: "Server test 4: core live patch (standard JVM, -javaagent)"
         run: |
-          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch" "$RUNNER_TEMP/patches" lemon-server/build/livepatch/baseline/baseline.jar
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
           EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/lemon-livepatch-agent.jar" \
             ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/livepatch" ../../scripts/ci/smoke-livepatch.txt
       # Tests 5 and 6 run even if test 4 failed, so one failure does not hide the others.
@@ -325,7 +321,7 @@ jobs:
       - name: "Server test 6: structural core patch on JetBrains Runtime"
         if: ${{ !cancelled() && steps.patches.outcome == 'success' && steps.jbr.outputs.java != '' }}
         run: |
-          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch-jbr" "$RUNNER_TEMP/patches" lemon-server/build/livepatch/baseline/baseline.jar
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch-jbr" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
           JAVA_BIN="${{ steps.jbr.outputs.java }}" \
           EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/lemon-livepatch-agent.jar -XX:+AllowEnhancedClassRedefinition" \
             ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/livepatch-jbr" ../../scripts/ci/smoke-livepatch-jbr.txt

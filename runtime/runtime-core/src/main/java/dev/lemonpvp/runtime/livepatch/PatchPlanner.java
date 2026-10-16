@@ -155,8 +155,8 @@ public final class PatchPlanner {
                 replaces = patched.get().installedBy();
             } else {
                 return reject(e, runningSha, List.of(), "patch was built against " + shortSha(e.baseSha256())
-                        + " but the server runs " + shortSha(runningSha) + " (different source or build; rebuild the patch"
-                        + " against the deployed server jar)");
+                        + " but the server runs " + shortSha(runningSha) + " (different source or build; build the patch"
+                        + " against the server jar that runs - versions/<mc>/*.jar in the server directory, -PserverJar)");
             }
         }
         if (runningSha.equals(e.sha256())) {

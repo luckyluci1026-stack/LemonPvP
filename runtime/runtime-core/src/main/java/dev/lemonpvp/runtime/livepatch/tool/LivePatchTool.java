@@ -36,15 +36,24 @@ import java.util.stream.Stream;
  * <pre>
  * java -cp &lt;server classes&gt; dev.lemonpvp.runtime.livepatch.tool.LivePatchTool create \
  *      --base &lt;deployed server jar&gt; --classes &lt;compiled classes dir or jar&gt; \
+ *      [--reference &lt;jar built from the unchanged sources&gt;] \
  *      [--id fix-tps] [--description "..."] [--out build/livepatch] \
  *      [--target-build &lt;build id&gt;] [--minecraft &lt;version&gt;]
  * </pre>
  *
- * <p>Every class whose bytes differ from the base jar becomes part of the patch (classes
- * that do not exist in the base jar are added as new classes). The base jar must be the
- * exact build that runs on the server; the server rejects a class whose running bytecode
- * differs from the base the patch was built against. Classes that exist in the base jar but
- * not in {@code --classes} are ignored (a patch cannot remove classes).</p>
+ * <p>Every class whose bytes differ from the reference jar becomes part of the patch
+ * (classes that do not exist there are added as new classes). The reference defaults to
+ * the base jar. The base jar must be the exact jar that runs on the server: its class
+ * digests go into the patch, and the server rejects a class whose running bytecode differs
+ * from them. Classes that exist in the base jar but not in {@code --classes} are ignored (a
+ * patch cannot remove classes).</p>
+ *
+ * <p>{@code --reference} is for builds whose server jar is rewritten after compilation:
+ * the 1.21.11 paperclip produces a server jar whose class files have a different constant
+ * pool layout than the Gradle jar (same classes, same code). Changes are then detected
+ * against the Gradle jar ({@code --reference}), digests are taken from the server jar
+ * ({@code --base}), and every patched class must be semantically identical in both
+ * (otherwise the reference is not the build that runs).</p>
  *
  * <p>Uses only the JDK, so it runs from the server's own compiled classes.</p>
  */
@@ -93,8 +102,8 @@ public final class LivePatchTool {
      */
     public static int run(String[] args, PrintStream out) throws ToolException, IOException {
         if (args.length == 0 || !args[0].equals("create")) {
-            throw new ToolException("usage: create --base <server jar> --classes <dir|jar> [--id <id>] [--description <text>]"
-                    + " [--out <dir>] [--target-build <id>] [--minecraft <version>]");
+            throw new ToolException("usage: create --base <server jar> --classes <dir|jar> [--reference <jar>] [--id <id>]"
+                    + " [--description <text>] [--out <dir>] [--target-build <id>] [--minecraft <version>]");
         }
         Map<String, String> opts = new HashMap<>();
         for (int i = 1; i < args.length; i++) {
@@ -105,6 +114,7 @@ public final class LivePatchTool {
         }
         Path base = Path.of(required(opts, "base"));
         Path classes = Path.of(required(opts, "classes"));
+        Path reference = opts.containsKey("reference") ? Path.of(opts.get("reference")) : base;
         String id = opts.getOrDefault("id", "p-" + ID_TIME.format(Instant.now()));
         if (PatchIds.problem(id) != null) {
             throw new ToolException("--id: " + PatchIds.problem(id));
@@ -116,28 +126,23 @@ public final class LivePatchTool {
             out.println("warning: the base jar has no build manifest; pass --target-build (see /fork live patch status)");
         }
 
-        Map<String, String> baseSha = new HashMap<>();
-        try (JarFile jar = new JarFile(base.toFile(), false)) {
-            Enumeration<JarEntry> entries = jar.entries();
-            while (entries.hasMoreElements()) {
-                JarEntry e = entries.nextElement();
-                String name = className(e.getName());
-                if (name == null) {
-                    continue;
-                }
-                try (InputStream in = jar.getInputStream(e)) {
-                    baseSha.put(name, Hashing.sha256(in));
-                }
-            }
-        }
+        Map<String, String> baseSha = classDigests(base);
         if (baseSha.isEmpty()) {
             throw new ToolException("the base jar contains no classes: " + base);
+        }
+        Map<String, String> referenceSha = reference.equals(base) ? baseSha : classDigests(reference);
+        if (!reference.equals(base)) {
+            String refBuild = BuildIdentity.of(reference);
+            if (!refBuild.equals(buildId) && !opts.containsKey("target-build")) {
+                throw new ToolException("--reference is build " + refBuild + " but --base is build " + buildId
+                        + "; both must come from the same build");
+            }
         }
 
         Map<String, byte[]> changed = new LinkedHashMap<>();
         for (Map.Entry<String, byte[]> e : compiledClasses(classes).entrySet()) {
             String sha = Hashing.sha256(e.getValue());
-            if (!sha.equals(baseSha.get(e.getKey()))) {
+            if (!sha.equals(referenceSha.get(e.getKey()))) {
                 changed.put(e.getKey(), e.getValue());
             }
         }
@@ -146,13 +151,17 @@ public final class LivePatchTool {
             return 2;
         }
         if (changed.size() > PatchManifest.MAX_CLASSES) {
-            throw new ToolException(changed.size() + " classes differ from the base jar (limit " + PatchManifest.MAX_CLASSES
-                    + "); is --base the jar that was built from these sources?");
+            throw new ToolException(changed.size() + " classes differ from the " + (reference.equals(base) ? "base" : "reference")
+                    + " jar (limit " + PatchManifest.MAX_CLASSES + "); was it built from these sources? If the server jar is"
+                    + " rewritten by the build (1.21.11 paperclip), pass the Gradle jar as --reference and the server jar as --base");
         }
 
         List<PatchManifest.Entry> entries = new ArrayList<>();
         boolean structural = false;
         out.println("patch " + id + " for " + buildId + " (Minecraft " + minecraft + ")");
+        if (!reference.equals(base)) {
+            out.println("  changes detected against " + reference.getFileName() + ", digests taken from " + base.getFileName());
+        }
         for (Map.Entry<String, byte[]> e : changed.entrySet()) {
             String name = e.getKey();
             String problem = PatchIds.classProblem(name);
@@ -169,6 +178,9 @@ public final class LivePatchTool {
                 throw new ToolException("file for " + name + " declares " + next.javaName());
             }
             boolean isNew = !baseSha.containsKey(name);
+            if (isNew && referenceSha.containsKey(name)) {
+                throw new ToolException(name + " is in --reference but not in --base; they are not the same build");
+            }
             entries.add(new PatchManifest.Entry(name, Hashing.sha256(e.getValue()), isNew ? null : baseSha.get(name), isNew));
             if (isNew) {
                 out.println("  new      " + name);
@@ -176,7 +188,16 @@ public final class LivePatchTool {
             }
             List<ClassChange> changes;
             try {
-                changes = ClassDiff.compare(ClassFileReader.read(readEntry(base, name)), next);
+                ClassInfo running = ClassFileReader.read(readEntry(base, name));
+                if (!reference.equals(base) && referenceSha.containsKey(name)
+                        && !baseSha.get(name).equals(referenceSha.get(name))) {
+                    List<ClassChange> drift = ClassDiff.compare(running, ClassFileReader.read(readEntry(reference, name)));
+                    if (!drift.isEmpty()) {
+                        throw new ToolException(name + " differs between --base and --reference beyond the class file layout ("
+                                + drift.get(0) + "); --reference is not the build that runs on the server");
+                    }
+                }
+                changes = ClassDiff.compare(running, next);
             } catch (ClassFormatException ex) {
                 throw new ToolException("base class " + name + ": " + ex.getMessage());
             }
@@ -207,6 +228,24 @@ public final class LivePatchTool {
         }
         out.println("next: upload both files to the server's patch directory, then /fork live check " + id);
         return 0;
+    }
+
+    private static Map<String, String> classDigests(Path jarFile) throws IOException {
+        Map<String, String> out = new HashMap<>();
+        try (JarFile jar = new JarFile(jarFile.toFile(), false)) {
+            Enumeration<JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry e = entries.nextElement();
+                String name = className(e.getName());
+                if (name == null) {
+                    continue;
+                }
+                try (InputStream in = jar.getInputStream(e)) {
+                    out.put(name, Hashing.sha256(in));
+                }
+            }
+        }
+        return out;
     }
 
     private static byte[] readEntry(Path jarFile, String className) throws IOException {
