@@ -213,6 +213,28 @@ Beide Läufe: alle 11 Jobs grün, alle vier Versionen.
 Dass der Class-Loader der alten Plugin-Version später eingesammelt wird, wurde auf dem
 Server nicht beobachtet (Lemon löst keine GC aus, der Test endet Sekunden danach).
 
+### Speer-Fix als echter Core-Live-Patch (1.21.11, CI-Job `spear-hotswap`)
+
+Server **ohne** Fix gebaut und gestartet (Temurin 21, `-javaagent`, Produktionsprofil),
+CombatProbe misst echte Angriffe eines serverseitigen Testspielers; der Patch
+`spear-cooldown` wurde mit `createLivePatch -PserverJar=…` aus den korrigierten Quellen
+gebaut (2 Klassen: `LivingEntity`, `Player`; 23 Klassen ohne Bytecode-Änderung
+übersprungen), `checkLivePatch`: `APPLICABLE on a standard JVM`.
+
+| Messung (Lauf #21) | vor dem Patch | nach dem Live-Patch | nach dem Rollback |
+|---|---|---|---|
+| Speer-Stich, zwei Ziele | 3,000 / **0,602** (0,20) | 3,000 / 3,000 (1,00) | 3,000 / 0,602 |
+| Speer-Stich ohne Ziel, Abklingzeit 100 → | **100** (nicht zurückgesetzt) | 0 | 100 |
+| Schwertschlag | 6,000, → 0, 1 Event | 6,000, → 0, 1 Event | 6,000, → 0, 1 Event |
+| Swap Schwert → Speer ohne Ausrüstungs-Update | 6,000 / **1,208** | 6,000 / 6,000 | 6,000 / 1,208 |
+| Swap mit Papers Ausrüstungs-Update | 0,602 / 0,602 | 0,602 / 0,602 | 0,602 / 0,602 |
+| `/tps`, Server-List-Ping | – | ✔ | ✔ |
+
+Redefinition beider Klassen auf dem Hauptthread: 200,3 ms; Rollback 66,7 ms. In Lauf #21
+meldete das Zurücklesen für `Player` fälschlich eine Abweichung (`ConstantValue` eines
+`final`-Instanzfelds, das die JVM ignoriert); behoben, mit einem Test, der den Fehlalarm
+ohne die Korrektur reproduziert. Ergebnis des Laufs mit der Korrektur: siehe unten.
+
 ## Noch nicht automatisiert
 
 | Test | Grund |
