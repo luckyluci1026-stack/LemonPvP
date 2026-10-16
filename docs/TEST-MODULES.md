@@ -172,8 +172,8 @@ behoben und mit Tests abgesichert:
    Task-Hülle der Runtime → Modul-Lambda → Klasse → Class-Loader`. Bukkit behält die zuletzt
    eingereichte Aufgabe als Kopf seiner Warteschlange, bis die nächste kommt; die Hülle der
    Runtime zeigte noch auf den Modulcode. Jetzt lässt die Hülle Modulcode, Callback-Guard und
-   Abschluss los, sobald die Aufgabe beendet oder freigegeben ist. Lauf #30 (1.21.11): 21 von
-   21 Loadern nach der GC eingesammelt.
+   Abschluss los, sobald die Aufgabe beendet oder freigegeben ist. Lauf #32: auf allen vier
+   Versionen 21 von 21 Loadern nach der GC eingesammelt.
 
 Ein Fehler lag im Test selbst: `stress commands` zählte die Befehle zuerst innerhalb von
 `/stress`. Ein Befehl, der während eines anderen Befehls ausgeführt wird, wird von Minecraft

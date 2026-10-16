@@ -242,13 +242,44 @@ Redefinition 267,4 ms, Zurücklesen 127,8 ms, Rollback 72,3 ms; `/tps` 19,4 bzw.
 Server-List-Ping nach Patch und Rollback beantwortet. Fork-Job 1.21.11, Servertest 7: die
 ausgelieferte JAR misst `VANILLA COOLDOWN, sword OK`.
 
+### Testmodule: Grenzen, Fehler, Abhängigkeiten, Leaks (Servertest 8, Lauf #32 `d2f9503`)
+
+Alle 12 Jobs grün. Ablauf und Module: [`TEST-MODULES.md`](TEST-MODULES.md),
+`scripts/ci/smoke-test-modules.txt`. Auf jeder Version bestanden: fehlende/falsche
+`.sha256` abgelehnt; Abhängigkeit, Service, Schutz vor Disable/Reload der Library,
+Versionsbereich (Library 2.0.0 abgelehnt); 12× `stress all` mit 10 Hot-Swaps unter Last
+(Generation am Ende 12, Version 2.0.0); alle `test-chaos`-Fehler (Rollback mit Grund,
+abgebrochenes `onLoad`, abgelehnte Konfiguration, langsames `onEnable` gemeldet, werfendes
+`onDisable` mit `Tracked resources: none`, `unload` bei laufender Async-Arbeit abgelehnt,
+geleakter Thread gemeldet); nach dem Entladen aller Module und `jcmd GC.run`: **21 von 21**
+Class-Loadern eingesammelt, keiner mehr `still in memory`.
+
+| Messung (erster Durchlauf) | 1.21.11 | 26.1.2 | 26.2 | 26.3 |
+|---|---|---|---|---|
+| 10 000 Events × 2000 Listener (20 Mio. Handler-Aufrufe) | 521,6 ms (26 ns) | 355,1 ms (17 ns) | 419,1 ms (20 ns) | 364,5 ms (18 ns) |
+| +20 000 Listener registrieren | 141,2 ms | 84,9 ms | 59,3 ms | 100,0 ms |
+| 1000 Events × 22 000 Listener | 528,6 ms (24 ns) | 380,3 ms (17 ns) | 676,6 ms (30 ns) | 382,1 ms (17 ns) |
+| 22 700 Registrierungen einzeln freigeben (`stress clear`) | 808,1 ms | 563,6 ms | 827,1 ms | 763,3 ms |
+| 200 Befehle registrieren / ausführen | 7,6 / 18,9 ms | 5,0 / 6,5 ms | 4,0 / 6,8 ms | 8,5 / 17,5 ms |
+| 500 Async-Tasks hin und zurück, Handles danach frei | 976,5 ms, 0 übrig | 67,9 ms, 0 übrig | 84,5 ms, 0 übrig | 98,0 ms, 0 übrig |
+| 500 Timer × 40 Ticks: Läufe / erwartet, Tick-Mittel | 20 000 / 20 000, 7,64 ms | 20 000 / 20 000, 4,49 ms | 20 000 / 20 000, 5,27 ms | 20 000 / 20 000, 4,87 ms |
+
+GitHub-Runner (geteilte VMs): Zeiten schwanken zwischen Läufen; sie zeigen Größenordnungen,
+keine Benchmarks. Der Anteil der Runtime am Freigeben ist klein (Tracker: 50 000 einzelne
+Freigaben in 5 ms, lokal gemessen); den Rest verbringt der Server beim Abmelden – laut Code
+durchsucht `HandlerList.unregisterAll` je Listener alle Handler-Listen (nicht getrennt gemessen).
+
+Auf dem Weg dahin (Läufe #26–#30) gefunden und behoben: ein Bukkit-Scheduler, der über den
+Kopf seiner Warteschlange ein entladenes Modul festhielt (per Heap-Analyse
+`scripts/ci/HeapPath.java` nachgewiesen), sowie zwei Fehler in den Tests selbst (verschachtelte
+Befehle werden eingereiht; `sed | head` unter `pipefail`). Details: `TEST-MODULES.md`,
+Abschnitt 7.
+
 ## Noch nicht automatisiert
 
 | Test | Grund |
 |---|---|
 | Echte Spieler-Events (Join-Nachricht des Beispielmoduls, Inventar-GUIs) auf dem Server | erfordert einen Test-Client/Bot; derzeit nur mit simuliertem Event-Bus (`TestPlatform`) getestet |
-| Rollback auf dem echten Server mit fehlerhafter zweiter Version | nur in Ebene 1 getestet; Server-Test 2 testet den erfolgreichen Wechsel 1.0.0 → 1.0.1 |
-| Freigabe entladener Class-Loader auf dem echten Server | nur in Ebene 1 (mit `System.gc()`); auf dem Server meldet die Diagnose direkt nach dem Entladen erwartungsgemäß „still reachable“ |
-| Lasttests / MSPT, Langzeit-Speicherverhalten | keine reproduzierbare Lastumgebung |
+| Lasttests mit echten Spielern / MSPT unter Spielerlast, Langzeit-Speicherverhalten | keine reproduzierbare Lastumgebung; Servertest 8 misst Last durch Module (Listener, Events, Timer, Befehle, Async) ohne Spieler |
 | Kombination mit Velocity/BungeeCord, ViaVersion, Geyser/Floodgate, LuckPerms | nicht getestet (`docs/COMPATIBILITY.md`) |
 | Windows/macOS | CI läuft nur auf Linux |
