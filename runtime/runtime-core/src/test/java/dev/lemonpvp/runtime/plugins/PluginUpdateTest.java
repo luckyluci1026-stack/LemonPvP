@@ -1,6 +1,7 @@
 package dev.lemonpvp.runtime.plugins;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.lemonpvp.runtime.plugins.PluginUpdateManager.Result.Kind;
@@ -68,12 +69,28 @@ class PluginUpdateTest {
             return this.unloadProblem;
         }
 
+        /** Resources each loaded plugin reports, and what stays registered after unloading (default: nothing). */
+        final Map<String, PluginResources> resources = new LinkedHashMap<>();
+        final Map<String, PluginResources> leftovers = new LinkedHashMap<>();
+        /** Class loader reported for the next unload of a plugin (to test thread and leak tracking). */
+        final Map<String, ClassLoader> loaders = new LinkedHashMap<>();
+
         @Override
-        public void unload(String name) {
+        public PluginResources resources(String name) {
+            return this.loaded.containsKey(name.toLowerCase())
+                    ? this.resources.getOrDefault(name.toLowerCase(), PluginResources.NONE) : null;
+        }
+
+        @Override
+        public Unloaded unload(String name) {
             this.calls.add("unload " + name);
             if (this.loaded.remove(name.toLowerCase()) == null) {
                 throw new IllegalStateException(name + " not loaded");
             }
+            ClassLoader loader = this.loaders.remove(name.toLowerCase());
+            return new Unloaded(this.resources.getOrDefault(name.toLowerCase(), PluginResources.NONE),
+                    this.leftovers.getOrDefault(name.toLowerCase(), PluginResources.NONE),
+                    loader == null ? null : new java.lang.ref.WeakReference<>(loader));
         }
 
         @Override
@@ -176,6 +193,127 @@ class PluginUpdateTest {
             assertEquals("1.0", host.loaded.get("testplugin").info().version());
             assertEquals(List.of("TestPlugin-1.0.jar"), names(host.plugins));
             f.awaitAudit("plugin-update | TestPlugin | OK");
+        }
+    }
+
+    @Test
+    void leftoversAndRunningThreadsOfTheOldVersionAreReported() throws Exception {
+        FakeHost[] h = new FakeHost[1];
+        try (RuntimeFixture f = start(h, true)) {
+            FakeHost host = h[0];
+            host.install(pluginJar(host.plugins, "TestPlugin-1.0.jar", yml("TestPlugin", "1.0")));
+            pluginJar(host.update, "TestPlugin-1.1.jar", yml("TestPlugin", "1.1"));
+            host.resources.put("testplugin", new PluginResources(3, 1, 2, 0, 1));
+            host.leftovers.put("testplugin", new PluginResources(0, 1, 0, 0, 0));
+            // A thread whose context class loader is the old plugin's loader, as if onDisable forgot to stop it.
+            ClassLoader oldLoader = new java.net.URLClassLoader(new java.net.URL[0], getClass().getClassLoader());
+            host.loaders.put("testplugin", oldLoader);
+            java.util.concurrent.CountDownLatch stop = new java.util.concurrent.CountDownLatch(1);
+            Thread worker = new Thread(() -> {
+                try {
+                    stop.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }, "TestPlugin-worker");
+            worker.setContextClassLoader(oldLoader);
+            worker.start();
+            try {
+                PluginUpdateManager m = f.runtime.pluginUpdates().orElseThrow();
+                assertEquals("3 listeners, 1 scheduler task, 2 commands, 1 messaging channel",
+                        m.resources("TestPlugin").orElseThrow().describe());
+                PluginUpdateManager.Result r = updateConfirmed(m, "TestPlugin");
+                assertEquals(Kind.UPDATED, r.kind(), r.message() + " " + r.details());
+                String details = String.join("\n", r.details());
+                assertTrue(details.contains("it had 3 listeners, 1 scheduler task, 2 commands, 1 messaging channel"), details);
+                assertTrue(details.contains("WARNING: still registered for the unloaded version 1.0: 1 scheduler task"), details);
+                assertTrue(details.contains("WARNING: threads of the unloaded version 1.0 are still running [TestPlugin-worker]"), details);
+                List<dev.lemonpvp.runtime.metrics.LeakDetector.Entry> previous = m.previousVersions("TestPlugin");
+                assertEquals(1, previous.size());
+                assertFalse(previous.get(0).collected(), "the thread keeps the old class loader alive");
+                assertEquals(List.of("TestPlugin-worker"), previous.get(0).liveThreads());
+            } finally {
+                stop.countDown();
+                worker.join(5000);
+            }
+        }
+    }
+
+    /** Collects command output. */
+    static final class Actor implements dev.lemonpvp.runtime.commands.CommandActor {
+        final List<String> lines = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+        @Override
+        public String name() {
+            return "admin";
+        }
+
+        @Override
+        public boolean hasPermission(String node) {
+            return true;
+        }
+
+        @Override
+        public void send(dev.lemonpvp.runtime.commands.MessageLevel level, String text) {
+            this.lines.add(level + " " + text);
+        }
+
+        void await(String fragment) throws InterruptedException {
+            for (int i = 0; i < 200 && this.lines.stream().noneMatch(l -> l.contains(fragment)); i++) {
+                Thread.sleep(50);
+            }
+            assertTrue(this.lines.stream().anyMatch(l -> l.contains(fragment)), "missing '" + fragment + "' in " + this.lines);
+        }
+    }
+
+    @Test
+    void inspectUpdateAllAndDiagnosticsOnTheCommandLevel() throws Exception {
+        FakeHost[] h = new FakeHost[1];
+        try (RuntimeFixture f = start(h, true)) {
+            FakeHost host = h[0];
+            host.install(pluginJar(host.plugins, "TestPlugin-1.0.jar", yml("TestPlugin", "1.0")));
+            host.install(pluginJar(host.plugins, "Other-2.0.jar", yml("Other", "2.0")));
+            pluginJar(host.update, "TestPlugin-1.1.jar", yml("TestPlugin", "1.1"));
+            pluginJar(host.update, "Other-2.1.jar", yml("Other", "2.1"));
+            host.resources.put("testplugin", new PluginResources(2, 1, 1, 0, 0));
+            ClassLoader oldLoader = new java.net.URLClassLoader(new java.net.URL[0], getClass().getClassLoader());
+            host.loaders.put("testplugin", oldLoader);
+            dev.lemonpvp.runtime.commands.AdminCommand cmd = new dev.lemonpvp.runtime.commands.AdminCommand(f.runtime);
+            Actor a = new Actor();
+            java.util.function.Consumer<String> run = line -> {
+                try {
+                    f.platform.onMain(() -> {
+                        cmd.execute(a, line.split(" "));
+                        return null;
+                    });
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            };
+
+            run.accept("live inspect TestPlugin");
+            a.await("Registered now: 2 listeners, 1 scheduler task, 1 command");
+            a.await("Live update: possible");
+
+            run.accept("live update all confirm");
+            a.await("No 'update all' is waiting for confirmation");
+            run.accept("live update all");
+            a.await("Run /fork live update all confirm within 120 s");
+            assertTrue(host.calls.isEmpty(), "nothing happens before the confirmation: " + host.calls);
+            run.accept("live update all confirm");
+            a.await("All 2 plugin update(s) done.");
+            assertEquals("1.1", host.loaded.get("testplugin").info().version());
+            assertEquals("2.1", host.loaded.get("other").info().version());
+
+            run.accept("live inspect plugin:TestPlugin");
+            a.await("Unloaded version 1.0");
+            a.await("class loader still in memory");
+            assertTrue(oldLoader != null, "kept reachable on purpose until here");
+            run.accept("live diagnostics");
+            a.await("Lemon live update diagnostics");
+            a.await("Plugins: live updates allowed");
+            run.accept("live capabilities");
+            a.await("Plugins: Bukkit plugins without dependents can be replaced live");
         }
     }
 

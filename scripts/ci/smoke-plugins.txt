@@ -1,6 +1,8 @@
 # Live updates of a normal Bukkit plugin (LemonTestPlugin) on a real server.
 fork live plugins
 lemontest
+fork live inspect LemonTestPlugin
+fork live capabilities
 @sleep 2
 # A jar that is not a plugin and a version for a newer API: reported, never loaded.
 @shell cp variants/NotAPlugin.jar variants/future/LemonTestPlugin.jar plugins/update/
@@ -20,6 +22,8 @@ fork live update LemonTestPlugin
 fork live update LemonTestPlugin confirm
 @sleep 5
 lemontest
+fork live inspect LemonTestPlugin
+fork live diagnostics
 @sleep 2
 # A version that throws in onEnable: the previous version must come back.
 @shell cp variants/broken/LemonTestPlugin.jar plugins/update/
@@ -66,6 +70,13 @@ fork live history
 @expect LemonTestPlugin 1\.0\.0 disabled
 @expect LemonTestPlugin 1\.0\.1 enabled
 @expect OK update of LemonTestPlugin done: 1\.0\.0 -> 1\.0\.1
+@expect unloaded LemonTestPlugin 1\.0\.0 \(it had 1 listener, 1 scheduler task, 1 command;
+@expect Registered now: 1 listener, 1 scheduler task, 1 command
+@expect Live update: possible
+@expect Unloaded version 1\.0\.0 \(
+@expect Plugins: Bukkit plugins without dependents can be replaced live
+@expect Lemon live update diagnostics
+@expect Plugins: live updates allowed
 @expect LemonTestPlugin 1\.0\.1 active: 1 scheduled task\(s\) owned by LemonTestPlugin, 1 listener\(s\)
 @expect simulated failure in onEnable
 @expect FAILED update of LemonTestPlugin to 1\.0\.2-broken failed: .*the previous version 1\.0\.1 was restored and is enabled
@@ -81,6 +92,7 @@ fork live history
 @count 2 LemonTestPlugin 1\.0\.0 active: 1 scheduled task
 @count 2 LemonTestPlugin 1\.0\.1 active: 1 scheduled task
 @reject LemonTestPlugin 1\.0\.2-broken active
+@reject WARNING: (still registered for|threads of) the unloaded version
 @reject Unknown (or incomplete )?command
 @reject Unhandled exception
 @reject \[null\]

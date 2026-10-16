@@ -120,6 +120,16 @@ public final class ModuleManager {
     }
 
     /**
+     * Unloaded module instances and whether their class loaders were collected. Inspects
+     * threads; call on demand only.
+     *
+     * @return oldest first
+     */
+    public List<LeakDetector.Entry> unloadedInstances() {
+        return this.env.leaks().report(null);
+    }
+
+    /**
      * Builds diagnostics for a module. Inspects threads; call on demand only.
      *
      * @param id module id

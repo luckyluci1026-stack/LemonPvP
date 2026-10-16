@@ -77,8 +77,8 @@ public final class LivePatchService {
     /**
      * Outcome of an apply or rollback request.
      *
-     * @param kind    outcome
-     * @param plan    the plan (apply only), or {@code null}
+     * @param kind         outcome
+     * @param plan         the plan (apply only), or {@code null}
      * @param message      one-line summary
      * @param details      further lines
      * @param verification read-back check after an apply or rollback, or {@code null}
@@ -132,6 +132,7 @@ public final class LivePatchService {
      * @param agentDetail      agent lookup result
      * @param instrumentation  whether the instrumentation instance is available
      * @param redefineSupported whether the JVM supports redefinition at all
+     * @param retransformSupported whether the running bytecode can be read back (agent 2 and JVM)
      * @param vm               JVM description
      * @param enhancedFlag     value of AllowEnhancedClassRedefinition
      * @param buildId          server build id
@@ -143,7 +144,8 @@ public final class LivePatchService {
      * @param heapMaxMiB       maximum heap
      */
     public record StatusReport(boolean enabled, LivePatchConfig.Profile profile, String profileNote, String agentDetail,
-                               boolean instrumentation, boolean redefineSupported, String vm, String enhancedFlag, String buildId,
+                               boolean instrumentation, boolean redefineSupported, boolean retransformSupported, String vm,
+                               String enhancedFlag, String buildId,
                                Path patchDirectory, String trustNote, long active, int attempts, long heapUsedMiB, long heapMaxMiB) {
     }
 
@@ -198,7 +200,8 @@ public final class LivePatchService {
         Optional<Instrumentation> inst = this.agent.instrumentation();
         Runtime rt = Runtime.getRuntime();
         return new StatusReport(enabled(), this.profile, this.profileNote, this.agent.detail(), inst.isPresent(),
-                inst.map(Instrumentation::isRedefineClassesSupported).orElse(false), JvmCapabilities.vmDescription(),
+                inst.map(Instrumentation::isRedefineClassesSupported).orElse(false),
+                inst.map(Instrumentation::isRetransformClassesSupported).orElse(false), JvmCapabilities.vmDescription(),
                 JvmCapabilities.enhancedRedefinitionFlag(), this.platform.serverBuildId(),
                 this.paths.patchDirectory(this.config.get()), trustNote(), this.registry.activeCount(), this.registry.records().size(),
                 (rt.totalMemory() - rt.freeMemory()) >> 20, rt.maxMemory() >> 20);

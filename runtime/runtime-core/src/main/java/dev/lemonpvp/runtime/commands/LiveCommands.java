@@ -47,11 +47,13 @@ import java.util.function.Consumer;
  * </ul>
  *
  * <pre>
- * /fork live status | scan | plugins | modules | history
+ * /fork live status | scan | plugins | modules | history | capabilities | diagnostics
+ * /fork live inspect &lt;name&gt;
  * /fork live check &lt;name&gt;
  * /fork live update &lt;name&gt; [confirm]
+ * /fork live update all [confirm]
  * /fork live rollback &lt;name&gt; [confirm]
- * /fork live patch status | probe | verify &lt;id&gt;
+ * /fork live patch status | probe | verify &lt;id&gt; | inspect &lt;id&gt; | apply &lt;id&gt; [confirm] | rollback &lt;id&gt; [confirm]
  * </pre>
  *
  * <p>A name may carry a prefix ({@code plugin:}, {@code module:}, {@code patch:}); without
@@ -59,16 +61,22 @@ import java.util.function.Consumer;
  */
 final class LiveCommands {
 
-    static final List<String> SUBCOMMANDS = List.of("status", "scan", "plugins", "modules", "check", "update", "rollback",
-            "history", "patch");
+    static final List<String> SUBCOMMANDS = List.of("status", "scan", "plugins", "modules", "inspect", "check", "update", "rollback",
+            "history", "patch", "capabilities", "diagnostics");
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
 
     private final LemonRuntime runtime;
     private final Reports reports;
+    private final LiveInspect inspect;
     private final Map<String, PendingModule> moduleConfirmations = new ConcurrentHashMap<>();
+    private final Map<String, PendingAll> allConfirmations = new ConcurrentHashMap<>();
 
     /** A validated module jar waiting for {@code confirm}: only exactly this jar is activated. */
     private record PendingModule(Instant until, String sha256) {
+    }
+
+    /** Plugins prepared by {@code update all}, waiting for {@code confirm}. */
+    private record PendingAll(Instant until, List<String> plugins) {
     }
 
     /** Kind of target. */
@@ -82,6 +90,7 @@ final class LiveCommands {
     LiveCommands(LemonRuntime runtime, Reports reports) {
         this.runtime = runtime;
         this.reports = reports;
+        this.inspect = new LiveInspect(runtime);
     }
 
     void execute(CommandActor actor, String[] args) {
@@ -91,7 +100,9 @@ final class LiveCommands {
         }
         String sub = args[1].toLowerCase(Locale.ROOT);
         boolean changes = sub.equals("update") || sub.equals("rollback")
-                || (sub.equals("patch") && args.length >= 3 && (args[2].equalsIgnoreCase("probe") || args[2].equalsIgnoreCase("verify")));
+                || (sub.equals("capabilities") && JvmCapabilities.probed().isEmpty())
+                || (sub.equals("patch") && args.length >= 3 && List.of("probe", "verify", "apply", "rollback")
+                .contains(args[2].toLowerCase(Locale.ROOT)));
         String node = changes ? RuntimePermissions.LIVE_UPDATE : RuntimePermissions.LIVE_VIEW;
         if (!SUBCOMMANDS.contains(sub)) {
             usage(actor);
@@ -108,22 +119,36 @@ final class LiveCommands {
             case "modules" -> reply(actor, this.runtime.modules().scan(), scan -> this.reports.list(actor, scan));
             case "history" -> history(actor);
             case "patch" -> patch(actor, args);
-            case "check", "update", "rollback" -> {
-                boolean confirm = args.length == 4 && args[3].equalsIgnoreCase("confirm");
-                if (args.length != 3 && !(args.length == 4 && confirm && !sub.equals("check"))) {
-                    actor.send(MessageLevel.ERROR, "Usage: /fork live " + sub + " <name>" + (sub.equals("check") ? "" : " [confirm]"));
-                    return;
+            case "capabilities" -> capabilities(actor);
+            case "diagnostics" -> this.inspect.diagnostics(actor);
+            case "update" -> {
+                if (args.length >= 3 && args[2].equalsIgnoreCase("all")) {
+                    updateAll(actor, args.length == 4 && args[3].equalsIgnoreCase("confirm"));
+                } else {
+                    target(actor, sub, args);
                 }
-                resolve(actor, args[2], target -> {
-                    switch (sub) {
-                        case "check" -> check(actor, target);
-                        case "update" -> update(actor, target, confirm);
-                        default -> rollback(actor, target, confirm);
-                    }
-                });
             }
+            case "inspect", "check", "rollback" -> target(actor, sub, args);
             default -> usage(actor);
         }
+    }
+
+    /** {@code inspect | check | update | rollback <name> [confirm]}. */
+    private void target(CommandActor actor, String sub, String[] args) {
+        boolean confirm = args.length == 4 && args[3].equalsIgnoreCase("confirm");
+        boolean readOnly = sub.equals("check") || sub.equals("inspect");
+        if (args.length != 3 && !(args.length == 4 && confirm && !readOnly)) {
+            actor.send(MessageLevel.ERROR, "Usage: /fork live " + sub + " <name>" + (readOnly ? "" : " [confirm]"));
+            return;
+        }
+        resolve(actor, args[2], target -> {
+            switch (sub) {
+                case "inspect" -> inspect(actor, target);
+                case "check" -> check(actor, target);
+                case "update" -> update(actor, target, confirm);
+                default -> rollback(actor, target, confirm);
+            }
+        });
     }
 
     // ------------------------------------------------------------------ overview
@@ -214,19 +239,8 @@ final class LiveCommands {
         List<InstalledPlugin> all = m.get().installed();
         a.send(MessageLevel.HEADER, "Plugins (" + all.size() + ")");
         for (InstalledPlugin p : all) {
-            List<String> dependents = all.stream().filter(o -> o != p && o.enabled()
-                    && (o.info().depend().stream().anyMatch(p.info()::answersTo) || o.info().softDepend().stream().anyMatch(p.info()::answersTo)))
-                    .map(InstalledPlugin::name).toList();
-            String live;
-            if (p.info().kind() == PluginInfo.Kind.PAPER) {
-                live = "restart only (Paper plugin)";
-            } else if (!dependents.isEmpty()) {
-                live = "restart only (used by " + dependents + ")";
-            } else if (m.get().unloadProblem() != null) {
-                live = "restart only";
-            } else {
-                live = "live update possible";
-            }
+            String restart = LiveInspect.restartOnlyReason(p, all, m.get());
+            String live = restart == null ? "live update possible" : "restart only (" + restart + ")";
             a.send(p.enabled() ? MessageLevel.INFO : MessageLevel.WARNING, p.name() + " " + p.info().version() + " - "
                     + (p.enabled() ? "enabled" : "DISABLED") + " - " + live);
         }
@@ -260,8 +274,24 @@ final class LiveCommands {
             reply(a, service.verify(a.name(), args[3]), r -> patchResult(a, r, "verify", args[3]));
             return;
         }
+        // Same as inspect/update/rollback with the patch: prefix.
+        boolean confirm = args.length == 5 && args[4].equalsIgnoreCase("confirm");
+        if (what.equals("inspect") && args.length == 4) {
+            inspect(a, new Target(Kind.PATCH, args[3]));
+            return;
+        }
+        if ((what.equals("apply") || what.equals("rollback")) && (args.length == 4 || confirm)) {
+            Target t = new Target(Kind.PATCH, args[3]);
+            if (what.equals("apply")) {
+                update(a, t, confirm);
+            } else {
+                rollback(a, t, confirm);
+            }
+            return;
+        }
         if (args.length != 3 || !(what.equals("status") || what.equals("probe"))) {
-            a.send(MessageLevel.ERROR, "Usage: /fork live patch status | probe | verify <id>");
+            a.send(MessageLevel.ERROR, "Usage: /fork live patch status | probe | verify <id> | inspect <id> | apply <id> [confirm]"
+                    + " | rollback <id> [confirm]");
             return;
         }
         if (what.equals("probe")) {
@@ -278,8 +308,8 @@ final class LiveCommands {
                 + ", profile: " + s.profile().yamlName() + (s.profileNote() == null ? "" : " (" + s.profileNote() + ")"));
         a.send(s.instrumentation() ? MessageLevel.INFO : MessageLevel.WARNING, "Agent: " + s.agentDetail());
         a.send(MessageLevel.INFO, "JVM: " + s.vm());
-        a.send(MessageLevel.DETAIL, "class redefinition supported: " + s.redefineSupported() + ", AllowEnhancedClassRedefinition: "
-                + s.enhancedFlag());
+        a.send(MessageLevel.DETAIL, "class redefinition supported: " + s.redefineSupported() + ", reading back running bytecode: "
+                + s.retransformSupported() + ", AllowEnhancedClassRedefinition: " + s.enhancedFlag());
         a.send(MessageLevel.INFO, "Build id: " + s.buildId());
         a.send(MessageLevel.INFO, "Patch directory: " + relative(s.patchDirectory()) + " - " + s.trustNote());
         a.send(MessageLevel.INFO, "Active patches: " + s.active() + " (apply attempts in this process: " + s.attempts() + ")");
@@ -298,6 +328,148 @@ final class LiveCommands {
                     + e.getKey().description());
             a.send(MessageLevel.DETAIL, e.getValue().detail());
         }
+    }
+
+    /** JVM, agent and probed class-redefinition support; probes once if not done yet. */
+    private void capabilities(CommandActor a) {
+        LivePatchService service = this.runtime.livePatches();
+        LivePatchService.StatusReport s = service.status();
+        a.send(MessageLevel.HEADER, "What can change in this server process");
+        a.send(MessageLevel.INFO, "JVM: " + s.vm());
+        a.send(s.instrumentation() ? MessageLevel.INFO : MessageLevel.WARNING, "Agent: " + s.agentDetail());
+        a.send(MessageLevel.INFO, "Plugins: " + this.runtime.pluginUpdates().map(m -> m.unloadProblem() == null
+                ? "Bukkit plugins without dependents can be replaced live (each jar is checked)" : "restart only: " + m.unloadProblem())
+                .orElse("not supported on this platform"));
+        a.send(MessageLevel.INFO, "Modules: hot swap with automatic rollback" + (this.runtime.config().allowRuntimeDeploy() ? ""
+                : " (currently OFF: allow-runtime-deploy: false)"));
+        if (!s.instrumentation()) {
+            a.send(MessageLevel.WARNING, "Core patches: not possible without the agent (-javaagent:lemon-livepatch-agent.jar)");
+            return;
+        }
+        Map<Capability, CapabilityProbe.Result> probed = JvmCapabilities.probed();
+        if (!probed.isEmpty()) {
+            a.send(MessageLevel.INFO, "Core patches (class redefinition, probed with throw-away classes):");
+            capabilities(a, probed);
+            return;
+        }
+        a.send(MessageLevel.INFO, "Probing class redefinition with throw-away classes ...");
+        reply(a, service.probe(), results -> {
+            a.send(MessageLevel.INFO, "Core patches (class redefinition, probed with throw-away classes):");
+            capabilities(a, results);
+        });
+    }
+
+    private void inspect(CommandActor a, Target t) {
+        switch (t.kind()) {
+            case PLUGIN -> {
+                Optional<PluginUpdateManager> m = this.runtime.pluginUpdates();
+                if (m.isEmpty()) {
+                    a.send(MessageLevel.ERROR, "Plugin updates are not supported on this platform.");
+                    return;
+                }
+                this.inspect.plugin(a, m.get(), t.name());
+            }
+            case MODULE -> {
+                if (ModuleIds.problem(t.name()) != null) {
+                    a.send(MessageLevel.ERROR, "Invalid module id: " + ModuleIds.problem(t.name()));
+                    return;
+                }
+                reply(a, this.runtime.modules().scan(), scan -> {
+                    this.reports.moduleInfo(a, t.name(), scan);
+                    if (this.runtime.modules().diagnostics(t.name()).isPresent()) {
+                        this.reports.diagnostics(a, t.name());
+                    }
+                });
+            }
+            case PATCH -> {
+                if (PatchIds.problem(t.name()) != null) {
+                    a.send(MessageLevel.ERROR, "Invalid patch id: " + PatchIds.problem(t.name()));
+                    return;
+                }
+                this.inspect.patch(a, t.name());
+                if (patchFileExists(t.name()) && LivePatchRegistry.INSTANCE.latest(t.name())
+                        .filter(r -> r.status() == LivePatchRegistry.Status.ACTIVE).isEmpty()) {
+                    reply(a, this.runtime.livePatches().inspect(t.name()), plan -> plan(a, plan));
+                } else if (LivePatchRegistry.INSTANCE.latest(t.name()).isEmpty()) {
+                    a.send(MessageLevel.ERROR, "No patch file " + t.name() + PatchIds.SUFFIX + " and no record in this process.");
+                }
+            }
+            default -> throw new IllegalStateException();
+        }
+    }
+
+    /**
+     * {@code update all}: prepares every plugin in the update folder that can go live, then
+     * updates them one after another on {@code confirm}. Stops at the first update that does
+     * not succeed. Modules and core patches are always updated one by one.
+     */
+    private void updateAll(CommandActor a, boolean confirm) {
+        Optional<PluginUpdateManager> m = this.runtime.pluginUpdates();
+        if (m.isEmpty()) {
+            a.send(MessageLevel.ERROR, "Plugin updates are not supported on this platform.");
+            return;
+        }
+        String key = a.name();
+        if (!confirm) {
+            reply(a, m.get().scan(), candidates -> {
+                List<String> live = candidates.stream().filter(c -> c.verdict().status() == PluginCompatibility.Status.LIVE)
+                        .map(c -> c.jar().info().name()).toList();
+                candidates.stream().filter(c -> c.verdict().status() != PluginCompatibility.Status.LIVE)
+                        .forEach(c -> a.send(level(c.verdict().status()), "skipped: plugin " + PluginUpdateManager.verdictLine(c)));
+                if (live.isEmpty()) {
+                    a.send(MessageLevel.INFO, "No plugin in " + relative(m.get().updateDirectory()) + " can be updated live.");
+                    return;
+                }
+                prepareAll(a, m.get(), live, 0, new ArrayList<>());
+            });
+            return;
+        }
+        PendingAll pending = this.allConfirmations.remove(key);
+        if (pending == null || pending.until().isBefore(Instant.now())) {
+            a.send(MessageLevel.ERROR, "No 'update all' is waiting for confirmation; run /fork live update all first.");
+            return;
+        }
+        a.send(MessageLevel.INFO, "Updating " + pending.plugins().size() + " plugin(s) one after another ...");
+        runAll(a, m.get(), pending.plugins(), 0);
+    }
+
+    /** Checks the plugins one after another (each check registers its own confirmation). */
+    private void prepareAll(CommandActor a, PluginUpdateManager m, List<String> names, int index, List<String> ready) {
+        if (index == names.size()) {
+            if (ready.isEmpty()) {
+                a.send(MessageLevel.INFO, "Nothing to update.");
+                return;
+            }
+            this.allConfirmations.put(a.name(), new PendingAll(Instant.now().plusSeconds(120), List.copyOf(ready)));
+            a.send(MessageLevel.WARNING, "Update " + ready + "? Run /fork live update all confirm within 120 s.");
+            return;
+        }
+        String name = names.get(index);
+        reply(a, m.update(a.name(), name, false), r -> {
+            if (r.kind() == PluginUpdateManager.Result.Kind.CONFIRMATION_REQUIRED) {
+                a.send(MessageLevel.SUCCESS, "ready: plugin " + r.message());
+                ready.add(name);
+            } else {
+                a.send(MessageLevel.WARNING, "skipped: " + name + ": " + r.message());
+            }
+            prepareAll(a, m, names, index + 1, ready);
+        });
+    }
+
+    private void runAll(CommandActor a, PluginUpdateManager m, List<String> names, int index) {
+        if (index == names.size()) {
+            a.send(MessageLevel.SUCCESS, "All " + names.size() + " plugin update(s) done.");
+            return;
+        }
+        String name = names.get(index);
+        reply(a, m.update(a.name(), name, true), r -> {
+            pluginResult(a, r, "update", name);
+            if (r.kind() == PluginUpdateManager.Result.Kind.UPDATED) {
+                runAll(a, m, names, index + 1);
+            } else if (index + 1 < names.size()) {
+                a.send(MessageLevel.WARNING, "Stopped; not attempted: " + names.subList(index + 1, names.size()));
+            }
+        });
     }
 
     // ------------------------------------------------------------------ check / update / rollback
@@ -506,7 +678,7 @@ final class LiveCommands {
                     + r.message());
             default -> throw new IllegalStateException();
         }
-        r.details().forEach(d -> a.send(MessageLevel.DETAIL, d));
+        r.details().forEach(d -> a.send(d.startsWith("WARNING") ? MessageLevel.WARNING : MessageLevel.DETAIL, d));
     }
 
     private static void patchResult(CommandActor a, LivePatchService.Result r, String verb, String id) {
@@ -603,10 +775,12 @@ final class LiveCommands {
 
     void usage(CommandActor a) {
         a.send(MessageLevel.HEADER, "Lemon live updates - modules, plugins and core patches");
-        a.send(MessageLevel.DETAIL, "/fork live status | scan | plugins | modules | history");
+        a.send(MessageLevel.DETAIL, "/fork live status | scan | plugins | modules | history | capabilities | diagnostics");
+        a.send(MessageLevel.DETAIL, "/fork live inspect <name>           - what is installed/active and what it holds");
         a.send(MessageLevel.DETAIL, "/fork live check <name>             - can it go live? (prefix plugin:, module: or patch: if ambiguous)");
         if (a.hasPermission(RuntimePermissions.LIVE_UPDATE)) {
             a.send(MessageLevel.DETAIL, "/fork live update <name> [confirm]  - install/update a plugin or module, apply a core patch");
+            a.send(MessageLevel.DETAIL, "/fork live update all [confirm]     - every plugin in the update folder that can go live");
             a.send(MessageLevel.DETAIL, "/fork live rollback <name> [confirm] - previous plugin jar or bytecode before a core patch");
         }
         a.send(MessageLevel.DETAIL, "/fork live patch status" + (a.hasPermission(RuntimePermissions.LIVE_UPDATE)
@@ -618,14 +792,22 @@ final class LiveCommands {
             return AdminCommand.filter(SUBCOMMANDS, args[1]);
         }
         if (args.length == 3 && args[1].equalsIgnoreCase("patch")) {
-            return AdminCommand.filter(List.of("status", "probe", "verify"), args[2]);
+            return AdminCommand.filter(List.of("status", "probe", "verify", "inspect", "apply", "rollback"), args[2]);
+        }
+        if (args.length == 4 && args[1].equalsIgnoreCase("patch") && List.of("inspect", "apply", "rollback")
+                .contains(args[2].toLowerCase(Locale.ROOT))) {
+            return AdminCommand.filter(LivePatchRegistry.INSTANCE.records().stream().map(LivePatchRegistry.PatchRecord::id).distinct()
+                    .toList(), args[3]);
         }
         if (args.length == 4 && args[1].equalsIgnoreCase("patch") && args[2].equalsIgnoreCase("verify")) {
             return AdminCommand.filter(LivePatchRegistry.INSTANCE.records().stream()
                     .filter(r -> r.status() == LivePatchRegistry.Status.ACTIVE).map(LivePatchRegistry.PatchRecord::id).distinct().toList(), args[3]);
         }
-        if (args.length == 3 && List.of("check", "update", "rollback").contains(args[1].toLowerCase(Locale.ROOT))) {
+        if (args.length == 3 && List.of("inspect", "check", "update", "rollback").contains(args[1].toLowerCase(Locale.ROOT))) {
             List<String> names = new ArrayList<>();
+            if (args[1].equalsIgnoreCase("update")) {
+                names.add("all");
+            }
             this.runtime.modules().modules().forEach(m -> names.add(m.id()));
             this.runtime.pluginUpdates().ifPresent(m -> m.installed().forEach(p -> names.add(p.name())));
             LivePatchRegistry.INSTANCE.records().forEach(r -> names.add(r.id()));

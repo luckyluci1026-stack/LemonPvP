@@ -66,6 +66,12 @@ class LiveCommandsTest {
             admin.await("Modules have no separate rollback");
             run(f, cmd, admin, "live check nothing-like-this");
             admin.await("No module, plugin or patch named 'nothing-like-this'");
+            run(f, cmd, admin, "live inspect livemod");
+            admin.await("Diagnostics livemod 1.0.0 - ENABLED");
+            run(f, cmd, admin, "live inspect patch:no-such-patch");
+            admin.await("No patch file no-such-patch.lemonpatch and no record in this process.");
+            run(f, cmd, admin, "live patch verify no-such-patch");
+            admin.await("NOT DONE live patching is disabled");
         }
     }
 

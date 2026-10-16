@@ -3,6 +3,7 @@ package dev.lemonpvp.runtime.plugins;
 import dev.lemonpvp.runtime.RuntimePaths;
 import dev.lemonpvp.runtime.config.RuntimeConfig;
 import dev.lemonpvp.runtime.live.LiveHistory;
+import dev.lemonpvp.runtime.metrics.LeakDetector;
 import dev.lemonpvp.runtime.platform.RuntimePlatform;
 import dev.lemonpvp.runtime.security.AuditLog;
 import dev.lemonpvp.runtime.security.Hashing;
@@ -53,6 +54,8 @@ public final class PluginUpdateManager {
     private final AuditLog audit;
     private final PluginHost host;
     private final AtomicBoolean busy = new AtomicBoolean();
+    /** Class loaders of unloaded plugin versions (weakly referenced), keyed by lower-case plugin name. */
+    private final LeakDetector previousVersions = new LeakDetector();
     private final Map<String, String> pending = new ConcurrentHashMap<>();
     private final Map<String, Instant> pendingExpiry = new ConcurrentHashMap<>();
 
@@ -452,8 +455,10 @@ public final class PluginUpdateManager {
         }
         try {
             if (c.installed().isPresent()) {
-                this.host.unload(c.installed().get().name());
-                details.add("unloaded " + name + " " + from + " (commands, permissions and plugin-manager entry removed)");
+                PluginHost.Unloaded unloaded = this.host.unload(c.installed().get().name());
+                details.add("unloaded " + name + " " + from + " (it had " + unloaded.before().describe()
+                        + "; commands, permissions and plugin-manager entry removed)");
+                details.addAll(afterUnload(name, from, unloaded));
                 Files.delete(c.installedFile().orElseThrow());
             }
             Files.move(staged.jar(), target, StandardCopyOption.REPLACE_EXISTING);
@@ -503,7 +508,7 @@ public final class PluginUpdateManager {
                 : "the plugin did not enable (see the server log for its exception)";
         if (loaded.name() != null) {
             try {
-                this.host.unload(loaded.name());
+                details.addAll(afterUnload(loaded.name(), loaded.version(), this.host.unload(loaded.name())));
             } catch (RuntimeException e) {
                 details.add("could not unload the failed version: " + e.getMessage());
             }
@@ -575,6 +580,52 @@ public final class PluginUpdateManager {
         LiveHistory.INSTANCE.record(LiveHistory.Kind.PLUGIN, name, action, actor, false, m);
         this.platform.logger().severe("Plugin " + action + " FAILED: " + m);
         return new Result(Result.Kind.FAILED, m, details, c);
+    }
+
+    // ------------------------------------------------------------------ resources
+
+    /**
+     * Checks what an unloaded plugin version left behind: registrations the server still
+     * lists for the old instance, and live threads that belong to its class loader. The
+     * class loader is tracked weakly for {@link #previousVersions(String)}.
+     *
+     * @return warning lines (empty if nothing was found)
+     */
+    private List<String> afterUnload(String name, String version, PluginHost.Unloaded unloaded) {
+        List<String> out = new ArrayList<>();
+        if (!unloaded.leftovers().isEmpty()) {
+            out.add("WARNING: still registered for the unloaded version " + version + ": " + unloaded.leftovers().describe()
+                    + " - they keep the old version in memory and may still run; restart the server when convenient");
+        }
+        ClassLoader loader = unloaded.classLoader() == null ? null : unloaded.classLoader().get();
+        if (loader != null) {
+            this.previousVersions.track(name.toLowerCase(java.util.Locale.ROOT), version, loader);
+            List<String> threads = LeakDetector.threadsReferencing(loader);
+            if (!threads.isEmpty()) {
+                out.add("WARNING: threads of the unloaded version " + version + " are still running " + threads
+                        + " - the plugin does not stop them in onDisable; the old version stays in memory until they end");
+            }
+        }
+        return out;
+    }
+
+    /**
+     * @param name plugin name
+     * @return what the server has registered for the installed plugin now, if it is installed
+     */
+    public Optional<PluginResources> resources(String name) {
+        return Optional.ofNullable(this.host.resources(name));
+    }
+
+    /**
+     * Versions of a plugin unloaded by live updates in this process, and whether their
+     * class loaders were garbage collected (Lemon never triggers a collection itself).
+     *
+     * @param name plugin name, or {@code null} for all plugins
+     * @return oldest first
+     */
+    public List<LeakDetector.Entry> previousVersions(String name) {
+        return this.previousVersions.report(name == null ? null : name.toLowerCase(java.util.Locale.ROOT));
     }
 
     // ------------------------------------------------------------------ helpers

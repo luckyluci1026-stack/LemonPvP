@@ -22,14 +22,33 @@ public interface PluginHost {
     String unloadProblem();
 
     /**
+     * @param name plugin name
+     * @return what the server has registered for the plugin now, or {@code null} if it is
+     * not installed
+     */
+    PluginResources resources(String name);
+
+    /**
      * Disables a plugin and removes everything Paper keeps for it: commands, permissions
      * from its descriptor and its entry in the plugin manager. Paper itself already
      * cancels tasks and unregisters listeners, services and channels on disable.
      *
      * @param name plugin name
+     * @return what was registered before and is still registered after unloading
      * @throws IllegalStateException if the plugin cannot be removed
      */
-    void unload(String name);
+    Unloaded unload(String name);
+
+    /**
+     * Result of {@link #unload(String)}.
+     *
+     * @param before      resources right before disabling
+     * @param leftovers   resources still registered for the old plugin instance afterwards
+     * @param classLoader class loader of the old plugin instance (weakly referenced), or
+     *                    {@code null} if unknown
+     */
+    record Unloaded(PluginResources before, PluginResources leftovers, java.lang.ref.WeakReference<ClassLoader> classLoader) {
+    }
 
     /**
      * Loads and enables a plugin jar. Note: Paper replaces the jar with a jar from the update

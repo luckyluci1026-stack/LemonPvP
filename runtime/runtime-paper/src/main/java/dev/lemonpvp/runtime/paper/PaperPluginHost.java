@@ -3,7 +3,9 @@ package dev.lemonpvp.runtime.paper;
 import dev.lemonpvp.runtime.plugins.InstalledPlugin;
 import dev.lemonpvp.runtime.plugins.PluginHost;
 import dev.lemonpvp.runtime.plugins.PluginInfo;
+import dev.lemonpvp.runtime.plugins.PluginResources;
 import io.papermc.paper.plugin.configuration.PluginMeta;
+import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +16,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.PluginIdentifiableCommand;
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -70,7 +73,25 @@ final class PaperPluginHost implements PluginHost {
     }
 
     @Override
-    public void unload(String name) {
+    public PluginResources resources(String name) {
+        Plugin plugin = this.server.getPluginManager().getPlugin(name);
+        return plugin == null ? null : resources(plugin);
+    }
+
+    /** Counts what the server API lists for this plugin instance (works for removed plugins too). */
+    private PluginResources resources(Plugin plugin) {
+        int listeners = HandlerList.getRegisteredListeners(plugin).size();
+        int tasks = (int) this.server.getScheduler().getPendingTasks().stream().filter(t -> t.getOwner() == plugin).count();
+        int commands = (int) this.server.getCommandMap().getKnownCommands().values().stream()
+                .filter(c -> c instanceof PluginIdentifiableCommand pic && pic.getPlugin() == plugin).distinct().count();
+        int services = this.server.getServicesManager().getRegistrations(plugin).size();
+        int channels = this.server.getMessenger().getIncomingChannels(plugin).size()
+                + this.server.getMessenger().getOutgoingChannels(plugin).size();
+        return new PluginResources(listeners, tasks, commands, services, channels);
+    }
+
+    @Override
+    public Unloaded unload(String name) {
         PluginManager pm = this.server.getPluginManager();
         Plugin plugin = pm.getPlugin(name);
         if (plugin == null) {
@@ -84,12 +105,15 @@ final class PaperPluginHost implements PluginHost {
             throw new IllegalStateException(problem);
         }
         List<Permission> permissions = plugin.getPluginMeta().getPermissions();
+        PluginResources before = resources(plugin);
+        WeakReference<ClassLoader> loader = new WeakReference<>(plugin.getClass().getClassLoader());
         pm.disablePlugin(plugin);
         removeCommands(plugin);
         for (Permission perm : permissions) {
             pm.removePermission(perm.getName());
         }
         PaperPluginInternals.get().remove(plugin);
+        return new Unloaded(before, resources(plugin), loader);
     }
 
     /** Removes every command the plugin owns, including its namespaced labels. */
