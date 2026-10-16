@@ -5,6 +5,9 @@ on:
     paths-ignore:
       - 'index.html'
       - 'index.zip'
+      # Prose only; docs/examples/** is read by tests and still runs the CI.
+      - 'docs/*.md'
+      - 'README.md'
       - 'scripts/ci/source-inspect/**'
       - '.github/workflows/source-inspect.yml'
   pull_request:

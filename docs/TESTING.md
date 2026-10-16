@@ -233,7 +233,14 @@ gebaut (2 Klassen: `LivingEntity`, `Player`; 23 Klassen ohne Bytecode-Änderung
 Redefinition beider Klassen auf dem Hauptthread: 200,3 ms; Rollback 66,7 ms. In Lauf #21
 meldete das Zurücklesen für `Player` fälschlich eine Abweichung (`ConstantValue` eines
 `final`-Instanzfelds, das die JVM ignoriert); behoben, mit einem Test, der den Fehlalarm
-ohne die Korrektur reproduziert. Ergebnis des Laufs mit der Korrektur: siehe unten.
+ohne die Korrektur reproduziert.
+
+**Lauf #23 (`9db3eb3`, alle 12 Jobs grün):** dieselben Messwerte vor / nach / nach Rollback
+wie oben; `OK patch spear-cooldown applied and verified` (beide Klassen „runs the expected
+bytecode (read back from the JVM)“), `patch verify` ✔, `rolled back and verified`;
+Redefinition 267,4 ms, Zurücklesen 127,8 ms, Rollback 72,3 ms; `/tps` 19,4 bzw. 19,7,
+Server-List-Ping nach Patch und Rollback beantwortet. Fork-Job 1.21.11, Servertest 7: die
+ausgelieferte JAR misst `VANILLA COOLDOWN, sword OK`.
 
 ## Noch nicht automatisiert
 
