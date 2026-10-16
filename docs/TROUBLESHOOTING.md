@@ -42,7 +42,7 @@
 | `must declare the 'events' capability` | Fähigkeit fehlt im Deskriptor | `capabilities: [events, …]` ergänzen |
 | Disable meldet „still running: async task #…“ und Unload wird verweigert | asynchrone Modularbeit endet nicht | Modul so ändern, dass Async-Tasks terminieren; später erneut `unload`; notfalls Neustart |
 | `/fork status`: „A controlled server restart is recommended“ | Freigabe unvollständig oder Rollback gescheitert | Diagnose lesen, Server zum nächsten passenden Zeitpunkt neu starten |
-| Diagnose: „class loader still reachable“ lange nach dem Entladen | Speicherleck im Modul (Threads, statische Referenzen, direkte Registrierungen) | Regeln in `docs/MODULE-FORMAT.md` befolgen; Heap-Dump analysieren |
+| Diagnose: „class loader still reachable“ lange nach dem Entladen | Speicherleck im Modul (Threads, statische Referenzen, direkte Registrierungen) | Regeln in `docs/MODULE-FORMAT.md` befolgen; Ursache finden: `jcmd <pid> GC.heap_dump leak.hprof`, dann `java scripts/ci/HeapPath.java leak.hprof dev.lemonpvp.runtime.loader.ModuleClassLoader closed` – zeigt die Referenzkette von einer GC-Wurzel bis zum Loader (Heap-Dump enthält Serverdaten, nicht weitergeben) |
 | „blocked the main thread for N ms“ | langsames `onEnable`/`onDisable` | Datei-/Netzwerkarbeit in Async-Tasks verlagern |
 | „timed out after 30 s“ | Hashing/Kopieren dauert zu lange (sehr große JAR, langsames Dateisystem) | `operation-timeout-seconds` erhöhen |
 

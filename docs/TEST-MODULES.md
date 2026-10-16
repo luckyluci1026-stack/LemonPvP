@@ -141,14 +141,15 @@ speichern (wie `test-stress` mit der Generation).
 * alle `test-chaos`-Fehlerfälle aus Abschnitt 4;
 * zum Schluss alles entladen, **volle GC** (`jcmd <pid> GC.run`), dann muss für jede der 21
   entladenen Modulinstanzen `class loader collected` gemeldet werden und nichts mehr
-  `still in memory` sein.
+  `still in memory` sein. Bleibt ein Loader übrig, schreibt der Test einen Heap-Dump und
+  `scripts/ci/HeapPath.java` gibt die Referenzkette von der GC-Wurzel bis zum Loader aus.
 
 Ergebnisse: [`TESTING.md`](TESTING.md).
 
 ## 7. Was die Testmodule in der Runtime gefunden haben
 
-Beim Bau der Module fielen drei Schwächen der Runtime auf; sie sind behoben und mit Tests
-abgesichert:
+Beim Bau und in den ersten CI-Läufen fielen vier Schwächen der Runtime auf; sie sind
+behoben und mit Tests abgesichert:
 
 1. **Einmalige Tasks blieben bis zum Deaktivieren registriert.** Jeder `run`/`runLater`/
    `runAsync`-Aufruf eines Moduls hinterließ einen Eintrag im Ressourcen-Tracker (und die
@@ -164,6 +165,20 @@ abgesichert:
    verschwieg, dass das Modul dabei bereits deaktiviert wurde (und merkte es für den Neustart
    weiter als aktiv vor). Jetzt stehen Grund bzw. Zustand im Ergebnis, und der Zustand wird
    gespeichert. Tests: `hotSwapRollsBack…`, `refusedUnloadOfAnEnabledModuleSaysItWasDisabledAndPersistsThat`.
+4. **Der Bukkit-Scheduler hielt ein entladenes Modul im Speicher.** CI-Lauf #26: nach dem
+   Entladen aller Module und voller GC war auf allen vier Versionen genau ein Class-Loader
+   noch erreichbar (`test-chaos`). Die Heap-Analyse in Lauf #28 zeigte den Weg:
+   `Server thread → CraftServer.scheduler → CraftAsyncScheduler.head → CraftAsyncTask →
+   Task-Hülle der Runtime → Modul-Lambda → Klasse → Class-Loader`. Bukkit behält die zuletzt
+   eingereichte Aufgabe als Kopf seiner Warteschlange, bis die nächste kommt; die Hülle der
+   Runtime zeigte noch auf den Modulcode. Jetzt lässt die Hülle Modulcode, Callback-Guard und
+   Abschluss los, sobald die Aufgabe beendet oder freigegeben ist. Lauf #30 (1.21.11): 21 von
+   21 Loadern nach der GC eingesammelt.
+
+Ein Fehler lag im Test selbst: `stress commands` zählte die Befehle zuerst innerhalb von
+`/stress`. Ein Befehl, der während eines anderen Befehls ausgeführt wird, wird von Minecraft
+(seit 1.20.3) nur eingereiht und läuft danach – gezählt wurden 0/200. Jetzt werden die
+Befehle im nächsten Tick aus einem Task heraus ausgeführt und gezählt.
 
 ## 8. Grenzen
 
