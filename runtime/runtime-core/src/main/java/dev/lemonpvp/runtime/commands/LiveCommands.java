@@ -64,7 +64,11 @@ final class LiveCommands {
 
     private final LemonRuntime runtime;
     private final Reports reports;
-    private final Map<String, Instant> moduleConfirmations = new ConcurrentHashMap<>();
+    private final Map<String, PendingModule> moduleConfirmations = new ConcurrentHashMap<>();
+
+    /** A validated module jar waiting for {@code confirm}: only exactly this jar is activated. */
+    private record PendingModule(Instant until, String sha256) {
+    }
 
     /** Kind of target. */
     enum Kind {
@@ -431,23 +435,26 @@ final class LiveCommands {
         String key = a.name() + "\u0000" + id;
         boolean loaded = this.runtime.modules().modules().stream().anyMatch(m -> m.id().equals(id));
         if (!confirm) {
-            reply(a, this.runtime.modules().validate(a.name(), id), r -> {
-                result(a, r);
-                if (r.success()) {
-                    this.moduleConfirmations.put(key, Instant.now().plusSeconds(120));
+            reply(a, this.runtime.modules().validateJar(a.name(), id), v -> {
+                result(a, v.result());
+                if (v.result().success() && v.sha256() != null) {
+                    this.moduleConfirmations.put(key, new PendingModule(Instant.now().plusSeconds(120), v.sha256()));
+                    a.send(MessageLevel.DETAIL, "sha256 " + v.sha256());
                     a.send(MessageLevel.WARNING, (loaded ? "Swap the running module to this version" : "Enable this module")
                             + "? Run /fork live update " + id + " confirm within 120 s.");
                 }
             });
             return;
         }
-        Instant until = this.moduleConfirmations.remove(key);
-        if (until == null || until.isBefore(Instant.now())) {
+        PendingModule pending = this.moduleConfirmations.remove(key);
+        if (pending == null || pending.until().isBefore(Instant.now())) {
             a.send(MessageLevel.ERROR, "No update of module " + id + " is waiting for confirmation; run /fork live update " + id + " first.");
             return;
         }
         a.send(MessageLevel.INFO, "Working ...");
-        CompletableFuture<OperationResult> f = loaded ? this.runtime.modules().reload(a.name(), id) : this.runtime.modules().enable(a.name(), id);
+        // Only the jar that was validated: a file replaced in the meantime is refused.
+        CompletableFuture<OperationResult> f = loaded ? this.runtime.modules().reload(a.name(), id, pending.sha256())
+                : this.runtime.modules().enable(a.name(), id, pending.sha256());
         reply(a, f, r -> result(a, r));
     }
 

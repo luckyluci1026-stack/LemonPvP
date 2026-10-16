@@ -15,12 +15,15 @@ public final class PatchIds {
     public static final String SUFFIX = ".lemonpatch";
 
     /**
-     * Class name prefixes that are never patched: the JDK, and the live-patch machinery
-     * itself (a patch must not change the code that applies or rolls it back).
+     * Class name prefixes that are never patched: the JDK, the live-patch machinery itself
+     * (a patch must not change the code that applies or rolls it back), and what that
+     * machinery relies on for its checks: integrity, allow-lists, path checks and the audit
+     * log ({@code security}) and the parsing of the switches and profiles ({@code config}).
      */
     private static final String[] FORBIDDEN_PREFIXES = {
         "java.", "javax.", "jdk.", "sun.", "com.sun.",
         "dev.lemonpvp.runtime.livepatch.", "dev.lemonpvp.livepatch.",
+        "dev.lemonpvp.runtime.security.", "dev.lemonpvp.runtime.config.",
     };
 
     private PatchIds() {

@@ -233,7 +233,7 @@ Alle Optionen werden ausgewertet (getestet in `RuntimeConfigLoaderTest`). Ungül
 | `live-patching.profile` | `production` | `production` \| `development` (Letzteres nur mit `-Dlemon.livepatch.development=true`) | Neustart |
 | `live-patching.patch-directory` | `lemon/patches/inbox` | Ablage für `<id>.lemonpatch` + `.sha256` | Neustart |
 | `live-patching.trusted-hashes-file` | `""` | Freigabeliste der Patch-Archive (in Produktion Pflicht) | sofort |
-| `live-patching.confirm-timeout-seconds` | 120 | Zeit zwischen `update` und `update … confirm` | sofort |
+| `live-patching.confirm-timeout-seconds` | 120 | Zeit zwischen `update` und `update … confirm` bei Core-Patches (Plugins und Module: immer 120 s) | sofort |
 
 Beispiel: `docs/examples/lemon-runtime.yml`. Live-Updates: [`LIVE-UPDATES.md`](LIVE-UPDATES.md).
 

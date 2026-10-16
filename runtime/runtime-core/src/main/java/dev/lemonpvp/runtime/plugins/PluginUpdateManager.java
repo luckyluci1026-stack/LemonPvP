@@ -5,6 +5,7 @@ import dev.lemonpvp.runtime.config.RuntimeConfig;
 import dev.lemonpvp.runtime.live.LiveHistory;
 import dev.lemonpvp.runtime.platform.RuntimePlatform;
 import dev.lemonpvp.runtime.security.AuditLog;
+import dev.lemonpvp.runtime.security.Hashing;
 import dev.lemonpvp.runtime.security.PathGuard;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,6 +17,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -134,12 +136,50 @@ public final class PluginUpdateManager {
 
     // ------------------------------------------------------------------ check
 
+    /**
+     * Plugin descriptors of the update folder and the plugin folder, read once per operation.
+     *
+     * @param update  jars in the update folder
+     * @param plugins jars in the plugin folder
+     */
+    private record Folders(Map<Path, Optional<PluginInfo>> update, Map<Path, Optional<PluginInfo>> plugins) {
+
+        Optional<Path> installedFile(String name) {
+            return named(this.plugins, name).findFirst();
+        }
+
+        /** @return update-folder jars other than {@code except} that declare plugin {@code name} */
+        List<String> updateJarsFor(String name, Path except) {
+            Path skip = except.toAbsolutePath().normalize();
+            return named(this.update, name).filter(p -> !p.toAbsolutePath().normalize().equals(skip))
+                    .map(p -> p.getFileName().toString()).toList();
+        }
+
+        private static Stream<Path> named(Map<Path, Optional<PluginInfo>> jars, String name) {
+            return jars.entrySet().stream().filter(e -> e.getValue().map(i -> i.name().equalsIgnoreCase(name)).orElse(false))
+                    .map(Map.Entry::getKey);
+        }
+    }
+
+    private Folders folders() throws IOException {
+        return new Folders(descriptors(this.host.updateDirectory()), descriptors(this.host.pluginDirectory()));
+    }
+
+    private static Map<Path, Optional<PluginInfo>> descriptors(Path dir) throws IOException {
+        Map<Path, Optional<PluginInfo>> out = new LinkedHashMap<>();
+        for (Path jar : jars(dir)) {
+            out.put(jar, PluginJarInspector.readInfo(jar));
+        }
+        return out;
+    }
+
     /** @return every jar in the update folder with its verdict */
     public CompletableFuture<List<Candidate>> scan() {
         return onMain(this.host::installed).thenCompose(all -> onWorker(() -> {
+            Folders f = folders();
             List<Candidate> out = new ArrayList<>();
-            for (Path jar : jars(this.host.updateDirectory())) {
-                out.add(evaluate(jar, all));
+            for (Path jar : f.update().keySet()) {
+                out.add(evaluate(jar, all, f, true));
             }
             return out;
         }));
@@ -150,14 +190,13 @@ public final class PluginUpdateManager {
      * @return the candidate in the update folder for that plugin
      */
     public CompletableFuture<Candidate> check(String name) {
-        return onMain(this.host::installed).thenCompose(all -> onWorker(() -> findCandidate(name, all)));
+        return onMain(this.host::installed).thenCompose(all -> onWorker(() -> findCandidate(name, all, folders())));
     }
 
-    private Candidate findCandidate(String name, List<InstalledPlugin> all) throws IOException, PluginUpdateException {
-        for (Path jar : jars(this.host.updateDirectory())) {
-            Optional<PluginInfo> info = PluginJarInspector.readInfo(jar);
-            if (info.isPresent() && info.get().name().equalsIgnoreCase(name)) {
-                return evaluate(jar, all);
+    private Candidate findCandidate(String name, List<InstalledPlugin> all, Folders f) throws IOException, PluginUpdateException {
+        for (Map.Entry<Path, Optional<PluginInfo>> e : f.update().entrySet()) {
+            if (e.getValue().map(i -> i.name().equalsIgnoreCase(name)).orElse(false)) {
+                return evaluate(e.getKey(), all, f, true);
             }
         }
         boolean installed = all.stream().anyMatch(p -> p.name().equalsIgnoreCase(name));
@@ -166,12 +205,16 @@ public final class PluginUpdateManager {
                 + (installed ? " (the plugin is installed; put the new version into the update folder)" : ""));
     }
 
-    private Candidate evaluate(Path jar, List<InstalledPlugin> all) throws IOException {
+    /**
+     * @param useAllowList check against plugin-updates.trusted-hashes-file (new jars). A backup
+     *                     (rollback) is checked against the {@code .sha256} written with the backup.
+     */
+    private Candidate evaluate(Path jar, List<InstalledPlugin> all, Folders f, boolean useAllowList) throws IOException {
         PluginJar inspected = PluginJarInspector.inspect(jar, Runtime.version().feature(),
-                this.paths.pluginTrustedHashes(this.config.get()));
+                useAllowList ? this.paths.pluginTrustedHashes(this.config.get()) : Optional.empty());
         Optional<InstalledPlugin> installed = inspected.info() == null ? Optional.empty()
                 : all.stream().filter(p -> p.name().equalsIgnoreCase(inspected.info().name())).findFirst();
-        Optional<Path> installedFile = installed.isEmpty() ? Optional.empty() : findInstalledFile(installed.get().name());
+        Optional<Path> installedFile = installed.isEmpty() ? Optional.empty() : f.installedFile(installed.get().name());
         Optional<PluginJar> installedJar = installedFile.isEmpty() || installedFile.get().equals(jar) ? Optional.empty()
                 : Optional.of(PluginJarInspector.inspect(installedFile.get(), Runtime.version().feature(), Optional.empty()));
         PluginCompatibility.Verdict verdict = PluginCompatibility.evaluate(inspected, installed, installedJar, all,
@@ -180,7 +223,7 @@ public final class PluginUpdateManager {
             verdict = new PluginCompatibility.Verdict(PluginCompatibility.Status.RESTART_REQUIRED,
                     List.of("the jar of the installed plugin was not found in plugins/"), verdict.warnings());
         }
-        List<String> clashes = inspected.info() == null ? List.of() : updateFolderJarsFor(inspected.info().name(), jar);
+        List<String> clashes = inspected.info() == null ? List.of() : f.updateJarsFor(inspected.info().name(), jar);
         if (!clashes.isEmpty()) {
             // Paper's plugin loader silently replaces a jar it loads with a jar from the update
             // folder that declares the same plugin name, so such a file would be loaded instead.
@@ -191,31 +234,6 @@ public final class PluginUpdateManager {
             verdict = new PluginCompatibility.Verdict(PluginCompatibility.Status.INCOMPATIBLE, reasons, verdict.warnings());
         }
         return new Candidate(inspected, installed, installedFile, verdict);
-    }
-
-    /** @return names of jars in the update folder, other than {@code except}, that declare plugin {@code name} */
-    private List<String> updateFolderJarsFor(String name, Path except) throws IOException {
-        List<String> out = new ArrayList<>();
-        for (Path p : jars(this.host.updateDirectory())) {
-            if (p.toAbsolutePath().normalize().equals(except.toAbsolutePath().normalize())) {
-                continue;
-            }
-            Optional<PluginInfo> info = PluginJarInspector.readInfo(p);
-            if (info.isPresent() && info.get().name().equalsIgnoreCase(name)) {
-                out.add(p.getFileName().toString());
-            }
-        }
-        return out;
-    }
-
-    private Optional<Path> findInstalledFile(String name) throws IOException {
-        for (Path jar : jars(this.host.pluginDirectory())) {
-            Optional<PluginInfo> info = PluginJarInspector.readInfo(jar);
-            if (info.isPresent() && info.get().name().equalsIgnoreCase(name)) {
-                return Optional.of(jar);
-            }
-        }
-        return Optional.empty();
     }
 
     private static List<Path> jars(Path dir) throws IOException {
@@ -263,13 +281,15 @@ public final class PluginUpdateManager {
                 return CompletableFuture.completedFuture(rejected("no update of " + name + " is waiting for confirmation by "
                         + actor + " (expired, never checked, or the jar changed); run '/fork live update " + name + "' first", c));
             }
-            return onWorker(() -> backup(c)).thenCompose(backup -> onMain(() -> swap(actor, c, c.jar().file(), backup, false)));
+            return onWorker(() -> prepareSwap(c, false)).thenCompose(staged -> onMain(() -> swap(actor, c, staged, false)));
         });
         return f.whenComplete((r, ex) -> this.busy.set(false));
     }
 
     /**
-     * Restores the newest backup of a plugin (the version before the last update).
+     * Restores the newest backup of a plugin (the version before the last update). Repeated
+     * rollbacks go further back: a backup that was rolled back to, and the backup a rollback
+     * itself makes, are not rollback targets.
      *
      * @param actor   who asked
      * @param name    plugin name
@@ -286,11 +306,12 @@ public final class PluginUpdateManager {
         String key = actor + "\u0000rollback\u0000" + name.toLowerCase(java.util.Locale.ROOT);
         CompletableFuture<Result> f = onMain(this.host::installed).thenCompose(all -> onWorker(() -> {
             Optional<Path> jar = latestBackup(name);
-            return jar.isEmpty() ? null : evaluate(jar.get(), all);
+            return jar.isEmpty() ? null : evaluate(jar.get(), all, folders(), false);
         })).thenCompose(c -> {
             if (c == null) {
                 return CompletableFuture.completedFuture(rejected("no backup of plugin '" + PathGuard.sanitize(name)
-                        + "' in lemon/plugin-backups/ (nothing to roll back to; failed updates are not rollback targets)", null));
+                        + "' in lemon/plugin-backups/ (nothing to roll back to; failed updates and versions already rolled"
+                        + " back to are not rollback targets)", null));
             }
             if (c.verdict().status() != PluginCompatibility.Status.LIVE) {
                 return CompletableFuture.completedFuture(new Result(Result.Kind.REJECTED, "rollback of " + name + ": " + verdictLine(c),
@@ -308,10 +329,17 @@ public final class PluginUpdateManager {
                 return CompletableFuture.completedFuture(rejected("no rollback of " + name + " is waiting for confirmation by "
                         + actor + "; run '/fork live rollback " + name + "' first", c));
             }
-            return onWorker(() -> backup(c)).thenCompose(backup -> onMain(() -> swap(actor, c, c.jar().file(), backup, true)));
+            return onWorker(() -> prepareSwap(c, true)).thenCompose(staged -> onMain(() -> swap(actor, c, staged, true)));
         });
         return f.whenComplete((r, ex) -> this.busy.set(false));
     }
+
+    /** Marker in a backup directory whose update failed; rollback ignores such directories. */
+    static final String FAILED_MARKER = "UPDATE-FAILED.txt";
+    /** Marker in a backup directory that a rollback restored; the next rollback goes further back. */
+    static final String ROLLED_BACK_MARKER = "ROLLED-BACK.txt";
+    /** Marker in the backup directory a rollback makes of the version it replaces. */
+    static final String BY_ROLLBACK_MARKER = "MADE-BY-ROLLBACK.txt";
 
     private Optional<Path> latestBackup(String name) throws IOException {
         Path root = this.paths.pluginBackups();
@@ -328,7 +356,8 @@ public final class PluginUpdateManager {
                 stamps = s.filter(Files::isDirectory).sorted(Comparator.reverseOrder()).toList();
             }
             for (Path stamp : stamps) {
-                if (Files.exists(stamp.resolve(FAILED_MARKER))) {
+                if (Files.exists(stamp.resolve(FAILED_MARKER)) || Files.exists(stamp.resolve(ROLLED_BACK_MARKER))
+                        || Files.exists(stamp.resolve(BY_ROLLBACK_MARKER))) {
                     continue;
                 }
                 for (Path jar : jars(stamp)) {
@@ -341,7 +370,35 @@ public final class PluginUpdateManager {
         return Optional.empty();
     }
 
-    /** Worker: copies the installed jar into a fresh backup directory. */
+    /** A backup directory and the private copy of the jar to install. */
+    private record Staged(Path backupDir, Path jar) {
+    }
+
+    /**
+     * Worker: backs up the installed jar (with a {@code .sha256}), then copies the jar to
+     * install into a private directory and checks that the copy still has the confirmed
+     * digest. Only that copy is installed, so a file replaced after the check never runs.
+     */
+    private Staged prepareSwap(Candidate c, boolean rollback) throws IOException, PluginUpdateException {
+        Path dir = backup(c);
+        if (rollback) {
+            Files.writeString(dir.resolve(BY_ROLLBACK_MARKER), "made by the rollback to " + c.jar().info().version()
+                    + System.lineSeparator());
+        }
+        Path staging = this.paths.pluginStaging();
+        Files.createDirectories(staging);
+        Path copy = staging.resolve(dir.getParent().getFileName() + "-" + dir.getFileName() + ".jar");
+        Files.copy(c.jar().file(), copy, StandardCopyOption.REPLACE_EXISTING);
+        String sha = Hashing.sha256(copy);
+        if (!sha.equals(c.jar().sha256())) {
+            Files.deleteIfExists(copy);
+            throw new PluginUpdateException(c.jar().file().getFileName() + " changed after it was checked (now "
+                    + sha.substring(0, 12) + "); nothing was changed, run the command again");
+        }
+        return new Staged(dir, copy);
+    }
+
+    /** Worker: copies the installed jar and its digest into a fresh backup directory. */
     private Path backup(Candidate c) throws IOException {
         String name = c.jar().info().name();
         if (!PathGuard.isSafeFileName(name)) {
@@ -357,18 +414,36 @@ public final class PluginUpdateManager {
         Files.createDirectory(dir);
         if (c.installedFile().isPresent()) {
             Path old = c.installedFile().get();
-            Files.copy(old, dir.resolve(old.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+            Path saved = dir.resolve(old.getFileName());
+            Files.copy(old, saved, StandardCopyOption.REPLACE_EXISTING);
+            // Checked by a later rollback, which does not use the update allow-list.
+            Files.writeString(saved.resolveSibling(saved.getFileName() + ".sha256"),
+                    Hashing.sha256(saved) + "  " + saved.getFileName() + System.lineSeparator());
         }
         return dir;
     }
 
-    /** Main thread: replaces the running plugin with the candidate; restores the old one on failure. */
-    private Result swap(String actor, Candidate c, Path source, Path backupDir, boolean rollback) {
+    /** Main thread: replaces the running plugin with the staged jar; restores the old one on failure. */
+    private Result swap(String actor, Candidate c, Staged staged, boolean rollback) {
+        try {
+            return swapStaged(actor, c, staged, rollback);
+        } finally {
+            try {
+                Files.deleteIfExists(staged.jar());
+            } catch (IOException e) {
+                this.platform.logger().warning("Could not delete " + staged.jar() + ": " + e.getMessage());
+            }
+        }
+    }
+
+    private Result swapStaged(String actor, Candidate c, Staged staged, boolean rollback) {
+        Path backupDir = staged.backupDir();
         String name = c.jar().info().name();
         String action = rollback ? "rollback" : c.installed().isPresent() ? "update" : "install";
         String from = c.installed().map(p -> p.info().version()).orElse("-");
         String to = c.jar().info().version();
         List<String> details = new ArrayList<>();
+        Path source = c.jar().file();
         Path pluginDir = this.host.pluginDirectory();
         Path target = pluginDir.resolve(source.getFileName());
         boolean placed = false;
@@ -381,16 +456,22 @@ public final class PluginUpdateManager {
                 details.add("unloaded " + name + " " + from + " (commands, permissions and plugin-manager entry removed)");
                 Files.delete(c.installedFile().orElseThrow());
             }
-            if (rollback) {
-                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-                placed = true;
-            } else {
-                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-                placed = true;
+            Files.move(staged.jar(), target, StandardCopyOption.REPLACE_EXISTING);
+            placed = true;
+            if (!rollback) {
+                // The checked jar must leave the update folder before loading: Paper would
+                // otherwise load whatever jar of this plugin lies there.
+                Files.delete(source);
                 Path sidecar = source.resolveSibling(source.getFileName() + ".sha256");
                 if (Files.isRegularFile(sidecar, LinkOption.NOFOLLOW_LINKS)) {
                     Files.move(sidecar, backupDir.resolve("new-" + sidecar.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                 }
+            }
+            List<String> intruders = Folders.named(descriptors(this.host.updateDirectory()), name)
+                    .map(p -> p.getFileName().toString()).toList();
+            if (!intruders.isEmpty()) {
+                throw new IllegalStateException("a jar of " + name + " appeared in the update folder " + intruders
+                        + " and Paper would load it instead; remove it");
             }
         } catch (IOException | RuntimeException e) {
             String message = action + " of " + name + " stopped before the new version was loaded: " + e.getMessage();
@@ -402,6 +483,14 @@ public final class PluginUpdateManager {
             details.add("loaded and enabled " + loaded.name() + " " + to + " from plugins/" + target.getFileName());
             details.add("backup of the previous jar: " + this.paths.serverDirectory().relativize(backupDir));
             details.add("check the plugin now; Lemon verifies loading and enabling, not the plugin's behaviour");
+            if (rollback) {
+                try {
+                    Files.writeString(source.resolveSibling(ROLLED_BACK_MARKER), "restored by " + actor + " at " + Instant.now()
+                            + System.lineSeparator());
+                } catch (IOException e) {
+                    details.add("could not mark the restored backup (a second rollback may pick it again): " + e.getMessage());
+                }
+            }
             String summary = name + " " + from + " -> " + to;
             this.audit.record(actor, "plugin-" + action, name, true, summary + "; sha256 " + c.jar().sha256());
             LiveHistory.INSTANCE.record(LiveHistory.Kind.PLUGIN, name, action, actor, true, summary);
@@ -421,9 +510,6 @@ public final class PluginUpdateManager {
         }
         return recover(actor, c, action, action + " of " + name + " to " + to + " failed: " + reason, true, target, backupDir, details);
     }
-
-    /** Marker in a backup directory whose update failed; rollback ignores such directories. */
-    static final String FAILED_MARKER = "UPDATE-FAILED.txt";
 
     /** Main thread: puts the previous jar back and loads it. */
     private Result recover(String actor, Candidate c, String action, String message, boolean newJarPlaced, Path newJar,
@@ -453,6 +539,12 @@ public final class PluginUpdateManager {
         try {
             if (!Files.exists(oldFile)) {
                 Files.copy(saved, oldFile);
+            }
+            // Paper would load a jar of this plugin from the update folder instead of the old one.
+            for (Path intruder : Folders.named(descriptors(this.host.updateDirectory()), name).toList()) {
+                Files.move(intruder, backupDir.resolve("quarantined-" + intruder.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                details.add("moved " + intruder.getFileName() + " out of the update folder to "
+                        + this.paths.serverDirectory().relativize(backupDir) + " so that the previous version loads");
             }
         } catch (IOException e) {
             String m = message + "; the previous jar could not be restored (" + e.getMessage() + "): copy "

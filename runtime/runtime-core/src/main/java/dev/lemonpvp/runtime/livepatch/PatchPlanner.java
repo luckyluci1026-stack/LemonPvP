@@ -268,7 +268,7 @@ public final class PatchPlanner {
                 "unsupported change(s): " + String.join("; ", unsupported) + ". A restart with a new server jar is required.");
     }
 
-    private static byte[] readResource(ClassLoader loader, String className) throws IOException {
+    static byte[] readResource(ClassLoader loader, String className) throws IOException {
         String path = className.replace('.', '/') + ".class";
         try (InputStream in = loader.getResourceAsStream(path)) {
             if (in == null) {

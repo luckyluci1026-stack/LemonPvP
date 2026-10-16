@@ -16,7 +16,6 @@ import dev.lemonpvp.runtime.security.Hashing;
 import dev.lemonpvp.runtime.security.IntegrityVerifier;
 import dev.lemonpvp.runtime.security.PathGuard;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.lang.invoke.MethodHandles;
@@ -292,6 +291,11 @@ public final class LivePatchService {
         } catch (PatchException e) {
             return CompletableFuture.completedFuture(rejected(null, e.getMessage()));
         }
+        if (this.registry.latest(id).filter(r -> r.status() == Status.ACTIVE).isPresent()) {
+            // One active version per id: rollback only knows the latest record of an id.
+            return CompletableFuture.completedFuture(rejected(null, "patch " + id + " is already active; roll it back first"
+                    + " or give the new version a new id"));
+        }
         if (!this.busy.compareAndSet(false, true)) {
             return CompletableFuture.completedFuture(rejected(null, "another live-patch operation is running"));
         }
@@ -349,7 +353,7 @@ public final class LivePatchService {
         ClassLoader loader = this.platform.serverClassLoader();
         for (PatchPlan.Entry e : plan.redefinitions()) {
             Optional<ClassVersion> patched = this.registry.current(e.className());
-            byte[] bytes = patched.isPresent() ? patched.get().bytes() : readResource(loader, e.className());
+            byte[] bytes = patched.isPresent() ? patched.get().bytes() : PatchPlanner.readResource(loader, e.className());
             if (!Hashing.sha256(bytes).equals(e.runningSha256())) {
                 return new Prepared(archive, plan, Map.of(), null, rejected(plan, e.className() + " changed while preparing"));
             }
@@ -636,16 +640,6 @@ public final class LivePatchService {
                     + "'; the file name must be <id>" + PatchIds.SUFFIX);
         }
         return archive;
-    }
-
-    private static byte[] readResource(ClassLoader loader, String className) throws IOException {
-        String path = className.replace('.', '/') + ".class";
-        try (InputStream in = loader.getResourceAsStream(path)) {
-            if (in == null) {
-                throw new IOException(path + " not found");
-            }
-            return in.readNBytes(PatchArchive.MAX_CLASS_BYTES + 1);
-        }
     }
 
     private long confirmTimeout() {

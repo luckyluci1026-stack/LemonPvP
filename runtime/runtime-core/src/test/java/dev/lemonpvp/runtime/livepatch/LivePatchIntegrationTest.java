@@ -163,6 +163,9 @@ class LivePatchIntegrationTest {
             assertEquals(Hashing.sha256(original), Hashing.sha256(backupDir.resolve("lpa/Greeter.class")), "backup holds the replaced bytecode");
 
             assertEquals(Kind.REJECTED, await(s.apply(ACTOR, "fix-a", true)).kind(), "a confirmation cannot be used twice");
+            LivePatchService.Result again = await(s.apply(ACTOR, "fix-a", false));
+            assertEquals(Kind.REJECTED, again.kind(), "one active version per patch id");
+            assertTrue(again.message().contains("already active"), again.message());
 
             LivePatchService.Result rbPlan = await(s.rollback(ACTOR, "fix-a", false));
             assertEquals(Kind.CONFIRMATION_REQUIRED, rbPlan.kind(), rbPlan.message());

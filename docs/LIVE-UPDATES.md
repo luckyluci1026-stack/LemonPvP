@@ -121,16 +121,21 @@ Produktionsserver nicht versehentlich lockern.
 3. **Kompatibilität prüfen:** `fork live check <Plugin>` – zeigt „can be updated live“,
    „needs a server restart“ oder „incompatible“ mit Gründen.
 4. **Update ausführen:** `fork live update <Plugin>` → `fork live update <Plugin> confirm`.
-   Ablauf: alte JAR nach `lemon/plugin-backups/<Plugin>/<Zeit>/` kopieren → Plugin
-   deaktivieren (Paper: `onDisable`, Tasks, Listener, Services, Kanäle, Class-Loader) →
-   Lemon entfernt zusätzlich Befehle, Berechtigungen und den Plugin-Manager-Eintrag →
-   neue JAR nach `plugins/` → laden, Berechtigungen registrieren, aktivieren → Befehlsbaum
-   der Spieler aktualisieren.
+   Ablauf: alte JAR (mit `.sha256`) nach `lemon/plugin-backups/<Plugin>/<Zeit>/` kopieren →
+   neue JAR nach `lemon/plugin-staging/` kopieren und die Kopie erneut hashen (eine nach der
+   Prüfung ausgetauschte Datei wird so nie geladen) → Plugin deaktivieren (Paper:
+   `onDisable`, Tasks, Listener, Services, Kanäle, Class-Loader) → Lemon entfernt zusätzlich
+   Befehle, Berechtigungen und den Plugin-Manager-Eintrag → geprüfte Kopie nach `plugins/`,
+   Original aus `plugins/update/` entfernen → laden, Berechtigungen registrieren,
+   aktivieren → Befehlsbaum der Spieler aktualisieren.
 5. **Ergebnis prüfen:** Ausgabe `OK update of … done: 1.0.0 -> 1.0.1`, dann
    `fork live plugins` und das Plugin selbst testen. Schlägt Laden/Aktivieren fehl
    (oder lädt Paper eine andere Version), wird die alte JAR zurückgelegt und wieder
    geladen: `FAILED … the previous version … was restored and is enabled`.
-   Zurück zur vorherigen Version: `fork live rollback <Plugin>` → `… confirm`.
+   Zurück zur vorherigen Version: `fork live rollback <Plugin>` → `… confirm`. Ein weiterer
+   Rollback geht eine Version weiter zurück; Sicherungen fehlgeschlagener Updates sind keine
+   Rollback-Ziele. Die Sicherung wird über ihre `.sha256` geprüft (nicht über die
+   Allow-List, auf der alte Versionen meist nicht stehen).
 
 Ist ein Live-Update nicht möglich, bleibt die JAR in `plugins/update/`; Paper installiert
 sie beim nächsten Start.
@@ -158,7 +163,8 @@ sie beim nächsten Start.
    1.21.11-Paperclip erzeugt diese JAR aus Vanilla-JAR + Binär-Patches, und dabei sind die
    Klassendateien anders angeordnet als in der Gradle-JAR (CI-Lauf #12: 9962 von 10183
    Klassen byte-verschieden bei gleichem Inhalt). Bei 26.1.2/26.2/26.3 ist sie
-   byte-identisch zur Gradle-JAR (26.2: 10554/10554), `-PserverJar` schadet dort nicht.
+   byte-identisch zur Gradle-JAR (CI-Lauf #12: alle Klassen identisch), `-PserverJar` schadet
+   dort nicht.
 3. **Code ändern und Patch bauen** (IntelliJ oder Konsole):
    `./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…" -PserverJar=C:\lemon\lemon-<mc>.jar`.
    Das Werkzeug erkennt Änderungen byte-genau gegen `baseline.jar`, übernimmt die
@@ -185,7 +191,8 @@ Patch ab, bevor etwas geändert wird):
 2. Datei ≤ 16 MiB, nur `lemon-patch.yml` und `classes/**.class`, keine Pfadtricks,
    ≤ 256 Klassen, Digest jeder Klassendatei passt zum Manifest, jede Klassendatei ist
    gültig und heißt wie angegeben, keine Klassen aus `java.*`, `javax.*`, `jdk.*`,
-   `sun.*`, `com.sun.*` und nicht der Live-Patch-Code selbst.
+   `sun.*`, `com.sun.*`, nicht der Live-Patch-Code selbst und nicht die Klassen, auf die
+   sich seine Prüfungen stützen (`dev.lemonpvp.runtime.security.*`, `…config.*`).
 3. `.sha256` passt zu genau den gelesenen Bytes; in Produktion steht der Digest in der
    Freigabeliste.
 4. Ziel-Minecraft-Version und **Build-ID** (`Brand-Id/Implementation-Version/Build-Time`

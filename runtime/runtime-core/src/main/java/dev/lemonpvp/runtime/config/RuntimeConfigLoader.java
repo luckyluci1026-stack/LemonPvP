@@ -113,6 +113,7 @@ public final class RuntimeConfigLoader {
               # Allow-list (one SHA-256 per line) of approved patch archives. Required in production.
               trusted-hashes-file: ""
               # How long '/fork live update <patch>' waits for '/fork live update <patch> confirm'.
+              # (Plugin and module updates always wait 120 s.)
               confirm-timeout-seconds: 120
             """;
 

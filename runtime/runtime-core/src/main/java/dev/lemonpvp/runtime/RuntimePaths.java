@@ -75,6 +75,11 @@ public record RuntimePaths(Path serverDirectory, Path configFile, Path root) {
         return PathGuard.resolveInside(this.serverDirectory, config.livePatching().patchDirectory());
     }
 
+    /** @return private copies of plugin jars between their check and their installation */
+    public Path pluginStaging() {
+        return this.root.resolve("plugin-staging");
+    }
+
     /** @return directory for backups of replaced plugin jars */
     public Path pluginBackups() {
         return this.root.resolve("plugin-backups");

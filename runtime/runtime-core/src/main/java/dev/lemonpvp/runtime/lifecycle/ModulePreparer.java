@@ -108,8 +108,9 @@ final class ModulePreparer {
         }
         details.addAll(verified.checks());
         if (expectedSha256 != null && !expectedSha256.equals(verified.sha256())) {
-            throw new LifecycleException("the jar of '" + id + "' changed since it was activated (expected " + expectedSha256
-                    + ", found " + verified.sha256() + "); activate it explicitly with /fork module enable " + id);
+            throw new LifecycleException("the jar of '" + id + "' changed since it was activated or checked (expected "
+                    + expectedSha256 + ", found " + verified.sha256() + "); check it again or activate it explicitly with"
+                    + " /fork module enable " + id);
         }
         if (!stage) {
             return new Prepared(artifact, verified.sha256(), null, null, ConfigSnapshot.empty(), details);

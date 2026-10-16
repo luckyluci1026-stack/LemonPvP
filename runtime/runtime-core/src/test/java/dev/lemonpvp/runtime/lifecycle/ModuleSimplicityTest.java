@@ -76,4 +76,36 @@ class ModuleSimplicityTest {
             assertFalse(f.await(f.runtime.modules().remove(A, "gone")).success(), "nothing left to remove");
         }
     }
+
+    @Test
+    void removeWithoutAJarChangesNothing() throws Exception {
+        try (RuntimeFixture f = RuntimeFixture.start(this.dir)) {
+            ModuleJarBuilder.create().descriptor("kept", "1.0.0", "mod.kept.Main")
+                    .source("mod.kept.Main", TestModules.basic("mod.kept", "kept")).writeTo(f.modules, "kept.jar");
+            assertTrue(f.await(f.runtime.modules().enable(A, "kept")).success());
+            Files.delete(f.modules.resolve("kept.jar"));
+            OperationResult r = f.await(f.runtime.modules().remove(A, "kept"));
+            assertFalse(r.success(), r.toString());
+            assertTrue(r.message().contains("nothing was changed"), r.message());
+            assertEquals(dev.lemonpvp.runtime.api.ModuleState.ENABLED, f.runtime.modules().modules().get(0).state(),
+                    "the module still runs");
+        }
+    }
+
+    @Test
+    void aConfirmedUpdateOnlyActivatesTheJarThatWasValidated() throws Exception {
+        try (RuntimeFixture f = RuntimeFixture.start(this.dir)) {
+            ModuleJarBuilder.create().descriptor("swapme", "1.0.0", "mod.swapme.Main")
+                    .source("mod.swapme.Main", TestModules.basic("mod.swapme", "v1")).writeTo(f.modules, "swapme.jar");
+            ModuleManager.Validated v = f.runtime.modules().validateJar(A, "swapme").get(60, java.util.concurrent.TimeUnit.SECONDS);
+            assertTrue(v.result().success(), v.result().toString());
+            // The file is replaced between the check and the confirmation.
+            ModuleJarBuilder.create().descriptor("swapme", "1.0.1", "mod.swapme.Main")
+                    .source("mod.swapme.Main", TestModules.basic("mod.swapme", "v2")).writeTo(f.modules, "swapme.jar");
+            OperationResult r = f.await(f.runtime.modules().enable(A, "swapme", v.sha256()));
+            assertFalse(r.success(), "a jar that was not validated must not be activated: " + r);
+            assertTrue(f.runtime.modules().modules().isEmpty(), "nothing was loaded");
+            assertTrue(f.await(f.runtime.modules().enable(A, "swapme")).success(), "an explicit enable still works");
+        }
+    }
 }

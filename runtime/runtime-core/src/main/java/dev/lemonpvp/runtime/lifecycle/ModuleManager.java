@@ -175,8 +175,31 @@ public final class ModuleManager {
      * @return the result
      */
     public CompletableFuture<OperationResult> validate(String actor, String id) {
+        return validateJar(actor, id).thenApply(Validated::result);
+    }
+
+    /**
+     * Result of {@link #validateJar}.
+     *
+     * @param result  the validation result
+     * @param sha256  digest of the validated jar, or {@code null} if validation failed before hashing
+     */
+    public record Validated(OperationResult result, String sha256) {
+    }
+
+    /**
+     * Like {@link #validate}, but also returns the digest of the validated jar, so that a later
+     * confirmed operation can insist on exactly that jar.
+     *
+     * @param actor who requested it
+     * @param id    module id
+     * @return result and digest
+     */
+    public CompletableFuture<Validated> validateJar(String actor, String id) {
+        String[] sha = new String[1];
         return guarded(actor, "validate", id, false, start -> onWorker(() -> this.preparer.prepare(id, null, false))
                 .thenCompose(p -> onMain(() -> {
+                    sha[0] = p.sha256();
                     DependencyResolver.Resolution res = DependencyResolver.resolve(p.artifact().descriptor(), this.instances, false);
                     List<String> details = new ArrayList<>(p.details());
                     details.addAll(res.warnings());
@@ -187,7 +210,7 @@ public final class ModuleManager {
                     }
                     return OperationResult.ok("validate", id, p.artifact().descriptor().coordinates() + " passed all checks",
                             details, start);
-                })));
+                }))).thenApply(r -> new Validated(r, r.success() ? sha[0] : null));
     }
 
     /**
@@ -216,7 +239,16 @@ public final class ModuleManager {
         return enable(actor, id, null);
     }
 
-    private CompletableFuture<OperationResult> enable(String actor, String id, String expectedSha256) {
+    /**
+     * Enables a module, but only from a jar with exactly this digest (checked again on the
+     * staged copy, so a jar replaced after validation is refused).
+     *
+     * @param actor          who requested it
+     * @param id             module id
+     * @param expectedSha256 digest the jar must have, or {@code null} for any
+     * @return the result
+     */
+    public CompletableFuture<OperationResult> enable(String actor, String id, String expectedSha256) {
         return guarded(actor, "enable", id, true, start -> {
             List<String> details = Collections.synchronizedList(new ArrayList<>());
             return onMain(() -> {
@@ -312,7 +344,11 @@ public final class ModuleManager {
     public CompletableFuture<OperationResult> remove(String actor, String id) {
         return guarded(actor, "remove", id, true, start -> {
             List<String> details = Collections.synchronizedList(new ArrayList<>());
-            return onMain(() -> {
+            // Find the jar first: nothing is unloaded if there is no file to remove.
+            return onWorker(() -> {
+                findArtifacts(id);
+                return null;
+            }).thenCompose(ignored -> onMain(() -> {
                 ModuleInstance inst = this.instances.get(id);
                 if (inst == null) {
                     return Optional.<ModuleInstance>empty();
@@ -328,7 +364,7 @@ public final class ModuleManager {
                 this.instances.remove(id, inst);
                 details.add("unloaded " + inst.descriptor().coordinates());
                 return Optional.of(inst);
-            }).thenCompose(inst -> inst.isEmpty() ? CompletableFuture.<Void>completedFuture(null)
+            })).thenCompose(inst -> inst.isEmpty() ? CompletableFuture.<Void>completedFuture(null)
                     : deleteStaged(inst.get().stagedJar()).thenCompose(v -> persist(actor, inst.get(), false, details)))
                     .thenCompose(v -> onWorker(() -> moveToRemoved(id, details)))
                     .thenApply(target -> OperationResult.ok("remove", id, "removed; files moved to "
@@ -336,12 +372,17 @@ public final class ModuleManager {
         });
     }
 
-    private Path moveToRemoved(String id, List<String> details) throws IOException, LifecycleException {
-        ScanReport report = this.preparer.scan();
-        List<ModuleArtifact> files = report.artifacts().stream().filter(a -> a.id().equals(id)).toList();
+    private List<ModuleArtifact> findArtifacts(String id) throws IOException, LifecycleException {
+        List<ModuleArtifact> files = this.preparer.scan().artifacts().stream().filter(a -> a.id().equals(id)).toList();
         if (files.isEmpty()) {
-            throw new LifecycleException("no jar of module '" + id + "' found in " + this.env.config().get().moduleDirectory());
+            throw new LifecycleException("no jar of module '" + id + "' found in " + this.env.config().get().moduleDirectory()
+                    + "; nothing was changed (use /fork module unload to only unload it)");
         }
+        return files;
+    }
+
+    private Path moveToRemoved(String id, List<String> details) throws IOException, LifecycleException {
+        List<ModuleArtifact> files = findArtifacts(id);
         Path target = this.env.paths().root().resolve("modules-removed")
                 .resolve(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(java.time.ZoneOffset.UTC)
                         .format(java.time.Instant.now()));
@@ -369,6 +410,18 @@ public final class ModuleManager {
      * @return the result
      */
     public CompletableFuture<OperationResult> reload(String actor, String id) {
+        return reload(actor, id, null);
+    }
+
+    /**
+     * Hot swap from a jar with exactly this digest.
+     *
+     * @param actor          who requested it
+     * @param id             module id
+     * @param expectedSha256 digest the new jar must have, or {@code null} for any
+     * @return the result
+     */
+    public CompletableFuture<OperationResult> reload(String actor, String id, String expectedSha256) {
         return guarded(actor, "reload", id, true, start -> {
             List<String> details = Collections.synchronizedList(new ArrayList<>());
             return onMain(() -> {
@@ -379,7 +432,7 @@ public final class ModuleManager {
                             + ". Unload the dependents first.");
                 }
                 return old;
-            }).thenCompose(old -> onWorker(() -> this.preparer.prepare(id, null, true)).thenCompose(prepared -> {
+            }).thenCompose(old -> onWorker(() -> this.preparer.prepare(id, expectedSha256, true)).thenCompose(prepared -> {
                 details.addAll(prepared.details());
                 if (prepared.sha256().equals(old.sha256())) {
                     details.add("jar is unchanged (same SHA-256); the module is restarted with a fresh class loader");

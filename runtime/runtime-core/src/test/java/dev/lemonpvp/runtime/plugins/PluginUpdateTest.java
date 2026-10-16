@@ -340,4 +340,45 @@ class PluginUpdateTest {
         assertTrue(PluginCompatibility.compareVersions("26.2", "26.10") < 0);
         assertEquals(0, PluginCompatibility.compareVersions("1.0", "1.0.0"));
     }
+
+    @Test
+    void repeatedRollbacksGoFurtherBackAndDoNotNeedTheAllowList() throws Exception {
+        Path server = this.dir.resolve("server");
+        FakeHost host = new FakeHost(server);
+        host.install(pluginJar(host.plugins, "TestPlugin.jar", yml("TestPlugin", "1.0")));
+        Path staging = Files.createDirectories(this.dir.resolve("staging"));
+        Path v11 = pluginJar(staging.resolve("11"), "TestPlugin.jar", yml("TestPlugin", "1.1"));
+        Path v12 = pluginJar(staging.resolve("12"), "TestPlugin.jar", yml("TestPlugin", "1.2"));
+        // Only the two new versions are approved; 1.0 was installed by hand long ago.
+        Files.writeString(server.resolve("trusted-plugins.txt"), dev.lemonpvp.runtime.security.Hashing.sha256(v11) + "\n"
+                + dev.lemonpvp.runtime.security.Hashing.sha256(v12) + "\n");
+        try (RuntimeFixture f = RuntimeFixture.start(server, p -> p.pluginHost(host), "plugin-updates:", "  enabled: true",
+                "  trusted-hashes-file: trusted-plugins.txt")) {
+            PluginUpdateManager m = f.runtime.pluginUpdates().orElseThrow();
+            Files.copy(v11, host.update.resolve("TestPlugin.jar"));
+            assertEquals(Kind.UPDATED, updateConfirmed(m, "TestPlugin").kind());
+            Files.copy(v12, host.update.resolve("TestPlugin.jar"));
+            assertEquals(Kind.UPDATED, updateConfirmed(m, "TestPlugin").kind());
+            assertEquals("1.2", host.loaded.get("testplugin").info().version());
+
+            assertEquals(Kind.CONFIRMATION_REQUIRED, await(m.rollback("console", "TestPlugin", false)).kind());
+            PluginUpdateManager.Result first = await(m.rollback("console", "TestPlugin", true));
+            assertEquals(Kind.UPDATED, first.kind(), first.message() + " " + first.details());
+            assertEquals("1.1", host.loaded.get("testplugin").info().version());
+
+            PluginUpdateManager.Result plan = await(m.rollback("console", "TestPlugin", false));
+            assertEquals(Kind.CONFIRMATION_REQUIRED, plan.kind(), "1.0 is not on the allow-list but was backed up with its digest: "
+                    + plan.message() + " " + plan.details());
+            PluginUpdateManager.Result second = await(m.rollback("console", "TestPlugin", true));
+            assertEquals(Kind.UPDATED, second.kind(), second.message());
+            assertEquals("1.0", host.loaded.get("testplugin").info().version(), "the second rollback goes further back");
+
+            PluginUpdateManager.Result none = await(m.rollback("console", "TestPlugin", false));
+            assertEquals(Kind.REJECTED, none.kind(), none.message());
+            assertTrue(names(host.update).isEmpty());
+            try (Stream<Path> s = Files.list(f.serverDir.resolve("lemon/plugin-staging"))) {
+                assertEquals(0, s.count(), "staged copies are removed");
+            }
+        }
+    }
 }
