@@ -119,6 +119,7 @@ if [ "$status" -ne 0 ]; then
   tail -n 300 server.log
 else
   echo "--- server log after startup (max. 400 lines) ---"
-  sed -n '/Done (/,$p' server.log | head -n 400
+  # awk instead of "sed | head": head closing the pipe makes sed fail (exit 4) under pipefail.
+  awk '/Done \(/ { f = 1 } f && n++ < 400' server.log
 fi
 exit "$status"
