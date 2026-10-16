@@ -204,7 +204,12 @@ meldet, was nach dem Entladen übrig blieb.
    Das Werkzeug erkennt Änderungen byte-genau gegen `baseline.jar`, übernimmt die
    Prüfsummen aus der laufenden JAR und prüft, dass beide für jede Patch-Klasse
    inhaltlich gleich sind (sonst Abbruch: „--reference is not the build that runs on the
-   server“). Es zeigt pro Klasse die Änderungen (strukturelle mit `[structural]`) und
+   server“, mit Befehlsliste beider Fassungen an der ersten Abweichung). Als gleich gilt
+   dabei auch eine Feld-/Methodenreferenz, die in der einen JAR die deklarierende Klasse und
+   in der anderen den Empfängertyp nennt (die 1.21.11-Paperclip-JAR schreibt
+   `Entity.firstTick`, javac `LivingEntity.firstTick`) – nur wenn keine Klasse dazwischen ein
+   gleichnamiges Mitglied deklariert. Klassen ohne Bytecode-Änderung (nur Zeilennummern,
+   Annotationen, Konstantenpool-Layout) landen nicht im Patch („skipped …“). Es zeigt pro Klasse die Änderungen (strukturelle mit `[structural]`) und
    schreibt `lemon-server/build/livepatch/fix-tps.lemonpatch` + `.sha256`.
 4. **Offline prüfen (vor dem Hochladen):**
    `./gradlew :lemon-server:checkLivePatch -PpatchId=fix-tps -PserverJar=C:\lemon\lemon-<mc>.jar`

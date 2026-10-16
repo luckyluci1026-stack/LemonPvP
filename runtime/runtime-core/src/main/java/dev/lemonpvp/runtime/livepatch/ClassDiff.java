@@ -20,6 +20,8 @@ import java.util.Set;
  */
 public final class ClassDiff {
 
+    private static final int ACC_STATIC = 0x0008;
+
     /** Access flags HotSpot compares for classes (ACC_SUPER is ignored). */
     private static final int CLASS_FLAGS = 0x0001 | 0x0010 | 0x0200 | 0x0400 | 0x1000 | 0x2000 | 0x4000;
 
@@ -78,7 +80,9 @@ public final class ClassDiff {
                         + (n.access() != f.access() ? " (modifiers 0x" + Integer.toHexString(f.access()) + " -> 0x"
                         + Integer.toHexString(n.access()) + ")" : "")));
                 schemaChange = true;
-            } else if (!Objects.equals(f.constantValue(), n.constantValue())) {
+            } else if ((f.access() & ACC_STATIC) != 0 && !Objects.equals(f.constantValue(), n.constantValue())) {
+                // Only static fields: the JVM ignores ConstantValue on instance fields (JVMS 4.7.2) and
+                // does not report it when it reconstitutes a class file.
                 out.add(new ClassChange(ChangeKind.FIELD_CONSTANT_VALUE, fieldText(f)));
             }
         }

@@ -99,13 +99,16 @@ normalem Angriff, nicht bei Speer-Stichen und nicht bei Projektilen (das Event i
 (`ServerPlayer` ohne Client, Pakete werden verworfen) führt echte Angriffe auf Schweine mit
 1000 Lebenspunkten aus und ruft dieselben Methoden auf wie die Paket-Handler:
 
-| Szenario | Paper 1.21.11 (ohne Fix) | Vanilla / mit Fix |
+| Szenario | Paper 1.21.11 (ohne Fix), erwartet | gemessen mit Fix (Lauf #20, ausgelieferte JAR, Servertest 7) |
 |---|---|---|
-| Speer-Stich durch zwei Ziele | zweites Ziel ≈ 20 % | beide gleich |
-| Speer-Stich ohne Ziel | Abklingzeit bleibt | Abklingzeit 0 |
-| Schwertschlag | Schaden, Abklingzeit 0, 1 Event | unverändert |
-| Swap Schwert → Speer ohne Ausrüstungs-Update | zweites Ziel ≈ 20 % | beide gleich |
-| Swap mit Papers Ausrüstungs-Update | beide schwach (U2) | beide schwach (U2) |
+| Eisenspeer-Stich durch zwei Ziele | zweites Ziel ≈ 20 % | 3,000 / 3,000 (Verhältnis 1,00), Abklingzeit danach 0 |
+| Speer-Stich ohne Ziel | Abklingzeit bleibt | 100 → 0 (zurückgesetzt) |
+| Eisenschwert-Schlag | Schaden, Abklingzeit 0, 1 Event | 6,000, 100 → 0, 1 Event |
+| Swap Eisenschwert → Eisenspeer ohne Ausrüstungs-Update | zweites Ziel ≈ 20 % | 6,000 / 6,000 (Schwert-Angriffsschaden, wie Vanilla) |
+| Swap mit Papers Ausrüstungs-Update | beide schwach (U2) | 0,602 / 0,602 (U2, unverändert) |
+
+Die Messung **ohne** Fix und der Live-Patch stehen im CI-Job `spear-hotswap` (siehe
+[`TESTING.md`](TESTING.md)).
 
 **CI-Job `spear-hotswap`** (1.21.11): baut den Server **ohne** Fix, misst (Fehler
 reproduziert), baut den Fix mit `createLivePatch` aus den korrigierten Quellen gegen die

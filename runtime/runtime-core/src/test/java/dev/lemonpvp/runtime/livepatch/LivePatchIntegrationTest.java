@@ -522,6 +522,23 @@ class LivePatchIntegrationTest {
     }
 
     @Test
+    void readBackOfAClassWithAConstantInstanceFieldIsVerified() throws Exception {
+        // javac writes ConstantValue for final instance fields too; the JVM drops it (seen with Player.defaultFlySpeed).
+        String v1 = "package lpm;\npublic class Fly {\n    public final float defaultFlySpeed = 0.05F;\n"
+                + "    public static String text() { return \"v1\"; }\n}\n";
+        Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("lpm.Fly", v1));
+        Path next = jar(this.dir.resolve("v2"), "classes.jar", Map.of("lpm.Fly", v1.replace("\"v1\"", "\"v2\"")));
+        try (RuntimeFixture f = fixture(this.dir, server)) {
+            Class<?> fly = Class.forName("lpm.Fly", true, f.platform.serverClassLoader());
+            tool(server, next, inbox(f), "fly");
+            LivePatchService.Result r = applyConfirmed(f.runtime.livePatches(), "fly");
+            assertEquals(Kind.APPLIED, r.kind(), r.message() + " " + r.details());
+            assertEquals("v2", call(fly, "text"));
+            assertEquals(AppliedBytecodeCheck.Outcome.VERIFIED, r.verification().outcome(), r.details().toString());
+        }
+    }
+
+    @Test
     void readBackWithoutRetransformSupportIsReportedAsNotVerifiedNeverAsVerified() throws Exception {
         var inst = InstrumentationAccess.find().instrumentation().orElseThrow();
         Instrumentation noRetransform = (Instrumentation) java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(),

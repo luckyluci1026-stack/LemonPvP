@@ -91,6 +91,14 @@ class ClassDiffTest {
     }
 
     @Test
+    void constantValuesCountOnlyForStaticFields() throws Exception {
+        String base = "package cd;\npublic class Subject { public final float speed = 0.05F; public static final int LIMIT = 3; }\n";
+        assertEquals(List.of(), kinds(base, base.replace("0.05F", "0.1F").replace("speed = 0.1F", "speed = 0.1F")).stream()
+                .filter(k -> k == ChangeKind.FIELD_CONSTANT_VALUE).toList(), "instance field constants are ignored by the JVM");
+        assertTrue(kinds(base, base.replace("LIMIT = 3", "LIMIT = 4")).contains(ChangeKind.FIELD_CONSTANT_VALUE));
+    }
+
+    @Test
     void codeListingResolvesConstantsAndNumbersJumpTargets() throws Exception {
         Path jar = ModuleJarBuilder.create().noDescriptor().source("cd.Subject", """
                 package cd;
