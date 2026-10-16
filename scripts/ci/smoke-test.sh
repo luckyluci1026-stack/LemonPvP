@@ -13,7 +13,8 @@
 #                 asserts that it does NOT match; "@count <n> <regex>" asserts
 #                 exactly n matching lines; "@sleep <seconds>" pauses;
 #                 "@shell <command>" runs a shell command in the work directory
-#                 (a non-zero exit counts as a failed assertion; the test goes on).
+#                 (a non-zero exit counts as a failed assertion; the test goes on;
+#                 $SERVER_PID is the server's process id, e.g. for jcmd).
 #
 # Exit code is non-zero if the server does not start within STARTUP_TIMEOUT
 # seconds, does not stop within STOP_TIMEOUT seconds, or an assertion fails.
@@ -80,7 +81,7 @@ if [ -n "$COMMANDS" ]; then
       '@reject '*) REJECT+=("${line#@reject }") ;;
       '@count '*) COUNT+=("${line#@count }") ;;
       '@sleep '*) sleep "${line#@sleep }" ;;
-      '@shell '*) echo "$ ${line#@shell }"; bash -c "${line#@shell }" || SHELL_FAILED+=("${line#@shell }") ;;
+      '@shell '*) echo "$ ${line#@shell }"; SERVER_PID="$PID" bash -c "${line#@shell }" || SHELL_FAILED+=("${line#@shell }") ;;
       *) echo "> $line"; send "$line"; sleep 1 ;;
     esac
   done < "$COMMANDS"

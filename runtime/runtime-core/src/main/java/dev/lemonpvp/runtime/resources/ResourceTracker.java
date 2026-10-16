@@ -3,11 +3,9 @@ package dev.lemonpvp.runtime.resources;
 import dev.lemonpvp.runtime.api.ResourceScope;
 import dev.lemonpvp.runtime.api.TrackedResource;
 import dev.lemonpvp.runtime.security.PathGuard;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,7 +16,9 @@ import java.util.Objects;
  * <p>Resources are released in reverse registration order (LIFO), so a resource that
  * depends on an earlier one is released first. Failures during release are collected
  * rather than aborting the cleanup, so one broken resource cannot prevent the others from
- * being released. Thread-safe.</p>
+ * being released. Releasing a single resource early is O(1), so modules that register and
+ * release many resources (listeners, one-shot tasks) do not slow down over time.
+ * Thread-safe.</p>
  */
 public final class ResourceTracker implements ResourceScope {
 
@@ -26,7 +26,8 @@ public final class ResourceTracker implements ResourceScope {
     public static final String CATEGORY_CUSTOM = "custom";
 
     private final String owner;
-    private final Deque<Entry> entries = new ArrayDeque<>();
+    /** Live entries in registration order (identity semantics: Entry does not override equals). */
+    private final LinkedHashSet<Entry> entries = new LinkedHashSet<>();
     private boolean closed;
 
     /** @param owner module id used in messages */
@@ -66,7 +67,7 @@ public final class ResourceTracker implements ResourceScope {
         Entry entry = new Entry(category, PathGuard.sanitize(description), cleanup);
         synchronized (this) {
             if (!this.closed) {
-                this.entries.push(entry);
+                this.entries.add(entry);
                 return entry;
             }
         }
@@ -98,7 +99,7 @@ public final class ResourceTracker implements ResourceScope {
     /** @return descriptions of live resources, most recent first */
     public synchronized List<String> describe() {
         List<String> out = new ArrayList<>();
-        for (Entry e : this.entries) {
+        for (Entry e : this.entries.reversed()) {
             out.add(e.category + ": " + e.description);
         }
         return out;
@@ -113,7 +114,7 @@ public final class ResourceTracker implements ResourceScope {
         List<Entry> toRelease;
         synchronized (this) {
             this.closed = true;
-            toRelease = new ArrayList<>(this.entries);
+            toRelease = new ArrayList<>(this.entries.reversed());
             this.entries.clear();
         }
         List<String> problems = new ArrayList<>();
@@ -127,13 +128,7 @@ public final class ResourceTracker implements ResourceScope {
     }
 
     private synchronized void remove(Entry entry) {
-        Iterator<Entry> it = this.entries.iterator();
-        while (it.hasNext()) {
-            if (it.next() == entry) {
-                it.remove();
-                return;
-            }
-        }
+        this.entries.remove(entry);
     }
 
     private final class Entry implements TrackedResource {

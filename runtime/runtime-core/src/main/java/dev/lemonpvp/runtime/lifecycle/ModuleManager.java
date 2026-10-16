@@ -330,10 +330,24 @@ public final class ModuleManager {
                 if (!dependents.isEmpty()) {
                     throw new LifecycleException("cannot unload '" + id + "': loaded modules depend on it: " + dependents);
                 }
+                boolean disabledNow = false;
                 if (inst.state() == ModuleState.ENABLED) {
                     details.addAll(this.lifecycle.disable(inst));
+                    disabledNow = true;
                 }
-                details.addAll(this.lifecycle.unload(inst));
+                try {
+                    details.addAll(this.lifecycle.unload(inst));
+                } catch (LifecycleException e) {
+                    if (!disabledNow) {
+                        throw e;
+                    }
+                    // The disable already happened: say so, and do not re-activate the module after a restart.
+                    persist(actor, inst, false, details);
+                    List<String> all = new ArrayList<>(e.details());
+                    all.addAll(details);
+                    all.add("the module was disabled but is still loaded; unload it again once the work has finished");
+                    throw new LifecycleException(e.getMessage(), all);
+                }
                 this.instances.remove(id, inst);
                 return inst;
             }).thenCompose(inst -> deleteStaged(inst.stagedJar()).thenCompose(v -> persist(actor, inst, false, details))
@@ -460,7 +474,8 @@ public final class ModuleManager {
                     }
                     details.addAll(outcome.details());
                     if (!outcome.success()) {
-                        throw new LifecycleException(outcome.message(), List.of());
+                        // Keep the reasons (e.g. "new version: ... onEnable threw ...") in the result.
+                        throw new LifecycleException(outcome.message(), List.copyOf(details));
                     }
                     if (!old.stagedJar().equals(next.stagedJar())) {
                         deleteStaged(old.stagedJar());

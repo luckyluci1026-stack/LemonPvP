@@ -5,6 +5,10 @@ package dev.lemonpvp.runtime.api.paper;
  * module is disabled. Asynchronous tasks that are already running cannot be stopped; the
  * runtime refuses to unload the module until they have returned. Asynchronous tasks must
  * not touch the world; use {@link #run(Runnable)} to get back onto the main thread.
+ *
+ * <p>Handles of one-shot tasks ({@link #run}, {@link #runLater}, {@link #runAsync}) are
+ * released automatically once the task has run ({@link ModuleTask#isReleased()} becomes
+ * {@code true}); timers stay tracked until they are closed or the module is disabled.</p>
  */
 public interface ModuleScheduler {
 

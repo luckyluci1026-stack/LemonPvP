@@ -53,6 +53,30 @@ public final class TestModules {
                 """.formatted(pkg, tag);
     }
 
+    /** A module whose onLoad throws while its config.yml says {@code fail-on-load: true}. */
+    public static String failingLoadOnConfig(String pkg, String tag) {
+        return """
+                package %1$s;
+
+                import dev.lemonpvp.runtime.api.*;
+                import testplatform.Probe;
+
+                public class Main implements RuntimeModule {
+                    @Override
+                    public void onLoad(ModuleContext ctx) {
+                        if (ctx.config().getBoolean("fail-on-load", false)) {
+                            throw new IllegalStateException("fail-on-load from %2$s");
+                        }
+                    }
+
+                    @Override
+                    public void onEnable(ModuleContext ctx) {
+                        Probe.record("%2$s:enable");
+                    }
+                }
+                """.formatted(pkg, tag);
+    }
+
     /** A module whose onEnable registers resources and then throws. */
     public static String failingEnable(String pkg, String tag) {
         return """

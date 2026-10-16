@@ -17,4 +17,6 @@ if (providers.gradleProperty("paperApiVersion").isPresent) {
     include("example-module")
     include("example-plugin")
     include("combat-probe")
+    // Test modules that push the module runtime to its limits (docs/TEST-MODULES.md).
+    include("test-modules:stress", "test-modules:chaos", "test-modules:library", "test-modules:consumer")
 }

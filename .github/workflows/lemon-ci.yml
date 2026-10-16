@@ -96,8 +96,8 @@ jobs:
         if: always()
         run: python3 ../scripts/ci/junit-summary.py .
 
-  # Compiles the Paper adapter, the example module and the test plugin against the public
-  # Paper API of each version and packages them for the server tests.
+  # Compiles the Paper adapter, the example module, the test modules and the test plugin
+  # against the public Paper API of each version and packages them for the server tests.
   paper-modules:
     name: Paper adapter + example module ${{ matrix.mc }}
     runs-on: ubuntu-latest
@@ -128,10 +128,10 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
       - uses: gradle/actions/setup-gradle@v4
-      - name: Compile adapter, build example module and test plugin
+      - name: Compile adapter, build example module, test modules and test plugin
         run: >
-          ./gradlew :runtime-paper:compileJava :example-module:assemble :example-plugin:jar --console=plain
-          -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
+          ./gradlew :runtime-paper:compileJava :example-module:assemble :test-modules:collect :example-plugin:jar
+          --console=plain -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
       - name: Show resolved Paper API version
         run: ./gradlew :runtime-paper:dependencies --configuration compileClasspath -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }} --console=plain | grep -m1 "paper-api" || true
       - uses: actions/upload-artifact@v4
@@ -140,6 +140,12 @@ jobs:
           path: |
             runtime/example-module/build/libs/example-greeter.jar
             runtime/example-module/build/libs/example-greeter.jar.sha256
+          if-no-files-found: error
+      # Stress, chaos, library and consumer modules (+ .sha256, variants/2.0.0/), docs/TEST-MODULES.md.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-modules-${{ matrix.mc }}
+          path: runtime/test-modules/build/modules/
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
@@ -258,6 +264,20 @@ jobs:
           ../../scripts/ci/prepare-runtime-server.sh "$RUNNER_TEMP/persist" "$RUNNER_TEMP/example-module"
           ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/persist" ../../scripts/ci/smoke-persist-1.txt
           ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/persist" ../../scripts/ci/smoke-persist-2.txt
+      - name: Download test modules
+        id: testmodules
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: test-modules-${{ matrix.mc }}
+          path: ${{ runner.temp }}/test-modules
+      - name: Require test modules
+        if: steps.testmodules.outcome != 'success'
+        run: echo "::error::test modules for ${{ matrix.mc }} are missing (paper-modules job failed)" && exit 1
+      - name: "Server test 8: test modules (integrity, dependencies, stress, hot-swap churn, faults, leaks)"
+        run: |
+          ../../scripts/ci/prepare-test-modules-server.sh "$RUNNER_TEMP/testmodules" "$RUNNER_TEMP/test-modules"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/testmodules" ../../scripts/ci/smoke-test-modules.txt
       - name: Download live-patch agent
         id: agent
         continue-on-error: true

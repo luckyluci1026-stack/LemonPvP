@@ -106,6 +106,7 @@ und was einen Neustart braucht: [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md).
 | Speer/Attribut-Swap 1.21.11: Analyse, Ursache, Fix, Live-Patch-Test | [`docs/SPEAR-COOLDOWN.md`](docs/SPEAR-COOLDOWN.md) |
 | Hot-Deployment: Architektur, Abläufe, Konfiguration, Befehle | [`docs/HOT-DEPLOYMENT.md`](docs/HOT-DEPLOYMENT.md) |
 | Modulformat und Modulentwicklung | [`docs/MODULE-FORMAT.md`](docs/MODULE-FORMAT.md) |
+| **Testmodule** (Stress, Fehler, Abhängigkeiten, Leaks) zum Ausprobieren | [`docs/TEST-MODULES.md`](docs/TEST-MODULES.md) |
 | Capability-Matrix / Neustartanforderungen | [`docs/RESTART-REQUIREMENTS.md`](docs/RESTART-REQUIREMENTS.md) |
 | Sicherheit | [`docs/SECURITY.md`](docs/SECURITY.md) |
 | Kompatibilität (Proxy, ViaVersion, Geyser …) | [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) |

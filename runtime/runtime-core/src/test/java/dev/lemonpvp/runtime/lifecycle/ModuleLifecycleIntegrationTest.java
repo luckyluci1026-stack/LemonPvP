@@ -243,6 +243,32 @@ class ModuleLifecycleIntegrationTest {
     }
 
     @Test
+    void failedLoadDuringAReloadOfTheSameJarKeepsTheRunningVersionsStagedCopy() throws Exception {
+        try (RuntimeFixture f = RuntimeFixture.start(this.dir)) {
+            ModuleJarBuilder.create().descriptor("loadfail", "1.0.0", "mod.loadfail.Main")
+                    .source("mod.loadfail.Main", TestModules.failingLoadOnConfig("mod.loadfail", "lf"))
+                    .writeTo(f.modules, "loadfail.jar");
+            assertTrue(f.await(f.runtime.modules().enable(A, "loadfail")).success());
+            List<Path> staged;
+            try (var files = Files.list(f.runtime.paths().staging())) {
+                staged = files.filter(p -> p.getFileName().toString().endsWith(".jar")).toList();
+            }
+            assertEquals(1, staged.size(), staged.toString());
+
+            // Same jar, so the new instance is staged at the same path as the running one.
+            Files.writeString(f.runtime.paths().moduleData("loadfail").resolve("config.yml"), "fail-on-load: true\n");
+            OperationResult r = f.await(f.runtime.modules().reload(A, "loadfail"));
+            assertFalse(r.success());
+            assertTrue(r.message().contains("loading failed"), r.message());
+            assertEquals(ModuleState.ENABLED, state(f, "loadfail"), "the running version is untouched");
+            assertTrue(Files.exists(staged.getFirst()), "the staged jar of the running version must not be deleted");
+
+            assertTrue(f.await(f.runtime.modules().unload(A, "loadfail")).success());
+            assertFalse(Files.exists(staged.getFirst()), "deleted once no instance uses it");
+        }
+    }
+
+    @Test
     void hotSwapRollsBackWhenTheNewVersionFailsAndSwitchesWhenItWorks() throws Exception {
         try (RuntimeFixture f = RuntimeFixture.start(this.dir)) {
             basic(f.modules, "swap", "1.0.0", "v1");
@@ -253,6 +279,8 @@ class ModuleLifecycleIntegrationTest {
             OperationResult failed = f.await(f.runtime.modules().reload(A, "swap"));
             assertFalse(failed.success());
             assertTrue(failed.message().contains("rolled back to swap@1.0.0"), failed.message());
+            assertTrue(failed.details().stream().anyMatch(d -> d.contains("boom from v2")),
+                    "the administrator sees why the new version failed: " + failed.details());
             assertEquals(ModuleState.ENABLED, state(f, "swap"));
             assertEquals("1.0.0", f.runtime.modules().descriptor("swap").orElseThrow().version());
             assertEquals(1, f.platform.listeners.size(), "old version re-registered exactly once");
@@ -308,6 +336,42 @@ class ModuleLifecycleIntegrationTest {
             OperationResult blocked = f.await(f.runtime.modules().unload(A, "worker"));
             assertFalse(blocked.success());
             assertTrue(blocked.message().contains("running asynchronous work"), blocked.message());
+
+            Gate.open();
+            for (int i = 0; i < 50 && !f.runtime.modules().diagnostics("worker").orElseThrow().runningAsyncWork().isEmpty(); i++) {
+                Thread.sleep(100);
+            }
+            assertTrue(f.await(f.runtime.modules().unload(A, "worker")).success());
+        }
+    }
+
+    @Test
+    void refusedUnloadOfAnEnabledModuleSaysItWasDisabledAndPersistsThat() throws Exception {
+        try (RuntimeFixture f = RuntimeFixture.start(this.dir)) {
+            ModuleJarBuilder.create().descriptor("worker", "1.0.0", "mod.worker.Main")
+                    .source("mod.worker.Main", """
+                            package mod.worker;
+                            public class Main implements dev.lemonpvp.runtime.api.RuntimeModule {
+                                public void onEnable(dev.lemonpvp.runtime.api.ModuleContext c) {
+                                    c.platform(testplatform.FakeServerApi.class).scheduleAsync(testplatform.Gate::await);
+                                }
+                            }
+                            """).writeTo(f.modules, "worker.jar");
+            assertTrue(f.await(f.runtime.modules().enable(A, "worker")).success());
+            assertTrue(Gate.awaitEntered(), "the async task started");
+            assertTrue(Files.readString(f.runtime.paths().stateFile()).contains("module.worker.sha256"));
+
+            OperationResult blocked = f.await(f.runtime.modules().unload(A, "worker"));
+            assertFalse(blocked.success());
+            assertTrue(blocked.message().contains("running asynchronous work"), blocked.message());
+            assertTrue(blocked.details().stream().anyMatch(d -> d.contains("still running")), blocked.toString());
+            assertTrue(blocked.details().stream().anyMatch(d -> d.contains("was disabled")), blocked.toString());
+            assertEquals(ModuleState.DISABLED, state(f, "worker"));
+            for (int i = 0; i < 50 && Files.readString(f.runtime.paths().stateFile()).contains("module.worker.sha256"); i++) {
+                Thread.sleep(100);
+            }
+            assertFalse(Files.readString(f.runtime.paths().stateFile()).contains("module.worker.sha256"),
+                    "a restart must not re-activate a module the administrator tried to unload");
 
             Gate.open();
             for (int i = 0; i < 50 && !f.runtime.modules().diagnostics("worker").orElseThrow().runningAsyncWork().isEmpty(); i++) {
