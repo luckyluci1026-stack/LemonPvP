@@ -72,6 +72,19 @@ for raw in request.read_text().splitlines():
                     shown += 1
                     print(f"--- {f.relative_to(root)}:{i + 1}")
                     show(f, i - 12, i + 13)
+    elif kind == "grepn":
+        n, _, rest2 = rest.partition(" ")
+        regex, _, rel = rest2.rpartition(" ")
+        target = root / rel
+        print(f"=== grepn {n} {regex} in {rel}")
+        files = [target] if target.is_file() else sorted(target.rglob("*.java")) if target.is_dir() else []
+        pattern = re.compile(regex)
+        for f in files:
+            lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
+            for i, l in enumerate(lines):
+                if pattern.search(l):
+                    print(f"--- {f.relative_to(root)}:{i + 1}")
+                    show(f, i - int(n), i + int(n) + 1)
     elif kind == "list":
         regex, _, rel = rest.rpartition(" ")
         target = root / rel

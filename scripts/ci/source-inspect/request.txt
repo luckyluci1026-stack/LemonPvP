@@ -3,22 +3,15 @@
 #   version <mc>            versions to patch (versions/<mc>)
 #   file <path>             print a whole file (path relative to versions/<mc>)
 #   grep <regex> <path>     print matching lines with 12 lines of context (path: file or directory)
+#   grepn <n> <regex> <path> same with n lines of context
 #   list <regex> <path>     print matching lines only (path: file or directory)
 #   method <name> <path>    print the method body starting at the first line declaring <name>(
 version 1.21.11
 version 26.3
-file lemon-server/src/minecraft/java/net/minecraft/world/item/component/PiercingWeapon.java
-file lemon-server/src/minecraft/java/net/minecraft/world/item/component/KineticWeapon.java
-list public void handle lemon-server/src/minecraft/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-list Piercing|PIERCING|Kinetic|KINETIC|stab|Stab|STAB|Spear|SPEAR lemon-server/src/minecraft/java/net/minecraft/network/protocol
-list Piercing|PIERCING|Kinetic|KINETIC|stabAttack|detectEquipmentUpdates\(|lastItemInMainHand|resetAttackStrengthTicker\(|attackStrengthTicker lemon-server/src/minecraft/java/net/minecraft
-method handleInteract lemon-server/src/minecraft/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-method handleSetCarriedItem lemon-server/src/minecraft/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-method stabAttack lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
-method attack lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
-method tick lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
-method getAttackStrengthScale lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
-method detectEquipmentUpdates lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
-method detectEquipmentUpdates lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java
-method collectEquipmentChanges lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java
-method handleEquipmentChanges lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java
+method handlePlayerAction lemon-server/src/minecraft/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+grepn 40 PIERCING_WEAPON|resetAttackStrengthTicker lemon-server/src/minecraft/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+list public void handle.*Attack|ServerboundAttack|STAB lemon-server/src/minecraft/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+grepn 6 void onAttack\(|void swingAndResetAttackStrength|float baseDamageScaleFactor|void resetOnlyAttackStrengthTicker|void postPiercingAttack|boolean cannotAttackWithItem lemon-server/src/minecraft/java/net/minecraft/world/entity
+grepn 18 PlayerAttackEntityCooldownResetEvent lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java
+grepn 14 this.detectEquipmentUpdates\(\);|collectEquipmentChanges\(|void handleHandSwap lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java
+grepn 10 STAB|stab\( lemon-server/src/minecraft/java/net/minecraft/network/protocol/game/ServerboundPlayerActionPacket.java
