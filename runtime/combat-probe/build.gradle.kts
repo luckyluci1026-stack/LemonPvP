@@ -11,6 +11,11 @@ dependencies {
 
 tasks.jar {
     archiveFileName = "CombatProbe.jar"
+    // The probe uses Mojang names via reflection; without this Paper 1.21.11 treats the jar as
+    // Spigot-mapped and remaps it on load.
+    manifest {
+        attributes("paperweight-mappings-namespace" to "mojang")
+    }
 }
 
 tasks.compileJava {

@@ -9,4 +9,4 @@ commands:
     permission: combatprobe.run
 permissions:
   combatprobe.run:
-    default: false
+    default: op
