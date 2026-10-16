@@ -1,0 +1,24 @@
+# Source inspection request (read by .github/workflows/source-inspect.yml).
+# Pushing a change to this file runs the inspection; the full CI is not started for it.
+#   version <mc>            versions to patch (versions/<mc>)
+#   file <path>             print a whole file (path relative to versions/<mc>)
+#   grep <regex> <path>     print matching lines with 12 lines of context (path: file or directory)
+#   list <regex> <path>     print matching lines only (path: file or directory)
+#   method <name> <path>    print the method body starting at the first line declaring <name>(
+version 1.21.11
+version 26.3
+file lemon-server/src/minecraft/java/net/minecraft/world/item/component/PiercingWeapon.java
+file lemon-server/src/minecraft/java/net/minecraft/world/item/component/KineticWeapon.java
+list public void handle lemon-server/src/minecraft/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+list Piercing|PIERCING|Kinetic|KINETIC|stab|Stab|STAB|Spear|SPEAR lemon-server/src/minecraft/java/net/minecraft/network/protocol
+list Piercing|PIERCING|Kinetic|KINETIC|stabAttack|detectEquipmentUpdates\(|lastItemInMainHand|resetAttackStrengthTicker\(|attackStrengthTicker lemon-server/src/minecraft/java/net/minecraft
+method handleInteract lemon-server/src/minecraft/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+method handleSetCarriedItem lemon-server/src/minecraft/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
+method stabAttack lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
+method attack lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
+method tick lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
+method getAttackStrengthScale lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
+method detectEquipmentUpdates lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
+method detectEquipmentUpdates lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java
+method collectEquipmentChanges lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java
+method handleEquipmentChanges lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java

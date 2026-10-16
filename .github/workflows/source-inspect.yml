@@ -1,0 +1,45 @@
+name: Source inspection
+
+# Prints selected (patched) Paper/Minecraft source excerpts into the job log, for analysing
+# bugs without a local Minecraft/Paper source tree. The request is a committed file.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/ci/source-inspect/**'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read requested versions
+        id: req
+        run: echo "versions=$(grep '^version ' scripts/ci/source-inspect/request.txt | cut -d' ' -f2 | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Configure Git user
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global gc.auto 0
+          git config --global maintenance.auto false
+      - name: Apply patches and print the requested sources
+        run: |
+          for mc in ${{ steps.req.outputs.versions }}; do
+            echo "################ $mc"
+            if [ "$mc" = "1.21.11" ]; then export JAVA_HOME="$JAVA_HOME_21_X64"; else export JAVA_HOME="$JAVA_HOME_25_X64"; fi
+            (cd "versions/$mc" && ./gradlew applyAllPatches --console=plain -q)
+            python3 scripts/ci/source-inspect/inspect.py scripts/ci/source-inspect/request.txt "versions/$mc"
+          done

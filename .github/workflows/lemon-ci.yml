@@ -5,6 +5,8 @@ on:
     paths-ignore:
       - 'index.html'
       - 'index.zip'
+      - 'scripts/ci/source-inspect/**'
+      - '.github/workflows/source-inspect.yml'
   pull_request:
   workflow_dispatch:
 
