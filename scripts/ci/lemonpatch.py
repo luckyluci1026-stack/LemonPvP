@@ -8,6 +8,10 @@
       Diagnostic: compares the server jar embedded in a paperclip jar with the baseline jar
       (build manifest and the digest of one class). Always exits 0.
 
+  lemonpatch.py compare-jars <a.jar> <b.jar>
+      Diagnostic: counts identical / different / missing class files between two jars and
+      lists some of the differing ones. Always exits 0.
+
   lemonpatch.py variant <patch> <out-dir> --id <new-id> [options]
       Writes <out-dir>/<new-id>.lemonpatch (+ .sha256) derived from <patch>, to test that the
       server rejects bad patches. Options:
@@ -195,9 +199,32 @@ def compare_base(paperclip: str, baseline: str, class_name: str):
     print(f"baseline jar sha256 {sha256(open(baseline, 'rb').read())}")
 
 
+def compare_jars(a: str, b: str):
+    with zipfile.ZipFile(a) as za, zipfile.ZipFile(b) as zb:
+        print(f"A {a}: build {build_attributes(za)}")
+        print(f"B {b}: build {build_attributes(zb)}")
+        ca = {n: sha256(za.read(n)) for n in za.namelist() if n.endswith(".class")}
+        cb = {n: sha256(zb.read(n)) for n in zb.namelist() if n.endswith(".class")}
+    same = [n for n in ca if cb.get(n) == ca[n]]
+    diff = sorted(n for n in ca if n in cb and cb[n] != ca[n])
+    print(f"classes: A {len(ca)}, B {len(cb)}, identical {len(same)}, different {len(diff)}, "
+          f"only in A {len(set(ca) - set(cb))}, only in B {len(set(cb) - set(ca))}")
+    for n in diff[:15]:
+        print(f"  different: {n}")
+    by_package = {}
+    for n in diff:
+        pkg = n.rsplit("/", 1)[0] if "/" in n else ""
+        by_package[pkg] = by_package.get(pkg, 0) + 1
+    for pkg, count in sorted(by_package.items(), key=lambda kv: -kv[1])[:10]:
+        print(f"  different in {pkg}: {count}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
+    cj = sub.add_parser("compare-jars")
+    cj.add_argument("a")
+    cj.add_argument("b")
     cmp_ = sub.add_parser("compare-base")
     cmp_.add_argument("paperclip")
     cmp_.add_argument("baseline")
@@ -217,6 +244,9 @@ def main():
     var.add_argument("--bad-sidecar", action="store_true")
     args = parser.parse_args()
 
+    if args.cmd == "compare-jars":
+        compare_jars(args.a, args.b)
+        return
     if args.cmd == "compare-base":
         compare_base(args.paperclip, args.baseline, args.class_name)
         return

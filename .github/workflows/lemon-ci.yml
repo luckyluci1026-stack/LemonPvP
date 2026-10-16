@@ -252,12 +252,25 @@ jobs:
       # Core live patches built the way a developer builds them: baseline = the jar that was just
       # packaged into the paperclip jar, then a changed Paper source file, then createLivePatch.
       - name: Build core live patches from changed Paper sources
+        id: patches
         run: |
           set -euo pipefail
           ./gradlew :lemon-server:livePatchBaseline --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
           # Diagnostic: is the baseline the server jar that the paperclip jar runs?
           python3 ../../scripts/ci/lemonpatch.py compare-base "../../dist/${{ steps.jar.outputs.name }}" \
             lemon-server/build/livepatch/baseline/baseline.jar org.spigotmc.TicksPerSecondCommand
+          # Diagnostic: the server jar paperclip actually created on disk in server test 1.
+          srv=$(find "$RUNNER_TEMP/disabled/versions" -name '*.jar' | head -n 1 || true)
+          if [ -n "$srv" ]; then
+            echo "server jar created by paperclip: $srv"
+            python3 ../../scripts/ci/lemonpatch.py compare-jars "$srv" lemon-server/build/livepatch/baseline/baseline.jar
+            base="$PWD/lemon-server/build/livepatch/baseline/baseline.jar"
+            for side in running:"$srv" baseline:"$base"; do
+              d="$RUNNER_TEMP/tpsdiff/${side%%:*}"; mkdir -p "$d"
+              (cd "$d" && unzip -q -o "${side#*:}" org/spigotmc/TicksPerSecondCommand.class && javap -c -p -v org/spigotmc/TicksPerSecondCommand.class > tps.txt) || true
+            done
+            diff "$RUNNER_TEMP/tpsdiff/running/tps.txt" "$RUNNER_TEMP/tpsdiff/baseline/tps.txt" | head -n 60 || true
+          fi
           src=paper-server/src/main/java/org/spigotmc/TicksPerSecondCommand.java
           cp "$src" "$RUNNER_TEMP/TicksPerSecondCommand.java.orig"
           python3 ../../scripts/ci/edit-tps-source.py "$src" text
@@ -286,27 +299,31 @@ jobs:
           ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch" "$RUNNER_TEMP/patches" lemon-server/build/livepatch/baseline/baseline.jar
           EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/lemon-livepatch-agent.jar" \
             ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/livepatch" ../../scripts/ci/smoke-livepatch.txt
+      # Tests 5 and 6 run even if test 4 failed, so one failure does not hide the others.
       - name: Download test plugin
         id: plugin
+        if: ${{ !cancelled() && steps.jar.outputs.name != '' }}
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: example-plugin-${{ matrix.mc }}
           path: ${{ runner.temp }}/example-plugin
       - name: Require test plugin
-        if: steps.plugin.outcome != 'success'
+        if: ${{ !cancelled() && steps.jar.outputs.name != '' && steps.plugin.outcome != 'success' }}
         run: echo "::error::test plugin for ${{ matrix.mc }} is missing (paper-modules job failed)" && exit 1
       - name: "Server test 5: live plugin updates"
+        if: ${{ !cancelled() && steps.plugin.outcome == 'success' }}
         run: |
           ../../scripts/ci/prepare-plugin-server.sh "$RUNNER_TEMP/plugins" "$RUNNER_TEMP/example-plugin"
           ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/plugins" ../../scripts/ci/smoke-plugins.txt
       - name: Download JetBrains Runtime ${{ matrix.java }}
         id: jbr
+        if: ${{ !cancelled() && steps.patches.outcome == 'success' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 ../../scripts/ci/fetch-jbr.py ${{ matrix.java }} "$RUNNER_TEMP/jbr"
       - name: "Server test 6: structural core patch on JetBrains Runtime"
-        if: steps.jbr.outputs.java != ''
+        if: ${{ !cancelled() && steps.patches.outcome == 'success' && steps.jbr.outputs.java != '' }}
         run: |
           ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch-jbr" "$RUNNER_TEMP/patches" lemon-server/build/livepatch/baseline/baseline.jar
           JAVA_BIN="${{ steps.jbr.outputs.java }}" \
