@@ -15,7 +15,7 @@ Stand: 2026-10-13. Quellen und Herleitung: [`ANALYSIS.md`](ANALYSIS.md), Abschni
 | Adventure im Server | 4.26.1 | 4.26.1 | 5.2.0 | 5.2.0 |
 | Status | **unterstützt** | **unterstützt** | **unterstützt** | **in Arbeit** (baut und läuft, aber Upstream ohne Release-Tag) |
 | Tests (CI-Lauf #8) | Paper-Suite 9436 Tests / 0 Fehler; Server-Tests 1–3 ✔ | Paper-Suite 9512 / 0; Server-Tests 1–3 ✔ | Paper-Suite 9764 / 0; Server-Tests 1–3 ✔ | Paper-Suite 10548 / 0; Server-Tests 1–3 ✔ |
-| Live-Updates (CI, Details `TESTING.md`) | Plugins ✔ (#12); Core-Patches: siehe `TESTING.md` | Core-Patches, Plugins, JBR ✔ (#11, #12) | Core-Patches, Plugins, JBR ✔ (#11, #12) | Core-Patches, Plugins, JBR ✔ (#11, #12) |
+| Live-Updates (CI, Details `TESTING.md`) | Core-Patches, Plugins, JBR 21 ✔ (#13) | Core-Patches, Plugins, JBR 25 ✔ (#11–#13) | Core-Patches, Plugins, JBR 25 ✔ (#11–#13) | Core-Patches, Plugins, JBR 25 ✔ (#11–#13) |
 | Von Paperclip geschriebene Server-JAR = Gradle-JAR? (CI-Lauf #12) | **nein** – 9962 von 10183 Klassen mit anderer Klassendatei-Anordnung, gleicher Inhalt (`-PserverJar` Pflicht) | ja, 10378/10378 Klassen identisch | ja, 10554/10554 | ja, 10928/10928 |
 | JVM-Optionen für Core-Patches | `-javaagent:lemon-livepatch-agent.jar`; strukturell: JBR 21 + `-XX:+AllowEnhancedClassRedefinition` | `-javaagent:…`; strukturell: JBR 25 + Flag | wie 26.1.2 | wie 26.1.2 |
 
