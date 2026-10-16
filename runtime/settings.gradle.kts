@@ -16,4 +16,5 @@ if (providers.gradleProperty("paperApiVersion").isPresent) {
     include("runtime-paper")
     include("example-module")
     include("example-plugin")
+    include("combat-probe")
 }

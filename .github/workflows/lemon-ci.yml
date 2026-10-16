@@ -143,6 +143,16 @@ jobs:
           name: example-plugin-${{ matrix.mc }}
           path: runtime/example-plugin/build/libs/LemonTestPlugin.jar
           if-no-files-found: error
+      # Test plugin for the spear cooldown fix (reflection on 1.21.11 server classes).
+      - name: Build combat probe (1.21.11)
+        if: matrix.mc == '1.21.11'
+        run: ./gradlew :combat-probe:jar --console=plain -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
+      - uses: actions/upload-artifact@v4
+        if: matrix.mc == '1.21.11'
+        with:
+          name: combat-probe-${{ matrix.mc }}
+          path: runtime/combat-probe/build/libs/CombatProbe.jar
+          if-no-files-found: error
 
   # One independent paperweight fork build per supported Minecraft version.
   # Each version uses the JDK and paperweight version of its Paper upstream branch.
@@ -197,6 +207,14 @@ jobs:
         run: ./gradlew tasks --all --console=plain | grep -iE 'patch|paperclip|bundler|rundev|fixup' || true
       - name: Apply patches
         run: set -o pipefail; ./gradlew applyAllPatches --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+      - name: Lemon Minecraft source patches applied (1.21.11 spear cooldown fix)
+        if: matrix.mc == '1.21.11'
+        run: |
+          grep -n "backport of Paper b80b604" lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java \
+            lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java
+          if grep -q "PlayerAttackEntityCooldownResetEvent" lemon-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java; then
+            echo "::error::LivingEntity still resets the attack cooldown during damage"; exit 1
+          fi
       - name: List server patch tasks
         run: ./gradlew :lemon-server:tasks --all --console=plain | grep -iE 'patch|paperclip|bundler|rundev|fixup' || true
       - name: Build and test (includes Paper's own test suite)
@@ -340,6 +358,21 @@ jobs:
           JAVA_BIN="${{ steps.jbr.outputs.java }}" \
           EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/lemon-livepatch-agent.jar -XX:+AllowEnhancedClassRedefinition" \
             ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/livepatch-jbr" ../../scripts/ci/smoke-livepatch-jbr.txt
+      - name: Download combat probe
+        id: probe
+        if: ${{ !cancelled() && matrix.mc == '1.21.11' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: combat-probe-${{ matrix.mc }}
+          path: ${{ runner.temp }}/combat-probe
+      - name: "Server test 7: spear cooldown in the shipped build (1.21.11)"
+        if: ${{ !cancelled() && matrix.mc == '1.21.11' }}
+        run: |
+          test -f "$RUNNER_TEMP/combat-probe/CombatProbe.jar" || { echo "::error::combat probe is missing (paper-modules job failed)"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/spear-shipped/plugins"
+          cp "$RUNNER_TEMP/combat-probe/CombatProbe.jar" "$RUNNER_TEMP/spear-shipped/plugins/"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/spear-shipped" ../../scripts/ci/smoke-spear-shipped.txt
       - name: Upload server logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -355,6 +388,7 @@ jobs:
             ${{ runner.temp }}/plugins/server.log
             ${{ runner.temp }}/plugins/lemon/logs/audit.log
             ${{ runner.temp }}/livepatch-jbr/server.log
+            ${{ runner.temp }}/spear-shipped/server.log
           if-no-files-found: ignore
       - name: Upload server jar
         uses: actions/upload-artifact@v4
@@ -372,3 +406,101 @@ jobs:
           name: test-reports-${{ matrix.mc }}
           path: versions/${{ matrix.mc }}/**/build/reports/
           if-no-files-found: ignore
+
+  # The spear cooldown fix (Paper b80b604 backported to 1.21.11) as a real core live patch:
+  # a server built WITHOUT the fix runs, CombatProbe reproduces the bug, the fix is built from
+  # the fixed sources with createLivePatch, applied live (Player + LivingEntity), measured,
+  # verified and rolled back. This server build is only used here; the shipped jar contains
+  # the fix (fork job, server test 7).
+  spear-hotswap:
+    name: Spear fix as live core patch (1.21.11)
+    needs: [runtime, paper-modules]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: versions/1.21.11
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Configure Git user
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global gc.auto 0
+          git config --global maintenance.auto false
+      - name: Build the server without the spear fix
+        run: |
+          set -euo pipefail
+          fix=lemon-server/minecraft-patches/sources/net/minecraft/world/entity
+          mkdir -p "$RUNNER_TEMP/spear-fix"
+          mv "$fix/LivingEntity.java.patch" "$fix/player/Player.java.patch" "$RUNNER_TEMP/spear-fix/"
+          ./gradlew applyAllPatches --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          if grep -q "backport of Paper b80b604" lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java; then
+            echo "::error::the fix is still applied"; exit 1
+          fi
+          ./gradlew createMojmapPaperclipJar --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          ./gradlew :lemon-server:livePatchBaseline --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          jar=$(find lemon-server/build/libs -maxdepth 1 -name '*paperclip*.jar' | head -n 1)
+          test -n "$jar"
+          cp "$jar" "$RUNNER_TEMP/before.jar"
+          # The server jar paperclip writes on disk is what runs (1.21.11 rewrites the class files).
+          mkdir -p "$RUNNER_TEMP/patchonly"
+          (cd "$RUNNER_TEMP/patchonly" && java -Dpaperclip.patchonly=true -jar "$RUNNER_TEMP/before.jar")
+          srv=$(find "$RUNNER_TEMP/patchonly/versions" -name '*.jar' | head -n 1)
+          test -n "$srv"
+          cp "$srv" "$RUNNER_TEMP/server-jar.jar"
+      - name: Build the spear fix as a live patch from the fixed sources
+        run: |
+          set -euo pipefail
+          fix=lemon-server/minecraft-patches/sources/net/minecraft/world/entity
+          mv "$RUNNER_TEMP/spear-fix/LivingEntity.java.patch" "$fix/"
+          mv "$RUNNER_TEMP/spear-fix/Player.java.patch" "$fix/player/"
+          ./gradlew applyAllPatches --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          grep -q "backport of Paper b80b604" lemon-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
+          ./gradlew :lemon-server:createLivePatch -PpatchId=spear-cooldown \
+            -PpatchDescription="1.21.11: attack cooldown reset as in vanilla (spear jabs; backport of Paper b80b604)" \
+            -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          ./gradlew :lemon-server:checkLivePatch -PpatchId=spear-cooldown -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee "$RUNNER_TEMP/check.log"
+          grep -F "APPLICABLE on a standard JVM" "$RUNNER_TEMP/check.log"
+          python3 ../../scripts/ci/lemonpatch.py show lemon-server/build/livepatch/spear-cooldown.lemonpatch \
+            --expect-classes net.minecraft.world.entity.LivingEntity,net.minecraft.world.entity.player.Player
+          mkdir -p "$RUNNER_TEMP/patches"
+          cp lemon-server/build/livepatch/spear-cooldown.lemonpatch lemon-server/build/livepatch/spear-cooldown.lemonpatch.sha256 "$RUNNER_TEMP/patches/"
+      - name: Download live-patch agent
+        uses: actions/download-artifact@v4
+        with:
+          name: livepatch-agent
+          path: ${{ runner.temp }}/agent
+      - name: Download combat probe
+        uses: actions/download-artifact@v4
+        with:
+          name: combat-probe-1.21.11
+          path: ${{ runner.temp }}/combat-probe
+      - name: "Reproduce, patch live, measure, verify, roll back"
+        run: |
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/spear" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
+          mkdir -p "$RUNNER_TEMP/spear/plugins"
+          cp "$RUNNER_TEMP/combat-probe/CombatProbe.jar" "$RUNNER_TEMP/spear/plugins/"
+          EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/lemon-livepatch-agent.jar" \
+            ../../scripts/ci/smoke-test.sh "$RUNNER_TEMP/before.jar" "$RUNNER_TEMP/spear" ../../scripts/ci/smoke-spear.txt
+      - name: Upload logs and patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spear-hotswap-1.21.11
+          path: |
+            ${{ runner.temp }}/spear/server.log
+            ${{ runner.temp }}/spear/lemon/logs/audit.log
+            ${{ runner.temp }}/patches/
+          if-no-files-found: ignore
+      - name: Summarize Gradle failure
+        if: failure()
+        run: grep -n -A25 -E "What went wrong|FAILED|error:" "$RUNNER_TEMP/gradle.log" | head -n 150 || true

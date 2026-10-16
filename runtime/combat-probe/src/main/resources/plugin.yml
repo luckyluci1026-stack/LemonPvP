@@ -1,0 +1,12 @@
+name: CombatProbe
+version: "1.0.0"
+main: dev.lemonpvp.test.combat.CombatProbe
+api-version: "1.21"
+description: Measures spear jabs, sword attacks and attribute swaps with a server-side test player (CI only)
+commands:
+  combatprobe:
+    description: Runs the combat measurements and prints the results
+    permission: combatprobe.run
+permissions:
+  combatprobe.run:
+    default: false
