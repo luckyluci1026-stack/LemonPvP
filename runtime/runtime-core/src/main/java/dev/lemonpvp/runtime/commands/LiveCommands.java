@@ -5,6 +5,7 @@ import dev.lemonpvp.runtime.descriptor.ModuleIds;
 import dev.lemonpvp.runtime.live.LiveHistory;
 import dev.lemonpvp.runtime.lifecycle.ModuleSummary;
 import dev.lemonpvp.runtime.lifecycle.OperationResult;
+import dev.lemonpvp.runtime.livepatch.AppliedBytecodeCheck;
 import dev.lemonpvp.runtime.livepatch.Capability;
 import dev.lemonpvp.runtime.livepatch.CapabilityProbe;
 import dev.lemonpvp.runtime.livepatch.ClassChange;
@@ -50,7 +51,7 @@ import java.util.function.Consumer;
  * /fork live check &lt;name&gt;
  * /fork live update &lt;name&gt; [confirm]
  * /fork live rollback &lt;name&gt; [confirm]
- * /fork live patch status | probe
+ * /fork live patch status | probe | verify &lt;id&gt;
  * </pre>
  *
  * <p>A name may carry a prefix ({@code plugin:}, {@code module:}, {@code patch:}); without
@@ -90,7 +91,7 @@ final class LiveCommands {
         }
         String sub = args[1].toLowerCase(Locale.ROOT);
         boolean changes = sub.equals("update") || sub.equals("rollback")
-                || (sub.equals("patch") && args.length >= 3 && args[2].equalsIgnoreCase("probe"));
+                || (sub.equals("patch") && args.length >= 3 && (args[2].equalsIgnoreCase("probe") || args[2].equalsIgnoreCase("verify")));
         String node = changes ? RuntimePermissions.LIVE_UPDATE : RuntimePermissions.LIVE_VIEW;
         if (!SUBCOMMANDS.contains(sub)) {
             usage(actor);
@@ -253,11 +254,16 @@ final class LiveCommands {
 
     private void patch(CommandActor a, String[] args) {
         String what = args.length >= 3 ? args[2].toLowerCase(Locale.ROOT) : "";
-        if (args.length != 3 || !(what.equals("status") || what.equals("probe"))) {
-            a.send(MessageLevel.ERROR, "Usage: /fork live patch status | probe");
+        LivePatchService service = this.runtime.livePatches();
+        if (what.equals("verify") && args.length == 4) {
+            a.send(MessageLevel.INFO, "Reading back the bytecode the JVM runs for patch " + PathGuard.sanitize(args[3]) + " ...");
+            reply(a, service.verify(a.name(), args[3]), r -> patchResult(a, r, "verify", args[3]));
             return;
         }
-        LivePatchService service = this.runtime.livePatches();
+        if (args.length != 3 || !(what.equals("status") || what.equals("probe"))) {
+            a.send(MessageLevel.ERROR, "Usage: /fork live patch status | probe | verify <id>");
+            return;
+        }
         if (what.equals("probe")) {
             a.send(MessageLevel.INFO, "Probing class redefinition with throw-away classes ...");
             reply(a, service.probe(), results -> {
@@ -515,7 +521,15 @@ final class LiveCommands {
                 a.send(MessageLevel.WARNING, "Run /fork live " + verb + " " + id + " confirm to change the running server.");
                 return;
             }
-            case APPLIED, ROLLED_BACK -> a.send(MessageLevel.SUCCESS, "OK " + r.message());
+            case APPLIED, ROLLED_BACK -> {
+                if (r.verification() == null || r.verification().outcome() == AppliedBytecodeCheck.Outcome.VERIFIED) {
+                    a.send(MessageLevel.SUCCESS, "OK " + r.message());
+                } else {
+                    // The JVM accepted the change, but Lemon could not confirm the running bytecode.
+                    a.send(r.verification().outcome() == AppliedBytecodeCheck.Outcome.DIFFERS ? MessageLevel.ERROR : MessageLevel.WARNING,
+                            (verb.equals("verify") ? "" : "DONE, ") + r.message() + " - " + r.verification().summary());
+                }
+            }
             case REJECTED -> a.send(MessageLevel.ERROR, "NOT DONE " + r.message());
             case FAILED -> a.send(MessageLevel.ERROR, "FAILED " + r.message());
             default -> throw new IllegalStateException();
@@ -595,7 +609,8 @@ final class LiveCommands {
             a.send(MessageLevel.DETAIL, "/fork live update <name> [confirm]  - install/update a plugin or module, apply a core patch");
             a.send(MessageLevel.DETAIL, "/fork live rollback <name> [confirm] - previous plugin jar or bytecode before a core patch");
         }
-        a.send(MessageLevel.DETAIL, "/fork live patch status" + (a.hasPermission(RuntimePermissions.LIVE_UPDATE) ? " | probe" : ""));
+        a.send(MessageLevel.DETAIL, "/fork live patch status" + (a.hasPermission(RuntimePermissions.LIVE_UPDATE)
+                ? " | probe | verify <id>  - JVM support; read back the running bytecode of an active patch" : ""));
     }
 
     List<String> complete(CommandActor actor, String[] args) {
@@ -603,7 +618,11 @@ final class LiveCommands {
             return AdminCommand.filter(SUBCOMMANDS, args[1]);
         }
         if (args.length == 3 && args[1].equalsIgnoreCase("patch")) {
-            return AdminCommand.filter(List.of("status", "probe"), args[2]);
+            return AdminCommand.filter(List.of("status", "probe", "verify"), args[2]);
+        }
+        if (args.length == 4 && args[1].equalsIgnoreCase("patch") && args[2].equalsIgnoreCase("verify")) {
+            return AdminCommand.filter(LivePatchRegistry.INSTANCE.records().stream()
+                    .filter(r -> r.status() == LivePatchRegistry.Status.ACTIVE).map(LivePatchRegistry.PatchRecord::id).distinct().toList(), args[3]);
         }
         if (args.length == 3 && List.of("check", "update", "rollback").contains(args[1].toLowerCase(Locale.ROOT))) {
             List<String> names = new ArrayList<>();

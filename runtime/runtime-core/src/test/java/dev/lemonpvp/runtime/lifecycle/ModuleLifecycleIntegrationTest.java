@@ -91,7 +91,7 @@ class ModuleLifecycleIntegrationTest {
             assertTrue(f.runtime.modules().modules().isEmpty());
             ModuleDiagnostics d = f.runtime.modules().diagnostics("alpha").orElseThrow();
             assertEquals(1, d.previousInstances().size());
-            assertTrue(Files.readString(f.runtime.paths().auditLog()).contains("| tester | unload | alpha | OK |"));
+            f.awaitAudit("| tester | unload | alpha | OK |");
         }
     }
 

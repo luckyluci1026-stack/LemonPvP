@@ -79,12 +79,19 @@ public final class LivePatchService {
      *
      * @param kind    outcome
      * @param plan    the plan (apply only), or {@code null}
-     * @param message one-line summary
-     * @param details further lines
+     * @param message      one-line summary
+     * @param details      further lines
+     * @param verification read-back check after an apply or rollback, or {@code null}
      */
-    public record Result(Kind kind, PatchPlan plan, String message, List<String> details) {
+    public record Result(Kind kind, PatchPlan plan, String message, List<String> details,
+                         AppliedBytecodeCheck.Report verification) {
         public Result {
             details = List.copyOf(details);
+        }
+
+        /** Result without a read-back check. */
+        public Result(Kind kind, PatchPlan plan, String message, List<String> details) {
+            this(kind, plan, message, details, null);
         }
 
         /** Outcome kinds. */
@@ -427,9 +434,17 @@ public final class LivePatchService {
                     + ". Per the JVMTI specification no class of this patch was changed.", prepared);
         }
         long micros = TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - start);
+        List<AppliedBytecodeCheck.Expectation> expectations = new ArrayList<>();
+        for (int i = 0; i < definitions.size(); i++) {
+            expectations.add(new AppliedBytecodeCheck.Expectation(definitions.get(i).getDefinitionClass(),
+                    records.get(i).installed().bytes(), records.get(i).previous().bytes()));
+        }
+        long verifyStart = System.nanoTime();
+        AppliedBytecodeCheck.Report verification = AppliedBytecodeCheck.check(inst, expectations);
+        long verifyMicros = TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - verifyStart);
         PatchRecord record = new PatchRecord(id, plan.archiveSha256(), actor, Instant.now(), Status.ACTIVE,
-                definitions.size() + " class(es) redefined, " + defined.size() + " defined in " + micros + " µs",
-                records, defined, prepared.backupDirectory().toString(), Instant.now());
+                definitions.size() + " class(es) redefined, " + defined.size() + " defined in " + micros + " µs; "
+                        + verification.summary(), records, defined, prepared.backupDirectory().toString(), Instant.now());
         this.registry.applied(record);
         List<String> details = new ArrayList<>();
         for (ClassRecord r : records) {
@@ -439,11 +454,15 @@ public final class LivePatchService {
         defined.forEach(n -> details.add("defined new class " + n));
         details.add("JVM redefinition took " + micros + " µs on the main thread");
         details.add("backup of the replaced class files: " + this.paths.serverDirectory().relativize(prepared.backupDirectory()));
-        details.add("status: technically applied; behaviour NOT validated by Lemon - test the changed code path now");
+        details.add(verification.summary() + (expectations.isEmpty() ? "" : " (read-back took " + verifyMicros + " µs)"));
+        details.addAll(verification.lines());
+        details.add("behaviour NOT validated by Lemon - test the changed code path now");
         this.audit.record(actor, "patch-apply", id, true, record.detail() + "; archive " + plan.archiveSha256());
         LiveHistory.INSTANCE.record(LiveHistory.Kind.PATCH, id, "apply", actor, true, record.detail());
         this.platform.logger().warning("Live patch " + id + " applied by " + actor + ": " + record.detail());
-        return new Result(Result.Kind.APPLIED, plan, "patch " + id + " applied", details);
+        verification.lines().forEach(l -> this.platform.logger().info("Live patch " + id + " check: " + l));
+        return new Result(Result.Kind.APPLIED, plan, "patch " + id + " applied"
+                + (verification.outcome() == AppliedBytecodeCheck.Outcome.VERIFIED ? " and verified" : ""), details, verification);
     }
 
     private Result fail(String actor, PatchPlan plan, List<String> defined, String message, Prepared prepared) {
@@ -558,14 +577,25 @@ public final class LivePatchService {
             long start = System.nanoTime();
             inst.redefineClasses(definitions.toArray(ClassDefinition[]::new));
             long micros = TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - start);
-            String detail = "rolled back by " + actor + ": " + definitions.size() + " class(es) restored in " + micros + " µs";
+            List<AppliedBytecodeCheck.Expectation> expectations = new ArrayList<>();
+            for (int i = 0; i < definitions.size(); i++) {
+                ClassRecord c = record.classes().get(i);
+                expectations.add(new AppliedBytecodeCheck.Expectation(definitions.get(i).getDefinitionClass(), c.previous().bytes(),
+                        c.installed().bytes()));
+            }
+            AppliedBytecodeCheck.Report verification = AppliedBytecodeCheck.check(inst, expectations);
+            String detail = "rolled back by " + actor + ": " + definitions.size() + " class(es) restored in " + micros + " µs; "
+                    + verification.summary();
             this.registry.rolledBack(record.id(), detail);
             this.audit.record(actor, "patch-rollback", record.id(), true, detail);
             LiveHistory.INSTANCE.record(LiveHistory.Kind.PATCH, record.id(), "rollback", actor, true, detail);
             this.platform.logger().warning("Live patch " + record.id() + " " + detail);
             List<String> details = new ArrayList<>(notes);
             details.add("JVM redefinition took " + micros + " µs on the main thread");
-            return new Result(Result.Kind.ROLLED_BACK, null, "patch " + record.id() + " rolled back", details);
+            details.add(verification.summary());
+            details.addAll(verification.lines());
+            return new Result(Result.Kind.ROLLED_BACK, null, "patch " + record.id() + " rolled back"
+                    + (verification.outcome() == AppliedBytecodeCheck.Outcome.VERIFIED ? " and verified" : ""), details, verification);
         } catch (ClassNotFoundException | java.lang.instrument.UnmodifiableClassException | LinkageError | RuntimeException e) {
             String message = "the JVM rejected the rollback: " + e + ". Per the JVMTI specification no class was changed;"
                     + " patch " + record.id() + " stays active.";
@@ -573,6 +603,62 @@ public final class LivePatchService {
             LiveHistory.INSTANCE.record(LiveHistory.Kind.PATCH, record.id(), "rollback", actor, false, message);
             return new Result(Result.Kind.FAILED, null, message, List.of());
         }
+    }
+
+    // ------------------------------------------------------------------ verify
+
+    /**
+     * Reads back the bytecode the JVM runs for every class of an active patch and compares
+     * it with the class files of the patch. Changes nothing (the read-back is a
+     * retransformation without changes).
+     *
+     * @param actor who asked
+     * @param id    patch id
+     * @return {@link Result.Kind#APPLIED} with the report, or a rejection
+     */
+    public CompletableFuture<Result> verify(String actor, String id) {
+        Instrumentation inst;
+        try {
+            inst = requireUsable(id);
+        } catch (PatchException e) {
+            return CompletableFuture.completedFuture(rejected(null, e.getMessage()));
+        }
+        Optional<PatchRecord> record = this.registry.latest(id).filter(r -> r.status() == Status.ACTIVE);
+        if (record.isEmpty()) {
+            return CompletableFuture.completedFuture(rejected(null, "patch " + id + " is not active in this JVM"));
+        }
+        if (!this.busy.compareAndSet(false, true)) {
+            return CompletableFuture.completedFuture(rejected(null, "another live-patch operation is running"));
+        }
+        CompletableFuture<Result> result = CompletableFuture.supplyAsync(() -> {
+            ClassLoader loader = this.platform.serverClassLoader();
+            List<AppliedBytecodeCheck.Expectation> expectations = new ArrayList<>();
+            List<String> notes = new ArrayList<>();
+            for (ClassRecord c : record.get().classes()) {
+                Optional<ClassVersion> now = this.registry.current(c.name());
+                if (now.isEmpty() || !now.get().sha256().equals(c.installed().sha256())) {
+                    notes.add(c.name() + ": replaced again by patch " + now.map(ClassVersion::installedBy).orElse("?")
+                            + "; checked against that version");
+                }
+                ClassVersion expected = now.orElse(c.installed());
+                try {
+                    expectations.add(new AppliedBytecodeCheck.Expectation(Class.forName(c.name(), false, loader), expected.bytes(),
+                            c.previous().bytes()));
+                } catch (ClassNotFoundException | LinkageError e) {
+                    notes.add(c.name() + ": cannot be resolved: " + e);
+                }
+            }
+            AppliedBytecodeCheck.Report report = AppliedBytecodeCheck.check(inst, expectations);
+            List<String> details = new ArrayList<>(notes);
+            details.add(report.summary());
+            details.addAll(report.lines());
+            if (!record.get().definedClasses().isEmpty()) {
+                details.add("classes added by the patch are not part of this check: " + record.get().definedClasses());
+            }
+            this.audit.record(actor, "patch-verify", id, report.outcome() == AppliedBytecodeCheck.Outcome.VERIFIED, report.summary());
+            return new Result(Result.Kind.APPLIED, null, "patch " + id + ": " + report.summary(), details, report);
+        }, this.platform.mainThreadExecutor());
+        return result.whenComplete((r, ex) -> this.busy.set(false));
     }
 
     // ------------------------------------------------------------------ helpers

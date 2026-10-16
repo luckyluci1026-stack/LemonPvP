@@ -60,6 +60,25 @@ public final class RuntimeFixture implements AutoCloseable {
         Files.writeString(serverDir.resolve("config/lemon-runtime.yml"), sb.toString());
     }
 
+    /**
+     * Waits until the audit log (written asynchronously) contains {@code expected}.
+     *
+     * @return the audit log contents
+     */
+    public String awaitAudit(String expected) throws Exception {
+        java.nio.file.Path file = this.serverDir.resolve("lemon/logs/audit.log");
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(10);
+        String text = "";
+        while (System.nanoTime() < deadline) {
+            text = java.nio.file.Files.exists(file) ? java.nio.file.Files.readString(file) : "";
+            if (text.contains(expected)) {
+                return text;
+            }
+            Thread.sleep(20);
+        }
+        throw new AssertionError("audit log does not contain '" + expected + "':\n" + text);
+    }
+
     public OperationResult await(CompletableFuture<OperationResult> f) throws Exception {
         return f.get(60, TimeUnit.SECONDS);
     }

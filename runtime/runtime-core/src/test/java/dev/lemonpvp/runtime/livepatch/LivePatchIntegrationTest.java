@@ -151,6 +151,8 @@ class LivePatchIntegrationTest {
 
             LivePatchService.Result done = await(s.apply(ACTOR, "fix-a", true));
             assertEquals(Kind.APPLIED, done.kind(), done.message() + " " + done.details());
+            assertEquals(AppliedBytecodeCheck.Outcome.VERIFIED, done.verification().outcome(), done.details().toString());
+            assertTrue(done.message().endsWith("applied and verified"), done.message());
             assertEquals("v2", call(greeter, "text"), "the same Class object runs the new code");
             assertEquals("hello v2", greeter.getMethod("hello").invoke(existing), "existing objects run the new code too");
             assertEquals(LivePatchRegistry.Status.ACTIVE, LivePatchRegistry.INSTANCE.latest("fix-a").orElseThrow().status());
@@ -167,14 +169,18 @@ class LivePatchIntegrationTest {
             assertEquals(Kind.REJECTED, again.kind(), "one active version per patch id");
             assertTrue(again.message().contains("already active"), again.message());
 
+            LivePatchService.Result verified = await(s.verify(ACTOR, "fix-a"));
+            assertEquals(AppliedBytecodeCheck.Outcome.VERIFIED, verified.verification().outcome(), verified.details().toString());
+
             LivePatchService.Result rbPlan = await(s.rollback(ACTOR, "fix-a", false));
             assertEquals(Kind.CONFIRMATION_REQUIRED, rbPlan.kind(), rbPlan.message());
             LivePatchService.Result rb = await(s.rollback(ACTOR, "fix-a", true));
             assertEquals(Kind.ROLLED_BACK, rb.kind(), rb.message() + " " + rb.details());
+            assertEquals(AppliedBytecodeCheck.Outcome.VERIFIED, rb.verification().outcome(), rb.details().toString());
             assertEquals("v1", call(greeter, "text"));
+            assertEquals(Kind.REJECTED, await(s.verify(ACTOR, "fix-a")).kind(), "only active patches can be verified");
             assertTrue(LiveHistory.INSTANCE.latest(5).stream().anyMatch(e -> e.name().equals("fix-a") && e.action().equals("rollback")));
-            String audit = Files.readString(f.serverDir.resolve("lemon/logs/audit.log"));
-            assertTrue(audit.contains("patch-apply | fix-a | OK"), audit);
+            f.awaitAudit("patch-apply | fix-a | OK");
         }
     }
 
@@ -451,6 +457,78 @@ class LivePatchIntegrationTest {
             assertEquals(Kind.ROLLED_BACK, await(s.rollback(ACTOR, "first", true)).kind());
             assertEquals("v1", call(greeter, "text"));
         }
+    }
+
+    /** A class with more than 256 constants, so constants added by a patch get wide indices after the JVM merges pools. */
+    static String manyConstants(String pkg, String value) {
+        StringBuilder b = new StringBuilder("package " + pkg + ";\npublic class Many {\n");
+        b.append("    public static String text(int i) { if (i > 3) { return \"big\"; } return \"").append(value).append("\"; }\n");
+        b.append("    public static String[] pool() { return new String[] {");
+        for (int i = 0; i < 300; i++) {
+            b.append(i == 0 ? "" : ", ").append("\"constant-").append(i).append('"');
+        }
+        return b.append("}; }\n}\n").toString();
+    }
+
+    static int codeLength(byte[] classFile, String method) throws Exception {
+        var m = ClassFileReader.read(classFile).methods().stream().filter(x -> x.name().equals(method)).findFirst().orElseThrow();
+        int at = m.codeOffset() + 4;
+        return ((classFile[at] & 0xFF) << 24) | ((classFile[at + 1] & 0xFF) << 16) | ((classFile[at + 2] & 0xFF) << 8)
+                | (classFile[at + 3] & 0xFF);
+    }
+
+    @Test
+    void readBackIgnoresHowTheJvmRenumbersConstantsAndDetectsChangesMadeBehindLemonsBack() throws Exception {
+        Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("lpk.Many", manyConstants("lpk", "old value")));
+        Path next = jar(this.dir.resolve("v2"), "classes.jar", Map.of("lpk.Many", manyConstants("lpk", "a value the old class never had")));
+        Path other = jar(this.dir.resolve("v3"), "classes.jar", Map.of("lpk.Many", manyConstants("lpk", "changed by someone else")));
+        try (RuntimeFixture f = fixture(this.dir, server)) {
+            Class<?> many = Class.forName("lpk.Many", true, f.platform.serverClassLoader());
+            LivePatchService s = f.runtime.livePatches();
+            tool(server, next, inbox(f), "wide");
+            LivePatchService.Result r = applyConfirmed(s, "wide");
+            assertEquals(Kind.APPLIED, r.kind(), r.message() + " " + r.details());
+            assertEquals("a value the old class never had", many.getMethod("text", int.class).invoke(null, 1));
+            assertEquals(AppliedBytecodeCheck.Outcome.VERIFIED, r.verification().outcome(), r.details().toString());
+
+            var inst = InstrumentationAccess.find().instrumentation().orElseThrow();
+            byte[] patched;
+            try (JarFile jar = new JarFile(next.toFile()); InputStream in = jar.getInputStream(jar.getEntry("lpk/Many.class"))) {
+                patched = in.readAllBytes();
+            }
+            byte[] running = AppliedBytecodeCheck.readRunning(inst, List.of(many)).get(many);
+            assertNotNull(running, "the JVM reports the running class file");
+            if (!"true".equals(JvmCapabilities.enhancedRedefinitionFlag())) {
+                // Standard HotSpot appends the new string after the old pool entries (index > 255) and widens
+                // ldc to ldc_w, which moves the jump targets: the byte layout differs, the meaning does not.
+                assertTrue(codeLength(running, "text") > codeLength(patched, "text"),
+                        "expected the JVM to widen ldc in text(): running " + codeLength(running, "text") + " bytes, patch "
+                                + codeLength(patched, "text"));
+            }
+            assertTrue(ClassDiff.compare(ClassFileReader.read(running), ClassFileReader.read(patched)).isEmpty());
+
+            byte[] foreign;
+            try (JarFile jar = new JarFile(other.toFile()); InputStream in = jar.getInputStream(jar.getEntry("lpk/Many.class"))) {
+                foreign = in.readAllBytes();
+            }
+            inst.redefineClasses(new java.lang.instrument.ClassDefinition(many, foreign));
+            assertEquals("changed by someone else", many.getMethod("text", int.class).invoke(null, 1));
+            LivePatchService.Result check = await(s.verify(ACTOR, "wide"));
+            assertEquals(AppliedBytecodeCheck.Outcome.DIFFERS, check.verification().outcome(), check.details().toString());
+            assertTrue(check.details().toString().contains("method body changed: text(int)"), check.details().toString());
+        }
+    }
+
+    @Test
+    void readBackWithoutRetransformSupportIsReportedAsNotVerifiedNeverAsVerified() throws Exception {
+        var inst = InstrumentationAccess.find().instrumentation().orElseThrow();
+        Instrumentation noRetransform = (Instrumentation) java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(),
+                new Class<?>[] {Instrumentation.class}, (proxy, method, args) -> method.getName().equals("isRetransformClassesSupported")
+                        ? Boolean.FALSE : method.invoke(inst, args));
+        AppliedBytecodeCheck.Report r = AppliedBytecodeCheck.check(noRetransform,
+                List.of(new AppliedBytecodeCheck.Expectation(String.class, new byte[0], null)));
+        assertEquals(AppliedBytecodeCheck.Outcome.NOT_VERIFIABLE, r.outcome());
+        assertTrue(r.lines().get(0).contains("Can-Retransform-Classes"), r.lines().toString());
     }
 
     @Test

@@ -6,10 +6,11 @@ tasks.jar {
     manifest {
         attributes(
             "Premain-Class" to "dev.lemonpvp.livepatch.agent.LemonLivePatchAgent",
-            // Required for Instrumentation.redefineClasses. Retransformation and native
-            // method prefixes are not needed and therefore not requested.
+            // Redefinition applies patches. Retransformation is only used to read back the
+            // bytecode the JVM runs after a patch (verification); no transformer changes a
+            // class. Native method prefixes are not needed and therefore not requested.
             "Can-Redefine-Classes" to "true",
-            "Can-Retransform-Classes" to "false",
+            "Can-Retransform-Classes" to "true",
             "Can-Set-Native-Method-Prefix" to "false",
         )
     }

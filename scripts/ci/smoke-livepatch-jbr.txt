@@ -21,9 +21,10 @@ tps
 @expect AllowEnhancedClassRedefinition: true
 @expect yes add methods/constructors
 @expect redefine org\.spigotmc\.TicksPerSecondCommand
-@expect OK patch tps-structural applied
-@expect OK patch tps-structural rolled back
+@expect OK patch tps-structural applied and verified
+@expect OK patch tps-structural rolled back and verified
 @count 1 TPS \(structural\) from last 1m, 5m, 15m
 @count 2 TPS from last 1m, 5m, 15m
 @reject Unhandled exception
 @reject \[null\]
+@reject VERIFICATION FAILED|not verified

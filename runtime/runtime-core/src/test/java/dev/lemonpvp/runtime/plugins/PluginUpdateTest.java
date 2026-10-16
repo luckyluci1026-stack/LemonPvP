@@ -175,7 +175,7 @@ class PluginUpdateTest {
             assertEquals(Kind.UPDATED, rb.kind(), rb.message());
             assertEquals("1.0", host.loaded.get("testplugin").info().version());
             assertEquals(List.of("TestPlugin-1.0.jar"), names(host.plugins));
-            assertTrue(Files.readString(f.serverDir.resolve("lemon/logs/audit.log")).contains("plugin-update | TestPlugin | OK"));
+            f.awaitAudit("plugin-update | TestPlugin | OK");
         }
     }
 

@@ -21,9 +21,15 @@ import java.util.List;
  * constant pool. Debug attributes (line numbers, local variable names, stack maps) are not
  * part of the digest.</p>
  *
+ * <p>Jump targets and exception ranges enter the digest as instruction numbers, and
+ * {@code ldc}/{@code ldc_w} as well as {@code goto}/{@code goto_w} count as the same
+ * instruction. The JVM may widen instructions when it merges constant pools during a
+ * redefinition; the bytecode it reports afterwards ({@code retransformClasses}) still has
+ * the same digest as the class file that was applied.</p>
+ *
  * <p>The reader validates the structure it walks (bounds, constant-pool indices and tags,
- * instruction lengths). It is not a bytecode verifier: the JVM still verifies a class when
- * it is redefined.</p>
+ * instruction lengths, jump targets). It is not a bytecode verifier; see
+ * {@code PreVerifier} for JVMs that do not verify redefined classes.</p>
  */
 public final class ClassFileReader {
 
@@ -395,92 +401,154 @@ public final class ClassFileReader {
             throw new ClassFormatException("method " + methodName + ": invalid code length " + codeLength);
         }
         int codeEnd = codeStart + (int) codeLength;
-        update(md, "ms" + maxStack + "ml" + maxLocals + ";");
+        // Pass 1: instruction boundaries. Jump targets and exception ranges are hashed as
+        // instruction numbers, not byte offsets, so the digest does not change when the JVM
+        // widens an instruction (ldc -> ldc_w after merging constant pools on redefinition).
+        int[] number = new int[(int) codeLength + 1];
+        java.util.Arrays.fill(number, -1);
+        int count = 0;
         int pc = codeStart;
+        while (pc < codeEnd) {
+            number[pc - codeStart] = count++;
+            pc += instructionLength(pc, codeStart, methodName);
+        }
+        if (pc != codeEnd) {
+            throw new ClassFormatException("method " + methodName + ": last instruction exceeds the code array");
+        }
+        number[(int) codeLength] = count;
+        // Pass 2: digest.
+        update(md, "ms" + maxStack + "ml" + maxLocals + ";");
+        pc = codeStart;
         while (pc < codeEnd) {
             int op = this.b[pc] & 0xFF;
             int rel = pc - codeStart;
-            int len;
-            md.update((byte) op);
+            int len = instructionLength(pc, codeStart, methodName);
             switch (op) {
-                case 0x12 -> { // ldc
-                    len = 2;
-                    update(md, describe(this.b[pc + 1] & 0xFF, 0));
+                case 0x12, 0x13 -> { // ldc, ldc_w: same instruction with a narrow or wide index
+                    md.update((byte) 0x12);
+                    update(md, describe(op == 0x12 ? this.b[pc + 1] & 0xFF : u2(pc + 1), 0));
                 }
-                case 0x13, 0x14, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xbb, 0xbd, 0xc0, 0xc1 -> {
-                    len = 3;
+                case 0x14, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xbb, 0xbd, 0xc0, 0xc1, 0xba -> {
+                    md.update((byte) op);
                     update(md, describe(u2(pc + 1), 0));
                 }
-                case 0xb9 -> { // invokeinterface
-                    len = 5;
-                    update(md, describe(u2(pc + 1), 0));
-                    md.update(this.b, pc + 3, 1);
-                }
-                case 0xba -> { // invokedynamic
-                    len = 5;
-                    update(md, describe(u2(pc + 1), 0));
-                }
-                case 0xc5 -> { // multianewarray
-                    len = 4;
+                case 0xb9, 0xc5 -> { // invokeinterface (count), multianewarray (dimensions)
+                    md.update((byte) op);
                     update(md, describe(u2(pc + 1), 0));
                     md.update(this.b, pc + 3, 1);
                 }
-                case 0xaa -> { // tableswitch
+                case 0xaa -> { // tableswitch: padding skipped, targets as instruction numbers
+                    md.update((byte) op);
                     int base = pc + 1 + ((4 - ((rel + 1) % 4)) % 4);
                     int low = (int) u4(base + 4);
                     int high = (int) u4(base + 8);
-                    if (high < low || (long) high - low > 65535) {
-                        throw new ClassFormatException("method " + methodName + ": invalid tableswitch");
+                    update(md, "d" + target(number, rel, (int) u4(base), methodName) + "l" + low + "h" + high);
+                    for (int i = 0; i <= high - low; i++) {
+                        update(md, "t" + target(number, rel, (int) u4(base + 12 + i * 4), methodName));
                     }
-                    len = base + 12 + (high - low + 1) * 4 - pc;
-                    md.update(this.b, pc + 1, len - 1);
                 }
                 case 0xab -> { // lookupswitch
+                    md.update((byte) op);
                     int base = pc + 1 + ((4 - ((rel + 1) % 4)) % 4);
                     int pairs = (int) u4(base + 4);
-                    if (pairs < 0 || pairs > 65535) {
-                        throw new ClassFormatException("method " + methodName + ": invalid lookupswitch");
+                    update(md, "d" + target(number, rel, (int) u4(base), methodName) + "n" + pairs);
+                    for (int i = 0; i < pairs; i++) {
+                        int at = base + 8 + i * 8;
+                        update(md, "k" + (int) u4(at) + "t" + target(number, rel, (int) u4(at + 4), methodName));
                     }
-                    len = base + 8 + pairs * 8 - pc;
-                    md.update(this.b, pc + 1, len - 1);
                 }
-                case 0xc4 -> { // wide
-                    int op2 = this.b[pc + 1] & 0xFF;
-                    len = op2 == 0x84 ? 6 : 4;
-                    md.update(this.b, pc + 1, len - 1);
+                case 0xc8, 0xc9 -> { // goto_w, jsr_w: same as goto, jsr
+                    md.update((byte) (op == 0xc8 ? 0xa7 : 0xa8));
+                    update(md, "t" + target(number, rel, (int) u4(pc + 1), methodName));
                 }
                 default -> {
-                    len = simpleLength(op);
-                    if (len < 0) {
-                        throw new ClassFormatException("method " + methodName + ": invalid opcode 0x" + Integer.toHexString(op)
-                                + " at pc " + rel);
-                    }
-                    if (len > 1) {
+                    md.update((byte) op);
+                    if ((op >= 0x99 && op <= 0xa8) || op == 0xc6 || op == 0xc7) { // branches
+                        update(md, "t" + target(number, rel, (short) u2(pc + 1), methodName));
+                    } else if (len > 1) {
                         md.update(this.b, pc + 1, len - 1);
                     }
                 }
             }
             pc += len;
         }
-        if (pc != codeEnd) {
-            throw new ClassFormatException("method " + methodName + ": last instruction exceeds the code array");
-        }
         int q = codeEnd;
         int handlers = u2(q);
         q += 2;
+        if (q + handlers * 8L > end) {
+            throw new ClassFormatException("method " + methodName + ": exception table exceeds the Code attribute");
+        }
         for (int i = 0; i < handlers; i++) {
-            md.update(this.b, q, 6);
+            update(md, "x" + boundary(number, u2(q), methodName) + "-" + boundary(number, u2(q + 2), methodName) + ">"
+                    + boundary(number, u2(q + 4), methodName));
             int catchType = u2(q + 6);
             update(md, catchType == 0 ? "any" : describe(catchType, 0));
             q += 8;
         }
-        if (q > end) {
-            throw new ClassFormatException("method " + methodName + ": exception table exceeds the Code attribute");
-        }
         return HexFormat.of().formatHex(md.digest());
     }
 
-    /** Length of instructions without constant-pool operands or variable size; -1 if invalid. */
+    /** @return length of the instruction at {@code pc}, validated against the class file */
+    private int instructionLength(int pc, int codeStart, String methodName) throws ClassFormatException {
+        int op = this.b[pc] & 0xFF;
+        int rel = pc - codeStart;
+        int len;
+        switch (op) {
+            case 0xaa -> {
+                int base = pc + 1 + ((4 - ((rel + 1) % 4)) % 4);
+                int low = (int) u4(base + 4);
+                int high = (int) u4(base + 8);
+                if (high < low || (long) high - low > 65535) {
+                    throw new ClassFormatException("method " + methodName + ": invalid tableswitch");
+                }
+                len = base + 12 + (high - low + 1) * 4 - pc;
+            }
+            case 0xab -> {
+                int base = pc + 1 + ((4 - ((rel + 1) % 4)) % 4);
+                int pairs = (int) u4(base + 4);
+                if (pairs < 0 || pairs > 65535) {
+                    throw new ClassFormatException("method " + methodName + ": invalid lookupswitch");
+                }
+                len = base + 8 + pairs * 8 - pc;
+            }
+            case 0xc4 -> len = (this.b[pc + 1] & 0xFF) == 0x84 ? 6 : 4; // wide
+            case 0x12 -> len = 2;
+            case 0x13, 0x14, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xbb, 0xbd, 0xc0, 0xc1 -> len = 3;
+            case 0xb9, 0xba -> len = 5;
+            case 0xc5 -> len = 4;
+            default -> {
+                len = simpleLength(op);
+                if (len < 0) {
+                    throw new ClassFormatException("method " + methodName + ": invalid opcode 0x" + Integer.toHexString(op)
+                            + " at pc " + rel);
+                }
+            }
+        }
+        if (pc + len > this.b.length) {
+            throw new ClassFormatException("method " + methodName + ": instruction at pc " + rel + " exceeds the class file");
+        }
+        return len;
+    }
+
+    /** @return instruction number of the jump target {@code from + offset} */
+    private static int target(int[] number, int from, int offset, String methodName) throws ClassFormatException {
+        long to = (long) from + offset;
+        if (to < 0 || to >= number.length - 1 || number[(int) to] < 0) {
+            throw new ClassFormatException("method " + methodName + ": jump at pc " + from + " to " + to
+                    + " is not the start of an instruction");
+        }
+        return number[(int) to];
+    }
+
+    /** @return instruction number of an exception-table offset (the code length is allowed as an end) */
+    private static int boundary(int[] number, int pc, String methodName) throws ClassFormatException {
+        if (pc >= number.length || number[pc] < 0) {
+            throw new ClassFormatException("method " + methodName + ": exception table offset " + pc
+                    + " is not the start of an instruction");
+        }
+        return number[pc];
+    }
+
     private static int simpleLength(int op) {
         if (op <= 0x0f) {
             return 1;
