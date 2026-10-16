@@ -3,6 +3,7 @@ package dev.lemonpvp.runtime.paper;
 import dev.lemonpvp.runtime.api.TrackedResource;
 import dev.lemonpvp.runtime.api.paper.ModuleScheduler;
 import dev.lemonpvp.runtime.api.paper.ModuleTask;
+import dev.lemonpvp.runtime.platform.CallbackGuard;
 import dev.lemonpvp.runtime.platform.ModuleHandle;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,9 @@ import org.bukkit.scheduler.BukkitTask;
  * entry and forget their async task id once they have run; otherwise a module that
  * schedules short tasks all the time (for example one per event) would grow its tracker
  * without bound until it is disabled.</p>
+ *
+ * <p>The scheduler only ever holds a {@link TaskBody}, which lets go of the module once the
+ * task is released (see there).</p>
  */
 final class ModuleSchedulerImpl implements ModuleScheduler {
 
@@ -69,15 +73,8 @@ final class ModuleSchedulerImpl implements ModuleScheduler {
             throw new IllegalStateException("module '" + this.handle.id() + "' is not enabled");
         }
         OneShot completion = oneShot ? new OneShot() : null;
-        BukkitTask task = submit.apply(() -> {
-            try {
-                this.handle.callbacks().run(kind, body);
-            } finally {
-                if (completion != null) {
-                    completion.finished();
-                }
-            }
-        });
+        TaskBody wrapper = new TaskBody(kind, this.handle.callbacks(), body, completion);
+        BukkitTask task = submit.apply(wrapper);
         if (async) {
             this.asyncTaskIds.add(task.getTaskId());
         }
@@ -87,6 +84,7 @@ final class ModuleSchedulerImpl implements ModuleScheduler {
             if (completion == null || !completion.isFinished()) {
                 task.cancel();
             }
+            wrapper.clear();
         });
         if (completion != null) {
             completion.registered(tracked, async ? task.getTaskId() : null);
@@ -117,6 +115,51 @@ final class ModuleSchedulerImpl implements ModuleScheduler {
                 tracked.close();
             }
         };
+    }
+
+    /**
+     * What the Bukkit scheduler holds for a module task. Bukkit can keep that object after the
+     * task has run or was cancelled: CraftScheduler keeps the most recently added task as the
+     * head of its queue until the next task arrives. Measured in CI (heap dump, test-chaos):
+     * the last async task of an unloaded module kept its class loader alive that way. So once
+     * the task is released, this drops everything that leads to the module (its code, its
+     * callback guard with the class loader, the completion).
+     */
+    private static final class TaskBody implements Runnable {
+        private final String kind;
+        private volatile CallbackGuard guard;
+        private volatile Runnable body;
+        private volatile OneShot completion;
+
+        TaskBody(String kind, CallbackGuard guard, Runnable body, OneShot completion) {
+            this.kind = kind;
+            this.guard = guard;
+            this.body = body;
+            this.completion = completion;
+        }
+
+        @Override
+        public void run() {
+            CallbackGuard g = this.guard;
+            Runnable b = this.body;
+            OneShot c = this.completion;
+            if (g == null || b == null) {
+                return; // released: cancelled or the module was disabled
+            }
+            try {
+                g.run(this.kind, b);
+            } finally {
+                if (c != null) {
+                    c.finished();
+                }
+            }
+        }
+
+        void clear() {
+            this.guard = null;
+            this.body = null;
+            this.completion = null;
+        }
     }
 
     /**
