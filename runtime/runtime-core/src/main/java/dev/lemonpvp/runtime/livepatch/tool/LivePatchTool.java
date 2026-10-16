@@ -171,6 +171,7 @@ public final class LivePatchTool {
         }
 
         List<PatchManifest.Entry> entries = new ArrayList<>();
+        Hierarchy hierarchy = new Hierarchy(base);
         Map<String, byte[]> included = new LinkedHashMap<>();
         List<String> skipped = new ArrayList<>();
         boolean structural = false;
@@ -206,21 +207,23 @@ public final class LivePatchTool {
             List<ClassChange> changes;
             try {
                 ClassInfo running = ClassFileReader.read(readEntry(base, name));
-                changes = ClassDiff.compare(running, next);
+                boolean useReference = !reference.equals(base) && referenceSha.containsKey(name);
+                // Show what the sources changed (same compiler output on both sides when a reference is given).
+                changes = ClassDiff.compare(useReference ? ClassFileReader.read(readEntry(reference, name)) : running, next);
                 if (changes.isEmpty()) {
                     // Same bytecode, only debug information, annotations or the class file layout differ
                     // (e.g. line numbers of an inner class whose outer source file changed): nothing to redefine.
                     skipped.add(name);
                     continue;
                 }
-                if (!reference.equals(base) && referenceSha.containsKey(name)
-                        && !baseSha.get(name).equals(referenceSha.get(name))) {
+                if (useReference && !baseSha.get(name).equals(referenceSha.get(name))) {
                     byte[] referenceBytes = readEntry(reference, name);
-                    List<ClassChange> drift = ClassDiff.compare(running, ClassFileReader.read(referenceBytes));
-                    if (!drift.isEmpty()) {
-                        printDrift(out, name, readEntry(base, name), referenceBytes);
+                    byte[] baseBytes = readEntry(base, name);
+                    String drift = drift(baseBytes, referenceBytes, hierarchy);
+                    if (drift != null) {
+                        printDrift(out, name, baseBytes, referenceBytes);
                         throw new ToolException(name + " differs between --base and --reference beyond the class file layout ("
-                                + drift.get(0) + "); --reference is not the build that runs on the server");
+                                + drift + "); --reference is not the build that runs on the server");
                     }
                 }
             } catch (ClassFormatException ex) {
@@ -365,6 +368,131 @@ public final class LivePatchTool {
         }
         out.println("APPLICABLE on a standard JVM (method bodies only). The server checks everything again before applying.");
         return 0;
+    }
+
+    /**
+     * Compares a class of the running jar with the same class of the reference jar.
+     *
+     * <p>Equivalent unless the members, the hierarchy or an instruction differ. One difference
+     * is accepted: a field or method reference that names a supertype in one jar and a subtype
+     * in the other (javac names the receiver's type, a remapper the declaring class), provided
+     * no class between the two declares that member, so both resolve to the same member.</p>
+     *
+     * @return {@code null} if equivalent, else the first real difference
+     */
+    static String drift(byte[] base, byte[] reference, Hierarchy hierarchy) {
+        try {
+            ClassInfo b = ClassFileReader.read(base);
+            ClassInfo r = ClassFileReader.read(reference);
+            for (ClassChange c : ClassDiff.compare(b, r)) {
+                if (c.kind() != ChangeKind.METHOD_BODY && c.kind() != ChangeKind.CONSTRUCTOR_BODY
+                        && c.kind() != ChangeKind.STATIC_INITIALIZER) {
+                    return c.toString();
+                }
+            }
+            for (ClassInfo.MethodInfo m : b.methods()) {
+                ClassInfo.MethodInfo other = r.method(m.name(), m.descriptor()).orElse(null);
+                if (other == null || java.util.Objects.equals(m.codeDigest(), other.codeDigest())) {
+                    continue;
+                }
+                List<String> lb = ClassFileReader.codeListing(base, m.name(), m.descriptor());
+                List<String> lr = ClassFileReader.codeListing(reference, m.name(), m.descriptor());
+                if (lb.size() != lr.size()) {
+                    return m.name() + m.descriptor() + ": " + lb.size() + " vs " + lr.size() + " instructions";
+                }
+                for (int i = 0; i < lb.size(); i++) {
+                    if (!lb.get(i).equals(lr.get(i)) && !sameMember(lb.get(i), lr.get(i), hierarchy)) {
+                        return m.name() + m.descriptor() + ": '" + lb.get(i) + "' vs '" + lr.get(i) + "'";
+                    }
+                }
+            }
+            return null;
+        } catch (ClassFormatException | IOException | RuntimeException e) {
+            return "cannot compare: " + e;
+        }
+    }
+
+    private static final java.util.regex.Pattern MEMBER_REF = java.util.regex.Pattern.compile("^(#\\d+ \\S+ )(F|M|IM):([^.]+)\\.(.+)$");
+
+    /** Same instruction, same member name and type, owners in a sub/supertype relation without a closer declaration. */
+    private static boolean sameMember(String a, String b, Hierarchy hierarchy) throws IOException {
+        java.util.regex.Matcher x = MEMBER_REF.matcher(a);
+        java.util.regex.Matcher y = MEMBER_REF.matcher(b);
+        if (!x.matches() || !y.matches() || !x.group(1).equals(y.group(1)) || !x.group(2).equals(y.group(2))
+                || !x.group(4).equals(y.group(4))) {
+            return false;
+        }
+        boolean field = x.group(2).equals("F");
+        return hierarchy.resolvesTo(x.group(3), y.group(3), field, x.group(4))
+                || hierarchy.resolvesTo(y.group(3), x.group(3), field, x.group(4));
+    }
+
+    /** Super types and members of the classes in a jar, read on demand (internal names). */
+    static final class Hierarchy {
+        private final Path jar;
+        private final Map<String, java.util.Optional<ClassInfo>> cache = new HashMap<>();
+
+        Hierarchy(Path jar) {
+            this.jar = jar;
+        }
+
+        private java.util.Optional<ClassInfo> info(String internalName) throws IOException {
+            java.util.Optional<ClassInfo> known = this.cache.get(internalName);
+            if (known != null) {
+                return known;
+            }
+            java.util.Optional<ClassInfo> found = java.util.Optional.empty();
+            try (JarFile file = new JarFile(this.jar.toFile(), false)) {
+                JarEntry e = file.getJarEntry(internalName + ".class");
+                if (e != null) {
+                    try (InputStream in = file.getInputStream(e)) {
+                        found = java.util.Optional.of(ClassFileReader.read(in.readAllBytes()));
+                    } catch (ClassFormatException ex) {
+                        found = java.util.Optional.empty();
+                    }
+                }
+            }
+            this.cache.put(internalName, found);
+            return found;
+        }
+
+        /**
+         * @return whether a reference to {@code memberAndType} through {@code sub} resolves to the
+         * member as declared in or inherited through {@code sup}: {@code sup} is a super type of
+         * {@code sub}, and no class or interface on the way (including {@code sub}) declares it
+         */
+        boolean resolvesTo(String sub, String sup, boolean field, String memberAndType) throws IOException {
+            int colon = memberAndType.indexOf(':');
+            String memberName = memberAndType.substring(0, colon);
+            String type = memberAndType.substring(colon + 1);
+            java.util.ArrayDeque<String> queue = new java.util.ArrayDeque<>(List.of(sub));
+            java.util.Set<String> seen = new java.util.HashSet<>();
+            while (!queue.isEmpty()) {
+                String c = queue.poll();
+                if (!seen.add(c)) {
+                    continue;
+                }
+                if (c.equals(sup)) {
+                    return true;
+                }
+                java.util.Optional<ClassInfo> info = info(c);
+                if (info.isEmpty()) {
+                    continue; // outside the jar (JDK): cannot be the declaring server class we look for
+                }
+                ClassInfo ci = info.get();
+                boolean declares = field
+                        ? ci.fields().stream().anyMatch(f -> f.name().equals(memberName) && f.descriptor().equals(type))
+                        : ci.methods().stream().anyMatch(mm -> mm.name().equals(memberName) && mm.descriptor().equals(type));
+                if (declares) {
+                    return false; // resolved before reaching sup: different members
+                }
+                if (ci.superName() != null) {
+                    queue.add(ci.superName());
+                }
+                queue.addAll(ci.interfaces());
+            }
+            return false;
+        }
     }
 
     /** Prints where the bytecode of --base and --reference differs, method by method (diagnostics). */
