@@ -531,6 +531,45 @@ class LivePatchIntegrationTest {
         assertTrue(r.lines().get(0).contains("Can-Retransform-Classes"), r.lines().toString());
     }
 
+    static int check(Path patch, Path serverJar, StringBuilder output) throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        int rc = dev.lemonpvp.runtime.livepatch.tool.LivePatchTool.run(new String[] {"check", "--patch", patch.toString(),
+                "--server-jar", serverJar.toString()}, new PrintStream(bytes, true, StandardCharsets.UTF_8));
+        output.append(bytes.toString(StandardCharsets.UTF_8));
+        return rc;
+    }
+
+    @Test
+    void offlineCheckTestsAPatchFileAgainstAServerJarBeforeUpload() throws Exception {
+        Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("lpl.Greeter", greeter("lpl", "v1")));
+        Path other = jar(this.dir.resolve("v9"), "server.jar", Map.of("lpl.Greeter", greeter("lpl", "v9")));
+        Path next = jar(this.dir.resolve("v2"), "classes.jar", Map.of("lpl.Greeter", greeter("lpl", "v2")));
+        Path structural = jar(this.dir.resolve("v3"), "classes.jar", Map.of("lpl.Greeter",
+                greeter("lpl", "v3").replace("public String hello()", "public String extra() { return \"x\"; }\n    public String hello()")));
+        Path out = this.dir.resolve("out");
+        tool(server, next, out, "body");
+        tool(server, structural, out, "shape");
+
+        StringBuilder text = new StringBuilder();
+        assertEquals(0, check(out.resolve("body.lemonpatch"), server, text), text.toString());
+        assertTrue(text.toString().contains("checksum file matches"), text.toString());
+        assertTrue(text.toString().contains("APPLICABLE on a standard JVM"), text.toString());
+
+        text.setLength(0);
+        assertEquals(3, check(out.resolve("shape.lemonpatch"), server, text), text.toString());
+        assertTrue(text.toString().contains("[structural] method added: extra() : String"), text.toString());
+        assertTrue(text.toString().contains("APPLICABLE ONLY with enhanced class redefinition"), text.toString());
+
+        text.setLength(0);
+        assertEquals(1, check(out.resolve("body.lemonpatch"), other, text), text.toString());
+        assertTrue(text.toString().contains("lpl.Greeter: patch was built against"), text.toString());
+
+        Files.writeString(out.resolve("body.lemonpatch.sha256"), "0".repeat(64) + "  body.lemonpatch\n");
+        text.setLength(0);
+        assertEquals(1, check(out.resolve("body.lemonpatch"), server, text), text.toString());
+        assertTrue(text.toString().contains("checksum file body.lemonpatch.sha256 says"), text.toString());
+    }
+
     @Test
     void disabledLivePatchingRefusesToApply() throws Exception {
         Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("lpi.Greeter", greeter("lpi", "v1")));

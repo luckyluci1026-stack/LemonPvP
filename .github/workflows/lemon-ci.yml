@@ -272,10 +272,17 @@ jobs:
           src=paper-server/src/main/java/org/spigotmc/TicksPerSecondCommand.java
           cp "$src" "$RUNNER_TEMP/TicksPerSecondCommand.java.orig"
           python3 ../../scripts/ci/edit-tps-source.py "$src" text
-          ./gradlew :lemon-server:createLivePatch -PpatchId=tps-text -PpatchDescription="CI: /tps text changed" -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          mkdir -p "$RUNNER_TEMP/deploy"
+          ./gradlew :lemon-server:createLivePatch -PpatchId=tps-text -PpatchDescription="CI: /tps text changed" -PserverJar="$RUNNER_TEMP/server-jar.jar" -PdeployDir="$RUNNER_TEMP/deploy" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          test -f "$RUNNER_TEMP/deploy/tps-text.lemonpatch" && test -f "$RUNNER_TEMP/deploy/tps-text.lemonpatch.sha256"
+          # Offline check against the server jar before uploading (what a developer runs).
+          ./gradlew :lemon-server:checkLivePatch -PpatchId=tps-text -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee "$RUNNER_TEMP/check.log"
+          grep -F "APPLICABLE on a standard JVM" "$RUNNER_TEMP/check.log"
           cp "$RUNNER_TEMP/TicksPerSecondCommand.java.orig" "$src"
           python3 ../../scripts/ci/edit-tps-source.py "$src" structural
           ./gradlew :lemon-server:createLivePatch -PpatchId=tps-structural -PpatchDescription="CI: /tps label from a new method" -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          ./gradlew :lemon-server:checkLivePatch -PpatchId=tps-structural -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee "$RUNNER_TEMP/check.log"
+          grep -F "APPLICABLE ONLY with enhanced class redefinition" "$RUNNER_TEMP/check.log"
           cp "$RUNNER_TEMP/TicksPerSecondCommand.java.orig" "$src"
           out="$RUNNER_TEMP/patches"
           mkdir -p "$out"
@@ -291,6 +298,12 @@ jobs:
           second=org.spigotmc.RestartCommand,org.spigotmc.SpigotCommand,org.spigotmc.WatchdogThread
           python3 "$P" variant "$out/tps-text.lemonpatch" "$out" --id tps-mixed --add-wrong-base "$second" --base-jar "$base"
           python3 "$P" variant "$out/tps-text.lemonpatch" "$out" --id tps-atomic --add-corrupt-class "$second" --base-jar "$base"
+          # The offline check refuses a patch for another build.
+          cp "$out"/tps-wrong-build.lemonpatch* lemon-server/build/livepatch/
+          if ./gradlew :lemon-server:checkLivePatch -PpatchId=tps-wrong-build -PserverJar="$base" --console=plain > "$RUNNER_TEMP/check.log" 2>&1; then
+            cat "$RUNNER_TEMP/check.log"; echo "::error::checkLivePatch accepted a patch for another build"; exit 1
+          fi
+          grep -F "patch was built for lemonpvp:lemon/0.0-WRONG/-" "$RUNNER_TEMP/check.log"
           ls -la "$out"
       - name: "Server test 4: core live patch (standard JVM, -javaagent)"
         run: |

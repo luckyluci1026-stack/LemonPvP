@@ -39,7 +39,16 @@ import java.util.stream.Stream;
  *      [--reference &lt;jar built from the unchanged sources&gt;] \
  *      [--id fix-tps] [--description "..."] [--out build/livepatch] \
  *      [--target-build &lt;build id&gt;] [--minecraft &lt;version&gt;]
+ *
+ * java -cp ... LivePatchTool check --patch &lt;id&gt;.lemonpatch --server-jar &lt;server jar&gt;
  * </pre>
+ *
+ * <p>{@code check} tests a patch file against a server jar before it is uploaded: checksum
+ * file, archive structure, build id, Minecraft version, the digest of every replaced class,
+ * and the kind of every change (standard JVM, enhanced redefinition, or never live). Exit
+ * code 0: applicable on a standard JVM; 3: only with enhanced class redefinition; 1: not
+ * applicable. The server checks everything again (including its JVM) before it applies a
+ * patch.</p>
  *
  * <p>Every class whose bytes differ from the reference jar becomes part of the patch
  * (classes that do not exist there are added as new classes). The reference defaults to
@@ -96,14 +105,16 @@ public final class LivePatchTool {
      *
      * @param args arguments
      * @param out  output
-     * @return exit code: 0 patch written, 2 nothing changed
+     * @return exit code: create - 0 patch written, 2 nothing changed; check - 0 applicable on a standard JVM,
+     * 3 only with enhanced class redefinition, 1 not applicable
      * @throws ToolException on bad input
      * @throws IOException   on I/O errors
      */
     public static int run(String[] args, PrintStream out) throws ToolException, IOException {
-        if (args.length == 0 || !args[0].equals("create")) {
+        if (args.length == 0 || !(args[0].equals("create") || args[0].equals("check"))) {
             throw new ToolException("usage: create --base <server jar> --classes <dir|jar> [--reference <jar>] [--id <id>]"
-                    + " [--description <text>] [--out <dir>] [--target-build <id>] [--minecraft <version>]");
+                    + " [--description <text>] [--out <dir>] [--target-build <id>] [--minecraft <version>]\n"
+                    + "       check --patch <file.lemonpatch> --server-jar <server jar>");
         }
         Map<String, String> opts = new HashMap<>();
         for (int i = 1; i < args.length; i++) {
@@ -111,6 +122,9 @@ public final class LivePatchTool {
                 throw new ToolException("expected --option value, got " + args[i]);
             }
             opts.put(args[i].substring(2), args[++i]);
+        }
+        if (args[0].equals("check")) {
+            return check(Path.of(required(opts, "patch")), Path.of(required(opts, "server-jar")), out);
         }
         Path base = Path.of(required(opts, "base"));
         Path classes = Path.of(required(opts, "classes"));
@@ -227,6 +241,111 @@ public final class LivePatchTool {
                     + " this patch (the server tells you before changing anything)");
         }
         out.println("next: upload both files to the server's patch directory, then /fork live check " + id);
+        return 0;
+    }
+
+    /**
+     * Checks a patch file against a server jar without a server.
+     *
+     * @return 0 applicable on a standard JVM, 3 only with enhanced redefinition, 1 not applicable
+     */
+    static int check(Path patch, Path serverJar, PrintStream out) throws ToolException, IOException {
+        if (!Files.isRegularFile(patch)) {
+            throw new ToolException("no patch file " + patch);
+        }
+        if (!Files.isRegularFile(serverJar)) {
+            throw new ToolException("no server jar " + serverJar);
+        }
+        if (Files.size(patch) > PatchArchive.MAX_ARCHIVE_BYTES) {
+            throw new ToolException(patch + " is larger than " + PatchArchive.MAX_ARCHIVE_BYTES + " bytes");
+        }
+        byte[] bytes = Files.readAllBytes(patch);
+        String sha = Hashing.sha256(bytes);
+        List<String> problems = new ArrayList<>();
+        out.println("check " + patch.getFileName() + " (sha256 " + sha + ") against " + serverJar.getFileName());
+        Path sidecar = patch.resolveSibling(patch.getFileName() + ".sha256");
+        if (Files.isRegularFile(sidecar)) {
+            String expected = Files.readString(sidecar).trim().split("\\s+")[0];
+            if (expected.equalsIgnoreCase(sha)) {
+                out.println("  checksum file matches");
+            } else {
+                problems.add("checksum file " + sidecar.getFileName() + " says " + expected + ", the file has " + sha);
+            }
+        } else {
+            out.println("  warning: no " + sidecar.getFileName() + " next to the patch (the server needs it when integrity checks are on)");
+        }
+        PatchArchive archive;
+        try {
+            archive = PatchArchive.parse(bytes);
+        } catch (dev.lemonpvp.runtime.livepatch.PatchException e) {
+            out.println("NOT APPLICABLE: " + e.getMessage());
+            return 1;
+        }
+        PatchManifest m = archive.manifest();
+        String build = BuildIdentity.of(serverJar);
+        String minecraft = minecraftOf(serverJar);
+        out.println("  patch " + m.id() + " for " + m.targetBuildId() + " (Minecraft " + m.targetMinecraft() + "), "
+                + m.classes().size() + " class(es)");
+        if (!m.targetBuildId().equals(build)) {
+            problems.add("patch was built for " + m.targetBuildId() + " but the jar is " + build);
+        }
+        if (!m.targetMinecraft().equals(minecraft)) {
+            problems.add("patch targets Minecraft " + m.targetMinecraft() + " but the jar is " + minecraft);
+        }
+        Map<String, String> digests = classDigests(serverJar);
+        boolean structural = false;
+        List<String> never = new ArrayList<>();
+        for (PatchManifest.Entry e : m.classes()) {
+            if (e.isNew()) {
+                if (digests.containsKey(e.name())) {
+                    problems.add(e.name() + " is marked as new but exists in the server jar");
+                } else {
+                    out.println("  new      " + e.name());
+                }
+                continue;
+            }
+            String running = digests.get(e.name());
+            if (running == null) {
+                problems.add(e.name() + " does not exist in the server jar");
+                continue;
+            }
+            if (!running.equals(e.baseSha256())) {
+                problems.add(e.name() + ": patch was built against " + e.baseSha256().substring(0, 12) + ", the jar has "
+                        + running.substring(0, 12) + " (build the patch against this jar: -PserverJar)");
+                continue;
+            }
+            List<ClassChange> changes;
+            try {
+                changes = ClassDiff.compare(ClassFileReader.read(readEntry(serverJar, e.name())), archive.infos().get(e.name()));
+            } catch (ClassFormatException ex) {
+                problems.add(e.name() + ": " + ex.getMessage());
+                continue;
+            }
+            out.println("  changed  " + e.name());
+            for (ClassChange c : changes) {
+                if (c.kind().required().isEmpty()) {
+                    never.add(e.name() + ": " + c);
+                }
+                structural |= !c.kind().bodyOnly();
+                out.println("           " + (c.kind().bodyOnly() ? "" : "[structural] ") + c);
+            }
+        }
+        if (!problems.isEmpty()) {
+            out.println("NOT APPLICABLE to this server jar:");
+            problems.forEach(p -> out.println("  - " + p));
+            return 1;
+        }
+        if (!never.isEmpty()) {
+            out.println("NOT APPLICABLE live (Lemon never applies these changes; restart with a rebuilt jar):");
+            never.forEach(p -> out.println("  - " + p));
+            return 1;
+        }
+        if (structural) {
+            out.println("APPLICABLE ONLY with enhanced class redefinition (JetBrains Runtime with"
+                    + " -XX:+AllowEnhancedClassRedefinition); a standard JVM refuses it before changing anything");
+            return 3;
+        }
+        out.println("APPLICABLE on a standard JVM (method bodies only). The server checks everything again before applying.");
         return 0;
     }
 
