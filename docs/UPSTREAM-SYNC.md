@@ -12,7 +12,15 @@ Jede Version in `versions/<mc>/` ist auf **einen exakten Paper-Commit** gepinnt
 3. `lemon-server/paper-patches/files/.../CraftServer.java.patch` – drei Hook-Zeilen.
 
 Alle drei werden von `scripts/fork/generate_patches.py` aus den Upstream-Dateien des
-gepinnten Commits **erzeugt**. Jede Änderung ist an genau eine Ankerzeile gebunden; fehlt
+gepinnten Commits **erzeugt**.
+
+Ausnahme, nur 1.21.11: `lemon-server/minecraft-patches/sources/net/minecraft/world/entity/`
+(`LivingEntity.java.patch`, `player/Player.java.patch`) – handgeschriebene Rückportierung von
+Paper `b80b604` (Abklingzeit bei Speer-Stichen, siehe [`SPEAR-COOLDOWN.md`](SPEAR-COOLDOWN.md)).
+Bei einem Upstream-Update von `ver/1.21.11` prüfen, ob der Fix dort angekommen ist
+(`git merge-base --is-ancestor b80b604 <neuer Commit>` bzw. die Zeilen in
+`LivingEntity.actuallyHurt`); dann die beiden Dateien löschen, sonst nach `applyAllPatches`
+die Prüfung im CI-Schritt „Lemon Minecraft source patches applied“ beachten. Jede Änderung ist an genau eine Ankerzeile gebunden; fehlt
 oder verdoppelt sich ein Anker upstream, bricht das Skript mit einer klaren Meldung ab.
 
 ### Warum der CraftServer-Patch nötig ist

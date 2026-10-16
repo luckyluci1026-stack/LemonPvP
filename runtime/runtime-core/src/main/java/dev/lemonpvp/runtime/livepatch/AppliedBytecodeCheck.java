@@ -121,9 +121,10 @@ public final class AppliedBytecodeCheck {
                 } else {
                     lines.add(name + ": runs the expected bytecode (read back from the JVM)");
                 }
-            } catch (ClassFormatException ex) {
+            } catch (ClassFormatException | RuntimeException ex) {
+                // Never let the check break the caller: the redefinition already happened.
                 unverifiable = true;
-                lines.add(name + ": the class file reported by the JVM could not be read: " + ex.getMessage());
+                lines.add(name + ": the class file reported by the JVM could not be compared: " + ex);
             }
         }
         Outcome outcome = differs ? Outcome.DIFFERS : unverifiable ? Outcome.NOT_VERIFIABLE : Outcome.VERIFIED;

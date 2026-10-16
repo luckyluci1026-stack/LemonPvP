@@ -43,10 +43,12 @@ Es gibt drei Testebenen:
 
 ```
 cd runtime && ./gradlew :runtime-core:test        # OpenJDK 21.0.12 (Ubuntu), Linux, Tests mit -javaagent
-runtime-core: 97 tests, 0 failures, 0 errors, 0 skipped
+runtime-core: 102 tests, 0 failures, 0 errors, 0 skipped
 ```
 
-(Stand nach den Live-Update-Arbeiten; der Referenzlauf #8 unten zählte noch 53 Tests.)
+(Stand nach den Erweiterungen Rücklesen/Plugin-Ressourcen/Offline-Prüfung; der Referenzlauf
+#8 unten zählte noch 53 Tests. In CI: Temurin 21 sowie JBR 21 und 25 mit
+`-XX:+AllowEnhancedClassRedefinition`, Läufe #17 und #18 grün.)
 
 Paper-Builds und Server-Tests konnten lokal nicht ausgeführt werden (Netzwerk, siehe
 `docs/ANALYSIS.md`); ihre Ergebnisse stammen aus GitHub Actions (unten).
@@ -190,6 +192,26 @@ Lebenszyklus, Hot-Swap und Neustart-Persistenz: Server-Tests 2 und 3 in allen vi
 Versionen ✔ (Läufe #11–#13); `module.yml` mit Standardwerten, `fork module remove` und die
 an den geprüften SHA-256 gebundene Bestätigung von `fork live update <modul>`: Unit-Tests
 (`ModuleSimplicityTest`). `fork live update <modul>` selbst lief nicht auf einem Server.
+
+### Rücklesen, Plugin-Ressourcen, Offline-Prüfung, neue Befehle (Läufe #17 `6079a06` und #18 `6f3959e`)
+
+Beide Läufe: alle 11 Jobs grün, alle vier Versionen.
+
+| Prüfung | 1.21.11 | 26.1.2 | 26.2 | 26.3 |
+|---|---|---|---|---|
+| Core-Patch angewendet **und zurückgelesen** (`applied and verified`), `patch verify`, Rollback `rolled back and verified` (Temurin) | ✔ | ✔ | ✔ | ✔ |
+| dasselbe für den strukturellen Patch auf JBR (`applied and verified`) | ✔ (JBR 21) | ✔ (JBR 25) | ✔ (JBR 25) | ✔ (JBR 25) |
+| Lauf #18: Redefinition / Zurücklesen, 1 Klasse, Temurin | 54,0 / 49,2 ms | 71,0 / 73,0 ms | 57,4 / 56,6 ms | 51,4 / 52,4 ms |
+| Lauf #18: dasselbe, struktureller Patch, JBR | 226,6 / 249,0 ms | 455,5 / 486,8 ms | 334,4 / 353,4 ms | 628,9 / 578,8 ms |
+| `checkLivePatch`: Body-Patch `APPLICABLE on a standard JVM`, struktureller `APPLICABLE ONLY with enhanced…`, Patch für fremde Build-ID abgelehnt (Gradle-Fehler) | ✔ | ✔ | ✔ | ✔ |
+| `createLivePatch -PdeployDir`: Patch + `.sha256` kopiert | ✔ | ✔ | ✔ | ✔ |
+| `fork live inspect LemonTestPlugin`: `Registered now: 1 listener, 1 scheduler task, 1 command` | ✔ | ✔ | ✔ | ✔ |
+| Update meldet `it had 1 listener, 1 scheduler task, 1 command`, **keine** Reste/Threads der alten Version (`@reject WARNING: …`) | ✔ | ✔ | ✔ | ✔ |
+| `inspect` nach dem Update: `Unloaded version 1.0.0 … class loader still in memory (not collected yet …)` | ✔ | ✔ | ✔ | ✔ |
+| `fork live capabilities`, `fork live diagnostics`, `fork live inspect patch:tps-text` | ✔ | ✔ | ✔ | ✔ |
+
+Dass der Class-Loader der alten Plugin-Version später eingesammelt wird, wurde auf dem
+Server nicht beobachtet (Lemon löst keine GC aus, der Test endet Sekunden danach).
 
 ## Noch nicht automatisiert
 

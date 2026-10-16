@@ -260,7 +260,26 @@ Anwendung: Sicherung der laufenden Klassendateien nach
 `Instrumentation.redefineClasses`-Aufruf mit allen Klassen auf dem Hauptthread zwischen
 zwei Ticks. Die JVM (JVMTI `RedefineClasses`) ändert dabei alle Klassen oder keine.
 
-### 4.4 Diagnose
+### 4.4 Beispiel: Paper-Core-Bugfix (Speer-Abklingzeit, 1.21.11)
+
+Ein echter Paper-Fehler als Live-Patch: In Paper 1.21.11 bekommt bei einem Speer-Stich jedes
+Ziel nach dem ersten nur ≈ 20 % Schaden. Analyse, Fix und Messung:
+[`SPEAR-COOLDOWN.md`](SPEAR-COOLDOWN.md). Kurz der Ablauf (wie 4.3):
+
+1. Laufende JAR holen, `livePatchBaseline` für den Stand, aus dem sie gebaut wurde.
+2. Fix in die Quellen (hier: zwei Dateien unter `lemon-server/minecraft-patches/sources/`,
+   dann `applyAllPatches`; bei eigenem Code direkt in `lemon-server/src/minecraft/java` bzw.
+   `paper-server/src/main/java` ändern).
+3. `createLivePatch -PpatchId=spear-cooldown -PserverJar=…` → `Player`, `LivingEntity`,
+   nur Methodenrümpfe.
+4. `checkLivePatch` → `APPLICABLE on a standard JVM`.
+5. Hochladen, `fork live check|update spear-cooldown`, `confirm` → `applied and verified`.
+6. Im Spiel testen; dauerhaft mit der neu gebauten JAR.
+
+Die CI macht genau das auf einem echten 1.21.11-Server (Job `spear-hotswap`) und misst vor
+dem Patch, danach und nach dem Rollback.
+
+### 4.5 Diagnose
 
 | Frage | Befehl |
 |---|---|
@@ -273,7 +292,7 @@ zwei Ticks. Die JVM (JVMTI `RedefineClasses`) ändert dabei alle Klassen oder ke
 
 Häufige Meldungen: [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
-### 4.5 Wann ein Neustart unvermeidbar ist
+### 4.6 Wann ein Neustart unvermeidbar ist
 
 * Core-Änderung, die nicht nur Methodenrümpfe betrifft, auf einer Standard-JVM
   (`checkLivePatch`: `APPLICABLE ONLY with enhanced class redefinition`; Server: `reject …
