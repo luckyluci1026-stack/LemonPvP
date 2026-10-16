@@ -60,6 +60,15 @@
    Plugins sehen nach dem Tausch ggf. ein veraltetes Fenster.
 9. **Kein Spieler-Login in der CI.** Die Server-Tests prüfen nach Patches Konsole, Ticks
    (`/tps`), Server-List-Ping und Heap; eine echte Spielerverbindung wurde nicht getestet.
+10. **Rücklesen belegt Bytecode, nicht Verhalten.** „verified“ heißt: die JVM führt genau
+    den Bytecode des Patches aus. Ob der Code richtig ist, prüft nur ein Test des geänderten
+    Ablaufs. Das Zurücklesen ist selbst eine Redefinition mit gleichem Bytecode (kurzer
+    Safepoint) und sieht die Klasse so, wie andere Agenten sie gerade instrumentieren.
+11. **Plugin-Ressourcen nur, soweit die Server-API sie listet:** Listener, Bukkit-Tasks,
+    Befehle, Services, Kanäle. Paper-Async/Region-Tasks, selbst gestartete Threads (nur
+    über den Thread-Check nach dem Entladen), Registrierungen in fremden Plugin-APIs und
+    Brigadier-Lifecycle-Befehle sind nicht sichtbar. „Class-Loader noch im Speicher“ kann
+    auch heißen, dass noch keine volle GC lief; Lemon löst keine aus.
 
 ## Fork / Versionen
 

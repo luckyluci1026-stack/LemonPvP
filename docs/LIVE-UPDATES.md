@@ -28,22 +28,32 @@ Namen in allen drei Bereichen und verlangt bei Mehrdeutigkeit ein Präfix
 | `/fork live scan` | view | was im Modulordner, in `plugins/update/` und im Patch-Ordner bereitliegt |
 | `/fork live plugins` | view | installierte Plugins mit Status und „live möglich / nur Neustart“ |
 | `/fork live modules` | view | Module im Modulordner mit Status |
+| `/fork live inspect <name>` | view | Plugin: Version, Abhängigkeiten, **registrierte Ressourcen** (Listener, Scheduler-Tasks, Befehle, Services, Kanäle), live möglich?, entladene Versionen noch im Speicher?; Modul: Info + Diagnose; Patch: Status, Klassen, Sicherung |
 | `/fork live check <name>` | view | Prüfung ohne Änderung: Kompatibilität (Plugin), Validierung (Modul), Änderungsplan (Patch) |
 | `/fork live update <name>` | `lemon.runtime.live.update` (**niemand**, nur Konsole) | zeigt den Plan und wartet auf Bestätigung |
 | `/fork live update <name> confirm` | update | führt den bestätigten Plan aus (innerhalb von 120 s) |
+| `/fork live update all [confirm]` | update | alle Plugins in `plugins/update/`, die live gehen, nacheinander; stoppt beim ersten Fehlschlag (Module und Patches immer einzeln) |
 | `/fork live rollback <name> [confirm]` | update | Plugin: vorherige JAR; Patch: Bytecode vor dem Patch |
 | `/fork live history` | view | letzte 15 Aktionen dieses Serverprozesses (vollständig: `lemon/logs/audit.log`) |
+| `/fork live capabilities` | view (Probe beim ersten Aufruf: update) | was in diesem Prozess live änderbar ist: Plugins, Module, Core-Patches (Fähigkeiten der JVM, per Probe ermittelt) |
+| `/fork live diagnostics` | view | Agent/JVM, aktive Patches mit Prüfergebnis, entladene Plugin-/Modulversionen noch im Speicher, abgebrochene Staging-Dateien, letzte Fehlschläge |
 | `/fork live patch status` | view | Agent, JVM, Build-ID, Profil, aktive Patches, Heap |
 | `/fork live patch probe` | update | prüft mit Wegwerf-Klassen, welche Änderungsarten diese JVM kann |
+| `/fork live patch verify <id>` | update | liest den laufenden Bytecode eines aktiven Patches aus der JVM zurück und vergleicht ihn mit dem Patch (siehe 6.1) |
+| `/fork live patch inspect\|apply\|rollback <id> [confirm]` | wie `inspect`/`update`/`rollback` | Kurzformen mit festem Bereich `patch:` |
 
 Weiterhin vorhanden (Details: [`HOT-DEPLOYMENT.md`](HOT-DEPLOYMENT.md)):
 `/fork module list|info|validate|diagnostics|load|enable|disable|reload|unload|config|remove <id>`.
 
-Ändernde Befehle (`update`, `rollback`, `probe`) haben den Berechtigungs-Default `false`
+Ändernde Befehle (`update`, `rollback`, `probe`, `verify`) haben den Berechtigungs-Default `false`
 und sind damit **nur über die Serverkonsole** möglich (RCON zählt nicht als Konsole).
 Jede Änderung braucht zwei Schritte (Plan → `confirm`). Bestätigt wird genau der geprüfte
 Stand: ändert sich die Datei zwischen Plan und Bestätigung (anderer SHA-256), wird
 abgelehnt.
+
+Einen Automatikmodus („neue Datei erkannt → sofort anwenden“) gibt es bewusst nicht: Lemon
+führt nie eine Datei aus, nur weil sie in einem Ordner auftaucht. Die Automatisierung ist
+`update all` (ein Plan, eine Bestätigung, dann nacheinander).
 
 ## 2. Was live geht und was einen Neustart braucht
 
@@ -128,8 +138,15 @@ Produktionsserver nicht versehentlich lockern.
    Befehle, Berechtigungen und den Plugin-Manager-Eintrag → geprüfte Kopie nach `plugins/`,
    Original aus `plugins/update/` entfernen → laden, Berechtigungen registrieren,
    aktivieren → Befehlsbaum der Spieler aktualisieren.
-5. **Ergebnis prüfen:** Ausgabe `OK update of … done: 1.0.0 -> 1.0.1`, dann
-   `fork live plugins` und das Plugin selbst testen. Schlägt Laden/Aktivieren fehl
+5. **Ergebnis prüfen:** Ausgabe `OK update of … done: 1.0.0 -> 1.0.1` mit
+   `unloaded … (it had 1 listener, 1 scheduler task, 1 command; …)`. Danach prüft Lemon, ob
+   für die **alte** Plugin-Instanz noch etwas registriert ist und ob Threads ihres
+   Class-Loaders weiterlaufen; beides erscheint als `WARNING: …` (das Update ist trotzdem
+   erfolgt, aber die alte Version bleibt im Speicher – bei Gelegenheit neu starten).
+   `fork live inspect <Plugin>` zeigt später, ob der Class-Loader der alten Version
+   eingesammelt wurde („class loader collected“) oder noch im Speicher ist. Lemon löst
+   keine Garbage Collection aus; „still in memory“ direkt nach dem Update ist normal.
+   Dann `fork live plugins` und das Plugin selbst testen. Schlägt Laden/Aktivieren fehl
    (oder lädt Paper eine andere Version), wird die alte JAR zurückgelegt und wieder
    geladen: `FAILED … the previous version … was restored and is enabled`.
    Zurück zur vorherigen Version: `fork live rollback <Plugin>` → `… confirm`. Ein weiterer
@@ -139,6 +156,20 @@ Produktionsserver nicht versehentlich lockern.
 
 Ist ein Live-Update nicht möglich, bleibt die JAR in `plugins/update/`; Paper installiert
 sie beim nächsten Start.
+
+Mehrere Plugins auf einmal: alle JARs nach `plugins/update/`, dann `fork live update all`
+(prüft jedes, listet „ready“/„skipped“) → `fork live update all confirm`. Nacheinander, mit
+denselben Prüfungen und Wiederherstellungen wie einzeln; beim ersten Update, das nicht
+gelingt, stoppt Lemon und nennt die nicht versuchten Plugins.
+
+Was Lemon über ein Plugin **sieht** (Server-API): Event-Listener, Tasks des
+Bukkit-Schedulers, Befehle, Services, Plugin-Messaging-Kanäle. **Nicht** sichtbar: Tasks
+der Paper-Async-/Region-Scheduler (Paper beendet sie beim Deaktivieren), selbst gestartete
+Threads/Executor (nur über den Thread-Check nach dem Entladen), Registrierungen in
+APIs anderer Plugins (Paket-Listener, Platzhalter-Erweiterungen, Hooks …) und
+Brigadier-Befehle über Papers Lifecycle-API. Deshalb gibt es kein „universell sicheres“
+Plugin-Reload: Lemon tauscht nur Plugins live aus, bei denen die Prüfung das erlaubt, und
+meldet, was nach dem Entladen übrig blieb.
 
 ### 4.2 Modul aktualisieren oder neu aktivieren
 
@@ -166,22 +197,34 @@ sie beim nächsten Start.
    byte-identisch zur Gradle-JAR (CI-Lauf #12: alle Klassen identisch), `-PserverJar` schadet
    dort nicht.
 3. **Code ändern und Patch bauen** (IntelliJ oder Konsole):
-   `./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…" -PserverJar=C:\lemon\lemon-<mc>.jar`.
+   `./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…" -PserverJar=C:\lemon\lemon-<mc>.jar`
+   (optional `-PdeployDir=<vorhandener Ordner>`: kopiert Patch + `.sha256` dorthin, z. B. in
+   den `lemon/patches/inbox`-Ordner eines lokalen Testservers; angewendet oder freigegeben
+   wird dadurch nichts).
    Das Werkzeug erkennt Änderungen byte-genau gegen `baseline.jar`, übernimmt die
    Prüfsummen aus der laufenden JAR und prüft, dass beide für jede Patch-Klasse
    inhaltlich gleich sind (sonst Abbruch: „--reference is not the build that runs on the
    server“). Es zeigt pro Klasse die Änderungen (strukturelle mit `[structural]`) und
    schreibt `lemon-server/build/livepatch/fix-tps.lemonpatch` + `.sha256`.
-4. **Übertragen:** beide Dateien per SFTP nach `lemon/patches/inbox/`. In Produktion
+4. **Offline prüfen (vor dem Hochladen):**
+   `./gradlew :lemon-server:checkLivePatch -PpatchId=fix-tps -PserverJar=C:\lemon\lemon-<mc>.jar`
+   prüft Prüfsummendatei, Archiv, Build-ID, Minecraft-Version, den SHA-256 jeder ersetzten
+   Klasse in der Server-JAR und die Art jeder Änderung. Ergebnis: `APPLICABLE on a standard
+   JVM`, `APPLICABLE ONLY with enhanced class redefinition` (JBR nötig) oder
+   `NOT APPLICABLE …` (Build schlägt fehl). Der Server prüft beim Anwenden alles erneut,
+   zusätzlich seine JVM.
+5. **Übertragen:** beide Dateien per SFTP nach `lemon/patches/inbox/`. In Produktion
    trägt die freigebende Person den SHA-256 in die Freigabeliste ein
    (`sha256sum fix-tps.lemonpatch >> lemon/patches/approved.sha256`).
-5. **Prüfen und anwenden:** `fork live check fix-tps` zeigt den Plan
+6. **Prüfen und anwenden:** `fork live check fix-tps` zeigt den Plan
    (redefine/define/reject je Klasse, Änderungsarten, ob die JVM sie kann);
    `fork live update fix-tps` → `fork live update fix-tps confirm`.
-6. **Ergebnis prüfen:** Meldung `OK patch fix-tps applied` + `status: technically applied;
-   behaviour NOT validated by Lemon` – den geänderten Codepfad jetzt testen.
-   `fork live patch status`, `fork live history`. Rückgängig: `fork live rollback fix-tps`
-   → `… confirm`. **Dauerhaft** wird eine Änderung erst mit einer neu gebauten Server-JAR
+7. **Ergebnis prüfen:** Meldung `OK patch fix-tps applied and verified` mit
+   `<Klasse>: runs the expected bytecode (read back from the JVM)` (siehe 6.1) und
+   `behaviour NOT validated by Lemon` – den geänderten Codepfad jetzt testen.
+   `fork live inspect patch:fix-tps`, `fork live patch verify fix-tps` (erneut
+   zurücklesen), `fork live history`. Rückgängig: `fork live rollback fix-tps`
+   → `… confirm` (wird ebenfalls zurückgelesen: `rolled back and verified`). **Dauerhaft** wird eine Änderung erst mit einer neu gebauten Server-JAR
    und Neustart: Patches gelten nur für den laufenden Prozess.
 
 Was der Server vor dem Anwenden prüft (jede fehlgeschlagene Prüfung lehnt den **ganzen**
@@ -217,6 +260,33 @@ Anwendung: Sicherung der laufenden Klassendateien nach
 `Instrumentation.redefineClasses`-Aufruf mit allen Klassen auf dem Hauptthread zwischen
 zwei Ticks. Die JVM (JVMTI `RedefineClasses`) ändert dabei alle Klassen oder keine.
 
+### 4.4 Diagnose
+
+| Frage | Befehl |
+|---|---|
+| Was kann dieser Prozess überhaupt live ändern? | `fork live capabilities` |
+| Was liegt bereit, was davon geht live? | `fork live scan` |
+| Was hält ein Plugin gerade, wo ist es im Speicher geblieben? | `fork live inspect <Plugin>` |
+| Läuft der Bytecode eines Patches noch? | `fork live patch verify <id>` |
+| Gesamtbild inkl. letzter Fehlschläge | `fork live diagnostics` |
+| Was ist wann passiert? | `fork live history`, vollständig `lemon/logs/audit.log` |
+
+Häufige Meldungen: [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
+
+### 4.5 Wann ein Neustart unvermeidbar ist
+
+* Core-Änderung, die nicht nur Methodenrümpfe betrifft, auf einer Standard-JVM
+  (`checkLivePatch`: `APPLICABLE ONLY with enhanced class redefinition`; Server: `reject …
+  this JVM cannot …`).
+* Änderungen, die Lemon nie live anwendet (Oberklasse auf Standard-JVM, Nest-/Sealed-/
+  Record-Attribute, Klassen-Modifikatoren) – `NOT APPLICABLE live`.
+* Änderungen an Code, der nur beim Start läuft (statische Initialisierer, Registries,
+  Bootstrap, Weltgenerierung beim Laden) – technisch anwendbar, aber ohne Wirkung.
+* Plugin mit abhängigen Plugins, Paper-Plugin (`paper-plugin.yml`), Plugin mit Paper-
+  Lifecycle-API – `needs a server restart`.
+* Dauerhaftigkeit: Jeder Core-Patch endet mit dem Prozess. Für den nächsten Start die
+  Server-JAR neu bauen und deployen.
+
 ## 5. Entwicklungs-Workflow: IntelliJ (Windows) → Testserver (Ubuntu 24.04 / Pterodactyl)
 
 ```
@@ -229,7 +299,9 @@ IntelliJ (Windows)                         Testserver (Ubuntu, Pterodactyl)
 3 Code ändern (paper-server/src/main/java,
   lemon-server/src/minecraft/java)
 4 :lemon-server:createLivePatch -PpatchId=x
-    -PserverJar=<geholte JAR>             ──SFTP──► lemon/patches/inbox/x.lemonpatch + .sha256
+    -PserverJar=<geholte JAR>
+  :lemon-server:checkLivePatch -PpatchId=x
+    -PserverJar=<geholte JAR>  (offline)  ──SFTP──► lemon/patches/inbox/x.lemonpatch + .sha256
                                                     (Produktion: Digest in approved.sha256)
                                                     Konsole: fork live check x
                                                              fork live update x
@@ -310,6 +382,29 @@ diese Adresse richten). Niemals auf Produktionsservern, niemals `address=*:5005`
 * **Fehlerfälle werden nie als Erfolg gemeldet.** Jede Ablehnung beginnt mit
   `NOT DONE`, jeder Fehlschlag mit `FAILED`; Details stehen im Server-Log und im Audit-Log.
 
+### 6.1 Prüfung nach dem Anwenden (Rücklesen des Bytecodes)
+
+Nach jeder Redefinition (Anwenden und Rollback) fragt Lemon die JVM nach der Klassendatei,
+die sie **jetzt** ausführt (`Instrumentation.retransformClasses` mit einem Transformer, der
+die Bytes nur mitschreibt und nie ändert; HotSpot rekonstruiert die Datei aus der geladenen
+Klasse). Diese wird mit der angewendeten Klassendatei verglichen (Member, Modifikatoren,
+Hierarchie, normalisierter Bytecode jeder Methode). Ergebnis:
+
+| Meldung | Bedeutung |
+|---|---|
+| `applied and verified` / `verified: the JVM runs the expected bytecode` | die JVM führt für jede Klasse genau den Bytecode des Patches aus |
+| `VERIFICATION FAILED … DIFFERS` | die JVM führt anderen Bytecode aus (z. B. hat ein anderer Agent die Klasse verändert) |
+| `not verified: …` | Zurücklesen nicht möglich (alter Agent ohne `Can-Retransform-Classes`, JVM ohne Unterstützung) oder die Änderung ist im Bytecode nicht sichtbar (nur Debug-Infos/Annotationen) |
+
+Grenzen: Belegt wird, **welcher Bytecode läuft** – nicht, dass er sich richtig verhält.
+Beim Zurücklesen nummeriert HotSpot den Konstantenpool um und verbreitert dabei z. B.
+`ldc` zu `ldc_w`; der Vergleich ist dagegen unempfindlich (Sprungziele als
+Befehlsnummern), das ist durch einen Test mit echter Redefinition belegt. Das Zurücklesen
+ist selbst eine Redefinition mit demselben Bytecode (ein weiterer kurzer Safepoint).
+Ab Agent-Version 2 deklariert `lemon-livepatch-agent.jar` dafür
+`Can-Retransform-Classes: true`; ein Transformer ist nur während des Zurücklesens
+registriert.
+
 ## 7. Dateien
 
 ```
@@ -318,6 +413,7 @@ lemon/patches/approved.sha256                    Freigabeliste (Produktion), Pfa
 lemon/patches/backups/<id>/<Zeit>/               Klassendateien vor dem Patch + backup.txt
 plugins/update/                                  neue Plugin-JARs (Paper-Standardordner)
 lemon/plugin-backups/<Plugin>/<Zeit>/            vorherige Plugin-JARs; UPDATE-FAILED.txt markiert Fehlversuche
+lemon/plugin-staging/                            geprüfte Kopie während eines Updates (danach leer)
 lemon/modules-removed/<Zeit>/                    mit /fork module remove entfernte Module
 lemon/logs/audit.log                             alle Aktionen: Zeit | Akteur | Aktion | Ziel | OK/FAILED | Details
 ```
@@ -350,6 +446,8 @@ Das Werkzeug ist auch ohne Gradle nutzbar (nur JDK, liegt in der Server-JAR):
 java -cp <server-jar oder kompilierte Klassen> dev.lemonpvp.runtime.livepatch.tool.LivePatchTool create \
      --base <laufende Server-JAR> --classes <Klassenverzeichnis> [--reference <Gradle-JAR desselben Builds>] \
      --id fix-tps [--description …] [--out …]
+java -cp <…> dev.lemonpvp.runtime.livepatch.tool.LivePatchTool check \
+     --patch fix-tps.lemonpatch --server-jar <laufende Server-JAR>      # Exit 0 / 3 (nur JBR) / 1
 ```
 
 ## 8. Teststand

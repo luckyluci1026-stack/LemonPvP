@@ -265,8 +265,8 @@ und überschreibt keinen bestehenden Befehl.
 | `/fork module list` | `lemon.runtime.module.view` (OP) | Verzeichnis scannen + Status |
 | `/fork module info\|validate\|diagnostics <id>` | `lemon.runtime.module.view` (OP) | Anzeige / Prüfung ohne Klassen zu laden |
 | `/fork module load\|enable\|disable\|reload\|unload\|config\|remove <id>` | `lemon.runtime.module.manage` (**niemand**, nur Konsole/explizit) | ändert ausgeführten Code; `remove` entlädt und verschiebt die JAR nach `lemon/modules-removed/` |
-| `/fork live status\|scan\|plugins\|modules\|history\|check <name>`, `/fork live patch status` | `lemon.runtime.live.view` (OP) | Anzeige / Prüfung (siehe `LIVE-UPDATES.md`) |
-| `/fork live update\|rollback <name> [confirm]`, `/fork live patch probe` | `lemon.runtime.live.update` (**niemand**, nur Konsole/explizit) | Plugins, Module, Core-Patches ändern |
+| `/fork live status\|scan\|plugins\|modules\|history\|capabilities\|diagnostics\|inspect <name>\|check <name>`, `/fork live patch status\|inspect <id>` | `lemon.runtime.live.view` (OP) | Anzeige / Prüfung (siehe `LIVE-UPDATES.md`) |
+| `/fork live update\|rollback <name> [confirm]`, `/fork live update all [confirm]`, `/fork live patch probe\|verify <id>\|apply <id>\|rollback <id>` | `lemon.runtime.live.update` (**niemand**, nur Konsole/explizit) | Plugins, Module, Core-Patches ändern bzw. JVM prüfen |
 
 Argumente werden validiert (Modul-IDs nur `[a-z][a-z0-9_-]{1,47}`, keine Pfade).
 Ausgaben nutzen feste MiniMessage-Vorlagen; dynamischer Text wird mit

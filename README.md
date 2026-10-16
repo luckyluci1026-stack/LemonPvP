@@ -83,6 +83,10 @@ fork live check <name>               # live möglich? (ohne Änderung)
 fork live update <name>              # Plan anzeigen …
 fork live update <name> confirm      # … und ausführen
 fork live rollback <name> [confirm]  # vorherige Plugin-JAR / Bytecode vor dem Patch
+fork live inspect <name>             # Ressourcen, Abhängigkeiten, Status, alte Versionen im Speicher
+fork live update all [confirm]       # alle live-fähigen Plugins aus plugins/update nacheinander
+fork live capabilities | diagnostics # was dieser Prozess kann / Gesamtzustand
+fork live patch verify <id>          # laufenden Bytecode eines Patches zurücklesen und vergleichen
 fork live history
 ```
 
