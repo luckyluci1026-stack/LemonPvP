@@ -337,21 +337,28 @@ public final class StressModule implements RuntimeModule, ConfigurableModule {
         }
         long registered = System.nanoTime();
         int players = updateCommandTrees(server);
-        long synced = System.nanoTime();
-        long before = this.commandCalls;
-        CommandSender console = server.getConsoleSender();
-        for (int i = first; i < this.nextCommand; i++) {
-            server.dispatchCommand(console, namespace + ":stress-cmd-" + i);
-        }
-        long answered = this.commandCalls - before;
         String text = "+" + n + " registered in " + ms(registered - start) + ", command tree sent to " + players
-                + " player(s) in " + ms(synced - registered) + ", " + answered + "/" + n + " answered in "
-                + ms(System.nanoTime() - synced) + " (stress commands now " + this.commands.size() + ")";
-        if (answered == n) {
-            ok(sender, "commands", text);
-        } else {
-            failed(sender, "commands", text);
-        }
+                + " player(s) in " + ms(System.nanoTime() - registered);
+        int last = this.nextCommand;
+        // Dispatched from a task, not from here: a command started while another command runs
+        // (this one) is only queued and runs after it (vanilla since 1.20.3), so it could not
+        // be counted synchronously.
+        this.paper.scheduler().run(() -> {
+            long before = this.commandCalls;
+            CommandSender console = server.getConsoleSender();
+            long dispatchStart = System.nanoTime();
+            for (int i = first; i < last; i++) {
+                server.dispatchCommand(console, namespace + ":stress-cmd-" + i);
+            }
+            long answered = this.commandCalls - before;
+            String result = text + ", " + answered + "/" + n + " answered in " + ms(System.nanoTime() - dispatchStart)
+                    + " (stress commands now " + this.commands.size() + ")";
+            if (answered == n) {
+                ok(sender, "commands", result);
+            } else {
+                failed(sender, "commands", result);
+            }
+        });
     }
 
     private void memory(CommandSender sender, int mib) {

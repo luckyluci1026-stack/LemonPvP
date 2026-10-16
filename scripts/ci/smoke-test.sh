@@ -14,12 +14,14 @@
 #                 exactly n matching lines; "@sleep <seconds>" pauses;
 #                 "@shell <command>" runs a shell command in the work directory
 #                 (a non-zero exit counts as a failed assertion; the test goes on;
-#                 $SERVER_PID is the server's process id, e.g. for jcmd).
+#                 $SERVER_PID is the server's process id, e.g. for jcmd; $SCRIPT_DIR is
+#                 the directory of this script).
 #
 # Exit code is non-zero if the server does not start within STARTUP_TIMEOUT
 # seconds, does not stop within STOP_TIMEOUT seconds, or an assertion fails.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 JAR="$(realpath "$1")"
 WORK="$2"
 COMMANDS="${3:-}"
@@ -81,7 +83,7 @@ if [ -n "$COMMANDS" ]; then
       '@reject '*) REJECT+=("${line#@reject }") ;;
       '@count '*) COUNT+=("${line#@count }") ;;
       '@sleep '*) sleep "${line#@sleep }" ;;
-      '@shell '*) echo "$ ${line#@shell }"; SERVER_PID="$PID" bash -c "${line#@shell }" || SHELL_FAILED+=("${line#@shell }") ;;
+      '@shell '*) echo "$ ${line#@shell }"; SERVER_PID="$PID" SCRIPT_DIR="$SCRIPT_DIR" bash -c "${line#@shell }" || SHELL_FAILED+=("${line#@shell }") ;;
       *) echo "> $line"; send "$line"; sleep 1 ;;
     esac
   done < "$COMMANDS"

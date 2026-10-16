@@ -184,6 +184,8 @@ fork module diagnostics test-consumer
 @shell sed -n '/lemon-gc-check/,$p' server.log > after-gc.log; grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log; ! grep -nE 'still in memory|still reachable' after-gc.log
 # test-stress 11 (10 swaps + final unload), test-chaos 5, test-library 3, test-consumer 2
 @shell test "$(grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log)" -eq 21
+# Diagnosis only (never fails the test): if a loader survived, print what still references it.
+@shell if grep -qE 'still in memory|still reachable' after-gc.log; then jcmd "$SERVER_PID" GC.heap_dump "$PWD/leak.hprof" > /dev/null && java -Xmx3g "$SCRIPT_DIR/HeapPath.java" leak.hprof dev.lemonpvp.runtime.loader.ModuleClassLoader closed; rm -f leak.hprof; fi; true
 fork status
 
 # 1. integrity
