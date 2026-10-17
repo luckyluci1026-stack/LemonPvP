@@ -391,6 +391,8 @@ jobs:
         if: ${{ !cancelled() && steps.patches.outcome == 'success' }}
         run: |
           ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/instrumentation" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
+          # Agent-related attributes of the server jar (a Launcher-Agent-Class affects EnableDynamicAgentLoading).
+          unzip -p "../../dist/${{ steps.jar.outputs.name }}" META-INF/MANIFEST.MF | grep -iE '^(Main-Class|Launcher-Agent-Class|Premain-Class|Agent-Class)' || echo "no agent attributes in the server jar manifest"
           AGENT_JAR="$RUNNER_TEMP/agent/lemon-livepatch-agent.jar" \
             ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/instrumentation" ../../scripts/ci/smoke-instrumentation.txt
       # Tests 5 and 6 run even if test 4 failed, so one failure does not hide the others.

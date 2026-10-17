@@ -35,7 +35,8 @@ import java.util.function.Consumer;
  * <p>Rules, each enforced here:</p>
  * <ul>
  *     <li>registered once, with {@code canRetransform = true}, and only if the JVM supports
- *     retransformation;</li>
+ *     retransformation and does not run with enhanced class redefinition (see
+ *     {@link JvmCapabilities#ENHANCED_RETRANSFORM_PROBLEM});</li>
  *     <li>never acts on class loading ({@code classBeingRedefined == null}): classes that
  *     are loaded or defined are never touched;</li>
  *     <li>only classes with a patch layer are changed; for every other class the method
@@ -142,6 +143,9 @@ public final class PatchTransformer implements ClassFileTransformer {
         if (!inst.isRetransformClassesSupported()) {
             throw new IllegalStateException("this JVM or agent does not support retransformation"
                     + " (Instrumentation.isRetransformClassesSupported() is false)");
+        }
+        if (JvmCapabilities.enhancedRedefinition()) {
+            throw new IllegalStateException(JvmCapabilities.ENHANCED_RETRANSFORM_PROBLEM);
         }
         inst.addTransformer(this, true);
         this.registeredWith = inst;

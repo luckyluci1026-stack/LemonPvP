@@ -175,10 +175,18 @@ class ClassCatalogTest {
             assertNull(d.lemon());
 
             tool(server, next, inbox(f), "cat-fix");
-            assertEquals(LivePatchService.Result.Kind.APPLIED, RetransformPatchTest.apply(s, "cat-fix", Mechanism.RETRANSFORM).kind());
+            // JVMs with enhanced redefinition refuse retransformation patches (JvmCapabilities.ENHANCED_RETRANSFORM_PROBLEM).
+            boolean retransform = !JvmCapabilities.enhancedRedefinition();
+            Mechanism mechanism = retransform ? Mechanism.RETRANSFORM : Mechanism.REDEFINE;
+            assertEquals(LivePatchService.Result.Kind.APPLIED, RetransformPatchTest.apply(s, "cat-fix", mechanism).kind());
             ClassCatalog.Description patched = await(s.describe("catd.Greeter", loaders)).get(0);
-            assertEquals("retransformed by cat-fix", patched.lemon());
-            assertEquals(List.of("cat-fix"), patched.transformer().patchIds());
+            if (retransform) {
+                assertEquals("retransformed by cat-fix", patched.lemon());
+                assertEquals(List.of("cat-fix"), patched.transformer().patchIds());
+            } else {
+                assertEquals("redefined by cat-fix", patched.lemon());
+                assertNull(patched.transformer());
+            }
 
             Runnable lambda = () -> { };
             ClassCatalog.Description hidden = ClassCatalog.describe(inst(), lambda.getClass(), loaders, LivePatchRegistry.INSTANCE,

@@ -148,6 +148,10 @@ public final class CapabilityProbe {
             return new Result(false, "Instrumentation.isRetransformClassesSupported() is false (agent without"
                     + " Can-Retransform-Classes, or the JVM cannot retransform)");
         }
+        if (JvmCapabilities.enhancedRedefinition()) {
+            // The probe itself would be the crashing pattern: its class is changed by a transformer and unloaded later.
+            return new Result(false, "not probed: " + JvmCapabilities.ENHANCED_RETRANSFORM_PROBLEM);
+        }
         ProbeLoader loader = new ProbeLoader();
         Class<?> probe = loader.define(PROBE, new ProbeClassWriter(PROBE, OBJECT)
                 .staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1).toBytes());

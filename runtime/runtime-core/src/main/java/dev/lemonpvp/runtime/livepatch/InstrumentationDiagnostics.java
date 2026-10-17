@@ -116,6 +116,7 @@ public final class InstrumentationDiagnostics {
         if (enhanced.equals("true")) {
             out.add(new Finding(Level.INFO, "AllowEnhancedClassRedefinition: true - structural changes may be possible (only"
                     + " the probes decide: /fork live patch probe). Use such a JVM for development servers only"));
+            out.add(new Finding(Level.INFO, "retransformation patches are disabled: " + JvmCapabilities.ENHANCED_RETRANSFORM_PROBLEM));
         } else {
             out.add(new Finding(Level.INFO, "standard class redefinition: only method bodies, constants and attributes can change"
                     + " live; adding/removing methods or fields and hierarchy changes need a restart (or, on development servers,"

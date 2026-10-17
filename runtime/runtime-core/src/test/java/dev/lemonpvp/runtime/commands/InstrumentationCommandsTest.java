@@ -122,6 +122,13 @@ class InstrumentationCommandsTest {
                     RuntimePermissions.LIVE_UPDATE);
 
             run(f, cmd, admin, "instrumentation patch check cmd-fix retransform");
+            if (dev.lemonpvp.runtime.livepatch.JvmCapabilities.enhancedRedefinition()) {
+                // Lemon refuses retransformation patches on JVMs with enhanced redefinition.
+                admin.await("retransformation patches are disabled");
+                admin.await("Cannot be applied live");
+                assertEquals("v1", greeter.getMethod("text").invoke(null));
+                return;
+            }
             admin.await("Apply: /fork instrumentation patch apply cmd-fix retransform");
             assertTrue(admin.saw("mechanism retransform"), admin.lines.toString());
             run(f, cmd, admin, "instrumentation patch apply cmd-fix retransform");

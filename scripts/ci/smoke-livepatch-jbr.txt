@@ -20,6 +20,9 @@ fork live rollback tps-structural confirm
 tps
 @expect AllowEnhancedClassRedefinition: true
 @expect yes add methods/constructors
+# Retransformation patches are refused on JVMs with enhanced redefinition (crash found in CI run #41).
+@expect no  change method bodies by retransformation \(and restore them\)
+@expect not probed: this JVM runs with AllowEnhancedClassRedefinition=true
 @expect redefine org\.spigotmc\.TicksPerSecondCommand
 @expect OK patch tps-structural applied and verified
 @expect OK patch tps-structural rolled back and verified

@@ -77,10 +77,12 @@ java -jar lemon-livepatch-agent.jar attach <pid>     # lädt den Agenten (agentm
   (Modul `jdk.attach`); der Server selbst darf auf einer JRE laufen.
 * Nicht möglich, wenn der Server mit `-XX:+DisableAttachMechanism` läuft. In
   Pterodactyl-Containern hat man meist keine Shell als Serverbenutzer – dort Weg A.
-* Java 21+ schreibt beim Anhängen eine Warnung ins Log (JEP 451, „A Java agent has been
-  loaded dynamically …“). Mit `-XX:+EnableDynamicAgentLoading` beim Start verschwindet sie;
-  laut JEP 451 soll das dynamische Laden in einer künftigen Java-Version standardmäßig
-  verboten werden – dann geht nur noch Weg A oder Weg B mit diesem Flag.
+* Java 21+ schreibt beim Anhängen eine Warnung („A Java agent has been loaded dynamically …“,
+  JEP 451), solange `EnableDynamicAgentLoading` aus ist; laut JEP 451 soll das dynamische
+  Laden in einer künftigen Java-Version standardmäßig verboten werden. Gemessen: Auf den
+  CI-Servern (Paperclip-JAR, Java 21 und 25, Startbefehl **ohne** das Flag) meldete die JVM
+  `EnableDynamicAgentLoading=true` – dort kam keine Warnung (CI-Lauf #41, alle vier Versionen).
+  Lemon zeigt den Wert in `/fork instrumentation status` (`dynamic attach: …`).
 * Lemon bemerkt den Agenten beim nächsten Befehl ohne Neustart
   (`Live-patch agent found: agent 3 loaded via agentmain (dynamic attach)`).
 * Klassen, die vor dem Anhängen geladen wurden, bekommt die JVM für Retransformationen aus
@@ -181,7 +183,7 @@ Beide Wege verwenden dieselbe `.lemonpatch`-Datei (vollständige Klassendateien,
 | Woher die JVM die neuen Bytes hat | aus der `ClassDefinition` | die JVM liest **keine** Datei: sie reicht die initialen Bytes der Klasse durch alle retransformationsfähigen Transformer; Lemons `PatchTransformer` liefert dabei die Patch-Klassendatei aus dem Speicher |
 | Spätere Retransformationen (andere Agenten, Lemons Rücklesen) | starten vom gepatchten Stand | starten vom Original; Lemons Transformer liefert den Patch **jedes Mal neu** |
 | Rollback | erneute Redefinition mit den vorherigen Bytes | Patch aus dem Transformer nehmen und retransformieren – die JVM fällt auf die initialen Bytes (bzw. die Schicht darunter) zurück |
-| Erlaubte Änderungen | was die Probes der JVM bestätigen (Standard: Methodenrümpfe; JBR mit `AllowEnhancedClassRedefinition` auch strukturell) | **nur Methodenrümpfe**, unabhängig von der JVM, per echter Retransformations-Probe geprüft |
+| Erlaubte Änderungen | was die Probes der JVM bestätigen (Standard: Methodenrümpfe; JBR mit `AllowEnhancedClassRedefinition` auch strukturell) | **nur Methodenrümpfe**, per echter Retransformations-Probe geprüft; **auf JVMs mit `AllowEnhancedClassRedefinition=true` gar nicht** (siehe §7) |
 | Fremde Redefinition derselben Klasse | überschreibt den Patch (bemerkt `verify`) | der Transformer erkennt sie (anderer Ausgangs-Digest), liefert den Patch nicht mehr und meldet `DISPLACED` |
 | Voraussetzung | `Can-Redefine-Classes` | zusätzlich `Can-Retransform-Classes` und `isRetransformClassesSupported()` |
 
@@ -279,8 +281,21 @@ Entwicklungsserver: JBR installieren, Server mit
 `<jbr>/bin/java -javaagent:lemon-livepatch-agent.jar -XX:+AllowEnhancedClassRedefinition -jar …`
 starten, `/fork instrumentation capabilities` zeigt, was diese JVM tatsächlich kann.
 Servertest 6 in CI prüft das mit JBR 21 und 25 (strukturelle Änderung angewendet). Bekannte
-Einschränkung aus CI: JBR hat ungültigen Bytecode bei der Redefinition ohne Fehler übernommen
-– Lemon verifiziert dort selbst vorher (Probe „reject invalid bytecode when redefining“).
+Einschränkungen aus CI:
+
+* JBR hat ungültigen Bytecode bei der Redefinition ohne Fehler übernommen – Lemon verifiziert
+  dort selbst vorher (Probe „reject invalid bytecode when redefining“).
+* **Retransformation mit Änderung + späteres Entladen der Klasse bringt JBR zum Absturz.**
+  `scripts/ci/RetransformRepro.java` führt jedes Muster in einer eigenen JVM aus (CI-Lauf #41,
+  Job „Runtime core on JetBrains Runtime“): JBR 21.0.11 und 25.0.4.1 **mit**
+  `-XX:+AllowEnhancedClassRedefinition` brachen im Szenario `modify-unload` mit
+  `free(): double free detected in tcache 2` (Exit 134) ab; `recorder` (nur zurücklesen),
+  `modify` (Klasse bleibt geladen) und `modify-then-redefine` liefen durch; **ohne** das Flag
+  liefen alle vier Szenarien durch. In der Testsuite traf es den GC-Test, der Klassen-Loader
+  entlädt. Deshalb verweigert Lemon auf JVMs mit `AllowEnhancedClassRedefinition=true`
+  Retransformations-Patches (Planer, Transformer-Registrierung) und führt dort auch die
+  Retransformations-Probe nicht aus („not probed: …“). Redefinition und das reine Zurücklesen
+  bleiben verfügbar. Auf Standard-JVMs (Temurin, OpenJDK) betrifft das nichts.
 
 ## 8. Grenzen der JVM
 

@@ -36,6 +36,24 @@ public final class JvmCapabilities {
     }
 
     /**
+     * Why Lemon does not retransform with changes on a JVM with enhanced redefinition.
+     * Measured in CI with {@code scripts/ci/RetransformRepro.java}: JetBrains Runtime 21.0.11
+     * and 25.0.4.1 with {@code -XX:+AllowEnhancedClassRedefinition} aborted ("free(): double free
+     * detected") when a class that a transformer had changed during a retransformation was
+     * unloaded; the same JVMs without the flag, and every scenario without a changing
+     * transformer, ran through.
+     */
+    public static final String ENHANCED_RETRANSFORM_PROBLEM = "this JVM runs with AllowEnhancedClassRedefinition=true;"
+            + " there, unloading a class that a transformer had changed during a retransformation crashed the JVM"
+            + " (\"double free\", JetBrains Runtime 21 and 25 in Lemon's CI), so Lemon does not apply retransformation"
+            + " patches on such a JVM - use 'redefine'";
+
+    /** @return whether the JVM runs with {@code AllowEnhancedClassRedefinition=true} */
+    public static boolean enhancedRedefinition() {
+        return "true".equals(enhancedRedefinitionFlag());
+    }
+
+    /**
      * Value of a HotSpot VM option (e.g. {@code EnableDynamicAgentLoading}).
      *
      * @param name option name without {@code -XX:}

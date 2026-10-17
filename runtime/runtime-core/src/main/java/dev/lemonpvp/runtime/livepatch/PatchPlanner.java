@@ -82,6 +82,8 @@ public final class PatchPlanner {
         if (ctx.mechanism() == Mechanism.RETRANSFORM && !ctx.instrumentation().isRetransformClassesSupported()) {
             errors.add("retransformation is not available (Instrumentation.isRetransformClassesSupported() is false: agent"
                     + " without Can-Retransform-Classes, or the JVM cannot retransform); use the mechanism 'redefine'");
+        } else if (ctx.mechanism() == Mechanism.RETRANSFORM && JvmCapabilities.enhancedRedefinition()) {
+            errors.add("retransformation patches are disabled: " + JvmCapabilities.ENHANCED_RETRANSFORM_PROBLEM);
         }
 
         List<PatchPlan.Entry> entries = new ArrayList<>();

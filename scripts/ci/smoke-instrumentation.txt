@@ -57,8 +57,10 @@ fork instrumentation status
 @expect Instrumentation: live-patch agent not loaded: start the JVM with -javaagent:lemon-livepatch-agent\.jar
 @expect fix: add -javaagent:lemon-livepatch-agent\.jar before -jar in the start command .*attach [0-9]+
 @expect NOT DONE: live-patch agent not loaded
-# The attach (JDK 21+ warns about dynamically loaded agents, JEP 451)
-@expect WARNING: A Java agent has been loaded dynamically
+# The attach. JDK 21+ warns about dynamically loaded agents (JEP 451) unless dynamic loading is
+# enabled; on the CI servers the JVM reported EnableDynamicAgentLoading=true (run #41), so either
+# the warning or that value must be in the log.
+@expect WARNING: A Java agent has been loaded dynamically|dynamic attach: EnableDynamicAgentLoading=true
 @expect \[Lemon\] live-patch agent 3 loaded \(agentmain \(dynamic attach\)\)
 @expect Live-patch agent found: agent 3 loaded via agentmain \(dynamic attach\)
 @expect live-patch agent 3 loaded via agentmain \(dynamic attach\)

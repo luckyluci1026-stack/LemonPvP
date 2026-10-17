@@ -13,7 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import dev.lemonpvp.runtime.livepatch.LivePatchService.Result.Kind;
 import dev.lemonpvp.runtime.livepatch.classfile.ClassFileReader;
@@ -36,6 +39,11 @@ import org.junit.jupiter.api.io.TempDir;
  * Integration tests of {@link Mechanism#RETRANSFORM} patches with real JVM retransformation
  * (the test JVM runs with {@code -javaagent:lemon-livepatch-agent.jar}). They prove the
  * mechanism on this JVM, not on a Paper server (see the CI server test for that).
+ *
+ * <p>On a JVM with {@code AllowEnhancedClassRedefinition=true} Lemon refuses retransformation
+ * patches ({@link JvmCapabilities#ENHANCED_RETRANSFORM_PROBLEM}); the tests that apply one are
+ * skipped there and {@link #enhancedRedefinitionJvmRefusesRetransformationPatches} checks the
+ * refusal instead.</p>
  */
 class RetransformPatchTest {
 
@@ -88,6 +96,7 @@ class RetransformPatchTest {
 
     @Test
     void retransformationPatchRunsNewCodeSurvivesLaterRetransformationsAndRollsBack() throws Exception {
+        assumeFalse(JvmCapabilities.enhancedRedefinition(), "retransformation patches are refused on this JVM");
         Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("rta.Greeter", greeter("rta", "v1")));
         Path next = jar(this.dir.resolve("v2"), "classes.jar", Map.of("rta.Greeter", greeter("rta", "v2")));
         try (RuntimeFixture f = fixture(this.dir, server)) {
@@ -139,6 +148,7 @@ class RetransformPatchTest {
 
     @Test
     void redefinitionByAnotherToolDisplacesTheRetransformationPatchAndIsReported() throws Exception {
+        assumeFalse(JvmCapabilities.enhancedRedefinition(), "retransformation patches are refused on this JVM");
         Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("rtb.Greeter", greeter("rtb", "v1")));
         Path next = jar(this.dir.resolve("v2"), "classes.jar", Map.of("rtb.Greeter", greeter("rtb", "v2")));
         Path foreign = jar(this.dir.resolve("v3"), "classes.jar", Map.of("rtb.Greeter", greeter("rtb", "foreign")));
@@ -174,6 +184,7 @@ class RetransformPatchTest {
 
     @Test
     void retransformationPatchesStackAndRedefinitionIsRefusedOnTop() throws Exception {
+        assumeFalse(JvmCapabilities.enhancedRedefinition(), "retransformation patches are refused on this JVM");
         Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("rtc.Greeter", greeter("rtc", "v1")));
         Path v2 = jar(this.dir.resolve("v2"), "classes.jar", Map.of("rtc.Greeter", greeter("rtc", "v2")));
         Path v3 = jar(this.dir.resolve("v3"), "classes.jar", Map.of("rtc.Greeter", greeter("rtc", "v3")));
@@ -205,6 +216,7 @@ class RetransformPatchTest {
 
     @Test
     void retransformationOnTopOfARedefinitionPatchFallsBackToThatPatch() throws Exception {
+        assumeFalse(JvmCapabilities.enhancedRedefinition(), "retransformation patches are refused on this JVM");
         Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("rtd.Greeter", greeter("rtd", "v1")));
         Path v2 = jar(this.dir.resolve("v2"), "classes.jar", Map.of("rtd.Greeter", greeter("rtd", "v2")));
         Path v3 = jar(this.dir.resolve("v3"), "classes.jar", Map.of("rtd.Greeter", greeter("rtd", "v3")));
@@ -284,6 +296,7 @@ class RetransformPatchTest {
 
     @Test
     void theConfirmationMustUseTheMechanismOfThePlan() throws Exception {
+        assumeFalse(JvmCapabilities.enhancedRedefinition(), "retransformation patches are refused on this JVM");
         Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("rtg.Greeter", greeter("rtg", "v1")));
         Path next = jar(this.dir.resolve("v2"), "classes.jar", Map.of("rtg.Greeter", greeter("rtg", "v2")));
         try (RuntimeFixture f = fixture(this.dir, server)) {
@@ -302,7 +315,36 @@ class RetransformPatchTest {
     @Test
     void retransformationCapabilityIsProbedWithARealRetransformation() {
         CapabilityProbe.Result r = CapabilityProbe.probe(inst(), Capability.RETRANSFORM_METHOD_BODY);
+        if (JvmCapabilities.enhancedRedefinition()) {
+            assertFalse(r.supported(), r.detail());
+            assertTrue(r.detail().startsWith("not probed: "), "the probe itself would be the crashing pattern: " + r.detail());
+            return;
+        }
         assertTrue(r.supported(), r.detail());
         assertTrue(r.detail().contains("(1 -> 2)") && r.detail().contains("(2 -> 1)"), r.detail());
+    }
+
+    @Test
+    void enhancedRedefinitionJvmRefusesRetransformationPatches() throws Exception {
+        assumeTrue(JvmCapabilities.enhancedRedefinition(), "only on a JVM with -XX:+AllowEnhancedClassRedefinition");
+        Path server = jar(this.dir.resolve("v1"), "server.jar", Map.of("rth.Greeter", greeter("rth", "v1")));
+        Path next = jar(this.dir.resolve("v2"), "classes.jar", Map.of("rth.Greeter", greeter("rth", "v2")));
+        try (RuntimeFixture f = fixture(this.dir, server)) {
+            Class<?> greeter = Class.forName("rth.Greeter", true, f.platform.serverClassLoader());
+            tool(server, next, inbox(f), "rt-enhanced");
+            LivePatchService s = f.runtime.livePatches();
+            PatchPlan plan = await(s.inspect("rt-enhanced", Mechanism.RETRANSFORM));
+            assertFalse(plan.applicable());
+            assertTrue(plan.errors().toString().contains("retransformation patches are disabled"), plan.errors().toString());
+            assertEquals(Kind.REJECTED, apply(s, "rt-enhanced", Mechanism.RETRANSFORM).kind());
+            IllegalStateException e = assertThrows(IllegalStateException.class, () -> PatchTransformer.INSTANCE.register(inst()));
+            assertTrue(e.getMessage().contains("AllowEnhancedClassRedefinition=true"), e.getMessage());
+            assertFalse(PatchTransformer.INSTANCE.registeredAt().isPresent());
+            assertEquals("v1", call(greeter, "text"));
+            // The same patch by redefinition works on this JVM.
+            LivePatchService.Result r = apply(s, "rt-enhanced", Mechanism.REDEFINE);
+            assertEquals(Kind.APPLIED, r.kind(), r.message() + " " + r.details());
+            assertEquals("v2", call(greeter, "text"));
+        }
     }
 }
