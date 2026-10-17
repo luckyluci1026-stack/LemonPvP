@@ -20,6 +20,8 @@ everything below is unreleased and can be built from source or taken from CI art
 - Open-source repository setup: English README (German: `README.de.md`), logo, banner, our
   mascot **Swappie** (`assets/swappie.svg`), contributing guide, code of conduct, security
   policy, issue and pull request templates, `.editorconfig`.
+- Swappie in seven poses (`assets/swappie/`) and a static website for paperswap.studio
+  (`website/`, self-hosted fonts, no external requests).
 
 ### Added
 

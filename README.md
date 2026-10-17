@@ -226,7 +226,8 @@ scripts/fork/       generators for version projects and patches
 scripts/livepatch/  Gradle tasks for core patches (included in every server build)
 scripts/ci/         live server tests and CI helpers
 docs/               documentation
-assets/             logo, Swappie mascot, banner, social preview
+assets/             logo, Swappie mascot (assets/swappie/: seven poses), banner, social preview
+website/            static website for paperswap.studio (no build step, no external requests)
 index.html, index.zip   website files of the LemonPvP server (not part of the fork)
 ```
 
