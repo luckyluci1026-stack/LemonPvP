@@ -77,12 +77,15 @@ java -jar lemon-livepatch-agent.jar attach <pid>     # lädt den Agenten (agentm
   (Modul `jdk.attach`); der Server selbst darf auf einer JRE laufen.
 * Nicht möglich, wenn der Server mit `-XX:+DisableAttachMechanism` läuft. In
   Pterodactyl-Containern hat man meist keine Shell als Serverbenutzer – dort Weg A.
-* Java 21+ schreibt beim Anhängen eine Warnung („A Java agent has been loaded dynamically …“,
-  JEP 451), solange `EnableDynamicAgentLoading` aus ist; laut JEP 451 soll das dynamische
-  Laden in einer künftigen Java-Version standardmäßig verboten werden. Gemessen: Auf den
-  CI-Servern (Paperclip-JAR, Java 21 und 25, Startbefehl **ohne** das Flag) meldete die JVM
-  `EnableDynamicAgentLoading=true` – dort kam keine Warnung (CI-Lauf #41, alle vier Versionen).
-  Lemon zeigt den Wert in `/fork instrumentation status` (`dynamic attach: …`).
+* Java 21+ kann beim Anhängen eine Warnung ausgeben („A Java agent has been loaded
+  dynamically …“, JEP 451); laut JEP 451 soll das dynamische Laden in einer künftigen
+  Java-Version standardmäßig verboten werden. Gemessen: `EnableDynamicAgentLoading` steht auf
+  OpenJDK 21 standardmäßig auf `true` (`{default}`); ein einfaches Testprogramm auf OpenJDK
+  21.0.12 gab die Warnung ohne Option aus und mit `-XX:+EnableDynamicAgentLoading` nicht. Auf
+  den CI-Paper-Servern (Java 21 und 25, CI-Lauf #41) stand keine Warnung im Serverlog – warum,
+  ist nicht geklärt. `/fork instrumentation status` zeigt Wert und Herkunft des Flags
+  (z. B. `dynamic attach: EnableDynamicAgentLoading=true (default)`). Wer dynamisches Laden
+  ausdrücklich erlauben will, startet mit `-XX:+EnableDynamicAgentLoading`.
 * Lemon bemerkt den Agenten beim nächsten Befehl ohne Neustart
   (`Live-patch agent found: agent 3 loaded via agentmain (dynamic attach)`).
 * Klassen, die vor dem Anhängen geladen wurden, bekommt die JVM für Retransformationen aus

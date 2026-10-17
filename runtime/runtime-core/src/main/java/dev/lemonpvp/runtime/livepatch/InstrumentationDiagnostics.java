@@ -97,8 +97,9 @@ public final class InstrumentationDiagnostics {
                     + " patches, no read-back check")));
             if (lookup.loadedBy().startsWith("agentmain")) {
                 out.add(new Finding(Level.INFO, "the agent was attached to the running JVM. Classes loaded before the attach are"
-                        + " retransformed from bytes the JVM reconstitutes (equivalent, not byte-identical); Java 21+ printed a"
-                        + " warning (JEP 451). For production prefer -javaagent at start"));
+                        + " retransformed from bytes the JVM reconstitutes (equivalent, not byte-identical); Java 21+ may print"
+                        + " a warning about dynamically loaded agents (JEP 451) unless -XX:+EnableDynamicAgentLoading was given."
+                        + " For production prefer -javaagent at start"));
             }
             if (countClasses) {
                 ClassCounts counts = count(i);
@@ -124,7 +125,7 @@ public final class InstrumentationDiagnostics {
         }
         if (Runtime.version().feature() >= 21) {
             out.add(new Finding(Level.INFO, "dynamic attach: EnableDynamicAgentLoading=" + JvmCapabilities.vmOption("EnableDynamicAgentLoading")
-                    + ", DisableAttachMechanism=" + disableAttach));
+                    + " (" + JvmCapabilities.vmOptionOrigin("EnableDynamicAgentLoading") + "), DisableAttachMechanism=" + disableAttach));
         }
         jdwp().ifPresent(out::add);
         if (!livePatchingEnabled) {

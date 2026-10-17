@@ -49,6 +49,7 @@ tps
 fork instrumentation status
 @sleep 3
 @shell grep -F "class file sha256: $(cat expected-tps-base.txt)" server.log
+@shell echo "JEP 451 warning lines in server.log: $(grep -c 'loaded dynamically' server.log || true)"
 @shell grep -F "| patch-apply | tps-text | OK |" lemon/logs/audit.log
 @shell grep -F "| class-verify | org.spigotmc.TicksPerSecondCommand | OK |" lemon/logs/audit.log
 @shell grep -F "| patch-verify | tps-text | OK |" lemon/logs/audit.log
@@ -57,10 +58,10 @@ fork instrumentation status
 @expect Instrumentation: live-patch agent not loaded: start the JVM with -javaagent:lemon-livepatch-agent\.jar
 @expect fix: add -javaagent:lemon-livepatch-agent\.jar before -jar in the start command .*attach [0-9]+
 @expect NOT DONE: live-patch agent not loaded
-# The attach. JDK 21+ warns about dynamically loaded agents (JEP 451) unless dynamic loading is
-# enabled; on the CI servers the JVM reported EnableDynamicAgentLoading=true (run #41), so either
-# the warning or that value must be in the log.
-@expect WARNING: A Java agent has been loaded dynamically|dynamic attach: EnableDynamicAgentLoading=true
+# The attach. EnableDynamicAgentLoading is true by default on JDK 21+ (the start command does not
+# set it); value, origin and whether the JDK printed its JEP 451 warning are recorded, not asserted (no warning
+# appeared in the Paper server log in run #41; a plain OpenJDK 21 program printed it locally).
+@expect dynamic attach: EnableDynamicAgentLoading=(true|false) \([a-z_ ]+\)
 @expect \[Lemon\] live-patch agent 3 loaded \(agentmain \(dynamic attach\)\)
 @expect Live-patch agent found: agent 3 loaded via agentmain \(dynamic attach\)
 @expect live-patch agent 3 loaded via agentmain \(dynamic attach\)

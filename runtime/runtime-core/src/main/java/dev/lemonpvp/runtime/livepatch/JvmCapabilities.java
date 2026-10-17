@@ -36,6 +36,27 @@ public final class JvmCapabilities {
     }
 
     /**
+     * Where the value of a HotSpot VM option comes from: {@code default}, {@code vm_creation}
+     * (command line), {@code environ_var}, {@code config_file}, {@code ergonomic}, ...
+     *
+     * @param name option name without {@code -XX:}
+     * @return the origin in lower case, or a note that it is unknown
+     */
+    public static String vmOptionOrigin(String name) {
+        try {
+            var bean = ManagementFactory.getPlatformMXBean(com.sun.management.HotSpotDiagnosticMXBean.class);
+            if (bean == null) {
+                return "origin unknown";
+            }
+            return bean.getVMOption(name).getOrigin().name().toLowerCase(java.util.Locale.ROOT);
+        } catch (IllegalArgumentException e) {
+            return "not available in this JVM";
+        } catch (RuntimeException | LinkageError e) {
+            return "origin unknown (" + e.getClass().getSimpleName() + ")";
+        }
+    }
+
+    /**
      * Why Lemon does not retransform with changes on a JVM with enhanced redefinition.
      * Measured in CI with {@code scripts/ci/RetransformRepro.java}: JetBrains Runtime 21.0.11
      * and 25.0.4.1 with {@code -XX:+AllowEnhancedClassRedefinition} aborted ("free(): double free

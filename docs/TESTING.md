@@ -290,6 +290,42 @@ Servers); Hot-Swap von `pvp-killstreaks` (die neue Instanz sagt die nächste Ser
 Class-Loadern eingesammelt. Nicht automatisiert: alles, was einen echten Spieler braucht
 (Treffer, Actionbar, Titel, Sounds, Effekte, Seitenleiste).
 
+### JVM-Instrumentation (Servertest 10, Läufe #41 `6b99bf6` und #43 `6a1d4b5`)
+
+Lauf #43: **alle 12 Jobs grün.** Ebenen (Details: [`INSTRUMENTATION.md`](INSTRUMENTATION.md) §9):
+
+* **Unit- und Integrationstests** (`:runtime-core:test`, Test-JVM mit echtem `-javaagent`):
+  Temurin 21.0.12: 134 Tests, 0 Fehler, 1 übersprungen (der Test, der nur auf JVMs mit
+  erweiterter Redefinition gilt). JBR 21.0.11 und JBR 25.0.4.1 mit
+  `-XX:+AllowEnhancedClassRedefinition`: je 134 Tests, 0 Fehler, 5 übersprungen (die
+  Retransformations-Tests); dort bestanden `enhancedRedefinitionJvmRefusesRetransformationPatches`
+  und `DynamicAttachTest` (zwei echte JVM-Prozesse: Attach per Launcher, `agentmain`,
+  Retransformation einer vorher geladenen Klasse, zweite Retransformation, Entfernen).
+* **JBR-Befund** (Diagnose-Schritt `RetransformRepro.java`, je Szenario eigene JVM, in Lauf #41
+  und #43 identisch): mit `-XX:+AllowEnhancedClassRedefinition` bricht `modify-unload` (Klasse
+  von einem Transformer bei der Retransformation verändert, danach entladen) mit
+  `free(): double free detected in tcache 2` ab (Exit 134); `recorder`, `modify`,
+  `modify-then-redefine` laufen durch; ohne das Flag laufen alle vier durch. In Lauf #39/#41
+  riss das die Test-JVM im GC-Test mit. Folge: Lemon verweigert Retransformations-Patches auf
+  solchen JVMs (Servertest 6 prüft die Meldung „not probed: …“).
+* **Live-Server-Test 10** (`scripts/ci/smoke-instrumentation.txt`, alle vier Versionen ✔ in
+  Lauf #43): Server **ohne** `-javaagent` gestartet; Status und Klassensuche melden den
+  fehlenden Agenten mit Abhilfe (`… attach <pid>`); `java -jar lemon-livepatch-agent.jar attach
+  <pid>` → `[Lemon] live-patch agent 3 loaded (agentmain (dynamic attach))`, Lemon findet ihn
+  ohne Neustart; gezählt: 28 627 (1.21.11) bis 30 116 (26.3) geladene Klassen, davon
+  15 827–16 630 änderbar und 12 799–13 485 versteckt (Zählung 10–14 ms); Klassensuche
+  `org.spigotmc.TicksPerSecondCommand - paper - modifiable`; Inspect mit Code-Source
+  `…/versions/<mc>/lemon-<mc>.jar` und dem SHA-256 der Klassendatei, der per `@shell` mit der
+  Klassendatei der laufenden JAR übereinstimmt; Probe „yes change method bodies by
+  retransformation (and restore them)“; Patch `tps-text` per Retransformation:
+  `OK patch tps-text applied and verified` (JVM-Retransformation 48–60 ms auf dem Hauptthread,
+  Rücklesen 46–63 ms), `/tps` zeigt zweimal den neuen Text; Rücklesen per
+  `inspect … verify` (selbst eine Retransformation) und `patch verify` bestätigen den Patch;
+  Redefinition derselben Klasse und der strukturelle Patch per Retransformation werden
+  abgelehnt; Rollback `rolled back and verified`, `/tps` wieder original; Audit-Log-Einträge
+  geprüft. In Lauf #41 war nur die Erwartung an die JEP-451-Warnung falsch (keine Warnung im
+  Serverlog); das Manifest der Server-JAR enthält nur `Main-Class` (Lauf #43).
+
 ## Noch nicht automatisiert
 
 | Test | Grund |
