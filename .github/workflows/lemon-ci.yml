@@ -371,6 +371,14 @@ jobs:
           ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
           EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/lemon-livepatch-agent.jar" \
             ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/livepatch" ../../scripts/ci/smoke-livepatch.txt
+      # Runs even if test 4 failed. Same patches, but the server starts WITHOUT -javaagent: the agent
+      # is attached to the running JVM and the patch is applied by retransformation.
+      - name: "Server test 10: instrumentation (dynamic attach, class search, retransformation patch)"
+        if: ${{ !cancelled() && steps.patches.outcome == 'success' }}
+        run: |
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/instrumentation" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
+          AGENT_JAR="$RUNNER_TEMP/agent/lemon-livepatch-agent.jar" \
+            ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/instrumentation" ../../scripts/ci/smoke-instrumentation.txt
       # Tests 5 and 6 run even if test 4 failed, so one failure does not hide the others.
       - name: Download test plugin
         id: plugin
@@ -431,6 +439,8 @@ jobs:
             ${{ runner.temp }}/plugins/server.log
             ${{ runner.temp }}/plugins/lemon/logs/audit.log
             ${{ runner.temp }}/livepatch-jbr/server.log
+            ${{ runner.temp }}/instrumentation/server.log
+            ${{ runner.temp }}/instrumentation/lemon/logs/audit.log
             ${{ runner.temp }}/spear-shipped/server.log
           if-no-files-found: ignore
       - name: Upload server jar

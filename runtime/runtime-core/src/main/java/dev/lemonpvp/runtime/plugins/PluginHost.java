@@ -9,6 +9,16 @@ import java.util.List;
  */
 public interface PluginHost {
 
+    /**
+     * Class loader of every loaded plugin, used to tell which plugin a loaded class belongs
+     * to. Default: none known.
+     *
+     * @return plugin name per plugin class loader (identity map)
+     */
+    default java.util.Map<ClassLoader, String> classLoaders() {
+        return java.util.Map.of();
+    }
+
     /** @return every installed plugin */
     List<InstalledPlugin> installed();
 

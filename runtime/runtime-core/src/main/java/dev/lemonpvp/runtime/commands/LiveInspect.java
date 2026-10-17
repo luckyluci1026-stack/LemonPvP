@@ -111,8 +111,8 @@ final class LiveInspect {
         a.send(MessageLevel.HEADER, "Core patch " + r.id() + " in this server process");
         a.send(r.status() == LivePatchRegistry.Status.ACTIVE ? MessageLevel.SUCCESS : r.status() == LivePatchRegistry.Status.FAILED
                 ? MessageLevel.ERROR : MessageLevel.INFO, r.status().name().toLowerCase(Locale.ROOT).replace('_', ' ') + " - " + r.detail());
-        a.send(MessageLevel.DETAIL, "applied by " + r.actor() + " at " + TIME.format(r.appliedAt()) + " UTC, archive "
-                + shortSha(r.archiveSha256()));
+        a.send(MessageLevel.DETAIL, "applied by " + r.actor() + " at " + TIME.format(r.appliedAt()) + " UTC ("
+                + r.mechanism().id() + "), archive " + shortSha(r.archiveSha256()));
         for (LivePatchRegistry.ClassRecord c : r.classes()) {
             a.send(MessageLevel.DETAIL, c.name() + ": " + shortSha(c.previous().sha256()) + " -> "
                     + shortSha(c.installed().sha256()));

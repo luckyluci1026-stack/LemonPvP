@@ -2,12 +2,18 @@ package dev.lemonpvp.runtime.livepatch;
 
 /**
  * Kinds of class redefinition a JVM may or may not support. Every capability is
- * determined by a real redefinition of a throw-away probe class ({@link CapabilityProbe}),
- * never assumed from the JVM name.
+ * determined by a real redefinition (or retransformation) of a throw-away probe class
+ * ({@link CapabilityProbe}), never assumed from the JVM name.
  */
 public enum Capability {
     /** Replace method bodies (standard HotSpot redefinition). */
     REDEFINE_METHOD_BODY("change existing method bodies"),
+    /**
+     * Replace method bodies through retransformation: a retransformation-capable
+     * {@link java.lang.instrument.ClassFileTransformer} supplies the new class file, and
+     * without it the next retransformation restores the initial class file.
+     */
+    RETRANSFORM_METHOD_BODY("change method bodies by retransformation (and restore them)"),
     /** Add methods or constructors. */
     ADD_METHOD("add methods/constructors"),
     /** Remove methods or constructors. */

@@ -21,6 +21,7 @@ import java.util.function.BiFunction;
  * <pre>
  * /fork info | version | status | reload
  * /fork live ...                      (see {@link LiveCommands}: modules, plugins, core patches)
+ * /fork instrumentation ...           (see {@link InstrumentationCommands}: JVM instrumentation, classes, patches)
  * /fork module list
  * /fork module info|validate|diagnostics &lt;id&gt;
  * /fork module load|enable|disable|reload|unload|config|remove &lt;id&gt;
@@ -32,19 +33,21 @@ import java.util.function.BiFunction;
  */
 public final class AdminCommand {
 
-    private static final List<String> TOP = List.of("info", "version", "status", "reload", "live", "module");
+    private static final List<String> TOP = List.of("info", "version", "status", "reload", "live", "instrumentation", "module");
     private static final List<String> MODULE_VIEW = List.of("list", "info", "validate", "diagnostics");
     private static final List<String> MODULE_MANAGE = List.of("load", "enable", "disable", "reload", "unload", "config", "remove");
 
     private final LemonRuntime runtime;
     private final Reports reports;
     private final LiveCommands live;
+    private final InstrumentationCommands instrumentation;
 
     /** @param runtime running runtime */
     public AdminCommand(LemonRuntime runtime) {
         this.runtime = runtime;
         this.reports = new Reports(runtime);
         this.live = new LiveCommands(runtime, this.reports);
+        this.instrumentation = new InstrumentationCommands(runtime);
     }
 
     /**
@@ -69,6 +72,7 @@ public final class AdminCommand {
             case "status" -> this.reports.status(actor);
             case "reload" -> reloadRuntimeConfig(actor);
             case "live" -> this.live.execute(actor, args);
+            case "instrumentation" -> this.instrumentation.execute(actor, args);
             case "module" -> module(actor, args);
             default -> usage(actor);
         }
@@ -191,6 +195,10 @@ public final class AdminCommand {
         if (actor.hasPermission(RuntimePermissions.LIVE_VIEW)) {
             actor.send(MessageLevel.DETAIL, "/fork live ...  - live updates of modules, plugins and core patches (/fork live for help)");
         }
+        if (actor.hasPermission(RuntimePermissions.LIVE_VIEW)) {
+            actor.send(MessageLevel.DETAIL, "/fork instrumentation ...  - JVM instrumentation: loaded classes, redefine/retransform"
+                    + " patches (/fork instrumentation for help)");
+        }
         if (actor.hasPermission(RuntimePermissions.RELOAD)) {
             actor.send(MessageLevel.DETAIL, "/fork reload  - reload lemon-runtime.yml");
         }
@@ -218,6 +226,9 @@ public final class AdminCommand {
         }
         if (args[0].equalsIgnoreCase("live")) {
             return actor.hasPermission(RuntimePermissions.LIVE_VIEW) ? this.live.complete(actor, args) : List.of();
+        }
+        if (args[0].equalsIgnoreCase("instrumentation")) {
+            return actor.hasPermission(RuntimePermissions.LIVE_VIEW) ? this.instrumentation.complete(args) : List.of();
         }
         if (!args[0].equalsIgnoreCase("module")) {
             return List.of();

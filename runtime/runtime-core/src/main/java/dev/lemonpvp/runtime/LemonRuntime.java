@@ -8,8 +8,10 @@ import dev.lemonpvp.runtime.config.RuntimeConfigLoader;
 import dev.lemonpvp.runtime.lifecycle.ModuleManager;
 import dev.lemonpvp.runtime.lifecycle.RuntimeEnvironment;
 import dev.lemonpvp.runtime.livepatch.InstrumentationAccess;
+import dev.lemonpvp.runtime.livepatch.InstrumentationDiagnostics;
 import dev.lemonpvp.runtime.livepatch.LivePatchRegistry;
 import dev.lemonpvp.runtime.livepatch.LivePatchService;
+import dev.lemonpvp.runtime.livepatch.PatchTransformer;
 import dev.lemonpvp.runtime.metrics.LeakDetector;
 import dev.lemonpvp.runtime.metrics.RuntimeHealth;
 import dev.lemonpvp.runtime.metrics.RuntimeMetrics;
@@ -70,7 +72,7 @@ public final class LemonRuntime {
                 new RuntimeMetrics(), new RuntimeHealth(), new LeakDetector(), new ServiceHub(), info);
         this.modules = new ModuleManager(this.env);
         this.livePatches = new LivePatchService(this.config::get, paths, platform, worker, this.env.audit(),
-                LivePatchRegistry.INSTANCE, InstrumentationAccess.find());
+                LivePatchRegistry.INSTANCE, PatchTransformer.INSTANCE, InstrumentationAccess::find);
         this.pluginUpdates = platform.pluginHost().map(h -> new PluginUpdateManager(this.config::get, paths, platform, worker,
                 this.env.audit(), h)).orElse(null);
     }
@@ -118,10 +120,23 @@ public final class LemonRuntime {
         platform.logger().warning("Hot deployment is ENABLED. Modules run with full server privileges; see docs/SECURITY.md."
                 + " allow-runtime-deploy=" + config.allowRuntimeDeploy() + ", verify-integrity=" + config.verifyIntegrity()
                 + ", plugin-updates=" + config.pluginUpdates().enabled() + ", live-patching=" + config.livePatching().enabled());
-        if (config.livePatching().enabled()) {
+        InstrumentationDiagnostics.Report instrumentation = runtime.livePatches.diagnostics(true);
+        if (config.livePatching().enabled() || runtime.livePatches.agent().instrumentation().isPresent()) {
             platform.logger().info("Core live patching: " + runtime.livePatches.status().agentDetail() + "; profile "
                     + runtime.livePatches.profile().yamlName() + (runtime.livePatches.profileNote() == null ? ""
                     : " (" + runtime.livePatches.profileNote() + ")"));
+            for (InstrumentationDiagnostics.Finding f : instrumentation.findings()) {
+                if (f.level() == InstrumentationDiagnostics.Level.MISSING || f.level() == InstrumentationDiagnostics.Level.WARNING) {
+                    platform.logger().warning("Instrumentation: " + f.text());
+                } else {
+                    platform.logger().info("Instrumentation: " + f.text());
+                }
+            }
+        } else {
+            platform.logger().info("Instrumentation: live-patch agent not loaded, live-patching.enabled: false"
+                    + " (/fork instrumentation status explains how to enable it)");
+            instrumentation.findings().stream().filter(f -> f.level() == InstrumentationDiagnostics.Level.WARNING)
+                    .forEach(f -> platform.logger().warning("Instrumentation: " + f.text()));
         }
         runtime.env.audit().record("server", "start", "*", true, "runtime " + RuntimeVersion.VERSION + " started on "
                 + platform.serverBrand() + " " + platform.minecraftVersion());

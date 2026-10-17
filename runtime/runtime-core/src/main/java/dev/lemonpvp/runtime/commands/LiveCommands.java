@@ -12,6 +12,7 @@ import dev.lemonpvp.runtime.livepatch.ClassChange;
 import dev.lemonpvp.runtime.livepatch.JvmCapabilities;
 import dev.lemonpvp.runtime.livepatch.LivePatchRegistry;
 import dev.lemonpvp.runtime.livepatch.LivePatchService;
+import dev.lemonpvp.runtime.livepatch.Mechanism;
 import dev.lemonpvp.runtime.livepatch.PatchIds;
 import dev.lemonpvp.runtime.livepatch.PatchPlan;
 import dev.lemonpvp.runtime.loader.ModuleArtifact;
@@ -322,7 +323,7 @@ final class LiveCommands {
         }
     }
 
-    private static void capabilities(CommandActor a, Map<Capability, CapabilityProbe.Result> results) {
+    static void capabilities(CommandActor a, Map<Capability, CapabilityProbe.Result> results) {
         for (Map.Entry<Capability, CapabilityProbe.Result> e : new EnumMap<>(results).entrySet()) {
             a.send(e.getValue().supported() ? MessageLevel.SUCCESS : MessageLevel.WARNING, (e.getValue().supported() ? "yes " : "no  ")
                     + e.getKey().description());
@@ -682,6 +683,18 @@ final class LiveCommands {
     }
 
     private static void patchResult(CommandActor a, LivePatchService.Result r, String verb, String id) {
+        patchOutcome(a, r, "/fork live " + verb + " " + id + " confirm", verb.equals("verify"));
+    }
+
+    /**
+     * Shows the outcome of a core patch operation.
+     *
+     * @param a       receiver
+     * @param r       outcome
+     * @param confirm command that confirms the operation
+     * @param verify  the operation was a read-back check
+     */
+    static void patchOutcome(CommandActor a, LivePatchService.Result r, String confirm, boolean verify) {
         if (r.plan() != null && (r.kind() == LivePatchService.Result.Kind.CONFIRMATION_REQUIRED
                 || r.kind() == LivePatchService.Result.Kind.REJECTED)) {
             plan(a, r.plan());
@@ -690,7 +703,7 @@ final class LiveCommands {
             case CONFIRMATION_REQUIRED -> {
                 a.send(MessageLevel.SUCCESS, r.message());
                 r.details().forEach(d -> a.send(MessageLevel.DETAIL, d));
-                a.send(MessageLevel.WARNING, "Run /fork live " + verb + " " + id + " confirm to change the running server.");
+                a.send(MessageLevel.WARNING, "Run " + confirm + " to change the running server.");
                 return;
             }
             case APPLIED, ROLLED_BACK -> {
@@ -699,7 +712,7 @@ final class LiveCommands {
                 } else {
                     // The JVM accepted the change, but Lemon could not confirm the running bytecode.
                     a.send(r.verification().outcome() == AppliedBytecodeCheck.Outcome.DIFFERS ? MessageLevel.ERROR : MessageLevel.WARNING,
-                            (verb.equals("verify") ? "" : "DONE, ") + r.message() + " - " + r.verification().summary());
+                            (verify ? "" : "DONE, ") + r.message() + " - " + r.verification().summary());
                 }
             }
             case REJECTED -> a.send(MessageLevel.ERROR, "NOT DONE " + r.message());
@@ -709,16 +722,18 @@ final class LiveCommands {
         r.details().forEach(d -> a.send(MessageLevel.DETAIL, d));
     }
 
-    private static void plan(CommandActor a, PatchPlan plan) {
+    static void plan(CommandActor a, PatchPlan plan) {
         a.send(MessageLevel.HEADER, "Core patch " + plan.patchId() + (plan.description().isEmpty() ? "" : " - " + plan.description()));
-        a.send(MessageLevel.DETAIL, "archive sha256 " + plan.archiveSha256());
+        a.send(MessageLevel.DETAIL, "archive sha256 " + plan.archiveSha256() + ", mechanism " + plan.mechanism().id());
         for (PatchPlan.Entry e : plan.entries()) {
             MessageLevel level = switch (e.action()) {
                 case REDEFINE, DEFINE -> MessageLevel.SUCCESS;
                 case UNCHANGED -> MessageLevel.INFO;
                 case REJECT -> MessageLevel.ERROR;
             };
-            a.send(level, e.action().name().toLowerCase(Locale.ROOT) + " " + e.className()
+            String action = e.action() == PatchPlan.Action.REDEFINE && plan.mechanism() == Mechanism.RETRANSFORM ? "retransform"
+                    : e.action().name().toLowerCase(Locale.ROOT);
+            a.send(level, action + " " + e.className()
                     + (e.replaces() == null ? "" : " (replaces the version of patch " + e.replaces() + ")"));
             for (ClassChange c : e.changes()) {
                 a.send(MessageLevel.DETAIL, c.toString());

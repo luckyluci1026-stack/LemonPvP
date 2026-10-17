@@ -32,12 +32,22 @@ public final class JvmCapabilities {
      * @return {@code "true"}, {@code "false"} or a note that the JVM does not know the flag
      */
     public static String enhancedRedefinitionFlag() {
+        return vmOption("AllowEnhancedClassRedefinition");
+    }
+
+    /**
+     * Value of a HotSpot VM option (e.g. {@code EnableDynamicAgentLoading}).
+     *
+     * @param name option name without {@code -XX:}
+     * @return {@code "true"}, {@code "false"}, another value, or a note that the JVM does not know the option
+     */
+    public static String vmOption(String name) {
         try {
             var bean = ManagementFactory.getPlatformMXBean(com.sun.management.HotSpotDiagnosticMXBean.class);
             if (bean == null) {
                 return "unknown (no HotSpot diagnostic bean)";
             }
-            return bean.getVMOption("AllowEnhancedClassRedefinition").getValue();
+            return bean.getVMOption(name).getValue();
         } catch (IllegalArgumentException e) {
             return "not available in this JVM";
         } catch (RuntimeException | LinkageError e) {

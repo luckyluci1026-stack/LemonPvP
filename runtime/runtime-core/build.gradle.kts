@@ -22,7 +22,11 @@ tasks.test {
     // Core live patch tests redefine real classes, so the test JVM runs with the agent, like a server would.
     val agentJar = project(":livepatch-agent").layout.buildDirectory.file("libs/lemon-livepatch-agent.jar")
     dependsOn(":livepatch-agent:jar")
-    jvmArgumentProviders.add(CommandLineArgumentProvider { listOf("-javaagent:" + agentJar.get().asFile.absolutePath) })
+    jvmArgumentProviders.add(CommandLineArgumentProvider {
+        listOf("-javaagent:" + agentJar.get().asFile.absolutePath,
+            // The dynamic-attach test starts a second JVM without the agent and attaches this jar to it.
+            "-Dlemon.test.agentJar=" + agentJar.get().asFile.absolutePath)
+    })
     // Optional: run the tests on another JVM (e.g. JetBrains Runtime) with extra flags, e.g.
     //   -PtestJava=/opt/jbr/bin/java -PtestJvmArgs=-XX:+AllowEnhancedClassRedefinition
     providers.gradleProperty("testJava").orNull?.let { executable = it }

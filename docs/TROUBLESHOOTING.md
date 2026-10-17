@@ -80,7 +80,7 @@ Logs und Audit: Server-Log (Präfix `[Lemon]`), `lemon/logs/audit.log`,
 | Plugin: `FAILED … the previous version … was restored and is enabled` | neue Version startete nicht (Fehler im Server-Log) | Plugin korrigieren; alte Version läuft weiter |
 | Plugin: `restoring the previous version also failed … restart the server` | auch die alte Version startete nicht | alte JAR liegt wieder in `plugins/`; Server neu starten |
 | `'x' is ambiguous ([MODULE, PLUGIN]); use a prefix` | gleicher Name in mehreren Bereichen | `plugin:x`, `module:x` oder `patch:x` |
-| `not verified: … Can-Retransform-Classes missing` | alte Agent-JAR (Version 1) | `lemon-livepatch-agent.jar` dieses Builds verwenden (Startmeldung `live-patch agent 2 loaded`); der Patch selbst wurde angewendet |
+| `not verified: … Can-Retransform-Classes missing` | alte Agent-JAR (Version 1) | `lemon-livepatch-agent.jar` dieses Builds verwenden (Startmeldung `live-patch agent 3 loaded`); der Patch selbst wurde angewendet |
 | `VERIFICATION FAILED: the JVM runs bytecode that differs …` | die Klasse wurde nach dem Patch verändert (anderer Agent, IntelliJ-HotSwap) oder ein Agent instrumentiert sie | `fork live patch verify <id>`, Ursache klären; `fork live rollback <id>` stellt den Bytecode vor dem Patch her |
 | Plugin: `WARNING: still registered for the unloaded version …` | nach dem Entladen waren noch Listener/Tasks/… der alten Instanz registriert | Update ist erfolgt; alte Version bleibt im Speicher – Neustart bei Gelegenheit, Plugin-Autor informieren |
 | Plugin: `WARNING: threads of the unloaded version … are still running` | Plugin beendet eigene Threads/Executor nicht in `onDisable` | wie oben; `fork live inspect <Plugin>` zeigt den Stand |

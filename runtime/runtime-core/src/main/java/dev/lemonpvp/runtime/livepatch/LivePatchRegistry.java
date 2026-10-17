@@ -23,7 +23,7 @@ public final class LivePatchRegistry {
 
     /** State of a patch in this JVM. */
     public enum Status {
-        /** Redefinition succeeded and was not rolled back. */
+        /** Redefinition (or retransformation) succeeded and was not rolled back. */
         ACTIVE,
         /** Rolled back to the previous bytecode. */
         ROLLED_BACK,
@@ -56,6 +56,7 @@ public final class LivePatchRegistry {
      *
      * @param id             patch id
      * @param archiveSha256  digest of the archive
+     * @param mechanism      how the classes were installed
      * @param actor          who applied it
      * @param appliedAt      time of the attempt
      * @param status         current status
@@ -65,16 +66,16 @@ public final class LivePatchRegistry {
      * @param backupDirectory where the previous class files were saved
      * @param changedAt      time of the last status change
      */
-    public record PatchRecord(String id, String archiveSha256, String actor, Instant appliedAt, Status status, String detail,
-                              List<ClassRecord> classes, List<String> definedClasses, String backupDirectory, Instant changedAt) {
+    public record PatchRecord(String id, String archiveSha256, Mechanism mechanism, String actor, Instant appliedAt, Status status,
+                              String detail, List<ClassRecord> classes, List<String> definedClasses, String backupDirectory, Instant changedAt) {
         public PatchRecord {
             classes = List.copyOf(classes);
             definedClasses = List.copyOf(definedClasses);
         }
 
         PatchRecord with(Status newStatus, String newDetail) {
-            return new PatchRecord(this.id, this.archiveSha256, this.actor, this.appliedAt, newStatus, newDetail, this.classes,
-                    this.definedClasses, this.backupDirectory, Instant.now());
+            return new PatchRecord(this.id, this.archiveSha256, this.mechanism, this.actor, this.appliedAt, newStatus, newDetail,
+                    this.classes, this.definedClasses, this.backupDirectory, Instant.now());
         }
     }
 

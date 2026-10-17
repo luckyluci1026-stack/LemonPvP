@@ -64,6 +64,7 @@ class LivePatchIntegrationTest {
     @BeforeEach
     void cleanRegistry() {
         LivePatchRegistry.INSTANCE.clearForTests();
+        PatchTransformer.INSTANCE.clearForTests();
         assertTrue(InstrumentationAccess.find().instrumentation().isPresent(), "tests must run with the live-patch agent");
     }
 

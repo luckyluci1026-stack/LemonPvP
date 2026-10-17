@@ -59,8 +59,8 @@ fork live patch status
 @shell grep -F "| patch-apply | tps-atomic | FAILED |" lemon/logs/audit.log
 @shell grep -F "| patch-rollback | tps-text | OK |" lemon/logs/audit.log
 @shell grep -F "| patch-verify | tps-text | OK |" lemon/logs/audit.log
-@expect live-patch agent 2 loaded \(-javaagent\)
-@expect Agent: agent 2 loaded via
+@expect live-patch agent 3 loaded \(-javaagent\)
+@expect Agent: agent 3 loaded via
 @expect live-patching.enabled: true, profile: production
 @expect patches must be listed in lemon/patches/approved.sha256
 @expect Build id: lemonpvp:lemon/

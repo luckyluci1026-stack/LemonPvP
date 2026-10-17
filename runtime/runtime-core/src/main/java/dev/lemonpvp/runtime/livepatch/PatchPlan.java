@@ -9,14 +9,15 @@ import java.util.Map;
  * @param patchId          patch id
  * @param archiveSha256    digest of the archive the plan was made from
  * @param description      description from the manifest
+ * @param mechanism        how the classes would be installed
  * @param entries          one entry per class of the patch
  * @param errors           reasons why the patch cannot be applied (empty = applicable)
  * @param warnings         semantic caveats the operator must read
  * @param capabilities     capabilities the patch needs and what the probes found
  * @param registryVersion  {@link LivePatchRegistry#version()} the plan is based on
  */
-public record PatchPlan(String patchId, String archiveSha256, String description, List<Entry> entries, List<String> errors,
-                        List<String> warnings, Map<Capability, CapabilityProbe.Result> capabilities, long registryVersion) {
+public record PatchPlan(String patchId, String archiveSha256, String description, Mechanism mechanism, List<Entry> entries,
+                        List<String> errors, List<String> warnings, Map<Capability, CapabilityProbe.Result> capabilities, long registryVersion) {
 
     public PatchPlan {
         entries = List.copyOf(entries);
@@ -27,7 +28,7 @@ public record PatchPlan(String patchId, String archiveSha256, String description
 
     /** What happens with one class. */
     public enum Action {
-        /** Existing class is redefined. */
+        /** Existing class is redefined (or retransformed, see {@link PatchPlan#mechanism()}). */
         REDEFINE,
         /** New class is defined in the package of {@link Entry#hostClass()}. */
         DEFINE,

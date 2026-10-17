@@ -59,6 +59,16 @@ public final class CapabilityProbe {
      * @return the result; never throws
      */
     public static Result probe(Instrumentation instrumentation, Capability capability) {
+        if (capability == Capability.RETRANSFORM_METHOD_BODY) {
+            try {
+                return retransform(instrumentation);
+            } catch (Throwable t) {
+                if (t instanceof VirtualMachineError vme && !(vme instanceof StackOverflowError)) {
+                    throw vme;
+                }
+                return new Result(false, "probe failed unexpectedly: " + t);
+            }
+        }
         if (!instrumentation.isRedefineClassesSupported()) {
             return new Result(false, "Instrumentation.isRedefineClassesSupported() is false");
         }
@@ -94,6 +104,7 @@ public final class CapabilityProbe {
                         new ProbeClassWriter(PROBE, BASE).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1),
                         new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1), false);
                 case DEFINE_NEW_CLASS -> defineNewClass();
+                case RETRANSFORM_METHOD_BODY -> throw new IllegalStateException("handled above");
                 case VERIFY_REDEFINED_CLASSES -> verifiesRedefinedClasses(instrumentation);
             };
         } catch (Throwable t) {
@@ -125,6 +136,52 @@ public final class CapabilityProbe {
             return new Result(true, "redefinition accepted; the new method body executed (1 -> 2)");
         }
         return new Result(false, "redefinition returned but the method still returns " + afterValue);
+    }
+
+    /**
+     * Retransforms a probe class with a temporary transformer that supplies a new method
+     * body, then retransforms it again without the transformer: the JVM must run the new body
+     * and afterwards the initial one again.
+     */
+    private static Result retransform(Instrumentation inst) throws ReflectiveOperationException {
+        if (!inst.isRetransformClassesSupported()) {
+            return new Result(false, "Instrumentation.isRetransformClassesSupported() is false (agent without"
+                    + " Can-Retransform-Classes, or the JVM cannot retransform)");
+        }
+        ProbeLoader loader = new ProbeLoader();
+        Class<?> probe = loader.define(PROBE, new ProbeClassWriter(PROBE, OBJECT)
+                .staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1).toBytes());
+        byte[] next = new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 2).toBytes();
+        java.lang.instrument.ClassFileTransformer supplier = new java.lang.instrument.ClassFileTransformer() {
+            @Override
+            public byte[] transform(Module module, ClassLoader l, String name, Class<?> redefined,
+                                    java.security.ProtectionDomain domain, byte[] classfile) {
+                return redefined == probe ? next.clone() : null;
+            }
+        };
+        int before = (int) probe.getMethod("value").invoke(null);
+        inst.addTransformer(supplier, true);
+        try {
+            inst.retransformClasses(probe);
+        } catch (UnsupportedOperationException e) {
+            return new Result(false, "JVM refused: " + e.getMessage());
+        } catch (java.lang.instrument.UnmodifiableClassException | LinkageError e) {
+            return new Result(false, "JVM error: " + e);
+        } finally {
+            inst.removeTransformer(supplier);
+        }
+        int patched = (int) probe.getMethod("value").invoke(null);
+        try {
+            inst.retransformClasses(probe);
+        } catch (UnsupportedOperationException | java.lang.instrument.UnmodifiableClassException | LinkageError e) {
+            return new Result(false, "retransformation without the transformer failed: " + e);
+        }
+        int restored = (int) probe.getMethod("value").invoke(null);
+        if (before == 1 && patched == 2 && restored == 1) {
+            return new Result(true, "the transformer's method body executed (1 -> 2) and the initial body came back"
+                    + " without it (2 -> 1)");
+        }
+        return new Result(false, "unexpected values: before " + before + ", patched " + patched + ", restored " + restored);
     }
 
     /**

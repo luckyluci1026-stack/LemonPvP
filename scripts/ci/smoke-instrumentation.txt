@@ -1,0 +1,100 @@
+# JVM instrumentation on a real server (standard JVM, production profile).
+# The server starts WITHOUT -javaagent; the agent is attached to the running JVM with the
+# launcher in the agent jar (java -jar lemon-livepatch-agent.jar attach <pid>). Then a patch
+# built in CI from changed Paper sources (org.spigotmc.TicksPerSecondCommand) is applied by
+# retransformation through Lemon's transformer, read back, and rolled back.
+fork instrumentation status
+@sleep 2
+fork instrumentation classes TicksPerSecond
+@sleep 3
+@shell java -jar "$AGENT_JAR" attach "$SERVER_PID"
+@sleep 2
+fork instrumentation status
+@sleep 3
+tps
+fork instrumentation classes spigotmc.TicksPerSecond paper
+@sleep 3
+fork instrumentation classes org.spigotmc.*Command
+@sleep 3
+fork instrumentation inspect org.spigotmc.TicksPerSecondCommand
+@sleep 3
+fork instrumentation capabilities
+@sleep 6
+# The patch file is the same one server test 4 applies by redefinition.
+fork instrumentation patch check tps-text retransform
+@sleep 4
+fork instrumentation patch apply tps-text retransform
+@sleep 4
+fork instrumentation patch apply tps-text retransform confirm
+@sleep 4
+tps
+# Reading back is itself a retransformation: Lemon's transformer supplies the patch again.
+fork instrumentation inspect org.spigotmc.TicksPerSecondCommand verify
+@sleep 3
+fork instrumentation patch verify tps-text
+@sleep 3
+tps
+# Refused while the retransformation patch is active / never applied by retransformation.
+fork instrumentation patch check tps-text redefine
+@sleep 4
+fork instrumentation patch check tps-structural retransform
+@sleep 4
+fork instrumentation history
+@sleep 2
+fork instrumentation patch rollback tps-text
+@sleep 3
+fork instrumentation patch rollback tps-text confirm
+@sleep 3
+tps
+fork instrumentation status
+@sleep 3
+@shell grep -F "class file sha256: $(cat expected-tps-base.txt)" server.log
+@shell grep -F "| patch-apply | tps-text | OK |" lemon/logs/audit.log
+@shell grep -F "| class-verify | org.spigotmc.TicksPerSecondCommand | OK |" lemon/logs/audit.log
+@shell grep -F "| patch-verify | tps-text | OK |" lemon/logs/audit.log
+@shell grep -F "| patch-rollback | tps-text | OK |" lemon/logs/audit.log
+# Before the attach
+@expect Instrumentation: live-patch agent not loaded: start the JVM with -javaagent:lemon-livepatch-agent\.jar
+@expect fix: add -javaagent:lemon-livepatch-agent\.jar before -jar in the start command .*attach [0-9]+
+@expect NOT DONE: live-patch agent not loaded
+# The attach (JDK 21+ warns about dynamically loaded agents, JEP 451)
+@expect WARNING: A Java agent has been loaded dynamically
+@expect \[Lemon\] live-patch agent 3 loaded \(agentmain \(dynamic attach\)\)
+@expect Live-patch agent found: agent 3 loaded via agentmain \(dynamic attach\)
+@expect live-patch agent 3 loaded via agentmain \(dynamic attach\)
+@expect retransformClasses: supported
+@expect the agent was attached to the running JVM
+@expect classes: [0-9]+ loaded, [0-9]+ modifiable, [0-9]+ hidden
+# Class search and inspection
+@expect Loaded classes matching 'spigotmc\.TicksPerSecond' in paper
+@expect org\.spigotmc\.TicksPerSecondCommand - paper - modifiable
+@expect Loaded classes matching 'org\.spigotmc\.\*Command'
+@expect Class org\.spigotmc\.TicksPerSecondCommand
+@expect code source \(as reported by the class loader\): file:.*versions/
+@expect isModifiableClass: true
+@expect Lemon: not changed by Lemon in this process
+@expect yes change method bodies by retransformation \(and restore them\)
+# Retransformation patch
+@expect archive sha256 [0-9a-f]+, mechanism retransform
+@expect retransform org\.spigotmc\.TicksPerSecondCommand
+@expect Apply: /fork instrumentation patch apply tps-text retransform
+@expect Run /fork instrumentation patch apply tps-text retransform confirm to change the running server
+@expect OK patch tps-text applied and verified
+@expect retransformed org\.spigotmc\.TicksPerSecondCommand
+@expect Live patch tps-text \(retransform\) applied by
+@expect the running bytecode equals the version of active patch tps-text \(retransformation layers \[tps-text\]\)
+@expect OK patch tps-text: verified: the JVM runs the expected bytecode
+@expect org\.spigotmc\.TicksPerSecondCommand: transformer layers \[tps-text\], supplied [0-9]+ time
+@expect the class runs retransformation patch \[tps-text\]
+@expect only method-body changes by retransformation
+@expect tps-text \(retransform\) active by
+@expect rollback of tps-text is ready
+@expect OK patch tps-text rolled back and verified
+@expect 0 class\(es\) with a retransformation patch
+@count 2 TPS from last 1m, 5m, 15m
+@count 2 TPS \(live patch\) from last 1m, 5m, 15m
+@reject TPS \(structural\)
+@reject DISPLACED
+@reject VERIFICATION FAILED|not verified
+@reject Unhandled exception
+@reject \[null\]

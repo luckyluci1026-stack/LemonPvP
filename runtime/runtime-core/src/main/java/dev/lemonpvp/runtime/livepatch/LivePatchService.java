@@ -41,8 +41,10 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
- * Core live patching: inspects, applies and rolls back patches that redefine classes of
- * the running server through {@link Instrumentation#redefineClasses}.
+ * Core live patching: inspects, applies and rolls back patches that change classes of the
+ * running server, either through {@link Instrumentation#redefineClasses}
+ * ({@link Mechanism#REDEFINE}) or through {@link Instrumentation#retransformClasses} with
+ * Lemon's {@link PatchTransformer} ({@link Mechanism#RETRANSFORM}).
  *
  * <p>Threading: file I/O, hashing, parsing and planning run on the runtime worker thread.
  * The redefinition itself runs on the server main thread, between two scheduled tasks, so
@@ -50,8 +52,9 @@ import java.util.stream.Stream;
  * code (other threads may still be inside old method versions; the JVM lets them finish
  * with the old code). One live-patch operation runs at a time.</p>
  *
- * <p>Atomicity: all classes of a patch are passed to one {@code redefineClasses} call. The
- * JVMTI specification guarantees that either all of them get the new definition or none.
+ * <p>Atomicity: all classes of a patch are passed to one {@code redefineClasses} (or
+ * {@code retransformClasses}) call. The JVMTI specification guarantees that either all of
+ * them get the new definition or none.
  * New classes (if any) are defined before that call; they cannot be removed again, but
  * nothing references them if the redefinition fails.</p>
  */
@@ -65,13 +68,15 @@ public final class LivePatchService {
     private final Executor worker;
     private final AuditLog audit;
     private final LivePatchRegistry registry;
-    private final InstrumentationAccess.Lookup agent;
+    private final PatchTransformer transformer;
+    private final Supplier<InstrumentationAccess.Lookup> agentLookup;
+    private volatile InstrumentationAccess.Lookup agent;
     private final LivePatchConfig.Profile profile;
     private final String profileNote;
     private final AtomicBoolean busy = new AtomicBoolean();
     private final Map<String, Pending> pending = new ConcurrentHashMap<>();
 
-    private record Pending(String archiveSha256, Instant expires) {
+    private record Pending(String archiveSha256, Mechanism mechanism, Instant expires) {
     }
 
     /**
@@ -100,7 +105,7 @@ public final class LivePatchService {
             CONFIRMATION_REQUIRED,
             /** Refused before anything was changed. */
             REJECTED,
-            /** Redefinition succeeded. */
+            /** Redefinition or retransformation succeeded. */
             APPLIED,
             /** Rollback succeeded. */
             ROLLED_BACK,
@@ -130,9 +135,14 @@ public final class LivePatchService {
      * @param profile          effective profile
      * @param profileNote      explanation if the configured profile was not honoured, or {@code null}
      * @param agentDetail      agent lookup result
+     * @param agentVersion     version of the agent, or {@code 0}
+     * @param agentLoadedBy    how the agent was loaded
      * @param instrumentation  whether the instrumentation instance is available
      * @param redefineSupported whether the JVM supports redefinition at all
-     * @param retransformSupported whether the running bytecode can be read back (agent 2 and JVM)
+     * @param retransformSupported whether classes can be retransformed (retransformation patches, read-back check)
+     * @param transformerRegistered whether Lemon's patch transformer is registered
+     * @param retransformedClasses classes that currently have a retransformation patch layer
+     * @param displacedClasses of those, classes whose patch was pushed out by another redefinition
      * @param vm               JVM description
      * @param enhancedFlag     value of AllowEnhancedClassRedefinition
      * @param buildId          server build id
@@ -144,8 +154,9 @@ public final class LivePatchService {
      * @param heapMaxMiB       maximum heap
      */
     public record StatusReport(boolean enabled, LivePatchConfig.Profile profile, String profileNote, String agentDetail,
-                               boolean instrumentation, boolean redefineSupported, boolean retransformSupported, String vm,
-                               String enhancedFlag, String buildId,
+                               int agentVersion, String agentLoadedBy, boolean instrumentation, boolean redefineSupported,
+                               boolean retransformSupported, boolean transformerRegistered, int retransformedClasses,
+                               int displacedClasses, String vm, String enhancedFlag, String buildId,
                                Path patchDirectory, String trustNote, long active, int attempts, long heapUsedMiB, long heapMaxMiB) {
     }
 
@@ -155,18 +166,24 @@ public final class LivePatchService {
      * @param platform hosting platform
      * @param worker   worker executor for I/O
      * @param audit    audit log
-     * @param registry registry of this JVM
-     * @param agent    agent lookup result
+     * @param registry    registry of this JVM
+     * @param transformer patch transformer of this JVM
+     * @param agentLookup finds the agent; called again while no agent was found, so an agent attached to the running
+     *                    JVM later ({@code java -jar lemon-livepatch-agent.jar attach <pid>}) is picked up
      */
     public LivePatchService(Supplier<RuntimeConfig> config, RuntimePaths paths, RuntimePlatform platform, Executor worker,
-                            AuditLog audit, LivePatchRegistry registry, InstrumentationAccess.Lookup agent) {
+                            AuditLog audit, LivePatchRegistry registry, PatchTransformer transformer,
+                            Supplier<InstrumentationAccess.Lookup> agentLookup) {
         this.config = config;
         this.paths = paths;
         this.platform = platform;
         this.worker = worker;
         this.audit = audit;
         this.registry = registry;
-        this.agent = agent;
+        this.transformer = transformer;
+        this.agentLookup = agentLookup;
+        this.agent = agentLookup.get();
+        transformer.warnings(m -> platform.logger().warning(m));
         LivePatchConfig lp = config.get().livePatching();
         if (lp.profile() == LivePatchConfig.Profile.DEVELOPMENT
                 && !Boolean.parseBoolean(System.getProperty(LivePatchConfig.DEVELOPMENT_PROPERTY))) {
@@ -193,15 +210,50 @@ public final class LivePatchService {
         return this.config.get().livePatching().enabled();
     }
 
+    /**
+     * The agent lookup. While no agent is found, every call looks again: an agent attached
+     * to the running JVM is used from then on, without a restart.
+     *
+     * @return current lookup result
+     */
+    public InstrumentationAccess.Lookup agent() {
+        InstrumentationAccess.Lookup current = this.agent;
+        if (current.instrumentation().isEmpty()) {
+            InstrumentationAccess.Lookup again = this.agentLookup.get();
+            if (again.instrumentation().isPresent()) {
+                this.agent = again;
+                this.platform.logger().info("Live-patch agent found: " + again.detail());
+                return again;
+            }
+        }
+        return current;
+    }
+
+    /**
+     * @param countClasses also count loaded and modifiable classes
+     * @return what this JVM offers for instrumentation and what is missing
+     */
+    public InstrumentationDiagnostics.Report diagnostics(boolean countClasses) {
+        return InstrumentationDiagnostics.collect(agent(), enabled(), countClasses);
+    }
+
+    /** @return Lemon's patch transformer */
+    public PatchTransformer transformer() {
+        return this.transformer;
+    }
+
     // ------------------------------------------------------------------ read-only views
 
     /** @return current status (no I/O) */
     public StatusReport status() {
-        Optional<Instrumentation> inst = this.agent.instrumentation();
+        InstrumentationAccess.Lookup lookup = agent();
+        Optional<Instrumentation> inst = lookup.instrumentation();
         Runtime rt = Runtime.getRuntime();
-        return new StatusReport(enabled(), this.profile, this.profileNote, this.agent.detail(), inst.isPresent(),
-                inst.map(Instrumentation::isRedefineClassesSupported).orElse(false),
-                inst.map(Instrumentation::isRetransformClassesSupported).orElse(false), JvmCapabilities.vmDescription(),
+        List<PatchTransformer.SlotInfo> slots = this.transformer.slots();
+        return new StatusReport(enabled(), this.profile, this.profileNote, lookup.detail(), lookup.agentVersion(), lookup.loadedBy(),
+                inst.isPresent(), inst.map(Instrumentation::isRedefineClassesSupported).orElse(false),
+                inst.map(Instrumentation::isRetransformClassesSupported).orElse(false), this.transformer.registeredAt().isPresent(),
+                slots.size(), (int) slots.stream().filter(s -> s.displaced() != null).count(), JvmCapabilities.vmDescription(),
                 JvmCapabilities.enhancedRedefinitionFlag(), this.platform.serverBuildId(),
                 this.paths.patchDirectory(this.config.get()), trustNote(), this.registry.activeCount(), this.registry.records().size(),
                 (rt.totalMemory() - rt.freeMemory()) >> 20, rt.maxMemory() >> 20);
@@ -228,9 +280,10 @@ public final class LivePatchService {
      * @return probe results
      */
     public CompletableFuture<Map<Capability, CapabilityProbe.Result>> probe() {
-        Optional<Instrumentation> inst = this.agent.instrumentation();
+        InstrumentationAccess.Lookup lookup = agent();
+        Optional<Instrumentation> inst = lookup.instrumentation();
         if (inst.isEmpty()) {
-            return CompletableFuture.failedFuture(new PatchException(this.agent.detail()));
+            return CompletableFuture.failedFuture(new PatchException(lookup.detail()));
         }
         return onWorker(() -> JvmCapabilities.probeAll(inst.get()));
     }
@@ -269,15 +322,26 @@ public final class LivePatchService {
     }
 
     /**
-     * Creates the plan for a patch without changing anything.
+     * Creates the plan for a redefinition patch without changing anything.
      *
      * @param id patch id
      * @return the plan
      */
     public CompletableFuture<PatchPlan> inspect(String id) {
+        return inspect(id, Mechanism.REDEFINE);
+    }
+
+    /**
+     * Creates the plan for a patch without changing anything.
+     *
+     * @param id        patch id
+     * @param mechanism how the classes would be installed
+     * @return the plan
+     */
+    public CompletableFuture<PatchPlan> inspect(String id, Mechanism mechanism) {
         try {
-            Instrumentation inst = requireUsable(id);
-            return onWorker(() -> plan(loadVerified(id), inst));
+            Instrumentation inst = requireUsable(id, mechanism);
+            return onWorker(() -> plan(loadVerified(id), inst, mechanism));
         } catch (PatchException e) {
             return CompletableFuture.failedFuture(e);
         }
@@ -286,8 +350,7 @@ public final class LivePatchService {
     // ------------------------------------------------------------------ apply
 
     /**
-     * Applies a patch. Without {@code confirm} only the plan is created and remembered;
-     * with {@code confirm} the remembered plan is re-checked and executed.
+     * Applies a patch by redefinition, see {@link #apply(String, String, boolean, Mechanism)}.
      *
      * @param actor   who asked
      * @param id      patch id
@@ -295,9 +358,24 @@ public final class LivePatchService {
      * @return the outcome
      */
     public CompletableFuture<Result> apply(String actor, String id, boolean confirm) {
+        return apply(actor, id, confirm, Mechanism.REDEFINE);
+    }
+
+    /**
+     * Applies a patch. Without {@code confirm} only the plan is created and remembered;
+     * with {@code confirm} the remembered plan is re-checked and executed. The confirmation
+     * must use the same mechanism as the plan.
+     *
+     * @param actor     who asked
+     * @param id        patch id
+     * @param confirm   second step
+     * @param mechanism how the classes are installed
+     * @return the outcome
+     */
+    public CompletableFuture<Result> apply(String actor, String id, boolean confirm, Mechanism mechanism) {
         Instrumentation inst;
         try {
-            inst = requireUsable(id);
+            inst = requireUsable(id, mechanism);
         } catch (PatchException e) {
             return CompletableFuture.completedFuture(rejected(null, e.getMessage()));
         }
@@ -312,13 +390,14 @@ public final class LivePatchService {
         String key = actor + "\u0000apply\u0000" + id;
         CompletableFuture<Result> result;
         if (!confirm) {
-            result = onWorker(() -> plan(loadVerified(id), inst)).thenApplyAsync(plan -> {
+            result = onWorker(() -> plan(loadVerified(id), inst, mechanism)).thenApplyAsync(plan -> {
                 if (!plan.applicable()) {
                     this.audit.record(actor, "patch-plan", id, false, String.join("; ", plan.errors()));
                     return new Result(Result.Kind.REJECTED, plan, "patch " + id + " cannot be applied", plan.errors());
                 }
-                this.pending.put(key, new Pending(plan.archiveSha256(), Instant.now().plusSeconds(confirmTimeout())));
-                this.audit.record(actor, "patch-plan", id, true, "plan created, waiting for confirmation; archive " + plan.archiveSha256());
+                this.pending.put(key, new Pending(plan.archiveSha256(), mechanism, Instant.now().plusSeconds(confirmTimeout())));
+                this.audit.record(actor, "patch-plan", id, true, "plan (" + mechanism.id() + ") created, waiting for confirmation;"
+                        + " archive " + plan.archiveSha256());
                 return new Result(Result.Kind.CONFIRMATION_REQUIRED, plan, "plan for " + id + " is ready", List.of());
             }, this.platform.mainThreadExecutor());
         } else {
@@ -328,7 +407,12 @@ public final class LivePatchService {
                 return CompletableFuture.completedFuture(rejected(null, "no plan of " + id + " is waiting for confirmation by "
                         + actor + " (it expired or was never created); run '/fork live update " + id + "' first"));
             }
-            result = onWorker(() -> prepare(id, inst, p.archiveSha256())).thenApplyAsync(prepared -> {
+            if (p.mechanism() != mechanism) {
+                this.busy.set(false);
+                return CompletableFuture.completedFuture(rejected(null, "the plan of " + id + " was made for '" + p.mechanism().id()
+                        + "', not '" + mechanism.id() + "'; create the plan again with the mechanism you want"));
+            }
+            result = onWorker(() -> prepare(id, inst, p.archiveSha256(), mechanism)).thenApplyAsync(prepared -> {
                 if (prepared.rejection != null) {
                     this.audit.record(actor, "patch-apply", id, false, prepared.rejection.message());
                     return prepared.rejection;
@@ -347,14 +431,15 @@ public final class LivePatchService {
     private record Prepared(PatchArchive archive, PatchPlan plan, Map<String, byte[]> previous, Path backupDirectory, Result rejection) {
     }
 
-    private Prepared prepare(String id, Instrumentation inst, String confirmedSha) throws PatchException, IOException {
+    private Prepared prepare(String id, Instrumentation inst, String confirmedSha, Mechanism mechanism)
+            throws PatchException, IOException {
         PatchArchive archive = loadVerified(id);
         if (!archive.sha256().equals(confirmedSha)) {
             return new Prepared(archive, null, Map.of(), null, rejected(null, id + PatchIds.SUFFIX
                     + " changed after the plan was shown (was " + PatchPlanner.shortSha(confirmedSha) + ", now "
                     + PatchPlanner.shortSha(archive.sha256()) + "); inspect it again"));
         }
-        PatchPlan plan = plan(archive, inst);
+        PatchPlan plan = plan(archive, inst, mechanism);
         if (!plan.applicable()) {
             return new Prepared(archive, plan, Map.of(), null, new Result(Result.Kind.REJECTED, plan,
                     "patch " + id + " cannot be applied any more", plan.errors()));
@@ -391,7 +476,7 @@ public final class LivePatchService {
         return dir;
     }
 
-    /** Main thread: performs the redefinition. */
+    /** Main thread: performs the redefinition or retransformation. */
     private Result execute(String actor, Prepared prepared, Instrumentation inst) {
         PatchPlan plan = prepared.plan();
         String id = plan.patchId();
@@ -428,15 +513,23 @@ public final class LivePatchService {
             }
         }
         long start = System.nanoTime();
-        try {
-            if (!definitions.isEmpty()) {
-                inst.redefineClasses(definitions.toArray(ClassDefinition[]::new));
+        if (plan.mechanism() == Mechanism.RETRANSFORM) {
+            String problem = retransform(id, definitions, inst);
+            if (problem != null) {
+                return fail(actor, plan, defined, problem, prepared, !problem.startsWith(PARTIAL));
             }
-        } catch (ClassNotFoundException | java.lang.instrument.UnmodifiableClassException | LinkageError | RuntimeException e) {
-            return fail(actor, plan, defined, "the JVM rejected the redefinition: " + e
-                    + ". Per the JVMTI specification no class of this patch was changed.", prepared);
+        } else {
+            try {
+                if (!definitions.isEmpty()) {
+                    inst.redefineClasses(definitions.toArray(ClassDefinition[]::new));
+                }
+            } catch (ClassNotFoundException | java.lang.instrument.UnmodifiableClassException | LinkageError | RuntimeException e) {
+                return fail(actor, plan, defined, "the JVM rejected the redefinition: " + e
+                        + ". Per the JVMTI specification no class of this patch was changed.", prepared);
+            }
         }
         long micros = TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - start);
+        String verb = plan.mechanism() == Mechanism.RETRANSFORM ? "retransformed" : "redefined";
         List<AppliedBytecodeCheck.Expectation> expectations = new ArrayList<>();
         for (int i = 0; i < definitions.size(); i++) {
             expectations.add(new AppliedBytecodeCheck.Expectation(definitions.get(i).getDefinitionClass(),
@@ -445,38 +538,103 @@ public final class LivePatchService {
         long verifyStart = System.nanoTime();
         AppliedBytecodeCheck.Report verification = AppliedBytecodeCheck.check(inst, expectations);
         long verifyMicros = TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - verifyStart);
-        PatchRecord record = new PatchRecord(id, plan.archiveSha256(), actor, Instant.now(), Status.ACTIVE,
-                definitions.size() + " class(es) redefined, " + defined.size() + " defined in " + micros + " µs; "
+        PatchRecord record = new PatchRecord(id, plan.archiveSha256(), plan.mechanism(), actor, Instant.now(), Status.ACTIVE,
+                definitions.size() + " class(es) " + verb + ", " + defined.size() + " defined in " + micros + " µs; "
                         + verification.summary(), records, defined, prepared.backupDirectory().toString(), Instant.now());
         this.registry.applied(record);
         List<String> details = new ArrayList<>();
         for (ClassRecord r : records) {
-            details.add("redefined " + r.name() + " (" + PatchPlanner.shortSha(r.previous().sha256()) + " -> "
+            details.add(verb + " " + r.name() + " (" + PatchPlanner.shortSha(r.previous().sha256()) + " -> "
                     + PatchPlanner.shortSha(r.installed().sha256()) + ")");
         }
         defined.forEach(n -> details.add("defined new class " + n));
-        details.add("JVM redefinition took " + micros + " µs on the main thread");
+        details.add("JVM " + (plan.mechanism() == Mechanism.RETRANSFORM ? "retransformation" : "redefinition") + " took " + micros
+                + " µs on the main thread");
+        if (plan.mechanism() == Mechanism.RETRANSFORM) {
+            details.add("Lemon's transformer supplies the patch on every later retransformation; rollback removes it");
+        }
         details.add("backup of the replaced class files: " + this.paths.serverDirectory().relativize(prepared.backupDirectory()));
         details.add(verification.summary() + (expectations.isEmpty() ? "" : " (read-back took " + verifyMicros + " µs)"));
         details.addAll(verification.lines());
         details.add("behaviour NOT validated by Lemon - test the changed code path now");
         this.audit.record(actor, "patch-apply", id, true, record.detail() + "; archive " + plan.archiveSha256());
         LiveHistory.INSTANCE.record(LiveHistory.Kind.PATCH, id, "apply", actor, true, record.detail());
-        this.platform.logger().warning("Live patch " + id + " applied by " + actor + ": " + record.detail());
+        this.platform.logger().warning("Live patch " + id + " (" + plan.mechanism().id() + ") applied by " + actor + ": "
+                + record.detail());
         verification.lines().forEach(l -> this.platform.logger().info("Live patch " + id + " check: " + l));
         return new Result(Result.Kind.APPLIED, plan, "patch " + id + " applied"
                 + (verification.outcome() == AppliedBytecodeCheck.Outcome.VERIFIED ? " and verified" : ""), details, verification);
     }
 
+    /**
+     * Installs the classes through Lemon's transformer and one {@code retransformClasses}
+     * call, and checks that the transformer really supplied the patch for every class.
+     *
+     * @return {@code null} on success, otherwise why nothing was changed
+     */
+    private String retransform(String id, List<ClassDefinition> definitions, Instrumentation inst) {
+        if (definitions.isEmpty()) {
+            return null;
+        }
+        Map<Class<?>, byte[]> layer = new LinkedHashMap<>();
+        Map<Class<?>, Long> servedBefore = new LinkedHashMap<>();
+        for (ClassDefinition d : definitions) {
+            layer.put(d.getDefinitionClass(), d.getDefinitionClassFile());
+            servedBefore.put(d.getDefinitionClass(), this.transformer.served(d.getDefinitionClass()));
+        }
+        try {
+            this.transformer.register(inst);
+            this.transformer.push(id, layer);
+        } catch (IllegalStateException e) {
+            return "cannot use Lemon's transformer: " + e.getMessage() + "; no class was changed";
+        }
+        try {
+            inst.retransformClasses(layer.keySet().toArray(Class<?>[]::new));
+        } catch (java.lang.instrument.UnmodifiableClassException | LinkageError | RuntimeException e) {
+            this.transformer.remove(id, layer.keySet());
+            return "the JVM rejected the retransformation: " + e + ". Per the JVMTI specification no class of this patch was"
+                    + " changed; the patch was removed from Lemon's transformer.";
+        }
+        List<String> missed = new ArrayList<>();
+        for (Map.Entry<Class<?>, Long> e : servedBefore.entrySet()) {
+            if (this.transformer.served(e.getKey()) <= e.getValue()) {
+                missed.add(e.getKey().getName());
+            }
+        }
+        if (missed.isEmpty()) {
+            return null;
+        }
+        // The JVM retransformed without taking the patch for some classes (see the server log). Take the
+        // patch out again and retransform, so no class keeps half of the patch.
+        this.transformer.remove(id, layer.keySet());
+        try {
+            inst.retransformClasses(layer.keySet().toArray(Class<?>[]::new));
+        } catch (java.lang.instrument.UnmodifiableClassException | LinkageError | RuntimeException e) {
+            return PARTIAL + "the transformer did not supply the patch for " + missed + ", and undoing the retransformation of"
+                    + " the other classes failed (" + e + "): the JVM may run a part of the patch. Restart the server.";
+        }
+        return "the transformer did not supply the patch for " + missed + " during the retransformation (see the server log);"
+                + " the patch was removed again and every class runs its previous code";
+    }
+
+    /** Start of a failure message after which the JVM may run a part of the patch. */
+    private static final String PARTIAL = "PARTIALLY APPLIED: ";
+
     private Result fail(String actor, PatchPlan plan, List<String> defined, String message, Prepared prepared) {
-        PatchRecord record = new PatchRecord(plan.patchId(), plan.archiveSha256(), actor, Instant.now(), Status.FAILED, message,
+        return fail(actor, plan, defined, message, prepared, true);
+    }
+
+    private Result fail(String actor, PatchPlan plan, List<String> defined, String message, Prepared prepared, boolean unchanged) {
+        PatchRecord record = new PatchRecord(plan.patchId(), plan.archiveSha256(), plan.mechanism(), actor, Instant.now(),
+                Status.FAILED, message,
                 List.of(), defined, prepared.backupDirectory() == null ? "" : prepared.backupDirectory().toString(), Instant.now());
         this.registry.failed(record);
         List<String> details = new ArrayList<>();
         if (!defined.isEmpty()) {
             details.add("new classes defined before the failure stay loaded until a restart (nothing references them): " + defined);
         }
-        details.add("the server keeps running the previous code; see the server log for the full exception");
+        details.add(unchanged ? "the server keeps running the previous code; see the server log for the full exception"
+                : "the server may run a mix of old and new code; restart it");
         this.audit.record(actor, "patch-apply", plan.patchId(), false, message);
         LiveHistory.INSTANCE.record(LiveHistory.Kind.PATCH, plan.patchId(), "apply", actor, false, message);
         this.platform.logger().warning("Live patch " + plan.patchId() + " FAILED: " + message);
@@ -488,6 +646,8 @@ public final class LivePatchService {
     /**
      * Restores the bytecode that ran before a patch. Only the most recent version of each
      * class can be rolled back (a later patch of the same class must be rolled back first).
+     * A redefinition patch is rolled back by redefining the previous class files; a
+     * retransformation patch by removing it from Lemon's transformer and retransforming.
      * Bytecode rollback does not restore game state or object state.
      *
      * @param actor   who asked
@@ -525,7 +685,8 @@ public final class LivePatchService {
             }
             notes.add("only bytecode is restored; game state, objects and static fields are NOT rolled back");
             if (!confirm) {
-                this.pending.put(key, new Pending(record.get().archiveSha256(), Instant.now().plusSeconds(confirmTimeout())));
+                this.pending.put(key, new Pending(record.get().archiveSha256(), record.get().mechanism(),
+                        Instant.now().plusSeconds(confirmTimeout())));
                 return new Result(Result.Kind.CONFIRMATION_REQUIRED, null, "rollback of " + id + " is ready", notes);
             }
             Pending p = this.pending.remove(key);
@@ -545,6 +706,23 @@ public final class LivePatchService {
         List<String> problems = new ArrayList<>();
         Set<Capability> needed = EnumSet.noneOf(Capability.class);
         List<ClassChange> changes = new ArrayList<>();
+        if (record.mechanism() == Mechanism.RETRANSFORM) {
+            if (!inst.isRetransformClassesSupported()) {
+                problems.add("retransformation is not available any more");
+            }
+            ClassLoader loader = this.platform.serverClassLoader();
+            for (ClassRecord c : record.classes()) {
+                try {
+                    Optional<PatchTransformer.SlotInfo> slot = this.transformer.slot(Class.forName(c.name(), false, loader));
+                    List<String> layers = slot.map(PatchTransformer.SlotInfo::patchIds).orElse(List.of());
+                    if (layers.isEmpty() || !layers.get(layers.size() - 1).equals(record.id())) {
+                        problems.add(c.name() + ": Lemon's transformer holds " + layers + ", not patch " + record.id() + " on top");
+                    }
+                } catch (ClassNotFoundException | LinkageError e) {
+                    problems.add(c.name() + ": cannot be resolved: " + e);
+                }
+            }
+        }
         for (ClassRecord c : record.classes()) {
             Optional<ClassVersion> now = this.registry.current(c.name());
             if (now.isEmpty() || !now.get().sha256().equals(c.installed().sha256())) {
@@ -555,8 +733,9 @@ public final class LivePatchService {
             for (ClassChange change : ClassDiff.compare(ClassFileReader.read(c.installed().bytes()),
                     ClassFileReader.read(c.previous().bytes()))) {
                 changes.add(change);
-                needed.addAll(change.kind().required());
-                if (change.kind().required().isEmpty()) {
+                Set<Capability> required = PatchPlanner.required(change.kind(), record.mechanism());
+                needed.addAll(required);
+                if (required.isEmpty()) {
                     problems.add(c.name() + ": reverting '" + change + "' is never applied by Lemon");
                 }
             }
@@ -578,7 +757,18 @@ public final class LivePatchService {
                 definitions.add(new ClassDefinition(Class.forName(c.name(), false, loader), c.previous().bytes()));
             }
             long start = System.nanoTime();
-            inst.redefineClasses(definitions.toArray(ClassDefinition[]::new));
+            List<String> warnings = new ArrayList<>();
+            if (record.mechanism() == Mechanism.RETRANSFORM) {
+                String problem = removeRetransformed(record.id(), definitions, inst, warnings);
+                if (problem != null) {
+                    String message = problem + "; patch " + record.id() + " stays active.";
+                    this.audit.record(actor, "patch-rollback", record.id(), false, message);
+                    LiveHistory.INSTANCE.record(LiveHistory.Kind.PATCH, record.id(), "rollback", actor, false, message);
+                    return new Result(Result.Kind.FAILED, null, message, List.of());
+                }
+            } else {
+                inst.redefineClasses(definitions.toArray(ClassDefinition[]::new));
+            }
             long micros = TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - start);
             List<AppliedBytecodeCheck.Expectation> expectations = new ArrayList<>();
             for (int i = 0; i < definitions.size(); i++) {
@@ -594,7 +784,9 @@ public final class LivePatchService {
             LiveHistory.INSTANCE.record(LiveHistory.Kind.PATCH, record.id(), "rollback", actor, true, detail);
             this.platform.logger().warning("Live patch " + record.id() + " " + detail);
             List<String> details = new ArrayList<>(notes);
-            details.add("JVM redefinition took " + micros + " µs on the main thread");
+            details.add("JVM " + (record.mechanism() == Mechanism.RETRANSFORM ? "retransformation" : "redefinition") + " took "
+                    + micros + " µs on the main thread");
+            details.addAll(warnings);
             details.add(verification.summary());
             details.addAll(verification.lines());
             return new Result(Result.Kind.ROLLED_BACK, null, "patch " + record.id() + " rolled back"
@@ -606,6 +798,38 @@ public final class LivePatchService {
             LiveHistory.INSTANCE.record(LiveHistory.Kind.PATCH, record.id(), "rollback", actor, false, message);
             return new Result(Result.Kind.FAILED, null, message, List.of());
         }
+    }
+
+    /**
+     * Takes a retransformation patch out of Lemon's transformer and retransforms; the layer
+     * below (or the class's initial bytes) runs again. Puts the patch back if the JVM refuses.
+     *
+     * @param warnings receives problems found after a successful retransformation
+     * @return {@code null} if the patch was removed, otherwise why nothing was changed
+     */
+    private String removeRetransformed(String id, List<ClassDefinition> definitions, Instrumentation inst, List<String> warnings) {
+        List<Class<?>> classes = definitions.stream().<Class<?>>map(ClassDefinition::getDefinitionClass).toList();
+        Map<Class<?>, Long> servedBefore = new LinkedHashMap<>();
+        classes.forEach(c -> servedBefore.put(c, this.transformer.served(c)));
+        Map<Class<?>, PatchTransformer.Layer> removed = this.transformer.remove(id, classes);
+        try {
+            inst.retransformClasses(classes.toArray(Class<?>[]::new));
+        } catch (java.lang.instrument.UnmodifiableClassException | LinkageError | RuntimeException e) {
+            this.transformer.restore(removed);
+            return "the JVM rejected the retransformation: " + e + ". Per the JVMTI specification no class was changed";
+        }
+        List<String> missed = new ArrayList<>();
+        for (Class<?> c : classes) {
+            // A class with a lower layer must have received that layer again.
+            if (this.transformer.slot(c).isPresent() && this.transformer.served(c) <= servedBefore.get(c)) {
+                missed.add(c.getName());
+            }
+        }
+        if (!missed.isEmpty()) {
+            warnings.add("WARNING: the transformer did not supply the lower patch layer of " + missed + " (see the server log);"
+                    + " the read-back below shows what runs now");
+        }
+        return null;
     }
 
     // ------------------------------------------------------------------ verify
@@ -645,8 +869,10 @@ public final class LivePatchService {
                 }
                 ClassVersion expected = now.orElse(c.installed());
                 try {
-                    expectations.add(new AppliedBytecodeCheck.Expectation(Class.forName(c.name(), false, loader), expected.bytes(),
-                            c.previous().bytes()));
+                    Class<?> type = Class.forName(c.name(), false, loader);
+                    expectations.add(new AppliedBytecodeCheck.Expectation(type, expected.bytes(), c.previous().bytes()));
+                    this.transformer.slot(type).ifPresent(s -> notes.add(c.name() + ": transformer layers " + s.patchIds()
+                            + ", supplied " + s.served() + " time(s)" + (s.displaced() == null ? "" : ", DISPLACED: " + s.displaced())));
                 } catch (ClassNotFoundException | LinkageError e) {
                     notes.add(c.name() + ": cannot be resolved: " + e);
                 }
@@ -664,9 +890,141 @@ public final class LivePatchService {
         return result.whenComplete((r, ex) -> this.busy.set(false));
     }
 
+    // ------------------------------------------------------------------ loaded classes
+
+    /**
+     * Searches the loaded classes (worker thread; changes nothing).
+     *
+     * @param query   query
+     * @param loaders loader knowledge, collected on the main thread
+     * @return a page of results
+     */
+    public CompletableFuture<ClassCatalog.Page> classes(ClassCatalog.Query query, ClassCatalog.Loaders loaders) {
+        InstrumentationAccess.Lookup lookup = agent();
+        if (lookup.instrumentation().isEmpty()) {
+            return CompletableFuture.failedFuture(new PatchException(lookup.detail()));
+        }
+        Instrumentation inst = lookup.instrumentation().get();
+        return onWorker(() -> ClassCatalog.search(inst, query, loaders, this.registry, this.transformer));
+    }
+
+    /**
+     * Describes every loaded class with this name (worker thread; loads and changes nothing).
+     *
+     * @param className binary name
+     * @param loaders   loader knowledge, collected on the main thread
+     * @return one description per defining class loader; empty if the class is not loaded
+     */
+    public CompletableFuture<List<ClassCatalog.Description>> describe(String className, ClassCatalog.Loaders loaders) {
+        InstrumentationAccess.Lookup lookup = agent();
+        if (lookup.instrumentation().isEmpty()) {
+            return CompletableFuture.failedFuture(new PatchException(lookup.detail()));
+        }
+        String problem = ClassCatalog.nameProblem(className);
+        if (problem != null) {
+            return CompletableFuture.failedFuture(new PatchException(problem));
+        }
+        Instrumentation inst = lookup.instrumentation().get();
+        return onWorker(() -> ClassCatalog.find(inst, className).stream()
+                .map(c -> ClassCatalog.describe(inst, c, loaders, this.registry, this.transformer)).toList());
+    }
+
+    /**
+     * Result of {@link #compareRunning}.
+     *
+     * @param className   binary name
+     * @param loader      defining class loader
+     * @param expected    what the running bytecode was compared with
+     * @param differences differences; empty = equal
+     */
+    public record RunningCheck(String className, String loader, String expected, List<ClassChange> differences) {
+        public RunningCheck {
+            differences = List.copyOf(differences);
+        }
+    }
+
+    /**
+     * Reads back the bytecode the JVM runs for one loaded class and compares it with what
+     * Lemon expects: the class file of its loader, or the version of Lemon's active patch.
+     * This is a retransformation (main thread, one live-patch operation at a time), so it
+     * needs {@code live-patching.enabled}.
+     *
+     * @param actor     who asked
+     * @param className binary name
+     * @param index     1-based index among the loaded classes with that name (sorted by loader)
+     * @return the comparison
+     */
+    public CompletableFuture<RunningCheck> compareRunning(String actor, String className, int index) {
+        if (!enabled()) {
+            return CompletableFuture.failedFuture(new PatchException("reading back running bytecode is a retransformation and"
+                    + " needs live-patching.enabled: true"));
+        }
+        String problem = ClassCatalog.nameProblem(className);
+        if (problem != null) {
+            return CompletableFuture.failedFuture(new PatchException(problem));
+        }
+        InstrumentationAccess.Lookup lookup = agent();
+        Optional<Instrumentation> found = lookup.instrumentation();
+        if (found.isEmpty()) {
+            return CompletableFuture.failedFuture(new PatchException(lookup.detail()));
+        }
+        Instrumentation inst = found.get();
+        if (!inst.isRetransformClassesSupported()) {
+            return CompletableFuture.failedFuture(new PatchException("this JVM or agent cannot retransform, so the running"
+                    + " bytecode cannot be read back"));
+        }
+        if (!this.busy.compareAndSet(false, true)) {
+            return CompletableFuture.failedFuture(new PatchException("another live-patch operation is running"));
+        }
+        CompletableFuture<RunningCheck> result = CompletableFuture.supplyAsync(() -> {
+            try {
+                List<Class<?>> classes = ClassCatalog.find(inst, className);
+                if (index < 1 || index > classes.size()) {
+                    throw new PatchException(classes.isEmpty() ? className + " is not loaded"
+                            : "there are " + classes.size() + " loaded classes named " + className + "; choose 1-" + classes.size());
+                }
+                Class<?> c = classes.get(index - 1);
+                if (!inst.isModifiableClass(c)) {
+                    throw new PatchException(className + " is not modifiable, so the JVM cannot report its running bytecode");
+                }
+                byte[] expected;
+                String source;
+                Optional<PatchTransformer.SlotInfo> slot = this.transformer.slot(c);
+                Optional<ClassVersion> patched = c.getClassLoader() != null && c.getClassLoader() == this.platform.serverClassLoader()
+                        ? this.registry.current(className) : Optional.empty();
+                if (patched.isPresent()) {
+                    expected = patched.get().bytes();
+                    source = "the version of active patch " + patched.get().installedBy()
+                            + slot.map(s -> " (retransformation layers " + s.patchIds() + ")").orElse("");
+                } else {
+                    Optional<byte[]> file = ClassCatalog.classFile(c);
+                    if (file.isEmpty()) {
+                        throw new PatchException("no class file of " + className + " is visible to its class loader");
+                    }
+                    expected = file.get();
+                    source = "the class file its class loader provides (" + PatchPlanner.shortSha(Hashing.sha256(expected)) + ")";
+                }
+                List<ClassChange> diff = ClassCatalog.runningBytecode(inst, c, expected);
+                String summary = diff.isEmpty() ? "running bytecode equals " + source : diff.size() + " difference(s) to " + source;
+                this.audit.record(actor, "class-verify", className, diff.isEmpty(), summary);
+                return new RunningCheck(className, PatchTransformer.loaderName(c.getClassLoader()), source, diff);
+            } catch (PatchException e) {
+                throw new java.util.concurrent.CompletionException(e);
+            } catch (Exception | LinkageError e) {
+                throw new java.util.concurrent.CompletionException(new PatchException("reading back " + className + " failed: " + e
+                        + " (per the JVMTI specification no class was changed)"));
+            }
+        }, this.platform.mainThreadExecutor());
+        return result.whenComplete((r, ex) -> this.busy.set(false));
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private Instrumentation requireUsable(String id) throws PatchException {
+        return requireUsable(id, Mechanism.REDEFINE);
+    }
+
+    private Instrumentation requireUsable(String id, Mechanism mechanism) throws PatchException {
         if (!enabled()) {
             throw new PatchException("live patching is disabled (live-patching.enabled: false in "
                     + RuntimePaths.DEFAULT_CONFIG + ")");
@@ -675,19 +1033,25 @@ public final class LivePatchService {
         if (problem != null) {
             throw new PatchException("invalid patch id '" + PathGuard.sanitize(id) + "': " + problem);
         }
-        Optional<Instrumentation> inst = this.agent.instrumentation();
+        InstrumentationAccess.Lookup lookup = agent();
+        Optional<Instrumentation> inst = lookup.instrumentation();
         if (inst.isEmpty()) {
-            throw new PatchException(this.agent.detail());
+            throw new PatchException(lookup.detail());
         }
         if (!inst.get().isRedefineClassesSupported()) {
             throw new PatchException("this JVM does not support class redefinition");
         }
+        if (mechanism == Mechanism.RETRANSFORM && !inst.get().isRetransformClassesSupported()) {
+            throw new PatchException("this JVM or agent does not support retransformation (agent " + lookup.agentVersion()
+                    + "; agent version 2 or newer declares Can-Retransform-Classes)");
+        }
         return inst.get();
     }
 
-    private PatchPlan plan(PatchArchive archive, Instrumentation inst) {
+    private PatchPlan plan(PatchArchive archive, Instrumentation inst, Mechanism mechanism) {
         return PatchPlanner.plan(archive, new PatchPlanner.Context(this.platform.serverBuildId(), this.platform.minecraftVersion(),
-                this.platform.serverClassLoader(), inst, this.registry, this.profile == LivePatchConfig.Profile.DEVELOPMENT));
+                this.platform.serverClassLoader(), inst, this.registry, this.profile == LivePatchConfig.Profile.DEVELOPMENT,
+                mechanism, this.transformer));
     }
 
     /**

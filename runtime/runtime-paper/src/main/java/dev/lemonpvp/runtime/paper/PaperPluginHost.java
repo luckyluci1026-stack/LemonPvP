@@ -48,6 +48,15 @@ final class PaperPluginHost implements PluginHost {
         return out;
     }
 
+    @Override
+    public Map<ClassLoader, String> classLoaders() {
+        Map<ClassLoader, String> out = new java.util.IdentityHashMap<>();
+        for (Plugin p : this.server.getPluginManager().getPlugins()) {
+            out.put(p.getClass().getClassLoader(), p.getName());
+        }
+        return out;
+    }
+
     private static PluginInfo info(Plugin p) {
         PluginMeta m = p.getPluginMeta();
         boolean bukkit = m instanceof PluginDescriptionFile;

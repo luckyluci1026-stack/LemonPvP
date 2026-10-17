@@ -26,6 +26,11 @@ import java.util.Set;
  * ({@link PreVerifier}). Any failed check rejects the whole patch: a patch is applied
  * completely or not at all.</p>
  *
+ * <p>{@link Mechanism#RETRANSFORM} plans accept only method-body changes (probed through
+ * a real retransformation) and are refused for classes whose retransformation patch was
+ * displaced; {@link Mechanism#REDEFINE} plans are refused for classes that currently run a
+ * retransformation patch, because the redefinition would silently push that patch out.</p>
+ *
  * <p>Side effect: target classes that were not loaded yet are loaded (not initialized) by
  * the server class loader. Runs on the worker thread.</p>
  */
@@ -41,9 +46,11 @@ public final class PatchPlanner {
      * @param registry         record of earlier patches
      * @param development      development profile: an unknown build id and classes that cannot be pre-verified
      *                         are warnings instead of errors
+     * @param mechanism        how the classes would be installed
+     * @param transformer      Lemon's retransformation patches in this JVM
      */
     public record Context(String buildId, String minecraftVersion, ClassLoader loader, Instrumentation instrumentation,
-                          LivePatchRegistry registry, boolean development) {
+                          LivePatchRegistry registry, boolean development, Mechanism mechanism, PatchTransformer transformer) {
     }
 
     private PatchPlanner() {
@@ -72,6 +79,10 @@ public final class PatchPlanner {
             errors.add("patch was built for " + m.targetBuildId() + " but the server is " + ctx.buildId()
                     + " (wrong build id; create the patch against the jar that runs on this server)");
         }
+        if (ctx.mechanism() == Mechanism.RETRANSFORM && !ctx.instrumentation().isRetransformClassesSupported()) {
+            errors.add("retransformation is not available (Instrumentation.isRetransformClassesSupported() is false: agent"
+                    + " without Can-Retransform-Classes, or the JVM cannot retransform); use the mechanism 'redefine'");
+        }
 
         List<PatchPlan.Entry> entries = new ArrayList<>();
         Set<Capability> needed = EnumSet.noneOf(Capability.class);
@@ -81,7 +92,7 @@ public final class PatchPlanner {
             entries.add(entry);
             for (ClassChange c : entry.changes()) {
                 kinds.add(c.kind());
-                needed.addAll(c.kind().required());
+                needed.addAll(required(c.kind(), ctx.mechanism()));
             }
         }
 
@@ -92,7 +103,7 @@ public final class PatchPlanner {
                 : JvmCapabilities.ensure(ctx.instrumentation(), needed);
         List<PatchPlan.Entry> checked = new ArrayList<>(entries.size());
         for (PatchPlan.Entry entry : entries) {
-            checked.add(checkCapabilities(entry, caps));
+            checked.add(checkCapabilities(entry, caps, ctx.mechanism()));
         }
         CapabilityProbe.Result verifies = caps.get(Capability.VERIFY_REDEFINED_CLASSES);
         if (verifies != null && !verifies.supported()) {
@@ -112,9 +123,28 @@ public final class PatchPlanner {
                 warnings.add(k.description() + ": " + k.note());
             }
         }
+        if (ctx.mechanism() == Mechanism.RETRANSFORM) {
+            warnings.add("retransformation: Lemon's transformer supplies the patch on every later retransformation; if"
+                    + " another tool redefines a patched class, the patch is marked displaced and no longer supplied");
+        }
         warnings.add("Lemon checks bytecode compatibility, not behaviour: the patch is technically applied but not"
                 + " semantically validated. Existing objects, static fields and caches keep their state.");
-        return new PatchPlan(m.id(), archive.sha256(), m.description(), checked, errors, warnings, caps, registryVersion);
+        return new PatchPlan(m.id(), archive.sha256(), m.description(), ctx.mechanism(), checked, errors, warnings, caps,
+                registryVersion);
+    }
+
+    /**
+     * Capabilities a change needs with a mechanism; empty = never applied that way.
+     *
+     * @param kind      change
+     * @param mechanism mechanism
+     * @return required capabilities
+     */
+    static Set<Capability> required(ChangeKind kind, Mechanism mechanism) {
+        if (mechanism == Mechanism.REDEFINE || kind == ChangeKind.NEW_CLASS) {
+            return kind.required();
+        }
+        return kind.bodyOnly() ? EnumSet.of(Capability.RETRANSFORM_METHOD_BODY) : EnumSet.noneOf(Capability.class);
     }
 
     private static PatchPlan.Entry reject(PatchManifest.Entry e, String runningSha, List<ClassChange> changes, String problem) {
@@ -135,6 +165,15 @@ public final class PatchPlanner {
         }
         if (!ctx.instrumentation().isModifiableClass(cls)) {
             return reject(e, null, List.of(), "the JVM reports this class as not modifiable");
+        }
+        Optional<PatchTransformer.SlotInfo> slot = ctx.transformer().slot(cls);
+        if (slot.isPresent() && slot.get().displaced() != null) {
+            return reject(e, null, List.of(), "Lemon's retransformation patch " + slot.get().patchIds() + " of this class was"
+                    + " displaced (" + slot.get().displaced() + "); roll it back first");
+        }
+        if (slot.isPresent() && ctx.mechanism() == Mechanism.REDEFINE) {
+            return reject(e, null, List.of(), "the class runs retransformation patch " + slot.get().patchIds()
+                    + "; a redefinition would push it out. Apply this patch with 'retransform' or roll that patch back first");
         }
         Optional<LivePatchRegistry.ClassVersion> patched = ctx.registry().current(e.name());
         byte[] running;
@@ -240,15 +279,18 @@ public final class PatchPlanner {
         return out;
     }
 
-    private static PatchPlan.Entry checkCapabilities(PatchPlan.Entry entry, Map<Capability, CapabilityProbe.Result> caps) {
+    private static PatchPlan.Entry checkCapabilities(PatchPlan.Entry entry, Map<Capability, CapabilityProbe.Result> caps,
+                                                     Mechanism mechanism) {
         if (entry.action() == PatchPlan.Action.REJECT || entry.action() == PatchPlan.Action.UNCHANGED) {
             return entry;
         }
         List<String> unsupported = new ArrayList<>();
         for (ClassChange c : entry.changes()) {
-            Set<Capability> required = c.kind().required();
+            Set<Capability> required = required(c.kind(), mechanism);
             if (required.isEmpty()) {
-                unsupported.add(c + " (never applied by Lemon)");
+                unsupported.add(c + (c.kind().required().isEmpty() ? " (never applied by Lemon)"
+                        : " (Lemon applies only method-body changes by retransformation; use 'redefine' on a JVM with"
+                        + " enhanced class redefinition)"));
                 continue;
             }
             for (Capability cap : required) {
