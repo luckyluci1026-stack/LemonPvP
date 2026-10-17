@@ -103,6 +103,7 @@ und was einen Neustart braucht: [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md).
 | Fork bauen | [`docs/BUILDING.md`](docs/BUILDING.md) |
 | Upstream-Synchronisierung, neue Versionen | [`docs/UPSTREAM-SYNC.md`](docs/UPSTREAM-SYNC.md) |
 | **Live-Updates: Module, Plugins, Core-Patches – Anleitung, Grenzen, Workflow IntelliJ → Server** | [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md) |
+| **JVM-Instrumentation**: Agent beim Start oder per Attach, Klassensuche, Redefinition vs. Retransformation, `/fork instrumentation` | [`docs/INSTRUMENTATION.md`](docs/INSTRUMENTATION.md) |
 | Speer/Attribut-Swap 1.21.11: Analyse, Ursache, Fix, Live-Patch-Test | [`docs/SPEAR-COOLDOWN.md`](docs/SPEAR-COOLDOWN.md) |
 | Hot-Deployment: Architektur, Abläufe, Konfiguration, Befehle | [`docs/HOT-DEPLOYMENT.md`](docs/HOT-DEPLOYMENT.md) |
 | Modulformat und Modulentwicklung | [`docs/MODULE-FORMAT.md`](docs/MODULE-FORMAT.md) |

@@ -43,6 +43,10 @@ subprojects {
         testLogging {
             exceptionFormat = TestExceptionFormat.FULL
             events("failed", "skipped")
+            // -PtestLogStarted: also log each test as it starts (shows which test ran when a JVM crashed).
+            if (providers.gradleProperty("testLogStarted").isPresent) {
+                events("started", "passed", "failed", "skipped")
+            }
         }
     }
 

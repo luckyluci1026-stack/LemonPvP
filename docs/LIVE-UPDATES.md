@@ -9,6 +9,11 @@ unterschiedliche Technik, Grenzen und Risiken und werden nie vermischt:
 | **plugin** – normale Paper/Bukkit-Plugins | ein Plugin (JAR) | Plugin entladen, neue JAR laden und aktivieren – **nur wenn die Kompatibilitätsprüfung das erlaubt** | automatisch bei Fehlschlag; manuell auf die vorherige JAR |
 | **patch** – Core-Live-Patches | Bytecode bereits geladener Serverklassen (Paper, Minecraft, Lemon) | JVM-Klassen-Redefinition (`java.lang.instrument`) über einen Java-Agenten | Bytecode der vorherigen Version (nur im selben Prozess) |
 
+Core-Patches lassen sich außerdem per **Retransformation** (statt Redefinition) anwenden,
+der Agent kann nachträglich an einen laufenden Server angehängt werden, und geladene Klassen
+lassen sich durchsuchen und untersuchen: `/fork instrumentation`, siehe
+[`INSTRUMENTATION.md`](INSTRUMENTATION.md).
+
 Alle drei werden über **einen** Befehl bedient: `/fork live`. Ohne Präfix sucht Lemon den
 Namen in allen drei Bereichen und verlangt bei Mehrdeutigkeit ein Präfix
 (`module:`, `plugin:`, `patch:`).

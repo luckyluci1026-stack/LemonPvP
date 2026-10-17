@@ -134,7 +134,9 @@ class InstrumentationCommandsTest {
 
             run(f, cmd, admin, "instrumentation classes ica.Greeter");
             admin.await("ica.Greeter - library - modifiable - retransformed by cmd-fix");
-            run(f, cmd, admin, "instrumentation inspect ica.Greeter");
+            // On JVMs that do not verify redefined classes (JBR), Lemon's pre-verifier defined further copies of
+            // ica.Greeter in throw-away class loaders; the server's copy sorts first ("(java.net.URLClassLoader)").
+            run(f, cmd, admin, "instrumentation inspect ica.Greeter 1");
             admin.await("Lemon: retransformed by cmd-fix");
             run(f, cmd, admin, "instrumentation status");
             admin.await("ica.Greeter: layers [cmd-fix]");

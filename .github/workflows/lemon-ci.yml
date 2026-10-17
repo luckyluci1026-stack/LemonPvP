@@ -87,10 +87,24 @@ jobs:
         run: |
           "${{ steps.jbr.outputs.java }}" -version
           "${{ steps.jbr.outputs.java }}" -XX:+AllowEnhancedClassRedefinition -XX:+PrintFlagsFinal -version | grep -E 'AllowEnhancedClassRedefinition'
+      # Diagnostic (never fails the job): which retransformation patterns this JVM survives, one JVM
+      # process per scenario, with and without enhanced redefinition. Lemon's policy for JVMs with
+      # enhanced redefinition is based on this output (docs/INSTRUMENTATION.md).
+      - name: Retransformation behaviour of this JVM (diagnostic)
+        if: steps.jbr.outputs.java != ''
+        run: |
+          ./gradlew :livepatch-agent:jar --console=plain -q
+          agent="$PWD/livepatch-agent/build/libs/lemon-livepatch-agent.jar"
+          for flags in "-XX:+AllowEnhancedClassRedefinition" "-XX:-AllowEnhancedClassRedefinition"; do
+            for sc in recorder modify modify-unload modify-then-redefine; do
+              out=$("${{ steps.jbr.outputs.java }}" $flags -javaagent:"$agent" ../scripts/ci/RetransformRepro.java "$sc" 2>&1) && rc=0 || rc=$?
+              echo "JBR ${{ matrix.jbr }} $flags $sc: exit $rc; $(echo "$out" | grep -E 'RESULT|double free|corruption|SIGSEGV|Error' | head -n 3 | tr '\n' ' ')"
+            done
+          done
       - name: Unit tests on JBR with -XX:+AllowEnhancedClassRedefinition
         if: steps.jbr.outputs.java != ''
         run: >
-          ./gradlew :runtime-core:test --console=plain
+          ./gradlew :runtime-core:test --console=plain -PtestLogStarted
           -PtestJava='${{ steps.jbr.outputs.java }}' -PtestJvmArgs=-XX:+AllowEnhancedClassRedefinition
       - name: Test summary
         if: always()
