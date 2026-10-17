@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="t d">
+  <title id="t">Swappie</title>
+  <desc id="d">Swappie, the PaperSwap mascot: a cheerful sheet of paper inside two swap arrows, waving hello</desc>
+  <defs>
+    <linearGradient id="swappie-swap" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fde047"/>
+      <stop offset="1" stop-color="#22c55e"/>
+    </linearGradient>
+  </defs>
+  <!-- swap arrows around Swappie (circle around 256,270, r 190) -->
+  <g fill="none" stroke="url(#swappie-swap)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M67 250 A190 190 0 0 1 390 136"/>
+    <path d="M390 93 L395 140 L348 136"/>
+    <path d="M445 290 A190 190 0 0 1 122 404"/>
+    <path d="M164 404 L117 400 L122 447"/>
+  </g>
+  <!-- white sticker outline, so Swappie also stands out on dark backgrounds -->
+  <g stroke="#ffffff" fill="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+    <g fill="none" stroke-width="26">
+      <path d="M214 404 L208 446"/>
+      <path d="M298 404 L304 446"/>
+      <path d="M146 296 Q112 270 104 222"/>
+      <path d="M366 300 Q398 322 404 356"/>
+    </g>
+    <ellipse cx="200" cy="452" rx="32" ry="18" stroke="none"/>
+    <ellipse cx="312" cy="452" rx="32" ry="18" stroke="none"/>
+    <circle cx="102" cy="210" r="28" stroke="none"/>
+    <circle cx="406" cy="366" r="28" stroke="none"/>
+    <path d="M164 120 H316 L368 172 V384 A22 22 0 0 1 346 406 H164 A22 22 0 0 1 142 384 V142 A22 22 0 0 1 164 120 Z" stroke-width="22"/>
+  </g>
+  <!-- legs -->
+  <g stroke="#1e293b" stroke-width="14" stroke-linecap="round">
+    <path d="M214 404 L208 446"/>
+    <path d="M298 404 L304 446"/>
+  </g>
+  <ellipse cx="200" cy="452" rx="26" ry="12" fill="#1e293b"/>
+  <ellipse cx="312" cy="452" rx="26" ry="12" fill="#1e293b"/>
+  <!-- arms: left waving, right relaxed -->
+  <g fill="none" stroke="#1e293b" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M146 296 Q112 270 104 222"/>
+    <path d="M366 300 Q398 322 404 356"/>
+  </g>
+  <circle cx="102" cy="210" r="17" fill="#f8fafc" stroke="#1e293b" stroke-width="10"/>
+  <circle cx="406" cy="366" r="17" fill="#f8fafc" stroke="#1e293b" stroke-width="10"/>
+  <!-- body: a sheet of paper with a folded corner -->
+  <path d="M164 120 H316 L368 172 V384 A22 22 0 0 1 346 406 H164 A22 22 0 0 1 142 384 V142 A22 22 0 0 1 164 120 Z"
+        fill="#f8fafc" stroke="#1e293b" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M316 120 V156 A16 16 0 0 0 332 172 H368 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="10" stroke-linejoin="round"/>
+  <!-- text lines on the paper -->
+  <g stroke="#cbd5e1" stroke-width="8" stroke-linecap="round">
+    <path d="M182 344 H330"/>
+    <path d="M182 368 H286"/>
+  </g>
+  <!-- face -->
+  <ellipse cx="216" cy="236" rx="17" ry="22" fill="#0f172a"/>
+  <ellipse cx="296" cy="236" rx="17" ry="22" fill="#0f172a"/>
+  <circle cx="210" cy="227" r="6" fill="#ffffff"/>
+  <circle cx="290" cy="227" r="6" fill="#ffffff"/>
+  <ellipse cx="186" cy="278" rx="17" ry="10" fill="#fb7185" opacity="0.55"/>
+  <ellipse cx="326" cy="278" rx="17" ry="10" fill="#fb7185" opacity="0.55"/>
+  <path d="M228 272 Q256 312 284 272 Z" fill="#0f172a" stroke="#0f172a" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M243 293 Q256 284 269 293 Q262 302 256 302 Q250 302 243 293 Z" fill="#fb7185"/>
+</svg>

@@ -24,6 +24,13 @@ can't, PaperSwap says so and tells you to restart instead of pretending.
 Out of the box it is plain Paper: the runtime is **off by default**, opens **no network port** and
 does nothing until you switch it on.
 
+<img align="right" src="assets/swappie.svg" width="150" alt="Swappie, the PaperSwap mascot">
+
+### Meet Swappie
+
+**Swappie** is our mascot: a sheet of paper caught between two swap arrows – just like the code on
+your server. Swappie loves swapping, but always checks first and keeps the old version at hand.
+
 ## Highlights
 
 - 🔁 **Hot-swappable modules** – load, enable, replace and unload extensions at runtime, each in its
@@ -219,7 +226,7 @@ scripts/fork/       generators for version projects and patches
 scripts/livepatch/  Gradle tasks for core patches (included in every server build)
 scripts/ci/         live server tests and CI helpers
 docs/               documentation
-assets/             logo, banner, social preview
+assets/             logo, Swappie mascot, banner, social preview
 index.html, index.zip   website files of the LemonPvP server (not part of the fork)
 ```
 

@@ -17,9 +17,9 @@ everything below is unreleased and can be built from source or taken from CI art
   descriptors are still recognised, and a server started with the old agent JAR is detected.
   Modules must be rebuilt against the new API package; permissions must be renamed.
   See [`docs/MIGRATION.md`](docs/MIGRATION.md).
-- Open-source repository setup: English README (German: `README.de.md`), logo and banner,
-  contributing guide, code of conduct, security policy, issue and pull request templates,
-  `.editorconfig`.
+- Open-source repository setup: English README (German: `README.de.md`), logo, banner, our
+  mascot **Swappie** (`assets/swappie.svg`), contributing guide, code of conduct, security
+  policy, issue and pull request templates, `.editorconfig`.
 
 ### Added
 

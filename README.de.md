@@ -24,6 +24,14 @@ nicht, sagt PaperSwap das und verlangt einen Neustart, statt Erfolg vorzutäusch
 Ohne Konfiguration ist es einfach Paper: Die Runtime ist **standardmäßig aus**, öffnet **keinen
 Netzwerkport** und tut nichts, bis du sie einschaltest.
 
+<img align="right" src="assets/swappie.svg" width="150" alt="Swappie, das PaperSwap-Maskottchen">
+
+### Das ist Swappie
+
+**Swappie** ist unser Maskottchen: ein Blatt Papier zwischen zwei Tausch-Pfeilen – genau wie der
+Code auf deinem Server. Swappie tauscht für sein Leben gern, prüft aber immer vorher und hält die
+alte Version griffbereit.
+
 ## Highlights
 
 - 🔁 **Module im laufenden Betrieb tauschen** – Erweiterungen laden, aktivieren, ersetzen und
@@ -223,7 +231,7 @@ scripts/fork/       Generatoren für Versionsprojekte und Patches
 scripts/livepatch/  Gradle-Tasks für Core-Patches (in jeden Server-Build eingebunden)
 scripts/ci/         Live-Server-Tests und CI-Hilfen
 docs/               Dokumentation
-assets/             Logo, Banner, Social-Preview
+assets/             Logo, Maskottchen Swappie, Banner, Social-Preview
 index.html, index.zip   Website-Dateien des LemonPvP-Servers (nicht Teil der Fork)
 ```
 
