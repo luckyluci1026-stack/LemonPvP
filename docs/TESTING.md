@@ -324,7 +324,10 @@ Lauf #43: **alle 12 Jobs grün.** Ebenen (Details: [`INSTRUMENTATION.md`](INSTRU
   Redefinition derselben Klasse und der strukturelle Patch per Retransformation werden
   abgelehnt; Rollback `rolled back and verified`, `/tps` wieder original; Audit-Log-Einträge
   geprüft. In Lauf #41 war nur die Erwartung an die JEP-451-Warnung falsch (keine Warnung im
-  Serverlog); das Manifest der Server-JAR enthält nur `Main-Class` (Lauf #43).
+  Serverlog); das Manifest der Server-JAR enthält nur `Main-Class` (Lauf #43). Lauf #45
+  `1ef15cd` (alle 12 Jobs grün) zeichnet auf: `EnableDynamicAgentLoading=true (default)` und
+  `JEP 451 warning lines in server.log: 0` (1.21.11 und 26.2 geprüft) – warum die JVM auf dem
+  Paper-Server keine Warnung ins Log schreibt, ist nicht geklärt.
 
 ## Noch nicht automatisiert
 
