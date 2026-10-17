@@ -1,8 +1,0 @@
-blank_issues_enabled: false
-contact_links:
-  - name: Report a security vulnerability
-    url: https://github.com/luckyluci1026-stack/LemonPvP/security/advisories/new
-    about: Please report security problems privately, not as a public issue.
-  - name: Bugs that also happen on plain Paper
-    url: https://github.com/PaperMC/Paper/issues
-    about: Problems that are not caused by PaperSwap belong to the Paper project.

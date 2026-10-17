@@ -1,7 +1,0 @@
-# Hot deployment disabled (default configuration): the server must behave like Paper.
-fork status
-@sleep 2
-@expect Hot deployment is disabled
-@reject PaperSwap runtime status
-@reject Hot deployment is ENABLED
-@reject PaperSwap-Runtime-Worker

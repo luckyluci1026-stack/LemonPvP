@@ -1,5 +1,0 @@
-# Example Greeter configuration.
-# Apply changes without restarting: /fork module config example-greeter
-# MiniMessage format. <player> is replaced by the (escaped) player name.
-join-message: "<green>Welcome, <player>!</green>"
-greet-message: "<yellow>Hello <player>!</yellow>"

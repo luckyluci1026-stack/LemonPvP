@@ -1,4 +1,0 @@
-# Part 1: activate the module at runtime, then stop the server.
-fork module enable example-greeter
-@sleep 5
-@expect OK enable example-greeter

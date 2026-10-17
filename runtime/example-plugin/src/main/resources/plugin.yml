@@ -1,8 +1,0 @@
-name: PaperSwapTestPlugin
-version: "1.0.0"
-main: dev.paperswap.example.plugin.PaperSwapTestPlugin
-api-version: "1.21"
-description: Normal Bukkit plugin used to test PaperSwap's live plugin updates
-commands:
-  paperswaptest:
-    description: Shows which version of PaperSwapTestPlugin runs and what it has registered

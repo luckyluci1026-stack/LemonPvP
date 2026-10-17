@@ -1,0 +1,66 @@
+name: LemonPvP suite
+
+# Builds the four PvP modules against the PaperSwap module API and runs their unit tests.
+# The API comes from a checkout of the PaperSwap repository. While PaperSwap is private,
+# add a repository secret PAPERSWAP_TOKEN (a fine-grained token with read access to
+# paperswapstudios-official/PaperSwap); once PaperSwap is public, no token is needed.
+on:
+  workflow_dispatch:
+    inputs:
+      paperswap-ref:
+        description: PaperSwap branch, tag or commit to build against
+        default: main
+  push:
+    branches: [main]
+    paths:
+      - 'pvp-suite/**'
+      - '.github/workflows/pvp-suite.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: PvP suite ${{ matrix.mc }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mc: '1.21.11'
+            java: '21'
+            paper-api: '1.21.11-R0.1-SNAPSHOT'
+          - mc: '26.1.2'
+            java: '25'
+            paper-api: '26.1.2.build.+'
+          - mc: '26.2'
+            java: '25'
+            paper-api: '26.2.build.+'
+          - mc: '26.3'
+            java: '25'
+            paper-api: '26.3.build.+'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out PaperSwap (module API)
+        uses: actions/checkout@v4
+        with:
+          repository: paperswapstudios-official/PaperSwap
+          ref: ${{ inputs.paperswap-ref || 'main' }}
+          token: ${{ secrets.PAPERSWAP_TOKEN || github.token }}
+          path: PaperSwap
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and test the modules
+        working-directory: pvp-suite
+        run: >
+          ./gradlew collect --console=plain -PpaperswapDir=../PaperSwap
+          -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pvp-suite-${{ matrix.mc }}
+          path: pvp-suite/build/modules/
+          if-no-files-found: error
