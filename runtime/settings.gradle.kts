@@ -19,4 +19,6 @@ if (providers.gradleProperty("paperApiVersion").isPresent) {
     include("combat-probe")
     // Test modules that push the module runtime to its limits (docs/TEST-MODULES.md).
     include("test-modules:stress", "test-modules:chaos", "test-modules:library", "test-modules:consumer")
+    // LemonPvP suite: stats, combat tag, killstreaks, scoreboard (docs/PVP-SUITE.md).
+    include("pvp-suite:core", "pvp-suite:combattag", "pvp-suite:killstreaks", "pvp-suite:scoreboard")
 }

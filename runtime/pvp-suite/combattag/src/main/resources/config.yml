@@ -1,0 +1,19 @@
+# LemonPvP Combat-Tag. Änderungen übernehmen: /fork module config pvp-combattag
+
+# Sekunden "im Kampf" nach jedem Treffer zwischen zwei Spielern (1-120)
+tag-seconds: 15
+
+# Wer sich im Kampf ausloggt, stirbt. Das ist ein normaler Tod: pvp-core zählt ihn, und
+# Minecraft rechnet den Kill dem letzten Angreifer zu, wenn dessen Treffer kurz zurückliegt.
+punish-logout: true
+
+# Im Kampf gesperrte Befehle (ohne /; gilt auch mit Präfix wie essentials:spawn)
+blocked-commands: [spawn, home, homes, tpa, tpahere, tpaccept, warp, back, ec, enderchest, hub, lobby]
+
+# Platzhalter: <enemy>, <seconds>, <command>, <player>
+messages:
+  tagged: "<red>⚔ Du bist im Kampf mit <enemy>! <gray>Nicht ausloggen (<seconds> s)."
+  action-bar: "<red>⚔ Im Kampf: <white><seconds> s"
+  safe: "<green>✔ Du bist nicht mehr im Kampf."
+  blocked: "<red>/<command> ist im Kampf gesperrt <gray>(noch <seconds> s)."
+  logout: "<red>☠ <player> hat sich im Kampf ausgeloggt und ist gestorben."

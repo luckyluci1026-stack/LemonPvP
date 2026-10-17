@@ -1,0 +1,20 @@
+id: pvp-combattag
+version: 1.0.0
+name: LemonPvP Combat-Tag
+description: Kampfmarkierung mit Countdown in der Actionbar, Tod beim Ausloggen im Kampf, gesperrte Befehle im Kampf.
+authors: [Lemon contributors]
+main: dev.lemonpvp.pvp.combattag.CombatTagModule
+api-version: 1
+minecraft-versions: ["1.21.11", "26.*"]
+capabilities: [events, commands, scheduler, services]
+permissions:
+  pvp-combattag.use:
+    description: /combat
+    default: true
+  pvp-combattag.bypass:
+    description: Kein Tod beim Ausloggen, keine gesperrten Befehle im Kampf
+    default: false
+dependencies:
+  - id: pvp-core
+    version: ">=1.0.0 <2.0.0"
+resources: [config.yml]

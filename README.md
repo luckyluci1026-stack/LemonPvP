@@ -107,6 +107,7 @@ und was einen Neustart braucht: [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md).
 | Hot-Deployment: Architektur, Abläufe, Konfiguration, Befehle | [`docs/HOT-DEPLOYMENT.md`](docs/HOT-DEPLOYMENT.md) |
 | Modulformat und Modulentwicklung | [`docs/MODULE-FORMAT.md`](docs/MODULE-FORMAT.md) |
 | **Testmodule** (Stress, Fehler, Abhängigkeiten, Leaks) zum Ausprobieren | [`docs/TEST-MODULES.md`](docs/TEST-MODULES.md) |
+| **LemonPvP-Suite**: Statistiken, Combat-Tag, Killstreaks, Scoreboard (4 Module) | [`docs/PVP-SUITE.md`](docs/PVP-SUITE.md) |
 | Capability-Matrix / Neustartanforderungen | [`docs/RESTART-REQUIREMENTS.md`](docs/RESTART-REQUIREMENTS.md) |
 | Sicherheit | [`docs/SECURITY.md`](docs/SECURITY.md) |
 | Kompatibilität (Proxy, ViaVersion, Geyser …) | [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) |

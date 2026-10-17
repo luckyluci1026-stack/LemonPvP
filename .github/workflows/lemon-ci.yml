@@ -128,10 +128,10 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
       - uses: gradle/actions/setup-gradle@v4
-      - name: Compile adapter, build example module, test modules and test plugin
+      - name: Compile adapter, build example module, test modules, PvP suite (with unit tests) and test plugin
         run: >
-          ./gradlew :runtime-paper:compileJava :example-module:assemble :test-modules:collect :example-plugin:jar
-          --console=plain -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
+          ./gradlew :runtime-paper:compileJava :example-module:assemble :test-modules:collect :pvp-suite:collect
+          :example-plugin:jar --console=plain -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
       - name: Show resolved Paper API version
         run: ./gradlew :runtime-paper:dependencies --configuration compileClasspath -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }} --console=plain | grep -m1 "paper-api" || true
       - uses: actions/upload-artifact@v4
@@ -146,6 +146,12 @@ jobs:
         with:
           name: test-modules-${{ matrix.mc }}
           path: runtime/test-modules/build/modules/
+          if-no-files-found: error
+      # LemonPvP suite: pvp-core, pvp-combattag, pvp-killstreaks, pvp-scoreboard (+ .sha256), docs/PVP-SUITE.md.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pvp-suite-${{ matrix.mc }}
+          path: runtime/pvp-suite/build/modules/
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
@@ -278,6 +284,20 @@ jobs:
         run: |
           ../../scripts/ci/prepare-test-modules-server.sh "$RUNNER_TEMP/testmodules" "$RUNNER_TEMP/test-modules"
           ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/testmodules" ../../scripts/ci/smoke-test-modules.txt
+      - name: Download PvP suite
+        id: pvpsuite
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: pvp-suite-${{ matrix.mc }}
+          path: ${{ runner.temp }}/pvp-suite
+      - name: Require PvP suite
+        if: steps.pvpsuite.outcome != 'success'
+        run: echo "::error::PvP suite for ${{ matrix.mc }} is missing (paper-modules job failed)" && exit 1
+      - name: "Server test 9: LemonPvP suite (dependencies, services, kills, killstreaks, config, persistence, leaks)"
+        run: |
+          ../../scripts/ci/prepare-pvp-server.sh "$RUNNER_TEMP/pvp" "$RUNNER_TEMP/pvp-suite"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/pvp" ../../scripts/ci/smoke-pvp.txt
       - name: Download live-patch agent
         id: agent
         continue-on-error: true

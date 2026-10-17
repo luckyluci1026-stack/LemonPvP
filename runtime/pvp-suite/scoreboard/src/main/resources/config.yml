@@ -1,0 +1,24 @@
+# LemonPvP Scoreboard. Änderungen übernehmen: /fork module config pvp-scoreboard
+
+# Alle N Ticks aktualisieren (20 Ticks = 1 Sekunde; 5-100)
+refresh-ticks: 10
+
+title: "<gradient:#fff200:#ff9a00><bold>LemonPvP</bold></gradient>"
+
+# Zeilen von oben nach unten (max. 14). Ein Leerzeichen " " ergibt eine Leerzeile.
+# Platzhalter: <player> <kills> <deaths> <kd> <streak> <best> <rating> <rank> <online>
+lines:
+  - " "
+  - "<gray>Spieler: <white><player>"
+  - " "
+  - "<white>Kills: <green><kills>"
+  - "<white>Tode: <red><deaths>"
+  - "<white>K/D: <yellow><kd>"
+  - " "
+  - "<white>Serie: <gold><streak> <gray>(beste <best>)"
+  - "<white>Rating: <aqua><rating> <gray>#<rank>"
+  - " "
+  - "<gray>Online: <white><online>"
+
+# Erscheint ganz oben, solange der Spieler im Kampf ist (nur wenn pvp-combattag läuft)
+combat-line: "<red><bold>⚔ IM KAMPF: <seconds>s"

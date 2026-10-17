@@ -1,0 +1,31 @@
+# LemonPvP Killstreaks. Änderungen übernehmen: /fork module config pvp-killstreaks
+
+# Diese Serien werden angesagt (Titel, Sound, Belohnung)
+milestones: [3, 5, 7, 10, 15, 20, 25]
+
+# Nach dem letzten Meilenstein alle N Kills erneut ansagen (0 = aus)
+repeat-every: 5
+
+# Ab dieser Länge wird angesagt, wer eine Serie beendet hat (0 = aus)
+shutdown-min-streak: 5
+
+# Ab dieser Serie hören alle Spieler einen Sound
+big-streak: 10
+
+# Blitz-Effekt am Ort des Opfers (nur Effekt: kein Schaden, kein Feuer)
+lightning: true
+
+# Belohnungen: "Effekt Stufe Sekunden" (Effektnamen wie in /effect, z. B. speed, strength).
+# Es gilt die höchste Stufe, die die Serie erreicht hat.
+rewards:
+  3: ["speed 1 10"]
+  5: ["speed 1 15", "regeneration 1 5"]
+  10: ["speed 2 20", "regeneration 2 8", "strength 1 10"]
+  20: ["speed 2 30", "regeneration 2 10", "strength 2 15", "absorption 2 30"]
+
+# Platzhalter: <player>, <streak>, <killer>, <victim>
+messages:
+  announce: "<gold>✪ <yellow><player></yellow> hat eine <red><streak>er-Killstreak</red>!"
+  title: "<gradient:#ffb000:#ff3000><bold><streak>er SERIE!</bold></gradient>"
+  subtitle: "<yellow>Weiter so!"
+  shutdown: "<aqua>⚡ <killer> hat die <streak>er-Serie von <victim> beendet!"

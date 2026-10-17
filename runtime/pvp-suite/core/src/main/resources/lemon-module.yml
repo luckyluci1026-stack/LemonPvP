@@ -1,0 +1,17 @@
+id: pvp-core
+version: 1.0.0
+name: LemonPvP Core
+description: PvP-Statistiken (Kills, Tode, Serien, Elo-Rating) mit /stats und /top. Basis der LemonPvP-Suite.
+authors: [Lemon contributors]
+main: dev.lemonpvp.pvp.core.CoreModule
+api-version: 1
+minecraft-versions: ["1.21.11", "26.*"]
+capabilities: [events, commands, scheduler, services]
+permissions:
+  pvp-core.use:
+    description: /stats und /top
+    default: true
+  pvp-core.admin:
+    description: /pvp (save, reset, sim)
+    default: op
+resources: [config.yml]
