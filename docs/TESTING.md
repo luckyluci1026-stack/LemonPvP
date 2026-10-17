@@ -275,6 +275,21 @@ Kopf seiner Warteschlange ein entladenes Modul festhielt (per Heap-Analyse
 Befehle werden eingereiht; `sed | head` unter `pipefail`). Details: `TEST-MODULES.md`,
 Abschnitt 7.
 
+### LemonPvP-Suite (Servertest 9, Lauf #36 `cdcbbbe`)
+
+Alle 12 Jobs grün. Die vier Module (`docs/PVP-SUITE.md`) werden in jedem Paper-API-Job
+gegen die echte API gebaut; vorher laufen ihre 22 Unit-Tests (`:pvp-suite:collect` hängt
+von `test` ab). Servertest 9 (`scripts/ci/smoke-pvp.txt`) bestand auf allen vier Versionen:
+`pvp-killstreaks` ohne `pvp-core` abgelehnt; simulierte Kills mit exakt erwarteten Werten
+(Alice: `Kills 5 · Tode 1 · K/D 5.00`, `Rating 1045 (#1)`; Bob `K/D 0.20`; Top-Liste);
+Ansagen für 3er- und 5er-Serie, keine für 4, „Serie beendet“; abgelehnte Konfiguration
+(`k-factor 500`, unbekannter Trankeffekt `flying` – geprüft gegen die Effekt-Registry des
+Servers); Hot-Swap von `pvp-killstreaks` (die neue Instanz sagt die nächste Serie an);
+`disable pvp-core` verweigert, solange Module es nutzen; nach Reload von `pvp-core` sind alle
+4 Spieler wieder da (`stats.tsv` geprüft); nach dem Entladen und `jcmd GC.run` **6 von 6**
+Class-Loadern eingesammelt. Nicht automatisiert: alles, was einen echten Spieler braucht
+(Treffer, Actionbar, Titel, Sounds, Effekte, Seitenleiste).
+
 ## Noch nicht automatisiert
 
 | Test | Grund |

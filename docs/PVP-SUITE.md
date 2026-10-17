@@ -119,7 +119,8 @@ Code: `runtime/pvp-suite/<modul>/src/main/java/dev/lemonpvp/pvp/…` – guter E
   simulierte Kills mit exakten Erwartungswerten (Rating 1045, Rang #1 …), Ansagen,
   abgelehnte Konfiguration (inklusive unbekanntem Trankeffekt aus der Server-Registry),
   Hot-Swap von `pvp-killstreaks`, Statistik übersteht einen Reload von `pvp-core`, und nach
-  dem Entladen und voller GC ist kein Modul mehr im Speicher. Ergebnisse: [`TESTING.md`](TESTING.md).
+  dem Entladen und voller GC ist kein Modul mehr im Speicher. Lauf #36: auf allen vier
+  Versionen bestanden (Details in [`TESTING.md`](TESTING.md)).
 * **Nicht automatisch getestet**: alles, was einen echten Spieler braucht (Treffer,
   Actionbar, Titel, Sounds, Effekte, Seitenleiste, Tod beim Ausloggen). Der Code dafür nutzt
   nur Paper-API, die gegen beide Versionen ohne Warnungen kompiliert; gesehen hat sie aber
