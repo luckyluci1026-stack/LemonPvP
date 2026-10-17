@@ -18,9 +18,9 @@ import java.util.Set;
 /**
  * Shows why an object is still alive: reads a HotSpot heap dump (HPROF) and prints the
  * shortest chain of strong references from a GC root to every instance of a class whose
- * boolean field has a given value (for Lemon: closed module class loaders).
+ * boolean field has a given value (for PaperSwap: closed module class loaders).
  *
- * <pre>java scripts/ci/HeapPath.java dump.hprof dev.lemonpvp.runtime.loader.ModuleClassLoader closed</pre>
+ * <pre>java scripts/ci/HeapPath.java dump.hprof dev.paperswap.runtime.loader.ModuleClassLoader closed</pre>
  *
  * References from {@code java.lang.ref.Reference.referent} (weak, soft, phantom, final
  * references) are ignored, as the GC does. Every instance also references its class and a

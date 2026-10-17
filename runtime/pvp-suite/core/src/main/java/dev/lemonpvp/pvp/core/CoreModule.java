@@ -5,14 +5,14 @@ import dev.lemonpvp.pvp.api.PlayerStats;
 import dev.lemonpvp.pvp.api.PvpKillEvent;
 import dev.lemonpvp.pvp.api.PvpStatsService;
 import dev.lemonpvp.pvp.api.Text;
-import dev.lemonpvp.runtime.api.ConfigSnapshot;
-import dev.lemonpvp.runtime.api.ConfigurableModule;
-import dev.lemonpvp.runtime.api.ModuleContext;
-import dev.lemonpvp.runtime.api.RuntimeModule;
-import dev.lemonpvp.runtime.api.paper.CommandSpec;
-import dev.lemonpvp.runtime.api.paper.ModuleCommandHandler;
-import dev.lemonpvp.runtime.api.paper.ModuleTask;
-import dev.lemonpvp.runtime.api.paper.PaperModulePlatform;
+import dev.paperswap.runtime.api.ConfigSnapshot;
+import dev.paperswap.runtime.api.ConfigurableModule;
+import dev.paperswap.runtime.api.ModuleContext;
+import dev.paperswap.runtime.api.RuntimeModule;
+import dev.paperswap.runtime.api.paper.CommandSpec;
+import dev.paperswap.runtime.api.paper.ModuleCommandHandler;
+import dev.paperswap.runtime.api.paper.ModuleTask;
+import dev.paperswap.runtime.api.paper.PaperModulePlatform;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -31,7 +31,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 /**
  * pvp-core: counts kills and deaths, keeps streaks and an Elo rating, saves everything to
- * {@code lemon/module-data/pvp-core/stats.tsv} and offers {@code /stats}, {@code /top} and
+ * {@code paperswap/module-data/pvp-core/stats.tsv} and offers {@code /stats}, {@code /top} and
  * {@code /pvp} (admin). Other modules of the suite use its {@link PvpStatsService} and
  * listen to {@link PvpKillEvent}.
  */

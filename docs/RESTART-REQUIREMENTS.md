@@ -1,6 +1,6 @@
 # Neustartanforderungen und Capability-Matrix
 
-Lemon versucht **nicht**, jede Änderung zur Laufzeit umzusetzen. Diese Matrix legt fest,
+PaperSwap versucht **nicht**, jede Änderung zur Laufzeit umzusetzen. Diese Matrix legt fest,
 was sofort wirkt, was kontrolliert hot-deploybar ist und was einen Neustart braucht.
 
 Legende:
@@ -13,10 +13,10 @@ Legende:
 
 | Änderung | Einstufung | Wie |
 |---|---|---|
-| Modulkonfiguration (`lemon/module-data/<id>/config.yml`) | A (wenn das Modul `ConfigurableModule` implementiert), sonst C1 | `/fork module config <id>`; ungültig ⇒ letzte gültige bleibt |
+| Modulkonfiguration (`paperswap/module-data/<id>/config.yml`) | A (wenn das Modul `ConfigurableModule` implementiert), sonst C1 | `/fork module config <id>`; ungültig ⇒ letzte gültige bleibt |
 | Nachrichten/Texte eines Moduls | A, sofern aus der Modulkonfiguration gelesen (Beispiel: `example-greeter`) | wie oben |
 | Feature-Flags, zeitgesteuerte Aktivierungen, Spawn-/Event-Regeln | A, sofern das Modul sie als Daten aus seiner Konfiguration liest und ein bereits laufender Handler sie auswertet | wie oben |
-| GUI-Definitionen | A nur, wenn das GUI-System des Moduls Definitionen als Daten lädt; Lemon stellt kein eigenes GUI-System bereit | modulabhängig |
+| GUI-Definitionen | A nur, wenn das GUI-System des Moduls Definitionen als Daten lädt; PaperSwap stellt kein eigenes GUI-System bereit | modulabhängig |
 | `allow-runtime-deploy`, `verify-integrity`, `trusted-hashes-file`, `log-module-lifecycle`, `max-module-count`, `operation-timeout-seconds`, `allowed-api-versions`, `persist-runtime-state` | A | `/fork reload` |
 | `allow-server-internals` | A für danach geladene Module | `/fork reload`, dann Module neu laden |
 | `enabled`, `module-directory`, `startup-modules` | C2 | Neustart (wird von `/fork reload` gemeldet) |
@@ -42,14 +42,14 @@ Details und Prüfregeln: [`LIVE-UPDATES.md`](LIVE-UPDATES.md).
 |---|---|---|
 | Bukkit-Plugin (`plugin.yml`) installieren | B' | `fork live check` ergibt „live“: Abhängigkeiten aktiv, API-Version passt, keine Paper-Lifecycle-API |
 | Bukkit-Plugin aktualisieren / auf vorherige JAR zurück | B' | zusätzlich: kein anderes aktives Plugin hängt davon ab; automatische Wiederherstellung bei Fehlschlag |
-| Methodenrumpf einer Server-Klasse (Paper, Minecraft, Lemon) | B' | `live-patching.enabled`, `-javaagent`, Patch passt zu Build und laufendem Bytecode; Zustand wird nicht migriert |
+| Methodenrumpf einer Server-Klasse (Paper, Minecraft, PaperSwap) | B' | `live-patching.enabled`, `-javaagent`, Patch passt zu Build und laufendem Bytecode; Zustand wird nicht migriert |
 | Methoden/Felder hinzufügen oder entfernen, Signaturen, Vererbung | B' nur auf JetBrains Runtime mit `-XX:+AllowEnhancedClassRedefinition`, sonst C2 | per Probe festgestellt |
 
 ## Kategorie C – Neustart erforderlich
 
 | Änderung | Einstufung | Grund |
 |---|---|---|
-| Minecraft-Kern, Paper-/CraftBukkit-Code, Lemon-Runtime: strukturelle Änderungen auf Standard-JVM, statische Initialisierer, Konstanten mit Wirkung auf bestehenden Zustand | C2 | Standard-HotSpot redefiniert nur Methodenrümpfe; `<clinit>` läuft nie erneut |
+| Minecraft-Kern, Paper-/CraftBukkit-Code, PaperSwap-Runtime: strukturelle Änderungen auf Standard-JVM, statische Initialisierer, Konstanten mit Wirkung auf bestehenden Zustand | C2 | Standard-HotSpot redefiniert nur Methodenrümpfe; `<clinit>` läuft nie erneut |
 | Dauerhafte Übernahme eines Core-Patches | C2 (neue Server-JAR) | Patches gelten nur für den laufenden Prozess |
 | Paper-Plugins (`paper-plugin.yml`), Plugins mit Paper-Lifecycle-API, Plugins mit aktiven Abhängigen | C2 | Bootstrap/Lifecycle-Handler laufen nur beim Start; Abhängige halten Klassenreferenzen |
 | Änderungen an bereits geladenen Modulklassen ohne neue Modulinstanz | C1 (Modul-Reload) | Module werden über neue Instanzen ausgetauscht, nicht per Redefinition |
@@ -59,4 +59,4 @@ Details und Prüfregeln: [`LIVE-UPDATES.md`](LIVE-UPDATES.md).
 | Brigadier-Befehle über Paper-Lifecycle-API | C2 / Paper-`/reload` | Paper erlaubt Registrierung nur beim Start/Reload |
 | Modul hinterließ unvollständig freigegebene Ressourcen (`FAILED` nach Disable, Rollback gescheitert) | C2 empfohlen | `/fork status` zeigt „A controlled server restart is recommended“ |
 | Asynchrone Modularbeit endet nicht | C2 empfohlen | Threads können nicht sicher beendet werden |
-| Änderungen, für die kein sauberer Rollback möglich ist (externe Datenbanken, versendete Nachrichten, Weltänderungen) | – | Lemon kann solche Effekte nie zurückrollen; Module müssen idempotent/abwärtskompatibel migrieren |
+| Änderungen, für die kein sauberer Rollback möglich ist (externe Datenbanken, versendete Nachrichten, Weltänderungen) | – | PaperSwap kann solche Effekte nie zurückrollen; Module müssen idempotent/abwärtskompatibel migrieren |

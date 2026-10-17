@@ -2,7 +2,7 @@
 
 ## Hot-Deployment
 
-1. **Modul-Hot-Deployment ist kein JVM-Hot-Swap.** Lemon tauscht Modulinstanzen aus.
+1. **Modul-Hot-Deployment ist kein JVM-Hot-Swap.** PaperSwap tauscht Modulinstanzen aus.
    Plugins und Serverklassen haben eigene, enger begrenzte Wege (siehe „Live-Updates“).
 2. **Klassen bleiben bis zur Garbage Collection im Speicher.** Ein geschlossener
    Class-Loader wird nur eingesammelt, wenn nichts mehr auf ihn verweist. Häufige Ursachen
@@ -15,7 +15,7 @@
 4. **Rollback nur innerhalb der Runtime.** Welt-, Datenbank- oder Netzwerkeffekte der neuen
    Version werden nicht zurückgenommen.
 5. **Hauptthread-Callbacks sind nicht unterbrechbar.** Ein `onEnable`, das hängt, blockiert
-   den Server. Lemon meldet langsame Callbacks, kann sie aber nicht abbrechen.
+   den Server. PaperSwap meldet langsame Callbacks, kann sie aber nicht abbrechen.
 6. **Laufende asynchrone Arbeit** kann nicht beendet werden; Entladen wird bis zu ihrem Ende
    verweigert bzw. beim Hot-Swap verzögert.
 7. **Abhängige Module** blockieren Reload/Unload ihrer Abhängigkeiten (Class-Loader-Bindung).
@@ -24,7 +24,7 @@
    verfügbar, weil Paper diese nur beim Start registriert.
 9. **Bundle-Bibliotheken:** Parent-first-Laden bedeutet, dass vom Server mitgelieferte
    Bibliotheksversionen gewinnen. Module müssen eigene Abhängigkeiten relocaten.
-10. **Folia wird nicht unterstützt** (regionalisiertes Threading; Lemon basiert auf Paper).
+10. **Folia wird nicht unterstützt** (regionalisiertes Threading; PaperSwap basiert auf Paper).
 11. **Permission-Defaults** von Modulberechtigungen werden nur registriert, wenn der Knoten
     noch nicht existiert.
 12. **Startreihenfolge:** Startmodule werden ab dem ersten Tick aktiviert, d. h. kurz nach
@@ -38,7 +38,7 @@
 1. **Kein universelles Live-Patching.** Standard-JVMs (Temurin/OpenJDK/Oracle) ändern nur
    Methodenrümpfe. Strukturelle Änderungen gehen nur mit JetBrains Runtime und
    `-XX:+AllowEnhancedClassRedefinition` – in der CI nur auf JBR 21.0.11 und 25.0.4.1 geprüft.
-2. **JBR verifiziert redefinierte Klassen nicht** (in der CI beobachtet). Lemon führt den
+2. **JBR verifiziert redefinierte Klassen nicht** (in der CI beobachtet). PaperSwap führt den
    Verifier deshalb selbst vorher aus; Klassen, die sich außerhalb ihres Laufzeitpakets
    nicht prüfen lassen, lehnt das Produktionsprofil ab.
 3. **Kein Zustandsabgleich.** Bestehende Objekte, statische Felder, Caches, Threads und
@@ -51,9 +51,9 @@
 6. **Neue Klassen bleiben geladen**, auch nach Rollback oder fehlgeschlagener Anwendung.
 7. **Kurze Pause aller Java-Threads** bei jeder Redefinition (JVM-Safepoint); mit
    erweiterter Redefinition je nach Heap länger.
-8. **Plugins:** Paper hat keine offizielle Entlade-Funktion. Lemon nutzt dazu interne
+8. **Plugins:** Paper hat keine offizielle Entlade-Funktion. PaperSwap nutzt dazu interne
    Felder von Papers Plugin-Manager (in allen vier Versionen identisch; fehlen sie, meldet
-   Lemon „restart only“). Zustand, den ein Plugin außerhalb der Bukkit-API angelegt hat
+   PaperSwap „restart only“). Zustand, den ein Plugin außerhalb der Bukkit-API angelegt hat
    (eigene Threads, statische Referenzen in anderen Plugins, JDBC-Treiber …), wird nicht
    aufgeräumt. Paper-Plugins, Plugins mit Lifecycle-API und Plugins mit aktiven
    Abhängigen werden nie live getauscht. Spieler mit offenen Inventaren/GUIs eines
@@ -68,7 +68,7 @@
     Befehle, Services, Kanäle. Paper-Async/Region-Tasks, selbst gestartete Threads (nur
     über den Thread-Check nach dem Entladen), Registrierungen in fremden Plugin-APIs und
     Brigadier-Lifecycle-Befehle sind nicht sichtbar. „Class-Loader noch im Speicher“ kann
-    auch heißen, dass noch keine volle GC lief; Lemon löst keine aus.
+    auch heißen, dass noch keine volle GC lief; PaperSwap löst keine aus.
 
 ## Fork / Versionen
 

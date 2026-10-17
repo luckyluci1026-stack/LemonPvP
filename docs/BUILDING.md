@@ -15,16 +15,16 @@ Patchen): `git config --global user.name "…"; git config --global user.email "
 
 ```bash
 cd versions/26.2                       # bzw. 1.21.11, 26.1.2, 26.3
-./gradlew applyAllPatches              # klont Paper @ paperRef, wendet Paper- und Lemon-Patches an
+./gradlew applyAllPatches              # klont Paper @ paperRef, wendet Paper- und PaperSwap-Patches an
 ./gradlew build                        # kompiliert (inkl. Runtime) und führt Paper-Tests aus
-./gradlew createPaperclipJar           # 26.x  → lemon-server/build/libs/lemon-paperclip-*.jar
-./gradlew createMojmapPaperclipJar     # 1.21.11 → lemon-server/build/libs/lemon-paperclip-*.jar
+./gradlew createPaperclipJar           # 26.x  → paperswap-server/build/libs/paperswap-paperclip-*.jar
+./gradlew createMojmapPaperclipJar     # 1.21.11 → paperswap-server/build/libs/paperswap-paperclip-*.jar
 ```
 
-Genau diese Befehle führt die CI (`.github/workflows/lemon-ci.yml`) pro Version aus. Mit
+Genau diese Befehle führt die CI (`.github/workflows/paperswap-ci.yml`) pro Version aus. Mit
 gesetzter Umgebungsvariable `BUILD_NUMBER` erhalten 26.x-Builds die Version
 `<mc>.build.<n>-alpha`, sonst `<mc>.local-SNAPSHOT`; 1.21.11 nutzt `1.21.11-R0.1-SNAPSHOT`.
-Die CI benennt Artefakte eindeutig: `lemon-<mc>-build.<run>-<commit>.jar` + `.sha256`.
+Die CI benennt Artefakte eindeutig: `paperswap-<mc>-build.<run>-<commit>.jar` + `.sha256`.
 
 ## Runtime separat bauen und testen
 
@@ -38,8 +38,8 @@ cd runtime
 Live-Patch-Agent und Test-Plugin:
 
 ```bash
-./gradlew :livepatch-agent:jar        # → livepatch-agent/build/libs/lemon-livepatch-agent.jar
-./gradlew :example-plugin:jar -PpaperApiVersion=26.2.build.+ -PjavaRelease=25   # → LemonTestPlugin.jar (CI-Tests)
+./gradlew :livepatch-agent:jar        # → livepatch-agent/build/libs/paperswap-agent.jar
+./gradlew :example-plugin:jar -PpaperApiVersion=26.2.build.+ -PjavaRelease=25   # → PaperSwapTestPlugin.jar (CI-Tests)
 ```
 
 Unit-Tests der Runtime laufen mit `-javaagent` (wie ein Server). Auf einer anderen JVM,
@@ -50,11 +50,11 @@ z. B. JetBrains Runtime mit erweiterter Redefinition:
 
 ```bash
 cd versions/26.2
-./gradlew :lemon-server:livePatchBaseline                    # direkt nach dem Bauen der deployten JAR
-# … Quellen ändern (paper-server/src/main/java, lemon-server/src/minecraft/java) …
-./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…" \
-          -PserverJar=/pfad/zu/versions/26.2/lemon-26.2.jar  # die JAR, die Paperclip auf dem Server schrieb (1.21.11: Pflicht)
-# → lemon-server/build/livepatch/fix-tps.lemonpatch + .sha256
+./gradlew :paperswap-server:livePatchBaseline                    # direkt nach dem Bauen der deployten JAR
+# … Quellen ändern (paper-server/src/main/java, paperswap-server/src/minecraft/java) …
+./gradlew :paperswap-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…" \
+          -PserverJar=/pfad/zu/versions/26.2/paperswap-26.2.jar  # die JAR, die Paperclip auf dem Server schrieb (1.21.11: Pflicht)
+# → paperswap-server/build/livepatch/fix-tps.swappatch + .sha256
 ```
 
 Ablauf und Prüfungen auf dem Server: [`LIVE-UPDATES.md`](LIVE-UPDATES.md).
@@ -68,12 +68,12 @@ gegen die öffentliche Paper-API und erzeugt das Beispielmodul
 
 ```bash
 mkdir run && cd run
-cp ../lemon-26.2-*.jar server.jar
+cp ../paperswap-26.2-*.jar server.jar
 echo "eula=true" > eula.txt            # nur nach Lesen/Akzeptieren der Minecraft EULA
 java -Xms2G -Xmx4G -jar server.jar --nogui
 ```
 
-Beim ersten Start entsteht `config/lemon-runtime.yml` mit `enabled: false`. Hot-Deployment
+Beim ersten Start entsteht `config/paperswap.yml` mit `enabled: false`. Hot-Deployment
 aktivieren: siehe `README.md` → „Schnellstart Hot-Deployment“.
 
 ## Was beim Build mit dem Code passiert
@@ -81,11 +81,11 @@ aktivieren: siehe `README.md` → „Schnellstart Hot-Deployment“.
 ```
 versions/<mc>/
 ├── build.gradle.kts / settings.gradle.kts / gradle.properties   (generiert: scripts/fork/scaffold_version.py)
-├── lemon-api/build.gradle.kts.patch                              (generiert: scripts/fork/generate_patches.py)
-├── lemon-server/build.gradle.kts.patch                           (generiert; fügt runtime/* als srcDir hinzu, setzt Marke)
-└── lemon-server/paper-patches/files/src/main/java/org/bukkit/craftbukkit/CraftServer.java.patch   (3 Hook-Zeilen)
+├── paperswap-api/build.gradle.kts.patch                              (generiert: scripts/fork/generate_patches.py)
+├── paperswap-server/build.gradle.kts.patch                           (generiert; fügt runtime/* als srcDir hinzu, setzt Marke)
+└── paperswap-server/paper-patches/files/src/main/java/org/bukkit/craftbukkit/CraftServer.java.patch   (3 Hook-Zeilen)
 ```
 
 Nach `applyAllPatches` liegen die gepatchten Quellen in `paper-api/`, `paper-server/`,
-`lemon-server/src/minecraft/` – diese Verzeichnisse sind in `.gitignore` und werden nie
+`paperswap-server/src/minecraft/` – diese Verzeichnisse sind in `.gitignore` und werden nie
 eingecheckt.

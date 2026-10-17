@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 
 /**
  * Minimal stand-in for a platform facade (like PaperModulePlatform) used by test modules.
- * Lives outside dev.lemonpvp.runtime so module class loaders can see it.
+ * Lives outside dev.paperswap.runtime so module class loaders can see it.
  */
 public interface FakeServerApi {
 

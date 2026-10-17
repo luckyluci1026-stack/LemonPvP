@@ -1,6 +1,6 @@
 # LemonPvP-Suite
 
-Vier Lemon-Module, die zusammen ein PvP-System ergeben. Jedes Modul lässt sich einzeln
+Vier PaperSwap-Module, die zusammen ein PvP-System ergeben. Jedes Modul lässt sich einzeln
 aktivieren, austauschen und abschalten, ohne den Server neu zu starten.
 
 | Modul | Was es macht | Befehle |
@@ -15,10 +15,10 @@ Scoreboard zeigt den Kampf-Countdown nur, wenn `pvp-combattag` läuft – ohne g
 
 ## Installieren
 
-1. Artefakt **`pvp-suite-<version>`** aus GitHub Actions laden (Lauf von „Lemon CI“ →
+1. Artefakt **`pvp-suite-<version>`** aus GitHub Actions laden (Lauf von „PaperSwap CI“ →
    Artifacts) oder selbst bauen: `cd runtime && ./gradlew :pvp-suite:collect -PpaperApiVersion=<…>`
    → `runtime/pvp-suite/build/modules/`.
-2. Alle vier JARs **mit** ihren `.sha256`-Dateien nach `lemon/modules/`.
+2. Alle vier JARs **mit** ihren `.sha256`-Dateien nach `paperswap/modules/`.
 3. Konsole (Reihenfolge: zuerst der Core):
    ```
    fork module enable pvp-core
@@ -27,7 +27,7 @@ Scoreboard zeigt den Kampf-Countdown nur, wenn `pvp-combattag` läuft – ohne g
    fork module enable pvp-scoreboard
    ```
    Dauerhaft beim Serverstart: `startup-modules: [pvp-core, pvp-combattag, pvp-killstreaks, pvp-scoreboard]`
-   in `config/lemon-runtime.yml` (die Runtime startet sie in der richtigen Reihenfolge).
+   in `config/paperswap.yml` (die Runtime startet sie in der richtigen Reihenfolge).
 
 ## Ausprobieren ohne zweiten Spieler
 
@@ -59,7 +59,7 @@ Jeder Befehl geht auch mit Präfix, z. B. `/pvp-core:stats`, falls ein anderes P
 
 ## Konfiguration
 
-Jedes Modul hat seine `config.yml` in `lemon/module-data/<modul>/`. Nach dem Bearbeiten:
+Jedes Modul hat seine `config.yml` in `paperswap/module-data/<modul>/`. Nach dem Bearbeiten:
 `fork module config <modul>` – ungültige Werte werden abgelehnt, die alte Konfiguration
 bleibt aktiv. Texte sind [MiniMessage](https://docs.advntr.dev/minimessage/format.html)
 (`<red>`, `<bold>`, `<gradient:#ff0:#f80>` …).
@@ -71,7 +71,7 @@ bleibt aktiv. Texte sind [MiniMessage](https://docs.advntr.dev/minimessage/forma
 * `pvp-scoreboard`: `refresh-ticks`, `title`, `lines` (Platzhalter `<kills>`, `<deaths>`,
   `<kd>`, `<streak>`, `<best>`, `<rating>`, `<rank>`, `<player>`, `<online>`), `combat-line`.
 
-Statistiken: `lemon/module-data/pvp-core/stats.tsv` (eine Zeile pro Spieler, Tab-getrennt).
+Statistiken: `paperswap/module-data/pvp-core/stats.tsv` (eine Zeile pro Spieler, Tab-getrennt).
 Gespeichert wird alle `autosave-minutes`, bei `/pvp save` und beim Deaktivieren.
 
 ## Wie es funktioniert (für Java-Lernende)

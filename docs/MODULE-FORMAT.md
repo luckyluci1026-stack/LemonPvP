@@ -1,8 +1,8 @@
 # Modulformat und Modulentwicklung
 
-Ein Lemon-Modul ist eine **JAR-Datei** mit einer Datei `module.yml` (gleichwertig:
-`lemon-module.yml`; nur eine von beiden) im Wurzelverzeichnis und einer Hauptklasse, die
-`dev.lemonpvp.runtime.api.RuntimeModule` implementiert. Neben der JAR liegt eine
+Ein PaperSwap-Modul ist eine **JAR-Datei** mit einer Datei `module.yml` (gleichwertig:
+`paperswap-module.yml`; nur eine von beiden) im Wurzelverzeichnis und einer Hauptklasse, die
+`dev.paperswap.runtime.api.RuntimeModule` implementiert. Neben der JAR liegt eine
 `<jar>.sha256`-Datei (Integrität). Das kürzeste gültige Modul braucht drei Zeilen:
 
 ```yaml
@@ -16,9 +16,9 @@ Ohne Angabe gelten: `api-version` = API-Version der Runtime, `minecraft-versions
 
 Ein Modul wird **nie** automatisch aktiviert, nur weil seine JAR im Modulverzeichnis
 liegt. Aktivierung erfolgt ausschließlich über `/fork module enable <id>` (wenn
-`allow-runtime-deploy: true`) oder `startup-modules` in `lemon-runtime.yml`.
+`allow-runtime-deploy: true`) oder `startup-modules` in `paperswap.yml`.
 
-## 1. `module.yml` / `lemon-module.yml`
+## 1. `module.yml` / `paperswap-module.yml`
 
 ```yaml
 id: event-tools                 # Pflicht. [a-z][a-z0-9_-]{1,47}, eindeutig, nicht reserviert
@@ -34,7 +34,7 @@ permissions:                    # deklarierte Berechtigungen, Präfix muss "<id>
   event-tools.start:
     description: Startet ein Event
     default: op                 # true | false | op | not-op
-dependencies:                   # andere Lemon-Module
+dependencies:                   # andere PaperSwap-Module
   - id: core-lib
     version: ">=2.0.0 <3.0.0"   # *, =, >, >=, <, <=, ^, ~ (UND-verknüpft)
   - id: stats
@@ -46,9 +46,9 @@ resources: [config.yml, lang/en.yml]  # beim ersten Laden ins Datenverzeichnis k
 
 | Feld | Pflicht | Prüfung |
 |---|---|---|
-| `id` | ja | Muster, reservierte IDs (`minecraft`, `bukkit`, `spigot`, `paper`, `papermc`, `craftbukkit`, `lemon`, `runtime`, `fork`) |
+| `id` | ja | Muster, reservierte IDs (`minecraft`, `bukkit`, `spigot`, `paper`, `papermc`, `craftbukkit`, `paperswap`, `runtime`, `fork`) |
 | `version` | ja | SemVer |
-| `main` | ja | voll qualifizierter Klassenname; nicht in `java.*`, `javax.*`, `jdk.*`, `sun.*`, `dev.lemonpvp.runtime.*`, `org.bukkit.*`, `io.papermc.*`, `net.minecraft.*` |
+| `main` | ja | voll qualifizierter Klassenname; nicht in `java.*`, `javax.*`, `jdk.*`, `sun.*`, `dev.paperswap.runtime.*`, `org.bukkit.*`, `io.papermc.*`, `net.minecraft.*` |
 | `api-version` | nein (Standard: Runtime-API) | ≥ 1, ≤ Runtime-API und in `allowed-api-versions` |
 | `minecraft-versions` | nein (Standard: `["*"]`) | muss die laufende Version treffen; eine leere Liste ist ein Fehler |
 | `capabilities` | nein (Standard: alle) | nur `events`, `commands`, `scheduler`, `services`; ist die Liste angegeben, verweigert die Fassade alles andere |
@@ -107,7 +107,7 @@ public final class EventTools implements RuntimeModule, ConfigurableModule {
 |---|---|
 | `descriptor()` | eigene Metadaten |
 | `logger()` | Logger mit `[id]`-Präfix |
-| `dataDirectory()` | `lemon/module-data/<id>/` |
+| `dataDirectory()` | `paperswap/module-data/<id>/` |
 | `config()` | letzte gültige `config.yml` als unveränderlicher `ConfigSnapshot` |
 | `resources()` | eigene Ressourcen zur automatischen Freigabe registrieren |
 | `services()` | Services anbieten (`services`-Fähigkeit) / finden |
@@ -151,7 +151,7 @@ nicht einbetten. Eigene Bibliotheken in die JAR schattieren und relocaten.
 ## 4. Installieren und aktivieren
 
 ```bash
-cp event-tools.jar event-tools.jar.sha256 <server>/lemon/modules/
+cp event-tools.jar event-tools.jar.sha256 <server>/paperswap/modules/
 ```
 ```
 /fork module list                 # Datei erscheint als "not loaded"
@@ -161,7 +161,7 @@ cp event-tools.jar event-tools.jar.sha256 <server>/lemon/modules/
 ```
 
 Update: neue JAR + neue `.sha256` ablegen (gleiche ID, neue Version), dann
-`/fork module reload event-tools`. Konfigurationsänderung: `lemon/module-data/event-tools/config.yml`
+`/fork module reload event-tools`. Konfigurationsänderung: `paperswap/module-data/event-tools/config.yml`
 bearbeiten, `/fork module config event-tools`.
 
 Vollständiges Beispiel: `runtime/example-module` (Join-Nachricht, `/greet`, Timer,

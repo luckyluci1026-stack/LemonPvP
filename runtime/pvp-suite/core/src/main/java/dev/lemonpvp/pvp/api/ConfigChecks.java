@@ -1,6 +1,6 @@
 package dev.lemonpvp.pvp.api;
 
-import dev.lemonpvp.runtime.api.ConfigSnapshot;
+import dev.paperswap.runtime.api.ConfigSnapshot;
 import java.util.List;
 import java.util.Optional;
 

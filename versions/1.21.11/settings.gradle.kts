@@ -9,9 +9,9 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-rootProject.name = "lemon"
+rootProject.name = "paperswap"
 
-for (name in listOf("lemon-api", "lemon-server")) {
+for (name in listOf("paperswap-api", "paperswap-server")) {
     include(name)
     file(name).mkdirs()
 }

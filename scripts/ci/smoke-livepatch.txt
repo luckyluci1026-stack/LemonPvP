@@ -47,7 +47,7 @@ fork live patch verify tps-text
 fork live inspect patch:tps-text
 @sleep 3
 # The backup holds exactly the class file that ran before the patch.
-@shell grep -F "$(cat expected-tps-base.txt)  org.spigotmc.TicksPerSecondCommand" lemon/patches/backups/tps-text/*/backup.txt
+@shell grep -F "$(cat expected-tps-base.txt)  org.spigotmc.TicksPerSecondCommand" paperswap/patches/backups/tps-text/*/backup.txt
 fork live rollback tps-text
 @sleep 3
 fork live rollback tps-text confirm
@@ -55,15 +55,15 @@ fork live rollback tps-text confirm
 tps
 fork live patch status
 @sleep 3
-@shell grep -F "| patch-apply | tps-text | OK |" lemon/logs/audit.log
-@shell grep -F "| patch-apply | tps-atomic | FAILED |" lemon/logs/audit.log
-@shell grep -F "| patch-rollback | tps-text | OK |" lemon/logs/audit.log
-@shell grep -F "| patch-verify | tps-text | OK |" lemon/logs/audit.log
+@shell grep -F "| patch-apply | tps-text | OK |" paperswap/logs/audit.log
+@shell grep -F "| patch-apply | tps-atomic | FAILED |" paperswap/logs/audit.log
+@shell grep -F "| patch-rollback | tps-text | OK |" paperswap/logs/audit.log
+@shell grep -F "| patch-verify | tps-text | OK |" paperswap/logs/audit.log
 @expect live-patch agent 3 loaded \(-javaagent\)
 @expect Agent: agent 3 loaded via
 @expect live-patching.enabled: true, profile: production
-@expect patches must be listed in lemon/patches/approved.sha256
-@expect Build id: lemonpvp:lemon/
+@expect patches must be listed in paperswap/patches/approved.sha256
+@expect Build id: paperswap:paperswap/
 @expect yes change existing method bodies
 @expect no  add methods/constructors
 @expect patch tps-text: 1 class\(es\)
@@ -84,7 +84,7 @@ fork live patch status
 @expect plan for tps-text is ready
 @expect OK patch tps-text applied and verified
 @expect org\.spigotmc\.TicksPerSecondCommand: runs the expected bytecode \(read back from the JVM\)
-@expect behaviour NOT validated by Lemon
+@expect behaviour NOT validated by PaperSwap
 @expect OK patch tps-text: verified: the JVM runs the expected bytecode
 @expect Core patch tps-text in this server process
 @expect active - 1 class\(es\) redefined, 0 defined in [0-9]+ µs; verified

@@ -1,0 +1,575 @@
+name: PaperSwap CI
+
+on:
+  push:
+    paths-ignore:
+      - 'index.html'
+      - 'index.zip'
+      # Prose only; docs/examples/** is read by tests and still runs the CI.
+      - 'docs/*.md'
+      - 'README.md'
+      - 'scripts/ci/source-inspect/**'
+      - '.github/workflows/source-inspect.yml'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paperswap-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Platform-neutral runtime (API + core) incl. lifecycle integration tests.
+  runtime:
+    name: Runtime core (JDK 21)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      # Built and uploaded before the tests so the server tests get the agent even if a unit test fails.
+      - name: Build live-patch agent
+        run: ./gradlew :livepatch-agent:jar --console=plain
+      - uses: actions/upload-artifact@v4
+        with:
+          name: livepatch-agent
+          path: runtime/livepatch-agent/build/libs/paperswap-agent.jar
+          if-no-files-found: error
+      - name: Build and test (unit tests run with -javaagent, like a server)
+        run: ./gradlew build --console=plain
+      - name: Test summary
+        if: always()
+        run: python3 ../scripts/ci/junit-summary.py .
+      - name: Upload runtime test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-test-reports
+          path: runtime/**/build/test-results/test/*.xml
+          if-no-files-found: ignore
+
+  # The same unit tests on JetBrains Runtime with enhanced class redefinition, where
+  # structural changes (added methods/fields) must be detected as supported and work.
+  runtime-jbr:
+    name: Runtime core on JetBrains Runtime ${{ matrix.jbr }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        jbr: ['21', '25']
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Download JetBrains Runtime ${{ matrix.jbr }}
+        id: jbr
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 ../scripts/ci/fetch-jbr.py ${{ matrix.jbr }} "$RUNNER_TEMP/jbr"
+      - name: Show JVM and redefinition flag
+        if: steps.jbr.outputs.java != ''
+        run: |
+          "${{ steps.jbr.outputs.java }}" -version
+          "${{ steps.jbr.outputs.java }}" -XX:+AllowEnhancedClassRedefinition -XX:+PrintFlagsFinal -version | grep -E 'AllowEnhancedClassRedefinition'
+      # Diagnostic (never fails the job): which retransformation patterns this JVM survives, one JVM
+      # process per scenario, with and without enhanced redefinition. PaperSwap's policy for JVMs with
+      # enhanced redefinition is based on this output (docs/INSTRUMENTATION.md).
+      - name: Retransformation behaviour of this JVM (diagnostic)
+        if: steps.jbr.outputs.java != ''
+        run: |
+          ./gradlew :livepatch-agent:jar --console=plain -q
+          agent="$PWD/livepatch-agent/build/libs/paperswap-agent.jar"
+          for flags in "-XX:+AllowEnhancedClassRedefinition" "-XX:-AllowEnhancedClassRedefinition"; do
+            for sc in recorder modify modify-unload modify-then-redefine; do
+              out=$("${{ steps.jbr.outputs.java }}" $flags -javaagent:"$agent" ../scripts/ci/RetransformRepro.java "$sc" 2>&1) && rc=0 || rc=$?
+              echo "JBR ${{ matrix.jbr }} $flags $sc: exit $rc; $(echo "$out" | grep -E 'RESULT|double free|corruption|SIGSEGV|Error' | head -n 3 | tr '\n' ' ')"
+            done
+          done
+      - name: Unit tests on JBR with -XX:+AllowEnhancedClassRedefinition
+        if: steps.jbr.outputs.java != ''
+        run: >
+          ./gradlew :runtime-core:test --console=plain -PtestLogStarted
+          -PtestJava='${{ steps.jbr.outputs.java }}' -PtestJvmArgs=-XX:+AllowEnhancedClassRedefinition
+      - name: Test summary
+        if: always()
+        run: python3 ../scripts/ci/junit-summary.py .
+
+  # Compiles the Paper adapter, the example module, the test modules and the test plugin
+  # against the public Paper API of each version and packages them for the server tests.
+  paper-modules:
+    name: Paper adapter + example module ${{ matrix.mc }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mc: '1.21.11'
+            java: '21'
+            paper-api: '1.21.11-R0.1-SNAPSHOT'
+          - mc: '26.1.2'
+            java: '25'
+            paper-api: '26.1.2.build.+'
+          - mc: '26.2'
+            java: '25'
+            paper-api: '26.2.build.+'
+          - mc: '26.3'
+            java: '25'
+            paper-api: '26.3.build.+'
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compile adapter, build example module, test modules, PvP suite (with unit tests) and test plugin
+        run: >
+          ./gradlew :runtime-paper:compileJava :example-module:assemble :test-modules:collect :pvp-suite:collect
+          :example-plugin:jar --console=plain -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
+      - name: Show resolved Paper API version
+        run: ./gradlew :runtime-paper:dependencies --configuration compileClasspath -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }} --console=plain | grep -m1 "paper-api" || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: example-module-${{ matrix.mc }}
+          path: |
+            runtime/example-module/build/libs/example-greeter.jar
+            runtime/example-module/build/libs/example-greeter.jar.sha256
+          if-no-files-found: error
+      # Stress, chaos, library and consumer modules (+ .sha256, variants/2.0.0/), docs/TEST-MODULES.md.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-modules-${{ matrix.mc }}
+          path: runtime/test-modules/build/modules/
+          if-no-files-found: error
+      # LemonPvP suite: pvp-core, pvp-combattag, pvp-killstreaks, pvp-scoreboard (+ .sha256), docs/PVP-SUITE.md.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pvp-suite-${{ matrix.mc }}
+          path: runtime/pvp-suite/build/modules/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: example-plugin-${{ matrix.mc }}
+          path: runtime/example-plugin/build/libs/PaperSwapTestPlugin.jar
+          if-no-files-found: error
+      # Test plugin for the spear cooldown fix (reflection on 1.21.11 server classes).
+      - name: Build combat probe (1.21.11)
+        if: matrix.mc == '1.21.11'
+        run: ./gradlew :combat-probe:jar --console=plain -PpaperApiVersion='${{ matrix.paper-api }}' -PjavaRelease=${{ matrix.java }}
+      - uses: actions/upload-artifact@v4
+        if: matrix.mc == '1.21.11'
+        with:
+          name: combat-probe-${{ matrix.mc }}
+          path: runtime/combat-probe/build/libs/CombatProbe.jar
+          if-no-files-found: error
+
+  # One independent paperweight fork build per supported Minecraft version.
+  # Each version uses the JDK and paperweight version of its Paper upstream branch.
+  fork:
+    name: Fork ${{ matrix.mc }}
+    needs: [runtime, paper-modules]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mc: '1.21.11'
+            java: '21'
+            paperclip-task: createMojmapPaperclipJar
+          - mc: '26.1.2'
+            java: '25'
+            paperclip-task: createPaperclipJar
+          - mc: '26.2'
+            java: '25'
+            paperclip-task: createPaperclipJar
+          - mc: '26.3'
+            java: '25'
+            paperclip-task: createPaperclipJar
+    defaults:
+      run:
+        working-directory: versions/${{ matrix.mc }}
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Configure Git user
+        # gc.auto/maintenance.auto: paperweight copies freshly patched repositories (including .git);
+        # a detached background "git gc --auto" can delete loose-object directories during that copy
+        # (seen once as NoSuchFileException .git/objects/18 in runPaperSwapSetup).
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global gc.auto 0
+          git config --global maintenance.auto false
+      - name: List relevant paperweight tasks
+        run: ./gradlew tasks --all --console=plain | grep -iE 'patch|paperclip|bundler|rundev|fixup' || true
+      - name: Apply patches
+        run: set -o pipefail; ./gradlew applyAllPatches --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+      - name: PaperSwap Minecraft source patches applied (1.21.11 spear cooldown fix)
+        if: matrix.mc == '1.21.11'
+        run: |
+          grep -n "backport of Paper b80b604" paperswap-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java \
+            paperswap-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java
+          if grep -q "PlayerAttackEntityCooldownResetEvent" paperswap-server/src/minecraft/java/net/minecraft/world/entity/LivingEntity.java; then
+            echo "::error::LivingEntity still resets the attack cooldown during damage"; exit 1
+          fi
+      - name: List server patch tasks
+        run: ./gradlew :paperswap-server:tasks --all --console=plain | grep -iE 'patch|paperclip|bundler|rundev|fixup' || true
+      - name: Build and test (includes Paper's own test suite)
+        run: set -o pipefail; ./gradlew build --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+      - name: Paper test summary
+        if: always()
+        run: python3 ../../scripts/ci/junit-summary.py .
+      - name: Create paperclip jar
+        run: set -o pipefail; ./gradlew ${{ matrix.paperclip-task }} --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+      - name: Locate artifact
+        id: jar
+        run: |
+          jar=$(find paperswap-server/build/libs -maxdepth 1 -name '*paperclip*.jar' | head -n 1)
+          if [ -z "$jar" ]; then echo "::error::no paperclip jar produced"; ls -la paperswap-server/build/libs || true; exit 1; fi
+          short=$(git rev-parse --short=8 HEAD)
+          name="paperswap-${{ matrix.mc }}-build.${{ github.run_number }}-${short}.jar"
+          mkdir -p ../../dist && cp "$jar" "../../dist/$name"
+          (cd ../../dist && sha256sum "$name" > "$name.sha256")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: "Server test 1: hot deployment disabled (default)"
+        run: ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/disabled" ../../scripts/ci/smoke-disabled.txt
+      - name: Download example module
+        id: module
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: example-module-${{ matrix.mc }}
+          path: ${{ runner.temp }}/example-module
+      - name: Require example module
+        if: steps.module.outcome != 'success'
+        run: echo "::error::example module for ${{ matrix.mc }} is missing (paper-modules job failed)" && exit 1
+      - name: "Server test 2: hot deployment enabled, full module lifecycle"
+        run: |
+          ../../scripts/ci/prepare-runtime-server.sh "$RUNNER_TEMP/enabled" "$RUNNER_TEMP/example-module"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/enabled" ../../scripts/ci/smoke-runtime.txt
+      - name: "Server test 3: runtime activation survives a restart"
+        run: |
+          ../../scripts/ci/prepare-runtime-server.sh "$RUNNER_TEMP/persist" "$RUNNER_TEMP/example-module"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/persist" ../../scripts/ci/smoke-persist-1.txt
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/persist" ../../scripts/ci/smoke-persist-2.txt
+      - name: Download test modules
+        id: testmodules
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: test-modules-${{ matrix.mc }}
+          path: ${{ runner.temp }}/test-modules
+      - name: Require test modules
+        if: steps.testmodules.outcome != 'success'
+        run: echo "::error::test modules for ${{ matrix.mc }} are missing (paper-modules job failed)" && exit 1
+      - name: "Server test 8: test modules (integrity, dependencies, stress, hot-swap churn, faults, leaks)"
+        run: |
+          ../../scripts/ci/prepare-test-modules-server.sh "$RUNNER_TEMP/testmodules" "$RUNNER_TEMP/test-modules"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/testmodules" ../../scripts/ci/smoke-test-modules.txt
+      - name: Download PvP suite
+        id: pvpsuite
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: pvp-suite-${{ matrix.mc }}
+          path: ${{ runner.temp }}/pvp-suite
+      - name: Require PvP suite
+        if: steps.pvpsuite.outcome != 'success'
+        run: echo "::error::PvP suite for ${{ matrix.mc }} is missing (paper-modules job failed)" && exit 1
+      - name: "Server test 9: LemonPvP suite (dependencies, services, kills, killstreaks, config, persistence, leaks)"
+        run: |
+          ../../scripts/ci/prepare-pvp-server.sh "$RUNNER_TEMP/pvp" "$RUNNER_TEMP/pvp-suite"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/pvp" ../../scripts/ci/smoke-pvp.txt
+      - name: Download live-patch agent
+        id: agent
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: livepatch-agent
+          path: ${{ runner.temp }}/agent
+      - name: Require live-patch agent
+        if: steps.agent.outcome != 'success'
+        run: echo "::error::live-patch agent is missing (runtime job failed)" && exit 1
+      - name: Add live-patch agent to the distribution
+        run: |
+          cp "$RUNNER_TEMP/agent/paperswap-agent.jar" ../../dist/
+          (cd ../../dist && sha256sum paperswap-agent.jar > paperswap-agent.jar.sha256 && cat paperswap-agent.jar.sha256)
+      # Core live patches built the way a developer builds them: baseline = the jar that was just
+      # packaged into the paperclip jar, then a changed Paper source file, then createLivePatch.
+      - name: Build core live patches from changed Paper sources
+        id: patches
+        run: |
+          set -euo pipefail
+          ./gradlew :paperswap-server:livePatchBaseline --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          # Diagnostic: is the baseline the server jar that the paperclip jar runs?
+          python3 ../../scripts/ci/swappatch.py compare-base "../../dist/${{ steps.jar.outputs.name }}" \
+            paperswap-server/build/livepatch/baseline/baseline.jar org.spigotmc.TicksPerSecondCommand
+          # The server jar paperclip wrote on disk in server test 1 (what really runs). 1.21.11's
+          # paperclip rewrites the class files, so patches use it as base and baseline.jar only as
+          # reference for change detection (-PserverJar), exactly as documented for users.
+          srv=$(find "$RUNNER_TEMP/disabled/versions" -name '*.jar' | head -n 1)
+          test -n "$srv"
+          echo "server jar created by paperclip: $srv"
+          cp "$srv" "$RUNNER_TEMP/server-jar.jar"
+          python3 ../../scripts/ci/swappatch.py compare-jars "$srv" paperswap-server/build/livepatch/baseline/baseline.jar
+          src=paper-server/src/main/java/org/spigotmc/TicksPerSecondCommand.java
+          cp "$src" "$RUNNER_TEMP/TicksPerSecondCommand.java.orig"
+          python3 ../../scripts/ci/edit-tps-source.py "$src" text
+          mkdir -p "$RUNNER_TEMP/deploy"
+          ./gradlew :paperswap-server:createLivePatch -PpatchId=tps-text -PpatchDescription="CI: /tps text changed" -PserverJar="$RUNNER_TEMP/server-jar.jar" -PdeployDir="$RUNNER_TEMP/deploy" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          test -f "$RUNNER_TEMP/deploy/tps-text.swappatch" && test -f "$RUNNER_TEMP/deploy/tps-text.swappatch.sha256"
+          # Offline check against the server jar before uploading (what a developer runs).
+          ./gradlew :paperswap-server:checkLivePatch -PpatchId=tps-text -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee "$RUNNER_TEMP/check.log"
+          grep -F "APPLICABLE on a standard JVM" "$RUNNER_TEMP/check.log"
+          cp "$RUNNER_TEMP/TicksPerSecondCommand.java.orig" "$src"
+          python3 ../../scripts/ci/edit-tps-source.py "$src" structural
+          ./gradlew :paperswap-server:createLivePatch -PpatchId=tps-structural -PpatchDescription="CI: /tps label from a new method" -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          ./gradlew :paperswap-server:checkLivePatch -PpatchId=tps-structural -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee "$RUNNER_TEMP/check.log"
+          grep -F "APPLICABLE ONLY with enhanced class redefinition" "$RUNNER_TEMP/check.log"
+          cp "$RUNNER_TEMP/TicksPerSecondCommand.java.orig" "$src"
+          out="$RUNNER_TEMP/patches"
+          mkdir -p "$out"
+          cp paperswap-server/build/livepatch/tps-*.swappatch paperswap-server/build/livepatch/tps-*.swappatch.sha256 "$out/"
+          base="$RUNNER_TEMP/server-jar.jar"
+          P=../../scripts/ci/swappatch.py
+          python3 "$P" show "$out/tps-text.swappatch" --expect-classes org.spigotmc.TicksPerSecondCommand
+          python3 "$P" show "$out/tps-structural.swappatch" --expect-classes org.spigotmc.TicksPerSecondCommand
+          # Deliberately bad variants: the server must refuse every one of them.
+          python3 "$P" variant "$out/tps-text.swappatch" "$out" --id tps-wrong-build --target-build "paperswap:paperswap/0.0-WRONG/-"
+          python3 "$P" variant "$out/tps-text.swappatch" "$out" --id tps-bad-checksum --bad-sidecar
+          python3 "$P" variant "$out/tps-text.swappatch" "$out" --id tps-garbage --garbage-class org.spigotmc.TicksPerSecondCommand
+          second=org.spigotmc.RestartCommand,org.spigotmc.SpigotCommand,org.spigotmc.WatchdogThread
+          python3 "$P" variant "$out/tps-text.swappatch" "$out" --id tps-mixed --add-wrong-base "$second" --base-jar "$base"
+          python3 "$P" variant "$out/tps-text.swappatch" "$out" --id tps-atomic --add-corrupt-class "$second" --base-jar "$base"
+          # The offline check refuses a patch for another build.
+          cp "$out"/tps-wrong-build.swappatch* paperswap-server/build/livepatch/
+          if ./gradlew :paperswap-server:checkLivePatch -PpatchId=tps-wrong-build -PserverJar="$base" --console=plain > "$RUNNER_TEMP/check.log" 2>&1; then
+            cat "$RUNNER_TEMP/check.log"; echo "::error::checkLivePatch accepted a patch for another build"; exit 1
+          fi
+          grep -F "patch was built for paperswap:paperswap/0.0-WRONG/-" "$RUNNER_TEMP/check.log"
+          ls -la "$out"
+      - name: "Server test 4: core live patch (standard JVM, -javaagent)"
+        run: |
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
+          EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/paperswap-agent.jar" \
+            ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/livepatch" ../../scripts/ci/smoke-livepatch.txt
+      # Runs even if test 4 failed. Same patches, but the server starts WITHOUT -javaagent: the agent
+      # is attached to the running JVM and the patch is applied by retransformation.
+      - name: "Server test 10: instrumentation (dynamic attach, class search, retransformation patch)"
+        if: ${{ !cancelled() && steps.patches.outcome == 'success' }}
+        run: |
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/instrumentation" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
+          # Agent-related attributes of the server jar (a Launcher-Agent-Class affects EnableDynamicAgentLoading).
+          unzip -p "../../dist/${{ steps.jar.outputs.name }}" META-INF/MANIFEST.MF | grep -iE '^(Main-Class|Launcher-Agent-Class|Premain-Class|Agent-Class)' || echo "no agent attributes in the server jar manifest"
+          AGENT_JAR="$RUNNER_TEMP/agent/paperswap-agent.jar" \
+            ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/instrumentation" ../../scripts/ci/smoke-instrumentation.txt
+      # Tests 5 and 6 run even if test 4 failed, so one failure does not hide the others.
+      - name: Download test plugin
+        id: plugin
+        if: ${{ !cancelled() && steps.jar.outputs.name != '' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: example-plugin-${{ matrix.mc }}
+          path: ${{ runner.temp }}/example-plugin
+      - name: Require test plugin
+        if: ${{ !cancelled() && steps.jar.outputs.name != '' && steps.plugin.outcome != 'success' }}
+        run: echo "::error::test plugin for ${{ matrix.mc }} is missing (paper-modules job failed)" && exit 1
+      - name: "Server test 5: live plugin updates"
+        if: ${{ !cancelled() && steps.plugin.outcome == 'success' }}
+        run: |
+          ../../scripts/ci/prepare-plugin-server.sh "$RUNNER_TEMP/plugins" "$RUNNER_TEMP/example-plugin"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/plugins" ../../scripts/ci/smoke-plugins.txt
+      - name: Download JetBrains Runtime ${{ matrix.java }}
+        id: jbr
+        if: ${{ !cancelled() && steps.patches.outcome == 'success' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 ../../scripts/ci/fetch-jbr.py ${{ matrix.java }} "$RUNNER_TEMP/jbr"
+      - name: "Server test 6: structural core patch on JetBrains Runtime"
+        if: ${{ !cancelled() && steps.patches.outcome == 'success' && steps.jbr.outputs.java != '' }}
+        run: |
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/livepatch-jbr" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
+          JAVA_BIN="${{ steps.jbr.outputs.java }}" \
+          EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/paperswap-agent.jar -XX:+AllowEnhancedClassRedefinition" \
+            ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/livepatch-jbr" ../../scripts/ci/smoke-livepatch-jbr.txt
+      - name: Download combat probe
+        id: probe
+        if: ${{ !cancelled() && matrix.mc == '1.21.11' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: combat-probe-${{ matrix.mc }}
+          path: ${{ runner.temp }}/combat-probe
+      - name: "Server test 7: spear cooldown in the shipped build (1.21.11)"
+        if: ${{ !cancelled() && matrix.mc == '1.21.11' }}
+        run: |
+          test -f "$RUNNER_TEMP/combat-probe/CombatProbe.jar" || { echo "::error::combat probe is missing (paper-modules job failed)"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/spear-shipped/plugins"
+          cp "$RUNNER_TEMP/combat-probe/CombatProbe.jar" "$RUNNER_TEMP/spear-shipped/plugins/"
+          ../../scripts/ci/smoke-test.sh "../../dist/${{ steps.jar.outputs.name }}" "$RUNNER_TEMP/spear-shipped" ../../scripts/ci/smoke-spear-shipped.txt
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs-${{ matrix.mc }}
+          path: |
+            ${{ runner.temp }}/disabled/server.log
+            ${{ runner.temp }}/enabled/server.log
+            ${{ runner.temp }}/enabled/paperswap/logs/audit.log
+            ${{ runner.temp }}/persist/server.log
+            ${{ runner.temp }}/livepatch/server.log
+            ${{ runner.temp }}/livepatch/paperswap/logs/audit.log
+            ${{ runner.temp }}/plugins/server.log
+            ${{ runner.temp }}/plugins/paperswap/logs/audit.log
+            ${{ runner.temp }}/livepatch-jbr/server.log
+            ${{ runner.temp }}/instrumentation/server.log
+            ${{ runner.temp }}/instrumentation/paperswap/logs/audit.log
+            ${{ runner.temp }}/spear-shipped/server.log
+          if-no-files-found: ignore
+      - name: Upload server jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: paperswap-${{ matrix.mc }}
+          path: dist/
+          if-no-files-found: error
+      - name: Summarize Gradle failure
+        if: failure()
+        run: grep -n -A25 -E "What went wrong|FAILED|error:" "$RUNNER_TEMP/gradle.log" | head -n 150 || true
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.mc }}
+          path: versions/${{ matrix.mc }}/**/build/reports/
+          if-no-files-found: ignore
+
+  # The spear cooldown fix (Paper b80b604 backported to 1.21.11) as a real core live patch:
+  # a server built WITHOUT the fix runs, CombatProbe reproduces the bug, the fix is built from
+  # the fixed sources with createLivePatch, applied live (Player + LivingEntity), measured,
+  # verified and rolled back. This server build is only used here; the shipped jar contains
+  # the fix (fork job, server test 7).
+  spear-hotswap:
+    name: Spear fix as live core patch (1.21.11)
+    needs: [runtime, paper-modules]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: versions/1.21.11
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Configure Git user
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global gc.auto 0
+          git config --global maintenance.auto false
+      - name: Build the server without the spear fix
+        run: |
+          set -euo pipefail
+          fix=paperswap-server/minecraft-patches/sources/net/minecraft/world/entity
+          mkdir -p "$RUNNER_TEMP/spear-fix"
+          mv "$fix/LivingEntity.java.patch" "$fix/player/Player.java.patch" "$RUNNER_TEMP/spear-fix/"
+          ./gradlew applyAllPatches --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          if grep -q "backport of Paper b80b604" paperswap-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java; then
+            echo "::error::the fix is still applied"; exit 1
+          fi
+          ./gradlew createMojmapPaperclipJar --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          ./gradlew :paperswap-server:livePatchBaseline --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          jar=$(find paperswap-server/build/libs -maxdepth 1 -name '*paperclip*.jar' | head -n 1)
+          test -n "$jar"
+          cp "$jar" "$RUNNER_TEMP/before.jar"
+          # The server jar paperclip writes on disk is what runs (1.21.11 rewrites the class files).
+          mkdir -p "$RUNNER_TEMP/patchonly"
+          (cd "$RUNNER_TEMP/patchonly" && java -Dpaperclip.patchonly=true -jar "$RUNNER_TEMP/before.jar")
+          srv=$(find "$RUNNER_TEMP/patchonly/versions" -name '*.jar' | head -n 1)
+          test -n "$srv"
+          cp "$srv" "$RUNNER_TEMP/server-jar.jar"
+      - name: Build the spear fix as a live patch from the fixed sources
+        run: |
+          set -euo pipefail
+          fix=paperswap-server/minecraft-patches/sources/net/minecraft/world/entity
+          mv "$RUNNER_TEMP/spear-fix/LivingEntity.java.patch" "$fix/"
+          mv "$RUNNER_TEMP/spear-fix/Player.java.patch" "$fix/player/"
+          ./gradlew applyAllPatches --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          grep -q "backport of Paper b80b604" paperswap-server/src/minecraft/java/net/minecraft/world/entity/player/Player.java
+          ./gradlew :paperswap-server:createLivePatch -PpatchId=spear-cooldown \
+            -PpatchDescription="1.21.11: attack cooldown reset as in vanilla (spear jabs; backport of Paper b80b604)" \
+            -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+          ./gradlew :paperswap-server:checkLivePatch -PpatchId=spear-cooldown -PserverJar="$RUNNER_TEMP/server-jar.jar" --console=plain 2>&1 | tee "$RUNNER_TEMP/check.log"
+          grep -F "APPLICABLE on a standard JVM" "$RUNNER_TEMP/check.log"
+          python3 ../../scripts/ci/swappatch.py show paperswap-server/build/livepatch/spear-cooldown.swappatch \
+            --expect-classes net.minecraft.world.entity.LivingEntity,net.minecraft.world.entity.player.Player
+          mkdir -p "$RUNNER_TEMP/patches"
+          cp paperswap-server/build/livepatch/spear-cooldown.swappatch paperswap-server/build/livepatch/spear-cooldown.swappatch.sha256 "$RUNNER_TEMP/patches/"
+      - name: Download live-patch agent
+        uses: actions/download-artifact@v4
+        with:
+          name: livepatch-agent
+          path: ${{ runner.temp }}/agent
+      - name: Download combat probe
+        uses: actions/download-artifact@v4
+        with:
+          name: combat-probe-1.21.11
+          path: ${{ runner.temp }}/combat-probe
+      - name: "Reproduce, patch live, measure, verify, roll back"
+        run: |
+          ../../scripts/ci/prepare-livepatch-server.sh "$RUNNER_TEMP/spear" "$RUNNER_TEMP/patches" "$RUNNER_TEMP/server-jar.jar"
+          mkdir -p "$RUNNER_TEMP/spear/plugins"
+          cp "$RUNNER_TEMP/combat-probe/CombatProbe.jar" "$RUNNER_TEMP/spear/plugins/"
+          EXTRA_JVM_ARGS="-javaagent:$RUNNER_TEMP/agent/paperswap-agent.jar" \
+            ../../scripts/ci/smoke-test.sh "$RUNNER_TEMP/before.jar" "$RUNNER_TEMP/spear" ../../scripts/ci/smoke-spear.txt
+      - name: Upload logs and patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spear-hotswap-1.21.11
+          path: |
+            ${{ runner.temp }}/spear/server.log
+            ${{ runner.temp }}/spear/paperswap/logs/audit.log
+            ${{ runner.temp }}/patches/
+          if-no-files-found: ignore
+      - name: Summarize Gradle failure
+        if: failure()
+        run: grep -n -A25 -E "What went wrong|FAILED|error:" "$RUNNER_TEMP/gradle.log" | head -n 150 || true

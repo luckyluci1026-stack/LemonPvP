@@ -1,9 +1,9 @@
-rootProject.name = "lemon-runtime"
+rootProject.name = "paperswap-runtime"
 
 // Platform-neutral parts: build and test anywhere with JDK 21+.
 include("runtime-api")
 include("runtime-core")
-// Java agent for core live patching (-javaagent:lemon-livepatch-agent.jar).
+// Java agent for core live patching (-javaagent:paperswap-agent.jar).
 include("livepatch-agent")
 
 // Paper-specific parts need the Paper API, which is only published on

@@ -6,8 +6,8 @@
 set -euo pipefail
 WORK="$1"
 MODULES="$2"
-mkdir -p "$WORK/config" "$WORK/lemon/modules" "$WORK/originals" "$WORK/variants"
-cat > "$WORK/config/lemon-runtime.yml" <<'YAML'
+mkdir -p "$WORK/config" "$WORK/paperswap/modules" "$WORK/originals" "$WORK/variants"
+cat > "$WORK/config/paperswap.yml" <<'YAML'
 config-version: 1
 enabled: true
 allow-runtime-deploy: true
@@ -17,8 +17,8 @@ persist-runtime-state: false
 # Low on purpose: test-chaos blocks onEnable for 5.5 s to trigger the slow-callback warning.
 operation-timeout-seconds: 5
 YAML
-cp "$MODULES"/test-*.jar "$MODULES"/test-*.jar.sha256 "$WORK/lemon/modules/"
+cp "$MODULES"/test-*.jar "$MODULES"/test-*.jar.sha256 "$WORK/paperswap/modules/"
 cp "$MODULES"/test-*.jar "$MODULES"/test-*.jar.sha256 "$WORK/originals/"
 cp -r "$MODULES/variants/." "$WORK/variants/"
-(cd "$WORK/lemon/modules" && sha256sum -c ./*.sha256)
+(cd "$WORK/paperswap/modules" && sha256sum -c ./*.sha256)
 (cd "$WORK/variants/2.0.0" && sha256sum -c ./*.sha256)

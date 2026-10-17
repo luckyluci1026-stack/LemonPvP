@@ -6,13 +6,13 @@ fork module list
 @sleep 3
 
 # ---------------------------------------------------------------- 1. integrity
-@shell mv lemon/modules/test-consumer.jar.sha256 consumer.sha256.bak
+@shell mv paperswap/modules/test-consumer.jar.sha256 consumer.sha256.bak
 fork module validate test-consumer
 @sleep 2
-@shell echo "0000000000000000000000000000000000000000000000000000000000000000  test-consumer.jar" > lemon/modules/test-consumer.jar.sha256
+@shell echo "0000000000000000000000000000000000000000000000000000000000000000  test-consumer.jar" > paperswap/modules/test-consumer.jar.sha256
 fork module validate test-consumer
 @sleep 2
-@shell mv consumer.sha256.bak lemon/modules/test-consumer.jar.sha256
+@shell mv consumer.sha256.bak paperswap/modules/test-consumer.jar.sha256
 
 # ---------------------------------------------------------------- 2. dependencies, services, version ranges
 fork module enable test-consumer
@@ -31,12 +31,12 @@ fork module reload test-library
 @sleep 2
 fork module unload test-consumer
 @sleep 2
-@shell cp variants/2.0.0/test-library.jar variants/2.0.0/test-library.jar.sha256 lemon/modules/
+@shell cp variants/2.0.0/test-library.jar variants/2.0.0/test-library.jar.sha256 paperswap/modules/
 fork module reload test-library
 @sleep 3
 fork module enable test-consumer
 @sleep 2
-@shell cp originals/test-library.jar originals/test-library.jar.sha256 lemon/modules/
+@shell cp originals/test-library.jar originals/test-library.jar.sha256 paperswap/modules/
 fork module reload test-library
 @sleep 3
 fork module enable test-consumer
@@ -107,7 +107,7 @@ fork module reload test-stress
 @sleep 3
 stress all
 @sleep 5
-@shell cp variants/2.0.0/test-stress.jar variants/2.0.0/test-stress.jar.sha256 lemon/modules/
+@shell cp variants/2.0.0/test-stress.jar variants/2.0.0/test-stress.jar.sha256 paperswap/modules/
 fork module reload test-stress
 @sleep 3
 stress all
@@ -125,28 +125,28 @@ chaos throw-task
 fork module diagnostics test-chaos
 
 # ---------------------------------------------------------------- 6. faults: lifecycle (rollback, aborted load, rejected config, slow enable, failing disable)
-@shell sed -i 's/^fail-on-enable: false/fail-on-enable: true/' lemon/module-data/test-chaos/config.yml
+@shell sed -i 's/^fail-on-enable: false/fail-on-enable: true/' paperswap/module-data/test-chaos/config.yml
 fork module reload test-chaos
 @sleep 3
 chaos ping
-@shell sed -i 's/^fail-on-enable: true/fail-on-enable: false/; s/^fail-on-load: false/fail-on-load: true/' lemon/module-data/test-chaos/config.yml
+@shell sed -i 's/^fail-on-enable: true/fail-on-enable: false/; s/^fail-on-load: false/fail-on-load: true/' paperswap/module-data/test-chaos/config.yml
 fork module reload test-chaos
 @sleep 3
 chaos ping
-@shell sed -i 's/^fail-on-load: true/fail-on-load: false/; s/^enable-delay-ms: 0/enable-delay-ms: 99999/' lemon/module-data/test-chaos/config.yml
+@shell sed -i 's/^fail-on-load: true/fail-on-load: false/; s/^enable-delay-ms: 0/enable-delay-ms: 99999/' paperswap/module-data/test-chaos/config.yml
 fork module config test-chaos
 @sleep 2
-@shell sed -i 's/^enable-delay-ms: 99999/enable-delay-ms: 5500/' lemon/module-data/test-chaos/config.yml
+@shell sed -i 's/^enable-delay-ms: 99999/enable-delay-ms: 5500/' paperswap/module-data/test-chaos/config.yml
 fork module reload test-chaos
 @sleep 9
 chaos ping
-@shell sed -i 's/^enable-delay-ms: 5500/enable-delay-ms: 0/; s/^fail-on-disable: false/fail-on-disable: true/' lemon/module-data/test-chaos/config.yml
+@shell sed -i 's/^enable-delay-ms: 5500/enable-delay-ms: 0/; s/^fail-on-disable: false/fail-on-disable: true/' paperswap/module-data/test-chaos/config.yml
 fork module config test-chaos
 @sleep 2
 fork module disable test-chaos
 @sleep 2
 fork module diagnostics test-chaos
-@shell sed -i 's/^fail-on-disable: true/fail-on-disable: false/' lemon/module-data/test-chaos/config.yml
+@shell sed -i 's/^fail-on-disable: true/fail-on-disable: false/' paperswap/module-data/test-chaos/config.yml
 fork module config test-chaos
 @sleep 2
 fork module enable test-chaos
@@ -172,7 +172,7 @@ fork module unload test-consumer
 @sleep 2
 fork module unload test-library
 @sleep 3
-say lemon-gc-check
+say paperswap-gc-check
 @shell jcmd "$SERVER_PID" GC.run
 @sleep 2
 fork live diagnostics
@@ -181,11 +181,11 @@ fork module diagnostics test-chaos
 fork module diagnostics test-library
 fork module diagnostics test-consumer
 @sleep 3
-@shell sed -n '/lemon-gc-check/,$p' server.log > after-gc.log; grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log; ! grep -nE 'still in memory|still reachable' after-gc.log
+@shell sed -n '/paperswap-gc-check/,$p' server.log > after-gc.log; grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log; ! grep -nE 'still in memory|still reachable' after-gc.log
 # test-stress 11 (10 swaps + final unload), test-chaos 5, test-library 3, test-consumer 2
 @shell test "$(grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log)" -eq 21
 # Diagnosis only (never fails the test): if a loader survived, print what still references it.
-@shell if grep -qE 'still in memory|still reachable' after-gc.log; then jcmd "$SERVER_PID" GC.heap_dump "$PWD/leak.hprof" > /dev/null && java -Xmx3g "$SCRIPT_DIR/HeapPath.java" leak.hprof dev.lemonpvp.runtime.loader.ModuleClassLoader closed; rm -f leak.hprof; fi; true
+@shell if grep -qE 'still in memory|still reachable' after-gc.log; then jcmd "$SERVER_PID" GC.heap_dump "$PWD/leak.hprof" > /dev/null && java -Xmx3g "$SCRIPT_DIR/HeapPath.java" leak.hprof dev.paperswap.runtime.loader.ModuleClassLoader closed; rm -f leak.hprof; fi; true
 fork status
 
 # 1. integrity
@@ -260,7 +260,7 @@ fork status
 @expect CHAOS leak-thread: started thread 'test-chaos-leaked-thread'
 @expect unloaded module test-chaos 1\.0\.0 still in memory, threads: \[test-chaos-leaked-thread\]
 # 8. after the GC
-@expect \[Server\] lemon-gc-check
+@expect \[Server\] paperswap-gc-check
 @expect OK unload test-stress:
 @expect OK unload test-library:
 @count 2 OK unload test-consumer:

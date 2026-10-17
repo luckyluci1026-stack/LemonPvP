@@ -9,7 +9,7 @@
 #                  released again and the old version is enabled again (rollback)
 # fail-on-disable: onDisable throws -> the runtime still releases everything
 # enable-delay-ms: onEnable blocks the main thread this long (0-10000); above
-#                  operation-timeout-seconds in lemon-runtime.yml the runtime warns
+#                  operation-timeout-seconds in paperswap.yml the runtime warns
 fail-on-load: false
 fail-on-enable: false
 fail-on-disable: false

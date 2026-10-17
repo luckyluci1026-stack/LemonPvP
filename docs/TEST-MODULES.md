@@ -15,7 +15,7 @@ Quellcode: `runtime/test-modules/` (`stress`, `chaos`, `library`, `consumer`).
 
 ## 1. Herunterladen
 
-GitHub → **Actions** → Lauf von „Lemon CI“ → unten **Artifacts** →
+GitHub → **Actions** → Lauf von „PaperSwap CI“ → unten **Artifacts** →
 **`test-modules-<version>`** (gleiche Version wie dein Server, z. B. `test-modules-1.21.11`).
 Inhalt:
 
@@ -32,10 +32,10 @@ Selbst bauen: `cd runtime && ./gradlew :test-modules:collect -PpaperApiVersion=<
 
 ## 2. Installieren
 
-Wie beim Beispielmodul (Server mit Lemon-JAR, `config/lemon-runtime.yml` mit
+Wie beim Beispielmodul (Server mit PaperSwap-JAR, `config/paperswap.yml` mit
 `enabled: true` und `allow-runtime-deploy: true`, danach Neustart):
 
-1. Gewünschte Module **jeweils mit ihrer `.sha256`-Datei** nach `lemon/modules/` hochladen.
+1. Gewünschte Module **jeweils mit ihrer `.sha256`-Datei** nach `paperswap/modules/` hochladen.
 2. Konsole: `fork module list` zeigt sie als `not loaded`.
 3. Aktivieren: `fork module enable test-stress` (bzw. `test-chaos`, `test-library`,
    `test-consumer`).
@@ -62,7 +62,7 @@ erreicht, nichts wurde geändert).
 | `stress status` | Version, **Generation**, gehaltene Registrierungen, Heap, Tick-Zeit |
 
 **Generation** zählt jede Aktivierung über Hot-Swaps und Neustarts hinweg (gespeichert in
-`lemon/module-data/test-stress/state.properties`). Nach `fork module reload test-stress` muss
+`paperswap/module-data/test-stress/state.properties`). Nach `fork module reload test-stress` muss
 sie um 1 steigen: Der Beweis, dass die neue Instanz den Zustand der alten vorgefunden hat.
 
 **Testablauf (Beispiel):**
@@ -78,7 +78,7 @@ fork module diagnostics test-stress     # alte Instanz: "Unloaded ... class load
 ```
 
 Hot-Swap auf eine andere Version: `variants/2.0.0/test-stress.jar` + `.sha256` über die Dateien in
-`lemon/modules/` kopieren, `fork module reload test-stress` → `switched test-stress@1.0.0 ->
+`paperswap/modules/` kopieren, `fork module reload test-stress` → `switched test-stress@1.0.0 ->
 test-stress@2.0.0`.
 
 ## 4. `test-chaos`
@@ -97,7 +97,7 @@ Laufzeitfehler (alle werden mit Modul-ID protokolliert; der Server läuft weiter
 
 `fork module diagnostics test-chaos` zählt die Fehler: `Callbacks: … N failed`.
 
-Lebenszyklus-Fehler über `lemon/module-data/test-chaos/config.yml`:
+Lebenszyklus-Fehler über `paperswap/module-data/test-chaos/config.yml`:
 
 | Schalter | Anwenden | Erwartung |
 |---|---|---|
@@ -120,7 +120,7 @@ testlib                            # TESTLIB 1.0.0: counters {alpha=1}
 fork module disable test-library   # FAILED: enabled modules depend on it: [test-consumer]
 fork module reload test-library    # FAILED: while loaded modules depend on it
 fork module unload test-consumer
-# variants/2.0.0/test-library.jar + .sha256 nach lemon/modules/ kopieren
+# variants/2.0.0/test-library.jar + .sha256 nach paperswap/modules/ kopieren
 fork module reload test-library    # switched test-library@1.0.0 -> test-library@2.0.0
 fork module enable test-consumer   # FAILED: module 'test-library' 2.0.0 does not satisfy >=1.0.0 <2.0.0
 ```
@@ -186,5 +186,5 @@ Befehle im nächsten Tick aus einem Task heraus ausgeführt und gezählt.
   (dafür: `LIVE-UPDATES.md`, CI-Servertests 4–7).
 * Ohne Spieler auf dem CI-Server werden Befehlsbäume an 0 Spieler gesendet; auf einem
   Testserver mit Spielern misst `stress commands` auch das.
-* „class loader collected“ erscheint erst nach einer vollen Garbage Collection. Lemon löst
+* „class loader collected“ erscheint erst nach einer vollen Garbage Collection. PaperSwap löst
   nie selbst eine aus; direkt nach dem Entladen ist „still reachable“ normal.

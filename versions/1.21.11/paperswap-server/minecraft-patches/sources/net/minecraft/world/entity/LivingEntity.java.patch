@@ -1,0 +1,26 @@
+--- a/net/minecraft/world/entity/LivingEntity.java
++++ b/net/minecraft/world/entity/LivingEntity.java
+@@ -2451,20 +2451,9 @@
+                 return false;
+             }
+ 
+-            if (damageSource.getEntity() instanceof net.minecraft.world.entity.player.Player attackingPlayer) {
+-                // Paper start - PlayerAttackEntityCooldownResetEvent
+-                //((net.minecraft.world.entity.player.Player) damagesource.getEntity()).resetOnlyAttackStrengthTicker(); // Moved from Player in order to make the cooldown reset get called after the damage event is fired
+-                if (!attackingPlayer.isUsingItem() || !attackingPlayer.getUseItem().has(DataComponents.KINETIC_WEAPON)) { // Paper - Preserve vanilla spear charge cooldown
+-                    if (attackingPlayer instanceof ServerPlayer player) {
+-                        if (new com.destroystokyo.paper.event.player.PlayerAttackEntityCooldownResetEvent(player.getBukkitEntity(), this.getBukkitEntity(), player.getAttackStrengthScale(0F)).callEvent()) {
+-                            player.resetOnlyAttackStrengthTicker();
+-                        }
+-                    } else {
+-                        attackingPlayer.resetOnlyAttackStrengthTicker();
+-                    }
+-                }
+-                // Paper end - PlayerAttackEntityCooldownResetEvent
+-            }
++            // PaperSwap - the attack cooldown is no longer reset here but in Player#attack and Player#onAttack, as in
++            // vanilla: a spear jab resets it once after all targets, a missed jab resets it, projectile hits do not.
++            // Backport of Paper b80b604 (#13856, "Attack strength ticker cooldown incorrectly reset") to 1.21.11.
+ 
+             // Resistance
+             if (event.getDamage(DamageModifier.RESISTANCE) < 0) {

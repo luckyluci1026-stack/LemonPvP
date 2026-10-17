@@ -2,6 +2,6 @@
 fork status
 @sleep 2
 @expect Hot deployment is disabled
-@reject Lemon runtime status
+@reject PaperSwap runtime status
 @reject Hot deployment is ENABLED
-@reject Lemon-Runtime-Worker
+@reject PaperSwap-Runtime-Worker

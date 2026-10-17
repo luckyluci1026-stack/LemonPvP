@@ -25,7 +25,7 @@ API = "https://api.github.com/repos/JetBrains/JetBrainsRuntime/releases?per_page
 
 
 def get(url: str, accept: str = "*/*") -> bytes:
-    headers = {"Accept": accept, "User-Agent": "lemon-ci"}
+    headers = {"Accept": accept, "User-Agent": "paperswap-ci"}
     token = os.environ.get("GITHUB_TOKEN")
     if token and url.startswith("https://api.github.com/"):
         headers["Authorization"] = f"Bearer {token}"

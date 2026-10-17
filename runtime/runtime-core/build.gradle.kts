@@ -1,4 +1,4 @@
-description = "Lemon hot-deployment runtime - platform-neutral manager"
+description = "PaperSwap hot-deployment runtime - platform-neutral manager"
 
 // SnakeYAML 2.2 is bundled by Paper (1.21.11 through 26.3) and therefore
 // provided at runtime by the server. Tests need it explicitly.
@@ -17,15 +17,15 @@ dependencies {
 
 tasks.test {
     // The integration-style tests compile small module jars at test time.
-    systemProperty("lemon.test.apiClasses", project(":runtime-api").layout.buildDirectory.dir("classes/java/main").get().asFile.absolutePath)
+    systemProperty("paperswap.test.apiClasses", project(":runtime-api").layout.buildDirectory.dir("classes/java/main").get().asFile.absolutePath)
     dependsOn(":runtime-api:classes")
     // Core live patch tests redefine real classes, so the test JVM runs with the agent, like a server would.
-    val agentJar = project(":livepatch-agent").layout.buildDirectory.file("libs/lemon-livepatch-agent.jar")
+    val agentJar = project(":livepatch-agent").layout.buildDirectory.file("libs/paperswap-agent.jar")
     dependsOn(":livepatch-agent:jar")
     jvmArgumentProviders.add(CommandLineArgumentProvider {
         listOf("-javaagent:" + agentJar.get().asFile.absolutePath,
             // The dynamic-attach test starts a second JVM without the agent and attaches this jar to it.
-            "-Dlemon.test.agentJar=" + agentJar.get().asFile.absolutePath)
+            "-Dpaperswap.test.agentJar=" + agentJar.get().asFile.absolutePath)
     })
     // Optional: run the tests on another JVM (e.g. JetBrains Runtime) with extra flags, e.g.
     //   -PtestJava=/opt/jbr/bin/java -PtestJvmArgs=-XX:+AllowEnhancedClassRedefinition

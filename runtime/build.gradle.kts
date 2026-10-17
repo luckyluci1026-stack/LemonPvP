@@ -9,7 +9,7 @@ val javaRelease = providers.gradleProperty("javaRelease").map(String::toInt).get
 
 subprojects {
     apply(plugin = "java-library")
-    group = "dev.lemonpvp.lemon"
+    group = "dev.paperswap"
     version = runtimeVersion
 
     repositories {

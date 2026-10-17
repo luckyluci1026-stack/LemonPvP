@@ -15,7 +15,7 @@ fork module reload example-greeter
 @sleep 5
 greet
 # Hot swap to a new version of the module while the server runs.
-@shell cp variant/example-greeter.jar variant/example-greeter.jar.sha256 lemon/modules/
+@shell cp variant/example-greeter.jar variant/example-greeter.jar.sha256 paperswap/modules/
 fork module reload example-greeter
 @sleep 5
 fork module list

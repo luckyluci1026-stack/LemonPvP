@@ -5,13 +5,13 @@
 set -euo pipefail
 WORK="$1"
 MODULES="$2"
-mkdir -p "$WORK/config" "$WORK/lemon/modules"
-cat > "$WORK/config/lemon-runtime.yml" <<'YAML'
+mkdir -p "$WORK/config" "$WORK/paperswap/modules"
+cat > "$WORK/config/paperswap.yml" <<'YAML'
 config-version: 1
 enabled: true
 allow-runtime-deploy: true
 verify-integrity: true
 persist-runtime-state: false
 YAML
-cp "$MODULES"/pvp-*.jar "$MODULES"/pvp-*.jar.sha256 "$WORK/lemon/modules/"
-(cd "$WORK/lemon/modules" && sha256sum -c ./*.sha256)
+cp "$MODULES"/pvp-*.jar "$MODULES"/pvp-*.jar.sha256 "$WORK/paperswap/modules/"
+(cd "$WORK/paperswap/modules" && sha256sum -c ./*.sha256)

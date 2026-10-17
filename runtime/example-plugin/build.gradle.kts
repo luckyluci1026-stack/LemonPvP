@@ -1,6 +1,6 @@
-// Normal Bukkit plugin (no Lemon API) for the live plugin update tests.
+// Normal Bukkit plugin (no PaperSwap API) for the live plugin update tests.
 // Build: ./gradlew :example-plugin:jar -PpaperApiVersion=<version>
-description = "Test plugin for Lemon's live plugin updates"
+description = "Test plugin for PaperSwap's live plugin updates"
 
 val paperApiVersion: String = providers.gradleProperty("paperApiVersion").get()
 
@@ -9,7 +9,7 @@ dependencies {
 }
 
 tasks.jar {
-    archiveFileName = "LemonTestPlugin.jar"
+    archiveFileName = "PaperSwapTestPlugin.jar"
 }
 
 tasks.compileJava {

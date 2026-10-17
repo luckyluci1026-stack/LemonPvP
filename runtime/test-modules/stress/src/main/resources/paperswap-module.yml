@@ -1,0 +1,14 @@
+id: test-stress
+version: 1.0.0
+name: PaperSwap Stress Test
+description: Pushes the module runtime to its limits - thousands of listeners, timers and commands, event storms, memory, async tasks and hot-swap churn. Test module, not for production servers.
+authors: [PaperSwap contributors]
+main: dev.paperswap.test.stress.StressModule
+api-version: 1
+minecraft-versions: ["1.21.11", "26.*"]
+capabilities: [events, commands, scheduler]
+permissions:
+  test-stress.use:
+    description: Run /stress
+    default: op
+resources: [config.yml]

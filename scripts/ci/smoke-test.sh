@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Starts a built Lemon paperclip jar, waits for the server to finish starting,
+# Starts a built PaperSwap paperclip jar, waits for the server to finish starting,
 # optionally sends console commands, stops it and checks the log.
 #
 # Usage: scripts/ci/smoke-test.sh <server-jar> <work-dir> [command-file]
@@ -34,7 +34,7 @@ read -r -a EXTRA <<< "${EXTRA_JVM_ARGS:-}"
 mkdir -p "$WORK"
 cd "$WORK"
 echo "eula=true" > eula.txt
-# Keep the test world small and the server offline; nothing here is required by Lemon.
+# Keep the test world small and the server offline; nothing here is required by PaperSwap.
 cat > server.properties <<'EOF'
 online-mode=false
 server-port=25599

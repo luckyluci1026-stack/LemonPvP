@@ -1,0 +1,240 @@
+package dev.paperswap.runtime.livepatch;
+
+import java.lang.instrument.ClassDefinition;
+import java.lang.instrument.Instrumentation;
+import java.lang.invoke.MethodHandles;
+import java.util.EnumMap;
+import java.util.Map;
+
+/**
+ * Determines what the running JVM can redefine by actually redefining small throw-away
+ * classes, each in its own class loader. The results are facts about this JVM process, not
+ * assumptions based on vendor names or flags.
+ *
+ * <p>Cost: a successful redefinition is a JVM safepoint operation (all Java threads pause
+ * briefly). On JVMs with enhanced redefinition (e.g. JetBrains Runtime with
+ * {@code -XX:+AllowEnhancedClassRedefinition}) a structural redefinition can take longer
+ * because the JVM updates existing objects. Probes run only on explicit request
+ * ({@code /fork live patch probe}) or when a patch needs a capability that has not
+ * been probed yet.</p>
+ */
+public final class CapabilityProbe {
+
+    private static final String PACKAGE = "paperswapprobe";
+    private static final String PROBE = PACKAGE + "/Probe";
+    private static final String BASE = PACKAGE + "/ProbeBase";
+    private static final String OBJECT = "java/lang/Object";
+
+    private CapabilityProbe() {
+    }
+
+    /**
+     * Outcome of one probe.
+     *
+     * @param supported whether the JVM accepted (and, for bodies, executed) the change
+     * @param detail    explanation, e.g. the JVM's error message
+     */
+    public record Result(boolean supported, String detail) {
+    }
+
+    /**
+     * Runs all probes.
+     *
+     * @param instrumentation instrumentation of this JVM
+     * @return one result per capability
+     */
+    public static Map<Capability, Result> probeAll(Instrumentation instrumentation) {
+        Map<Capability, Result> out = new EnumMap<>(Capability.class);
+        for (Capability c : Capability.values()) {
+            out.put(c, probe(instrumentation, c));
+        }
+        return out;
+    }
+
+    /**
+     * Runs one probe.
+     *
+     * @param instrumentation instrumentation of this JVM
+     * @param capability      what to test
+     * @return the result; never throws
+     */
+    public static Result probe(Instrumentation instrumentation, Capability capability) {
+        if (capability == Capability.RETRANSFORM_METHOD_BODY) {
+            try {
+                return retransform(instrumentation);
+            } catch (Throwable t) {
+                if (t instanceof VirtualMachineError vme && !(vme instanceof StackOverflowError)) {
+                    throw vme;
+                }
+                return new Result(false, "probe failed unexpectedly: " + t);
+            }
+        }
+        if (!instrumentation.isRedefineClassesSupported()) {
+            return new Result(false, "Instrumentation.isRedefineClassesSupported() is false");
+        }
+        try {
+            return switch (capability) {
+                case REDEFINE_METHOD_BODY -> redefine(instrumentation,
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1),
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 2), true);
+                case ADD_METHOD -> redefine(instrumentation,
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1),
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1)
+                                .staticIntMethod("extra", ProbeClassWriter.ACC_PUBLIC, 3), false);
+                case REMOVE_METHOD -> redefine(instrumentation,
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1)
+                                .staticIntMethod("extra", ProbeClassWriter.ACC_PUBLIC, 3),
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1), false);
+                case ADD_FIELD -> redefine(instrumentation,
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1),
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1)
+                                .staticIntField("added"), false);
+                case REMOVE_FIELD -> redefine(instrumentation,
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1)
+                                .staticIntField("removed"),
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1), false);
+                case CHANGE_METHOD_MODIFIERS -> redefine(instrumentation,
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1),
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PRIVATE, 1), false);
+                case CHANGE_INTERFACES -> redefine(instrumentation,
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1),
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1)
+                                .implement("java/io/Serializable"), false);
+                case CHANGE_SUPERCLASS -> redefine(instrumentation,
+                        new ProbeClassWriter(PROBE, BASE).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1),
+                        new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1), false);
+                case DEFINE_NEW_CLASS -> defineNewClass();
+                case RETRANSFORM_METHOD_BODY -> throw new IllegalStateException("handled above");
+                case VERIFY_REDEFINED_CLASSES -> verifiesRedefinedClasses(instrumentation);
+            };
+        } catch (Throwable t) {
+            if (t instanceof VirtualMachineError vme && !(vme instanceof StackOverflowError)) {
+                throw vme;
+            }
+            return new Result(false, "probe failed unexpectedly: " + t);
+        }
+    }
+
+    private static Result redefine(Instrumentation inst, ProbeClassWriter before, ProbeClassWriter after, boolean verifyBody)
+            throws ReflectiveOperationException {
+        ProbeLoader loader = new ProbeLoader();
+        loader.define(BASE, new ProbeClassWriter(BASE, OBJECT).toBytes());
+        Class<?> probe = loader.define(PROBE, before.toBytes());
+        int beforeValue = (int) probe.getMethod("value").invoke(null);
+        try {
+            inst.redefineClasses(new ClassDefinition(probe, after.toBytes()));
+        } catch (UnsupportedOperationException e) {
+            return new Result(false, "JVM refused: " + e.getMessage());
+        } catch (ClassFormatError | VerifyError | java.lang.instrument.UnmodifiableClassException | ClassNotFoundException e) {
+            return new Result(false, "JVM error: " + e);
+        }
+        if (!verifyBody) {
+            return new Result(true, "redefinition accepted by the JVM");
+        }
+        int afterValue = (int) probe.getMethod("value").invoke(null);
+        if (beforeValue == 1 && afterValue == 2) {
+            return new Result(true, "redefinition accepted; the new method body executed (1 -> 2)");
+        }
+        return new Result(false, "redefinition returned but the method still returns " + afterValue);
+    }
+
+    /**
+     * Retransforms a probe class with a temporary transformer that supplies a new method
+     * body, then retransforms it again without the transformer: the JVM must run the new body
+     * and afterwards the initial one again.
+     */
+    private static Result retransform(Instrumentation inst) throws ReflectiveOperationException {
+        if (!inst.isRetransformClassesSupported()) {
+            return new Result(false, "Instrumentation.isRetransformClassesSupported() is false (agent without"
+                    + " Can-Retransform-Classes, or the JVM cannot retransform)");
+        }
+        if (JvmCapabilities.enhancedRedefinition()) {
+            // The probe itself would be the crashing pattern: its class is changed by a transformer and unloaded later.
+            return new Result(false, "not probed: " + JvmCapabilities.ENHANCED_RETRANSFORM_PROBLEM);
+        }
+        ProbeLoader loader = new ProbeLoader();
+        Class<?> probe = loader.define(PROBE, new ProbeClassWriter(PROBE, OBJECT)
+                .staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1).toBytes());
+        byte[] next = new ProbeClassWriter(PROBE, OBJECT).staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 2).toBytes();
+        java.lang.instrument.ClassFileTransformer supplier = new java.lang.instrument.ClassFileTransformer() {
+            @Override
+            public byte[] transform(Module module, ClassLoader l, String name, Class<?> redefined,
+                                    java.security.ProtectionDomain domain, byte[] classfile) {
+                return redefined == probe ? next.clone() : null;
+            }
+        };
+        int before = (int) probe.getMethod("value").invoke(null);
+        inst.addTransformer(supplier, true);
+        try {
+            inst.retransformClasses(probe);
+        } catch (UnsupportedOperationException e) {
+            return new Result(false, "JVM refused: " + e.getMessage());
+        } catch (java.lang.instrument.UnmodifiableClassException | LinkageError e) {
+            return new Result(false, "JVM error: " + e);
+        } finally {
+            inst.removeTransformer(supplier);
+        }
+        int patched = (int) probe.getMethod("value").invoke(null);
+        try {
+            inst.retransformClasses(probe);
+        } catch (UnsupportedOperationException | java.lang.instrument.UnmodifiableClassException | LinkageError e) {
+            return new Result(false, "retransformation without the transformer failed: " + e);
+        }
+        int restored = (int) probe.getMethod("value").invoke(null);
+        if (before == 1 && patched == 2 && restored == 1) {
+            return new Result(true, "the transformer's method body executed (1 -> 2) and the initial body came back"
+                    + " without it (2 -> 1)");
+        }
+        return new Result(false, "unexpected values: before " + before + ", patched " + patched + ", restored " + restored);
+    }
+
+    /**
+     * Redefines a probe class with a method whose max_stack is too small. A verifying JVM
+     * throws {@link VerifyError}; a JVM that accepts it does not verify redefined classes.
+     * The invalid method is never called, and the probe class becomes garbage afterwards.
+     */
+    private static Result verifiesRedefinedClasses(Instrumentation inst) throws ReflectiveOperationException {
+        ProbeLoader loader = new ProbeLoader();
+        Class<?> probe = loader.define(PROBE, new ProbeClassWriter(PROBE, OBJECT)
+                .staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1).toBytes());
+        if ((int) probe.getMethod("value").invoke(null) != 1) {
+            return new Result(false, "probe class did not run");
+        }
+        try {
+            inst.redefineClasses(new ClassDefinition(probe, new ProbeClassWriter(PROBE, OBJECT)
+                    .staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 2).invalidStack().toBytes()));
+        } catch (VerifyError e) {
+            return new Result(true, "the JVM verifier rejected invalid bytecode (" + e.getClass().getSimpleName() + ")");
+        } catch (ClassFormatError | java.lang.instrument.UnmodifiableClassException | ClassNotFoundException
+                 | UnsupportedOperationException e) {
+            return new Result(false, "unexpected JVM error: " + e);
+        }
+        return new Result(false, "the JVM accepted bytecode that fails verification; PaperSwap verifies patch classes itself"
+                + " before applying them");
+    }
+
+    private static Result defineNewClass() throws ReflectiveOperationException {
+        ProbeLoader loader = new ProbeLoader();
+        Class<?> host = loader.define(PROBE, new ProbeClassWriter(PROBE, OBJECT)
+                .staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 1).toBytes());
+        MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(host, MethodHandles.lookup());
+        Class<?> added = lookup.defineClass(new ProbeClassWriter(PACKAGE + "/ProbeAdded", OBJECT)
+                .staticIntMethod("value", ProbeClassWriter.ACC_PUBLIC, 4).toBytes());
+        int v = (int) added.getMethod("value").invoke(null);
+        if (added.getClassLoader() == loader && v == 4) {
+            return new Result(true, "class defined in the host's class loader and executed");
+        }
+        return new Result(false, "defined class is in an unexpected class loader");
+    }
+
+    /** Throw-away class loader; becomes garbage after the probe. */
+    private static final class ProbeLoader extends ClassLoader {
+        ProbeLoader() {
+            super(CapabilityProbe.class.getClassLoader());
+        }
+
+        Class<?> define(String internalName, byte[] bytes) {
+            return defineClass(internalName.replace('/', '.'), bytes, 0, bytes.length);
+        }
+    }
+}

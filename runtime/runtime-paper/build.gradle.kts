@@ -1,7 +1,7 @@
 // Paper adapter. Inside the fork these sources are compiled directly into the server
 // (see scripts/fork/generate_patches.py); this project only checks that they compile
 // against the public Paper API of a given version.
-description = "Lemon hot-deployment runtime - Paper adapter"
+description = "PaperSwap hot-deployment runtime - Paper adapter"
 
 val paperApiVersion: String = providers.gradleProperty("paperApiVersion").get()
 

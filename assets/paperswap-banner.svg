@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-labelledby="t d">
+  <title id="t">PaperSwap</title>
+  <desc id="d">Hot-swap modules, plugins and core code on a running Paper server, with checks and rollback</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#05080f"/>
+    </linearGradient>
+    <linearGradient id="swap" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fde047"/>
+      <stop offset="1" stop-color="#22c55e"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.22" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#22c55e" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#22c55e" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+  <rect width="1280" height="640" fill="url(#glow)"/>
+  <g transform="translate(96 192)">
+    <rect width="256" height="256" rx="56" fill="#1e293b" stroke="#ffffff" stroke-opacity="0.08"/>
+    <path d="M74 44h80l44 44v120a12 12 0 0 1-12 12H74a12 12 0 0 1-12-12V56a12 12 0 0 1 12-12z" fill="#f8fafc"/>
+    <path d="M154 44v32a12 12 0 0 0 12 12h32z" fill="#cbd5e1"/>
+    <path d="M92 138a38 38 0 0 1 66-26" fill="none" stroke="url(#swap)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M146 96l20 13-18 18" fill="none" stroke="url(#swap)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M168 150a38 38 0 0 1-66 26" fill="none" stroke="url(#swap)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M114 192l-20-13 18-18" fill="none" stroke="url(#swap)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, 'DejaVu Sans', sans-serif">
+    <text x="404" y="290" font-size="104" font-weight="800" fill="#f8fafc" letter-spacing="-2">Paper<tspan fill="url(#swap)">Swap</tspan></text>
+    <text x="408" y="348" font-size="28" fill="#cbd5e1">Hot-swap modules, plugins and core code</text>
+    <text x="408" y="386" font-size="28" fill="#cbd5e1">on a running Paper server – with checks and rollback.</text>
+    <g font-size="22" font-weight="600">
+      <rect x="408" y="426" width="372" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#22c55e" stroke-opacity="0.5"/>
+      <text x="594" y="455" text-anchor="middle" fill="#bbf7d0">MC 1.21.11 · 26.1.2 · 26.2 · 26.3</text>
+      <rect x="796" y="426" width="180" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#fde047" stroke-opacity="0.5"/>
+      <text x="886" y="455" text-anchor="middle" fill="#fef9c3">Java 21 / 25</text>
+      <rect x="992" y="426" width="140" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#94a3b8" stroke-opacity="0.5"/>
+      <text x="1062" y="455" text-anchor="middle" fill="#e2e8f0">GPL-3.0</text>
+    </g>
+  </g>
+</svg>

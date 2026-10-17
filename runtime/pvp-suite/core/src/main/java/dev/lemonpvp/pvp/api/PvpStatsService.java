@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * Read access to the PvP statistics, published by pvp-core. Use it on the server main
- * thread only. Modules that use it declare a dependency on pvp-core in lemon-module.yml.
+ * thread only. Modules that use it declare a dependency on pvp-core in paperswap-module.yml.
  */
 public interface PvpStatsService {
 

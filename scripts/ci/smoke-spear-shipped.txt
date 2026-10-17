@@ -1,4 +1,4 @@
-# The shipped 1.21.11 build contains the spear cooldown fix (Lemon source patch).
+# The shipped 1.21.11 build contains the spear cooldown fix (PaperSwap source patch).
 combatprobe
 @sleep 3
 @count 1 \[CombatProbe\] verdict: VANILLA COOLDOWN, sword OK

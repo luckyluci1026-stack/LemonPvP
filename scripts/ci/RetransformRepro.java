@@ -17,7 +17,7 @@ import javax.tools.ToolProvider;
  * (e.g. JetBrains Runtime with -XX:+AllowEnhancedClassRedefinition) survives.
  *
  * <pre>
- * java -javaagent:lemon-livepatch-agent.jar RetransformRepro.java &lt;scenario&gt;
+ * java -javaagent:paperswap-agent.jar RetransformRepro.java &lt;scenario&gt;
  * scenarios: recorder | modify | modify-unload | modify-then-redefine
  * </pre>
  *
@@ -29,7 +29,7 @@ public class RetransformRepro {
     public static void main(String[] args) throws Exception {
         String scenario = args[0];
         Instrumentation inst = (Instrumentation) ClassLoader.getSystemClassLoader()
-                .loadClass("dev.lemonpvp.livepatch.agent.LemonLivePatchAgent").getMethod("instrumentation").invoke(null);
+                .loadClass("dev.paperswap.livepatch.agent.PaperSwapAgent").getMethod("instrumentation").invoke(null);
         byte[] v1 = compile("1");
         byte[] v2 = compile("2");
         byte[] v3 = compile("3");

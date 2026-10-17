@@ -1,5 +1,11 @@
 # Phase 1 – Analyse (Stand: 2026-10-13)
 
+> **Hinweis zur Umbenennung:** Bis Commit `05a9c87` hieß das Projekt **Lemon** (Server-JAR
+> `lemon-<mc>.jar`, `config/lemon-runtime.yml`, Ordner `lemon/`, `lemon-livepatch-agent.jar`,
+> `.lemonpatch`, Pakete `dev.lemonpvp.*`). Die Einträge unten sind Protokolle der damaligen
+> Läufe und verwenden deshalb die damaligen Namen. Heute: PaperSwap – siehe
+> [`MIGRATION.md`](MIGRATION.md).
+
 Diese Datei dokumentiert, was **vor** der Implementierung geprüft wurde, mit welchen
 Quellen, und welche Schlüsse daraus gezogen wurden. Aussagen ohne Quelle wurden nicht
 getroffen.

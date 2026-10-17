@@ -17,9 +17,9 @@ if source.count(LITERAL) != 1:
 if mode == "text":
     source = source.replace(LITERAL, '"TPS (live patch) from last 1m, 5m, 15m: "')
 elif mode == "structural":
-    source = source.replace(LITERAL, "lemonStructuralLabel()")
+    source = source.replace(LITERAL, "paperswapStructuralLabel()")
     end = source.rstrip().rfind("}")
-    source = (source[:end] + "\n    private static String lemonStructuralLabel() {\n"
+    source = (source[:end] + "\n    private static String paperswapStructuralLabel() {\n"
               + '        return "TPS (structural) from last 1m, 5m, 15m: ";\n    }\n' + source[end:])
 else:
     sys.exit("mode must be text or structural")

@@ -1,45 +1,45 @@
 # Live-Updates: Module, Plugins und Core-Patches
 
-Lemon kann einen laufenden Server auf **drei getrennten Wegen** verändern. Sie haben
+PaperSwap kann einen laufenden Server auf **drei getrennten Wegen** verändern. Sie haben
 unterschiedliche Technik, Grenzen und Risiken und werden nie vermischt:
 
 | Ziel | Was wird ausgetauscht | Technik | Rollback |
 |---|---|---|---|
-| **module** – Lemon-Runtime-Module | eine Modulinstanz (eigener Class-Loader) | alte Instanz deaktivieren, neue laden und aktivieren | automatisch, wenn die neue Version nicht startet |
+| **module** – PaperSwap-Runtime-Module | eine Modulinstanz (eigener Class-Loader) | alte Instanz deaktivieren, neue laden und aktivieren | automatisch, wenn die neue Version nicht startet |
 | **plugin** – normale Paper/Bukkit-Plugins | ein Plugin (JAR) | Plugin entladen, neue JAR laden und aktivieren – **nur wenn die Kompatibilitätsprüfung das erlaubt** | automatisch bei Fehlschlag; manuell auf die vorherige JAR |
-| **patch** – Core-Live-Patches | Bytecode bereits geladener Serverklassen (Paper, Minecraft, Lemon) | JVM-Klassen-Redefinition (`java.lang.instrument`) über einen Java-Agenten | Bytecode der vorherigen Version (nur im selben Prozess) |
+| **patch** – Core-Live-Patches | Bytecode bereits geladener Serverklassen (Paper, Minecraft, PaperSwap) | JVM-Klassen-Redefinition (`java.lang.instrument`) über einen Java-Agenten | Bytecode der vorherigen Version (nur im selben Prozess) |
 
 Core-Patches lassen sich außerdem per **Retransformation** (statt Redefinition) anwenden,
 der Agent kann nachträglich an einen laufenden Server angehängt werden, und geladene Klassen
 lassen sich durchsuchen und untersuchen: `/fork instrumentation`, siehe
 [`INSTRUMENTATION.md`](INSTRUMENTATION.md).
 
-Alle drei werden über **einen** Befehl bedient: `/fork live`. Ohne Präfix sucht Lemon den
+Alle drei werden über **einen** Befehl bedient: `/fork live`. Ohne Präfix sucht PaperSwap den
 Namen in allen drei Bereichen und verlangt bei Mehrdeutigkeit ein Präfix
 (`module:`, `plugin:`, `patch:`).
 
-> **Was Lemon nicht behauptet:** Es gibt kein „universelles“ Live-Patching. Auf einer
+> **Was PaperSwap nicht behauptet:** Es gibt kein „universelles“ Live-Patching. Auf einer
 > Standard-JVM (Temurin, OpenJDK, Oracle) lassen sich nur **Methodenrümpfe** ändern.
 > Strukturelle Änderungen (Methoden/Felder hinzufügen oder entfernen, Signaturen,
 > Vererbung) brauchen eine JVM mit erweiterter Redefinition (JetBrains Runtime mit
-> `-XX:+AllowEnhancedClassRedefinition`) – oder einen Neustart. Lemon prüft das vor jeder
+> `-XX:+AllowEnhancedClassRedefinition`) – oder einen Neustart. PaperSwap prüft das vor jeder
 > Anwendung durch echte Probe-Redefinitionen und lehnt ab, was die JVM nicht kann.
 
 ## 1. Befehle
 
 | Befehl | Berechtigung | Wirkung |
 |---|---|---|
-| `/fork live status` | `lemon.runtime.live.view` (OP) | Übersicht: Module, Plugins, Core-Patches, letzte Aktionen |
+| `/fork live status` | `paperswap.live.view` (OP) | Übersicht: Module, Plugins, Core-Patches, letzte Aktionen |
 | `/fork live scan` | view | was im Modulordner, in `plugins/update/` und im Patch-Ordner bereitliegt |
 | `/fork live plugins` | view | installierte Plugins mit Status und „live möglich / nur Neustart“ |
 | `/fork live modules` | view | Module im Modulordner mit Status |
 | `/fork live inspect <name>` | view | Plugin: Version, Abhängigkeiten, **registrierte Ressourcen** (Listener, Scheduler-Tasks, Befehle, Services, Kanäle), live möglich?, entladene Versionen noch im Speicher?; Modul: Info + Diagnose; Patch: Status, Klassen, Sicherung |
 | `/fork live check <name>` | view | Prüfung ohne Änderung: Kompatibilität (Plugin), Validierung (Modul), Änderungsplan (Patch) |
-| `/fork live update <name>` | `lemon.runtime.live.update` (**niemand**, nur Konsole) | zeigt den Plan und wartet auf Bestätigung |
+| `/fork live update <name>` | `paperswap.live.update` (**niemand**, nur Konsole) | zeigt den Plan und wartet auf Bestätigung |
 | `/fork live update <name> confirm` | update | führt den bestätigten Plan aus (innerhalb von 120 s) |
 | `/fork live update all [confirm]` | update | alle Plugins in `plugins/update/`, die live gehen, nacheinander; stoppt beim ersten Fehlschlag (Module und Patches immer einzeln) |
 | `/fork live rollback <name> [confirm]` | update | Plugin: vorherige JAR; Patch: Bytecode vor dem Patch |
-| `/fork live history` | view | letzte 15 Aktionen dieses Serverprozesses (vollständig: `lemon/logs/audit.log`) |
+| `/fork live history` | view | letzte 15 Aktionen dieses Serverprozesses (vollständig: `paperswap/logs/audit.log`) |
 | `/fork live capabilities` | view (Probe beim ersten Aufruf: update) | was in diesem Prozess live änderbar ist: Plugins, Module, Core-Patches (Fähigkeiten der JVM, per Probe ermittelt) |
 | `/fork live diagnostics` | view | Agent/JVM, aktive Patches mit Prüfergebnis, entladene Plugin-/Modulversionen noch im Speicher, abgebrochene Staging-Dateien, letzte Fehlschläge |
 | `/fork live patch status` | view | Agent, JVM, Build-ID, Profil, aktive Patches, Heap |
@@ -56,7 +56,7 @@ Jede Änderung braucht zwei Schritte (Plan → `confirm`). Bestätigt wird genau
 Stand: ändert sich die Datei zwischen Plan und Bestätigung (anderer SHA-256), wird
 abgelehnt.
 
-Einen Automatikmodus („neue Datei erkannt → sofort anwenden“) gibt es bewusst nicht: Lemon
+Einen Automatikmodus („neue Datei erkannt → sofort anwenden“) gibt es bewusst nicht: PaperSwap
 führt nie eine Datei aus, nur weil sie in einem Ordner auftaucht. Die Automatisierung ist
 `update all` (ein Plan, eine Bestätigung, dann nacheinander).
 
@@ -64,20 +64,20 @@ führt nie eine Datei aus, nur weil sie in einem Ordner auftaucht. Die Automatis
 
 | Änderung | Live? | Bedingung / Grund |
 |---|---|---|
-| Neue Version eines Lemon-Moduls | **ja** | keine aktivierten Module hängen davon ab; Hot-Swap mit automatischem Rollback |
+| Neue Version eines PaperSwap-Moduls | **ja** | keine aktivierten Module hängen davon ab; Hot-Swap mit automatischem Rollback |
 | Konfiguration eines Moduls | **ja** | `ConfigurableModule`; `/fork module config <id>` |
 | Neues Bukkit-Plugin (`plugin.yml`) installieren | **ja**, wenn die Prüfung „live“ ergibt | Abhängigkeiten installiert und aktiv, API-Version passt, keine Lifecycle-API |
 | Bukkit-Plugin aktualisieren | **ja**, wenn die Prüfung „live“ ergibt | kein anderes aktives Plugin hängt davon ab (`depend`, `softdepend`, `loadbefore`), keine Lifecycle-API (alt und neu) |
 | Plugin, von dem andere abhängen | nein → Neustart | andere Plugins halten Referenzen auf seine Klassen |
 | Paper-Plugin (`paper-plugin.yml`) | nein → Neustart | Bootstrap-/Loader-Phase läuft nur beim Start |
 | Plugin mit Paper-Lifecycle-API (z. B. Brigadier-Befehle über `LifecycleEvents.COMMANDS`) | nein → Neustart | Paper führt diese Handler nur beim Start aus |
-| Methodenrumpf einer geladenen Serverklasse ändern (Paper, Minecraft, Lemon) | **ja** (Agent nötig) | Standard-JVM genügt |
+| Methodenrumpf einer geladenen Serverklasse ändern (Paper, Minecraft, PaperSwap) | **ja** (Agent nötig) | Standard-JVM genügt |
 | Konstante (`static final`) ändern | eingeschränkt | Feld behält den aktuellen Wert; Klassen, die die Konstante eingebettet haben, ändern sich nur, wenn sie im Patch enthalten sind |
 | Methode/Konstruktor hinzufügen oder entfernen, Feld hinzufügen/entfernen, Modifikatoren, Oberklasse, Interfaces | nur mit JBR + `-XX:+AllowEnhancedClassRedefinition`, sonst Neustart | Standard-HotSpot lehnt das ab („attempted to add a method“ …) |
 | Neue Klasse in einem bestehenden Paket | **ja** (Agent nötig) | wird vor der Redefinition definiert; bleibt bis zum Neustart geladen |
 | Statischer Initialisierer (`<clinit>`) geändert | technisch ja, **ohne Wirkung** | läuft für eine bereits initialisierte Klasse nie erneut |
 | Registries, Weltgenerierung, Netzwerkprotokoll, Datenformate | Neustart | Zustand ist beim Start festgelegt / an Sessions gebunden |
-| Paper-Konfiguration, `server.properties` | Neustart (bzw. Paper-eigene Mechanismen) | nicht Teil von Lemon |
+| Paper-Konfiguration, `server.properties` | Neustart (bzw. Paper-eigene Mechanismen) | nicht Teil von PaperSwap |
 
 Zustand wird **nie** migriert: Objekte, statische Felder, Caches, laufende Tasks und
 Threads behalten ihren Zustand. Ein Live-Patch ändert nur, welcher Code **ab dem nächsten
@@ -88,15 +88,15 @@ alten Code.
 
 | Bereich | Voraussetzung |
 |---|---|
-| alle | `config/lemon-runtime.yml`: `enabled: true` (Neustart) |
+| alle | `config/paperswap.yml`: `enabled: true` (Neustart) |
 | Module | `allow-runtime-deploy: true` |
 | Plugins | `plugin-updates.enabled: true` (sofort per `/fork reload`) |
-| Core-Patches | `live-patching.enabled: true` (Neustart) **und** JVM-Option `-javaagent:lemon-livepatch-agent.jar` |
+| Core-Patches | `live-patching.enabled: true` (Neustart) **und** JVM-Option `-javaagent:paperswap-agent.jar` |
 | Core-Patches, Produktion | `live-patching.trusted-hashes-file` gesetzt (Freigabeliste der Patch-Archive) |
 | Core-Patches, strukturelle Änderungen | JetBrains Runtime (JBR) 21/25 mit `-XX:+AllowEnhancedClassRedefinition` |
 
 ```yaml
-# config/lemon-runtime.yml (Ausschnitt)
+# config/paperswap.yml (Ausschnitt)
 enabled: true
 allow-runtime-deploy: true          # Module
 plugin-updates:
@@ -105,8 +105,8 @@ plugin-updates:
 live-patching:
   enabled: true                     # Core-Patches
   profile: production               # production | development
-  patch-directory: lemon/patches/inbox
-  trusted-hashes-file: lemon/patches/approved.sha256
+  patch-directory: paperswap/patches/inbox
+  trusted-hashes-file: paperswap/patches/approved.sha256
   confirm-timeout-seconds: 120
 ```
 
@@ -114,7 +114,7 @@ live-patching:
 
 | | `production` (Standard) | `development` |
 |---|---|---|
-| Aktiv, wenn … | immer, außer die Bedingungen rechts sind erfüllt | `profile: development` **und** JVM-Start mit `-Dlemon.livepatch.development=true` |
+| Aktiv, wenn … | immer, außer die Bedingungen rechts sind erfüllt | `profile: development` **und** JVM-Start mit `-Dpaperswap.livepatch.development=true` |
 | Freigabeliste | **Pflicht** – ohne Eintrag wird nichts angewendet | optional |
 | `.sha256`-Datei | Pflicht | Pflicht |
 | Build-ID des Servers unbekannt | Ablehnung | Warnung, nur Klassen-Hashes werden geprüft |
@@ -131,25 +131,25 @@ Produktionsserver nicht versehentlich lockern.
 1. **Plugin bauen** (wie immer, z. B. `./gradlew build`).
 2. **Datei ablegen:** neue JAR nach `plugins/update/` (SFTP). Pro Plugin genau **eine**
    JAR in diesem Ordner – Paper lädt beim Laden eines Plugins automatisch eine JAR aus
-   `plugins/update/` mit demselben Plugin-Namen; liegen mehrere dort, verweigert Lemon.
+   `plugins/update/` mit demselben Plugin-Namen; liegen mehrere dort, verweigert PaperSwap.
    Optional `<jar>.sha256` daneben (wird dann geprüft).
 3. **Kompatibilität prüfen:** `fork live check <Plugin>` – zeigt „can be updated live“,
    „needs a server restart“ oder „incompatible“ mit Gründen.
 4. **Update ausführen:** `fork live update <Plugin>` → `fork live update <Plugin> confirm`.
-   Ablauf: alte JAR (mit `.sha256`) nach `lemon/plugin-backups/<Plugin>/<Zeit>/` kopieren →
-   neue JAR nach `lemon/plugin-staging/` kopieren und die Kopie erneut hashen (eine nach der
+   Ablauf: alte JAR (mit `.sha256`) nach `paperswap/plugin-backups/<Plugin>/<Zeit>/` kopieren →
+   neue JAR nach `paperswap/plugin-staging/` kopieren und die Kopie erneut hashen (eine nach der
    Prüfung ausgetauschte Datei wird so nie geladen) → Plugin deaktivieren (Paper:
-   `onDisable`, Tasks, Listener, Services, Kanäle, Class-Loader) → Lemon entfernt zusätzlich
+   `onDisable`, Tasks, Listener, Services, Kanäle, Class-Loader) → PaperSwap entfernt zusätzlich
    Befehle, Berechtigungen und den Plugin-Manager-Eintrag → geprüfte Kopie nach `plugins/`,
    Original aus `plugins/update/` entfernen → laden, Berechtigungen registrieren,
    aktivieren → Befehlsbaum der Spieler aktualisieren.
 5. **Ergebnis prüfen:** Ausgabe `OK update of … done: 1.0.0 -> 1.0.1` mit
-   `unloaded … (it had 1 listener, 1 scheduler task, 1 command; …)`. Danach prüft Lemon, ob
+   `unloaded … (it had 1 listener, 1 scheduler task, 1 command; …)`. Danach prüft PaperSwap, ob
    für die **alte** Plugin-Instanz noch etwas registriert ist und ob Threads ihres
    Class-Loaders weiterlaufen; beides erscheint als `WARNING: …` (das Update ist trotzdem
    erfolgt, aber die alte Version bleibt im Speicher – bei Gelegenheit neu starten).
    `fork live inspect <Plugin>` zeigt später, ob der Class-Loader der alten Version
-   eingesammelt wurde („class loader collected“) oder noch im Speicher ist. Lemon löst
+   eingesammelt wurde („class loader collected“) oder noch im Speicher ist. PaperSwap löst
    keine Garbage Collection aus; „still in memory“ direkt nach dem Update ist normal.
    Dann `fork live plugins` und das Plugin selbst testen. Schlägt Laden/Aktivieren fehl
    (oder lädt Paper eine andere Version), wird die alte JAR zurückgelegt und wieder
@@ -165,46 +165,46 @@ sie beim nächsten Start.
 Mehrere Plugins auf einmal: alle JARs nach `plugins/update/`, dann `fork live update all`
 (prüft jedes, listet „ready“/„skipped“) → `fork live update all confirm`. Nacheinander, mit
 denselben Prüfungen und Wiederherstellungen wie einzeln; beim ersten Update, das nicht
-gelingt, stoppt Lemon und nennt die nicht versuchten Plugins.
+gelingt, stoppt PaperSwap und nennt die nicht versuchten Plugins.
 
-Was Lemon über ein Plugin **sieht** (Server-API): Event-Listener, Tasks des
+Was PaperSwap über ein Plugin **sieht** (Server-API): Event-Listener, Tasks des
 Bukkit-Schedulers, Befehle, Services, Plugin-Messaging-Kanäle. **Nicht** sichtbar: Tasks
 der Paper-Async-/Region-Scheduler (Paper beendet sie beim Deaktivieren), selbst gestartete
 Threads/Executor (nur über den Thread-Check nach dem Entladen), Registrierungen in
 APIs anderer Plugins (Paket-Listener, Platzhalter-Erweiterungen, Hooks …) und
 Brigadier-Befehle über Papers Lifecycle-API. Deshalb gibt es kein „universell sicheres“
-Plugin-Reload: Lemon tauscht nur Plugins live aus, bei denen die Prüfung das erlaubt, und
+Plugin-Reload: PaperSwap tauscht nur Plugins live aus, bei denen die Prüfung das erlaubt, und
 meldet, was nach dem Entladen übrig blieb.
 
 ### 4.2 Modul aktualisieren oder neu aktivieren
 
 1. **Modul bauen** (Format: [`MODULE-FORMAT.md`](MODULE-FORMAT.md); `module.yml` genügt,
    z. B. nur `id`, `version`, `main`).
-2. **Datei ablegen:** JAR + `<jar>.sha256` nach `lemon/modules/`.
+2. **Datei ablegen:** JAR + `<jar>.sha256` nach `paperswap/modules/`.
 3. **Prüfen:** `fork live check <modul-id>` (Validierung ohne Klassen zu laden).
 4. **Ausführen:** `fork live update <modul-id>` → `fork live update <modul-id> confirm`
    (nicht geladen: aktivieren; geladen: Hot-Swap mit Rollback).
 5. **Ergebnis prüfen:** `fork module diagnostics <modul-id>`, `fork live history`.
    Entfernen: `fork module remove <modul-id>` (verschiebt die Datei nach
-   `lemon/modules-removed/`).
+   `paperswap/modules-removed/`).
 
-### 4.3 Core-Patch (Änderung an Paper/Minecraft/Lemon-Code)
+### 4.3 Core-Patch (Änderung an Paper/Minecraft/PaperSwap-Code)
 
 1. **Basis festhalten:** direkt nach dem Bauen der Server-JAR, die deployt wird (gleicher
-   Quellstand, noch keine Änderungen): `./gradlew :lemon-server:livePatchBaseline` (kopiert
-   die Gradle-JAR nach `lemon-server/build/livepatch/baseline/baseline.jar`).
+   Quellstand, noch keine Änderungen): `./gradlew :paperswap-server:livePatchBaseline` (kopiert
+   die Gradle-JAR nach `paperswap-server/build/livepatch/baseline/baseline.jar`).
 2. **Laufende Server-JAR holen:** Paperclip schreibt beim ersten Start die Server-JAR, die
-   wirklich läuft, nach `versions/<mc>/lemon-<mc>.jar` im Serververzeichnis. Diese Datei per
-   SFTP holen (z. B. nach `C:\lemon\lemon-<mc>.jar`). **Bei 1.21.11 ist das Pflicht:** die
+   wirklich läuft, nach `versions/<mc>/paperswap-<mc>.jar` im Serververzeichnis. Diese Datei per
+   SFTP holen (z. B. nach `C:\paperswap\paperswap-<mc>.jar`). **Bei 1.21.11 ist das Pflicht:** die
    1.21.11-Paperclip erzeugt diese JAR aus Vanilla-JAR + Binär-Patches, und dabei sind die
    Klassendateien anders angeordnet als in der Gradle-JAR (CI-Lauf #12: 9962 von 10183
    Klassen byte-verschieden bei gleichem Inhalt). Bei 26.1.2/26.2/26.3 ist sie
    byte-identisch zur Gradle-JAR (CI-Lauf #12: alle Klassen identisch), `-PserverJar` schadet
    dort nicht.
 3. **Code ändern und Patch bauen** (IntelliJ oder Konsole):
-   `./gradlew :lemon-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…" -PserverJar=C:\lemon\lemon-<mc>.jar`
+   `./gradlew :paperswap-server:createLivePatch -PpatchId=fix-tps -PpatchDescription="…" -PserverJar=C:\paperswap\paperswap-<mc>.jar`
    (optional `-PdeployDir=<vorhandener Ordner>`: kopiert Patch + `.sha256` dorthin, z. B. in
-   den `lemon/patches/inbox`-Ordner eines lokalen Testservers; angewendet oder freigegeben
+   den `paperswap/patches/inbox`-Ordner eines lokalen Testservers; angewendet oder freigegeben
    wird dadurch nichts).
    Das Werkzeug erkennt Änderungen byte-genau gegen `baseline.jar`, übernimmt die
    Prüfsummen aus der laufenden JAR und prüft, dass beide für jede Patch-Klasse
@@ -215,23 +215,23 @@ meldet, was nach dem Entladen übrig blieb.
    `Entity.firstTick`, javac `LivingEntity.firstTick`) – nur wenn keine Klasse dazwischen ein
    gleichnamiges Mitglied deklariert. Klassen ohne Bytecode-Änderung (nur Zeilennummern,
    Annotationen, Konstantenpool-Layout) landen nicht im Patch („skipped …“). Es zeigt pro Klasse die Änderungen (strukturelle mit `[structural]`) und
-   schreibt `lemon-server/build/livepatch/fix-tps.lemonpatch` + `.sha256`.
+   schreibt `paperswap-server/build/livepatch/fix-tps.swappatch` + `.sha256`.
 4. **Offline prüfen (vor dem Hochladen):**
-   `./gradlew :lemon-server:checkLivePatch -PpatchId=fix-tps -PserverJar=C:\lemon\lemon-<mc>.jar`
+   `./gradlew :paperswap-server:checkLivePatch -PpatchId=fix-tps -PserverJar=C:\paperswap\paperswap-<mc>.jar`
    prüft Prüfsummendatei, Archiv, Build-ID, Minecraft-Version, den SHA-256 jeder ersetzten
    Klasse in der Server-JAR und die Art jeder Änderung. Ergebnis: `APPLICABLE on a standard
    JVM`, `APPLICABLE ONLY with enhanced class redefinition` (JBR nötig) oder
    `NOT APPLICABLE …` (Build schlägt fehl). Der Server prüft beim Anwenden alles erneut,
    zusätzlich seine JVM.
-5. **Übertragen:** beide Dateien per SFTP nach `lemon/patches/inbox/`. In Produktion
+5. **Übertragen:** beide Dateien per SFTP nach `paperswap/patches/inbox/`. In Produktion
    trägt die freigebende Person den SHA-256 in die Freigabeliste ein
-   (`sha256sum fix-tps.lemonpatch >> lemon/patches/approved.sha256`).
+   (`sha256sum fix-tps.swappatch >> paperswap/patches/approved.sha256`).
 6. **Prüfen und anwenden:** `fork live check fix-tps` zeigt den Plan
    (redefine/define/reject je Klasse, Änderungsarten, ob die JVM sie kann);
    `fork live update fix-tps` → `fork live update fix-tps confirm`.
 7. **Ergebnis prüfen:** Meldung `OK patch fix-tps applied and verified` mit
    `<Klasse>: runs the expected bytecode (read back from the JVM)` (siehe 6.1) und
-   `behaviour NOT validated by Lemon` – den geänderten Codepfad jetzt testen.
+   `behaviour NOT validated by PaperSwap` – den geänderten Codepfad jetzt testen.
    `fork live inspect patch:fix-tps`, `fork live patch verify fix-tps` (erneut
    zurücklesen), `fork live history`. Rückgängig: `fork live rollback fix-tps`
    → `… confirm` (wird ebenfalls zurückgelesen: `rolled back and verified`). **Dauerhaft** wird eine Änderung erst mit einer neu gebauten Server-JAR
@@ -241,11 +241,11 @@ Was der Server vor dem Anwenden prüft (jede fehlgeschlagene Prüfung lehnt den 
 Patch ab, bevor etwas geändert wird):
 
 1. Live-Patching aktiviert, Agent geladen, JVM kann redefinieren.
-2. Datei ≤ 16 MiB, nur `lemon-patch.yml` und `classes/**.class`, keine Pfadtricks,
+2. Datei ≤ 16 MiB, nur `paperswap-patch.yml` und `classes/**.class`, keine Pfadtricks,
    ≤ 256 Klassen, Digest jeder Klassendatei passt zum Manifest, jede Klassendatei ist
    gültig und heißt wie angegeben, keine Klassen aus `java.*`, `javax.*`, `jdk.*`,
    `sun.*`, `com.sun.*`, nicht der Live-Patch-Code selbst und nicht die Klassen, auf die
-   sich seine Prüfungen stützen (`dev.lemonpvp.runtime.security.*`, `…config.*`).
+   sich seine Prüfungen stützen (`dev.paperswap.runtime.security.*`, `…config.*`).
 3. `.sha256` passt zu genau den gelesenen Bytes; in Produktion steht der Digest in der
    Freigabeliste.
 4. Ziel-Minecraft-Version und **Build-ID** (`Brand-Id/Implementation-Version/Build-Time`
@@ -258,7 +258,7 @@ Patch ab, bevor etwas geändert wird):
 7. Bytecode-Verifikation: Standard-HotSpot verifiziert redefinierte Klassen selbst und
    lehnt ungültigen Bytecode mit `VerifyError` ab. **JetBrains Runtime mit
    `-XX:+AllowEnhancedClassRedefinition` hat in der CI (JBR 21.0.11 und 25.0.4.1)
-   ungültigen Bytecode ohne Fehler übernommen.** Lemon prüft deshalb per Probe
+   ungültigen Bytecode ohne Fehler übernommen.** PaperSwap prüft deshalb per Probe
    („reject invalid bytecode when redefining“), ob die JVM verifiziert; wenn nicht, läuft
    der JVM-Verifier vorher auf jeder Klasse des Patches in einem Wegwerf-Class-Loader
    (ohne statische Initialisierer). Ungültige Klassen ⇒ Ablehnung. Klassen, die sich so
@@ -266,7 +266,7 @@ Patch ab, bevor etwas geändert wird):
    das Entwicklungsprofil wendet sie mit Warnung an.
 
 Anwendung: Sicherung der laufenden Klassendateien nach
-`lemon/patches/backups/<id>/<Zeit>/` (+ `backup.txt` mit SHA-256), dann **ein**
+`paperswap/patches/backups/<id>/<Zeit>/` (+ `backup.txt` mit SHA-256), dann **ein**
 `Instrumentation.redefineClasses`-Aufruf mit allen Klassen auf dem Hauptthread zwischen
 zwei Ticks. Die JVM (JVMTI `RedefineClasses`) ändert dabei alle Klassen oder keine.
 
@@ -277,8 +277,8 @@ Ziel nach dem ersten nur ≈ 20 % Schaden. Analyse, Fix und Messung:
 [`SPEAR-COOLDOWN.md`](SPEAR-COOLDOWN.md). Kurz der Ablauf (wie 4.3):
 
 1. Laufende JAR holen, `livePatchBaseline` für den Stand, aus dem sie gebaut wurde.
-2. Fix in die Quellen (hier: zwei Dateien unter `lemon-server/minecraft-patches/sources/`,
-   dann `applyAllPatches`; bei eigenem Code direkt in `lemon-server/src/minecraft/java` bzw.
+2. Fix in die Quellen (hier: zwei Dateien unter `paperswap-server/minecraft-patches/sources/`,
+   dann `applyAllPatches`; bei eigenem Code direkt in `paperswap-server/src/minecraft/java` bzw.
    `paper-server/src/main/java` ändern).
 3. `createLivePatch -PpatchId=spear-cooldown -PserverJar=…` → `Player`, `LivingEntity`,
    nur Methodenrümpfe.
@@ -298,7 +298,7 @@ dem Patch, danach und nach dem Rollback.
 | Was hält ein Plugin gerade, wo ist es im Speicher geblieben? | `fork live inspect <Plugin>` |
 | Läuft der Bytecode eines Patches noch? | `fork live patch verify <id>` |
 | Gesamtbild inkl. letzter Fehlschläge | `fork live diagnostics` |
-| Was ist wann passiert? | `fork live history`, vollständig `lemon/logs/audit.log` |
+| Was ist wann passiert? | `fork live history`, vollständig `paperswap/logs/audit.log` |
 
 Häufige Meldungen: [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
@@ -307,7 +307,7 @@ Häufige Meldungen: [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 * Core-Änderung, die nicht nur Methodenrümpfe betrifft, auf einer Standard-JVM
   (`checkLivePatch`: `APPLICABLE ONLY with enhanced class redefinition`; Server: `reject …
   this JVM cannot …`).
-* Änderungen, die Lemon nie live anwendet (Oberklasse auf Standard-JVM, Nest-/Sealed-/
+* Änderungen, die PaperSwap nie live anwendet (Oberklasse auf Standard-JVM, Nest-/Sealed-/
   Record-Attribute, Klassen-Modifikatoren) – `NOT APPLICABLE live`.
 * Änderungen an Code, der nur beim Start läuft (statische Initialisierer, Registries,
   Bootstrap, Weltgenerierung beim Laden) – technisch anwendbar, aber ohne Wirkung.
@@ -322,15 +322,15 @@ Häufige Meldungen: [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 IntelliJ (Windows)                         Testserver (Ubuntu, Pterodactyl)
 ───────────────────                        ─────────────────────────────────
 1 versions/<mc>: applyAllPatches, build,
-  create(Mojmap)PaperclipJar               ──SFTP──► server.jar (+ lemon-livepatch-agent.jar)
-2 :lemon-server:livePatchBaseline                   Start mit -javaagent:lemon-livepatch-agent.jar
-  laufende JAR holen                      ◄──SFTP── versions/<mc>/lemon-<mc>.jar (von Paperclip geschrieben)
+  create(Mojmap)PaperclipJar               ──SFTP──► server.jar (+ paperswap-agent.jar)
+2 :paperswap-server:livePatchBaseline                   Start mit -javaagent:paperswap-agent.jar
+  laufende JAR holen                      ◄──SFTP── versions/<mc>/paperswap-<mc>.jar (von Paperclip geschrieben)
 3 Code ändern (paper-server/src/main/java,
-  lemon-server/src/minecraft/java)
-4 :lemon-server:createLivePatch -PpatchId=x
+  paperswap-server/src/minecraft/java)
+4 :paperswap-server:createLivePatch -PpatchId=x
     -PserverJar=<geholte JAR>
-  :lemon-server:checkLivePatch -PpatchId=x
-    -PserverJar=<geholte JAR>  (offline)  ──SFTP──► lemon/patches/inbox/x.lemonpatch + .sha256
+  :paperswap-server:checkLivePatch -PpatchId=x
+    -PserverJar=<geholte JAR>  (offline)  ──SFTP──► paperswap/patches/inbox/x.swappatch + .sha256
                                                     (Produktion: Digest in approved.sha256)
                                                     Konsole: fork live check x
                                                              fork live update x
@@ -341,34 +341,34 @@ IntelliJ (Windows)                         Testserver (Ubuntu, Pterodactyl)
 * Unter Windows `gradlew.bat` statt `./gradlew`. Gebaut wird das Projekt
   `versions/<mc>/` (siehe [`BUILDING.md`](BUILDING.md)); IntelliJ öffnet es als
   Gradle-Projekt.
-* Der Agent liegt im CI-Artefakt `lemon-<mc>` (`lemon-livepatch-agent.jar` + `.sha256`)
+* Der Agent liegt im CI-Artefakt `paperswap-<mc>` (`paperswap-agent.jar` + `.sha256`)
   oder entsteht lokal mit `cd runtime && ./gradlew :livepatch-agent:jar`
-  (`runtime/livepatch-agent/build/libs/lemon-livepatch-agent.jar`).
+  (`runtime/livepatch-agent/build/libs/paperswap-agent.jar`).
 
 ### Pterodactyl
 
 * **Startbefehl** (Server → Startup; das Egg muss Änderungen erlauben, sonst Admin):
-  `-javaagent:lemon-livepatch-agent.jar` **vor** `-jar` einfügen, z. B.
+  `-javaagent:paperswap-agent.jar` **vor** `-jar` einfügen, z. B.
   ```
-  java -Xms128M -XX:MaxRAMPercentage=95.0 -javaagent:lemon-livepatch-agent.jar -jar {{SERVER_JARFILE}}
+  java -Xms128M -XX:MaxRAMPercentage=95.0 -javaagent:paperswap-agent.jar -jar {{SERVER_JARFILE}}
   ```
   Die Agent-JAR liegt im Serververzeichnis (`/home/container`). Für JBR zusätzlich
   `-XX:+AllowEnhancedClassRedefinition` und ein Docker-Image mit JetBrains Runtime
   (Standard-Images enthalten Temurin/OpenJDK – dort sind nur Methodenrümpfe möglich).
-* Entwicklungsprofil nur auf dem Testserver: `-Dlemon.livepatch.development=true` im
+* Entwicklungsprofil nur auf dem Testserver: `-Dpaperswap.livepatch.development=true` im
   Startbefehl **und** `profile: development`.
 * **Übertragung** per SFTP des Panels (Benutzer/Port stehen unter „Settings → SFTP
   Details“). Der Patch-Ordner nimmt nur Dateien entgegen – ausgeführt wird erst nach
   `check`/`update`/`confirm` an der Konsole. Es gibt keinen Upload-Endpunkt und keinen
-  Netzwerkport von Lemon.
+  Netzwerkport von PaperSwap.
 * `fork …`-Befehle in der Panel-Konsole eingeben (das ist die Serverkonsole).
 
 ### Alternative: IntelliJ-HotSwap über JDWP (nur lokaler Entwicklungsserver)
 
 IntelliJ kann geänderte Klassen über den Debugger (JDWP) direkt einspielen. Das nutzt
-dieselbe JVM-Redefinition (gleiche Grenzen), umgeht aber alle Lemon-Prüfungen, Sicherungen
+dieselbe JVM-Redefinition (gleiche Grenzen), umgeht aber alle PaperSwap-Prüfungen, Sicherungen
 und das Audit-Log. **JDWP hat keine Authentifizierung: Wer den Port erreicht, kann
-beliebigen Code im Server ausführen.** Lemon öffnet keinen JDWP-Port. Wenn überhaupt, dann:
+beliebigen Code im Server ausführen.** PaperSwap öffnet keinen JDWP-Port. Wenn überhaupt, dann:
 
 ```
 # nur Entwicklungsserver; Port NICHT im Panel als Allocation freigeben
@@ -393,7 +393,7 @@ diese Adresse richten). Niemals auf Produktionsservern, niemals `address=*:5005`
   in alten Methodenversionen stehen und beenden diese mit dem alten Code.
 * **Kein Zustand wird repariert oder migriert.** Felder, Objekte, Caches behalten ihre
   Werte. Ein Patch, der neue Annahmen über bestehenden Zustand macht, kann falsch sein,
-  obwohl er „technisch angewendet“ wurde – Lemon prüft Bytecode-Kompatibilität, nicht
+  obwohl er „technisch angewendet“ wurde – PaperSwap prüft Bytecode-Kompatibilität, nicht
   Verhalten.
 * **Rollback = Bytecode-Rollback.** Nur der vorherige Bytecode wird wiederhergestellt
   (aus dem Speicher des Prozesses; die Sicherung auf der Platte dient der
@@ -404,7 +404,7 @@ diese Adresse richten). Niemals auf Produktionsservern, niemals `address=*:5005`
 * **Kein Überleben über Neustarts.** Nach einem Neustart läuft wieder die Server-JAR.
   Ein Patch-Datensatz eines früheren Prozesses kann nicht zurückgerollt werden.
 * **Plugins:** Zwischen Entladen und Laden gibt es eine kurze Lücke (ein
-  Hauptthread-Schritt); Paper selbst entlädt Plugins nicht offiziell. Lemon entfernt
+  Hauptthread-Schritt); Paper selbst entlädt Plugins nicht offiziell. PaperSwap entfernt
   Befehle, Berechtigungen und den Plugin-Manager-Eintrag zusätzlich zu Papers
   `disablePlugin`. Objekte, Threads oder statische Zustände, die ein Plugin außerhalb der
   Bukkit-API angelegt hat, räumt niemand auf – deshalb die konservative Prüfung.
@@ -413,7 +413,7 @@ diese Adresse richten). Niemals auf Produktionsservern, niemals `address=*:5005`
 
 ### 6.1 Prüfung nach dem Anwenden (Rücklesen des Bytecodes)
 
-Nach jeder Redefinition (Anwenden und Rollback) fragt Lemon die JVM nach der Klassendatei,
+Nach jeder Redefinition (Anwenden und Rollback) fragt PaperSwap die JVM nach der Klassendatei,
 die sie **jetzt** ausführt (`Instrumentation.retransformClasses` mit einem Transformer, der
 die Bytes nur mitschreibt und nie ändert; HotSpot rekonstruiert die Datei aus der geladenen
 Klasse). Diese wird mit der angewendeten Klassendatei verglichen (Member, Modifikatoren,
@@ -430,35 +430,35 @@ Beim Zurücklesen nummeriert HotSpot den Konstantenpool um und verbreitert dabei
 `ldc` zu `ldc_w`; der Vergleich ist dagegen unempfindlich (Sprungziele als
 Befehlsnummern), das ist durch einen Test mit echter Redefinition belegt. Das Zurücklesen
 ist selbst eine Redefinition mit demselben Bytecode (ein weiterer kurzer Safepoint).
-Ab Agent-Version 2 deklariert `lemon-livepatch-agent.jar` dafür
+Ab Agent-Version 2 deklariert `paperswap-agent.jar` dafür
 `Can-Retransform-Classes: true`; ein Transformer ist nur während des Zurücklesens
 registriert.
 
 ## 7. Dateien
 
 ```
-lemon/patches/inbox/<id>.lemonpatch (+ .sha256)  hochgeladene Core-Patches
-lemon/patches/approved.sha256                    Freigabeliste (Produktion), Pfad konfigurierbar
-lemon/patches/backups/<id>/<Zeit>/               Klassendateien vor dem Patch + backup.txt
+paperswap/patches/inbox/<id>.swappatch (+ .sha256)  hochgeladene Core-Patches
+paperswap/patches/approved.sha256                    Freigabeliste (Produktion), Pfad konfigurierbar
+paperswap/patches/backups/<id>/<Zeit>/               Klassendateien vor dem Patch + backup.txt
 plugins/update/                                  neue Plugin-JARs (Paper-Standardordner)
-lemon/plugin-backups/<Plugin>/<Zeit>/            vorherige Plugin-JARs; UPDATE-FAILED.txt markiert Fehlversuche
-lemon/plugin-staging/                            geprüfte Kopie während eines Updates (danach leer)
-lemon/modules-removed/<Zeit>/                    mit /fork module remove entfernte Module
-lemon/logs/audit.log                             alle Aktionen: Zeit | Akteur | Aktion | Ziel | OK/FAILED | Details
+paperswap/plugin-backups/<Plugin>/<Zeit>/            vorherige Plugin-JARs; UPDATE-FAILED.txt markiert Fehlversuche
+paperswap/plugin-staging/                            geprüfte Kopie während eines Updates (danach leer)
+paperswap/modules-removed/<Zeit>/                    mit /fork module remove entfernte Module
+paperswap/logs/audit.log                             alle Aktionen: Zeit | Akteur | Aktion | Ziel | OK/FAILED | Details
 ```
 
-### Patch-Format (`.lemonpatch`)
+### Patch-Format (`.swappatch`)
 
-ZIP mit `lemon-patch.yml` und `classes/<paket>/<Klasse>.class`:
+ZIP mit `paperswap-patch.yml` und `classes/<paket>/<Klasse>.class`:
 
 ```yaml
 format: 1
 id: "fix-tps"
 description: "…"
 created: "2026-10-14T12:00:00Z"
-tool: "lemon-livepatch-tool 1"
+tool: "paperswap-livepatch-tool 1"
 target:
-  build-id: "lemonpvp:lemon/26.2-123-abcdef0/1970-01-01T00:00:00Z"
+  build-id: "paperswap:paperswap/26.2-123-abcdef0/1970-01-01T00:00:00Z"
   minecraft: "26.2"
 classes:
   - name: "org.spigotmc.TicksPerSecondCommand"
@@ -472,11 +472,11 @@ classes:
 Das Werkzeug ist auch ohne Gradle nutzbar (nur JDK, liegt in der Server-JAR):
 
 ```
-java -cp <server-jar oder kompilierte Klassen> dev.lemonpvp.runtime.livepatch.tool.LivePatchTool create \
+java -cp <server-jar oder kompilierte Klassen> dev.paperswap.runtime.livepatch.tool.LivePatchTool create \
      --base <laufende Server-JAR> --classes <Klassenverzeichnis> [--reference <Gradle-JAR desselben Builds>] \
      --id fix-tps [--description …] [--out …]
-java -cp <…> dev.lemonpvp.runtime.livepatch.tool.LivePatchTool check \
-     --patch fix-tps.lemonpatch --server-jar <laufende Server-JAR>      # Exit 0 / 3 (nur JBR) / 1
+java -cp <…> dev.paperswap.runtime.livepatch.tool.LivePatchTool check \
+     --patch fix-tps.swappatch --server-jar <laufende Server-JAR>      # Exit 0 / 3 (nur JBR) / 1
 ```
 
 ## 8. Teststand

@@ -1,9 +1,9 @@
 import java.security.MessageDigest
 
 // Example runtime module. Build: ./gradlew :example-module:jar -PpaperApiVersion=<version>
-// The resulting jar goes into <server>/lemon/modules/ together with a .sha256 file
+// The resulting jar goes into <server>/paperswap/modules/ together with a .sha256 file
 // (task :example-module:sha256).
-description = "Example Lemon runtime module"
+description = "Example PaperSwap runtime module"
 
 val paperApiVersion: String = providers.gradleProperty("paperApiVersion").get()
 

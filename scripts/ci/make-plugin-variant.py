@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Copies the LemonTestPlugin jar with a changed plugin.yml (CI plugin update tests).
+"""Copies the PaperSwapTestPlugin jar with a changed plugin.yml (CI plugin update tests).
 
 Usage:
-  make-plugin-variant.py <LemonTestPlugin.jar> <out.jar> version <new-version>
-  make-plugin-variant.py <LemonTestPlugin.jar> <out.jar> api-version <api-version>
-  make-plugin-variant.py <LemonTestPlugin.jar> <out.jar> addon
-      addon: a second plugin "LemonTestAddon" (main class LemonTestAddon, depend: [LemonTestPlugin],
-      no commands) without the LemonTestPlugin classes.
+  make-plugin-variant.py <PaperSwapTestPlugin.jar> <out.jar> version <new-version>
+  make-plugin-variant.py <PaperSwapTestPlugin.jar> <out.jar> api-version <api-version>
+  make-plugin-variant.py <PaperSwapTestPlugin.jar> <out.jar> addon
+      addon: a second plugin "PaperSwapTestAddon" (main class PaperSwapTestAddon, depend: [PaperSwapTestPlugin],
+      no commands) without the PaperSwapTestPlugin classes.
 """
 import pathlib
 import re
@@ -17,12 +17,12 @@ src, dst, mode = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[
 arg = sys.argv[4] if len(sys.argv) > 4 else None
 dst.parent.mkdir(parents=True, exist_ok=True)
 
-ADDON_YML = """name: LemonTestAddon
+ADDON_YML = """name: PaperSwapTestAddon
 version: "1.0.0"
-main: dev.lemonpvp.example.plugin.LemonTestAddon
+main: dev.paperswap.example.plugin.PaperSwapTestAddon
 api-version: "1.21"
-depend: [LemonTestPlugin]
-description: Depends on LemonTestPlugin (CI dependency test)
+depend: [PaperSwapTestPlugin]
+description: Depends on PaperSwapTestPlugin (CI dependency test)
 """
 
 
@@ -42,7 +42,7 @@ def edit(text: str) -> str:
 
 with zipfile.ZipFile(src) as zin, zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as zout:
     for item in zin.infolist():
-        if mode == "addon" and "/LemonTestPlugin" in item.filename:
+        if mode == "addon" and "/PaperSwapTestPlugin" in item.filename:
             continue
         data = zin.read(item.filename)
         if item.filename == "plugin.yml":

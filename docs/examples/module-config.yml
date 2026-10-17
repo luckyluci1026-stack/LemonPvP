@@ -1,4 +1,4 @@
-# Beispiel: lemon/module-data/lobby-tools/config.yml
+# Beispiel: paperswap/module-data/lobby-tools/config.yml
 # Änderungen ohne Neustart übernehmen: /fork module config lobby-tools
 # Ungültige Werte werden abgelehnt; die letzte gültige Konfiguration bleibt aktiv.
 features:

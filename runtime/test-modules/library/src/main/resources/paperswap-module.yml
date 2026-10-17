@@ -1,0 +1,13 @@
+id: test-library
+version: 1.0.0
+name: PaperSwap Test Library
+description: Publishes a CounterService for test-consumer (module dependencies, shared classes and services). Test module.
+authors: [PaperSwap contributors]
+main: dev.paperswap.test.library.LibraryModule
+api-version: 1
+minecraft-versions: ["1.21.11", "26.*"]
+capabilities: [services, commands]
+permissions:
+  test-library.use:
+    description: Run /testlib
+    default: op

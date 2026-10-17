@@ -3,11 +3,11 @@ import java.security.MessageDigest
 // Test modules for the module runtime (docs/TEST-MODULES.md).
 //   ./gradlew :test-modules:collect -PpaperApiVersion=<version>
 // Result in runtime/test-modules/build/modules/:
-//   <id>.jar + <id>.jar.sha256                   one per module, ready for lemon/modules/
+//   <id>.jar + <id>.jar.sha256                   one per module, ready for paperswap/modules/
 //   variants/2.0.0/<id>.jar + <id>.jar.sha256    the same module with version 2.0.0 (hot swap,
 //                                                version-range checks)
 // The module id is "test-" plus the directory name.
-description = "Lemon test modules"
+description = "PaperSwap test modules"
 
 val paperApiVersion: String = providers.gradleProperty("paperApiVersion").get()
 val variantVersion = "2.0.0"
@@ -45,10 +45,10 @@ subprojects {
         archiveFileName = "$moduleId.jar"
         destinationDirectory = layout.buildDirectory.dir("variant/$variantVersion")
         from(main.output) {
-            exclude("lemon-module.yml")
+            exclude("paperswap-module.yml")
         }
         from(main.output) {
-            include("lemon-module.yml")
+            include("paperswap-module.yml")
             filter { line: String -> if (line.startsWith("version:")) "version: $variantVersion" else line }
         }
     }

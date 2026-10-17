@@ -1,6 +1,6 @@
 // Paper-specific part of the module API (events, commands, scheduler).
 // Compiled against the Paper API of the target Minecraft version.
-description = "Lemon hot-deployment runtime - Paper module API"
+description = "PaperSwap hot-deployment runtime - Paper module API"
 
 val paperApiVersion: String = providers.gradleProperty("paperApiVersion").get()
 

@@ -1,5 +1,11 @@
 # Tests
 
+> **Hinweis zur Umbenennung:** Bis Commit `05a9c87` hieß das Projekt **Lemon** (Server-JAR
+> `lemon-<mc>.jar`, `config/lemon-runtime.yml`, Ordner `lemon/`, `lemon-livepatch-agent.jar`,
+> `.lemonpatch`, Pakete `dev.lemonpvp.*`). Die Einträge unten sind Protokolle der damaligen
+> Läufe und verwenden deshalb die damaligen Namen. Heute: PaperSwap – siehe
+> [`MIGRATION.md`](MIGRATION.md).
+
 Es gibt drei Testebenen:
 
 1. **Runtime-Unit- und Integrationstests** (`runtime/runtime-core`, JUnit 5) – plattformneutral,

@@ -1,9 +1,9 @@
 import java.security.MessageDigest
 
-// LemonPvP suite: four Lemon modules that work together (docs/PVP-SUITE.md).
+// LemonPvP suite: four PaperSwap modules that work together (docs/PVP-SUITE.md).
 //   ./gradlew :pvp-suite:collect -PpaperApiVersion=<version>
 // Runs the unit tests of the game logic, then puts every module into
-// runtime/pvp-suite/build/modules/: pvp-<name>.jar + pvp-<name>.jar.sha256, ready for lemon/modules/.
+// runtime/pvp-suite/build/modules/: pvp-<name>.jar + pvp-<name>.jar.sha256, ready for paperswap/modules/.
 // The module id is "pvp-" plus the directory name.
 description = "LemonPvP suite modules"
 

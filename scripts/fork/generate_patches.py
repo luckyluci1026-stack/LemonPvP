@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Lemon's paperweight build-file and source patches for one Paper ref.
+"""Generate PaperSwap's paperweight build-file and source patches for one Paper ref.
 
 Why this script exists
 ----------------------
@@ -32,7 +32,7 @@ import pathlib
 import subprocess
 import sys
 
-# Relative path (seen from versions/<mc>/lemon-server) to the shared runtime sources.
+# Relative path (seen from versions/<mc>/paperswap-server) to the shared runtime sources.
 RUNTIME_ROOT = "../../../runtime"
 RUNTIME_SOURCE_DIRS = (
     "runtime-api/src/main/java",
@@ -82,11 +82,11 @@ def make_patch(path: str, before: str, after: str) -> str:
 # --------------------------------------------------------------------------- #
 FORK_REGISTRATION = """    gitFilePatches = false
 
-    val fork = forks.register("lemon") {
+    val fork = forks.register("paperswap") {
         upstream.patchDir("paperServer") {
             upstreamPath = "paper-server"
             excludes = setOf("src/minecraft", "patches", "build.gradle.kts")
-            patchesDir = rootDirectory.dir("lemon-server/paper-patches")
+            patchesDir = rootDirectory.dir("paperswap-server/paper-patches")
             outputDir = rootDirectory.dir("paper-server")
         }
     }
@@ -95,9 +95,9 @@ FORK_REGISTRATION = """    gitFilePatches = false
 """
 
 
-LIVEPATCH_APPLY = """// Lemon start - core live patch tasks, see docs/LIVE-UPDATES.md
-apply(from = rootProject.file("../../scripts/livepatch/lemon-livepatch.gradle.kts"))
-// Lemon end - core live patch tasks
+LIVEPATCH_APPLY = """// PaperSwap start - core live patch tasks, see docs/LIVE-UPDATES.md
+apply(from = rootProject.file("../../scripts/livepatch/paperswap-livepatch.gradle.kts"))
+// PaperSwap end - core live patch tasks
 """
 
 
@@ -106,10 +106,10 @@ def server_build_edits(text: str, baseline: bool) -> str:
 
     runtime_dirs = ""
     if not baseline:
-        runtime_dirs = "        // Lemon start - hot deployment runtime (shared sources, see docs/HOT-DEPLOYMENT.md)\n"
+        runtime_dirs = "        // PaperSwap start - hot deployment runtime (shared sources, see docs/HOT-DEPLOYMENT.md)\n"
         for d in RUNTIME_SOURCE_DIRS:
             runtime_dirs += f'        java {{ srcDir("{RUNTIME_ROOT}/{d}") }}\n'
-        runtime_dirs += "        // Lemon end - hot deployment runtime\n"
+        runtime_dirs += "        // PaperSwap end - hot deployment runtime\n"
 
     source_sets = (
         "sourceSets {\n"
@@ -132,12 +132,12 @@ def server_build_edits(text: str, baseline: bool) -> str:
     text = replace_once(
         text,
         '    implementation(project(":paper-api"))\n',
-        '    implementation(project(":lemon-api"))\n',
+        '    implementation(project(":paperswap-api"))\n',
         "api project dependency",
     )
     # Honest branding: the fork must not identify itself as Paper.
-    text = replace_once(text, '"Brand-Id" to "papermc:paper",', '"Brand-Id" to "lemonpvp:lemon",', "brand id")
-    text = replace_once(text, '"Brand-Name" to "Paper",', '"Brand-Name" to "Lemon",', "brand name")
+    text = replace_once(text, '"Brand-Id" to "papermc:paper",', '"Brand-Id" to "paperswap:paperswap",', "brand id")
+    text = replace_once(text, '"Brand-Name" to "Paper",', '"Brand-Name" to "PaperSwap",', "brand name")
     if not baseline:
         # Gradle tasks for core live patches (livePatchBaseline, createLivePatch).
         text = text.rstrip("\n") + "\n\n" + LIVEPATCH_APPLY
@@ -228,9 +228,9 @@ def api_build_edits(text: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# CraftServer.java (Paper-owned source, patched via lemon-server/paper-patches)
+# CraftServer.java (Paper-owned source, patched via paperswap-server/paper-patches)
 # --------------------------------------------------------------------------- #
-HOOKS = "dev.lemonpvp.runtime.paper.LemonRuntimeHooks"
+HOOKS = "dev.paperswap.runtime.paper.PaperSwapRuntimeHooks"
 
 
 def craftserver_edits(text: str) -> str:
@@ -244,7 +244,7 @@ def craftserver_edits(text: str) -> str:
     new = (
         "            if (!io.papermc.paper.configuration.GlobalConfiguration.get().misc.loadPermissionsYmlBeforePlugins) "
         "this.loadCustomPermissions(); // Paper\n"
-        f"            {HOOKS}.onPluginsEnabled(this); // Lemon - hot deployment runtime\n"
+        f"            {HOOKS}.onPluginsEnabled(this); // PaperSwap - hot deployment runtime\n"
         "            this.syncCommands();\n"
     )
     text = replace_once(text, old, new, "postworld hook")
@@ -253,7 +253,7 @@ def craftserver_edits(text: str) -> str:
         text,
         "    public void disablePlugins() {\n        this.pluginManager.disablePlugins();\n",
         "    public void disablePlugins() {\n"
-        f"        {HOOKS}.onPluginsDisabling(); // Lemon - hot deployment runtime\n"
+        f"        {HOOKS}.onPluginsDisabling(); // PaperSwap - hot deployment runtime\n"
         "        this.pluginManager.disablePlugins();\n",
         "disable hook",
     )
@@ -261,7 +261,7 @@ def craftserver_edits(text: str) -> str:
     text = replace_once(
         text,
         "        this.commandMap.clearCommands(); // Paper - Move command reloading up\n",
-        f"        {HOOKS}.onReloadStarting(); // Lemon - hot deployment runtime\n"
+        f"        {HOOKS}.onReloadStarting(); // PaperSwap - hot deployment runtime\n"
         "        this.commandMap.clearCommands(); // Paper - Move command reloading up\n",
         "reload hook",
     )
@@ -285,15 +285,15 @@ def main() -> int:
     out = args.version_dir
     try:
         server = git_show(args.paper_checkout, args.ref, "paper-server/build.gradle.kts")
-        write(out / "lemon-server/build.gradle.kts.patch",
+        write(out / "paperswap-server/build.gradle.kts.patch",
               make_patch("paper-server/build.gradle.kts", server, server_build_edits(server, args.baseline)))
 
         api = git_show(args.paper_checkout, args.ref, "paper-api/build.gradle.kts")
-        write(out / "lemon-api/build.gradle.kts.patch",
+        write(out / "paperswap-api/build.gradle.kts.patch",
               make_patch("paper-api/build.gradle.kts", api, api_build_edits(api)))
 
         craft_path = "src/main/java/org/bukkit/craftbukkit/CraftServer.java"
-        patch_file = out / "lemon-server/paper-patches/files" / (craft_path + ".patch")
+        patch_file = out / "paperswap-server/paper-patches/files" / (craft_path + ".patch")
         if args.baseline:
             if patch_file.exists():
                 patch_file.unlink()

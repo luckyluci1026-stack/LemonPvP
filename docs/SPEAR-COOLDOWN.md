@@ -4,8 +4,8 @@ Ausgangspunkt: „Fehler beim Attribut-Swappen mit einem Speer“, vermutete Urs
 Genaue Schritte zum Nachstellen lagen nicht vor. Untersucht wurde deshalb der gesamte Weg
 eines Speer-Angriffs und eines Attribut-Swaps im **gepatchten** Server-Quellcode aller vier
 Versionen (Auszüge per CI-Workflow `source-inspect`, siehe unten). Zeilennummern beziehen
-sich auf `versions/1.21.11/lemon-server/src/minecraft/java` nach `applyAllPatches` (ohne den
-Lemon-Fix).
+sich auf `versions/1.21.11/paperswap-server/src/minecraft/java` nach `applyAllPatches` (ohne den
+PaperSwap-Fix).
 
 ## Ergebnis in Kürze
 
@@ -20,7 +20,7 @@ auf einen Speer. Ob genau das der gemeldete Fehler ist, lässt sich ohne die gen
 Schritte des Meldenden nicht sagen; U2 ist die zweite Stelle, an der sich Paper beim
 Attribut-Swap anders verhält als Vanilla.
 
-Kein Lemon-Code ist beteiligt (Lemon berührt Kampf-Code nur durch diesen Fix), und kein
+Kein PaperSwap-Code ist beteiligt (PaperSwap berührt Kampf-Code nur durch diesen Fix), und kein
 Plugin: gemessen wurde auf einem Server ohne andere Plugins als dem Mess-Plugin.
 
 ## Ablauf eines Speer-Stichs (1.21.11)
@@ -65,7 +65,7 @@ bei anderem Gegenstandstyp zurück. Paper ruft dagegen standardmäßig nach dem 
 sofort `detectEquipmentUpdates()` auf (`handleSetCarriedItem` Z. 2303), was Attribute
 übernimmt **und** die Abklingzeit zurücksetzt. Damit ist Attribut-Swapping auf Paper
 standardmäßig ausgeschaltet – für alle Waffen und alle Versionen. Das ist eine bewusste
-Paper-Einstellung, kein Fehler, und Lemon ändert sie nicht. Wer Vanilla-Verhalten will:
+Paper-Einstellung, kein Fehler, und PaperSwap ändert sie nicht. Wer Vanilla-Verhalten will:
 
 ```yaml
 # config/paper-global.yml
@@ -77,8 +77,8 @@ unsupported-settings:
 
 ## Fix (nur 1.21.11)
 
-Rückportierung von Paper `b80b604` als Lemon-Quellpatch
-(`versions/1.21.11/lemon-server/minecraft-patches/sources/…/LivingEntity.java.patch` und
+Rückportierung von Paper `b80b604` als PaperSwap-Quellpatch
+(`versions/1.21.11/paperswap-server/minecraft-patches/sources/…/LivingEntity.java.patch` und
 `…/player/Player.java.patch`):
 
 * `LivingEntity.actuallyHurt`: kein Zurücksetzen der Abklingzeit mehr.
@@ -91,7 +91,7 @@ Es werden nur **Methodenrümpfe** geändert (keine neue Methode, anders als upst
 `onAttack(Entity)`), damit der Fix auch als Live-Patch auf einer Standard-JVM anwendbar ist.
 Verhalten danach wie Paper 26.x: `PlayerAttackEntityCooldownResetEvent` kommt einmal je
 normalem Angriff, nicht bei Speer-Stichen und nicht bei Projektilen (das Event ist in Paper
-26.x als veraltet markiert). 26.1.2, 26.2 und 26.3 brauchen keinen Lemon-Patch.
+26.x als veraltet markiert). 26.1.2, 26.2 und 26.3 brauchen keinen PaperSwap-Patch.
 
 ## Tests
 
@@ -120,24 +120,24 @@ Vanilla-Verhalten. Ergebnisse: [`TESTING.md`](TESTING.md).
 
 ## Auf dem eigenen Testserver prüfen
 
-**Dauerhaft:** Server-JAR aus diesem Stand bauen (bzw. CI-Artefakt `lemon-1.21.11`),
+**Dauerhaft:** Server-JAR aus diesem Stand bauen (bzw. CI-Artefakt `paperswap-1.21.11`),
 deployen, neu starten.
 
-**Live, ohne Neustart** (Server läuft mit einer älteren Lemon-1.21.11-JAR und
-`-javaagent:lemon-livepatch-agent.jar`):
+**Live, ohne Neustart** (Server läuft mit einer älteren PaperSwap-1.21.11-JAR und
+`-javaagent:paperswap-agent.jar`):
 
 1. Den Quellstand bauen, aus dem die laufende JAR stammt, und
-   `./gradlew :lemon-server:livePatchBaseline` ausführen; laufende JAR
-   (`versions/1.21.11/lemon-1.21.11.jar` im Serververzeichnis) holen.
+   `./gradlew :paperswap-server:livePatchBaseline` ausführen; laufende JAR
+   (`versions/1.21.11/paperswap-1.21.11.jar` im Serververzeichnis) holen.
 2. Die beiden Patch-Dateien des Fixes nach
-   `versions/1.21.11/lemon-server/minecraft-patches/sources/net/minecraft/world/entity/`
+   `versions/1.21.11/paperswap-server/minecraft-patches/sources/net/minecraft/world/entity/`
    kopieren, `./gradlew applyAllPatches`.
-3. `./gradlew :lemon-server:createLivePatch -PpatchId=spear-cooldown -PserverJar=<geholte JAR>`
+3. `./gradlew :paperswap-server:createLivePatch -PpatchId=spear-cooldown -PserverJar=<geholte JAR>`
    → erwartet: `changed net.minecraft.world.entity.LivingEntity`,
    `changed net.minecraft.world.entity.player.Player`, nur „method body changed“.
-4. `./gradlew :lemon-server:checkLivePatch -PpatchId=spear-cooldown -PserverJar=<geholte JAR>`
+4. `./gradlew :paperswap-server:checkLivePatch -PpatchId=spear-cooldown -PserverJar=<geholte JAR>`
    → `APPLICABLE on a standard JVM`.
-5. Hochladen nach `lemon/patches/inbox/` (+ Freigabe in `approved.sha256`), dann an der
+5. Hochladen nach `paperswap/patches/inbox/` (+ Freigabe in `approved.sha256`), dann an der
    Konsole `fork live check spear-cooldown`, `fork live update spear-cooldown`,
    `… confirm` → `applied and verified`.
 6. Im Spiel: zwei Mobs hintereinander (Abstand ≈ 1 Block) in Speer-Reichweite, voll

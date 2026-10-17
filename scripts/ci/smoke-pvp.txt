@@ -32,14 +32,14 @@ top
 @sleep 2
 
 # config.yml checks: a rejected value, an unknown potion effect, then valid again
-@shell sed -i 's/^k-factor: 32/k-factor: 500/' lemon/module-data/pvp-core/config.yml
+@shell sed -i 's/^k-factor: 32/k-factor: 500/' paperswap/module-data/pvp-core/config.yml
 fork module config pvp-core
 @sleep 2
-@shell sed -i 's/^k-factor: 500/k-factor: 32/' lemon/module-data/pvp-core/config.yml
-@shell sed -i 's/"speed 1 10"/"flying 1 10"/' lemon/module-data/pvp-killstreaks/config.yml
+@shell sed -i 's/^k-factor: 500/k-factor: 32/' paperswap/module-data/pvp-core/config.yml
+@shell sed -i 's/"speed 1 10"/"flying 1 10"/' paperswap/module-data/pvp-killstreaks/config.yml
 fork module config pvp-killstreaks
 @sleep 2
-@shell sed -i 's/"flying 1 10"/"speed 1 10"/' lemon/module-data/pvp-killstreaks/config.yml
+@shell sed -i 's/"flying 1 10"/"speed 1 10"/' paperswap/module-data/pvp-killstreaks/config.yml
 fork module config pvp-killstreaks
 @sleep 2
 
@@ -64,7 +64,7 @@ fork module unload pvp-combattag
 @sleep 2
 fork module reload pvp-core
 @sleep 3
-@shell grep -q "$(printf 'Alice\t5\t1\t0\t5\t1045')" lemon/module-data/pvp-core/stats.tsv
+@shell grep -q "$(printf 'Alice\t5\t1\t0\t5\t1045')" paperswap/module-data/pvp-core/stats.tsv
 stats Alice
 top
 @sleep 1
@@ -72,7 +72,7 @@ top
 # everything off, full GC: every unloaded instance must be collected
 fork module unload pvp-core
 @sleep 3
-say lemon-gc-check
+say paperswap-gc-check
 @shell jcmd "$SERVER_PID" GC.run
 @sleep 2
 fork live diagnostics
@@ -81,10 +81,10 @@ fork module diagnostics pvp-combattag
 fork module diagnostics pvp-killstreaks
 fork module diagnostics pvp-scoreboard
 @sleep 3
-@shell sed -n '/lemon-gc-check/,$p' server.log > after-gc.log; grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log; ! grep -nE 'still in memory|still reachable' after-gc.log
+@shell sed -n '/paperswap-gc-check/,$p' server.log > after-gc.log; grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log; ! grep -nE 'still in memory|still reachable' after-gc.log
 # pvp-core 2 (reload + unload), pvp-killstreaks 2 (reload + unload), pvp-combattag 1, pvp-scoreboard 1
 @shell test "$(grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log)" -eq 6
-@shell if grep -qE 'still in memory|still reachable' after-gc.log; then jcmd "$SERVER_PID" GC.heap_dump "$PWD/leak.hprof" > /dev/null && java -Xmx3g "$SCRIPT_DIR/HeapPath.java" leak.hprof dev.lemonpvp.runtime.loader.ModuleClassLoader closed; rm -f leak.hprof; fi; true
+@shell if grep -qE 'still in memory|still reachable' after-gc.log; then jcmd "$SERVER_PID" GC.heap_dump "$PWD/leak.hprof" > /dev/null && java -Xmx3g "$SCRIPT_DIR/HeapPath.java" leak.hprof dev.paperswap.runtime.loader.ModuleClassLoader closed; rm -f leak.hprof; fi; true
 
 @expect FAILED enable pvp-killstreaks: unresolved dependencies of pvp-killstreaks@1\.0\.0
 @expect requires module 'pvp-core' \(>=1\.0\.0 <2\.0\.0\) which is not loaded
@@ -118,7 +118,7 @@ fork module diagnostics pvp-scoreboard
 @expect PvP core disabled, statistics of 4 players saved
 @expect PvP core enabled: 4 players loaded from stats\.tsv
 @expect OK reload pvp-core: switched pvp-core@1\.0\.0 -> pvp-core@1\.0\.0
-@expect \[Server\] lemon-gc-check
+@expect \[Server\] paperswap-gc-check
 @reject Unhandled exception in
 @reject FAILED (enable|reload|unload) pvp-(core|combattag|scoreboard)
 @reject [Rr]estart (is )?recommended

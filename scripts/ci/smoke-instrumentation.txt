@@ -1,8 +1,8 @@
 # JVM instrumentation on a real server (standard JVM, production profile).
 # The server starts WITHOUT -javaagent; the agent is attached to the running JVM with the
-# launcher in the agent jar (java -jar lemon-livepatch-agent.jar attach <pid>). Then a patch
+# launcher in the agent jar (java -jar paperswap-agent.jar attach <pid>). Then a patch
 # built in CI from changed Paper sources (org.spigotmc.TicksPerSecondCommand) is applied by
-# retransformation through Lemon's transformer, read back, and rolled back.
+# retransformation through PaperSwap's transformer, read back, and rolled back.
 fork instrumentation status
 @sleep 2
 fork instrumentation classes TicksPerSecond
@@ -28,7 +28,7 @@ fork instrumentation patch apply tps-text retransform
 fork instrumentation patch apply tps-text retransform confirm
 @sleep 4
 tps
-# Reading back is itself a retransformation: Lemon's transformer supplies the patch again.
+# Reading back is itself a retransformation: PaperSwap's transformer supplies the patch again.
 fork instrumentation inspect org.spigotmc.TicksPerSecondCommand verify
 @sleep 3
 fork instrumentation patch verify tps-text
@@ -50,19 +50,19 @@ fork instrumentation status
 @sleep 3
 @shell grep -F "class file sha256: $(cat expected-tps-base.txt)" server.log
 @shell echo "JEP 451 warning lines in server.log: $(grep -c 'loaded dynamically' server.log || true)"
-@shell grep -F "| patch-apply | tps-text | OK |" lemon/logs/audit.log
-@shell grep -F "| class-verify | org.spigotmc.TicksPerSecondCommand | OK |" lemon/logs/audit.log
-@shell grep -F "| patch-verify | tps-text | OK |" lemon/logs/audit.log
-@shell grep -F "| patch-rollback | tps-text | OK |" lemon/logs/audit.log
+@shell grep -F "| patch-apply | tps-text | OK |" paperswap/logs/audit.log
+@shell grep -F "| class-verify | org.spigotmc.TicksPerSecondCommand | OK |" paperswap/logs/audit.log
+@shell grep -F "| patch-verify | tps-text | OK |" paperswap/logs/audit.log
+@shell grep -F "| patch-rollback | tps-text | OK |" paperswap/logs/audit.log
 # Before the attach
-@expect Instrumentation: live-patch agent not loaded: start the JVM with -javaagent:lemon-livepatch-agent\.jar
-@expect fix: add -javaagent:lemon-livepatch-agent\.jar before -jar in the start command .*attach [0-9]+
+@expect Instrumentation: live-patch agent not loaded: start the JVM with -javaagent:paperswap-agent\.jar
+@expect fix: add -javaagent:paperswap-agent\.jar before -jar in the start command .*attach [0-9]+
 @expect NOT DONE: live-patch agent not loaded
 # The attach. EnableDynamicAgentLoading is true by default on JDK 21+ (the start command does not
 # set it); value, origin and whether the JDK printed its JEP 451 warning are recorded, not asserted (no warning
 # appeared in the Paper server log in run #41; a plain OpenJDK 21 program printed it locally).
 @expect dynamic attach: EnableDynamicAgentLoading=(true|false) \([a-z_ ]+\)
-@expect \[Lemon\] live-patch agent 3 loaded \(agentmain \(dynamic attach\)\)
+@expect \[PaperSwap\] live-patch agent 3 loaded \(agentmain \(dynamic attach\)\)
 @expect Live-patch agent found: agent 3 loaded via agentmain \(dynamic attach\)
 @expect live-patch agent 3 loaded via agentmain \(dynamic attach\)
 @expect retransformClasses: supported
@@ -75,7 +75,7 @@ fork instrumentation status
 @expect Class org\.spigotmc\.TicksPerSecondCommand
 @expect code source \(as reported by the class loader\): file:.*versions/
 @expect isModifiableClass: true
-@expect Lemon: not changed by Lemon in this process
+@expect PaperSwap: not changed by PaperSwap in this process
 @expect yes change method bodies by retransformation \(and restore them\)
 # Retransformation patch
 @expect archive sha256 [0-9a-f]+, mechanism retransform

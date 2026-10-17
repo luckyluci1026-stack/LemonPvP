@@ -4,7 +4,7 @@
 
 | Anforderung | Umsetzung |
 |---|---|
-| Keine Hintergrundaktivität bei deaktivierter Runtime | `enabled: false` ⇒ kein Thread, kein Scan, kein Listener, kein Befehl, kein Task; nur einmalig `config/lemon-runtime.yml` lesen (getestet: `BootstrapTest`) |
+| Keine Hintergrundaktivität bei deaktivierter Runtime | `enabled: false` ⇒ kein Thread, kein Scan, kein Listener, kein Befehl, kein Task; nur einmalig `config/paperswap.yml` lesen (getestet: `BootstrapTest`) |
 | Keine periodischen Tasks / Dateisystem-Scans | Scans nur auf Befehl (`/fork module list|enable|reload|validate`) bzw. beim Start, wenn Module aktiviert werden sollen |
 | Kein Eingriff in den Tick | keine Minecraft-Patches; die drei Hooks laufen nur bei Start, `/reload` und Stopp |
 | Keine blockierende I/O im Tick-Thread | Scannen, Hashen, Kopieren, YAML-Parsen, Klassendefinition auf dem Worker-Thread |

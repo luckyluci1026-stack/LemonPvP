@@ -28,7 +28,7 @@ final class Board {
     Board(Server server, Player player) {
         this.player = player;
         this.scoreboard = server.getScoreboardManager().getNewScoreboard();
-        this.objective = this.scoreboard.registerNewObjective("lemonpvp", Criteria.DUMMY, Component.empty());
+        this.objective = this.scoreboard.registerNewObjective("paperswappvp", Criteria.DUMMY, Component.empty());
         this.objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         this.objective.numberFormat(NumberFormat.blank());
         player.setScoreboard(this.scoreboard);

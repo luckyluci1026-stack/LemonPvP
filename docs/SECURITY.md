@@ -16,40 +16,40 @@ Netzwerk, Spielerdaten, Datenbank-Zugangsdaten, Reflection auf alle Objekte).
    Prozessen kann ein Modul jede Grenze umgehen. Der Java-`SecurityManager` ist ab JDK 24
    dauerhaft deaktiviert (JEP 486) und in JDK 21 zur Entfernung vorgesehen; er wird nicht
    verwendet.
-3. Behandle das Recht, Dateien in `lemon/modules/`, die `.sha256`-Dateien, die Allow-List
-   oder `config/lemon-runtime.yml` zu schreiben, **wie Shell-Zugriff auf den Server**.
+3. Behandle das Recht, Dateien in `paperswap/modules/`, die `.sha256`-Dateien, die Allow-List
+   oder `config/paperswap.yml` zu schreiben, **wie Shell-Zugriff auf den Server**.
 
 ## Umgesetzte Schutzmaßnahmen
 
 | Bedrohung | Maßnahme | Ort |
 |---|---|---|
 | Unbeabsichtigte Aktivierung | Runtime standardmäßig aus (`enabled: false`); Laufzeit-Deployment zusätzlich aus (`allow-runtime-deploy: false`); JAR im Ordner wird nie automatisch aktiviert | `RuntimeConfig`, `ModuleManager.guarded` |
-| Ungültige Konfiguration aktiviert etwas | Fehlerhafte `lemon-runtime.yml` ⇒ Runtime bleibt aus; `/fork reload` mit Fehlern ⇒ alte Konfiguration bleibt | `LemonRuntime.bootstrap`, `reloadConfig` |
-| Unberechtigte Bedienung | Ändernde Befehle brauchen `lemon.runtime.module.manage` (Standard: **niemand**, nur Konsole); Konfig-Reload `lemon.runtime.command.reload` (Standard: niemand). Die Serverkonsole (`ConsoleCommandSender`) darf alle `/fork`-Befehle; RCON zählt **nicht** als Konsole | `PaperRuntime`, `ForkCommand`, `AdminCommand` |
+| Ungültige Konfiguration aktiviert etwas | Fehlerhafte `paperswap.yml` ⇒ Runtime bleibt aus; `/fork reload` mit Fehlern ⇒ alte Konfiguration bleibt | `PaperSwapRuntime.bootstrap`, `reloadConfig` |
+| Unberechtigte Bedienung | Ändernde Befehle brauchen `paperswap.module.manage` (Standard: **niemand**, nur Konsole); Konfig-Reload `paperswap.command.reload` (Standard: niemand). Die Serverkonsole (`ConsoleCommandSender`) darf alle `/fork`-Befehle; RCON zählt **nicht** als Konsole | `PaperRuntime`, `ForkCommand`, `AdminCommand` |
 | Path Traversal über Befehle | Befehle akzeptieren nur Modul-IDs (`[a-z][a-z0-9_-]{1,47}`), nie Pfade | `ModuleIds`, `AdminCommand` |
 | Path Traversal über Deskriptoren (Zip-Slip) | `resources` nur als sichere relative Pfade; Auflösung mit `PathGuard.resolveInside` inkl. Symlink-Prüfung; Größenlimit beim Kopieren | `DescriptorParser`, `ModulePreparer`, `PathGuard` |
 | Manipulierte Dateinamen / Symlinks im Modulordner | nur sichere Dateinamen, keine Symlinks, Datei muss im Modulordner liegen | `ModuleScanner`, `PathGuard` |
 | Gefährliche Konfigurationspfade | `module-directory` und `trusted-hashes-file` nur als sichere relative Pfade im Serververzeichnis | `RuntimeConfigLoader` |
 | Beschädigte / unvollständige Uploads | `<jar>.sha256` muss passen (`verify-integrity`) | `IntegrityVerifier` |
 | Austausch einer freigegebenen Datei | optionale Allow-List (`trusted-hashes-file`); persistierte Aktivierungen werden nur bei identischem SHA-256 wiederhergestellt | `IntegrityVerifier`, `ModuleManager.activateStartupModules` |
-| Time-of-check/time-of-use | geprüfte JAR wird nach `lemon/staging/` kopiert, die Kopie erneut gehasht; geladen wird nur die Kopie | `ArtifactStager` |
+| Time-of-check/time-of-use | geprüfte JAR wird nach `paperswap/staging/` kopiert, die Kopie erneut gehasht; geladen wird nur die Kopie | `ArtifactStager` |
 | Doppelte / mehrdeutige Module | doppelte IDs ⇒ **alle** Kandidaten abgelehnt | `ModuleScanner` |
 | Zip-Bomben / riesige Dateien | JAR ≤ 64 MiB, Deskriptor ≤ 64 KiB, Ressourcen ≤ 1 MiB, YAML ≤ 1 MiB, Alias-/Tiefenlimits | `ModuleScanner`, `LimitedInputStream`, `YamlSupport` |
 | YAML-Deserialisierungsangriffe | SnakeYAML `SafeConstructor`, keine doppelten Schlüssel | `YamlSupport` |
 | Überschreiben fremder Befehle/Berechtigungen | Kurzlabels und Aliasse nur, wenn frei; Berechtigungsknoten müssen mit `<id>.` beginnen und werden nie überschrieben | `ModuleCommandsImpl`, `DescriptorParser`, `PaperBinding` |
 | Markup-/Format-Injection in Ausgaben | feste MiniMessage-Vorlagen, Werte via `Placeholder.unparsed` | `ForkCommand` |
 | Log-Injection / gefälschte Audit-Einträge | Steuerzeichen und `|` in Feldern werden ersetzt | `AuditLog`, `PathGuard.sanitize` |
-| Fehler eines Moduls bringt Server zum Absturz | jeder Aufruf in Modulcode ist gekapselt; Hooks fangen alle Exceptions | `CallbackGuard`, `ModuleLifecycle`, `LemonRuntimeHooks` |
+| Fehler eines Moduls bringt Server zum Absturz | jeder Aufruf in Modulcode ist gekapselt; Hooks fangen alle Exceptions | `CallbackGuard`, `ModuleLifecycle`, `PaperSwapRuntimeHooks` |
 | Heruntergeladener Code aus unsicheren Quellen | Die Runtime lädt **nichts** aus dem Netz; sie liest nur lokale Dateien | – |
 | Live-Updates ohne Freigabe | Plugin-Updates und Core-Patches standardmäßig aus; jede Änderung braucht `update` + `confirm` an der Konsole; bestätigt wird nur der geprüfte SHA-256-Stand | `LiveCommands`, `PluginUpdateManager`, `LivePatchService` |
-| Untergeschobene Core-Patches | Produktionsprofil: nur Archive aus der Freigabeliste; immer `.sha256`; Prüfung der Build-ID und des laufenden Bytecodes je Klasse; keine Klassen aus `java.*`/`jdk.*`/…, nicht der Live-Patch-Code selbst und nicht Integritätsprüfung, Audit-Log und Konfiguration (`dev.lemonpvp.runtime.security.*`, `…config.*`); Größen-/Eintragslimits, kein Zip-Slip | `PatchArchive`, `PatchPlanner`, `LivePatchService` |
-| Ungültiger Bytecode im laufenden Server | Standard-JVM: Verifier der JVM; JVMs ohne Verifikation bei Redefinition (per Probe erkannt, z. B. JBR): Lemon verifiziert vorher selbst | `CapabilityProbe`, `PreVerifier` |
-| Entwicklungsprofil versehentlich in Produktion | gilt nur mit JVM-Option `-Dlemon.livepatch.development=true`; sonst Produktionsregeln | `LivePatchService` |
-| Agent als Angriffsfläche | Agent per `-javaagent` (empfohlen) oder per `java -jar lemon-livepatch-agent.jar attach <pid>`: das Anhängen nutzt den lokalen Attach-Mechanismus des JDK (Datei-Socket, nur derselbe Betriebssystem-Benutzer, **kein Netzwerkport**; mit `-XX:+DisableAttachMechanism` abschaltbar). Der Agent stellt nur die `Instrumentation`-Instanz bereit und registriert selbst keinen Transformer. Lemon registriert seinen `PatchTransformer` erst beim ersten Retransformations-Patch; er ändert nur Klassen mit bestätigtem Patch und nie Klassen beim Laden. Jeder Code im Serverprozess (Plugins) kann die Instanz finden – Plugins laufen ohnehin mit vollen Rechten, aber den Agent nur dort laden, wo Core-Patches gebraucht werden | `LemonLivePatchAgent`, `AttachLauncher`, `PatchTransformer`, `AppliedBytecodeCheck` |
-| Offener Debug-Port | Lemon prüft beim Start die JVM-Argumente: ein JDWP-Port, der nicht nur auf `127.0.0.1` lauscht (z. B. `address=*:5005`), wird als Warnung gemeldet (Log und `/fork instrumentation status`) | `InstrumentationDiagnostics` |
-| Automatische Ausführung neuer Dateien | gibt es nicht: weder Ordnerüberwachung noch Autoload; `update all` braucht einen Plan und eine Bestätigung an der Konsole; `-PdeployDir` (Entwicklerrechner) kopiert nur Dateien | `LiveCommands`, `lemon-livepatch.gradle.kts` |
-| Fremde Plugin-JARs | Prüfung vor dem Laden (Deskriptor, Hauptklasse, Klassenversionen, Abhängigkeiten); optionale Allow-List; keine automatische Aktivierung aus `plugins/update/` durch Lemon | `PluginJarInspector`, `PluginCompatibility` |
-| Remote-Debugging | Lemon öffnet **keinen** JDWP- oder sonstigen Port. JDWP (IntelliJ-HotSwap) hat keine Authentifizierung: nur auf Entwicklungsservern, an `127.0.0.1`/Container-Adresse gebunden, Zugriff per SSH-Tunnel, Port nie veröffentlichen | `LIVE-UPDATES.md` §5 |
+| Untergeschobene Core-Patches | Produktionsprofil: nur Archive aus der Freigabeliste; immer `.sha256`; Prüfung der Build-ID und des laufenden Bytecodes je Klasse; keine Klassen aus `java.*`/`jdk.*`/…, nicht der Live-Patch-Code selbst und nicht Integritätsprüfung, Audit-Log und Konfiguration (`dev.paperswap.runtime.security.*`, `…config.*`); Größen-/Eintragslimits, kein Zip-Slip | `PatchArchive`, `PatchPlanner`, `LivePatchService` |
+| Ungültiger Bytecode im laufenden Server | Standard-JVM: Verifier der JVM; JVMs ohne Verifikation bei Redefinition (per Probe erkannt, z. B. JBR): PaperSwap verifiziert vorher selbst | `CapabilityProbe`, `PreVerifier` |
+| Entwicklungsprofil versehentlich in Produktion | gilt nur mit JVM-Option `-Dpaperswap.livepatch.development=true`; sonst Produktionsregeln | `LivePatchService` |
+| Agent als Angriffsfläche | Agent per `-javaagent` (empfohlen) oder per `java -jar paperswap-agent.jar attach <pid>`: das Anhängen nutzt den lokalen Attach-Mechanismus des JDK (Datei-Socket, nur derselbe Betriebssystem-Benutzer, **kein Netzwerkport**; mit `-XX:+DisableAttachMechanism` abschaltbar). Der Agent stellt nur die `Instrumentation`-Instanz bereit und registriert selbst keinen Transformer. PaperSwap registriert seinen `PatchTransformer` erst beim ersten Retransformations-Patch; er ändert nur Klassen mit bestätigtem Patch und nie Klassen beim Laden. Jeder Code im Serverprozess (Plugins) kann die Instanz finden – Plugins laufen ohnehin mit vollen Rechten, aber den Agent nur dort laden, wo Core-Patches gebraucht werden | `PaperSwapAgent`, `AttachLauncher`, `PatchTransformer`, `AppliedBytecodeCheck` |
+| Offener Debug-Port | PaperSwap prüft beim Start die JVM-Argumente: ein JDWP-Port, der nicht nur auf `127.0.0.1` lauscht (z. B. `address=*:5005`), wird als Warnung gemeldet (Log und `/fork instrumentation status`) | `InstrumentationDiagnostics` |
+| Automatische Ausführung neuer Dateien | gibt es nicht: weder Ordnerüberwachung noch Autoload; `update all` braucht einen Plan und eine Bestätigung an der Konsole; `-PdeployDir` (Entwicklerrechner) kopiert nur Dateien | `LiveCommands`, `paperswap-livepatch.gradle.kts` |
+| Fremde Plugin-JARs | Prüfung vor dem Laden (Deskriptor, Hauptklasse, Klassenversionen, Abhängigkeiten); optionale Allow-List; keine automatische Aktivierung aus `plugins/update/` durch PaperSwap | `PluginJarInspector`, `PluginCompatibility` |
+| Remote-Debugging | PaperSwap öffnet **keinen** JDWP- oder sonstigen Port. JDWP (IntelliJ-HotSwap) hat keine Authentifizierung: nur auf Entwicklungsservern, an `127.0.0.1`/Container-Adresse gebunden, Zugriff per SSH-Tunnel, Port nie veröffentlichen | `LIVE-UPDATES.md` §5 |
 | Eingebettete Geheimnisse | keine Schlüssel, Passwörter oder Tokens im Code oder in der CI | – |
 
 ## Empfehlungen für den Betrieb
@@ -58,15 +58,15 @@ Netzwerk, Spielerdaten, Datenbank-Zugangsdaten, Reflection auf alle Objekte).
   Produktion `startup-modules` + Neustart bevorzugen oder nur kurzzeitig freischalten.
 * `trusted-hashes-file` in Produktion verwenden und den Freigabeprozess (Build in CI,
   Review, Hash in die Allow-List) von den Personen trennen, die Dateien hochladen.
-* `lemon.runtime.module.manage` und `lemon.runtime.live.update` niemals an Spielergruppen
+* `paperswap.module.manage` und `paperswap.live.update` niemals an Spielergruppen
   vergeben. Aktionen über die Konsole oder ein abgesichertes Admin-Konto ausführen.
 * Core-Patches in Produktion nur über die Freigabeliste; die Person, die freigibt, sollte
   nicht dieselbe sein, die hochlädt. Nach einem Patch zeitnah eine neu gebaute JAR
   deployen und neu starten.
-* `-javaagent:lemon-livepatch-agent.jar` nur setzen, wenn Core-Patches gebraucht werden;
+* `-javaagent:paperswap-agent.jar` nur setzen, wenn Core-Patches gebraucht werden;
   das dynamische Anhängen (`attach <pid>`) ist für Entwicklungsserver gedacht.
-* `lemon/logs/audit.log` sichern und überwachen.
-* Dateirechte: der Serverbenutzer braucht Schreibrechte für `lemon/`, Uploads sollten von
+* `paperswap/logs/audit.log` sichern und überwachen.
+* Dateirechte: der Serverbenutzer braucht Schreibrechte für `paperswap/`, Uploads sollten von
   einem anderen Benutzer kommen, der `config/` nicht schreiben kann.
 
 ## Melden von Sicherheitsproblemen

@@ -1,14 +1,14 @@
 # Hinweise zu Lizenz und Herkunft
 
-## Lemon ist eine Paper-basierte Fork – kein offizielles Paper-Projekt
+## PaperSwap ist eine Paper-basierte Fork – kein offizielles Paper-Projekt
 
-Lemon ist eine eigenständige Fork von [Paper](https://github.com/PaperMC/Paper). Sie
+PaperSwap ist eine eigenständige Fork von [Paper](https://github.com/PaperMC/Paper). Sie
 steht in **keiner offiziellen Verbindung** zu PaperMC, Mojang Studios oder Microsoft.
 „Paper“ ist ein Projekt von PaperMC, „Minecraft“ ist eine Marke von Mojang Studios.
-Fehler in Lemon-Builds bitte **nicht** bei PaperMC melden, sondern in diesem Repository.
+Fehler in PaperSwap-Builds bitte **nicht** bei PaperMC melden, sondern in diesem Repository.
 
-Die Server-JARs melden sich deshalb mit eigener Marke (`Brand-Id: lemonpvp:lemon`,
-`Brand-Name: Lemon`).
+Die Server-JARs melden sich deshalb mit eigener Marke (`Brand-Id: paperswap:paperswap`,
+`Brand-Name: PaperSwap`).
 
 ## Lizenzen
 
@@ -16,10 +16,10 @@ Die Server-JARs melden sich deshalb mit eigener Marke (`Brand-Id: lemonpvp:lemon
 |---|---|---|
 | Paper-Quellcode, der beim Build aus dem gepinnten Upstream-Commit bezogen wird | GPL-3.0 (Teile unter MIT, siehe `licenses/PAPER-LICENSE.md`) | https://github.com/PaperMC/Paper |
 | Bukkit / CraftBukkit / Spigot-Anteile innerhalb von Paper | GPL-3.0 | über Paper |
-| Eigene Fork-Patches (`versions/*/lemon-*/…patch`), Runtime (`runtime/`), Skripte, Dokumentation | GPL-3.0 (`LICENSE`) | dieses Repository |
+| Eigene Fork-Patches (`versions/*/paperswap-*/…patch`), Runtime (`runtime/`), Skripte, Dokumentation | GPL-3.0 (`LICENSE`) | dieses Repository |
 | Beispielmodul (`runtime/example-module`) | GPL-3.0 (`LICENSE`) | dieses Repository |
 
-Ein ausgelieferter Lemon-Server ist ein abgeleitetes Werk von Paper und muss daher unter
+Ein ausgelieferter PaperSwap-Server ist ein abgeleitetes Werk von Paper und muss daher unter
 der **GPL-3.0** weitergegeben werden (inkl. Quellcode-Angebot). Die Lizenztexte liegen in
 `LICENSE` (GPL-3.0), `licenses/MIT.md` und `licenses/PAPER-LICENSE.md` (Paper-Lizenzhinweis
 inkl. Liste der Autoren, die ihre Beiträge unter MIT gestellt haben).
