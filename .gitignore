@@ -1,0 +1,7 @@
+# Gradle / build output
+.gradle/
+build/
+# IDEs
+.idea/
+*.iml
+.vscode/

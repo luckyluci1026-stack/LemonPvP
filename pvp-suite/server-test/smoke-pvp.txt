@@ -1,0 +1,125 @@
+# LemonPvP suite on a real server (docs/PVP-SUITE.md): module dependencies, services, kills
+# (simulated with /pvp sim, the same code path as real kills), killstreak announcements,
+# config validation incl. the potion effect registry, hot swap, statistics surviving a core
+# reload, and a full GC after which no module class loader may be left.
+fork module list
+@sleep 3
+fork module enable pvp-killstreaks
+@sleep 2
+fork module enable pvp-core
+@sleep 2
+fork module enable pvp-combattag
+@sleep 2
+fork module enable pvp-killstreaks
+@sleep 2
+fork module enable pvp-scoreboard
+@sleep 2
+top
+stats
+sb
+combat Alice
+
+# Alice kills Bob five times, then Bob ends her streak
+pvp sim kill Alice Bob
+pvp sim kill Alice Bob
+pvp sim kill Alice Bob
+pvp sim kill Alice Bob
+pvp sim kill Alice Bob
+pvp sim kill Bob Alice
+stats Alice
+stats Bob
+top
+@sleep 2
+
+# config.yml checks: a rejected value, an unknown potion effect, then valid again
+@shell sed -i 's/^k-factor: 32/k-factor: 500/' paperswap/module-data/pvp-core/config.yml
+fork module config pvp-core
+@sleep 2
+@shell sed -i 's/^k-factor: 500/k-factor: 32/' paperswap/module-data/pvp-core/config.yml
+@shell sed -i 's/"speed 1 10"/"flying 1 10"/' paperswap/module-data/pvp-killstreaks/config.yml
+fork module config pvp-killstreaks
+@sleep 2
+@shell sed -i 's/"flying 1 10"/"speed 1 10"/' paperswap/module-data/pvp-killstreaks/config.yml
+fork module config pvp-killstreaks
+@sleep 2
+
+# hot swap of a module that uses pvp-core, while it runs; the new instance announces
+fork module reload pvp-killstreaks
+@sleep 3
+pvp sim kill Carol Dave
+pvp sim kill Carol Dave
+pvp sim kill Carol Dave
+@sleep 1
+
+# pvp-core cannot go away while modules use it
+fork module disable pvp-core
+@sleep 2
+
+# statistics survive a reload of pvp-core (saved on disable, loaded on enable)
+fork module unload pvp-scoreboard
+@sleep 2
+fork module unload pvp-killstreaks
+@sleep 2
+fork module unload pvp-combattag
+@sleep 2
+fork module reload pvp-core
+@sleep 3
+@shell grep -q "$(printf 'Alice\t5\t1\t0\t5\t1045')" paperswap/module-data/pvp-core/stats.tsv
+stats Alice
+top
+@sleep 1
+
+# everything off, full GC: every unloaded instance must be collected
+fork module unload pvp-core
+@sleep 3
+say paperswap-gc-check
+@shell jcmd "$SERVER_PID" GC.run
+@sleep 2
+fork live diagnostics
+fork module diagnostics pvp-core
+fork module diagnostics pvp-combattag
+fork module diagnostics pvp-killstreaks
+fork module diagnostics pvp-scoreboard
+@sleep 3
+@shell sed -n '/paperswap-gc-check/,$p' server.log > after-gc.log; grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log; ! grep -nE 'still in memory|still reachable' after-gc.log
+# pvp-core 2 (reload + unload), pvp-killstreaks 2 (reload + unload), pvp-combattag 1, pvp-scoreboard 1
+@shell test "$(grep -cE 'Unloaded [0-9.]+ at .*: class loader collected' after-gc.log)" -eq 6
+@shell if grep -qE 'still in memory|still reachable' after-gc.log; then jcmd "$SERVER_PID" GC.heap_dump "$PWD/leak.hprof" > /dev/null && java -Xmx3g "$SCRIPT_DIR/HeapPath.java" leak.hprof dev.paperswap.runtime.loader.ModuleClassLoader closed; rm -f leak.hprof; fi; true
+
+@expect FAILED enable pvp-killstreaks: unresolved dependencies of pvp-killstreaks@1\.0\.0
+@expect requires module 'pvp-core' \(>=1\.0\.0 <2\.0\.0\) which is not loaded
+@expect PvP core enabled: 0 players loaded from stats\.tsv
+@expect Combat tag enabled: 15 s per hit, logout punishment on
+@expect Killstreaks enabled
+@expect PvP scoreboard enabled for 0 online player\(s\)
+@expect Noch keine PvP-Kämpfe gezählt\.
+@expect Von der Konsole: /stats Spieler
+@expect Nur für Spieler\.
+@expect Alice ist nicht online\.
+@count 6 \[sim\] (Alice hat Bob|Bob hat Alice) getötet\.
+@expect Alice hat eine 3er-Killstreak!
+@expect Alice hat eine 5er-Killstreak!
+@reject Alice hat eine 4er-Killstreak!
+@expect Bob hat die 5er-Serie von Alice beendet!
+@count 2 Kills 5 · Tode 1 · K/D 5\.00
+@count 2 Serie 0 · beste 5 · Rating 1045 \(#1\)
+@expect Kills 1 · Tode 5 · K/D 0\.20
+@expect #1 Alice · 1045 · 5/1
+@expect #2 Carol · 1044 · 3/0
+@expect FAILED config pvp-core: configuration rejected
+@expect k-factor must be a whole number from 1 to 100
+@expect FAILED config pvp-killstreaks: configuration rejected
+@expect unknown potion effect 'flying' in rewards
+@expect OK config pvp-killstreaks: configuration applied
+@expect OK reload pvp-killstreaks: switched pvp-killstreaks@1\.0\.0 -> pvp-killstreaks@1\.0\.0
+@count 2 Killstreaks enabled
+@expect Carol hat eine 3er-Killstreak!
+@expect FAILED disable pvp-core: cannot disable 'pvp-core': enabled modules depend on it
+@expect PvP core disabled, statistics of 4 players saved
+@expect PvP core enabled: 4 players loaded from stats\.tsv
+@expect OK reload pvp-core: switched pvp-core@1\.0\.0 -> pvp-core@1\.0\.0
+@expect \[Server\] paperswap-gc-check
+@reject Unhandled exception in
+@reject FAILED (enable|reload|unload) pvp-(core|combattag|scoreboard)
+@reject [Rr]estart (is )?recommended
+@reject \[null\]

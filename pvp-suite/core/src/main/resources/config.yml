@@ -1,0 +1,13 @@
+# LemonPvP Core. Änderungen übernehmen: /fork module config pvp-core
+
+# Wie stark ein Kill das Rating verändert (1-100). 32 = wie im Schach.
+k-factor: 32
+
+# Statistik alle N Minuten speichern (1-60). Beim Deaktivieren wird immer gespeichert.
+autosave-minutes: 5
+
+# Nachrichten (MiniMessage: https://docs.advntr.dev/minimessage/format.html)
+# Platzhalter: <change> Rating-Punkte, <victim>/<killer> Namen, <rating> neues Rating
+messages:
+  kill: "<green>+<change> Rating</green> <gray>für den Kill an <victim> (jetzt <rating>)"
+  death: "<red>-<change> Rating</red> <gray>(<killer> hat dich getötet, jetzt <rating>)"
